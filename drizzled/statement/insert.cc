@@ -47,7 +47,7 @@ bool statement::Insert::execute()
 
   DRIZZLE_INSERT_START(session->getQueryString()->c_str());
 
-  bool res= mysql_insert(session,
+  bool res= insert_query(session,
                          all_tables,
                          session->lex->field_list,
                          session->lex->many_values,

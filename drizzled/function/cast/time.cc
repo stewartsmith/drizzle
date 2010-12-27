@@ -27,7 +27,7 @@ namespace drizzled {
 namespace function {
 namespace cast {
 
-bool Time::get_time(DRIZZLE_TIME *ltime)
+bool Time::get_time(type::Time *ltime)
 {
   bool res= get_arg0_time(ltime);
 
@@ -42,7 +42,7 @@ bool Time::get_time(DRIZZLE_TIME *ltime)
 String *Time::val_str(String *str)
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
   if (not get_arg0_time(&ltime))
   {
@@ -58,7 +58,7 @@ String *Time::val_str(String *str)
 int64_t Time::val_int()
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
   if (get_time(&ltime))
     return 0;

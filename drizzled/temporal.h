@@ -72,7 +72,9 @@
 #include <ostream>
 
 /* Outside forward declarations */
-class my_decimal;
+namespace type {
+class Decimal;
+}
 
 namespace drizzled
 {
@@ -433,12 +435,12 @@ public:
   virtual bool from_time_t(const time_t from);
 
   /**
-   * Fills a supplied my_decimal with a representation of
+   * Fills a supplied type::Decimal with a representation of
    * the Date value.
    *
-   * @param Pointer to the my_decimal to fill
+   * @param Pointer to the type::Decimal to fill
    */
-  virtual void to_decimal(my_decimal *to) const;
+  virtual void to_decimal(type::Decimal *to) const;
 
   friend class TemporalInterval;
   friend class Timestamp;
@@ -568,12 +570,12 @@ public:
   bool from_time_t(const time_t from);
 
   /**
-   * Fills a supplied my_decimal with a representation of
+   * Fills a supplied type::Decimal with a representation of
    * the Time value.
    *
-   * @param Pointer to the my_decimal to fill
+   * @param Pointer to the type::Decimal to fill
    */
-  void to_decimal(my_decimal *to) const;
+  void to_decimal(type::Decimal *to) const;
 
   friend class Date;
   friend class DateTime;
@@ -682,12 +684,12 @@ public:
   void to_tm(struct tm *to) const;
 
   /**
-   * Fills a supplied my_decimal with a representation of
+   * Fills a supplied type::Decimal with a representation of
    * the DateTime value.
    *
-   * @param Pointer to the my_decimal to fill
+   * @param Pointer to the type::Decimal to fill
    */
-  void to_decimal(my_decimal *to) const;
+  void to_decimal(type::Decimal *to) const;
 
   friend class Timestamp;
 };

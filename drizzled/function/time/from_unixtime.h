@@ -34,7 +34,7 @@ class Item_func_from_unixtime :public Item_date_func
   String *val_str(String *str);
   const char *func_name() const { return "from_unixtime"; }
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  bool get_date(type::Time *res, uint32_t fuzzy_date);
 };
 
 } /* namespace drizzled */

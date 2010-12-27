@@ -45,7 +45,7 @@ bool statement::Truncate::execute()
     return true;
   }
 
-  return mysql_truncate(*session, first_table);
+  return truncate(*session, first_table);
 }
 
 } /* namespace drizzled */

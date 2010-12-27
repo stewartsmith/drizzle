@@ -65,7 +65,7 @@
 
 /* Added this for string translation. */
 #include "drizzled/gettext.h"
-#include "drizzled/drizzle_time.h"
+#include "drizzled/type/time.h"
 #include "drizzled/charset.h"
 #include <drizzled/configmake.h>
 

@@ -57,7 +57,7 @@ int64_t BenchmarkFunction::val_int()
 
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff), &my_charset_bin);
-  my_decimal tmp_decimal;
+  type::Decimal tmp_decimal;
   Session *session= current_session;
   uint64_t loop_count;
 

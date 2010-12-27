@@ -196,7 +196,7 @@ void Item_char_typecast::fix_length_and_dec()
 String *Item_datetime_typecast::val_str(String *str)
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
   if (! get_arg0_date(&ltime, TIME_FUZZY_DATE))
   {
@@ -226,7 +226,7 @@ String *Item_datetime_typecast::val_str(String *str)
 int64_t Item_datetime_typecast::val_int()
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_arg0_date(&ltime,1))
   {
     null_value= 1;
@@ -237,7 +237,7 @@ int64_t Item_datetime_typecast::val_int()
 }
 
 
-bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint32_t )
+bool Item_date_typecast::get_date(type::Time *ltime, uint32_t )
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
@@ -246,9 +246,9 @@ bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint32_t )
 }
 
 
-bool Item_date_typecast::get_time(DRIZZLE_TIME *ltime)
+bool Item_date_typecast::get_time(type::Time *ltime)
 {
-  memset(ltime, 0, sizeof(DRIZZLE_TIME));
+  memset(ltime, 0, sizeof(type::Time));
   return args[0]->null_value;
 }
 
@@ -256,7 +256,7 @@ bool Item_date_typecast::get_time(DRIZZLE_TIME *ltime)
 String *Item_date_typecast::val_str(String *str)
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
       !str->alloc(MAX_DATE_STRING_REP_LENGTH))
@@ -272,7 +272,7 @@ String *Item_date_typecast::val_str(String *str)
 int64_t Item_date_typecast::val_int()
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if ((null_value= args[0]->get_date(&ltime, TIME_FUZZY_DATE)))
     return 0;
   return (int64_t) (ltime.year * 10000L + ltime.month * 100 + ltime.day);

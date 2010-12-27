@@ -40,7 +40,7 @@ public:
   virtual ~Item_str_func();
   int64_t val_int();
   double val_real();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type () const { return STRING_RESULT; }
   void left_right_max_length();
   bool fix_fields(Session *session, Item **ref);

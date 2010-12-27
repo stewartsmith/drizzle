@@ -64,7 +64,7 @@ class user_var_entry
   double val_real(bool *null_value);
   int64_t val_int(bool *null_value) const;
   String *val_str(bool *null_value, String *str, uint32_t decimals);
-  my_decimal *val_decimal(bool *null_value, my_decimal *result);
+  type::Decimal *val_decimal(bool *null_value, type::Decimal *result);
   DTCollation collation;
 
   bool update_hash(bool set_null, void *ptr, uint32_t length,

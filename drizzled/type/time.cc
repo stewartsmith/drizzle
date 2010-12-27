@@ -15,7 +15,7 @@
 
 #include "config.h"
 
-#include "drizzled/drizzle_time.h"
+#include "drizzled/type/time.h"
 
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
@@ -30,7 +30,7 @@ using namespace std;
 namespace drizzled
 {
 
-static int check_time_range(DRIZZLE_TIME *my_time, int *warning);
+static int check_time_range(type::Time *my_time, int *warning);
 
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
 
@@ -90,7 +90,7 @@ uint32_t calc_days_in_year(uint32_t year)
     1  error
 */
 
-bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
+bool check_date(const type::Time *ltime, bool not_zero_date,
                    uint32_t flags, int *was_cut)
 {
   if (not_zero_date)
@@ -119,7 +119,7 @@ bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
 
 
 /*
-  Convert a timestamp string to a DRIZZLE_TIME value.
+  Convert a timestamp string to a type::Time value.
 
   SYNOPSIS
     str_to_datetime()
@@ -172,7 +172,7 @@ bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
 #define MAX_DATE_PARTS 8
 
 enum enum_drizzle_timestamp_type
-str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
+str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
                 uint32_t flags, int *was_cut)
 {
   uint32_t field_length, year_length=4, digits, i, number_of_fields;
@@ -459,7 +459,7 @@ err:
 
 
 /*
- Convert a time string to a DRIZZLE_TIME struct.
+ Convert a time string to a type::Time struct.
 
   SYNOPSIS
    str_to_time()
@@ -483,7 +483,7 @@ err:
      1  error
 */
 
-bool str_to_time(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
+bool str_to_time(const char *str, uint32_t length, type::Time *l_time,
                     int *warning)
 {
   uint32_t date[5];
@@ -646,13 +646,13 @@ fractional:
   l_time->second_part=  date[4];
   l_time->time_type= DRIZZLE_TIMESTAMP_TIME;
 
-  /* Check if the value is valid and fits into DRIZZLE_TIME range */
+  /* Check if the value is valid and fits into type::Time range */
   if (check_time_range(l_time, warning))
   {
     return 1;
   }
 
-  /* Check if there is garbage at end of the DRIZZLE_TIME specification */
+  /* Check if there is garbage at end of the type::Time specification */
   if (str != end)
   {
     do
@@ -669,11 +669,11 @@ fractional:
 
 
 /*
-  Check 'time' value to lie in the DRIZZLE_TIME range
+  Check 'time' value to lie in the type::Time range
 
   SYNOPSIS:
     check_time_range()
-    time     pointer to DRIZZLE_TIME value
+    time     pointer to type::Time value
     warning  set DRIZZLE_TIME_WARN_OUT_OF_RANGE flag if the value is out of range
 
   DESCRIPTION
@@ -686,7 +686,7 @@ fractional:
     1        time value is invalid
 */
 
-static int check_time_range(DRIZZLE_TIME *my_time, int *warning)
+static int check_time_range(type::Time *my_time, int *warning)
 {
   int64_t hour;
 
@@ -719,7 +719,7 @@ void init_time(void)
 {
   time_t seconds;
   struct tm *l_time,tm_tmp;
-  DRIZZLE_TIME my_time;
+  type::Time my_time;
   bool not_used;
 
   seconds= (time_t) time((time_t*) 0);
@@ -791,7 +791,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
 
 
 /*
-  Convert time in DRIZZLE_TIME representation in system time zone to its
+  Convert time in type::Time representation in system time zone to its
   time_t form (number of seconds in UTC since begginning of Unix Epoch).
 
   SYNOPSIS
@@ -813,14 +813,14 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
     Time in UTC seconds since Unix Epoch representation.
 */
 time_t
-my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
+my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
                   bool *in_dst_time_gap)
 {
   uint32_t loop;
   time_t tmp= 0;
   int shift= 0;
-  DRIZZLE_TIME tmp_time;
-  DRIZZLE_TIME *t= &tmp_time;
+  type::Time tmp_time;
+  type::Time *t= &tmp_time;
   struct tm *l_time,tm_tmp;
   long diff, current_timezone;
 
@@ -828,7 +828,7 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
     Use temp variable to avoid trashing input data, which could happen in
     case of shift required for boundary dates processing.
   */
-  memcpy(&tmp_time, t_src, sizeof(DRIZZLE_TIME));
+  memcpy(&tmp_time, t_src, sizeof(type::Time));
 
   if (!validate_timestamp_range(t))
     return 0;
@@ -1002,9 +1002,9 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
 } /* my_system_gmt_sec */
 
 
-/* Set DRIZZLE_TIME structure to 0000-00-00 00:00:00.000000 */
+/* Set type::Time structure to 0000-00-00 00:00:00.000000 */
 
-void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
+void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type)
 {
   memset(tm, 0, sizeof(*tm));
   tm->time_type= time_type;
@@ -1014,7 +1014,7 @@ void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
 /*
   Functions to convert time/date/datetime value to a string,
   using default format.
-  This functions don't check that given DRIZZLE_TIME structure members are
+  This functions don't check that given type::Time structure members are
   in valid range. If they are not, return value won't reflect any
   valid date either. Additionally, make_time doesn't take into
   account time->day member: it's assumed that days have been converted
@@ -1024,7 +1024,7 @@ void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
     number of characters written to 'to'
 */
 
-int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
+int my_time_to_str(const type::Time *l_time, char *to)
 {
   uint32_t extra_hours= 0;
   return sprintf(to, "%s%02u:%02u:%02u",
@@ -1034,7 +1034,7 @@ int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
                          l_time->second);
 }
 
-int my_date_to_str(const DRIZZLE_TIME *l_time, char *to)
+int my_date_to_str(const type::Time *l_time, char *to)
 {
   return sprintf(to, "%04u-%02u-%02u",
                          l_time->year,
@@ -1042,7 +1042,7 @@ int my_date_to_str(const DRIZZLE_TIME *l_time, char *to)
                          l_time->day);
 }
 
-int my_datetime_to_str(const DRIZZLE_TIME *l_time, char *to)
+int my_datetime_to_str(const type::Time *l_time, char *to)
 {
   return sprintf(to, "%04u-%02u-%02u %02u:%02u:%02u",
                          l_time->year,
@@ -1065,7 +1065,7 @@ int my_datetime_to_str(const DRIZZLE_TIME *l_time, char *to)
     The string must have at least MAX_DATE_STRING_REP_LENGTH bytes reserved.
 */
 
-int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to)
+int my_TIME_to_str(const type::Time *l_time, char *to)
 {
   switch (l_time->time_type) {
   case DRIZZLE_TIMESTAMP_DATETIME:
@@ -1100,7 +1100,7 @@ int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to)
 
   DESCRIPTION
     Convert a datetime value of formats YYMMDD, YYYYMMDD, YYMMDDHHMSS,
-    YYYYMMDDHHMMSS to broken-down DRIZZLE_TIME representation. Return value in
+    YYYYMMDDHHMMSS to broken-down type::Time representation. Return value in
     YYYYMMDDHHMMSS format as side-effect.
 
     This function also checks if datetime value fits in DATETIME range.
@@ -1111,7 +1111,7 @@ int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to)
     Datetime value in YYYYMMDDHHMMSS format.
 */
 
-int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
+int64_t number_to_datetime(int64_t nr, type::Time *time_res,
                             uint32_t flags, int *was_cut)
 {
   long part1,part2;
@@ -1189,7 +1189,7 @@ int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
 
 /* Convert time value to integer in YYYYMMDDHHMMSS format */
 
-uint64_t TIME_to_uint64_t_datetime(const DRIZZLE_TIME *my_time)
+uint64_t TIME_to_uint64_t_datetime(const type::Time *my_time)
 {
   return ((uint64_t) (my_time->year * 10000UL +
                        my_time->month * 100UL +
@@ -1200,9 +1200,9 @@ uint64_t TIME_to_uint64_t_datetime(const DRIZZLE_TIME *my_time)
 }
 
 
-/* Convert DRIZZLE_TIME value to integer in YYYYMMDD format */
+/* Convert type::Time value to integer in YYYYMMDD format */
 
-static uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
+static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
 {
   return (uint64_t) (my_time->year * 10000UL + my_time->month * 100UL +
                       my_time->day);
@@ -1210,12 +1210,12 @@ static uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
 
 
 /*
-  Convert DRIZZLE_TIME value to integer in HHMMSS format.
+  Convert type::Time value to integer in HHMMSS format.
   This function doesn't take into account time->day member:
   it's assumed that days have been converted to hours already.
 */
 
-static uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *my_time)
+static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
 {
   return (uint64_t) (my_time->hour * 10000UL +
                       my_time->minute * 100UL +
@@ -1224,7 +1224,7 @@ static uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *my_time)
 
 
 /*
-  Convert struct DRIZZLE_TIME (date and time split into year/month/day/hour/...
+  Convert struct type::Time (date and time split into year/month/day/hour/...
   to a number in format YYYYMMDDHHMMSS (DATETIME),
   YYYYMMDD (DATE)  or HHMMSS (TIME).
 
@@ -1238,12 +1238,12 @@ static uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *my_time)
     SELECT ?+1;
 
   NOTE
-    This function doesn't check that given DRIZZLE_TIME structure members are
+    This function doesn't check that given type::Time structure members are
     in valid range. If they are not, return value won't reflect any
     valid date either.
 */
 
-uint64_t TIME_to_uint64_t(const DRIZZLE_TIME *my_time)
+uint64_t TIME_to_uint64_t(const type::Time *my_time)
 {
   switch (my_time->time_type) {
   case DRIZZLE_TIMESTAMP_DATETIME:

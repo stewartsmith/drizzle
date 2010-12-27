@@ -91,7 +91,7 @@ public:
     return value_buffer;
   }
 
-  drizzled::my_decimal* val_decimal(drizzled::my_decimal *dec)
+  type::Decimal* val_decimal(type::Decimal *dec)
   {
     (void)dec;
     return 0;

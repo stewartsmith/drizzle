@@ -44,7 +44,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   void fix_length_and_dec();
   enum Item_result result_type () const { return cmp_type; }
   bool result_as_int64_t() { return compare_as_dates; };

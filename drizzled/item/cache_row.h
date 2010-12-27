@@ -55,7 +55,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *val);
-  my_decimal *val_decimal(my_decimal *val);
+  type::Decimal *val_decimal(type::Decimal *val);
 
   enum Item_result result_type() const;
 

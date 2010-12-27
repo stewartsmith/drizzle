@@ -28,9 +28,6 @@ ROLLBACK TO SAVEPOINT savept3;
 COMMIT;
 DROP TABLE t1;
 START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t1`;
-COMMIT;
-START TRANSACTION;
 CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
@@ -44,9 +41,6 @@ DROP TABLE `test`.`t1`;
 COMMIT;
 
 Generating statements for innodb replication log
-START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t1`;
-COMMIT;
 START TRANSACTION;
 CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;

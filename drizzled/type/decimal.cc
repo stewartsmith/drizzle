@@ -108,7 +108,7 @@
 #include "drizzled/definitions.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
-#include "drizzled/decimal.h"
+#include "drizzled/type/decimal.h"
 
 #include <plugin/myisam/myisampack.h>
 #include <drizzled/util/test.h>
@@ -178,7 +178,7 @@ int decimal_operation_results(int result)
 /**
   @brief Converting decimal to string
 
-  @details Convert given my_decimal to String; allocate buffer as needed.
+  @details Convert given type::Decimal to String; allocate buffer as needed.
 
   @param[in]   mask        what problems to warn on (mask of E_DEC_* values)
   @param[in]   d           the decimal to print
@@ -194,7 +194,7 @@ int decimal_operation_results(int result)
     @retval E_DEC_OOM
 */
 
-int my_decimal2string(uint32_t mask, const my_decimal *d,
+int class_decimal2string(uint32_t mask, const type::Decimal *d,
                       uint32_t fixed_prec, uint32_t fixed_dec,
                       char filler, String *str)
 {
@@ -206,12 +206,12 @@ int my_decimal2string(uint32_t mask, const my_decimal *d,
     one if the user only wanted decimal places, but we force a leading
     zero on them. Because the type is implicitly UNSIGNED, we do not
     need to reserve a character for the sign. For all other cases,
-    fixed_prec will be 0, and my_decimal_string_length() will be called
+    fixed_prec will be 0, and class_decimal_string_length() will be called
     instead to calculate the required size of the buffer.
   */
   int length= (int)(fixed_prec
                     ? (uint32_t)(fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
-                    : (uint32_t)my_decimal_string_length(d));
+                    : (uint32_t)class_decimal_string_length(d));
   int result;
   if (str->alloc(length))
     return check_result(mask, E_DEC_OOM);
@@ -242,12 +242,12 @@ int my_decimal2string(uint32_t mask, const my_decimal *d,
    @retval E_DEC_OVERFLOW
 */
 
-int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
+int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *bin, int prec,
 		      int scale)
 {
   int err1= E_DEC_OK, err2;
-  my_decimal rounded;
-  my_decimal2decimal(d, &rounded);
+  type::Decimal rounded;
+  class_decimal2decimal(d, &rounded);
   rounded.frac= decimal_actual_fraction(&rounded);
   if (scale < rounded.frac)
   {
@@ -279,8 +279,8 @@ int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, in
    @retval E_DEC_OOM
 */
 
-int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
-                   const CHARSET_INFO * charset, my_decimal *decimal_value)
+int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
+                   const CHARSET_INFO * charset, type::Decimal *decimal_value)
 {
   char *end, *from_end;
   int err;
@@ -313,13 +313,13 @@ int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
 }
 
 
-my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
+type::Decimal *date2_class_decimal(type::Time *ltime, type::Decimal *dec)
 {
   int64_t date;
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;
   if (ltime->time_type > DRIZZLE_TIMESTAMP_DATE)
     date= ((date*100L + ltime->hour)*100L+ ltime->minute)*100L + ltime->second;
-  if (int2my_decimal(E_DEC_FATAL_ERROR, date, false, dec))
+  if (int2_class_decimal(E_DEC_FATAL_ERROR, date, false, dec))
     return dec;
   if (ltime->second_part)
   {
@@ -330,7 +330,7 @@ my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
 }
 
 
-void my_decimal_trim(uint32_t *precision, uint32_t *scale)
+void class_decimal_trim(uint32_t *precision, uint32_t *scale)
 {
   if (!(*precision) && !(*scale))
   {
@@ -2533,6 +2533,19 @@ int decimal_mod(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
   return do_div_mod(from1, from2, 0, to, 0);
 }
 
+std::ostream& operator<<(std::ostream& output, const type::Decimal &dec)
+{
+  drizzled::String str;
+
+  class_decimal2string(E_DEC_OK, &dec, 0, 20, ' ', &str);
+
+  output << "type::Decimal:(";
+  output <<  str.c_ptr();
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
 } /* namespace drizzled */
 
 #ifdef MAIN
@@ -3266,4 +3279,5 @@ int main()
 
   return 0;
 }
+
 #endif

@@ -42,8 +42,8 @@ public:
                field_name_arg, dec_arg, zero_arg, unsigned_arg),
     not_fixed(dec_arg >= NOT_FIXED_DEC)
     {}
-  int store_decimal(const my_decimal *);
-  my_decimal *val_decimal(my_decimal *);
+  int store_decimal(const type::Decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   int truncate(double *nr, double max_length);
   uint32_t max_display_length() { return field_length; }
   uint32_t size_of() const { return sizeof(*this); }

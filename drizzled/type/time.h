@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DRIZZLE_TIME_H
-#define DRIZZLED_DRIZZLE_TIME_H
+#ifndef DRIZZLED_TYPE_TIME_H
+#define DRIZZLED_TYPE_TIME_H
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -82,32 +82,35 @@ enum enum_drizzle_timestamp_type
   month <= 12, day <= 31, hour <= 23, hour <= 59, hour <= 59. Many functions
   in server such as my_system_gmt_sec() or make_time() family of functions
   rely on this (actually now usage of make_*() family relies on a bit weaker
-  restriction). Also functions that produce DRIZZLE_TIME as result ensure this.
+  restriction). Also functions that produce type::Time as result ensure this.
   There is one exception to this rule though if this structure holds time
   value (time_type == DRIZZLE_TIMESTAMP_TIME) days and hour member can hold
   bigger values.
 */
-typedef struct st_drizzle_time
+namespace type {
+class Time
 {
+public:
   unsigned int  year, month, day, hour, minute, second;
   unsigned long second_part;
   bool       neg;
   enum enum_drizzle_timestamp_type time_type;
-} DRIZZLE_TIME;
+};
+}
 
 
-bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
+bool check_date(const type::Time *ltime, bool not_zero_date,
                    uint32_t flags, int *was_cut);
 enum enum_drizzle_timestamp_type
-str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
+str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
                 uint32_t flags, int *was_cut);
-int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
+int64_t number_to_datetime(int64_t nr, type::Time *time_res,
                             uint32_t flags, int *was_cut);
-uint64_t TIME_to_uint64_t_datetime(const DRIZZLE_TIME *);
-uint64_t TIME_to_uint64_t(const DRIZZLE_TIME *);
+uint64_t TIME_to_uint64_t_datetime(const type::Time *);
+uint64_t TIME_to_uint64_t(const type::Time *);
 
 
-bool str_to_time(const char *str,uint32_t length, DRIZZLE_TIME *l_time,
+bool str_to_time(const char *str,uint32_t length, type::Time *l_time,
                  int *warning);
 
 long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
@@ -121,16 +124,16 @@ void init_time(void);
   Function to check sanity of a TIMESTAMP value
 
   DESCRIPTION
-    Check if a given DRIZZLE_TIME value fits in TIMESTAMP range.
+    Check if a given type::Time value fits in TIMESTAMP range.
     This function doesn't make precise check, but rather a rough
     estimate.
 
   RETURN VALUES
     false   The value seems sane
-    true    The DRIZZLE_TIME value is definitely out of range
+    true    The type::Time value is definitely out of range
 */
 
-static inline bool validate_timestamp_range(const DRIZZLE_TIME *t)
+static inline bool validate_timestamp_range(const type::Time *t)
 {
   if ((t->year > TIMESTAMP_MAX_YEAR || t->year < TIMESTAMP_MIN_YEAR) ||
       (t->year == TIMESTAMP_MAX_YEAR && (t->month > 1 || t->day > 19)) ||
@@ -141,10 +144,10 @@ static inline bool validate_timestamp_range(const DRIZZLE_TIME *t)
 }
 
 time_t
-my_system_gmt_sec(const DRIZZLE_TIME *t, long *my_timezone,
+my_system_gmt_sec(const type::Time *t, long *my_timezone,
                   bool *in_dst_time_gap);
 
-void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type);
+void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type);
 
 /*
   Required buffer length for my_time_to_str, my_date_to_str,
@@ -156,10 +159,10 @@ void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
 */
 #define MAX_DATE_STRING_REP_LENGTH 30
 
-int my_time_to_str(const DRIZZLE_TIME *l_time, char *to);
-int my_date_to_str(const DRIZZLE_TIME *l_time, char *to);
-int my_datetime_to_str(const DRIZZLE_TIME *l_time, char *to);
-int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to);
+int my_time_to_str(const type::Time *l_time, char *to);
+int my_date_to_str(const type::Time *l_time, char *to);
+int my_datetime_to_str(const type::Time *l_time, char *to);
+int my_TIME_to_str(const type::Time *l_time, char *to);
 
 /*
   Available interval types used in any statement.
@@ -188,4 +191,4 @@ enum interval_type
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DRIZZLE_TIME_H */
+#endif /* DRIZZLED_TYPE_TIME_H */

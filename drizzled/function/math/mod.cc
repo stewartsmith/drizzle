@@ -69,10 +69,10 @@ double Item_func_mod::real_op()
 }
 
 
-my_decimal *Item_func_mod::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_mod::decimal_op(type::Decimal *decimal_value)
 {
-  my_decimal value1, *val1;
-  my_decimal value2, *val2;
+  type::Decimal value1, *val1;
+  type::Decimal value2, *val2;
 
   val1= args[0]->val_decimal(&value1);
   if ((null_value= args[0]->null_value))
@@ -80,7 +80,7 @@ my_decimal *Item_func_mod::decimal_op(my_decimal *decimal_value)
   val2= args[1]->val_decimal(&value2);
   if ((null_value= args[1]->null_value))
     return 0;
-  switch (my_decimal_mod(E_DEC_FATAL_ERROR & ~E_DEC_DIV_ZERO, decimal_value,
+  switch (class_decimal_mod(E_DEC_FATAL_ERROR & ~E_DEC_DIV_ZERO, decimal_value,
                          val1, val2)) {
   case E_DEC_TRUNCATED:
   case E_DEC_OK:

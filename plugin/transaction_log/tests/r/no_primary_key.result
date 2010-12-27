@@ -7,9 +7,6 @@ INSERT INTO t1 VALUES (1, "I love testing.");
 ERROR HY000: Tables which are replicated require a primary key.
 DROP TABLE t1;
 START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t1`;
-COMMIT;
-START TRANSACTION;
 CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
@@ -17,9 +14,6 @@ DROP TABLE `test`.`t1`;
 COMMIT;
 
 Generating statements for innodb replication log
-START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t1`;
-COMMIT;
 START TRANSACTION;
 CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;

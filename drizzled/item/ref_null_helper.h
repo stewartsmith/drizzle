@@ -45,9 +45,9 @@ public:
   double val_real();
   int64_t val_int();
   String* val_str(String* s);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool val_bool();
-  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate);
+  bool get_date(type::Time *ltime, uint32_t fuzzydate);
   virtual void print(String *str, enum_query_type query_type);
   /*
     we add RAND_TABLE_BIT to prevent moving this item from HAVING to WHERE

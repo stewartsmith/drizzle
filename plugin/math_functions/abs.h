@@ -32,7 +32,7 @@ public:
   Item_func_abs() :Item_func_num1() {}
   double real_op();
   int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   const char *func_name() const { return "abs"; }
   void fix_length_and_dec();
   bool check_argument_count(int n) { return n == 1; }

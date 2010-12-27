@@ -74,8 +74,8 @@ public:
   long get_timestamp(bool *null_value);
 
 private:
-  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_date(type::Time *ltime,uint32_t fuzzydate);
+  bool get_time(type::Time *ltime);
 
 public:
   timestamp_auto_set_type get_auto_set_type() const;

@@ -227,7 +227,7 @@ void upgrade_lock_type(Session *,
   end of dispatch_command().
 */
 
-bool mysql_insert(Session *session,TableList *table_list,
+bool insert_query(Session *session,TableList *table_list,
                   List<Item> &fields,
                   List<List_item> &values_list,
                   List<Item> &update_fields,
@@ -271,7 +271,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   values= its++;
   value_count= values->elements;
 
-  if (mysql_prepare_insert(session, table_list, table, fields, values,
+  if (prepare_insert(session, table_list, table, fields, values,
 			   update_fields, update_values, duplic, &unused_conds,
                            false,
                            (fields.elements || !value_count ||
@@ -520,7 +520,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   Check if table can be updated
 
   SYNOPSIS
-     mysql_prepare_insert_check_table()
+     prepare_insert_check_table()
      session		Thread handle
      table_list		Table list
      fields		List of fields to be updated
@@ -532,7 +532,7 @@ bool mysql_insert(Session *session,TableList *table_list,
      true  ERROR
 */
 
-static bool mysql_prepare_insert_check_table(Session *session, TableList *table_list,
+static bool prepare_insert_check_table(Session *session, TableList *table_list,
                                              List<Item> &,
                                              bool select_insert)
 {
@@ -560,7 +560,7 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
   Prepare items in INSERT statement
 
   SYNOPSIS
-    mysql_prepare_insert()
+    prepare_insert()
     session			Thread handler
     table_list	        Global/local table list
     table		Table to insert into (can be NULL if table should
@@ -587,7 +587,7 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
     true  error
 */
 
-bool mysql_prepare_insert(Session *session, TableList *table_list,
+bool prepare_insert(Session *session, TableList *table_list,
                           Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
@@ -632,7 +632,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
       return(true);
   }
 
-  if (mysql_prepare_insert_check_table(session, table_list, fields, select_insert))
+  if (prepare_insert_check_table(session, table_list, fields, select_insert))
     return(true);
 
 
@@ -868,7 +868,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
           /*
             If ON DUP KEY UPDATE updates a row instead of inserting one, it's
             like a regular UPDATE statement: it should not affect the value of a
-            next SELECT LAST_INSERT_ID() or mysql_insert_id().
+            next SELECT LAST_INSERT_ID() or insert_id().
             Except if LAST_INSERT_ID(#) was in the INSERT query, which is
             handled separately by Session::arg_of_last_insert_id_function.
           */
@@ -1026,7 +1026,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
   make insert specific preparation and checks after opening tables
 
   SYNOPSIS
-    mysql_insert_select_prepare()
+    insert_select_prepare()
     session         thread handler
 
   RETURN
@@ -1034,7 +1034,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
     true  Error
 */
 
-bool mysql_insert_select_prepare(Session *session)
+bool insert_select_prepare(Session *session)
 {
   LEX *lex= session->lex;
   Select_Lex *select_lex= &lex->select_lex;
@@ -1044,7 +1044,7 @@ bool mysql_insert_select_prepare(Session *session)
     clause if table is VIEW
   */
 
-  if (mysql_prepare_insert(session, lex->query_tables,
+  if (prepare_insert(session, lex->query_tables,
                            lex->query_tables->table, lex->field_list, 0,
                            lex->update_list, lex->value_list,
                            lex->duplicates,
@@ -1576,7 +1576,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   */
   Table *table= 0;
   {
-    if (not mysql_create_table_no_lock(session,
+    if (not create_table_no_lock(session,
 				       identifier,
 				       create_info,
 				       table_proto,

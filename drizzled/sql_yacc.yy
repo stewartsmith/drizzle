@@ -268,9 +268,9 @@ static bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_d
   }
   /* This counter shouldn't be incremented for UNION parts */
   lex->nest_level--;
-  if (mysql_new_select(lex, 0))
+  if (new_select(lex, 0))
     return true;
-  mysql_init_select(lex);
+  init_select(lex);
   lex->current_select->linkage=UNION_TYPE;
   if (is_union_distinct) /* UNION DISTINCT - remember position */
     lex->current_select->master_unit()->union_distinct=
@@ -409,12 +409,12 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %token  ABORT_SYM                     /* INTERNAL (used in lex) */
 %token  ACTION                        /* SQL-2003-N */
-%token  ADD                           /* SQL-2003-R */
+%token  ADD_SYM                           /* SQL-2003-R */
 %token  ADDDATE_SYM                   /* MYSQL-FUNC */
 %token  AFTER_SYM                     /* SQL-2003-N */
 %token  AGGREGATE_SYM
 %token  ALL                           /* SQL-2003-R */
-%token  ALTER                         /* SQL-2003-R */
+%token  ALTER_SYM                         /* SQL-2003-R */
 %token  ANALYZE_SYM
 %token  AND_SYM                       /* SQL-2003-R */
 %token  ANY_SYM                       /* SQL-2003-R */
@@ -445,7 +445,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CASE_SYM                      /* SQL-2003-R */
 %token  CAST_SYM                      /* SQL-2003-R */
 %token  CHAIN_SYM                     /* SQL-2003-N */
-%token  CHANGE
+%token  CHANGE_SYM
 %token  CHAR_SYM                      /* SQL-2003-R */
 %token  CHECKSUM_SYM
 %token  CHECK_SYM                     /* SQL-2003-R */
@@ -695,7 +695,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SESSION_SYM                   /* SQL-2003-N */
 %token  SERVER_SYM
 %token  SERVER_OPTIONS
-%token  SET                           /* SQL-2003-R */
+%token  SET_SYM                           /* SQL-2003-R */
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
@@ -1195,7 +1195,7 @@ create_select:
               is created correctly in this case
             */
             lex->current_select->table_list.save_and_clear(&lex->save_list);
-            mysql_init_select(lex);
+            init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
@@ -2077,9 +2077,9 @@ opt_on_update_delete:
 delete_option:
           RESTRICT      { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_RESTRICT; }
         | CASCADE       { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_CASCADE; }
-        | SET NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
+        | SET_SYM NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
         | NO_SYM ACTION { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_NO_ACTION; }
-        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT;  }
+        | SET_SYM DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT;  }
         ;
 
 key_type:
@@ -2194,7 +2194,7 @@ string_list:
 */
 
 alter:
-          ALTER build_method opt_ignore TABLE_SYM table_ident
+          ALTER_SYM build_method opt_ignore TABLE_SYM table_ident
           {
             Session *session= YYSession;
             LEX *lex= session->lex;
@@ -2216,7 +2216,7 @@ alter:
           }
           alter_commands
           {}
-        | ALTER DATABASE ident_or_empty
+        | ALTER_SYM DATABASE ident_or_empty
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_ALTER_DB;
@@ -2275,7 +2275,7 @@ alter_list:
         ;
 
 add_column:
-          ADD opt_column
+          ADD_SYM opt_column
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -2286,7 +2286,7 @@ add_column:
 
 alter_list_item:
           add_column column_def opt_place { }
-        | ADD key_def
+        | ADD_SYM key_def
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -2299,7 +2299,7 @@ alter_list_item:
             statement->alter_info.flags.set(ALTER_ADD_COLUMN);
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
-        | CHANGE opt_column field_ident
+        | CHANGE_SYM opt_column field_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
             statement->change= $3.str;
@@ -2380,14 +2380,14 @@ alter_list_item:
             statement->alter_info.keys_onoff= ENABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
           }
-        | ALTER opt_column field_ident SET DEFAULT signed_literal
+        | ALTER_SYM opt_column field_ident SET_SYM DEFAULT signed_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
             statement->alter_info.alter_list.push_back(new AlterColumn($3.str,$6));
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
-        | ALTER opt_column field_ident DROP DEFAULT
+        | ALTER_SYM opt_column field_ident DROP DEFAULT
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -2625,7 +2625,7 @@ select_part2:
             LEX *lex= Lex;
             Select_Lex *sel= lex->current_select;
             if (sel->linkage != UNION_TYPE)
-              mysql_init_select(lex);
+              init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
@@ -3651,6 +3651,14 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
         | BOOLEAN_SYM
           { $$=ITEM_CAST_BOOLEAN; Lex->charset= &my_charset_bin; Lex->dec= 0; }
+        | SIGNED_SYM
+          { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | SIGNED_SYM INT_SYM
+          { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | UNSIGNED_SYM
+          { $$=ITEM_CAST_UNSIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | UNSIGNED_SYM INT_SYM
+          { $$=ITEM_CAST_UNSIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | CHAR_SYM opt_len
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM
@@ -4040,7 +4048,7 @@ select_part2_derived:
             LEX *lex= Lex;
             Select_Lex *sel= lex->current_select;
             if (sel->linkage != UNION_TYPE)
-              mysql_init_select(lex);
+              init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
@@ -4086,9 +4094,9 @@ select_derived2:
               DRIZZLE_YYABORT;
             }
             if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE ||
-                mysql_new_select(lex, 1))
+                new_select(lex, 1))
               DRIZZLE_YYABORT;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->current_select->linkage= DERIVED_TABLE_TYPE;
             lex->current_select->parsing_place= SELECT_LIST;
           }
@@ -4694,7 +4702,7 @@ insert:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->duplicates= DUP_ERROR;
-            mysql_init_select(lex);
+            init_select(lex);
             /* for subselects */
             lex->lock_option= TL_READ;
           }
@@ -4716,7 +4724,7 @@ replace:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->duplicates= DUP_REPLACE;
-            mysql_init_select(lex);
+            init_select(lex);
           }
           insert2
           {
@@ -4745,7 +4753,7 @@ insert_field_spec:
           insert_values {}
         | '(' ')' insert_values {}
         | '(' fields ')' insert_values {}
-        | SET
+        | SET_SYM
           {
             LEX *lex=Lex;
             if (!(lex->insert_list = new List_item) ||
@@ -4850,7 +4858,7 @@ update:
           UPDATE_SYM opt_ignore table_ident
           {
             LEX *lex= Lex;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->sql_command= SQLCOM_UPDATE;
             lex->statement= new(std::nothrow) statement::Update(YYSession);
             if (lex->statement == NULL)
@@ -4860,7 +4868,7 @@ update:
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
           }
-          SET update_list
+          SET_SYM update_list
           {
             LEX *lex= Lex;
             if (lex->select_lex.get_table_list()->derived)
@@ -4873,7 +4881,7 @@ update:
             /*
               In case of multi-update setting write lock for all tables may
               be too pessimistic. We will decrease lock level if possible in
-              mysql_multi_update().
+              multi_update().
             */
             Lex->current_select->set_lock_for_tables(TL_WRITE_DEFAULT);
           }
@@ -4918,7 +4926,7 @@ delete:
             lex->statement= new(std::nothrow) statement::Delete(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->lock_option= TL_WRITE_DEFAULT;
             lex->ignore= 0;
             lex->select_lex.init_order();
@@ -4972,7 +4980,7 @@ show:
             LEX *lex=Lex;
             lex->wild=0;
             lex->lock_option= TL_READ;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
           }
           show_param
@@ -5533,7 +5541,7 @@ describe:
             statement::Show *select;
             LEX *lex= Lex;
             lex->lock_option= TL_READ;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
             lex->sql_command= SQLCOM_SELECT;
             select= new(std::nothrow) statement::Show(session);
@@ -5869,7 +5877,7 @@ field_or_var:
 
 opt_load_data_set_spec:
           /* empty */ {}
-        | SET insert_update_list {}
+        | SET_SYM insert_update_list {}
         ;
 
 /* Common definitions */
@@ -6360,7 +6368,7 @@ keyword_sp:
 /* Option functions */
 
 set:
-          SET opt_option
+          SET_SYM opt_option
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SET_OPTION;
@@ -6368,7 +6376,7 @@ set:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->option_type=OPT_SESSION;
             lex->var_list.empty();
           }
@@ -6724,7 +6732,7 @@ subselect_start:
               (SELECT .. ) UNION ...  becomes
               SELECT * FROM ((SELECT ...) UNION ...)
             */
-            if (mysql_new_select(Lex, 1))
+            if (new_select(Lex, 1))
               DRIZZLE_YYABORT;
           }
         ;

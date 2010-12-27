@@ -63,16 +63,16 @@ public:
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
   Item_result result_type () const { return DECIMAL_RESULT; }
   int  reset(void);
-  bool store_value(const my_decimal *decimal_value);
-  void set_value_on_overflow(my_decimal *decimal_value, bool sign);
+  bool store_value(const type::Decimal *decimal_value);
+  void set_value_on_overflow(type::Decimal *decimal_value, bool sign);
   int  store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type t_type);
-  int  store_decimal(const my_decimal *);
+  int store_time(type::Time *ltime, enum enum_drizzle_timestamp_type t_type);
+  int  store_decimal(const type::Decimal *);
   double val_real(void);
   int64_t val_int(void);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   String *val_str(String*, String *);
   int cmp(const unsigned char *, const unsigned char *);
   void sort_string(unsigned char *buff, uint32_t length);

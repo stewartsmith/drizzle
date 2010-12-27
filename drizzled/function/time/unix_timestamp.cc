@@ -30,7 +30,7 @@ namespace drizzled
 
 int64_t Item_func_unix_timestamp::val_int()
 {
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
   assert(fixed == 1);
   if (arg_count == 0)

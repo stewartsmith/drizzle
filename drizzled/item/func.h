@@ -43,6 +43,8 @@ namespace drizzled
 enum Cast_target
 {
   ITEM_CAST_BINARY,
+  ITEM_CAST_SIGNED,
+  ITEM_CAST_UNSIGNED,
   ITEM_CAST_DATE,
   ITEM_CAST_TIME,
   ITEM_CAST_DATETIME,

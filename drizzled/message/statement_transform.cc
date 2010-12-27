@@ -860,13 +860,6 @@ transformDropTableStatementToSql(const DropTableStatement &statement,
 
   destination.append("DROP TABLE ", 11);
 
-  /* Add the IF EXISTS clause if necessary */
-  if (statement.has_if_exists_clause() &&
-      statement.if_exists_clause() == true)
-  {
-    destination.append("IF EXISTS ", 10);
-  }
-
   destination.push_back(quoted_identifier);
   destination.append(table_metadata.schema_name());
   destination.push_back(quoted_identifier);

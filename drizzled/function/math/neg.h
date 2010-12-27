@@ -28,16 +28,27 @@ namespace drizzled
 
 class Item_func_neg :public Item_func_num1
 {
+  bool _is_negative;
+
 public:
-  Item_func_neg(Item *a) :Item_func_num1(a) {}
+  Item_func_neg(Item *a) :
+    Item_func_num1(a),
+    _is_negative(true)
+  {}
+
   double real_op();
   int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   const char *func_name() const { return "-"; }
   enum Functype functype() const   { return NEG_FUNC; }
   void fix_length_and_dec();
   void fix_num_length_and_dec();
   uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
+
+  bool negative() const
+  {
+    return _is_negative;
+  }
 };
 
 } /* namespace drizzled */

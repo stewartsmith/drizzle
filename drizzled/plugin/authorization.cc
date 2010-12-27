@@ -208,6 +208,13 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_share
                                          const Session *session,
                                          bool send_error)
 {
+  return isAuthorized(*user_ctx, session, send_error);
+}
+
+bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+                                         const Session *session,
+                                         bool send_error)
+{
   drizzled::identifier::User::const_shared_ptr session_ctx= session->user();
 
   /* If we never loaded any authorization plugins, just return true */
@@ -218,7 +225,7 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_share
   std::vector<plugin::Authorization *>::const_iterator iter=
     std::find_if(authorization_plugins.begin(),
                  authorization_plugins.end(),
-                 RestrictProcessFunctor(*user_ctx, *session_ctx));
+                 RestrictProcessFunctor(user_ctx, *session_ctx));
 
   /*
    * If iter is == end() here, that means that all of the plugins returned
@@ -234,6 +241,7 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_share
     }
     return false;
   }
+
   return true;
 }
 

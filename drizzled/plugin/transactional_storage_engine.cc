@@ -72,7 +72,7 @@ void TransactionalStorageEngine::setTransactionReadWrite(Session& session)
   FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a session to
   keep them over several calls of the InnoDB Cursor interface when a join
   is executed. But when we let the control to pass to the client they have
-  to be released because if the application program uses mysql_use_result(),
+  to be released because if the application program uses use_result(),
   it may deadlock on the S-latch if the application on another connection
   performs another SQL query. In MySQL-4.1 this is even more important because
   there a connection can have several SELECT queries open at the same time.

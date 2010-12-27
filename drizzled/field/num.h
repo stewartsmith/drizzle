@@ -50,9 +50,9 @@ public:
 
   bool eq_def(Field *field);
 
-  int store_decimal(const my_decimal *);
+  int store_decimal(const type::Decimal *);
 
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
 
   uint32_t is_equal(CreateField *new_field);
 

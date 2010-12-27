@@ -117,7 +117,7 @@ void write_bin_log(Session *session, const std::string &query)
   Execute the drop of a normal or temporary table
 
   SYNOPSIS
-    mysql_rm_table_part2()
+    rm_table_part2()
     session			Thread Cursor
     tables		Tables to drop
     if_exists		If set, don't give an error if table doesn't exists.
@@ -140,7 +140,7 @@ void write_bin_log(Session *session, const std::string &query)
    -1	Thread was killed
 */
 
-int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
+int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary)
 {
   TableList *table;
@@ -214,6 +214,13 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       {
         error= plugin::StorageEngine::dropTable(*session, identifier);
 
+        /* Generate transaction event ONLY when we successfully drop */ 
+        if (error == 0)
+        {
+          TransactionServices &transaction_services= TransactionServices::singleton();
+          transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()));
+        }
+
         if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
         {
           error= 0;
@@ -225,12 +232,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
           /* the table is referenced by a foreign key constraint */
           foreign_key_error= true;
         }
-      }
-
-      if (error == 0 || (if_exists && foreign_key_error == false))
-      {
-        TransactionServices &transaction_services= TransactionServices::singleton();
-        transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()), if_exists);
       }
 
       if (error)
@@ -514,7 +515,7 @@ int prepare_create_field(CreateField *sql_field,
   return 0;
 }
 
-static int mysql_prepare_create_table(Session *session,
+static int prepare_create_table(Session *session,
                                       HA_CREATE_INFO *create_info,
                                       message::Table &create_proto,
                                       AlterInfo *alter_info,
@@ -1377,7 +1378,7 @@ static bool locked_create_event(Session *session,
   Create a table
 
   SYNOPSIS
-    mysql_create_table_no_lock()
+    create_table_no_lock()
     session			Thread object
     db			Database
     table_name		Table name
@@ -1393,7 +1394,7 @@ static bool locked_create_event(Session *session,
 
     Note that this function assumes that caller already have taken
     name-lock on table being created or used some other way to ensure
-    that concurrent operations won't intervene. mysql_create_table()
+    that concurrent operations won't intervene. create_table()
     is a wrapper that can be used for this.
 
   RETURN VALUES
@@ -1401,7 +1402,7 @@ static bool locked_create_event(Session *session,
     true  error
 */
 
-bool mysql_create_table_no_lock(Session *session,
+bool create_table_no_lock(Session *session,
                                 const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
 				message::Table &table_proto,
@@ -1427,7 +1428,7 @@ bool mysql_create_table_no_lock(Session *session,
   set_table_default_charset(create_info, identifier.getSchemaName().c_str());
 
   /* Build a Table object to pass down to the engine, and the do the actual create. */
-  if (not mysql_prepare_create_table(session, create_info, table_proto, alter_info,
+  if (not prepare_create_table(session, create_info, table_proto, alter_info,
                                      internal_tmp_table,
                                      &db_options,
                                      &key_info_buffer, &key_count,
@@ -1489,7 +1490,7 @@ static bool drizzle_create_table(Session *session,
   }
   else
   {
-    result= mysql_create_table_no_lock(session,
+    result= create_table_no_lock(session,
                                        identifier,
                                        create_info,
                                        table_proto,
@@ -1510,9 +1511,9 @@ static bool drizzle_create_table(Session *session,
 
 
 /*
-  Database locking aware wrapper for mysql_create_table_no_lock(),
+  Database locking aware wrapper for create_table_no_lock(),
 */
-bool mysql_create_table(Session *session,
+bool create_table(Session *session,
                         const TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
 			message::Table &table_proto,
@@ -1523,7 +1524,7 @@ bool mysql_create_table(Session *session,
 {
   if (identifier.isTmp())
   {
-    return mysql_create_table_no_lock(session,
+    return create_table_no_lock(session,
                                       identifier,
                                       create_info,
                                       table_proto,
@@ -1593,7 +1594,7 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
   Rename a table.
 
   SYNOPSIS
-    mysql_rename_table()
+    rename_table()
       session
       base                      The plugin::StorageEngine handle.
       old_db                    The old database name.
@@ -1607,7 +1608,7 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 */
 
 bool
-mysql_rename_table(Session &session,
+rename_table(Session &session,
                    plugin::StorageEngine *base,
                    const TableIdentifier &from,
                    const TableIdentifier &to)
@@ -1720,7 +1721,7 @@ void Session::close_cached_table(Table *table)
     true  Message should be sent by caller
           (admin operation or network communication failed)
 */
-static bool mysql_admin_table(Session* session, TableList* tables,
+static bool admin_table(Session* session, TableList* tables,
                               HA_CHECK_OPT* check_opt,
                               const char *operator_name,
                               thr_lock_type lock_type,
@@ -1749,7 +1750,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (session->client->sendFields(&field_list))
+  if (session->getClient()->sendFields(&field_list))
     return true;
 
   for (table= tables; table; table= table->next_local)
@@ -1804,18 +1805,18 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     {
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
-      session->client->store(table_name);
-      session->client->store(operator_name);
-      session->client->store(STRING_WITH_LEN("error"));
+      session->getClient()->store(table_name);
+      session->getClient()->store(operator_name);
+      session->getClient()->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
-      session->client->store(buff, length);
+      session->getClient()->store(buff, length);
       transaction_services.autocommitOrRollback(session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
       table->table=0;				// For query cache
-      if (session->client->flush())
+      if (session->getClient()->flush())
 	goto err;
       continue;
     }
@@ -1846,18 +1847,18 @@ send_result:
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
-        session->client->store(table_name);
-        session->client->store(operator_name);
-        session->client->store(warning_level_names[err->level].str,
+        session->getClient()->store(table_name);
+        session->getClient()->store(operator_name);
+        session->getClient()->store(warning_level_names[err->level].str,
                                warning_level_names[err->level].length);
-        session->client->store(err->msg);
-        if (session->client->flush())
+        session->getClient()->store(err->msg);
+        if (session->getClient()->flush())
           goto err;
       }
       drizzle_reset_errors(session, true);
     }
-    session->client->store(table_name);
-    session->client->store(operator_name);
+    session->getClient()->store(table_name);
+    session->getClient()->store(operator_name);
 
     switch (result_code) {
     case HA_ADMIN_NOT_IMPLEMENTED:
@@ -1865,41 +1866,41 @@ send_result:
 	char buf[ERRMSGSIZE+20];
 	uint32_t length=snprintf(buf, ERRMSGSIZE,
                              ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
-	session->client->store(STRING_WITH_LEN("note"));
-	session->client->store(buf, length);
+	session->getClient()->store(STRING_WITH_LEN("note"));
+	session->getClient()->store(buf, length);
       }
       break;
 
     case HA_ADMIN_OK:
-      session->client->store(STRING_WITH_LEN("status"));
-      session->client->store(STRING_WITH_LEN("OK"));
+      session->getClient()->store(STRING_WITH_LEN("status"));
+      session->getClient()->store(STRING_WITH_LEN("OK"));
       break;
 
     case HA_ADMIN_FAILED:
-      session->client->store(STRING_WITH_LEN("status"));
-      session->client->store(STRING_WITH_LEN("Operation failed"));
+      session->getClient()->store(STRING_WITH_LEN("status"));
+      session->getClient()->store(STRING_WITH_LEN("Operation failed"));
       break;
 
     case HA_ADMIN_REJECT:
-      session->client->store(STRING_WITH_LEN("status"));
-      session->client->store(STRING_WITH_LEN("Operation need committed state"));
+      session->getClient()->store(STRING_WITH_LEN("status"));
+      session->getClient()->store(STRING_WITH_LEN("Operation need committed state"));
       open_for_modify= false;
       break;
 
     case HA_ADMIN_ALREADY_DONE:
-      session->client->store(STRING_WITH_LEN("status"));
-      session->client->store(STRING_WITH_LEN("Table is already up to date"));
+      session->getClient()->store(STRING_WITH_LEN("status"));
+      session->getClient()->store(STRING_WITH_LEN("Table is already up to date"));
       break;
 
     case HA_ADMIN_CORRUPT:
-      session->client->store(STRING_WITH_LEN("error"));
-      session->client->store(STRING_WITH_LEN("Corrupt"));
+      session->getClient()->store(STRING_WITH_LEN("error"));
+      session->getClient()->store(STRING_WITH_LEN("Corrupt"));
       fatal_error=1;
       break;
 
     case HA_ADMIN_INVALID:
-      session->client->store(STRING_WITH_LEN("error"));
-      session->client->store(STRING_WITH_LEN("Invalid argument"));
+      session->getClient()->store(STRING_WITH_LEN("error"));
+      session->getClient()->store(STRING_WITH_LEN("Invalid argument"));
       break;
 
     default:				// Probably HA_ADMIN_INTERNAL_ERROR
@@ -1908,8 +1909,8 @@ send_result:
         uint32_t length=snprintf(buf, ERRMSGSIZE,
                              _("Unknown - internal error %d during operation"),
                              result_code);
-        session->client->store(STRING_WITH_LEN("error"));
-        session->client->store(buf, length);
+        session->getClient()->store(STRING_WITH_LEN("error"));
+        session->getClient()->store(buf, length);
         fatal_error=1;
         break;
       }
@@ -1938,7 +1939,7 @@ send_result:
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
-    if (session->client->flush())
+    if (session->getClient()->flush())
       goto err;
   }
 
@@ -2035,7 +2036,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
   Create a table identical to the specified table
 
   SYNOPSIS
-    mysql_create_like_table()
+    create_like_table()
     session		Thread object
     table       Table list element for target table
     src_table   Table list element for source table
@@ -2046,7 +2047,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
     true  error
 */
 
-bool mysql_create_like_table(Session* session,
+bool create_like_table(Session* session,
                              const TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
@@ -2177,21 +2178,21 @@ bool mysql_create_like_table(Session* session,
 }
 
 
-bool mysql_analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
+bool analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
-  return(mysql_admin_table(session, tables, check_opt,
+  return(admin_table(session, tables, check_opt,
 				"analyze", lock_type, true,
 				&Cursor::ha_analyze));
 }
 
 
-bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_opt)
+bool check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_opt)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
-  return(mysql_admin_table(session, tables, check_opt,
+  return(admin_table(session, tables, check_opt,
 				"check", lock_type,
 				false,
 				&Cursor::ha_check));

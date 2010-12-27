@@ -458,8 +458,12 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_ARGUMENT_OUT_OF_RANGE, N_("Received an out-of-range argument '%s' for function '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   ADD_ERROR_MESSAGE(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));
-  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition: %s"));
+
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition for %s: %s"));
   ADD_ERROR_MESSAGE(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for %s : %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_ENUM, N_("The number of enum that were required was too high for table %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, N_("Collation '%s' for table %s is invalid/unknown"));
+
   ADD_ERROR_MESSAGE(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   ADD_ERROR_MESSAGE(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
   ADD_ERROR_MESSAGE(ER_DROP_SCHEMA, +N_("Error droppping Schema : %s"));
@@ -480,6 +484,10 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_USER_LOCKS_INVALID_NAME_LOCK, N_("Invalid name for user defined lock."));
 
   ADD_ERROR_MESSAGE(ER_INVALID_ALTER_TABLE_FOR_NOT_NULL, N_("Either a DEFAULt value or NULL NULL description is required for a new column if table is not empty"));
+
+  // Cast errors
+  ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_UNSIGNED, N_("Cast to unsigned converted negative integer to it's positive complement: %s"));
+  ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_SIGNED, N_("Invalid cast to signed integer: %s"));
 
 
   ADD_ERROR_MESSAGE(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));

@@ -50,12 +50,12 @@ public:
   int store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
   int store(double );
   int store(int64_t nr, bool unsigned_val);
-  int store_decimal(const drizzled::my_decimal*);
+  int store_decimal(const drizzled::type::Decimal*);
 
   String *val_str(String*,String *);
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
 
   void sql_type(drizzled::String&) const;
 

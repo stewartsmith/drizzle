@@ -67,7 +67,7 @@ namespace drizzled
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-void mysql_parse(Session *session, const char *inBuf, uint32_t length);
+void parse(Session *session, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -210,7 +210,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     SchemaIdentifier identifier(tmp);
 
-    if (not mysql_change_db(session, identifier))
+    if (not change_db(session, identifier))
     {
       session->my_ok();
     }
@@ -224,7 +224,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         session->thread_id,
                         const_cast<const char *>(session->schema()->c_str()));
 
-    mysql_parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
+    parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
 
     break;
   }
@@ -282,16 +282,16 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->client->sendError(session->main_da.sql_errno(),
+    session->getClient()->sendError(session->main_da.sql_errno(),
                                session->main_da.message());
     break;
 
   case Diagnostics_area::DA_EOF:
-    session->client->sendEOF();
+    session->getClient()->sendEOF();
     break;
 
   case Diagnostics_area::DA_OK:
-    session->client->sendOK();
+    session->getClient()->sendOK();
     break;
 
   case Diagnostics_area::DA_DISABLED:
@@ -299,7 +299,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   case Diagnostics_area::DA_EMPTY:
   default:
-    session->client->sendOK();
+    session->getClient()->sendOK();
     break;
   }
 
@@ -429,7 +429,7 @@ int prepare_new_schema_table(Session *session, LEX *lex,
     true        Error
 */
 
-static int mysql_execute_command(Session *session)
+static int execute_command(Session *session)
 {
   bool res= false;
   LEX  *lex= session->lex;
@@ -587,7 +587,7 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 
 
 void
-mysql_init_select(LEX *lex)
+init_select(LEX *lex)
 {
   Select_Lex *select_lex= lex->current_select;
   select_lex->init_select();
@@ -601,7 +601,7 @@ mysql_init_select(LEX *lex)
 
 
 bool
-mysql_new_select(LEX *lex, bool move_down)
+new_select(LEX *lex, bool move_down)
 {
   Select_Lex *select_lex;
   Session *session= lex->session;
@@ -687,7 +687,7 @@ void create_select_for_variable(const char *var_name)
 
   session= current_session;
   lex= session->lex;
-  mysql_init_select(lex);
+  init_select(lex);
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
@@ -714,7 +714,7 @@ void create_select_for_variable(const char *var_name)
   @param       length  Length of the query text
 */
 
-void mysql_parse(Session *session, const char *inBuf, uint32_t length)
+void parse(Session *session, const char *inBuf, uint32_t length)
 {
   boost::posix_time::ptime start_time=boost::posix_time::microsec_clock::local_time();
   session->lex->start(session);
@@ -748,7 +748,7 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
         /* Actually execute the query */
         try 
         {
-          mysql_execute_command(session);
+          execute_command(session);
         }
         catch (...)
         {
@@ -1674,21 +1674,21 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 
   /* Parse the query. */
 
-  bool mysql_parse_status= DRIZZLEparse(session) != 0;
+  bool parse_status= DRIZZLEparse(session) != 0;
 
   /* Check that if DRIZZLEparse() failed, session->is_error() is set. */
 
-  assert(!mysql_parse_status || session->is_error());
+  assert(!parse_status || session->is_error());
 
   /* Reset Lex_input_stream. */
 
   session->m_lip= NULL;
 
-  DRIZZLE_QUERY_PARSE_DONE(mysql_parse_status || session->is_fatal_error);
+  DRIZZLE_QUERY_PARSE_DONE(parse_status || session->is_fatal_error);
 
   /* That's it. */
 
-  return mysql_parse_status || session->is_fatal_error;
+  return parse_status || session->is_fatal_error;
 }
 
 /**

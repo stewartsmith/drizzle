@@ -123,7 +123,7 @@ int Field_date::store(int64_t from, bool)
   return 0;
 }
 
-int Field_date::store_time(DRIZZLE_TIME *ltime,
+int Field_date::store_time(type::Time *ltime,
                               enum enum_drizzle_timestamp_type time_type)
 {
   long tmp;
@@ -209,7 +209,7 @@ String *Field_date::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Field_date::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Field_date::get_date(type::Time *ltime,uint32_t fuzzydate)
 {
   uint32_t tmp=(uint32_t) uint4korr(ptr);
   ltime->day=		(int) (tmp%100);
@@ -221,7 +221,7 @@ bool Field_date::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
           1 : 0);
 }
 
-bool Field_date::get_time(DRIZZLE_TIME *ltime)
+bool Field_date::get_time(type::Time *ltime)
 {
   return Field_date::get_date(ltime,0);
 }

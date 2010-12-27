@@ -60,14 +60,14 @@ namespace drizzled
 static long drop_tables_via_filenames(Session *session,
                                  SchemaIdentifier &schema_identifier,
                                  TableIdentifier::vector &dropped_tables);
-static void mysql_change_db_impl(Session *session);
-static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
+static void change_db_impl(Session *session);
+static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
 
 /*
   Create a database
 
   SYNOPSIS
-  mysql_create_db()
+  create_db()
   session		Thread handler
   db		Name of database to create
 		Function assumes that this is already validated.
@@ -84,7 +84,7 @@ static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_iden
 
 */
 
-bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
+bool create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
   bool error= false;
@@ -149,7 +149,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(Session *session, const message::Schema &schema_message)
+bool alter_db(Session *session, const message::Schema &schema_message)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
 
@@ -202,7 +202,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
   Drop all tables in a database and the database itself
 
   SYNOPSIS
-    mysql_rm_db()
+    rm_db()
     session			Thread handle
     db			Database name in the case given by user
 		        It's already validated and set to lower case
@@ -215,7 +215,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
     ERROR Error
 */
 
-bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_exists)
+bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_exists)
 {
   long deleted=0;
   int error= false;
@@ -277,20 +277,19 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
       /* After deleting database, remove all cache entries related to schema */
       table::Cache::singleton().removeSchema(schema_identifier);
 
-
       error= -1;
       deleted= drop_tables_via_filenames(session, schema_identifier, dropped_tables);
       if (deleted >= 0)
       {
         error= 0;
+        
+        /* We've already verified that the schema does exist, so safe to log it */
+        TransactionServices &transaction_services= TransactionServices::singleton();
+        transaction_services.dropSchema(session, schema_identifier.getSchemaName());
       }
     }
     if (deleted >= 0)
     {
-      assert(not session->getQueryString()->empty());
-
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropSchema(session, schema_identifier.getSchemaName());
       session->clear_error();
       session->server_status|= SERVER_STATUS_DB_DROPPED;
       session->my_ok((uint32_t) deleted);
@@ -342,7 +341,7 @@ exit:
       it to 0.
     */
     if (schema_identifier.compare(*session->schema()))
-      mysql_change_db_impl(session);
+      change_db_impl(session);
   }
 
   session->startWaitingGlobalReadLock();
@@ -435,6 +434,12 @@ static int rm_table_part2(Session *session, TableList *tables)
       {
         error= plugin::StorageEngine::dropTable(*session, identifier);
 
+        /* Generate transaction event ONLY when we successfully drop */ 
+        if (error == 0)
+        {
+          transaction_services.dropTable(session, string(db), string(table->getTableName()));
+        }
+
         if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
         {
           error= 0;
@@ -446,11 +451,6 @@ static int rm_table_part2(Session *session, TableList *tables)
           /* the table is referenced by a foreign key constraint */
           foreign_key_error= true;
         }
-      }
-
-      if (error == 0 || (foreign_key_error == false))
-      {
-        transaction_services.dropTable(session, string(db), string(table->getTableName()), true);
       }
 
       if (error)
@@ -616,7 +616,7 @@ static long drop_tables_via_filenames(Session *session,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, SchemaIdentifier &schema_identifier)
+bool change_db(Session *session, SchemaIdentifier &schema_identifier)
 {
 
   if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
@@ -647,7 +647,7 @@ bool mysql_change_db(Session *session, SchemaIdentifier &schema_identifier)
     return true;
   }
 
-  mysql_change_db_impl(session, schema_identifier);
+  change_db_impl(session, schema_identifier);
 
   return false;
 }
@@ -663,7 +663,7 @@ bool mysql_change_db(Session *session, SchemaIdentifier &schema_identifier)
   @param new_db_charset Character set of the new database.
 */
 
-static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_identifier)
+static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier)
 {
   /* 1. Change current database in Session. */
 
@@ -690,7 +690,7 @@ static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_iden
   }
 }
 
-static void mysql_change_db_impl(Session *session)
+static void change_db_impl(Session *session)
 {
   session->set_db(string());
 }

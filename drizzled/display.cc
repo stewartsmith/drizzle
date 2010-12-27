@@ -79,6 +79,8 @@ static const std::string PARAM_ITEM("PARAM_ITEM");
 static const std::string BOOLEAN_ITEM("BOOLEAN_ITEM");
 static const std::string DECIMAL_ITEM("DECIMAL_ITEM");
 
+static const std::string ITEM_CAST_SIGNED("ITEM_CAST_SIGNED");
+static const std::string ITEM_CAST_UNSIGNED("ITEM_CAST_UNSIGNED");
 static const std::string ITEM_CAST_BINARY("ITEM_CAST_BINARY");
 static const std::string ITEM_CAST_BOOLEAN("ITEM_CAST_BOOLEAN");
 static const std::string ITEM_CAST_DATE("ITEM_CAST_DATE");
@@ -94,6 +96,10 @@ const std::string &type(drizzled::Cast_target type)
 {
   switch (type)
   {
+  case drizzled::ITEM_CAST_SIGNED:
+    return ITEM_CAST_SIGNED;
+  case drizzled::ITEM_CAST_UNSIGNED:
+    return ITEM_CAST_UNSIGNED;
   case drizzled::ITEM_CAST_BINARY:
     return ITEM_CAST_BINARY;
   case drizzled::ITEM_CAST_BOOLEAN:

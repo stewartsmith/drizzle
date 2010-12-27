@@ -29,12 +29,12 @@ namespace drizzled
 class Item_decimal :public Item_num
 {
 protected:
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 public:
   Item_decimal(const char *str_arg, uint32_t length, const CHARSET_INFO * const charset);
-  Item_decimal(const char *str, const my_decimal *val_arg,
+  Item_decimal(const char *str, const type::Decimal *val_arg,
                uint32_t decimal_par, uint32_t length);
-  Item_decimal(my_decimal *value_par);
+  Item_decimal(type::Decimal *value_par);
   Item_decimal(int64_t val, bool unsig);
   Item_decimal(double val, int precision, int scale);
   Item_decimal(const unsigned char *bin, int precision, int scale);
@@ -45,7 +45,7 @@ public:
   int64_t val_int();
   double val_real();
   String *val_str(String*);
-  my_decimal *val_decimal(my_decimal *)
+  type::Decimal *val_decimal(type::Decimal *)
   { return &decimal_value; }
   int save_in_field(Field *field, bool no_conversions);
   bool basic_const_item() const { return 1; }
@@ -56,13 +56,13 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg()
   {
-    my_decimal_neg(&decimal_value);
+    class_decimal_neg(&decimal_value);
     unsigned_flag= !decimal_value.sign();
     return this;
   }
   uint32_t decimal_precision() const { return decimal_value.precision(); }
   bool eq(const Item *, bool binary_cmp) const;
-  void set_decimal_value(my_decimal *value_par);
+  void set_decimal_value(type::Decimal *value_par);
 };
 
 } /* namespace drizzled */
