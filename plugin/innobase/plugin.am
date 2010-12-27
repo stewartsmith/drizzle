@@ -371,6 +371,8 @@ plugin/innobase/pars/pars0lex.c: plugin/innobase/pars/pars0lex.l
 	     -e 's/^\(extern \)\?\(\(FILE\|char\) *\* *yy\)/static \2/' \
 	     -e 's/static int yyleng;//' \
 	     -e 's/static char \*yytext;//' \
+	     -e 's/int yyleng;//' \
+	     -e 's/char \*yytext;//' \
               < plugin/innobase/pars/_flex_tmp.c >> $@
 	@rm plugin/innobase/pars/_flex_tmp.c
 
