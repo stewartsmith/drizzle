@@ -53,7 +53,7 @@ AC_DEFUN([PANDORA_BUILDING_FROM_VC],[
         PANDORA_VC_REVNO="${PANDORA_BZR_REVNO}"
         PANDORA_VC_REVID=`bzr log -r-1 --show-ids | grep revision-id | cut -f2 -d' ' | head -1`
         PANDORA_VC_BRANCH=`bzr nick`
-        if test "x${vcs_changelog}" = "xyes"; then
+        if test "x${vc_changelog}" = "xyes"; then
           bzr log --gnu > ChangeLog
         fi
       fi
