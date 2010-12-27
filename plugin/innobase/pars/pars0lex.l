@@ -52,6 +52,10 @@ Created 12/14/1997 Heikki Tuuri
 
 #define YY_INPUT(buf, result, max_size) pars_get_lex_chars(buf, &result, max_size)
 
+  /* The comments here are to subvert the sed script in makefile */
+static char * /* BLOW THE MATCHING */ yytext;
+static int /* BLOW THE MATCHING */ yyleng;
+
 /* String buffer for removing quotes */
 static ulint	stringbuf_len_alloc = 0; /* Allocated length */
 static ulint	stringbuf_len = 0; /* Current length */

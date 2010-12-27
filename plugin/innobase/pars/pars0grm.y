@@ -35,6 +35,8 @@ que_node_t */
 #include "row0sel.h"
 
 #define YYSTYPE que_node_t*
+#define YYENABLE_NLS 0
+#define YYLTYPE_IS_TRIVIAL 0
 
 /* #define __STDC__ */
 
