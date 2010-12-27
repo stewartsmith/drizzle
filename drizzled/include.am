@@ -235,6 +235,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/item/field.h \
 			      drizzled/item/float.h \
 			      drizzled/item/func.h \
+			      drizzled/item/function/boolean.h \
 			      drizzled/item/hex_string.h \
 			      drizzled/item/ident.h \
 			      drizzled/item/insert_value.h \
@@ -654,6 +655,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/item/empty_string.cc \
 			   drizzled/item/field.cc \
 			   drizzled/item/float.cc \
+			   drizzled/item/function/boolean.cc \
 			   drizzled/item/hex_string.cc \
 			   drizzled/item/ident.cc \
 			   drizzled/item/insert_value.cc \
