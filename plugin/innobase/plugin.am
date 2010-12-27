@@ -326,6 +326,7 @@ plugin_innobase_libpars_la_CFLAGS= \
 				   -DBUILD_DRIZZLE
 plugin_innobase_libpars_la_CXXFLAGS= \
 				     ${AM_CXXFLAGS} \
+				     ${PERMISSIVE_WARNINGS} \
 				     -I$(top_builddir)/plugin/innobase/include \
 				     -I$(top_srcdir)/plugin/innobase/include \
 				     -DBUILD_DRIZZLE

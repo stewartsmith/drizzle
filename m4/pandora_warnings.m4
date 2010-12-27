@@ -371,7 +371,7 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
       dnl TODO: Figure out a better way to deal with this:
       PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow -Wno-missing-braces ${NO_ATTRIBUTES}"
       NO_WERROR="-Wno-error"
-      INNOBASE_SKIP_WARNINGS="-Wno-shadow -Wno-cast-align"
+      dnl INNOBASE_SKIP_WARNINGS="-Wno-shadow -Wno-cast-align"
       PERMISSIVE_WARNINGS="-Wno-error -Wno-unused-function -fpermissive"
       AS_IF([test "$host_vendor" = "apple"],[
         BOOSTSKIP_WARNINGS="-Wno-uninitialized"
@@ -417,7 +417,7 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
     CXX_WARNINGS="+w +w2 -xwe -xport64 -errtags=yes ${CXX_WARNINGS_FULL} ${W_FAIL}"
     PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse,truncwarn1,signextwarn,partinit,notused,badargtype2w,wbadinit"
     BOOSTSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint,hidef,wvarhidenmem"
-    INNOBASE_SKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint,hidef,wvarhidenmem,notused,badargtype2w"
+    PERMISSIVE_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint,hidef,wvarhidenmem,notused,badargtype2w,wunreachable"
     NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
     NO_WERROR="-errwarn=%none"
 
@@ -433,7 +433,6 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
   AC_SUBST(PROTOSKIP_WARNINGS)
   AC_SUBST(BOOSTSKIP_WARNINGS)
   AC_SUBST(PERMISSIVE_WARNINGS)
-  AC_SUBST(INNOBASE_SKIP_WARNINGS)
   AC_SUBST(NO_WERROR)
   AC_SUBST([GCOV_LIBS])
 
