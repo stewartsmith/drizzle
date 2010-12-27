@@ -457,7 +457,7 @@ bool Item_ref::val_bool_result()
         type::Decimal decimal_value;
         type::Decimal *val= result_field->val_decimal(&decimal_value);
         if (val)
-          return !class_decimal_is_zero(val);
+          return not val->is_zero();
         return 0;
       }
 

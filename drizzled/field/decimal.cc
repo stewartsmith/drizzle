@@ -124,18 +124,19 @@ void Field_decimal::set_value_on_overflow(type::Decimal *decimal_value,
 
 bool Field_decimal::store_value(const type::Decimal *decimal_value)
 {
-  int error= class_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
-                                         decimal_value, ptr, precision, dec);
+  int error= decimal_value->val_binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, ptr, precision, dec);
+
   if (warn_if_overflow(error))
   {
     if (error != E_DEC_TRUNCATED)
     {
       type::Decimal buff;
       set_value_on_overflow(&buff, decimal_value->sign());
-      class_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
+      buff.val_binary(E_DEC_FATAL_ERROR, ptr, precision, dec);
     }
     error= 1;
   }
+
   return(error);
 }
 
@@ -148,10 +149,9 @@ int Field_decimal::store(const char *from, uint32_t length,
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if ((err= str2_class_decimal(E_DEC_FATAL_ERROR &
+  if ((err= decimal_value.store(E_DEC_FATAL_ERROR &
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
-                           from, length, charset_arg,
-                           &decimal_value)) &&
+                           from, length, charset_arg)) &&
       getTable()->in_use->abort_on_warning)
   {
     /* Because "from" is not NUL-terminated and we use %s in the ER() */
@@ -187,7 +187,7 @@ int Field_decimal::store(const char *from, uint32_t length,
                           ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                           "decimal", from_as_str.c_ptr(), field_name,
                           (uint32_t) getTable()->in_use->row_count);
-      class_decimal_set_zero(&decimal_value);
+      decimal_value.set_zero();
 
       break;
     }
@@ -285,7 +285,7 @@ int64_t Field_decimal::val_int(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  class_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), false, &i);
+  val_decimal(&decimal_value)->val_int32(E_DEC_FATAL_ERROR, false, &i);
 
   return i;
 }

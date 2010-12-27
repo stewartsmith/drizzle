@@ -101,7 +101,7 @@ bool Item::val_bool()
       type::Decimal decimal_value;
       type::Decimal *val= val_decimal(&decimal_value);
       if (val)
-        return !class_decimal_is_zero(val);
+        return not val->is_zero();
       return false;
     }
 
@@ -177,11 +177,10 @@ type::Decimal *Item::val_decimal_from_string(type::Decimal *decimal_value)
     return NULL;
 
   end_ptr= (char*) res->ptr()+ res->length();
-  if (str2_class_decimal(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
+  if (decimal_value->store(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
                      res->ptr(), 
                      res->length(), 
-                     res->charset(),
-                     decimal_value) & E_DEC_BAD_NUM)
+                     res->charset()) & E_DEC_BAD_NUM)
   {
     push_warning_printf(current_session, 
                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -198,7 +197,7 @@ type::Decimal *Item::val_decimal_from_date(type::Decimal *decimal_value)
   type::Time ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
   {
-    class_decimal_set_zero(decimal_value);
+    decimal_value->set_zero();
     null_value= 1;                               // set NULL, stop processing
     return NULL;
   }
@@ -211,7 +210,7 @@ type::Decimal *Item::val_decimal_from_time(type::Decimal *decimal_value)
   type::Time ltime;
   if (get_time(&ltime))
   {
-    class_decimal_set_zero(decimal_value);
+    decimal_value->set_zero();
     return NULL;
   }
   return date2_class_decimal(&ltime, decimal_value);
@@ -235,7 +234,7 @@ int64_t Item::val_int_from_decimal()
   type::Decimal value, *dec_val= val_decimal(&value);
   if (null_value)
     return 0;
-  class_decimal2int(E_DEC_FATAL_ERROR, dec_val, unsigned_flag, &result);
+  dec_val->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
   return result;
 }
 

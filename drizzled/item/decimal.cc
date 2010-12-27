@@ -27,7 +27,7 @@ namespace drizzled
 Item_decimal::Item_decimal(const char *str_arg, uint32_t length,
                            const CHARSET_INFO * const charset)
 {
-  str2_class_decimal(E_DEC_FATAL_ERROR, str_arg, length, charset, &decimal_value);
+  decimal_value.store(E_DEC_FATAL_ERROR, str_arg, length, charset);
   name= (char*) str_arg;
   decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
@@ -88,7 +88,7 @@ Item_decimal::Item_decimal(const unsigned char *bin, int precision, int scale)
 int64_t Item_decimal::val_int()
 {
   int64_t result;
-  class_decimal2int(E_DEC_FATAL_ERROR, &decimal_value, unsigned_flag, &result);
+  decimal_value.val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
   return result;
 }
 

@@ -80,7 +80,7 @@ type::Decimal *Item_cache_str::val_decimal(type::Decimal *decimal_val)
 {
   assert(fixed == 1);
   if (value)
-    string2_class_decimal(E_DEC_FATAL_ERROR, value, decimal_val);
+    decimal_val->store(E_DEC_FATAL_ERROR, value);
   else
     decimal_val= 0;
   return decimal_val;

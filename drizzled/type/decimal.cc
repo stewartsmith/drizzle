@@ -195,8 +195,8 @@ int decimal_operation_results(int result)
 */
 
 int class_decimal2string(uint32_t mask, const type::Decimal *d,
-                      uint32_t fixed_prec, uint32_t fixed_dec,
-                      char filler, String *str)
+                         uint32_t fixed_prec, uint32_t fixed_dec,
+                         char filler, String *str)
 {
   /*
     Calculate the size of the string: For DECIMAL(a,b), fixed_prec==a
@@ -211,7 +211,7 @@ int class_decimal2string(uint32_t mask, const type::Decimal *d,
   */
   int length= (int)(fixed_prec
                     ? (uint32_t)(fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
-                    : (uint32_t)class_decimal_string_length(d));
+                    : (uint32_t)d->string_length());
   int result;
   if (str->alloc(length))
     return check_result(mask, E_DEC_OOM);
@@ -242,12 +242,13 @@ int class_decimal2string(uint32_t mask, const type::Decimal *d,
    @retval E_DEC_OVERFLOW
 */
 
-int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *bin, int prec,
-		      int scale)
+namespace type {
+
+int Decimal::val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const
 {
   int err1= E_DEC_OK, err2;
   type::Decimal rounded;
-  class_decimal2decimal(d, &rounded);
+  class_decimal2decimal(this, &rounded);
   rounded.frac= decimal_actual_fraction(&rounded);
   if (scale < rounded.frac)
   {
@@ -261,6 +262,8 @@ int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *b
   return check_result(mask, err2);
 }
 
+} // namespace type
+
 
 /**
   @brief Convert string for decimal when string can be in some multibyte charset
@@ -269,7 +272,6 @@ int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *b
   @param  from            string to process
   @param  length          length of given string
   @param  charset         charset of given string
-  @param  decimal_value   buffer for result storing
 
   @return Error code
    @retval E_DEC_OK
@@ -279,8 +281,7 @@ int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *b
    @retval E_DEC_OOM
 */
 
-int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
-                   const CHARSET_INFO * charset, type::Decimal *decimal_value)
+int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset)
 {
   char *end, *from_end;
   int err;
@@ -295,7 +296,7 @@ int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
     charset= &my_charset_bin;
   }
   from_end= end= (char*) from+length;
-  err= string2decimal((char *)from, (decimal_t*) decimal_value, &end);
+  err= string2decimal((char *)from, (decimal_t*) this, &end);
   if (end != from_end && !err)
   {
     /* Give warning if there is something other than end space */
@@ -308,7 +309,7 @@ int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
       }
     }
   }
-  check_result_and_overflow(mask, err, decimal_value);
+  check_result_and_overflow(mask, err);
   return err;
 }
 

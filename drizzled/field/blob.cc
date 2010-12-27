@@ -286,10 +286,12 @@ type::Decimal *Field_blob::val_decimal(type::Decimal *decimal_value)
     length= 0;
   }
   else
+  {
     length= get_length(ptr);
+  }
 
-  str2_class_decimal(E_DEC_FATAL_ERROR, blob, length, charset(),
-                 decimal_value);
+  decimal_value->store(E_DEC_FATAL_ERROR, blob, length, charset());
+
   return decimal_value;
 }
 

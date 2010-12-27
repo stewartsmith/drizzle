@@ -683,7 +683,7 @@ Item_sum_hybrid::fix_fields(Session *session, Item **ref)
     break;
   case DECIMAL_RESULT:
     max_length= item->max_length;
-    class_decimal_set_zero(&sum_dec);
+    sum_dec.set_zero();
     break;
   case REAL_RESULT:
     max_length= float_length(decimals);
@@ -784,7 +784,7 @@ void Item_sum_sum::clear()
   if (hybrid_type == DECIMAL_RESULT)
   {
     curr_dec_buff= 0;
-    class_decimal_set_zero(dec_buffs);
+    dec_buffs->set_zero();
   }
   else
     sum= 0.0;
@@ -811,7 +811,7 @@ void Item_sum_sum::fix_length_and_dec()
                                                  unsigned_flag);
       curr_dec_buff= 0;
       hybrid_type= DECIMAL_RESULT;
-      class_decimal_set_zero(dec_buffs);
+      dec_buffs->set_zero();
       break;
     }
   case ROW_RESULT:
@@ -849,8 +849,7 @@ int64_t Item_sum_sum::val_int()
   if (hybrid_type == DECIMAL_RESULT)
   {
     int64_t result;
-    class_decimal2int(E_DEC_FATAL_ERROR, dec_buffs + curr_dec_buff, unsigned_flag,
-                   &result);
+    (dec_buffs + curr_dec_buff)->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
     return result;
   }
   return (int64_t) rint(val_real());
@@ -1603,7 +1602,7 @@ void Item_sum_hybrid::clear()
     sum_int= 0;
     break;
   case DECIMAL_RESULT:
-    class_decimal_set_zero(&sum_dec);
+    sum_dec.set_zero();
     break;
   case REAL_RESULT:
     sum= 0.0;
@@ -1656,7 +1655,7 @@ int64_t Item_sum_hybrid::val_int()
   case DECIMAL_RESULT:
   {
     int64_t result;
-    class_decimal2int(E_DEC_FATAL_ERROR, &sum_dec, unsigned_flag, &result);
+    sum_dec.val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
     return sum_int;
   }
   default:
@@ -1673,7 +1672,7 @@ type::Decimal *Item_sum_hybrid::val_decimal(type::Decimal *val)
 
   switch (hybrid_type) {
   case STRING_RESULT:
-    string2_class_decimal(E_DEC_FATAL_ERROR, &value, val);
+    val->store(E_DEC_FATAL_ERROR, &value);
     break;
   case REAL_RESULT:
     double2_class_decimal(E_DEC_FATAL_ERROR, sum, val);
@@ -2080,7 +2079,7 @@ void Item_sum_avg::reset_field()
     }
     else
       tmp= 1;
-    class_decimal2binary(E_DEC_FATAL_ERROR, arg_dec, res, f_precision, f_scale);
+    arg_dec->val_binary(E_DEC_FATAL_ERROR, res, f_precision, f_scale);
     res+= dec_bin_size;
     int8store(res, tmp);
   }
@@ -2183,8 +2182,7 @@ void Item_sum_avg::update_field()
                         dec_buffs + 1, f_precision, f_scale);
       field_count= sint8korr(res + dec_bin_size);
       class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, dec_buffs + 1);
-      class_decimal2binary(E_DEC_FATAL_ERROR, dec_buffs,
-                        res, f_precision, f_scale);
+      dec_buffs->val_binary(E_DEC_FATAL_ERROR, res, f_precision, f_scale);
       res+= dec_bin_size;
       field_count++;
       int8store(res, field_count);

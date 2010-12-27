@@ -164,7 +164,7 @@ bool Cached_item_field::cmp(void)
 Cached_item_decimal::Cached_item_decimal(Item *it)
   :item(it)
 {
-  class_decimal_set_zero(&value);
+  value.set_zero();
 }
 
 

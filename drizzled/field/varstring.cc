@@ -173,8 +173,8 @@ type::Decimal *Field_varstring::val_decimal(type::Decimal *decimal_value)
 
   length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
 
-  str2_class_decimal(E_DEC_FATAL_ERROR, (char*) ptr+length_bytes, length,
-                 charset(), decimal_value);
+  decimal_value->store(E_DEC_FATAL_ERROR, (char*) ptr+length_bytes, length, charset());
+
   return decimal_value;
 }
 

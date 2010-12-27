@@ -113,6 +113,8 @@ inline void decimal_neg(decimal_t *dec)
 
 #define E_DEC_ERROR            31
 #define E_DEC_FATAL_ERROR      30
+
+
 #define DECIMAL_LONGLONG_DIGITS 22
 #define DECIMAL_LONG_DIGITS 10
 #define DECIMAL_LONG3_DIGITS 8
@@ -145,51 +147,14 @@ inline void decimal_neg(decimal_t *dec)
 */
 #define DECIMAL_MAX_FIELD_SIZE DECIMAL_MAX_PRECISION
 
+namespace type {
+class Decimal;
+}
+
 inline int class_decimal_int_part(uint32_t precision, uint32_t decimals)
 {
   return precision - ((decimals == DECIMAL_NOT_SPECIFIED) ? 0 : decimals);
 }
-
-
-namespace type {
-/**
-  type::Decimal class limits 'decimal_t' type to what we need in MySQL.
-
-  It contains internally all necessary space needed by the instance so
-  no extra memory is needed. One should call fix_buffer_pointer() function
-  when he moves type::Decimal objects in memory.
-*/
-
-class Decimal :public decimal_t
-{
-  decimal_digit_t buffer[DECIMAL_BUFF_LENGTH];
-
-public:
-
-  void init()
-  {
-    len= DECIMAL_BUFF_LENGTH;
-    buf= buffer;
-	#if !defined (HAVE_VALGRIND)
-		/* Set buffer to 'random' value to find wrong buffer usage */
-		for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
-		  buffer[i]= i;
-	#endif
-  }
-
-  Decimal()
-  {
-    init();
-  }
-  void fix_buffer_pointer() { buf= buffer; }
-  bool sign() const { return decimal_t::sign; }
-  void sign(bool s) { decimal_t::sign= s; }
-  uint32_t precision() const { return intg + frac; }
-};
-
-} // type
-
-std::ostream& operator<<(std::ostream& output, const type::Decimal &dec);
 
 int decimal_operation_results(int result);
 
@@ -212,35 +177,114 @@ inline int check_result(uint32_t mask, int result)
   return result;
 }
 
-inline int check_result_and_overflow(uint32_t mask, int result, type::Decimal *val)
-{
-  if (check_result(mask, result) & E_DEC_OVERFLOW)
+namespace type {
+/**
+  type::Decimal class limits 'decimal_t' type to what we need in MySQL.
+
+  It contains internally all necessary space needed by the instance so
+  no extra memory is needed. One should call fix_buffer_pointer() function
+  when he moves type::Decimal objects in memory.
+*/
+
+class Decimal :public decimal_t
   {
-    bool sign= val->sign();
-    val->fix_buffer_pointer();
-    max_internal_decimal(val);
-    val->sign(sign);
-  }
-  return result;
+    decimal_digit_t buffer[DECIMAL_BUFF_LENGTH];
+
+  public:
+
+    void init()
+    {
+      len= DECIMAL_BUFF_LENGTH;
+      buf= buffer;
+#if !defined (HAVE_VALGRIND)
+      /* Set buffer to 'random' value to find wrong buffer usage */
+      for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
+        buffer[i]= i;
+#endif
+    }
+
+    Decimal()
+    {
+      init();
+    }
+    void fix_buffer_pointer() { buf= buffer; }
+    bool sign() const { return decimal_t::sign; }
+    void sign(bool s) { decimal_t::sign= s; }
+    uint32_t precision() const { return intg + frac; }
+
+    int val_int32(uint32_t mask, bool unsigned_flag, int64_t *l) const
+    {
+      type::Decimal rounded;
+      /* decimal_round can return only E_DEC_TRUNCATED */
+      decimal_round(static_cast<const decimal_t*>(this), &rounded, 0, HALF_UP);
+      return check_result(mask, (unsigned_flag ?
+                                 decimal2uint64_t(&rounded, reinterpret_cast<uint64_t *>(l)) :
+                                 decimal2int64_t(&rounded, l)));
+    }
+
+    int string_length() const
+    {
+      return decimal_string_size(this);
+    }
+
+    int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
+
+
+    int set_zero()
+    {
+      decimal_make_zero(static_cast<decimal_t*> (this));
+      return 0;
+    }
+
+
+    bool is_zero() const
+    {
+      return decimal_is_zero(static_cast<const decimal_t*>(this));
+    }
+
+
+    int store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset);
+
+    int store(uint32_t mask, char *str, char **end)
+    {
+      return check_result_and_overflow(mask, string2decimal(str, static_cast<decimal_t*>(this), end));
+    }
+
+    int store(uint32_t mask, const String *str)
+    {
+      return store(mask, str->ptr(), str->length(), str->charset());
+    }
+
+    int check_result_and_overflow(uint32_t mask, int result)
+    {
+      if (check_result(mask, result) & E_DEC_OVERFLOW)
+      {
+        bool _sign= sign();
+        fix_buffer_pointer();
+        max_internal_decimal(this);
+        sign(_sign);
+      }
+      return result;
 }
 
+
+  };
+
+} // type
+
+std::ostream& operator<<(std::ostream& output, const type::Decimal &dec);
+
 inline uint32_t class_decimal_length_to_precision(uint32_t length, uint32_t scale,
-                                           bool unsigned_flag)
+                                                  bool unsigned_flag)
 {
   return (uint32_t) (length - (scale>0 ? 1:0) - (unsigned_flag ? 0:1));
 }
 
 inline uint32_t class_decimal_precision_to_length(uint32_t precision, uint8_t scale,
-                                             bool unsigned_flag)
+                                                  bool unsigned_flag)
 {
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   return static_cast<uint32_t>(precision + (scale>0 ? 1:0) + (unsigned_flag ? 0:1));
-}
-
-inline
-int class_decimal_string_length(const type::Decimal *d)
-{
-  return decimal_string_size(d);
 }
 
 
@@ -267,30 +311,11 @@ void class_decimal2decimal(const type::Decimal *from, type::Decimal *to)
 }
 
 
-int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *bin, int prec,
-		      int scale);
-
-
 inline
 int binary2_class_decimal(uint32_t mask, const unsigned char *bin, type::Decimal *d, int prec,
 		      int scale)
 {
   return check_result(mask, bin2decimal(bin, static_cast<decimal_t*>(d), prec, scale));
-}
-
-
-inline
-int class_decimal_set_zero(type::Decimal *d)
-{
-  decimal_make_zero(static_cast<decimal_t*> (d));
-  return 0;
-}
-
-
-inline
-bool class_decimal_is_zero(const type::Decimal *decimal_value)
-{
-  return decimal_is_zero(static_cast<const decimal_t*>(decimal_value));
 }
 
 
@@ -320,18 +345,6 @@ int class_decimal_ceiling(uint32_t mask, const type::Decimal *from, type::Decima
 int class_decimal2string(uint32_t mask, const type::Decimal *d, uint32_t fixed_prec,
                       uint32_t fixed_dec, char filler, String *str);
 
-inline
-int class_decimal2int(uint32_t mask, const type::Decimal *d, bool unsigned_flag,
-                   int64_t *l)
-{
-  type::Decimal rounded;
-  /* decimal_round can return only E_DEC_TRUNCATED */
-  decimal_round(static_cast<const decimal_t*>(d), &rounded, 0, HALF_UP);
-  return check_result(mask, (unsigned_flag ?
-			     decimal2uint64_t(&rounded, reinterpret_cast<uint64_t *>(l)) :
-			     decimal2int64_t(&rounded, l)));
-}
-
 
 inline
 int class_decimal2double(uint32_t, const type::Decimal *d, double *result)
@@ -341,31 +354,13 @@ int class_decimal2double(uint32_t, const type::Decimal *d, double *result)
 }
 
 
-inline
-int str2_class_decimal(uint32_t mask, char *str, type::Decimal *d, char **end)
-{
-  return check_result_and_overflow(mask, string2decimal(str, static_cast<decimal_t*>(d),end),
-                                   d);
-}
-
-
-int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
-                   const CHARSET_INFO * charset, type::Decimal *decimal_value);
-
-inline
-int string2_class_decimal(uint32_t mask, const String *str, type::Decimal *d)
-{
-  return str2_class_decimal(mask, str->ptr(), str->length(), str->charset(), d);
-}
-
-
 type::Decimal *date2_class_decimal(type::Time *ltime, type::Decimal *dec);
 
 
 inline
 int double2_class_decimal(uint32_t mask, double val, type::Decimal *d)
 {
-  return check_result_and_overflow(mask, double2decimal(val, static_cast<decimal_t*>(d)), d);
+  return d->check_result_and_overflow(mask, double2decimal(val, static_cast<decimal_t*>(d)));
 }
 
 
@@ -394,10 +389,9 @@ inline
 int class_decimal_add(uint32_t mask, type::Decimal *res, const type::Decimal *a,
 		   const type::Decimal *b)
 {
-  return check_result_and_overflow(mask,
-                                   decimal_add(static_cast<const decimal_t*>(a),
-                                               static_cast<const decimal_t*>(b), res),
-                                   res);
+  return res->check_result_and_overflow(mask,
+                                        decimal_add(static_cast<const decimal_t*>(a),
+                                                    static_cast<const decimal_t*>(b), res));
 }
 
 
@@ -405,10 +399,9 @@ inline
 int class_decimal_sub(uint32_t mask, type::Decimal *res, const type::Decimal *a,
 		   const type::Decimal *b)
 {
-  return check_result_and_overflow(mask,
-                                   decimal_sub(static_cast<const decimal_t*>(a),
-                                               static_cast<const decimal_t*>(b), res),
-                                   res);
+  return res->check_result_and_overflow(mask,
+                                        decimal_sub(static_cast<const decimal_t*>(a),
+                                                    static_cast<const decimal_t*>(b), res));
 }
 
 
@@ -416,10 +409,9 @@ inline
 int class_decimal_mul(uint32_t mask, type::Decimal *res, const type::Decimal *a,
 		   const type::Decimal *b)
 {
-  return check_result_and_overflow(mask,
-                                   decimal_mul(static_cast<const decimal_t*>(a),
-                                               static_cast<const decimal_t*>(b),res),
-                                   res);
+  return res->check_result_and_overflow(mask,
+                                        decimal_mul(static_cast<const decimal_t*>(a),
+                                                    static_cast<const decimal_t*>(b),res));
 }
 
 
@@ -427,11 +419,10 @@ inline
 int class_decimal_div(uint32_t mask, type::Decimal *res, const type::Decimal *a,
 		   const type::Decimal *b, int div_scale_inc)
 {
-  return check_result_and_overflow(mask,
-                                   decimal_div(static_cast<const decimal_t*>(a),
-                                               static_cast<const decimal_t*>(b),res,
-                                               div_scale_inc),
-                                   res);
+  return res->check_result_and_overflow(mask,
+                                        decimal_div(static_cast<const decimal_t*>(a),
+                                                    static_cast<const decimal_t*>(b),res,
+                                                    div_scale_inc));
 }
 
 
@@ -439,10 +430,9 @@ inline
 int class_decimal_mod(uint32_t mask, type::Decimal *res, const type::Decimal *a,
 		   const type::Decimal *b)
 {
-  return check_result_and_overflow(mask,
-                                   decimal_mod(static_cast<const decimal_t*>(a),
-                                               static_cast<const decimal_t*>(b),res),
-                                   res);
+  return res->check_result_and_overflow(mask,
+                                        decimal_mod(static_cast<const decimal_t*>(a),
+                                                    static_cast<const decimal_t*>(b),res));
 }
 
 

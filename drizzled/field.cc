@@ -915,9 +915,9 @@ void Field::make_field(SendField *field)
 int64_t Field::convert_decimal2int64_t(const type::Decimal *val, bool, int *err)
 {
   int64_t i;
-  if (warn_if_overflow(class_decimal2int(E_DEC_ERROR &
+  if (warn_if_overflow(val->val_int32(E_DEC_ERROR &
                                       ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
-                                      val, false, &i)))
+                                      false, &i)))
   {
     i= (val->sign() ? INT64_MIN : INT64_MAX);
     *err= 1;
