@@ -149,7 +149,7 @@ type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
     break;
 
   case STRING_RESULT:
-    str2_class_decimal(E_DEC_FATAL_ERROR, value, length, collation.collation, val);
+    val->store(E_DEC_FATAL_ERROR, value, length, collation.collation);
     break;
 
   case ROW_RESULT:

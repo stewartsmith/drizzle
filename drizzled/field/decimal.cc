@@ -149,10 +149,9 @@ int Field_decimal::store(const char *from, uint32_t length,
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if ((err= str2_class_decimal(E_DEC_FATAL_ERROR &
+  if ((err= decimal_value.store(E_DEC_FATAL_ERROR &
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
-                           from, length, charset_arg,
-                           &decimal_value)) &&
+                           from, length, charset_arg)) &&
       getTable()->in_use->abort_on_warning)
   {
     /* Because "from" is not NUL-terminated and we use %s in the ER() */

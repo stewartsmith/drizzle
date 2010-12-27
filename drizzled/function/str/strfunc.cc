@@ -59,10 +59,11 @@ type::Decimal *Item_str_func::val_decimal(type::Decimal *decimal_value)
   char buff[64];
   String *res, tmp(buff,sizeof(buff), &my_charset_bin);
   res= val_str(&tmp);
-  if (!res)
+  if (not res)
     return 0;
-  (void)str2_class_decimal(E_DEC_FATAL_ERROR, (char*) res->ptr(),
-                       res->length(), res->charset(), decimal_value);
+
+  (void)decimal_value->store(E_DEC_FATAL_ERROR, (char*) res->ptr(), res->length(), res->charset());
+
   return decimal_value;
 }
 

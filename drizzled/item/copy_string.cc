@@ -47,7 +47,8 @@ type::Decimal *Item_copy_string::val_decimal(type::Decimal *decimal_value)
   // Item_copy_string is used without fix_fields call
   if (null_value)
     return 0;
-  string2_class_decimal(E_DEC_FATAL_ERROR, &str_value, decimal_value);
+  decimal_value->store(E_DEC_FATAL_ERROR, &str_value);
+
   return (decimal_value);
 }
 

@@ -272,7 +272,6 @@ int Decimal::val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) 
   @param  from            string to process
   @param  length          length of given string
   @param  charset         charset of given string
-  @param  decimal_value   buffer for result storing
 
   @return Error code
    @retval E_DEC_OK
@@ -282,8 +281,7 @@ int Decimal::val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) 
    @retval E_DEC_OOM
 */
 
-int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
-                   const CHARSET_INFO * charset, type::Decimal *decimal_value)
+int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset)
 {
   char *end, *from_end;
   int err;
@@ -298,7 +296,7 @@ int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
     charset= &my_charset_bin;
   }
   from_end= end= (char*) from+length;
-  err= string2decimal((char *)from, (decimal_t*) decimal_value, &end);
+  err= string2decimal((char *)from, (decimal_t*) this, &end);
   if (end != from_end && !err)
   {
     /* Give warning if there is something other than end space */
@@ -311,7 +309,7 @@ int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
       }
     }
   }
-  check_result_and_overflow(mask, err, decimal_value);
+  check_result_and_overflow(mask, err);
   return err;
 }
 

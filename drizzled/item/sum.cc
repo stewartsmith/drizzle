@@ -1672,7 +1672,7 @@ type::Decimal *Item_sum_hybrid::val_decimal(type::Decimal *val)
 
   switch (hybrid_type) {
   case STRING_RESULT:
-    string2_class_decimal(E_DEC_FATAL_ERROR, &value, val);
+    val->store(E_DEC_FATAL_ERROR, &value);
     break;
   case REAL_RESULT:
     double2_class_decimal(E_DEC_FATAL_ERROR, sum, val);

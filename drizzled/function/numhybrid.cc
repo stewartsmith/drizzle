@@ -169,8 +169,8 @@ type::Decimal *Item_func_numhybrid::val_decimal(type::Decimal *decimal_value)
       if (!(res= str_op(&str_value)))
         return NULL;
 
-      str2_class_decimal(E_DEC_FATAL_ERROR, (char*) res->ptr(),
-                     res->length(), res->charset(), decimal_value);
+      decimal_value->store(E_DEC_FATAL_ERROR, (char*) res->ptr(),
+                           res->length(), res->charset());
       break;
     }
   case ROW_RESULT:

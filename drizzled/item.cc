@@ -177,11 +177,10 @@ type::Decimal *Item::val_decimal_from_string(type::Decimal *decimal_value)
     return NULL;
 
   end_ptr= (char*) res->ptr()+ res->length();
-  if (str2_class_decimal(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
+  if (decimal_value->store(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
                      res->ptr(), 
                      res->length(), 
-                     res->charset(),
-                     decimal_value) & E_DEC_BAD_NUM)
+                     res->charset()) & E_DEC_BAD_NUM)
   {
     push_warning_printf(current_session, 
                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
