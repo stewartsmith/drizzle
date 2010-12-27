@@ -117,7 +117,7 @@ can be released by page reorganize, then it is reorganized */
 /** A BLOB field reference full of zero, for use in assertions and tests.
 Initially, BLOB field references are set to zero, in
 dtuple_convert_big_rec(). */
-UNIV_INTERN const byte field_ref_zero[BTR_EXTERN_FIELD_REF_SIZE]= {0};
+const byte field_ref_zero[BTR_EXTERN_FIELD_REF_SIZE]= {0};
 
 #ifndef UNIV_HOTBACKUP
 /*******************************************************************//**

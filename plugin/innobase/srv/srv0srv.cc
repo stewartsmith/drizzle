@@ -201,7 +201,7 @@ with mutex_enter(), which will wait until it gets the mutex. */
 /** The sort order table of the MySQL latin1_swedish_ci character set
 collation */
 #if defined(BUILD_DRIZZLE)
-UNIV_INTERN const byte	srv_latin1_ordering[256]	/* The sort order table of the latin1
+const byte	srv_latin1_ordering[256]	/* The sort order table of the latin1
 					character set. The following table is
 					the MySQL order as of Feb 10th, 2002 */
 = {
