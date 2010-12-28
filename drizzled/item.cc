@@ -1852,6 +1852,7 @@ std::ostream& operator<<(std::ostream& output, const Item &item)
   case drizzled::Item::PARAM_ITEM :
   case drizzled::Item::DECIMAL_ITEM :
   case drizzled::Item::FUNC_ITEM :
+  case drizzled::Item::BOOLEAN_ITEM :
     {
       output << "Item:(";
       output <<  item.full_name();

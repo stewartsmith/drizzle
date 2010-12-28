@@ -12,4 +12,7 @@ a	b
 111	aaa
 333	ccc
 DELETE FROM t1 WHERE a!=111;
+SELECT * FROM t1;
+a	b
+111	aaa
 DROP TABLE t1;

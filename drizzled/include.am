@@ -101,6 +101,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/filesort_info.h \
 			      drizzled/foreign_key.h \
 			      drizzled/function/additive_op.h \
+			      drizzled/function/cast/boolean.h \
 			      drizzled/function/cast/signed.h \
 			      drizzled/function/cast/time.h \
 			      drizzled/function/cast/unsigned.h \
@@ -216,6 +217,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
 			      drizzled/item/blob.h \
+			      drizzled/item/boolean.h \
 			      drizzled/item/cache.h \
 			      drizzled/item/cache_decimal.h \
 			      drizzled/item/cache_int.h \
@@ -229,9 +231,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/item/default_value.h \
 			      drizzled/item/direct_ref.h \
 			      drizzled/item/empty_string.h \
+			      drizzled/item/false.h \
 			      drizzled/item/field.h \
 			      drizzled/item/float.h \
 			      drizzled/item/func.h \
+			      drizzled/item/function/boolean.h \
 			      drizzled/item/hex_string.h \
 			      drizzled/item/ident.h \
 			      drizzled/item/insert_value.h \
@@ -248,6 +252,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/item/string.h \
 			      drizzled/item/subselect.h \
 			      drizzled/item/sum.h \
+			      drizzled/item/true.h \
 			      drizzled/item/type_holder.h \
 			      drizzled/item/uint.h \
 			      drizzled/item_result.h \
@@ -532,6 +537,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/filesort.cc \
 			   drizzled/foreign_key.cc \
 			   drizzled/function/additive_op.cc \
+			   drizzled/function/cast/boolean.cc \
 			   drizzled/function/cast/signed.cc \
 			   drizzled/function/cast/time.cc \
 			   drizzled/function/cast/unsigned.cc \
@@ -649,6 +655,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/item/empty_string.cc \
 			   drizzled/item/field.cc \
 			   drizzled/item/float.cc \
+			   drizzled/item/function/boolean.cc \
 			   drizzled/item/hex_string.cc \
 			   drizzled/item/ident.cc \
 			   drizzled/item/insert_value.cc \

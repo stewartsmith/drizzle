@@ -83,6 +83,7 @@
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
 
+#include "drizzled/function/cast/boolean.h"
 #include "drizzled/function/cast/signed.h"
 #include "drizzled/function/cast/time.h"
 #include "drizzled/function/cast/unsigned.h"
@@ -2102,6 +2103,10 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
 
   case ITEM_CAST_BINARY:
     res= new (session->mem_root) Item_func_binary(a);
+    break;
+
+  case ITEM_CAST_BOOLEAN:
+    res= new (session->mem_root) function::cast::Boolean(a);
     break;
 
   case ITEM_CAST_TIME:

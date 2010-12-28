@@ -82,6 +82,13 @@ class Table_ident;
 class Item;
 class Item_num;
 
+namespace item
+{
+class Boolean;
+class True;
+class False;
+}
+
 
 static bool check_reserved_words(LEX_STRING *name)
 {
@@ -3649,6 +3656,8 @@ in_sum_expr:
 cast_type:
           BINARY opt_len
           { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
+        | BOOLEAN_SYM
+          { $$=ITEM_CAST_BOOLEAN; Lex->charset= &my_charset_bin; Lex->dec= 0; }
         | SIGNED_SYM
           { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | SIGNED_SYM INT_SYM
@@ -5940,8 +5949,8 @@ literal:
             $$ = new Item_null();
             YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
           }
-        | FALSE_SYM { $$= new Item_int((char*) "FALSE",0,1); }
-        | TRUE_SYM { $$= new Item_int((char*) "TRUE",1,1); }
+        | FALSE_SYM { $$= new drizzled::item::False(); }
+        | TRUE_SYM { $$= new drizzled::item::True(); }
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
         | DATE_SYM text_literal { $$ = $2; }

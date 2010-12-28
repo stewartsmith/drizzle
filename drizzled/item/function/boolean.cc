@@ -18,59 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-#ifndef PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H
-#define PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H
-
-#include <drizzled/item/function/boolean.h>
-#include <drizzled/execute.h>
-#include <iostream>
+#include "config.h"
 
 namespace drizzled
 {
 
-namespace utility_functions
+namespace item
 {
 
-class Execute :public drizzled::item::function::Boolean
+namespace function
 {
-  drizzled::String _res;
-  drizzled::Execute execute;
 
-public:
-  Execute() :
-    drizzled::item::function::Boolean(),
-    execute(getSession(), false)
-  {
-    unsigned_flag= true;
-  }
 
-  bool val_bool();
-
-  int64_t val_int()
-  {
-    return val_bool();
-  }
-  const char *func_name() const { return "execute"; }
-  const char *fully_qualified_func_name() const { return "execute()"; }
-
-  void fix_length_and_dec()
-  {
-    max_length= 1;
-  }
-
-  bool check_argument_count(int n)
-  {
-    if (n == 2)
-    {
-      execute.setWait();
-    }
-
-    return (n == 1 or n == 2);
-  }
-};
-
-} /* namespace utility_functions */
+} /* namespace function */
+} /* namespace item */
 } /* namespace drizzled */
-
-#endif /* PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H */
