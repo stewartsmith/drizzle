@@ -171,7 +171,7 @@ bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_t
           needs to be created for every execution of a PS/SP.
         */
         if ((result= new select_create(create_table_list,
-                                       is_if_not_exists,
+                                       session->getLex()->exists(),
                                        &create_info(),
                                        createTableMessage(),
                                        &alter_info,
@@ -204,7 +204,7 @@ bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_t
                                create_table_list, 
                                select_tables,
                                createTableMessage(),
-                               is_if_not_exists,
+                               session->getLex()->exists(),
                                is_engine_set);
       }
       else
@@ -224,7 +224,7 @@ bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_t
                           &alter_info, 
                           false, 
                           0,
-                          is_if_not_exists);
+                          session->getLex()->exists());
       }
 
       if (not res)

@@ -993,6 +993,7 @@ public:
   void reset()
   {
     sum_expr_used= false;
+    _exists= false;
   }
 
   void setSumExprUsed()
@@ -1016,10 +1017,21 @@ public:
     return _create_table;
   }
 
+  void setExists()
+  {
+    _exists= true;
+  }
+
+  bool exists() const
+  {
+    return _exists;
+  }
+
 private: 
   bool cacheable;
   bool sum_expr_used;
   message::Table *_create_table;
+  bool _exists;
 };
 
 extern void lex_start(Session *session);

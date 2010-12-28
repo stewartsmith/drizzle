@@ -266,7 +266,6 @@ void lex_start(Session *session)
   lex->statement= NULL;
   
   lex->is_cross= false;
-
   lex->reset();
 }
 
@@ -1870,21 +1869,22 @@ void Query_tables_list::reset_query_tables_list(bool init)
     statement parsing. On should use lex_start() function to prepare LEX
     for this.
 */
-LEX::LEX()
-  :
+LEX::LEX() :
     result(0), 
     yacc_yyss(0), 
     yacc_yyvs(0),
+    session(NULL),
     charset(NULL),
     sql_command(SQLCOM_END), 
+    statement(NULL),
     option_type(OPT_DEFAULT), 
     is_lex_started(0),
     cacheable(true),
     sum_expr_used(false),
-    _create_table(NULL)
+    _create_table(NULL),
+    _exists(false)
 {
   reset_query_tables_list(true);
-  statement= NULL;
 }
 
 /**

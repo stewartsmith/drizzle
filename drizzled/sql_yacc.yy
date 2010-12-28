@@ -1066,7 +1066,6 @@ create:
                                                    TL_WRITE))
               DRIZZLE_YYABORT;
             lex->col_list.empty();
-            statement->is_if_not_exists= $4;
 
             Lex->table()->set_name($5->table.str);
 	    if ($2)
@@ -1094,7 +1093,6 @@ create:
                                                    TL_WRITE))
               DRIZZLE_YYABORT;
             lex->col_list.empty();
-            statement->is_if_not_exists= $4;
 
             Lex->table()->set_name($5->table.str);
 	    if ($2)
@@ -1143,7 +1141,6 @@ create:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->is_if_not_exists= $3;
           }
           opt_create_database_options
           {
@@ -1152,9 +1149,13 @@ create:
         ;
 
 create2:
-          '(' create2a {}
+          '(' create2a 
+          {
+          }
         | opt_create_table_options
-          create3 {}
+          create3 
+          {
+          }
         | '(' LIKE table_ident ')'
           {
             Session *session= YYSession;
@@ -1169,7 +1170,9 @@ create2:
 
 create2a:
           field_list ')' opt_create_table_options
-          create3 {}
+          create3
+          {
+          }
         |  create_select ')'
            { Lex->current_select->set_braces(1);}
            union_opt {}
@@ -1178,10 +1181,14 @@ create2a:
 create3:
           /* empty */ {}
         | opt_duplicate opt_as create_select
-          { Lex->current_select->set_braces(0);}
+          {
+            Lex->current_select->set_braces(0);
+          }
           union_clause {}
         | opt_duplicate opt_as '(' create_select ')'
-          { Lex->current_select->set_braces(1);}
+          {
+            Lex->current_select->set_braces(1);
+          }
           union_opt {}
         ;
 
@@ -1283,7 +1290,7 @@ opt_table_options:
 
 opt_if_not_exists:
           /* empty */ { $$= false; }
-        | IF not EXISTS { $$= true; }
+        | IF not EXISTS { $$= true; YYSession->getLex()->setExists(); }
         ;
 
 opt_create_table_options:

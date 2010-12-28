@@ -44,7 +44,6 @@ public:
       on_update_value(NULL),
       is_engine_set(false),
       is_create_table_like(false),
-      is_if_not_exists(false),
       lex_identified_temp_table(false),
       link_to_local(false),
       create_table_list(NULL)
@@ -103,7 +102,6 @@ public:
 
   bool is_engine_set;
   bool is_create_table_like;
-  bool is_if_not_exists;
   bool lex_identified_temp_table;
   bool link_to_local;
   TableList *create_table_list;
