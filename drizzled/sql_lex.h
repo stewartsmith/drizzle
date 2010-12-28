@@ -930,9 +930,7 @@ public:
      statement in a session. It's re-used by doing lex_end, lex_start
      in sql_lex.cc
   */
-  virtual ~LEX()
-  {
-  }
+  virtual ~LEX();
 
   TableList *unlink_first_table(bool *link_to_local);
   void link_first_table_back(TableList *first, bool link_to_local);
@@ -1010,9 +1008,18 @@ public:
   void start(Session *session);
   void end();
 
+  message::Table *table()
+  {
+    if (not _create_table)
+      _create_table= new message::Table;
+
+    return _create_table;
+  }
+
 private: 
   bool cacheable;
   bool sum_expr_used;
+  message::Table *_create_table;
 };
 
 extern void lex_start(Session *session);

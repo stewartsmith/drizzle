@@ -448,6 +448,8 @@ public:
   }
 };
 
+std::ostream& operator<<(std::ostream& output, const StorageEngine &engine);
+
 } /* namespace plugin */
 } /* namespace drizzled */
 

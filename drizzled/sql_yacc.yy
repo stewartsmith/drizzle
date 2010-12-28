@@ -1060,24 +1060,46 @@ create:
                                                    TL_WRITE))
               DRIZZLE_YYABORT;
             lex->col_list.empty();
-            statement->change=NULL;
             statement->is_if_not_exists= $4;
-            statement->create_info.db_type= NULL;
-            statement->create_info.default_table_charset= NULL;
-            lex->name.str= 0;
 
-	    message::Table &proto= statement->create_table_message;
-	   
-	    proto.set_name($5->table.str);
+            Lex->table()->set_name($5->table.str);
 	    if ($2)
-	      proto.set_type(message::Table::TEMPORARY);
+	      Lex->table()->set_type(message::Table::TEMPORARY);
 	    else
-	      proto.set_type(message::Table::STANDARD);
+	      Lex->table()->set_type(message::Table::STANDARD);
           }
           create2
           {
             LEX *lex= YYSession->lex;
             lex->current_select= &lex->select_lex;
+          }
+        | CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident LIKE table_ident opt_create_table_options
+          {
+            Session *session= YYSession;
+            LEX *lex= session->lex;
+            lex->sql_command= SQLCOM_CREATE_TABLE;
+            statement::CreateTable *statement= new(std::nothrow) statement::CreateTable(YYSession);
+            lex->statement= statement;
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
+
+            if (!lex->select_lex.add_table_to_list(session, $5, NULL,
+                                                   TL_OPTION_UPDATING,
+                                                   TL_WRITE))
+              DRIZZLE_YYABORT;
+            lex->col_list.empty();
+            statement->is_if_not_exists= $4;
+
+            Lex->table()->set_name($5->table.str);
+	    if ($2)
+	      Lex->table()->set_type(message::Table::TEMPORARY);
+	    else
+	      Lex->table()->set_type(message::Table::STANDARD);
+
+            statement->is_create_table_like= true;
+
+            if (not lex->select_lex.add_table_to_list(session, $7, NULL, 0, TL_READ))
+              DRIZZLE_YYABORT;
           }
         | CREATE build_method
           {
@@ -1127,16 +1149,6 @@ create2:
           '(' create2a {}
         | opt_create_table_options
           create3 {}
-        | LIKE table_ident opt_create_table_options
-          {
-            Session *session= YYSession;
-            LEX *lex= session->lex;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            statement->is_create_table_like= true;
-            if (!lex->select_lex.add_table_to_list(session, $2, NULL, 0, TL_READ))
-              DRIZZLE_YYABORT;
-          }
         | '(' LIKE table_ident ')'
           {
             Session *session= YYSession;
@@ -1289,33 +1301,24 @@ create_table_option:
 custom_engine_option:
         ENGINE_SYM equal ident_or_text
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            statement->is_engine_set= true;
-
-            ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->set_name($3.str);
+            Lex->table()->mutable_engine()->set_name($3.str);
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
-	    message::Table::TableOptions *tableopts;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
-
-	    tableopts->set_comment($3.str);
+            Lex->table()->mutable_options()->set_comment($3.str);
           }
         | AUTO_INC opt_equal ulonglong_num
           {
-	    message::Table::TableOptions *tableopts;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            Lex->table()->mutable_options()->set_auto_increment_value($3);
 
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
-
+#if 0
             statement->create_info.auto_increment_value=$3;
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
-	    tableopts->set_auto_increment_value($3);
+#endif
           }
         |  ident_or_text equal ident_or_text
           {
-	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
+	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
 
             opt->set_name($1.str);
             opt->set_state($3.str);
@@ -1325,7 +1328,7 @@ custom_engine_option:
             char number_as_string[22];
             snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
 
-	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
+	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
             opt->set_name($1.str);
             opt->set_state(number_as_string);
           }
@@ -1337,7 +1340,7 @@ default_collation:
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            HA_CREATE_INFO *cinfo= &statement->create_info;
+            HA_CREATE_INFO *cinfo= &statement->create_info();
             if ((cinfo->used_fields & HA_CREATE_USED_DEFAULT_CHARSET) &&
                  cinfo->default_table_charset && $4 &&
                  !my_charset_same(cinfo->default_table_charset,$4))
@@ -1346,8 +1349,8 @@ default_collation:
                          $4->name, cinfo->default_table_charset->csname);
                 DRIZZLE_YYABORT;
               }
-              statement->create_info.default_table_charset= $4;
-              statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+              statement->create_info().default_table_charset= $4;
+              statement->create_info().used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
           }
         ;
 
@@ -2400,9 +2403,9 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            statement->create_info.table_charset=
-            statement->create_info.default_table_charset= $3;
-            statement->create_info.used_fields|= (HA_CREATE_USED_CHARSET |
+            statement->create_info().table_charset=
+            statement->create_info().default_table_charset= $3;
+            statement->create_info().used_fields|= (HA_CREATE_USED_CHARSET |
               HA_CREATE_USED_DEFAULT_CHARSET);
             statement->alter_info.flags.set(ALTER_CONVERT);
           }

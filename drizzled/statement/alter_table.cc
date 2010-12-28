@@ -89,15 +89,17 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
+  is_engine_set= not createTableMessage().engine().name().empty();
+
   if (is_engine_set)
   {
-    create_info.db_type= 
-      plugin::StorageEngine::findByName(*session, create_table_message.engine().name());
+    create_info().db_type= 
+      plugin::StorageEngine::findByName(*session, createTableMessage().engine().name());
 
-    if (create_info.db_type == NULL)
+    if (create_info().db_type == NULL)
     {
       my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               create_table_message.engine().name().c_str());
+               createTableMessage().engine().name().c_str());
 
       return true;
     }
@@ -118,12 +120,12 @@ bool statement::AlterTable::execute()
       return true;
     }
 
-    if (not  create_info.db_type)
+    if (not  create_info().db_type)
     {
-      create_info.db_type= 
+      create_info().db_type= 
         plugin::StorageEngine::findByName(*session, original_table_message->engine().name());
 
-      if (not create_info.db_type)
+      if (not create_info().db_type)
       {
         std::string path;
         identifier.getSQLPath(path);
@@ -153,9 +155,9 @@ bool statement::AlterTable::execute()
     res= alter_table(session, 
                      identifier,
                      new_identifier,
-                     &create_info,
+                     &create_info(),
                      *original_table_message,
-                     create_table_message,
+                     createTableMessage(),
                      first_table,
                      &alter_info,
                      select_lex->order_list.elements,
@@ -176,9 +178,9 @@ bool statement::AlterTable::execute()
       res= alter_table(session, 
                        identifier,
                        new_identifier,
-                       &create_info,
+                       &create_info(),
                        *original_table_message,
-                       create_table_message,
+                       createTableMessage(),
                        first_table,
                        &alter_info,
                        select_lex->order_list.elements,

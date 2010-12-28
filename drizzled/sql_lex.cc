@@ -281,6 +281,8 @@ void LEX::end()
   }
 
   delete result;
+  delete _create_table;
+  _create_table= NULL;
 
   result= 0;
   setCacheable(true);
@@ -1801,6 +1803,11 @@ void Select_Lex::print_limit(Session *, String *str,
   }
 }
 
+LEX::~LEX()
+{
+  delete _create_table;
+}
+
 /**
   @brief Restore the LEX and Session in case of a parse error.
 
@@ -1873,7 +1880,8 @@ LEX::LEX()
     option_type(OPT_DEFAULT), 
     is_lex_started(0),
     cacheable(true),
-    sum_expr_used(false)
+    sum_expr_used(false),
+    _create_table(NULL)
 {
   reset_query_tables_list(true);
   statement= NULL;

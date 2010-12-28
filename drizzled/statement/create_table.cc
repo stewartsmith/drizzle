@@ -37,24 +37,26 @@ bool statement::CreateTable::execute()
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   bool need_start_waiting= false;
-  lex_identified_temp_table= create_table_message.type() == message::Table::TEMPORARY;
+  lex_identified_temp_table= createTableMessage().type() == message::Table::TEMPORARY;
+
+  is_engine_set= not createTableMessage().engine().name().empty();
 
   if (is_engine_set)
   {
-    create_info.db_type= 
-      plugin::StorageEngine::findByName(*session, create_table_message.engine().name());
+    create_info().db_type= 
+      plugin::StorageEngine::findByName(*session, createTableMessage().engine().name());
 
-    if (create_info.db_type == NULL)
+    if (create_info().db_type == NULL)
     {
       my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               create_table_message.engine().name().c_str());
+               createTableMessage().engine().name().c_str());
 
       return true;
     }
   }
   else /* We now get the default, place it in create_info, and put the engine name in table proto */
   {
-    create_info.db_type= session->getDefaultStorageEngine();
+    create_info().db_type= session->getDefaultStorageEngine();
   }
 
   if (not validateCreateTableOption())
@@ -74,11 +76,11 @@ bool statement::CreateTable::execute()
   /* Skip first table, which is the table we are creating */
   create_table_list= session->lex->unlink_first_table(&link_to_local);
 
-  drizzled::message::init(create_table_message, create_table_message.name(), create_table_list->getSchemaName(), create_info.db_type->getName());
+  drizzled::message::init(createTableMessage(), createTableMessage().name(), create_table_list->getSchemaName(), create_info().db_type->getName());
 
   TableIdentifier new_table_identifier(create_table_list->getSchemaName(),
                                        create_table_list->getTableName(),
-                                       create_table_message.type());
+                                       createTableMessage().type());
 
   if (not check(new_table_identifier))
   {
@@ -88,7 +90,7 @@ bool statement::CreateTable::execute()
   }
 
   /* Might have been updated in create_table_precheck */
-  create_info.alias= create_table_list->alias;
+  create_info().alias= create_table_list->alias;
 
   /*
      The create-select command will open and read-lock the select table
@@ -170,8 +172,8 @@ bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_t
         */
         if ((result= new select_create(create_table_list,
                                        is_if_not_exists,
-                                       &create_info,
-                                       create_table_message,
+                                       &create_info(),
+                                       createTableMessage(),
                                        &alter_info,
                                        select_lex->item_list,
                                        session->lex->duplicates,
@@ -201,7 +203,7 @@ bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_t
                                new_table_identifier,
                                create_table_list, 
                                select_tables,
-                               create_table_message,
+                               createTableMessage(),
                                is_if_not_exists,
                                is_engine_set);
       }
@@ -210,15 +212,15 @@ bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_t
 
         for (int32_t x= 0; x < alter_info.alter_proto.added_field_size(); x++)
         {
-          message::Table::Field *field= create_table_message.add_field();
+          message::Table::Field *field= createTableMessage().add_field();
 
           *field= alter_info.alter_proto.added_field(x);
         }
 
         res= create_table(session, 
                           new_table_identifier,
-                          &create_info,
-                          create_table_message,
+                          &create_info(),
+                          createTableMessage(),
                           &alter_info, 
                           false, 
                           0,
@@ -264,20 +266,20 @@ bool statement::CreateTable::check(const TableIdentifier &identifier)
 bool statement::CreateTable::validateCreateTableOption()
 {
   bool rc= true;
-  size_t num_engine_options= create_table_message.engine().options_size();
+  size_t num_engine_options= createTableMessage().engine().options_size();
 
-  assert(create_info.db_type);
+  assert(create_info().db_type);
 
   for (size_t y= 0; y < num_engine_options; ++y)
   {
-    bool valid= create_info.db_type->validateCreateTableOption(create_table_message.engine().options(y).name(),
-                                                               create_table_message.engine().options(y).state());
+    bool valid= create_info().db_type->validateCreateTableOption(createTableMessage().engine().options(y).name(),
+                                                                 createTableMessage().engine().options(y).state());
 
     if (not valid)
     {
       my_error(ER_UNKNOWN_ENGINE_OPTION, MYF(0),
-               create_table_message.engine().options(y).name().c_str(),
-               create_table_message.engine().options(y).state().c_str());
+               createTableMessage().engine().options(y).name().c_str(),
+               createTableMessage().engine().options(y).state().c_str());
 
       rc= false;
     }
