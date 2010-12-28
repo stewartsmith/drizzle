@@ -2512,7 +2512,7 @@ int HailDBCursor::info(uint32_t flag)
 
     err= ib_get_duplicate_key(transaction, &err_table_name, &err_index_name);
 
-    errkey= -1;
+    errkey= UINT32_MAX;
 
     for (unsigned int i = 0; i < getTable()->getShare()->keys; i++)
     {

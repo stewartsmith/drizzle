@@ -702,7 +702,7 @@ dict_sys_tables_get_flags(
 		return(ULINT_UNDEFINED);
 	}
 
-	if (UNIV_UNLIKELY(flags & (~0 << DICT_TF_BITS))) {
+	if (UNIV_UNLIKELY(flags & (SIZE_MAX << DICT_TF_BITS))) {
 		/* Some unused bits are set. */
 		return(ULINT_UNDEFINED);
 	}
@@ -1641,7 +1641,7 @@ err_len:
 
 		flags2 = mach_read_from_4(field);
 
-		if (flags2 & (~0 << (DICT_TF2_BITS - DICT_TF2_SHIFT))) {
+		if (flags2 & (SIZE_MAX << (DICT_TF2_BITS - DICT_TF2_SHIFT))) {
 			ut_print_timestamp(stderr);
 			fputs("  InnoDB: Warning: table ", stderr);
 			ut_print_filename(stderr, name);
