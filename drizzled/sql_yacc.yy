@@ -354,6 +354,7 @@ using namespace drizzled;
   drizzled::Key_part_spec *key_part;
   const drizzled::plugin::Function *udf;
   drizzled::TableList *table_list;
+  enum drizzled::enum_field_types field_val;
   struct drizzled::sys_var_with_base variable;
   enum drizzled::sql_var_t var_type;
   drizzled::Key::Keytype key_type;
@@ -828,8 +829,13 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <string>
         text_string opt_gconcat_separator
 
+%type <field_val>
+      field_definition
+      int_type
+      real_type
+
 %type <num>
-        type int_type real_type order_dir field_def
+        order_dir field_def
         if_exists opt_table_options
         opt_if_not_exists
         opt_temporary all_or_any opt_distinct
@@ -1497,10 +1503,10 @@ field_spec:
           }
         ;
 field_def:
-          type opt_attribute {}
+          field_definition opt_attribute {}
         ;
 
-type:
+field_definition:
           int_type ignored_field_number_length opt_field_number_signed opt_zerofill
           { 
             $$= $1;
