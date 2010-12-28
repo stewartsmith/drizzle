@@ -48,10 +48,15 @@ Created 10/10/1995 Heikki Tuuri
 #include "que0types.h"
 #include "trx0types.h"
 
+#include <string>
+
 extern const char*	srv_main_thread_op_info;
 
 /** Prefix used by MySQL to indicate pre-5.1 table name encoding */
-extern const char	srv_mysql50_table_name_prefix[9];
+/** LOOKIE HERE!!!! This used to be srv_mysql50_table_name_prefix[10]
+    which was a buffer overrun, because it didn't allow for the trailing
+    '\0'. Thanks C++! */
+static const std::string srv_mysql50_table_name_prefix("#mysql50#");
 
 /* When this event is set the lock timeout and InnoDB monitor
 thread starts running */
@@ -657,7 +662,7 @@ UNIV_INTERN
 os_thread_ret_t
 srv_purge_thread(
 /*=============*/
-	void*	arg __attribute__((unused))); /*!< in: a dummy parameter
+	void*	/*arg __attribute__((unused))*/); /*!< in: a dummy parameter
 					      required by os_thread_create */
 
 /**********************************************************************//**

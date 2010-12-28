@@ -22,7 +22,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include "drizzled/current_session.h"
 
-extern "C" {
 #include "trx0i_s.h"
 #include "trx0trx.h" /* for TRX_QUE_STATE_STR_MAX_LEN */
 #include "buf0buddy.h" /* for i_s_cmpmem */
@@ -34,7 +33,6 @@ extern "C" {
 #include "dict0load.h"	/* for file sys_tables related info. */
 #include "dict0mem.h"
 #include "dict0types.h"
-}
 #include "handler0vars.h"
 
 using namespace drizzled;
