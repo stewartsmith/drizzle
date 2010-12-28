@@ -1316,11 +1316,6 @@ custom_engine_option:
         | AUTO_INC opt_equal ulonglong_num
           {
             Lex->table()->mutable_options()->set_auto_increment_value($3);
-
-#if 0
-            statement->create_info.auto_increment_value=$3;
-            statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
-#endif
           }
         |  ident_or_text equal ident_or_text
           {
