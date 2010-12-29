@@ -160,4 +160,5 @@ utf8_unicode_ci	utf8_general_ci
 select COUNT(*) from data_dictionary.tables;
 COUNT(*)
 ####.##.####
+COMMIT;
 DROP TABLE t1;
