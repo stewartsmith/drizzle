@@ -49,7 +49,7 @@
 
 namespace drizzled {
 
-static std::string catalog("local");
+static std::string default_catalog("local");
 
 class SchemaIdentifier
 {

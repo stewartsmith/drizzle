@@ -515,6 +515,14 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(EE_DIR, find(ER_CANT_READ_DIR));
   ADD_ERROR_MESSAGE(EE_STAT, find(ER_CANT_GET_STAT));
   ADD_ERROR_MESSAGE(EE_DISK_FULL, find(ER_DISK_FULL));
+  
+  // Catalog related errors
+  ADD_ERROR_MESSAGE(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_CATALOG_DEFINITION, N_("Corrupt or invalid catalog definition for %s : %s"));
+  ADD_ERROR_MESSAGE(ER_CATALOG_DOES_NOT_EXIST, N_("Catalog does not exist: %s"));
+  ADD_ERROR_MESSAGE(ER_CATALOG_NO_LOCK, N_("Could not gain lock on %s"));
+  ADD_ERROR_MESSAGE(ER_CATALOG_NO_DROP_LOCAL, N_("You can not drop the local catalog"));
+
 
 }
 

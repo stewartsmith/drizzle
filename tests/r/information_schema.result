@@ -187,6 +187,7 @@ c2.column_name LIKE '%SCHEMA%'
 AND t.table_name NOT LIKE 'falcon%'
   ORDER BY t.table_name, c1.column_name;
 table_name	column_name
+CATALOGS	CATALOG_CREATION_TIME
 CHARACTER_SETS	DEFAULT_COLLATE_NAME
 COLLATIONS	COLLATION_NAME
 COLUMNS	TABLE_SCHEMA
@@ -251,6 +252,7 @@ c2.column_name LIKE '%SCHEMA%'
 AND t.table_name NOT LIKE 'falcon%'
   ORDER BY t.table_name, c1.column_name;
 table_name	column_name
+CATALOGS	CATALOG_CREATION_TIME
 CHARACTER_SETS	DEFAULT_COLLATE_NAME
 COLLATIONS	COLLATION_NAME
 COLUMNS	TABLE_SCHEMA
@@ -311,10 +313,10 @@ create table t1 (f1 int);
 create table t2 (f1 int, f2 int);
 drop table t1,t2;
 select 1 as f1 from data_dictionary.tables  where "CHARACTER_SETS"=
-(select cast(table_name as char)  from data_dictionary.tables
-order by table_name limit 1) limit 1;
+(select cast(table_name as char)  from data_dictionary.tables WHERE TABLE_SCHEMA=schema()
+AND TABLE_NAME = "CHARACTER_SETS"
+ order by table_name limit 1) AND TABLE_SCHEMA=schema() limit 1;
 f1
-1
 select t.table_name, group_concat(t.table_schema, '.', t.table_name),
 count(*) as num1
 from data_dictionary.tables t
