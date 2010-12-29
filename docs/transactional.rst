@@ -23,6 +23,8 @@ Drizzle can operate in an autocommit mode, where each statement is committed at 
 
 If you set AUTOCOMMIT=1 during a transaction, that transaction will be committed as part of the SET AUTOCOMMIT=1 statement.
 
+Transactional DDL is currently not supported, although it may be in the future. This means that although currently you will get a ER_TRANSACTION_DDL_NOT_SUPPORTED error message if you try and execute DDL statements within a transaction, in future versions of Drizzle they may succeed.
+
 Currently DDL operations are performed as a single transaction, this limitation will be lifted in the future.
 
 
