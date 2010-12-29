@@ -1886,7 +1886,6 @@ void Join::cleanup(bool full)
 {
   if (table)
   {
-    JoinTable *tab,*end;
     /*
       Only a sorted table may be cached.  This sorted table is always the
       first non const table in join->table
@@ -1896,6 +1895,11 @@ void Join::cleanup(bool full)
       table[const_tables]->free_io_cache();
       table[const_tables]->filesort_free_buffers(full);
     }
+  }
+
+  if (join_tab)
+  {
+    JoinTable *tab,*end;
 
     if (full)
     {
@@ -1912,6 +1916,7 @@ void Join::cleanup(bool full)
       }
     }
   }
+
   /*
     We are not using tables anymore
     Unlock all tables. We may be in an INSERT .... SELECT statement.
