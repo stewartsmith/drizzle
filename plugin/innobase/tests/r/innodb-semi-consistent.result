@@ -34,5 +34,6 @@ a
 10
 11
 7
+commit;
 drop table t1;
 SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
