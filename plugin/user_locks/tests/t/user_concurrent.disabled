@@ -1,0 +1,11 @@
+# We will test to make sure that locks are being held correctly across
+# sessions.
+
+SELECT GET_LOCK("mine");
+SELECT USER_NAME, USER_LOCK_NAME FROM DATA_DICTIONARY.USER_DEFINED_LOCKS ORDER BY USER_LOCK_NAME, USER_NAME;
+EXECUTE "SELECT GET_LOCK('mine', 20); SELECT 1;" CONCURRENT;
+--error 1709
+SELECT wait_for_lock("mine");
+--error 1712
+SELECT RELEASE_LOCK_AND_WAIT(@LOCK);
+SELECT RELEASE_LOCK_AND_WAIT("mine");

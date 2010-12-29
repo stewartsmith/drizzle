@@ -1,0 +1,33 @@
+SELECT create_barrier("foo");
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS ORDER BY USER_BARRIER_NAME;
+SELECT release_barrier("foo");
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS ORDER BY USER_BARRIER_NAME;
+
+SELECT create_barrier("foo1");
+SELECT create_barrier("foo2");
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS ORDER BY USER_BARRIER_NAME;
+SELECT release_barrier("foo2");
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS ORDER BY USER_BARRIER_NAME;
+SELECT release_barrier("foo1");
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS ORDER BY USER_BARRIER_NAME;
+
+# This should complain about a non-existant barrier
+--error 1707
+SELECT release_barrier("foo2");
+
+# foo2 does not exist, so we should not wait for it
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS ORDER BY USER_BARRIER_NAME;
+--error 1707
+SELECT wait("foo2");
+
+# Make sure we can not lock a barrier we have created.
+set @self_lock= "self_barrier";
+SELECT create_barrier(@self_lock);
+--error 1706
+SELECT wait(@self_lock);
+SELECT release_barrier(@self_lock);
+
+# Test creating a barrier with a number
+set @count_barrier= "count_barrier";
+SELECT create_barrier(@count_barrier, 4);
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAITER_LIMIT from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;

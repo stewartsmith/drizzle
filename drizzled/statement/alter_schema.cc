@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ namespace drizzled
 bool statement::AlterSchema::execute()
 {
   LEX_STRING *db= &session->lex->name;
-  message::SchemaPtr old_definition;
+  message::schema::shared_ptr old_definition;
 
   if (not validateSchemaOptions())
     return true;
@@ -45,7 +45,10 @@ bool statement::AlterSchema::execute()
 
   if (not check_db_name(session, schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
+    std::string path;
+    schema_identifier.getSQLPath(path);
+    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
+
     return false;
   }
 
@@ -82,7 +85,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= mysql_alter_db(session, schema_message);
+  bool res= alter_db(session, schema_message);
 
   return not res;
 }

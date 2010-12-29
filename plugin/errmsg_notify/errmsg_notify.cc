@@ -22,7 +22,9 @@
 #include <cstdio>  /* for vsnprintf */
 #include <stdarg.h>  /* for va_list */
 #include <unistd.h>  /* for write(2) */
+#include <iostream>
 #include <libnotifymm.h>
+#include <boost/scoped_ptr.hpp>
 
 #include <string>
 #include <vector>
@@ -36,12 +38,10 @@
 #define MAX_MSG_LEN 8192
 
 using namespace drizzled;
-using namespace std;
-
 
 class Error_message_notify : public plugin::ErrorMessage
 {
-  vector<string> errmsg_tags;
+  std::vector<std::string> errmsg_tags;
 public:
   Error_message_notify()
    : plugin::ErrorMessage("Error_message_notify"),
@@ -73,18 +73,18 @@ public:
     {
       if (!n.show())
 #else
-      auto_ptr<Glib::Error> error;
+      boost::scoped_ptr<Glib::Error> error;
       if (!n.show(error))
 #endif
       {
-        fprintf(stderr, _("Failed to send error message to libnotify\n"));
+        std::cerr << _("Failed to send error message to libnotify\n");
         return true;
       }
 #ifdef GLIBMM_EXCEPTIONS_ENABLED
      }
      catch (Glib::Error& err)
      {
-        fprintf(stderr, err.what().c_str());
+       std::cerr << err.what() << std::endl;
      }
 #endif
 

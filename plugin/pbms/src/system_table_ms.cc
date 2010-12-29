@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -354,7 +354,7 @@ static int pbms_create_proto_table(const char *engine_name, const char *name, DT
 				break;
 				
 			case DRIZZLE_TYPE_TIMESTAMP:
-				field->set_type(message::Table::Field::TIMESTAMP);
+				field->set_type(message::Table::Field::EPOCH);
 				break;
 				
 			case DRIZZLE_TYPE_BLOB:
@@ -637,25 +637,25 @@ void PBMSSystemTables::restoreSystemTables(MSDatabase *db, const char *data, siz
 				if (MSHTTPHeaderTable::tableVersion == tab_version)
 					MSHTTPHeaderTable::restoreTable(RETAIN(db), data, tab_size);
 				else
-					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "METADATA_HEADER_NAME" failed, incompatable table version" );
+					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "METADATA_HEADER_NAME" failed, incompatible table version" );
 				break;
 			case MSCloudTable::tableID:
 				if (MSCloudTable::tableVersion == tab_version)
 					MSCloudTable::restoreTable(RETAIN(db), data, tab_size);
 				else
-					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "CLOUD_TABLE_NAME" failed, incompatable table version" );
+					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "CLOUD_TABLE_NAME" failed, incompatible table version" );
 				break;
 			case MSBackupTable::tableID:
 				if (MSBackupTable::tableVersion == tab_version)
 					MSBackupTable::restoreTable(RETAIN(db), data, tab_size);
 				else
-					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "BACKUP_TABLE_NAME" failed, incompatable table version" );
+					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "BACKUP_TABLE_NAME" failed, incompatible table version" );
 				break;				
 			case MSVariableTable::tableID:
 				if (MSVariableTable::tableVersion == tab_version)
 					MSVariableTable::restoreTable(RETAIN(db), data, tab_size);
 				else
-					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "VARIABLES_TABLE_NAME" failed, incompatable table version" );
+					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "VARIABLES_TABLE_NAME" failed, incompatible table version" );
 				break;
 			default:
 				ASSERT(false);

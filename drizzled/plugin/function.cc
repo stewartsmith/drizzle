@@ -28,8 +28,6 @@
 
 #include "drizzled/util/string.h"
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -49,7 +47,7 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
                   udf->getName().c_str());
     return true;
   }
-  pair<UdfMap::iterator, bool> ret=
+  std::pair<UdfMap::iterator, bool> ret=
     udf_registry.insert(make_pair(udf->getName(), udf));
   if (ret.second == false)
   {

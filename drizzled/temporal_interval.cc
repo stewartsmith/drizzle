@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -186,7 +186,7 @@ bool TemporalInterval::initFromItem(Item *args,
   return false;
 }
 
-bool TemporalInterval::addDate(DRIZZLE_TIME *ltime, interval_type int_type)
+bool TemporalInterval::addDate(type::Time *ltime, interval_type int_type)
 {
   long period, sign;
 

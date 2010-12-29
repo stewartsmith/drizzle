@@ -30,7 +30,7 @@ drop table t1;
 # Test problem with rows that are 65517-65520 bytes long
 #
 
-create table t1 (a int not null auto_increment, b blob not null, primary key (a));
+create temporary table t1 (a int not null auto_increment, b blob not null, primary key (a)) engine=myisam;
 
 let $1=100;
 disable_query_log;
@@ -342,7 +342,7 @@ DROP TABLE t1;
 
 CREATE TEMPORARY TABLE t1 (a int not null, b int, c int, key(b), key(c), key(a,b), key(c,a)) ENGINE=MyISAM;
 INSERT into t1 values (0, null, 0), (0, null, 1), (0, null, 2), (0, null,3), (1,1,4);
-create table t2 (a int not null, b int, c int, key(b), key(c), key(a));
+create temporary table t2 (a int not null, b int, c int, key(b), key(c), key(a)) engine=myisam;
 INSERT into t2 values (1,1,1), (2,2,2);
 alter table t1 ENGINE=MYISAM;
 show index from t1;
@@ -361,7 +361,7 @@ drop table t1,t2;
 # Test bug when updating a split dynamic row where keys are not changed
 #
 
-create table t1 (a int not null auto_increment primary key, b varchar(255));
+create temporary table t1 (a int not null auto_increment primary key, b varchar(255)) engine=myisam;
 insert into t1 (b) values (repeat('a',100)),(repeat('b',100)),(repeat('c',100));
 update t1 set b=repeat(left(b,1),200) where a=1;
 
@@ -441,7 +441,7 @@ DROP TABLE t1;
 #
 # Verify blob handling
 #
-create table t1 (a blob);
+create temporary table t1 (a blob) engine=myisam;
 insert into t1 values('a '),('a');
 select concat(a,'.') from t1 where a='a';
 select concat(a,'.') from t1 where a='a ';
@@ -453,7 +453,7 @@ drop table t1;
 #
 # Test text and unique
 #
-create table t1 (a int not null auto_increment primary key, b text not null, unique b (b(20)));
+create temporary table t1 (a int not null auto_increment primary key, b text not null, unique b (b(20))) engine=myisam;
 insert into t1 (b) values ('a'),('b'),('c');
 select concat(b,'.') from t1;
 update t1 set b='b ' where a=2;
@@ -469,8 +469,8 @@ drop table t1;
 #
 # Test keys with 0 segments. (Bug #3203)
 #
-create table t1 (a int not null);
-create table t2 (a int not null, primary key (a));
+create temporary table t1 (a int not null) engine=myisam;
+create temporary table t2 (a int not null, primary key (a)) engine=myisam;
 insert into t1 values (1);
 insert into t2 values (1),(2);
 select sql_big_result distinct t1.a from t1,t2 order by t2.a;
@@ -494,8 +494,8 @@ drop table t1;
 
 # End of 4.0 tests
 
-create table t1 (a int, b varchar(200), c text not null);
-create table t2 (a int, b varchar(200), c text not null);
+create temporary table t1 (a int, b varchar(200), c text not null) engine=myisam;
+create temporary table t2 (a int, b varchar(200), c text not null) engine=myisam;
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
 --replace_column 1 #  6 # 7 # 8 # 9 # 10 #
@@ -531,7 +531,7 @@ drop table t1,t2;
 #
 # index search for NULL in blob. Bug #4816
 #
-create table t1 ( a tinytext, b char(1), index idx (a(1),b) );
+create temporary table t1 ( a tinytext, b char(1), index idx (a(1),b) ) engine=myisam;
 insert into t1 values (null,''), (null,'');
 explain select count(*) from t1 where a is null;
 select count(*) from t1 where a is null;
@@ -540,8 +540,8 @@ drop table t1;
 #
 # bug9188 - Corruption Can't open file: 'table.MYI' (errno: 145)
 #
-create table t1 (c1 int, c2 varchar(4) not null default '',
-                 key(c2(3)));
+create temporary table t1 (c1 int, c2 varchar(4) not null default '',
+                 key(c2(3))) engine=myisam;
 insert into t1 values (1,'A'), (2, 'B'), (3, 'A');
 update t1 set c2='A  B' where c1=2;
 check table t1;
@@ -549,11 +549,11 @@ drop table t1;
 
 # BUG#13814 - key value packed incorrectly for TINYBLOBs
 
-create table t1(
+create temporary table t1(
   cip INT NOT NULL,
   score INT NOT NULL DEFAULT 0,
   bob TINYBLOB
-);
+) engine=myisam;
 
 insert into t1 (cip) VALUES (1), (2), (3);
 insert into t1 (cip, bob) VALUES (4, 'a' ), (5, 'b'), 
@@ -821,7 +821,7 @@ eval set storage_engine=$default;
 
 # BUG#9622 - ANALYZE TABLE and ALTER TABLE .. ENABLE INDEX produce
 # different statistics on the same table with NULL values.
-create table t1 (a int, key(a));
+create temporary table t1 (a int, key(a)) engine=myisam;
 
 insert into t1 values (1),(2),(3),(4),(NULL),(NULL),(NULL),(NULL);
 analyze table t1;

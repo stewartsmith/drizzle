@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,9 +33,9 @@ bool statement::Analyze::execute()
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &session->lex->select_lex;
-  bool res= mysql_analyze_table(session, first_table, &check_opt);
+  bool res= analyze_table(session, first_table, &check_opt);
   /* ! we write after unlocking the table */
-  write_bin_log(session, session->query.c_str());
+  write_bin_log(session, *session->getQueryString());
   select_lex->table_list.first= (unsigned char*) first_table;
   session->lex->query_tables= all_tables;
   return res;

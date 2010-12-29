@@ -23,13 +23,14 @@
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
 #include "drizzled/sql_base.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -97,7 +98,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Copy the newly read columns into the new record. */
   for (field_p= table->getFields(); (field= *field_p); field_p++)
   {
-    if (unique_map.test(field->field_index))
+    if (unique_map.test(field->position()))
     {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
     }
@@ -111,7 +112,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   Process usual UPDATE
 
   SYNOPSIS
-    mysql_update()
+    update_query()
     session			thread handler
     fields		fields for update
     values		values of fields for update
@@ -126,16 +127,15 @@ static void prepare_record_for_error_message(int error, Table *table)
     1  - error
 */
 
-int mysql_update(Session *session, TableList *table_list,
+int update_query(Session *session, TableList *table_list,
                  List<Item> &fields, List<Item> &values, COND *conds,
-                 uint32_t order_num, order_st *order,
+                 uint32_t order_num, Order *order,
                  ha_rows limit, enum enum_duplicates,
                  bool ignore)
 {
   bool		using_limit= limit != HA_POS_ERROR;
   bool		used_key_is_modified;
   bool		transactional_table;
-  bool		can_compare_record;
   int		error;
   uint		used_index= MAX_KEY, dup_key_found;
   bool          need_sort= true;
@@ -147,9 +147,9 @@ int mysql_update(Session *session, TableList *table_list,
   Select_Lex    *select_lex= &session->lex->select_lex;
   uint64_t     id;
   List<Item> all_fields;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
-  DRIZZLE_UPDATE_START(session->query.c_str());
+  DRIZZLE_UPDATE_START(session->getQueryString()->c_str());
   if (session->openTablesLock(table_list))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);
@@ -163,7 +163,7 @@ int mysql_update(Session *session, TableList *table_list,
   table->covering_keys= table->getShare()->keys_in_use;
   table->quick_keys.reset();
 
-  if (mysql_prepare_update(session, table_list, &conds, order_num, order))
+  if (prepare_update(session, table_list, &conds, order_num, order))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);
     return 1;
@@ -189,7 +189,7 @@ int mysql_update(Session *session, TableList *table_list,
       if (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
           table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH)
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
   }
@@ -313,14 +313,14 @@ int mysql_update(Session *session, TableList *table_list,
       uint32_t         length= 0;
       SortField  *sortorder;
       ha_rows examined_rows;
+      FileSort filesort(*session);
 
-      table->sort.io_cache = new internal::IO_CACHE;
+      table->sort.io_cache= new internal::IO_CACHE;
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
-          (table->sort.found_records= filesort(session, table, sortorder, length,
-                                               select, limit, 1,
-                                               &examined_rows))
-          == HA_POS_ERROR)
+	  (table->sort.found_records= filesort.run(table, sortorder, length,
+						   select, limit, 1,
+						   examined_rows)) == HA_POS_ERROR)
       {
 	goto err;
       }
@@ -340,9 +340,10 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       internal::IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,
-			   DISK_BUFFER_SIZE, MYF(MY_WME)))
+      if (tempfile.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
+      {
 	goto err;
+      }
 
       /* If quick select is used, initialize it before retrieving rows. */
       if (select && select->quick && select->quick->reset())
@@ -372,7 +373,7 @@ int mysql_update(Session *session, TableList *table_list,
       session->set_proc_info("Searching rows for update");
       ha_rows tmp_limit= limit;
 
-      while (!(error=info.read_record(&info)) && !session->killed)
+      while (not(error= info.read_record(&info)) && not session->getKilled())
       {
 	if (!(select && select->skip_record()))
 	{
@@ -395,7 +396,7 @@ int mysql_update(Session *session, TableList *table_list,
 	else
 	  table->cursor->unlock_row();
       }
-      if (session->killed && !error)
+      if (session->getKilled() && not error)
 	error= 1;				// Aborted
       limit= tmp_limit;
       table->cursor->try_semi_consistent_read(0);
@@ -415,7 +416,7 @@ int mysql_update(Session *session, TableList *table_list,
 	select= new optimizer::SqlSelect;
 	select->head=table;
       }
-      if (reinit_io_cache(&tempfile,internal::READ_CACHE,0L,0,0))
+      if (tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
 	error=1;
       // Read row ptrs from this cursor
       memcpy(select->file, &tempfile, sizeof(tempfile));
@@ -457,41 +458,20 @@ int mysql_update(Session *session, TableList *table_list,
   if (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ))
     table->prepare_for_position();
 
-  /*
-    We can use compare_record() to optimize away updates if
-    the table handler is returning all columns OR if
-    if all updated columns are read
-  */
-  can_compare_record= (! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
-                       table->write_set->is_subset_of(*table->read_set));
-
-  while (! (error=info.read_record(&info)) && !session->killed)
+  while (not (error=info.read_record(&info)) && not session->getKilled())
   {
-    if (! (select && select->skip_record()))
+    if (not (select && select->skip_record()))
     {
       if (table->cursor->was_semi_consistent_read())
         continue;  /* repeat the read of the same row if it still exists */
 
       table->storeRecord();
       if (fill_record(session, fields, values))
-      {
-        /*
-         * If we updated some rows before this one failed (updated > 0),
-         * then we will need to undo adding those records to the
-         * replication Statement message.
-         */
-        if (updated > 0)
-        {
-          TransactionServices &ts= TransactionServices::singleton();
-          ts.removeStatementRecords(session, updated);
-        }
-
         break;
-      }
 
       found++;
 
-      if (!can_compare_record || table->compare_record())
+      if (! table->records_are_comparable() || table->compare_records())
       {
         /* Non-batched update */
         error= table->cursor->updateRecord(table->getUpdateRecord(),
@@ -544,7 +524,7 @@ int mysql_update(Session *session, TableList *table_list,
     It's assumed that if an error was set in combination with an effective
     killed status then the error is due to killing.
   */
-  killed_status= session->killed; // get the status of the volatile
+  killed_status= session->getKilled(); // get the status of the volatile
   // simulated killing after the loop must be ineffective for binlogging
   error= (killed_status == Session::NOT_KILLED)?  error : 1;
 
@@ -617,7 +597,7 @@ err:
   Prepare items in UPDATE statement
 
   SYNOPSIS
-    mysql_prepare_update()
+    prepare_update()
     session			- thread handler
     table_list		- global/local table list
     conds		- conditions
@@ -628,8 +608,8 @@ err:
     false OK
     true  error
 */
-bool mysql_prepare_update(Session *session, TableList *table_list,
-			 Item **conds, uint32_t order_num, order_st *order)
+bool prepare_update(Session *session, TableList *table_list,
+			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;
   Select_Lex *select_lex= &session->lex->select_lex;

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,12 +38,12 @@ bool statement::Replace::execute()
     return true;
   }
 
-  if (wait_if_global_read_lock(session, false, true))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
-  bool res= mysql_insert(session, 
+  bool res= insert_query(session, 
                          all_tables, 
                          session->lex->field_list, 
                          session->lex->many_values,
@@ -55,7 +55,8 @@ bool statement::Replace::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
+
   return res;
 }
 

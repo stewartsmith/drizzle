@@ -1,4 +1,4 @@
-/* Copyright (c) 2005 PrimeBase Technologies GmbH
+/* Copyright (C) 2005 PrimeBase Technologies GmbH
  *
  * Derived from ha_example.h
  * Copyright (C) 2003 MySQL AB
@@ -101,9 +101,9 @@ public:
 	/* override */ uint32_t max_supported_keys(void) const { return UINT32_MAX; }
 	/* override */ uint32_t max_supported_key_part_length(void) const { return MAX_KEY_LENGTH; }
 
-	/* override */ void doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                           const drizzled::SchemaIdentifier&,
-                                           drizzled::TableIdentifiers&) {}
+        /* override */ void doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                                  const drizzled::SchemaIdentifier&,
+                                                  drizzled::TableIdentifier::vector&) {}
 
 	/* override */ bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 

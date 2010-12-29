@@ -3,7 +3,7 @@
 # 
 # We create a table then alter it by adding a column into it. 
 # 
-# We then use the transaction_reader in drizzled/message/ to read the events.
+# We then use the transaction_reader in plugin/transaction_log/utilities to read the events.
 #
 
 --disable_warnings
@@ -17,3 +17,5 @@ CREATE TABLE t1 (
 );
 
 RENAME TABLE t1 TO t2;
+
+DROP TABLE t2;

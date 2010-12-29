@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ namespace drizzled
 
 /**
   @details
-  Created mostly for mysql_prepare_table(). Important
+  Created mostly for prepare_table(). Important
   when a string ENUM/SET column is described with a numeric default value:
 
   CREATE TABLE t1(a SET('a') DEFAULT 1);

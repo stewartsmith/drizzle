@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2006, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2006, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -159,28 +159,6 @@ get_innobase_type_from_mysql_type(
 	const void*	field)		/*!< in: MySQL Field */
 	__attribute__((nonnull));
 
-/*************************************************************//**
-If you want to print a thd that is not associated with the current thread,
-you must call this function before reserving the InnoDB kernel_mutex, to
-protect MySQL from setting thd->query NULL. If you print a thd of the current
-thread, we know that MySQL cannot modify thd->query, and it is not necessary
-to call this. Call innobase_mysql_end_print_arbitrary_thd() after you release
-the kernel_mutex. */
-UNIV_INTERN
-void
-innobase_mysql_prepare_print_arbitrary_thd(void);
-/*============================================*/
-
-/*************************************************************//**
-Releases the mutex reserved by innobase_mysql_prepare_print_arbitrary_thd().
-In the InnoDB latching order, the mutex sits right above the
-kernel_mutex.  In debug builds, we assert that the kernel_mutex is
-released before this function is invoked. */
-UNIV_INTERN
-void
-innobase_mysql_end_print_arbitrary_thd(void);
-/*========================================*/
-
 /******************************************************************//**
 Get the variable length bounds of the given character set. */
 UNIV_INTERN
@@ -244,11 +222,22 @@ innobase_casedn_str(
 /**********************************************************************//**
 Determines the connection character set.
 @return	connection character set */
-UNIV_INTERN
 const void *
 innobase_get_charset(
 /*=================*/
 	void*	mysql_thd);	/*!< in: MySQL thread handle */
+
+/**********************************************************************//**
+Determines the current SQL statement.
+@return        SQL statement string */
+UNIV_INTERN
+const char*
+innobase_get_stmt(
+/*==============*/
+       void*   mysql_thd,      /*!< in: MySQL thread handle */
+       size_t* length)         /*!< out: length of the SQL statement */
+       __attribute__((nonnull));
+
 
 /******************************************************************//**
 This function is used to find the storage length in bytes of the first n
@@ -289,6 +278,14 @@ thd_lock_wait_timeout(
 /*==================*/
 	void*	thd);	/*!< in: thread handle (THD*), or NULL to query
 			the global innodb_lock_wait_timeout */
+/******************************************************************//**
+Add up the time waited for the lock for the current query. */
+UNIV_INTERN
+void
+thd_set_lock_wait_time(
+/*===================*/
+        void*   thd,	/*!< in: thread handle (THD*) */
+        ulint   value);	/*!< in: time waited for the lock */
 
 UNIV_INTERN
 bool

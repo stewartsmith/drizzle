@@ -23,11 +23,10 @@
 
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"
+#include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/authorization.h"
-
-using namespace std;
 
 namespace drizzled
 {
@@ -36,13 +35,13 @@ namespace plugin
 {
 
 class AddSchemaNames : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
-  SchemaIdentifiers &schemas;
+  SchemaIdentifier::vector &schemas;
 
 public:
 
-  AddSchemaNames(SchemaIdentifiers &of_names) :
+  AddSchemaNames(SchemaIdentifier::vector &of_names) :
     schemas(of_names)
   {
   }
@@ -53,23 +52,23 @@ public:
   }
 };
 
-void StorageEngine::getIdentifiers(Session &session, SchemaIdentifiers &schemas)
+void StorageEngine::getIdentifiers(Session &session, SchemaIdentifier::vector &schemas)
 {
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
            AddSchemaNames(schemas));
 
-  plugin::Authorization::pruneSchemaNames(session.getSecurityContext(), schemas);
+  plugin::Authorization::pruneSchemaNames(session.user(), schemas);
 }
 
-class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
+class StorageEngineGetSchemaDefinition: public std::unary_function<StorageEngine *, bool>
 {
   const SchemaIdentifier &identifier;
-  message::SchemaPtr &schema_proto;
+  message::schema::shared_ptr &schema_proto;
 
 public:
   StorageEngineGetSchemaDefinition(const SchemaIdentifier &identifier_arg,
-                                   message::SchemaPtr &schema_proto_arg) :
+                                   message::schema::shared_ptr &schema_proto_arg) :
     identifier(identifier_arg),
     schema_proto(schema_proto_arg) 
   {
@@ -84,16 +83,16 @@ public:
 /*
   Return value is "if parsed"
 */
-bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::SchemaPtr &proto)
+bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::schema::shared_ptr &proto)
 {
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
 
-bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::SchemaPtr &proto)
+bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::schema::shared_ptr &proto)
 {
   EngineVector::iterator iter=
-    find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-            StorageEngineGetSchemaDefinition(identifier, proto));
+    std::find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                 StorageEngineGetSchemaDefinition(identifier, proto));
 
   if (iter != StorageEngine::getSchemaEngines().end())
   {
@@ -105,7 +104,7 @@ bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, mess
 
 bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
 {
-  message::SchemaPtr proto;
+  message::schema::shared_ptr proto;
 
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
@@ -113,20 +112,23 @@ bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
 
 const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &identifier)
 {
-  message::SchemaPtr schmema_proto;
+  message::schema::shared_ptr schmema_proto;
   bool found;
 
   found= StorageEngine::getSchemaDefinition(identifier, schmema_proto);
 
   if (found && schmema_proto->has_collation())
   {
-    const string buffer= schmema_proto->collation();
+    const std::string buffer= schmema_proto->collation();
     const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
 
     if (not cs)
     {
+      std::string path;
+      identifier.getSQLPath(path);
+
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Error while loading database options: '%s':"), const_cast<SchemaIdentifier &>(identifier).getSQLPath().c_str());
+                    _("Error while loading database options: '%s':"), path.c_str());
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
 
       return default_charset_info;
@@ -139,7 +141,7 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &id
 }
 
 class CreateSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   const drizzled::message::Schema &schema_message;
 
@@ -153,21 +155,27 @@ public:
   result_type operator() (argument_type engine)
   {
     // @todo eomeday check that at least one engine said "true"
-    (void)engine->doCreateSchema(schema_message);
+    bool success= engine->doCreateSchema(schema_message);
+
+    if (success) 
+    {
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.allocateNewTransactionId();
+    }
   }
 };
 
 bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
 {
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           CreateSchema(schema_message));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                CreateSchema(schema_message));
 
   return true;
 }
 
 class DropSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
   const SchemaIdentifier &identifier;
@@ -186,7 +194,11 @@ public:
     bool success= engine->doDropSchema(identifier);
 
     if (success)
+    {
       success_count++;
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.allocateNewTransactionId();
+    }
   }
 };
 
@@ -194,14 +206,14 @@ bool StorageEngine::dropSchema(const SchemaIdentifier &identifier)
 {
   uint64_t counter= 0;
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           DropSchema(identifier, counter));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                DropSchema(identifier, counter));
 
   return counter ? true : false;
 }
 
 class AlterSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
   const drizzled::message::Schema &schema_message;
@@ -221,7 +233,11 @@ public:
 
 
     if (success)
+    {
       success_count++;
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.allocateNewTransactionId();
+    }
   }
 };
 
@@ -229,8 +245,8 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 {
   uint64_t success_count= 0;
 
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           AlterSchema(schema_message, success_count));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                AlterSchema(schema_message, success_count));
 
   return success_count ? true : false;
 }

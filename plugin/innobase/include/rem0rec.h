@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -659,7 +659,7 @@ rec_fold(
 					fields to fold */
 	ulint		n_bytes,	/*!< in: number of bytes to fold
 					in an incomplete last field */
-	dulint		tree_id)	/*!< in: index tree id */
+	index_id_t	tree_id)	/*!< in: index tree id */
 	__attribute__((pure));
 #endif /* !UNIV_HOTBACKUP */
 /*********************************************************//**
@@ -801,9 +801,9 @@ UNIV_INTERN
 void
 rec_print(
 /*======*/
-	FILE*		file,	/*!< in: file where to print */
-	const rec_t*	rec,	/*!< in: physical record */
-	dict_index_t*	index);	/*!< in: record descriptor */
+	FILE*			file,	/*!< in: file where to print */
+	const rec_t*		rec,	/*!< in: physical record */
+	const dict_index_t*	index);	/*!< in: record descriptor */
 #endif /* UNIV_HOTBACKUP */
 
 #define REC_INFO_BITS		6	/* This is single byte bit-field */

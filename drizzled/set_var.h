@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,11 +20,6 @@
 #ifndef DRIZZLED_SET_VAR_H
 #define DRIZZLED_SET_VAR_H
 
-/*#include "drizzled/function/func.h"
-#include "drizzled/function/set_user_var.h"
-#include "drizzled/item/string.h"
-#include "drizzled/item/field.h"
-*/
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/lex_string.h"

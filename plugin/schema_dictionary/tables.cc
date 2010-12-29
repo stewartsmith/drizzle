@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ TablesTool::Generator::Generator(Field **arg) :
 
 bool TablesTool::Generator::nextTable()
 {
-  const drizzled::message::Table *table_ptr;
+  drizzled::message::table::shared_ptr table_ptr;
   while ((table_ptr= all_tables_generator))
   {
     table_message.CopyFrom(*table_ptr);

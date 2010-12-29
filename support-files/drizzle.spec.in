@@ -368,7 +368,6 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/query_id.h
 %{_includedir}/drizzled/records.h
 %{_includedir}/drizzled/replication_services.h
-%{_includedir}/drizzled/security_context.h
 %{_includedir}/drizzled/select_create.h
 %{_includedir}/drizzled/select_dump.h
 %{_includedir}/drizzled/select_dumpvar.h

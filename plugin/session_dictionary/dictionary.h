@@ -23,5 +23,7 @@
 
 #include "drizzled/plugin/table_function.h"
 #include "plugin/session_dictionary/processlist.h"
+#include "plugin/session_dictionary/savepoints.h"
+#include "plugin/session_dictionary/variables.h"
 
 #endif /* PLUGIN_SESSION_DICTIONARY_DICTIONARY_H */

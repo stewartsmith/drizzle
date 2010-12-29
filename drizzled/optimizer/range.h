@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -345,7 +345,7 @@ QuickRangeSelect *get_quick_select(Parameter *param,
                                    uint32_t mrr_buf_size, 
                                    memory::Root *alloc);
 
-uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);
+uint32_t get_index_for_order(Table *table, Order *order, ha_rows limit);
 
 SqlSelect *make_select(Table *head, 
                        table_map const_tables,

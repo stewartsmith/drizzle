@@ -43,7 +43,6 @@ TODO:
 #include "config.h"
 #include <drizzled/field.h>
 #include <drizzled/field/blob.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -144,12 +143,12 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
 };
 
 void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                  const drizzled::SchemaIdentifier&,
-                                 drizzled::TableIdentifiers&)
+                                 drizzled::TableIdentifier::vector&)
 {
 }
 
@@ -167,14 +166,14 @@ int Tina::doRenameTable(Session &session,
     }
   }
 
-  session.renameTableMessage(from, to);
+  session.getMessageCache().renameTableMessage(from, to);
 
   return error;
 }
 
 bool Tina::doDoesTableExist(Session &session, const drizzled::TableIdentifier &identifier)
 {
-  return session.doesTableMessageExist(identifier);
+  return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 
@@ -201,7 +200,7 @@ int Tina::doDropTable(Session &session,
     error= enoent_or_zero;
   }
 
-  session.removeTableMessage(identifier);
+  session.getMessageCache().removeTableMessage(identifier);
 
   return error;
 }
@@ -232,7 +231,7 @@ int Tina::doGetTableDefinition(Session &session,
                                const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
-  if (session.getTableMessage(identifier, table_message))
+  if (session.getMessageCache().getTableMessage(identifier, table_message))
     return EEXIST;
 
   return ENOENT;
@@ -746,9 +745,10 @@ int ha_tina::find_current_row(unsigned char *buf)
     {
       /* This masks a bug in the logic for a SELECT * */
       (*field)->setWriteSet();
-      if ((*field)->store(buffer.ptr(), buffer.length(), buffer.charset(),
-                          CHECK_FIELD_WARN))
+      if ((*field)->store_and_check(CHECK_FIELD_WARN, buffer.c_ptr(), buffer.length(), buffer.charset()))
+      {
         goto err;
+      }
 
       if ((*field)->flags & BLOB_FLAG)
       {
@@ -1308,7 +1308,7 @@ int Tina::doCreateTable(Session &session,
 
   internal::my_close(create_file, MYF(0));
 
-  session.storeTableMessage(identifier, create_proto);
+  session.getMessageCache().storeTableMessage(identifier, create_proto);
 
   return 0;
 }

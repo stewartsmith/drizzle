@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ namespace drizzled
 class filesort_info
 {
 public:
-  internal::IO_CACHE *io_cache;           /* If sorted through filesort */
+  internal::st_io_cache *io_cache;           /* If sorted through filesort */
   unsigned char     **sort_keys;        /* Buffer for sorting keys */
   unsigned char     *buffpek;           /* Buffer for buffpek structures */
   uint32_t      buffpek_len;        /* Max number of buffpeks in the buffer */
@@ -52,6 +52,25 @@ public:
     record_pointers(0),
     found_records()
   { }
+
+  filesort_info(const filesort_info& arg) :
+    io_cache(arg.io_cache),
+    sort_keys(arg.sort_keys),
+    buffpek(arg.buffpek),
+    buffpek_len(arg.buffpek_len),
+    addon_buf(arg.addon_buf),
+    addon_length(arg.addon_length),
+    addon_field(arg.addon_field),
+    unpack(arg.unpack),
+    record_pointers(arg.record_pointers),
+    found_records(arg.found_records)
+  {
+  }
+
+  ~filesort_info()
+  {
+  }
+
 };
 
 } /* namespace drizzled */

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/plugin/logging.h"
 
 namespace drizzled
 {
@@ -34,7 +35,7 @@ bool statement::Flush::execute()
    * reloadCache() will tell us if we are allowed to write to the
    * binlog or not.
    */
-  if (! reloadCache())
+  if (not reloadCache())
   {
     /*
      * We WANT to write and we CAN write.
@@ -42,7 +43,7 @@ bool statement::Flush::execute()
      *
      * Presumably, RESET and binlog writing doesn't require synchronization
      */
-    write_bin_log(session, session->query.c_str());
+    write_bin_log(session, *session->getQueryString());
     session->my_ok();
   }
 
@@ -69,16 +70,16 @@ bool statement::Flush::reloadCache()
   {
     if (session && flush_tables_with_read_lock)
     {
-      if (lock_global_read_lock(session))
+      if (session->lockGlobalReadLock())
       {
         return true; /* Killed */
       }
       result= session->close_cached_tables(tables, true, true);
 
-      if (make_global_read_lock_block_commit(session)) /* Killed */
+      if (session->makeGlobalReadLockBlockCommit()) /* Killed */
       {
         /* Don't leave things in a half-locked state */
-        unlock_global_read_lock(session);
+        session->unlockGlobalReadLock();
         return true;
       }
     }
@@ -93,7 +94,14 @@ bool statement::Flush::reloadCache()
     session->refresh_status();
   }
 
- return result;
+  if (session && flush_global_status)
+  {
+    memset(&current_global_counters, 0, sizeof(current_global_counters));
+    plugin::Logging::resetStats(session);
+    session->refresh_status();
+  }
+
+  return result;
 }
 
 }

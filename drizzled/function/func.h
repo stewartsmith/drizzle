@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -160,7 +160,7 @@ public:
     {Sum}Functype and Item_func::functype()/Item_sum::sum_func()
     instead.
   */
-  virtual const char *func_name() const { return NULL; };
+  virtual const char *func_name() const { return NULL; }
   virtual bool const_item() const { return const_item_cache; }
   Item **arguments() const { return args; }
   void set_arguments(List<Item> &list);
@@ -183,8 +183,8 @@ public:
   void count_real_length();
   void count_decimal_length();
 
-  bool get_arg0_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
-  bool get_arg0_time(DRIZZLE_TIME *ltime);
+  bool get_arg0_date(type::Time *ltime, uint32_t fuzzy_date);
+  bool get_arg0_time(type::Time *ltime);
 
   bool is_null();
 
@@ -195,7 +195,7 @@ public:
 
   Item *get_tmp_table_item(Session *session);
 
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
 
   bool agg_arg_collations(DTCollation &c, Item **items, uint32_t nitems,
                           uint32_t flags);

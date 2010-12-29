@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,9 +68,8 @@ void TableFunctionContainer::getNames(const string &predicate,
 
 void TableFunctionContainer::addFunction(plugin::TableFunction *tool)
 {
-  std::pair<ToolMap::iterator, bool> ret;
-
-  ret= table_map.insert(std::make_pair(tool->getPath(), tool));
+  std::pair<ToolMap::iterator, bool> ret=
+    table_map.insert(std::make_pair(tool->getPath(), tool));
   assert(ret.second == true);
 }
 

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,98 +20,80 @@
 
 #include "config.h"
 
-#include <drizzled/gettext.h>
-#include <drizzled/session.h>
-
 #include <stdarg.h>
 #include <limits.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <boost/date_time.hpp>
+
+#include <drizzled/gettext.h>
+#include <drizzled/session.h>
+
 #include "logging.h"
 #include "wrap.h"
 
-using namespace drizzled;
-
-/* stolen from mysys/my_getsystime
-   until the Session has a good utime "now" we can use
-   will have to use this instead */
-
-static uint64_t get_microtime()
+namespace drizzle_plugin
 {
-#if defined(HAVE_GETHRTIME)
-  return gethrtime()/1000;
-#else
-  uint64_t newtime;
-  struct timeval t;
-  /* loop is because gettimeofday may fail on some systems */
-  while (gettimeofday(&t, NULL) != 0) {}
-  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
-  return newtime;
-#endif
-}
 
-Logging_syslog::Logging_syslog()
-  : drizzled::plugin::Logging("Logging_syslog")
+logging::Syslog::Syslog(const std::string &facility,
+                        const std::string &priority,
+                        uint64_t threshold_slow,
+                        uint64_t threshold_big_resultset,
+                        uint64_t threshold_big_examined) :
+  drizzled::plugin::Logging("Syslog Logging"),
+  _facility(WrapSyslog::getFacilityByName(facility.c_str())),
+  _priority(WrapSyslog::getPriorityByName(priority.c_str())),
+  _threshold_slow(threshold_slow),
+  _threshold_big_resultset(threshold_big_resultset),
+  _threshold_big_examined(threshold_big_examined)
 {
-  syslog_facility= WrapSyslog::getFacilityByName(syslog_module::sysvar_facility);
-  if (syslog_facility < 0)
+  if (_facility < 0)
   {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog facility \"%s\" not known, using \"local0\""),
-                  syslog_module::sysvar_facility);
-    syslog_facility= WrapSyslog::getFacilityByName("local0");
+    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+                            _("syslog facility \"%s\" not known, using \"local0\""),
+                            facility.c_str());
+    _facility= WrapSyslog::getFacilityByName("local0");
   }
 
-  syslog_priority= WrapSyslog::getPriorityByName(syslog_module::sysvar_logging_priority);
-  if (syslog_priority < 0)
+  if (_priority < 0)
   {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog priority \"%s\" not known, using \"info\""),
-                  syslog_module::sysvar_logging_priority);
-    syslog_priority= WrapSyslog::getPriorityByName("info");
+    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+                            _("syslog priority \"%s\" not known, using \"info\""),
+                            priority.c_str());
+    _priority= WrapSyslog::getPriorityByName("info");
   }
-
-  WrapSyslog::singleton().openlog(syslog_module::sysvar_ident);
 }
 
 
-bool Logging_syslog::post (Session *session)
+bool logging::Syslog::post(drizzled::Session *session)
 {
   assert(session != NULL);
 
-  if (syslog_module::sysvar_logging_enable == false)
-    return false;
-  
   // return if query was not too small
-  if (session->sent_row_count < syslog_module::sysvar_logging_threshold_big_resultset)
+  if (session->sent_row_count < _threshold_big_resultset)
     return false;
-  if (session->examined_row_count < syslog_module::sysvar_logging_threshold_big_examined)
+  if (session->examined_row_count < _threshold_big_examined)
     return false;
   
   /* TODO, the session object should have a "utime command completed"
      inside itself, so be more accurate, and so this doesnt have to
      keep calling current_utime, which can be slow */
   
-  uint64_t t_mark= get_microtime();
+  boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+  boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+  uint64_t t_mark= (mytime-epoch).total_microseconds();
 
   // return if query was not too slow
-  if ((t_mark - session->start_utime) < syslog_module::sysvar_logging_threshold_slow)
+  if ((t_mark - session->start_utime) < _threshold_slow)
     return false;
   
-  /* to avoid trying to printf %s something that is potentially NULL */
-  
-  const char *dbs= session->db.empty() ? "" : session->db.c_str();
-  
-  const char *qys= (! session->getQueryString().empty()) ? session->getQueryString().c_str() : "";
-  int qyl= 0;
-  if (qys)
-    qyl= session->getQueryLength();
+  drizzled::Session::QueryString query_string(session->getQueryString());
+  drizzled::util::string::const_shared_ptr schema(session->schema());
 
   WrapSyslog::singleton()
-    .log(syslog_facility, syslog_priority,
+    .log(_facility, _priority,
          "thread_id=%ld query_id=%ld"
          " db=\"%.*s\""
          " query=\"%.*s\""
@@ -121,10 +103,12 @@ bool Logging_syslog::post (Session *session)
          " tmp_table=%ld total_warn_count=%ld\n",
          (unsigned long) session->thread_id,
          (unsigned long) session->getQueryId(),
-         (int) session->db.length(), dbs,
-         qyl, qys,
-         (int) command_name[session->command].length,
-         command_name[session->command].str,
+         (int) schema->size(),
+         schema->empty() ? "" : schema->c_str(),
+         (int) query_string->length(), 
+         query_string->empty() ? "" : query_string->c_str(),
+         (int) drizzled::command_name[session->command].length,
+         drizzled::command_name[session->command].str,
          (unsigned long long) (t_mark - session->getConnectMicroseconds()),
          (unsigned long long) (t_mark - session->start_utime),
          (unsigned long long) (t_mark - session->utime_after_lock),
@@ -135,3 +119,5 @@ bool Logging_syslog::post (Session *session)
   
     return false;
 }
+
+} /* namespsace drizzle_plugin */

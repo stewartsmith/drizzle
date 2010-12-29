@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ bool statement::Load::execute()
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  bool res= mysql_load(session,
+  bool res= load(session,
                        session->lex->exchange,
                        first_table,
                        session->lex->field_list,

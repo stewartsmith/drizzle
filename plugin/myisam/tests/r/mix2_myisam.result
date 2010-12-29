@@ -263,22 +263,22 @@ col1	col2
 2	3
 3	4
 4	7
-alter table t1 add co3 int not null;
+alter table t1 add co3 int DEFAULT 42 not null;
 select * from t1;
 col1	col2	co3
-1	1	0
-5	2	0
-2	3	0
-3	4	0
-4	7	0
+1	1	42
+5	2	42
+2	3	42
+3	4	42
+4	7	42
 update t1 set col2='9' where col1='2';
 select * from t1;
 col1	col2	co3
-1	1	0
-5	2	0
-2	9	0
-3	4	0
-4	7	0
+1	1	42
+5	2	42
+2	9	42
+3	4	42
+4	7	42
 drop table t1;
 create TEMPORARY table t1 (a int not null , b int, primary key (a)) engine = MyISAM;
 create TEMPORARY table t2 (a int not null , b int, primary key (a)) engine = MEMORY;

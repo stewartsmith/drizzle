@@ -1,4 +1,4 @@
-/* Copyright (c) 2010 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2010 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -28,8 +28,11 @@
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/session.h>
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 using namespace drizzled;
 using namespace drizzled::plugin;
+namespace po= boost::program_options;
 
 #include "cslib/CSConfig.h"
 #else
@@ -45,7 +48,7 @@ using namespace drizzled::plugin;
 
 
 #include "defs_ms.h"
-
+#include "pbmslib.h"
 
 /////////////////////////
 // Plugin Definition:
@@ -54,21 +57,24 @@ using namespace drizzled::plugin;
 #include "events_ms.h"
 static PBMSEvents *pbms_events= NULL;
 
-
 extern int pbms_init_func(module::Context &registry);
-extern struct drizzled::drizzle_sys_var* pbms_system_variables[];
 
-static int my_init(module::Context &registry)
+static void init_options(module::option_context &context)
+{
+	PBMSParameters::initOptions(context);
+}
+
+static int my_init(module::Context &context)
 {
 	int rtc;
-	
-	PBMSParameters::startUp();
-	rtc = pbms_init_func(registry);
+
+	PBMSParameters::startUp(context);
+	rtc = pbms_init_func(context);
 	if (rtc == 0) {
 		pbms_events = new PBMSEvents();
-		registry.add(pbms_events);
+		context.add(pbms_events);
 	}
-	
+
 	return rtc;
 }
 
@@ -81,8 +87,8 @@ DRIZZLE_DECLARE_PLUGIN
 	"The Media Stream daemon for Drizzle",
 	PLUGIN_LICENSE_GPL,
 	my_init, /* Plugin Init */
-	pbms_system_variables,          /* system variables                */
-	NULL                                            /* config options                  */
+	NULL,          /* system variables                */
+	init_options                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
 
@@ -119,3 +125,4 @@ mysql_declare_plugin_end;
 #endif //DRIZZLED
 
 
+// vim:noexpandtab:sts=8:sw=8:tabstop=8:smarttab:

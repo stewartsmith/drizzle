@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (c) 2006 MySQL AB
- *  Copyright (c) 2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2006 MySQL AB
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include <drizzled/configmake.h>
 using namespace std;
 #include <boost/program_options.hpp>
+#include <boost/scoped_ptr.hpp>
 namespace po= boost::program_options;
 #include "azio.h"
 #include <string.h>
@@ -32,6 +33,7 @@ namespace po= boost::program_options;
 #include <stdio.h>
 #include <stdarg.h>
 #include <fcntl.h>
+#include <memory>
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/m_string.h"
 
@@ -85,12 +87,21 @@ try
   ;
 
   unsigned int ret;
-  azio_stream reader_handle;
+  boost::scoped_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  azio_stream &reader_handle= *reader_handle_ap.get();
 
   std::string system_config_dir_archive_reader(SYSCONFDIR); 
   system_config_dir_archive_reader.append("/drizzle/archive_reader.cnf");
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
   
   po::options_description long_options("Allowed Options");
   long_options.add(commandline_options).add(archive_reader_options);
@@ -155,7 +166,8 @@ try
 
   if (opt_autoincrement)
   {
-    azio_stream writer_handle;
+    boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
+    azio_stream &writer_handle= *writer_handle_ap.get();
 
     if (new_auto_increment_value)
     {
@@ -252,7 +264,8 @@ try
     uint64_t row_count= 0;
     char *buffer;
 
-    azio_stream writer_handle;
+    boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
+    azio_stream &writer_handle= *writer_handle_ap.get();
 
     buffer= (char *)malloc(reader_handle.longest_row);
     if (buffer == NULL)

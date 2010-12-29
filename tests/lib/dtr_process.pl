@@ -356,7 +356,7 @@ sub dtr_kill_leftovers () {
     dtr_debug("  - drizzled " .
               "(pid: $srv->{pid}; " .
               "pid file: '$srv->{path_pid}'; " .
-              "socket: '$srv->{path_sock}'; ".
+              "socket: '$srv->{sockfile}'; ".
               "port: $srv->{port})");
 
     my $pid= dtr_server_shutdown($srv);
@@ -367,7 +367,7 @@ sub dtr_kill_leftovers () {
     push(@kill_pids,{
 		     pid      => $srv->{'pid'},
 		     pidfile  => $srv->{'path_pid'},
-		     sockfile => $srv->{'path_sock'},
+		     sockfile => $srv->{'sockfile'},
 		     port     => $srv->{'port'},
 		    });
     $srv->{'pid'}= 0; # Assume we are done with it
@@ -590,6 +590,11 @@ sub dtr_check_stop_servers ($) {
       {
         dtr_error("can't remove $srv->{'pidfile'}");
       }
+      if ( -f $srv->{'sockfile'} and ! unlink($srv->{'sockfile'}) and
+           -f $srv->{'sockfile'} )
+      {
+        dtr_error("can't remove $srv->{'sockfile'}");
+      }
     }
   }
 
@@ -608,6 +613,10 @@ sub dtr_check_stop_servers ($) {
     my $errors= 0;
     foreach my $srv ( @$spec )
     {
+      if ( $srv->{'sockfile'} )
+      {
+        unlink($srv->{'sockfile'});
+      }
       if ( $srv->{'pid'} )
       {
 	# Server has been hard killed, clean it's resources
@@ -682,17 +691,12 @@ sub dtr_server_shutdown($) {
   dtr_add_arg($args, "--password=");
   dtr_add_arg($args, "--silent");
 
-  if ( -e $srv->{'path_sock'} )
-  {
-    dtr_add_arg($args, "--socket=%s", $srv->{'path_sock'});
-  }
-
   if ( $srv->{'port'} )
   {
     dtr_add_arg($args, "--port=%s", $srv->{'port'});
   }
 
-  dtr_add_arg($args, "--connect_timeout=5");
+  dtr_add_arg($args, "--connect-timeout=5");
 
   my $pid= dtr_spawn($::exe_drizzle, $args,
                      "", "", "", "", { append_log_file => 1 });

@@ -155,7 +155,7 @@ select @a;
 # Second part, set user var from large number in table
 # then select it
 CREATE TABLE `bigfailure` (
-  `afield` BIGINT NOT NULL
+  `afield` BIGINT UNSIGNED NOT NULL
 );
 INSERT INTO `bigfailure` VALUES (18446744071710965857);
 SELECT * FROM bigfailure;

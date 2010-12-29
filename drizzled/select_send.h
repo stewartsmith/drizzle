@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ public:
     /* Unlock tables before sending packet to gain some speed */
     if (session->lock)
     {
-      mysql_unlock_tables(session, session->lock);
+      session->unlockTables(session->lock);
       session->lock= 0;
     }
     session->my_eof();
@@ -60,7 +60,7 @@ public:
   bool send_fields(List<Item> &list)
   {
     bool res;
-    if (! (res= session->client->sendFields(&list)))
+    if (! (res= session->getClient()->sendFields(&list)))
       is_result_set_started= 1;
     return res;
   }
@@ -106,7 +106,7 @@ public:
     Item *item;
     while ((item=li++))
     {
-      if (item->send(session->client, &buffer))
+      if (item->send(session->getClient(), &buffer))
       {
         my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
         break;
@@ -119,7 +119,7 @@ public:
     session->sent_row_count++;
     if (session->is_error())
       return true;
-    return session->client->flush();
+    return session->getClient()->flush();
   }
 };
 

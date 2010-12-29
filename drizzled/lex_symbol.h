@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,7 +42,6 @@ typedef struct st_lex_symbol
   char   *str;
   uint32_t   length;
 } LEX_SYMBOL;
-
 
 extern SYM_GROUP sym_group_common;
 extern SYM_GROUP sym_group_geom;

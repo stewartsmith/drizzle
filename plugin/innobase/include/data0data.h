@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -309,7 +309,7 @@ dtuple_fold(
 	ulint		n_fields,/*!< in: number of complete fields to fold */
 	ulint		n_bytes,/*!< in: number of bytes to fold in an
 				incomplete last field */
-	dulint		tree_id)/*!< in: index tree id */
+	index_id_t	tree_id)/*!< in: index tree id */
 	__attribute__((pure));
 /*******************************************************************//**
 Sets types of fields binary in a tuple. */

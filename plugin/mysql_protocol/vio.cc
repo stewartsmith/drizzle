@@ -19,7 +19,6 @@
   we are working on.  In this case we should just return read errors from
   the file descriptior.
 */
-
 #include "config.h"
 #include "vio.h"
 #include <string.h>
@@ -41,205 +40,18 @@
 
 using namespace std;
 
-static void _vio_delete(Vio* vio)
+namespace drizzle_plugin
 {
-  if (!vio)
-    return; /* It must be safe to delete null pointers. */
 
-  if (!vio->closed)
-    vio->vioclose(vio);
-  free((unsigned char*) vio);
-}
-
-static int _vio_errno(Vio *vio)
+Vio::Vio(int nsd) :
+  closed(false),
+  sd(nsd),
+  fcntl_mode(0),
+  local(),
+  remote(),
+  read_pos(NULL),
+  read_end(NULL)
 {
-  (void)vio;
-  return errno;
-}
-
-static size_t _vio_read(Vio * vio, unsigned char* buf, size_t size)
-{
-  size_t r;
-
-  /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
-  assert(vio->read_end == vio->read_pos);
-  r= read(vio->sd, buf, size);
-
-  return r;
-}
-
-static size_t _vio_write(Vio * vio, const unsigned char* buf, size_t size)
-{
-  size_t r;
-
-  r = write(vio->sd, buf, size);
-
-  return r;
-}
-
-static int _vio_blocking(Vio * vio, bool set_blocking_mode, bool *old_mode)
-{
-  int r=0;
-
-  *old_mode= drizzled::test(!(vio->fcntl_mode & O_NONBLOCK));
-
-  if (vio->sd >= 0)
-  {
-    int old_fcntl=vio->fcntl_mode;
-    if (set_blocking_mode)
-      vio->fcntl_mode &= ~O_NONBLOCK; /* clear bit */
-    else
-      vio->fcntl_mode |= O_NONBLOCK; /* set bit */
-    if (old_fcntl != vio->fcntl_mode)
-    {
-      r= fcntl(vio->sd, F_SETFL, vio->fcntl_mode);
-      if (r == -1)
-      {
-        vio->fcntl_mode= old_fcntl;
-      }
-    }
-  }
-
-  return r;
-}
-
-static int _vio_fastsend(Vio * vio)
-{
-  (void)vio;
-  int nodelay = 1;
-  int error;
-
-  error= setsockopt(vio->sd, IPPROTO_TCP, TCP_NODELAY,
-                    &nodelay, sizeof(nodelay));
-  if (error != 0)
-  {
-    perror("setsockopt");
-  }
-
-  return error;
-}
-
-static int32_t _vio_keepalive(Vio* vio, bool set_keep_alive)
-{
-  int r= 0;
-  uint32_t opt= 0;
-
-  if (set_keep_alive)
-    opt= 1;
-
-  r= setsockopt(vio->sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
-  if (r != 0)
-  {
-    perror("setsockopt");
-    assert(r == 0);
-  }
-
-  return r;
-}
-
-static bool _vio_should_retry(Vio * vio)
-{
-  (void)vio;
-  int en = errno;
-  return (en == EAGAIN || en == EINTR ||
-	  en == EWOULDBLOCK);
-}
-
-static bool _vio_was_interrupted(Vio *vio)
-{
-  (void)vio;
-  int en= errno;
-  return (en == EAGAIN || en == EINTR ||
-	  en == EWOULDBLOCK || en == ETIMEDOUT);
-}
-
-static int _vio_close(Vio * vio)
-{
-  int r=0;
- if (!vio->closed)
-  {
-    assert(vio->sd >= 0);
-    if (shutdown(vio->sd, SHUT_RDWR))
-      r= -1;
-    if (close(vio->sd))
-      r= -1;
-  }
-  vio->closed= true;
-  vio->sd=   -1;
-
-  return r;
-}
-
-static bool _vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen)
-{
-  int error;
-  char port_buf[NI_MAXSERV];
-  socklen_t addrLen = sizeof(vio->remote);
-
-  if (getpeername(vio->sd, (struct sockaddr *) (&vio->remote),
-                  &addrLen) != 0)
-  {
-    return true;
-  }
-  vio->addrLen= (int)addrLen;
-
-  if ((error= getnameinfo((struct sockaddr *)(&vio->remote),
-                          addrLen,
-                          buf, buflen,
-                          port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))
-  {
-    return true;
-  }
-
-  *port= (uint16_t)strtol(port_buf, (char **)NULL, 10);
-
-  return false;
-}
-
-static void _vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout)
-{
-  int error;
-
-  /* POSIX specifies time as struct timeval. */
-  struct timeval wait_timeout;
-  wait_timeout.tv_sec= timeout;
-  wait_timeout.tv_usec= 0;
-
-  assert(timeout >= 0 && timeout <= INT32_MAX);
-  assert(vio->sd != -1);
-  error= setsockopt(vio->sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO,
-                    &wait_timeout,
-                    (socklen_t)sizeof(struct timeval));
-  if (error == -1 && errno != ENOPROTOOPT)
-  {
-    perror("setsockopt");
-    assert(error == 0);
-  }
-}
-
-/* Open the socket or TCP/IP connection and read the fnctl() status */
-Vio *mysql_protocol_vio_new(int sd)
-{
-  Vio *vio = (Vio*) malloc(sizeof(Vio));
-  if (vio == NULL)
-    return NULL;
-
-  memset(vio, 0, sizeof(*vio));
-  vio->closed= false;
-  vio->sd= sd;
-  vio->viodelete= _vio_delete;
-  vio->vioerrno= _vio_errno;
-  vio->read= _vio_read;
-  vio->write= _vio_write;
-  vio->fastsend= _vio_fastsend;
-  vio->viokeepalive= _vio_keepalive;
-  vio->should_retry= _vio_should_retry;
-  vio->was_interrupted= _vio_was_interrupted;
-  vio->vioclose= _vio_close;
-  vio->peer_addr= _vio_peer_addr;
-  vio->vioblocking= _vio_blocking;
-  vio->timeout= _vio_timeout;
-
   /*
     We call fcntl() to set the flags and then immediately read them back
     to make sure that we and the system are in agreement on the state of
@@ -251,7 +63,192 @@ Vio *mysql_protocol_vio_new(int sd)
     block.
   */
   fcntl(sd, F_SETFL, 0);
-  vio->fcntl_mode= fcntl(sd, F_GETFL);
-
-  return vio;
+  fcntl_mode= fcntl(sd, F_GETFL);
 }
+
+Vio::~Vio()
+{
+ if (!closed)
+    close();
+}
+
+int Vio::close()
+{
+  int r=0;
+  if (!closed)
+  {
+    assert(sd >= 0);
+    if (shutdown(sd, SHUT_RDWR))
+      r= -1;
+    if (::close(sd))
+      r= -1;
+  }
+  closed= true;
+  sd=   -1;
+
+  return r;
+}
+
+size_t Vio::read(unsigned char* buf, size_t size)
+{
+  size_t r;
+
+  /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
+  assert(read_end == read_pos);
+  r= ::read(sd, buf, size);
+
+  return r;
+}
+
+size_t Vio::write(const unsigned char* buf, size_t size)
+{
+  size_t r;
+
+  r = ::write(sd, buf, size);
+
+  return r;
+}
+
+int Vio::blocking(bool set_blocking_mode, bool *old_mode)
+{
+  int r=0;
+
+  // make sure ptr is not NULL:
+  if (NULL != old_mode)
+    *old_mode= drizzled::test(!(fcntl_mode & O_NONBLOCK));
+
+  if (sd >= 0)
+  {
+    int old_fcntl=fcntl_mode;
+    if (set_blocking_mode)
+      fcntl_mode &= ~O_NONBLOCK; /* clear bit */
+    else
+      fcntl_mode |= O_NONBLOCK; /* set bit */
+    if (old_fcntl != fcntl_mode)
+    {
+      r= fcntl(sd, F_SETFL, fcntl_mode);
+      if (r == -1)
+      {
+        fcntl_mode= old_fcntl;
+      }
+    }
+  }
+
+  return r;
+}
+
+int Vio::fastsend()
+{
+  int nodelay = 1;
+  int error;
+
+  error= setsockopt(sd, IPPROTO_TCP, TCP_NODELAY,
+                    &nodelay, sizeof(nodelay));
+  if (error != 0)
+  {
+    perror("setsockopt");
+  }
+
+  return error;
+}
+
+int32_t Vio::keepalive(bool set_keep_alive)
+{
+  int r= 0;
+  uint32_t opt= 0;
+
+  if (set_keep_alive)
+    opt= 1;
+
+  r= setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
+  if (r != 0)
+  {
+    perror("setsockopt");
+    assert(r == 0);
+  }
+
+  return r;
+}
+
+bool Vio::should_retry() const
+{
+  int en = errno;
+  return (en == EAGAIN || en == EINTR ||
+          en == EWOULDBLOCK);
+}
+
+bool Vio::was_interrupted() const
+{
+  int en= errno;
+  return (en == EAGAIN || en == EINTR ||
+          en == EWOULDBLOCK || en == ETIMEDOUT);
+}
+
+bool Vio::peer_addr(char *buf, uint16_t *port, size_t buflen) const
+{
+  int error;
+  char port_buf[NI_MAXSERV];
+  socklen_t al = sizeof(remote);
+
+  if (getpeername(sd, (struct sockaddr *) (&remote),
+                  &al) != 0)
+  {
+    return true;
+  }
+
+  if ((error= getnameinfo((struct sockaddr *)(&remote),
+                          al,
+                          buf, buflen,
+                          port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))
+  {
+    return true;
+  }
+
+  *port= (uint16_t)strtol(port_buf, (char **)NULL, 10);
+
+  return false;
+}
+
+void Vio::timeout(bool is_sndtimeo, int32_t t)
+{
+  int error;
+
+  /* POSIX specifies time as struct timeval. */
+  struct timeval wait_timeout;
+  wait_timeout.tv_sec= t;
+  wait_timeout.tv_usec= 0;
+
+  assert(t >= 0 && t <= INT32_MAX);
+  assert(sd != -1);
+  error= setsockopt(sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO,
+                    &wait_timeout,
+                    (socklen_t)sizeof(struct timeval));
+  if (error == -1 && errno != ENOPROTOOPT)
+  {
+    perror("setsockopt");
+    assert(error == 0);
+  }
+}
+
+int Vio::get_errno() const
+{
+  return errno;
+}
+
+int Vio::get_fd() const
+{
+  return sd;
+}
+
+
+char *Vio::get_read_pos() const
+{
+  return read_pos;
+}
+
+char *Vio::get_read_end() const
+{
+  return read_end;
+}
+
+} /* namespace drizzle_plugin */

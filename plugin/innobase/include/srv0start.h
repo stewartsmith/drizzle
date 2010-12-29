@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -90,10 +90,6 @@ innobase_shutdown_for_mysql(void);
 extern	ib_uint64_t	srv_shutdown_lsn;
 /** Log sequence number immediately after startup */
 extern	ib_uint64_t	srv_start_lsn;
-
-#ifdef __NETWARE__
-void set_panic_flag_for_netware(void);
-#endif
 
 #ifdef HAVE_DARWIN_THREADS
 /** TRUE if the F_FULLFSYNC option is available */

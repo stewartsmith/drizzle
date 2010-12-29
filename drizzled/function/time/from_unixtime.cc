@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ void Item_func_from_unixtime::fix_length_and_dec()
 
 String *Item_func_from_unixtime::val_str(String *str)
 {
-  DRIZZLE_TIME time_tmp;
+  type::Time time_tmp;
 
   assert(fixed == 1);
 
@@ -61,7 +61,7 @@ String *Item_func_from_unixtime::val_str(String *str)
 
 int64_t Item_func_from_unixtime::val_int()
 {
-  DRIZZLE_TIME time_tmp;
+  type::Time time_tmp;
 
   assert(fixed == 1);
 
@@ -71,7 +71,7 @@ int64_t Item_func_from_unixtime::val_int()
   return (int64_t) TIME_to_uint64_t_datetime(&time_tmp);
 }
 
-bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime, uint32_t)
+bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
 {
   uint64_t tmp= (uint64_t)(args[0]->val_int());
   /*

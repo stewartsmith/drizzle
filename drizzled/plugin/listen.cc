@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,14 +30,12 @@
 
 #include <poll.h>
 
-using namespace std;
-
 namespace drizzled
 {
 
-vector<plugin::Listen *> listen_list;
-vector<plugin::Listen *> listen_fd_list;
-vector<pollfd> fd_list;
+std::vector<plugin::Listen *> listen_list;
+std::vector<plugin::Listen *> listen_fd_list;
+std::vector<pollfd> fd_list;
 uint32_t fd_count= 0;
 int wakeup_pipe[2];
 
@@ -49,20 +47,20 @@ bool plugin::Listen::addPlugin(plugin::Listen *listen_obj)
 
 void plugin::Listen::removePlugin(plugin::Listen *listen_obj)
 {
-  listen_list.erase(remove(listen_list.begin(),
-                           listen_list.end(),
-                           listen_obj),
+  listen_list.erase(std::remove(listen_list.begin(),
+                                listen_list.end(),
+                                listen_obj),
                     listen_list.end());
 }
 
 bool plugin::Listen::setup(void)
 {
-  vector<plugin::Listen *>::iterator it;
+  std::vector<plugin::Listen *>::iterator it;
 
   for (it= listen_list.begin(); it < listen_list.end(); ++it)
   {
-    vector<int> fds;
-    vector<int>::iterator fd;
+    std::vector<int> fds;
+    std::vector<int>::iterator fd;
 
     if ((*it)->getFileDescriptors(fds))
     {

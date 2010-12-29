@@ -1,0 +1,76 @@
+# we are going to have everything owned by a particular connection
+connect (barrier_owner,localhost,root,,);
+connection barrier_owner;
+set @my_barrier= "barrier";
+SELECT CREATE_BARRIER(@my_barrier);
+
+connection default;
+set @my_barrier= "barrier";
+SELECT USER_BARRIER_NAME FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@my_barrier;
+SET @execute= "SELECT WAIT('barrier')";
+SELECT SIGNAL(@my_barrier);
+
+EXECUTE @execute CONCURRENT;
+EXECUTE @execute CONCURRENT;
+EXECUTE @execute CONCURRENT;
+ 
+SELECT WAIT_UNTIL(@my_barrier, 3);
+ 
+### Now lets see what the processlist shows.
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+SELECT SIGNAL(@my_barrier);
+
+## Wait till we know the above is done (this will be replaced with broadcast() in the future)
+#EXECUTE @sleep;
+#
+## Check that a concurrent session cannot create one of itself, but can call
+## execute.
+#SET @var="EXECUTE \"SELECT SLEEP(3)\"";
+#EXECUTE @var CONCURRENT;
+#SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+#
+## Wait till everything closes out
+#EXECUTE @sleep;
+#SET @var="EXECUTE \"SELECT SLEEP(3)\" CONCURRENT";
+#EXECUTE @var CONCURRENT;
+#SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+#
+#
+## Test multiple statements
+#
+#SET @var="CREATE SCHEMA d; CREATE SCHEMA e;";
+#EXECUTE @var CONCURRENT;
+#
+## Wait for a second...
+#EXECUTE @sleep;
+#show schemas LIKE "d";
+#show schemas LIKE "e";
+#DROP SCHEMA d;
+#DROP SCHEMA e;
+#
+#
+## We are now going to make sure that data is actually committed.
+#CREATE TABLE foo (a serial);
+#
+#SET @var="INSERT INTO foo VALUES(); INSERT INTO foo VALUES ()";
+#EXECUTE @var CONCURRENT;
+#EXECUTE @sleep;
+#SELECT * FROM foo;
+#
+#SET @var="SAVEPOINT mine; INSERT INTO foo VALUES(); INSERT INTO foo VALUES ()";
+#EXECUTE @var CONCURRENT;
+#EXECUTE @sleep;
+#SELECT * FROM foo;
+#
+#SET @var="SAVEPOINT mine; INSERT INTO foo VALUES(); INSERT INTO foo VALUES (); RELEASE SAVEPOINT mine";
+#EXECUTE @var CONCURRENT;
+#EXECUTE @sleep;
+#SELECT * FROM foo;
+#
+#SET @var="SAVEPOINT mine; INSERT INTO foo VALUES (); INSERT INTO foo VALUES (); ROLLBACK TO SAVEPOINT mine";
+#EXECUTE @var CONCURRENT;
+#EXECUTE @sleep;
+#SELECT * FROM foo;
+#
+#DROP TABLE foo;
+#

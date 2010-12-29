@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,22 +21,37 @@
 #ifndef PLUGIN_SYSLOG_LOGGING_H
 #define PLUGIN_SYSLOG_LOGGING_H
 
-#include "module.h"
 #include <drizzled/plugin/logging.h>
 
-class Logging_syslog: public drizzled::plugin::Logging
+namespace drizzle_plugin
 {
- private:
-  int syslog_facility;
-  int syslog_priority;
+namespace logging
+{
 
-  Logging_syslog(const Logging_syslog&);
-  Logging_syslog& operator=(const Logging_syslog&);
+class Syslog: public drizzled::plugin::Logging
+{
+private:
+  int _facility;
+  int _priority;
+  uint64_t _threshold_slow;
+  uint64_t _threshold_big_resultset;
+  uint64_t _threshold_big_examined;
 
- public:
-  Logging_syslog();
+  Syslog();
+  Syslog(const Syslog&);
+  Syslog& operator=(const Syslog&);
+
+public:
+  Syslog(const std::string &facility,
+         const std::string &priority,
+         uint64_t threshold_slow,
+         uint64_t threshold_big_resultset,
+         uint64_t threshold_big_examined);
 
   virtual bool post (drizzled::Session *session);
 };
+
+} /* namespace logging */
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_SYSLOG_LOGGING_H */

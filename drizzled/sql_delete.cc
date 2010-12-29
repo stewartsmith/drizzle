@@ -30,6 +30,7 @@
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
 namespace drizzled
 {
@@ -42,7 +43,7 @@ namespace drizzled
   end of dispatch_command().
 */
 
-bool mysql_delete(Session *session, TableList *table_list, COND *conds,
+bool delete_query(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows limit, uint64_t,
                   bool reset_auto_increment)
 {
@@ -56,7 +57,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
   Select_Lex   *select_lex= &session->lex->select_lex;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   if (session->openTablesLock(table_list))
   {
@@ -70,7 +71,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   session->set_proc_info("init");
   table->map=1;
 
-  if (mysql_prepare_delete(session, table_list, &conds))
+  if (prepare_delete(session, table_list, &conds))
   {
     DRIZZLE_DELETE_DONE(1, 0);
     return true;
@@ -88,7 +89,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
       if (select_lex->setup_ref_array(session, order->elements) ||
 	  setup_order(session, select_lex->ref_pointer_array, &tables,
-                    fields, all_fields, (order_st*) order->first))
+                    fields, all_fields, (Order*) order->first))
       {
         delete select;
         free_underlaid_joins(session, &session->lex->select_lex);
@@ -200,19 +201,18 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     ha_rows examined_rows;
 
     if ((!select || table->quick_keys.none()) && limit != HA_POS_ERROR)
-      usable_index= optimizer::get_index_for_order(table, (order_st*)(order->first), limit);
+      usable_index= optimizer::get_index_for_order(table, (Order*)(order->first), limit);
 
     if (usable_index == MAX_KEY)
     {
+      FileSort filesort(*session);
       table->sort.io_cache= new internal::IO_CACHE;
 
 
-      if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
-                                             &length, NULL)) ||
-	  (table->sort.found_records = filesort(session, table, sortorder, length,
-                                                select, HA_POS_ERROR, 1,
-                                                &examined_rows))
-	  == HA_POS_ERROR)
+      if (not (sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL)) ||
+	  (table->sort.found_records = filesort.run(table, sortorder, length,
+						    select, HA_POS_ERROR, 1,
+						    examined_rows)) == HA_POS_ERROR)
       {
         delete select;
         free_underlaid_joins(session, &session->lex->select_lex);
@@ -252,7 +252,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   table->mark_columns_needed_for_delete();
 
-  while (!(error=info.read_record(&info)) && !session->killed &&
+  while (!(error=info.read_record(&info)) && !session->getKilled() &&
 	 ! session->is_error())
   {
     // session->is_error() is tested to disallow delete row on error
@@ -285,7 +285,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     else
       table->cursor->unlock_row();  // Row failed selection, release lock on it
   }
-  killed_status= session->killed;
+  killed_status= session->getKilled();
   if (killed_status != Session::NOT_KILLED || session->is_error())
     error= 1;					// Aborted
 
@@ -345,7 +345,7 @@ cleanup:
   Prepare items in DELETE statement
 
   SYNOPSIS
-    mysql_prepare_delete()
+    prepare_delete()
     session			- thread handler
     table_list		- global/local table list
     conds		- conditions
@@ -354,7 +354,7 @@ cleanup:
     false OK
     true  error
 */
-int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
+int prepare_delete(Session *session, TableList *table_list, Item **conds)
 {
   Select_Lex *select_lex= &session->lex->select_lex;
 
@@ -393,7 +393,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
   This will work even if the .ISM and .ISD tables are destroyed
 */
 
-bool mysql_truncate(Session& session, TableList *table_list)
+bool truncate(Session& session, TableList *table_list)
 {
   bool error;
   TransactionServices &transaction_services= TransactionServices::singleton();
@@ -401,8 +401,8 @@ bool mysql_truncate(Session& session, TableList *table_list)
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  mysql_init_select(session.lex);
-  error= mysql_delete(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
+  init_select(session.lex);
+  error= delete_query(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)

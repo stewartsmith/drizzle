@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_HYBRID_TYPE_H
 #define DRIZZLED_HYBRID_TYPE_H
 
-#include <drizzled/decimal.h>
+#include <drizzled/type/decimal.h>
 
 namespace drizzled
 {
@@ -46,7 +46,7 @@ public:
     Hybrid_type+= arg is implemented as dec_buf[1]= dec_buf[0] + arg.
     The third decimal is used as a handy temporary storage.
   */
-  my_decimal dec_buf[3];
+  type::Decimal dec_buf[3];
   int used_dec_buf_no;
 
   /*

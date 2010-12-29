@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -112,8 +112,10 @@ This function runs a purge batch.
 @return	number of undo log pages handled in the batch */
 UNIV_INTERN
 ulint
-trx_purge(void);
-/*===========*/
+trx_purge(
+/*======*/
+	ulint	limit);		/*!< in: the maximum number of records to
+				purge in one batch */
 /******************************************************************//**
 Prints information of the purge system to stderr. */
 UNIV_INTERN

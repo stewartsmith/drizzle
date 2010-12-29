@@ -28,8 +28,6 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -61,13 +59,13 @@ bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
   return false;
 }
 
-plugin::TableFunction *plugin::TableFunction::getFunction(const string &arg)
+plugin::TableFunction *plugin::TableFunction::getFunction(const std::string &arg)
 {
   return table_functions.getFunction(arg);
 }
 
-void plugin::TableFunction::getNames(const string &arg,
-                                     set<std::string> &set_of_names)
+void plugin::TableFunction::getNames(const std::string &arg,
+                                     std::set<std::string> &set_of_names)
 {
   table_functions.getNames(arg, set_of_names);
 }
@@ -109,11 +107,6 @@ void plugin::TableFunction::add_field(const char *label,
 
   switch (type) 
   {
-  default:
-  case TableFunction::BOOLEAN: // Currently BOOLEAN always has a value
-    field_length= 5;
-    field_options->set_default_null(false);
-    field_constraints->set_is_nullable(false);
   case TableFunction::STRING:
     {
       drizzled::message::Table::Field::StringFieldOptions *string_field_options;
@@ -143,8 +136,16 @@ void plugin::TableFunction::add_field(const char *label,
       string_field_options->set_collation_id(my_charset_bin.number);
     }
     break;
-  case TableFunction::NUMBER: // Currently NUMBER always has a value
+  case TableFunction::NUMBER:
     field->set_type(drizzled::message::Table::Field::BIGINT);
+    break;
+  case TableFunction::SIZE:
+    field->set_type(drizzled::message::Table::Field::BIGINT);
+    field_constraints->set_is_unsigned(true);
+    break;
+  case TableFunction::BOOLEAN: // Currently BOOLEAN always has a value
+    field->set_type(drizzled::message::Table::Field::BOOLEAN);
+    field_constraints->set_is_unsigned(true);
     break;
   }
 }
@@ -194,6 +195,9 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
   assert(arg);
   length= length ? length : strlen(arg);
 
+  if ((*columns_iterator)->char_length() < length)
+    length= (*columns_iterator)->char_length();
+
   (*columns_iterator)->store(arg, length, scs);
   (*columns_iterator)->set_notnull();
   columns_iterator++;
@@ -201,9 +205,8 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
 
 void plugin::TableFunction::Generator::push()
 {
-#if 0 // @note this needs to be rewritten such that a drizzled::Field object can determine if it should ever be null
-  assert((*columns_iterator)->getTable()->getShare()->getTableProto()->field((*columns_iterator)->getTable()->getFields() - columns_iterator).constraints().is_nullable());
-#endif
+  /* Only accept NULLs */
+  assert((*columns_iterator)->maybe_null());
   (*columns_iterator)->set_null();
   columns_iterator++;
 }

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,8 @@ public:
     flush_log(false),
     flush_tables(false),
     flush_tables_with_read_lock(false),
-    flush_status(false)
+    flush_status(false),
+    flush_global_status(false)
   {}
 
   bool execute();
@@ -49,6 +50,7 @@ private:
   bool flush_tables;
   bool flush_tables_with_read_lock;
   bool flush_status;
+  bool flush_global_status;
 
 public:
   void setFlushLog(bool f) { flush_log= f; }
@@ -57,6 +59,7 @@ public:
     flush_tables= flush_tables_with_read_lock= f;
   }
   void setFlushStatus(bool f) { flush_status= f; }
+  void setFlushGlobalStatus(bool f) { flush_global_status= f; }
 
 private:
 

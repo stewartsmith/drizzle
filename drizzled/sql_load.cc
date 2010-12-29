@@ -22,7 +22,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include <drizzled/db.h>
@@ -75,13 +75,13 @@ public:
   */
   void end_io_cache()
   {
-    internal::end_io_cache(&cache);
+    cache.end_io_cache();
     need_end_io_cache = 0;
   }
 
   /*
     Either this method, or we need to make cache public
-    Arg must be set from mysql_load() since constructor does not see
+    Arg must be set from load() since constructor does not see
     either the table or Session value
   */
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
@@ -103,7 +103,7 @@ static int read_sep_field(Session *session, CopyInfo &info, TableList *table_lis
   Execute LOAD DATA query
 
   SYNOPSYS
-    mysql_load()
+    load()
       session - current thread
       ex  - file_exchange object representing source cursor and its parsing rules
       table_list  - list of tables to which we are loading data
@@ -119,7 +119,7 @@ static int read_sep_field(Session *session, CopyInfo &info, TableList *table_lis
     true - error / false - success
 */
 
-int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
+int load(Session *session,file_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore)
@@ -138,11 +138,12 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  const char *tdb= session->db.empty() ? table_list->getSchemaName()  : session->db.c_str();		// Result is never null
+  util::string::const_shared_ptr schema(session->schema());
+  const char *tdb= (schema and not schema->empty()) ? schema->c_str() : table_list->getSchemaName(); // Result should never be null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   /* Escape and enclosed character may be a utf8 4-byte character */
   if (escaped->length() > 4 || enclosed->length() > 4)
@@ -205,11 +206,13 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     */
     if (table->timestamp_field)
     {
-      if (table->isWriteSet(table->timestamp_field->field_index))
+      if (table->isWriteSet(table->timestamp_field->position()))
+      {
         table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+      }
       else
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
     /* Fix the expressions in SET clause */
@@ -316,7 +319,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
-  SchemaIdentifier identifier(session->db);
+  SchemaIdentifier identifier(*schema);
   READ_INFO read_info(file, tot_length,
                       ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(identifier),
 		      *field_term, *ex->line_start, *ex->line_term, *enclosed,
@@ -390,7 +393,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
-  killed_status= (error == 0)? Session::NOT_KILLED : session->killed;
+  killed_status= (error == 0)? Session::NOT_KILLED : session->getKilled();
   if (error)
   {
     error= -1;				// Error on read
@@ -436,7 +439,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
 
   while (!read_info.read_fixed_length())
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       return(1);
@@ -481,8 +484,9 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_WARN_TOO_FEW_RECORDS,
                             ER(ER_WARN_TOO_FEW_RECORDS), session->row_count);
+
         if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
-            ((Field_timestamp*) field)->set_time();
+            ((field::Epoch::pointer) field)->set_time();
       }
       else
       {
@@ -509,7 +513,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                           ER(ER_WARN_TOO_MANY_RECORDS), session->row_count);
     }
 
-    if (session->killed ||
+    if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
       return(1);
@@ -558,7 +562,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
 
   for (;;it.rewind())
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       return(1);
@@ -601,10 +605,13 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
           if (!field->maybe_null())
           {
             if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
-              ((Field_timestamp*) field)->set_time();
+            {
+              ((field::Epoch::pointer) field)->set_time();
+            }
             else if (field != table->next_number_field)
-              field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 ER_WARN_NULL_TO_NOTNULL, 1);
+            {
+              field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_NULL_TO_NOTNULL, 1);
+            }
           }
 	}
         else if (item->type() == Item::STRING_ITEM)
@@ -666,7 +673,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
             return(1);
           }
           if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
-              ((Field_timestamp*) field)->set_time();
+              ((field::Epoch::pointer) field)->set_time();
           /*
             QQ: We probably should not throw warning for each field.
             But how about intention to always have the same number
@@ -691,7 +698,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       }
     }
 
-    if (session->killed ||
+    if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
       return(1);
@@ -712,7 +719,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS),
                           session->row_count);
-      if (session->killed)
+      if (session->getKilled())
         return(1);
     }
     session->row_count++;
@@ -795,10 +802,10 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
   else
   {
     end_of_buff=buffer+buff_length;
-    if (init_io_cache(&cache,(false) ? -1 : cursor, 0,
-		      (false) ? internal::READ_NET :
-		      (is_fifo ? internal::READ_FIFO : internal::READ_CACHE),0L,1,
-		      MYF(MY_WME)))
+    if (cache.init_io_cache((false) ? -1 : cursor, 0,
+                            (false) ? internal::READ_NET :
+                            (is_fifo ? internal::READ_FIFO : internal::READ_CACHE),0L,1,
+                            MYF(MY_WME)))
     {
       free((unsigned char*) buffer);
       error=1;
@@ -821,7 +828,7 @@ READ_INFO::~READ_INFO()
   if (!error)
   {
     if (need_end_io_cache)
-      internal::end_io_cache(&cache);
+      cache.end_io_cache();
     free(buffer);
     error=1;
   }

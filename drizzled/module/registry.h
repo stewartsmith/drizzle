@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,13 +28,10 @@
 #include "drizzled/gettext.h"
 #include "drizzled/unireg.h"
 #include "drizzled/errmsg_print.h"
+#include "drizzled/plugin/plugin.h"
 
 namespace drizzled
 {
-namespace plugin
-{
-class Plugin;
-}
 
 namespace module
 {
@@ -63,6 +60,8 @@ public:
     static Registry *registry= new Registry();
     return *registry;
   }
+
+  void copy(plugin::Plugin::vector &arg);
 
   static void shutdown();
 

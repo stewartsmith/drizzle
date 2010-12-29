@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,12 +34,14 @@ bool statement::CreateIndex::execute()
   TableList *all_tables= session->lex->query_tables;
 
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
-  message::Table original_table_message;
+  message::table::shared_ptr original_table_message;
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
-      my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
       return true;
     }
   }
@@ -60,7 +62,7 @@ bool statement::CreateIndex::execute()
   }
 
   bool res;
-  if (original_table_message.type() == message::Table::STANDARD )
+  if (original_table_message->type() == message::Table::STANDARD )
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
@@ -69,11 +71,11 @@ bool statement::CreateIndex::execute()
                      identifier,
                      identifier,
                      &create_info, 
-                     original_table_message,
+                     *original_table_message,
                      create_table_message, 
                      first_table,
                      &alter_info,
-                     0, (order_st*) 0, 0);
+                     0, (Order*) 0, 0);
   }
   else
   {
@@ -88,11 +90,11 @@ bool statement::CreateIndex::execute()
                        identifier,
                        identifier,
                        &create_info, 
-                       original_table_message,
+                       *original_table_message,
                        create_table_message, 
                        first_table,
                        &alter_info,
-                       0, (order_st*) 0, 0);
+                       0, (Order*) 0, 0);
     }
   }
 

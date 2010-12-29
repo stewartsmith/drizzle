@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -114,12 +114,13 @@ ut_test_malloc(
 	ulint	n);	/*!< in: try to allocate this many bytes */
 #endif /* !UNIV_HOTBACKUP */
 /**********************************************************************//**
-Frees a memory block allocated with ut_malloc. */
+Frees a memory block allocated with ut_malloc. Freeing a NULL pointer is
+a nop. */
 UNIV_INTERN
 void
 ut_free(
 /*====*/
-	void* ptr);  /*!< in, own: memory block */
+	void* ptr);  /*!< in, own: memory block, can be NULL */
 #ifndef UNIV_HOTBACKUP
 /**********************************************************************//**
 Implements realloc. This is needed by /pars/lexyy.c. Otherwise, you should not

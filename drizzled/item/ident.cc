@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -174,11 +174,11 @@ int64_t Item_ident_for_show::val_int()
 
 String *Item_ident_for_show::val_str(String *str)
 {
-  return field->val_str(str);
+  return field->val_str_internal(str);
 }
 
 
-my_decimal *Item_ident_for_show::val_decimal(my_decimal *dec)
+type::Decimal *Item_ident_for_show::val_decimal(type::Decimal *dec)
 {
   return field->val_decimal(dec);
 }

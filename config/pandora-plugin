@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-#  Copyright (C) 2009 Sun Microsystems
+#  Copyright (C) 2009 Sun Microsystems, Inc.
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -131,9 +131,16 @@ VERSION=$(PANDORA_RELEASE_VERSION)
 pkgplugindir=%(pkgplugindir)s
 EXTRA_DIST = plugin.ini
 
+noinst_HEADERS=
+nobase_include_HEADERS=
+check_PROGRAMS=
+noinst_LTLIBRARIES=
+bin_PROGRAMS=
+
+
 """ % plugin)
   if plugin['headers'] != "":
-    plugin_file.write("noinst_HEADERS = %(headers)s\n" % plugin)
+    plugin_file.write("noinst_HEADERS += %(headers)s\n" % plugin)
   if plugin['install_headers'] != "":
     plugin_file.write("nobase_include_HEADERS += %(install_headers)s\n" % plugin)
   if plugin['testsuite']:
@@ -280,11 +287,13 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
   if plugin['static']:
     plugin_ac.write("""
         AS_IF([test "x$enable_%(name)s_plugin" = "xyes"],[
-          pandora_builtin_list="%(module_name)s,${pandora_builtin_list}"
-          pandora_builtin_symbols_list="_drizzled_%(module_name)s_plugin_,${pandora_builtin_symbols_list}"
-          pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(libname)s.la"
+          pandora_builtin_load_list="%(module_name)s,${pandora_builtin_load_list}"
+          pandora_builtin_load_symbols_list="_drizzled_%(module_name)s_plugin_,${pandora_builtin_load_symbols_list}"
           PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
         ])
+        pandora_builtin_list="%(module_name)s,${pandora_builtin_list}"
+        pandora_builtin_symbols_list="_drizzled_%(module_name)s_plugin_,${pandora_builtin_symbols_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(libname)s.la"
     """ % plugin)
 
   else:
@@ -365,17 +374,19 @@ def find_docs(plugin_dir):
     return os.path.join(plugin_dir, "docs")
 
 def read_plugin_ini(plugin_dir):
+    sources_default=""
     if plugin_dir == ".":
       plugin_name="**OUT-OF-TREE**"
+      module_name="**OUT-OF-TREE**"
     else:
-      short_name=os.path.basename(plugin_dir)
+      sources_default="%s.cc" % os.path.basename(plugin_dir)
       plugin_name = plugin_dir[plugin_dir.index(config['root_plugin_dir']) + len(config['root_plugin_dir']) + 1:]
       module_name = plugin_name.replace("/", config['module_name_separator']).replace("\\", config['module_name_separator'])
       plugin_name = plugin_name.replace("/", config['plugin_name_separator']).replace("\\", config['plugin_name_separator'])
 
 
     plugin_file= os.path.join(plugin_dir,config['plugin_ini_fname'])
-    plugin_defaults= dict(sources="%s.cc" % short_name,
+    plugin_defaults= dict(sources=sources_default,
                           headers="",
                           install_headers="",
                           cflags="",

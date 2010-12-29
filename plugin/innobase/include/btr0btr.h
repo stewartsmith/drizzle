@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -68,18 +68,29 @@ enum btr_latch_mode {
 	BTR_MODIFY_PREV = 36
 };
 
+/* BTR_INSERT, BTR_DELETE and BTR_DELETE_MARK are mutually exclusive. */
+
 /** If this is ORed to btr_latch_mode, it means that the search tuple
-will be inserted to the index, at the searched position */
+will be inserted to the index, at the searched position.
+When the record is not in the buffer pool, try to use the insert buffer. */
 #define BTR_INSERT		512
 
 /** This flag ORed to btr_latch_mode says that we do the search in query
 optimization */
 #define BTR_ESTIMATE		1024
 
-/** This flag ORed to btr_latch_mode says that we can ignore possible
+/** This flag ORed to BTR_INSERT says that we can ignore possible
 UNIQUE definition on secondary indexes when we decide if we can use
 the insert buffer to speed up inserts */
 #define BTR_IGNORE_SEC_UNIQUE	2048
+
+/** Try to delete mark the record at the searched position using the
+insert/delete buffer when the record is not in the buffer pool. */
+#define BTR_DELETE_MARK		4096
+
+/** Try to purge the record at the searched position using the insert/delete
+buffer when the record is not in the buffer pool. */
+#define BTR_DELETE		8192
 
 /**************************************************************//**
 Gets the root node of a tree and x-latches it.
@@ -94,32 +105,41 @@ btr_root_get(
 Gets a buffer page and declares its latching order level. */
 UNIV_INLINE
 buf_block_t*
-btr_block_get(
-/*==========*/
-	ulint	space,		/*!< in: space id */
-	ulint	zip_size,	/*!< in: compressed page size in bytes
-				or 0 for uncompressed pages */
-	ulint	page_no,	/*!< in: page number */
-	ulint	mode,		/*!< in: latch mode */
-	mtr_t*	mtr);		/*!< in: mtr */
-/**************************************************************//**
-Gets a buffer page and declares its latching order level. */
-UNIV_INLINE
-page_t*
-btr_page_get(
-/*=========*/
-	ulint	space,		/*!< in: space id */
-	ulint	zip_size,	/*!< in: compressed page size in bytes
-				or 0 for uncompressed pages */
-	ulint	page_no,	/*!< in: page number */
-	ulint	mode,		/*!< in: latch mode */
-	mtr_t*	mtr);		/*!< in: mtr */
+btr_block_get_func(
+/*===============*/
+	ulint		space,		/*!< in: space id */
+	ulint		zip_size,	/*!< in: compressed page size in bytes
+					or 0 for uncompressed pages */
+	ulint		page_no,	/*!< in: page number */
+	ulint		mode,		/*!< in: latch mode */
+	const char*	file,		/*!< in: file name */
+	ulint		line,		/*!< in: line where called */
+	mtr_t*		mtr)		/*!< in/out: mtr */
+	__attribute__((nonnull));
+/** Gets a buffer page and declares its latching order level.
+@param space	tablespace identifier
+@param zip_size	compressed page size in bytes or 0 for uncompressed pages
+@param page_no	page number
+@param mode	latch mode
+@param mtr	mini-transaction handle
+@return the block descriptor */
+# define btr_block_get(space,zip_size,page_no,mode,mtr) \
+	btr_block_get_func(space,zip_size,page_no,mode,__FILE__,__LINE__,mtr)
+/** Gets a buffer page and declares its latching order level.
+@param space	tablespace identifier
+@param zip_size	compressed page size in bytes or 0 for uncompressed pages
+@param page_no	page number
+@param mode	latch mode
+@param mtr	mini-transaction handle
+@return the uncompressed page frame */
+# define btr_page_get(space,zip_size,page_no,mode,mtr) \
+	buf_block_get_frame(btr_block_get(space,zip_size,page_no,mode,mtr))
 #endif /* !UNIV_HOTBACKUP */
 /**************************************************************//**
 Gets the index id field of a page.
 @return	index id */
 UNIV_INLINE
-dulint
+index_id_t
 btr_page_get_index_id(
 /*==================*/
 	const page_t*	page);	/*!< in: index page */
@@ -193,6 +213,10 @@ btr_leaf_page_release(
 	mtr_t*		mtr);		/*!< in: mtr */
 /**************************************************************//**
 Gets the child node file address in a node pointer.
+NOTE: the offsets array must contain all offsets for the record since
+we read the last field according to offsets and assume that it contains
+the child page number. In other words offsets must have been retrieved
+with rec_get_offsets(n_fields=ULINT_UNDEFINED).
 @return	child node address */
 UNIV_INLINE
 ulint
@@ -211,7 +235,7 @@ btr_create(
 	ulint		space,	/*!< in: space where created */
 	ulint		zip_size,/*!< in: compressed page size in bytes
 				or 0 for uncompressed pages */
-	dulint		index_id,/*!< in: index id */
+	index_id_t	index_id,/*!< in: index id */
 	dict_index_t*	index,	/*!< in: index */
 	mtr_t*		mtr);	/*!< in: mini-transaction handle */
 /************************************************************//**
@@ -317,12 +341,16 @@ Inserts a data tuple to a tree on a non-leaf level. It is assumed
 that mtr holds an x-latch on the tree. */
 UNIV_INTERN
 void
-btr_insert_on_non_leaf_level(
-/*=========================*/
+btr_insert_on_non_leaf_level_func(
+/*==============================*/
 	dict_index_t*	index,	/*!< in: index */
 	ulint		level,	/*!< in: level, must be > 0 */
 	dtuple_t*	tuple,	/*!< in: the record to be inserted */
+	const char*	file,	/*!< in: file name */
+	ulint		line,	/*!< in: line where called */
 	mtr_t*		mtr);	/*!< in: mtr */
+# define btr_insert_on_non_leaf_level(i,l,t,m)				\
+	btr_insert_on_non_leaf_level_func(i,l,t,__FILE__,__LINE__,m)
 #endif /* !UNIV_HOTBACKUP */
 /****************************************************************//**
 Sets a record as the predefined minimum record. */

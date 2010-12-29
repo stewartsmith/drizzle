@@ -1,0 +1,11 @@
+#Interface to processlist.
+#
+# Slap tests for concurrency
+# 
+
+CREATE SCHEMA drizzleslap;
+
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.SESSION_ID FROM DATA_DICTIONARY.SESSIONS as a, DATA_DICTIONARY.SESSIONS as b ORDER BY SESSION_ID" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from DATA_DICTIONARY.SESSIONS" --delimiter=";"
+
+DROP SCHEMA drizzleslap;

@@ -56,7 +56,7 @@ CacheMap &getCache(void)
   entry		Table to remove
 
   NOTE
-  We need to have a lock on LOCK_open when calling this
+  We need to have a lock on table::Cache::singleton().mutex() when calling this
 */
 
 static void free_cache_entry(table::Concurrent *table)
@@ -138,7 +138,7 @@ and afterwards delete those marked unused.
 
 void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
 {
-  //safe_mutex_assert_owner(LOCK_open.native_handle());
+  boost::mutex::scoped_lock scopedLock(_mutex);
 
   for (table::CacheMap::const_iterator iter= table::getCache().begin();
        iter != table::getCache().end();
@@ -164,7 +164,7 @@ void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
   close_thread_tables() is called.
 
   PREREQUISITES
-  Lock on LOCK_open()
+  Lock on table::Cache::singleton().mutex()()
 
   RETURN
   0  This thread now have exclusive access to this table and no other thread
@@ -200,7 +200,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
       {
         /*
           Mark that table is going to be deleted from cache. This will
-          force threads that are in mysql_lock_tables() (but not yet
+          force threads that are in lockTables() (but not yet
           in thr_multi_lock()) to abort it's locks, close all tables and retry
         */
         in_use->some_tables_deleted= true;
@@ -211,9 +211,9 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
         /*
           Now we must abort all tables locks used by this thread
           as the thread may be waiting to get a lock for another table.
-          Note that we need to hold LOCK_open while going through the
+          Note that we need to hold table::Cache::singleton().mutex() while going through the
           list. So that the other thread cannot change it. The other
-          thread must also hold LOCK_open whenever changing the
+          thread must also hold table::Cache::singleton().mutex() whenever changing the
           open_tables list. Aborting the MERGE lock after a child was
           closed and before the parent is closed would be fatal.
         */
@@ -223,7 +223,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
         {
           /* Do not handle locks of MERGE children. */
           if (session_table->db_stat)	// If table is open
-            signalled|= mysql_lock_abort_for_thread(session, session_table);
+            signalled|= session->abortLockForThread(session_table);
         }
       }
       else
@@ -243,13 +243,13 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
         Signal any thread waiting for tables to be freed to
         reopen their tables
       */
-      broadcast_refresh();
-      if (!(flags & RTFC_CHECK_KILLED_FLAG) || !session->killed)
+      locking::broadcast_refresh();
+      if (not (flags & RTFC_CHECK_KILLED_FLAG) || not session->getKilled())
       {
         dropping_tables++;
         if (likely(signalled))
         {
-          boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
+          boost_unique_lock_t scoped(table::Cache::singleton().mutex(), boost::adopt_lock_t());
           COND_refresh.wait(scoped);
           scoped.release();
         }
@@ -268,7 +268,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
           boost::xtime xt; 
           xtime_get(&xt, boost::TIME_UTC); 
           xt.sec += 10; 
-          boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
+          boost_unique_lock_t scoped(table::Cache::singleton().mutex(), boost::adopt_lock_t());
           COND_refresh.timed_wait(scoped, xt);
           scoped.release();
         }
@@ -280,6 +280,14 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
   }
 
   return result;
+}
+
+
+bool Cache::insert(table::Concurrent *arg)
+{
+  CacheMap::iterator returnable= cache.insert(std::make_pair(arg->getShare()->getCacheKey(), arg));
+
+  return not (returnable == cache.end());
 }
 
 } /* namespace table */

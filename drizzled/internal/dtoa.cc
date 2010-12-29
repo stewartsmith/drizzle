@@ -20,7 +20,7 @@
 
   The author of this software is David M. Gay.
 
-  Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
+  Copyright (C) 1991, 2000, 2001 by Lucent Technologies.
 
   Permission to use, copy, modify, and distribute this software for any
   purpose without fee is hereby granted, provided that this entire notice
@@ -482,7 +482,7 @@ double my_atof(const char *nptr)
  *
  * The author of this software is David M. Gay.
  *
- * Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
+ * Copyright (C) 1991, 2000, 2001 by Lucent Technologies.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose without fee is hereby granted, provided that this entire notice

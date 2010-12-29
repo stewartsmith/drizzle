@@ -19,6 +19,8 @@
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <drizzled/errmsg_print.h>
+#include "drizzled/session.h"
+#include "drizzled/session/cache.h"
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -28,29 +30,46 @@ using namespace std;
 using namespace drizzled;
 
 /* Configuration variables. */
-static uint32_t max_threads;
-
-/* Global's (TBR) */
-static MultiThreadScheduler *scheduler= NULL;
+typedef constrained_check<uint32_t, 4096, 1> max_threads_constraint;
+static max_threads_constraint max_threads;
 
 namespace drizzled
 {
   extern size_t my_thread_stack_size;
 }
 
-void MultiThreadScheduler::runSession(drizzled::Session *session)
+namespace multi_thread {
+
+void MultiThreadScheduler::runSession(drizzled::session_id_t id)
 {
+  char stack_dummy;
+  boost::this_thread::disable_interruption disable_by_default;
+  Session::shared_ptr session(session::Cache::singleton().find(id));
+
+  if (not session)
+  {
+    std::cerr << "Session killed before thread could execute\n";
+    return;
+  }
+  session->pushInterrupt(&disable_by_default);
+
   if (drizzled::internal::my_thread_init())
   {
-    session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
+    session->disconnect(drizzled::ER_OUT_OF_RESOURCES);
     session->status_var.aborted_connects++;
-    killSessionNow(session);
   }
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
+  else
+  {
+    boost::this_thread::at_thread_exit(&internal::my_thread_end);
 
-  session->thread_stack= (char*) &session;
-  session->run();
+    session->thread_stack= (char*) &stack_dummy;
+    session->run();
+  }
+
   killSessionNow(session);
+  // @todo remove hard spin by disconnection the session first from the
+  // thread.
+  while (not session.unique()) {}
 }
 
 void MultiThreadScheduler::setStackSize()
@@ -91,16 +110,22 @@ void MultiThreadScheduler::setStackSize()
 #endif
 }
 
-bool MultiThreadScheduler::addSession(Session *session)
+bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
 {
   if (thread_count >= max_threads)
     return true;
 
   thread_count.increment();
 
-  boost::thread new_thread(boost::bind(&MultiThreadScheduler::runSession, this, session));
+  session->getThread().reset(new boost::thread((boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()))));
 
-  if (not new_thread.joinable())
+  if (not session->getThread())
+  {
+    thread_count.decrement();
+    return true;
+  }
+
+  if (not session->getThread()->joinable())
   {
     thread_count.decrement();
     return true;
@@ -110,8 +135,19 @@ bool MultiThreadScheduler::addSession(Session *session)
 }
 
 
-void MultiThreadScheduler::killSessionNow(Session *session)
+void MultiThreadScheduler::killSession(Session *session)
 {
+  boost_thread_shared_ptr thread(session->getThread());
+
+  if (thread)
+  {
+    thread->interrupt();
+  }
+}
+
+void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
+{
+  killSession(session.get());
   /* Locks LOCK_thread_count and deletes session */
   Session::unlink(session);
   thread_count.decrement();
@@ -119,49 +155,30 @@ void MultiThreadScheduler::killSessionNow(Session *session)
 
 MultiThreadScheduler::~MultiThreadScheduler()
 {
-  boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+  boost::mutex::scoped_lock scopedLock(drizzled::session::Cache::singleton().mutex());
   while (thread_count)
   {
     COND_thread_count.wait(scopedLock);
   }
 }
 
+} // multi_thread namespace
+
   
 static int init(drizzled::module::Context &context)
 {
   
-  const module::option_map &vm= context.getOptions();
-  if (vm.count("max-threads"))
-  {
-    if (max_threads > 4096 || max_threads < 1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-threads\n"));
-      exit(-1);
-    }
-  }
-
-  scheduler= new MultiThreadScheduler("multi_thread");
-  context.add(scheduler);
+  context.add(new multi_thread::MultiThreadScheduler("multi_thread"));
 
   return 0;
 }
 
-static DRIZZLE_SYSVAR_UINT(max_threads, max_threads,
-                           PLUGIN_VAR_RQCMDARG,
-                           N_("Maximum number of user threads available."),
-                           NULL, NULL, 2048, 1, 4096, 0);
-
 static void init_options(drizzled::module::option_context &context)
 {
   context("max-threads",
-          po::value<uint32_t>(&max_threads)->default_value(2048),
+          po::value<max_threads_constraint>(&max_threads)->default_value(2048),
           N_("Maximum number of user threads available."));
 }
-
-static drizzle_sys_var* sys_variables[]= {
-  DRIZZLE_SYSVAR(max_threads),
-  NULL
-};
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -172,7 +189,7 @@ DRIZZLE_DECLARE_PLUGIN
   "One Thread Per Session Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  sys_variables,   /* system variables */
+  NULL,   /* system variables */
   init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

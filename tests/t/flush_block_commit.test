@@ -40,7 +40,7 @@ select * from t1 for update;
 connection con2;
 begin;
 send select * from t1 for update; # blocked by con1
-sleep 0.1;
+sleep 0.5;
 connection con3;
 send flush tables with read lock; # blocked by con2
 connection con1;

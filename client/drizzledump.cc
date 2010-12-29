@@ -200,7 +200,7 @@ void generate_dump_db(void)
       opt_destination_port, opt_destination_user, opt_destination_password,
       false);
   }
-  catch (...)
+  catch (std::exception&)
   {
     cerr << "Could not connect to destination database server" << endl;
     maybe_exit(EX_DRIZZLEERR);
@@ -225,7 +225,7 @@ void generate_dump_db(void)
       DrizzleDumpDatabase *database= *i;
       sout << *database;
     }
-    catch (...)
+    catch (std::exception&)
     {
       std::cout << _("Error inserting into destination database") << std::endl;
       if (not ignore_errors)
@@ -575,6 +575,14 @@ try
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
 
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
+
   po::positional_options_description p;
   p.add("database-used", 1);
   p.add("Table-used",-1);
@@ -746,7 +754,7 @@ try
     db_connection = new DrizzleDumpConnection(current_host, opt_drizzle_port,
       current_user, opt_password, use_drizzle_protocol);
   }
-  catch (...)
+  catch (std::exception&)
   {
     maybe_exit(EX_DRIZZLEERR);
   }
@@ -793,10 +801,8 @@ try
     dump_selected_tables(database_used, vm["Table-used"].as< vector<string> >());
   }
 
-  if (vm.count("Table-used") && opt_databases)
+  if (vm.count("Table-used") and opt_databases)
   {
-/*
- * This is not valid!
     vector<string> database_used= vm["database-used"].as< vector<string> >();
     vector<string> table_used= vm["Table-used"].as< vector<string> >();
 
@@ -806,16 +812,17 @@ try
     {
       database_used.insert(database_used.end(), *it);
     }
+
     dump_databases(database_used);
-    dump_tables();
-*/
+    dump_all_tables();
   }
-  
+
   if (vm.count("database-used") && ! vm.count("Table-used"))
   {
     dump_databases(vm["database-used"].as< vector<string> >());
     dump_all_tables();
   }
+
   if (opt_destination == DESTINATION_STDOUT)
     generate_dump();
   else

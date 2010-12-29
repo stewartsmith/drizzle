@@ -3,7 +3,7 @@
  *
  *  Definitions required for Query Logging plugin
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -51,12 +51,14 @@ public:
   virtual bool pre(Session *) {return false;}
   virtual bool post(Session *) {return false;}
   virtual bool postEnd(Session*) {return false;}
+  virtual bool resetGlobalScoreboard() {return false;}
 
   static bool addPlugin(Logging *handler);
   static void removePlugin(Logging *handler);
   static bool preDo(Session *session);
   static bool postDo(Session *session);
   static bool postEndDo(Session *session);
+  static bool resetStats(Session *session);
 };
 
 } /* namespace plugin */

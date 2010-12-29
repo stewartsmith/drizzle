@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 
 #include <plugin/registry_dictionary/dictionary.h>
 
-using namespace std;
 using namespace drizzled;
 
 PluginsTool::PluginsTool() :
@@ -30,7 +29,7 @@ PluginsTool::PluginsTool() :
 {
   add_field("PLUGIN_NAME");
   add_field("PLUGIN_TYPE");
-  add_field("IS_ACTIVE", plugin::TableFunction::BOOLEAN);
+  add_field("IS_ACTIVE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("MODULE_NAME");
 }
 
@@ -38,7 +37,7 @@ PluginsTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   module::Registry &registry= module::Registry::singleton();
-  const map<string, plugin::Plugin *> &plugin_map=
+  const std::map<std::string, plugin::Plugin *> &plugin_map=
     registry.getPluginsMap();
 
   it= plugin_map.begin();

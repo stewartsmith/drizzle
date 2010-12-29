@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +22,9 @@
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 
 #include <vector>
-
-using namespace std;
 
 namespace drizzled
 {
@@ -38,24 +36,26 @@ bool plugin::Authentication::addPlugin(plugin::Authentication *auth)
 {
   if (auth != NULL)
     all_authentication.push_back(auth);
+
   return false;
 }
 
 void plugin::Authentication::removePlugin(plugin::Authentication *auth)
 {
   if (auth != NULL)
-    all_authentication.erase(find(all_authentication.begin(),
-                                  all_authentication.end(),
-                                  auth));
+    all_authentication.erase(std::find(all_authentication.begin(),
+                                       all_authentication.end(),
+                                       auth));
 }
 
-class AuthenticateBy : public unary_function<plugin::Authentication *, bool>
+class AuthenticateBy : public std::unary_function<plugin::Authentication *, bool>
 {
-  const SecurityContext &sctx;
-  const string &password;
+  const identifier::User &sctx;
+  const std::string &password;
+
 public:
-  AuthenticateBy(const SecurityContext &sctx_arg, const string &password_arg) :
-    unary_function<plugin::Authentication *, bool>(),
+  AuthenticateBy(const identifier::User &sctx_arg, const std::string &password_arg) :
+    std::unary_function<plugin::Authentication *, bool>(),
     sctx(sctx_arg), password(password_arg) {}
 
   inline result_type operator()(argument_type auth)
@@ -64,17 +64,17 @@ public:
   }
 };
 
-bool plugin::Authentication::isAuthenticated(const SecurityContext &sctx,
-                                             const string &password)
+bool plugin::Authentication::isAuthenticated(drizzled::identifier::User::const_shared_ptr sctx,
+                                             const std::string &password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (all_authentication.empty())
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authentication *>::iterator iter=
-    find_if(all_authentication.begin(), all_authentication.end(),
-            AuthenticateBy(sctx, password));
+  std::vector<plugin::Authentication *>::iterator iter=
+    std::find_if(all_authentication.begin(), all_authentication.end(),
+                 AuthenticateBy(*sctx, password));
 
   /* We only require one plugin to return success in order to authenticate.
    * If iter is == end() here, that means that all of the plugins returned
@@ -83,11 +83,13 @@ bool plugin::Authentication::isAuthenticated(const SecurityContext &sctx,
   if (iter == all_authentication.end())
   {
     my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
-             sctx.getUser().c_str(),
-             sctx.getIp().c_str(),
+             sctx->username().c_str(),
+             sctx->address().c_str(),
              password.empty() ? ER(ER_NO) : ER(ER_YES));
+
     return false;
   }
+
   return true;
 }
 

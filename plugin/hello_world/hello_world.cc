@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ public:
   String *val_str(String* s) {
     s->set(STRING_WITH_LEN("Hello World!"),system_charset_info);
     return s;
-  };
+  }
   void fix_length_and_dec() {
     max_length=strlen("Hello World!");
   }

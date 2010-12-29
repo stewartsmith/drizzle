@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2006, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2006, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -35,7 +35,9 @@ ib_wqueue_create(void)
 {
 	ib_wqueue_t*	wq = mem_alloc(sizeof(ib_wqueue_t));
 
-	mutex_create(&wq->mutex, SYNC_WORK_QUEUE);
+	/* Function ib_wqueue_create() has not been used anywhere,
+	not necessary to instrument this mutex */
+	mutex_create(PFS_NOT_INSTRUMENTED, &wq->mutex, SYNC_WORK_QUEUE);
 
 	wq->items = ib_list_create();
 	wq->event = os_event_create(NULL);

@@ -20,20 +20,23 @@
 #ifndef PLUGIN_SYSLOG_FUNCTION_H
 #define PLUGIN_SYSLOG_FUNCTION_H
 
-#include "module.h"
-
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-class Function_syslog : public drizzled::Item_str_func
+namespace drizzle_plugin
+{
+namespace udf
+{
+
+class Syslog : public drizzled::Item_str_func
 {
 private:
-  Function_syslog(const Function_syslog&);
-  Function_syslog& operator=(const Function_syslog&);
+  Syslog(const Syslog&);
+  Syslog& operator=(const Syslog&);
 
 public:
-  Function_syslog();
+  Syslog();
 
   const char *func_name() const { return "syslog"; }
 
@@ -41,5 +44,9 @@ public:
   void fix_length_and_dec();
   bool check_argument_count(int n);
 };
+
+} /* namespace udf */
+} /* namepsace drizzle_plugin */
+
 
 #endif /* PLUGIN_SYSLOG_FUNCTION_H */

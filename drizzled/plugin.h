@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ struct drizzle_value;
 
 /*
   SYNOPSIS
-    (*mysql_var_check_func)()
+    (*var_check_func)()
       session               thread handle
       var               dynamic variable being altered
       save              pointer to temporary storage
@@ -122,13 +122,13 @@ struct drizzle_value;
   automatically at the end of the statement.
 */
 
-typedef int (*mysql_var_check_func)(Session *session,
+typedef int (*var_check_func)(Session *session,
                                     drizzle_sys_var *var,
                                     void *save, drizzle_value *value);
 
 /*
   SYNOPSIS
-    (*mysql_var_update_func)()
+    (*var_update_func)()
       session               thread handle
       var               dynamic variable being altered
       var_ptr           pointer to dynamic variable
@@ -140,218 +140,17 @@ typedef int (*mysql_var_check_func)(Session *session,
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
 */
-typedef void (*mysql_var_update_func)(Session *session,
+typedef void (*var_update_func)(Session *session,
                                       drizzle_sys_var *var,
                                       void *var_ptr, const void *save);
 
 
-/* the following declarations are for internal use only */
-
-
-#define PLUGIN_VAR_MASK \
-        (PLUGIN_VAR_READONLY | PLUGIN_VAR_NOSYSVAR | \
-         PLUGIN_VAR_NOCMDOPT | PLUGIN_VAR_NOCMDARG | \
-         PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_MEMALLOC)
-
-#define DRIZZLE_PLUGIN_VAR_HEADER \
-  int flags;                    \
-  const char *name;             \
-  const char *comment;          \
-  mysql_var_check_func check;   \
-  mysql_var_update_func update
-
-#define DRIZZLE_SYSVAR_NAME(name) drizzle_sysvar_ ## name
-#define DRIZZLE_SYSVAR(name) \
-  ((drizzle_sys_var *)(&(DRIZZLE_SYSVAR_NAME(name))))
-
-/*
-  for global variables, the value pointer is the first
-  element after the header, the default value is the second.
-  for thread variables, the value offset is the first
-  element after the header, the default value is the second.
-*/
-
-
-#define DECLARE_DRIZZLE_SYSVAR_BOOL(name) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  bool *value;                  \
-  bool def_val;           \
-} DRIZZLE_SYSVAR_NAME(name)
-
-#define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  type *value;                  \
-  const type def_val;           \
-} DRIZZLE_SYSVAR_NAME(name)
-
-#define DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  type *value; type def_val;    \
-  type min_val; type max_val;   \
-  type blk_sz;                  \
-} DRIZZLE_SYSVAR_NAME(name)
-
-#define DECLARE_SessionVAR_FUNC(type) \
-  type *(*resolve)(Session *session, int offset)
-
-#define DECLARE_DRIZZLE_SessionVAR_BASIC(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  int offset;                   \
-  const type def_val;           \
-  DECLARE_SessionVAR_FUNC(type);    \
-} DRIZZLE_SYSVAR_NAME(name)
-
-#define DECLARE_DRIZZLE_SessionVAR_BOOL(name) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  int offset;                   \
-  bool def_val;           \
-  DECLARE_SessionVAR_FUNC(bool);    \
-} DRIZZLE_SYSVAR_NAME(name)
-
-#define DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  int offset;                   \
-  type def_val; type min_val;   \
-  type max_val; type blk_sz;    \
-  DECLARE_SessionVAR_FUNC(type);    \
-} DRIZZLE_SYSVAR_NAME(name)
-
-#define DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  int offset;                   \
-  type def_val;                 \
-  DECLARE_SessionVAR_FUNC(type);    \
-  TYPELIB *typelib;             \
-} DRIZZLE_SYSVAR_NAME(name)
-
-
-/*
-  the following declarations are for use by plugin implementors
-*/
-
-#define DECLARE_DRIZZLE_SYSVAR_BOOL(name) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  bool *value;                  \
-  bool def_val;           \
-} DRIZZLE_SYSVAR_NAME(name)
-
-
-#define DRIZZLE_SYSVAR_BOOL(name, varname, opt, comment, check, update, def) \
-  DECLARE_DRIZZLE_SYSVAR_BOOL(name) = { \
-  PLUGIN_VAR_BOOL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def}
-
-#define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  type *value;                  \
-  const type def_val;           \
-} DRIZZLE_SYSVAR_NAME(name)
-
-#define DRIZZLE_SYSVAR_STR(name, varname, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_SYSVAR_BASIC(name, char *) = { \
-  PLUGIN_VAR_STR | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def}
-
-#define DRIZZLE_SYSVAR_INT(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, int) = { \
-  PLUGIN_VAR_INT | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, min, max, blk }
-
-#define DRIZZLE_SYSVAR_UINT(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, unsigned int) = { \
-  PLUGIN_VAR_INT | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, min, max, blk }
-
-#define DRIZZLE_SYSVAR_LONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, long) = { \
-  PLUGIN_VAR_LONG | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, min, max, blk }
-
-#define DRIZZLE_SYSVAR_ULONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, unsigned long) = { \
-  PLUGIN_VAR_LONG | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, min, max, blk }
-
-#define DRIZZLE_SYSVAR_LONGLONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, int64_t) = { \
-  PLUGIN_VAR_LONGLONG | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, min, max, blk }
-
-#define DRIZZLE_SYSVAR_ULONGLONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, uint64_t) = { \
-  PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, min, max, blk }
-
-#define DRIZZLE_SessionVAR_BOOL(name, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_SessionVAR_BOOL(name) = { \
-  PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, NULL}
-
-#define DRIZZLE_SessionVAR_STR(name, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_SessionVAR_BASIC(name, char *) = { \
-  PLUGIN_VAR_STR | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, NULL}
-
-#define DRIZZLE_SessionVAR_INT(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, int) = { \
-  PLUGIN_VAR_INT | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, min, max, blk, NULL }
-
-#define DRIZZLE_SessionVAR_UINT(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, unsigned int) = { \
-  PLUGIN_VAR_INT | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, min, max, blk, NULL }
-
-#define DRIZZLE_SessionVAR_LONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, long) = { \
-  PLUGIN_VAR_LONG | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, min, max, blk, NULL }
-
-#define DRIZZLE_SessionVAR_ULONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, unsigned long) = { \
-  PLUGIN_VAR_LONG | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, min, max, blk, NULL }
-
-#define DRIZZLE_SessionVAR_LONGLONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, int64_t) = { \
-  PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, min, max, blk, NULL }
-
-#define DRIZZLE_SessionVAR_ULONGLONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, uint64_t) = { \
-  PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, min, max, blk, NULL }
-
-/* accessor macros */
-
-#define SYSVAR(name) \
-  (*(DRIZZLE_SYSVAR_NAME(name).value))
-
-/* when session == null, result points to global value */
-#define SessionVAR(session, name) \
-  (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
-
-
-/*************************************************************************
-  drizzle_value struct for reading values from mysqld.
-  Used by server variables framework to parse user-provided values.
-  Will be used for arguments when implementing UDFs.
-
-  Note that val_str() returns a string in temporary memory
-  that will be freed at the end of statement. Copy the string
-  if you need it to persist.
-*/
-
-#define DRIZZLE_VALUE_TYPE_STRING 0
-#define DRIZZLE_VALUE_TYPE_REAL   1
-#define DRIZZLE_VALUE_TYPE_INT    2
 
 /*
   skeleton of a plugin variable - portion of structure common to all.
 */
 struct drizzle_sys_var
 {
-  DRIZZLE_PLUGIN_VAR_HEADER;
 };
 
 void plugin_opt_set_limits(option *options, const drizzle_sys_var *opt);
@@ -403,38 +202,7 @@ void notify_plugin_load(std::string in_plugin_load);
   @retval -1    error
   @retval >= 0  a file handle that can be passed to dup or internal::my_close
 */
-int mysql_tmpfile(const char *prefix);
-
-/**
-  Check the killed state of a connection
-
-  @details
-  In MySQL support for the KILL statement is cooperative. The KILL
-  statement only sets a "killed" flag. This function returns the value
-  of that flag.  A thread should check it often, especially inside
-  time-consuming loops, and gracefully abort the operation if it is
-  non-zero.
-
-  @param session  user thread connection handle
-  @retval 0  the connection is active
-  @retval 1  the connection has been killed
-*/
-int session_killed(const Session *session);
-
-
-const charset_info_st *session_charset(Session *session);
-
-/**
-  Invalidate the query cache for a given table.
-
-  @param session         user thread connection handle
-  @param key         databasename\\0tablename\\0
-  @param key_length  length of key in bytes, including the NUL bytes
-  @param using_trx   flag: TRUE if using transactions, FALSE otherwise
-*/
-void mysql_query_cache_invalidate4(Session *session,
-                                   const char *key, unsigned int key_length,
-                                   int using_trx);
+int tmpfile(const char *prefix);
 
 } /* namespace drizzled */
 

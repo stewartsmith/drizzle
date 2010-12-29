@@ -44,21 +44,21 @@ ShowTableStatus::ShowTableStatus() :
 
 ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   show_dictionary::Show::Generator(arg),
-  is_primed(false)
+  is_primed(false),
+  scopedLock(table::Cache::singleton().mutex())
 {
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   schema_predicate.append(select->getShowSchema());
 
-  if (schema_predicate.empty())
+  util::string::const_shared_ptr schema(getSession().schema());
+  if (schema_predicate.empty() and schema)
   {
-    schema_predicate.append(getSession().db);
+    schema_predicate.append(*schema);
   }
 
   if (not schema_predicate.empty())
   {
-    LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
-
     table::CacheMap &open_cache(table::getCache());
 
     for (table::CacheMap::const_iterator iter= open_cache.begin();
@@ -68,7 +68,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
       table_list.push_back((*iter).second);
     }
 
-    for (drizzled::Table *tmp_table= getSession().temporary_tables; tmp_table; tmp_table= tmp_table->getNext())
+    for (drizzled::Table *tmp_table= getSession().getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
     {
       if (tmp_table->getShare())
       {
@@ -81,8 +81,6 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
 ShowTableStatus::Generator::~Generator()
 {
-  if (not schema_predicate.empty())
-    LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool ShowTableStatus::Generator::nextCore()

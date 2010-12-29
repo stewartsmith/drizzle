@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ namespace drizzled
 class Item_func_curdate :public Item_date
 {
 protected:
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   Date cached_temporal;
 public:
   Item_func_curdate() :Item_date() {}
@@ -50,7 +50,7 @@ public:
    * @param Reference to a Date to populate
    */
   bool get_temporal(Date &temporal);
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
+  virtual void store_now_in_TIME(type::Time *now_time)=0;
 };
 
 class Item_func_curdate_local :public Item_func_curdate
@@ -58,7 +58,7 @@ class Item_func_curdate_local :public Item_func_curdate
 public:
   Item_func_curdate_local() :Item_func_curdate() {}
   const char *func_name() const { return "curdate"; }
-  void store_now_in_TIME(DRIZZLE_TIME *now_time);
+  void store_now_in_TIME(type::Time *now_time);
 };
 
 class Item_func_curdate_utc :public Item_func_curdate
@@ -66,7 +66,7 @@ class Item_func_curdate_utc :public Item_func_curdate
 public:
   Item_func_curdate_utc() :Item_func_curdate() {}
   const char *func_name() const { return "utc_date"; }
-  void store_now_in_TIME(DRIZZLE_TIME *now_time);
+  void store_now_in_TIME(type::Time *now_time);
 };
 
 } /* namespace drizzled */

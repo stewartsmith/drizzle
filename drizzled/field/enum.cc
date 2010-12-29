@@ -145,7 +145,7 @@ String *Field_enum::val_str(String *, String *val_ptr)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  if (!tmp || tmp > typelib->count)
+  if (not tmp || tmp > typelib->count)
   {
     val_ptr->set("", 0, field_charset);
   }

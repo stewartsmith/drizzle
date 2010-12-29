@@ -20,7 +20,7 @@
   subselect Item
 
   @todo
-    - add function from mysql_select that use JOIN* as parameter to JOIN
+    - add function from select_query that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
 #include "config.h"
@@ -268,7 +268,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
     {
       List_iterator<Item> li(lex->item_list);
       Item *item;
-      order_st *order;
+      Order *order;
 
       if (lex->where && (lex->where)->walk(processor, walk_subquery, argument))
         return 1;
@@ -281,12 +281,12 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
         if (item->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (order_st*) lex->order_list.first ; order; order= order->next)
+      for (order= (Order*) lex->order_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (order_st*) lex->group_list.first ; order; order= order->next)
+      for (order= (Order*) lex->group_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
@@ -668,7 +668,7 @@ String *Item_singlerow_subselect::val_str(String *str)
 }
 
 
-my_decimal *Item_singlerow_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_singlerow_subselect::val_decimal(type::Decimal *decimal_value)
 {
   if (!exec() && !value->null_value)
   {
@@ -818,7 +818,7 @@ String *Item_exists_subselect::val_str(String *str)
 }
 
 
-my_decimal *Item_exists_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_exists_subselect::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
   if (exec())
@@ -826,7 +826,7 @@ my_decimal *Item_exists_subselect::val_decimal(my_decimal *decimal_value)
     reset();
     return 0;
   }
-  int2my_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
   return decimal_value;
 }
 
@@ -929,7 +929,7 @@ bool Item_in_subselect::val_bool()
   return value;
 }
 
-my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_in_subselect::val_decimal(type::Decimal *decimal_value)
 {
   /*
     As far as Item_in_subselect called only from Item_in_optimizer this
@@ -946,7 +946,7 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
   }
   if (was_null && !value)
     null_value= 1;
-  int2my_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
   return decimal_value;
 }
 
@@ -2039,8 +2039,8 @@ int subselect_single_select_engine::prepare()
 		    select_lex->where,
 		    select_lex->order_list.elements +
 		    select_lex->group_list.elements,
-		    (order_st*) select_lex->order_list.first,
-		    (order_st*) select_lex->group_list.first,
+		    (Order*) select_lex->order_list.first,
+		    (Order*) select_lex->group_list.first,
 		    select_lex->having,
 		    select_lex, select_lex->master_unit()))
     return 1;

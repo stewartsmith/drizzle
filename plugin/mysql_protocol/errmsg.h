@@ -20,6 +20,9 @@
 #ifndef PLUGIN_MYSQL_PROTOCOL_ERRMSG_H
 #define PLUGIN_MYSQL_PROTOCOL_ERRMSG_H
 
+namespace drizzle_plugin
+{
+
 /* Error messages for MySQL clients */
 enum CR_CLIENT_ERRORS {
   CR_ERROR_FIRST    =2000, /*Copy first error nr.*/
@@ -86,5 +89,7 @@ enum CR_CLIENT_ERRORS {
   /* Add error numbers before CR_ERROR_LAST and change it accordingly. */
   CR_ERROR_LAST    =2065 /*Copy last error nr:*/
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MYSQL_PROTOCOL_ERRMSG_H */

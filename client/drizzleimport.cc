@@ -2,7 +2,7 @@
   Copyright (C) 2010 Vijay Samuel
   Copyright (C) 2010 Brian Aker
   Copyright (C) 2000-2006 MySQL AB
-  Copyright (C) 2008-2009 Sun Microsystems, Inc
+  Copyright (C) 2008-2009 Sun Microsystems, Inc.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -421,6 +421,14 @@ try
   system_config_dir_client.append("/drizzle/client.cnf");
   
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
 
   po::variables_map vm;
 

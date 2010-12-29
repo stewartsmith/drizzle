@@ -30,28 +30,28 @@ namespace generator {
 class Table
 {
   Session &session;
-  message::Table table;
+  message::table::shared_ptr table;
 
-  TableIdentifiers table_names;
-  TableIdentifiers::const_iterator table_iterator;
+  TableIdentifier::vector table_names;
+  TableIdentifier::vector::const_iterator table_iterator;
 
 public:
 
   Table(Session &arg, const SchemaIdentifier &schema_identifier);
 
-  operator const drizzled::message::Table*()
+  operator const drizzled::message::table::shared_ptr()
   {
     while (table_iterator != table_names.end())
     {
-      table.Clear();
+      table->Clear();
       bool is_table_parsed= plugin::StorageEngine::getTableDefinition(session, *table_iterator, table);
       table_iterator++;
 
       if (is_table_parsed)
-        return &table;
+        return table;
     }
 
-    return NULL;
+    return message::table::shared_ptr();
   }
 
   operator const drizzled::TableIdentifier*()

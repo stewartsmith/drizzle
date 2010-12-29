@@ -17,7 +17,6 @@ drizzled/identifier/schema.cc
 drizzled/identifier/table.cc
 drizzled/internal/default.cc
 drizzled/main.cc
-drizzled/message/transaction_reader.cc
 drizzled/message/transaction_writer.cc
 drizzled/module/library.cc
 drizzled/module/loader.cc
@@ -57,6 +56,7 @@ plugin/auth_file/auth_file.cc
 plugin/auth_http/auth_http.cc
 plugin/auth_ldap/auth_ldap.cc
 plugin/blitzdb/ha_blitz.h
+plugin/blitzdb/ha_blitz.cc
 plugin/console/console.cc
 plugin/default_replicator/default_replicator.cc
 plugin/drizzle_protocol/drizzle_protocol.cc
@@ -67,8 +67,9 @@ plugin/haildb/haildb_engine.cc
 plugin/hello_events/hello_events.cc
 plugin/innobase/handler/data_dictionary.cc
 plugin/innobase/handler/ha_innodb.cc
+plugin/innobase/handler/replication_dictionary.cc
 plugin/innobase/pars/pars0grm.c
-plugin/innobase/ut/ut0auxconf_pause.c
+plugin/innobase/srv/srv0start.c
 plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_stats/logging_stats.cc
@@ -84,6 +85,8 @@ plugin/myisam/my_handler_errors.cc
 plugin/mysql_protocol/mysql_protocol.cc
 plugin/mysql_unix_socket_protocol/protocol.cc
 plugin/pbms/src/parameters_ms.cc
+plugin/pbms/src/plugin_ms.cc
+plugin/rabbitmq/rabbitmq_handler.cc
 plugin/rabbitmq/rabbitmq_log.cc
 plugin/session_dictionary/processlist.cc
 plugin/signal_handler/signal_handler.cc
@@ -97,4 +100,6 @@ plugin/transaction_log/module.cc
 plugin/transaction_log/print_transaction_message.cc
 plugin/transaction_log/transaction_log.cc
 plugin/transaction_log/transaction_log_reader.cc
+plugin/transaction_log/utilities/transaction_file_reader.cc
+plugin/transaction_log/utilities/transaction_reader.cc
 plugin/transaction_log/write_buffer.cc

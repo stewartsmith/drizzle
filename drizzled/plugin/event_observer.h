@@ -294,7 +294,7 @@ public:
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
   
-  static bool hasEvents(Session &session) { return (session.getSessionObservers() != NULL);}
+  static bool hasEvents(Session &in_session) { return (in_session.getSessionObservers() != NULL);}
 };
 
 //-----
@@ -335,7 +335,7 @@ public:
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
   
-  static bool hasEvents(Table &table) { return (table.getMutableShare()->getTableObservers() != NULL);}
+  static bool hasEvents(Table &in_table) { return (in_table.getMutableShare()->getTableObservers() != NULL);}
 };
 
 //-----

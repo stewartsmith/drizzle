@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -86,7 +86,9 @@ String *SubstrFunction::val_str(String *str)
       (args[1]->unsigned_flag && ((uint64_t) start > INT32_MAX)))
     return &my_empty_string;
 
-  start= ((start < 0) ? res->numchars() + start : start - 1);
+  start= ((start < 0) ?
+          static_cast<int64_t>(res->numchars() + start)
+          : start - 1);
   start= res->charpos((int) start);
   if ((start < 0) || ((uint) start + 1 > res->length()))
     return &my_empty_string;

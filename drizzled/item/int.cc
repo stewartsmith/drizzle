@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,9 +40,9 @@ Item_int::Item_int(const char *str_arg, uint32_t length)
   fixed= 1;
 }
 
-my_decimal *Item_int::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_int::val_decimal(type::Decimal *decimal_value)
 {
-  int2my_decimal(E_DEC_FATAL_ERROR, value, unsigned_flag, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, unsigned_flag, decimal_value);
   return decimal_value;
 }
 

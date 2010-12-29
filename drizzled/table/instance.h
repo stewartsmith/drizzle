@@ -60,6 +60,8 @@ public:
 
   bool hasShare() const { return true; }
 
+  void release() {};
+
   bool hasVariableWidth() const
   {
     return _has_variable_width;

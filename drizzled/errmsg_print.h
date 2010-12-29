@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,10 +33,10 @@ namespace drizzled
 #define ERRMSG_LVL_WARN 3
 #define ERRMSG_LVL_ERROR 4
 
-// todo: add __attribute__((format(printf, 1, 2)))
-bool errmsg_printf (int priority, char const *format, ...);
+bool errmsg_printf(int priority, char const *format, ...)
+  __attribute__((format(printf, 2, 3)));
 
-void sql_perror (const char *message);
+void sql_perror(const char *message);
 
 } /* namespace drizzled */
 

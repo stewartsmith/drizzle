@@ -1,0 +1,25 @@
+CREATE TABLE t1 (A BOOLEAN);
+insert into t1 VALUES ("no");
+insert into t1 VALUES ("false");
+
+insert into t1 VALUES ("true");
+insert into t1 VALUES ("yes");
+
+insert into t1 VALUES ("NO");
+insert into t1 VALUES ("FALSE");
+
+insert into t1 VALUES ("TRUE");
+insert into t1 VALUES ("YES");
+
+insert into t1 VALUES ("n");
+insert into t1 VALUES ("f");
+
+insert into t1 VALUES ("t");
+insert into t1 VALUES ("y");
+
+--error ER_INVALID_BOOLEAN_VALUE
+insert into t1 VALUES ("from");
+
+SELECT A from t1 ORDER BY a;
+
+DROP TABLE t1;

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -311,6 +311,7 @@ enum enum_duplicates
 
 enum drizzled_error_code {
 
+  EE_OK=0,
   EE_ERROR_FIRST=1,
   EE_CANTCREATEFILE,
   EE_READ,
@@ -866,7 +867,7 @@ enum drizzled_error_code {
   ER_UNUSED1521,
   ER_UNUSED1522,
   ER_UNUSED1523,
-  ER_UNUSED1524,
+  ER_INVALID_OPTION_VALUE,
   ER_WRONG_VALUE,
   ER_NO_PARTITION_FOR_GIVEN_VALUE,
   ER_UNUSED1527,
@@ -1044,7 +1045,31 @@ enum drizzled_error_code {
   ER_UNKNOWN_SCHEMA_OPTION,
   ER_EVENT_OBSERVER_PLUGIN,
   ER_CORRUPT_SCHEMA_DEFINITION,
+  ER_OUT_OF_GLOBAL_SORTMEMORY,
+  ER_OUT_OF_GLOBAL_JOINMEMORY,
+  ER_OUT_OF_GLOBAL_READRNDMEMORY,
+  ER_OUT_OF_GLOBAL_READMEMORY,
+  ER_USER_LOCKS_CANT_WAIT_ON_OWN_BARRIER,
+  ER_USER_LOCKS_UNKNOWN_BARRIER,
+  ER_USER_LOCKS_NOT_OWNER_OF_BARRIER,
+  ER_USER_LOCKS_CANT_WAIT_ON_OWN_LOCK,
+  ER_USER_LOCKS_NOT_OWNER_OF_LOCK,
+  ER_USER_LOCKS_INVALID_NAME_BARRIER,
+  ER_USER_LOCKS_INVALID_NAME_LOCK,
+  ER_KILL_DENY_SELF_ERROR,
+  ER_INVALID_ALTER_TABLE_FOR_NOT_NULL,
+  ER_ADMIN_ACCESS,
+  ER_INVALID_UUID_VALUE,
+  ER_INVALID_UUID_TIME,
+  ER_CORRUPT_TABLE_DEFINITION_ENUM,
+  ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION,
+  ER_INVALID_CAST_TO_SIGNED,
+  ER_INVALID_CAST_TO_UNSIGNED,
+  ER_INVALID_BOOLEAN_VALUE,
+  ER_INVALID_CAST_TO_BOOLEAN,
   ER_TRANSACTIONAL_DDL_NOT_SUPPORTED,
+  // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags
+  // instead of numbers in error messages in test.
   ER_ERROR_LAST=   ER_TRANSACTIONAL_DDL_NOT_SUPPORTED
 };
 

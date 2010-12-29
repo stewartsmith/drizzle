@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,8 +31,6 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 #include <cerrno>
-
-using namespace std;
 
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 
@@ -91,7 +89,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   hints.ai_socktype= SOCK_STREAM;
 
   snprintf(port_buf, NI_MAXSERV, "%d", getPort());
-  ret= getaddrinfo(getHost(), port_buf, &hints, &ai_list);
+  ret= getaddrinfo(getHost().empty() ? NULL : getHost().c_str(), port_buf, &hints, &ai_list);
   if (ret != 0)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("getaddrinfo() failed with error %s"),
@@ -226,9 +224,9 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   return false;
 }
 
-const char* plugin::ListenTcp::getHost(void) const
+const std::string plugin::ListenTcp::getHost(void) const
 {
-  return NULL;
+  return "";
 }
 
 } /* namespace drizzled */

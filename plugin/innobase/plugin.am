@@ -43,6 +43,8 @@ noinst_HEADERS+= \
                  plugin/innobase/include/db0err.h \
                  plugin/innobase/include/dict0boot.h \
                  plugin/innobase/include/dict0boot.ic \
+                 plugin/innobase/include/create_replication.h \
+                 plugin/innobase/include/read_replication.h \
                  plugin/innobase/include/dict0crea.h \
                  plugin/innobase/include/dict0crea.ic \
                  plugin/innobase/include/dict0dict.h \
@@ -100,6 +102,7 @@ noinst_HEADERS+= \
                  plugin/innobase/include/mtr0types.h \
                  plugin/innobase/include/mysql_addons.h \
                  plugin/innobase/include/os0file.h \
+		 plugin/innobase/include/os0file.ic \
                  plugin/innobase/include/os0proc.h \
                  plugin/innobase/include/os0proc.ic \
                  plugin/innobase/include/os0sync.h \
@@ -155,7 +158,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/row0upd.ic \
                  plugin/innobase/include/row0vers.h \
                  plugin/innobase/include/row0vers.ic \
-                 plugin/innobase/include/srv0que.h \
                  plugin/innobase/include/srv0srv.h \
                  plugin/innobase/include/srv0srv.ic \
                  plugin/innobase/include/srv0start.h \
@@ -189,13 +191,13 @@ noinst_HEADERS+= \
                  plugin/innobase/include/usr0sess.h \
                  plugin/innobase/include/usr0sess.ic \
                  plugin/innobase/include/usr0types.h \
-                 plugin/innobase/include/ut0auxconf.h \
                  plugin/innobase/include/ut0byte.h \
                  plugin/innobase/include/ut0byte.ic \
                  plugin/innobase/include/ut0dbg.h \
                  plugin/innobase/include/ut0lst.h \
                  plugin/innobase/include/ut0mem.h \
                  plugin/innobase/include/ut0mem.ic \
+                 plugin/innobase/include/ut0rbt.h \
                  plugin/innobase/include/ut0rnd.h \
                  plugin/innobase/include/ut0rnd.ic \
                  plugin/innobase/include/ut0sort.h \
@@ -213,6 +215,8 @@ noinst_HEADERS+= \
                  plugin/innobase/handler/handler0vars.h \
                  plugin/innobase/handler/status_function.h \
                  plugin/innobase/handler/internal_dictionary.h \
+                 plugin/innobase/handler/replication_dictionary.h \
+                 plugin/innobase/handler/replication_log.h \
                  plugin/innobase/handler/data_dictionary.h
 
 if BUILD_INNOBASE_PLUGIN
@@ -221,8 +225,8 @@ noinst_LTLIBRARIES+= \
 		     plugin/innobase/libpars.la
 endif
 
-plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
-plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/btr/btr0btr.c \
                                         plugin/innobase/btr/btr0cur.c \
@@ -236,6 +240,7 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/data/data0data.c \
                                         plugin/innobase/data/data0type.c \
                                         plugin/innobase/dict/dict0boot.c \
+                                        plugin/innobase/dict/create_replication.c \
                                         plugin/innobase/dict/dict0crea.c \
                                         plugin/innobase/dict/dict0dict.c \
                                         plugin/innobase/dict/dict0load.c \
@@ -286,7 +291,6 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/row/row0undo.c \
                                         plugin/innobase/row/row0upd.c \
                                         plugin/innobase/row/row0vers.c \
-                                        plugin/innobase/srv/srv0que.c \
                                         plugin/innobase/srv/srv0srv.c \
                                         plugin/innobase/srv/srv0start.c \
                                         plugin/innobase/sync/sync0arr.c \
@@ -306,6 +310,7 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/ut/ut0dbg.c \
                                         plugin/innobase/ut/ut0list.c \
                                         plugin/innobase/ut/ut0mem.c \
+                                        plugin/innobase/ut/ut0rbt.c \
                                         plugin/innobase/ut/ut0rnd.c \
                                         plugin/innobase/ut/ut0ut.c \
                                         plugin/innobase/ut/ut0vec.c \
@@ -314,15 +319,19 @@ plugin_innobase_libinnobase_la_SOURCES= \
 # pars0lex.c and pars0grm.c have lots of redundant decls 
 # and unused/undefeind stuf, but are generated anyway 
 plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_WERROR} \
+			-I$(top_builddir)/plugin/innobase/include \
 			-I$(top_srcdir)/plugin/innobase/include \
 			-DBUILD_DRIZZLE
-plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/pars0lex.c \
-			plugin/innobase/pars/pars0grm.c
+
+plugin_innobase_libpars_la_SOURCES= \
+				    plugin/innobase/pars/pars0lex.c \
+				    plugin/innobase/pars/pars0grm.c
 
 plugin_innobase_libinnobase_la_LIBADD=	plugin/innobase/libpars.la
 
 plugin/innobase/pars/pars0grm.c: plugin/innobase/pars/pars0grm.y
-	$(AM_V_GEN) $(YACC) -d plugin/innobase/pars/pars0grm.y -o plugin/innobase/pars/pars0grm.tab.c
+	$(AM_V_GEN) $(YACC) -d $< -o plugin/innobase/pars/pars0grm.tab.c
+	@mkdir -p plugin/innobase/include
 	@mv plugin/innobase/pars/pars0grm.tab.h plugin/innobase/include/pars0grm.h
 	@sed -e 's/pars0grm.tab.c/pars0grm.c/; s/^\(\(YYSTYPE\|int\) yy\(char\|nerrs\)\)/static \1/; s/\(\(YYSTYPE\|int\) yy\(lval\|parse\)\)/UNIV_INTERN \1/;' < plugin/innobase/pars/pars0grm.tab.c > plugin/innobase/pars/pars0grm.c
 	@rm plugin/innobase/pars/pars0grm.tab.c
@@ -364,11 +373,5 @@ BUILT_MAINT_SRC+= \
 EXTRA_DIST+= \
              plugin/innobase/CMakeLists.txt \
              plugin/innobase/pars/pars0grm.y \
-             plugin/innobase/pars/pars0lex.l \
-             plugin/innobase/ut/ut0auxconf_atomic_pthread_t_gcc.c \
-             plugin/innobase/ut/ut0auxconf_atomic_pthread_t_solaris.c \
-             plugin/innobase/ut/ut0auxconf_have_solaris_atomics.c \
-             plugin/innobase/ut/ut0auxconf_pause.c \
-             plugin/innobase/ut/ut0auxconf_sizeof_pthread_t.c
-
+             plugin/innobase/pars/pars0lex.l
 

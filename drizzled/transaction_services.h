@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,13 +36,14 @@ namespace plugin
 {
   class MonitoredInTransaction;
   class XaResourceManager;
+  class XaStorageEngine;
   class TransactionalStorageEngine;
 }
 
 class Session;
 class NamedSavepoint;
 class Field;
- 
+
 /**
  * This is a class which manages the XA transaction processing
  * in the server
@@ -51,17 +52,8 @@ class TransactionServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
-  typedef uint64_t TransactionId;
-  /**
-   * Constructor
-   */
-  TransactionServices()
-  {
-    /**
-     * @todo set transaction ID to the last one from an applier...
-     */
-    current_transaction_id= 0;
-  }
+  
+  TransactionServices();
 
   /**
    * Singleton method
@@ -228,6 +220,14 @@ public:
    */
   void rollbackTransactionMessage(Session *in_session);
   /**
+   * Rolls back the current statement, deleting the last Statement out of
+   * the current Transaction message.
+   *
+   * @note This depends on having clear statement boundaries (i.e., one
+   * Statement message per actual SQL statement.
+   */
+  void rollbackStatementMessage(Session *in_session);
+  /**
    * Creates a new InsertRecord GPB message and pushes it to
    * replicators.
    *
@@ -317,12 +317,10 @@ public:
    * @param[in] in_session Pointer to the Session which issued the statement
    * @param[in] schema_name The schema of the table being dropped
    * @param[in] table_name The table name of the table being dropped
-   * @param[in] if_exists Did the user specify an IF EXISTS clause?
    */
   void dropTable(Session *in_session,
                      const std::string &schema_name,
-                     const std::string &table_name,
-                     bool if_exists);
+                     const std::string &table_name);
   /**
    * Creates a TruncateTable Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
@@ -435,22 +433,11 @@ public:
                                       plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine,
                                       plugin::XaResourceManager *resource_manager);
-  TransactionId getNextTransactionId()
-  {
-    return current_transaction_id.increment();
-  }
-  TransactionId getCurrentTransactionId()
-  {
-    return current_transaction_id;
-  }
-  /**
-   * DEBUG ONLY.  See plugin::TransactionLog::truncate()
-   */
-  void resetTransactionId()
-  {
-    current_transaction_id= 0;
-  }
 
+  uint64_t getCurrentTransactionId(Session *session);
+
+  void allocateNewTransactionId();
+ 
   /**************
    * Events API
    **************/
@@ -476,7 +463,6 @@ public:
   bool sendShutdownEvent(Session *session);
 
 private:
-  atomic<TransactionId> current_transaction_id;
 
   /**
    * Checks if a field has been updated 
@@ -520,6 +506,8 @@ private:
                                Table *in_table,
                                const unsigned char *old_record,
                                const unsigned char *new_record);
+
+  plugin::XaStorageEngine *xa_storage_engine;
 };
 
 } /* namespace drizzled */

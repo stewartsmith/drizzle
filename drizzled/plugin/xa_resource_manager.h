@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,6 +71,16 @@ public:
     return doXaRecover(append_to, len);
   }
 
+  uint64_t getCurrentTransactionId(Session *session)
+  {
+    return doGetCurrentTransactionId(session);
+  }
+
+  uint64_t getNewTransactionId(Session *session)
+  {
+    return doGetNewTransactionId(session);
+  }
+
   typedef ::boost::unordered_set<my_xid> commit_list_set;
   /** 
    * The below static class methods wrap the interaction
@@ -117,6 +127,10 @@ private:
    *  for this engine.
    */
   virtual int doXaRecover(XID * append_to, size_t len)= 0;
+
+  virtual uint64_t doGetCurrentTransactionId(Session *session)= 0;
+
+  virtual uint64_t doGetNewTransactionId(Session *session)= 0;
 };
 
 } /* namespace plugin */

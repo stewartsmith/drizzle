@@ -28,7 +28,7 @@ class AllIndexes
 {
   Session &session;
   message::Table table_message;
-  const drizzled::message::Table *table_ptr;
+  drizzled::message::table::shared_ptr table_ptr;
   int32_t index_iterator;
 
   drizzled::generator::AllTables all_tables_generator;

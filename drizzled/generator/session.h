@@ -21,47 +21,49 @@
 #ifndef DRIZZLED_GENERATOR_SESSION_H
 #define DRIZZLED_GENERATOR_SESSION_H
 
-#include "drizzled/pthread_globals.h"
-#include "drizzled/session_list.h"
+#include <boost/thread/mutex.hpp>
+#include "drizzled/session/cache.h"
+#include "drizzled/identifier/user.h"
 
 namespace drizzled {
 namespace generator {
 
 class Session
 {
-  SessionList local_list;
-  SessionList::const_iterator iter;
+  session::Cache::list local_list;
+  session::Cache::list::const_iterator iter;
+  identifier::User::const_reference user;
 
 public:
 
-  Session()
+  Session(identifier::User::const_reference arg) :
+    user(arg)
   {
-    LOCK_thread_count.lock();
-    local_list= getSessionList();
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    local_list= session::Cache::singleton().getCache();
     iter= local_list.begin();
   }
 
   ~Session()
   {
-    LOCK_thread_count.unlock();
   }
 
-  operator drizzled::SessionPtr()
+  operator drizzled::Session::pointer()
   {
     while (iter != local_list.end())
     {
-      if (not (*iter)->isViewable())
+      drizzled::Session::pointer ret= (*iter).get();
+      iter++;
+
+      if (not ret->isViewable(user))
       {
-        iter++;
         continue;
       }
 
-      drizzled::SessionPtr ret= *iter;
-      iter++;
       return ret;
     }
 
-    return NULL;
+    return drizzled::Session::pointer();
   }
 };
 

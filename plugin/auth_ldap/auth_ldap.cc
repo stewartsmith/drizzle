@@ -29,27 +29,33 @@
 #include <string>
 
 #include "drizzled/plugin/authentication.h"
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
 
+#include <drizzled/module/option_map.h>
+#include <boost/program_options.hpp>
+
+namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
 namespace auth_ldap
 {
 
-static char *uri= NULL;
-static const char DEFAULT_URI[]= "ldap://127.0.0.1/";
-static char *bind_dn= NULL;
-static char *bind_password= NULL;
-static char *base_dn= NULL;
-static char *password_attribute= NULL;
-static const char DEFAULT_PASSWORD_ATTRIBUTE[]= "userPassword";
-static char *mysql_password_attribute= NULL;
-static const char DEFAULT_MYSQL_PASSWORD_ATTRIBUTE[]= "mysqlUserPassword";
-static int cache_timeout= 0;
+std::string uri;
+const std::string DEFAULT_URI= "ldap://127.0.0.1/";
+std::string bind_dn;
+std::string bind_password;
+std::string base_dn;
+std::string password_attribute;
+std::string DEFAULT_PASSWORD_ATTRIBUTE= "userPassword";
+std::string mysql_password_attribute;
+const std::string DEFAULT_MYSQL_PASSWORD_ATTRIBUTE= "mysqlUserPassword";
 static const int DEFAULT_CACHE_TIMEOUT= 600;
+typedef constrained_check<int, DEFAULT_CACHE_TIMEOUT, 0, 2147483647> cachetimeout_constraint;
+static cachetimeout_constraint cache_timeout= 0;
+
 
 class AuthLDAP: public plugin::Authentication
 {
@@ -86,14 +92,14 @@ private:
     MYSQL_HASH
   } PasswordType;
 
-  typedef pair<PasswordType, string> PasswordEntry;
-  typedef pair<string, PasswordEntry> UserEntry;
-  typedef map<string, PasswordEntry> UserCache;
+  typedef std::pair<PasswordType, std::string> PasswordEntry;
+  typedef std::pair<std::string, PasswordEntry> UserEntry;
+  typedef std::map<std::string, PasswordEntry> UserCache;
 
   /**
    * Base class method to check authentication for a user.
    */
-  bool authenticate(const SecurityContext &sctx, const string &password);
+  bool authenticate(const identifier::User &sctx, const string &password);
 
   /**
    * Lookup a user in LDAP.
@@ -154,7 +160,7 @@ bool AuthLDAP::initialize(void)
 
 bool AuthLDAP::connect(void)
 {
-  int return_code= ldap_initialize(&ldap, uri);
+  int return_code= ldap_initialize(&ldap, (char *)uri.c_str());
   if (return_code != LDAP_SUCCESS)
   {
     error= "ldap_initialize failed: ";
@@ -173,9 +179,9 @@ bool AuthLDAP::connect(void)
     return false;
   }
 
-  if (bind_dn != NULL)
+  if (not bind_dn.empty())
   {
-    return_code= ldap_simple_bind_s(ldap, bind_dn, bind_password);
+    return_code= ldap_simple_bind_s(ldap, (char *)bind_dn.c_str(), (char *)bind_password.c_str());
     if (return_code != LDAP_SUCCESS)
     {
       ldap_unbind(ldap);
@@ -194,7 +200,7 @@ string& AuthLDAP::getError(void)
   return error;
 }
 
-bool AuthLDAP::authenticate(const SecurityContext &sctx, const string &password)
+bool AuthLDAP::authenticate(const identifier::User &sctx, const string &password)
 {
   /* See if cache should be emptied. */
   if (cache_timeout > 0)
@@ -216,7 +222,7 @@ bool AuthLDAP::authenticate(const SecurityContext &sctx, const string &password)
 
   pthread_rwlock_rdlock(&lock);
 
-  AuthLDAP::UserCache::const_iterator user= users.find(sctx.getUser());
+  AuthLDAP::UserCache::const_iterator user= users.find(sctx.username());
   if (user == users.end())
   {
     pthread_rwlock_unlock(&lock);
@@ -224,16 +230,16 @@ bool AuthLDAP::authenticate(const SecurityContext &sctx, const string &password)
     pthread_rwlock_wrlock(&lock);
 
     /* Make sure the user was not added while we unlocked. */
-    user= users.find(sctx.getUser());
+    user= users.find(sctx.username());
     if (user == users.end())
-      lookupUser(sctx.getUser());
+      lookupUser(sctx.username());
 
     pthread_rwlock_unlock(&lock);
 
     pthread_rwlock_rdlock(&lock);
 
     /* Get user again because map may have changed while unlocked. */
-    user= users.find(sctx.getUser());
+    user= users.find(sctx.username());
     if (user == users.end())
     {
       pthread_rwlock_unlock(&lock);
@@ -247,7 +253,7 @@ bool AuthLDAP::authenticate(const SecurityContext &sctx, const string &password)
     return false;
   }
 
-  if (sctx.getPasswordType() == SecurityContext::MYSQL_HASH)
+  if (sctx.getPasswordType() == identifier::User::MYSQL_HASH)
   {
     bool allow= verifyMySQLHash(user->second, sctx.getPasswordContext(), password);
     pthread_rwlock_unlock(&lock);
@@ -269,8 +275,8 @@ void AuthLDAP::lookupUser(const string& user)
   string filter("(cn=" + user + ")");
   const char *attributes[3]=
   {
-    password_attribute,
-    mysql_password_attribute,
+    (char *)password_attribute.c_str(),
+    (char *)mysql_password_attribute.c_str(),
     NULL
   };
   LDAPMessage *result;
@@ -289,7 +295,7 @@ void AuthLDAP::lookupUser(const string& user)
     }
 
     int return_code= ldap_search_ext_s(ldap,
-                                       base_dn,
+                                       (char *)base_dn.c_str(),
                                        LDAP_SCOPE_ONELEVEL,
                                        filter.c_str(),
                                        const_cast<char **>(attributes),
@@ -325,10 +331,10 @@ void AuthLDAP::lookupUser(const string& user)
     new_password= AuthLDAP::PasswordEntry(NOT_FOUND, "");
   else
   {
-    char **values= ldap_get_values(ldap, entry, mysql_password_attribute);
+    char **values= ldap_get_values(ldap, entry, (char *)mysql_password_attribute.c_str());
     if (values == NULL)
     {
-      values= ldap_get_values(ldap, entry, password_attribute);
+      values= ldap_get_values(ldap, entry, (char *)password_attribute.c_str());
       if (values == NULL)
         new_password= AuthLDAP::PasswordEntry(NOT_FOUND, "");
       else
@@ -413,81 +419,36 @@ static int init(module::Context &context)
     return 1;
   }
 
+  context.registerVariable(new sys_var_const_string_val("uri", uri));
+  context.registerVariable(new sys_var_const_string_val("bind-dn", bind_dn));
+  context.registerVariable(new sys_var_const_string_val("bind-password", bind_password));
+  context.registerVariable(new sys_var_const_string_val("base-dn", base_dn));
+  context.registerVariable(new sys_var_const_string_val("password-attribute",password_attribute));
+  context.registerVariable(new sys_var_const_string_val("mysql-password-attribute", mysql_password_attribute));
+  context.registerVariable(new sys_var_constrained_value_readonly<int>("cache-timeout", cache_timeout));
+
   context.add(auth_ldap);
   return 0;
 }
 
-static DRIZZLE_SYSVAR_STR(uri,
-                          uri,
-                          PLUGIN_VAR_READONLY,
-                          N_("URI of the LDAP server to contact"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          DEFAULT_URI);
-
-static DRIZZLE_SYSVAR_STR(bind_dn,
-                          bind_dn,
-                          PLUGIN_VAR_READONLY,
-                          N_("DN to use when binding to the LDAP server"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          NULL); /* default value */
-
-static DRIZZLE_SYSVAR_STR(bind_password,
-                          bind_password,
-                          PLUGIN_VAR_READONLY,
-                          N_("Password to use when binding the DN"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          NULL); /* default value */
-
-static DRIZZLE_SYSVAR_STR(base_dn,
-                          base_dn,
-                          PLUGIN_VAR_READONLY,
-                          N_("DN to use when searching"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          NULL); /* default value */
-
-static DRIZZLE_SYSVAR_STR(password_attribute,
-                          password_attribute,
-                          PLUGIN_VAR_READONLY,
-                          N_("Attribute in LDAP with plain text password"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          DEFAULT_PASSWORD_ATTRIBUTE);
-
-static DRIZZLE_SYSVAR_STR(mysql_password_attribute,
-                          mysql_password_attribute,
-                          PLUGIN_VAR_READONLY,
-                          N_("Attribute in LDAP with MySQL hashed password"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          DEFAULT_MYSQL_PASSWORD_ATTRIBUTE);
-
-static DRIZZLE_SYSVAR_INT(cache_timeout,
-                          cache_timeout,
-                          PLUGIN_VAR_READONLY,
-                          N_("How often to empty the users cache, 0 to disable"),
-                          NULL, /* check func */
-                          NULL, /* update func */
-                          DEFAULT_CACHE_TIMEOUT,
-                          0,
-                          2147483647,
-                          0);
-
-static drizzle_sys_var* sys_variables[]=
+static void init_options(drizzled::module::option_context &context)
 {
-  DRIZZLE_SYSVAR(uri),
-  DRIZZLE_SYSVAR(bind_dn),
-  DRIZZLE_SYSVAR(bind_password),
-  DRIZZLE_SYSVAR(base_dn),
-  DRIZZLE_SYSVAR(password_attribute),
-  DRIZZLE_SYSVAR(mysql_password_attribute),
-  DRIZZLE_SYSVAR(cache_timeout),
-  NULL
-};
+  context("uri", po::value<string>(&uri)->default_value(DEFAULT_URI),
+          N_("URI of the LDAP server to contact"));
+  context("bind-db", po::value<string>(&bind_dn)->default_value(""),
+          N_("DN to use when binding to the LDAP server"));
+  context("bind-password", po::value<string>(&bind_password)->default_value(""),
+          N_("Password to use when binding the DN"));
+  context("base-dn", po::value<string>(&base_dn)->default_value(""),
+          N_("DN to use when searching"));
+  context("password-attribute", po::value<string>(&password_attribute)->default_value(DEFAULT_PASSWORD_ATTRIBUTE),
+          N_("Attribute in LDAP with plain text password"));
+  context("mysql-password-attribute", po::value<string>(&mysql_password_attribute)->default_value(DEFAULT_MYSQL_PASSWORD_ATTRIBUTE),
+          N_("Attribute in LDAP with MySQL hashed password"));
+  context("cache-timeout", po::value<cachetimeout_constraint>(&cache_timeout)->default_value(DEFAULT_CACHE_TIMEOUT),
+          N_("How often to empty the users cache, 0 to disable"));
+}
 
 } /* namespace auth_ldap */
 
-DRIZZLE_PLUGIN(auth_ldap::init, auth_ldap::sys_variables, NULL);
+DRIZZLE_PLUGIN(auth_ldap::init, NULL, auth_ldap::init_options);

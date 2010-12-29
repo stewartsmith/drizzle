@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ void Item_date_add_interval::fix_length_and_dec()
     - If first arg is a DRIZZLE_TYPE_DATE and the interval type uses hours,
       minutes or seconds then type is DRIZZLE_TYPE_DATETIME.
     - Otherwise the result is DRIZZLE_TYPE_VARCHAR
-      (This is because you can't know if the string contains a DATE, DRIZZLE_TIME or
+      (This is because you can't know if the string contains a DATE, type::Time or
       DATETIME argument)
   */
   cached_field_type= DRIZZLE_TYPE_VARCHAR;
@@ -81,7 +81,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
 /* Here arg[1] is a Item_interval object */
 
-bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
+bool Item_date_add_interval::get_date(type::Time *ltime, uint32_t )
 {
   TemporalInterval interval;
 
@@ -103,13 +103,15 @@ bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
 String *Item_date_add_interval::val_str(String *str)
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
 
   if (ltime.time_type == DRIZZLE_TIMESTAMP_DATE)
+  {
     make_date(&ltime, str);
+  }
   else if (ltime.second_part)
   {
     /* Ensure we've got enough room for our timestamp string. */
@@ -127,7 +129,9 @@ String *Item_date_add_interval::val_str(String *str)
     str->set_charset(&my_charset_bin);
   }
   else
+  {
     make_datetime(&ltime, str);
+  }
 
   return str;
 }
@@ -135,7 +139,7 @@ String *Item_date_add_interval::val_str(String *str)
 int64_t Item_date_add_interval::val_int()
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   int64_t date;
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return (int64_t) 0;

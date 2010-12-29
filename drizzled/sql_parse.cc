@@ -39,7 +39,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/global_charset_info.h"
 
 #include "drizzled/plugin/logging.h"
@@ -54,7 +54,7 @@
 
 #include <bitset>
 #include <algorithm>
-
+#include <boost/date_time.hpp>
 #include "drizzled/internal/my_sys.h"
 
 using namespace std;
@@ -67,7 +67,7 @@ namespace drizzled
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-void mysql_parse(Session *session, const char *inBuf, uint32_t length);
+void parse(Session *session, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -170,8 +170,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
 
-  DRIZZLE_COMMAND_START(session->thread_id,
-                        command);
+  DRIZZLE_COMMAND_START(session->thread_id, command);
 
   session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
@@ -211,7 +210,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     SchemaIdentifier identifier(tmp);
 
-    if (not mysql_change_db(session, identifier))
+    if (not change_db(session, identifier))
     {
       session->my_ok();
     }
@@ -219,14 +218,13 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_QUERY:
   {
-    if (! session->readAndStoreQuery(packet, packet_length))
+    if (not session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->query.c_str(),
+    DRIZZLE_QUERY_START(session->getQueryString()->c_str(),
                         session->thread_id,
-                        const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+                        const_cast<const char *>(session->schema()->c_str()));
 
-    plugin::QueryRewriter::rewriteQuery(session->db, session->query);
-    mysql_parse(session, session->query.c_str(), session->query.length());
+    parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
 
     break;
   }
@@ -271,9 +269,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     if (! session->main_da.is_set())
       session->send_kill_message();
   }
-  if (session->killed == Session::KILL_QUERY || session->killed == Session::KILL_BAD_DATA)
+  if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
   {
-    session->killed= Session::NOT_KILLED;
+    session->setKilled(Session::NOT_KILLED);
     session->setAbort(false);
   }
 
@@ -284,16 +282,16 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->client->sendError(session->main_da.sql_errno(),
+    session->getClient()->sendError(session->main_da.sql_errno(),
                                session->main_da.message());
     break;
 
   case Diagnostics_area::DA_EOF:
-    session->client->sendEOF();
+    session->getClient()->sendEOF();
     break;
 
   case Diagnostics_area::DA_OK:
-    session->client->sendOK();
+    session->getClient()->sendOK();
     break;
 
   case Diagnostics_area::DA_DISABLED:
@@ -301,7 +299,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   case Diagnostics_area::DA_EMPTY:
   default:
-    session->client->sendOK();
+    session->getClient()->sendOK();
     break;
   }
 
@@ -320,8 +318,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
   session->command= COM_SLEEP;
-  memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query.clear();
+  session->resetQueryString();
 
   session->set_proc_info(NULL);
   session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
@@ -432,8 +429,7 @@ int prepare_new_schema_table(Session *session, LEX *lex,
     true        Error
 */
 
-static int
-mysql_execute_command(Session *session)
+static int execute_command(Session *session)
 {
   bool res= false;
   LEX  *lex= session->lex;
@@ -441,12 +437,6 @@ mysql_execute_command(Session *session)
   Select_Lex *select_lex= &lex->select_lex;
   /* list of all tables in query */
   TableList *all_tables;
-  /* A peek into the query string */
-  size_t proc_info_len= session->query.length() > PROCESS_LIST_WIDTH ?
-                        PROCESS_LIST_WIDTH : session->query.length();
-
-  memcpy(session->process_list_info, session->query.c_str(), proc_info_len);
-  session->process_list_info[proc_info_len]= '\0';
 
   /*
     In many cases first table of main Select_Lex have special meaning =>
@@ -597,7 +587,7 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 
 
 void
-mysql_init_select(LEX *lex)
+init_select(LEX *lex)
 {
   Select_Lex *select_lex= lex->current_select;
   select_lex->init_select();
@@ -611,7 +601,7 @@ mysql_init_select(LEX *lex)
 
 
 bool
-mysql_new_select(LEX *lex, bool move_down)
+new_select(LEX *lex, bool move_down)
 {
   Select_Lex *select_lex;
   Session *session= lex->session;
@@ -697,7 +687,7 @@ void create_select_for_variable(const char *var_name)
 
   session= current_session;
   lex= session->lex;
-  mysql_init_select(lex);
+  init_select(lex);
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
@@ -724,10 +714,11 @@ void create_select_for_variable(const char *var_name)
   @param       length  Length of the query text
 */
 
-void mysql_parse(Session *session, const char *inBuf, uint32_t length)
+void parse(Session *session, const char *inBuf, uint32_t length)
 {
-  uint64_t start_time= my_getsystime();
-  lex_start(session);
+  boost::posix_time::ptime start_time=boost::posix_time::microsec_clock::local_time();
+  session->lex->start(session);
+
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble
@@ -748,21 +739,22 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   if (!err)
   {
     {
-      if (! session->is_error())
+      if (not session->is_error())
       {
-        DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
+        DRIZZLE_QUERY_EXEC_START(session->getQueryString()->c_str(),
                                  session->thread_id,
-                                 const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+                                 const_cast<const char *>(session->schema()->c_str()));
         // Implement Views here --Brian
         /* Actually execute the query */
         try 
         {
-          mysql_execute_command(session);
+          execute_command(session);
         }
         catch (...)
         {
           // Just try to catch any random failures that could have come
           // during execution.
+          unireg_abort(1);
         }
         DRIZZLE_QUERY_EXEC_DONE(0);
       }
@@ -776,7 +768,8 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
-  session->status_var.execution_time_nsec+= my_getsystime() - start_time;
+  boost::posix_time::ptime end_time=boost::posix_time::microsec_clock::local_time();
+  session->status_var.execution_time_nsec+=(end_time-start_time).total_microseconds();
 }
 
 
@@ -966,8 +959,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  if (table->table.length)
-    table->table.length= my_casedn_str(files_charset_info, table->table.str);
   ptr->setTableName(table->table.str);
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
@@ -1424,71 +1415,6 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 
 
 /**
-  kill on thread.
-
-  @param session			Thread class
-  @param id			Thread id
-  @param only_kill_query        Should it kill the query or the connection
-
-  @note
-    This is written such that we have a short lock on LOCK_thread_count
-*/
-
-static unsigned int
-kill_one_thread(Session *, session_id_t id, bool only_kill_query)
-{
-  Session *tmp= NULL;
-  uint32_t error= ER_NO_SUCH_THREAD;
-  
-  {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
-    {
-      if ((*it)->thread_id == id)
-      {
-        tmp= *it;
-        tmp->lockForDelete();
-        break;
-      }
-    }
-  }
-
-  if (tmp)
-  {
-
-    if (tmp->isViewable())
-    {
-      tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-      error= 0;
-    }
-
-    tmp->unlockForDelete();
-  }
-  return(error);
-}
-
-
-/*
-  kills a thread and sends response
-
-  SYNOPSIS
-    sql_kill()
-    session			Thread class
-    id			Thread id
-    only_kill_query     Should it kill the query or the connection
-*/
-
-void sql_kill(Session *session, int64_t id, bool only_kill_query)
-{
-  uint32_t error;
-  if (!(error= kill_one_thread(session, id, only_kill_query)))
-    session->my_ok();
-  else
-    my_error(error, MYF(0), id);
-}
-
-
-/**
   Check if the select is a simple select (not an union).
 
   @retval
@@ -1612,37 +1538,6 @@ bool insert_precheck(Session *session, TableList *)
     return(true);
   }
   return(false);
-}
-
-
-/**
-  CREATE TABLE query pre-check.
-
-  @param session			Thread handler
-  @param tables		Global table list
-  @param create_table	        Table which will be created
-
-  @retval
-    false   OK
-  @retval
-    true   Error
-*/
-
-bool create_table_precheck(TableIdentifier &identifier)
-{
-  if (not plugin::StorageEngine::canCreateTable(identifier))
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
-    return true;
-  }
-
-  if (not plugin::StorageEngine::doesSchemaExist(identifier))
-  {
-    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
-    return true;
-  }
-
-  return false;
 }
 
 
@@ -1771,7 +1666,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
-  DRIZZLE_QUERY_PARSE_START(session->query.c_str());
+  DRIZZLE_QUERY_PARSE_START(session->getQueryString()->c_str());
 
   /* Set Lex_input_stream. */
 
@@ -1779,21 +1674,21 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 
   /* Parse the query. */
 
-  bool mysql_parse_status= DRIZZLEparse(session) != 0;
+  bool parse_status= DRIZZLEparse(session) != 0;
 
   /* Check that if DRIZZLEparse() failed, session->is_error() is set. */
 
-  assert(!mysql_parse_status || session->is_error());
+  assert(!parse_status || session->is_error());
 
   /* Reset Lex_input_stream. */
 
   session->m_lip= NULL;
 
-  DRIZZLE_QUERY_PARSE_DONE(mysql_parse_status || session->is_fatal_error);
+  DRIZZLE_QUERY_PARSE_DONE(parse_status || session->is_fatal_error);
 
   /* That's it. */
 
-  return mysql_parse_status || session->is_fatal_error;
+  return parse_status || session->is_fatal_error;
 }
 
 /**

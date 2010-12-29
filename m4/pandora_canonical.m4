@@ -1,10 +1,10 @@
-dnl  Copyright (C) 2009 Sun Microsystems
-dnl This file is free software; Sun Microsystems
+dnl  Copyright (C) 2009 Sun Microsystems, Inc.
+dnl This file is free software; Sun Microsystems, Inc.
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.161])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.163])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -201,6 +201,25 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AC_DEFINE([TIME_T_UNSIGNED], 1, [Define to 1 if time_t is unsigned])
   ])
 
+  AC_CACHE_CHECK([if system defines RUSAGE_THREAD], [ac_cv_rusage_thread],[
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+      [[
+#include <sys/time.h>
+#include <sys/resource.h>
+      ]],[[
+      int x= RUSAGE_THREAD;
+      ]])
+    ],[
+      ac_cv_rusage_thread=yes
+    ],[
+      ac_cv_rusage_thread=no
+    ])
+  ])
+  AS_IF([test "$ac_cv_rusage_thread" = "no"],[
+    AC_DEFINE([RUSAGE_THREAD], [RUSAGE_SELF],
+      [Define if system doesn't define])
+  ])
+
   AC_CHECK_LIBM
   dnl Bug on FreeBSD - LIBM check doesn't set the damn variable
   AC_SUBST([LIBM])
@@ -348,6 +367,32 @@ typedef unsigned long int ulong;
 #define closesocket(a) close(a)
 #define get_socket_errno() errno
 #endif
+
+#if defined(__cplusplus)
+# if defined(DEBUG)
+#  include <cassert>
+#  include <cstddef>
+# endif
+template<typename To, typename From>
+inline To implicit_cast(From const &f) {
+  return f;
+}
+template<typename To, typename From>     // use like this: down_cast<T*>(foo);
+inline To down_cast(From* f) {                   // so we only accept pointers
+  // Ensures that To is a sub-type of From *.  This test is here only
+  // for compile-time type checking, and has no overhead in an
+  // optimized build at run-time, as it will be optimized away
+  // completely.
+  if (false) {
+    implicit_cast<From*, To>(0);
+  }
+
+#if defined(DEBUG)
+  assert(f == NULL || dynamic_cast<To>(f) != NULL);  // RTTI: debug mode only!
+#endif
+  return static_cast<To>(f);
+}
+#endif /* defined(__cplusplus) */
 
 #endif /* __CONFIG_H__ */
   ])

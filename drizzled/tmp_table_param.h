@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,16 +71,35 @@ public:
 
   const CHARSET_INFO *table_charset;
 
-  Tmp_Table_Param()
-    :copy_field(0),
+  Tmp_Table_Param() :
+    keyinfo(0),
+    copy_funcs(),
+    save_copy_funcs(),
+    copy_field(0),
+    copy_field_end(0),
+    save_copy_field(0),
+    save_copy_field_end(0),
+    group_buff(0),
+    items_to_copy(0),
+    recinfo(0),
+    start_recinfo(0),
+    end_write_records(0),
+    field_count(0),
+    sum_func_count(0),
+    func_count(0),
+    hidden_field_count(0),
     group_parts(0),
     group_length(0),
     group_null_parts(0),
+    quick_group(0),
+    using_indirect_summary_function(false),
     schema_table(false),
     precomputed_group_by(false),
     force_copy_fields(false),
-    convert_blob_length(0)
+    convert_blob_length(0),
+    table_charset(0)
   {}
+
   ~Tmp_Table_Param()
   {
     cleanup();

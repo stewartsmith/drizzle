@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -91,7 +91,6 @@ public:
   enum tablespace_op_type tablespace_op;
   uint32_t no_parts;
   enum ha_build_method build_method;
-  CreateField *datetime_field;
   bool error_if_not_empty;
 
   AlterInfo();

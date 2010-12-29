@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@
 #include "config.h"
 #include "drizzled/sql_select.h" /* include join.h */
 #include "drizzled/field/blob.h"
+#include "drizzled/drizzled.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <algorithm>
 
@@ -87,6 +89,8 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   if (!(cache->field=(CacheField*)
         memory::sql_alloc(sizeof(CacheField)*(cache->fields+table_count*2)+(blobs+1)* sizeof(CacheField*))))
   {
+    size= cache->end - cache->buff;
+    global_join_buffer.sub(size);
     free((unsigned char*) cache->buff);
     cache->buff=0;
     return(1);
@@ -162,6 +166,11 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   cache->blobs= blobs;
   *blob_ptr= NULL;					/* End sequentel */
   size= max((size_t) session->variables.join_buff_size, (size_t)cache->length);
+  if (not global_join_buffer.add(size))
+  {
+    my_error(ER_OUT_OF_GLOBAL_JOINMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+    return 1;
+  }
   if (!(cache->buff= (unsigned char*) malloc(size)))
     return 1;
   cache->end= cache->buff+size;

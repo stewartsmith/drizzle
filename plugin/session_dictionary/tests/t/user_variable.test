@@ -1,0 +1,8 @@
+# Insert some variables, and then see if they exist.
+
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_VARIABLES;
+SET @a="fsdfsdf";
+SET @g= NULL;
+
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_VARIABLES;
+SET @a= NULL;

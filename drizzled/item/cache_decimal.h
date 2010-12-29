@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ namespace drizzled
 class Item_cache_decimal: public Item_cache
 {
 protected:
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 public:
   Item_cache_decimal(): Item_cache() {}
 
@@ -36,7 +36,7 @@ public:
   double val_real();
   int64_t val_int();
   String* val_str(String *str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type() const { return DECIMAL_RESULT; }
 };
 

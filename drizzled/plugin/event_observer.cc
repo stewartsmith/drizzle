@@ -36,8 +36,6 @@
 
 
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -65,7 +63,7 @@ namespace plugin
   void EventObserver::removePlugin(EventObserver *handler)
   {
     if (handler != NULL)
-      all_event_plugins.erase(find(all_event_plugins.begin(), all_event_plugins.end(), handler));
+      all_event_plugins.erase(std::find(all_event_plugins.begin(), all_event_plugins.end(), handler));
   }
 
 
@@ -81,11 +79,11 @@ namespace plugin
   {
 
   public:
-    typedef multimap<uint32_t, EventObserver *> ObserverMap;
+    typedef std::multimap<uint32_t, EventObserver *> ObserverMap;
 
   private:
     /* A list of lists indexed by event type. */
-    vector<ObserverMap *> event_observer_lists;
+    std::vector<ObserverMap *> event_observer_lists;
 
   public:
 
@@ -97,10 +95,10 @@ namespace plugin
 
     ~EventObserverList()
     {
-      for_each(event_observer_lists.begin(),
-               event_observer_lists.end(),
-               SafeDeletePtr());
-			event_observer_lists.clear();
+      std::for_each(event_observer_lists.begin(),
+                    event_observer_lists.end(),
+                    SafeDeletePtr());
+      event_observer_lists.clear();
     }
 
     /* Add the observer to the observer list for the even, positioning it if required.
@@ -139,7 +137,7 @@ namespace plugin
         }
       }
 
-      observers->insert(pair<uint32_t, EventObserver *>(event_pos, eventObserver) );
+      observers->insert(std::pair<uint32_t, EventObserver *>(event_pos, eventObserver) );
     }
 
 
@@ -168,7 +166,7 @@ namespace plugin
   /* For each EventObserver plugin call its registerTableEventsDo() meathod so that it can
    * register what events, if any, it is interested in on this table.
    */ 
-  class RegisterTableEventsIterate : public unary_function<EventObserver *, void>
+  class RegisterTableEventsIterate : public std::unary_function<EventObserver *, void>
   {
     TableShare &table_share;
     EventObserverList &observers;
@@ -208,8 +206,8 @@ namespace plugin
 		table_share.setTableObservers(observers);
  
 
-    for_each(all_event_plugins.begin(), all_event_plugins.end(),
-             RegisterTableEventsIterate(table_share, *observers));
+    std::for_each(all_event_plugins.begin(), all_event_plugins.end(),
+                  RegisterTableEventsIterate(table_share, *observers));
 
   }
 
@@ -240,7 +238,7 @@ namespace plugin
   /* For each EventObserver plugin call its registerSchemaEventsDo() meathod so that it can
    * register what events, if any, it is interested in on the schema.
    */ 
-  class RegisterSchemaEventsIterate : public unary_function<EventObserver *, void>
+  class RegisterSchemaEventsIterate : public std::unary_function<EventObserver *, void>
   {
     const std::string &db;
     EventObserverList &observers;
@@ -275,8 +273,8 @@ namespace plugin
       session.setSchemaObservers(db, observers);
    }
 
-    for_each(all_event_plugins.begin(), all_event_plugins.end(),
-             RegisterSchemaEventsIterate(db, *observers));
+    std::for_each(all_event_plugins.begin(), all_event_plugins.end(),
+                  RegisterSchemaEventsIterate(db, *observers));
 
   }
 
@@ -306,7 +304,7 @@ namespace plugin
   /* For each EventObserver plugin call its registerSessionEventsDo() meathod so that it can
    * register what events, if any, it is interested in on this session.
    */ 
-  class RegisterSessionEventsIterate : public unary_function<EventObserver *, void>
+  class RegisterSessionEventsIterate : public std::unary_function<EventObserver *, void>
   {
     Session &session;
     EventObserverList &observers;
@@ -342,8 +340,8 @@ namespace plugin
 	observers= new EventObserverList();
 	session.setSessionObservers(observers);
 
-    for_each(all_event_plugins.begin(), all_event_plugins.end(),
-             RegisterSessionEventsIterate(session, *observers));
+  std::for_each(all_event_plugins.begin(), all_event_plugins.end(),
+                RegisterSessionEventsIterate(session, *observers));
 
   }
 
@@ -368,13 +366,13 @@ namespace plugin
 
   /* Event observer list iterator: */
   //----------
-  class EventIterate : public unary_function<pair<uint32_t, EventObserver *>, bool>
+  class EventIterate : public std::unary_function<std::pair<uint32_t, EventObserver *>, bool>
   {
     EventData &data;
 
   public:
     EventIterate(EventData &data_arg) :
-      unary_function<pair<uint32_t, EventObserver *>, bool>(),
+      std::unary_function<std::pair<uint32_t, EventObserver *>, bool>(),
       data(data_arg)
     {}
 
@@ -415,8 +413,8 @@ namespace plugin
 
     /* Use find_if instead of foreach so that we can collect return codes */
     EventObserverList::ObserverMap::iterator iter=
-      find_if(eventObservers->begin(), eventObservers->end(),
-              EventIterate(*this)); 
+      std::find_if(eventObservers->begin(), eventObservers->end(),
+                   EventIterate(*this)); 
     /* If iter is == end() here, that means that all of the plugins returned
      * false, which in this case means they all succeeded. Since we want to 
      * return false on success, we return the value of the two being !=.

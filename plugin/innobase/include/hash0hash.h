@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1997, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1997, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -434,10 +434,11 @@ struct hash_table_struct {
 				these heaps */
 #endif /* !UNIV_HOTBACKUP */
 	mem_heap_t*	heap;
+#ifdef UNIV_DEBUG
 	ulint		magic_n;
+# define HASH_TABLE_MAGIC_N	76561114
+#endif /* UNIV_DEBUG */
 };
-
-#define HASH_TABLE_MAGIC_N	76561114
 
 #ifndef UNIV_NONINL
 #include "hash0hash.ic"

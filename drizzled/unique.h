@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,10 +60,10 @@ public:
   static double get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size,
                              size_t max_in_memory_size);
   inline static int get_cost_calc_buff_size(ulong nkeys, uint32_t key_size,
-                                            size_t max_in_memory_size)
+                                            size_t sortbuff_size)
   {
     register size_t max_elems_in_tree=
-      (1 + max_in_memory_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
+      (1 + sortbuff_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
     return (int) (sizeof(uint32_t)*(1 + nkeys/max_elems_in_tree));
   }
 

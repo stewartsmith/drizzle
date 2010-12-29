@@ -90,7 +90,7 @@ static bool insertRecord(TableEventData &data, unsigned char *new_row)
 		}
 		
 		// Signal PBMS to delete the reference to the BLOB.
-		err = MSEngine::referenceBlob(data.table.getSchemaName(), data.table.getTableName(), &blob_url_buffer, blob_url, field->field_index, &result);
+		err = MSEngine::referenceBlob(data.table.getSchemaName(), data.table.getTableName(), &blob_url_buffer, blob_url, field->position(), &result);
 		if (err) {
 			// If it fails log the error and continue to try and release any other BLOBs in the row.
 			fprintf(stderr, "PBMSEvents: referenceBlob(\"%s.%s\", \"%s\" ) error (%d):'%s'\n", 
@@ -206,7 +206,7 @@ static bool insertRecord(const char *db, const char *table_name, char *possible_
 	}
 	
 	// Tell PBMS to add a reference to the BLOB.
-	err = MSEngine::referenceBlob(db, table_name, &blob_url_buffer, blob_url, field->field_index, &result);
+	err = MSEngine::referenceBlob(db, table_name, &blob_url_buffer, blob_url, field->position(), &result);
 	if (err) {
 		// If it fails log the error and continue to try and release any other BLOBs in the row.
 		fprintf(stderr, "PBMSEvents: referenceBlob(\"%s.%s\", \"%s\" ) error (%d):'%s'\n", 
@@ -222,7 +222,7 @@ static bool insertRecord(const char *db, const char *table_name, char *possible_
 		char *blob = possible_blob_url; // This is the BLOB as the server currently sees it.
 		
 		if (length != org_length) {
-			field->store_length(blob_rec, packlength, length);
+			field->store_length(blob_rec, packlength);
 		}
 		
 		if (length > org_length) {

@@ -22,6 +22,7 @@
 
 using namespace std;
 using namespace drizzled;
+namespace po= boost::program_options;
 
 static pthread_mutex_t blitz_utility_mutex;
 
@@ -80,7 +81,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
 
   bool doDoesTableExist(drizzled::Session &session,
                         const drizzled::TableIdentifier &identifier);
@@ -167,6 +168,42 @@ int BlitzEngine::doRenameTable(drizzled::Session &,
 
   BlitzData blitz_table;
   uint32_t nkeys;
+
+  BlitzData dict;
+  int ecode;
+  /* Write the table definition to system table. */
+  if ((ecode = dict.open_system_table(from.getPath(), HDBOWRITER)) != 0)
+    return ecode;
+
+  drizzled::message::Table proto;
+  char *proto_string;
+  int proto_string_len;
+
+  proto_string = dict.get_system_entry(BLITZ_TABLE_PROTO_KEY.c_str(),
+                                       BLITZ_TABLE_PROTO_KEY.length(),
+                                       &proto_string_len);
+
+  if (proto_string == NULL) {
+    return ENOMEM;
+  }
+
+  if (!proto.ParseFromArray(proto_string, proto_string_len)) {
+    free(proto_string);
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  free(proto_string);
+
+  proto.set_name(to.getTableName());
+  proto.set_schema(to.getSchemaName());
+  proto.set_catalog(to.getCatalogName());
+
+  if (!dict.write_table_definition(proto)) {
+    dict.close_system_table();
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  dict.close_system_table();
 
   /* Find out the number of indexes in this table. This information
      is required because BlitzDB creates a file for each indexes.*/
@@ -288,7 +325,7 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
 
 void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                         const drizzled::SchemaIdentifier &schema_id,
-                                        drizzled::TableIdentifiers &ids) {
+                                        drizzled::TableIdentifier::vector &ids) {
   drizzled::CachedDirectory::Entries entries = directory.getEntries();
 
   for (drizzled::CachedDirectory::Entries::iterator entry_iter = entries.begin();
@@ -1104,9 +1141,23 @@ size_t ha_blitz::make_index_key(char *pack_to, int key_num,
       *pos++ = 1;
     }
 
-    end = key_part->field->pack(pos, row + key_part->offset);
-    offset = end - pos;
-    pos += offset;
+    /* Here we normalize VARTEXT1 to VARTEXT2 for simplicity. */
+    if (key_part->type == HA_KEYTYPE_VARTEXT1) {
+      /* Extract the length of the string from the row. */
+      uint16_t data_len = *(uint8_t *)(row + key_part->offset);
+
+      /* Copy the length of the string. Use 2 bytes. */
+      int2store(pos, data_len);
+      pos += sizeof(data_len);
+
+      /* Copy the string data */
+      memcpy(pos, row + key_part->offset + sizeof(uint8_t), data_len);
+      pos += data_len;
+    } else {
+      end = key_part->field->pack(pos, row + key_part->offset);
+      offset = end - pos;
+      pos += offset;
+    }
   }
 
   return ((char *)pos - pack_to);
@@ -1154,15 +1205,14 @@ size_t ha_blitz::btree_key_length(const char *key, const int key_num) {
 
   for (; key_part != key_part_end; key_part++) {
     if (key_part->null_bit) {
+      pos++;
       rv++;
       if (*key == 0)
         continue;
     }
 
-    if (key_part->type == HA_KEYTYPE_VARTEXT1) {
-      len = *(uint8_t *)pos;
-      rv += len + sizeof(uint8_t);
-    } else if (key_part->type == HA_KEYTYPE_VARTEXT2) {
+    if (key_part->type == HA_KEYTYPE_VARTEXT1 ||
+        key_part->type == HA_KEYTYPE_VARTEXT2) {
       len = uint2korr(pos);
       rv += len + sizeof(uint16_t);
     } else {
@@ -1206,20 +1256,20 @@ char *ha_blitz::native_to_blitz_key(const unsigned char *native_key,
         continue;
     }
 
-    /* This is a temporary workaround for a bug in Drizzle's VARCHAR
-       where a 1 byte representable length varchar's actual data is
-       positioned 2 bytes ahead of the beginning of the buffer. The
-       correct behavior is to be positioned 1 byte ahead. Furthermore,
-       this is only applicable with varchar keys on READ. */
+    /* Normalize a VARTEXT1 key to VARTEXT2. */
     if (key_part->type == HA_KEYTYPE_VARTEXT1) {
-      /* Dereference the 1 byte length of the value. */
-      uint8_t varlen = *(uint8_t *)key_pos;
-      *keybuf_pos++ = varlen;
+      uint16_t str_len = *(uint16_t *)key_pos;
 
-      /* Read the value by skipping 2 bytes. This is the workaround. */
-      memcpy(keybuf_pos, key_pos + sizeof(uint16_t), varlen);
-      offset = (sizeof(uint8_t) + varlen);
-      keybuf_pos += varlen;
+      /* Copy the length of the string over to key buffer. */
+      int2store(keybuf_pos, str_len);
+      keybuf_pos += sizeof(str_len);
+
+      /* Copy the actual value over to the key buffer. */
+      memcpy(keybuf_pos, key_pos + sizeof(str_len), str_len);
+      keybuf_pos += str_len;
+
+      /* NULL byte + Length of str (2 byte) + Actual String. */
+      offset = 1 + sizeof(str_len) + str_len;
     } else {
       end = key_part->field->pack(keybuf_pos, key_pos);
       offset = end - keybuf_pos;
@@ -1429,6 +1479,8 @@ static int blitz_init(drizzled::module::Context &context) {
 
   pthread_mutex_init(&blitz_utility_mutex, NULL);
   context.add(blitz_engine);
+  context.registerVariable(new sys_var_uint64_t_ptr("estimated-rows",
+                                                    &blitz_estimated_rows));
   return 0;
 }
 
@@ -1448,22 +1500,11 @@ static bool str_is_numeric(const std::string &str) {
   return true;
 }
 
-static DRIZZLE_SYSVAR_ULONGLONG (
-  estimated_rows,
-  blitz_estimated_rows,
-  PLUGIN_VAR_RQCMDARG,
-  "Estimated number of rows that a BlitzDB table will store.",
-  NULL,
-  NULL,
-  0,
-  0,
-  UINT64_MAX,
-  0
-);
+static void blitz_init_options(drizzled::module::option_context &context)
+{
+  context("estimated-rows",
+          po::value<uint64_t>(&blitz_estimated_rows)->default_value(0),
+          N_("Estimated number of rows that a BlitzDB table will store."));
+}
 
-static drizzle_sys_var *blitz_system_variables[] = {
-  DRIZZLE_SYSVAR(estimated_rows),
-  NULL
-};
-
-DRIZZLE_PLUGIN(blitz_init, blitz_system_variables, NULL);
+DRIZZLE_PLUGIN(blitz_init, NULL, blitz_init_options);

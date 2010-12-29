@@ -1,5 +1,5 @@
-dnl  Copyright (C) 2009 Sun Microsystems
-dnl This file is free software; Sun Microsystems
+dnl  Copyright (C) 2009 Sun Microsystems, Inc.
+dnl This file is free software; Sun Microsystems, Inc.
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
@@ -27,8 +27,8 @@ AC_DEFUN([PANDORA_OPTIMIZE],[
     DEBUG_CFLAGS="-O0"
     DEBUG_CXXFLAGS="-O0"
 
-    OPTIMIZE_CFLAGS="-O3"
-    OPTIMIZE_CXXFLAGS="-O3"
+    OPTIMIZE_CFLAGS="-O2"
+    OPTIMIZE_CXXFLAGS="-O2"
   ])
   AS_IF([test "$INTELCC" = "yes"],[
     AM_CPPFLAGS="-g ${AM_CPPFLAGS}"
@@ -36,7 +36,7 @@ AC_DEFUN([PANDORA_OPTIMIZE],[
     DEBUG_CFLAGS="-O0"
     DEBUG_CXXFLAGS="-O0"
 
-    OPTIMIZE_CFLAGS="-xHOST -O3 -no-prec-div -static"
+    OPTIMIZE_CFLAGS="-xHOST -O2 -no-prec-div -static"
     OPTIMIZE_CXXFLAGS="${OPTIMIZE_CFLAGS}"
 
   ])

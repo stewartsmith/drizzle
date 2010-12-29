@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
     component_name= &component;                 // Empty string
   }
 
-  if (!(var= find_sys_var(session, base_name->str, base_name->length)))
+  if (!(var= find_sys_var(base_name->str, base_name->length)))
     return 0;
   if (component.str)
   {

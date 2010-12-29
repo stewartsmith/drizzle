@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -563,15 +563,15 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   {
     session->lex->current_select= first;
     unit->set_limit(unit->global_parameters);
-    res= mysql_select(session, 
+    res= select_query(session, 
                       &first->ref_pointer_array,
                       (TableList*) first->table_list.first,
                       first->with_wild, 
                       first->item_list,
                       first->where,
                       first->order_list.elements + first->group_list.elements,
-                      (order_st*) first->order_list.first,
-                      (order_st*) first->group_list.first,
+                      (Order*) first->order_list.first,
+                      (Order*) first->group_list.first,
                       first->having,
                       first->options | session->options | SELECT_DESCRIBE,
                       result, 

@@ -1,8 +1,8 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; i/dent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,18 +64,24 @@
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/field/boolean.h"
 #include "drizzled/field/enum.h"
 #include "drizzled/field/null.h"
 #include "drizzled/field/date.h"
 #include "drizzled/field/decimal.h"
 #include "drizzled/field/real.h"
 #include "drizzled/field/double.h"
-#include "drizzled/field/long.h"
-#include "drizzled/field/int64_t.h"
+#include "drizzled/field/int32.h"
+#include "drizzled/field/int64.h"
+#include "drizzled/field/size.h"
 #include "drizzled/field/num.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/time.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/field/uuid.h"
+
+#include "drizzled/definition/cache.h"
 
 using namespace std;
 
@@ -103,64 +109,54 @@ extern size_t table_def_size;
 void TableShare::release(TableShare *share)
 {
   bool to_be_deleted= false;
-  safe_mutex_assert_owner(LOCK_open.native_handle);
+  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
 
   share->lock();
   if (!--share->ref_count)
   {
     to_be_deleted= true;
   }
+  share->unlock();
 
   if (to_be_deleted)
   {
-    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
-    plugin::EventObserver::deregisterTableEvents(*share);
-   
-    definition::Cache::singleton().erase(identifier);
-    return;
+    definition::Cache::singleton().erase(share->getCacheKey());
   }
-  share->unlock();
 }
 
-void TableShare::release(TableSharePtr &share)
+void TableShare::release(TableShare::shared_ptr &share)
 {
   bool to_be_deleted= false;
-  safe_mutex_assert_owner(LOCK_open.native_handle);
+  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
 
   share->lock();
   if (!--share->ref_count)
   {
     to_be_deleted= true;
   }
+  share->unlock();
 
   if (to_be_deleted)
   {
-    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
-    plugin::EventObserver::deregisterTableEvents(*share);
-   
-    definition::Cache::singleton().erase(identifier);
-    return;
+    definition::Cache::singleton().erase(share->getCacheKey());
   }
-  share->unlock();
 }
 
-void TableShare::release(TableIdentifier &identifier)
+void TableShare::release(const TableIdentifier &identifier)
 {
-  TableSharePtr share= definition::Cache::singleton().find(identifier);
+  TableShare::shared_ptr share= definition::Cache::singleton().find(identifier.getKey());
   if (share)
   {
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
-      share->lock();
-      plugin::EventObserver::deregisterTableEvents(*share);
-      definition::Cache::singleton().erase(identifier);
+      definition::Cache::singleton().erase(identifier.getKey());
     }
   }
 }
 
 
-static TableSharePtr foundTableShare(TableSharePtr share)
+static TableShare::shared_ptr foundTableShare(TableShare::shared_ptr share)
 {
   /*
     We found an existing table definition. Return it if we didn't get
@@ -173,7 +169,7 @@ static TableSharePtr foundTableShare(TableSharePtr share)
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
 
-    return TableSharePtr();
+    return TableShare::shared_ptr();
   }
 
   share->incrementTableCount();
@@ -196,7 +192,7 @@ static TableSharePtr foundTableShare(TableSharePtr share)
   If it doesn't exist, create a new from the table definition file.
 
   NOTES
-  We must have wrlock on LOCK_open when we come here
+  We must have wrlock on table::Cache::singleton().mutex() when we come here
   (To be changed later)
 
   RETURN
@@ -204,65 +200,36 @@ static TableSharePtr foundTableShare(TableSharePtr share)
 #  Share for table
 */
 
-TableSharePtr TableShare::getShareCreate(Session *session, 
-                                         TableIdentifier &identifier,
-                                         int *error)
+TableShare::shared_ptr TableShare::getShareCreate(Session *session, 
+                                                  const TableIdentifier &identifier,
+                                                  int &in_error)
 {
-  TableSharePtr share;
+  TableShare::shared_ptr share;
 
-  *error= 0;
+  in_error= 0;
 
   /* Read table definition from cache */
-  if ((share= definition::Cache::singleton().find(identifier)))
+  if ((share= definition::Cache::singleton().find(identifier.getKey())))
     return foundTableShare(share);
 
   share.reset(new TableShare(message::Table::STANDARD, identifier));
   
-  /*
-    Lock mutex to be able to read table definition from file without
-    conflicts
-  */
-  share->lock();
-
-  bool ret= definition::Cache::singleton().insert(identifier, share);
-
-  if (not ret)
-    return TableSharePtr();
-
   if (share->open_table_def(*session, identifier))
   {
-    *error= share->error;
-    definition::Cache::singleton().erase(identifier);
+    in_error= share->error;
 
-    return TableSharePtr();
+    return TableShare::shared_ptr();
   }
   share->ref_count++;				// Mark in use
   
   plugin::EventObserver::registerTableEvents(*share);
-  
-  share->unlock();
+
+  bool ret= definition::Cache::singleton().insert(identifier.getKey(), share);
+
+  if (not ret)
+    return TableShare::shared_ptr();
 
   return share;
-}
-
-
-/*
-  Check if table definition exits in cache
-
-  SYNOPSIS
-  get_cached_table_share()
-  db			Database name
-  table_name		Table name
-
-  RETURN
-  0  Not cached
-#  TableShare for table
-*/
-TableSharePtr TableShare::getShare(TableIdentifier &identifier)
-{
-  safe_mutex_assert_owner(LOCK_open.native_handle);
-
-  return definition::Cache::singleton().find(identifier);
 }
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
@@ -277,7 +244,7 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::DOUBLE:
     field_type= DRIZZLE_TYPE_DOUBLE;
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     field_type= DRIZZLE_TYPE_TIMESTAMP;
     break;
   case message::Table::Field::BIGINT:
@@ -301,9 +268,18 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::BLOB:
     field_type= DRIZZLE_TYPE_BLOB;
     break;
+  case message::Table::Field::UUID:
+    field_type= DRIZZLE_TYPE_UUID;
+    break;
+  case message::Table::Field::BOOLEAN:
+    field_type= DRIZZLE_TYPE_BOOLEAN;
+    break;
+  case message::Table::Field::TIME:
+    field_type= DRIZZLE_TYPE_TIME;
+    break;
   default:
-    field_type= DRIZZLE_TYPE_LONG; /* Set value to kill GCC warning */
-    assert(1);
+    assert(0);
+    abort(); // Programming error
   }
 
   return field_type;
@@ -337,11 +313,15 @@ static Item *default_value_item(enum_field_types field_type,
                                  default_value->length());
     break;
   case DRIZZLE_TYPE_NULL:
-    assert(false);
+    assert(0);
+    abort();
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
+  case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_BOOLEAN:
     default_item= new Item_string(default_value->c_str(),
                                   default_value->length(),
                                   system_charset_info);
@@ -392,7 +372,7 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
       size_t num_parts= index.index_part_size();
       for (size_t y= 0; y < num_parts; ++y)
       {
-        if (index.index_part(y).fieldnr() == in_field->field_index)
+        if (index.index_part(y).fieldnr() == in_field->position())
           return true;
       }
     }
@@ -400,7 +380,7 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
   return false;
 }
 
-TableShare::TableShare(TableIdentifier::Type type_arg) :
+TableShare::TableShare(const TableIdentifier::Type type_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
   timestamp_field(NULL),
@@ -429,7 +409,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -444,9 +423,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   errarg(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
-  name_lock(false),
-  replace_with_name_lock(false),
-  waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
@@ -469,7 +445,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   }
 }
 
-TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key) :// Used by placeholder
+TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier::Key &key) :// Used by placeholder
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
   timestamp_field(NULL),
@@ -498,7 +474,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -513,9 +488,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   errarg(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
-  name_lock(false),
-  replace_with_name_lock(false),
-  waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
@@ -539,7 +511,11 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   path.str= (char *)"";
   normalized_path.str= path.str;
   path.length= normalized_path.length= 0;
-  assert(strcmp(identifier.getTableName().c_str(), table_name.str) == 0);
+
+  std::string tb_name(identifier.getTableName());
+  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
+  assert(strcmp(tb_name.c_str(), table_name.str) == 0);
+
   assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
 }
 
@@ -573,7 +549,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -588,9 +563,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   errarg(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
-  name_lock(false),
-  replace_with_name_lock(false),
-  waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
@@ -623,8 +595,8 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
 /*
   Used for shares that will go into the cache.
 */
-TableShare::TableShare(TableIdentifier::Type type_arg,
-                       TableIdentifier &identifier,
+TableShare::TableShare(const TableIdentifier::Type type_arg,
+                       const TableIdentifier &identifier,
                        char *path_arg,
                        uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
@@ -655,7 +627,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -670,9 +641,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   errarg(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
-  name_lock(false),
-  replace_with_name_lock(false),
-  waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
@@ -716,6 +684,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   else
   {
     assert(0); // We should throw here.
+    abort();
   }
 }
 
@@ -738,33 +707,17 @@ TableShare::~TableShare()
 {
   assert(ref_count == 0);
 
-  /*
-    If someone is waiting for this to be deleted, inform it about this.
-    Don't do a delete until we know that no one is refering to this anymore.
-  */
-  if (tmp_table == message::Table::STANDARD)
-  {
-    /* share->mutex is locked in release_table_share() */
-    while (waiting_on_cond)
-    {
-      cond.notify_all();
-      boost::mutex::scoped_lock scoped(mutex, boost::adopt_lock_t());
-      cond.wait(scoped);
-      scoped.release();
-    }
-    /* No thread refers to this anymore */
-    mutex.unlock();
-  }
-
   storage_engine= NULL;
 
   delete table_proto;
   table_proto= NULL;
 
+  plugin::EventObserver::deregisterTableEvents(*this);
+
   mem_root.free_root(MYF(0));                 // Free's share
 }
 
-void TableShare::setIdentifier(TableIdentifier &identifier_arg)
+void TableShare::setIdentifier(const TableIdentifier &identifier_arg)
 {
   private_key_for_cache= identifier_arg.getKey();
 
@@ -787,7 +740,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (! table.IsInitialized())
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), table.InitializationErrorString().c_str());
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             table.name().empty() ? " " :  table.name().c_str(),
+             table.InitializationErrorString().c_str());
+
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
@@ -819,16 +775,11 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (! table_charset)
   {
-    char errmsg[100];
-    snprintf(errmsg, sizeof(errmsg),
-             _("Table %s has invalid/unknown collation: %d,%s"),
-             getPath(),
-             table_options.collation_id(),
-             table_options.collation().c_str());
-    errmsg[99]='\0';
+    my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, MYF(0),
+             table_options.collation().c_str(),
+             table.name().c_str());
 
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
-    return ER_CORRUPT_TABLE_DEFINITION;
+    return ER_CORRUPT_TABLE_DEFINITION; // Historical
   }
 
   db_record_offset= 1;
@@ -992,8 +943,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   uint32_t local_null_fields= 0;
   reclength= 0;
 
-  vector<uint32_t> field_offsets;
-  vector<uint32_t> field_pack_length;
+  std::vector<uint32_t> field_offsets;
+  std::vector<uint32_t> field_pack_length;
 
   field_offsets.resize(fields);
   field_pack_length.resize(fields);
@@ -1049,7 +1000,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-        field_pack_length[fieldnr]= my_decimal_get_binary_size(fo.precision(), fo.scale());
+        field_pack_length[fieldnr]= class_decimal_get_binary_size(fo.precision(), fo.scale());
       }
       break;
     default:
@@ -1111,15 +1062,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     if (field_options.field_value_size() > Field_enum::max_supported_elements)
     {
-      char errmsg[100];
-      snprintf(errmsg, sizeof(errmsg),
-               _("ENUM column %s has greater than %d possible values"),
-               pfield.name().c_str(),
-               Field_enum::max_supported_elements);
-      errmsg[99]='\0';
+      my_error(ER_CORRUPT_TABLE_DEFINITION_ENUM, MYF(0), table.name().c_str());
 
-      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
-      return ER_CORRUPT_TABLE_DEFINITION;
+      return ER_CORRUPT_TABLE_DEFINITION_ENUM; // Historical
     }
 
 
@@ -1193,7 +1138,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         unireg_type= Field::TIMESTAMP_DN_FIELD;
       }
       else
-        assert(1); // Invalid update value.
+      {
+        assert(0); // Invalid update value.
+        abort();
+      }
     }
     else if (pfield.has_options() &&
              pfield.options().has_update_expression() &&
@@ -1286,11 +1234,11 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
 
-    db_low_byte_first= true; //Cursor->low_byte_first();
     blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
+    // We set field_length in this loop.
     switch (field_type)
     {
     case DRIZZLE_TYPE_BLOB:
@@ -1332,11 +1280,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-        field_length= my_decimal_precision_to_length(fo.precision(), fo.scale(),
+        field_length= class_decimal_precision_to_length(fo.precision(), fo.scale(),
                                                      false);
         break;
       }
-    case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_DATETIME:
       field_length= DateTime::MAX_STRING_LENGTH;
       break;
@@ -1371,25 +1318,58 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_LONGLONG:
       field_length= MAX_BIGINT_WIDTH;
       break;
+    case DRIZZLE_TYPE_UUID:
+      field_length= field::Uuid::max_string_length();
+      break;
+    case DRIZZLE_TYPE_BOOLEAN:
+      field_length= field::Boolean::max_string_length();
+      break;
+    case DRIZZLE_TYPE_TIMESTAMP:
+      field_length= field::Epoch::max_string_length();
+      break;
+    case DRIZZLE_TYPE_TIME:
+      field_length= field::Time::max_string_length();
+      break;
     case DRIZZLE_TYPE_NULL:
       abort(); // Programming error
     }
 
-    Field* f= make_field(record + field_offsets[fieldnr] + data_offset,
-                                field_length,
-                                pfield.constraints().is_nullable(),
-                                null_pos,
-                                null_bit_pos,
-                                decimals,
-                                field_type,
-                                charset,
-                                (Field::utype) MTYP_TYPENR(unireg_type),
-                                ((field_type == DRIZZLE_TYPE_ENUM) ?
-                                 &intervals[interval_nr++]
-                                 : (TYPELIB*) 0),
-                                getTableProto()->field(fieldnr).name().c_str());
+    assert(enum_field_types_size == 14);
+
+    Field* f= make_field(pfield,
+                         record + field_offsets[fieldnr] + data_offset,
+                         field_length,
+                         pfield.constraints().is_nullable(),
+                         null_pos,
+                         null_bit_pos,
+                         decimals,
+                         field_type,
+                         charset,
+                         MTYP_TYPENR(unireg_type),
+                         ((field_type == DRIZZLE_TYPE_ENUM) ?  &intervals[interval_nr++] : (TYPELIB*) 0),
+                         getTableProto()->field(fieldnr).name().c_str());
 
     field[fieldnr]= f;
+
+    // Insert post make_field code here.
+    switch (field_type)
+    {
+    case DRIZZLE_TYPE_BLOB:
+    case DRIZZLE_TYPE_VARCHAR:
+    case DRIZZLE_TYPE_DOUBLE:
+    case DRIZZLE_TYPE_DECIMAL:
+    case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_TIME:
+    case DRIZZLE_TYPE_DATETIME:
+    case DRIZZLE_TYPE_DATE:
+    case DRIZZLE_TYPE_ENUM:
+    case DRIZZLE_TYPE_LONG:
+    case DRIZZLE_TYPE_LONGLONG:
+    case DRIZZLE_TYPE_NULL:
+    case DRIZZLE_TYPE_UUID:
+    case DRIZZLE_TYPE_BOOLEAN:
+      break;
+    }
 
     // This needs to go, we should be setting the "use" on the field so that
     // it does not reference the share/table.
@@ -1420,8 +1400,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         return local_error;
       }
     }
-    else if (f->real_type() == DRIZZLE_TYPE_ENUM &&
-             (f->flags & NOT_NULL_FLAG))
+    else if (f->real_type() == DRIZZLE_TYPE_ENUM && (f->flags & NOT_NULL_FLAG))
     {
       f->set_notnull();
       f->store((int64_t) 1, true);
@@ -1435,7 +1414,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     f->setTable(NULL);
     f->orig_table= NULL;
 
-    f->field_index= fieldnr;
+    f->setPosition(fieldnr);
     f->comment= comment;
     if (! default_value &&
         ! (f->unireg_check==Field::NEXT_NUMBER) &&
@@ -1448,15 +1427,11 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     if (f->unireg_check == Field::NEXT_NUMBER)
       found_next_number_field= &(field[fieldnr]);
 
-    if (timestamp_field == f)
-      timestamp_field_offset= fieldnr;
-
     if (use_hash) /* supposedly this never fails... but comments lie */
     {
       const char *local_field_name= field[fieldnr]->field_name;
       name_hash.insert(make_pair(local_field_name, &(field[fieldnr])));
     }
-
   }
 
   keyinfo= key_info;
@@ -1481,7 +1456,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     We need to set the unused bits to 1. If the number of bits is a multiple
     of 8 there are no unused bits.
   */
-
   if (null_count & 7)
     *(record + null_count / 8)|= ~(((unsigned char) 1 << (null_count & 7)) - 1);
 
@@ -1658,7 +1632,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
   }
 
-  db_low_byte_first= true; // @todo Question this.
   all_set.clear();
   all_set.resize(fields);
   all_set.set();
@@ -1706,7 +1679,7 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
   6    Unknown .frm version
 */
 
-int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
+int TableShare::open_table_def(Session& session, const TableIdentifier &identifier)
 {
   int local_error;
   bool error_given;
@@ -1714,32 +1687,33 @@ int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
   local_error= 1;
   error_given= 0;
 
-  message::Table table;
+  message::table::shared_ptr table;
 
   local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 
-  if (local_error != EEXIST)
-  {
-    if (local_error > 0)
+  do {
+    if (local_error != EEXIST)
     {
-      errno= local_error;
-      local_error= 1;
-    }
-    else
-    {
-      if (not table.IsInitialized())
+      if (local_error > 0)
       {
-        local_error= 4;
+        errno= local_error;
+        local_error= 1;
       }
+      else
+      {
+        if (not table->IsInitialized())
+        {
+          local_error= 4;
+        }
+      }
+      break;
     }
-    goto err_not_open;
-  }
 
-  local_error= parse_table_proto(session, table);
+    local_error= parse_table_proto(session, *table);
 
-  setTableCategory(TABLE_CATEGORY_USER);
+    setTableCategory(TABLE_CATEGORY_USER);
+  } while (0);
 
-err_not_open:
   if (local_error && !error_given)
   {
     error= local_error;
@@ -1887,8 +1861,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     outparam.found_next_number_field=
       outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field_offset);
-
+    outparam.timestamp_field= (field::Epoch*) outparam.getField(timestamp_field->position());
 
   /* Fix key->name and key_part->field */
   if (key_parts)
@@ -2053,7 +2026,8 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   return;
 } /* open_table_error */
 
-Field *TableShare::make_field(unsigned char *ptr,
+Field *TableShare::make_field(message::Table::Field &pfield,
+                              unsigned char *ptr,
                               uint32_t field_length,
                               bool is_nullable,
                               unsigned char *null_pos,
@@ -2064,6 +2038,33 @@ Field *TableShare::make_field(unsigned char *ptr,
                               Field::utype unireg_check,
                               TYPELIB *interval,
                               const char *field_name)
+{
+  return make_field(ptr,
+                    field_length,
+                    is_nullable,
+                    null_pos,
+                    null_bit,
+                    decimals,
+                    field_type,
+                    field_charset,
+                    unireg_check,
+                    interval,
+                    field_name,
+                    pfield.constraints().is_unsigned());
+}
+
+Field *TableShare::make_field(unsigned char *ptr,
+                              uint32_t field_length,
+                              bool is_nullable,
+                              unsigned char *null_pos,
+                              unsigned char null_bit,
+                              uint8_t decimals,
+                              enum_field_types field_type,
+                              const CHARSET_INFO * field_charset,
+                              Field::utype unireg_check,
+                              TYPELIB *interval,
+                              const char *field_name, 
+                              bool is_unsigned)
 {
   if (! is_nullable)
   {
@@ -2080,6 +2081,7 @@ Field *TableShare::make_field(unsigned char *ptr,
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
+  case DRIZZLE_TYPE_UUID:
     field_charset= &my_charset_bin;
   default: break;
   }
@@ -2088,16 +2090,16 @@ Field *TableShare::make_field(unsigned char *ptr,
   {
   case DRIZZLE_TYPE_ENUM:
     return new (&mem_root) Field_enum(ptr,
-                                 field_length,
-                                 null_pos,
-                                 null_bit,
-                                 field_name,
-                                 interval,
-                                 field_charset);
+                                      field_length,
+                                      null_pos,
+                                      null_bit,
+                                      field_name,
+                                      interval,
+                                      field_charset);
   case DRIZZLE_TYPE_VARCHAR:
     setVariableWidth();
     return new (&mem_root) Field_varstring(ptr,field_length,
-                                      HA_VARCHAR_PACKLENGTH(field_length),
+                                      ha_varchar_packlength(field_length),
                                       null_pos,null_bit,
                                       field_name,
                                       field_charset);
@@ -2107,7 +2109,6 @@ Field *TableShare::make_field(unsigned char *ptr,
                                  null_bit,
                                  field_name,
                                  this,
-                                 calc_pack_length(DRIZZLE_TYPE_LONG, 0),
                                  field_charset);
   case DRIZZLE_TYPE_DECIMAL:
     return new (&mem_root) Field_decimal(ptr,
@@ -2129,33 +2130,61 @@ Field *TableShare::make_field(unsigned char *ptr,
                                    decimals,
                                    false,
                                    false /* is_unsigned */);
+  case DRIZZLE_TYPE_UUID:
+    return new (&mem_root) field::Uuid(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name);
+  case DRIZZLE_TYPE_BOOLEAN:
+    return new (&mem_root) field::Boolean(ptr,
+                                          field_length,
+                                          null_pos,
+                                          null_bit,
+                                          field_name,
+                                          is_unsigned);
   case DRIZZLE_TYPE_LONG:
-    return new (&mem_root) Field_long(ptr,
-                                 field_length,
-                                 null_pos,
-                                 null_bit,
-                                 unireg_check,
-                                 field_name,
-                                 false,
-                                 false /* is_unsigned */);
+    return new (&mem_root) field::Int32(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name);
   case DRIZZLE_TYPE_LONGLONG:
-    return new (&mem_root) Field_int64_t(ptr,
-                                    field_length,
-                                    null_pos,
-                                    null_bit,
-                                    unireg_check,
-                                    field_name,
-                                    false,
-                                    false /* is_unsigned */);
+    {
+      if (is_unsigned)
+      {
+        return new (&mem_root) field::Size(ptr,
+                                           field_length,
+                                           null_pos,
+                                           null_bit,
+                                           unireg_check,
+                                           field_name);
+      }
+
+      return new (&mem_root) field::Int64(ptr,
+                                          field_length,
+                                          null_pos,
+                                          null_bit,
+                                          unireg_check,
+                                          field_name);
+    }
   case DRIZZLE_TYPE_TIMESTAMP:
-    return new (&mem_root) Field_timestamp(ptr,
-                                      field_length,
-                                      null_pos,
-                                      null_bit,
-                                      unireg_check,
-                                      field_name,
-                                      this,
-                                      field_charset);
+    return new (&mem_root) field::Epoch(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name,
+                                        this,
+                                        field_charset);
+  case DRIZZLE_TYPE_TIME:
+    return new (&mem_root) field::Time(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name,
+                                       field_charset);
   case DRIZZLE_TYPE_DATE:
     return new (&mem_root) Field_date(ptr,
                                  null_pos,
@@ -2173,10 +2202,9 @@ Field *TableShare::make_field(unsigned char *ptr,
                                  field_length,
                                  field_name,
                                  field_charset);
-  default: // Impossible (Wrong version)
-    break;
   }
-  return 0;
+  assert(0);
+  abort();
 }
 
 

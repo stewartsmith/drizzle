@@ -1,4 +1,4 @@
-/* Copyright (c) 2010 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2010 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -27,12 +27,26 @@
 #ifndef __PARAMETERS_MS_H__
 #define __PARAMETERS_MS_H__
 
+#ifdef DRIZZLED
+namespace drizzled { namespace module {
+class Context;
+class option_context;
+}}
+#endif
+
 class PBMSParameters {
 	public:
-	static void startUp();
+#ifdef DRIZZLED
+        static void startUp(drizzled::module::Context &context);
+
+        static void initOptions(drizzled::module::option_context &context);
 	
+#else	
+        static void startUp();
+
+#endif
 	static void shutDown(){}
-	
+
 	static uint32_t getPortNumber();
 
 	static uint32_t getServerID();

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Monty Taylor
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,8 @@
 #include <boost/program_options.hpp>
 
 #include "drizzled/atomics.h"
-
+#include "drizzled/global_buffer.h"
+#include "drizzled/definitions.h"
 struct passwd;
 
 namespace drizzled
@@ -46,6 +47,11 @@ extern bool opt_help;
 extern bool opt_help_extended;
 extern passwd *user_info;
 extern char *drizzled_user;
+
+extern global_buffer_constraint<uint64_t> global_sort_buffer;
+extern global_buffer_constraint<uint64_t> global_join_buffer;
+extern global_buffer_constraint<uint64_t> global_read_rnd_buffer;
+extern global_buffer_constraint<uint64_t> global_read_buffer;
 
 extern const char * const DRIZZLE_CONFIG_NAME;
 

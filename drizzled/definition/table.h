@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,19 +39,17 @@
 #include "drizzled/util/string.h"
 
 #include "drizzled/table/cache.h"
-#include "drizzled/definition/cache.h"
 
 namespace drizzled
 {
 
 extern uint64_t refresh_version;
 
-typedef boost::shared_ptr<TableShare> TableSharePtr;
-
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
 const static std::string INTERNAL_STRING("INTERNAL");
 const static std::string FUNCTION_STRING("FUNCTION");
+const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
 
 namespace plugin
 {
@@ -63,15 +61,19 @@ class Field_blob;
 class TableShare
 {
   typedef std::vector<std::string> StringVector;
-public:
-  TableShare(TableIdentifier::Type type_arg);
 
-  TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key); // Used by placeholder
+public:
+  typedef boost::shared_ptr<TableShare> shared_ptr;
+  typedef std::vector <shared_ptr> vector;
+
+  TableShare(const TableIdentifier::Type type_arg);
+
+  TableShare(const TableIdentifier &identifier, const TableIdentifier::Key &key); // Used by placeholder
 
   TableShare(const TableIdentifier &identifier); // Just used during createTable()
 
-  TableShare(TableIdentifier::Type type_arg,
-             TableIdentifier &identifier,
+  TableShare(const TableIdentifier::Type type_arg,
+             const TableIdentifier &identifier,
              char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
   ~TableShare();
@@ -172,7 +174,7 @@ public:
 
 private:
   memory::Root mem_root;
-public:
+
   void *alloc_root(size_t arg)
   {
     return mem_root.alloc_root(arg);
@@ -188,7 +190,6 @@ public:
     return &mem_root;
   }
 
-private:
   std::vector<std::string> _keynames;
 
   void addKeyName(std::string arg)
@@ -294,6 +295,7 @@ public:
     return private_key_for_cache.size();
   }
 
+private:
   void setPath(char *str_arg, uint32_t size_arg)
   {
     path.str= str_arg;
@@ -305,6 +307,7 @@ public:
     normalized_path.str= str_arg;
     normalized_path.length= size_arg;
   }
+public:
 
   const char *getTableName() const
   {
@@ -399,17 +402,24 @@ public:
 
   const std::string &getTableTypeAsString() const
   {
-    switch (table_proto->type())
+    if (table_proto)
     {
-    default:
-    case message::Table::STANDARD:
-      return STANDARD_STRING;
-    case message::Table::TEMPORARY:
-      return TEMPORARY_STRING;
-    case message::Table::INTERNAL:
-      return INTERNAL_STRING;
-    case message::Table::FUNCTION:
-      return FUNCTION_STRING;
+      switch (table_proto->type())
+      {
+      default:
+      case message::Table::STANDARD:
+        return STANDARD_STRING;
+      case message::Table::TEMPORARY:
+        return TEMPORARY_STRING;
+      case message::Table::INTERNAL:
+        return INTERNAL_STRING;
+      case message::Table::FUNCTION:
+        return FUNCTION_STRING;
+      }
+    }
+    else
+    {
+      return NO_PROTOBUFFER_AVAILABLE;
     }
   }
 
@@ -491,11 +501,6 @@ public:
     unlock();
   }
 
-  uint32_t decrementTableCount()
-  {
-    return --ref_count;
-  }
-
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
@@ -517,7 +522,6 @@ public:
   uint32_t uniques;                         /* Number of UNIQUE index */
   uint32_t null_fields;			/* number of null fields */
   uint32_t blob_fields;			/* number of blob fields */
-  uint32_t timestamp_field_offset;		/* Field number for timestamp field */
 private:
   bool has_variable_width;                  /* number of varchar fields */
 public:
@@ -565,24 +569,6 @@ public:
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
 
-private:
-  bool name_lock;
-public:
-  bool isNameLock() const
-  {
-    return name_lock;
-  }
-
-  bool replace_with_name_lock;
-
-private:
-  bool waiting_on_cond;                 /* Protection against free */
-public:
-  bool isWaitingOnCondition()
-  {
-    return waiting_on_cond;
-  }
-
   /*
     Set of keys in use, implemented as a Bitmap.
     Excludes keys disabled by ALTER Table ... DISABLE KEYS.
@@ -616,7 +602,7 @@ public:
     NOTES
   */
 
-  void setIdentifier(TableIdentifier &identifier_arg);
+  void setIdentifier(const TableIdentifier &identifier_arg);
 
   /*
     Initialize share for temporary tables
@@ -642,12 +628,11 @@ public:
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
   static void release(TableShare *share);
-  static void release(TableSharePtr &share);
-  static void release(TableIdentifier &identifier);
-  static TableSharePtr getShare(TableIdentifier &identifier);
-  static TableSharePtr getShareCreate(Session *session, 
-                                      TableIdentifier &identifier,
-                                      int *error);
+  static void release(TableShare::shared_ptr &share);
+  static void release(const TableIdentifier &identifier);
+  static TableShare::shared_ptr getShareCreate(Session *session, 
+                                               const TableIdentifier &identifier,
+                                               int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {
@@ -664,7 +649,8 @@ public:
     return output;  // for multiple << operators.
   }
 
-  Field *make_field(unsigned char *ptr,
+  Field *make_field(message::Table::Field &pfield,
+                    unsigned char *ptr,
                     uint32_t field_length,
                     bool is_nullable,
                     unsigned char *null_pos,
@@ -676,7 +662,20 @@ public:
                     TYPELIB *interval,
                     const char *field_name);
 
-  int open_table_def(Session& session, TableIdentifier &identifier);
+  Field *make_field(unsigned char *ptr,
+                    uint32_t field_length,
+                    bool is_nullable,
+                    unsigned char *null_pos,
+                    unsigned char null_bit,
+                    uint8_t decimals,
+                    enum_field_types field_type,
+                    const CHARSET_INFO * field_charset,
+                    Field::utype unireg_check,
+                    TYPELIB *interval,
+                    const char *field_name, 
+                    bool is_unsigned);
+
+  int open_table_def(Session& session, const TableIdentifier &identifier);
 
   int open_table_from_share(Session *session,
                             const TableIdentifier &identifier,

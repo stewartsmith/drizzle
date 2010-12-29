@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  Authors: 
  *
@@ -95,26 +95,26 @@ public:
     return neg;
   }
 
-  inline uint32_t  get_year() { return year; };
-  inline void set_year(uint32_t new_year) { year = new_year; };
+  inline uint32_t  get_year() { return year; }
+  inline void set_year(uint32_t new_year) { year = new_year; }
 
-  inline uint32_t  get_month(){ return month; };
-  inline void set_month(uint32_t new_month) { month = new_month; };
+  inline uint32_t  get_month(){ return month; }
+  inline void set_month(uint32_t new_month) { month = new_month; }
 
-  inline uint32_t  get_day(){ return day; };
-  inline void set_day(uint32_t new_day) { day = new_day; };
+  inline uint32_t  get_day(){ return day; }
+  inline void set_day(uint32_t new_day) { day = new_day; }
 
-  inline uint32_t  get_hour(){ return hour; };
-  inline void set_hour(uint32_t new_hour) { hour = new_hour; };
+  inline uint32_t  get_hour(){ return hour; }
+  inline void set_hour(uint32_t new_hour) { hour = new_hour; }
 
-  inline uint64_t  get_minute(){ return minute; };
-  inline void set_minute(uint32_t new_minute) { minute = new_minute; };
+  inline uint64_t  get_minute(){ return minute; }
+  inline void set_minute(uint32_t new_minute) { minute = new_minute; }
 
-  inline uint64_t  get_second(){ return second; };
-  inline void set_second(uint32_t new_second) { second = new_second; };
+  inline uint64_t  get_second(){ return second; }
+  inline void set_second(uint32_t new_second) { second = new_second; }
 
-  inline uint64_t  get_second_part(){ return second_part; };
-  inline void set_second_part(uint32_t new_second_part) { second_part = new_second_part; };
+  inline uint64_t  get_second_part(){ return second_part; }
+  inline void set_second_part(uint32_t new_second_part) { second_part = new_second_part; }
 
   /**
    * Populate this TemporalInterval from a string value
@@ -137,7 +137,7 @@ public:
    * @retval true date was added and value stored properly
    * @retval false result of addition is a null value
    */
-  bool addDate(DRIZZLE_TIME *ltime, interval_type int_type);
+  bool addDate(type::Time *ltime, interval_type int_type);
 
 private:
 

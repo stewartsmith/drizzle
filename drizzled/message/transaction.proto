@@ -507,7 +507,6 @@ message AlterTableStatement
 message DropTableStatement
 {
   required TableMetadata table_metadata = 1; /* Minimal metadata about the table to be dropped */
-  optional bool if_exists_clause = 2; /* Did the user specify an IF EXISTS clause? */
 }
 
 /*
@@ -547,6 +546,7 @@ message Statement
     CREATE_TABLE = 8; /* A CREATE TABLE statement */
     ALTER_TABLE = 9; /* An ALTER TABLE statement */
     DROP_TABLE = 10; /* A DROP TABLE statement */
+    ROLLBACK_STATEMENT = 11; /* ROLLBACK current statement */
     SET_VARIABLE = 98; /* A SET statement */
     RAW_SQL = 99; /* A raw SQL statement */
   }

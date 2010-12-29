@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,15 +25,12 @@
 #include <cassert>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/gettext.h"
 namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
-
-static bool sysvar_auth_http_enable;
-static char* sysvar_auth_http_url= NULL;
 
 static size_t curl_cb_read(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -47,9 +44,11 @@ class Auth_http : public drizzled::plugin::Authentication
 {
   CURLcode rv;
   CURL *curl_handle;
+  const std::string auth_url;
 public:
-  Auth_http(std::string name_arg)
-    : drizzled::plugin::Authentication(name_arg)
+  Auth_http(std::string name_arg, const std::string &url_arg) :
+    drizzled::plugin::Authentication(name_arg),
+    auth_url(url_arg)
   {
     // we are trusting that plugin initializers are called singlethreaded at startup
     // if something else also calls curl_global_init() in a threadrace while we are here,
@@ -74,27 +73,23 @@ public:
     curl_global_cleanup();
   }
 
-  virtual bool authenticate(const SecurityContext &sctx, const string &password)
+  virtual bool authenticate(const identifier::User &sctx, const string &password)
   {
     long http_response_code;
 
-    if (sysvar_auth_http_enable == false)
-      return true;
-
-    assert(sctx.getUser().c_str());
-
+    assert(sctx.username().c_str());
 
     // set the parameters: url, username, password
-    rv= curl_easy_setopt(curl_handle, CURLOPT_URL, sysvar_auth_http_url);
+    rv= curl_easy_setopt(curl_handle, CURLOPT_URL, auth_url.c_str());
 #if defined(HAVE_CURLOPT_USERNAME)
 
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME,
-                         sctx.getUser().c_str());
+                         sctx.username().c_str());
     rv= curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password.c_str());
 
 #else
 
-    string userpwd(sctx.getUser());
+    string userpwd(sctx.username());
     userpwd.append(":");
     userpwd.append(password);
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERPWD, userpwd.c_str());
@@ -123,6 +118,8 @@ Auth_http* auth= NULL;
 
 static int initialize(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+
   /* 
    * Per libcurl manual, in multi-threaded applications, curl_global_init() should
    * be called *before* curl_easy_init()...which is called in Auto_http's 
@@ -131,42 +128,28 @@ static int initialize(drizzled::module::Context &context)
   if (curl_global_init(CURL_GLOBAL_NOTHING) != 0)
     return 1;
 
-  auth= new Auth_http("auth_http");
+  const string auth_url(vm["url"].as<string>());
+  if (auth_url.size() == 0)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("auth_http plugin loaded but required option url not "
+                    "specified. Against which URL are you intending on "
+                    "authenticating?\n"));
+    return 1;
+  }
+
+  auth= new Auth_http("auth_http", auth_url);
   context.add(auth);
+  context.registerVariable(new sys_var_const_string_val("url", auth_url));
 
   return 0;
 }
 
 static void init_options(drizzled::module::option_context &context)
 {
-   context("enable", po::value<bool>(&sysvar_auth_http_enable)->default_value(false)->zero_tokens(),
-           N_("Enable HTTP Auth check"));
+  context("url", po::value<string>()->default_value(""),
+          N_("URL for HTTP Auth check"));
 } 
-
-static DRIZZLE_SYSVAR_BOOL(
-  enable,
-  sysvar_auth_http_enable,
-  PLUGIN_VAR_NOCMDARG,
-  N_("Enable HTTP Auth check"),
-  NULL, /* check func */
-  NULL, /* update func */
-  false /* default */);
-
-
-static DRIZZLE_SYSVAR_STR(
-  url,
-  sysvar_auth_http_url,
-  PLUGIN_VAR_READONLY,
-  N_("URL for HTTP Auth check"),
-  NULL, /* check func */
-  NULL, /* update func*/
-  "http://localhost/" /* default */);
-
-static drizzle_sys_var* auth_http_system_variables[]= {
-  DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(url),
-  NULL
-};
 
 
 DRIZZLE_DECLARE_PLUGIN
@@ -178,7 +161,7 @@ DRIZZLE_DECLARE_PLUGIN
   "HTTP based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  auth_http_system_variables,
+  NULL,
   init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

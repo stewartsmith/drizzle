@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,30 +27,58 @@
 
 #include "net_serv.h"
 
+namespace drizzle_plugin
+{
+void compose_ip_addresses(std::vector<std::string> options);
+
+class ProtocolCounters
+{
+  public:
+    ProtocolCounters():
+      max_connections(1000)
+    { }
+    drizzled::atomic<uint64_t> connectionCount;
+    drizzled::atomic<uint64_t> adminConnectionCount;
+    drizzled::atomic<uint64_t> failedConnections;
+    drizzled::atomic<uint64_t> connected;
+    drizzled::atomic<uint64_t> adminConnected;
+    uint32_t max_connections;
+};
+
+typedef drizzled::constrained_check<uint32_t, 300, 1> timeout_constraint;
+typedef drizzled::constrained_check<uint32_t, 300, 1> retry_constraint;
+typedef drizzled::constrained_check<uint32_t, 1048576, 1024, 1024> buffer_constraint;
+
 class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
-private:
-  bool using_mysql41_protocol;
-  static drizzled::plugin::TableFunction* status_table_function_ptr;
+protected:
+  const std::string _hostname;
+  bool _using_mysql41_protocol;
 
 public:
-  ListenMySQLProtocol(std::string name_arg, bool using_mysql41_protocol_arg):
-   drizzled::plugin::ListenTcp(name_arg),
-   using_mysql41_protocol(using_mysql41_protocol_arg)
+  ListenMySQLProtocol(std::string name,
+                      const std::string &hostname,
+                      bool using_mysql41_protocol):
+   drizzled::plugin::ListenTcp(name),
+   _hostname(hostname),
+   _using_mysql41_protocol(using_mysql41_protocol)
   { }
   virtual ~ListenMySQLProtocol();
-  virtual const char* getHost(void) const;
+  virtual const std::string getHost(void) const;
   virtual in_port_t getPort(void) const;
   virtual drizzled::plugin::Client *getClient(int fd);
+  static ProtocolCounters *mysql_counters;
+  virtual ProtocolCounters *getCounters(void) const { return mysql_counters; }
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
 {
-private:
+protected:
   NET net;
   drizzled::String packet;
   uint32_t client_capabilities;
-  bool using_mysql41_protocol;
+  bool is_admin_connection;
+  bool _using_mysql41_protocol;
 
   bool checkConnection(void);
   bool netStoreData(const unsigned char *from, size_t length);
@@ -59,12 +87,10 @@ private:
   void makeScramble(char *scramble);
 
 public:
-  ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg);
+  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters *set_counters);
   virtual ~ClientMySQLProtocol();
 
-  static drizzled::atomic<uint64_t> connectionCount;
-  static drizzled::atomic<uint64_t> failedConnections;
-  static drizzled::atomic<uint64_t> connected;
+  ProtocolCounters *counters;
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();
@@ -95,6 +121,11 @@ public:
   virtual bool haveError(void);
   virtual bool haveMoreData(void);
   virtual bool wasAborted(void);
+  virtual bool isAdminAllowed(void);
+  static std::vector<std::string> mysql_admin_ip_addresses;
+  static void mysql_compose_ip_addresses(std::vector<std::string> options);
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H */

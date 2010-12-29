@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Joseph Daly <skinny.moey@gmail.com>
+ * Copyright (C) 2010 Joseph Daly <skinny.moey@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,24 +121,24 @@ SessionStatementsTool::SessionStatementsTool(LoggingStats *in_logging_stats) :
   add_field("VARIABLE_VALUE", 1024);
 }
 
-SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
   count= 0;
 
   /* Set user_commands */
-  Scoreboard *current_scoreboard= logging_stats->getCurrentScoreboard();
+  Scoreboard *current_scoreboard= in_logging_stats->getCurrentScoreboard();
 
   uint32_t bucket_number= current_scoreboard->getBucketNumber(&getSession());
 
-  vector<ScoreboardSlot* > *scoreboard_vector=
+  std::vector<ScoreboardSlot* > *scoreboard_vector=
      current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
 
-  vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
-  vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
+  std::vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
+  std::vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
 
   ScoreboardSlot *scoreboard_slot= NULL;
-  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+  for (std::vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
        it != scoreboard_vector->end(); ++it)
   {
     scoreboard_slot= *it;
@@ -187,16 +187,16 @@ GlobalStatementsTool::GlobalStatementsTool(LoggingStats *in_logging_stats) :
   add_field("VARIABLE_VALUE", 1024);
 }
 
-GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
   count= 0;
   /* add the current scoreboard and the saved global statements */
   global_stats_to_display= new GlobalStats();
-  CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
-  cumulativeStats->sumCurrentScoreboard(logging_stats->getCurrentScoreboard(), 
+  CumulativeStats *cumulativeStats= in_logging_stats->getCumulativeStats();
+  cumulativeStats->sumCurrentScoreboard(in_logging_stats->getCurrentScoreboard(), 
                                         NULL, global_stats_to_display->getUserCommands());
-  global_stats_to_display->merge(logging_stats->getCumulativeStats()->getGlobalStats()); 
+  global_stats_to_display->merge(in_logging_stats->getCumulativeStats()->getGlobalStats()); 
 }
 
 GlobalStatementsTool::Generator::~Generator()
@@ -260,7 +260,7 @@ CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_sta
 
 void CurrentCommandsTool::Generator::setVectorIteratorsAndLock(uint32_t bucket_number)
 {
-  vector<ScoreboardSlot* > *scoreboard_vector= 
+  std::vector<ScoreboardSlot* > *scoreboard_vector= 
     current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number); 
 
   current_lock= current_scoreboard->getVectorOfScoreboardLocks()->at(bucket_number);

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
@@ -545,7 +545,7 @@ int Cursor::update_auto_increment()
     /*
       first test if the query was aborted due to strict mode constraints
     */
-    if (session->killed == Session::KILL_BAD_DATA)
+    if (session->getKilled() == Session::KILL_BAD_DATA)
       return HA_ERR_AUTOINC_ERANGE;
 
     /*
@@ -906,7 +906,7 @@ double Cursor::index_only_read_time(uint32_t keynr, double key_records)
 
   @note
     This method (or an overriding one in a derived class) must check for
-    session->killed and return HA_POS_ERROR if it is not zero. This is required
+    session->getKilled() and return HA_POS_ERROR if it is not zero. This is required
     for a user to be able to interrupt the calculation by killing the
     connection/query.
 

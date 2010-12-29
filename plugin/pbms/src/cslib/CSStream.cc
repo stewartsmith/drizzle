@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -738,7 +738,7 @@ void CSStaticMemoryOutputStream::write(const char b)
  * Callback InPUT STREAM
  */
 
-CSCallbackInputStream *CSCallbackInputStream::newStream(CSStreamReadCallbackFunc callback, void *user_data)
+CSCallbackInputStream *CSCallbackInputStream::newStream(CSStreamReadCallbackFunc in_callback, void *user_data)
 {
 	CSCallbackInputStream *s;
 
@@ -746,7 +746,7 @@ CSCallbackInputStream *CSCallbackInputStream::newStream(CSStreamReadCallbackFunc
 		CSException::throwOSError(CS_CONTEXT, ENOMEM);
 	}
 	
-	s->callback = callback;
+	s->callback = in_callback;
 	s->cb_data = user_data;
 	return s;
 }

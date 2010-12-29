@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes
  *
  *  Authors:
  *
@@ -127,6 +127,10 @@ transformStatementToSql(const Statement &source,
 
   switch (source.type())
   {
+  case Statement::ROLLBACK_STATEMENT:
+    {
+      break;
+    }
   case Statement::ROLLBACK:
     {
       sql_strings.push_back("ROLLBACK");
@@ -856,13 +860,6 @@ transformDropTableStatementToSql(const DropTableStatement &statement,
 
   destination.append("DROP TABLE ", 11);
 
-  /* Add the IF EXISTS clause if necessary */
-  if (statement.has_if_exists_clause() &&
-      statement.if_exists_clause() == true)
-  {
-    destination.append("IF EXISTS ", 10);
-  }
-
   destination.push_back(quoted_identifier);
   destination.append(table_metadata.schema_name());
   destination.push_back(quoted_identifier);
@@ -1349,6 +1346,12 @@ transformFieldDefinitionToSql(const Table::Field &field,
       destination.push_back(')');
       break;
     }
+  case Table::Field::UUID:
+    destination.append(" UUID", 5);
+    break;
+  case Table::Field::BOOLEAN:
+    destination.append(" BOOLEAN", 8);
+    break;
   case Table::Field::INTEGER:
     destination.append(" INT", 4);
     break;
@@ -1367,11 +1370,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
   case Table::Field::DATE:
     destination.append(" DATE", 5);
     break;
-  case Table::Field::TIMESTAMP:
+  case Table::Field::EPOCH:
     destination.append(" TIMESTAMP",  10);
     break;
   case Table::Field::DATETIME:
     destination.append(" DATETIME",  9);
+    break;
+  case Table::Field::TIME:
+    destination.append(" TIME",  5);
     break;
   }
 
@@ -1402,7 +1408,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
   {
     destination.append(" NOT NULL", 9);
   }
-  else if (field.type() == Table::Field::TIMESTAMP)
+  else if (field.type() == Table::Field::EPOCH)
     destination.append(" NULL", 5);
 
   if (field.type() == Table::Field::INTEGER || 
@@ -1488,11 +1494,13 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
     assert(false); /* Not a user definable type */
     return Table::Field::INTEGER; /* unreachable */
   case DRIZZLE_TYPE_TIMESTAMP:
-    return Table::Field::TIMESTAMP;
+    return Table::Field::EPOCH;
   case DRIZZLE_TYPE_LONGLONG:
     return Table::Field::BIGINT;
   case DRIZZLE_TYPE_DATETIME:
     return Table::Field::DATETIME;
+  case DRIZZLE_TYPE_TIME:
+    return Table::Field::TIME;
   case DRIZZLE_TYPE_DATE:
     return Table::Field::DATE;
   case DRIZZLE_TYPE_VARCHAR:
@@ -1503,6 +1511,10 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
     return Table::Field::ENUM;
   case DRIZZLE_TYPE_BLOB:
     return Table::Field::BLOB;
+  case DRIZZLE_TYPE_UUID:
+    return Table::Field::UUID;
+  case DRIZZLE_TYPE_BOOLEAN:
+    return Table::Field::BOOLEAN;
   }
 
   assert(false);

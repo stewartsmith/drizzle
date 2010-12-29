@@ -21,8 +21,6 @@
 #ifndef PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H
 #define PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H
 
-#include "drizzled/internal/getrusage.h"
-
 #include "drizzled/session.h"
 
 namespace performance_dictionary {
@@ -93,13 +91,7 @@ public:
     query_list.resize(USAGE_MAX_KEPT);
   }
 
-  void push(const std::string &sql, const struct rusage &arg)
-  {
-    Query_list::iterator it= query_list.end();
-    it--;
-    query_list.splice(query_list.begin(), query_list, it);
-    query_list.front().set(sql, arg);
-  }
+  void push(drizzled::Session::QueryString query_string, const struct rusage &arg);
 
   Query_list &list(void)
   {

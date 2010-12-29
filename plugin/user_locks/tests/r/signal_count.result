@@ -1,0 +1,32 @@
+set @count_barrier= "count_barrier";
+set @wait_count= 4;
+SELECT create_barrier(@count_barrier, @wait_count);
+create_barrier(@count_barrier, @wait_count)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), if ((WAITER_LIMIT = @wait_count), "YES", "NO"), if ((GENERATION = 0), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	if ((WAITER_LIMIT = @wait_count), "YES", "NO")	if ((GENERATION = 0), "YES", "NO")
+YES	YES	YES
+SELECT SIGNAL(@count_barrier);
+SIGNAL(@count_barrier)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), if ((WAITER_LIMIT = @wait_count), "YES", "NO"), if ((GENERATION = 1), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	if ((WAITER_LIMIT = @wait_count), "YES", "NO")	if ((GENERATION = 1), "YES", "NO")
+YES	YES	YES
+SELECT SIGNAL(@count_barrier);
+SIGNAL(@count_barrier)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), if ((WAITER_LIMIT = @wait_count), "YES", "NO"), if ((GENERATION = 2), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	if ((WAITER_LIMIT = @wait_count), "YES", "NO")	if ((GENERATION = 2), "YES", "NO")
+YES	YES	YES
+SELECT RELEASE_BARRIER(@count_barrier);
+RELEASE_BARRIER(@count_barrier)
+1
+SELECT count (*) from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+count (*)
+0
+SELECT create_barrier(@count_barrier);
+create_barrier(@count_barrier)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), if ((WAITER_LIMIT = 0), "YES", "NO"), if ((GENERATION = 0), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	if ((WAITER_LIMIT = 0), "YES", "NO")	if ((GENERATION = 0), "YES", "NO")
+YES	YES	YES

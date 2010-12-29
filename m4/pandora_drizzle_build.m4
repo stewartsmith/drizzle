@@ -1,5 +1,5 @@
-dnl  Copyright (C) 2009 Sun Microsystems
-dnl This file is free software; Sun Microsystems
+dnl  Copyright (C) 2009 Sun Microsystems, Inc.
+dnl This file is free software; Sun Microsystems, Inc.
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
@@ -72,5 +72,6 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   PANDORA_REQUIRE_BOOST_REGEX
   PANDORA_REQUIRE_BOOST_DATE_TIME
   PANDORA_REQUIRE_BOOST_FILESYSTEM
+  PANDORA_REQUIRE_BOOST_IOSTREAMS
 
 ])

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -76,24 +76,24 @@ bool statement::CreateTable::execute()
     }
   }
   /* Skip first table, which is the table we are creating */
-  TableList *create_table= session->lex->unlink_first_table(&link_to_local);
+  TableList *create_table_list= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
 
-  drizzled::message::init(create_table_message, create_table_message.name(), create_table->getSchemaName(), create_info.db_type->getName());
+  drizzled::message::init(create_table_message, create_table_message.name(), create_table_list->getSchemaName(), create_info.db_type->getName());
 
-  TableIdentifier new_table_identifier(create_table->getSchemaName(),
-                                       create_table->getTableName(),
+  TableIdentifier new_table_identifier(create_table_list->getSchemaName(),
+                                       create_table_list->getTableName(),
                                        create_table_message.type());
 
-  if (create_table_precheck(new_table_identifier))
+  if (not check(new_table_identifier))
   {
     /* put tables back for PS rexecuting */
-    session->lex->link_first_table_back(create_table, link_to_local);
+    session->lex->link_first_table_back(create_table_list, link_to_local);
     return true;
   }
 
   /* Might have been updated in create_table_precheck */
-  create_info.alias= create_table->alias;
+  create_info.alias= create_table_list->alias;
 
   /*
      The create-select command will open and read-lock the select table
@@ -108,10 +108,10 @@ bool statement::CreateTable::execute()
      TABLE in the same way. That way we avoid that a new table is
      created during a gobal read lock.
    */
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (! (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
   {
     /* put tables back for PS rexecuting */
-    session->lex->link_first_table_back(create_table, link_to_local);
+    session->lex->link_first_table_back(create_table_list, link_to_local);
     return true;
   }
 
@@ -124,8 +124,8 @@ bool statement::CreateTable::execute()
 
     if (not lex_identified_temp_table)
     {
-      session->lex->link_first_table_back(create_table, link_to_local);
-      create_table->setCreate(true);
+      session->lex->link_first_table_back(create_table_list, link_to_local);
+      create_table_list->setCreate(true);
     }
 
     if (not (res= session->openTablesLock(session->lex->query_tables)))
@@ -137,17 +137,18 @@ bool statement::CreateTable::execute()
       if (not lex_identified_temp_table)
       {
         TableList *duplicate= NULL;
-        create_table= session->lex->unlink_first_table(&link_to_local);
-        if ((duplicate= unique_table(create_table, select_tables)))
+        create_table_list= session->lex->unlink_first_table(&link_to_local);
+        if ((duplicate= unique_table(create_table_list, select_tables)))
         {
-          my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table->alias);
+          my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table_list->alias);
           /*
              Release the protection against the global read lock and wake
              everyone, who might want to set a global read lock.
            */
-          start_waiting_global_read_lock(session);
+          session->startWaitingGlobalReadLock();
           /* put tables back for PS rexecuting */
-          session->lex->link_first_table_back(create_table, link_to_local);
+          session->lex->link_first_table_back(create_table_list, link_to_local);
+
           return true;
         }
       }
@@ -156,7 +157,7 @@ bool statement::CreateTable::execute()
          select_create is currently not re-execution friendly and
          needs to be created for every execution of a PS/SP.
        */
-      if ((result= new select_create(create_table,
+      if ((result= new select_create(create_table_list,
                                      is_if_not_exists,
                                      &create_info,
                                      create_table_message,
@@ -177,7 +178,7 @@ bool statement::CreateTable::execute()
     }
     else if (not lex_identified_temp_table)
     {
-      create_table= session->lex->unlink_first_table(&link_to_local);
+      create_table_list= session->lex->unlink_first_table(&link_to_local);
     }
   }
   else
@@ -185,9 +186,9 @@ bool statement::CreateTable::execute()
     /* regular create */
     if (is_create_table_like)
     {
-      res= mysql_create_like_table(session, 
+      res= create_like_table(session, 
                                    new_table_identifier,
-                                   create_table, 
+                                   create_table_list, 
                                    select_tables,
                                    create_table_message,
                                    is_if_not_exists,
@@ -203,7 +204,7 @@ bool statement::CreateTable::execute()
         *field= alter_info.alter_proto.added_field(x);
       }
 
-      res= mysql_create_table(session, 
+      res= create_table(session, 
                               new_table_identifier,
                               &create_info,
                               create_table_message,
@@ -223,9 +224,35 @@ bool statement::CreateTable::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return res;
+}
+
+bool statement::CreateTable::check(const TableIdentifier &identifier)
+{
+  // Check table name for validity
+  if (not identifier.isValid())
+    return false;
+
+  // See if any storage engine objects to the name of the file
+  if (not plugin::StorageEngine::canCreateTable(identifier))
+  {
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
+
+    return false;
+  }
+
+  // Make sure the schema exists, we will do this again during the actual
+  // create for the table.
+  if (not plugin::StorageEngine::doesSchemaExist(identifier))
+  {
+    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
+
+    return false;
+  }
+
+  return true;
 }
 
 bool statement::CreateTable::validateCreateTableOption()

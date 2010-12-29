@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@
 #include "drizzled/gettext.h"
 #include "drizzled/configmake.h"
 #include "drizzled/session.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/unireg.h"
 #include "drizzled/drizzled.h"
@@ -198,15 +199,10 @@ static void init_signals(void)
   return;
 }
 
-static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char* filename,
-                       int line, const string& message) throw(const char *)
+static void GoogleProtoErrorThrower(google::protobuf::LogLevel level,
+                                    const char* ,
+                                    int, const string& ) throw(const char *)
 {
-  (void)filename;
-  (void)line;
-  (void)message;
-  std::cerr << "\n";
-  drizzled::util::custom_backtrace();
-  std::cerr << "\n";
   switch(level)
   {
   case google::protobuf::LOGLEVEL_INFO:
@@ -215,7 +211,6 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   case google::protobuf::LOGLEVEL_ERROR:
   case google::protobuf::LOGLEVEL_FATAL:
   default:
-    std::cerr << "GoogleProtoErrorThrower(" << filename << ", " << line << ", " << message << ")";
     throw("error in google protocol buffer parsing");
   }
 }
@@ -232,7 +227,6 @@ int main(int argc, char **argv)
 
   module::Registry &modules= module::Registry::singleton();
   plugin::Client *client;
-  Session *session;
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
@@ -333,11 +327,16 @@ int main(int argc, char **argv)
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   /* Send server startup event */
-  if ((session= new Session(plugin::Listen::getNullClient())))
   {
-    transaction_services.sendStartupEvent(session);
-    session->lockForDelete();
-    delete session;
+    Session *session;
+
+    if ((session= new Session(plugin::Listen::getNullClient())))
+    {
+      currentSession().release();
+      currentSession().reset(session);
+      transaction_services.sendStartupEvent(session);
+      delete session;
+    }
   }
 
 
@@ -346,34 +345,42 @@ int main(int argc, char **argv)
      should be shutdown. */
   while ((client= plugin::Listen::getClient()) != NULL)
   {
-    if (!(session= new Session(client)))
+    Session::shared_ptr session(new Session(client));
+
+    if (not session)
     {
       delete client;
       continue;
     }
 
     /* If we error on creation we drop the connection and delete the session. */
-    if (session->schedule())
+    if (Session::schedule(session))
       Session::unlink(session);
   }
 
   /* Send server shutdown event */
-  if ((session= new Session(plugin::Listen::getNullClient())))
   {
-    transaction_services.sendShutdownEvent(session);
-    session->lockForDelete();
-    delete session;
+    Session *session;
+
+    if ((session= new Session(plugin::Listen::getNullClient())))
+    {
+      currentSession().release();
+      currentSession().reset(session);
+      transaction_services.sendShutdownEvent(session);
+      delete session;
+    }
   }
 
-  LOCK_thread_count.lock();
-  select_thread_in_use=0;			// For close_connections
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    select_thread_in_use= false;			// For close_connections
+  }
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
-    while (!ready_to_exit)
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    while (not ready_to_exit)
       COND_server_end.wait(scopedLock);
   }
 

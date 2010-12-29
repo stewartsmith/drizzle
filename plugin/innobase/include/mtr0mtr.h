@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -263,15 +263,6 @@ mtr_read_ulint(
 /*===========*/
 	const byte*	ptr,	/*!< in: pointer from where to read */
 	ulint		type,	/*!< in: MLOG_1BYTE, MLOG_2BYTES, MLOG_4BYTES */
-	mtr_t*		mtr);	/*!< in: mini-transaction handle */
-/********************************************************//**
-Reads 8 bytes from a file page buffered in the buffer pool.
-@return	value read */
-UNIV_INTERN
-dulint
-mtr_read_dulint(
-/*============*/
-	const byte*	ptr,	/*!< in: pointer from where to read */
 	mtr_t*		mtr);	/*!< in: mini-transaction handle */
 #ifndef UNIV_HOTBACKUP
 /*********************************************************************//**

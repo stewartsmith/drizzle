@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,11 @@
  */
 
 #include "config.h"
+
+#include <boost/lexical_cast.hpp>
+#include <boost/exception/get_error_info.hpp>
+#include <string>
+
 #include "drizzled/session.h"
 #include "drizzled/item/string.h"
 #include "drizzled/sql_list.h"
@@ -143,12 +148,55 @@ int set_var::check(Session *session)
 */
 int set_var::update(Session *session)
 {
-  if (! value)
-    var->set_default(session, type);
-  else if (var->update(session, this))
-    return -1;				// should never happen
-  if (var->getAfterUpdateTrigger())
-    (*var->getAfterUpdateTrigger())(session, type);
+  try
+  {
+    if (! value)
+      var->set_default(session, type);
+    else if (var->update(session, this))
+      return -1;				// should never happen
+    if (var->getAfterUpdateTrigger())
+      (*var->getAfterUpdateTrigger())(session, type);
+  }
+  catch (invalid_option_value &ex)
+  {
+    /* TODO: Fix this to be typesafe once we have properly typed set_var */
+    string new_val= boost::lexical_cast<string>(save_result.uint32_t_value);
+    if (boost::get_error_info<invalid_max_info>(ex) != NULL)
+    { 
+      const uint64_t max_val= *(boost::get_error_info<invalid_max_info>(ex));
+      string explanation("(> ");
+      explanation.append(boost::lexical_cast<std::string>(max_val));
+      explanation.push_back(')');
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_INVALID_OPTION_VALUE,
+                          ER(ER_INVALID_OPTION_VALUE),
+                          var->getName().c_str(),
+                          new_val.c_str(),
+                          explanation.c_str());
+    }
+    else if (boost::get_error_info<invalid_min_info>(ex) != NULL)
+    { 
+      const int64_t min_val= *(boost::get_error_info<invalid_min_info>(ex));
+      string explanation("(< ");
+      explanation.append(boost::lexical_cast<std::string>(min_val));
+      explanation.push_back(')');
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_INVALID_OPTION_VALUE,
+                          ER(ER_INVALID_OPTION_VALUE),
+                          var->getName().c_str(),
+                          new_val.c_str(),
+                          explanation.c_str());
+    }
+    else
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_INVALID_OPTION_VALUE,
+                          ER(ER_INVALID_OPTION_VALUE),
+                          var->getName().c_str(),
+                          new_val.c_str(),
+                          "");
+    }
+  }
   return 0;
 }
 

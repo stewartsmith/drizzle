@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ int64_t Item_func_int_div::val_int()
     return 0;
   }
   return (unsigned_flag ?
-          (uint64_t) value / (uint64_t) val2 :
+          (int64_t)((uint64_t) value / (uint64_t) val2) :
           value / val2);
 }
 

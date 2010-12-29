@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,12 +37,15 @@
 #ifndef __WIN__
 #include <sys/wait.h>
 #endif
+#include <memory>
 
 #ifdef __WIN__
 #define srandom  srand
 #define random   rand
 #define snprintf _snprintf
 #endif
+
+#include <boost/scoped_ptr.hpp>
 
 #include "azio.h"
 
@@ -136,7 +139,8 @@ void scheduler(az_method use_aio)
 {
   unsigned int x;
   uint64_t total;
-  azio_stream writer_handle;
+  boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
+  azio_stream &writer_handle= *writer_handle_ap.get();
   thread_context_st *context;
   pthread_t mainthread;            /* Thread descriptor */
   pthread_attr_t attr;          /* Thread attributes */
@@ -263,7 +267,8 @@ void *run_concurrent_task(void *p)
   uint64_t count;
   int ret;
   int error;
-  azio_stream reader_handle;
+  boost::scoped_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  azio_stream &reader_handle= *reader_handle_ap.get();
 
   if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,
                     context->use_aio)))

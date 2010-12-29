@@ -1,5 +1,5 @@
-dnl  Copyright (C) 2009 Sun Microsystems
-dnl This file is free software; Sun Microsystems
+dnl  Copyright (C) 2009 Sun Microsystems, Inc.
+dnl This file is free software; Sun Microsystems, Inc.
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
@@ -33,6 +33,12 @@ AC_DEFUN([PANDORA_WARNINGS],[
     AS_IF([test "$pandora_building_from_vc" = "yes"],
           [ac_cv_warnings_as_errors=yes],
           [ac_cv_warnings_as_errors=no]))
+
+  AC_ARG_ENABLE([gcc-profile-mode],
+      [AS_HELP_STRING([--enable-gcc-profile-mode],
+         [Toggle gcc profile mode @<:@default=off@:>@])],
+      [ac_gcc_profile_mode="$enableval"],
+      [ac_gcc_profile_mode="no"])
 
   AC_ARG_ENABLE([profiling],
       [AS_HELP_STRING([--enable-profiling],
@@ -87,95 +93,33 @@ AC_DEFUN([PANDORA_WARNINGS],[
             F_DIAGNOSTICS_SHOW_OPTION="-fdiagnostics-show-option"
           ])
 
-    AC_CACHE_CHECK([whether it is safe to use -Wformat],
-      [ac_cv_safe_to_use_wformat_],
+    AC_CACHE_CHECK([whether it is safe to use -floop-parallelize-all],
+      [ac_cv_safe_to_use_floop_parallelize_all_],
       [save_CFLAGS="$CFLAGS"
-       dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
-       dnl conversion warnings to all the tarball folks
-       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+       CFLAGS="-floop-parallelize-all ${AM_CFLAGS} ${CFLAGS}"
        AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([[
-#include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
-void foo(bool a)
-{
-  uint64_t test_u= 0;
-  printf("This is a %" PRIu64 "test\n", test_u);
-}
-         ]],[[
-foo(0);
-         ]])],
-         [ac_cv_safe_to_use_wformat_=yes],
-         [ac_cv_safe_to_use_wformat_=no])
-       CFLAGS="$save_CFLAGS"])
-    AS_IF([test "$ac_cv_safe_to_use_wformat_" = "yes"],[
-      W_FORMAT="-Wformat"
-      W_FORMAT_2="-Wformat=2"
-      NO_FORMAT="-Wno-format"
-      ],[
-      W_FORMAT="-Wno-format"
-      W_FORMAT_2="-Wno-format"
-      NO_FORMAT="-Wno-format"
-    ])
-
-
- 
-    AC_CACHE_CHECK([whether it is safe to use -Wconversion],
-      [ac_cv_safe_to_use_wconversion_],
-      [save_CFLAGS="$CFLAGS"
-       dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
-       dnl conversion warnings to all the tarball folks
-       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
-       AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([[
-#include <stdbool.h>
-void foo(bool a)
-{
-  (void)a;
-}
-         ]],[[
-foo(0);
-         ]])],
-         [ac_cv_safe_to_use_wconversion_=yes],
-         [ac_cv_safe_to_use_wconversion_=no])
+         [AC_LANG_PROGRAM([],[])],
+         [ac_cv_safe_to_use_floop_parallelize_all_=yes],
+         [ac_cv_safe_to_use_floop_parallelize_all_=no])
        CFLAGS="$save_CFLAGS"])
 
-    AS_IF([test "$ac_cv_safe_to_use_wconversion_" = "yes"],
-      [W_CONVERSION="-Wconversion"
-      AC_CACHE_CHECK([whether it is safe to use -Wconversion with htons],
-        [ac_cv_safe_to_use_Wconversion_],
-        [save_CFLAGS="$CFLAGS"
-         dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
-         dnl conversion warnings to all the tarball folks
-         CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
-         AC_COMPILE_IFELSE(
-           [AC_LANG_PROGRAM(
-             [[
-#include <netinet/in.h>
-             ]],[[
-uint16_t x= htons(80);
-             ]])],
-           [ac_cv_safe_to_use_Wconversion_=yes],
-           [ac_cv_safe_to_use_Wconversion_=no])
-         CFLAGS="$save_CFLAGS"])
-
-      AS_IF([test "$ac_cv_safe_to_use_Wconversion_" = "no"],
-            [NO_CONVERSION="-Wno-conversion"])
-    ])
+    AS_IF([test "$ac_cv_safe_to_use_floop_parallelize_all_" = "yes"],
+          [
+            F_LOOP_PARALLELIZE_ALL="-floop-parallelize-all"
+          ])
 
     NO_STRICT_ALIASING="-fno-strict-aliasing -Wno-strict-aliasing"
     NO_SHADOW="-Wno-shadow"
 
     AS_IF([test "$INTELCC" = "yes"],[
       m4_if(PW_LESS_WARNINGS,[no],[
-        BASE_WARNINGS="-w1 -Werror -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188"
+        BASE_WARNINGS="-w1 -Werror -Wcheck -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188"
       ],[
         dnl 2203 is like old-style-cast
         dnl 1684 is like strict-aliasing
         dnl 188 is about using enums as bitfields
         dnl 1683 is a warning about _EXPLICIT_ casting, which we want
-        BASE_WARNINGS="-w1 -Werror -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188,981,2259,2203,1683,1684"
+        BASE_WARNINGS="-w1 -Werror -Wcheck -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188,981,2259,2203,1683,1684"
       ])
       CC_WARNINGS="${BASE_WARNINGS}"
       CXX_WARNINGS="${BASE_WARNINGS}"
@@ -183,13 +127,13 @@ uint16_t x= htons(80);
       
     ],[
       m4_if(PW_LESS_WARNINGS,[no],[
-        BASE_WARNINGS_FULL="${W_FORMAT_2} ${W_CONVERSION} -Wstrict-aliasing"
+        BASE_WARNINGS_FULL="${W_CONVERSION} -Wstrict-aliasing"
         CC_WARNINGS_FULL="-Wswitch-default -Wswitch-enum -Wwrite-strings"
         CXX_WARNINGS_FULL="-Weffc++ -Wold-style-cast"
         NO_OLD_STYLE_CAST="-Wno-old-style-cast"
         NO_EFF_CXX="-Wno-effc++"
       ],[
-        BASE_WARNINGS_FULL="${W_FORMAT_2} ${NO_STRICT_ALIASING}"
+        BASE_WARNINGS_FULL="${NO_STRICT_ALIASING}"
       ])
 
       AS_IF([test "${ac_cv_assert}" = "no"],
@@ -209,11 +153,87 @@ uint16_t x= htons(80);
         [ac_cv_safe_to_use_Wextra_=no])
       CFLAGS="$save_CFLAGS"])
 
-      BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wundef -Wshadow ${NO_UNUSED} ${F_DIAGNOSTICS_SHOW_OPTION} ${BASE_WARNINGS_FULL}"
+      BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wundef -Wshadow ${NO_UNUSED} ${F_DIAGNOSTICS_SHOW_OPTION} ${F_LOOP_PARALLELIZE_ALL} ${BASE_WARNINGS_FULL}"
       AS_IF([test "$ac_cv_safe_to_use_Wextra_" = "yes"],
             [BASE_WARNINGS="${BASE_WARNINGS} -Wextra"],
             [BASE_WARNINGS="${BASE_WARNINGS} -W"])
   
+      AC_CACHE_CHECK([whether it is safe to use -Wformat],
+        [ac_cv_safe_to_use_wformat_],
+        [save_CFLAGS="$CFLAGS"
+         dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+         dnl conversion warnings to all the tarball folks
+         CFLAGS="-Wformat -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+         AC_COMPILE_IFELSE(
+           [AC_LANG_PROGRAM([[
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+void foo();
+void foo()
+{
+  uint64_t test_u= 0;
+  printf("This is a %" PRIu64 "test\n", test_u);
+}
+           ]],[[
+foo();
+           ]])],
+           [ac_cv_safe_to_use_wformat_=yes],
+           [ac_cv_safe_to_use_wformat_=no])
+         CFLAGS="$save_CFLAGS"])
+      AS_IF([test "$ac_cv_safe_to_use_wformat_" = "yes"],[
+        BASE_WARNINGS="${BASE_WARNINGS} -Wformat -Wno-format-nonliteral -Wno-format-security"
+        BASE_WARNINGS_FULL="${BASE_WARNINGS_FULL} -Wformat=2 -Wno-format-nonliteral -Wno-format-security"
+        ],[
+        BASE_WARNINGS="${BASE_WARNINGS} -Wno-format"
+        BASE_WARNINGS_FULL="${BASE_WARNINGS_FULL} -Wno-format"
+      ])
+
+
+ 
+      AC_CACHE_CHECK([whether it is safe to use -Wconversion],
+        [ac_cv_safe_to_use_wconversion_],
+        [save_CFLAGS="$CFLAGS"
+         dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+         dnl conversion warnings to all the tarball folks
+         CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+         AC_COMPILE_IFELSE(
+           [AC_LANG_PROGRAM([[
+#include <stdbool.h>
+void foo(bool a)
+{
+  (void)a;
+}
+           ]],[[
+foo(0);
+           ]])],
+           [ac_cv_safe_to_use_wconversion_=yes],
+           [ac_cv_safe_to_use_wconversion_=no])
+         CFLAGS="$save_CFLAGS"])
+  
+      AS_IF([test "$ac_cv_safe_to_use_wconversion_" = "yes"],
+        [W_CONVERSION="-Wconversion"
+        AC_CACHE_CHECK([whether it is safe to use -Wconversion with htons],
+          [ac_cv_safe_to_use_Wconversion_],
+          [save_CFLAGS="$CFLAGS"
+           dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+           dnl conversion warnings to all the tarball folks
+           CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+           AC_COMPILE_IFELSE(
+             [AC_LANG_PROGRAM(
+               [[
+#include <netinet/in.h>
+               ]],[[
+uint16_t x= htons(80);
+               ]])],
+             [ac_cv_safe_to_use_Wconversion_=yes],
+             [ac_cv_safe_to_use_Wconversion_=no])
+           CFLAGS="$save_CFLAGS"])
+  
+        AS_IF([test "$ac_cv_safe_to_use_Wconversion_" = "no"],
+              [NO_CONVERSION="-Wno-conversion"])
+      ])
+
       CC_WARNINGS="${BASE_WARNINGS} -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wmissing-declarations -Wcast-align ${CC_WARNINGS_FULL}"
       CXX_WARNINGS="${BASE_WARNINGS} -Woverloaded-virtual -Wnon-virtual-dtor -Wctor-dtor-privacy -Wno-long-long ${CXX_WARNINGS_FULL}"
 
@@ -235,6 +255,25 @@ uint16_t x= htons(80);
       ])
       AS_IF([test "$ac_cv_safe_to_use_Wmissing_declarations_" = "yes"],
             [CXX_WARNINGS="${CXX_WARNINGS} -Wmissing-declarations"])
+  
+      AC_CACHE_CHECK([whether it is safe to use -Wframe-larger-than],
+        [ac_cv_safe_to_use_Wframe_larger_than_],
+        [AC_LANG_PUSH(C++)
+         save_CXXFLAGS="$CXXFLAGS"
+         CXXFLAGS="-Werror -pedantic -Wframe-larger-than=32768 ${AM_CXXFLAGS}"
+         AC_COMPILE_IFELSE([
+           AC_LANG_PROGRAM(
+           [[
+#include <stdio.h>
+           ]], [[]])
+        ],
+        [ac_cv_safe_to_use_Wframe_larger_than_=yes],
+        [ac_cv_safe_to_use_Wframe_larger_than_=no])
+        CXXFLAGS="$save_CXXFLAGS"
+        AC_LANG_POP()
+      ])
+      AS_IF([test "$ac_cv_safe_to_use_Wframe_larger_than_" = "yes"],
+            [CXX_WARNINGS="${CXX_WARNINGS} -Wframe-larger-than=32768"])
   
       AC_CACHE_CHECK([whether it is safe to use -Wlogical-op],
         [ac_cv_safe_to_use_Wlogical_op_],

@@ -61,7 +61,7 @@ class ItemStub : public Item
       (void) str;
       return string_to_return;
     };
-    virtual my_decimal *val_decimal(my_decimal *decimal_buffer)
+    virtual type::Decimal *val_decimal(type::Decimal *decimal_buffer)
     {
       (void) decimal_buffer;
       return NULL;
@@ -141,7 +141,7 @@ TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond_tooFewArguments
 
 TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond)
 {
-  DRIZZLE_TIME drizzle_time= {1990, 3, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
+  type::Time drizzle_time= {1990, 3, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
   TemporalInterval *interval= TemporalGenerator::TemporalIntervalGen::make_temporal_interval(
                                0, 0, 6, 13, 54, 3, 435675, false);
 
@@ -158,7 +158,7 @@ TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond)
 
 TEST(TemporalIntervalAddDateTest, addDate_negativeDayMicrosecond)
 {
-  DRIZZLE_TIME drizzle_time= {1990, 4, 1, 4, 59, 20, 312218, false, DRIZZLE_TIMESTAMP_DATETIME};
+  type::Time drizzle_time= {1990, 4, 1, 4, 59, 20, 312218, false, DRIZZLE_TIMESTAMP_DATETIME};
   TemporalInterval *interval= TemporalGenerator::TemporalIntervalGen::make_temporal_interval(
                                0, 0, 6, 13, 54, 3, 435675, true);
   
@@ -175,7 +175,7 @@ TEST(TemporalIntervalAddDateTest, addDate_negativeDayMicrosecond)
 
 TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond_shouldCountLeapDayToo)
 {
-  DRIZZLE_TIME drizzle_time= {2004, 2, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
+  type::Time drizzle_time= {2004, 2, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
   TemporalInterval *interval= TemporalGenerator::TemporalIntervalGen::make_temporal_interval(
                                0, 0, 6, 13, 54, 3, 435675, false);
   
@@ -192,7 +192,7 @@ TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond_shouldCountLeap
 
 TEST(TemporalIntervalAddDateTest, addDate_negativeWeek)
 {
-  DRIZZLE_TIME drizzle_time= {1998, 1, 25, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  type::Time drizzle_time= {1998, 1, 25, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
   TemporalInterval *interval= TemporalGenerator::TemporalIntervalGen::make_temporal_interval(
                               0, 0, 28, 0, 0, 0, 0, true);
   
@@ -205,7 +205,7 @@ TEST(TemporalIntervalAddDateTest, addDate_negativeWeek)
 
 TEST(TemporalIntervalAddDateTest, addDate_addPositiveYearToLeapDay)
 {
-  DRIZZLE_TIME drizzle_time= {2004, 2, 29, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  type::Time drizzle_time= {2004, 2, 29, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
   TemporalInterval *interval= TemporalGenerator::TemporalIntervalGen::make_temporal_interval(
                                5, 0, 0, 0, 0, 0, 0, false);
   
@@ -218,7 +218,7 @@ TEST(TemporalIntervalAddDateTest, addDate_addPositiveYearToLeapDay)
 
 TEST(TemporalIntervalAddDateTest, addDate_addOneMonthToLastDayInMonth_shouldChangeToProperLastDay)
 {
-  DRIZZLE_TIME drizzle_time= {2004, 7, 31, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  type::Time drizzle_time= {2004, 7, 31, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
   TemporalInterval *interval= TemporalGenerator::TemporalIntervalGen::make_temporal_interval(
                                0, 2, 0, 0, 0, 0, 0, false);
   

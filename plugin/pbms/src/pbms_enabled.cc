@@ -1,4 +1,4 @@
-/* Copyright (c) 2010 PrimeBase Technologies GmbH
+/* Copyright (C) 2010 PrimeBase Technologies GmbH
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
@@ -135,7 +135,7 @@ static int insertRecord(Field_blob *field, char *blob,  size_t org_length, unsig
 	size_t length;
 	PBMSBlobURLRec blob_url;
 	
-	err = pbms_api.retainBlob(DB_NAME(field), TAB_NAME(field), &blob_url, blob, org_length, field->field_index, result);
+	err = pbms_api.retainBlob(DB_NAME(field), TAB_NAME(field), &blob_url, blob, org_length, field->position(), result);
 	if (err)
 		return err;
 		

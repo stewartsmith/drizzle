@@ -1,0 +1,18 @@
+set @signal_barrier= "signal_barrier";
+set @signal_barrier= "signal_barrier";
+SELECT create_barrier(@signal_barrier);
+create_barrier(@signal_barrier)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAITER_LIMIT from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	GENERATION	WAITER_LIMIT
+SELECT @test_generation:=GENERATION from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@signal_barrier;
+@test_generation:=GENERATION 
+0
+SELECT SIGNAL(@signal_barrier);
+SIGNAL(@signal_barrier)
+1
+SELECT wait(@signal_barrier, @test_generation);
+wait(@signal_barrier, @test_generation)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAITER_LIMIT from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	GENERATION	WAITER_LIMIT

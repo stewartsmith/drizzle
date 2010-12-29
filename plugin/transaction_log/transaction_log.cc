@@ -1,8 +1,8 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  Authors:
  *
@@ -216,7 +216,7 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
                     " bytes at offset %" PRId64 ", but only wrote %" PRId32 " bytes.  Error: %s\n"), 
                   static_cast<int64_t>(data_length),
                   static_cast<int64_t>(cur_offset),
-                  static_cast<int64_t>(written), 
+                  static_cast<int32_t>(written), 
                   errmsg);
     state= CRASHED;
     /* 
@@ -285,7 +285,6 @@ void TransactionLog::truncate()
     result= ftruncate(log_file, log_offset);
   }
   while (result == -1 && errno == EINTR);
-  drizzled::TransactionServices::singleton().resetTransactionId();
 }
 
 bool TransactionLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,

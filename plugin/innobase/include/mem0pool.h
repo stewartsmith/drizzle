@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -99,18 +99,6 @@ ulint
 mem_pool_get_reserved(
 /*==================*/
 	mem_pool_t*	pool);	/*!< in: memory pool */
-/********************************************************************//**
-Reserves the mem pool mutex. */
-UNIV_INTERN
-void
-mem_pool_mutex_enter(void);
-/*======================*/
-/********************************************************************//**
-Releases the mem pool mutex. */
-UNIV_INTERN
-void
-mem_pool_mutex_exit(void);
-/*=====================*/
 /********************************************************************//**
 Validates a memory pool.
 @return	TRUE if ok */

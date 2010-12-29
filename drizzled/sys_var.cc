@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -88,7 +88,6 @@ extern struct option my_long_options[];
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
 
-class sys_var_pluginvar;
 typedef map<string, sys_var *> SystemVariableMap;
 static SystemVariableMap system_variable_map;
 extern char *opt_drizzle_tmpdir;
@@ -141,7 +140,7 @@ static sys_var_fs_path sys_plugin_dir("plugin_dir", plugin_dir);
 
 static sys_var_size_t_ptr sys_thread_stack_size("thread_stack",
                                                       &my_thread_stack_size);
-static sys_var_constrained_value<uint32_t> sys_back_log("back_log", back_log);
+static sys_var_constrained_value_readonly<uint32_t> sys_back_log("back_log", back_log);
 
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size("bulk_insert_buffer_size",
                                                           &drizzle_system_variables::bulk_insert_buff_size);
@@ -197,6 +196,10 @@ static sys_var_session_uint32_t	sys_div_precincrement("div_precision_increment",
 
 static sys_var_session_size_t	sys_range_alloc_block_size("range_alloc_block_size",
                                                            &drizzle_system_variables::range_alloc_block_size);
+
+static sys_var_session_bool sys_replicate_query("replicate_query",
+                                                &drizzle_system_variables::replicate_query);
+
 static sys_var_session_uint32_t	sys_query_alloc_block_size("query_alloc_block_size",
                                                            &drizzle_system_variables::query_alloc_block_size,
                                                            NULL, fix_session_mem_root);
@@ -317,21 +320,44 @@ sys_var_session_time_zone sys_time_zone("time_zone");
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname("hostname", glob_hostname);
 
-bool sys_var::check(Session *, set_var *var)
+bool sys_var::check(Session *session, set_var *var)
 {
+  if (check_func)
+  {
+    int res;
+    if ((res=(*check_func)(session, var)) < 0)
+      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
+    return res;
+  }
   var->save_result.uint64_t_value= var->value->val_int();
   return 0;
 }
 
 bool sys_var_str::check(Session *session, set_var *var)
 {
-  int res;
   if (!check_func)
     return 0;
 
+  int res;
   if ((res=(*check_func)(session, var)) < 0)
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
   return res;
+}
+
+bool sys_var_std_string::check(Session *session, set_var *var)
+{
+  if (check_func == NULL)
+  {
+    return false;
+  }
+
+  int res= (*check_func)(session, var);
+  if (res != 0)
+  {
+    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
+    return true;
+  }
+  return false;
 }
 
 /*
@@ -541,11 +567,18 @@ bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
 
 void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
 {
-  bool not_used;
-  LOCK_global_system_variables.lock();
-  *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
-                                 option_limits, &not_used);
-  LOCK_global_system_variables.unlock();
+  if (have_default_value)
+  {
+    *value= default_value;
+  }
+  else
+  {
+    bool not_used;
+    LOCK_global_system_variables.lock();
+    *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
+                                   option_limits, &not_used);
+    LOCK_global_system_variables.unlock();
+  }
 }
 
 
@@ -580,7 +613,7 @@ bool sys_var_bool_ptr::update(Session *, set_var *var)
 
 void sys_var_bool_ptr::set_default(Session *, sql_var_t)
 {
-  *value= (bool) option_limits->def_value;
+  *value= default_value;
 }
 
 
@@ -1601,6 +1634,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_range_alloc_block_size, my_long_options);
     add_sys_var_to_list(&sys_read_buff_size, my_long_options);
     add_sys_var_to_list(&sys_read_rnd_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_replicate_query, my_long_options);
     add_sys_var_to_list(&sys_scheduler, my_long_options);
     add_sys_var_to_list(&sys_secure_file_priv, my_long_options);
     add_sys_var_to_list(&sys_select_limit, my_long_options);
@@ -1629,7 +1663,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_version_compile_vendor, my_long_options);
     add_sys_var_to_list(&sys_warning_count, my_long_options);
   }
-  catch (...)
+  catch (std::exception&)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
     return(1);

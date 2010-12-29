@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -592,13 +592,15 @@ an x-latch on the tree.
 @return	rec_get_offsets() of the node pointer record */
 static
 ulint*
-btr_page_get_father_node_ptr(
-/*=========================*/
+btr_page_get_father_node_ptr_func(
+/*==============================*/
 	ulint*		offsets,/*!< in: work area for the return value */
 	mem_heap_t*	heap,	/*!< in: memory heap to use */
 	btr_cur_t*	cursor,	/*!< in: cursor pointing to user record,
 				out: cursor on node pointer record,
 				its page x-latched */
+	const char*	file,	/*!< in: file name */
+	ulint		line,	/*!< in: line where called */
 	mtr_t*		mtr)	/*!< in: mtr */
 {
 	dtuple_t*	tuple;
@@ -617,12 +619,14 @@ btr_page_get_father_node_ptr(
 	ut_ad(dict_index_get_page(index) != page_no);
 
 	level = btr_page_get_level(btr_cur_get_page(cursor), mtr);
+
 	user_rec = btr_cur_get_rec(cursor);
 	ut_a(page_rec_is_user_rec(user_rec));
 	tuple = dict_index_build_node_ptr(index, user_rec, 0, heap, level);
 
 	btr_cur_search_to_nth_level(index, level + 1, tuple, PAGE_CUR_LE,
-				    BTR_CONT_MODIFY_TREE, cursor, 0, mtr);
+				    BTR_CONT_MODIFY_TREE, cursor, 0,
+				    file, line, mtr);
 
 	node_ptr = btr_cur_get_rec(cursor);
 	ut_ad(!page_rec_is_comp(node_ptr)
@@ -669,6 +673,9 @@ btr_page_get_father_node_ptr(
 
 	return(offsets);
 }
+
+#define btr_page_get_father_node_ptr(of,heap,cur,mtr)			\
+	btr_page_get_father_node_ptr_func(of,heap,cur,__FILE__,__LINE__,mtr)
 
 /************************************************************//**
 Returns the upper level node pointer to a page. It is assumed that mtr holds
@@ -728,7 +735,7 @@ btr_create(
 	ulint		space,	/*!< in: space where created */
 	ulint		zip_size,/*!< in: compressed page size in bytes
 				or 0 for uncompressed pages */
-	dulint		index_id,/*!< in: index id */
+	index_id_t	index_id,/*!< in: index id */
 	dict_index_t*	index,	/*!< in: index */
 	mtr_t*		mtr)	/*!< in: mini-transaction handle */
 {
@@ -943,6 +950,7 @@ btr_page_reorganize_low(
 	dict_index_t*	index,	/*!< in: record descriptor */
 	mtr_t*		mtr)	/*!< in: mtr */
 {
+	buf_pool_t*	buf_pool	= buf_pool_from_bpage(&block->page);
 	page_t*		page		= buf_block_get_frame(block);
 	page_zip_des_t*	page_zip	= buf_block_get_page_zip(block);
 	buf_block_t*	temp_block;
@@ -973,7 +981,7 @@ btr_page_reorganize_low(
 	log_mode = mtr_set_log_mode(mtr, MTR_LOG_NONE);
 
 #ifndef UNIV_HOTBACKUP
-	temp_block = buf_block_alloc(0);
+	temp_block = buf_block_alloc(buf_pool, 0);
 #else /* !UNIV_HOTBACKUP */
 	ut_ad(block == back_block1);
 	temp_block = back_block2;
@@ -1010,7 +1018,7 @@ btr_page_reorganize_low(
 		/* In crash recovery, dict_index_is_sec_or_ibuf() always
 		returns TRUE, even for clustered indexes.  max_trx_id is
 		unused in clustered index pages. */
-		ut_ad(!ut_dulint_is_zero(max_trx_id) || recovery);
+		ut_ad(max_trx_id != 0 || recovery);
 	}
 
 	if (UNIV_LIKELY_NULL(page_zip)
@@ -1445,11 +1453,11 @@ Calculates a split record such that the tuple will certainly fit on
 its half-page when the split is performed. We assume in this function
 only that the cursor page has at least one user record.
 @return split record, or NULL if tuple will be the first record on
-upper half-page */
+the lower or upper half-page (determined by btr_page_tuple_smaller()) */
 static
 rec_t*
-btr_page_get_sure_split_rec(
-/*========================*/
+btr_page_get_split_rec(
+/*===================*/
 	btr_cur_t*	cursor,	/*!< in: cursor at which insert should be made */
 	const dtuple_t*	tuple,	/*!< in: tuple to insert */
 	ulint		n_ext)	/*!< in: number of externally stored columns */
@@ -1662,11 +1670,13 @@ Inserts a data tuple to a tree on a non-leaf level. It is assumed
 that mtr holds an x-latch on the tree. */
 UNIV_INTERN
 void
-btr_insert_on_non_leaf_level(
-/*=========================*/
+btr_insert_on_non_leaf_level_func(
+/*==============================*/
 	dict_index_t*	index,	/*!< in: index */
 	ulint		level,	/*!< in: level, must be > 0 */
 	dtuple_t*	tuple,	/*!< in: the record to be inserted */
+	const char*	file,	/*!< in: file name */
+	ulint		line,	/*!< in: line where called */
 	mtr_t*		mtr)	/*!< in: mtr */
 {
 	big_rec_t*	dummy_big_rec;
@@ -1678,7 +1688,7 @@ btr_insert_on_non_leaf_level(
 
 	btr_cur_search_to_nth_level(index, level, tuple, PAGE_CUR_LE,
 				    BTR_CONT_MODIFY_TREE,
-				    &cursor, 0, mtr);
+				    &cursor, 0, file, line, mtr);
 
 	err = btr_cur_pessimistic_insert(BTR_NO_LOCKING_FLAG
 					 | BTR_KEEP_SYS_FLAG
@@ -1824,6 +1834,37 @@ btr_attach_half_pages(
 }
 
 /*************************************************************//**
+Determine if a tuple is smaller than any record on the page.
+@return TRUE if smaller */
+static
+ibool
+btr_page_tuple_smaller(
+/*===================*/
+	btr_cur_t*	cursor,	/*!< in: b-tree cursor */
+	const dtuple_t*	tuple,	/*!< in: tuple to consider */
+	ulint*		offsets,/*!< in/out: temporary storage */
+	ulint		n_uniq,	/*!< in: number of unique fields
+				in the index page records */
+	mem_heap_t**	heap)	/*!< in/out: heap for offsets */
+{
+	buf_block_t*	block;
+	const rec_t*	first_rec;
+	page_cur_t	pcur;
+
+	/* Read the first user record in the page. */
+	block = btr_cur_get_block(cursor);
+	page_cur_set_before_first(block, &pcur);
+	page_cur_move_to_next(&pcur);
+	first_rec = page_cur_get_rec(&pcur);
+
+	offsets = rec_get_offsets(
+		first_rec, cursor->index, offsets,
+		n_uniq, heap);
+
+	return(cmp_dtuple_rec(tuple, first_rec, offsets) < 0);
+}
+
+/*************************************************************//**
 Splits an index page to halves and inserts the tuple. It is assumed
 that mtr holds an x-latch to the index tree. NOTE: the tree x-latch is
 released within this function! NOTE that the operation of this
@@ -1856,7 +1897,6 @@ btr_page_split_and_insert(
 	buf_block_t*	left_block;
 	buf_block_t*	right_block;
 	buf_block_t*	insert_block;
-	page_t*		insert_page;
 	page_cur_t*	page_cursor;
 	rec_t*		first_rec;
 	byte*		buf = 0; /* remove warning */
@@ -1893,50 +1933,40 @@ func_start:
 	/* 1. Decide the split record; split_rec == NULL means that the
 	tuple to be inserted should be the first record on the upper
 	half-page */
+	insert_left = FALSE;
 
 	if (n_iterations > 0) {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
-		split_rec = btr_page_get_sure_split_rec(cursor, tuple, n_ext);
+                split_rec = btr_page_get_split_rec(cursor, tuple, n_ext);
 
+		if (UNIV_UNLIKELY(split_rec == NULL)) {
+			insert_left = btr_page_tuple_smaller(
+				cursor, tuple, offsets, n_uniq, &heap);
+		}
 	} else if (btr_page_get_split_rec_to_right(cursor, &split_rec)) {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
-
 	} else if (btr_page_get_split_rec_to_left(cursor, &split_rec)) {
 		direction = FSP_DOWN;
 		hint_page_no = page_no - 1;
+                ut_ad(split_rec);
 	} else {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
+		/* If there is only one record in the index page, we
+		can't split the node in the middle by default. We need
+		to determine whether the new record will be inserted
+		to the left or right. */
 
-		if (page_get_n_recs(page) == 1) {
-			page_cur_t	pcur;
-
-			/* There is only one record in the index page
-			therefore we can't split the node in the middle
-			by default. We need to determine whether the
-			new record will be inserted to the left or right. */
-
-			/* Read the first (and only) record in the page. */
-			page_cur_set_before_first(block, &pcur);
-			page_cur_move_to_next(&pcur);
-			first_rec = page_cur_get_rec(&pcur);
-
-			offsets = rec_get_offsets(
-				first_rec, cursor->index, offsets,
-				n_uniq, &heap);
-
-			/* If the new record is less than the existing record
-			the the split in the middle will copy the existing
-			record to the new node. */
-			if (cmp_dtuple_rec(tuple, first_rec, offsets) < 0) {
-				split_rec = page_get_middle_rec(page);
-			} else {
-				split_rec = NULL;
-			}
+		if (page_get_n_recs(page) > 1) {
+                  split_rec = page_get_middle_rec(page);
+		} else if (btr_page_tuple_smaller(cursor, tuple,
+						  offsets, n_uniq, &heap)) {
+			split_rec = page_rec_get_next(
+				page_get_infimum_rec(page));
 		} else {
-			split_rec = page_get_middle_rec(page);
+			split_rec = NULL;
 		}
 	}
 
@@ -1966,13 +1996,18 @@ func_start:
 			avoid further splits by inserting the record
 			to an empty page. */
 			split_rec = NULL;
-			goto insert_right;
+			goto insert_empty;
 		}
+	} else if (UNIV_UNLIKELY(insert_left)) {
+		ut_a(n_iterations > 0);
+		first_rec = page_rec_get_next(page_get_infimum_rec(page));
+		move_limit = page_rec_get_next(btr_cur_get_rec(cursor));
 	} else {
-insert_right:
-		insert_left = FALSE;
-		buf = mem_alloc(rec_get_converted_size(cursor->index,
-						       tuple, n_ext));
+insert_empty:
+		ut_ad(!split_rec);
+		ut_ad(!insert_left);
+		buf = (unsigned char *)mem_alloc(rec_get_converted_size(cursor->index,
+                                                                        tuple, n_ext));
 
 		first_rec = rec_convert_dtuple_to_rec(buf, cursor->index,
 						      tuple, n_ext);
@@ -1994,7 +2029,11 @@ insert_right:
 			&& btr_page_insert_fits(cursor, split_rec,
 						offsets, tuple, n_ext, heap);
 	} else {
-		mem_free(buf);
+		if (!insert_left) {
+			mem_free(buf);
+			buf = NULL;
+		}
+
 		insert_will_fit = !new_page_zip
 			&& btr_page_insert_fits(cursor, NULL,
 						NULL, tuple, n_ext, heap);
@@ -2113,8 +2152,6 @@ insert_right:
 		insert_block = right_block;
 	}
 
-	insert_page = buf_block_get_frame(insert_block);
-
 	/* 7. Reposition the cursor for insert and try insertion */
 	page_cursor = btr_cur_get_page_cur(cursor);
 
@@ -2126,8 +2163,12 @@ insert_right:
 
 #ifdef UNIV_ZIP_DEBUG
 	{
+		page_t*		insert_page
+			= buf_block_get_frame(insert_block);
+
 		page_zip_des_t*	insert_page_zip
 			= buf_block_get_page_zip(insert_block);
+
 		ut_a(!insert_page_zip
 		     || page_zip_validate(insert_page_zip, insert_page));
 	}
@@ -2520,7 +2561,6 @@ btr_compress(
 	ulint		n_recs;
 	ulint		max_ins_size;
 	ulint		max_ins_size_reorg;
-	ulint		level;
 
 	block = btr_cur_get_block(cursor);
 	page = btr_cur_get_page(cursor);
@@ -2530,7 +2570,6 @@ btr_compress(
 	ut_ad(mtr_memo_contains(mtr, dict_index_get_lock(index),
 				MTR_MEMO_X_LOCK));
 	ut_ad(mtr_memo_contains(mtr, block, MTR_MEMO_PAGE_X_FIX));
-	level = btr_page_get_level(page, mtr);
 	space = dict_index_get_space(index);
 	zip_size = dict_table_zip_size(index->table);
 
@@ -2839,7 +2878,7 @@ btr_discard_only_page_on_level(
 		ibuf_reset_free_bits(block);
 
 		if (page_is_leaf(buf_block_get_frame(block))) {
-			ut_a(!ut_dulint_is_zero(max_trx_id));
+			ut_a(max_trx_id);
 			page_set_max_trx_id(block,
 					    buf_block_get_page_zip(block),
 					    max_trx_id, mtr);

@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,8 +35,8 @@ static const char *function_exts[] = {
 
 class Function : public drizzled::plugin::StorageEngine
 {
-  drizzled::message::SchemaPtr information_message;
-  drizzled::message::SchemaPtr data_dictionary_message;
+  drizzled::message::schema::shared_ptr information_message;
+  drizzled::message::schema::shared_ptr data_dictionary_message;
 
 public:
   Function(const std::string &name_arg);
@@ -78,11 +78,11 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::SchemaIdentifiers&);
+  void doGetSchemaIdentifiers(drizzled::SchemaIdentifier::vector&);
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
 
-  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier &schema, drizzled::message::SchemaPtr &schema_message);
+  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier &schema, drizzled::message::schema::shared_ptr &schema_message);
 
   int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &, const drizzled::TableIdentifier &)
   {
@@ -91,7 +91,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */

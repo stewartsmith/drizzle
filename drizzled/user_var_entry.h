@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ class user_var_entry
   { 
     name.str= strdup(arg);
     name.length= strlen(arg);
-  };
+  }
 
   ~user_var_entry()
   {
@@ -64,7 +64,7 @@ class user_var_entry
   double val_real(bool *null_value);
   int64_t val_int(bool *null_value) const;
   String *val_str(bool *null_value, String *str, uint32_t decimals);
-  my_decimal *val_decimal(bool *null_value, my_decimal *result);
+  type::Decimal *val_decimal(bool *null_value, type::Decimal *result);
   DTCollation collation;
 
   bool update_hash(bool set_null, void *ptr, uint32_t length,

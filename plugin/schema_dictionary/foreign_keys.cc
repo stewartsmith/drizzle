@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Andrew Hutchings
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,7 @@ ForeignKeysTool::Generator::Generator(Field **arg) :
 
 bool ForeignKeysTool::Generator::nextTable()
 {
-  const drizzled::message::Table *table_ptr;
+  drizzled::message::table::shared_ptr table_ptr;
   while ((table_ptr= all_tables_generator))
   {
     table_message.CopyFrom(*table_ptr);

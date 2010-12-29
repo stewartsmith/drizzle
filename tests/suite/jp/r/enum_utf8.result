@@ -75,31 +75,67 @@ SELECT * FROM `Ｔ９`;
 龗
 SHOW CREATE TABLE `Ｔ１`;
 Table	Create Table
+Ｔ１	CREATE TABLE `Ｔ１` (
+  `Ｃ１` ENUM('ｱ','ｲ','ｳ') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `Ｔ２`;
 Table	Create Table
+Ｔ２	CREATE TABLE `Ｔ２` (
+  `Ｃ１` ENUM('あ','い','う') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `Ｔ３`;
 Table	Create Table
+Ｔ３	CREATE TABLE `Ｔ３` (
+  `Ｃ１` ENUM('龔','龖','龗') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `Ｔ４`;
 Table	Create Table
+Ｔ４	CREATE TEMPORARY TABLE `Ｔ４` (
+  `Ｃ１` ENUM('ｱ','ｲ','ｳ') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `Ｔ５`;
 Table	Create Table
+Ｔ５	CREATE TEMPORARY TABLE `Ｔ５` (
+  `Ｃ１` ENUM('あ','い','う') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `Ｔ６`;
 Table	Create Table
+Ｔ６	CREATE TEMPORARY TABLE `Ｔ６` (
+  `Ｃ１` ENUM('龔','龖','龗') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `Ｔ７`;
 Table	Create Table
+Ｔ７	CREATE TEMPORARY TABLE `Ｔ７` (
+  `Ｃ１` ENUM('ｱ','ｲ','ｳ') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `Ｔ８`;
 Table	Create Table
+Ｔ８	CREATE TEMPORARY TABLE `Ｔ８` (
+  `Ｃ１` ENUM('あ','い','う') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `Ｔ９`;
 Table	Create Table
-ALTER TABLE `Ｔ１` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ２` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ３` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ４` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ５` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ６` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ７` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ８` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ９` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
+Ｔ９	CREATE TEMPORARY TABLE `Ｔ９` (
+  `Ｃ１` ENUM('龔','龖','龗') DEFAULT NULL,
+  KEY `Ｃ１` (`Ｃ１`)
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+ALTER TABLE `Ｔ１` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
+ALTER TABLE `Ｔ２` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
+ALTER TABLE `Ｔ３` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
+ALTER TABLE `Ｔ４` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
+ALTER TABLE `Ｔ５` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
+ALTER TABLE `Ｔ６` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
+ALTER TABLE `Ｔ７` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
+ALTER TABLE `Ｔ８` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
+ALTER TABLE `Ｔ９` ADD `Ｃ２` CHAR(1) DEFAULT "Y" NOT NULL FIRST;
 DROP TABLE `Ｔ１`;
 DROP TABLE `Ｔ２`;
 DROP TABLE `Ｔ３`;

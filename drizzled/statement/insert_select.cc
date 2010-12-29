@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,20 +49,20 @@ bool statement::InsertSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (! (need_start_waiting= not session->wait_if_global_read_lock(false, true)))
   {
     return true;
   }
 
   if (! (res= session->openTablesLock(all_tables)))
   {
-    DRIZZLE_INSERT_SELECT_START(session->query.c_str());
+    DRIZZLE_INSERT_SELECT_START(session->getQueryString()->c_str());
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
     select_lex->context.table_list=
       select_lex->context.first_name_resolution_table= second_table;
-    res= mysql_insert_select_prepare(session);
+    res= insert_select_prepare(session);
     if (! res && (sel_result= new select_insert(first_table,
                                                 first_table->table,
                                                 &session->lex->field_list,
@@ -100,7 +100,7 @@ bool statement::InsertSelect::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return res;
 }

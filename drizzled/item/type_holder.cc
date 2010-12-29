@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -100,7 +100,6 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
       case DECIMAL_RESULT:
         return DRIZZLE_TYPE_DECIMAL;
       case ROW_RESULT:
-      default:
         assert(0);
         return DRIZZLE_TYPE_VARCHAR;
       }
@@ -131,61 +130,64 @@ bool Item_type_holder::join_types(Session *, Item *item)
     int precision= min(max(prev_decimal_int_part, item->decimal_int_part())
                        + decimals, DECIMAL_MAX_PRECISION);
     unsigned_flag&= item->unsigned_flag;
-    max_length= my_decimal_precision_to_length(precision, decimals,
+    max_length= class_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
   }
 
   switch (Field::result_merge_type(fld_type))
   {
   case STRING_RESULT:
-  {
-    const char *old_cs, *old_derivation;
-    uint32_t old_max_chars= max_length / collation.collation->mbmaxlen;
-    old_cs= collation.collation->name;
-    old_derivation= collation.derivation_name();
-    if (collation.aggregate(item->collation, MY_COLL_ALLOW_CONV))
     {
-      my_error(ER_CANT_AGGREGATE_2COLLATIONS, MYF(0),
-               old_cs, old_derivation,
-               item->collation.collation->name,
-               item->collation.derivation_name(),
-               "UNION");
-      return(true);
-    }
-    /*
-      To figure out max_length, we have to take into account possible
-      expansion of the size of the values because of character set
-      conversions.
-     */
-    if (collation.collation != &my_charset_bin)
-    {
-      max_length= max(old_max_chars * collation.collation->mbmaxlen,
-                      display_length(item) /
-                      item->collation.collation->mbmaxlen *
-                      collation.collation->mbmaxlen);
-    }
-    else
-      set_if_bigger(max_length, display_length(item));
-    break;
-  }
-  case REAL_RESULT:
-  {
-    if (decimals != NOT_FIXED_DEC)
-    {
-      int delta1= max_length_orig - decimals_orig;
-      int delta2= item->max_length - item->decimals;
-      max_length= max(delta1, delta2) + decimals;
-      if (fld_type == DRIZZLE_TYPE_DOUBLE && max_length > DBL_DIG + 2)
+      const char *old_cs, *old_derivation;
+      uint32_t old_max_chars= max_length / collation.collation->mbmaxlen;
+      old_cs= collation.collation->name;
+      old_derivation= collation.derivation_name();
+      if (collation.aggregate(item->collation, MY_COLL_ALLOW_CONV))
       {
-        max_length= DBL_DIG + 7;
-        decimals= NOT_FIXED_DEC;
+        my_error(ER_CANT_AGGREGATE_2COLLATIONS, MYF(0),
+                 old_cs, old_derivation,
+                 item->collation.collation->name,
+                 item->collation.derivation_name(),
+                 "UNION");
+        return(true);
       }
+      /*
+        To figure out max_length, we have to take into account possible
+        expansion of the size of the values because of character set
+        conversions.
+      */
+      if (collation.collation != &my_charset_bin)
+      {
+        max_length= max(old_max_chars * collation.collation->mbmaxlen,
+                        display_length(item) /
+                        item->collation.collation->mbmaxlen *
+                        collation.collation->mbmaxlen);
+      }
+      else
+        set_if_bigger(max_length, display_length(item));
+      break;
     }
-    else
-      max_length= DBL_DIG+7;
-    break;
-  }
-  default:
+  case REAL_RESULT:
+    {
+      if (decimals != NOT_FIXED_DEC)
+      {
+        int delta1= max_length_orig - decimals_orig;
+        int delta2= item->max_length - item->decimals;
+        max_length= max(delta1, delta2) + decimals;
+        if (fld_type == DRIZZLE_TYPE_DOUBLE && max_length > DBL_DIG + 2)
+        {
+          max_length= DBL_DIG + 7;
+          decimals= NOT_FIXED_DEC;
+        }
+      }
+      else
+        max_length= DBL_DIG+7;
+      break;
+    }
+
+  case INT_RESULT:
+  case DECIMAL_RESULT:
+  case ROW_RESULT:
     max_length= max(max_length, display_length(item));
   };
   maybe_null|= item->maybe_null;
@@ -193,6 +195,7 @@ bool Item_type_holder::join_types(Session *, Item *item)
 
   /* Remember decimal integer part to be used in DECIMAL_RESULT handleng */
   prev_decimal_int_part= decimal_int_part();
+
   return(false);
 }
 
@@ -296,7 +299,7 @@ int64_t Item_type_holder::val_int()
   return 0;
 }
 
-my_decimal *Item_type_holder::val_decimal(my_decimal *)
+type::Decimal *Item_type_holder::val_decimal(type::Decimal *)
 {
   assert(0); // should never be called
   return 0;

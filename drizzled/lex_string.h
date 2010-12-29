@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,6 +35,26 @@ typedef struct drizzle_lex_string
   char *str;
   size_t length;
 } LEX_STRING;
+
+struct execute_string_t : public drizzle_lex_string
+{
+private:
+  bool is_variable;
+public:
+
+  bool isVariable() const
+  {
+    return is_variable;
+  }
+
+  void set(const drizzle_lex_string& ptr, bool is_variable_arg= false)
+  {
+    is_variable= is_variable_arg;
+    str= ptr.str;
+    length= ptr.length;
+  }
+
+};
 
 
 #define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1)))

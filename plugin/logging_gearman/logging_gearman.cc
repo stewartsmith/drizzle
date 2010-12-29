@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008,2009 Sun Microsystems
+ *  Copyright (C) 2008, 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,50 +18,32 @@
  */
 
 #include "config.h"
+
+#include <boost/scoped_array.hpp>
+
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <boost/date_time.hpp>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <libgearman/gearman.h>
 #include <limits.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdio>
 #include <cerrno>
+#include <memory>
 
-using namespace drizzled;
+
+namespace drizzle_plugin
+{
+
 namespace po= boost::program_options;
 
 /* TODO make this dynamic as needed */
 static const int MAX_MSG_LEN= 32*1024;
-
-static bool sysvar_logging_gearman_enable;
-static char* sysvar_logging_gearman_host= NULL;
-static char* sysvar_logging_gearman_function= NULL;
-
-
-/* stolen from mysys/my_getsystime
-   until the Session has a good utime "now" we can use
-   will have to use this instead */
-
-static uint64_t get_microtime()
-{
-#if defined(HAVE_GETHRTIME)
-  return gethrtime()/1000;
-#else
-  uint64_t newtime;
-  struct timeval t;
-  /*
-    The following loop is here because gettimeofday may fail on some systems
-  */
-  while (gettimeofday(&t, NULL) != 0) {}
-  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
-  return newtime;
-#endif  /* defined(HAVE_GETHRTIME) */
-}
 
 /* quote a string to be safe to include in a CSV line
    that means backslash quoting all commas, doublequotes, backslashes,
@@ -171,62 +153,67 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
   return dst;
 }
 
-class LoggingGearman : public plugin::Logging
+class LoggingGearman :
+  public drizzled::plugin::Logging
 {
 
-  int gearman_client_ok;
-  gearman_client_st gearman_client;
+  const std::string _host;
+  const std::string _function;
+
+  int _gearman_client_ok;
+  gearman_client_st _gearman_client;
+
+  LoggingGearman();
+  LoggingGearman(const LoggingGearman&);
 
 public:
 
-  LoggingGearman()
-    : plugin::Logging("LoggingGearman"),
-      gearman_client_ok(0)
+  LoggingGearman(const std::string &host,
+                 const std::string &function) :
+    drizzled::plugin::Logging("LoggingGearman"),
+    _host(host),
+    _function(function),
+    _gearman_client_ok(0),
+    _gearman_client()
   {
     gearman_return_t ret;
 
-    if (sysvar_logging_gearman_enable == false)
-      return;
 
-    if (sysvar_logging_gearman_host == NULL)
-      return;
-
-
-    if (gearman_client_create(&gearman_client) == NULL)
+    if (gearman_client_create(&_gearman_client) == NULL)
     {
       char errmsg[STRERROR_MAX];
       strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
-                    errmsg);
+      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
+                              errmsg);
       return;
     }
 
     /* TODO, be able to override the port */
     /* TODO, be able send to multiple servers */
-    ret= gearman_client_add_server(&gearman_client,
-                                   sysvar_logging_gearman_host, 0);
+    ret= gearman_client_add_server(&_gearman_client,
+                                   host.c_str(), 0);
     if (ret != GEARMAN_SUCCESS)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_add_server(): %s"),
-                    gearman_client_error(&gearman_client));
+      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_add_server(): %s"),
+                              gearman_client_error(&_gearman_client));
       return;
     }
 
-    gearman_client_ok= 1;
+    _gearman_client_ok= 1;
 
   }
 
   ~LoggingGearman()
   {
-    if (gearman_client_ok)
+    if (_gearman_client_ok)
     {
-      gearman_client_free(&gearman_client);
+      gearman_client_free(&_gearman_client);
     }
   }
 
-  virtual bool post(Session *session)
+  virtual bool post(drizzled::Session *session)
   {
-    char msgbuf[MAX_MSG_LEN];
+    boost::scoped_array<char> msgbuf(new char[MAX_MSG_LEN]);
     int msgbuf_len= 0;
   
     assert(session != NULL);
@@ -235,23 +222,26 @@ public:
        but that crashes the server, so for now, we just lie a little bit
     */
 
-    if (!gearman_client_ok)
+    if (not _gearman_client_ok)
         return false;
   
     /* TODO, the session object should have a "utime command completed"
        inside itself, so be more accurate, and so this doesnt have to
        keep calling current_utime, which can be slow */
   
-    uint64_t t_mark= get_microtime();
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
   
+
     // buffer to quotify the query
     unsigned char qs[255];
   
     // to avoid trying to printf %s something that is potentially NULL
-    const char *dbs= session->db.empty() ? "" : session->db.c_str();
+    drizzled::util::string::const_shared_ptr dbs(session->schema());
   
     msgbuf_len=
-      snprintf(msgbuf, MAX_MSG_LEN,
+      snprintf(msgbuf.get(), MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
                "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
                "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\"",
@@ -259,14 +249,13 @@ public:
                session->thread_id,
                session->getQueryId(),
                // dont need to quote the db name, always CSV safe
-               (int)session->db.length(), dbs,
+               (int)dbs->size(), dbs->c_str(),
                // do need to quote the query
-               quotify((const unsigned char *)session->getQueryString().c_str(),
-                       session->getQueryLength(), qs, sizeof(qs)),
+               quotify((const unsigned char *)session->getQueryString()->c_str(), session->getQueryString()->length(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
-               (int)command_name[session->command].length,
-               command_name[session->command].str,
+               (int)drizzled::command_name[session->command].length,
+               drizzled::command_name[session->command].str,
                // counters are at end, to make it easier to add more
                (t_mark - session->getConnectMicroseconds()),
                (t_mark - session->start_utime),
@@ -276,15 +265,15 @@ public:
                session->tmp_table,
                session->total_warn_count,
                session->getServerId(),
-               glob_hostname
+               drizzled::glob_hostname
                );
   
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];
   
-    (void) gearman_client_do_background(&gearman_client,
-                                        sysvar_logging_gearman_function,
+    (void) gearman_client_do_background(&_gearman_client,
+                                        _function.c_str(),
                                         NULL,
-                                        (void *) msgbuf,
+                                        (void *) msgbuf.get(),
                                         (size_t) msgbuf_len,
                                         job_handle);
   
@@ -294,54 +283,30 @@ public:
 
 static LoggingGearman *handler= NULL;
 
-static int logging_gearman_plugin_init(module::Context &context)
+static int logging_gearman_plugin_init(drizzled::module::Context &context)
 {
-  handler= new LoggingGearman();
+  const drizzled::module::option_map &vm= context.getOptions();
+
+  handler= new LoggingGearman(vm["host"].as<std::string>(),
+                              vm["function"].as<std::string>());
   context.add(handler);
+  context.registerVariable(new drizzled::sys_var_const_string_val("host", vm["host"].as<std::string>()));
+  context.registerVariable(new drizzled::sys_var_const_string_val("function", vm["function"].as<std::string>()));
 
   return 0;
 }
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("enable",
-          po::value<bool>(&sysvar_logging_gearman_enable)->default_value(false)->zero_tokens(),
-          N_("Enable logging to a gearman server"));
+  context("host",
+          po::value<std::string>()->default_value("localhost"),
+          N_("Hostname for logging to a Gearman server"));
+  context("function",
+          po::value<std::string>()->default_value("drizzlelog"),
+          N_("Gearman Function to send logging to"));
 }
 
-static DRIZZLE_SYSVAR_BOOL(
-                           enable,
-                           sysvar_logging_gearman_enable,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("Enable logging to a gearman server"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           false /* default */);
-
-static DRIZZLE_SYSVAR_STR(
-                          host,
-                          sysvar_logging_gearman_host,
-                          PLUGIN_VAR_READONLY,
-                          N_("Hostname for logging to a Gearman server"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          "localhost" /* default */);
-
-static DRIZZLE_SYSVAR_STR(
-                          function,
-                          sysvar_logging_gearman_function,
-                          PLUGIN_VAR_READONLY,
-                          N_("Gearman Function to send logging to"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          "drizzlelog" /* default */);
-
-static drizzle_sys_var* logging_gearman_system_variables[]= {
-  DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(host),
-  DRIZZLE_SYSVAR(function),
-  NULL
-};
+} /* namespace drizzle_plugin */
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -350,9 +315,9 @@ DRIZZLE_DECLARE_PLUGIN
     "0.1",
     "Mark Atwood <mark@fallenpegasus.com>",
     N_("Log queries to a Gearman server"),
-    PLUGIN_LICENSE_GPL,
-    logging_gearman_plugin_init,
-    logging_gearman_system_variables,
-    init_options
+    drizzled::PLUGIN_LICENSE_GPL,
+    drizzle_plugin::logging_gearman_plugin_init,
+    NULL,
+    drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

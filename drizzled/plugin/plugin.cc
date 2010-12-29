@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,16 +24,16 @@
 namespace drizzled
 {
 
-plugin::Plugin::Plugin(std::string in_name, std::string in_type_name)
-  : name(in_name),
-    is_active(true),
-    module(NULL),
-    type_name(in_type_name)
+plugin::Plugin::Plugin(const std::string &name, const std::string &type_name)
+  : _name(name),
+    _is_active(true),
+    _module(NULL),
+    _type_name(type_name)
 { }
 
 const std::string& plugin::Plugin::getModuleName() const
 {
-  return module->getName();
+  return _module->getName();
 }
 
 } /* namespace drizzled */

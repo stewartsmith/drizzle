@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,27 +42,21 @@ class Cursor;
 namespace message { class Table; }
 class TableIdentifier;
 
-int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
+int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);
-void write_bin_log_drop_table(Session *session,
-                              bool if_exists, const char *db_name,
-                              const char *table_name);
-bool quick_rm_table(Session& session,
-                    TableIdentifier &identifier);
 void close_cached_table(Session *session, Table *table);
 
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_check_table(Session* session, TableList* table_list,
+bool check_table(Session* session, TableList* table_list,
                        HA_CHECK_OPT* check_opt);
-bool mysql_analyze_table(Session* session, TableList* table_list,
+bool analyze_table(Session* session, TableList* table_list,
                          HA_CHECK_OPT* check_opt);
-bool mysql_optimize_table(Session* session, TableList* table_list,
+bool optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
-void write_bin_log(Session *session,
-                   char const *query);
+void write_bin_log(Session *session, const std::string &query);
 
 bool is_primary_key(KeyInfo *key_info);
 const char* is_primary_key_name(const char* key_name);

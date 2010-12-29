@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -451,7 +451,7 @@ void MSConnectionHandler::handlePut()
 	push_(metadata);
 	
 	 if (! iInputStream->getContentLength(&blob_len)) {
-		CSException::throwException(CS_CONTEXT, CS_ERR_MISSING_HTTP_HEADER, "Missing content lenght header");
+		CSException::throwException(CS_CONTEXT, CS_ERR_MISSING_HTTP_HEADER, "Missing content length header");
 	 }
 	 
 	

@@ -25,6 +25,8 @@
 #include "drizzled/plugin/daemon.h"
 #include "drizzled/signal_handler.h"
 
+#include "drizzled/session/cache.h"
+
 #include "drizzled/drizzled.h"
 
 #include <boost/thread/thread.hpp>
@@ -49,6 +51,7 @@ extern std::bitset<12> test_flags;
 }
 
 using namespace drizzled;
+
 
 
 
@@ -158,8 +161,8 @@ void signal_hand()
     (Asked MontyW over the phone about this.) -Brian
 
   */
-  LOCK_thread_count.lock();
-  LOCK_thread_count.unlock();
+  session::Cache::singleton().mutex().lock();
+  session::Cache::singleton().mutex().unlock();
   COND_thread_count.notify_all();
 
   if (pthread_sigmask(SIG_BLOCK, &set, NULL))
@@ -224,7 +227,7 @@ public:
     drizzled::plugin::Daemon("Signal Handler")
   {
     // @todo fix spurious wakeup issue
-    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     thread= boost::thread(signal_hand);
     signal_thread= thread.native_handle();
     COND_thread_count.wait(scopedLock);

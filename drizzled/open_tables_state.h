@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,9 +48,69 @@ public:
     or for an intermediate table used in ALTER.
     XXX Why are internal temporary tables added to this list?
   */
+private:
   Table *temporary_tables;
+public:
 
+  Table *getTemporaryTables()
+  {
+    return temporary_tables;
+  }
+
+  /**
+    Mark all temporary tables which were used by the current statement or
+    substatement as free for reuse, but only if the query_id can be cleared.
+
+    @param session thread context
+
+    @remark For temp tables associated with a open SQL HANDLER the query_id
+            is not reset until the HANDLER is closed.
+  */
+  void mark_temp_tables_as_free_for_reuse();
+
+protected:
+  void close_temporary_tables();
+public:
+  void close_temporary_table(Table *table);
+  // The method below just handles the de-allocation of the table. In
+  // a better memory type world, this would not be needed.
+private:
+  void nukeTable(Table *table);
+public:
+
+  /* Work with temporary tables */
+  Table *find_temporary_table(const TableIdentifier &identifier);
+
+  void dumpTemporaryTableNames(const char *id);
+  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
+  bool rm_temporary_table(plugin::StorageEngine *base, const TableIdentifier &identifier);
+  bool rm_temporary_table(const drizzled::TableIdentifier &identifier, bool best_effort= false);
+  Table *open_temporary_table(const drizzled::TableIdentifier &identifier,
+                              bool link_in_list= true);
+
+  virtual query_id_t getQueryId()  const= 0;
+
+private:
   Table *derived_tables;
+public:
+
+
+  Table *getDerivedTables()
+  {
+    return derived_tables;
+  }
+
+  void setDerivedTables(Table *arg)
+  {
+    derived_tables= arg;
+  }
+
+  void clearDerivedTables()
+  {
+    if (derived_tables)
+      derived_tables= NULL; // They should all be invalid by this point
+  }
+
   /*
     During a MySQL session, one can lock tables in two modes: automatic
     or manual. In automatic mode all necessary tables are locked just before
@@ -80,8 +140,33 @@ public:
     This constructor serves for creation of Open_tables_state instances
     which are used as backup storage.
   */
-  Open_tables_state() { }
+  Open_tables_state() :
+    open_tables(0),
+    temporary_tables(0),
+    derived_tables(0),
+    lock(0),
+    extra_lock(0),
+    version(0),
+    current_tablenr(0)
+  { }
   virtual ~Open_tables_state() {}
+
+  void doGetTableNames(CachedDirectory &directory,
+                       const SchemaIdentifier &schema_identifier,
+                       std::set<std::string>& set_of_names);
+  void doGetTableNames(const SchemaIdentifier &schema_identifier,
+                       std::set<std::string>& set_of_names);
+
+  void doGetTableIdentifiers(CachedDirectory &directory,
+                             const SchemaIdentifier &schema_identifier,
+                             TableIdentifier::vector &set_of_identifiers);
+  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
+                             TableIdentifier::vector &set_of_identifiers);
+
+  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
+                           message::Table &table_proto);
+  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
+
 
   Open_tables_state(uint64_t version_arg);
 };

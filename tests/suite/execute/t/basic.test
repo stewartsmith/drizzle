@@ -1,0 +1,144 @@
+--replace_column 1 #
+EXECUTE "SELECT TABLE_NAME FROM DATA_DICTIONARY.tables LIMIT 2";
+SET @t1=1, @t2=2, @t3:=4;
+SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3;
+
+EXECUTE "SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
+
+SET @bugus_syntax= "3";
+--error 1064
+EXECUTE "SELECT * FROM DATA_DICTIONARY.tables LIMIT @bugus_syntax";
+
+--replace_column 1 #
+EXECUTE "SELECT TABLE_NAME FROM DATA_DICTIONARY.tables LIMIT 2";
+
+--error 1064
+EXECUTE "EXECUTE SELECT * FROM DATA_DICTIONARY.tables LIMIT 2";
+
+EXECUTE "SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
+set @sub_var="SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
+EXECUTE @sub_var;
+
+EXECUTE "CREATE TABLE t1 (a SERIAL)";
+SHOW CREATE TABLE t1;
+EXECUTE "INSERT INTO t1 VALUES ()";
+EXECUTE "DROP TABLE t1";
+SHOW TABLES;
+
+--error 1064
+EXECUTE "SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3; SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
+
+set @foo="SELECT 1+2+3";
+execute @foo;
+
+set @create="CREATE TABLE t1 (a SERIAL)";
+set @insert="INSERT INTO t1 VALUES ()";
+set @select="SELECT a FROM t1";
+set @drop="DROP TABLE t1";
+
+execute @create;
+execute @insert;
+execute @insert;
+execute @insert;
+execute @select;
+execute @drop;
+
+execute @create WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @select WITH NO RETURN;
+execute @drop WITH NO RETURN;
+
+--error 1210
+EXECUTE @does_not_exist;
+
+--error 1210
+EXECUTE "";
+
+EXECUTE "SELECT (SELECT 1) UNION SELECT (SELECT 2)";
+EXECUTE "explain extended SELECT (SELECT 1) UNION SELECT (SELECT 2)";
+EXECUTE "SELECT (SELECT (SELECT 0 UNION SELECT 0))";
+EXECUTE "explain extended SELECT (SELECT (SELECT 0 UNION SELECT 0))";
+
+EXECUTE "SELECT (SELECT 1) UNION SELECT (SELECT 2)" WITH NO RETURN;
+EXECUTE "explain extended SELECT (SELECT 1) UNION SELECT (SELECT 2)" WITH NO RETURN;
+EXECUTE "SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RETURN;
+EXECUTE "explain extended SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RETURN;
+
+# Test multiple statements
+
+SET @var="CREATE SCHEMA d; CREATE SCHEMA e;";
+EXECUTE @var WITH NO RETURN;
+
+show schemas LIKE "d";
+show schemas LIKE "e";
+DROP SCHEMA d;
+DROP SCHEMA e;
+
+# Test error statement in mid query
+SET @var="CREATE SCHEMA d; SELECT fosdsd; CREATE SCHEMA e;";
+EXECUTE @var WITH NO RETURN;
+show schemas LIKE "d";
+show schemas LIKE "e";
+DROP SCHEMA d;
+
+# Test recursion
+SET @var = "SET @var='test value'";
+EXECUTE @var;
+SELECT @var;
+
+# Alter table
+CREATE TABLE t1 (a int);
+SET @var = "ALTER TABLE t1 ADD COLUMN (b char(100))";
+EXECUTE @var;
+SHOW CREATE TABLE t1;
+DROP TABLE t1;
+
+# Insert
+CREATE TABLE t1 (a int, b char(20));
+SET @var = "INSERT INTO t1 VALUES (@a_val, @b_val)";
+SET @a_val = 1;
+SET @b_val = 'TNETENNBA';
+EXECUTE @var;
+SELECT * FROM t1;
+SET @a_val = 2;
+SET @b_val = 'OVERNUMEROUSNESS';
+EXECUTE @var;
+SELECT * FROM t1;
+DROP TABLE t1;
+
+# Update
+CREATE TABLE t1 (a int, b char(100), c char(100));
+INSERT INTO t1 VALUES (1, 'Moss', 'IT');
+INSERT INTO t1 VALUES (2, 'Roy', 'IT');
+INSERT INTO t1 VALUES (3, 'Jen', 'IT');
+SET @var = "UPDATE t1 SET c = @new_dept WHERE b = @name";
+SET @new_dept = "Relationship Manager";
+SET @name = 'Jen';
+EXECUTE @var;
+SELECT * FROM t1;
+DROP TABLE t1;
+
+# DELETE
+CREATE TABLE t1 (a int);
+INSERT INTO t1 VALUES (42);
+INSERT INTO t1 VALUES (9);
+INSERT INTO t1 VALUES (1);
+INSERT INTO t1 VALUES (0);
+INSERT INTO t1 VALUES (2);
+SET @var = "DELETE FROM t1 WHERE a%2=0";
+EXECUTE @var;
+SELECT * FROM t1;
+DROP TABLE t1;
+
+# INDEX
+CREATE TABLE t1 (a int);
+SET @var = "CREATE INDEX a_index ON t1 (a)";
+EXECUTE @var;
+SHOW CREATE TABLE t1;
+SET @var = "DROP INDEX a_index ON t1";
+EXECUTE @var;
+SHOW CREATE TABLE t1;
+DROP TABLE t1;
+

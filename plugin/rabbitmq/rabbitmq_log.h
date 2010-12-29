@@ -31,6 +31,8 @@
 #include <string>
 #include "rabbitmq_handler.h"
 
+namespace drizzle_plugin
+{
 
 /**
  * @brief
@@ -41,10 +43,13 @@
  *   Connects to rabbitmq server in constructor, publishes messages
  *   in apply(...). If error occurs, the plugin disables itself.
  */
-class RabbitMQLog: public drizzled::plugin::TransactionApplier 
+class RabbitMQLog :
+  public drizzled::plugin::TransactionApplier 
 {
 private:
-  RabbitMQHandler* rabbitMQHandler;
+  RabbitMQHandler* _rabbitMQHandler;
+  const std::string _exchange;
+  const std::string _routingkey;
 public:
 
   /**
@@ -56,8 +61,10 @@ public:
    *
    * @param[in] mqHandler name of the plugin, typically rabbitmq_log.
    */
-  RabbitMQLog(const std::string name_arg, 
-	      RabbitMQHandler* mqHandler);
+  RabbitMQLog(const std::string &name,
+              const std::string &exchange,
+              const std::string &routingkey,
+              RabbitMQHandler* mqHandler);
   ~RabbitMQLog();
 
   /**
@@ -73,5 +80,7 @@ public:
   apply(drizzled::Session &session, const drizzled::message::Transaction &to_apply);
 
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_RABBITMQ_RABBITMQ_LOG_H */

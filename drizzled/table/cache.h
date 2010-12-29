@@ -2,7 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,10 +49,24 @@ public:
     return cache;
   }
 
+  void rehash(size_t arg)
+  {
+    cache.rehash(arg);
+  }
+
   bool areTablesUsed(Table *table, bool wait_for_name_lock);
   void removeSchema(const SchemaIdentifier &schema_identifier);
   bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
   void release(TableShare *share);
+  bool insert(table::Concurrent *arg);
+
+  boost::mutex &mutex()
+  {
+    return _mutex;
+  }
+
+private:
+  boost::mutex _mutex;
 };
 
 CacheMap &getCache(void);

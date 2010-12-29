@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -31,9 +31,7 @@ Created 8/22/1994 Heikki Tuuri
 #ifdef UNIV_DEBUG
 # include "buf0buf.h"
 #endif /* UNIV_DEBUG */
-#ifdef UNIV_SYNC_DEBUG
-# include "btr0sea.h"
-#endif /* UNIV_SYNC_DEBUG */
+#include "btr0sea.h"
 #include "page0page.h"
 
 /*************************************************************//**
@@ -101,6 +99,8 @@ ha_clear(
 	ulint	i;
 	ulint	n;
 
+	ut_ad(table);
+	ut_ad(table->magic_n == HASH_TABLE_MAGIC_N);
 #ifdef UNIV_SYNC_DEBUG
 	ut_ad(rw_lock_own(&btr_search_latch, RW_LOCK_EXCLUSIVE));
 #endif /* UNIV_SYNC_DEBUG */
@@ -125,7 +125,8 @@ ha_clear(
 /*************************************************************//**
 Inserts an entry into a hash table. If an entry with the same fold number
 is found, its node is updated to point to the new data, and no new node
-is inserted.
+is inserted. If btr_search_enabled is set to FALSE, we will only allow
+updating existing nodes, but no new node is allowed to be added.
 @return	TRUE if succeed, FALSE if no more memory could be allocated */
 UNIV_INTERN
 ibool
@@ -146,7 +147,9 @@ ha_insert_for_fold_func(
 	ha_node_t*	prev_node;
 	ulint		hash;
 
-	ut_ad(table && data);
+	ut_ad(data);
+	ut_ad(table);
+	ut_ad(table->magic_n == HASH_TABLE_MAGIC_N);
 #if defined UNIV_AHI_DEBUG || defined UNIV_DEBUG
 	ut_a(block->frame == page_align(data));
 #endif /* UNIV_AHI_DEBUG || UNIV_DEBUG */
@@ -170,6 +173,7 @@ ha_insert_for_fold_func(
 				prev_block->n_pointers--;
 				block->n_pointers++;
 			}
+			ut_ad(!btr_search_fully_disabled);
 # endif /* !UNIV_HOTBACKUP */
 
 			prev_node->block = block;
@@ -180,6 +184,13 @@ ha_insert_for_fold_func(
 		}
 
 		prev_node = prev_node->next;
+	}
+
+	/* We are in the process of disabling hash index, do not add
+	new chain node */
+	if (!btr_search_enabled) {
+		ut_ad(!btr_search_fully_disabled);
+		return(TRUE);
 	}
 
 	/* We have to allocate a new chain node */
@@ -237,6 +248,8 @@ ha_delete_hash_node(
 	hash_table_t*	table,		/*!< in: hash table */
 	ha_node_t*	del_node)	/*!< in: node to be deleted */
 {
+	ut_ad(table);
+	ut_ad(table->magic_n == HASH_TABLE_MAGIC_N);
 #if defined UNIV_AHI_DEBUG || defined UNIV_DEBUG
 # ifndef UNIV_HOTBACKUP
 	if (table->adaptive) {
@@ -267,6 +280,8 @@ ha_search_and_update_if_found_func(
 {
 	ha_node_t*	node;
 
+	ut_ad(table);
+	ut_ad(table->magic_n == HASH_TABLE_MAGIC_N);
 	ASSERT_HASH_MUTEX_OWN(table, fold);
 #if defined UNIV_AHI_DEBUG || defined UNIV_DEBUG
 	ut_a(new_block->frame == page_align(new_data));
@@ -304,6 +319,8 @@ ha_remove_all_nodes_to_page(
 {
 	ha_node_t*	node;
 
+	ut_ad(table);
+	ut_ad(table->magic_n == HASH_TABLE_MAGIC_N);
 	ASSERT_HASH_MUTEX_OWN(table, fold);
 
 	node = ha_chain_get_first(table, fold);
@@ -337,6 +354,7 @@ ha_remove_all_nodes_to_page(
 #endif
 }
 
+#if defined UNIV_AHI_DEBUG || defined UNIV_DEBUG
 /*************************************************************//**
 Validates a given range of the cells in hash table.
 @return	TRUE if ok */
@@ -353,6 +371,8 @@ ha_validate(
 	ibool		ok	= TRUE;
 	ulint		i;
 
+	ut_ad(table);
+	ut_ad(table->magic_n == HASH_TABLE_MAGIC_N);
 	ut_a(start_index <= end_index);
 	ut_a(start_index < hash_get_n_cells(table));
 	ut_a(end_index < hash_get_n_cells(table));
@@ -381,6 +401,7 @@ ha_validate(
 
 	return(ok);
 }
+#endif /* defined UNIV_AHI_DEBUG || defined UNIV_DEBUG */
 
 /*************************************************************//**
 Prints info of a hash table. */
@@ -391,6 +412,8 @@ ha_print_info(
 	FILE*		file,	/*!< in: file where to print */
 	hash_table_t*	table)	/*!< in: hash table */
 {
+	ut_ad(table);
+	ut_ad(table->magic_n == HASH_TABLE_MAGIC_N);
 #ifdef UNIV_DEBUG
 /* Some of the code here is disabled for performance reasons in production
 builds, see http://bugs.mysql.com/36941 */

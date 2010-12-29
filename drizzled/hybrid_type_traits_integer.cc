@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -77,10 +77,10 @@ double Hybrid_type_traits_integer::val_real(Hybrid_type *val) const
 }
 
 
-my_decimal *Hybrid_type_traits_integer::val_decimal(Hybrid_type *val,
-                                                    my_decimal *) const
+type::Decimal *Hybrid_type_traits_integer::val_decimal(Hybrid_type *val,
+                                                    type::Decimal *) const
 {
-  int2my_decimal(E_DEC_FATAL_ERROR, val->integer, 0, &val->dec_buf[2]);
+  int2_class_decimal(E_DEC_FATAL_ERROR, val->integer, 0, &val->dec_buf[2]);
   return &val->dec_buf[2];
 }
 

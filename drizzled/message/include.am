@@ -32,7 +32,6 @@ noinst_PROGRAMS+= \
 		  drizzled/message/table_raw_reader \
 		  drizzled/message/table_reader \
 		  drizzled/message/table_writer \
-		  drizzled/message/transaction_reader \
 		  drizzled/message/transaction_writer
 
 lib_LTLIBRARIES += drizzled/message/libdrizzledmessage.la
@@ -42,14 +41,16 @@ drizzled_message_libdrizzledmessage_la_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WE
 drizzled_message_libdrizzledmessage_la_SOURCES = drizzled/message/statement_transform.cc
 drizzled_message_libdrizzledmessage_la_LIBADD= ${LTLIBPROTOBUF} $(GCOV_LIBS) drizzled/libcharset.la
 
-nobase_dist_include_HEADERS+= drizzled/message/statement_transform.h
+nobase_dist_include_HEADERS+= drizzled/message/statement_transform.h \
+						drizzled/message/schema.h \
+						drizzled/message/table.h
 
 nodist_drizzled_message_libdrizzledmessage_la_SOURCES = \
 							drizzled/message/event.pb.cc \
 							drizzled/message/engine.pb.cc \
 							drizzled/message/transaction.pb.cc \
 							drizzled/message/schema.pb.cc \
-                                                        drizzled/message/resultset.pb.cc \
+							drizzled/message/resultset.pb.cc \
 							drizzled/message/table.pb.cc
 
 nobase_nodist_include_HEADERS+= \
@@ -57,14 +58,11 @@ nobase_nodist_include_HEADERS+= \
 				drizzled/message/engine.pb.h \
 				drizzled/message/transaction.pb.h \
 				drizzled/message/schema.pb.h \
-                                drizzled/message/resultset.pb.h \
+				drizzled/message/resultset.pb.h \
 				drizzled/message/table.pb.h 
 
 noinst_HEADERS+= \
-		drizzled/message/ioutil.h \
-		drizzled/message/all.h \
-		drizzled/message/transaction_manager.h
-
+		drizzled/message/ioutil.h 
 
 drizzled_message_schema_reader_SOURCES =  drizzled/message/schema_reader.cc
 drizzled_message_schema_reader_LDADD = ${MESSAGE_LDADD}
@@ -89,11 +87,6 @@ drizzled_message_table_writer_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS}
 drizzled_message_transaction_writer_SOURCES =  drizzled/message/transaction_writer.cc
 drizzled_message_transaction_writer_LDADD = ${MESSAGE_LDADD} ${top_builddir}/drizzled/algorithm/libhash.la
 drizzled_message_transaction_writer_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
-
-drizzled_message_transaction_reader_SOURCES =  drizzled/message/transaction_reader.cc \
-                                               drizzled/message/transaction_manager.cc
-drizzled_message_transaction_reader_LDADD = ${MESSAGE_LDADD} ${top_builddir}/drizzled/algorithm/libhash.la ${top_builddir}/drizzled/util/libutil.la
-drizzled_message_transaction_reader_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
 
 EXTRA_DIST += \
 		${MESSAGE_DIR}/event.proto \

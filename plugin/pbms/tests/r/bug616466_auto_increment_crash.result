@@ -1,0 +1,5 @@
+create table autoincbug (id int not null primary key auto_increment, test varchar(10));
+alter table autoincbug auto_increment = 1000;
+insert into autoincbug values (null, 'hej');
+alter table autoincbug auto_increment = 32727;
+drop table autoincbug;

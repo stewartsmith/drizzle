@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -44,5 +44,8 @@ typedef struct tab_node_struct		tab_node_t;
 /* Space id and page no where the dictionary header resides */
 #define	DICT_HDR_SPACE		0	/* the SYSTEM tablespace */
 #define	DICT_HDR_PAGE_NO	FSP_DICT_HDR_PAGE_NO
+
+typedef ib_id_t		table_id_t;
+typedef ib_id_t		index_id_t;
 
 #endif

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,19 +34,22 @@ Item_cache* Item_cache::get_cache(const Item *item)
   switch (item->result_type()) {
   case INT_RESULT:
     return new Item_cache_int();
+
   case REAL_RESULT:
     return new Item_cache_real();
+
   case DECIMAL_RESULT:
     return new Item_cache_decimal();
+
   case STRING_RESULT:
     return new Item_cache_str(item);
+
   case ROW_RESULT:
     return new Item_cache_row();
-  default:
-    // should never be in real life
-    assert(0);
-    return 0;
   }
+
+  assert(0);
+  abort();
 }
 
 

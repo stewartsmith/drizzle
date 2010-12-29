@@ -1,0 +1,14 @@
+SELECT GET_LOCK("mine");
+GET_LOCK("mine")
+1
+SELECT USER_NAME, USER_LOCK_NAME FROM DATA_DICTIONARY.USER_DEFINED_LOCKS ORDER BY USER_LOCK_NAME, USER_NAME;
+USER_NAME	USER_LOCK_NAME
+root	mine
+EXECUTE "SELECT GET_LOCK('mine', 20); SELECT 1;" CONCURRENT;
+SELECT wait_for_lock("mine");
+ERROR HY000: Session can not wait on a user defined lock owned by the session.
+SELECT RELEASE_LOCK_AND_WAIT(@LOCK);
+ERROR HY000: Invalid name for user defined lock.
+SELECT RELEASE_LOCK_AND_WAIT("mine");
+RELEASE_LOCK_AND_WAIT("mine")
+1

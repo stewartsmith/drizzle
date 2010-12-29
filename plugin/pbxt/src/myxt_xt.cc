@@ -1,4 +1,4 @@
-/* Copyright (c) 2005 PrimeBase Technologies GmbH
+/* Copyright (C) 2005 PrimeBase Technologies GmbH
  *
  * PrimeBase XT
  *
@@ -663,7 +663,7 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 			memcpy(&data, ((char *) from)+packlength, sizeof(char*));
 			
 			//*len = ((Field_blob *) field)->get_length((byte *) from);
-			*len = ((Field_blob *) field)->get_length((byte *) from, packlength, GET_TABLE_SHARE(table)->db_low_byte_first);
+			*len = ((Field_blob *) field)->get_length((byte *) from, GET_TABLE_SHARE(table)->db_low_byte_first);
 			return data;
 		}
 #ifndef DRIZZLED
@@ -724,9 +724,11 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 		case DRIZZLE_TYPE_TIMESTAMP:
 		case DRIZZLE_TYPE_LONGLONG:
 		case DRIZZLE_TYPE_DATETIME:
+		case DRIZZLE_TYPE_TIME:
 		case DRIZZLE_TYPE_DATE:
 		case DRIZZLE_TYPE_DECIMAL:
 		case DRIZZLE_TYPE_ENUM:
+		case DRIZZLE_TYPE_UUID:
 #endif
 			break;
 	}
@@ -772,7 +774,7 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 			*/
 			xtWord4 packlength = ((Field_blob *) field)->pack_length_no_ptr();
 
-			((Field_blob *) field)->store_length((byte *) from, packlength, len, GET_TABLE_SHARE(table)->db_low_byte_first);
+			((Field_blob *) field)->store_length((byte *) from, len, GET_TABLE_SHARE(table)->db_low_byte_first);
 			memcpy_fixed(((char *) from)+packlength, &data, sizeof(char*));
 
 			if (data)
@@ -837,9 +839,11 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 		case DRIZZLE_TYPE_TIMESTAMP:
 		case DRIZZLE_TYPE_LONGLONG:
 		case DRIZZLE_TYPE_DATETIME:
+		case DRIZZLE_TYPE_TIME:
 		case DRIZZLE_TYPE_DATE:
 		case DRIZZLE_TYPE_DECIMAL:
 		case DRIZZLE_TYPE_ENUM:
+		case DRIZZLE_TYPE_UUID:
 #endif
 			break;
 	}
@@ -1841,7 +1845,7 @@ xtPublic void myxt_get_column_as_string(XTOpenTablePtr ot, char *buffer, u_int c
 		xt_lock_mutex(self, &tab->tab_dic_field_lock);
 		pushr_(xt_unlock_mutex, &tab->tab_dic_field_lock);
 		field->ptr = (byte *) buffer + field->offset(table->getDefaultValues());
-		field->val_str(&val);
+		field->val_str_internal(&val);
 		field->ptr = save;					// Restore org row pointer
 		freer_(); // xt_unlock_mutex(&tab->tab_dic_field_lock)
 		xt_strcpy(len, value, val.c_ptr());
@@ -2198,7 +2202,7 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 			}
 		}
 
-		seg->col_idx = field->field_index;
+		seg->col_idx = field->position();
 		seg->is_recs_in_range = 1;
 		seg->is_selectivity = 1;
 		seg->type = (int) type;
@@ -2312,9 +2316,9 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 		/* NOTE: do not set if the field is only partially in the index!!! */
 		if (!partial_field)
 #ifdef DRIZZLED
-			MX_BIT_FAST_TEST_AND_SET(&mi_col_map, field->field_index);
+			MX_BIT_FAST_TEST_AND_SET(&mi_col_map, field->position());
 #else
-			MX_BIT_FAST_TEST_AND_SET(&ind->mi_col_map, field->field_index);
+			MX_BIT_FAST_TEST_AND_SET(&ind->mi_col_map, field->position());
 #endif
 	}
 
@@ -2438,8 +2442,8 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 		for (key_part = index->key_part; key_part != key_part_end; key_part++) {
 			curr_field = key_part->field;
 
-			if ((u_int) curr_field->field_index+1 > dic->dic_ind_cols_req)
-				dic->dic_ind_cols_req = curr_field->field_index+1;
+			if ((u_int) curr_field->position()+1 > dic->dic_ind_cols_req)
+				dic->dic_ind_cols_req = curr_field->position()+1;
 		}
 	}
 
@@ -2476,8 +2480,8 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 				else
 					max_ave_row_size = 200;
 				large_blob_field_count++;
-				if ((u_int) curr_field->field_index+1 > dic->dic_blob_cols_req)
-					dic->dic_blob_cols_req = curr_field->field_index+1;
+				if ((u_int) curr_field->position()+1 > dic->dic_blob_cols_req)
+					dic->dic_blob_cols_req = curr_field->position()+1;
 				dic->dic_blob_count++;
 				xt_realloc(self, (void **) &dic->dic_blob_cols, sizeof(Field *) * dic->dic_blob_count);
 				dic->dic_blob_cols[dic->dic_blob_count-1] = curr_field;
@@ -2951,7 +2955,7 @@ xtPublic XTDDTable *myxt_create_table_from_table(XTThreadPtr self, STRUCT_TABLE 
 xtPublic void myxt_static_convert_identifier(XTThreadPtr XT_UNUSED(self), MX_CONST_CHARSET_INFO *cs, char *from, char *to, size_t to_len)
 {
 #ifdef DRIZZLED
-	((void *)cs);
+	((void)cs);
 	 xt_strcpy(to_len, to, from);
 #else
 	uint errors;
@@ -2973,7 +2977,7 @@ xtPublic char *myxt_convert_identifier(XTThreadPtr self, MX_CONST_CHARSET_INFO *
 {
 #ifdef DRIZZLED
 	char *to = xt_dup_string(self, from);
-	((void *)cs);
+	((void)cs);
 #else
 	uint	errors;
 	u_int	len;
@@ -3060,7 +3064,7 @@ xtPublic MX_CONST_CHARSET_INFO *myxt_getcharset(bool convert)
 		THD *thd = current_thd;
 
 		if (thd)
-			return (MX_CHARSET_INFO *)thd_charset(thd);
+			return (MX_CHARSET_INFO *)thd->charset();
 	}
 	return (MX_CHARSET_INFO *)&my_charset_utf8_general_ci;
 }
@@ -3174,11 +3178,10 @@ xtPublic void myxt_destroy_thread(void *s, xtBool end_threads)
 {
 	Session *session = (Session *) s;
 
-	session->lockForDelete();
 	delete session;
 
 	if (end_threads)
-		drizzled::internal::my_thread_end();
+          drizzled::internal::my_thread_end();
 }
 #else
 xtPublic void myxt_destroy_thread(void *thread, xtBool end_threads)

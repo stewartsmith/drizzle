@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,14 +60,19 @@
 #include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/replication_services.h" /* For ReplicationServices::evaluateRegisteredPlugins() */
 #include "drizzled/probes.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/charset.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/module/registry.h"
 #include "drizzled/module/load_list.h"
+#include "drizzled/global_buffer.h"
+
+#include "drizzled/definition/cache.h"
 
 #include "drizzled/plugin/event_observer.h"
+
+#include "drizzled/message/cache.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -150,7 +155,6 @@ namespace dpo=drizzled::program_options;
 namespace drizzled
 {
 
-#define mysqld_charset &my_charset_utf8_general_ci
 inline void setup_fpu()
 {
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
@@ -316,7 +320,7 @@ const char *in_left_expr_name= "<left expr>";
 const char *in_additional_cond= "<IN COND>";
 const char *in_having_cond= "<IN HAVING>";
 
-my_decimal decimal_zero;
+type::Decimal decimal_zero;
 /* classes for comparation parsing/processing */
 
 FILE *stderror_file=0;
@@ -334,10 +338,7 @@ MY_LOCALE *my_default_lc_time_names;
 SHOW_COMP_OPTION have_symlink;
 
 /* Thread specific variables */
-
-boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
-boost::mutex LOCK_thread_count;
 
 boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
@@ -351,6 +352,11 @@ int cleanup_done;
 passwd *user_info;
 
 atomic<uint32_t> connection_count;
+
+global_buffer_constraint<uint64_t> global_sort_buffer(0);
+global_buffer_constraint<uint64_t> global_join_buffer(0);
+global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
+global_buffer_constraint<uint64_t> global_read_buffer(0);
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
@@ -410,7 +416,7 @@ void close_connections(void)
 
   /* kill connection thread */
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
 
     while (select_thread_in_use)
     {
@@ -434,21 +440,23 @@ void close_connections(void)
     statements and inform their clients that the server is about to die.
   */
 
-  Session *tmp;
-
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    session::Cache::list list= session::Cache::singleton().getCache();
+
+    for (session::Cache::list::iterator it= list.begin(); it != list.end(); ++it )
     {
-      tmp= *it;
-      tmp->killed= Session::KILL_CONNECTION;
-      tmp->scheduler->killSession(tmp);
+      Session::shared_ptr tmp(*it);
+
+      tmp->setKilled(Session::KILL_CONNECTION);
+      tmp->scheduler->killSession(tmp.get());
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
+
       tmp->lockOnSys();
     }
   }
 
-  if (connection_count)
+  if (session::Cache::singleton().count())
     sleep(2);                                   // Give threads time to die
 
   /*
@@ -458,14 +466,15 @@ void close_connections(void)
   */
   for (;;)
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    if (getSessionList().empty())
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    session::Cache::list list= session::Cache::singleton().getCache();
+
+    if (list.empty())
     {
       break;
     }
-    tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
-    tmp->client->close();
+    list.front()->getClient()->close();
   }
 }
 
@@ -504,11 +513,13 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
-  LOCK_thread_count.lock();
-  ready_to_exit=1;
-  /* do the broadcast inside the lock to ensure that my_end() is not called */
-  COND_server_end.notify_all();
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    ready_to_exit= true;
+
+    /* do the broadcast inside the lock to ensure that my_end() is not called */
+    COND_server_end.notify_all();
+  }
 
   /*
     The following lines may never be executed as the main thread may have
@@ -538,7 +549,7 @@ passwd *check_user(const char *user)
     }
     return NULL;
   }
-  if (!user)
+  if (not user)
   {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
                       "the manual to find out how to run drizzled as root!\n"));
@@ -551,7 +562,7 @@ passwd *check_user(const char *user)
   {
     // Allow a numeric uid to be used
     const char *pos;
-    for (pos= user; my_isdigit(mysqld_charset,*pos); pos++) ;
+    for (pos= user; my_isdigit(&my_charset_utf8_general_ci,*pos); pos++) ;
     if (*pos)                                   // Not numeric id
       goto err;
     if (!(tmp_user_info= getpwuid(atoi(user))))
@@ -614,29 +625,29 @@ static void set_root(const char *path)
   SYNOPSIS
     Session::unlink()
     session		 Thread handler
-
-  NOTES
-    LOCK_thread_count is locked and left locked
 */
 
-void Session::unlink(Session *session)
+void drizzled::Session::unlink(session_id_t &session_id)
+{
+  Session::shared_ptr session= session::Cache::singleton().find(session_id);
+
+  if (session)
+    unlink(session);
+}
+
+void drizzled::Session::unlink(Session::shared_ptr &session)
 {
   connection_count.decrement();
 
   session->cleanup();
 
-  boost::mutex::scoped_lock scoped(LOCK_thread_count);
-  session->lockForDelete();
+  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
 
-  getSessionList().erase(remove(getSessionList().begin(),
-                         getSessionList().end(),
-                         session));
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
     // We should do something about an error...
   }
-
-  delete session;
+  session::Cache::singleton().erase(session);
 }
 
 
@@ -1038,62 +1049,6 @@ static void check_limits_transaction_message_threshold(size_t in_transaction_mes
   global_system_variables.transaction_message_threshold= in_transaction_message_threshold;
 }
 
-static pair<string, string> parse_size_suffixes(string s)
-{
-  size_t equal_pos= s.find("=");
-  if (equal_pos != string::npos)
-  {
-    string arg_key(s.substr(0, equal_pos));
-    string arg_val(s.substr(equal_pos+1));
-
-    try
-    {
-      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
-      if (size_suffix_pos == arg_val.size()-1)
-      {
-        char suffix= arg_val[size_suffix_pos];
-        string size_val(arg_val.substr(0, size_suffix_pos));
-
-        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
-        uint64_t new_size= 0;
-
-        switch (suffix)
-        {
-        case 'K':
-        case 'k':
-          new_size= base_size * 1024;
-          break;
-        case 'M':
-        case 'm':
-          new_size= base_size * 1024 * 1024;
-          break;
-        case 'G':
-        case 'g':
-          new_size= base_size * 1024 * 1024 * 1024;
-          break;
-        }
-        return make_pair(arg_key,
-                         boost::lexical_cast<string>(new_size));
-      }
-    }
-    catch (...)
-    {
-      /* Screw it, let the normal parser take over */
-    }
-  }
-
-  return make_pair(string(""), string(""));
-}
-
-static pair<string, string> parse_size_arg(string s)
-{
-  if (s.find("--") == 0)
-  {
-    return parse_size_suffixes(s.substr(2));
-  }
-  return make_pair(string(""), string(""));
-}
-
 static void process_defaults_files()
 {
   for (vector<string>::iterator iter= defaults_file_list.begin();
@@ -1157,7 +1112,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 {
   time_t curr_time;
   umask(((~internal::my_umask) & 0666));
-  my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
+  decimal_zero.set_zero(); // set decimal_zero constant;
   tzset();			// Set tzname
 
   curr_time= time(NULL);
@@ -1199,7 +1154,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   pid_file.replace_extension(".pid");
 
   system_config_dir /= "drizzle";
-  std::string system_config_file_drizzle("drizzled.cnf");
 
   config_options.add_options()
   ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
@@ -1262,6 +1216,8 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
   N_("Maximum time in seconds to wait for the port to become free. "))
+  ("replicate-query", po::value<bool>(&global_system_variables.replicate_query)->default_value(false)->zero_tokens(),
+  N_("Include the SQL query in replicated protobuf messages."))
   ("secure-file-priv", po::value<fs::path>(&secure_file_priv)->notifier(expand_secure_file_priv),
   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
      "within specified directory"))
@@ -1300,6 +1256,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("The maximum length of the result of function  group_concat."))
   ("join-buffer-size", po::value<uint64_t>(&global_system_variables.join_buff_size)->default_value(128*1024L)->notifier(&check_limits_join_buffer_size),
   N_("The size of the buffer that is used for full joins."))
+  ("join-heap-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the amount of memory that can be allocated by session join buffers (0 means unlimited)"))
   ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(64*1024*1024L)->notifier(&check_limits_map),
   N_("Max packetlength to send/receive from to server."))
   ("max-connect-errors", po::value<uint64_t>(&max_connect_errors)->default_value(MAX_CONNECT_ERRORS)->notifier(&check_limits_mce),
@@ -1353,16 +1312,25 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Each thread that does a sequential scan allocates a buffer of this "
       "size for each table it scans. If you do many sequential scans, you may "
       "want to increase this value."))
+  ("read-buffer-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the size of read-buffer-size (0 means unlimited)"))
   ("read-rnd-buffer-size",
   po::value<uint32_t>(&global_system_variables.read_rnd_buff_size)->default_value(256*1024L)->notifier(&check_limits_read_rnd_buffer_size),
   N_("When reading rows in sorted order after a sort, the rows are read "
      "through this buffer to avoid a disk seeks. If not set, then it's set "
      "to the value of record_buffer."))
+  ("read-rnd-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the size of read-rnd-buffer-size (0 means unlimited)"))
   ("scheduler", po::value<string>(),
   N_("Select scheduler to be used (by default multi-thread)."))
   ("sort-buffer-size",
   po::value<size_t>(&global_system_variables.sortbuff_size)->default_value(MAX_SORT_MEMORY)->notifier(&check_limits_sort_buffer_size),
   N_("Each thread that needs to do a sort allocates a buffer of this size."))
+  ("sort-heap-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the amount of memory that can be allocated by session sort buffers (0 means unlimited)"))
   ("table-definition-cache", po::value<size_t>(&table_def_size)->default_value(128)->notifier(&check_limits_tdc),
   N_("The number of cached table definitions."))
   ("table-open-cache", po::value<uint64_t>(&table_cache_size)->default_value(TABLE_OPEN_CACHE_DEFAULT)->notifier(&check_limits_toc),
@@ -1395,7 +1363,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   {
     po::store(parsed, vm);
   }
-  catch (...)
+  catch (std::exception&)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
     unireg_abort(1);
@@ -1403,11 +1371,14 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (not vm["no-defaults"].as<bool>())
   {
+    fs::path system_config_file_drizzle(system_config_dir);
+    system_config_file_drizzle /= "drizzled.cnf";
     defaults_file_list.insert(defaults_file_list.begin(),
-                              system_config_file_drizzle);
+                              system_config_file_drizzle.file_string());
 
     fs::path config_conf_d_location(system_config_dir);
     config_conf_d_location /= "conf.d";
+
 
     CachedDirectory config_conf_d(config_conf_d_location.file_string());
     if (not config_conf_d.fail())
@@ -1482,7 +1453,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   {
     po::parsed_options final_parsed=
       po::command_line_parser(unknown_options).style(style).
-      options(full_options).extra_parser(parse_size_arg).run();
+      options(full_options).extra_parser(dpo::parse_size_arg).run();
 
     final_unknown_options=
       po::collect_unrecognized(final_parsed.options, po::include_positional);
@@ -1621,7 +1592,9 @@ int init_server_components(module::Registry &plugins)
   }
 
   // Resize the definition Cache at startup
+  table::Cache::singleton().rehash(table_def_size);
   definition::Cache::singleton().rehash(table_def_size);
+  message::Cache::singleton().rehash(table_def_size);
 
   setup_fpu();
 
@@ -2173,7 +2146,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  getSessionList().clear();
+  session::Cache::singleton().getCache().clear();
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
@@ -2256,6 +2229,58 @@ static void get_options()
     exit(0);
   }
 
+  if (vm.count("sort-heap-threshold"))
+  {
+    if ((vm["sort-heap-threshold"].as<uint64_t>() > 0) and
+      (vm["sort-heap-threshold"].as<uint64_t>() < 
+      global_system_variables.sortbuff_size))
+    {
+      cout << N_("Error: sort-heap-threshold cannot be less than sort-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_sort_buffer.setMaxSize(vm["sort-heap-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("join-heap-threshold"))
+  {
+    if ((vm["join-heap-threshold"].as<uint64_t>() > 0) and
+      (vm["join-heap-threshold"].as<uint64_t>() <
+      global_system_variables.join_buff_size))
+    {
+      cout << N_("Error: join-heap-threshold cannot be less than join-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_join_buffer.setMaxSize(vm["join-heap-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("read-rnd-threshold"))
+  {
+    if ((vm["read-rnd-threshold"].as<uint64_t>() > 0) and
+      (vm["read-rnd-threshold"].as<uint64_t>() <
+      global_system_variables.read_rnd_buff_size))
+    {
+      cout << N_("Error: read-rnd-threshold cannot be less than read-rnd-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_read_rnd_buffer.setMaxSize(vm["read-rnd-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("read-buffer-threshold"))
+  {
+    if ((vm["read-buffer-threshold"].as<uint64_t>() > 0) and
+      (vm["read-buffer-threshold"].as<uint64_t>() <
+      global_system_variables.read_buff_size))
+    {
+      cout << N_("Error: read-buffer-threshold cannot be less than read-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_read_buffer.setMaxSize(vm["read-buffer-threshold"].as<uint64_t>());
+  }
+
   if (vm.count("exit-info"))
   {
     if (vm["exit-info"].as<long>())
@@ -2334,7 +2359,7 @@ static void fix_paths()
     pid_file_path= getDataHome();
     pid_file_path /= pid_file;
   }
-  pid_file= pid_file_path;
+  pid_file= fs::system_complete(pid_file_path);
 
   if (not opt_help)
   {

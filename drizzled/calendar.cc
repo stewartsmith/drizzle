@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,8 +53,21 @@ static const uint32_t __normal_days_to_end_month[13]= {0, 31, 59, 90, 120, 150, 
  * Private utility macro for enabling a switch between
  * Gregorian and Julian leap year date arrays.
  */
-#define __DAYS_IN_MONTH(y, c) (const uint32_t *) (IS_LEAP_YEAR((y),(c)) ? __leap_days_in_month : __normal_days_in_month)
-#define __DAYS_TO_END_MONTH(y, c) (const uint32_t *) (IS_LEAP_YEAR((y),(c)) ? __leap_days_to_end_month : __normal_days_to_end_month)
+inline static const uint32_t* days_in_month(uint32_t y, enum calendar c) 
+{
+  if (is_leap_year(y, c))
+    return __leap_days_in_month;
+  else
+    return __normal_days_in_month;
+}
+
+inline static const uint32_t* days_to_end_month(uint32_t y, enum calendar c) 
+{
+  if (is_leap_year(y, c))
+    return __leap_days_to_end_month;
+  else
+    return __normal_days_to_end_month;
+}
 
 
 /**
@@ -289,7 +302,7 @@ bool is_valid_gregorian_date(uint32_t year, uint32_t month, uint32_t day)
     return (day <= __normal_days_in_month[month - 1]);
   else
   {
-    const uint32_t *p_months= __DAYS_IN_MONTH(year, (enum calendar) GREGORIAN);
+    const uint32_t *p_months= days_in_month(year, (enum calendar) GREGORIAN);
     return (day <= p_months[1]);
   }
 }
@@ -303,7 +316,7 @@ bool is_valid_gregorian_date(uint32_t year, uint32_t month, uint32_t day)
  */
 uint32_t days_in_gregorian_year_month(uint32_t year, uint32_t month)
 {
-  const uint32_t *p_months= __DAYS_IN_MONTH(year, GREGORIAN);
+  const uint32_t *p_months= days_in_month(year, GREGORIAN);
   return p_months[month - 1];
 }
 

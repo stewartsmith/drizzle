@@ -6,7 +6,7 @@
 # into it.  We then issue an INSERT ... ON DUPLICATE KEY UPDATE
 # statement which will affect an existing record.
 # 
-# We then use the transaction_reader in drizzled/message/ to read the events.
+# We then use the transaction_reader in plugin/transaction_log/utilities to read the events.
 #
 
 --disable_warnings

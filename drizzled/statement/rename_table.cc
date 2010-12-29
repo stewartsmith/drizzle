@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,58 +68,50 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     return true;
   }
 
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
     return true;
 
-  LOCK_open.lock(); /* Rename table lock for exclusive access */
-  if (lock_table_names_exclusively(session, table_list))
   {
-    LOCK_open.unlock();
-    goto err;
+    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Rename table lock for exclusive access */
+
+    if (not session->lock_table_names_exclusively(table_list))
+    {
+      error= false;
+      ren_table= renameTablesInList(table_list, false);
+
+      if (ren_table)
+      {
+        /* Rename didn't succeed;  rename back the tables in reverse order */
+        TableList *table;
+
+        /* Reverse the table list */
+        table_list= reverseTableList(table_list);
+
+        /* Find the last renamed table */
+        for (table= table_list;
+             table->next_local != ren_table;
+             table= table->next_local->next_local) 
+        { /* do nothing */ }
+
+        table= table->next_local->next_local;		// Skip error table
+
+        /* Revert to old names */
+        renameTablesInList(table, true);
+        error= true;
+      }
+
+      table_list->unlock_table_names();
+    }
   }
-
-  error= false;
-  ren_table= renameTablesInList(table_list, 0);
-  if (ren_table)
-  {
-    /* Rename didn't succeed;  rename back the tables in reverse order */
-    TableList *table;
-
-    /* Reverse the table list */
-    table_list= reverseTableList(table_list);
-
-    /* Find the last renamed table */
-    for (table= table_list;
-         table->next_local != ren_table;
-         table= table->next_local->next_local) 
-    { /* do nothing */ }
-    table= table->next_local->next_local;		// Skip error table
-    /* Revert to old names */
-    renameTablesInList(table, 1);
-    error= true;
-  }
-  /*
-    An exclusive lock on table names is satisfactory to ensure
-    no other thread accesses this table.
-    We still should unlock LOCK_open as early as possible, to provide
-    higher concurrency - query_cache_invalidate can take minutes to
-    complete.
-  */
-  LOCK_open.unlock();
 
   /* Lets hope this doesn't fail as the result will be messy */
-  if (! error)
+  if (not error)
   {
-    write_bin_log(session, session->query.c_str());
+    write_bin_log(session, *session->getQueryString());
     session->my_ok();
   }
 
-  LOCK_open.lock(); /* unlock all tables held */
-  unlock_table_names(table_list, NULL);
-  LOCK_open.unlock();
-
-err:
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -152,7 +144,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   }
 
   plugin::StorageEngine *engine= NULL;
-  message::Table table_proto;
+  message::table::shared_ptr table_proto;
 
   TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
@@ -162,7 +154,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
     return true;
   }
 
-  engine= plugin::StorageEngine::findByName(*session, table_proto.engine().name());
+  engine= plugin::StorageEngine::findByName(*session, table_proto->engine().name());
 
   TableIdentifier new_identifier(new_db, new_alias, message::Table::STANDARD);
   if (plugin::StorageEngine::doesTableExist(*session, new_identifier))
@@ -171,7 +163,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
     return 1; // This can't be skipped
   }
 
-  rc= mysql_rename_table(*session, engine, old_identifier, new_identifier);
+  rc= rename_table(*session, engine, old_identifier, new_identifier);
   if (rc && ! skip_error)
     return true;
 

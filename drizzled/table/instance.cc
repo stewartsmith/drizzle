@@ -63,16 +63,17 @@ Instance::Instance(Session *session, List<CreateField> &field_list) :
   while ((cdef= it++))
   {
     *field_arg= getMutableShare()->make_field(NULL,
-                                                 cdef->length,
-                                                 (cdef->flags & NOT_NULL_FLAG) ? false : true,
-                                                 (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
-                                                 (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
-                                                 cdef->decimals,
-                                                 cdef->sql_type,
-                                                 cdef->charset,
-                                                 cdef->unireg_check,
-                                                 cdef->interval,
-                                                 cdef->field_name);
+                                              cdef->length,
+                                              (cdef->flags & NOT_NULL_FLAG) ? false : true,
+                                              (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
+                                              (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
+                                              cdef->decimals,
+                                              cdef->sql_type,
+                                              cdef->charset,
+                                              cdef->unireg_check,
+                                              cdef->interval,
+                                              cdef->field_name,
+                                              cdef->flags & UNSIGNED_FLAG ? true : false);
     if (!*field_arg)
     {
       throw "Memory allocation failure";
@@ -323,7 +324,9 @@ Instance::~Instance()
     }
 
     TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
-    getShare()->getEngine()->doDropTable(*in_use, identifier);
+    plugin::StorageEngine::dropTable(*in_use,
+                                     *getShare()->getEngine(),
+                                     identifier);
 
     delete cursor;
   }

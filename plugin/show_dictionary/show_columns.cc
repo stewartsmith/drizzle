@@ -85,10 +85,10 @@ bool ShowColumns::Generator::nextColumnCore()
     is_columns_primed= true;
   }
 
-  if (column_iterator >= getTableProto().field_size())
+  if (column_iterator >= getTableProto()->field_size())
     return false;
 
-  column= getTableProto().field(column_iterator);
+  column= getTableProto()->field(column_iterator);
 
   return true;
 }
@@ -144,7 +144,7 @@ void ShowColumns::Generator::pushType(message::Table::Field::FieldType type, con
   case message::Table::Field::DATE:
     push(DATE);
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     push(TIMESTAMP);
     break;
   case message::Table::Field::DATETIME:

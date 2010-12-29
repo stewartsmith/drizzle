@@ -29,10 +29,10 @@ namespace generator {
 class AllTables
 {
   Session &session;
-  message::Table table;
+  message::table::shared_ptr table;
 
-  TableIdentifiers table_names;
-  TableIdentifiers::const_iterator table_iterator;
+  TableIdentifier::vector table_names;
+  TableIdentifier::vector::const_iterator table_iterator;
 
   drizzled::generator::Schema schema_generator;
   const drizzled::SchemaIdentifier *schema_ptr;
@@ -45,21 +45,20 @@ public:
 
   void reset();
 
-  operator const drizzled::message::Table*()
+  operator const drizzled::message::table::shared_ptr()
   {
     do {
       while (table_iterator != table_names.end())
       {
-        table.Clear();
         bool is_table_parsed= plugin::StorageEngine::getTableDefinition(session, *table_iterator, table);
         table_iterator++;
 
         if (is_table_parsed)
-          return &table;
+          return table;
       }
     } while ((schema_ptr= schema_generator) && table_setup());
 
-    return NULL;
+    return message::table::shared_ptr();
   }
 
   operator const drizzled::TableIdentifier*()

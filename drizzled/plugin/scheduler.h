@@ -3,7 +3,7 @@
  *
  *  Definitions required for Configuration Variables plugin
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #ifndef DRIZZLED_PLUGIN_SCHEDULER_H
 #define DRIZZLED_PLUGIN_SCHEDULER_H
 
+#include "drizzled/session.h"
 #include "drizzled/plugin/plugin.h"
 
 #include <string>
@@ -29,6 +30,7 @@
 
 namespace drizzled
 {
+
 class Session;
 
 namespace plugin
@@ -54,7 +56,7 @@ public:
    * Add a session to the scheduler. When the scheduler is ready to run the
    * session, it should call session->run().
    */
-  virtual bool addSession(Session *session)= 0;
+  virtual bool addSession(Session::shared_ptr &session)= 0;
 
   /**
    * Notify the scheduler that it should be killed gracefully.
@@ -64,7 +66,7 @@ public:
   /**
    * This is called when a scheduler should kill the session immedaitely.
    */
-  virtual void killSessionNow(Session *) {}
+  virtual void killSessionNow(Session::shared_ptr&) {}
 
   static bool addPlugin(plugin::Scheduler *sced);
   static void removePlugin(plugin::Scheduler *sced);

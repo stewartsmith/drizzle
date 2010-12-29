@@ -1,4 +1,4 @@
-/* Copyright (c) 2009 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2009 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -211,11 +211,11 @@ try_again:
 		log_size = DFLT_TRANS_LOG_LIST_SIZE * sizeof(MSDiskTransRec) + sizeof(MSDiskTransHeadRec);
 
 		// Preallocate the log space and initialize it.
-		MSDiskTransRec recs[1024] = {};
+                MSDiskTransRec *recs= (MSDiskTransRec*)calloc(1024, sizeof(MSDiskTransRec));
 		off64_t offset = sizeof(MSDiskTransHeadRec);
 		uint64_t num_records = DFLT_TRANS_LOG_LIST_SIZE;
 		size_t size;
-		
+
 		while (num_records) {
 			if (num_records < 1024)
 				size = num_records;
@@ -225,6 +225,8 @@ try_again:
 			offset += size * sizeof(MSDiskTransRec);
 			num_records -= size;
 		}
+
+                free(recs);
 
 		trans->txn_MaxRecords = DFLT_TRANS_LOG_LIST_SIZE;
 		trans->txn_ReqestedMaxRecords = DFLT_TRANS_LOG_LIST_SIZE;

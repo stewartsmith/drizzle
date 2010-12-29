@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -78,7 +78,7 @@ trx_undo_rec_get_undo_no(
 
 	ptr = undo_rec + 3;
 
-	return(mach_dulint_read_much_compressed(ptr));
+	return(mach_ull_read_much_compressed(ptr));
 }
 
 /**********************************************************************//**
@@ -90,7 +90,7 @@ trx_undo_rec_get_offset(
 /*====================*/
 	undo_no_t	undo_no)	/*!< in: undo no read from node */
 {
-	return (3 + mach_dulint_get_much_compressed_size(undo_no));
+	return (3 + mach_ull_get_much_compressed_size(undo_no));
 }
 
 /***********************************************************************//**
@@ -107,6 +107,6 @@ trx_undo_rec_copy(
 
 	len = mach_read_from_2(undo_rec)
 		- ut_align_offset(undo_rec, UNIV_PAGE_SIZE);
-	return(mem_heap_dup(heap, undo_rec, len));
+	return (trx_undo_rec_t*)mem_heap_dup(heap, undo_rec, len);
 }
 #endif /* !UNIV_HOTBACKUP */

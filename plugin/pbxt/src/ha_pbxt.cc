@@ -1,4 +1,4 @@
-/* Copyright (c) 2005 PrimeBase Technologies GmbH
+/* Copyright (C) 2005 PrimeBase Technologies GmbH
  *
  * Derived from ha_example.h
  * Copyright (C) 2003 MySQL AB
@@ -47,7 +47,6 @@
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/session.h>
 
 #include <string>
@@ -198,10 +197,10 @@ static char				*pbxt_data_log_threshold;
 static char				*pbxt_data_file_grow_size;
 static char				*pbxt_row_file_grow_size;
 static char				*pbxt_record_write_threshold;
-static my_bool			pbxt_support_xa;
 
 #ifndef DRIZZLED
 // drizzle complains it's not used
+static my_bool			pbxt_support_xa;
 static XTXactEnumXARec	pbxt_xa_enum;
 #endif
 
@@ -2505,19 +2504,19 @@ xtPublic void ha_set_auto_increment(XTOpenTablePtr ot, Field *nr)
 	nr_int_val = nr->val_int();
 	tab = ot->ot_table;
 
-	if (nr->cmp((const unsigned char *)&tab->tab_auto_inc) > 0) {
+	if (nr->cmp_internal((const unsigned char *)&tab->tab_auto_inc) > 0) {
 		xt_spinlock_lock(&tab->tab_ainc_lock);
 
-		if (nr->cmp((const unsigned char *)&tab->tab_auto_inc) > 0) {
-			/* {PRE-INC}
-			 * We increment later, so just set the value!
-			MX_ULONGLONG_T nr_int_val_plus_one = nr_int_val + 1;
-			if (nr->cmp((const unsigned char *)&nr_int_val_plus_one) < 0)
-				tab->tab_auto_inc = nr_int_val_plus_one;
-			else
-			 */
-			tab->tab_auto_inc = nr_int_val;
-		}
+                if (nr->cmp_internal((const unsigned char *)&tab->tab_auto_inc) > 0) {
+                  /* {PRE-INC}
+                   * We increment later, so just set the value!
+                   MX_ULONGLONG_T nr_int_val_plus_one = nr_int_val + 1;
+                   if (nr->cmp((const unsigned char *)&nr_int_val_plus_one) < 0)
+                   tab->tab_auto_inc = nr_int_val_plus_one;
+                   else
+                 */
+                  tab->tab_auto_inc = nr_int_val;
+                }
 		xt_spinlock_unlock(&tab->tab_ainc_lock);
 	}
 
@@ -3902,7 +3901,7 @@ int ha_pbxt::info(uint flag)
 			 * #1	0x0022e1f1 in make_sortkey at filesort.cc:769
 			 * #2	0x0022f1cf in find_all_keys at filesort.cc:619
 			 * #3	0x00230eec in filesort at filesort.cc:243
-			 * #4	0x001b9d89 in mysql_update at sql_update.cc:415
+			 * #4	0x001b9d89 in update_query at sql_update.cc:415
 			 * #5	0x0010db12 in mysql_execute_command at sql_parse.cc:2959
 			 * #6	0x0011480d in mysql_parse at sql_parse.cc:5787
 			 * #7	0x00115afb in dispatch_command at sql_parse.cc:1200
@@ -4195,7 +4194,7 @@ void ha_pbxt::unlock_row()
  *
  * Called from item_sum.cc by Item_func_group_concat::clear(),
  * Item_sum_count_distinct::clear(), and Item_func_group_concat::clear().
- * Called from sql_delete.cc by mysql_delete().
+ * Called from sql_delete.cc by delete_query().
  * Called from sql_select.cc by JOIN::reinit().
  * Called from sql_union.cc by st_select_lex_unit::exec().
  */
@@ -4348,7 +4347,7 @@ int ha_pbxt::analyze(THD *thd)
 	else
 		my_xn_id = db->db_xn_to_clean_id;
 
-	while ((!db->db_sw_idle || xt_xn_is_before(db->db_xn_to_clean_id, my_xn_id)) && !thd_killed(thd)) {
+	while ((!db->db_sw_idle || xt_xn_is_before(db->db_xn_to_clean_id, my_xn_id)) && not (thd->getKilled())) {
 		xt_busy_wait();
 
 		/*
@@ -5629,7 +5628,8 @@ int PBXTStorageEngine::doCreateTable(Session&,
 
 		StorageEngine::writeDefinitionFromPath(ident, proto);
 
-		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, table_arg.getMutableShare()), &source_dic);
+                Session::QueryString query_string(thd->getQueryString());
+		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(query_string->c_str()), myxt_create_table_from_table(self, table_arg.getMutableShare()), &source_dic);
 		tab_def->checkForeignKeys(self, proto.type() == message::Table::TEMPORARY);
 
 		dic.dic_table = tab_def;
@@ -6020,6 +6020,7 @@ uint ha_pbxt::referenced_by_foreign_key()
 }
 #endif // DRI_IS
 
+#ifndef DRIZZLED
 struct st_mysql_sys_var
 {
 	MYSQL_PLUGIN_VAR_HEADER;
@@ -6034,11 +6035,13 @@ struct st_mysql_sys_var
 #define USE_CONST_SAVE
 #endif
 #endif
+#endif
 
 #ifdef DRIZZLED
 #define st_mysql_sys_var drizzled::drizzle_sys_var
 #endif
 
+#ifndef DRIZZLED
 #ifdef USE_CONST_SAVE
 static void pbxt_record_cache_size_func(THD *XT_UNUSED(thd), struct st_mysql_sys_var *var, void *tgt, const void *save)
 #else
@@ -6064,14 +6067,12 @@ static void pbxt_record_cache_size_func(THD *XT_UNUSED(thd), struct st_mysql_sys
 #endif
 }
 
-#ifndef DRIZZLED
 struct st_mysql_storage_engine pbxt_storage_engine = {
 	MYSQL_HANDLERTON_INTERFACE_VERSION
 };
 static st_mysql_information_schema pbxt_statitics = {
 	MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION
 };
-#endif
 
 #if MYSQL_VERSION_ID >= 50118
 static MYSQL_SYSVAR_STR(index_cache_size, pbxt_index_cache_size,
@@ -6204,6 +6205,7 @@ static struct st_mysql_sys_var* pbxt_system_variables[] = {
   NULL
 };
 #endif
+#endif
 
 #ifdef DRIZZLED
 DRIZZLE_DECLARE_PLUGIN
@@ -6215,7 +6217,7 @@ DRIZZLE_DECLARE_PLUGIN
         "High performance, multi-versioning transactional engine",
         PLUGIN_LICENSE_GPL,
         pbxt_init, /* Plugin Init */
-        pbxt_system_variables,          /* system variables                */
+        NULL,          /* system variables                */
         NULL                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

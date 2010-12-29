@@ -1,4 +1,4 @@
-/* Copyright (c) 2009 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2009 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -469,10 +469,11 @@ bool MSBackup::doWork()
 		uint8_t				blob_storage_type;
 		uint16_t				tab_index;
 		uint32_t				mod_time;
-		char				transferBuffer[MS_BACKUP_BUFFER_SIZE];
+		char				*transferBuffer;
 		CloudKeyRec			cloud_key;
 
-	
+                transferBuffer= (char*)malloc(MS_BACKUP_BUFFER_SIZE);
+
 		bu_BackupRunning = true;
 		bu_State = BU_RUNNING; 
 
@@ -684,7 +685,8 @@ bool MSBackup::doWork()
 			bu_State = BU_TERMINATED; 
 		else
 			bu_State = BU_COMPLETED; 
-			
+
+                free(transferBuffer);
 	}	
 	
 	catch_(a) {

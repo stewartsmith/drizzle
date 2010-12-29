@@ -32,8 +32,8 @@ class Temporary : public Table
   TableShare *_share; /**< Pointer to the shared metadata about the table */
 
 public:
-  Temporary(TableIdentifier::Type type_arg,
-             TableIdentifier &identifier,
+  Temporary(const TableIdentifier::Type type_arg,
+            const TableIdentifier &identifier,
              char *path_arg, uint32_t path_length_arg) :
     Table()
   {
@@ -48,7 +48,14 @@ public:
   virtual TableShare *getMutableShare() { assert(_share); return _share; } /* Get rid of this long term */
   virtual bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
   virtual void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
+
+  void release(void)
+  {
+    delete _share;
+    _share= NULL;
+  }
 };
+
 
 } /* namespace table */
 } /* namespace drizzled */

@@ -91,7 +91,8 @@ class DrizzleDumpField
       isUnsigned(false),
       isAutoIncrement(false),
       defaultIsNull(false),
-      convertDateTime(false)
+      convertDateTime(false),
+      rangeCheck(false)
     { }
 
     virtual ~DrizzleDumpField() { }
@@ -109,8 +110,10 @@ class DrizzleDumpField
     bool isAutoIncrement;
     bool defaultIsNull;
     bool convertDateTime;
+    bool rangeCheck;
     std::string defaultValue;
     std::string collation;
+    std::string comment;
 
     /* For enum type */
     std::string enumValues;
@@ -262,7 +265,7 @@ class DrizzleStringBuf : public std::streambuf
     void writeString(std::string &str)
     {
       if (not connection->queryNoResult(str))
-        throw 1;
+        throw std::exception();
     }
 
     void setConnection(DrizzleDumpConnection *conn) { connection= conn; }

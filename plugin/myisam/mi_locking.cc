@@ -68,7 +68,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       }
       if (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED))
       {
-	if (end_io_cache(&info->rec_cache))
+	if (info->rec_cache.end_io_cache())
 	{
 	  error=errno;
           mi_print_error(info->s, HA_ERR_CRASHED);

@@ -95,15 +95,7 @@ int Table::delete_table(bool free_share)
 
   if (free_share)
   {
-    if (getShare()->getType() == message::Table::STANDARD)
-    {
-      TableShare::release(getMutableShare());
-    }
-    else
-    {
-      delete getShare();
-    }
-    setShare(NULL);
+    release();
   }
 
   return error;
@@ -255,16 +247,6 @@ int set_zone(register int nr, int min_zone, int max_zone)
   return (nr);
 } /* set_zone */
 
-	/* Adjust number to next larger disk buffer */
-
-ulong next_io_size(register ulong pos)
-{
-  register ulong offset;
-  if ((offset= pos & (IO_SIZE-1)))
-    return pos-offset+IO_SIZE;
-  return pos;
-} /* next_io_size */
-
 
 /*
   Store an SQL quoted string.
@@ -353,7 +335,7 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
 
 bool check_db_name(Session *session, SchemaIdentifier &schema_identifier)
 {
-  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(), schema_identifier))
+  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
   {
     return false;
   }
@@ -539,8 +521,8 @@ void Table::mark_auto_increment_column()
     We must set bit in read set as update_auto_increment() is using the
     store() to check overflow of auto_increment values
   */
-  setReadSet(found_next_number_field->field_index);
-  setWriteSet(found_next_number_field->field_index);
+  setReadSet(found_next_number_field->position());
+  setWriteSet(found_next_number_field->position());
   if (getShare()->next_number_keypart)
     mark_columns_used_by_index_no_reset(getShare()->next_number_index);
 }
@@ -589,7 +571,7 @@ void Table::mark_columns_needed_for_delete()
     for (reg_field= field ; *reg_field ; reg_field++)
     {
       if ((*reg_field)->flags & PART_KEY_FLAG)
-        setReadSet((*reg_field)->field_index);
+        setReadSet((*reg_field)->position());
     }
   }
 }
@@ -638,7 +620,7 @@ void Table::mark_columns_needed_for_update()
     {
       /* Merge keys is all keys that had a column refered to in the query */
       if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
-        setReadSet((*reg_field)->field_index);
+        setReadSet((*reg_field)->position());
     }
   }
 
@@ -789,7 +771,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
-		 order_st *group, bool distinct, bool save_sum_fields,
+		 Order *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
@@ -823,7 +805,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     {
       group= 0;					// Can't use group key
     }
-    else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
+    else for (Order *tmp=group ; tmp ; tmp=tmp->next)
     {
       /*
         marker == 4 means two things:
@@ -983,7 +965,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
             */
             (*argp)->maybe_null=1;
           }
-          new_field->field_index= fieldnr++;
+          new_field->setPosition(fieldnr++);
 	}
       }
     }
@@ -1030,7 +1012,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	group_null_items++;
 	new_field->flags|= GROUP_FLAG;
       }
-      new_field->field_index= fieldnr++;
+      new_field->setPosition(fieldnr++);
       *(reg_field++)= new_field;
     }
     if (!--hidden_field_count)
@@ -1256,7 +1238,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->rec_per_key= 0;
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
     keyinfo->name= (char*) "group_key";
-    order_st *cur_group= group;
+    Order *cur_group= group;
     for (; cur_group ; cur_group= cur_group->next, key_part_info++)
     {
       Field *field=(*cur_group->item)->get_tmp_table_field();
@@ -1490,13 +1472,67 @@ bool Table::compare_record(Field **ptr)
   return false;
 }
 
-/* Return false if row hasn't changed */
-
-bool Table::compare_record()
+/**
+   True if the table's input and output record buffers are comparable using
+   compare_records(TABLE*).
+ */
+bool Table::records_are_comparable()
 {
+  return ((getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) == 0) ||
+          write_set->is_subset_of(*read_set));
+}
+
+/**
+   Compares the input and outbut record buffers of the table to see if a row
+   has changed. The algorithm iterates over updated columns and if they are
+   nullable compares NULL bits in the buffer before comparing actual
+   data. Special care must be taken to compare only the relevant NULL bits and
+   mask out all others as they may be undefined. The storage engine will not
+   and should not touch them.
+
+   @param table The table to evaluate.
+
+   @return true if row has changed.
+   @return false otherwise.
+*/
+bool Table::compare_records()
+{
+  if (getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) != 0)
+  {
+    /*
+      Storage engine may not have read all columns of the record.  Fields
+      (including NULL bits) not in the write_set may not have been read and
+      can therefore not be compared.
+    */
+    for (Field **ptr= this->field ; *ptr != NULL; ptr++)
+    {
+      Field *f= *ptr;
+      if (write_set->test(f->position()))
+      {
+        if (f->real_maybe_null())
+        {
+          unsigned char null_byte_index= f->null_ptr - record[0];
+
+          if (((record[0][null_byte_index]) & f->null_bit) !=
+              ((record[1][null_byte_index]) & f->null_bit))
+            return true;
+        }
+        if (f->cmp_binary_offset(getShare()->rec_buff_length))
+          return true;
+      }
+    }
+    return false;
+  }
+
+  /*
+    The storage engine has read all columns, so it's safe to compare all bits
+    including those not in the write_set. This is cheaper than the
+    field-by-field comparison done above.
+  */
   if (not getShare()->blob_fields + getShare()->hasVariableWidth())
+    // Fixed-size record: do bitwise comparison of the records
     return memcmp(this->getInsertRecord(), this->getUpdateRecord(), (size_t) getShare()->getRecordLength());
-  
+
   /* Compare null bits */
   if (memcmp(null_flags, null_flags + getShare()->rec_buff_length, getShare()->null_bytes))
     return true; /* Diff in NULL value */
@@ -1504,7 +1540,7 @@ bool Table::compare_record()
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {
-    if (isWriteSet((*ptr)->field_index) &&
+    if (isWriteSet((*ptr)->position()) &&
 	(*ptr)->cmp_binary_offset(getShare()->rec_buff_length))
       return true;
   }
@@ -1693,6 +1729,40 @@ bool Table::fill_item_list(List<Item> *item_list) const
       return true;
   }
   return false;
+}
+
+
+void Table::filesort_free_buffers(bool full)
+{
+  if (sort.record_pointers)
+  {
+    free((unsigned char*) sort.record_pointers);
+    sort.record_pointers=0;
+  }
+  if (full)
+  {
+    if (sort.sort_keys )
+    {
+      if ((unsigned char*) sort.sort_keys)
+        free((unsigned char*) sort.sort_keys);
+      sort.sort_keys= 0;
+    }
+    if (sort.buffpek)
+    {
+      if ((unsigned char*) sort.buffpek)
+        free((unsigned char*) sort.buffpek);
+      sort.buffpek= 0;
+      sort.buffpek_len= 0;
+    }
+  }
+
+  if (sort.addon_buf)
+  {
+    free((char *) sort.addon_buf);
+    free((char *) sort.addon_field);
+    sort.addon_buf=0;
+    sort.addon_field=0;
+  }
 }
 
 } /* namespace drizzled */

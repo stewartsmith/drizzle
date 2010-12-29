@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,17 +27,17 @@ namespace drizzled
 
 class Item_decimal_typecast :public Item_func
 {
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 public:
   Item_decimal_typecast(Item *a, int len, int dec) :Item_func(a)
   {
     decimals= dec;
-    max_length= my_decimal_precision_to_length(len, dec, unsigned_flag);
+    max_length= class_decimal_precision_to_length(len, dec, unsigned_flag);
   }
   String *val_str(String *str);
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal*);
+  type::Decimal *val_decimal(type::Decimal*);
   enum Item_result result_type () const { return DECIMAL_RESULT; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_DECIMAL; }
   void fix_length_and_dec() {};

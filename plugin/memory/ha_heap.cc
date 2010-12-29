@@ -17,7 +17,6 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
 #include "drizzled/plugin/daemon.h"
 
@@ -104,25 +103,25 @@ public:
   bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
   void doGetTableIdentifiers(CachedDirectory &directory,
                              const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
+                             TableIdentifier::vector &set_of_identifiers);
 };
 
 void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
                                        const SchemaIdentifier&,
-                                       TableIdentifiers&)
+                                       TableIdentifier::vector&)
 {
 }
 
 bool HeapEngine::doDoesTableExist(Session& session, const TableIdentifier &identifier)
 {
-  return session.doesTableMessageExist(identifier);
+  return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 int HeapEngine::doGetTableDefinition(Session &session,
                                      const TableIdentifier &identifier,
                                      message::Table &table_proto)
 {
-  if (session.getTableMessage(identifier, table_proto))
+  if (session.getMessageCache().getTableMessage(identifier, table_proto))
     return EEXIST;
 
   return ENOENT;
@@ -133,7 +132,7 @@ int HeapEngine::doGetTableDefinition(Session &session,
 */
 int HeapEngine::doDropTable(Session &session, const TableIdentifier &identifier)
 {
-  session.removeTableMessage(identifier);
+  session.getMessageCache().removeTableMessage(identifier);
 
   int error= heap_delete_table(identifier.getPath().c_str());
 
@@ -626,7 +625,7 @@ void ha_heap::drop_table(const char *)
 
 int HeapEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
-  session.renameTableMessage(from, to);
+  session.getMessageCache().renameTableMessage(from, to);
   return heap_rename(from.getPath().c_str(), to.getPath().c_str());
 }
 
@@ -667,7 +666,7 @@ int HeapEngine::doCreateTable(Session &session,
 
   if (error == 0)
   {
-    session.storeTableMessage(identifier, create_proto);
+    session.getMessageCache().storeTableMessage(identifier, create_proto);
   }
 
   return error;
@@ -770,10 +769,10 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
         auto_key= key+ 1;
 	auto_key_type= field->key_type();
       }
-      if ((uint)field->field_index + 1 > max_key_fieldnr)
+      if ((uint)field->position() + 1 > max_key_fieldnr)
       {
         /* Do not use seg->fieldnr as it's not reliable in case of temp tables */
-        max_key_fieldnr= field->field_index + 1;
+        max_key_fieldnr= field->position() + 1;
       }
     }
   }

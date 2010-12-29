@@ -25,7 +25,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/lock.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
@@ -129,7 +129,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
       }
       else
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
   }
@@ -170,8 +170,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
-    table->write_set->reset(table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->test(table->timestamp_field->position());
+    table->write_set->reset(table->timestamp_field->position());
   }
 
   /* Check the fields we are going to modify */
@@ -189,7 +189,7 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
 
     if (timestamp_mark)
     {
-      table->setWriteSet(table->timestamp_field->field_index);
+      table->setWriteSet(table->timestamp_field->position());
     }
   }
   return 0;
@@ -227,7 +227,7 @@ void upgrade_lock_type(Session *,
   end of dispatch_command().
 */
 
-bool mysql_insert(Session *session,TableList *table_list,
+bool insert_query(Session *session,TableList *table_list,
                   List<Item> &fields,
                   List<List_item> &values_list,
                   List<Item> &update_fields,
@@ -271,7 +271,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   values= its++;
   value_count= values->elements;
 
-  if (mysql_prepare_insert(session, table_list, table, fields, values,
+  if (prepare_insert(session, table_list, table, fields, values,
 			   update_fields, update_values, duplic, &unused_conds,
                            false,
                            (fields.elements || !value_count ||
@@ -520,7 +520,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   Check if table can be updated
 
   SYNOPSIS
-     mysql_prepare_insert_check_table()
+     prepare_insert_check_table()
      session		Thread handle
      table_list		Table list
      fields		List of fields to be updated
@@ -532,7 +532,7 @@ bool mysql_insert(Session *session,TableList *table_list,
      true  ERROR
 */
 
-static bool mysql_prepare_insert_check_table(Session *session, TableList *table_list,
+static bool prepare_insert_check_table(Session *session, TableList *table_list,
                                              List<Item> &,
                                              bool select_insert)
 {
@@ -560,7 +560,7 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
   Prepare items in INSERT statement
 
   SYNOPSIS
-    mysql_prepare_insert()
+    prepare_insert()
     session			Thread handler
     table_list	        Global/local table list
     table		Table to insert into (can be NULL if table should
@@ -587,7 +587,7 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
     true  error
 */
 
-bool mysql_prepare_insert(Session *session, TableList *table_list,
+bool prepare_insert(Session *session, TableList *table_list,
                           Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
@@ -632,7 +632,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
       return(true);
   }
 
-  if (mysql_prepare_insert_check_table(session, table_list, fields, select_insert))
+  if (prepare_insert_check_table(session, table_list, fields, select_insert))
     return(true);
 
 
@@ -846,9 +846,8 @@ int write_record(Session *session, Table *table,CopyInfo *info)
           table->cursor->adjust_next_insert_id_after_explicit_value(
             table->next_number_field->val_int());
         info->touched++;
-        if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
-            ! table->write_set->is_subset_of(*table->read_set)) ||
-            table->compare_record())
+
+        if (! table->records_are_comparable() || table->compare_records())
         {
           if ((error=table->cursor->updateRecord(table->getUpdateRecord(),
                                                 table->getInsertRecord())) &&
@@ -869,7 +868,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
           /*
             If ON DUP KEY UPDATE updates a row instead of inserting one, it's
             like a regular UPDATE statement: it should not affect the value of a
-            next SELECT LAST_INSERT_ID() or mysql_insert_id().
+            next SELECT LAST_INSERT_ID() or insert_id().
             Except if LAST_INSERT_ID(#) was in the INSERT query, which is
             handled separately by Session::arg_of_last_insert_id_function.
           */
@@ -1027,7 +1026,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
   make insert specific preparation and checks after opening tables
 
   SYNOPSIS
-    mysql_insert_select_prepare()
+    insert_select_prepare()
     session         thread handler
 
   RETURN
@@ -1035,7 +1034,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
     true  Error
 */
 
-bool mysql_insert_select_prepare(Session *session)
+bool insert_select_prepare(Session *session)
 {
   LEX *lex= session->lex;
   Select_Lex *select_lex= &lex->select_lex;
@@ -1045,7 +1044,7 @@ bool mysql_insert_select_prepare(Session *session)
     clause if table is VIEW
   */
 
-  if (mysql_prepare_insert(session, lex->query_tables,
+  if (prepare_insert(session, lex->query_tables,
                            lex->query_tables->table, lex->field_list, 0,
                            lex->update_list, lex->value_list,
                            lex->duplicates,
@@ -1276,16 +1275,7 @@ bool select_insert::send_data(List<Item> &values)
   store_values(values);
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   if (session->is_error())
-  {
-    /*
-     * If we fail mid-way through INSERT..SELECT, we need to remove any
-     * records that we added to the current Statement message. We can
-     * use session->row_count to know how many records we have already added.
-     */
-    TransactionServices &ts= TransactionServices::singleton();
-    ts.removeStatementRecords(session, (session->row_count - 1));
     return(1);
-  }
 
   // Release latches in case bulk insert takes a long time
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
@@ -1586,7 +1576,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   */
   Table *table= 0;
   {
-    if (not mysql_create_table_no_lock(session,
+    if (not create_table_no_lock(session,
 				       identifier,
 				       create_info,
 				       table_proto,
@@ -1608,7 +1598,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
       if (not identifier.isTmp())
       {
-        LOCK_open.lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
+        /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
+        boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
 
         if (create_table->table)
         {
@@ -1616,7 +1607,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
           if (concurrent_table->reopen_name_locked_table(create_table, session))
           {
-            quick_rm_table(*session, identifier);
+            plugin::StorageEngine::dropTable(*session, identifier);
           }
           else
           {
@@ -1625,10 +1616,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         }
         else
         {
-          quick_rm_table(*session, identifier);
+          plugin::StorageEngine::dropTable(*session, identifier);
         }
-
-        LOCK_open.unlock();
       }
       else
       {
@@ -1650,12 +1639,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   }
 
   table->reginfo.lock_type=TL_WRITE;
-  if (! ((*lock)= mysql_lock_tables(session, &table, 1,
-                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
+  if (! ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
   {
     if (*lock)
     {
-      mysql_unlock_tables(session, *lock);
+      session->unlockTables(*lock);
       *lock= 0;
     }
 
@@ -1716,7 +1704,9 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
-    table->setWriteSet((*f)->field_index);
+  {
+    table->setWriteSet((*f)->position());
+  }
 
   /* Don't set timestamp if used */
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
@@ -1787,7 +1777,7 @@ bool select_create::send_eof()
     table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     if (m_plock)
     {
-      mysql_unlock_tables(session, *m_plock);
+      session->unlockTables(*m_plock);
       *m_plock= NULL;
       m_plock= NULL;
     }
@@ -1817,7 +1807,7 @@ void select_create::abort()
 
   if (m_plock)
   {
-    mysql_unlock_tables(session, *m_plock);
+    session->unlockTables(*m_plock);
     *m_plock= NULL;
     m_plock= NULL;
   }

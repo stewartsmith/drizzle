@@ -4,9 +4,36 @@
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
  * All rights reserved.
  *
- * Use and distribution licensed under the BSD license.  See
- * the COPYING.BSD file in the root source directory for full text.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *
+ *     * The names of its contributors may not be used to endorse or
+ * promote products derived from this software without specific prior
+ * written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
+
 
 #include <errno.h>
 #include <stdio.h>
@@ -45,9 +72,9 @@ int main(int argc, char *argv[])
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
   drizzle_return_t ret;
   drizzle_st drizzle;
-  drizzle_con_st con_listen;
-  drizzle_con_st server;
-  drizzle_con_st client;
+  drizzle_con_st *con_listen= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
+  drizzle_con_st *server= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
+  drizzle_con_st *client= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
   drizzle_result_st server_result;
   drizzle_result_st client_result;
   drizzle_column_st column;
@@ -85,7 +112,27 @@ int main(int argc, char *argv[])
       break;
 
     case 'v':
-      verbose++;
+      switch(verbose)
+      {
+      case DRIZZLE_VERBOSE_NEVER:
+        verbose= DRIZZLE_VERBOSE_FATAL;
+        break;
+      case DRIZZLE_VERBOSE_FATAL:
+        verbose= DRIZZLE_VERBOSE_ERROR;
+        break;
+      case DRIZZLE_VERBOSE_ERROR:
+        verbose= DRIZZLE_VERBOSE_INFO;
+        break;
+      case DRIZZLE_VERBOSE_INFO:
+        verbose= DRIZZLE_VERBOSE_DEBUG;
+        break;
+      case DRIZZLE_VERBOSE_DEBUG:
+        verbose= DRIZZLE_VERBOSE_CRAZY;
+        break;
+      case DRIZZLE_VERBOSE_CRAZY:
+      case DRIZZLE_VERBOSE_MAX:
+        break;
+      }
       break;
 
     default:
@@ -112,19 +159,19 @@ int main(int argc, char *argv[])
   drizzle_add_options(&drizzle, DRIZZLE_FREE_OBJECTS);
   drizzle_set_verbose(&drizzle, verbose);
 
-  if (drizzle_con_create(&drizzle, &con_listen) == NULL)
+  if (drizzle_con_create(&drizzle, con_listen) == NULL)
   {
     printf("drizzle_con_create:NULL\n");
     return 1;
   }
 
-  drizzle_con_add_options(&con_listen, DRIZZLE_CON_LISTEN);
-  drizzle_con_set_tcp(&con_listen, server_host, server_port);
+  drizzle_con_add_options(con_listen, DRIZZLE_CON_LISTEN);
+  drizzle_con_set_tcp(con_listen, server_host, server_port);
 
   if (server_mysql)
-    drizzle_con_add_options(&con_listen, DRIZZLE_CON_MYSQL);
+    drizzle_con_add_options(con_listen, DRIZZLE_CON_MYSQL);
 
-  if (drizzle_con_listen(&con_listen) != DRIZZLE_RETURN_OK)
+  if (drizzle_con_listen(con_listen) != DRIZZLE_RETURN_OK)
   {
     printf("drizzle_con_listen:%s\n", drizzle_error(&drizzle));
     return 1;
@@ -132,36 +179,36 @@ int main(int argc, char *argv[])
 
   while (1)
   {
-    (void)drizzle_con_accept(&drizzle, &server, &ret);
+    (void)drizzle_con_accept(&drizzle, server, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
       printf("drizzle_con_accept:%s\n", drizzle_error(&drizzle));
       return 1;
     }
 
-    if (drizzle_con_create(&drizzle, &client) == NULL)
+    if (drizzle_con_create(&drizzle, client) == NULL)
     {
       printf("drizzle_con_create:NULL\n");
       return 1;
     }
 
-    drizzle_con_add_options(&client,
+    drizzle_con_add_options(client,
                             DRIZZLE_CON_RAW_PACKET | DRIZZLE_CON_RAW_SCRAMBLE);
     if (client_mysql)
-      drizzle_con_add_options(&client, DRIZZLE_CON_MYSQL);
-    drizzle_con_set_tcp(&client, client_host, client_port);
+      drizzle_con_add_options(client, DRIZZLE_CON_MYSQL);
+    drizzle_con_set_tcp(client, client_host, client_port);
 
-    ret= drizzle_con_connect(&client);
+    ret= drizzle_con_connect(client);
     if (ret != DRIZZLE_RETURN_OK)
     {
       printf("drizzle_con_connect:%s\n", drizzle_error(&drizzle));
       return 1;
     }
 
-    proxy(&drizzle, &server, &client, &server_result, &client_result, &column);
+    proxy(&drizzle, server, client, &server_result, &client_result, &column);
 
-    drizzle_con_free(&client);
-    drizzle_con_free(&server);
+    drizzle_con_free(client);
+    drizzle_con_free(server);
 
     if (count > 0)
     {
@@ -172,8 +219,12 @@ int main(int argc, char *argv[])
     }
   }
 
-  drizzle_con_free(&con_listen);
+  drizzle_con_free(con_listen);
   drizzle_free(&drizzle);
+
+  free(con_listen);
+  free(server);
+  free(client);
 
   return 0;
 }
@@ -184,7 +235,7 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
 {
   drizzle_return_t ret;
   drizzle_command_t command;
-  const uint8_t *data;
+  uint8_t *data;
   size_t offset;
   size_t size;
   size_t total;
@@ -237,7 +288,7 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
 
     while (1)
     {
-      data= drizzle_con_command_read(server, &command, &offset, &size, &total,
+      data= (uint8_t *)drizzle_con_command_read(server, &command, &offset, &size, &total,
                                      &ret);
       if (ret == DRIZZLE_RETURN_LOST_CONNECTION)
         return;

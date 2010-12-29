@@ -1,0 +1,23 @@
+# Test creating a barrier with a number
+connect (con1,localhost,root,,);
+connect (con4,localhost,root,,);
+
+connection con1;
+set @signal_barrier= "signal_barrier";
+
+connection con4;
+set @signal_barrier= "signal_barrier";
+SELECT create_barrier(@signal_barrier);
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAITER_LIMIT from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+
+connection con1;
+SELECT @test_generation:=GENERATION from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@signal_barrier;
+
+connection con4;
+SELECT SIGNAL(@signal_barrier);
+
+connection con1;
+SELECT wait(@signal_barrier, @test_generation);
+
+connection con4;
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAITER_LIMIT from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;

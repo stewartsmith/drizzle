@@ -4,6 +4,22 @@
 use utf8;
 
 #
+# Copyright (C) 2008
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
+#
+#
 ##############################################################################
 #
 #  drizzle-test-run.pl
@@ -140,6 +156,7 @@ our $opt_repeat_test= 1;
 
 our $exe_master_drizzled;
 our $exe_drizzle;
+our $exe_drizzleadmin;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
@@ -212,6 +229,7 @@ our $clusters;
 our $opt_master_myport;
 our $opt_slave_myport;
 our $opt_memc_myport;
+our $opt_pbms_myport;
 our $opt_record;
 my $opt_report_features;
 our $opt_check_testcases;
@@ -489,6 +507,7 @@ sub command_line_setup () {
              'master_port=i'            => \$opt_master_myport,
              'slave_port=i'             => \$opt_slave_myport,
              'memc_port=i'              => \$opt_memc_myport,
+	     'pbms_port=i'              => \$opt_pbms_myport,
 	     'dtr-build-thread=i'       => \$opt_dtr_build_thread,
 
              # Test case authoring
@@ -940,17 +959,6 @@ sub command_line_setup () {
     }
   }
 
-  # On QNX, /tmp/dir/master.sock and /tmp/dir//master.sock seem to be
-  # considered different, so avoid the extra slash (/) in the socket
-  # paths.
-  my $sockdir = $opt_tmpdir;
-  $sockdir =~ s|/+$||;
-
-  # On some operating systems, there is a limit to the length of a
-  # UNIX domain socket's path far below PATH_MAX, so try to avoid long
-  # socket path names.
-  $sockdir = tempdir(CLEANUP => 0) if ( length($sockdir) >= 70 );
-
   $master->[0]=
   {
    pid            => 0,
@@ -959,7 +967,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/master-data",
    path_myerr     => "$opt_vardir/log/master.err",
    path_pid       => "$opt_vardir/run/master.pid",
-   path_sock      => "$sockdir/master.sock",
+   path_sock      => "$opt_vardir/master.sock",
    port           =>  $opt_master_myport,
    secondary_port =>  $opt_master_myport + $secondary_port_offset,
    start_timeout  =>  400, # enough time create innodb tables
@@ -975,7 +983,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/master1-data",
    path_myerr     => "$opt_vardir/log/master1.err",
    path_pid       => "$opt_vardir/run/master1.pid",
-   path_sock      => "$sockdir/master1.sock",
+   path_sock      => "$opt_vardir/master1.sock",
    port           => $opt_master_myport + 1,
    secondary_port => $opt_master_myport + 1 + $secondary_port_offset,
    start_timeout  => 400, # enough time create innodb tables
@@ -991,7 +999,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/slave-data",
    path_myerr     => "$opt_vardir/log/slave.err",
    path_pid       => "$opt_vardir/run/slave.pid",
-   path_sock      => "$sockdir/slave.sock",
+   path_sock      => "$opt_vardir/slave.sock",
    port           => $opt_slave_myport,
    secondary_port => $opt_slave_myport + $secondary_port_offset,
    start_timeout  => 400,
@@ -1007,7 +1015,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/slave1-data",
    path_myerr     => "$opt_vardir/log/slave1.err",
    path_pid       => "$opt_vardir/run/slave1.pid",
-   path_sock      => "$sockdir/slave1.sock",
+   path_sock      => "$opt_vardir/slave1.sock",
    port           => $opt_slave_myport + 1,
    secondary_port => $opt_slave_myport + 1 + $secondary_port_offset,
    start_timeout  => 300,
@@ -1023,7 +1031,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/slave2-data",
    path_myerr     => "$opt_vardir/log/slave2.err",
    path_pid       => "$opt_vardir/run/slave2.pid",
-   path_sock      => "$sockdir/slave2.sock",
+   path_sock      => "$opt_vardir/slave2.sock",
    port           => $opt_slave_myport + 2,
    secondary_port => $opt_slave_myport + 2 + $secondary_port_offset,
    start_timeout  => 300,
@@ -1132,6 +1140,7 @@ sub set_dtr_build_thread_ports($) {
 
   $opt_slave_myport=          gimme_a_good_port($opt_master_myport + 2);  # and 3 4
   $opt_memc_myport= gimme_a_good_port($opt_master_myport + 10);
+  $opt_pbms_myport= gimme_a_good_port($opt_master_myport + 11);
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
@@ -1258,6 +1267,7 @@ sub executable_setup () {
   $exe_drizzledump= dtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= dtr_exe_exists("$path_client_bindir/drizzleimport");
   $exe_drizzle=          dtr_exe_exists("$path_client_bindir/drizzle");
+  $exe_drizzleadmin= dtr_exe_exists("$path_client_bindir/drizzleadmin");
 
   if (!$opt_extern)
   {
@@ -1312,6 +1322,12 @@ sub generate_cmdline_drizzle ($) {
     " -uroot --port=$drizzled->{'port'} ";
 }
 
+sub generate_cmdline_drizzleadmin ($) {
+  my($drizzled) = @_;
+  return
+    dtr_native_path($exe_drizzleadmin) .
+    " -uroot --port=$drizzled->{'port'} ";
+}
 
 ##############################################################################
 #
@@ -1454,6 +1470,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
+  $ENV{'PBMS_PORT'}=            $opt_pbms_myport;
   $ENV{'DRIZZLE_TCP_PORT'}=     $drizzled_variables{'drizzle-protocol.port'};
 
   $ENV{'DTR_BUILD_THREAD'}=      $opt_dtr_build_thread;
@@ -1464,6 +1481,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
   # ----------------------------------------------------
+  my $cmdline_drizzleadmin= generate_cmdline_drizzleadmin($master->[0]);
   my $cmdline_drizzledump= generate_cmdline_drizzledump($master->[0]);
   my $cmdline_drizzledumpslave= generate_cmdline_drizzledump($slave->[0]);
   my $cmdline_drizzledump_secondary= dtr_native_path($exe_drizzledump) .
@@ -1479,6 +1497,7 @@ sub environment_setup () {
     $cmdline_drizzledump_secondary .=
       " --debug=d:t:A,$path_vardir_trace/log/drizzledump-drizzle.trace";
   }
+  $ENV{'DRIZZLE_ADMIN'}= $cmdline_drizzleadmin;
   $ENV{'DRIZZLE_DUMP'}= $cmdline_drizzledump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_drizzledumpslave;
   $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_drizzledump_secondary;
@@ -1609,6 +1628,7 @@ sub environment_setup () {
     print "Using SLAVE_MYPORT1         = $ENV{SLAVE_MYPORT1}\n";
     print "Using SLAVE_MYPORT2         = $ENV{SLAVE_MYPORT2}\n";
     print "Using MC_PORT               = $ENV{MC_PORT}\n";
+    print "Using PBMS_PORT             = $ENV{PBMS_PORT}\n";
   }
 
   # Create an environment variable to make it possible
@@ -2527,6 +2547,9 @@ sub drizzled_arguments ($$$$) {
 
   dtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $drizzled->{'path_myddir'});
+
+  dtr_add_arg($args, "%s--mysql-unix-socket-protocol.path=%s", $prefix,
+              $drizzled->{'path_sock'});
 
   # Check if "extra_opt" contains --skip-log-bin
   if ( $drizzled->{'type'} eq 'master' )

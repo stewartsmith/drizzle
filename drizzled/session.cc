@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 #include "config.h"
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include <sys/stat.h>
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
@@ -41,12 +41,15 @@
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
+
+#include "drizzled/identifier.h"
 
 #include "drizzled/table/instance.h"
 
@@ -57,10 +60,14 @@
 
 #include "drizzled/util/functors.h"
 
+#include "drizzled/display.h"
+
 #include <fcntl.h>
 #include <algorithm>
 #include <climits>
 #include <boost/filesystem.hpp>
+
+#include "drizzled/util/backtrace.h"
 
 using namespace std;
 
@@ -81,7 +88,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
   return length == other.length &&
          field_name.length == other.field_name.length &&
-         !strcmp(field_name.str, other.field_name.str);
+    !my_strcasecmp(system_charset_info, field_name.str, other.field_name.str);
 }
 
 Open_tables_state::Open_tables_state(uint64_t version_arg) :
@@ -94,7 +101,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg) :
 /*
   The following functions form part of the C plugin API
 */
-int mysql_tmpfile(const char *prefix)
+int tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
@@ -157,19 +164,26 @@ enum_tx_isolation session_tx_isolation(const Session *session)
 Session::Session(plugin::Client *client_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
+  xa_id(0),
   lex(&main_lex),
+  query(new std::string),
+  _schema(new std::string("")),
   catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
   lock_id(&main_lock_id),
+  thread_stack(NULL),
+  security_ctx(identifier::User::make_shared()),
   user_time(0),
   ha_data(plugin::num_trx_monitored_objects),
+  concurrent_execute_allowed(true),
   arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
-  global_read_lock(0),
+  _global_read_lock(NONE),
+  _killed(NOT_KILLED),
   some_tables_deleted(false),
   no_errors(false),
   password(false),
@@ -185,7 +199,6 @@ Session::Session(plugin::Client *client_arg) :
   session_event_observers(NULL),
   use_usage(false)
 {
-  memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
 
   /*
@@ -194,9 +207,7 @@ Session::Session(plugin::Client *client_arg) :
     will be re-initialized in init_for_queries().
   */
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
-  thread_stack= NULL;
   count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-  killed= NOT_KILLED;
   col_access= 0;
   tmp_table= 0;
   used_tables= 0;
@@ -331,7 +342,7 @@ void Session::cleanup(void)
 {
   assert(cleanup_done == false);
 
-  killed= KILL_CONNECTION;
+  setKilled(KILL_CONNECTION);
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
   if (transaction.xid_state.xa_state == XA_PREPARED)
   {
@@ -357,7 +368,9 @@ void Session::cleanup(void)
   close_temporary_tables();
 
   if (global_read_lock)
-    unlock_global_read_lock(this);
+  {
+    unlockGlobalReadLock();
+  }
 
   cleanup_done= true;
 }
@@ -366,19 +379,26 @@ Session::~Session()
 {
   this->checkSentry();
 
-  if (client->isConnected())
+  if (client and client->isConnected())
   {
+    assert(security_ctx);
     if (global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),internal::my_progname,
-                      thread_id,
-                      (getSecurityContext().getUser().c_str() ?
-                       getSecurityContext().getUser().c_str() : ""));
-    disconnect(0, false);
+    {
+      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),
+                    internal::my_progname,
+                    thread_id,
+                    security_ctx->username().c_str());
+    }
+
+    disconnect();
   }
 
   /* Close connection */
-  client->close();
-  delete client;
+  if (client)
+  {
+    client->close();
+    delete client;
+  }
 
   if (cleanup_done == false)
     cleanup();
@@ -402,22 +422,29 @@ Session::~Session()
     delete (*iter).second;
   }
   life_properties.clear();
-
-  /* Ensure that no one is using Session */
-  LOCK_delete.unlock();
 }
 
-void Session::awake(Session::killed_state state_to_set)
+void Session::setClient(plugin::Client *client_arg)
 {
-  this->checkSentry();
-  safe_mutex_assert_owner(&LOCK_delete);
+  client= client_arg;
+  client->setSession(this);
+}
 
-  killed= state_to_set;
+void Session::awake(Session::killed_state_t state_to_set)
+{
+  if ((state_to_set == Session::KILL_QUERY) and (command == COM_SLEEP))
+    return;
+
+  this->checkSentry();
+
+  setKilled(state_to_set);
+  scheduler->killSession(this);
+
   if (state_to_set != Session::KILL_QUERY)
   {
-    scheduler->killSession(this);
     DRIZZLE_CONNECTION_DONE(thread_id);
   }
+
   if (mysys_var)
   {
     boost_unique_lock_t scopedLock(mysys_var->mutex);
@@ -513,7 +540,7 @@ bool Session::initGlobals()
 {
   if (storeGlobals())
   {
-    disconnect(ER_OUT_OF_RESOURCES, true);
+    disconnect(ER_OUT_OF_RESOURCES);
     status_var.aborted_connects++;
     return true;
   }
@@ -524,25 +551,25 @@ void Session::run()
 {
   if (initGlobals() || authenticate())
   {
-    disconnect(0, true);
+    disconnect();
     return;
   }
 
   prepareForQueries();
 
-  while (! client->haveError() && killed != KILL_CONNECTION)
+  while (not client->haveError() && getKilled() != KILL_CONNECTION)
   {
-    if (! executeStatement())
+    if (not executeStatement())
       break;
   }
 
-  disconnect(0, true);
+  disconnect();
 }
 
-bool Session::schedule()
+bool Session::schedule(Session::shared_ptr &arg)
 {
-  scheduler= plugin::Scheduler::getScheduler();
-  assert(scheduler);
+  arg->scheduler= plugin::Scheduler::getScheduler();
+  assert(arg->scheduler);
 
   connection_count.increment();
 
@@ -552,41 +579,43 @@ bool Session::schedule()
   }
 
   current_global_counters.connections++;
-  thread_id= variables.pseudo_thread_id= global_thread_id++;
+  arg->thread_id= arg->variables.pseudo_thread_id= global_thread_id++;
 
-  {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    getSessionList().push_back(this);
-  }
+  session::Cache::singleton().insert(arg);
 
-  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  if (unlikely(plugin::EventObserver::connectSession(*arg)))
   {
     // We should do something about an error...
   }
 
-  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  if (plugin::Scheduler::getScheduler()->addSession(arg))
   {
-    // We should do something about an error...
-  }
-
-  if (scheduler->addSession(this))
-  {
-    DRIZZLE_CONNECTION_START(thread_id);
+    DRIZZLE_CONNECTION_START(arg->getSessionId());
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
-    killed= Session::KILL_CONNECTION;
+    arg->setKilled(Session::KILL_CONNECTION);
 
-    status_var.aborted_connects++;
+    arg->status_var.aborted_connects++;
 
     /* Can't use my_error() since store_globals has not been called. */
     /* TODO replace will better error message */
     snprintf(error_message_buff, sizeof(error_message_buff),
              ER(ER_CANT_CREATE_THREAD), 1);
-    client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+    arg->client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+
     return true;
   }
 
   return false;
+}
+
+
+/*
+  Is this session viewable by the current user?
+*/
+bool Session::isViewable(identifier::User::const_reference user_arg) const
+{
+  return plugin::Authorization::isAuthorized(user_arg, this, false);
 }
 
 
@@ -617,7 +646,7 @@ void Session::exit_cond(const char* old_msg)
 
 bool Session::authenticate()
 {
-  lex_start(this);
+  lex->start(this);
   if (client->authenticate())
     return false;
 
@@ -630,8 +659,7 @@ bool Session::checkUser(const std::string &passwd_str,
                         const std::string &in_db)
 {
   bool is_authenticated=
-    plugin::Authentication::isAuthenticated(getSecurityContext(),
-                                            passwd_str);
+    plugin::Authentication::isAuthenticated(user(), passwd_str);
 
   if (is_authenticated != true)
   {
@@ -644,9 +672,9 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     SchemaIdentifier identifier(in_db);
-    if (mysql_change_db(this, identifier))
+    if (change_db(this, identifier))
     {
-      /* mysql_change_db() has pushed the error message. */
+      /* change_db() has pushed the error message. */
       return false;
     }
   }
@@ -673,21 +701,23 @@ bool Session::executeStatement()
   main_da.reset_diagnostics_area();
 
   if (client->readCommand(&l_packet, &packet_length) == false)
+  {
     return false;
+  }
 
-  if (killed == KILL_CONNECTION)
+  if (getKilled() == KILL_CONNECTION)
     return false;
 
   if (packet_length == 0)
     return true;
 
-  l_command= (enum enum_server_command) (unsigned char) l_packet[0];
+  l_command= static_cast<enum_server_command>(l_packet[0]);
 
   if (command >= COM_END)
     command= COM_END;                           // Wrong command
 
   assert(packet_length);
-  return ! dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
+  return not dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
 }
 
 bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
@@ -699,14 +729,20 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
   const char *pos= in_packet + in_packet_length; /* Point at end null */
-  while (in_packet_length > 0 &&
-	 (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
+  while (in_packet_length > 0 && (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
   {
     pos--;
     in_packet_length--;
   }
 
-  query.assign(in_packet, in_packet + in_packet_length);
+  std::string *new_query= new std::string(in_packet, in_packet + in_packet_length);
+  // We can not be entirely sure _schema has a value
+  if (_schema)
+  {
+    plugin::QueryRewriter::rewriteQuery(*_schema, *new_query);
+  }
+  query.reset(new_query);
+  _state.reset(new State(in_packet, in_packet_length));
 
   return true;
 }
@@ -761,9 +797,13 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
   }
 
   if (result == false)
+  {
     my_error(killed_errno(), MYF(0));
+  }
   else if ((result == true) && do_release)
-    killed= Session::KILL_CONNECTION;
+  {
+    setKilled(Session::KILL_CONNECTION);
+  }
 
   return result;
 }
@@ -922,7 +962,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   my_message(errcode, err, MYF(0));
   if (file > 0)
   {
-    (void) end_io_cache(cache);
+    (void) cache->end_io_cache();
     (void) internal::my_close(file, MYF(0));
     (void) internal::my_delete(path.file_string().c_str(), MYF(0));		// Delete file on error
     file= -1;
@@ -932,7 +972,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 
 bool select_to_file::send_eof()
 {
-  int error= test(end_io_cache(cache));
+  int error= test(cache->end_io_cache());
   if (internal::my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
@@ -954,7 +994,7 @@ void select_to_file::cleanup()
   /* In case of error send_eof() may be not called: close the file here. */
   if (file >= 0)
   {
-    (void) end_io_cache(cache);
+    (void) cache->end_io_cache();
     (void) internal::my_close(file, MYF(0));
     file= -1;
   }
@@ -1013,7 +1053,8 @@ static int create_file(Session *session,
   if (not to_file.has_root_directory())
   {
     target_path= fs::system_complete(getDataHomeCatalog());
-    if (not session->db.empty())
+    util::string::const_shared_ptr schema(session->schema());
+    if (schema and not schema->empty())
     {
       int count_elements= 0;
       for (fs::path::iterator iter= to_file.begin();
@@ -1023,7 +1064,7 @@ static int create_file(Session *session,
 
       if (count_elements == 1)
       {
-        target_path /= session->db;
+        target_path /= *schema;
       }
     }
     target_path /= to_file;
@@ -1052,7 +1093,7 @@ static int create_file(Session *session,
   if ((file= internal::my_create(target_path.file_string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
-  if (init_io_cache(cache, file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
+  if (cache->init_io_cache(file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     internal::my_close(file, MYF(0));
     internal::my_delete(target_path.file_string().c_str(), MYF(0));  // Delete file on error, it was just created
@@ -1081,9 +1122,10 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
     {
       if (item->max_length >= MAX_BLOB_WIDTH)
       {
-	blob_flag=1;
-	break;
+        blob_flag=1;
+        break;
       }
+
       if (item->result_type() == STRING_RESULT)
         string_results= true;
       else
@@ -1469,15 +1511,15 @@ bool select_max_min_finder_subselect::cmp_int()
 bool select_max_min_finder_subselect::cmp_decimal()
 {
   Item *maxmin= ((Item_singlerow_subselect *)item)->element_index(0);
-  my_decimal cval, *cvalue= cache->val_decimal(&cval);
-  my_decimal mval, *mvalue= maxmin->val_decimal(&mval);
+  type::Decimal cval, *cvalue= cache->val_decimal(&cval);
+  type::Decimal mval, *mvalue= maxmin->val_decimal(&mval);
   if (fmax)
     return (cache->null_value && !maxmin->null_value) ||
       (!cache->null_value && !maxmin->null_value &&
-       my_decimal_cmp(cvalue, mvalue) > 0) ;
+       class_decimal_cmp(cvalue, mvalue) > 0) ;
   return (maxmin->null_value && !cache->null_value) ||
     (!cache->null_value && !maxmin->null_value &&
-     my_decimal_cmp(cvalue,mvalue) < 0);
+     class_decimal_cmp(cvalue,mvalue) < 0);
 }
 
 bool select_max_min_finder_subselect::cmp_str()
@@ -1519,20 +1561,29 @@ bool select_exists_subselect::send_data(List<Item> &)
 void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
-  lex_end(lex);
+  lex->end();
   query_cache_key= ""; // reset the cache key
   resetResultsetMessage();
 }
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
-  if (db.empty())
+  assert(_schema);
+  if (_schema and _schema->empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= strmake(db.c_str(), db.length());
-  *p_db_length= db.length();
+  else if (not _schema)
+  {
+    my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+    return true;
+  }
+  assert(_schema);
+
+  *p_db= strmake(_schema->c_str(), _schema->size());
+  *p_db_length= _schema->size();
+
   return false;
 }
 
@@ -1572,36 +1623,19 @@ void Session::set_status_var_init()
 }
 
 
-bool Session::set_db(const std::string &new_db)
+void Session::set_db(const std::string &new_db)
 {
   /* Do not reallocate memory if current chunk is big enough. */
   if (new_db.length())
-    db= new_db;
+  {
+    _schema.reset(new std::string(new_db));
+  }
   else
-    db.clear();
-
-  return false;
+  {
+    _schema.reset(new std::string(""));
+  }
 }
 
-
-
-
-/**
-  Check the killed state of a user thread
-  @param session  user thread
-  @retval 0 the user thread is active
-  @retval 1 the user thread has been killed
-*/
-int session_killed(const Session *session)
-{
-  return(session->killed);
-}
-
-
-const struct charset_info_st *session_charset(Session *session)
-{
-  return(session->charset());
-}
 
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
@@ -1618,47 +1652,41 @@ void mark_transaction_to_rollback(Session *session, bool all)
   }
 }
 
-void Session::disconnect(uint32_t errcode, bool should_lock)
+void Session::disconnect(enum drizzled_error_code errcode)
 {
   /* Allow any plugins to cleanup their session variables */
   plugin_sessionvar_cleanup(this);
 
   /* If necessary, log any aborted or unauthorized connections */
-  if (killed || client->wasAborted())
+  if (getKilled() || client->wasAborted())
   {
     status_var.aborted_threads++;
   }
 
   if (client->wasAborted())
   {
-    if (! killed && variables.log_warnings > 1)
+    if (not getKilled() && variables.log_warnings > 1)
     {
-      SecurityContext *sctx= &security_ctx;
-
       errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
-                  , (db.empty() ? "unconnected" : db.c_str())
-                  , sctx->getUser().empty() == false ? sctx->getUser().c_str() : "unauthenticated"
-                  , sctx->getIp().c_str()
+                  , (_schema->empty() ? "unconnected" : _schema->c_str())
+                  , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
+                  , security_ctx->address().c_str()
                   , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
     }
   }
 
-  /* Close out our connection to the client */
-  if (should_lock)
-    LOCK_thread_count.lock();
-  killed= Session::KILL_CONNECTION;
+  setKilled(Session::KILL_CONNECTION);
+
   if (client->isConnected())
   {
-    if (errcode)
+    if (errcode != EE_OK)
     {
       /*my_error(errcode, ER(errcode));*/
       client->sendError(errcode, ER(errcode));
     }
     client->close();
   }
-  if (should_lock)
-    (void) LOCK_thread_count.unlock();
 }
 
 void Session::reset_for_next_command()
@@ -1686,7 +1714,7 @@ void Session::reset_for_next_command()
   Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
 */
 
-void Session::close_temporary_tables()
+void Open_tables_state::close_temporary_tables()
 {
   Table *table;
   Table *tmp_next;
@@ -1706,7 +1734,7 @@ void Session::close_temporary_tables()
   unlink from session->temporary tables and close temporary table
 */
 
-void Session::close_temporary_table(Table *table)
+void Open_tables_state::close_temporary_table(Table *table)
 {
   if (table->getPrev())
   {
@@ -1742,7 +1770,7 @@ void Session::close_temporary_table(Table *table)
   If this is needed, use close_temporary_table()
 */
 
-void Session::nukeTable(Table *table)
+void Open_tables_state::nukeTable(Table *table)
 {
   plugin::StorageEngine *table_type= table->getShare()->db_type();
 
@@ -1816,11 +1844,11 @@ void Session::setVariable(const std::string &name, const std::string &value)
                               DERIVATION_IMPLICIT, false);
 }
 
-void Session::mark_temp_tables_as_free_for_reuse()
+void Open_tables_state::mark_temp_tables_as_free_for_reuse()
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->query_id == query_id)
+    if (table->query_id == getQueryId())
     {
       table->query_id= 0;
       table->cursor->ha_reset();
@@ -1832,7 +1860,7 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 {
   for (; table ; table= table->getNext())
   {
-    if (table->query_id == query_id)
+    if (table->query_id == getQueryId())
     {
       table->query_id= 0;
       table->cursor->ha_reset();
@@ -1851,8 +1879,7 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 */
 void Session::close_thread_tables()
 {
-  if (derived_tables)
-    derived_tables= NULL; // They should all be invalid by this point
+  clearDerivedTables();
 
   /*
     Mark all temporary tables used by this statement as free for reuse.
@@ -1885,13 +1912,13 @@ void Session::close_thread_tables()
       handled either before writing a query log event (inside
       binlog_query()) or when preparing a pending event.
      */
-    mysql_unlock_tables(this, lock);
+    unlockTables(lock);
     lock= 0;
   }
   /*
-    Note that we need to hold LOCK_open while changing the
+    Note that we need to hold table::Cache::singleton().mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -1929,9 +1956,9 @@ bool Session::openTablesLock(TableList *tables)
       return true;
     close_tables_for_reopen(&tables);
   }
-  if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
+  if ((handle_derived(lex, &derived_prepare) ||
        (
-        mysql_handle_derived(lex, &mysql_derived_filling))))
+        handle_derived(lex, &derived_filling))))
     return true;
 
   return false;
@@ -1943,14 +1970,16 @@ bool Session::openTablesLock(TableList *tables)
   might be an issue (lame engines).
 */
 
-bool Session::rm_temporary_table(TableIdentifier &identifier, bool best_effort)
+bool Open_tables_state::rm_temporary_table(const TableIdentifier &identifier, bool best_effort)
 {
-  if (plugin::StorageEngine::dropTable(*this, identifier))
+  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), identifier))
   {
     if (not best_effort)
     {
+      std::string path;
+      identifier.getSQLPath(path);
       errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                    identifier.getSQLPath().c_str(), errno);
+                    path.c_str(), errno);
     }
 
     return true;
@@ -1959,14 +1988,16 @@ bool Session::rm_temporary_table(TableIdentifier &identifier, bool best_effort)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
+bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const TableIdentifier &identifier)
 {
   assert(base);
 
-  if (plugin::StorageEngine::dropTable(*this, *base, identifier))
+  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), *base, identifier))
   {
+    std::string path;
+    identifier.getSQLPath(path);
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getSQLPath().c_str(), errno);
+                  path.c_str(), errno);
 
     return true;
   }
@@ -1978,7 +2009,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &i
   @note this will be removed, I am looking through Hudson to see if it is finding
   any tables that are missed during cleanup.
 */
-void Session::dumpTemporaryTableNames(const char *foo)
+void Open_tables_state::dumpTemporaryTableNames(const char *foo)
 {
   Table *table;
 
@@ -2002,18 +2033,20 @@ void Session::dumpTemporaryTableNames(const char *foo)
       cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
     }
     else
+    {
       cerr << "\tTabl;e Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
+    }
   }
 }
 
-bool Session::storeTableMessage(const TableIdentifier &identifier, message::Table &table_message)
+bool Session::TableMessages::storeTableMessage(const TableIdentifier &identifier, message::Table &table_message)
 {
   table_message_cache.insert(make_pair(identifier.getPath(), table_message));
 
   return true;
 }
 
-bool Session::removeTableMessage(const TableIdentifier &identifier)
+bool Session::TableMessages::removeTableMessage(const TableIdentifier &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2027,7 +2060,7 @@ bool Session::removeTableMessage(const TableIdentifier &identifier)
   return true;
 }
 
-bool Session::getTableMessage(const TableIdentifier &identifier, message::Table &table_message)
+bool Session::TableMessages::getTableMessage(const TableIdentifier &identifier, message::Table &table_message)
 {
   TableMessageCache::iterator iter;
 
@@ -2041,7 +2074,7 @@ bool Session::getTableMessage(const TableIdentifier &identifier, message::Table 
   return true;
 }
 
-bool Session::doesTableMessageExist(const TableIdentifier &identifier)
+bool Session::TableMessages::doesTableMessageExist(const TableIdentifier &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2055,7 +2088,7 @@ bool Session::doesTableMessageExist(const TableIdentifier &identifier)
   return true;
 }
 
-bool Session::renameTableMessage(const TableIdentifier &from, const TableIdentifier &to)
+bool Session::TableMessages::renameTableMessage(const TableIdentifier &from, const TableIdentifier &to)
 {
   TableMessageCache::iterator iter;
 
@@ -2114,5 +2147,31 @@ table::Instance *Session::getInstanceTable(List<CreateField> &field_list)
 
   return tmp_share;
 }
+
+namespace display  {
+
+static const std::string NONE= "NONE";
+static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
+static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
+
+const std::string &type(drizzled::Session::global_read_lock_t type)
+{
+  switch (type) {
+    default:
+    case Session::NONE:
+      return NONE;
+    case Session::GOT_GLOBAL_READ_LOCK:
+      return GOT_GLOBAL_READ_LOCK;
+    case Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT:
+      return MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT;
+  }
+}
+
+size_t max_string_length(drizzled::Session::global_read_lock_t)
+{
+  return MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT.size();
+}
+
+} /* namespace display */
 
 } /* namespace drizzled */

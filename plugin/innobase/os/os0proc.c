@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -147,7 +147,7 @@ skip:
 		os_fast_mutex_unlock(&ut_list_mutex);
 		UNIV_MEM_ALLOC(ptr, size);
 	}
-#elif defined __NETWARE__ || !defined OS_MAP_ANON
+#elif !defined OS_MAP_ANON
 	size = *n;
 	ptr = ut_malloc_low(size, TRUE, FALSE);
 #else
@@ -215,7 +215,7 @@ os_mem_free_large(
 		os_fast_mutex_unlock(&ut_list_mutex);
 		UNIV_MEM_FREE(ptr, size);
 	}
-#elif defined __NETWARE__ || !defined OS_MAP_ANON
+#elif !defined OS_MAP_ANON
 	ut_free(ptr);
 #else
 	if (munmap(ptr, size)) {

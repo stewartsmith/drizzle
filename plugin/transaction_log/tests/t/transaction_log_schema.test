@@ -2,6 +2,12 @@
 # Test of CREATE / DROP /ALTER SCHEMA statements and how the transaction log
 # captures / represents them
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
 --echo Simple CREATE / DROP test
 --echo Testing simple CREATE SCHEMA 
 CREATE SCHEMA my_test_schema;
@@ -38,7 +44,7 @@ DROP SCHEMA my_test_schema;
 --echo after issuing the DROP SCHEMA
 --echo We do check the first entry (OFFSET=0) as this should be the first of 3 DROP TABLE messages
 
---replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /table_name: "t[1|2|3]"/table_name:  TABLE_NAME/
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /table_name: "t[1|2|3]"/table_name:  TABLE_NAME/ /transaction_id: [0-9]+/TRANSACTION_ID/
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',0);
 
 

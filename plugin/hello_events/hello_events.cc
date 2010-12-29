@@ -38,6 +38,7 @@ set global hello_events1_watch_tables = "x,y";
 #include <drizzled/module/option_map.h>
 #include "drizzled/session.h"
 #include "hello_events.h"
+
 namespace po= boost::program_options;
 using namespace drizzled;
 using namespace plugin;
@@ -45,10 +46,10 @@ using namespace std;
 
 #define PLUGIN_NAME "hello_events1"
 
-static bool sysvar_hello_events_enabled= true;
+static bool sysvar_hello_events_enabled;
 static HelloEvents *hello_events= NULL;
-static char *sysvar_table_list= NULL;
-static char *sysvar_db_list= NULL;
+static string sysvar_db_list;
+static string sysvar_table_list;
 
 /*
  * Event observer positions are used to set the order in which
@@ -64,9 +65,12 @@ static char *sysvar_db_list= NULL;
  * or the last position (-1) in the calling order, for example it makes no sence 
  * to initially ask to be called in position 13.
  */
-static int32_t sysvar_before_write_position= 1;      // Call this event observer first.
-static int32_t sysvar_before_update_position= 1;
-static int32_t sysvar_post_drop_db_position= -1;  // I want my event observer to be called last. No reason, I just do!
+typedef constrained_check<uint64_t, INT32_MAX-1, 1> position_constraint;
+typedef constrained_check<int32_t, -1, INT32_MIN+1> post_drop_constraint;
+
+static position_constraint sysvar_before_write_position;      // Call this event observer first.
+static position_constraint sysvar_before_update_position;
+static post_drop_constraint sysvar_post_drop_db_position;  // I want my event observer to be called last. No reason, I just do!
 
 
 //==================================
@@ -188,19 +192,7 @@ static void observeAfterStatement(AfterStatementEventData &data)
 }
 
 HelloEvents::~HelloEvents()
-{
-  /* These are strdup'd in option processing */
-  if (sysvar_table_list) {
-	free(sysvar_table_list);
-	sysvar_table_list = NULL;
-  }
-  
-  if (sysvar_db_list) {
-	free(sysvar_db_list);
-	sysvar_db_list = NULL;
-  }
-  
-}
+{ }
 
 //==================================
 /* This is where I register which table events my pluggin is interested in.*/
@@ -211,9 +203,10 @@ void HelloEvents::registerTableEventsDo(TableShare &table_share, EventObserverLi
     || !isDatabaseInteresting(table_share.getSchemaName()))
     return;
     
-  registerEvent(observers, BEFORE_INSERT_RECORD, sysvar_before_write_position); // I want to be called first if passible
+  registerEvent(observers, BEFORE_INSERT_RECORD, sysvar_before_write_position.get());
+  // I want to be called first if passible
   registerEvent(observers, AFTER_INSERT_RECORD);
-  registerEvent(observers, BEFORE_UPDATE_RECORD, sysvar_before_update_position);
+  registerEvent(observers, BEFORE_UPDATE_RECORD, sysvar_before_update_position.get());
   registerEvent(observers, AFTER_UPDATE_RECORD);
   registerEvent(observers, BEFORE_DELETE_RECORD);
   registerEvent(observers, AFTER_DELETE_RECORD);
@@ -240,7 +233,7 @@ void HelloEvents::registerSessionEventsDo(Session &session, EventObserverList &o
     return;
     
   registerEvent(observers, AFTER_CREATE_DATABASE);
-  registerEvent(observers, AFTER_DROP_DATABASE, sysvar_post_drop_db_position);
+  registerEvent(observers, AFTER_DROP_DATABASE, sysvar_post_drop_db_position.get());
   registerEvent(observers, DISCONNECT_SESSION);
   registerEvent(observers, CONNECT_SESSION);
   registerEvent(observers, BEFORE_STATEMENT);
@@ -325,101 +318,53 @@ bool HelloEvents::observeEventDo(EventData &data)
 
 /* Plugin initialization and system variables */
 
-static void enable(Session *,
-                   drizzle_sys_var *,
-                   void *var_ptr,
-                   const void *save)
+static void enable(Session*, sql_var_t)
 {
   if (hello_events)
   {
-    if (*(bool *)save != false)
+    if (sysvar_hello_events_enabled)
     {
       hello_events->enable();
-      *(bool *) var_ptr= (bool) true;
     }
     else
     {
       hello_events->disable();
-      *(bool *) var_ptr= (bool) false;
     }
   }
 }
 
 
-static void set_db_list(Session *,
-                   drizzle_sys_var *, 
-                   void *var_ptr,     
-                   const void *save)
+static int set_db_list(Session *, set_var *var)
 {
+  const char *db_list= var->value->str_value.ptr();
+  if (db_list == NULL)
+    return 1;
+
   if (hello_events)
   {
-    hello_events->setDatabasesOfInterest(*(const char **) save);
-    *(const char **) var_ptr= hello_events->getDatabasesOfInterest();
+    hello_events->setDatabasesOfInterest(db_list);
+    sysvar_db_list.assign(db_list);
   }
+  return 0;
 }
 
-static void set_table_list(Session *,
-                   drizzle_sys_var *, 
-                   void *var_ptr,     
-                   const void *save)
+static int set_table_list(Session *, set_var *var)
 {
+  const char *table_list= var->value->str_value.ptr();
+  if (table_list == NULL)
+    return 1;
+
   if (hello_events)
   {
-    hello_events->setTablesOfInterest(*(const char **) save);
-    *(const char **) var_ptr= hello_events->getTablesOfInterest();
+    hello_events->setTablesOfInterest(table_list);
+    sysvar_table_list.assign(table_list);
   }
+  return 0;
 }
 
 
 static int init(module::Context &context)
 {
-  const module::option_map &vm= context.getOptions();
-  if (vm.count("before-write-position"))
-  { 
-    if (sysvar_before_write_position < 1 || sysvar_before_write_position > INT32_MAX -1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of before-write-position\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("before-update-position"))
-  { 
-    if (sysvar_before_update_position < 1 || sysvar_before_update_position > INT32_MAX -1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of before-update-position\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("post-drop-db-position"))
-  { 
-    if (sysvar_post_drop_db_position > -1 || sysvar_post_drop_db_position < INT32_MIN+1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of before-update-position\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("watch-databases"))
-  {
-    sysvar_db_list= strdup(vm["watch-databases"].as<string>().c_str());
-  }
-
-  else
-  {
-    sysvar_db_list= strdup("");
-  }
-
-  if (vm.count("watch-tables"))
-  {
-    sysvar_table_list= strdup(vm["watch-tables"].as<string>().c_str());
-  }
-
-  else
-  {
-    sysvar_table_list= strdup("");
-  }
   hello_events= new HelloEvents(PLUGIN_NAME);
 
   context.add(hello_events);
@@ -429,85 +374,49 @@ static int init(module::Context &context)
     hello_events->enable();
   }
 
+  context.registerVariable(new sys_var_bool_ptr("enable",
+                                                &sysvar_hello_events_enabled,
+                                                enable));
+  context.registerVariable(new sys_var_std_string("watch_databases",
+                                                  sysvar_db_list,
+                                                  set_db_list));
+  context.registerVariable(new sys_var_std_string("watch_tables",
+                                                  sysvar_table_list,
+                                                  set_table_list));
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("before_write_position",
+                                                         sysvar_before_write_position));
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("before_update_position",
+                                                         sysvar_before_update_position));
+  context.registerVariable(new sys_var_constrained_value<int32_t>("post_drop_position",
+                                                         sysvar_post_drop_db_position));
+
+
   return 0;
 }
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("watch-databases",
-          po::value<string>(),
-          N_("A comma delimited list of databases to watch"));
-  context("watch-tables",
-          po::value<string>(),
-          N_("A comma delimited list of databases to watch"));
   context("enable",
           po::value<bool>(&sysvar_hello_events_enabled)->default_value(false)->zero_tokens(),
           N_("Enable Example Events Plugin"));
+  context("watch-databases",
+          po::value<string>(&sysvar_db_list)->default_value(""),
+          N_("A comma delimited list of databases to watch"));
+  context("watch-tables",
+          po::value<string>(&sysvar_table_list)->default_value(""),
+          N_("A comma delimited list of databases to watch"));
   context("before-write-position",
-          po::value<int32_t>(&sysvar_before_write_position)->default_value(1),
+          po::value<position_constraint>(&sysvar_before_write_position)->default_value(1),
           N_("Before write row event observer call position"));
   context("before-update-position",
-          po::value<int32_t>(&sysvar_before_update_position)->default_value(1),
+          po::value<position_constraint>(&sysvar_before_update_position)->default_value(1),
           N_("Before update row event observer call position"));
   context("post-drop-db-position",
-          po::value<int32_t>(&sysvar_post_drop_db_position)->default_value(-1),
+          po::value<post_drop_constraint>(&sysvar_post_drop_db_position)->default_value(-1),
           N_("After drop database event observer call position"));
 }
 
-static DRIZZLE_SYSVAR_STR(watch_databases,
-                           sysvar_db_list,
-                           PLUGIN_VAR_OPCMDARG,
-                           N_("A comma delimited list of databases to watch"),
-                           NULL, /* check func */
-                           set_db_list, /* update func */
-                           "" /* default */);
 
-static DRIZZLE_SYSVAR_STR(watch_tables,
-                           sysvar_table_list,
-                           PLUGIN_VAR_OPCMDARG,
-                           N_("A comma delimited list of tables to watch"),
-                           NULL, /* check func */
-                           set_table_list, /* update func */
-                           "" /* default */);
-
-static DRIZZLE_SYSVAR_BOOL(enable,
-                           sysvar_hello_events_enabled,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("Enable Example Events Plugin"),
-                           NULL, /* check func */
-                           enable, /* update func */
-                           false /* default */);
-
-static DRIZZLE_SYSVAR_INT(before_write_position,
-                           sysvar_before_write_position,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("Before write row event observer call position"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           1, /* default */
-                           1, /* min */
-                           INT32_MAX -1, /* max */
-                           0 /* blk */);
-
-static DRIZZLE_SYSVAR_INT(before_update_position,
-                           sysvar_before_update_position,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("Before update row event observer call position"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           1, /* default */
-                           1, /* min */
-                           INT32_MAX -1, /* max */
-                           0 /* blk */);
-
-static drizzle_sys_var* system_var[]= {
-  DRIZZLE_SYSVAR(watch_databases),
-  DRIZZLE_SYSVAR(watch_tables),
-  DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(before_write_position),
-  DRIZZLE_SYSVAR(before_update_position),
-  NULL
-};
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -518,7 +427,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("An example events Plugin"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  system_var, /* system variables */
+  NULL, /* system variables */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

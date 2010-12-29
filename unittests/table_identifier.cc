@@ -30,21 +30,27 @@ TEST(table_identifier_test_standard, Create)
 {
   TableIdentifier identifier("test", "a");
   EXPECT_EQ("test/a", identifier.getPath());
-  EXPECT_EQ("test.a", identifier.getSQLPath());
+  std::string path;
+  identifier.getSQLPath(path);
+  EXPECT_EQ("test.a", path);
 }
 
 TEST(table_identifier_test_temporary, Create)
 {
   TableIdentifier identifier("test", "a", message::Table::TEMPORARY);
   EXPECT_EQ("/#sql", identifier.getPath().substr(0, 5));
-  EXPECT_EQ("test.#a", identifier.getSQLPath());
+  std::string path;
+  identifier.getSQLPath(path);
+  EXPECT_EQ("test.#a", path);
 }
 
 TEST(table_identifier_test_internal, Create)
 {
   TableIdentifier identifier("test", "a", message::Table::TEMPORARY);
   EXPECT_EQ("/#sql", identifier.getPath().substr(0, 5));
-  EXPECT_EQ("test.#a", identifier.getSQLPath());
+  std::string path;
+  identifier.getSQLPath(path);
+  EXPECT_EQ("test.#a", path);
 }
 
 TEST(table_identifier_test_build_tmptable_filename, Static)

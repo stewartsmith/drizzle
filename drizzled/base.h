@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@
  *
  * @TODO Convert HA_XXX defines into enums and/or bitmaps
  */
+
+#include "definitions.h"
 
 #ifndef DRIZZLED_BASE_H
 #define DRIZZLED_BASE_H
@@ -494,7 +496,10 @@ public:
 
 /* For number of records */
 typedef uint64_t	ha_rows;
-#define rows2double(A)	uint64_t2double(A)
+inline static double rows2double(ha_rows rows)
+{  
+  return uint64_t2double(rows);
+}
 
 #define HA_POS_ERROR	(~ (::drizzled::ha_rows) 0)
 #define HA_OFFSET_ERROR	(~ (::drizzled::internal::my_off_t) 0)
@@ -505,7 +510,10 @@ typedef uint64_t	ha_rows;
 #define MAX_FILE_SIZE	INT64_MAX
 #endif
 
-#define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
+inline static uint32_t ha_varchar_packlength(uint32_t field_length)
+{
+  return (field_length < 256 ? 1 :2);
+}
 
 
 } /* namespace drizzled */

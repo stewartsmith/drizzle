@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,10 @@ bool statement::DropSchema::execute()
   SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
   if (not check_db_name(session, schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
+    std::string path;
+    schema_identifier.getSQLPath(path);
+
+    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
     return false;
   }
   if (session->inTransaction())
@@ -53,16 +56,18 @@ bool statement::DropSchema::execute()
   }
   
   bool res = true;
-  if (unlikely(plugin::EventObserver::beforeDropDatabase(*session, schema_identifier.getSQLPath()))) 
+  std::string path;
+  schema_identifier.getSQLPath(path);
+  if (unlikely(plugin::EventObserver::beforeDropDatabase(*session, path))) 
   {
-    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
+    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
   }
   else
   {
-    res= mysql_rm_db(session, schema_identifier, drop_if_exists);
-    if (unlikely(plugin::EventObserver::afterDropDatabase(*session, schema_identifier.getSQLPath(), res)))
+    res= rm_db(session, schema_identifier, drop_if_exists);
+    if (unlikely(plugin::EventObserver::afterDropDatabase(*session, path, res)))
     {
-      my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
+      my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
       res = false;
     }
 

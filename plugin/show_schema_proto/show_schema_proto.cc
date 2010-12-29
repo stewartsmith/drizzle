@@ -1,5 +1,5 @@
 /* vim: expandtab:shiftwidth=2:tabstop=2:smarttab:
-   Copyright (C) 2009 Sun Microsystems
+   Copyright (C) 2009 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
   const char* db= db_sptr->c_ptr_safe();
 
   string proto_as_text("");
-  message::SchemaPtr proto;
+  message::schema::shared_ptr proto;
 
 
   SchemaIdentifier schema_identifier(db);

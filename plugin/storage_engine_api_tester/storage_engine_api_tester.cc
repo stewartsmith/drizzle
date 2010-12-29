@@ -20,6 +20,7 @@
 #include <drizzled/table.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/session.h> // for mark_transaction_to_rollback
 #include <string>
 #include <map>
 #include <fstream>
@@ -33,9 +34,6 @@
 using namespace std;
 using namespace drizzled;
 
-typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageMap;
-typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to>::iterator TableMessageMapIterator;
-
 string engine_state;
 typedef multimap<string, string> state_multimap;
 typedef multimap<string, string>::value_type state_pair;
@@ -46,8 +44,62 @@ state_multimap cursor_state_transitions;
 void load_engine_state_transitions(state_multimap &states);
 void load_cursor_state_transitions(state_multimap &states);
 
-/* This is a hack to make store_lock kinda work */
-drizzled::THR_LOCK share_lock;
+plugin::TransactionalStorageEngine *realEngine;
+
+/* ERROR INJECTION For SEAPITESTER
+   -------------------------------
+
+   IF you add a new error injection, document it here!
+
+   Conflicting error inject numbers will lead to tears
+   (not Borsch, Vodka and Tears - that's quite nice).
+
+   1 - doInsertRecord(): every 2nd row, LOCK_WAIT_TIMEOUT.
+   2 - doInsertRecord(): every 2nd row, DEADLOCK.
+   3 - rnd_next(): every 2nd row, LOCK_WAIT_TIMEOUT
+ */
+static uint32_t error_injected= 0;
+
+#include <drizzled/function/math/int.h>
+#include <drizzled/plugin/function.h>
+
+class SEAPITesterErrorInjectFunc :public Item_int_func
+{
+public:
+  int64_t val_int();
+  SEAPITesterErrorInjectFunc() :Item_int_func() {}
+
+  const char *func_name() const
+  {
+    return "seapitester_error_inject";
+  }
+
+  void fix_length_and_dec()
+  {
+    max_length= 4;
+  }
+
+  bool check_argument_count(int n)
+  {
+    return (n == 1);
+  }
+};
+
+
+int64_t SEAPITesterErrorInjectFunc::val_int()
+{
+  assert(fixed == true);
+  uint32_t err_to_inject= args[0]->val_int();
+
+  error_injected= err_to_inject;
+
+  return error_injected;
+}
+
+static plugin::TransactionalStorageEngine *getRealEngine()
+{
+  return down_cast<plugin::TransactionalStorageEngine*>(plugin::StorageEngine::findByName("INNODB"));
+}
 
 static inline void ENGINE_NEW_STATE(const string &new_state)
 {
@@ -84,45 +136,138 @@ static inline void ENGINE_NEW_STATE(const string &new_state)
 }
 
 static const string engine_name("STORAGE_ENGINE_API_TESTER");
-
+namespace drizzled {
 class SEAPITesterCursor : public drizzled::Cursor
 {
+  friend class drizzled::Cursor;
 public:
+  drizzled::Cursor *realCursor;
+
   SEAPITesterCursor(drizzled::plugin::StorageEngine &engine_arg,
                     drizzled::Table &table_arg)
     : Cursor(engine_arg, table_arg)
-    { cursor_state= "Cursor()"; }
+    { cursor_state= "Cursor()"; realCursor= NULL;}
+
   ~SEAPITesterCursor()
-  {}
+    { delete realCursor;}
 
-  int close() { return 0; }
-  int rnd_next(unsigned char*) { CURSOR_NEW_STATE("::rnd_next()"); return HA_ERR_END_OF_FILE; }
-  int rnd_pos(unsigned char*, unsigned char*) { CURSOR_NEW_STATE("::rnd_pos()"); return -1; }
-  void position(const unsigned char*) { CURSOR_NEW_STATE("::position()"); return; }
-  int info(uint32_t) { return 0; }
+  int close();
+  int rnd_next(unsigned char *buf) {
+    static int count= 0;
+    CURSOR_NEW_STATE("::rnd_next()");
+
+    if (error_injected == 3 && (count++ % 2))
+    {
+      mark_transaction_to_rollback(user_session, false);
+      return HA_ERR_LOCK_WAIT_TIMEOUT;
+    }
+    return realCursor->rnd_next(buf);
+  }
+
+  int rnd_pos(unsigned char* buf, unsigned char* pos) { CURSOR_NEW_STATE("::rnd_pos()"); return realCursor->rnd_pos(buf, pos); }
+  void position(const unsigned char *record);
+  int info(uint32_t flag);
+
+  int reset();
+
   void get_auto_increment(uint64_t, uint64_t, uint64_t, uint64_t*, uint64_t*) {}
-  int doStartTableScan(bool) { CURSOR_NEW_STATE("::doStartTableScan()"); return HA_ERR_END_OF_FILE; }
+  int doStartTableScan(bool scan) { CURSOR_NEW_STATE("::doStartTableScan()"); return realCursor->doStartTableScan(scan); }
+  int doEndTableScan() { CURSOR_NEW_STATE("::doEndTableScan()"); return realCursor->doEndTableScan(); }
 
-  int open(const char*, int, uint32_t)
-    { CURSOR_NEW_STATE("::open()"); lock.init(&share_lock); return 0;}
-
-  drizzled::THR_LOCK_DATA lock;        /* MySQL lock */
+  int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
 
   THR_LOCK_DATA **store_lock(Session *,
                                      THR_LOCK_DATA **to,
                              enum thr_lock_type);
 
-  int doInsertRecord(unsigned char *)
+  int external_lock(Session *session, int lock_type);
+
+  int doInsertRecord(unsigned char *buf)
   {
+    static int i=0;
     CURSOR_NEW_STATE("::doInsertRecord()");
-    CURSOR_NEW_STATE("::store_lock()");
-    return 0;
+
+    if (error_injected == 1 && (i++ % 2))
+    {
+      mark_transaction_to_rollback(user_session, false);
+      return HA_ERR_LOCK_WAIT_TIMEOUT;
+    }
+
+    if (error_injected == 2 && (i++ % 2))
+    {
+      mark_transaction_to_rollback(user_session, true);
+      return HA_ERR_LOCK_DEADLOCK;
+    }
+
+    return realCursor->doInsertRecord(buf);
+  }
+
+  int doUpdateRecord(const unsigned char *old_row, unsigned char *new_row)
+  {
+    CURSOR_NEW_STATE("::doUpdateRecord()");
+    return realCursor->doUpdateRecord(old_row, new_row);
   }
 
 private:
   string cursor_state;
   void CURSOR_NEW_STATE(const string &new_state);
+  Session* user_session;
 };
+
+int SEAPITesterCursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+{
+  CURSOR_NEW_STATE("::doOpen()");
+
+  int r= realCursor->doOpen(identifier, mode, test_if_locked);
+
+  ref_length= realCursor->ref_length;
+
+  return r;
+}
+
+int SEAPITesterCursor::reset()
+{
+  CURSOR_NEW_STATE("::reset()");
+  CURSOR_NEW_STATE("::doOpen()");
+
+  return realCursor->reset();
+}
+
+int SEAPITesterCursor::close()
+{
+  CURSOR_NEW_STATE("::close()");
+  CURSOR_NEW_STATE("Cursor()");
+
+  return realCursor->close();
+}
+
+void SEAPITesterCursor::position(const unsigned char *record)
+{
+  CURSOR_NEW_STATE("::position()");
+
+  /* We need to use the correct buffer for upper layer */
+  realCursor->ref= ref;
+
+  realCursor->position(record);
+}
+
+int SEAPITesterCursor::info(uint32_t flag)
+{
+  CURSOR_NEW_STATE("::info()");
+  CURSOR_NEW_STATE("locked");
+
+  return realCursor->info(flag);
+}
+
+int SEAPITesterCursor::external_lock(Session *session, int lock_type)
+{
+  CURSOR_NEW_STATE("::external_lock()");
+  CURSOR_NEW_STATE("locked");
+
+  user_session= session;
+
+  return realCursor->external_lock(session, lock_type);
+}
 
 THR_LOCK_DATA **SEAPITesterCursor::store_lock(Session *session,
                                               THR_LOCK_DATA **to,
@@ -131,37 +276,7 @@ THR_LOCK_DATA **SEAPITesterCursor::store_lock(Session *session,
 {
   CURSOR_NEW_STATE("::store_lock()");
 
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-  {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
-    */
-
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE)
-        && !session_tablespace_op(session))
-      lock_type = TL_WRITE_ALLOW_WRITE;
-
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
-    */
-
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
-
-    lock.type=lock_type;
-  }
-
-  *to++= &lock;
-
-  return(to);
+  return realCursor->store_lock(session, to, lock_type);
 }
 
 void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
@@ -189,27 +304,39 @@ void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
       || new_state.compare((*cur).second))
   {
     cerr << "ERROR: Invalid Cursor state transition!" << endl
-         << "Cannot go from " << cursor_state << " to " << new_state << endl;
+         << "Cursor " << this << "Cannot go from "
+         << cursor_state << " to " << new_state << endl;
     assert(false);
   }
 
   cursor_state= new_state;
 
-  cerr << "\t\tCursor STATE : " << cursor_state << endl;
+  cerr << "\t\tCursor " << this << " STATE : " << cursor_state << endl;
 }
+
+} /* namespace drizzled */
 
 static const char *api_tester_exts[] = {
   NULL
 };
 
-
+namespace drizzled {
+  namespace plugin {
 class SEAPITester : public drizzled::plugin::TransactionalStorageEngine
 {
 public:
+  /* BUG: Currently flags are just copy&pasted from innobase. Instead, we
+     need to have a call somewhere.
+   */
   SEAPITester(const string &name_arg)
     : drizzled::plugin::TransactionalStorageEngine(name_arg,
-//                                                   HTON_SKIP_STORE_LOCK |
-                                                   HTON_HAS_DOES_TRANSACTIONS)
+                            HTON_NULL_IN_KEY |
+                            HTON_CAN_INDEX_BLOBS |
+                            HTON_PRIMARY_KEY_IN_READ_INDEX |
+                            HTON_PARTIAL_COLUMN_READ |
+                            HTON_TABLE_SCAN_ON_INDEX |
+                            HTON_HAS_FOREIGN_KEYS |
+                            HTON_HAS_DOES_TRANSACTIONS)
   {
     ENGINE_NEW_STATE("::SEAPITester()");
   }
@@ -225,7 +352,11 @@ public:
 
   virtual Cursor *create(Table &table)
   {
-    return new SEAPITesterCursor(*this, table);
+    SEAPITesterCursor *c= new SEAPITesterCursor(*this, table);
+    Cursor *realCursor= getRealEngine()->create(table);
+    c->realCursor= realCursor;
+
+    return c;
   }
 
   int doCreateTable(Session&,
@@ -235,10 +366,10 @@ public:
 
   int doDropTable(Session&, const TableIdentifier &identifier);
 
-  int doRenameTable(drizzled::Session&,
-                    const drizzled::TableIdentifier&,
-                    const drizzled::TableIdentifier&)
-    { return ENOENT; }
+  int doRenameTable(drizzled::Session& session,
+                    const drizzled::TableIdentifier& from,
+                    const drizzled::TableIdentifier& to)
+    { return getRealEngine()->renameTable(session, from, to); }
 
   int doGetTableDefinition(Session& ,
                            const TableIdentifier &,
@@ -248,7 +379,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
                              const drizzled::SchemaIdentifier &,
-                             drizzled::TableIdentifiers &);
+                             drizzled::TableIdentifier::vector &);
 
   virtual int doStartTransaction(Session *session,
                                  start_transaction_option_t options);
@@ -268,96 +399,125 @@ public:
 
   virtual int doRollback(Session*, bool);
 
+  uint32_t max_supported_record_length(void) const {
+    ENGINE_NEW_STATE("::max_supported_record_length()");
+    return getRealEngine()->max_supported_record_length();
+  }
 
-private:
-  TableMessageMap table_messages;
+  uint32_t max_supported_keys(void) const {
+    ENGINE_NEW_STATE("::max_supported_keys()");
+    return getRealEngine()->max_supported_keys();
+  }
+
+  uint32_t max_supported_key_parts(void) const {
+    ENGINE_NEW_STATE("::max_supported_key_parts()");
+    return getRealEngine()->max_supported_key_parts();
+  }
+
+  uint32_t max_supported_key_length(void) const {
+    ENGINE_NEW_STATE("::max_supported_key_length()");
+    return getRealEngine()->max_supported_key_length();
+  }
+
+  uint32_t max_supported_key_part_length(void) const {
+    ENGINE_NEW_STATE("::max_supported_key_part_length()");
+    return getRealEngine()->max_supported_key_part_length();
+  }
+
 };
 
-bool SEAPITester::doDoesTableExist(Session&, const TableIdentifier &identifier)
+bool SEAPITester::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
-  return table_messages.find(identifier.getPath()) != table_messages.end();
+  return getRealEngine()->doDoesTableExist(session, identifier);
 }
 
-void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &,
-                                        const drizzled::SchemaIdentifier &,
-                                        drizzled::TableIdentifiers &)
+void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &cd,
+                                        const drizzled::SchemaIdentifier &si,
+                                        drizzled::TableIdentifier::vector &ti)
 {
+  return getRealEngine()->doGetTableIdentifiers(cd, si, ti);
 }
 
-int SEAPITester::doCreateTable(Session&,
-                               Table&,
+int SEAPITester::doCreateTable(Session& session,
+                               Table& table,
                                const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table& create_proto)
 {
   ENGINE_NEW_STATE("::doCreateTable()");
 
-  if (table_messages.find(identifier.getPath()) != table_messages.end())
-  {
-    ENGINE_NEW_STATE("::SEAPITester()");
-    return EEXIST;
-  }
+  int r= getRealEngine()->doCreateTable(session, table, identifier, create_proto);
 
-  table_messages.insert(make_pair(identifier.getPath(), create_proto));
   ENGINE_NEW_STATE("::SEAPITester()");
-  return 0;
+  return r;
 }
 
-int SEAPITester::doDropTable(Session&, const TableIdentifier &identifier)
+int SEAPITester::doDropTable(Session& session, const TableIdentifier &identifier)
 {
-  if (table_messages.find(identifier.getPath()) == table_messages.end())
-    return ENOENT;
-
-  table_messages.erase(identifier.getPath());
-  assert(table_messages.find(identifier.getPath()) == table_messages.end());
-  return 0;
+  return getRealEngine()->doDropTable(session, identifier);
 }
 
-int SEAPITester::doGetTableDefinition(Session& ,
+int SEAPITester::doGetTableDefinition(Session& session,
                                       const TableIdentifier &identifier,
                                       drizzled::message::Table &table)
 {
-  TableMessageMapIterator iter= table_messages.find(identifier.getPath());
-  if (iter == table_messages.end())
-  {
-    return ENOENT;
-  }
-
-  table= (*iter).second;
-
-  return EEXIST;
+  return getRealEngine()->doGetTableDefinition(session, identifier, table);
 }
 
-int SEAPITester::doStartTransaction(Session *,
-                                    start_transaction_option_t )
+int SEAPITester::doStartTransaction(Session *session,
+                                    start_transaction_option_t opt)
 {
   ENGINE_NEW_STATE("BEGIN");
+  ENGINE_NEW_STATE("In Transaction");
 
-  return 0;
+  return getRealEngine()->startTransaction(session, opt);
 }
 
-void SEAPITester::doStartStatement(Session *)
+void SEAPITester::doStartStatement(Session *session)
 {
   ENGINE_NEW_STATE("START STATEMENT");
+  return getRealEngine()->startStatement(session);
 }
 
-void SEAPITester::doEndStatement(Session *)
+void SEAPITester::doEndStatement(Session *session)
 {
   ENGINE_NEW_STATE("END STATEMENT");
+  return getRealEngine()->endStatement(session);
 }
 
-int SEAPITester::doCommit(Session*, bool)
+int SEAPITester::doCommit(Session *session, bool all)
 {
-  ENGINE_NEW_STATE("COMMIT");
-  ENGINE_NEW_STATE("::SEAPITester()");
-  return 0;
+  if (all     || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  {
+    ENGINE_NEW_STATE("COMMIT");
+    ENGINE_NEW_STATE("::SEAPITester()");
+  }
+  else
+  {
+    ENGINE_NEW_STATE("COMMIT STATEMENT");
+    ENGINE_NEW_STATE("In Transaction");
+  }
+  return getRealEngine()->commit(session, all);
 }
 
-int SEAPITester::doRollback(Session*, bool)
+int SEAPITester::doRollback(Session *session, bool all)
 {
-  ENGINE_NEW_STATE("ROLLBACK");
-  ENGINE_NEW_STATE("::SEAPITester()");
-  return 0;
+  if (all
+    || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  {
+    ENGINE_NEW_STATE("ROLLBACK");
+    ENGINE_NEW_STATE("::SEAPITester()");
+  }
+  else
+  {
+    ENGINE_NEW_STATE("ROLLBACK STATEMENT");
+    ENGINE_NEW_STATE("In Transaction");
+  }
+
+  return getRealEngine()->rollback(session, all);
 }
+
+  } /* namespace plugin */
+} /* namespace drizzled */
 
 static int seapi_tester_init(drizzled::module::Context &context)
 {
@@ -365,9 +525,10 @@ static int seapi_tester_init(drizzled::module::Context &context)
   load_cursor_state_transitions(cursor_state_transitions);
   engine_state= "INIT";
 
-  thr_lock_init(&share_lock); /* HACK for store_lock */
+  context.add(new plugin::SEAPITester(engine_name));
 
-  context.add(new SEAPITester(engine_name));
+  context.add(new plugin::Create_function<SEAPITesterErrorInjectFunc>("seapitester_error_inject"));
+
   return 0;
 }
 

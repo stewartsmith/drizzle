@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2009-2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2009-2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,18 +28,16 @@
 #include <algorithm>
 #include <functional>
 
-using namespace std;
-
 namespace drizzled
 {
 
 namespace plugin
 {
 
-static vector<TransactionalStorageEngine *> vector_of_transactional_engines;
+static std::vector<TransactionalStorageEngine *> vector_of_transactional_engines;
 
-TransactionalStorageEngine::TransactionalStorageEngine(const string name_arg,
-                                                       const bitset<HTON_BIT_SIZE> &flags_arg)
+TransactionalStorageEngine::TransactionalStorageEngine(const std::string name_arg,
+                                                       const std::bitset<HTON_BIT_SIZE> &flags_arg)
     : StorageEngine(name_arg, flags_arg)
 {
 }
@@ -74,7 +72,7 @@ void TransactionalStorageEngine::setTransactionReadWrite(Session& session)
   FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a session to
   keep them over several calls of the InnoDB Cursor interface when a join
   is executed. But when we let the control to pass to the client they have
-  to be released because if the application program uses mysql_use_result(),
+  to be released because if the application program uses use_result(),
   it may deadlock on the S-latch if the application on another connection
   performs another SQL query. In MySQL-4.1 this is even more important because
   there a connection can have several SELECT queries open at the same time.
@@ -86,12 +84,12 @@ void TransactionalStorageEngine::setTransactionReadWrite(Session& session)
 */
 int TransactionalStorageEngine::releaseTemporaryLatches(Session *session)
 {
-  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
-           bind2nd(mem_fun(&TransactionalStorageEngine::doReleaseTemporaryLatches),session));
+  std::for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
+                std::bind2nd(std::mem_fun(&TransactionalStorageEngine::doReleaseTemporaryLatches),session));
   return 0;
 }
 
-struct StartTransactionFunc :public unary_function<TransactionalStorageEngine *, int>
+struct StartTransactionFunc :public std::unary_function<TransactionalStorageEngine *, int>
 {
   Session *session;
   start_transaction_option_t options;
@@ -108,17 +106,19 @@ struct StartTransactionFunc :public unary_function<TransactionalStorageEngine *,
 int TransactionalStorageEngine::notifyStartTransaction(Session *session, start_transaction_option_t options)
 {
   if (vector_of_transactional_engines.empty())
+  {
     return 0;
+  }
   else
   {
     StartTransactionFunc functor(session, options);
-    vector<int> results;
+    std::vector<int> results;
     results.reserve(vector_of_transactional_engines.size());
     transform(vector_of_transactional_engines.begin(),
               vector_of_transactional_engines.end(),
               results.begin(),
               functor);
-    return *max_element(results.begin(), results.end());
+    return *std::max_element(results.begin(), results.end());
   }
 }
 

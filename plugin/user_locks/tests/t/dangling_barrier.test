@@ -1,0 +1,6 @@
+# The goal is to create a "dangling barrier". We should be cleaning up locks on
+# exit, and this will tell us (via valgrind) if that is happending.
+set @barrier_name= "dangling_barrier";
+SELECT create_barrier(@barrier_name);
+SELECT USER_BARRIER_NAME FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS  ORDER BY USER_BARRIER_NAME;
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@barrier_name;

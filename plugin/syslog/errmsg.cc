@@ -27,40 +27,37 @@
 #include "errmsg.h"
 #include "wrap.h"
 
-using namespace drizzled;
-
-ErrorMessage_syslog::ErrorMessage_syslog()
-  : drizzled::plugin::ErrorMessage("ErrorMessage_syslog")
+namespace drizzle_plugin
 {
-  syslog_facility= WrapSyslog::getFacilityByName(syslog_module::sysvar_facility);
-  if (syslog_facility == -1)
+
+error_message::Syslog::Syslog(const std::string& facility,
+                              const std::string& priority) :
+  drizzled::plugin::ErrorMessage("Syslog"),
+  _facility(WrapSyslog::getFacilityByName(facility.c_str())),
+  _priority(WrapSyslog::getPriorityByName(priority.c_str()))
+{
+  if (_facility == -1)
   {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog facility \"%s\" not known, using \"local0\""),
-                  syslog_module::sysvar_facility);
-    syslog_facility= WrapSyslog::getFacilityByName("local0");
-    assert (! (syslog_facility == -1));
+    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+                            _("syslog facility \"%s\" not known, using \"local0\""),
+                            facility.c_str());
+    _facility= WrapSyslog::getFacilityByName("local0");
   }
 
-  syslog_priority= WrapSyslog::getPriorityByName(syslog_module::sysvar_errmsg_priority);
-  if (syslog_priority == -1)
+  if (_priority == -1)
   {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog priority \"%s\" not known, using \"warn\""),
-                  syslog_module::sysvar_errmsg_priority);
-    syslog_priority= WrapSyslog::getPriorityByName("warn");
-    assert (! (syslog_priority == -1));
+    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+                            _("syslog priority \"%s\" not known, using \"warn\""),
+                            priority.c_str());
+    _priority= WrapSyslog::getPriorityByName("warn");
   }
-
-  WrapSyslog::singleton().openlog(syslog_module::sysvar_ident);
 }
 
-bool ErrorMessage_syslog::errmsg(drizzled::Session *,
-                                 int,
-                                 const char *format, va_list ap)
+bool error_message::Syslog::errmsg(drizzled::Session *,
+                                  int, const char *format, va_list ap)
 {
-  if (syslog_module::sysvar_errmsg_enable == false)
-    return false;
-  WrapSyslog::singleton().vlog(syslog_facility, syslog_priority, format, ap);
+  WrapSyslog::singleton().vlog(_facility, _priority, format, ap);
   return false;
 }
+
+} /* namespace drizzle_plugin */

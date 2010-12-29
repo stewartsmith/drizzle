@@ -25,30 +25,33 @@
 #include <iostream>
 
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 #include "drizzled/configmake.h"
 #include "drizzled/plugin/authentication.h"
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
 #include "drizzled/module/option_map.h"
 
 namespace po= boost::program_options;
+namespace fs= boost::filesystem;
+
 using namespace std;
 using namespace drizzled;
 
 namespace auth_file
 {
 
-static const char DEFAULT_USERS_FILE[]= SYSCONFDIR "/drizzle.users";
+static const fs::path DEFAULT_USERS_FILE= SYSCONFDIR "/drizzle.users";
 
 class AuthFile: public plugin::Authentication
 {
-  const std::string users_file;
+  const fs::path users_file;
 
 public:
 
-  AuthFile(string name_arg, string users_file_arg);
+  AuthFile(string name_arg, fs::path users_file_arg);
 
   /**
    * Retrieve the last error encountered in the class.
@@ -68,7 +71,7 @@ private:
   /**
    * Base class method to check authentication for a user.
    */
-  bool authenticate(const SecurityContext &sctx, const string &password);
+  bool authenticate(const identifier::User &sctx, const string &password);
 
   /**
    * Verify the local and remote scrambled password match using the MySQL
@@ -90,10 +93,10 @@ private:
   /**
    * Cache or username:password entries from the file.
    */
-  map<string, string> users;
+  std::map<string, string> users;
 };
 
-AuthFile::AuthFile(string name_arg, string users_file_arg):
+AuthFile::AuthFile(string name_arg, fs::path users_file_arg):
   plugin::Authentication(name_arg),
   users_file(users_file_arg),
   error(),
@@ -108,12 +111,12 @@ string& AuthFile::getError(void)
 
 bool AuthFile::loadFile(void)
 {
-  ifstream file(users_file.c_str());
+  ifstream file(users_file.string().c_str());
 
   if (!file.is_open())
   {
     error = "Could not open users file: ";
-    error += users_file;
+    error += users_file.string();
     return false;
   }
 
@@ -137,8 +140,9 @@ bool AuthFile::loadFile(void)
       password = string(line, password_offset + 1);
     }
 
-    pair<map<string, string>::iterator, bool> result;
-    result = users.insert(pair<string, string>(username, password));
+    std::pair<std::map<std::string, std::string>::iterator, bool> result=
+      users.insert(std::pair<std::string, std::string>(username, password));
+
     if (result.second == false)
     {
       error = "Duplicate entry found in users file: ";
@@ -198,13 +202,13 @@ bool AuthFile::verifyMySQLHash(const string &password,
   return memcmp(local_scrambled_password, scrambled_password_check, SHA1_DIGEST_LENGTH) == 0;
 }
 
-bool AuthFile::authenticate(const SecurityContext &sctx, const string &password)
+bool AuthFile::authenticate(const identifier::User &sctx, const string &password)
 {
-  map<string, string>::const_iterator user = users.find(sctx.getUser());
+  std::map<std::string, std::string>::const_iterator user= users.find(sctx.username());
   if (user == users.end())
     return false;
 
-  if (sctx.getPasswordType() == SecurityContext::MYSQL_HASH)
+  if (sctx.getPasswordType() == identifier::User::MYSQL_HASH)
     return verifyMySQLHash(user->second, sctx.getPasswordContext(), password);
 
   if (password == user->second)
@@ -217,7 +221,7 @@ static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  AuthFile *auth_file = new AuthFile("auth_file", vm["users"].as<string>());
+  AuthFile *auth_file = new AuthFile("auth_file", fs::path(vm["users"].as<string>()));
   if (!auth_file->loadFile())
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Could not load auth file: %s\n"),
@@ -235,7 +239,7 @@ static int init(module::Context &context)
 static void init_options(drizzled::module::option_context &context)
 {
   context("users", 
-          po::value<string>()->default_value(DEFAULT_USERS_FILE),
+          po::value<string>()->default_value(DEFAULT_USERS_FILE.string()),
           N_("File to load for usernames and passwords"));
 }
 

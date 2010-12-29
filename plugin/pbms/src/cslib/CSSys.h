@@ -1,4 +1,4 @@
-/* Copyright (c) 2010 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2010 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *

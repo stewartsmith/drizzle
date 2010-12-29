@@ -21,7 +21,6 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/unordered_map.hpp>
-#include <boost/logic/tribool.hpp>
 #include <boost/unordered/unordered_set.hpp>
 
 #include <string>
@@ -36,17 +35,17 @@
 namespace user_locks {
 
 class Key {
-  drizzled::SecurityContext context;
+  drizzled::identifier::User context;
   std::string lock_name;
   size_t hash_value;
 
 public:
-  Key(const drizzled::SecurityContext &context_arg, const std::string &lock_name_arg) :
+  Key(const drizzled::identifier::User &context_arg, const std::string &lock_name_arg) :
     context(context_arg),
     lock_name(lock_name_arg)
   {
     drizzled::util::insensitive_hash hasher;
-    hash_value= hasher(context.getUser() + lock_name_arg);
+    hash_value= hasher(context.username() + lock_name_arg);
   }
 
   size_t getHashValue() const
@@ -61,9 +60,8 @@ public:
 
   const std::string &getUser() const
   {
-    return context.getUser();
+    return context.username();
   }
-
 };
 
 bool operator==(Key const& left, Key const& right);

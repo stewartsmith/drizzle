@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ bool alter_table(Session *session,
                  message::Table &create_proto,
                  TableList *table_list,
                  AlterInfo *alter_info,
-                 uint32_t order_num, order_st *order, bool ignore);
+                 uint32_t order_num, Order *order, bool ignore);
 
 } /* namespace drizzled */
 #endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */

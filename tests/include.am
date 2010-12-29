@@ -1,6 +1,6 @@
 # vim:ft=automake
 # Copyright (C) 2000-2006 MySQL AB
-# Copyright (c) 2010 Monty Taylor
+# Copyright (C) 2010 Monty Taylor
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -36,6 +36,15 @@ TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 		--suitepath=../${top_srcdir}/plugin \
 		--testdir=../${top_srcdir}/tests \
 		--dtr-build-thread=$$$$
+
+TEST_RUN_MEM= $(PERL) -I../$(top_srcdir)/tests/lib \
+	      ../${top_srcdir}/tests/test-run.pl \
+	      --top-srcdir=../${top_srcdir} \
+	      --top-builddir=../${top_builddir} \
+	      --mem \
+	      --suitepath=../${top_srcdir}/plugin \
+	      --testdir=../${top_srcdir}/tests \
+	      --dtr-build-thread=$$$$
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
@@ -94,6 +103,9 @@ test: check
 
 test-all:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
+
+test-mem:
+	( cd tests && $(TEST_RUN_MEM) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
 test-drizzle:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))

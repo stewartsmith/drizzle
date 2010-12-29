@@ -27,7 +27,7 @@ namespace drizzled
   Call given derived table processor (preparing or filling tables)
 
   SYNOPSIS
-    mysql_handle_derived()
+    handle_derived()
     lex                 LEX for this thread
     processor           procedure of derived table processing
 
@@ -35,7 +35,7 @@ namespace drizzled
     false  OK
     true   Error
 */
-bool mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
+bool handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
 {
   bool res= false;
   if (lex->derived_tables)
@@ -68,7 +68,7 @@ out:
   Create temporary table structure (but do not fill it)
 
   SYNOPSIS
-    mysql_derived_prepare()
+    derived_prepare()
     session			Thread handle
     lex                 LEX for this thread
     orig_table_list     TableList for the upper SELECT
@@ -88,7 +88,7 @@ out:
     false  OK
     true   Error
 */
-bool mysql_derived_prepare(Session *session, LEX *, TableList *orig_table_list)
+bool derived_prepare(Session *session, LEX *, TableList *orig_table_list)
 {
   Select_Lex_Unit *unit= orig_table_list->derived;
   uint64_t create_options;
@@ -154,8 +154,8 @@ exit:
       /* Force read of table stats in the optimizer */
       table->cursor->info(HA_STATUS_VARIABLE);
       /* Add new temporary table to list of open derived tables */
-      table->setNext(session->derived_tables);
-      session->derived_tables= table;
+      table->setNext(session->getDerivedTables());
+      session->setDerivedTables(table);
     }
   }
 
@@ -166,7 +166,7 @@ exit:
   fill derived table
 
   SYNOPSIS
-    mysql_derived_filling()
+    derived_filling()
     session			Thread handle
     lex                 LEX for this thread
     unit                node that contains all SELECT's for derived tables
@@ -184,7 +184,7 @@ exit:
     false  OK
     true   Error
 */
-bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_list)
+bool derived_filling(Session *session, LEX *lex, TableList *orig_table_list)
 {
   Table *table= orig_table_list->table;
   Select_Lex_Unit *unit= orig_table_list->derived;
@@ -208,14 +208,14 @@ bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_lis
 	      first_select->options&= ~OPTION_FOUND_ROWS;
 
       lex->current_select= first_select;
-      res= mysql_select(session, &first_select->ref_pointer_array,
+      res= select_query(session, &first_select->ref_pointer_array,
                         (TableList*) first_select->table_list.first,
                         first_select->with_wild,
                         first_select->item_list, first_select->where,
                         (first_select->order_list.elements+
                         first_select->group_list.elements),
-                        (order_st *) first_select->order_list.first,
-                        (order_st *) first_select->group_list.first,
+                        (Order *) first_select->order_list.first,
+                        (Order *) first_select->group_list.first,
                         first_select->having,
                         (first_select->options | session->options | SELECT_NO_UNLOCK),
                         derived_result, unit, first_select);

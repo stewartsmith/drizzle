@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *  Copyright 2005-2008 Intel Corporation.  All Rights Reserved.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 # if defined(__SUNPRO_CC)
 #  include <drizzled/atomic/sun_studio.h>
 # endif
-# if !defined(__ICC) && (defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(__SUNPRO_CC))
+# if !defined(__ICC) && !defined(__clang__) && (defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(__SUNPRO_CC))
 #  include <drizzled/atomic/gcc_traits.h>
 #  define ATOMIC_TRAITS internal::gcc_traits
 # else  /* use pthread impl */

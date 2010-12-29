@@ -37,6 +37,9 @@
 #include "vio.h"
 #include "net_serv.h"
 
+namespace drizzle_plugin
+{
+
 using namespace std;
 using namespace drizzled;
 
@@ -82,15 +85,15 @@ bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
 
   if (vio != 0)                    /* If real connection */
   {
-    net->fd  = vio_fd(vio);            /* For perl DBI/DBD */
-    vio_fastsend(vio);
+    net->fd  = vio->get_fd();            /* For perl DBI/DBD */
+    vio->fastsend();
   }
   return(0);
 }
 
 bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length)
 {
-  Vio *vio_tmp= mysql_protocol_vio_new(sock);
+  Vio *vio_tmp= new Vio(sock);
   if (vio_tmp == NULL)
     return true;
   else
@@ -100,7 +103,7 @@ bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length)
        * NET object.
        */
       if (vio_tmp && (net->vio != vio_tmp))
-        vio_delete(vio_tmp);
+        delete vio_tmp;
       else
       {
         (void) shutdown(sock, SHUT_RDWR);
@@ -123,29 +126,29 @@ void drizzleclient_net_close(NET *net)
 {
   if (net->vio != NULL)
   {
-    vio_delete(net->vio);
+    delete net->vio;
     net->vio= 0;
   }
 }
 
 bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
 {
-  return vio_peer_addr(net->vio, buf, port, buflen);
+  return net->vio->peer_addr(buf, port, buflen);
 }
 
 void drizzleclient_net_keepalive(NET *net, bool flag)
 {
-  vio_keepalive(net->vio, flag);
+  net->vio->keepalive(flag);
 }
 
 int drizzleclient_net_get_sd(NET *net)
 {
-  return net->vio->sd;
+  return net->vio->get_fd();
 }
 
 bool drizzleclient_net_more_data(NET *net)
 {
-  return (net->vio == 0 || net->vio->read_pos < net->vio->read_end);
+  return (net->vio == 0 || net->vio->get_read_pos() < net->vio->get_read_end());
 }
 
 /** Realloc the packet buffer. */
@@ -232,10 +235,10 @@ void drizzleclient_net_clear(NET *net, bool clear_buffer)
 {
   if (clear_buffer)
   {
-    while (net_data_is_ready(net->vio->sd) > 0)
+    while (net_data_is_ready(net->vio->get_fd()) > 0)
     {
       /* The socket is ready */
-      if (vio_read(net->vio, net->buff, (size_t) net->max_packet) <= 0)
+      if (net->vio->read(net->buff, (size_t) net->max_packet) <= 0)
       {
         net->error= 2;
         break;
@@ -527,7 +530,8 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
   while (pos != end)
   {
     assert(pos);
-    if ((long) (length= vio_write(net->vio, pos, (size_t) (end-pos))) <= 0)
+    // TODO - see bug comment below - will we crash now?
+    if ((long) (length= net->vio->write( pos, (size_t) (end-pos))) <= 0)
     {
      /*
       * We could end up here with net->vio == NULL
@@ -537,7 +541,7 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
       if (net->vio == NULL)
         break;
       
-      const bool interrupted= vio_should_retry(net->vio);
+      const bool interrupted= net->vio->should_retry();
       /*
         If we read 0, or we were interrupted this means that
         we need to switch to blocking mode and wait until the timeout
@@ -547,9 +551,9 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
       {
         bool old_mode;
 
-        while (vio_blocking(net->vio, true, &old_mode) < 0)
+        while (net->vio->blocking(true, &old_mode) < 0)
         {
-          if (vio_should_retry(net->vio) && retry_count++ < net->retry_count)
+          if (net->vio->should_retry() && retry_count++ < net->retry_count)
             continue;
           net->error= 2;                     /* Close socket */
           net->last_errno= ER_NET_PACKET_TOO_LARGE;
@@ -565,7 +569,7 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
           continue;
       }
 
-      if (vio_errno(net->vio) == EINTR)
+      if (net->vio->get_errno() == EINTR)
       {
         continue;
       }
@@ -617,25 +621,25 @@ my_real_read(NET *net, size_t *complen)
     while (remain > 0)
     {
       /* First read is done with non blocking mode */
-      if ((long) (length= vio_read(net->vio, pos, remain)) <= 0L)
+      if ((long) (length= net->vio->read(pos, remain)) <= 0L)
       {
         if (net->vio == NULL)
           goto end;
 
-        const bool interrupted = vio_should_retry(net->vio);
+        const bool interrupted = net->vio->should_retry();
 
         if (interrupted)
         {                    /* Probably in MIT threads */
           if (retry_count++ < net->retry_count)
             continue;
         }
-        if (vio_errno(net->vio) == EINTR)
+        if (net->vio->get_errno() == EINTR)
         {
           continue;
         }
         len= packet_error;
         net->error= 2;                /* Close socket */
-        net->last_errno= (vio_was_interrupted(net->vio) ?
+        net->last_errno= (net->vio->was_interrupted() ?
                           CR_NET_READ_INTERRUPTED :
                           CR_NET_READ_ERROR);
         goto end;
@@ -677,7 +681,7 @@ my_real_read(NET *net, size_t *complen)
           /* Clear the buffer so libdrizzle doesn't keep retrying */
           while (len > 0)
           {
-            length= read(net->vio->sd, net->buff, min((size_t)net->max_packet, len));
+            length= read(net->vio->get_fd(), net->buff, min((size_t)net->max_packet, len));
             assert((long)length > 0L);
             len-= length;
           }
@@ -870,7 +874,7 @@ void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout)
   net->read_timeout= timeout;
 #ifndef __sun
   if (net->vio)
-    vio_timeout(net->vio, 0, timeout);
+    net->vio->timeout(0, timeout);
 #endif
   return;
 }
@@ -881,7 +885,7 @@ void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout)
   net->write_timeout= timeout;
 #ifndef __sun
   if (net->vio)
-    vio_timeout(net->vio, 1, timeout);
+    net->vio->timeout(1, timeout);
 #endif
   return;
 }
@@ -897,3 +901,5 @@ void drizzleclient_drizzleclient_net_clear_error(NET *net)
   net->last_error[0]= '\0';
   strcpy(net->sqlstate, not_error_sqlstate);
 }
+
+} /* namespace drizzle_plugin */

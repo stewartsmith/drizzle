@@ -1,0 +1,23 @@
+SELECT WAIT("");
+ERROR HY000: Invalid name for user defined barrier.
+SELECT WAIT(NULL);
+ERROR HY000: Invalid name for user defined barrier.
+set @signal_name= "foo";
+SELECT CREATE_BARRIER(@signal_name);
+CREATE_BARRIER(@signal_name)
+1
+SELECT SIGNAL("FOO");
+ERROR HY000: Unknown user defined barrier requested.
+SELECT SIGNAL("FoO");
+ERROR HY000: Unknown user defined barrier requested.
+SELECT SIGNAL(@signal_name);
+SIGNAL(@signal_name)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAITER_LIMIT from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@signal_name;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	GENERATION	WAITER_LIMIT
+YES	1	0
+SELECT RELEASE_BARRIER(@signal_name);
+RELEASE_BARRIER(@signal_name)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@signal_name;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")

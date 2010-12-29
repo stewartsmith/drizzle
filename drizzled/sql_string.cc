@@ -117,7 +117,8 @@ bool String::real_alloc(size_t arg_length)
   str_length=0;
   if (Alloced_length < arg_length)
   {
-    free();
+    if (Alloced_length > 0)
+      free();
     if (!(Ptr=(char*) malloc(arg_length)))
       return true;
     Alloced_length=arg_length;
@@ -228,7 +229,6 @@ bool String::copy(const char *str,size_t arg_length, const CHARSET_INFO * const 
   str_charset=cs;
   return false;
 }
-
 
 /*
   Checks that the source string can be just copied to the destination string
@@ -817,6 +817,17 @@ bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                              char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
+}
+
+std::ostream& operator<<(std::ostream& output, const String &str)
+{
+  output << "String:(";
+  output <<  const_cast<String&>(str).c_str();
+  output << ", ";
+  output << str.length();
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace drizzled */

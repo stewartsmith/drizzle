@@ -1,4 +1,4 @@
-/* Copyright (c) 2005 PrimeBase Technologies GmbH
+/* Copyright (C) 2005 PrimeBase Technologies GmbH
  *
  * PrimeBase XT
  *
@@ -106,7 +106,6 @@ struct XTIndex;
 struct XTIndBlock;
 struct XTTable;
 struct XTThread;
-class Field;
 
 /*
  * INDEX ROLLBACK

@@ -1,0 +1,22 @@
+# Test creating a barrier with a number
+connect (con1,localhost,root,,);
+connect (con5,localhost,root,,);
+
+# The default connection will own everything.
+connection default;
+set @count_barrier= "count_barrier";
+set @barrier_limit= 6;
+SELECT create_barrier(@count_barrier, @barrier_limit);
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, if ((WAITER_LIMIT = @barrier_limit), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+
+connection con1;
+set @count_barrier= "count_barrier";
+send SELECT wait(@count_barrier),
+"con1","llllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongTooooooooooooooooooooooooooooChhhhhhhhhhhhhhhhhhhhheeeeeeeeeeeeeeeecccccccccccccccccccccccckkkkkkkkkkkkkkkkkkkFooooooooooooooooooooooooooooooooooooooooooorIssssssssssssssssssssssssssssssssssssssssssssssssuuuuuuuuuuuuuuuuuuuuuuueeeeeeeeeeeeeeesssssssssssssssssssssssOoooooooofffffffffffffffffffffffffffffffffLeeeeeeeeeeeeeeeennnnnnnnnnnnnnnnnnnnnnnnnnnngggggggggggggggggggggggggggggtttttttttttttttthhhh";
+
+# We don't budge until we know everyone is in place.
+connection con5;
+set @count_barrier= "count_barrier";
+SELECT WAIT_UNTIL(@count_barrier, 1);
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+SELECT signal(@count_barrier);

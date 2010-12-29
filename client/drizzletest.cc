@@ -63,11 +63,9 @@
 #include <stdarg.h>
 #include <boost/unordered_map.hpp>
 
-#include "errname.h"
-
 /* Added this for string translation. */
 #include "drizzled/gettext.h"
-#include "drizzled/drizzle_time.h"
+#include "drizzled/type/time.h"
 #include "drizzled/charset.h"
 #include <drizzled/configmake.h>
 
@@ -90,6 +88,7 @@ int get_one_option(int optid, const struct option *, char *argument);
 #define QUERY_SEND_FLAG  1
 #define QUERY_REAP_FLAG  2
 
+typedef boost::unordered_map<std::string, uint32_t> ErrorCodes;
 ErrorCodes global_error_names;
 
 enum {
@@ -1462,7 +1461,7 @@ static int string_cmp(string* ds, const char *fname)
   int fd;
   char temp_file_path[FN_REFLEN];
 
-  if ((fd= internal::create_temp_file(temp_file_path, NULL,
+  if ((fd= internal::create_temp_file(temp_file_path, TMPDIR,
                             "tmp", MYF(MY_WME))) < 0)
     die("Failed to create temporary file for ds");
 
@@ -3387,17 +3386,78 @@ static void do_set_charset(struct st_command *command)
     abort_not_supported_test("Test requires charset '%s'", charset_name);
 }
 
+static void fill_global_error_names()
+{
+  drizzle_result_st res;
+  drizzle_return_t ret;
+  drizzle_row_t row;
+  drizzle_con_st *con= &cur_con->con;
+
+  global_error_names.clear();
+
+  const std::string ds_query("select error_name, error_code "
+                             "from data_dictionary.errors");
+  if (drizzle_query_str(con, &res, ds_query.c_str(), &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      die("Error running query '%s': %d %s", ds_query.c_str(),
+          drizzle_result_error_code(&res), drizzle_result_error(&res));
+      drizzle_result_free(&res);
+    }
+    else
+    {
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
+          drizzle_con_error(con));
+    }
+  }
+  if (drizzle_result_column_count(&res) == 0 ||
+      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+  {
+    drizzle_result_free(&res);
+    die("Query '%s' didn't return a result set", ds_query.c_str());
+  }
+
+  while ((row= drizzle_row_next(&res)) && row[0])
+  {
+    /*
+      Concatenate all fields in the first row with tab in between
+      and assign that string to the $variable
+    */
+    size_t *lengths= drizzle_row_field_sizes(&res);
+    const std::string error_name(row[0], lengths[0]);
+    const std::string error_code(row[1], lengths[1]);
+
+    try
+    {
+      global_error_names.insert(ErrorCodes::value_type(error_name,
+                                                       boost::lexical_cast<uint32_t>(error_code)));
+    }
+    catch (boost::bad_lexical_cast &ex)
+    {
+      drizzle_result_free(&res);
+      die("Invalid error_code from Drizzle: %s", ex.what());
+    }
+
+  }
+
+  drizzle_result_free(&res);
+}
+
 static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 {
   size_t err_name_len= error_end - error_name;
   string error_name_s(error_name, err_name_len);
 
-  uint32_t code= global_error_names.getErrorCode(error_name_s);
+  ErrorCodes::iterator it= global_error_names.find(error_name_s);
+  if (it != global_error_names.end())
+  {
+    return (*it).second;
+  }
 
-  if (!code)
-    die("Unknown SQL error name '%s'", error_name_s.c_str());
-
-  return(code);
+  die("Unknown SQL error name '%s'", error_name_s.c_str());
+  return 0;
 }
 
 static void do_get_errcodes(struct st_command *command)
@@ -5477,6 +5537,14 @@ try
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
 
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
+
   po::variables_map vm;
 
   // Disable allow_guessing
@@ -5685,6 +5753,8 @@ try
     die("Out of memory");
   safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
+
+  fill_global_error_names();
 
   /* Use all time until exit if no explicit 'start_timer' */
   timer_start= timer_now();
