@@ -77,6 +77,7 @@ INSERT into commit_test VALUES (10);
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
 Handler_commit	4
+COMMIT;
 drop table commit_test;
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value

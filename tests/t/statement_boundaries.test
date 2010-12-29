@@ -83,5 +83,6 @@ INSERT into commit_test VALUES (10);
 
 
 SHOW STATUS LIKE 'Handler_commit%';
+COMMIT;
 drop table commit_test;
 SHOW STATUS LIKE 'Handler_commit%';
