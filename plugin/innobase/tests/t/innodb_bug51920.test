@@ -38,5 +38,6 @@ connection con1;
 -- error ER_QUERY_INTERRUPTED,20,2
 reap;
 connection default;
+COMMIT;
 DROP TABLE bug51920;
 -- disconnect con1
