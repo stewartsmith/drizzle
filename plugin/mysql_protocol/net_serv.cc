@@ -579,7 +579,10 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
       break;
     }
     pos+=length;
-    current_session->status_var.bytes_sent+= length;
+
+    /* If this is an error we may not have a current_session any more */
+    if (current_session)
+      current_session->status_var.bytes_sent+= length;
   }
 end:
   if ((net->compress) && (packet != NULL))
