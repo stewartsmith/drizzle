@@ -116,8 +116,15 @@ bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
     return true;
 
   thread_count.increment();
-
-  session->getThread().reset(new boost::thread((boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()))));
+  try
+  {
+    session->getThread().reset(new boost::thread((boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()))));
+  }
+  catch (std::exception&)
+  {
+    thread_count.decrement();
+    return true;
+  }
 
   if (not session->getThread())
   {
