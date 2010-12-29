@@ -331,6 +331,7 @@ delete from t1;
 commit;
 select * from t1;
 id	val
+commit;
 drop table t1;
 create table t1 (a integer) engine=innodb;
 start transaction;
@@ -358,6 +359,7 @@ marc@anyware.co.uk
 SELECT _userid FROM t1 WHERE _userid='marc@anyware.co.uk';
 _userid
 marc@anyware.co.uk
+COMMIT;
 drop table t1;
 set autocommit=1;
 CREATE TABLE t1 (

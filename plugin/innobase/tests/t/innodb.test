@@ -228,6 +228,7 @@ select * from t1;
 delete from t1;
 commit;
 select * from t1;
+commit;
 drop table t1;
 
 #
@@ -260,6 +261,7 @@ INSERT INTO t1  SET _userid='marc@anyware.co.uk';
 COMMIT;
 SELECT * FROM t1;
 SELECT _userid FROM t1 WHERE _userid='marc@anyware.co.uk';
+COMMIT;
 drop table t1;
 set autocommit=1;
 
