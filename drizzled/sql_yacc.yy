@@ -950,7 +950,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         flush_options flush_option
         equal optional_braces
         normal_join
-        table_to_table_list table_to_table opt_table_list opt_as
+        table_to_table_list table_to_table opt_table_list
         single_multi
         union_clause union_list
         precision subselect_start
@@ -1078,33 +1078,6 @@ create:
             LEX *lex= YYSession->lex;
             lex->current_select= &lex->select_lex;
           }
-        | CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident LIKE table_ident opt_create_table_options
-          {
-            Session *session= YYSession;
-            LEX *lex= session->lex;
-            lex->sql_command= SQLCOM_CREATE_TABLE;
-            statement::CreateTable *statement= new(std::nothrow) statement::CreateTable(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-
-            if (!lex->select_lex.add_table_to_list(session, $5, NULL,
-                                                   TL_OPTION_UPDATING,
-                                                   TL_WRITE))
-              DRIZZLE_YYABORT;
-            lex->col_list.empty();
-
-            Lex->table()->set_name($5->table.str);
-	    if ($2)
-	      Lex->table()->set_type(message::Table::TEMPORARY);
-	    else
-	      Lex->table()->set_type(message::Table::STANDARD);
-
-            statement->is_create_table_like= true;
-
-            if (not lex->select_lex.add_table_to_list(session, $7, NULL, 0, TL_READ))
-              DRIZZLE_YYABORT;
-          }
         | CREATE build_method
           {
             LEX *lex=Lex;
@@ -1152,19 +1125,11 @@ create2:
           '(' create2a 
           {
           }
+        | create_like opt_create_table_options
+          { }
         | opt_create_table_options
           create3 
           {
-          }
-        | '(' LIKE table_ident ')'
-          {
-            Session *session= YYSession;
-            LEX *lex= session->lex;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            statement->is_create_table_like= true;
-            if (!lex->select_lex.add_table_to_list(session, $3, NULL, 0, TL_READ))
-              DRIZZLE_YYABORT;
           }
         ;
 
@@ -1176,21 +1141,33 @@ create2a:
         |  create_select ')'
            { Lex->current_select->set_braces(1);}
            union_opt {}
+        |  create_like ')' opt_create_table_options
+          { }
         ;
 
 create3:
           /* empty */ {}
-        | opt_duplicate opt_as create_select
+        | opt_duplicate_as create_select
           {
             Lex->current_select->set_braces(0);
           }
           union_clause {}
-        | opt_duplicate opt_as '(' create_select ')'
+        | opt_duplicate_as '(' create_select ')'
           {
             Lex->current_select->set_braces(1);
           }
           union_opt {}
         ;
+
+create_like:
+            LIKE table_ident
+            {
+              ((statement::CreateTable *)(YYSession->getLex()->statement))->is_create_table_like= true;
+
+              if (not YYSession->getLex()->select_lex.add_table_to_list(YYSession, $2, NULL, 0, TL_READ))
+                DRIZZLE_YYABORT;
+            }
+          ;
 
 create_select:
           SELECT_SYM
@@ -1235,11 +1212,6 @@ create_select:
             */
             Lex->current_select->table_list.push_front(&Lex->save_list);
           }
-        ;
-
-opt_as:
-          /* empty */ {}
-        | AS {}
         ;
 
 opt_create_database_options:
@@ -5771,6 +5743,15 @@ opt_duplicate:
           /* empty */ { Lex->duplicates=DUP_ERROR; }
         | REPLACE { Lex->duplicates=DUP_REPLACE; }
         | IGNORE_SYM { Lex->ignore= 1; }
+        ;
+
+opt_duplicate_as:
+          /* empty */ { Lex->duplicates=DUP_ERROR; }
+        | AS { Lex->duplicates=DUP_ERROR; }
+        | REPLACE { Lex->duplicates=DUP_REPLACE; }
+        | IGNORE_SYM { Lex->ignore= true; }
+        | REPLACE AS { Lex->duplicates=DUP_REPLACE; }
+        | IGNORE_SYM AS { Lex->ignore= true; }
         ;
 
 opt_field_term:
