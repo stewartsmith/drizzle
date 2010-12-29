@@ -70,8 +70,10 @@ bool statement::AlterSchema::execute()
     @todo right now the logic for alter schema is just sitting here, at some point this should be packaged up in a class/etc.
   */
 
+  // First initialize the schema message
+  drizzled::message::schema::init(schema_message, old_definition->name());
+
   // We set the name from the old version to keep case preference
-  schema_message.set_name(old_definition->name());
   schema_message.set_version(old_definition->version());
   schema_message.set_uuid(old_definition->uuid());
   schema_message.mutable_engine()->set_name(old_definition->engine().name());
