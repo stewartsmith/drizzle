@@ -3295,7 +3295,7 @@ sub dbx_arguments {
   {
     # write init file for drizzled
     dtr_tofile($dbx_init_file,
-               "stop in __1cIdrizzledLmysql_parse6Fpn0AHSession_pkcI_v_\n" .
+               "stop in __1cIdrizzledLparse6Fpn0AHSession_pkcI_v_\n" .
                "runargs $str\n" .
                "run\n" .
                "\n");
@@ -3366,7 +3366,7 @@ sub gdb_arguments {
 	       "set args $str\n" .
                "$extra_gdb_init" .
                "set breakpoint pending on\n" .
-	       "break drizzled::mysql_parse\n" .
+	       "break drizzled::parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end\n" .
@@ -3432,7 +3432,7 @@ sub ddd_arguments {
     dtr_tofile($gdb_init_file,
 	       "file $$exe\n" .
 	       "set args $str\n" .
-	       "break drizzled::mysql_parse\n" .
+	       "break drizzled::parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end");
