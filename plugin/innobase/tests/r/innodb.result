@@ -2536,6 +2536,7 @@ set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 insert into t1 select * from t2;
 update t1 set b = (select e from t2 where a = d);
+commit;
 create table t3(d int not null, e int, primary key(d)) engine=innodb
 select * from t2;
 commit;
