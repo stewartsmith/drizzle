@@ -1395,31 +1395,40 @@ static bool set_option_bit(Session *session, set_var *var)
 
 static bool set_option_autocommit(Session *session, set_var *var)
 {
+  bool success= true;
   /* The test is negative as the flag we use is NOT autocommit */
 
   uint64_t org_options= session->options;
+  uint64_t new_options= session->options;
 
   if (var->save_result.uint32_t_value != 0)
-    session->options&= ~((sys_var_session_bit*) var->var)->bit_flag;
+    new_options&= ~((sys_var_session_bit*) var->var)->bit_flag;
   else
-    session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
+    new_options|= ((sys_var_session_bit*) var->var)->bit_flag;
 
-  if ((org_options ^ session->options) & OPTION_NOT_AUTOCOMMIT)
+  if ((org_options ^ new_options) & OPTION_NOT_AUTOCOMMIT)
   {
     if ((org_options & OPTION_NOT_AUTOCOMMIT))
     {
+      success= session->endActiveTransaction();
       /* We changed to auto_commit mode */
       session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      if (transaction_services.commitTransaction(session, true))
-        return 1;
     }
     else
     {
       session->server_status&= ~SERVER_STATUS_AUTOCOMMIT;
     }
   }
+
+  if (var->save_result.uint32_t_value != 0)
+    session->options&= ~((sys_var_session_bit*) var->var)->bit_flag;
+  else
+    session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
+
+  if (not success)
+    return true;
+
   return 0;
 }
 
