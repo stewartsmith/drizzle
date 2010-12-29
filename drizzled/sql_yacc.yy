@@ -1073,7 +1073,7 @@ create:
 	    else
 	      Lex->table()->set_type(message::Table::STANDARD);
           }
-          create2
+          create_table_definition
           {
             LEX *lex= YYSession->lex;
             lex->current_select= &lex->select_lex;
@@ -1121,21 +1121,21 @@ create:
           }
         ;
 
-create2:
-          '(' create2a 
+create_table_definition:
+          '(' create_list 
           {
           }
         | create_like opt_create_table_options
           { }
         | opt_create_table_options
-          create3 
+          create_select_as 
           {
           }
         ;
 
-create2a:
+create_list:
           field_list ')' opt_create_table_options
-          create3
+          create_select_as
           {
           }
         |  create_select ')'
@@ -1145,7 +1145,7 @@ create2a:
           { }
         ;
 
-create3:
+create_select_as:
           /* empty */ {}
         | opt_duplicate_as create_select
           {
@@ -1160,14 +1160,14 @@ create3:
         ;
 
 create_like:
-            LIKE table_ident
-            {
-              ((statement::CreateTable *)(YYSession->getLex()->statement))->is_create_table_like= true;
+          LIKE table_ident
+          {
+            ((statement::CreateTable *)(YYSession->getLex()->statement))->is_create_table_like= true;
 
-              if (not YYSession->getLex()->select_lex.add_table_to_list(YYSession, $2, NULL, 0, TL_READ))
-                DRIZZLE_YYABORT;
-            }
-          ;
+            if (not YYSession->getLex()->select_lex.add_table_to_list(YYSession, $2, NULL, 0, TL_READ))
+              DRIZZLE_YYABORT;
+          }
+        ;
 
 create_select:
           SELECT_SYM
