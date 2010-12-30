@@ -337,6 +337,7 @@ static Item* reserved_keyword_function(Session *session, const std::string &name
 using namespace drizzled;
 %}
 %union {
+  bool boolean;
   int  num;
   ulong ulong_num;
   uint64_t ulonglong_number;
@@ -834,18 +835,22 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
       int_type
       real_type
 
+%type <boolean>
+        opt_wait
+        opt_concurrent
+        opt_status
+        opt_zerofill
+        opt_if_not_exists
+        if_exists 
+        opt_temporary 
+
 %type <num>
         order_dir field_def
-        if_exists opt_table_options
-        opt_if_not_exists
-        opt_temporary all_or_any opt_distinct
+        opt_table_options
+        all_or_any opt_distinct
         union_option
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
-        opt_status
-        opt_concurrent
-        opt_wait
-        opt_zerofill
         opt_field_number_signed
         kill_option
 
@@ -1133,10 +1138,8 @@ create_table_definition:
           { }
         | create_like opt_create_table_options
           { }
-        | opt_create_table_options
-          create_select_as 
-          {
-          }
+        | opt_create_table_options create_select_as 
+          { }
         ;
 
 create_select_as:
@@ -1796,8 +1799,8 @@ ignored_field_number_length:
         ;
 
 opt_zerofill:
-          /* empty */ { $$= 0; }
-        | ZEROFILL_SYM { $$= 1; Lex->type|= UNSIGNED_FLAG; }
+          /* empty */ { $$= false; }
+        | ZEROFILL_SYM { $$= true; Lex->type|= UNSIGNED_FLAG; }
         ;
 
 opt_precision:
@@ -4604,18 +4607,18 @@ table_name:
         ;
 
 if_exists:
-          /* empty */ { $$= 0; }
-        | IF EXISTS { $$= 1; }
+          /* empty */ { $$= false; }
+        | IF EXISTS { $$= true; }
         ;
 
 opt_temporary:
-          /* empty */ { $$= 0; }
-        | TEMPORARY_SYM { $$= 1; }
+          /* empty */ { $$= false; }
+        | TEMPORARY_SYM { $$= true; }
         ;
 
 /*
   Execute a string as dynamic SQL.
-  */
+*/
 
 execute:
        EXECUTE_SYM execute_var_or_string opt_status opt_concurrent opt_wait
@@ -4639,18 +4642,18 @@ execute_var_or_string:
         }
 
 opt_status:
-          /* empty */ { $$= 0; }
-        | WITH NO_SYM RETURN_SYM { $$= 1; }
+          /* empty */ { $$= false; }
+        | WITH NO_SYM RETURN_SYM { $$= true; }
         ;
 
 opt_concurrent:
-          /* empty */ { $$= 0; }
-        | CONCURRENT { $$= 1; }
+          /* empty */ { $$= false; }
+        | CONCURRENT { $$= true; }
         ;
 
 opt_wait:
-          /* empty */ { $$= 0; }
-        | WAIT_SYM { $$= 1; }
+          /* empty */ { $$= false; }
+        | WAIT_SYM { $$= true; }
         ;
 
 /*
