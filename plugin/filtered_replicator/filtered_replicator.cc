@@ -508,6 +508,7 @@ void FilteredReplicator::setTableFilter(const string &input)
   _tab_filter.assign(input);
   tables_to_filter.clear();
   populateFilter(_tab_filter, tables_to_filter);
+  pthread_mutex_unlock(&sysvar_tab_lock);
   pthread_mutex_unlock(&tab_vector_lock);
 }
 
