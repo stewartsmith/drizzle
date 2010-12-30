@@ -353,7 +353,7 @@ public:
   static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);
   static const CHARSET_INFO *getSchemaCollation(const drizzled::SchemaIdentifier &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
-  static bool dropSchema(const drizzled::SchemaIdentifier &identifier);
+  static bool dropSchema(drizzled::Session& session, SchemaIdentifier::const_reference identifier);
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected

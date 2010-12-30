@@ -58,8 +58,8 @@ namespace drizzled
 {
 
 static long drop_tables_via_filenames(Session *session,
-                                 SchemaIdentifier &schema_identifier,
-                                 TableIdentifier::vector &dropped_tables);
+                                      SchemaIdentifier &schema_identifier,
+                                      TableIdentifier::vector &dropped_tables);
 static void change_db_impl(Session *session);
 static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
 
@@ -237,17 +237,6 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
   if (session->wait_if_global_read_lock(false, true))
   {
     return -1;
-  }
-
-  // Lets delete the temporary tables first outside of locks.  
-  set<string> set_of_names;
-  session->doGetTableNames(schema_identifier, set_of_names);
-
-  for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
-  {
-    TableIdentifier identifier(schema_identifier, *iter, message::Table::TEMPORARY);
-    Table *table= session->find_temporary_table(identifier);
-    session->close_temporary_table(table);
   }
 
   {
@@ -532,6 +521,7 @@ static long drop_tables_via_filenames(Session *session,
     tot_list_next= &table_list->next_local;
     deleted++;
   }
+
   if (session->getKilled())
     return -1;
 
@@ -542,7 +532,7 @@ static long drop_tables_via_filenames(Session *session,
   }
 
 
-  if (not plugin::StorageEngine::dropSchema(schema_identifier))
+  if (not plugin::StorageEngine::dropSchema(*session, schema_identifier))
   {
     std::string path;
     schema_identifier.getSQLPath(path);

@@ -202,9 +202,23 @@ public:
   }
 };
 
-bool StorageEngine::dropSchema(const SchemaIdentifier &identifier)
+bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::const_reference identifier)
 {
   uint64_t counter= 0;
+
+  {
+    // Lets delete the temporary tables first outside of locks.  
+    std::set<std::string> set_of_names;
+    session.doGetTableNames(identifier, set_of_names);
+
+    for (std::set<std::string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
+    {
+      TableIdentifier table_identifier(identifier, *iter, message::Table::TEMPORARY);
+      Table *table= session.find_temporary_table(table_identifier);
+      session.close_temporary_table(table);
+    }
+  }
+
   // Add hook here for engines to register schema.
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
                 DropSchema(identifier, counter));
