@@ -1124,7 +1124,12 @@ create:
 create_table_definition:
           '(' field_list ')' opt_create_table_options  create_select_as
           { }
-        | '(' create_list 
+        | '(' create_select ')'
+           {
+             Lex->current_select->set_braces(1);
+           }
+           union_opt {}
+        |  '(' create_like ')' opt_create_table_options
           { }
         | create_like opt_create_table_options
           { }
@@ -1132,14 +1137,6 @@ create_table_definition:
           create_select_as 
           {
           }
-        ;
-
-create_list:
-           create_select ')'
-           { Lex->current_select->set_braces(1);}
-           union_opt {}
-        |  create_like ')' opt_create_table_options
-          { }
         ;
 
 create_select_as:
