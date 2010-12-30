@@ -1054,18 +1054,18 @@ statement:
 create:
           CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident
           {
-            Session *session= YYSession;
-            LEX *lex= session->lex;
-            lex->sql_command= SQLCOM_CREATE_TABLE;
+            Lex->sql_command= SQLCOM_CREATE_TABLE;
             statement::CreateTable *statement= new(std::nothrow) statement::CreateTable(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
+            Lex->statement= statement;
+
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            if (!lex->select_lex.add_table_to_list(session, $5, NULL,
-                                                   TL_OPTION_UPDATING,
-                                                   TL_WRITE))
+
+            if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL,
+                                                     TL_OPTION_UPDATING,
+                                                     TL_WRITE))
               DRIZZLE_YYABORT;
-            lex->col_list.empty();
+            Lex->col_list.empty();
 
             Lex->table()->set_name($5->table.str);
 	    if ($2)
