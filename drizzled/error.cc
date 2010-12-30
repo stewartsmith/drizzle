@@ -96,6 +96,11 @@ error_handler_func error_handler_hook= NULL;
        ...	variable list
 */
 
+void my_error(drizzled_error_code nr)
+{
+  my_error(nr, MYF(0));
+}
+
 void my_error(int nr, myf MyFlags, ...)
 {
   std::string format;
