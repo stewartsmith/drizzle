@@ -52,22 +52,26 @@ namespace drizzled
     -1  ERROR, message not sent
 */
 
-int sql_set_variables(Session *session, List<set_var_base> *var_list)
+int sql_set_variables(Session *session, const SetVarVector &var_list)
 {
   int error;
-  List_iterator_fast<set_var_base> it(*var_list);
 
-  set_var_base *var;
-  while ((var=it++))
+  SetVarVector::const_iterator it(var_list.begin());
+
+  while (it != var_list.end())
   {
-    if ((error= var->check(session)))
+    if ((error= (*it)->check(session)))
       goto err;
+    ++it;
   }
   if (!(error= test(session->is_error())))
   {
-    it.rewind();
-    while ((var= it++))
-      error|= var->update(session);         // Returns 0, -1 or 1
+    it= var_list.begin();
+    while (it != var_list.end())
+    {
+      error|= (*it)->update(session);         // Returns 0, -1 or 1
+      ++it;
+    }
   }
 
 err:
