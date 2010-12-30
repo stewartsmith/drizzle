@@ -23,7 +23,7 @@
 
 #include <boost/make_shared.hpp>
 #include "drizzled/message/catalog.h"
-#include "drizzled/session.h"
+#include "drizzled/identifier/session.h"
 
 namespace drizzled {
 namespace catalog {

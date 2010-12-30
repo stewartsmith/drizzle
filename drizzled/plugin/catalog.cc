@@ -49,97 +49,6 @@ public:
   }
 };
 
-class LockErase
-{
-  bool _locked;
-  const identifier::Catalog &identifier;
-  catalog::error_t error;
-
-public:
-  LockErase(const identifier::Catalog &identifier_arg) :
-    _locked(false),
-    identifier(identifier_arg)
-  {
-    init();
-  }
-
-  bool locked () const
-  {
-    return _locked;
-  }
-
-  ~LockErase()
-  {
-    if (_locked)
-    {
-      if (not catalog::Cache::singleton().unlock(identifier, error))
-      {
-        catalog::error(error, identifier);
-        assert(0);
-      }
-    }
-  }
-
-private:
-  void init()
-  {
-    // We insert a lock into the cache, if this fails we bail.
-    if (not catalog::Cache::singleton().lock(identifier, error))
-    {
-      assert(0);
-      return;
-    }
-
-    _locked= true;
-  }
-};
-
-class CreateLock
-{
-  bool _locked;
-  const identifier::Catalog &identifier;
-  catalog::error_t error;
-
-public:
-  CreateLock(const identifier::Catalog &identifier_arg) :
-    _locked(false),
-    identifier(identifier_arg)
-  {
-    init();
-  }
-
-  bool locked () const
-  {
-    return _locked;
-  }
-
-  ~CreateLock()
-  {
-    if (_locked)
-    {
-      if (not catalog::Cache::singleton().unlock(identifier, error))
-      {
-        catalog::error(error, identifier);
-        assert(0);
-      }
-    }
-  }
-
-
-private:
-  void init()
-  {
-    // We insert a lock into the cache, if this fails we bail.
-    if (not catalog::Cache::singleton().lock(identifier, error))
-    {
-      assert(0);
-      return;
-    }
-
-    _locked= true;
-  }
-};
-
 Catalog::~Catalog()
 {
 }
@@ -154,7 +63,7 @@ bool Catalog::create(const identifier::Catalog &identifier, message::catalog::sh
 {
   assert(message);
 
-  CreateLock lock(identifier);
+  catalog::lock::Create lock(identifier);
 
   if (not lock.locked())
   {
@@ -188,7 +97,7 @@ bool Catalog::drop(const identifier::Catalog &identifier)
     return false;
   }
 
-  LockErase lock(identifier);
+  catalog::lock::Erase lock(identifier);
   if (not lock.locked())
   {
     my_error(ER_CATALOG_NO_LOCK, MYF(0), identifier.getName().c_str());
@@ -299,24 +208,27 @@ bool plugin::Catalog::getMessage(const identifier::Catalog &identifier, message:
   return false;
 }
 
-bool plugin::Catalog::getInstance(const identifier::Catalog &identifier, catalog::Instance::shared_ptr &instance)
+catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Catalog &identifier)
 {
   catalog::error_t error;
-  instance= catalog::Cache::singleton().find(identifier, error);
+  catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
 
   if (instance)
-    return true;
+    return instance;
 
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
     if (ref->getInstance(identifier, instance))
-      return true;
+    {
+      // If this should fail inserting into the cache, we are in a world of
+      // pain.
+      catalog::Cache::singleton().insert(identifier, instance, error);
+
+      return instance;
+    }
   }
 
-  // If this should fail, we are in a world of pain.
-  catalog::Cache::singleton().insert(identifier, instance, error);
-
-  return true;
+  return catalog::Instance::shared_ptr();
 }
 
 

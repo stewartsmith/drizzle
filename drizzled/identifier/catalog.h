@@ -51,6 +51,8 @@ public:
 
 public:
   typedef std::vector<Catalog> vector;
+  typedef const Catalog& const_reference;
+  typedef Catalog& reference;
 
   Catalog(const std::string &name_arg);
 

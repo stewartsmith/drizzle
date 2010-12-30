@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,13 +18,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_IDENTIFIER_H
-#define DRIZZLED_IDENTIFIER_H
 
-#include "drizzled/identifier/catalog.h"
-#include "drizzled/identifier/schema.h"
-#include "drizzled/identifier/session.h"
-#include "drizzled/identifier/table.h"
-#include "drizzled/identifier/user.h"
+#ifndef DRIZZLED_CATALOG_LOCAL_H
+#define DRIZZLED_CATALOG_LOCAL_H
 
-#endif /* DRIZZLED_IDENTIFIER_H */
+#include "drizzled/catalog/instance.h"
+
+namespace drizzled
+{
+namespace catalog
+{
+
+Instance::shared_ptr local();
+
+} /* namespace catalog */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_CATALOG_LOCAL_H */

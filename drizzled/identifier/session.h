@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,13 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_IDENTIFIER_H
-#define DRIZZLED_IDENTIFIER_H
 
-#include "drizzled/identifier/catalog.h"
-#include "drizzled/identifier/schema.h"
-#include "drizzled/identifier/session.h"
-#include "drizzled/identifier/table.h"
-#include "drizzled/identifier/user.h"
+#ifndef DRIZZLED_IDENTIFIER_SESSION_H
+#define DRIZZLED_IDENTIFIER_SESSION_H
 
-#endif /* DRIZZLED_IDENTIFIER_H */
+namespace drizzled
+{
+
+typedef int64_t session_id_t;
+
+namespace identifier
+{
+
+class Session 
+{
+  session_id_t _id;
+public:
+
+  Session() :
+    _id(0)
+  {
+  }
+
+  ~Session()
+  {
+  }
+};
+
+} /* namespace identifier */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_IDENTIFIER_SESSION_H */

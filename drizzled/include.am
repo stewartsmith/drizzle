@@ -55,6 +55,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/catalog/cache.h \
 			      drizzled/catalog/engine.h \
 			      drizzled/catalog/instance.h \
+			      drizzled/catalog/local.h \
 			      drizzled/charset.h \
 			      drizzled/charset_info.h \
 			      drizzled/check_stack_overrun.h \
@@ -216,6 +217,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/identifier.h \
 			      drizzled/identifier/catalog.h \
 			      drizzled/identifier/schema.h \
+			      drizzled/identifier/session.h \
 			      drizzled/identifier/table.h \
 			      drizzled/identifier/user.h \
 			      drizzled/index_hint.h \
@@ -512,6 +514,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/cached_item.cc \
 			   drizzled/catalog.cc \
 			   drizzled/catalog/cache.cc \
+			   drizzled/catalog/local.cc \
 			   drizzled/check_stack_overrun.cc \
 			   drizzled/comp_creator.cc \
 			   drizzled/create_field.cc \

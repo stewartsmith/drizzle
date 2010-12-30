@@ -32,18 +32,27 @@
 
 namespace drizzled {
 
+namespace plugin {
+class Catalog;
+}
 namespace generator {
 namespace catalog {
 class Cache;
 class Instance;
+
 } //namespace catalog
 } //namespace generator
 
 namespace catalog {
 
+namespace lock {
+class Create;
+class Erase;
+
+} //namespace lock
+
 class Cache
 {
-public:
   static inline Cache &singleton()
   {
     static Cache open_cache;
@@ -68,19 +77,115 @@ public:
   bool lock(const identifier::Catalog &identifier, catalog::error_t &error);
   bool unlock(const identifier::Catalog &identifier, catalog::error_t &error);
 
-protected:
   friend class drizzled::generator::catalog::Cache;
   friend class drizzled::plugin::Catalog;
+  friend class drizzled::catalog::lock::Erase;
+  friend class drizzled::catalog::lock::Create;
 
   void copy(catalog::Instance::vector &vector);
 
-private:
   typedef boost::unordered_map< identifier::Catalog, catalog::Instance::shared_ptr> unordered_map;
 
   unordered_map cache;
   boost::mutex _mutex;
 };
 
+
+namespace lock {
+
+class Erase
+{
+  bool _locked;
+  const identifier::Catalog &identifier;
+  catalog::error_t error;
+
+public:
+  Erase(const identifier::Catalog &identifier_arg) :
+    _locked(false),
+    identifier(identifier_arg)
+  {
+    init();
+  }
+
+  bool locked () const
+  {
+    return _locked;
+  }
+
+  ~Erase()
+  {
+    if (_locked)
+    {
+      if (not catalog::Cache::singleton().unlock(identifier, error))
+      {
+        catalog::error(error, identifier);
+        assert(0);
+      }
+    }
+  }
+
+private:
+  void init()
+  {
+    // We insert a lock into the cache, if this fails we bail.
+    if (not catalog::Cache::singleton().lock(identifier, error))
+    {
+      assert(0);
+      return;
+    }
+
+    _locked= true;
+  }
+};
+
+
+class Create
+{
+  bool _locked;
+  const identifier::Catalog &identifier;
+  catalog::error_t error;
+
+public:
+  Create(const identifier::Catalog &identifier_arg) :
+    _locked(false),
+    identifier(identifier_arg)
+  {
+    init();
+  }
+
+  bool locked () const
+  {
+    return _locked;
+  }
+
+  ~Create()
+  {
+    if (_locked)
+    {
+      if (not catalog::Cache::singleton().unlock(identifier, error))
+      {
+        catalog::error(error, identifier);
+        assert(0);
+      }
+    }
+  }
+
+
+private:
+  void init()
+  {
+    // We insert a lock into the cache, if this fails we bail.
+    if (not catalog::Cache::singleton().lock(identifier, error))
+    {
+      assert(0);
+      return;
+    }
+
+    _locked= true;
+  }
+};
+
+} /* namespace lock */
 } /* namespace catalog */
 } /* namespace drizzled */
 

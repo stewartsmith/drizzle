@@ -66,7 +66,7 @@ public:
   static bool getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message);
 
   // Get Instance
-  static bool getInstance(const identifier::Catalog &identifier, catalog::Instance::shared_ptr &instance);
+  static catalog::Instance::shared_ptr getInstance(const identifier::Catalog &identifier);
 };
 
 } /* namespace plugin */

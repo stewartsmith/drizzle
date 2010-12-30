@@ -53,6 +53,9 @@
 #include "drizzled/diagnostics_area.h"
 #include "drizzled/plugin/authorization.h"
 
+#include "drizzled/catalog/instance.h"
+#include "drizzled/catalog/local.h"
+
 #include <boost/unordered_map.hpp>
 
 #include <boost/thread/thread.hpp>
@@ -310,7 +313,6 @@ struct Ha_data
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
-typedef int64_t session_id_t;
 
 class Session : public Open_tables_state
 {
@@ -322,6 +324,11 @@ public:
   typedef const Session& const_reference;
   typedef const Session* const_pointer;
   typedef Session* pointer;
+
+  static shared_ptr make_shared(plugin::Client *client, catalog::Instance::shared_ptr instance_arg)
+  {
+    return boost::make_shared<Session>(client, instance_arg);
+  }
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -1126,7 +1133,7 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(plugin::Client *client_arg);
+  Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
   virtual ~Session();
 
   void cleanup(void);
@@ -1814,6 +1821,8 @@ public:
   }
 
 private:
+  catalog::Instance::shared_ptr _catalog;
+
   // This lives throughout the life of Session
   bool use_usage;
   PropertyMap life_properties;
