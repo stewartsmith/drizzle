@@ -52,7 +52,7 @@ drizzled::String *Boolean::val_str(drizzled::String *value)
 
       if (res->length() == 1)
       {
-        switch (res->ptr()[0])
+        switch (res->c_ptr()[0])
         {
         case 'y': case 'Y':
         case 't': case 'T': // PG compatibility
@@ -66,28 +66,28 @@ drizzled::String *Boolean::val_str(drizzled::String *value)
           break;
         }
       }
-      else if ((res->length() == 5) and (strcasecmp(res->ptr(), "FALSE") == 0))
+      else if ((res->length() == 5) and (strcasecmp(res->c_ptr(), "FALSE") == 0))
       {
         return evaluate(false, value);
       }
-      if ((res->length() == 4) and (strcasecmp(res->ptr(), "TRUE") == 0))
+      if ((res->length() == 4) and (strcasecmp(res->c_ptr(), "TRUE") == 0))
       {
         return evaluate(true, value);
       }
-      else if ((res->length() == 5) and (strcasecmp(res->ptr(), "FALSE") == 0))
+      else if ((res->length() == 5) and (strcasecmp(res->c_ptr(), "FALSE") == 0))
       {
         return evaluate(false, value);
       }
-      else if ((res->length() == 3) and (strcasecmp(res->ptr(), "YES") == 0))
+      else if ((res->length() == 3) and (strcasecmp(res->c_ptr(), "YES") == 0))
       {
         return evaluate(true, value);
       }
-      else if ((res->length() == 2) and (strcasecmp(res->ptr(), "NO") == 0))
+      else if ((res->length() == 2) and (strcasecmp(res->c_ptr(), "NO") == 0))
       {
         return evaluate(false, value);
       }
 
-      my_error(ER_INVALID_CAST_TO_BOOLEAN, MYF(0), res->ptr());
+      my_error(ER_INVALID_CAST_TO_BOOLEAN, MYF(0), res->c_ptr());
       return evaluate(false, value);
     }
 
@@ -113,7 +113,7 @@ String *Boolean::evaluate(const bool &result, String *val_buffer)
   uint32_t mlength= (5) * cs->mbmaxlen;
 
   val_buffer->alloc(mlength);
-  char *buffer=(char*) val_buffer->ptr();
+  char *buffer=(char*) val_buffer->c_ptr();
 
   if (result)
   {
@@ -128,75 +128,6 @@ String *Boolean::evaluate(const bool &result, String *val_buffer)
 
   return val_buffer;
 }
-
-#if 0
-bool Boolean::val_bool()
-{
-  bool tmp= false;
-
-  switch (args[0]->result_type())
-  {
-  case STRING_RESULT:
-    {
-      drizzled::String _res, *res;
-
-      if (not (res= args[0]->val_str(&_res)))
-      { 
-        null_value= true; 
-
-        break;
-      }
-      null_value= false; 
-
-      if (res->length() == 1)
-      {
-        switch (res->ptr()[0])
-        {
-        case 'y': case 'Y':
-        case 't': case 'T': // PG compatibility
-          return true;
-
-        case 'n': case 'N':
-        case 'f': case 'F': // PG compatibility
-          return false;
-
-        default:
-          break;
-        }
-      }
-      else if ((res->length() == 5) and (strcasecmp(res->ptr(), "FALSE") == 0))
-      {
-        return false;
-      }
-      if ((res->length() == 4) and (strcasecmp(res->ptr(), "TRUE") == 0))
-      {
-        return true;
-      }
-      else if ((res->length() == 5) and (strcasecmp(res->ptr(), "FALSE") == 0))
-      {
-        return false;
-      }
-      else if ((res->length() == 3) and (strcasecmp(res->ptr(), "YES") == 0))
-      {
-        return true;
-      }
-      else if ((res->length() == 2) and (strcasecmp(res->ptr(), "NO") == 0))
-      {
-        return false;
-      }
-
-      break;
-    }
-
-  default:
-    tmp= args[0]->val_bool();
-    null_value=args[0]->null_value;
-  }
-
-  return tmp;
-}
-#endif
-
 
 } // namespace cast
 } // namespace function
