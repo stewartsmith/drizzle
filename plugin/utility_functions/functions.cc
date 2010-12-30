@@ -26,6 +26,7 @@ using namespace drizzled;
 
 static int init(drizzled::module::Context &context)
 {
+  context.add(new plugin::Create_function<utility_functions::Assert>("assert"));
   context.add(new plugin::Create_function<utility_functions::Catalog>("catalog"));
   context.add(new plugin::Create_function<utility_functions::Execute>("execute"));
   context.add(new plugin::Create_function<utility_functions::GlobalReadLock>("global_read_lock"));

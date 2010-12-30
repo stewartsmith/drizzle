@@ -18,18 +18,48 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+#ifndef PLUGIN_UTILITY_FUNCTIONS_ASSERT_H
+#define PLUGIN_UTILITY_FUNCTIONS_ASSERT_H
 
-#include "plugin/utility_functions/assert.h"
-#include "plugin/utility_functions/catalog.h"
-#include "plugin/utility_functions/execute.h"
-#include "plugin/utility_functions/global_read_lock.h"
-#include "plugin/utility_functions/kill.h"
-#include "plugin/utility_functions/schema.h"
-#include "plugin/utility_functions/user.h"
+#include <drizzled/item/function/boolean.h>
+#include <iostream>
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */
+namespace drizzled
+{
+
+namespace utility_functions
+{
+
+class Assert :public drizzled::item::function::Boolean
+{
+public:
+  Assert() :
+    drizzled::item::function::Boolean()
+  {
+  }
+
+  bool val_bool();
+
+  int64_t val_int()
+  {
+    return val_bool();
+  }
+  const char *func_name() const { return "assert"; }
+  const char *fully_qualified_func_name() const { return "assert()"; }
+
+  void fix_length_and_dec()
+  {
+    max_length= 1;
+  }
+
+  bool check_argument_count(int n)
+  {
+    return (n == 1);
+  }
+};
+
+} /* namespace utility_functions */
+} /* namespace drizzled */
+
+#endif /* PLUGIN_UTILITY_FUNCTIONS_ASSERT_H */
