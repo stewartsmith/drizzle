@@ -3976,17 +3976,15 @@ select_part2_derived:
 select_derived:
           get_select_lex
           {
-            LEX *lex= Lex;
-            if ($1->init_nested_join(lex->session))
+            if ($1->init_nested_join(Lex->session))
               DRIZZLE_YYABORT;
           }
           derived_table_list
           {
-            LEX *lex= Lex;
             /* for normal joins, $3 != NULL and end_nested_join() != NULL,
                for derived tables, both must equal NULL */
 
-            if (!($$= $1->end_nested_join(lex->session)) && $3)
+            if (!($$= $1->end_nested_join(Lex->session)) && $3)
               DRIZZLE_YYABORT;
             if (!$3 && $$)
             {
@@ -3999,20 +3997,18 @@ select_derived:
 
 select_derived2:
           {
-            LEX *lex= Lex;
-            lex->derived_tables|= DERIVED_SUBQUERY;
-            if (!lex->expr_allows_subselect)
+            Lex->derived_tables|= DERIVED_SUBQUERY;
+            if (not Lex->expr_allows_subselect)
             {
               struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
               my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
-            if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE ||
-                new_select(lex, 1))
+            if (Lex->current_select->linkage == GLOBAL_OPTIONS_TYPE || new_select(Lex, 1))
               DRIZZLE_YYABORT;
-            init_select(lex);
-            lex->current_select->linkage= DERIVED_TABLE_TYPE;
-            lex->current_select->parsing_place= SELECT_LIST;
+            init_select(Lex);
+            Lex->current_select->linkage= DERIVED_TABLE_TYPE;
+            Lex->current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
           {
@@ -4028,11 +4024,9 @@ get_select_lex:
 select_derived_init:
           SELECT_SYM
           {
-            LEX *lex= Lex;
-
-            Select_Lex *sel= lex->current_select;
+            Select_Lex *sel= Lex->current_select;
             TableList *embedding;
-            if (!sel->embedding || sel->end_nested_join(lex->session))
+            if (!sel->embedding || sel->end_nested_join(Lex->session))
             {
               /* we are not in parentheses */
               struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
@@ -4264,14 +4258,13 @@ olap_opt:
               MySQL syntax: GROUP BY col1, col2, col3 WITH ROLLUP
               SQL-2003: GROUP BY ... ROLLUP(col1, col2, col3)
             */
-            LEX *lex= Lex;
-            if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
+            if (Lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
             {
               my_error(ER_WRONG_USAGE, MYF(0), "WITH ROLLUP",
                        "global union parameters");
               DRIZZLE_YYABORT;
             }
-            lex->current_select->olap= ROLLUP_TYPE;
+            Lex->current_select->olap= ROLLUP_TYPE;
           }
         ;
 
@@ -4309,8 +4302,7 @@ opt_order_clause:
 order_clause:
           ORDER_SYM BY
           {
-            LEX *lex=Lex;
-            Select_Lex *sel= lex->current_select;
+            Select_Lex *sel= Lex->current_select;
             Select_Lex_Unit *unit= sel-> master_unit();
             if (sel->linkage != GLOBAL_OPTIONS_TYPE &&
                 sel->olap != UNSPECIFIED_OLAP_TYPE &&
@@ -4320,7 +4312,7 @@ order_clause:
                        "CUBE/ROLLUP", "ORDER BY");
               DRIZZLE_YYABORT;
             }
-            if (lex->sql_command != SQLCOM_ALTER_TABLE && !unit->fake_select_lex)
+            if (Lex->sql_command != SQLCOM_ALTER_TABLE && !unit->fake_select_lex)
             {
               /*
                 A query of the of the form (SELECT ...) ORDER BY order_list is
@@ -4334,7 +4326,7 @@ order_clause:
               if (!unit->is_union() &&
                   (first_sl->order_list.elements ||
                    first_sl->select_limit) &&           
-                  unit->add_fake_select_lex(lex->session))
+                  unit->add_fake_select_lex(Lex->session))
                 DRIZZLE_YYABORT;
             }
           }
@@ -4357,8 +4349,7 @@ order_dir:
 opt_limit_clause_init:
           /* empty */
           {
-            LEX *lex= Lex;
-            Select_Lex *sel= lex->current_select;
+            Select_Lex *sel= Lex->current_select;
             sel->offset_limit= 0;
             sel->select_limit= 0;
           }
@@ -4407,8 +4398,7 @@ limit_option:
 delete_limit_clause:
           /* empty */
           {
-            LEX *lex=Lex;
-            lex->current_select->select_limit= 0;
+            Lex->current_select->select_limit= 0;
           }
         | LIMIT limit_option
           {
@@ -4437,8 +4427,7 @@ ulonglong_num:
 
 select_var_list_init:
           {
-            LEX *lex=Lex;
-            if (!lex->describe && (!(lex->result= new select_dumpvar())))
+            if (not Lex->describe && (not (Lex->result= new select_dumpvar())))
               DRIZZLE_YYABORT;
           }
           select_var_list
@@ -4453,15 +4442,14 @@ select_var_list:
 select_var_ident: 
           '@' ident_or_text
           {
-            LEX *lex=Lex;
-            if (lex->result)
-              ((select_dumpvar *)lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
+            if (Lex->result)
+              ((select_dumpvar *)Lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
             else
               /*
                 The parser won't create select_result instance only
                 if it's an EXPLAIN.
               */
-              assert(lex->describe);
+              assert(Lex->describe);
           }
         ;
 
@@ -4474,22 +4462,20 @@ into:
 into_destination:
           OUTFILE TEXT_STRING_filesystem
           {
-            LEX *lex= Lex;
-            lex->setCacheable(false);
-            if (!(lex->exchange= new file_exchange($2.str, 0)) ||
-                !(lex->result= new select_export(lex->exchange)))
+            Lex->setCacheable(false);
+            if (!(Lex->exchange= new file_exchange($2.str, 0)) ||
+                !(Lex->result= new select_export(Lex->exchange)))
               DRIZZLE_YYABORT;
           }
           opt_field_term opt_line_term
         | DUMPFILE TEXT_STRING_filesystem
           {
-            LEX *lex=Lex;
-            if (!lex->describe)
+            if (not Lex->describe)
             {
-              lex->setCacheable(false);
-              if (!(lex->exchange= new file_exchange($2.str,1)))
+              Lex->setCacheable(false);
+              if (not (Lex->exchange= new file_exchange($2.str,1)))
                 DRIZZLE_YYABORT;
-              if (!(lex->result= new select_dump(lex->exchange)))
+              if (not (Lex->result= new select_dump(Lex->exchange)))
                 DRIZZLE_YYABORT;
             }
           }
@@ -4504,40 +4490,37 @@ into_destination:
 drop:
           DROP opt_temporary table_or_tables if_exists table_list
           {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_DROP_TABLE;
+            Lex->sql_command = SQLCOM_DROP_TABLE;
             statement::DropTable *statement= new(std::nothrow) statement::DropTable(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
+            Lex->statement= statement;
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
             statement->drop_temporary= $2;
             statement->drop_if_exists= $4;
           }
         | DROP build_method INDEX_SYM ident ON table_ident {}
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_DROP_INDEX;
+            Lex->sql_command= SQLCOM_DROP_INDEX;
             statement::DropIndex *statement= new(std::nothrow) statement::DropIndex(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
+            Lex->statement= statement;
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
             statement->alter_info.build_method= $2;
             statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY, $4.str));
-            if (!lex->current_select->add_table_to_list(lex->session, $6, NULL,
-                                                        TL_OPTION_UPDATING))
+            if (not Lex->current_select->add_table_to_list(Lex->session, $6, NULL,
+                                                          TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
           }
         | DROP DATABASE if_exists ident
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_DROP_DB;
+            Lex->sql_command= SQLCOM_DROP_DB;
             statement::DropSchema *statement= new(std::nothrow) statement::DropSchema(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
+            Lex->statement= statement;
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
             statement->drop_if_exists=$3;
-            lex->name= $4;
+            Lex->name= $4;
           }
 table_list:
           table_name
@@ -4569,10 +4552,9 @@ opt_temporary:
 execute:
        EXECUTE_SYM execute_var_or_string opt_status opt_concurrent opt_wait
        {
-          LEX *lex= Lex;
           statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession, $2, $3, $4, $5);
-          lex->statement= statement;
-          if (lex->statement == NULL)
+          Lex->statement= statement;
+          if (Lex->statement == NULL)
             DRIZZLE_YYABORT;
        }
 
@@ -4609,15 +4591,14 @@ opt_wait:
 insert:
           INSERT
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_INSERT;
-            lex->statement= new(std::nothrow) statement::Insert(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_INSERT;
+            Lex->statement= new(std::nothrow) statement::Insert(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->duplicates= DUP_ERROR;
-            init_select(lex);
+            Lex->duplicates= DUP_ERROR;
+            init_select(Lex);
             /* for subselects */
-            lex->lock_option= TL_READ;
+            Lex->lock_option= TL_READ;
           }
           opt_ignore insert2
           {
@@ -4631,13 +4612,12 @@ insert:
 replace:
           REPLACE
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_REPLACE;
-            lex->statement= new(std::nothrow) statement::Replace(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_REPLACE;
+            Lex->statement= new(std::nothrow) statement::Replace(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->duplicates= DUP_REPLACE;
-            init_select(lex);
+            Lex->duplicates= DUP_REPLACE;
+            init_select(Lex);
           }
           insert2
           {
@@ -4656,10 +4636,9 @@ insert2:
 insert_table:
           table_name
           {
-            LEX *lex=Lex;
-            lex->field_list.empty();
-            lex->many_values.empty();
-            lex->insert_list=0;
+            Lex->field_list.empty();
+            Lex->many_values.empty();
+            Lex->insert_list=0;
           };
 
 insert_field_spec:
@@ -4668,9 +4647,8 @@ insert_field_spec:
         | '(' fields ')' insert_values {}
         | SET
           {
-            LEX *lex=Lex;
-            if (!(lex->insert_list = new List_item) ||
-                lex->many_values.push_back(lex->insert_list))
+            if (not (Lex->insert_list = new List_item) ||
+                Lex->many_values.push_back(Lex->insert_list))
               DRIZZLE_YYABORT;
           }
           ident_eq_list
@@ -4709,9 +4687,8 @@ ident_eq_list:
 ident_eq_value:
           simple_ident_nospvar equal expr_or_default
           {
-            LEX *lex=Lex;
-            if (lex->field_list.push_back($1) ||
-                lex->insert_list->push_back($3))
+            if (Lex->field_list.push_back($1) ||
+                Lex->insert_list->push_back($3))
               DRIZZLE_YYABORT;
           }
         ;
@@ -4734,8 +4711,7 @@ no_braces:
           }
           opt_values ')'
           {
-            LEX *lex=Lex;
-            if (lex->many_values.push_back(lex->insert_list))
+            if (Lex->many_values.push_back(Lex->insert_list))
               DRIZZLE_YYABORT;
           }
         ;
@@ -4774,25 +4750,23 @@ opt_insert_update:
 update:
           UPDATE_SYM opt_ignore table_ident
           {
-            LEX *lex= Lex;
-            init_select(lex);
-            lex->sql_command= SQLCOM_UPDATE;
-            lex->statement= new(std::nothrow) statement::Update(YYSession);
-            if (lex->statement == NULL)
+            init_select(Lex);
+            Lex->sql_command= SQLCOM_UPDATE;
+            Lex->statement= new(std::nothrow) statement::Update(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->lock_option= TL_UNLOCK; /* Will be set later */
-            lex->duplicates= DUP_ERROR;
-            if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
+            Lex->lock_option= TL_UNLOCK; /* Will be set later */
+            Lex->duplicates= DUP_ERROR;
+            if (not Lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
           }
           SET update_list
           {
-            LEX *lex= Lex;
-            if (lex->select_lex.get_table_list()->derived)
+            if (Lex->select_lex.get_table_list()->derived)
             {
               /* it is single table update and it is update of derived table */
               my_error(ER_NON_UPDATABLE_TABLE, MYF(0),
-                       lex->select_lex.get_table_list()->alias, "UPDATE");
+                       Lex->select_lex.get_table_list()->alias, "UPDATE");
               DRIZZLE_YYABORT;
             }
             /*
@@ -4826,9 +4800,8 @@ insert_update_list:
 insert_update_elem:
           simple_ident_nospvar equal expr_or_default
           {
-          LEX *lex= Lex;
-          if (lex->update_list.push_back($1) ||
-              lex->value_list.push_back($3))
+          if (Lex->update_list.push_back($1) ||
+              Lex->value_list.push_back($3))
               DRIZZLE_YYABORT;
           }
         ;
@@ -4838,15 +4811,14 @@ insert_update_elem:
 delete:
           DELETE_SYM
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_DELETE;
-            lex->statement= new(std::nothrow) statement::Delete(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_DELETE;
+            Lex->statement= new(std::nothrow) statement::Delete(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            init_select(lex);
-            lex->lock_option= TL_WRITE_DEFAULT;
-            lex->ignore= 0;
-            lex->select_lex.init_order();
+            init_select(Lex);
+            Lex->lock_option= TL_WRITE_DEFAULT;
+            Lex->ignore= 0;
+            Lex->select_lex.init_order();
           }
           opt_delete_options single_multi
         ;
@@ -4874,13 +4846,12 @@ opt_delete_option:
 truncate:
           TRUNCATE_SYM opt_table_sym table_name
           {
-            LEX* lex= Lex;
-            lex->sql_command= SQLCOM_TRUNCATE;
-            lex->statement= new(std::nothrow) statement::Truncate(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_TRUNCATE;
+            Lex->statement= new(std::nothrow) statement::Truncate(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->select_lex.options= 0;
-            lex->select_lex.init_order();
+            Lex->select_lex.options= 0;
+            Lex->select_lex.init_order();
           }
         ;
 
@@ -4894,11 +4865,10 @@ opt_table_sym:
 show:
           SHOW
           {
-            LEX *lex=Lex;
-            lex->wild=0;
-            lex->lock_option= TL_READ;
-            init_select(lex);
-            lex->current_select->parsing_place= SELECT_LIST;
+            Lex->wild=0;
+            Lex->lock_option= TL_READ;
+            init_select(Lex);
+            Lex->current_select->parsing_place= SELECT_LIST;
           }
           show_param
           {}
@@ -4908,12 +4878,10 @@ show:
 show_param:
            DATABASES show_wild
            {
-             LEX *lex= Lex;
-
-             lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
+             Lex->sql_command= SQLCOM_SELECT;
+             Lex->statement=
                new(std::nothrow) statement::Show(YYSession);
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
              std::string column_name= "Database";
@@ -4926,12 +4894,12 @@ show_param:
 
              if (Lex->current_select->where)
              {
-               if (prepare_new_schema_table(YYSession, lex, "SCHEMAS"))
+               if (prepare_new_schema_table(YYSession, Lex, "SCHEMAS"))
                  DRIZZLE_YYABORT;
              }
              else
              {
-               if (prepare_new_schema_table(YYSession, lex, "SHOW_SCHEMAS"))
+               if (prepare_new_schema_table(YYSession, Lex, "SHOW_SCHEMAS"))
                  DRIZZLE_YYABORT;
              }
 
@@ -4948,16 +4916,14 @@ show_param:
            /* SHOW TABLES */
          | TABLES opt_db show_wild
            {
-             LEX *lex= Lex;
-
-             lex->sql_command= SQLCOM_SELECT;
+             Lex->sql_command= SQLCOM_SELECT;
 
              statement::Show *select=
                new(std::nothrow) statement::Show(YYSession);
 
-             lex->statement= select;
+             Lex->statement= select;
 
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
 
@@ -4968,7 +4934,7 @@ show_param:
               {
 		SchemaIdentifier identifier($2);
                 column_name.append($2);
-                lex->select_lex.db= $2;
+                Lex->select_lex.db= $2;
                 if (not plugin::StorageEngine::doesSchemaExist(identifier))
                 {
                   my_error(ER_BAD_DB_ERROR, MYF(0), $2);
@@ -4994,7 +4960,7 @@ show_param:
                column_name.append(")");
              }
 
-             if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
+             if (prepare_new_schema_table(YYSession, Lex, "SHOW_TABLES"))
                DRIZZLE_YYABORT;
 
              Item_field *my_field= new Item_field(&YYSession->lex->current_select->context, NULL, NULL, "TABLE_NAME");
@@ -5010,20 +4976,18 @@ show_param:
            /* SHOW TEMPORARY TABLES */
          | TEMPORARY_SYM TABLES show_wild
            {
-             LEX *lex= Lex;
-
-             lex->sql_command= SQLCOM_SELECT;
+             Lex->sql_command= SQLCOM_SELECT;
 
              statement::Show *select=
                new(std::nothrow) statement::Show(YYSession);
 
-             lex->statement= select;
+             Lex->statement= select;
 
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
 
-             if (prepare_new_schema_table(YYSession, lex, "SHOW_TEMPORARY_TABLES"))
+             if (prepare_new_schema_table(YYSession, Lex, "SHOW_TEMPORARY_TABLES"))
                DRIZZLE_YYABORT;
 
              if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
@@ -5036,14 +5000,13 @@ show_param:
            /* SHOW TABLE STATUS */
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
-             LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SELECT;
+             Lex->sql_command= SQLCOM_SELECT;
              statement::Show *select=
                new(std::nothrow) statement::Show(YYSession);
 
-             lex->statement= select;
+             Lex->statement= select;
 
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
              std::string column_name= "Tables_in_";
@@ -5051,7 +5014,7 @@ show_param:
              util::string::const_shared_ptr schema(YYSession->schema());
              if ($3)
              {
-               lex->select_lex.db= $3;
+               Lex->select_lex.db= $3;
 
 	       SchemaIdentifier identifier($3);
                if (not plugin::StorageEngine::doesSchemaExist(identifier))
@@ -5071,7 +5034,7 @@ show_param:
                DRIZZLE_YYABORT;
              }
 
-             if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLE_STATUS"))
+             if (prepare_new_schema_table(YYSession, Lex, "SHOW_TABLE_STATUS"))
                DRIZZLE_YYABORT;
 
              if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
@@ -5083,16 +5046,15 @@ show_param:
            /* SHOW COLUMNS FROM table_name */
         | COLUMNS from_or_in table_ident opt_db show_wild
           {
-             LEX *lex= Lex;
              statement::Show *select;
 
-             lex->sql_command= SQLCOM_SELECT;
+             Lex->sql_command= SQLCOM_SELECT;
 
              select= new(std::nothrow) statement::Show(YYSession);
 
-             lex->statement= select;
+             Lex->statement= select;
 
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
              util::string::const_shared_ptr schema(YYSession->schema());
@@ -5124,7 +5086,7 @@ show_param:
                }
              }
 
-             if (prepare_new_schema_table(YYSession, lex, "SHOW_COLUMNS"))
+             if (prepare_new_schema_table(YYSession, Lex, "SHOW_COLUMNS"))
                DRIZZLE_YYABORT;
 
              if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
@@ -5137,16 +5099,15 @@ show_param:
           /* SHOW INDEXES from table */
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
-             LEX *lex= Lex;
              statement::Show *select;
 
-             lex->sql_command= SQLCOM_SELECT;
+             Lex->sql_command= SQLCOM_SELECT;
 
              select= new(std::nothrow) statement::Show(YYSession);
 
-             lex->statement= select;
+             Lex->statement= select;
 
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
              util::string::const_shared_ptr schema(YYSession->schema());
@@ -5178,7 +5139,7 @@ show_param:
                }
              }
 
-             if (prepare_new_schema_table(YYSession, lex, "SHOW_INDEXES"))
+             if (prepare_new_schema_table(YYSession, Lex, "SHOW_INDEXES"))
                DRIZZLE_YYABORT;
 
              if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
@@ -5190,17 +5151,15 @@ show_param:
         | COUNT_SYM '(' '*' ')' WARNINGS
           {
             (void) create_select_for_variable("warning_count");
-            LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Show(YYSession);
-            if (lex->statement == NULL)
+            Lex->statement= new(std::nothrow) statement::Show(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | COUNT_SYM '(' '*' ')' ERRORS
           {
             (void) create_select_for_variable("error_count");
-            LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Show(YYSession);
-            if (lex->statement == NULL)
+            Lex->statement= new(std::nothrow) statement::Show(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | WARNINGS opt_limit_clause_init
@@ -5219,21 +5178,19 @@ show_param:
           }
         | opt_var_type STATUS_SYM show_wild
            {
-             LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
-               new(std::nothrow) statement::Show(YYSession);
-             if (lex->statement == NULL)
+             Lex->sql_command= SQLCOM_SELECT;
+             Lex->statement= new(std::nothrow) statement::Show(YYSession);
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
              if ($1 == OPT_GLOBAL)
              {
-               if (prepare_new_schema_table(YYSession, lex, "GLOBAL_STATUS"))
+               if (prepare_new_schema_table(YYSession, Lex, "GLOBAL_STATUS"))
                  DRIZZLE_YYABORT;
              }
              else
              {
-               if (prepare_new_schema_table(YYSession, lex, "SESSION_STATUS"))
+               if (prepare_new_schema_table(YYSession, Lex, "SESSION_STATUS"))
                  DRIZZLE_YYABORT;
              }
 
@@ -5256,17 +5213,16 @@ show_param:
            }
         | CREATE TABLE_SYM table_ident
            {
-             LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SELECT;
+             Lex->sql_command= SQLCOM_SELECT;
              statement::Show *select=
                new(std::nothrow) statement::Show(YYSession);
 
-             lex->statement= select;
+             Lex->statement= select;
 
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
-             if (prepare_new_schema_table(YYSession, lex, "TABLE_SQL_DEFINITION"))
+             if (prepare_new_schema_table(YYSession, Lex, "TABLE_SQL_DEFINITION"))
                DRIZZLE_YYABORT;
 
              util::string::const_shared_ptr schema(YYSession->schema());
@@ -5304,14 +5260,13 @@ show_param:
         | PROCESSLIST_SYM
           {
            {
-             LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
+             Lex->sql_command= SQLCOM_SELECT;
+             Lex->statement=
                new(std::nothrow) statement::Show(YYSession);
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
-             if (prepare_new_schema_table(YYSession, lex, "PROCESSLIST"))
+             if (prepare_new_schema_table(YYSession, Lex, "PROCESSLIST"))
                DRIZZLE_YYABORT;
 
              if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
@@ -5323,21 +5278,20 @@ show_param:
           }
         | opt_var_type  VARIABLES show_wild
            {
-             LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
+             Lex->sql_command= SQLCOM_SELECT;
+             Lex->statement=
                new(std::nothrow) statement::Show(YYSession);
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
              if ($1 == OPT_GLOBAL)
              {
-               if (prepare_new_schema_table(YYSession, lex, "GLOBAL_VARIABLES"))
+               if (prepare_new_schema_table(YYSession, Lex, "GLOBAL_VARIABLES"))
                  DRIZZLE_YYABORT;
              }
              else
              {
-               if (prepare_new_schema_table(YYSession, lex, "SESSION_VARIABLES"))
+               if (prepare_new_schema_table(YYSession, Lex, "SESSION_VARIABLES"))
                  DRIZZLE_YYABORT;
              }
 
@@ -5360,17 +5314,16 @@ show_param:
            }
         | CREATE DATABASE opt_if_not_exists ident
            {
-             LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SELECT;
+             Lex->sql_command= SQLCOM_SELECT;
              statement::Show *select=
                new(std::nothrow) statement::Show(YYSession);
 
-             lex->statement= select;
+             Lex->statement= select;
 
-             if (lex->statement == NULL)
+             if (Lex->statement == NULL)
                DRIZZLE_YYABORT;
 
-             if (prepare_new_schema_table(YYSession, lex, "SCHEMA_SQL_DEFINITION"))
+             if (prepare_new_schema_table(YYSession, Lex, "SCHEMA_SQL_DEFINITION"))
                DRIZZLE_YYABORT;
 
              util::string::const_shared_ptr schema(YYSession->schema());
@@ -5438,16 +5391,15 @@ describe:
           describe_command table_ident
           {
             statement::Show *select;
-            LEX *lex= Lex;
-            lex->lock_option= TL_READ;
-            init_select(lex);
-            lex->current_select->parsing_place= SELECT_LIST;
-            lex->sql_command= SQLCOM_SELECT;
+            Lex->lock_option= TL_READ;
+            init_select(Lex);
+            Lex->current_select->parsing_place= SELECT_LIST;
+            Lex->sql_command= SQLCOM_SELECT;
             select= new(std::nothrow) statement::Show(YYSession);
-            lex->statement= select;
-            if (lex->statement == NULL)
+            Lex->statement= select;
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->select_lex.db= 0;
+            Lex->select_lex.db= 0;
 
              util::string::const_shared_ptr schema(YYSession->schema());
              if ($2->db.str)
@@ -5474,7 +5426,7 @@ describe:
                }
              }
 
-             if (prepare_new_schema_table(YYSession, lex, "SHOW_COLUMNS"))
+             if (prepare_new_schema_table(YYSession, Lex, "SHOW_COLUMNS"))
                DRIZZLE_YYABORT;
 
              if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
@@ -5491,8 +5443,7 @@ describe:
           { Lex->describe|= DESCRIBE_NORMAL; }
           select
           {
-            LEX *lex=Lex;
-            lex->select_lex.options|= SELECT_DESCRIBE;
+            Lex->select_lex.options|= SELECT_DESCRIBE;
           }
         ;
 
@@ -5523,12 +5474,11 @@ opt_describe_column:
 flush:
           FLUSH_SYM
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_FLUSH;
-            lex->statement= new(std::nothrow) statement::Flush(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_FLUSH;
+            Lex->statement= new(std::nothrow) statement::Flush(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->type= 0;
+            Lex->type= 0;
           }
           flush_options
           {}
@@ -5578,8 +5528,6 @@ opt_table_list:
 kill:
           KILL_SYM kill_option expr
           {
-            LEX *lex=Lex;
-
             if ($2)
             {
               Lex->type= ONLY_KILL_QUERY;
@@ -5589,11 +5537,11 @@ kill:
               Lex->type= 0;
             }
 
-            lex->value_list.empty();
-            lex->value_list.push_front($3);
-            lex->sql_command= SQLCOM_KILL;
-            lex->statement= new(std::nothrow) statement::Kill(YYSession);
-            if (lex->statement == NULL)
+            Lex->value_list.empty();
+            Lex->value_list.push_front($3);
+            Lex->sql_command= SQLCOM_KILL;
+            Lex->statement= new(std::nothrow) statement::Kill(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         ;
@@ -5609,12 +5557,11 @@ kill_option:
 use:
           USE_SYM ident
           {
-            LEX *lex=Lex;
-            lex->sql_command=SQLCOM_CHANGE_DB;
-            lex->statement= new(std::nothrow) statement::ChangeSchema(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command=SQLCOM_CHANGE_DB;
+            Lex->statement= new(std::nothrow) statement::ChangeSchema(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->select_lex.db= $2.str;
+            Lex->select_lex.db= $2.str;
           }
         ;
 
@@ -5623,12 +5570,10 @@ use:
 load:
           LOAD data_file
           {
-            LEX *lex= YYSession->lex;
-
-            lex->sql_command= SQLCOM_LOAD;
+            Lex->sql_command= SQLCOM_LOAD;
             statement::Load *statement= new(std::nothrow) statement::Load(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
+            Lex->statement= statement;
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
 
             Lex_input_stream *lip= YYSession->m_lip;
@@ -5636,11 +5581,10 @@ load:
           }
           load_data_lock INFILE TEXT_STRING_filesystem
           {
-            LEX *lex=Lex;
-            lex->lock_option= $4;
-            lex->duplicates= DUP_ERROR;
-            lex->ignore= 0;
-            if (!(lex->exchange= new file_exchange($6.str, 0, $2)))
+            Lex->lock_option= $4;
+            Lex->duplicates= DUP_ERROR;
+            Lex->ignore= 0;
+            if (not (Lex->exchange= new file_exchange($6.str, 0, $2)))
               DRIZZLE_YYABORT;
           }
           opt_duplicate INTO
@@ -5650,14 +5594,13 @@ load:
           }
           TABLE_SYM table_ident
           {
-            LEX *lex=Lex;
             if (!Lex->current_select->add_table_to_list(YYSession,
                     $12, NULL, TL_OPTION_UPDATING,
-                    lex->lock_option))
+                    Lex->lock_option))
               DRIZZLE_YYABORT;
-            lex->field_list.empty();
-            lex->update_list.empty();
-            lex->value_list.empty();
+            Lex->field_list.empty();
+            Lex->update_list.empty();
+            Lex->value_list.empty();
           }
           opt_field_term opt_line_term opt_ignore_lines opt_field_or_var_spec
           opt_load_data_set_spec
@@ -5708,10 +5651,9 @@ field_term:
           }
         | OPTIONALLY ENCLOSED BY text_string
           {
-            LEX *lex= Lex;
-            assert(lex->exchange != 0);
-            lex->exchange->enclosed= $4;
-            lex->exchange->opt_enclosed= 1;
+            assert(Lex->exchange != 0);
+            Lex->exchange->enclosed= $4;
+            Lex->exchange->opt_enclosed= 1;
           }
         | ENCLOSED BY text_string
           {
@@ -5947,10 +5889,8 @@ simple_ident_nospvar:
 simple_ident_q:
           ident '.' ident
           {
-            LEX *lex= YYSession->lex;
-
             {
-              Select_Lex *sel= lex->current_select;
+              Select_Lex *sel= Lex->current_select;
               if (sel->no_table_names_allowed)
               {
                 my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
@@ -5966,8 +5906,7 @@ simple_ident_q:
           }
         | '.' ident '.' ident
           {
-            LEX *lex= YYSession->lex;
-            Select_Lex *sel= lex->current_select;
+            Select_Lex *sel= Lex->current_select;
             if (sel->no_table_names_allowed)
             {
               my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
@@ -5981,8 +5920,7 @@ simple_ident_q:
           }
         | ident '.' ident '.' ident
           {
-            LEX *lex= YYSession->lex;
-            Select_Lex *sel= lex->current_select;
+            Select_Lex *sel= Lex->current_select;
             if (sel->no_table_names_allowed)
             {
               my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
@@ -6271,15 +6209,14 @@ keyword_sp:
 set:
           SET opt_option
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_SET_OPTION;
+            Lex->sql_command= SQLCOM_SET_OPTION;
             statement::SetOption *statement= new(std::nothrow) statement::SetOption(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
+            Lex->statement= statement;
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            init_select(lex);
-            lex->option_type=OPT_SESSION;
-            lex->var_list.empty();
+            init_select(Lex);
+            Lex->option_type=OPT_SESSION;
+            Lex->var_list.empty();
           }
           option_value_list
           {}
@@ -6337,21 +6274,18 @@ ext_option_value:
 sys_option_value:
           option_type internal_variable_name equal set_expr_or_default
           {
-            LEX *lex=Lex;
-
             if ($2.var)
             { /* System variable */
               if ($1)
-                lex->option_type= $1;
-              lex->var_list.push_back(new set_var(lex->option_type, $2.var,
+                Lex->option_type= $1;
+              Lex->var_list.push_back(new set_var(Lex->option_type, $2.var,
                                       &$2.base_name, $4));
             }
           }
         | option_type TRANSACTION_SYM ISOLATION LEVEL_SYM isolation_types
           {
-            LEX *lex=Lex;
-            lex->option_type= $1;
-            lex->var_list.push_back(new set_var(lex->option_type,
+            Lex->option_type= $1;
+            Lex->var_list.push_back(new set_var(Lex->option_type,
                                                 find_sys_var("tx_isolation"),
                                                 &null_lex_str,
                                                 new Item_int((int32_t) $5)));
@@ -6365,8 +6299,7 @@ option_value:
           }
         | '@' '@' opt_var_ident_type internal_variable_name equal set_expr_or_default
           {
-            LEX *lex=Lex;
-            lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
+            Lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
           }
         ;
 
@@ -6408,10 +6341,9 @@ table_or_tables:
 unlock:
           UNLOCK_SYM
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_UNLOCK_TABLES;
-            lex->statement= new(std::nothrow) statement::UnlockTables(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_UNLOCK_TABLES;
+            Lex->statement= new(std::nothrow) statement::UnlockTables(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
           table_or_tables
@@ -6421,10 +6353,9 @@ unlock:
 begin:
           BEGIN_SYM
           {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_BEGIN;
-            lex->statement= new(std::nothrow) statement::StartTransaction(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command = SQLCOM_BEGIN;
+            Lex->statement= new(std::nothrow) statement::StartTransaction(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
           opt_work {}
@@ -6457,11 +6388,10 @@ opt_savepoint:
 commit:
           COMMIT_SYM opt_work opt_chain opt_release
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_COMMIT;
+            Lex->sql_command= SQLCOM_COMMIT;
             statement::Commit *statement= new(std::nothrow) statement::Commit(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
+            Lex->statement= statement;
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
             statement->tx_chain= $3;
             statement->tx_release= $4;
@@ -6471,11 +6401,10 @@ commit:
 rollback:
           ROLLBACK_SYM opt_work opt_chain opt_release
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_ROLLBACK;
+            Lex->sql_command= SQLCOM_ROLLBACK;
             statement::Rollback *statement= new(std::nothrow) statement::Rollback(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
+            Lex->statement= statement;
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
             statement->tx_chain= $3;
             statement->tx_release= $4;
@@ -6483,36 +6412,33 @@ rollback:
         | ROLLBACK_SYM opt_work
           TO_SYM opt_savepoint ident
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_ROLLBACK_TO_SAVEPOINT;
-            lex->statement= new(std::nothrow) statement::RollbackToSavepoint(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_ROLLBACK_TO_SAVEPOINT;
+            Lex->statement= new(std::nothrow) statement::RollbackToSavepoint(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->ident= $5;
+            Lex->ident= $5;
           }
         ;
 
 savepoint:
           SAVEPOINT_SYM ident
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_SAVEPOINT;
-            lex->statement= new(std::nothrow) statement::Savepoint(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_SAVEPOINT;
+            Lex->statement= new(std::nothrow) statement::Savepoint(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->ident= $2;
+            Lex->ident= $2;
           }
         ;
 
 release:
           RELEASE_SYM SAVEPOINT_SYM ident
           {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_RELEASE_SAVEPOINT;
-            lex->statement= new(std::nothrow) statement::ReleaseSavepoint(YYSession);
-            if (lex->statement == NULL)
+            Lex->sql_command= SQLCOM_RELEASE_SAVEPOINT;
+            Lex->statement= new(std::nothrow) statement::ReleaseSavepoint(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->ident= $3;
+            Lex->ident= $3;
           }
         ;
 
@@ -6550,16 +6476,15 @@ union_opt:
 
 union_order_or_limit:
           {
-            LEX *lex= YYSession->lex;
-            assert(lex->current_select->linkage != GLOBAL_OPTIONS_TYPE);
-            Select_Lex *sel= lex->current_select;
+            assert(Lex->current_select->linkage != GLOBAL_OPTIONS_TYPE);
+            Select_Lex *sel= Lex->current_select;
             Select_Lex_Unit *unit= sel->master_unit();
             Select_Lex *fake= unit->fake_select_lex;
             if (fake)
             {
               unit->global_parameters= fake;
               fake->no_table_names_allowed= 1;
-              lex->current_select= fake;
+              Lex->current_select= fake;
             }
             YYSession->where= "global ORDER clause";
           }
@@ -6617,8 +6542,7 @@ subselect:
 
 subselect_start:
           {
-            LEX *lex=Lex;
-            if (!lex->expr_allows_subselect)
+            if (not Lex->expr_allows_subselect)
             {
               struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
               my_parse_error(&pass);
@@ -6638,17 +6562,16 @@ subselect_start:
 
 subselect_end:
           {
-            LEX *lex=Lex;
-            lex->pop_context();
-            Select_Lex *child= lex->current_select;
-            lex->current_select = lex->current_select->return_after_parsing();
-            lex->nest_level--;
-            lex->current_select->n_child_sum_items += child->n_sum_items;
+            Lex->pop_context();
+            Select_Lex *child= Lex->current_select;
+            Lex->current_select= Lex->current_select->return_after_parsing();
+            Lex->nest_level--;
+            Lex->current_select->n_child_sum_items += child->n_sum_items;
             /*
               A subselect can add fields to an outer select. Reserve space for
               them.
             */
-            lex->current_select->select_n_where_fields+=
+            Lex->current_select->select_n_where_fields+=
             child->select_n_where_fields;
           }
         ;
