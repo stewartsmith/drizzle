@@ -18,19 +18,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
+#include "config.h"
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+#include "plugin/utility_functions/functions.h"
+#include <drizzled/display.h>
 
-#include "plugin/utility_functions/assert.h"
-#include "plugin/utility_functions/catalog.h"
-#include "plugin/utility_functions/execute.h"
-#include "plugin/utility_functions/global_read_lock.h"
-#include "plugin/utility_functions/kill.h"
-#include "plugin/utility_functions/result_type.h"
-#include "plugin/utility_functions/schema.h"
-#include "plugin/utility_functions/user.h"
+namespace drizzled
+{
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */
+namespace utility_functions
+{
+
+String *ResultType::val_str(String *str)
+{
+  assert(fixed == 1);
+  null_value= false;
+
+  const std::string &tmp= display::type(args[0]->result_type());
+  str->copy(tmp.c_str(), tmp.length(), system_charset_info);
+
+  return str;
+}
+
+void ResultType::fix_length_and_dec()
+{
+  max_length= display::type(args[0]->result_type()).size() * system_charset_info->mbmaxlen;
+}
+
+} /* namespace utility_functions */
+} /* namespace drizzled */

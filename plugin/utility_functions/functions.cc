@@ -30,6 +30,7 @@ static int init(drizzled::module::Context &context)
   context.add(new plugin::Create_function<utility_functions::Catalog>("catalog"));
   context.add(new plugin::Create_function<utility_functions::Execute>("execute"));
   context.add(new plugin::Create_function<utility_functions::GlobalReadLock>("global_read_lock"));
+  context.add(new plugin::Create_function<utility_functions::ResultType>("result_type"));
   context.add(new plugin::Create_function<utility_functions::Kill>("kill"));
   context.add(new plugin::Create_function<utility_functions::Schema>("database"));
   context.add(new plugin::Create_function<utility_functions::User>("user"));
