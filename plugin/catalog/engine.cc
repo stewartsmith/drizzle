@@ -52,7 +52,8 @@ bool Engine::create(const drizzled::identifier::Catalog &identifier, drizzled::m
 
     return false;
   }
-  return false;
+
+  return true;
 }
 
 bool Engine::drop(const drizzled::identifier::Catalog &identifier)

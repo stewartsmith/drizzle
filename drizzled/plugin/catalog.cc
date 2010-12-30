@@ -162,12 +162,18 @@ bool Catalog::create(const identifier::Catalog &identifier, message::catalog::sh
     return false;
   }
 
+  size_t create_count= 0;
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
     if (ref->create(identifier, message))
-    {
-      return false;
-    }
+      create_count++;
+  }
+  assert(create_count < 2);
+
+  if (not create_count)
+  {
+    my_error(ER_CATALOG_CANNOT_CREATE, MYF(0), identifier.getName().c_str());
+    return false;
   }
 
   return true;
@@ -190,12 +196,18 @@ bool Catalog::drop(const identifier::Catalog &identifier)
   }
 
   
+  size_t drop_count= 0;
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
-    if (not ref->drop(identifier))
-    {
-      return false;
-    }
+    if (ref->drop(identifier))
+      drop_count++;
+  }
+  assert(drop_count < 2);
+
+  if (not drop_count)
+  {
+    my_error(ER_CATALOG_DOES_NOT_EXIST, MYF(0), identifier.getName().c_str());
+    return false;
   }
 
   return true;

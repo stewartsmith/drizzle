@@ -337,3 +337,7 @@ xid.gcno
 ylwrap
 docs/man
 .pc
+drizzled/message/catalog.pb.cc
+drizzled/message/catalog.pb.h
+drizzled/message/catalog_reader
+drizzled/message/catalog_writer
