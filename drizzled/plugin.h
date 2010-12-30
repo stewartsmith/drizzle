@@ -175,7 +175,6 @@ extern void my_print_help_inc_plugins(option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
-extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);
 
 int session_in_lock_tables(const Session *session);
 int session_tablespace_op(const Session *session);

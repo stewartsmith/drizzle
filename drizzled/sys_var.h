@@ -1159,7 +1159,7 @@ struct sys_var_with_base
 drizzle_show_var* enumerate_sys_vars(Session *session);
 void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
-sys_var *find_sys_var(const char *str, uint32_t length=0);
+sys_var *find_sys_var(const char *str, uint32_t length=0, bool no_error=false);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;

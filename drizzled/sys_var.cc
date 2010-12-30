@@ -1686,7 +1686,7 @@ int sys_var_init()
     0		Unknown variable (error message is given)
 */
 
-sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
+sys_var *find_sys_var(const char *str, uint32_t, bool no_error)
 {
   string lower_name(str);
   transform(lower_name.begin(), lower_name.end(),
