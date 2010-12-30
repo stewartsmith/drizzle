@@ -843,15 +843,16 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_if_not_exists
         if_exists 
         opt_temporary 
+        opt_field_number_signed
 
 %type <num>
-        order_dir field_def
+        order_dir
+        field_def
         opt_table_options
         all_or_any opt_distinct
         union_option
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
-        opt_field_number_signed
         kill_option
 
 %type <m_fk_option>
@@ -1788,9 +1789,9 @@ opt_len:
         ;
 
 opt_field_number_signed:
-          /* empty */ { $$= 0; }
-        | SIGNED_SYM { $$= 0; }
-        | UNSIGNED_SYM { $$= 1; Lex->type|= UNSIGNED_FLAG; }
+          /* empty */ { $$= false; }
+        | SIGNED_SYM { $$= false; }
+        | UNSIGNED_SYM { $$= true; Lex->type|= UNSIGNED_FLAG; }
         ;
 
 ignored_field_number_length:
