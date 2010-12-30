@@ -48,7 +48,7 @@ select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
 IF(((@id := kill_id) - kill_id), "NO", "YES")
 YES
 kill @id;
-ERROR HY000: Unknown session id: 1
+ERROR HY000: Unknown session id: #
 SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
 USER	DB
 root	user2
