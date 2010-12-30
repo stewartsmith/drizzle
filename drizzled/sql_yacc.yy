@@ -812,7 +812,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident ident_or_text
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
-        BIN_NUM TEXT_STRING_filesystem ident_or_empty
+        BIN_NUM TEXT_STRING_filesystem
         opt_constraint constraint opt_ident
 
 %type <execute_string>
@@ -2147,7 +2147,7 @@ alter:
           }
           alter_commands
           {}
-        | ALTER DATABASE ident_or_empty
+        | ALTER DATABASE ident
           {
             Lex->sql_command=SQLCOM_ALTER_DB;
             Lex->statement= new statement::AlterSchema(YYSession);
@@ -2159,11 +2159,6 @@ alter:
                 Lex->copy_db_to(&Lex->name.str, &Lex->name.length))
               DRIZZLE_YYABORT;
           }
-        ;
-
-ident_or_empty:
-          /* empty */ { $$.str= 0; $$.length= 0; }
-        | ident { $$= $1; }
         ;
 
 alter_commands:
