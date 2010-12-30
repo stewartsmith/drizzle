@@ -37,6 +37,7 @@
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/detail/atomic_count.hpp>
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
@@ -351,7 +352,7 @@ int cleanup_done;
 
 passwd *user_info;
 
-atomic<uint32_t> connection_count;
+boost::detail::atomic_count connection_count(0);
 
 global_buffer_constraint<uint64_t> global_sort_buffer(0);
 global_buffer_constraint<uint64_t> global_join_buffer(0);
@@ -637,7 +638,7 @@ void drizzled::Session::unlink(session_id_t &session_id)
 
 void drizzled::Session::unlink(Session::shared_ptr &session)
 {
-  connection_count.decrement();
+  --connection_count;
 
   session->cleanup();
 
@@ -2196,8 +2197,6 @@ static void drizzle_init_variables(void)
 #else
   have_symlink=SHOW_OPTION_YES;
 #endif
-
-  connection_count= 0;
 }
 
 
