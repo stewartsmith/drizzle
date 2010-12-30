@@ -56,8 +56,8 @@ public:
     unsigned_flag= true;
   }
 
-  const char *func_name() const { return "assert"; }
-  const char *fully_qualified_func_name() const { return "assert()"; }
+  const char *func_name() const { return "assert_and_crash"; }
+  const char *fully_qualified_func_name() const { return "assert_and_crash()"; }
 
   bool val_bool()
   {
@@ -137,7 +137,7 @@ public:
 
 static int initialize(drizzled::module::Context &context)
 {
-  context.add(new drizzled::plugin::Create_function<debug::Assert>("assert"));
+  context.add(new drizzled::plugin::Create_function<debug::Assert>("assert_and_crash"));
   context.add(new drizzled::plugin::Create_function<debug::Backtrace>("backtrace"));
   context.add(new drizzled::plugin::Create_function<debug::Crash>("crash"));
 

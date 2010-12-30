@@ -89,6 +89,12 @@ static const std::string ITEM_CAST_DATETIME("ITEM_CAST_DATETIME");
 static const std::string ITEM_CAST_CHAR("ITEM_CAST_CHAR");
 static const std::string ITEM_CAST_DECIMAL("ITEM_CAST_DECIMAL");
 
+static const std::string STRING_RESULT_STRING("STRING");
+static const std::string REAL_RESULT_STRING("REAL");
+static const std::string INT_RESULT_STRING("INTEGER");
+static const std::string ROW_RESULT_STRING("ROW");
+static const std::string DECIMAL_RESULT_STRING("DECIMAL");
+
 static const std::string YES("YES");
 static const std::string NO("NO");
 
@@ -203,6 +209,25 @@ const std::string &type(drizzled::Item::Type type)
   return PROGRAM_ERROR;
 }
 
+const std::string &type(Item_result type)
+{
+  switch (type)
+  {
+  case STRING_RESULT:
+    return STRING_RESULT_STRING;
+  case REAL_RESULT:
+    return REAL_RESULT_STRING;
+  case INT_RESULT:
+    return INT_RESULT_STRING;
+  case ROW_RESULT:
+    return ROW_RESULT_STRING;
+  case DECIMAL_RESULT:
+    return DECIMAL_RESULT_STRING;
+  }
+
+  assert(0);
+  return PROGRAM_ERROR;
+}
 
 const std::string &type(drizzled::enum_field_types type)
 {
