@@ -1675,9 +1675,7 @@ int sys_var_init()
 /**
   Find a user set-table variable.
 
-  @param str	   Name of system variable to find
-  @param length    Length of variable.  zero means that we should use strlen()
-                   on the variable
+  @param name	   Name of system variable to find
   @param no_error  Refuse to emit an error, even if one occurred.
 
   @retval
@@ -1686,9 +1684,9 @@ int sys_var_init()
     0		Unknown variable (error message is given)
 */
 
-sys_var *find_sys_var(const char *str, uint32_t, bool no_error)
+sys_var *find_sys_var(const std::string &name, bool no_error)
 {
-  string lower_name(str);
+  string lower_name(name);
   transform(lower_name.begin(), lower_name.end(),
             lower_name.begin(), ::tolower);
 
@@ -1712,7 +1710,7 @@ sys_var *find_sys_var(const char *str, uint32_t, bool no_error)
     }
     else
     {
-      my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), (char*) str);
+      my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), name.c_str());
       return NULL;
     }
   }

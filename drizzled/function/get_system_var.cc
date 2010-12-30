@@ -72,7 +72,7 @@ Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
     component_name= &component;                 // Empty string
   }
 
-  if (!(var= find_sys_var(base_name->str, base_name->length)))
+  if (!(var= find_sys_var(base_name->str)))
     return 0;
   if (component.str)
   {

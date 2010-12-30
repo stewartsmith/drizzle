@@ -6482,7 +6482,7 @@ internal_variable_name:
             /* We have to lookup here since local vars can shadow sysvars */
             {
               /* Not an SP local variable */
-              sys_var *tmp=find_sys_var($1.str, $1.length);
+              sys_var *tmp=find_sys_var($1.str);
               if (!tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;
