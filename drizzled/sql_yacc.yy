@@ -3571,8 +3571,8 @@ variable_aux:
         ;
 
 opt_distinct:
-          /* empty */ { $$ = 0; }
-        | DISTINCT    { $$ = 1; }
+          /* empty */ { $$ = false; }
+        | DISTINCT    { $$ = true; }
         ;
 
 opt_gconcat_separator:
@@ -5672,9 +5672,9 @@ kill:
         ;
 
 kill_option:
-          /* empty */ { $$= 0; }
-        | CONNECTION_SYM { $$= 0; }
-        | QUERY_SYM      { $$= 1; }
+          /* empty */ { $$= false; }
+        | CONNECTION_SYM { $$= false; }
+        | QUERY_SYM      { $$= true; }
         ;
 
 /* change database */
