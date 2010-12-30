@@ -33,18 +33,19 @@ bool Assert::val_bool()
 {
   if (not args[0]->val_bool())
   {
-    drizzled::String _res;
-    drizzled::String *res;
+    drizzled::String res;
+    args[0]->print(&res, QT_ORDINARY);
+
+    assert(res.c_ptr());
 
     if (args[0]->is_null())
     {
-      drizzled::my_error(ER_ASSERT_NULL, MYF(0));
-
-      return false;
+      drizzled::my_error(ER_ASSERT_NULL, MYF(0), res.c_ptr());
     }
-
-    res= args[0]->val_str(&_res);
-    drizzled::my_error(ER_ASSERT, MYF(0), res->c_str());
+    else
+    {
+      drizzled::my_error(ER_ASSERT, MYF(0), res.c_ptr());
+    }
 
     return false;
   }

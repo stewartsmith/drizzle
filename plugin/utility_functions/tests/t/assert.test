@@ -40,6 +40,9 @@ SELECT (SELECT ASSERT(FALSE)) UNION SELECT (SELECT ASSERT(FALSE));
 --error ER_ASSERT
 SELECT (SELECT ASSERT(FALSE)) UNION SELECT (SELECT 1);
 
+--error ER_ASSERT_NULL
+select ASSERT(IF((0 > 1),1, NULL));
+
 
 # Look at assertions based on table result return
 
