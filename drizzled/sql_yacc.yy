@@ -1170,6 +1170,15 @@ create_like:
         ;
 
 create_select:
+          stored_select
+          {
+          }
+        ;
+
+/*
+  This rule is used for both CREATE TABLE .. SELECT,  AND INSERT ... SELECT
+*/
+stored_select:
           SELECT_SYM
           {
             LEX *lex=Lex;
@@ -4732,11 +4741,15 @@ fields:
 insert_values:
           VALUES values_list {}
         | VALUE_SYM values_list {}
-        | create_select
-          { Lex->current_select->set_braces(0);}
+        | stored_select
+          {
+            Lex->current_select->set_braces(0);
+          }
           union_clause {}
-        | '(' create_select ')'
-          { Lex->current_select->set_braces(1);}
+        | '(' stored_select ')'
+          {
+            Lex->current_select->set_braces(1);
+          }
           union_opt {}
         ;
 
