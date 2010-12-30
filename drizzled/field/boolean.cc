@@ -170,7 +170,7 @@ String *Boolean::val_str(String *val_buffer, String *)
   uint32_t mlength= (5) * cs->mbmaxlen;
 
   val_buffer->alloc(mlength);
-  char *buffer=(char*) val_buffer->ptr();
+  char *buffer=(char*) val_buffer->c_ptr();
 
   if (isTrue())
   {

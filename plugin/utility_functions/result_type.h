@@ -1,12 +1,11 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,26 +17,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DISPLAY_H
-#define DRIZZLED_DISPLAY_H
 
-#include "drizzled/common.h"
-#include <string>
+#ifndef PLUGIN_UTILITY_FUNCTIONS_RESULT_TYPE_H
+#define PLUGIN_UTILITY_FUNCTIONS_RESULT_TYPE_H
 
-#include "drizzled/item/func.h"
+#include <drizzled/function/str/strfunc.h>
 
-namespace drizzled {
-namespace display {
+namespace drizzled
+{
 
-const std::string &type(drizzled::Cast_target type);
-const std::string &type(Item_result type);
-const std::string &type(drizzled::enum_field_types type);
-const std::string &type(drizzled::enum_server_command type);
-const std::string &type(bool type);
+namespace utility_functions
+{
 
-std::string hexdump(const unsigned char *str, size_t length);
+class ResultType :public Item_str_func
+{
+public:
+  ResultType()
+  { }
 
-} /* namespace display */
+  String *val_str(String *);
+  void fix_length_and_dec();
+  const char *func_name() const { return "result_type"; }
+  const char *fully_qualified_func_name() const { return "result_type()"; }
+
+  bool check_argument_count(int n)
+  {
+    return (n == 1);
+  }
+};
+
+} /* namespace utility_functions */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DISPLAY_H */
+#endif /* PLUGIN_UTILITY_FUNCTIONS_RESULT_TYPE_H */
