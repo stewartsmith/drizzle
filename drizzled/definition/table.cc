@@ -399,7 +399,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg) :
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
-  fields(0),
+  _field_size(0),
   rec_buff_length(0),
   keys(0),
   key_parts(0),
@@ -464,7 +464,7 @@ TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier:
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
-  fields(0),
+  _field_size(0),
   rec_buff_length(0),
   keys(0),
   key_parts(0),
@@ -539,7 +539,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
-  fields(0),
+  _field_size(0),
   rec_buff_length(0),
   keys(0),
   key_parts(0),
@@ -617,7 +617,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg,
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
-  fields(0),
+  _field_size(0),
   rec_buff_length(0),
   keys(0),
   key_parts(0),
@@ -935,10 +935,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   keys_for_keyread.reset();
   set_prefix(keys_in_use, keys);
 
-  fields= table.field_size();
+  _field_size= table.field_size();
 
-  setFields(fields + 1);
-  field[fields]= NULL;
+  setFields(_field_size + 1);
+  _fields[_field_size]= NULL;
 
   uint32_t local_null_fields= 0;
   reclength= 0;
@@ -946,15 +946,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   std::vector<uint32_t> field_offsets;
   std::vector<uint32_t> field_pack_length;
 
-  field_offsets.resize(fields);
-  field_pack_length.resize(fields);
+  field_offsets.resize(_field_size);
+  field_pack_length.resize(_field_size);
 
   uint32_t interval_count= 0;
   uint32_t interval_parts= 0;
 
   uint32_t stored_columns_reclength= 0;
 
-  for (unsigned int fieldnr= 0; fieldnr < fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < _field_size; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
     if (pfield.constraints().is_nullable())
@@ -1050,7 +1050,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   uint32_t interval_nr= 0;
 
-  for (unsigned int fieldnr= 0; fieldnr < fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < _field_size; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
 
@@ -1107,12 +1107,12 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   /* and read the fields */
   interval_nr= 0;
 
-  bool use_hash= fields >= MAX_FIELDS_BEFORE_HASH;
+  bool use_hash= _field_size >= MAX_FIELDS_BEFORE_HASH;
 
   unsigned char* null_pos= getDefaultValues();
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
-  for (unsigned int fieldnr= 0; fieldnr < fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < _field_size; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
 
@@ -1349,7 +1349,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                          ((field_type == DRIZZLE_TYPE_ENUM) ?  &intervals[interval_nr++] : (TYPELIB*) 0),
                          getTableProto()->field(fieldnr).name().c_str());
 
-    field[fieldnr]= f;
+    _fields[fieldnr]= f;
 
     // Insert post make_field code here.
     switch (field_type)
@@ -1425,12 +1425,12 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
     if (f->unireg_check == Field::NEXT_NUMBER)
-      found_next_number_field= &(field[fieldnr]);
+      found_next_number_field= &(_fields[fieldnr]);
 
     if (use_hash) /* supposedly this never fails... but comments lie */
     {
-      const char *local_field_name= field[fieldnr]->field_name;
-      name_hash.insert(make_pair(local_field_name, &(field[fieldnr])));
+      const char *local_field_name= _fields[fieldnr]->field_name;
+      name_hash.insert(make_pair(local_field_name, &(_fields[fieldnr])));
     }
   }
 
@@ -1486,9 +1486,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         for (uint32_t i= 0; i < keyinfo->key_parts; i++)
         {
           uint32_t fieldnr= key_part[i].fieldnr;
-          if (! fieldnr ||
-              field[fieldnr-1]->null_ptr ||
-              field[fieldnr-1]->key_length() != key_part[i].length)
+          if (not fieldnr ||
+              _fields[fieldnr-1]->null_ptr ||
+              _fields[fieldnr-1]->key_length() != key_part[i].length)
           {
             local_primary_key= MAX_KEY; // Can't be used
             break;
@@ -1503,7 +1503,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         {
           return ENOMEM;
         }
-        local_field= key_part->field= field[key_part->fieldnr-1];
+        local_field= key_part->field= _fields[key_part->fieldnr-1];
         key_part->type= local_field->key_type();
         if (local_field->null_ptr)
         {
@@ -1625,7 +1625,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     blob_field.resize(blob_fields);
     uint32_t *save= &blob_field[0];
     uint32_t k= 0;
-    for (Fields::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
+    for (Fields::iterator iter= _fields.begin(); iter != _fields.end()-1; iter++, k++)
     {
       if ((*iter)->flags & BLOB_FLAG)
         (*save++)= k;
@@ -1633,7 +1633,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   }
 
   all_set.clear();
-  all_set.resize(fields);
+  all_set.resize(_field_size);
   all_set.set();
 
   return local_error;
@@ -1838,7 +1838,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
+  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((_field_size+1)* sizeof(Field*)))))
   {
     return local_error;
   }
@@ -1850,9 +1850,9 @@ int TableShare::open_table_from_share_inner(Session *session,
   outparam.null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
-  for (uint32_t i= 0 ; i < fields; i++, field_ptr++)
+  for (uint32_t i= 0 ; i < _field_size; i++, field_ptr++)
   {
-    if (!((*field_ptr)= field[i]->clone(outparam.getMemRoot(), &outparam)))
+    if (!((*field_ptr)= _fields[i]->clone(outparam.getMemRoot(), &outparam)))
       return local_error;
   }
   (*field_ptr)= 0;                              // End marker
@@ -1910,9 +1910,9 @@ int TableShare::open_table_from_share_inner(Session *session,
 
   /* Allocate bitmaps */
 
-  outparam.def_read_set.resize(fields);
-  outparam.def_write_set.resize(fields);
-  outparam.tmp_set.resize(fields);
+  outparam.def_read_set.resize(_field_size);
+  outparam.def_write_set.resize(_field_size);
+  outparam.tmp_set.resize(_field_size);
   outparam.default_column_bitmaps();
 
   return 0;
@@ -2026,7 +2026,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   return;
 } /* open_table_error */
 
-Field *TableShare::make_field(message::Table::Field &pfield,
+Field *TableShare::make_field(const message::Table::Field &pfield,
                               unsigned char *ptr,
                               uint32_t field_length,
                               bool is_nullable,
@@ -2039,7 +2039,8 @@ Field *TableShare::make_field(message::Table::Field &pfield,
                               TYPELIB *interval,
                               const char *field_name)
 {
-  return make_field(ptr,
+  return make_field(pfield,
+                    ptr,
                     field_length,
                     is_nullable,
                     null_pos,
@@ -2053,7 +2054,8 @@ Field *TableShare::make_field(message::Table::Field &pfield,
                     pfield.constraints().is_unsigned());
 }
 
-Field *TableShare::make_field(unsigned char *ptr,
+Field *TableShare::make_field(const message::Table::Field &,
+                              unsigned char *ptr,
                               uint32_t field_length,
                               bool is_nullable,
                               unsigned char *null_pos,

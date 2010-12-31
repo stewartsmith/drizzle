@@ -716,7 +716,6 @@ void create_select_for_variable(const char *var_name)
 
 void parse(Session *session, const char *inBuf, uint32_t length)
 {
-  boost::posix_time::ptime start_time=boost::posix_time::microsec_clock::local_time();
   session->lex->start(session);
 
   session->reset_for_next_command();
@@ -768,8 +767,7 @@ void parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
-  boost::posix_time::ptime end_time=boost::posix_time::microsec_clock::local_time();
-  session->status_var.execution_time_nsec+=(end_time-start_time).total_microseconds();
+  session->set_end_timer();
 }
 
 

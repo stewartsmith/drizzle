@@ -77,13 +77,12 @@ bool logging::Syslog::post(drizzled::Session *session)
   if (session->examined_row_count < _threshold_big_examined)
     return false;
   
-  /* TODO, the session object should have a "utime command completed"
-     inside itself, so be more accurate, and so this doesnt have to
-     keep calling current_utime, which can be slow */
-  
-  boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-  boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-  uint64_t t_mark= (mytime-epoch).total_microseconds();
+  /*
+    TODO, the session object should have a "utime command completed"
+    inside itself, so be more accurate, and so this doesnt have to
+    keep calling current_utime, which can be slow.
+  */
+  uint64_t t_mark= session->getCurrentTimestamp(false);
 
   // return if query was not too slow
   if ((t_mark - session->start_utime) < _threshold_slow)

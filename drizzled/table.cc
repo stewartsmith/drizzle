@@ -1035,7 +1035,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   field_count= fieldnr;
   *reg_field= 0;
   *blob_field= 0;				// End marker
-  table->getMutableShare()->fields= field_count;
+  table->getMutableShare()->setFieldSize(field_count);
 
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */

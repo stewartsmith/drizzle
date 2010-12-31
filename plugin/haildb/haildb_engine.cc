@@ -485,7 +485,7 @@ uint64_t HailDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
   else
   {
     assert (err == DB_SUCCESS);
-    err= ib_tuple_read_u64(tuple, getTable()->getShare()->fields, &nr);
+    err= ib_tuple_read_u64(tuple, getTable()->getShare()->sizeFields(), &nr);
     nr++;
   }
   ib_tuple_delete(tuple);
@@ -1971,7 +1971,8 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   if (share->has_hidden_primary_key)
   {
-    err= ib_tuple_write_u64(tuple, getTable()->getShare()->fields, share->hidden_pkey_auto_increment_value.fetch_and_increment());
+    err= ib_tuple_write_u64(tuple, getTable()->getShare()->sizeFields(),
+                            share->hidden_pkey_auto_increment_value.fetch_and_increment());
   }
 
   err= ib_cursor_insert_row(cursor, tuple);
