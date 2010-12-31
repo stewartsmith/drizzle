@@ -282,6 +282,7 @@ void LEX::end()
   delete result;
   delete _create_table;
   _create_table= NULL;
+  _create_field= NULL;
 
   result= 0;
   setCacheable(true);
@@ -1882,6 +1883,7 @@ LEX::LEX() :
     cacheable(true),
     sum_expr_used(false),
     _create_table(NULL),
+    _create_field(NULL),
     _exists(false)
 {
   reset_query_tables_list(true);

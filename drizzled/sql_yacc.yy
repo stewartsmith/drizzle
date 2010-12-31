@@ -1433,16 +1433,17 @@ field_spec:
             Lex->charset= NULL;
             statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
 
-            message::AlterTable &alter_proto=
-              ((statement::CreateTable *)Lex->statement)->alter_info.alter_proto;
-            statement->current_proto_field= alter_proto.add_added_field();
+            message::AlterTable &alter_proto= ((statement::CreateTable *)Lex->statement)->alter_info.alter_proto;
+            Lex->setField(alter_proto.add_added_field());
           }
           field_def
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_name($1.str);
+            if (Lex->field())
+            {
+              Lex->field()->set_name($1.str);
+            }
 
             if (add_field_to_list(Lex->session, &$1, (enum enum_field_types) $3,
                                   Lex->length, Lex->dec, Lex->type,
@@ -1452,7 +1453,7 @@ field_spec:
                                   statement->change, &Lex->interval_list, Lex->charset))
               DRIZZLE_YYABORT;
 
-            statement->current_proto_field= NULL;
+            Lex->setField(NULL);
           }
         ;
 field_def:
@@ -1464,30 +1465,28 @@ field_definition:
           { 
             $$= $1;
             Lex->length=(char*) 0; /* use default length */
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
 
             if ($3 or $4)
             {
               $1= DRIZZLE_TYPE_LONGLONG;
             }
 
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
               assert ($1 == DRIZZLE_TYPE_LONG or $1 == DRIZZLE_TYPE_LONGLONG);
               // We update the type for unsigned types
               if ($3 or $4)
               {
-                statement->current_proto_field->set_type(message::Table::Field::BIGINT);
-                statement->current_proto_field->mutable_constraints()->set_is_unsigned(true);
+                Lex->field()->set_type(message::Table::Field::BIGINT);
+                Lex->field()->mutable_constraints()->set_is_unsigned(true);
               }
               if ($1 == DRIZZLE_TYPE_LONG)
               {
-                statement->current_proto_field->set_type(message::Table::Field::INTEGER);
+                Lex->field()->set_type(message::Table::Field::INTEGER);
               }
               else if ($1 == DRIZZLE_TYPE_LONGLONG)
               {
-                statement->current_proto_field->set_type(message::Table::Field::BIGINT);
+                Lex->field()->set_type(message::Table::Field::BIGINT);
               }
             }
           }
@@ -1495,13 +1494,10 @@ field_definition:
           {
             $$=$1;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
               assert ($1 == DRIZZLE_TYPE_DOUBLE);
-              statement->current_proto_field->set_type(message::Table::Field::DOUBLE);
+              Lex->field()->set_type(message::Table::Field::DOUBLE);
             }
           }
           | char '(' NUM ')'
@@ -1509,15 +1505,12 @@ field_definition:
               Lex->length=$3.str;
               $$=DRIZZLE_TYPE_VARCHAR;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
-              statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+              Lex->field()->set_type(message::Table::Field::VARCHAR);
               message::Table::Field::StringFieldOptions *string_field_options;
 
-              string_field_options= statement->current_proto_field->mutable_string_options();
+              string_field_options= Lex->field()->mutable_string_options();
 
               string_field_options->set_length(atoi($3.str));
             }
@@ -1527,27 +1520,21 @@ field_definition:
               Lex->length=(char*) "1";
               $$=DRIZZLE_TYPE_VARCHAR;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::VARCHAR);
             }
           | varchar '(' NUM ')'
             {
               Lex->length=$3.str;
               $$= DRIZZLE_TYPE_VARCHAR;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
+            if (Lex->field())
 	    {
-              statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+              Lex->field()->set_type(message::Table::Field::VARCHAR);
 
               message::Table::Field::StringFieldOptions *string_field_options;
 
-              string_field_options= statement->current_proto_field->mutable_string_options();
+              string_field_options= Lex->field()->mutable_string_options();
 
               string_field_options->set_length(atoi($3.str));
             }
@@ -1558,15 +1545,12 @@ field_definition:
               Lex->charset=&my_charset_bin;
               $$= DRIZZLE_TYPE_VARCHAR;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
+            if (Lex->field())
 	    {
-              statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+              Lex->field()->set_type(message::Table::Field::VARCHAR);
               message::Table::Field::StringFieldOptions *string_field_options;
 
-              string_field_options= statement->current_proto_field->mutable_string_options();
+              string_field_options= Lex->field()->mutable_string_options();
 
               string_field_options->set_length(atoi($3.str));
               string_field_options->set_collation_id(my_charset_bin.number);
@@ -1577,41 +1561,29 @@ field_definition:
           {
             $$=DRIZZLE_TYPE_DATE;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::DATE);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DATE);
           }
           | TIME_SYM
           {
             $$=DRIZZLE_TYPE_TIME;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::TIME);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::TIME);
           }
           | TIMESTAMP_SYM
           {
             $$=DRIZZLE_TYPE_TIMESTAMP;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::EPOCH);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::EPOCH);
           }
           | DATETIME_SYM
           {
             $$=DRIZZLE_TYPE_DATETIME;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::DATETIME);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DATETIME);
           }
           | BLOB_SYM
             {
@@ -1619,15 +1591,12 @@ field_definition:
               $$=DRIZZLE_TYPE_BLOB;
               Lex->length=(char*) 0; /* use default length */
 
-              statement::CreateTable *statement=
-                (statement::CreateTable *)Lex->statement;
-
-              if (statement->current_proto_field)
+              if (Lex->field())
               {
-                statement->current_proto_field->set_type(message::Table::Field::BLOB);
+                Lex->field()->set_type(message::Table::Field::BLOB);
                 message::Table::Field::StringFieldOptions *string_field_options;
 
-                string_field_options= statement->current_proto_field->mutable_string_options();
+                string_field_options= Lex->field()->mutable_string_options();
                 string_field_options->set_collation_id(my_charset_bin.number);
                 string_field_options->set_collation(my_charset_bin.name);
               }
@@ -1637,41 +1606,29 @@ field_definition:
               $$=DRIZZLE_TYPE_BLOB;
               Lex->length=(char*) 0; /* use default length */
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::BLOB);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::BLOB);
             }
           | DECIMAL_SYM float_options
           {
             $$=DRIZZLE_TYPE_DECIMAL;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::DECIMAL);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DECIMAL);
           }
           | NUMERIC_SYM float_options
           {
             $$=DRIZZLE_TYPE_DECIMAL;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::DECIMAL);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DECIMAL);
           }
           | FIXED_SYM float_options
           {
             $$=DRIZZLE_TYPE_DECIMAL;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::DECIMAL);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DECIMAL);
           }
           | ENUM_SYM
             {Lex->interval_list.empty();}
@@ -1679,35 +1636,28 @@ field_definition:
           {
             $$=DRIZZLE_TYPE_ENUM;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::ENUM);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::ENUM);
           }
           | UUID_SYM
           {
             $$=DRIZZLE_TYPE_UUID;
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
-
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::UUID);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::UUID);
           }
         | SERIAL_SYM
           {
             $$=DRIZZLE_TYPE_LONGLONG;
             Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG);
 
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
               message::Table::Field::FieldConstraints *constraints;
-              constraints= statement->current_proto_field->mutable_constraints();
+              constraints= Lex->field()->mutable_constraints();
               constraints->set_is_nullable(false);
 
-              statement->current_proto_field->set_type(message::Table::Field::BIGINT);
+              Lex->field()->set_type(message::Table::Field::BIGINT);
             }
           }
         ;
@@ -1793,13 +1743,12 @@ opt_attribute_list:
 attribute:
           NULL_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
             Lex->type&= ~ NOT_NULL_FLAG;
 
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
               message::Table::Field::FieldConstraints *constraints;
-              constraints= statement->current_proto_field->mutable_constraints();
+              constraints= Lex->field()->mutable_constraints();
               constraints->set_is_nullable(true);
             }
           }
@@ -1812,13 +1761,12 @@ attribute:
           }
         | not NULL_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
             Lex->type|= NOT_NULL_FLAG;
 
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
               message::Table::Field::FieldConstraints *constraints;
-              constraints= statement->current_proto_field->mutable_constraints();
+              constraints= Lex->field()->mutable_constraints();
               constraints->set_is_nullable(false);
             }
           }
@@ -1835,12 +1783,11 @@ attribute:
           {
             Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;
 
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
               message::Table::Field::FieldConstraints *constraints;
 
-              constraints= statement->current_proto_field->mutable_constraints();
+              constraints= Lex->field()->mutable_constraints();
               constraints->set_is_nullable(false);
             }
           }
@@ -1851,10 +1798,10 @@ attribute:
             Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
 
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
               message::Table::Field::FieldConstraints *constraints;
-              constraints= statement->current_proto_field->mutable_constraints();
+              constraints= Lex->field()->mutable_constraints();
               constraints->set_is_nullable(false);
             }
           }
@@ -1865,10 +1812,10 @@ attribute:
             Lex->type|= PRI_KEY_FLAG | NOT_NULL_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
 
-            if (statement->current_proto_field)
+            if (Lex->field())
             {
               message::Table::Field::FieldConstraints *constraints;
-              constraints= statement->current_proto_field->mutable_constraints();
+              constraints= Lex->field()->mutable_constraints();
               constraints->set_is_nullable(false);
             }
           }
@@ -1891,8 +1838,8 @@ attribute:
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
             statement->comment= $2;
 
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_comment($2.str);
+            if (Lex->field())
+              Lex->field()->set_comment($2.str);
           }
         | COLLATE_SYM collation_name
           {
@@ -2155,8 +2102,7 @@ alter:
           default_collation_schema
           {
             Lex->name= $3;
-            if (Lex->name.str == NULL &&
-                Lex->copy_db_to(&Lex->name.str, &Lex->name.length))
+            if (Lex->name.str == NULL && Lex->copy_db_to(&Lex->name.str, &Lex->name.length))
               DRIZZLE_YYABORT;
           }
         ;
@@ -2239,7 +2185,7 @@ alter_list_item:
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
             statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
 
-            statement->current_proto_field= NULL;
+            Lex->setField(NULL);
           }
           field_def
           {

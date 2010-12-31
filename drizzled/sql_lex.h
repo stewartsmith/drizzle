@@ -1017,6 +1017,16 @@ public:
     return _create_table;
   }
 
+  message::Table::Field *field()
+  {
+    return _create_field;
+  }
+
+  void setField(message::Table::Field *arg)
+  {
+    _create_field= arg;
+  }
+
   void setExists()
   {
     _exists= true;
@@ -1031,6 +1041,7 @@ private:
   bool cacheable;
   bool sum_expr_used;
   message::Table *_create_table;
+  message::Table::Field *_create_field;
   bool _exists;
 };
 

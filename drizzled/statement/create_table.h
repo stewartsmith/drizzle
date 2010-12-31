@@ -38,7 +38,6 @@ class CreateTable : public Statement
 public:
   CreateTable(Session *in_session) :
       Statement(in_session),
-      current_proto_field(NULL),
       change(NULL),
       default_value(NULL),
       on_update_value(NULL),
@@ -63,7 +62,7 @@ public:
   {
     return *session->lex->table();
   };
-  message::Table::Field *current_proto_field;
+
 private:
   HA_CREATE_INFO _create_info;
 
