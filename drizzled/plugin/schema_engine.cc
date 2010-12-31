@@ -214,8 +214,7 @@ bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::con
     for (std::set<std::string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
     {
       TableIdentifier table_identifier(identifier, *iter, message::Table::TEMPORARY);
-      Table *table= session.find_temporary_table(table_identifier);
-      session.close_temporary_table(table);
+      session.drop_temporary_table(table_identifier);
     }
   }
 
