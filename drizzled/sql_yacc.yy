@@ -385,7 +385,9 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 }
 %}
 
+%debug
 %pure_parser                                    /* We have threads */
+
 /*
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
@@ -810,6 +812,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <lex_str>
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
         LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident ident_or_text
+        ident_or_text_or_hostname
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
         BIN_NUM TEXT_STRING_filesystem
@@ -3411,17 +3414,17 @@ variable:
         ;
 
 variable_aux:
-          ident_or_text SET_VAR expr
+          ident_or_text_or_hostname SET_VAR expr
           {
             $$= new Item_func_set_user_var($1, $3);
             Lex->setCacheable(false);
           }
-        | ident_or_text
+        | ident_or_text_or_hostname
           {
             $$= new Item_func_get_user_var(*YYSession, $1);
             Lex->setCacheable(false);
           }
-        | '@' opt_var_ident_type ident_or_text opt_component
+        | '@' opt_var_ident_type ident_or_text_or_hostname opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
             if ($3.str && $4.str && check_reserved_words(&$3))
@@ -4350,7 +4353,7 @@ select_var_list:
         ;
 
 select_var_ident: 
-          '@' ident_or_text
+          '@' ident_or_text_or_hostname
           {
             if (Lex->result)
               ((select_dumpvar *)Lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
@@ -4461,11 +4464,11 @@ execute:
 
 
 execute_var_or_string:
-         ident_or_text
+         ident_or_text_or_hostname
          {
             $$.set($1);
          }
-        | '@' ident_or_text
+        | '@' ident_or_text_or_hostname
         {
             $$.set($2, true);
         }
@@ -5543,7 +5546,7 @@ fields_or_vars:
 
 field_or_var:
           simple_ident_nospvar {$$= $1;}
-        | '@' ident_or_text
+        | '@' ident_or_text_or_hostname
           { $$= new Item_user_var_as_out_param($2); }
         ;
 
@@ -5850,6 +5853,11 @@ ident:
 ident_or_text:
           ident           { $$=$1;}
         | TEXT_STRING_sys { $$=$1;}
+        ;
+
+ident_or_text_or_hostname:
+          ident           { $$=$1;}
+        | TEXT_STRING_sys { $$=$1;}
         | LEX_HOSTNAME { $$=$1;}
         ;
 
@@ -6114,7 +6122,7 @@ sys_option_value:
         ;
 
 option_value:
-          '@' ident_or_text equal expr
+          '@' ident_or_text_or_hostname equal expr
           {
             Lex->var_list.push_back(new set_var_user(new Item_func_set_user_var($2,$4)));
           }
