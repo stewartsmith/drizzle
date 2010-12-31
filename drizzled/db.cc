@@ -278,6 +278,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
         transaction_services.dropSchema(session, schema_identifier.getSchemaName());
       }
     }
+
     if (deleted >= 0)
     {
       session->clear_error();
@@ -287,42 +288,12 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
     }
     else
     {
-      char *query, *query_pos, *query_end, *query_data_start;
-
-      if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
-      {
-        break; /* not much else we can do */
-      }
-
-      query_pos= query_data_start= strcpy(query,"drop table ")+11;
-      query_end= query + MAX_DROP_TABLE_Q_LEN;
-
       TransactionServices &transaction_services= TransactionServices::singleton();
       for (TableIdentifier::vector::iterator it= dropped_tables.begin();
            it != dropped_tables.end();
            it++)
       {
-        uint32_t tbl_name_len;
-
-        /* 3 for the quotes and the comma*/
-        tbl_name_len= (*it).getTableName().length() + 3;
-        if (query_pos + tbl_name_len + 1 >= query_end)
-        {
-          /* These DDL methods and logging protected with LOCK_create_db */
-          transaction_services.rawStatement(session, query);
-          query_pos= query_data_start;
-        }
-
-        *query_pos++ = '`';
-        query_pos= strcpy(query_pos, (*it).getTableName().c_str()) + (tbl_name_len-3);
-        *query_pos++ = '`';
-        *query_pos++ = ',';
-      }
-
-      if (query_pos != query_data_start)
-      {
-        /* These DDL methods and logging protected with LOCK_create_db */
-        transaction_services.rawStatement(session, query);
+        transaction_services.dropTable(session, (*it).getSchemaName(), (*it).getTableName());
       }
     }
 
@@ -334,6 +305,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
     */
     if (schema_identifier.compare(*session->schema()))
       change_db_impl(session);
+
   } while (0);
 
   session->startWaitingGlobalReadLock();
