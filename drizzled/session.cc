@@ -571,7 +571,9 @@ bool Session::schedule(Session::shared_ptr &arg)
   arg->scheduler= plugin::Scheduler::getScheduler();
   assert(arg->scheduler);
 
-  long current_connections= ++connection_count;
+  ++connection_count;
+
+  long current_connections= connection_count;
 
   if (current_connections > 0 and static_cast<uint64_t>(current_connections) > current_global_counters.max_used_connections)
   {
