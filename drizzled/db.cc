@@ -57,7 +57,7 @@ using namespace std;
 namespace drizzled
 {
 
-static long drop_tables_via_filenames(Session *session,
+static long drop_all_tables_in_schema(Session *session,
                                       SchemaIdentifier &schema_identifier,
                                       TableIdentifier::vector &dropped_tables);
 static void change_db_impl(Session *session);
@@ -218,7 +218,7 @@ bool alter_db(Session *session, const message::Schema &schema_message)
 bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_exists)
 {
   long deleted=0;
-  int error= false;
+  bool error= false;
   TableIdentifier::vector dropped_tables;
   message::Schema schema_proto;
 
@@ -257,7 +257,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       }
       else
       {
-        error= -1;
+        error= true;
         my_error(ER_DB_DROP_EXISTS, MYF(0), path.c_str());
         break;
       }
@@ -267,12 +267,19 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       /* After deleting database, remove all cache entries related to schema */
       table::Cache::singleton().removeSchema(schema_identifier);
 
-      error= -1;
-      deleted= drop_tables_via_filenames(session, schema_identifier, dropped_tables);
-      if (deleted >= 0)
+      deleted= drop_all_tables_in_schema(session, schema_identifier, dropped_tables);
+
+      if (not plugin::StorageEngine::dropSchema(*session, schema_identifier))
       {
-        error= 0;
-        
+        std::string path;
+        schema_identifier.getSQLPath(path);
+        my_error(ER_DROP_SCHEMA, MYF(0), path.c_str());
+        error= true;
+
+        break;
+      }
+      else
+      {
         /* We've already verified that the schema does exist, so safe to log it */
         TransactionServices &transaction_services= TransactionServices::singleton();
         transaction_services.dropSchema(session, schema_identifier.getSchemaName());
@@ -285,16 +292,6 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       session->server_status|= SERVER_STATUS_DB_DROPPED;
       session->my_ok((uint32_t) deleted);
       session->server_status&= ~SERVER_STATUS_DB_DROPPED;
-    }
-    else
-    {
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      for (TableIdentifier::vector::iterator it= dropped_tables.begin();
-           it != dropped_tables.end();
-           it++)
-      {
-        transaction_services.dropTable(session, (*it).getSchemaName(), (*it).getTableName());
-      }
     }
 
     /*
@@ -313,159 +310,18 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
   return error;
 }
 
-
-static int rm_table_part2(Session *session, TableList *tables)
-{
-  TransactionServices &transaction_services= TransactionServices::singleton();
-
-  TableList *table;
-  String wrong_tables;
-  int error= 0;
-  bool foreign_key_error= false;
-
-  {
-    table::Cache::singleton().mutex().lock(); /* Part 2 of rm a table */
-
-    if (session->lock_table_names_exclusively(tables))
-    {
-      table::Cache::singleton().mutex().unlock();
-      return 1;
-    }
-
-    /* Don't give warnings for not found errors, as we already generate notes */
-    session->no_warnings_for_error= 1;
-
-    for (table= tables; table; table= table->next_local)
-    {
-      const char *db=table->getSchemaName();
-      TableIdentifier identifier(table->getSchemaName(), table->getTableName());
-
-      plugin::StorageEngine *table_type;
-
-      error= session->drop_temporary_table(identifier);
-
-      switch (error) {
-      case  0:
-        // removed temporary table
-        continue;
-      case -1:
-        error= 1;
-        tables->unlock_table_names();
-        table::Cache::singleton().mutex().unlock();
-        session->no_warnings_for_error= 0;
-
-        return(error);
-      default:
-        // temporary table not found
-        error= 0;
-      }
-
-      table_type= table->getDbType();
-
-      {
-        Table *locked_table;
-        abort_locked_tables(session, identifier);
-        table::Cache::singleton().removeTable(session, identifier,
-                                              RTFC_WAIT_OTHER_THREAD_FLAG |
-                                              RTFC_CHECK_KILLED_FLAG);
-        /*
-          If the table was used in lock tables, remember it so that
-          unlock_table_names can free it
-        */
-        if ((locked_table= drop_locked_tables(session, identifier)))
-          table->table= locked_table;
-
-        if (session->getKilled())
-        {
-          error= -1;
-          tables->unlock_table_names();
-          table::Cache::singleton().mutex().unlock();
-          session->no_warnings_for_error= 0;
-
-          return(error);
-        }
-      }
-      identifier.getPath();
-
-      if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))
-      {
-        // Table was not found on disk and table can't be created from engine
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
-                            table->getTableName());
-      }
-      else
-      {
-        error= plugin::StorageEngine::dropTable(*session, identifier);
-
-        /* Generate transaction event ONLY when we successfully drop */ 
-        if (error == 0)
-        {
-          transaction_services.dropTable(session, string(db), string(table->getTableName()));
-        }
-
-        if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
-        {
-          error= 0;
-          session->clear_error();
-        }
-
-        if (error == HA_ERR_ROW_IS_REFERENCED)
-        {
-          /* the table is referenced by a foreign key constraint */
-          foreign_key_error= true;
-        }
-      }
-
-      if (error)
-      {
-        if (wrong_tables.length())
-          wrong_tables.append(',');
-        wrong_tables.append(String(table->getTableName(),system_charset_info));
-      }
-    }
-    /*
-      It's safe to unlock table::Cache::singleton().mutex(): we have an exclusive lock
-      on the table name.
-    */
-    table::Cache::singleton().mutex().unlock();
-  }
-
-  error= 0;
-  if (wrong_tables.length())
-  {
-    if (not foreign_key_error)
-      my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
-                      wrong_tables.c_ptr());
-    else
-    {
-      my_message(ER_ROW_IS_REFERENCED, ER(ER_ROW_IS_REFERENCED), MYF(0));
-    }
-    error= 1;
-  }
-
-  {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* final bit in rm table lock */
-    tables->unlock_table_names();
-  }
-  session->no_warnings_for_error= 0;
-
-  return(error);
-}
-
 /*
   Removes files with known extensions plus.
   session MUST be set when calling this function!
 */
 
-static long drop_tables_via_filenames(Session *session,
+static long drop_all_tables_in_schema(Session *session,
                                       SchemaIdentifier &schema_identifier,
                                       TableIdentifier::vector &dropped_tables)
 {
   long deleted= 0;
-  TableList *tot_list= NULL, **tot_list_next;
 
-  tot_list_next= &tot_list;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   plugin::StorageEngine::getIdentifiers(*session, schema_identifier, dropped_tables);
 
@@ -473,47 +329,13 @@ static long drop_tables_via_filenames(Session *session,
        it != dropped_tables.end();
        it++)
   {
-    size_t db_len= schema_identifier.getSchemaName().size();
-
-    /* Drop the table nicely */
-    TableList *table_list=(TableList*)
-      session->calloc(sizeof(*table_list) +
-                      db_len + 1 +
-                      (*it).getTableName().length() + 1);
-
-    if (not table_list)
-      return -1;
-
-    table_list->setSchemaName((char*) (table_list+1));
-    table_list->setTableName(strcpy((char*) (table_list+1), schema_identifier.getSchemaName().c_str()) + db_len + 1);
-    TableIdentifier::filename_to_tablename((*it).getTableName().c_str(), const_cast<char *>(table_list->getTableName()), (*it).getTableName().size() + 1);
-    table_list->alias= table_list->getTableName();  // If lower_case_table_names=2
-    table_list->setInternalTmpTable((strncmp((*it).getTableName().c_str(),
-                                             TMP_FILE_PREFIX,
-                                             strlen(TMP_FILE_PREFIX)) == 0));
-    /* Link into list */
-    (*tot_list_next)= table_list;
-    tot_list_next= &table_list->next_local;
+    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+    table::Cache::singleton().removeTable(session, *it,
+                                          RTFC_WAIT_OTHER_THREAD_FLAG |
+                                          RTFC_CHECK_KILLED_FLAG);
+    plugin::StorageEngine::dropTable(*session, *it);
+    transaction_services.dropTable(session, (*it).getSchemaName(), (*it).getTableName());
     deleted++;
-  }
-
-  if (session->getKilled())
-    return -1;
-
-  if (tot_list)
-  {
-    if (rm_table_part2(session, tot_list))
-      return -1;
-  }
-
-
-  if (not plugin::StorageEngine::dropSchema(*session, schema_identifier))
-  {
-    std::string path;
-    schema_identifier.getSQLPath(path);
-    my_error(ER_DROP_SCHEMA, MYF(0), path.c_str());
-
-    return -1;
   }
 
   return deleted;
