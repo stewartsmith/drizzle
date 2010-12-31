@@ -659,9 +659,13 @@ public:
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* @note the following three members should likely move to Client */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
+private:
+  boost::posix_time::ptime _epoch;
+
+public:
+
   time_t start_time;
   time_t user_time;
-  uint64_t thr_create_utime; /**< track down slow pthread_create */
   uint64_t start_utime;
   uint64_t utime_after_lock;
 
@@ -684,6 +688,7 @@ private:
   */
   query_id_t query_id;
   query_id_t warn_query_id;
+
 public:
   void **getEngineData(const plugin::MonitoredInTransaction *monitored);
   ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
@@ -1244,8 +1249,7 @@ public:
   inline void set_time()
   {
     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    start_utime= utime_after_lock= (mytime-epoch).total_microseconds();
+    start_utime= utime_after_lock= (mytime - _epoch).total_microseconds();
 
     if (user_time)
     {
@@ -1253,22 +1257,20 @@ public:
       connect_microseconds= start_utime;
     }
     else 
-      start_time= (mytime-epoch).total_seconds();
+      start_time= (mytime - _epoch).total_seconds();
   }
   inline void	set_current_time()    { start_time= time(NULL); }
   inline void	set_time(time_t t)
   {
     start_time= user_time= t;
     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    uint64_t t_mark= (mytime-epoch).total_microseconds();
+    uint64_t t_mark= (mytime - _epoch).total_microseconds();
 
     start_utime= utime_after_lock= t_mark;
   }
   void set_time_after_lock()  { 
      boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-     utime_after_lock= (mytime-epoch).total_microseconds();
+     utime_after_lock= (mytime - _epoch).total_microseconds();
   }
   /**
    * Returns the current micro-timestamp
@@ -1276,8 +1278,7 @@ public:
   inline uint64_t getCurrentTimestamp()  
   { 
     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    uint64_t t_mark= (mytime-epoch).total_microseconds();
+    uint64_t t_mark= (mytime - _epoch).total_microseconds();
 
     return t_mark; 
   }
