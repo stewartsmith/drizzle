@@ -208,13 +208,12 @@ bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::con
 
   {
     // Lets delete the temporary tables first outside of locks.  
-    std::set<std::string> set_of_names;
-    session.doGetTableNames(identifier, set_of_names);
+    TableIdentifier::vector set_of_identifiers;
+    session.doGetTableIdentifiers(identifier, set_of_identifiers);
 
-    for (std::set<std::string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
+    for (TableIdentifier::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
     {
-      TableIdentifier table_identifier(identifier, *iter, message::Table::TEMPORARY);
-      session.drop_temporary_table(table_identifier);
+      session.drop_temporary_table(*iter);
     }
   }
 
