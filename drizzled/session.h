@@ -659,8 +659,11 @@ public:
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* @note the following three members should likely move to Client */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
+
 private:
   boost::posix_time::ptime _epoch;
+  boost::posix_time::ptime _start_timer;
+  boost::posix_time::ptime _end_timer;
 
 public:
 
@@ -1245,11 +1248,15 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  inline time_t query_start() { return start_time; }
-  inline void set_time()
+  time_t query_start()
   {
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    start_utime= utime_after_lock= (mytime - _epoch).total_microseconds();
+    return start_time;
+  }
+
+  void set_time()
+  {
+    _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();
+    start_utime= utime_after_lock= (_start_timer - _epoch).total_microseconds();
 
     if (user_time)
     {
@@ -1257,48 +1264,73 @@ public:
       connect_microseconds= start_utime;
     }
     else 
-      start_time= (mytime - _epoch).total_seconds();
+    {
+      start_time= (_start_timer - _epoch).total_seconds();
+    }
   }
-  inline void	set_current_time()    { start_time= time(NULL); }
-  inline void	set_time(time_t t)
+
+  void set_time(time_t t)
   {
     start_time= user_time= t;
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
     uint64_t t_mark= (mytime - _epoch).total_microseconds();
 
     start_utime= utime_after_lock= t_mark;
   }
-  void set_time_after_lock()  { 
-     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-     utime_after_lock= (mytime - _epoch).total_microseconds();
+
+  void set_time_after_lock()
+  { 
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
+    utime_after_lock= (mytime - _epoch).total_microseconds();
   }
+
+  void set_end_timer()
+  {
+    _end_timer= boost::posix_time::microsec_clock::universal_time();
+    status_var.execution_time_nsec+=(_end_timer - _start_timer).total_microseconds();
+  }
+
   /**
    * Returns the current micro-timestamp
    */
-  inline uint64_t getCurrentTimestamp()  
+  uint64_t getCurrentTimestamp(bool actual= true)  
   { 
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    uint64_t t_mark= (mytime - _epoch).total_microseconds();
+    uint64_t t_mark;
+
+    if (actual)
+    {
+      boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
+      t_mark= (mytime - _epoch).total_microseconds();
+    }
+    else
+    {
+      t_mark= (_end_timer - _epoch).total_microseconds();
+    }
 
     return t_mark; 
   }
-  inline uint64_t found_rows(void)
+
+  uint64_t found_rows(void)
   {
     return limit_found_rows;
   }
+
   /** Returns whether the session is currently inside a transaction */
-  inline bool inTransaction()
+  bool inTransaction()
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
+
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
+
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const std::string &str,
                               bool allocate_lex_string);
 
   int send_explain_fields(select_result *result);
+
   /**
     Clear the current error, if any.
     We do not clear is_fatal_error or is_fatal_sub_stmt_error since we
