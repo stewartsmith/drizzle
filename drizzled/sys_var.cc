@@ -1158,7 +1158,7 @@ bool sys_var_timestamp::update(Session *session,  set_var *var)
 
 void sys_var_timestamp::set_default(Session *session, sql_var_t)
 {
-  session->user_time=0;
+  session->resetUserTime();
 }
 
 

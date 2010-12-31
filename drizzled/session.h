@@ -668,9 +668,16 @@ private:
 public:
 
   time_t start_time;
+private:
   time_t user_time;
   uint64_t start_utime;
-  uint64_t utime_after_lock;
+public:
+  uint64_t utime_after_lock; // This used by Innodb.
+
+  void resetUserTime()
+  {
+    user_time= 0;
+  }
 
   thr_lock_type update_lock_default;
 
@@ -1269,7 +1276,7 @@ public:
     }
   }
 
-  void set_time(time_t t)
+  void set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
   {
     start_time= user_time= t;
     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
@@ -1288,6 +1295,11 @@ public:
   {
     _end_timer= boost::posix_time::microsec_clock::universal_time();
     status_var.execution_time_nsec+=(_end_timer - _start_timer).total_microseconds();
+  }
+
+  uint64_t getElapsedTime() const
+  {
+    return (_end_timer - _start_timer).total_microseconds();
   }
 
   /**
