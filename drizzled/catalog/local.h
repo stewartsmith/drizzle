@@ -29,6 +29,7 @@ namespace drizzled
 namespace catalog
 {
 
+identifier::Catalog::const_reference local_identifier();
 Instance::shared_ptr local();
 
 } /* namespace catalog */

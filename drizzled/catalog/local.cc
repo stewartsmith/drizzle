@@ -42,6 +42,11 @@ static void init()
   _local_catalog= plugin::Catalog::getInstance(default_catalog);
 }
 
+identifier::Catalog::const_reference local_identifier()
+{
+  return default_catalog;
+}
+
 Instance::shared_ptr local()
 {
   boost::call_once(&init, run_once);

@@ -34,6 +34,7 @@
 
 #include "drizzled/data_home.h"
 #include "drizzled/cached_directory.h"
+#include <drizzled/catalog/local.h>
 #include "plugin/catalog/module.h"
 
 namespace plugin {
@@ -94,7 +95,6 @@ void Engine::getMessages(drizzled::message::catalog::vector &messages)
 void Engine::prime(drizzled::message::catalog::vector &messages)
 {
   bool found_local= false;
-  static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
   drizzled::CachedDirectory directory(drizzled::getFullDataHome().file_string(), drizzled::CachedDirectory::DIRECTORY, true);
   drizzled::CachedDirectory::Entries files= directory.getEntries();
 
@@ -114,14 +114,14 @@ void Engine::prime(drizzled::message::catalog::vector &messages)
     {
       messages.push_back(message);
 
-      if (LOCAL_IDENTIFIER == identifier)
+      if (drizzled::catalog::local_identifier() == identifier)
         found_local= true;
     }
   }
 
   if (not found_local)
   {
-    messages.push_back(drizzled::message::catalog::make_shared(LOCAL_IDENTIFIER));
+    messages.push_back(drizzled::catalog::local()->message());
   }
 }
 
