@@ -24,12 +24,11 @@ The "Persons" table:
 +---------+------------+----------+----------+--------+
 | 3 	  | Pettersen  | Kari 	  |30 Mell   | Reno   |
 +---------+------------+----------+----------+--------+
+ 
+If you want to select only the persons living in the city "Chicago" from the table above, use the following SELECT statement: ::
 
-Now we want to select only the persons living in the city "Sandnes" from the table above.
-
-We use the following SELECT statement:
-SELECT * FROM Persons
-WHERE City='Chicago'
+	SELECT * FROM Persons
+	WHERE City='Chicago'
 
 The result-set will look like this:
 
