@@ -24,17 +24,28 @@
 #include "drizzled/catalog/local.h"
 #include "drizzled/plugin/catalog.h"
 
+#include <boost/thread/once.hpp>
+
 namespace drizzled
 {
 namespace catalog
 {
 
 /* Setup the local catalog for us to use with session */
-static identifier::Catalog default_catalog("local");
-static catalog::Instance::shared_ptr _local_catalog= plugin::Catalog::getInstance(default_catalog);
+static identifier::Catalog default_catalog("LOCAL");
+static catalog::Instance::shared_ptr _local_catalog;
+
+static boost::once_flag run_once= BOOST_ONCE_INIT;
+
+static void init()
+{
+  _local_catalog= plugin::Catalog::getInstance(default_catalog);
+}
 
 Instance::shared_ptr local()
 {
+  boost::call_once(&init, run_once);
+
   return _local_catalog;
 }
 

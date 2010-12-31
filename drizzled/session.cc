@@ -168,7 +168,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   lex(&main_lex),
   query(new std::string),
   _schema(new std::string("")),
-  catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),

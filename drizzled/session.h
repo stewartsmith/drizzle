@@ -327,6 +327,7 @@ public:
 
   static shared_ptr make_shared(plugin::Client *client, catalog::Instance::shared_ptr instance_arg)
   {
+    assert(instance_arg);
     return boost::make_shared<Session>(client, instance_arg);
   }
 
@@ -527,7 +528,7 @@ public:
 
     return util::string::const_shared_ptr(new std::string(""));
   }
-  std::string catalog;
+
   /* current cache key */
   std::string query_cache_key;
   /**
@@ -1818,6 +1819,11 @@ public:
   const struct rusage &getUsage()
   {
     return usage;
+  }
+
+  catalog::Instance::const_pointer catalog() const
+  {
+    return _catalog.get();
   }
 
 private:

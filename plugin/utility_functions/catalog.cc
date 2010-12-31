@@ -33,16 +33,10 @@ namespace utility_functions
 String *Catalog::val_str(String *str)
 {
   assert(fixed == 1);
-  Session *session= current_session;
-  if (session->catalog.empty())
-  {
-    null_value= 1;
-    return 0;
-  }
-  else
-  {
-    str->copy(session->catalog.c_str(), session->catalog.length(), system_charset_info);
-  }
+  assert(getSession().catalog());
+  assert(not getSession().catalog()->name().empty());
+
+  str->copy(getSession().catalog()->name(), system_charset_info);
 
   return str;
 }
