@@ -236,9 +236,10 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
   */
   if (session->wait_if_global_read_lock(false, true))
   {
-    return -1;
+    return true;
   }
 
+  do
   {
     boost::mutex::scoped_lock scopedLock(LOCK_create_db);
 
@@ -258,7 +259,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       {
         error= -1;
         my_error(ER_DB_DROP_EXISTS, MYF(0), path.c_str());
-        goto exit;
+        break;
       }
     }
     else
@@ -289,7 +290,10 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       char *query, *query_pos, *query_end, *query_data_start;
 
       if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
-        goto exit; /* not much else we can do */
+      {
+        break; /* not much else we can do */
+      }
+
       query_pos= query_data_start= strcpy(query,"drop table ")+11;
       query_end= query + MAX_DROP_TABLE_Q_LEN;
 
@@ -322,7 +326,6 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       }
     }
 
-exit:
     /*
       If this database was the client's selected database, we silently
       change the client's selected database to nothing (to have an empty
@@ -331,7 +334,7 @@ exit:
     */
     if (schema_identifier.compare(*session->schema()))
       change_db_impl(session);
-  }
+  } while (0);
 
   session->startWaitingGlobalReadLock();
 
