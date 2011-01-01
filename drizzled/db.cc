@@ -274,7 +274,6 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
 
         for (TableIdentifier::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
         {
-          std::cerr << "Dropping temporary ->" << *iter << std::endl;
           if (session->drop_temporary_table(*iter))
           {
             my_error(ER_TABLE_DROP, MYF(0), (*iter).getTableName().c_str());
@@ -360,12 +359,10 @@ static bool drop_all_tables_in_schema(Session *session,
     if (plugin::StorageEngine::dropTable(*session, *it))
     {
       my_error(ER_TABLE_DROP, MYF(0), (*it).getTableName().c_str());
-      std::cerr << "Dropping table " << *it << " had issues \n";
       return false;
     }
     transaction_services.dropTable(session, (*it).getSchemaName(), (*it).getTableName());
     deleted++;
-    std::cerr << *it << std::endl;
   }
 
   return true;
