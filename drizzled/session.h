@@ -662,13 +662,11 @@ public:
 
 private:
   boost::posix_time::ptime _epoch;
+  boost::posix_time::ptime _connect_time;
   boost::posix_time::ptime _start_timer;
   boost::posix_time::ptime _end_timer;
 
-public:
-
   time_t start_time;
-private:
   time_t user_time;
   uint64_t start_utime;
 public:
@@ -677,6 +675,16 @@ public:
   void resetUserTime()
   {
     user_time= 0;
+  }
+
+  const boost::posix_time::ptime &start_timer() const
+  {
+    return _start_timer;
+  }
+
+  void getTimeDifference(boost::posix_time::time_duration &result_arg, const boost::posix_time::ptime &arg) const
+  {
+    result_arg=  arg - _start_timer;
   }
 
   thr_lock_type update_lock_default;
@@ -1268,7 +1276,6 @@ public:
     if (user_time)
     {
       start_time= user_time;
-      connect_microseconds= start_utime;
     }
     else 
     {
@@ -1305,7 +1312,7 @@ public:
   /**
    * Returns the current micro-timestamp
    */
-  uint64_t getCurrentTimestamp(bool actual= true)  
+  uint64_t getCurrentTimestamp(bool actual= true) const
   { 
     uint64_t t_mark;
 
@@ -1322,13 +1329,19 @@ public:
     return t_mark; 
   }
 
-  uint64_t found_rows(void)
+  // We may need to set user on this
+  int64_t getCurrentTimestampEpoch() const
+  { 
+    return (_start_timer - _epoch).total_seconds();
+  }
+
+  uint64_t found_rows(void) const
   {
     return limit_found_rows;
   }
 
   /** Returns whether the session is currently inside a transaction */
-  bool inTransaction()
+  bool inTransaction() const
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
@@ -1511,9 +1524,14 @@ public:
    * Returns the timestamp (in microseconds) of when the Session 
    * connected to the server.
    */
-  inline uint64_t getConnectMicroseconds() const
+  uint64_t getConnectMicroseconds() const
   {
-    return connect_microseconds;
+    return (_connect_time - _epoch).total_microseconds();
+  }
+
+  uint64_t getConnectSeconds() const
+  {
+    return (_connect_time - _epoch).total_seconds();
   }
 
   /**
@@ -1634,8 +1652,6 @@ public:
   
   
  private:
- /** Microsecond timestamp of when Session connected */
-  uint64_t connect_microseconds;
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */

@@ -181,6 +181,7 @@ Session::Session(plugin::Client *client_arg) :
   command(COM_CONNECT),
   file_id(0),
   _epoch(boost::gregorian::date(1970,1,1)),
+  _connect_time(boost::posix_time::microsec_clock::universal_time()),
   start_time(0),
   user_time(0),
   start_utime(0),
