@@ -265,6 +265,25 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
     }
     else
     {
+      // Remove all temp tables first, this prevents loss of table from
+      // shadowing (ie temp over standard table)
+      {
+        // Lets delete the temporary tables first outside of locks.  
+        TableIdentifier::vector set_of_identifiers;
+        session->doGetTableIdentifiers(schema_identifier, set_of_identifiers);
+
+        for (TableIdentifier::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
+        {
+          std::cerr << "Dropping temporary ->" << *iter << std::endl;
+          if (session->drop_temporary_table(*iter))
+          {
+            my_error(ER_TABLE_DROP, MYF(0), (*iter).getTableName().c_str());
+            error= true;
+            break;
+          }
+        }
+      }
+
       /* After deleting database, remove all cache entries related to schema */
       table::Cache::singleton().removeSchema(schema_identifier);
 

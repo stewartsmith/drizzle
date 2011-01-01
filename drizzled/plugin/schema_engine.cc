@@ -202,25 +202,10 @@ public:
   }
 };
 
-bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::const_reference identifier)
+bool StorageEngine::dropSchema(Session::reference , SchemaIdentifier::const_reference identifier)
 {
   uint64_t counter= 0;
 
-  {
-    // Lets delete the temporary tables first outside of locks.  
-    TableIdentifier::vector set_of_identifiers;
-    session.doGetTableIdentifiers(identifier, set_of_identifiers);
-
-    for (TableIdentifier::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
-    {
-      std::cerr << "Dropping temporary ->" << *iter << std::endl;
-      if (session.drop_temporary_table(*iter))
-      {
-        my_error(ER_TABLE_DROP, MYF(0), (*iter).getTableName().c_str());
-        return false;
-      }
-    }
-  }
 
   // Add hook here for engines to register schema.
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
