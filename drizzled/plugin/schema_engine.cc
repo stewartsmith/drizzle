@@ -213,7 +213,12 @@ bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::con
 
     for (TableIdentifier::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
     {
-      session.drop_temporary_table(*iter);
+      std::cerr << "Dropping temporary ->" << *iter << std::endl;
+      if (session.drop_temporary_table(*iter))
+      {
+        my_error(ER_TABLE_DROP, MYF(0), (*iter).getTableName().c_str());
+        return false;
+      }
     }
   }
 

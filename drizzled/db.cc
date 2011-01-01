@@ -57,9 +57,10 @@ using namespace std;
 namespace drizzled
 {
 
-static long drop_all_tables_in_schema(Session *session,
+static bool drop_all_tables_in_schema(Session *session,
                                       SchemaIdentifier &schema_identifier,
-                                      TableIdentifier::vector &dropped_tables);
+                                      TableIdentifier::vector &dropped_tables,
+                                      uint64_t &dropped);
 static void change_db_impl(Session *session);
 static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
 
@@ -217,7 +218,7 @@ bool alter_db(Session *session, const message::Schema &schema_message)
 
 bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_exists)
 {
-  long deleted=0;
+  uint64_t deleted= 0;
   bool error= false;
   TableIdentifier::vector dropped_tables;
   message::Schema schema_proto;
@@ -267,7 +268,12 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       /* After deleting database, remove all cache entries related to schema */
       table::Cache::singleton().removeSchema(schema_identifier);
 
-      deleted= drop_all_tables_in_schema(session, schema_identifier, dropped_tables);
+      if (not drop_all_tables_in_schema(session, schema_identifier, dropped_tables, deleted))
+      {
+        error= true;
+        my_error(ER_DROP_SCHEMA, MYF(0), schema_identifier.getSchemaName().c_str());
+        break;
+      }
 
       if (not plugin::StorageEngine::dropSchema(*session, schema_identifier))
       {
@@ -286,7 +292,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       }
     }
 
-    if (deleted >= 0)
+    if (deleted > 0)
     {
       session->clear_error();
       session->server_status|= SERVER_STATUS_DB_DROPPED;
@@ -315,12 +321,11 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
   session MUST be set when calling this function!
 */
 
-static long drop_all_tables_in_schema(Session *session,
+static bool drop_all_tables_in_schema(Session *session,
                                       SchemaIdentifier &schema_identifier,
-                                      TableIdentifier::vector &dropped_tables)
+                                      TableIdentifier::vector &dropped_tables,
+                                      uint64_t &deleted)
 {
-  long deleted= 0;
-
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   plugin::StorageEngine::getIdentifiers(*session, schema_identifier, dropped_tables);
@@ -333,12 +338,18 @@ static long drop_all_tables_in_schema(Session *session,
     table::Cache::singleton().removeTable(session, *it,
                                           RTFC_WAIT_OTHER_THREAD_FLAG |
                                           RTFC_CHECK_KILLED_FLAG);
-    plugin::StorageEngine::dropTable(*session, *it);
+    if (plugin::StorageEngine::dropTable(*session, *it))
+    {
+      my_error(ER_TABLE_DROP, MYF(0), (*it).getTableName().c_str());
+      std::cerr << "Dropping table " << *it << " had issues \n";
+      return false;
+    }
     transaction_services.dropTable(session, (*it).getSchemaName(), (*it).getTableName());
     deleted++;
+    std::cerr << *it << std::endl;
   }
 
-  return deleted;
+  return true;
 }
 
 /**
