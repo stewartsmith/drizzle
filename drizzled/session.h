@@ -666,15 +666,13 @@ private:
   boost::posix_time::ptime _start_timer;
   boost::posix_time::ptime _end_timer;
 
-  time_t start_time;
-  time_t user_time;
-  uint64_t start_utime;
+  boost::posix_time::ptime _user_time;
 public:
   uint64_t utime_after_lock; // This used by Innodb.
 
   void resetUserTime()
   {
-    user_time= 0;
+    _user_time= boost::posix_time::not_a_date_time;
   }
 
   const boost::posix_time::ptime &start_timer() const
@@ -1265,31 +1263,18 @@ public:
 
   time_t query_start()
   {
-    return start_time;
+    return getCurrentTimestampEpoch();
   }
 
   void set_time()
   {
     _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();
-    start_utime= utime_after_lock= (_start_timer - _epoch).total_microseconds();
-
-    if (user_time)
-    {
-      start_time= user_time;
-    }
-    else 
-    {
-      start_time= (_start_timer - _epoch).total_seconds();
-    }
+    utime_after_lock= (_start_timer - _epoch).total_microseconds();
   }
 
   void set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
   {
-    start_time= user_time= t;
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
-    uint64_t t_mark= (mytime - _epoch).total_microseconds();
-
-    start_utime= utime_after_lock= t_mark;
+    _user_time= boost::posix_time::from_time_t(t);
   }
 
   void set_time_after_lock()
@@ -1332,6 +1317,9 @@ public:
   // We may need to set user on this
   int64_t getCurrentTimestampEpoch() const
   { 
+    if (not _user_time.is_not_a_date_time())
+      return (_user_time - _epoch).total_seconds();
+
     return (_start_timer - _epoch).total_seconds();
   }
 
