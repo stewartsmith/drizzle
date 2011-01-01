@@ -85,7 +85,7 @@ bool logging::Syslog::post(drizzled::Session *session)
   uint64_t t_mark= session->getCurrentTimestamp(false);
 
   // return if query was not too slow
-  if ((t_mark - session->start_utime) < _threshold_slow)
+  if (session->getElapsedTime() < _threshold_slow)
     return false;
   
   drizzled::Session::QueryString query_string(session->getQueryString());
@@ -109,7 +109,7 @@ bool logging::Syslog::post(drizzled::Session *session)
          (int) drizzled::command_name[session->command].length,
          drizzled::command_name[session->command].str,
          (unsigned long long) (t_mark - session->getConnectMicroseconds()),
-         (unsigned long long) (t_mark - session->start_utime),
+         (unsigned long long) (session->getElapsedTime()),
          (unsigned long long) (t_mark - session->utime_after_lock),
          (unsigned long) session->sent_row_count,
          (unsigned long) session->examined_row_count,

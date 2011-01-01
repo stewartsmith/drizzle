@@ -241,7 +241,7 @@ public:
     */
     uint64_t t_mark= session->getCurrentTimestamp(false);
 
-    if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow.get()))
+    if (session->getElapsedTime() < (sysvar_logging_query_threshold_slow.get()))
       return false;
 
     Session::QueryString query_string(session->getQueryString());
@@ -273,7 +273,7 @@ public:
               % qs
               % command_name[session->command].str
               % (t_mark - session->getConnectMicroseconds())
-              % (t_mark - session->start_utime)
+              % session->getElapsedTime()
               % (t_mark - session->utime_after_lock)
               % session->sent_row_count
               % session->examined_row_count
