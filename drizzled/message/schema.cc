@@ -27,6 +27,8 @@
 #include "drizzled/message/schema.h"
 #include "drizzled/session.h"
 
+#include "drizzled/catalog/local.h"
+
 namespace drizzled {
 namespace message {
 namespace schema {
@@ -43,7 +45,7 @@ shared_ptr make_shared(const std::string &name_arg)
 void init(drizzled::message::Schema &arg, const std::string &name_arg)
 {
   arg.set_name(name_arg);
-  arg.set_catalog("local");
+  arg.set_catalog(drizzled::catalog::local()->name());
   arg.mutable_engine()->set_name(std::string("filesystem")); // For the moment we have only one.
   arg.set_creation_timestamp(time(NULL));
   arg.set_update_timestamp(time(NULL));

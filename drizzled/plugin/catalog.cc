@@ -22,6 +22,7 @@
 
 #include "drizzled/plugin/catalog.h"
 #include "drizzled/catalog/cache.h"
+#include "drizzled/catalog/local.h"
 #include "drizzled/error.h"
 
 #include <boost/foreach.hpp>
@@ -90,8 +91,7 @@ bool Catalog::create(const identifier::Catalog &identifier, message::catalog::sh
 
 bool Catalog::drop(const identifier::Catalog &identifier)
 {
-  static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
-  if (identifier == LOCAL_IDENTIFIER)
+  if (identifier == drizzled::catalog::local_identifier())
   {
     my_error(drizzled::ER_CATALOG_NO_DROP_LOCAL, MYF(0));
     return false;

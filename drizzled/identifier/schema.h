@@ -35,6 +35,7 @@
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
 #include "drizzled/message/table.pb.h"
+#include "drizzled/catalog/local.h"
 #include <string.h>
 
 #include <assert.h>
@@ -49,13 +50,10 @@
 
 namespace drizzled {
 
-static std::string default_catalog("local");
-
 class SchemaIdentifier
 {
   std::string db;
   std::string db_path;
-  std::string catalog;
 
 public:
   typedef std::vector <SchemaIdentifier> vector;
@@ -76,7 +74,7 @@ public:
 
   const std::string &getCatalogName() const
   {
-    return catalog;
+    return drizzled::catalog::local_identifier().name();
   }
 
   virtual bool isValid() const;
@@ -93,7 +91,7 @@ public:
                                   SchemaIdentifier::const_reference identifier)
   {
     output << "SchemaIdentifier:(";
-    output <<  identifier.catalog;
+    output <<  catalog::local_identifier();
     output << ", ";
     output <<  identifier.db;
     output << ", ";

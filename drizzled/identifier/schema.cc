@@ -63,8 +63,7 @@ static size_t build_schema_filename(string &path, const string &db)
 
 SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
   db(db_arg),
-  db_path(""),
-  catalog("LOCAL")
+  db_path("")
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);

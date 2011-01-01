@@ -40,9 +40,7 @@ public:
 
   bool exist(const drizzled::identifier::Catalog &identifier)
   {
-    static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
-
-    if (LOCAL_IDENTIFIER == identifier)
+    if (drizzled::catalog::local_identifier() == identifier)
       return true;
 
     return false;
@@ -50,15 +48,12 @@ public:
 
   void getIdentifiers(drizzled::identifier::Catalog::vector &identifiers)
   {
-    static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
-    identifiers.push_back(LOCAL_IDENTIFIER);
+    identifiers.push_back(drizzled::catalog::local_identifier());
   }
 
   bool getMessage(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message)
   {
-    static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
-
-    if (LOCAL_IDENTIFIER == identifier)
+    if (drizzled::catalog::local_identifier() == identifier)
     {
       message= drizzled::message::catalog::make_shared(identifier);
 
@@ -72,9 +67,7 @@ public:
 
   bool getInstance(const drizzled::identifier::Catalog &identifier, drizzled::catalog::Instance::shared_ptr &instance)
   {
-    static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
-
-    if (LOCAL_IDENTIFIER == identifier)
+    if (drizzled::catalog::local_identifier() == identifier)
     {
       instance=  drizzled::catalog::Instance::create(identifier);
 

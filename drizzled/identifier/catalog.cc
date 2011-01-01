@@ -44,12 +44,12 @@ namespace drizzled
 namespace identifier
 {
 
-static void build_schema_filename(string &path, const string &name)
+static void build_schema_filename(string &path, const string &name_arg)
 {
   path.append("../");
   bool conversion_error= false;
 
-  conversion_error= util::tablename_to_filename(name, path);
+  conversion_error= util::tablename_to_filename(name_arg, path);
   if (conversion_error)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -59,11 +59,11 @@ static void build_schema_filename(string &path, const string &name)
 }
 
 Catalog::Catalog(const std::string &name_arg) :
-  name(name_arg)
+  _name(name_arg)
 { 
   assert(not name_arg.empty());
 
-  build_schema_filename(path, name);
+  build_schema_filename(path, _name);
   assert(path.length()); // TODO throw exception, this is a possibility
 
   util::insensitive_hash hasher;
@@ -77,33 +77,33 @@ const std::string &Catalog::getPath() const
 
 bool Catalog::compare(const std::string &arg) const
 {
-  return boost::iequals(arg, name);
+  return boost::iequals(arg, _name);
 }
 
 bool Catalog::isValid() const
 {
-  if (name.empty())
+  if (_name.empty())
     return false;
 
-  if (name.size() > NAME_LEN)
+  if (_name.size() > NAME_LEN)
     return false;
 
-  if (name.at(name.length() -1) == ' ')
+  if (_name.at(_name.length() -1) == ' ')
     return false;
 
   const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, name.c_str(), name.c_str() + name.length(),
+  uint32_t res= cs->cset->well_formed_len(cs, _name.c_str(), _name.c_str() + _name.length(),
                                           NAME_CHAR_LEN, &well_formed_error);
 
   if (well_formed_error)
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", name.c_str());
+    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", _name.c_str());
     return false;
   }
 
-  if (name.length() != res)
+  if (_name.length() != res)
     return false;
 
   return true;

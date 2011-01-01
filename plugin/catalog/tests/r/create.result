@@ -22,7 +22,7 @@ foo3
 foo1
 foo2
 foo4
-local
+LOCAL
 SELECT DROP_CATALOG("foo1");
 DROP_CATALOG("foo1")
 1

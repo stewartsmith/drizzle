@@ -23,6 +23,7 @@
 #include "drizzled/message/table.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/catalog/local.h"
 
 namespace drizzled {
 namespace message {
@@ -61,6 +62,8 @@ void init(drizzled::message::Table &arg, const std::string &name_arg, const std:
 
   arg.mutable_options()->set_collation_id(default_charset_info->number);
   arg.mutable_options()->set_collation(default_charset_info->name);
+
+  arg.set_catalog(drizzled::catalog::local()->name());
 }
 
 void update(drizzled::message::Table &arg)

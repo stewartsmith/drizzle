@@ -41,7 +41,7 @@ namespace identifier {
 
 class Catalog
 {
-  std::string name;
+  std::string _name;
   std::string path;
 
 
@@ -63,7 +63,12 @@ public:
 
   const std::string &getName() const
   {
-    return name;
+    return _name;
+  }
+
+  const std::string &name() const
+  {
+    return _name;
   }
 
   bool isValid() const;
