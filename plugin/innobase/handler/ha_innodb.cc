@@ -2599,10 +2599,7 @@ retry:
       }
     }
 
-                /* Store transaction point for binlog
-    Later logic tests that this is set to _something_. We need
-    that logic to fire, even though we do not have a real name. */
-    trx->mysql_log_file_name = "UNUSED";
+    trx->mysql_log_file_name = NULL;
     trx->mysql_log_offset = 0;
 
     /* Don't do write + flush right now. For group commit
