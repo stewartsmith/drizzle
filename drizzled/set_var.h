@@ -95,7 +95,7 @@ class set_var_user: public set_var_base
 {
   Item_func_set_user_var *user_var_item;
 public:
-  set_var_user(Item_func_set_user_var *item) :
+  explicit set_var_user(Item_func_set_user_var *item) :
     user_var_item(item)
   {}
   int check(Session *session);
