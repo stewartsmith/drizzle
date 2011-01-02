@@ -95,6 +95,6 @@ SELECT * FROM t3;
 --replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /transaction_id: [0-9]+/TRANSACTION_ID/
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log', ENTRY_OFFSET) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 
-DROP TABLE t1, t2;
+DROP TABLE t1, t2, t3;
 
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

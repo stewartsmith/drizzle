@@ -53,7 +53,6 @@ ProcesslistTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
   session_generator(*getSession().user())
 {
-  now= time(NULL);
 }
 
 ProcesslistTool::Generator::~Generator()
@@ -104,19 +103,13 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* type::Time */
-    push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
+    boost::posix_time::time_duration duration_result;
+    getSession().getTimeDifference(duration_result, getSession().start_timer());
+    duration_result.is_negative() ? push(static_cast<uint64_t>(0)) : push(static_cast<uint64_t>(duration_result.total_seconds()));
 
     /* STATE */
     const char *step= tmp->get_proc_info();
-
-    if (step)
-    {
-      push(step);
-    }
-    else
-    {
-      push();
-    }
+    step ? push(step): push();
 
     /* INFO */
     if (state)

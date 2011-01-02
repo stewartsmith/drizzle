@@ -39,6 +39,8 @@ INSERT INTO t1 (id,padding) VALUES (2, "I hate testing.");
 update t1 set padding="bar" where id=1;
 commit;
 INSERT INTO t1 (id,padding) VALUES (2, "I hate testing.");
+--error 1213,1205
+INSERT INTO t1 (id,padding) VALUES (3, "I hate testing too.");
 COMMIT;
 select * from t1;
 DROP TABLE t1;

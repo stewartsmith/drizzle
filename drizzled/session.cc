@@ -175,14 +175,35 @@ Session::Session(plugin::Client *client_arg) :
   lock_id(&main_lock_id),
   thread_stack(NULL),
   security_ctx(identifier::User::make_shared()),
-  user_time(0),
+  where(Session::DEFAULT_WHERE),
+  dbug_sentry(Session_SENTRY_MAGIC),
+  mysys_var(0),
+  command(COM_CONNECT),
+  file_id(0),
+  _epoch(boost::gregorian::date(1970,1,1)),
+  _connect_time(boost::posix_time::microsec_clock::universal_time()),
+  utime_after_lock(0),
   ha_data(plugin::num_trx_monitored_objects),
+  query_id(0),
+  warn_query_id(0),
   concurrent_execute_allowed(true),
   arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
+  options(session_startup_options),
+  row_count_func(-1),
+  sent_row_count(0),
+  examined_row_count(0),
+  used_tables(0),
+  total_warn_count(0),
+  col_access(0),
+  statement_id_counter(0),
+  row_count(0),
+  thread_id(0),
+  tmp_table(0),
   _global_read_lock(NONE),
+  count_cuted_fields(CHECK_FIELD_ERROR_FOR_NULL),
   _killed(NOT_KILLED),
   some_tables_deleted(false),
   no_errors(false),
@@ -207,26 +228,11 @@ Session::Session(plugin::Client *client_arg) :
     will be re-initialized in init_for_queries().
   */
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
-  count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-  col_access= 0;
-  tmp_table= 0;
-  used_tables= 0;
   cuted_fields= sent_row_count= row_count= 0L;
-  row_count_func= -1;
-  statement_id_counter= 0UL;
   // Must be reset to handle error with Session's created for init of mysqld
   lex->current_select= 0;
-  start_time=(time_t) 0;
-  start_utime= 0L;
-  utime_after_lock= 0L;
   memset(&variables, 0, sizeof(variables));
-  thread_id= 0;
-  file_id = 0;
-  query_id= 0;
-  warn_query_id= 0;
-  mysys_var= 0;
   scoreboard_index= -1;
-  dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;  
 
   /* query_cache init */
@@ -235,8 +241,6 @@ Session::Session(plugin::Client *client_arg) :
 
   /* Variables with default values */
   proc_info="login";
-  where= Session::DEFAULT_WHERE;
-  command= COM_CONNECT;
 
   plugin_sessionvar_init(this);
   /*
@@ -246,7 +250,6 @@ Session::Session(plugin::Client *client_arg) :
   */
   variables.pseudo_thread_id= thread_id;
   server_status= SERVER_STATUS_AUTOCOMMIT;
-  options= session_startup_options;
 
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
@@ -258,7 +261,6 @@ Session::Session(plugin::Client *client_arg) :
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
   warn_list.empty();
   memset(warn_count, 0, sizeof(warn_count));
-  total_warn_count= 0;
   memset(&status_var, 0, sizeof(status_var));
 
   /* Initialize sub structures */
@@ -571,11 +573,13 @@ bool Session::schedule(Session::shared_ptr &arg)
   arg->scheduler= plugin::Scheduler::getScheduler();
   assert(arg->scheduler);
 
-  connection_count.increment();
+  ++connection_count;
 
-  if (connection_count > current_global_counters.max_used_connections)
+  long current_connections= connection_count;
+
+  if (current_connections > 0 and static_cast<uint64_t>(current_connections) > current_global_counters.max_used_connections)
   {
-    current_global_counters.max_used_connections= connection_count;
+    current_global_counters.max_used_connections= static_cast<uint64_t>(connection_count);
   }
 
   current_global_counters.connections++;

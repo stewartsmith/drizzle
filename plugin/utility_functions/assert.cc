@@ -18,20 +18,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
+#include "config.h"
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+#include "plugin/utility_functions/functions.h"
+#include <drizzled/error.h>
 
-#include "plugin/utility_functions/assert.h"
-#include "plugin/utility_functions/catalog.h"
-#include "plugin/utility_functions/execute.h"
-#include "plugin/utility_functions/global_read_lock.h"
-#include "plugin/utility_functions/kill.h"
-#include "plugin/utility_functions/result_type.h"
-#include "plugin/utility_functions/schema.h"
-#include "plugin/utility_functions/typeof.h"
-#include "plugin/utility_functions/user.h"
+namespace drizzled
+{
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */
+namespace utility_functions
+{
+
+bool Assert::val_bool()
+{
+  if (not args[0]->val_bool())
+  {
+    drizzled::String res;
+    args[0]->print(&res, QT_ORDINARY);
+
+    assert(res.c_ptr());
+
+    if (args[0]->is_null())
+    {
+      drizzled::my_error(ER_ASSERT_NULL, MYF(0), res.c_ptr());
+    }
+    else
+    {
+      drizzled::my_error(ER_ASSERT, MYF(0), res.c_ptr());
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
+} /* namespace utility_functions */
+} /* namespace drizzled */

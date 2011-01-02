@@ -1,0 +1,35 @@
+--disable_warnings
+DROP TABLE IF EXISTS AA;
+DROP TABLE IF EXISTS BB;
+--enable_warnings
+
+CREATE TABLE `aa` (
+  `pk` int NOT NULL DEFAULT '0',
+  `col_text_not_null_key` text NOT NULL,
+  `col_int_not_null_key` int NOT NULL,
+  `col_bigint_not_null_key` bigint NOT NULL,
+  `col_enum_not_null_key` enum('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_int_key` int DEFAULT NULL,
+  `col_int` int DEFAULT NULL,
+  `col_char_1024_not_null_key` varchar(1024) NOT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci;
+
+INSERT INTO `aa` VALUES (1,'',-523436032,-6388637546401759232,'s',2071265280,9,'well'),(2,'',1,5,'p',1,-1692139520,'on'),(3,'',621543424,1,'n',NULL,4,'ASUNK'),(4,'',880148480,-9123448420122492928,'o',1734213632,9,'d'),(5,'',1963982848,9,'b',1505558528,-1091567616,'m'),(6,'',8,6,'c',8,126156800,'to'),(7,'',1445462016,5,'p',NULL,534904832,'t'),(8,'',0,5903374686552588288,'i',-1685520384,8,'m'),(9,'',-747241472,2,'f',NULL,NULL,'USQVA'),(10,'',6,-3207125884641214464,'p',-1431502848,NULL,'FUBQO');
+
+CREATE TABLE `bb` (
+  `pk` int NOT NULL DEFAULT '0',
+  `col_text` text,
+  `col_text_not_null_key` text NOT NULL,
+  `col_char_1024_key` varchar(1024) DEFAULT NULL,
+  `col_char_10_not_null` varchar(10) NOT NULL,
+  `col_char_1024_not_null_key` varchar(1024) NOT NULL,
+  `col_bigint_key` bigint DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci;
+
+INSERT INTO `bb` VALUES (1,NULL,'','ANVSO','f','IHTVZ',NULL),(2,NULL,'','JBJPT','GQPHI','a',NULL),(3,NULL,'','KAHJT','her','s',-647673921411219456),(4,NULL,'','q','you','d',-5702401553181179904),(5,NULL,'','l','but','TTNNK',NULL),(6,NULL,'','ULWFL','XDMGU','GKTRR',4),(7,NULL,'','YOIXU','NGHIX','ZZDWO',NULL),(8,NULL,'','that\'s','u','up',8),(9,NULL,'','ZPPIG','l','would',NULL),(10,NULL,'','like','MDJAH','JNAFV',NULL);
+
+SELECT table1 . `col_text_not_null_key` AS field1 , table2 . `col_int_not_null_key` AS field2 , table2 . `col_bigint_not_null_key` AS field3 , table1 . `col_enum_not_null_key` AS field4 FROM ( AA AS table1 STRAIGHT_JOIN AA AS table2 ON (table2 . `pk` = table1 . `col_int_key` ) ) WHERE ( table1 . `col_int_key` IN ( SELECT 1 UNION SELECT 5 ) ) AND ( table1 . `pk` != table1 . `col_int` OR table1 . `col_int` < table1 . `col_int` ) GROUP BY field1, field2, field3, field4 HAVING ( 'm', 'u' ) IN ( SELECT SUBQUERY2_t1 . `col_text` AS SUBQUERY2_field1 , SUBQUERY2_t1 . `col_text_not_null_key` AS SUBQUERY2_field2 FROM ( BB AS SUBQUERY2_t1 RIGHT JOIN BB AS SUBQUERY2_t2 ON (SUBQUERY2_t2 . `col_char_1024_key` = SUBQUERY2_t1 . `col_char_10_not_null` ) ) WHERE ( SUBQUERY2_t1 . `col_text` > SUBQUERY2_t1 . `col_char_1024_not_null_key` AND SUBQUERY2_t2 . `col_bigint_key` < SUBQUERY2_t2 . `col_bigint_key` ) ) ORDER BY table1 . `col_char_1024_not_null_key` , field1 DESC , table1 . `col_text_not_null_key` ASC, field1, field2, field3, field4 LIMIT 2 ;
+
+DROP TABLE AA;
+DROP TABLE BB;
+
