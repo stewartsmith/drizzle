@@ -950,12 +950,24 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
     con->buffer_ptr= con->buffer;
   }
 
+  if ((con->revents & POLLIN) == 0 &&
+      (con->drizzle->options & DRIZZLE_NON_BLOCKING))
+  {
+    /* non-blocking mode: return IO_WAIT instead of attempting to read. This
+     * avoids reading immediately after writing a command, which typically
+     * returns EAGAIN. This improves performance. */
+    ret= drizzle_con_set_events(con, POLLIN);
+    if (ret != DRIZZLE_RETURN_OK)
+      return ret;
+    return DRIZZLE_RETURN_IO_WAIT;
+  }
+
   while (1)
   {
+    size_t available_buffer= (size_t)DRIZZLE_MAX_BUFFER_SIZE -
+        ((size_t)(con->buffer_ptr - con->buffer) + con->buffer_size);
     read_size = recv(con->fd, (char *)con->buffer_ptr + con->buffer_size,
-                     (size_t)DRIZZLE_MAX_BUFFER_SIZE -
-                     ((size_t)(con->buffer_ptr - con->buffer) +
-                      con->buffer_size),0); 
+                     available_buffer, 0);
 #ifdef _WIN32
     /*Get windows error codes and map it to Posix*/
     errno = WSAGetLastError();
@@ -981,6 +993,8 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
     {
       if (errno == EAGAIN)
       {
+        /* clear the read ready flag */
+        con->revents&= ~POLLIN;
         ret= drizzle_con_set_events(con, POLLIN);
         if (ret != DRIZZLE_RETURN_OK)
           return ret;
@@ -1016,6 +1030,8 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
       return DRIZZLE_RETURN_ERRNO;
     }
 
+    /* clear the "read ready" flag if we read all available data. */
+    if ((size_t) read_size < available_buffer) con->revents&= ~POLLIN;
     con->buffer_size+= (size_t)read_size;
     break;
   }
