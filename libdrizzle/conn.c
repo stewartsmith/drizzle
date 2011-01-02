@@ -983,7 +983,7 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
       {
         ret= drizzle_con_set_events(con, POLLIN);
         if (ret != DRIZZLE_RETURN_OK)
-          return 0;
+          return ret;
 
         if (con->drizzle->options & DRIZZLE_NON_BLOCKING)
           return DRIZZLE_RETURN_IO_WAIT;
@@ -1020,7 +1020,7 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
     break;
   }
 
-  drizzle_state_pop(con);;
+  drizzle_state_pop(con);
   return DRIZZLE_RETURN_OK;
 }
 
