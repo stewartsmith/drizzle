@@ -257,7 +257,7 @@ public:
                drizzled::command_name[session->command].str,
                // counters are at end, to make it easier to add more
                (t_mark - session->getConnectMicroseconds()),
-               (t_mark - session->start_utime),
+               (session->getElapsedTime()),
                (t_mark - session->utime_after_lock),
                session->sent_row_count,
                session->examined_row_count,

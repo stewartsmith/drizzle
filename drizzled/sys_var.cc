@@ -1158,14 +1158,14 @@ bool sys_var_timestamp::update(Session *session,  set_var *var)
 
 void sys_var_timestamp::set_default(Session *session, sql_var_t)
 {
-  session->user_time=0;
+  session->resetUserTime();
 }
 
 
 unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t,
                                             const LEX_STRING *)
 {
-  session->sys_var_tmp.int32_t_value= (int32_t) session->start_time;
+  session->sys_var_tmp.int32_t_value= (int32_t) session->getCurrentTimestampEpoch();
   return (unsigned char*) &session->sys_var_tmp.int32_t_value;
 }
 
