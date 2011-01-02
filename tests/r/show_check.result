@@ -181,7 +181,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `b` (`b`)
 ) ENGINE=MyISAM ROW_FORMAT='dynamic' COMMENT='test' COLLATE = utf8_general_ci
-ALTER TABLE t1 COMMENT="", ROW_FORMAT='default';
+ALTER TABLE t1 COMMENT="", ROW_FORMAT=default;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (

@@ -1352,8 +1352,7 @@ row_format:
         ;
 
 row_format_or_text:
-          TEXT_STRING_sys { $$=$1; }
-        | row_format
+          row_format
           {
             $$.str= YYSession->strmake($1.str, $1.length);
             $$.length= $1.length;
