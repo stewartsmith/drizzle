@@ -392,7 +392,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 97
+%expect 89
 
 /*
    Comments for TOKENS.
@@ -504,6 +504,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DISCARD
 %token  DISTINCT                      /* SQL-2003-R */
 %token  DIV_SYM
+%token  DO_SYM
 %token  DOUBLE_SYM                    /* SQL-2003-R */
 %token  DROP                          /* SQL-2003-R */
 %token  DUMPFILE
@@ -810,12 +811,13 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <lex_str>
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
-        LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident ident_or_text
-        ident_or_text_or_keyword
+        LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident
+        ident_or_text
         row_format_or_text
         ident_or_text_or_keyword_or_hostname
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
+        engine_option_value
         BIN_NUM TEXT_STRING_filesystem
         opt_constraint constraint opt_ident
 
@@ -1275,7 +1277,7 @@ create_table_option:
           custom_engine_option;
 
 custom_engine_option:
-        ENGINE_SYM equal ident_or_text_or_keyword
+        ENGINE_SYM equal ident_or_text
           {
             Lex->table()->mutable_engine()->set_name($3.str);
           }
@@ -1294,14 +1296,21 @@ custom_engine_option:
             opt->set_name("ROW_FORMAT");
             opt->set_state($3.str);
           }
-        |  ident_or_text_or_keyword equal ident_or_text_or_keyword
+        |  FILE_SYM equal TEXT_STRING_sys
+          {
+	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
+
+            opt->set_name("FILE");
+            opt->set_state($3.str);
+          }
+        |  ident_or_text equal engine_option_value
           {
 	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
 
             opt->set_name($1.str);
             opt->set_state($3.str);
           }
-        | ident_or_text_or_keyword equal ulonglong_num
+        | ident_or_text equal ulonglong_num
           {
             char number_as_string[22];
             snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
@@ -5883,8 +5892,8 @@ ident_or_text:
         | TEXT_STRING_sys { $$=$1;}
         ;
 
-ident_or_text_or_keyword:
-          ident           { $$=$1;}
+engine_option_value:
+          IDENT_sys           { $$=$1;}
         | TEXT_STRING_sys { $$=$1;}
         ;
 
@@ -5904,7 +5913,9 @@ keyword:
         | COMMIT_SYM            {}
         | CONTAINS_SYM          {}
         | DEALLOCATE_SYM        {}
+        | DO_SYM                {}
         | END                   {}
+        | EXECUTE_SYM           {}
         | FLUSH_SYM             {}
         | NO_SYM                {}
         | OPEN_SYM              {}
@@ -5912,6 +5923,7 @@ keyword:
         | SAVEPOINT_SYM         {}
         | SECURITY_SYM          {}
         | SERVER_SYM            {}
+        | SIGNED_SYM            {}
         | START_SYM             {}
         | STOP_SYM              {}
         | TRUNCATE_SYM          {}
