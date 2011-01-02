@@ -242,6 +242,7 @@ void lex_start(Session *session)
   lex->derived_tables= 0;
   lex->lock_option= TL_READ;
   lex->leaf_tables_insert= 0;
+  lex->var_list.clear();
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
@@ -1869,6 +1870,7 @@ LEX::LEX()
     yacc_yyss(0), 
     yacc_yyvs(0),
     charset(NULL),
+    var_list(),
     sql_command(SQLCOM_END), 
     option_type(OPT_DEFAULT), 
     is_lex_started(0),

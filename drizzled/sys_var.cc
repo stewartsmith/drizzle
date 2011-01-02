@@ -1675,10 +1675,7 @@ int sys_var_init()
 /**
   Find a user set-table variable.
 
-  @param str	   Name of system variable to find
-  @param length    Length of variable.  zero means that we should use strlen()
-                   on the variable
-  @param no_error  Refuse to emit an error, even if one occurred.
+  @param name	   Name of system variable to find
 
   @retval
     pointer	pointer to variable definitions
@@ -1686,9 +1683,9 @@ int sys_var_init()
     0		Unknown variable (error message is given)
 */
 
-sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
+sys_var *find_sys_var(const std::string &name)
 {
-  string lower_name(str);
+  string lower_name(name);
   transform(lower_name.begin(), lower_name.end(),
             lower_name.begin(), ::tolower);
 
@@ -1700,21 +1697,10 @@ sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
     result= (*iter).second;
   } 
 
-  /*
-    This function is only called from the sql_plugin.cc.
-    A lock on LOCK_system_variable_hash should be held
-  */
   if (result == NULL)
   {
-    if (no_error)
-    {
-      return NULL;
-    }
-    else
-    {
-      my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), (char*) str);
-      return NULL;
-    }
+    my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), name.c_str());
+    return NULL;
   }
 
   return result;

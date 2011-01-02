@@ -29,13 +29,12 @@ namespace drizzled
 bool statement::SetOption::execute()
 {
   TableList *all_tables= session->lex->query_tables;
-  List<set_var_base> *lex_var_list= &session->lex->var_list;
 
   if (session->openTablesLock(all_tables))
   {
     return true;
   }
-  bool res= sql_set_variables(session, lex_var_list);
+  bool res= sql_set_variables(session, session->lex->var_list);
   if (res)
   {
     /*

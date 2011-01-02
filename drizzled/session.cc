@@ -650,7 +650,6 @@ void Session::exit_cond(const char* old_msg)
 
 bool Session::authenticate()
 {
-  lex->start(this);
   if (client->authenticate())
     return false;
 
