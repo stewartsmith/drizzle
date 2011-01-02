@@ -392,7 +392,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 95
+%expect 97
 
 /*
    Comments for TOKENS.
@@ -442,7 +442,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BOTH                          /* SQL-2003-R */
 %token  BTREE_SYM
 %token  BY                            /* SQL-2003-R */
-%token  BYTE_SYM
 %token  CALL_SYM                      /* SQL-2003-R */
 %token  CASCADE                       /* SQL-2003-N */
 %token  CASCADED                      /* SQL-2003-R */
@@ -812,7 +811,9 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <lex_str>
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
         LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident ident_or_text
-        ident_or_text_or_hostname
+        ident_or_text_or_keyword
+        row_format_or_text
+        ident_or_text_or_keyword_or_hostname
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
         BIN_NUM TEXT_STRING_filesystem
@@ -924,7 +925,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <cast_type> cast_type
 
-%type <symbol> keyword keyword_sp
+%type <symbol>
+        keyword
+        keyword_sp
+        row_format
 
 %type <charset>
         collation_name
@@ -1103,7 +1107,7 @@ create:
             statement->alter_info.key_list.push_back(key);
             Lex->col_list.empty();
           }
-        | CREATE DATABASE opt_if_not_exists ident
+        | CREATE DATABASE opt_if_not_exists IDENT_sys
           {
             Lex->sql_command=SQLCOM_CREATE_DB;
             Lex->statement= new statement::CreateSchema(YYSession);
@@ -1271,7 +1275,7 @@ create_table_option:
           custom_engine_option;
 
 custom_engine_option:
-        ENGINE_SYM equal ident_or_text
+        ENGINE_SYM equal ident_or_text_or_keyword
           {
             Lex->table()->mutable_engine()->set_name($3.str);
           }
@@ -1283,14 +1287,21 @@ custom_engine_option:
           {
             Lex->table()->mutable_options()->set_auto_increment_value($3);
           }
-        |  ident_or_text equal ident_or_text
+        |  ROW_FORMAT_SYM equal row_format_or_text
+          {
+	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
+
+            opt->set_name("ROW_FORMAT");
+            opt->set_state($3.str);
+          }
+        |  ident_or_text_or_keyword equal ident_or_text_or_keyword
           {
 	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
 
             opt->set_name($1.str);
             opt->set_state($3.str);
           }
-        | ident_or_text equal ulonglong_num
+        | ident_or_text_or_keyword equal ulonglong_num
           {
             char number_as_string[22];
             snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
@@ -1328,6 +1339,24 @@ default_collation_schema:
 
             message::Schema &schema_message= statement->schema_message;
             schema_message.set_collation($4->name);
+          }
+        ;
+
+row_format:
+          COMPACT_SYM  {}
+        | COMPRESSED_SYM  {}
+        | DEFAULT  {}
+        | DYNAMIC_SYM  {}
+        | FIXED_SYM  {}
+        | REDUNDANT_SYM  {}
+        ;
+
+row_format_or_text:
+          TEXT_STRING_sys { $$=$1; }
+        | row_format
+          {
+            $$.str= YYSession->strmake($1.str, $1.length);
+            $$.length= $1.length;
           }
         ;
 
@@ -2097,7 +2126,7 @@ alter:
           }
           alter_commands
           {}
-        | ALTER DATABASE ident
+        | ALTER DATABASE IDENT_sys
           {
             Lex->sql_command=SQLCOM_ALTER_DB;
             Lex->statement= new statement::AlterSchema(YYSession);
@@ -3414,17 +3443,17 @@ variable:
         ;
 
 variable_aux:
-          ident_or_text_or_hostname SET_VAR expr
+          ident_or_text_or_keyword_or_hostname SET_VAR expr
           {
             $$= new Item_func_set_user_var($1, $3);
             Lex->setCacheable(false);
           }
-        | ident_or_text_or_hostname
+        | ident_or_text_or_keyword_or_hostname
           {
             $$= new Item_func_get_user_var(*YYSession, $1);
             Lex->setCacheable(false);
           }
-        | '@' opt_var_ident_type ident_or_text_or_hostname opt_component
+        | '@' opt_var_ident_type ident_or_text_or_keyword_or_hostname opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
             if ($3.str && $4.str && check_reserved_words(&$3))
@@ -4353,7 +4382,7 @@ select_var_list:
         ;
 
 select_var_ident: 
-          '@' ident_or_text_or_hostname
+          '@' ident_or_text_or_keyword_or_hostname
           {
             if (Lex->result)
               ((select_dumpvar *)Lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
@@ -4421,7 +4450,7 @@ drop:
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
           }
-        | DROP DATABASE if_exists ident
+        | DROP DATABASE if_exists IDENT_sys
           {
             Lex->sql_command= SQLCOM_DROP_DB;
             statement::DropSchema *statement= new statement::DropSchema(YYSession);
@@ -4464,11 +4493,11 @@ execute:
 
 
 execute_var_or_string:
-         ident_or_text_or_hostname
+         ident_or_text_or_keyword_or_hostname
          {
             $$.set($1);
          }
-        | '@' ident_or_text_or_hostname
+        | '@' ident_or_text_or_keyword_or_hostname
         {
             $$.set($2, true);
         }
@@ -5546,7 +5575,7 @@ fields_or_vars:
 
 field_or_var:
           simple_ident_nospvar {$$= $1;}
-        | '@' ident_or_text_or_hostname
+        | '@' ident_or_text_or_keyword_or_hostname
           { $$= new Item_user_var_as_out_param($2); }
         ;
 
@@ -5797,7 +5826,7 @@ field_ident:
 
 table_ident:
           ident { $$=new Table_ident($1); }
-        | ident '.' ident { $$=new Table_ident($1,$3);}
+        | IDENT_sys '.' ident { $$=new Table_ident($1,$3);}
         | '.' ident { $$=new Table_ident($2);} /* For Delphi */
         ;
 
@@ -5851,11 +5880,16 @@ ident:
         ;
 
 ident_or_text:
+          IDENT_sys           { $$=$1;}
+        | TEXT_STRING_sys { $$=$1;}
+        ;
+
+ident_or_text_or_keyword:
           ident           { $$=$1;}
         | TEXT_STRING_sys { $$=$1;}
         ;
 
-ident_or_text_or_hostname:
+ident_or_text_or_keyword_or_hostname:
           ident           { $$=$1;}
         | TEXT_STRING_sys { $$=$1;}
         | LEX_HOSTNAME { $$=$1;}
@@ -5865,7 +5899,6 @@ ident_or_text_or_hostname:
 keyword:
           keyword_sp            {}
         | BEGIN_SYM             {}
-        | BYTE_SYM              {}
         | CHECKSUM_SYM          {}
         | CLOSE_SYM             {}
         | COMMENT_SYM           {}
@@ -6122,7 +6155,7 @@ sys_option_value:
         ;
 
 option_value:
-          '@' ident_or_text_or_hostname equal expr
+          '@' ident_or_text_or_keyword_or_hostname equal expr
           {
             Lex->var_list.push_back(new set_var_user(new Item_func_set_user_var($2,$4)));
           }
