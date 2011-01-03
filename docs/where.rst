@@ -1,7 +1,5 @@
-Where Clause
-============
-
-The WHERE Clause 
+Where
+=====
 
 The WHERE clause is used to extract only those records that fulfill a specified criterion.
 
@@ -11,7 +9,7 @@ SQL WHERE Syntax ::
 	FROM table_name
 	WHERE column_name operator value
 	
-WHERE Clause Example
+**WHERE Clause Example**
 
 The "Persons" table:
 
@@ -20,9 +18,9 @@ The "Persons" table:
 +=========+============+==========+==========+========+
 | 1 	  | Larson     | Sue      |3 Cherry  | Chicago|
 +---------+------------+----------+----------+--------+
-| 2 	  | Roberts     | Teri 	  |21 Brown  | Chicago|
+| 2 	  | Roberts    | Teri 	  |21 Brown  | Chicago|
 +---------+------------+----------+----------+--------+
-| 3 	  | Pettersen  | Kari 	  |30 Mell   | Reno   |
+| 3 	  | Peterson   | Kari 	  |30 Mell   | Reno   |
 +---------+------------+----------+----------+--------+
  
 If you want to select only the persons living in the city "Chicago" from the table above, use the following SELECT statement: ::

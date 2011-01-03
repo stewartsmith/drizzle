@@ -41,6 +41,8 @@ SQL Language:
    :maxdepth: 2
 
    queries
+   clauses
+   functions
    ddl
    dml
    columntypes 
@@ -92,6 +94,7 @@ Clients:
 
    clients/drizzle.rst
    clients/drizzledump.rst
+   clients/drizzleadmin.rst
 
 libdrizzle:
 ^^^^^^^^^^^
