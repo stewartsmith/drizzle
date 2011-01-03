@@ -64,6 +64,7 @@ iPrevLink(NULL)
 //iUseCount(0),
 //iUsedBlobs(0)
 {
+	memset(myOTBuffer, 0, MS_OT_BUFFER_SIZE); // wipe this to make valgrind happy.
 }
 
 MSOpenTable::~MSOpenTable()
