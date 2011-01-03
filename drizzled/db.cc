@@ -57,10 +57,6 @@ using namespace std;
 namespace drizzled
 {
 
-static bool drop_all_tables_in_schema(Session *session,
-                                      SchemaIdentifier &schema_identifier,
-                                      TableIdentifier::vector &dropped_tables,
-                                      uint64_t &dropped);
 static void change_db_impl(Session *session);
 static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
 
@@ -218,10 +214,7 @@ bool alter_db(Session *session, const message::Schema &schema_message)
 
 bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_exists)
 {
-  uint64_t deleted= 0;
   bool error= false;
-  TableIdentifier::vector dropped_tables;
-  message::Schema schema_proto;
 
   /*
     Do not drop database if another thread is holding read lock.
@@ -265,57 +258,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
     }
     else
     {
-      // Remove all temp tables first, this prevents loss of table from
-      // shadowing (ie temp over standard table)
-      {
-        // Lets delete the temporary tables first outside of locks.  
-        TableIdentifier::vector set_of_identifiers;
-        session->doGetTableIdentifiers(schema_identifier, set_of_identifiers);
-
-        for (TableIdentifier::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
-        {
-          if (session->drop_temporary_table(*iter))
-          {
-            my_error(ER_TABLE_DROP, MYF(0), (*iter).getTableName().c_str());
-            error= true;
-            break;
-          }
-        }
-      }
-
-      /* After deleting database, remove all cache entries related to schema */
-      table::Cache::singleton().removeSchema(schema_identifier);
-
-      if (not drop_all_tables_in_schema(session, schema_identifier, dropped_tables, deleted))
-      {
-        error= true;
-        my_error(ER_DROP_SCHEMA, MYF(0), schema_identifier.getSchemaName().c_str());
-        break;
-      }
-
-      if (not plugin::StorageEngine::dropSchema(*session, schema_identifier))
-      {
-        std::string path;
-        schema_identifier.getSQLPath(path);
-        my_error(ER_DROP_SCHEMA, MYF(0), path.c_str());
-        error= true;
-
-        break;
-      }
-      else
-      {
-        /* We've already verified that the schema does exist, so safe to log it */
-        TransactionServices &transaction_services= TransactionServices::singleton();
-        transaction_services.dropSchema(session, schema_identifier.getSchemaName());
-      }
-    }
-
-    if (deleted > 0)
-    {
-      session->clear_error();
-      session->server_status|= SERVER_STATUS_DB_DROPPED;
-      session->my_ok((uint32_t) deleted);
-      session->server_status&= ~SERVER_STATUS_DB_DROPPED;
+      error= plugin::StorageEngine::dropSchema(*session, schema_identifier);
     }
 
     /*
@@ -326,46 +269,11 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
     */
     if (schema_identifier.compare(*session->schema()))
       change_db_impl(session);
-
   } while (0);
 
   session->startWaitingGlobalReadLock();
 
   return error;
-}
-
-/*
-  Removes files with known extensions plus.
-  session MUST be set when calling this function!
-*/
-
-static bool drop_all_tables_in_schema(Session *session,
-                                      SchemaIdentifier &schema_identifier,
-                                      TableIdentifier::vector &dropped_tables,
-                                      uint64_t &deleted)
-{
-  TransactionServices &transaction_services= TransactionServices::singleton();
-
-  plugin::StorageEngine::getIdentifiers(*session, schema_identifier, dropped_tables);
-
-  for (TableIdentifier::vector::iterator it= dropped_tables.begin();
-       it != dropped_tables.end();
-       it++)
-  {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
-    table::Cache::singleton().removeTable(session, *it,
-                                          RTFC_WAIT_OTHER_THREAD_FLAG |
-                                          RTFC_CHECK_KILLED_FLAG);
-    if (plugin::StorageEngine::dropTable(*session, *it))
-    {
-      my_error(ER_TABLE_DROP, MYF(0), (*it).getTableName().c_str());
-      return false;
-    }
-    transaction_services.dropTable(session, (*it).getSchemaName(), (*it).getTableName());
-    deleted++;
-  }
-
-  return true;
 }
 
 /**

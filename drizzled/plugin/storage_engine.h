@@ -141,10 +141,10 @@ class StorageEngine : public Plugin,
 public:
   typedef uint64_t Table_flags;
 
+  static EngineVector &getSchemaEngines();
 private:
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
 
-  static EngineVector &getSchemaEngines();
 
   virtual void setTransactionReadWrite(Session& session);
 
