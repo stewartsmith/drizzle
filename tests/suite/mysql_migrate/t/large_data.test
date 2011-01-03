@@ -1,0 +1,26 @@
+# mysql_migrate.blob_type
+# test migration of a randgen-generated database
+# contains 5 tables of varying size and composition
+# no blobs/texts used for size constraints 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_large_data.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our tables:
+--echo test table1
+eval SHOW CREATE TABLE $database.dump_table1;
+eval SELECT * FROM $database.dump_table1;
+
+--echo test table2 
+eval SHOW CREATE TABLE $database.dump_table2;
+eval SELECT * FROM $database.dump_table2;
+
+--echo test table3 
+eval SHOW CREATE TABLE $database.dump_table3;
+eval SELECT * FROM $database.dump_table3;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;

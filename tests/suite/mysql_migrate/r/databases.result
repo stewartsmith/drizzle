@@ -1,0 +1,70 @@
+DROP SCHEMA IF EXISTS drizzledump_migrate_test1;
+DROP SCHEMA IF EXISTS drizzledump_migrate_test2;
+DROP SCHEMA IF EXISTS drizzledump_migrate_test3;
+Dropping test database on MySQL...
+Create test database on MySQL...
+populating MySQL with test data...
+calling drizzledump to populate Drizzle...
+../client/drizzledump --compact --host=127.0.0.1 --port=13000 --destination-type=database --destination-host=localhost --destination-port=9306 --destination-user=root --user=root --databases drizzledump_migrate_test1 drizzledump_migrate_test2
+see our schemas
+SHOW SCHEMAS;
+Database
+DATA_DICTIONARY
+drizzledump_migrate_test1
+drizzledump_migrate_test2
+INFORMATION_SCHEMA
+mysql
+test
+test our table:
+SHOW CREATE TABLE drizzledump_migrate_test1.t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT DEFAULT NULL,
+  `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE drizzledump_migrate_test1.t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` INT DEFAULT NULL,
+  `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE drizzledump_migrate_test2.t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT DEFAULT NULL,
+  `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE drizzledump_migrate_test2.t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` INT DEFAULT NULL,
+  `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+this doesn't fail, just doesn't show anything...
+SHOW CREATE TABLE drizzledump_migrate_test3.t1;
+Table	Create Table
+SELECT * FROM drizzledump_migrate_test1.t1;
+a	b
+1	Jen
+2	Roy
+3	Moss
+SELECT * FROM drizzledump_migrate_test1.t2;
+a	b
+1	Vince
+2	Howard
+3	Naboo
+4	Bollo
+5	Bob Fossil
+SELECT * FROM drizzledump_migrate_test2.t1;
+a	b
+1	Jen
+2	Moss
+SELECT * FROM drizzledump_migrate_test2.t2;
+a	b
+1	Naboo
+2	Bollo
+SELECT * FROM drizzledump_migrate_test3.t1;
+ERROR 42S02: Table 'drizzledump_migrate_test3.t1' doesn't exist
+Dropping test database on MySQL...
+DROP SCHEMA drizzledump_migrate_test1;
+DROP SCHEMA drizzledump_migrate_test2;
