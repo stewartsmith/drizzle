@@ -512,7 +512,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DYNAMIC_SYM                   /* SQL-2003-R */
 %token  EACH_SYM                      /* SQL-2003-R */
 %token  ELSE                          /* SQL-2003-R */
-%token  ELSEIF_SYM
 %token  ENABLE_SYM
 %token  ENCLOSED
 %token  END                           /* SQL-2003-R */
@@ -526,7 +525,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ESCAPED
 %token  ESCAPE_SYM                    /* SQL-2003-R */
 %token  EXCLUSIVE_SYM
-%token  EXECUTE_SYM
+%token  EXECUTE_SYM                   /* SQL-2003-R */
 %token  EXISTS                        /* SQL-2003-R */
 %token  EXTENDED_SYM
 %token  EXTRACT_SYM                   /* SQL-2003-N */
@@ -600,7 +599,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LOGS_SYM
 %token  LONG_NUM
 %token  LONG_SYM
-%token  LOOP_SYM
 %token  LT                            /* OPERATOR */
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_ROWS
@@ -698,7 +696,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SERIAL_SYM
 %token  SESSION_SYM                   /* SQL-2003-N */
 %token  SERVER_SYM
-%token  SERVER_OPTIONS
 %token  SET                           /* SQL-2003-R */
 %token  SET_VAR
 %token  SHARE_SYM
@@ -721,7 +718,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  STDDEV_SAMP_SYM               /* SQL-2003-N */
 %token  STD_SYM
 %token  STOP_SYM
-%token  STORAGE_SYM
 %token  STORED_SYM
 %token  STRAIGHT_JOIN
 %token  STRING_SYM
@@ -5915,7 +5911,6 @@ keyword:
         | DEALLOCATE_SYM        {}
         | DO_SYM                {}
         | END                   {}
-        | EXECUTE_SYM           {}
         | FLUSH_SYM             {}
         | NO_SYM                {}
         | OPEN_SYM              {}
@@ -6050,7 +6045,6 @@ keyword_sp:
         | SNAPSHOT_SYM             {}
         | SQL_BUFFER_RESULT        {}
         | STATUS_SYM               {}
-        | STORAGE_SYM              {}
         | STRING_SYM               {}
         | SUBDATE_SYM              {}
         | SUBJECT_SYM              {}
