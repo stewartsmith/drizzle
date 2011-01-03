@@ -261,15 +261,16 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       error= plugin::StorageEngine::dropSchema(*session, schema_identifier);
     }
 
-    /*
-      If this database was the client's selected database, we silently
-      change the client's selected database to nothing (to have an empty
-      SELECT DATABASE() in the future). For this we free() session->db and set
-      it to 0.
-    */
-    if (schema_identifier.compare(*session->schema()))
-      change_db_impl(session);
   } while (0);
+
+  /*
+    If this database was the client's selected database, we silently
+    change the client's selected database to nothing (to have an empty
+    SELECT DATABASE() in the future). For this we free() session->db and set
+    it to 0.
+  */
+  if (not error and schema_identifier.compare(*session->schema()))
+    change_db_impl(session);
 
   session->startWaitingGlobalReadLock();
 
