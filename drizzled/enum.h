@@ -1068,6 +1068,7 @@ enum drizzled_error_code {
   ER_INVALID_BOOLEAN_VALUE,
   ER_ASSERT,
   ER_ASSERT_NULL,
+  ER_TABLE_DROP,
   ER_INVALID_CAST_TO_BOOLEAN,
   
   // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags

@@ -1785,7 +1785,6 @@ void Open_tables_state::nukeTable(Table *table)
 
   delete table->getMutableShare();
 
-  /* This makes me sad, but we're allocating it via malloc */
   delete table;
 }
 

@@ -319,6 +319,7 @@ public:
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
   typedef Session* Ptr;
   typedef boost::shared_ptr<Session> shared_ptr;
+  typedef Session& reference;
   typedef const Session& const_reference;
   typedef const Session* const_pointer;
   typedef Session* pointer;
