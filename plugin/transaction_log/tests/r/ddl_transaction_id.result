@@ -41,6 +41,7 @@ statement {
       schema_name: "test"
       table_name: "t1"
     }
+    if_exists_clause: false
   }
 }
 
@@ -210,6 +211,7 @@ statement {
       schema_name: "test"
       table_name: "t1"
     }
+    if_exists_clause: false
   }
 }
 

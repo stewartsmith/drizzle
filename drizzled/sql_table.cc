@@ -218,7 +218,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         if (error == 0)
         {
           TransactionServices &transaction_services= TransactionServices::singleton();
-          transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()));
+          transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()), if_exists);
         }
 
         if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)

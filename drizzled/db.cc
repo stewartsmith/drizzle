@@ -437,7 +437,7 @@ static int rm_table_part2(Session *session, TableList *tables)
         /* Generate transaction event ONLY when we successfully drop */ 
         if (error == 0)
         {
-          transaction_services.dropTable(session, string(db), string(table->getTableName()));
+          transaction_services.dropTable(session, string(db), string(table->getTableName()), true);
         }
 
         if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
