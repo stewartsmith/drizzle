@@ -231,18 +231,6 @@ static bool drop_all_tables_in_schema(Session& session,
   return true;
 }
 
-static bool dropSchemaInner(Session::reference , SchemaIdentifier::const_reference identifier)
-{
-  uint64_t counter= 0;
-
-
-  // Add hook here for engines to register schema.
-  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-                DropSchema(identifier, counter));
-
-  return counter ? true : false;
-}
-
 bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::const_reference identifier)
 {
   uint64_t deleted= 0;
@@ -280,7 +268,12 @@ bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::con
       break;
     }
 
-    if (not dropSchemaInner(session, identifier))
+    uint64_t counter= 0;
+    // Add hook here for engines to register schema.
+    std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                  DropSchema(identifier, counter));
+
+    if (not counter)
     {
       std::string path;
       identifier.getSQLPath(path);
