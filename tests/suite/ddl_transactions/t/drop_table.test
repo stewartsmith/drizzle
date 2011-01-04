@@ -1,0 +1,6 @@
+CREATE TABLE t1 (a int);
+BEGIN;
+--error 1724
+DROP TABLE t1;
+COMMIT;
+DROP TABLE t1;
