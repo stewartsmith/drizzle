@@ -1,4 +1,4 @@
 BEGIN;
---error 1724
+--error 1727
 CREATE TABLE t1 (a int);
 COMMIT;
