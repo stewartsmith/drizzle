@@ -116,9 +116,9 @@ public:
     Tokenizer tok(arg, boost::escaped_list_separator<char>("\\", ";", "\""));
 
     {
-      byte.resize(sizeof("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
+      byte.resize(sizeof("SET AUTOCOMMIT=0")); // +1 for the COM_QUERY, provided by null count from sizeof()
       byte[0]= COM_QUERY;
-      memcpy(&byte[1], "START TRANSACTION", sizeof("START TRANSACTION") -1);
+      memcpy(&byte[1], "SET AUTOCOMMIT=0", sizeof("SET AUTOCOMMIT=0") -1);
       to_execute.push(byte);
     }
 
