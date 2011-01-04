@@ -1374,7 +1374,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
     destination.append(" TIMESTAMP",  10);
     break;
   case Table::Field::MICROTIME:
-    destination.append(" MICROTIME",  10);
+    destination.append(" MICROSECOND TIMESTAMP",  21);
     break;
   case Table::Field::DATETIME:
     destination.append(" DATETIME",  9);

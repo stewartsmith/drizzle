@@ -75,10 +75,9 @@ private:
   bool get_time(type::Time *ltime);
 
 public:
-  timestamp_auto_set_type get_auto_set_type() const;
   static size_t max_string_length()
   {
-    return 12;
+    return 8;
   }
 };
 

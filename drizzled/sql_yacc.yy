@@ -1648,16 +1648,16 @@ type:
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::EPOCH);
           }
-          | LONG_SYM TIMESTAMP_SYM
+          | MICROSECOND_SYM TIMESTAMP_SYM
           {
-            $$=DRIZZLE_TYPE_TIMESTAMP;
+            $$=DRIZZLE_TYPE_MICROTIME;
 
             statement::CreateTable *statement=
               (statement::CreateTable *)Lex->statement;
 
             if (statement->current_proto_field)
             {
-              statement->current_proto_field->set_type(message::Table::Field::EPOCH);
+              statement->current_proto_field->set_type(message::Table::Field::MICROTIME);
               statement->current_proto_field->mutable_time_options()->set_microseconds(true);
             }
           }

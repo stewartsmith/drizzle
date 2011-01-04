@@ -59,40 +59,6 @@ Microtime::Microtime(bool maybe_null_arg,
 {
 }
 
-/**
-  Get auto-set type for TIMESTAMP field.
-
-  Returns value indicating during which operations this TIMESTAMP field
-  should be auto-set to current timestamp.
-*/
-timestamp_auto_set_type Microtime::get_auto_set_type() const
-{
-  switch (unireg_check)
-  {
-  case TIMESTAMP_DN_FIELD:
-    return TIMESTAMP_AUTO_SET_ON_INSERT;
-  case TIMESTAMP_UN_FIELD:
-    return TIMESTAMP_AUTO_SET_ON_UPDATE;
-  case TIMESTAMP_OLD_FIELD:
-    /*
-      Although we can have several such columns in legacy tables this
-      function should be called only for first of them (i.e. the one
-      having auto-set property).
-    */
-    assert(getTable()->timestamp_field == this);
-    /* Fall-through */
-  case TIMESTAMP_DNUN_FIELD:
-    return TIMESTAMP_AUTO_SET_ON_BOTH;
-  default:
-    /*
-      Normally this function should not be called for TIMESTAMPs without
-      auto-set property.
-    */
-    assert(0);
-    return TIMESTAMP_NO_AUTO_SET;
-  }
-}
-
 int Microtime::store(const char *from,
                  uint32_t len,
                  const CHARSET_INFO * const )
@@ -261,7 +227,7 @@ void Microtime::sort_string(unsigned char *to,uint32_t )
 
 void Microtime::sql_type(String &res) const
 {
-  res.set_ascii(STRING_WITH_LEN("microtime"));
+  res.set_ascii(STRING_WITH_LEN("microsecond timestamp"));
 }
 
 void Microtime::set_time()

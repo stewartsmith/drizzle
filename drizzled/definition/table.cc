@@ -278,6 +278,9 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::TIME:
     field_type= DRIZZLE_TYPE_TIME;
     break;
+  case message::Table::Field::MICROTIME:
+    field_type= DRIZZLE_TYPE_MICROTIME;
+    break;
   default:
     assert(0);
     abort(); // Programming error
