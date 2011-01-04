@@ -101,7 +101,7 @@ void my_error(drizzled_error_code nr)
   my_error(nr, MYF(0));
 }
 
-void my_error(int nr, myf MyFlags, ...)
+void my_error(drizzled_error_code nr, myf MyFlags, ...)
 {
   std::string format;
   va_list args;

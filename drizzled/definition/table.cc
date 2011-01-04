@@ -1991,7 +1991,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     {
       err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
         ER_FILE_USED : ER_CANT_OPEN_FILE;
-      my_error(err_no, errortype, normalized_path.str, db_errno);
+      my_error(static_cast<drizzled::drizzled_error_code >(err_no), errortype, normalized_path.str, db_errno);
       break;
     }
   case 5:

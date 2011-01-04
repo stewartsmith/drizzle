@@ -252,7 +252,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
       if (sql_lock->sizeTable())
         unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
       reset_lock_data_and_free(&sql_lock);
-      my_error(rc, MYF(0));
+      my_error(static_cast<drizzled::drizzled_error_code>(rc), MYF(0));
       break;
     }
     else if (rc == 1)                           /* aborted */
@@ -874,7 +874,7 @@ void TableList::unlock_table_names(TableList *last_table)
 
 static void print_lock_error(int error, const char *table)
 {
-  int textno;
+  drizzled::drizzled_error_code textno;
 
   switch (error) {
   case HA_ERR_LOCK_WAIT_TIMEOUT:

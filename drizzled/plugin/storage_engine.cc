@@ -768,7 +768,7 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
 
 void StorageEngine::print_error(int error, myf errflag, Table *table)
 {
-  int textno= ER_GET_ERRNO;
+  drizzled::drizzled_error_code textno= ER_GET_ERRNO;
   switch (error) {
   case EACCES:
     textno=ER_OPEN_AS_READONLY;
@@ -846,7 +846,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     textno=ER_CRASHED_ON_USAGE;
     break;
   case HA_ERR_NOT_A_TABLE:
-    textno= error;
+    textno= static_cast<drizzled::drizzled_error_code>(error);
     break;
   case HA_ERR_CRASHED_ON_REPAIR:
     textno=ER_CRASHED_ON_REPAIR;
