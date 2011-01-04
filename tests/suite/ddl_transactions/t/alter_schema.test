@@ -1,0 +1,6 @@
+CREATE SCHEMA foo;
+begin;
+--error 1727
+alter schema foo collate = utf8_bin;
+commit;
+DROP SCHEMA foo;
