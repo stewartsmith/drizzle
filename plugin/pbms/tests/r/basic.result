@@ -1,24 +1,6 @@
-CREATE TABLE t1 (a int primary key, b blob);
-insert into t1 values (1, "Hello World");
-insert into t1 values (2, "Hello PBMS");
-insert into t1 values (3, "Hello BLOB World");
-SELECT COUNT(*) FROM t1;
-COUNT(*)
-3
-select a, Table_name, Blob_size from pbms_reference ref, t1  where ref.Blob_url =  t1.b order by a;
-a	Table_name	Blob_size
-1	t1	11
-2	t1	10
-3	t1	16
-select a, MD5_Checksum from pbms_repository rep, pbms_reference ref, t1 where t1.b = ref.Blob_url and ref.Repository_id = rep.Repository_id and ref.Repo_blob_offset = rep.Repo_blob_offset order by a;
-a	MD5_Checksum
-1	B10A8DB164E0754105B7A99BE72E3FE5
-2	90D9BF084B48FBC92710E6807B8875B0
-3	6B230DE148EE7EA4A4454090784119E6
 CREATE Temporary TABLE my_pbms_blob_ids (id int, offset int, url varchar(120));
 insert into my_pbms_blob_ids values(1,2,"aaaaaaaaaaaaaaaaaaaaa");
 drop Temporary table my_pbms_blob_ids;
-drop table t1;
 create table autoincbug (id int not null primary key auto_increment, test varchar(10));
 alter table autoincbug auto_increment = 1000;
 insert into autoincbug values (null, 'hej');

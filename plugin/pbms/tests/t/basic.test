@@ -1,27 +1,7 @@
-# This is a very basic sanity test for PBMS
-# it makes a lot of use of the system tables
-# which is frowned on in a real application.
-
-CREATE TABLE t1 (a int primary key, b blob);
-insert into t1 values (1, "Hello World");
-insert into t1 values (2, "Hello PBMS");
-insert into t1 values (3, "Hello BLOB World");
-SELECT COUNT(*) FROM t1;
-
-# Check that the BLOBs look OK
-select a, Table_name, Blob_size from pbms_reference ref, t1  where ref.Blob_url =  t1.b order by a;
-select a, MD5_Checksum from pbms_repository rep, pbms_reference ref, t1 where t1.b = ref.Blob_url and ref.Repository_id = rep.Repository_id and ref.Repo_blob_offset = rep.Repo_blob_offset order by a;
-
-# This should work but it doesn't because of a bug in the current version of PBMS
-#insert into pbms_metadata (select Repository_id, Repo_blob_offset, "Name", "Test1" from pbms_reference ref, t1  where t1.a = 1 and ref.Blob_url =  t1.b);
-
-# For now I will use a temp table.
 CREATE Temporary TABLE my_pbms_blob_ids (id int, offset int, url varchar(120));
-#insert into my_pbms_blob_ids (select Repository_id, Repo_blob_offset, Blob_url from pbms_reference);
 insert into my_pbms_blob_ids values(1,2,"aaaaaaaaaaaaaaaaaaaaa");
 
 drop Temporary table my_pbms_blob_ids;
-drop table t1;
 
 create table autoincbug (id int not null primary key auto_increment, test varchar(10));
 alter table autoincbug auto_increment = 1000;
