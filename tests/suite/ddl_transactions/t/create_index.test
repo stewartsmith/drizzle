@@ -1,0 +1,6 @@
+CREATE TABLE t1 (a int);
+BEGIN;
+--error 1727
+CREATE INDEX foo on t1 (a);
+COMMIT;
+DROP TABLE t1;
