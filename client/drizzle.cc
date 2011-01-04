@@ -1665,7 +1665,7 @@ try
   }
   if (vm.count("silent"))
   {
-    opt_silent++;
+    opt_silent= 2;
   }
   
   if (vm.count("help") || vm.count("version"))
@@ -4051,12 +4051,11 @@ sql_connect(const string &host, const string &database, const string &user, cons
 */
   if ((ret= drizzle_con_connect(&con)) != DRIZZLE_RETURN_OK)
   {
-    (void) put_error(&con, NULL);
-    (void) fflush(stdout);
 
-    if ((ret != DRIZZLE_RETURN_GETADDRINFO) && 
-      (ret != DRIZZLE_RETURN_COULD_NOT_CONNECT))
+    if (opt_silent < 2)
     {
+      (void) put_error(&con, NULL);
+      (void) fflush(stdout);
       return ignore_errors ? -1 : 1;    // Abort
     }
     return -1;          // Retryable
