@@ -292,6 +292,7 @@ public:
    * @param[in] schema message::Schema message describing new schema
    */
   void createSchema(Session *in_session, const message::Schema &schema);
+
   /**
    * Creates a DropSchema Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
@@ -300,7 +301,8 @@ public:
    * @param[in] in_session Pointer to the Session which issued the statement
    * @param[in] schema_name message::Schema message describing new schema
    */
-  void dropSchema(Session *in_session, const std::string &schema_name);
+  void dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier);
+
   /**
    * Creates a CreateTable Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing

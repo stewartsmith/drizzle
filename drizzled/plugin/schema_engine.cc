@@ -286,7 +286,7 @@ bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::con
     {
       /* We've already verified that the schema does exist, so safe to log it */
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropSchema(&session, identifier.getSchemaName());
+      transaction_services.dropSchema(&session, identifier);
     }
   } while (0);
 

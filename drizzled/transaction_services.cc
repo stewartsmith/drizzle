@@ -2034,7 +2034,7 @@ void TransactionServices::createSchema(Session *in_session,
 
 }
 
-void TransactionServices::dropSchema(Session *in_session, const string &schema_name)
+void TransactionServices::dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -2051,7 +2051,7 @@ void TransactionServices::dropSchema(Session *in_session, const string &schema_n
    */
   message::DropSchemaStatement *drop_schema_statement= statement->mutable_drop_schema_statement();
 
-  drop_schema_statement->set_schema_name(schema_name);
+  drop_schema_statement->set_schema_name(identifier.getSchemaName());
 
   finalizeStatementMessage(*statement, in_session);
 
