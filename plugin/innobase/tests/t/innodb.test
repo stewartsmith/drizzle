@@ -236,9 +236,9 @@ drop table t1;
 #
 
 create table t1 (a integer) engine=innodb;
-start transaction;
 rename table t1 to t2;
 create table t1 (b integer) engine=innodb;
+start transaction;
 insert into t1 values (1);
 rollback;
 drop table t1;
@@ -551,6 +551,7 @@ show tables from mysqltest;
 set autocommit=0;
 create table t1 (a int not null) engine= innodb;
 insert into t1 values(1),(2);
+commit;
 truncate table t1;
 commit;
 truncate table t1;
