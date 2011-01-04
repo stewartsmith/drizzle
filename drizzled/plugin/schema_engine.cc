@@ -224,7 +224,7 @@ static bool drop_all_tables_in_schema(Session& session,
       my_error(ER_TABLE_DROP, MYF(0), (*it).getTableName().c_str());
       return false;
     }
-    transaction_services.dropTable(&session, (*it).getSchemaName(), (*it).getTableName());
+    transaction_services.dropTable(&session, (*it).getSchemaName(), (*it).getTableName(), true);
     deleted++;
   }
 
