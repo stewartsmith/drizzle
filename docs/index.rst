@@ -41,7 +41,6 @@ SQL Language:
    :maxdepth: 2
 
    queries
-   clauses
    functions
    ddl
    dml
