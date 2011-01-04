@@ -14,10 +14,12 @@ SELECT * FROM is an example of using SELECT with :doc:`/clauses`. The select cla
 
 Keywords and clauses include:
 
-* The WHERE clause
-* The GROUP BY clause
-* The HAVING clause
-* The ORDER BY clause
+* The :doc:`\where` clause
+* The :doc:`\distinct` clause
+* The :doc:`\groupby` clause
+* The :doc:`\having` clause
+* The :doc:`\orderby` clause
+* The :doc:`\join`clause
 
 For example, ::
 
