@@ -2063,8 +2063,7 @@ void TransactionServices::dropSchema(Session *in_session, const string &schema_n
 }
 
 void TransactionServices::dropTable(Session *in_session,
-                                    const string &schema_name,
-                                    const string &table_name,
+                                    const TableIdentifier &table,
                                     bool if_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
@@ -2086,8 +2085,8 @@ void TransactionServices::dropTable(Session *in_session,
 
   message::TableMetadata *table_metadata= drop_table_statement->mutable_table_metadata();
 
-  table_metadata->set_schema_name(schema_name);
-  table_metadata->set_table_name(table_name);
+  table_metadata->set_schema_name(table.getSchemaName());
+  table_metadata->set_table_name(table.getTableName());
 
   finalizeStatementMessage(*statement, in_session);
 
