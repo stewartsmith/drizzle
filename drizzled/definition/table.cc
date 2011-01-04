@@ -1969,7 +1969,6 @@ int TableShare::open_table_cursor_inner(const TableIdentifier &identifier,
 /* error message when opening a form cursor */
 void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 {
-  int err_no;
   char buff[FN_REFLEN];
   myf errortype= ME_ERROR+ME_WAITTANG;
 
@@ -1989,8 +1988,11 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   case 2:
     {
+      drizzled::drizzled_error_code err_no;
+
       err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
         ER_FILE_USED : ER_CANT_OPEN_FILE;
+
       my_error(err_no, errortype, normalized_path.str, db_errno);
       break;
     }

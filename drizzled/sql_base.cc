@@ -3685,7 +3685,10 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
         }
       }
       else
+      {
         session->used_tables|= item->used_tables();
+      }
+
       session->lex->current_select->cur_pos_in_select_list++;
     }
     /*
@@ -3705,10 +3708,14 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     qualified '*', and all columns were coalesced, we have to give a more
     meaningful message than ER_BAD_TABLE_ERROR.
   */
-  if (!table_name)
+  if (not table_name)
+  {
     my_message(ER_NO_TABLES_USED, ER(ER_NO_TABLES_USED), MYF(0));
+  }
   else
+  {
     my_error(ER_BAD_TABLE_ERROR, MYF(0), table_name);
+  }
 
   return true;
 }

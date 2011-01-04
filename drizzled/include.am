@@ -77,6 +77,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/enum_nested_loop_state.h \
 			      drizzled/errmsg_print.h \
 			      drizzled/error.h \
+			      drizzled/error_t.h \
 			      drizzled/execute.h \
 			      drizzled/field.h \
 			      drizzled/field/blob.h \
@@ -636,6 +637,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/hybrid_type_traits.cc \
 			   drizzled/hybrid_type_traits_decimal.cc \
 			   drizzled/hybrid_type_traits_integer.cc \
+			   drizzled/identifier.cc \
 			   drizzled/identifier/schema.cc \
 			   drizzled/identifier/table.cc \
 			   drizzled/identifier/user.cc \

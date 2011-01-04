@@ -801,7 +801,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
 
   if (result == false)
   {
-    my_error(killed_errno(), MYF(0));
+    my_error(static_cast<drizzled::drizzled_error_code>(killed_errno()), MYF(0));
   }
   else if ((result == true) && do_release)
   {
