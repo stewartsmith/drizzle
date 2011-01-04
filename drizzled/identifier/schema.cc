@@ -85,7 +85,7 @@ SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
 
 void SchemaIdentifier::getSQLPath(std::string &arg) const
 {
-  arg.append(getSchemaName());
+  arg= db;
 }
 
 const std::string &SchemaIdentifier::getPath() const
@@ -149,10 +149,7 @@ bool SchemaIdentifier::isValid() const
 
   if (error)
   {
-    std::string name;
-
-    getSQLPath(name);
-    my_error(ER_WRONG_DB_NAME, MYF(0), name.c_str());
+    my_error(ER_WRONG_DB_NAME, *this);
 
     return false;
   }

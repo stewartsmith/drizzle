@@ -28,6 +28,8 @@
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 
+#include "drizzled/identifier.h"
+
 #include <boost/unordered_map.hpp>
 #include <exception>
 
@@ -95,6 +97,13 @@ error_handler_func error_handler_hook= NULL;
        MyFlags	Flags
        ...	variable list
 */
+
+void my_error(drizzled_error_code nr, drizzled::Identifier::const_reference ref)
+{
+  std::string temp;
+  ref.getSQLPath(temp);
+  my_error(nr, MYF(0), temp.c_str());
+} 
 
 void my_error(drizzled_error_code nr)
 {

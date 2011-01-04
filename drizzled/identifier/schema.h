@@ -51,7 +51,7 @@ namespace drizzled {
 
 static std::string catalog("local");
 
-class SchemaIdentifier
+class SchemaIdentifier : public Identifier
 {
   std::string db;
   std::string db_path;
@@ -67,6 +67,7 @@ public:
   { }
 
   virtual void getSQLPath(std::string &arg) const;
+
   const std::string &getPath() const;
 
   const std::string &getSchemaName() const

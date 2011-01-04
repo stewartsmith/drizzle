@@ -72,7 +72,7 @@ void init_update_queries(void);
 bool dispatch_command(enum enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length);
 
-bool check_simple_select();
+bool check_simple_select(Session* session);
 
 void init_select(LEX *lex);
 bool new_select(LEX *lex, bool move_down);

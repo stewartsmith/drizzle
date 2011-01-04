@@ -221,7 +221,7 @@ static bool drop_all_tables_in_schema(Session& session,
                                           RTFC_CHECK_KILLED_FLAG);
     if (plugin::StorageEngine::dropTable(session, *it))
     {
-      my_error(ER_TABLE_DROP, MYF(0), (*it).getTableName().c_str());
+      my_error(ER_TABLE_DROP, *it);
       return false;
     }
     transaction_services.dropTable(&session, (*it).getSchemaName(), (*it).getTableName());
@@ -251,7 +251,7 @@ bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::con
       {
         if (session.drop_temporary_table(*iter))
         {
-          my_error(ER_TABLE_DROP, MYF(0), (*iter).getTableName().c_str());
+          my_error(ER_TABLE_DROP, *iter);
           error= true;
           break;
         }
@@ -264,7 +264,7 @@ bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::con
     if (not drop_all_tables_in_schema(session, identifier, dropped_tables, deleted))
     {
       error= true;
-      my_error(ER_DROP_SCHEMA, MYF(0), identifier.getSchemaName().c_str());
+      my_error(ER_DROP_SCHEMA, identifier);
       break;
     }
 
@@ -275,9 +275,7 @@ bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::con
 
     if (not counter)
     {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_DROP_SCHEMA, MYF(0), path.c_str());
+      my_error(ER_DROP_SCHEMA, identifier);
       error= true;
 
       break;
