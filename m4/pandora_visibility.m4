@@ -23,14 +23,13 @@ dnl Defines and sets the variable HAVE_VISIBILITY.
 AC_DEFUN([PANDORA_CHECK_VISIBILITY],
 [
   AC_REQUIRE([AC_PROG_CC])
-  AC_REQUIRE([PANDORA_PLATFORM])
   CFLAG_VISIBILITY=
   HAVE_VISIBILITY=0
   AS_IF([test -n "$GCC"],[
     AC_MSG_CHECKING([for simple visibility declarations])
     AC_CACHE_VAL([gl_cv_cc_visibility], [
       gl_save_CFLAGS="$CFLAGS"
-      CFLAGS="$CFLAGS -fvisibility=hidden"
+      CFLAGS="$CFLAGS -fvisibility=hidden -Werror"
       AC_TRY_COMPILE(
         [extern __attribute__((__visibility__("hidden"))) int hiddenvar;
          extern __attribute__((__visibility__("default"))) int exportedvar;

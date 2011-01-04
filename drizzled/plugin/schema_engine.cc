@@ -202,14 +202,104 @@ public:
   }
 };
 
-bool StorageEngine::dropSchema(const SchemaIdentifier &identifier)
+static bool drop_all_tables_in_schema(Session& session,
+                                      SchemaIdentifier::const_reference identifier,
+                                      TableIdentifier::vector &dropped_tables,
+                                      uint64_t &deleted)
 {
-  uint64_t counter= 0;
-  // Add hook here for engines to register schema.
-  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-                DropSchema(identifier, counter));
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
-  return counter ? true : false;
+  plugin::StorageEngine::getIdentifiers(session, identifier, dropped_tables);
+
+  for (TableIdentifier::vector::iterator it= dropped_tables.begin();
+       it != dropped_tables.end();
+       it++)
+  {
+    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+    table::Cache::singleton().removeTable(&session, *it,
+                                          RTFC_WAIT_OTHER_THREAD_FLAG |
+                                          RTFC_CHECK_KILLED_FLAG);
+    if (plugin::StorageEngine::dropTable(session, *it))
+    {
+      my_error(ER_TABLE_DROP, MYF(0), (*it).getTableName().c_str());
+      return false;
+    }
+    transaction_services.dropTable(&session, (*it).getSchemaName(), (*it).getTableName());
+    deleted++;
+  }
+
+  return true;
+}
+
+bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::const_reference identifier)
+{
+  uint64_t deleted= 0;
+  bool error= false;
+  TableIdentifier::vector dropped_tables;
+  message::Schema schema_proto;
+
+  do
+  {
+    // Remove all temp tables first, this prevents loss of table from
+    // shadowing (ie temp over standard table)
+    {
+      // Lets delete the temporary tables first outside of locks.  
+      TableIdentifier::vector set_of_identifiers;
+      session.doGetTableIdentifiers(identifier, set_of_identifiers);
+
+      for (TableIdentifier::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
+      {
+        if (session.drop_temporary_table(*iter))
+        {
+          my_error(ER_TABLE_DROP, MYF(0), (*iter).getTableName().c_str());
+          error= true;
+          break;
+        }
+      }
+    }
+
+    /* After deleting database, remove all cache entries related to schema */
+    table::Cache::singleton().removeSchema(identifier);
+
+    if (not drop_all_tables_in_schema(session, identifier, dropped_tables, deleted))
+    {
+      error= true;
+      my_error(ER_DROP_SCHEMA, MYF(0), identifier.getSchemaName().c_str());
+      break;
+    }
+
+    uint64_t counter= 0;
+    // Add hook here for engines to register schema.
+    std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                  DropSchema(identifier, counter));
+
+    if (not counter)
+    {
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_DROP_SCHEMA, MYF(0), path.c_str());
+      error= true;
+
+      break;
+    }
+    else
+    {
+      /* We've already verified that the schema does exist, so safe to log it */
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.dropSchema(&session, identifier.getSchemaName());
+    }
+  } while (0);
+
+  if (deleted > 0)
+  {
+    session.clear_error();
+    session.server_status|= SERVER_STATUS_DB_DROPPED;
+    session.my_ok((uint32_t) deleted);
+    session.server_status&= ~SERVER_STATUS_DB_DROPPED;
+  }
+
+
+  return error;
 }
 
 class AlterSchema : 

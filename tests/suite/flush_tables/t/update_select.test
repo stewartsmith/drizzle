@@ -18,3 +18,5 @@ SEND select * from t1 for update;
 
 connection default;
 UNLOCK tables;
+
+DROP TABLE t1;

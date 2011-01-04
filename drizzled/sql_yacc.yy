@@ -1648,6 +1648,19 @@ type:
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::EPOCH);
           }
+          | LONG_SYM TIMESTAMP_SYM
+          {
+            $$=DRIZZLE_TYPE_TIMESTAMP;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+            {
+              statement->current_proto_field->set_type(message::Table::Field::EPOCH);
+              statement->current_proto_field->mutable_time_options()->set_microseconds(true);
+            }
+          }
           | DATETIME_SYM
           {
             $$=DRIZZLE_TYPE_DATETIME;
@@ -3661,6 +3674,8 @@ cast_type:
         | SIGNED_SYM
           { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | SIGNED_SYM INT_SYM
+          { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | INT_SYM
           { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | UNSIGNED_SYM
           { $$=ITEM_CAST_UNSIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
@@ -6449,30 +6464,33 @@ sys_option_value:
             { /* System variable */
               if ($1)
                 lex->option_type= $1;
-              lex->var_list.push_back(new set_var(lex->option_type, $2.var,
-                                      &$2.base_name, $4));
+              lex->var_list.push_back(SetVarPtr(new set_var(lex->option_type, $2.var,
+                                      &$2.base_name, $4)));
             }
           }
         | option_type TRANSACTION_SYM ISOLATION LEVEL_SYM isolation_types
           {
             LEX *lex=Lex;
             lex->option_type= $1;
-            lex->var_list.push_back(new set_var(lex->option_type,
+            lex->var_list.push_back(SetVarPtr(new set_var(lex->option_type,
                                                 find_sys_var("tx_isolation"),
                                                 &null_lex_str,
-                                                new Item_int((int32_t) $5)));
+                                                new Item_int((int32_t)
+                                                $5))));
           }
         ;
 
 option_value:
           '@' ident_or_text equal expr
           {
-            Lex->var_list.push_back(new set_var_user(new Item_func_set_user_var($2,$4)));
+            Lex->var_list.push_back(SetVarPtr(new set_var_user(new
+                    Item_func_set_user_var($2,$4))));
           }
         | '@' '@' opt_var_ident_type internal_variable_name equal set_expr_or_default
           {
             LEX *lex=Lex;
-            lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
+            lex->var_list.push_back(SetVarPtr(new set_var($3, $4.var,
+                    &$4.base_name, $6)));
           }
         ;
 
@@ -6482,7 +6500,7 @@ internal_variable_name:
             /* We have to lookup here since local vars can shadow sysvars */
             {
               /* Not an SP local variable */
-              sys_var *tmp=find_sys_var($1.str, $1.length);
+              sys_var *tmp=find_sys_var($1.str);
               if (!tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;

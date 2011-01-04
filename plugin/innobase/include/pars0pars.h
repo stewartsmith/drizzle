@@ -106,6 +106,9 @@ pars_sql(
 	const char*	str);	/*!< in: SQL string */
 /*************************************************************//**
 Retrieves characters to the lexical analyzer. */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void
 pars_get_lex_chars(
@@ -585,6 +588,9 @@ pars_info_get_bound_id(
 
 /******************************************************************//**
 Release any resources used by the lexer. */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void
 pars_lexer_close(void);
@@ -630,7 +636,7 @@ struct pars_bound_id_struct {
 /** Struct used to denote a reserved word in a parsing tree */
 struct pars_res_word_struct{
 	int	code;	/*!< the token code for the reserved word from
-			pars0grm.h */
+			pars0grm.hh */
 };
 
 /** A predefined function or operator node in a parsing tree; this construct
@@ -638,7 +644,7 @@ is also used for some non-functions like the assignment ':=' */
 struct func_node_struct{
 	que_common_t	common;	/*!< type: QUE_NODE_FUNC */
 	int		func;	/*!< token code of the function name */
-	ulint		class;	/*!< class of the function */
+	ulint		func_class;	/*!< class of the function */
 	que_node_t*	args;	/*!< argument(s) of the function */
 	UT_LIST_NODE_T(func_node_t) cond_list;
 				/*!< list of comparison conditions; defined

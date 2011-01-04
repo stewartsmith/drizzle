@@ -16,6 +16,8 @@ Got one of the listed errors
 update t1 set padding="bar" where id=1;
 commit;
 INSERT INTO t1 (id,padding) VALUES (2, "I hate testing.");
+INSERT INTO t1 (id,padding) VALUES (3, "I hate testing too.");
+Got one of the listed errors
 COMMIT;
 select * from t1;
 pk	id	padding

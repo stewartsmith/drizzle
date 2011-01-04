@@ -68,8 +68,8 @@ plugin/hello_events/hello_events.cc
 plugin/innobase/handler/data_dictionary.cc
 plugin/innobase/handler/ha_innodb.cc
 plugin/innobase/handler/replication_dictionary.cc
-plugin/innobase/pars/pars0grm.c
-plugin/innobase/srv/srv0start.c
+plugin/innobase/pars/pars0grm.cc
+plugin/innobase/srv/srv0start.cc
 plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_stats/logging_stats.cc

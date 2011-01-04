@@ -142,9 +142,9 @@ public:
   typedef uint64_t Table_flags;
 
 private:
+  static EngineVector &getSchemaEngines();
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
 
-  static EngineVector &getSchemaEngines();
 
   virtual void setTransactionReadWrite(Session& session);
 
@@ -353,7 +353,7 @@ public:
   static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);
   static const CHARSET_INFO *getSchemaCollation(const drizzled::SchemaIdentifier &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
-  static bool dropSchema(const drizzled::SchemaIdentifier &identifier);
+  static bool dropSchema(drizzled::Session& session, SchemaIdentifier::const_reference identifier);
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected

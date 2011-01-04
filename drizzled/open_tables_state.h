@@ -50,6 +50,7 @@ public:
   */
 private:
   Table *temporary_tables;
+
 public:
 
   Table *getTemporaryTables()
@@ -70,14 +71,16 @@ public:
 
 protected:
   void close_temporary_tables();
+
 public:
   void close_temporary_table(Table *table);
+  
+private:
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
-private:
   void nukeTable(Table *table);
-public:
 
+public:
   /* Work with temporary tables */
   Table *find_temporary_table(const TableIdentifier &identifier);
 

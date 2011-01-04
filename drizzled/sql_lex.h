@@ -850,7 +850,7 @@ public:
   List<Lex_Column>    columns;
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
-  List<set_var_base>  var_list;
+  SetVarVector  var_list;
   /*
     A stack of name resolution contexts for the query. This stack is used
     at parse time to set local name resolution contexts for various parts

@@ -96,6 +96,11 @@ error_handler_func error_handler_hook= NULL;
        ...	variable list
 */
 
+void my_error(drizzled_error_code nr)
+{
+  my_error(nr, MYF(0));
+}
+
 void my_error(int nr, myf MyFlags, ...)
 {
   std::string format;
@@ -464,6 +469,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_ENUM, N_("The number of enum that were required was too high for table %s"));
   ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, N_("Collation '%s' for table %s is invalid/unknown"));
 
+  ADD_ERROR_MESSAGE(ER_TABLE_DROP, N_("Cannot drop table '%s'"));
+
   ADD_ERROR_MESSAGE(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   ADD_ERROR_MESSAGE(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
   ADD_ERROR_MESSAGE(ER_DROP_SCHEMA, +N_("Error droppping Schema : %s"));
@@ -513,8 +520,14 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_BOOLEAN_VALUE, N_("Received an invalid BOOLEAN value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_BOOLEAN, N_("Invalid cast to BOOLEAN: '%s'."));
 
+<<<<<<< TREE
   // Transactional DDL
   ADD_ERROR_MESSAGE(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, N_("Transactional DDL not supported"));
+=======
+  // ASSERT Message
+  ADD_ERROR_MESSAGE(ER_ASSERT, N_("Assertion '%s' failed."));
+  ADD_ERROR_MESSAGE(ER_ASSERT_NULL, N_("Assertion '%s' failed, the result was NULL."));
+>>>>>>> MERGE-SOURCE
 
   // Some old error values use the same strings as some new error values.
   ADD_ERROR_MESSAGE(EE_FILENOTFOUND, find(ER_FILE_NOT_FOUND));

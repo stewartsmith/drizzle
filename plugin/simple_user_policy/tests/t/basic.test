@@ -83,6 +83,7 @@ connection con2;
 SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
 select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
 
+--replace_regex /Unknown session id: [0-9]+/Unknown session id: #/
 --error ER_NO_SUCH_THREAD
 kill @id;
 

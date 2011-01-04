@@ -1886,7 +1886,6 @@ void Join::cleanup(bool full)
 {
   if (table)
   {
-    JoinTable *tab,*end;
     /*
       Only a sorted table may be cached.  This sorted table is always the
       first non const table in join->table
@@ -1896,6 +1895,11 @@ void Join::cleanup(bool full)
       table[const_tables]->free_io_cache();
       table[const_tables]->filesort_free_buffers(full);
     }
+  }
+
+  if (join_tab)
+  {
+    JoinTable *tab,*end;
 
     if (full)
     {
@@ -1912,6 +1916,7 @@ void Join::cleanup(bool full)
       }
     }
   }
+
   /*
     We are not using tables anymore
     Unlock all tables. We may be in an INSERT .... SELECT statement.
@@ -5595,16 +5600,27 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
        As we use bitmaps to represent the relation the complexity
        of the algorithm is O((number of tables)^2).
     */
-    for (i= 0, s= stat ; i < table_count ; i++, s++)
+    for (i= 0; i < table_count; i++)
     {
-      for (uint32_t j= 0 ; j < table_count ; j++)
+      uint32_t j;
+      table= stat[i].table;
+
+      if (!table->reginfo.join_tab->dependent)
+        continue;
+
+      for (j= 0, s= stat; j < table_count; j++, s++)
       {
-        table= stat[j].table;
         if (s->dependent & table->map)
+        {
+          table_map was_dependent= s->dependent;
           s->dependent |= table->reginfo.join_tab->dependent;
+          if (i > j && s->dependent != was_dependent)
+          {
+            i= j= 1;
+            break;
+          }
+        }
       }
-      if (s->dependent)
-        s->table->maybe_null= 1;
     }
     /* Catch illegal cross references for outer joins */
     for (i= 0, s= stat ; i < table_count ; i++, s++)
@@ -5615,6 +5631,9 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
         my_message(ER_WRONG_OUTER_JOIN, ER(ER_WRONG_OUTER_JOIN), MYF(0));
         return 1;
       }
+      if (outer_join & s->table->map)
+        s->table->maybe_null= 1;
+
       s->key_dependent= s->dependent;
     }
   }

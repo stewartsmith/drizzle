@@ -287,7 +287,7 @@ ibool
 rw_lock_s_lock_low(
 /*===============*/
 	rw_lock_t*	lock,	/*!< in: pointer to rw-lock */
-	ulint		pass __attribute__((unused)),
+	ulint		/*pass __attribute__((unused))*/,
 				/*!< in: pass value; != 0, if the lock will be
 				passed to another thread to unlock */
 	const char*	file_name, /*!< in: file name where lock requested */

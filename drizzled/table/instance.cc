@@ -52,7 +52,7 @@ Instance::Instance(Session *session, List<CreateField> &field_list) :
   setFields(getMutableShare()->getFields(true));
   field_arg= getMutableShare()->getFields(true);
   getMutableShare()->blob_field.resize(field_count+1);
-  getMutableShare()->fields= field_count;
+  getMutableShare()->setFieldSize(field_count);
   getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
   setup_tmp_table_column_bitmaps();
 
@@ -60,9 +60,11 @@ Instance::Instance(Session *session, List<CreateField> &field_list) :
 
   /* Create all fields and calculate the total length of record */
   List_iterator_fast<CreateField> it(field_list);
+  message::Table::Field null_field;
   while ((cdef= it++))
   {
-    *field_arg= getMutableShare()->make_field(NULL,
+    *field_arg= getMutableShare()->make_field(null_field,
+                                              NULL,
                                               cdef->length,
                                               (cdef->flags & NOT_NULL_FLAG) ? false : true,
                                               (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),

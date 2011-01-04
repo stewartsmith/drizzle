@@ -97,32 +97,37 @@ public:
   /* The following is copied to each Table on OPEN */
   typedef std::vector<Field *> Fields;
 private:
-  Fields field;
+  Fields _fields;
 public:
   const Fields getFields() const
   {
-    return field;
+    return _fields;
+  }
+
+  Fields getFields()
+  {
+    return _fields;
   }
 
   Field ** getFields(bool)
   {
-    return &field[0];
+    return &_fields[0];
   }
 
   void setFields(uint32_t arg)
   {
-    field.resize(arg);
+    _fields.resize(arg);
   }
 
   uint32_t positionFields(Field **arg) const
   {
-    return (arg - (Field **)&field[0]);
+    return (arg - (Field **)&_fields[0]);
   }
 
   void pushField(Field *arg)
   {
-    fields++;
-    field.push_back(arg);
+    _field_size++;
+    _fields.push_back(arg);
   }
 
 
@@ -379,7 +384,7 @@ public:
   const Field_blob *getBlobFieldAt(uint32_t arg) const
   {
     if (arg < blob_fields)
-      return (Field_blob*) field[blob_field[arg]];
+      return (Field_blob*) _fields[blob_field[arg]];
 
     return NULL;
   }
@@ -427,6 +432,12 @@ public:
   inline message::Table *getTableProto() const
   {
     return table_proto;
+  }
+
+  const message::Table::Field &field(int32_t field_position) const
+  {
+    assert(table_proto);
+    return table_proto->field(field_position);
   }
 
   inline void setTableProto(message::Table *arg)
@@ -503,11 +514,18 @@ public:
 
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
-  uint32_t fields;				/* Number of fields */
+private:
+  uint32_t _field_size;				/* Number of fields */
+
+public:
+  void setFieldSize(uint32_t arg)
+  {
+    _field_size= arg;
+  }
 
   uint32_t sizeFields() const
   {
-    return fields;
+    return _field_size;
   }
 
   uint32_t rec_buff_length;                 /* Size of table->record[] buffer */
@@ -649,7 +667,7 @@ public:
     return output;  // for multiple << operators.
   }
 
-  Field *make_field(message::Table::Field &pfield,
+  Field *make_field(const message::Table::Field &pfield,
                     unsigned char *ptr,
                     uint32_t field_length,
                     bool is_nullable,
@@ -662,7 +680,8 @@ public:
                     TYPELIB *interval,
                     const char *field_name);
 
-  Field *make_field(unsigned char *ptr,
+  Field *make_field(const message::Table::Field &pfield,
+                    unsigned char *ptr,
                     uint32_t field_length,
                     bool is_nullable,
                     unsigned char *null_pos,
