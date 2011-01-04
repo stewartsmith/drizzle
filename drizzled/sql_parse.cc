@@ -1608,7 +1608,7 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
+bool check_identifier_name(LEX_STRING *str, drizzled_error_code err_code,
                            uint32_t max_char_length,
                            const char *param_for_err_msg)
 {
@@ -1634,18 +1634,19 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
 
   switch (err_code)
   {
-  case 0:
+  case EE_OK:
     break;
   case ER_WRONG_STRING_LENGTH:
-    my_error(static_cast<drizzled::drizzled_error_code>(err_code), MYF(0), str->str, param_for_err_msg, max_char_length);
+    my_error(err_code, MYF(0), str->str, param_for_err_msg, max_char_length);
     break;
   case ER_TOO_LONG_IDENT:
-    my_error(static_cast<drizzled::drizzled_error_code>(err_code), MYF(0), str->str);
+    my_error(err_code, MYF(0), str->str);
     break;
   default:
     assert(0);
     break;
   }
+
   return true;
 }
 
