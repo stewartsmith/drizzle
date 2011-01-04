@@ -89,10 +89,9 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   if (!(cache->field=(CacheField*)
         memory::sql_alloc(sizeof(CacheField)*(cache->fields+table_count*2)+(blobs+1)* sizeof(CacheField*))))
   {
-    size= cache->end - cache->buff;
+    size= cache->buff.size();
     global_join_buffer.sub(size);
-    free((unsigned char*) cache->buff);
-    cache->buff=0;
+    cache->buff.clear();
     return(1);
   }
   copy=cache->field;
@@ -171,9 +170,8 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     my_error(ER_OUT_OF_GLOBAL_JOINMEMORY, MYF(ME_ERROR+ME_WAITTANG));
     return 1;
   }
-  if (!(cache->buff= (unsigned char*) malloc(size)))
-    return 1;
-  cache->end= cache->buff+size;
+  cache->buff.resize(size);
+  cache->end= &cache->buff.back();
   cache->reset_cache_write();
 
   return 0;
@@ -255,7 +253,7 @@ bool JoinCache::store_record_in_cache()
 void JoinCache::reset_cache_read()
 {
   record_nr= 0;
-  pos= buff;
+  pos= &buff[0];
 }
 
 void JoinCache::reset_cache_write()

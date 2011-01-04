@@ -78,7 +78,7 @@ static COND *build_equal_items(Session *session, COND *cond,
 static Item* part_of_refkey(Table *form,Field *field);
 static bool cmp_buffer_with_ref(JoinTable *tab);
 static void change_cond_ref_to_const(Session *session,
-                                     vector<COND_CMP>& save_list,
+                                     list<COND_CMP>& save_list,
                                      Item *and_father,
                                      Item *cond,
                                      Item *field,
@@ -1220,13 +1220,12 @@ void JoinTable::cleanup()
   select= 0;
   delete quick;
   quick= 0;
-  if (cache.buff)
+  if (not cache.buff.empty())
   {
-    size_t size= cache.end - cache.buff;
+    size_t size= cache.buff.size();
     global_join_buffer.sub(size);
-    free(cache.buff);
+    cache.buff.clear();
   }
-  cache.buff= 0;
   limit= 0;
   if (table)
   {
@@ -2364,7 +2363,7 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
   and_level
 */
 static void change_cond_ref_to_const(Session *session,
-                                     vector<COND_CMP>& save_list,
+                                     list<COND_CMP>& save_list,
                                      Item *and_father,
                                      Item *cond,
                                      Item *field,
@@ -2470,7 +2469,7 @@ Item *remove_additional_cond(Item* conds)
 }
 
 static void propagate_cond_constants(Session *session, 
-                                     vector<COND_CMP>& save_list, 
+                                     list<COND_CMP>& save_list, 
                                      COND *and_father, 
                                      COND *cond)
 {
@@ -2479,7 +2478,7 @@ static void propagate_cond_constants(Session *session,
     bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
     List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
     Item *item;
-    vector<COND_CMP> save;
+    list<COND_CMP> save;
     while ((item=li++))
     {
       propagate_cond_constants(session, save, and_level ? cond : item, item);
@@ -2487,13 +2486,13 @@ static void propagate_cond_constants(Session *session,
     if (and_level)
     {
       // Handle other found items
-      for (vector<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
+      for (list<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
       {
-        Item **args= iter->cmp_func->arguments();
+        Item **args= iter->second->arguments();
         if (not args[0]->const_item())
         {
-          change_cond_ref_to_const(session, save_list, iter->and_level,
-                                   iter->and_level, args[0], args[1] );
+          change_cond_ref_to_const(session, save, iter->first,
+                                   iter->first, args[0], args[1] );
         }
       }
     }
@@ -2684,7 +2683,7 @@ COND *optimize_cond(Join *join, COND *conds, List<TableList> *join_list, Item::c
                              &join->cond_equal);
 
     /* change field = field to field = const for each found field = const */
-    vector<COND_CMP> temp;
+    list<COND_CMP> temp;
     propagate_cond_constants(session, temp, conds, conds);
     /*
       Remove all instances of item == item

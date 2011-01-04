@@ -39,6 +39,20 @@ class Item;
 
 struct table_reference_st
 {
+  table_reference_st() :
+    key_err(false),
+    key_parts(0),
+    key_length(0),
+    key(0),
+    key_buff(NULL),
+    key_buff2(NULL),
+    key_copy(NULL),
+    items(NULL),
+    cond_guards(NULL),
+    null_ref_key(NULL),
+    disable_cache(false)
+  { }
+
   bool key_err;
   uint32_t key_parts; /**< num of key parts */
   uint32_t key_length; /**< length of key_buff */
