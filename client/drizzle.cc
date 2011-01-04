@@ -368,8 +368,7 @@ static int com_quit(string *str,const char*),
   com_nopager(string *str, const char*), com_pager(string *str, const char*);
 
 static int read_and_execute(bool interactive);
-static int sql_connect(const string &host, const string &database, const string &user, const string &password,
-                       uint32_t silent);
+static int sql_connect(const string &host, const string &database, const string &user, const string &password);
 static const char *server_version_string(drizzle_con_st *con);
 static int put_info(const char *str,INFO_TYPE info,uint32_t error,
                     const char *sql_state);
@@ -1695,7 +1694,7 @@ try
   }
 
   memset(&drizzle, 0, sizeof(drizzle));
-  if (sql_connect(current_host, current_db, current_user, opt_password,opt_silent))
+  if (sql_connect(current_host, current_db, current_user, opt_password))
   {
     quick= 1;          // Avoid history
     status.setExitStatus(1);
@@ -3695,7 +3694,7 @@ com_connect(string *buffer, const char *line)
   }
   else
     opt_rehash= 0;
-  error=sql_connect(current_host, current_db, current_user, opt_password,0);
+  error=sql_connect(current_host, current_db, current_user, opt_password);
   opt_rehash= save_rehash;
 
   if (connected)
@@ -4004,8 +4003,7 @@ char *get_arg(char *line, bool get_next_arg)
 
 
 static int
-sql_connect(const string &host, const string &database, const string &user, const string &password,
-                 uint32_t silent)
+sql_connect(const string &host, const string &database, const string &user, const string &password)
 {
   drizzle_return_t ret;
   if (connected)
@@ -4054,11 +4052,12 @@ sql_connect(const string &host, const string &database, const string &user, cons
 */
   if ((ret= drizzle_con_connect(&con)) != DRIZZLE_RETURN_OK)
   {
-    if (!silent || (ret != DRIZZLE_RETURN_GETADDRINFO &&
-                    ret != DRIZZLE_RETURN_COULD_NOT_CONNECT))
+    (void) put_error(&con, NULL);
+    (void) fflush(stdout);
+
+    if ((ret != DRIZZLE_RETURN_GETADDRINFO) && 
+      (ret != DRIZZLE_RETURN_COULD_NOT_CONNECT))
     {
-      (void) put_error(&con, NULL);
-      (void) fflush(stdout);
       return ignore_errors ? -1 : 1;    // Abort
     }
     return -1;          // Retryable
