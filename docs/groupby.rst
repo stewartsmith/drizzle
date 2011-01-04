@@ -11,37 +11,72 @@ SQL GROUP BY Syntax ::
 	GROUP BY column_name
 
 	
-WHERE Clause Example
+**GROUP BY Clause Example**
 
 The "Activities" table:
 
-+---------+--------------+-------------+----------+
-|Id       |ActivityDate  |ActivityType |User      |
-+=========+==============+=============+==========+
-| 1       |              | Sue         |Larson    | 
-+---------+--------------+-------------+----------+
-| 2       | Roberts      | Teri        |Roberts   |
-+---------+--------------+-------------+----------+
-| 3       | Peterson     | Kari        |Peterson  | 
-+---------+--------------+-------------+----------+
-| 4       | Larson       | Sue         |Smith     | 
-+---------+--------------+-------------+----------+
-| 5       | Roberts      | Teri        |Dagwood   |
-+---------+--------------+-------------+----------+
-| 6       | Peterson     | Kari        |Masters   | 
-+---------+--------------+-------------+----------+
- 
-If you want to select only the persons living in the city "Chicago" from the table above, use the following SELECT statement: ::
++---------+--------------+--------------+-------------+----------+
+|Id       |ActivityDate  |ActivityType  |ActivityCost | userID   |
++=========+==============+==============+=============+==========+
+| 1       |2011-01-02    | Sue          |45           |131       |
++---------+--------------+--------------+-------------+----------+
+| 2       |2011-01-02    | Teri         |10           |256       |
++---------+--------------+--------------+-------------+----------+
+| 3       |2011-01-02    | Kari         |25           |022       |
++---------+--------------+--------------+-------------+----------+
+| 4       |2011-01-02    | Sue          |125          |022       |
++---------+--------------+--------------+-------------+----------+
+| 5       |2011-01-03    | Teri         |40           |131       |
++---------+--------------+--------------+-------------+----------+
+| 6       |2011-01-03    | Kari         |20           |175       |
++---------+--------------+--------------+-------------+----------+
 
-	SELECT * FROM Persons
-	WHERE City='Chicago'
+Running the following simple query::
+
+	SELECT userID
+	FROM activities
+	GROUP BY userID;
+ 
+Returns:
+
++---------+
+| userID  |
++=========+
+| 131     |
++---------+
+| 256     |
++---------+
+| 022     |
++---------+
+| 175     |
++---------+
+
+(This shows that GROUP BY accepts a column_name and consolidates like customer values.)
+
+However, GROUP BY is much more powerful when used with an aggregate function. Let's say you want to find the total amount spent by each unique User.
+
+You could use the following SQL statement: ::
+	
+	SELECT userID,SUM(ActivityCost) AS "Activity Total"
+	FROM Activities
+	GROUP BY userID;
 
 The result-set will look like this:
 
-+---------+------------+----------+----------+--------+
-| Id 	  |LastName    |FirstName |Address   |City    |
-+---------+------------+----------+----------+--------+
-|1 	  | Larson     | Sue 	  |3 Cherry  | Chicago|
-+---------+------------+----------+----------+--------+
-|2 	  | Roberts    | Teri 	  |21 Brown  | Chicago|
-+---------+------------+----------+----------+--------+
+======    ==============
+userID    Activity Total
+======    ==============
+131       85             
+256       10             
+022       150            
+175       20             
+======    ==============
+
+With the aggregate SUM() function, SQL can calculate how much each unique user has spent on activities over time.
+
+We can also use the GROUP BY statement on more than one column, like this: ::
+	
+	SELECT userID,ActivityDate,SUM(ActivityCost) 
+	FROM Activities
+	GROUP BY userID,ActivityDate;
+
