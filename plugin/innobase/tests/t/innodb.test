@@ -1813,6 +1813,7 @@ drop table t2, t1;
 CREATE TABLE t1 ( a int ) ENGINE=innodb;
 BEGIN;
 INSERT INTO t1 VALUES (1);
+COMMIT;
 ALTER TABLE t1 ENGINE=innodb;
 DROP TABLE t1;
 
