@@ -16,7 +16,7 @@ a	MD5_Checksum
 2	90D9BF084B48FBC92710E6807B8875B0
 3	6B230DE148EE7EA4A4454090784119E6
 CREATE Temporary TABLE my_pbms_blob_ids (id int, offset int, url varchar(120));
-insert into my_pbms_blob_ids (select Repository_id, Repo_blob_offset, Blob_url from pbms_reference);
+insert into my_pbms_blob_ids values(1,2,"aaaaaaaaaaaaaaaaaaaaa");
 drop Temporary table my_pbms_blob_ids;
 drop table t1;
 create table autoincbug (id int not null primary key auto_increment, test varchar(10));

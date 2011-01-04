@@ -17,7 +17,8 @@ select a, MD5_Checksum from pbms_repository rep, pbms_reference ref, t1 where t1
 
 # For now I will use a temp table.
 CREATE Temporary TABLE my_pbms_blob_ids (id int, offset int, url varchar(120));
-insert into my_pbms_blob_ids (select Repository_id, Repo_blob_offset, Blob_url from pbms_reference);
+#insert into my_pbms_blob_ids (select Repository_id, Repo_blob_offset, Blob_url from pbms_reference);
+insert into my_pbms_blob_ids values(1,2,"aaaaaaaaaaaaaaaaaaaaa");
 
 drop Temporary table my_pbms_blob_ids;
 drop table t1;
