@@ -1,0 +1,6 @@
+CREATE TABLE t1 (a int);
+begin;
+--error 1727
+RENAME TABLE t1 to t2;
+commit;
+DROP TABLE IF EXISTS t1,t2;
