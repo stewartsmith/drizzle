@@ -1220,12 +1220,13 @@ void JoinTable::cleanup()
   select= 0;
   delete quick;
   quick= 0;
-  if (not cache.buff.empty())
+  if (cache.buff)
   {
-    size_t size= cache.buff.size();
+    size_t size= cache.end - cache.buff;
     global_join_buffer.sub(size);
-    cache.buff.clear();
+    free(cache.buff);
   }
+  cache.buff= 0;
   limit= 0;
   if (table)
   {

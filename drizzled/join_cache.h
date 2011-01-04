@@ -57,7 +57,7 @@ public:
 class JoinCache
 {
 public:
-  std::vector<unsigned char> buff;
+  unsigned char *buff;
   unsigned char *pos;    /* Start of free space in the buffer */
   unsigned char *end;
   uint32_t records;  /* # of row cominations currently stored in the cache */
@@ -78,6 +78,7 @@ public:
   optimizer::SqlSelect *select;
 
   JoinCache():
+    buff(NULL),
     pos(NULL),
     end(NULL),
     records(0),
