@@ -1489,7 +1489,6 @@ try
   if (! isatty(0) || ! isatty(1))
   {
     status.setBatch(1); opt_silent=1;
-    ignore_errors=0;
   }
   else
     status.setAddToHistory(1);
