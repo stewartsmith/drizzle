@@ -6,6 +6,7 @@ BEGIN;
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
 Handler_commit	0
+COMMIT;
 DROP SCHEMA IF EXISTS boundaries;
 Warnings:
 Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
@@ -20,10 +21,10 @@ SET AUTOCOMMIT= 1;
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
 Handler_commit	1
-BEGIN;
 DROP SCHEMA IF EXISTS boundaries;
 Warnings:
 Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
+BEGIN;
 COMMIT;
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value

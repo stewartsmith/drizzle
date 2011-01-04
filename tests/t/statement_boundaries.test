@@ -16,10 +16,10 @@ BEGIN;
 
 SHOW STATUS LIKE 'Handler_commit%';
 
+COMMIT;
 DROP SCHEMA IF EXISTS boundaries;
 
-# Expect 1 commit count since above DROP SCHEMA
-# will implicitly call COMMIT.
+# Expect 1 commit count since above COMMIT before DROP SCHEMA
 #
 # When we get transactional DDL, should be 0.
 SHOW STATUS LIKE 'Handler_commit%';
@@ -38,8 +38,8 @@ SHOW STATUS LIKE 'Handler_commit%';
 SET AUTOCOMMIT= 1;
 
 SHOW STATUS LIKE 'Handler_commit%';
-BEGIN;
 DROP SCHEMA IF EXISTS boundaries;
+BEGIN;
 COMMIT;
 
 SHOW STATUS LIKE 'Handler_commit%';
