@@ -17,6 +17,7 @@
 
 #define DRIZZLE_LEX 1
 
+#include "drizzled/abort_exception.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
@@ -753,7 +754,7 @@ void parse(Session *session, const char *inBuf, uint32_t length)
         {
           // Just try to catch any random failures that could have come
           // during execution.
-          unireg_abort(1);
+          DRIZZLE_ABORT;
         }
         DRIZZLE_QUERY_EXEC_DONE(0);
       }
