@@ -3045,6 +3045,7 @@ static void calc_group_buffer(Join *join, Order *group)
           if (type == DRIZZLE_TYPE_DATE ||
               type == DRIZZLE_TYPE_TIME ||
               type == DRIZZLE_TYPE_DATETIME ||
+              type == DRIZZLE_TYPE_MICROTIME ||
               type == DRIZZLE_TYPE_TIMESTAMP)
           {
             key_length+= 8;

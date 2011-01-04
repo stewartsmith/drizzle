@@ -827,7 +827,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     */
     if (default_value->type() == Item::FUNC_ITEM &&
         !(((Item_func*)default_value)->functype() == Item_func::NOW_FUNC &&
-         type == DRIZZLE_TYPE_TIMESTAMP))
+         (type == DRIZZLE_TYPE_TIMESTAMP or type == DRIZZLE_TYPE_MICROTIME)))
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
       return true;
@@ -849,7 +849,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     }
   }
 
-  if (on_update_value && type != DRIZZLE_TYPE_TIMESTAMP)
+  if (on_update_value && (type != DRIZZLE_TYPE_TIMESTAMP and type != DRIZZLE_TYPE_MICROTIME))
   {
     my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
     return true;

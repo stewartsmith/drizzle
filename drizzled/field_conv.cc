@@ -189,7 +189,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
     when set to NULL (TIMESTAMP fields which allow setting to NULL
     are handled by first check).
   */
-  if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+  if (field->is_timestamp())
   {
     ((field::Epoch::pointer) field)->set_time();
     return 0;					// Ok to set time to NULL
@@ -620,7 +620,7 @@ void CopyField::set(Field *to,Field *from,bool save)
     }
     else
     {
-      if (to_field->type() == DRIZZLE_TYPE_TIMESTAMP)
+      if (to_field->is_timestamp())
       {
         do_copy= do_copy_timestamp;               // Automatic timestamp
       }

@@ -286,6 +286,11 @@ public:
    */
   virtual bool eq_def(Field *field);
 
+  virtual bool is_timestamp() const
+  {
+    return false;
+  }
+
   /**
    * Returns size (in bytes) used to store field data in memory
    * (i.e. it returns the maximum size of the field in a row of the table,

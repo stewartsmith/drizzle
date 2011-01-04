@@ -20,7 +20,7 @@
 
 #include "config.h"
 #include <boost/lexical_cast.hpp>
-#include <drizzled/field/epoch.h>
+#include <drizzled/field/microtime.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
@@ -37,85 +37,26 @@ namespace drizzled
 
 namespace field
 {
-
-/**
-  TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to
-  2038-01-01 00:00:00 UTC stored as number of seconds since Unix
-  Epoch in UTC.
-
-  Up to one of timestamps columns in the table can be automatically
-  set on row update and/or have NOW() as default value.
-  TABLE::timestamp_field points to Field object for such timestamp with
-  auto-set-on-update. TABLE::time_stamp holds offset in record + 1 for this
-  field, and is used by handler code which performs updates required.
-
-  Actually SQL-99 says that we should allow niladic functions (like NOW())
-  as defaults for any field. Current limitations (only NOW() and only
-  for one TIMESTAMP field) are because of restricted binary .frm format
-  and should go away in the future.
-
-  Also because of this limitation of binary .frm format we use 5 different
-  unireg_check values with TIMESTAMP field to distinguish various cases of
-  DEFAULT or ON UPDATE values. These values are:
-
-  TIMESTAMP_OLD_FIELD - old timestamp, if there was not any fields with
-    auto-set-on-update (or now() as default) in this table before, then this
-    field has NOW() as default and is updated when row changes, else it is
-    field which has 0 as default value and is not automatically updated.
-  TIMESTAMP_DN_FIELD - field with NOW() as default but not set on update
-    automatically (TIMESTAMP DEFAULT NOW())
-  TIMESTAMP_UN_FIELD - field which is set on update automatically but has not
-    NOW() as default (but it may has 0 or some other const timestamp as
-    default) (TIMESTAMP ON UPDATE NOW()).
-  TIMESTAMP_DNUN_FIELD - field which has now() as default and is auto-set on
-    update. (TIMESTAMP DEFAULT NOW() ON UPDATE NOW())
-  NONE - field which is not auto-set on update with some other than NOW()
-    default value (TIMESTAMP DEFAULT 0).
-
-  Note that TIMESTAMP_OLD_FIELDs are never created explicitly now, they are
-  left only for preserving ability to read old tables. Such fields replaced
-  with their newer analogs in CREATE TABLE and in SHOW CREATE TABLE. This is
-  because we want to prefer NONE unireg_check before TIMESTAMP_OLD_FIELD for
-  "TIMESTAMP DEFAULT 'Const'" field. (Old timestamps allowed such
-  specification too but ignored default value for first timestamp, which of
-  course is non-standard.) In most cases user won't notice any change, only
-  exception is different behavior of old/new timestamps during ALTER TABLE.
- */
-  Epoch::Epoch(unsigned char *ptr_arg,
-               unsigned char *null_ptr_arg,
-               unsigned char null_bit_arg,
-               enum utype unireg_check_arg,
-               const char *field_name_arg,
-               drizzled::TableShare *share) :
-  Field_str(ptr_arg,
-            DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
-            null_ptr_arg,
-            null_bit_arg,
-            field_name_arg,
-            &my_charset_bin)
-{
-  unireg_check= unireg_check_arg;
-  if (! share->getTimestampField() && unireg_check != NONE)
+Microtime::Microtime(unsigned char *ptr_arg,
+                     unsigned char *null_ptr_arg,
+                     unsigned char null_bit_arg,
+                     enum utype unireg_check_arg,
+                     const char *field_name_arg,
+                     drizzled::TableShare *share) :
+  Epoch(ptr_arg,
+        null_ptr_arg,
+        null_bit_arg,
+        unireg_check_arg,
+        field_name_arg,
+        share)
   {
-    /* This timestamp has auto-update */
-    share->setTimestampField(this);
-    flags|= FUNCTION_DEFAULT_FLAG;
-    if (unireg_check != TIMESTAMP_DN_FIELD)
-      flags|= ON_UPDATE_NOW_FLAG;
   }
-}
 
-Epoch::Epoch(bool maybe_null_arg,
-             const char *field_name_arg) :
-  Field_str((unsigned char*) NULL,
-            DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
-            maybe_null_arg ? (unsigned char*) "": 0,
-            0,
-            field_name_arg,
-            &my_charset_bin)
+Microtime::Microtime(bool maybe_null_arg,
+                     const char *field_name_arg) :
+  Epoch(maybe_null_arg,
+        field_name_arg)
 {
-  if (unireg_check != TIMESTAMP_DN_FIELD)
-    flags|= ON_UPDATE_NOW_FLAG;
 }
 
 /**
@@ -124,7 +65,7 @@ Epoch::Epoch(bool maybe_null_arg,
   Returns value indicating during which operations this TIMESTAMP field
   should be auto-set to current timestamp.
 */
-timestamp_auto_set_type Epoch::get_auto_set_type() const
+timestamp_auto_set_type Microtime::get_auto_set_type() const
 {
   switch (unireg_check)
   {
@@ -152,7 +93,7 @@ timestamp_auto_set_type Epoch::get_auto_set_type() const
   }
 }
 
-int Epoch::store(const char *from,
+int Microtime::store(const char *from,
                  uint32_t len,
                  const CHARSET_INFO * const )
 {
@@ -173,7 +114,7 @@ int Epoch::store(const char *from,
   return 0;
 }
 
-int Epoch::store(double from)
+int Microtime::store(double from)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -189,10 +130,10 @@ int Epoch::store(double from)
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
-  return Epoch::store((int64_t) rint(from), false);
+  return Microtime::store((int64_t) rint(from), false);
 }
 
-int Epoch::store(int64_t from, bool)
+int Microtime::store(int64_t from, bool)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -218,12 +159,12 @@ int Epoch::store(int64_t from, bool)
   return 0;
 }
 
-double Epoch::val_real(void)
+double Microtime::val_real(void)
 {
-  return (double) Epoch::val_int();
+  return (double) Microtime::val_int();
 }
 
-int64_t Epoch::val_int(void)
+int64_t Microtime::val_int(void)
 {
   uint64_t temp;
 
@@ -240,7 +181,7 @@ int64_t Epoch::val_int(void)
   return result;
 }
 
-String *Epoch::val_str(String *val_buffer, String *)
+String *Microtime::val_str(String *val_buffer, String *)
 {
   uint64_t temp= 0;
   char *to;
@@ -264,7 +205,7 @@ String *Epoch::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Epoch::get_date(type::Time *ltime, uint32_t)
+bool Microtime::get_date(type::Time *ltime, uint32_t)
 {
   uint64_t temp;
 
@@ -288,12 +229,12 @@ bool Epoch::get_date(type::Time *ltime, uint32_t)
   return 0;
 }
 
-bool Epoch::get_time(type::Time *ltime)
+bool Microtime::get_time(type::Time *ltime)
 {
-  return Epoch::get_date(ltime,0);
+  return Microtime::get_date(ltime,0);
 }
 
-int Epoch::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
+int Microtime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   uint64_t a,b;
 
@@ -304,40 +245,26 @@ int Epoch::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-void Epoch::sort_string(unsigned char *to,uint32_t )
+void Microtime::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!getTable() || !getTable()->getShare()->db_low_byte_first)
+  if ((not getTable()) or (not getTable()->getShare()->db_low_byte_first))
   {
-    to[0] = ptr[0];
-    to[1] = ptr[1];
-    to[2] = ptr[2];
-    to[3] = ptr[3];
-    to[4] = ptr[4];
-    to[5] = ptr[5];
-    to[6] = ptr[6];
-    to[7] = ptr[7];
+    std::reverse_copy(to, to+pack_length(), ptr);
   }
   else
 #endif
   {
-    to[0] = ptr[7];
-    to[1] = ptr[6];
-    to[2] = ptr[5];
-    to[3] = ptr[4];
-    to[4] = ptr[3];
-    to[5] = ptr[2];
-    to[6] = ptr[1];
-    to[7] = ptr[0];
+    memcpy(to, ptr, pack_length());
   }
 }
 
-void Epoch::sql_type(String &res) const
+void Microtime::sql_type(String &res) const
 {
-  res.set_ascii(STRING_WITH_LEN("timestamp"));
+  res.set_ascii(STRING_WITH_LEN("microtime"));
 }
 
-void Epoch::set_time()
+void Microtime::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
   time_t tmp= session->query_start();
@@ -345,7 +272,7 @@ void Epoch::set_time()
   pack_num(tmp);
 }
 
-void Epoch::set_default()
+void Microtime::set_default()
 {
   if (getTable()->timestamp_field == this &&
       unireg_check != TIMESTAMP_UN_FIELD)
@@ -358,18 +285,13 @@ void Epoch::set_default()
   }
 }
 
-long Epoch::get_timestamp(bool *null_value)
+long Microtime::get_timestamp(bool *null_value)
 {
   if ((*null_value= is_null()))
     return 0;
 
   uint64_t tmp;
   return unpack_num(tmp);
-}
-
-size_t Epoch::max_string_length()
-{
-  return sizeof(uint64_t);
 }
 
 } /* namespace field */

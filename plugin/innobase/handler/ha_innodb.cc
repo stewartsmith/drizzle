@@ -3850,6 +3850,7 @@ get_innobase_type_from_mysql_type(
       return(DATA_VARMYSQL);
     }
   case DRIZZLE_TYPE_DECIMAL:
+  case DRIZZLE_TYPE_MICROTIME:
     return(DATA_FIXBINARY);
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:

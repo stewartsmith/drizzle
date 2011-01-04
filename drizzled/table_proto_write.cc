@@ -299,6 +299,7 @@ static int fill_table_proto(message::Table &table_proto,
         if (field_arg->sql_type == DRIZZLE_TYPE_DATE
             || field_arg->sql_type == DRIZZLE_TYPE_TIME
             || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
+            || field_arg->sql_type == DRIZZLE_TYPE_MICROTIME
             || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
         {
           type::Time ltime;
