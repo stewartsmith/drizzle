@@ -26,6 +26,8 @@
 #include "drizzled/comp_creator.h"
 #include "drizzled/identifier.h"
 
+#include "drizzled/error_t.h"
+
 namespace drizzled
 {
 

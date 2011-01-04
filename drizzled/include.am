@@ -75,6 +75,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/enum_nested_loop_state.h \
 			      drizzled/errmsg_print.h \
 			      drizzled/error.h \
+			      drizzled/error_t.h \
 			      drizzled/execute.h \
 			      drizzled/field.h \
 			      drizzled/field/blob.h \
