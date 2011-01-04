@@ -1,3 +1,4 @@
 CREATE TABLE t1 (a serial);
 select * from t1 for update;
 UNLOCK tables;
+DROP TABLE t1;
