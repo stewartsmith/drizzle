@@ -1,0 +1,6 @@
+CREATE TABLE t1 (a int, index a_idx (a));
+BEGIN;
+--error 1727
+DROP INDEX a_idx on t1;
+commit;
+drop table t1;
