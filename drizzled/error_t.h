@@ -23,7 +23,7 @@
 
 namespace drizzled { 
 
-enum drizzled_error_code {
+enum error_t {
 
   EE_OK=0,
   EE_ERROR_FIRST=1,

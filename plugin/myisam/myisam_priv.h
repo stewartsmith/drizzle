@@ -688,7 +688,7 @@ extern uint32_t _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
                                     int file, drizzled::internal::my_off_t filepos);
 extern void _my_store_blob_length(unsigned char *pos,uint32_t pack_length,uint32_t length);
 extern void mi_report_error(int errcode, const char *file_name);
-extern void mi_report_error(drizzled::drizzled_error_code errcode, const char *file_name);
+extern void mi_report_error(drizzled::error_t errcode, const char *file_name);
 extern size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
                             size_t Count, drizzled::internal::my_off_t offset, drizzled::myf MyFlags);
 extern size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,

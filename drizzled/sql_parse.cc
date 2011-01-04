@@ -1606,7 +1606,7 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(LEX_STRING *str, drizzled_error_code err_code,
+bool check_identifier_name(LEX_STRING *str, error_t err_code,
                            uint32_t max_char_length,
                            const char *param_for_err_msg)
 {

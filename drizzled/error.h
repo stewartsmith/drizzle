@@ -79,9 +79,9 @@ void add_error_message(uint32_t error_code, const std::string &error_name,
                        const std::string& message);
 #define DRIZZLE_ADD_ERROR_MESSAGE(code, msg) add_error_message(code, STRINGIFY_ARG(code), msg)
 
-void my_error(drizzled_error_code nr, drizzled::Identifier::const_reference ref);
-void my_error(drizzled_error_code nr);
-void my_error(drizzled_error_code nr, myf MyFlags, ...);
+void my_error(error_t nr, drizzled::Identifier::const_reference ref);
+void my_error(error_t nr);
+void my_error(error_t nr, myf MyFlags, ...);
 void my_message(uint32_t my_err, const char *str, myf MyFlags);
 void my_printf_error(uint32_t my_err, const char *format,
                      myf MyFlags, ...)

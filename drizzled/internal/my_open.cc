@@ -120,7 +120,7 @@ int my_register_filename(int fd, const char *FileName, uint32_t error_message_nu
   {
     if (errno == EMFILE)
       error_message_number= EE_OUT_OF_FILERESOURCES;
-    my_error(static_cast<drizzled::drizzled_error_code>(error_message_number), MYF(ME_BELL+ME_WAITTANG),
+    my_error(static_cast<drizzled::error_t>(error_message_number), MYF(ME_BELL+ME_WAITTANG),
              FileName, errno);
   }
   return -1;

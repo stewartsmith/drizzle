@@ -120,7 +120,7 @@ void mi_report_error(int errcode, const char *file_name)
   mi_report_error(errcode, file_name);
 }
 
-void mi_report_error(drizzled_error_code errcode, const char *file_name)
+void mi_report_error(drizzled::error_t errcode, const char *file_name)
 {
   size_t        lgt;
 
