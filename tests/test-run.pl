@@ -148,7 +148,7 @@ our $default_top_builddir;
 
 our $opt_usage;
 our $opt_suites;
-our $opt_suites_default= "main,jp,tamil,regression,bool_type,cast,flush_tables,identifiers,mysql_compatibility,tamil,time_type,unsigned_integer_type,uuid_type"; # Default suites to run
+our $opt_suites_default= "main,jp,ddl_transactions,tamil,regression,bool_type,cast,flush_tables,identifiers,mysql_compatibility,tamil,time_type,unsigned_integer_type,uuid_type"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
