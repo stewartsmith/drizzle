@@ -45,9 +45,7 @@ bool statement::AlterSchema::execute()
 
   if (not check_db_name(session, schema_identifier))
   {
-    std::string path;
-    schema_identifier.getSQLPath(path);
-    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
+    my_error(ER_WRONG_DB_NAME, schema_identifier);
 
     return false;
   }
@@ -55,7 +53,7 @@ bool statement::AlterSchema::execute()
   SchemaIdentifier identifier(db->str);
   if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
   {
-    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), db->str);
+    my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 
     return true;
   }
 

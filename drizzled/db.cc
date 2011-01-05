@@ -116,7 +116,7 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
     {
       if (not is_if_not_exists)
       {
-        my_error(ER_DB_CREATE_EXISTS, MYF(0), schema_message.name().c_str());
+        my_error(ER_DB_CREATE_EXISTS, schema_identifier);
         error= true;
       }
       else
@@ -172,7 +172,7 @@ bool alter_db(Session *session, const message::Schema &schema_message)
     SchemaIdentifier schema_idenifier(schema_message.name());
     if (not plugin::StorageEngine::doesSchemaExist(schema_idenifier))
     {
-      my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), schema_message.name().c_str());
+      my_error(ER_SCHEMA_DOES_NOT_EXIST, schema_idenifier);
       return false;
     }
 
@@ -186,7 +186,7 @@ bool alter_db(Session *session, const message::Schema &schema_message)
     }
     else
     {
-      my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
+      my_error(ER_ALTER_SCHEMA, schema_idenifier);
     }
   }
   session->startWaitingGlobalReadLock();
@@ -252,7 +252,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
       else
       {
         error= true;
-        my_error(ER_DB_DROP_EXISTS, MYF(0), path.c_str());
+        my_error(ER_DB_DROP_EXISTS, schema_identifier);
         break;
       }
     }
@@ -352,18 +352,14 @@ bool change_db(Session *session, SchemaIdentifier &schema_identifier)
   {
     std::string path;
     schema_identifier.getSQLPath(path);
-    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
+    my_error(ER_WRONG_DB_NAME, schema_identifier);
 
     return true;
   }
 
   if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
   {
-    /* Report an error and free new_db_file_name. */
-    std::string path;
-    schema_identifier.getSQLPath(path);
-
-    my_error(ER_BAD_DB_ERROR, MYF(0), path.c_str());
+    my_error(ER_BAD_DB_ERROR, schema_identifier);
 
     /* The operation failed. */
 

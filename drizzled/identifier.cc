@@ -1,11 +1,12 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,30 +20,12 @@
 
 #include "config.h"
 
-#include "drizzled/identifier.h"
-#include "drizzled/identifier/user.h"
+#include <drizzled/identifier.h>
 
-namespace drizzled
-{
-namespace identifier
-{
+namespace drizzled {
 
-User::shared_ptr User::make_shared()
+void Identifier::getSQLPath(std::string &) const
 {
-  return shared_ptr(new User);
 }
 
-void User::getSQLPath(std::string &arg) const
-{
-  if (_user.empty())
-  {
-    arg.append("no user");
-  }
-  else
-  {
-    arg.append(_user);
-  }
-}
-
-} /* namespace identifier */
-} /* namespace drizzled */
+} // namespace Identifier

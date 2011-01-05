@@ -26,6 +26,8 @@
 #include "drizzled/comp_creator.h"
 #include "drizzled/identifier.h"
 
+#include "drizzled/error_t.h"
+
 namespace drizzled
 {
 
@@ -49,7 +51,7 @@ bool insert_precheck(Session *session, TableList *tables);
 
 Item *negate_expression(Session *session, Item *expr);
 
-bool check_identifier_name(LEX_STRING *str, uint32_t err_code= 0,
+bool check_identifier_name(LEX_STRING *str, error_t err_code= EE_OK,
                            uint32_t max_char_length= NAME_CHAR_LEN,
                            const char *param_for_err_msg= "");
 
@@ -72,7 +74,7 @@ void init_update_queries(void);
 bool dispatch_command(enum enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length);
 
-bool check_simple_select();
+bool check_simple_select(Session* session);
 
 void init_select(LEX *lex);
 bool new_select(LEX *lex, bool move_down);

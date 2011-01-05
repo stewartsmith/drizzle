@@ -35,7 +35,8 @@ namespace identifier
   @brief A set of Session members describing the current authenticated user.
 */
 
-class User {
+class User : public Identifier
+{
 public:
   typedef boost::shared_ptr<User> shared_ptr;
   typedef boost::shared_ptr<const User> const_shared_ptr;
@@ -53,6 +54,8 @@ public:
     _user(""),
     _address("")
   { }
+
+  virtual void getSQLPath(std::string &arg) const;
 
   const std::string& address() const
   {
