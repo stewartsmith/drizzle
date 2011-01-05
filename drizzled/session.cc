@@ -1609,7 +1609,7 @@ void Tmp_Table_Param::cleanup(void)
   if (copy_field)
   {
     delete [] copy_field;
-    save_copy_field= copy_field= 0;
+    save_copy_field= save_copy_field_end= copy_field= copy_field_end= 0;
   }
 }
 
