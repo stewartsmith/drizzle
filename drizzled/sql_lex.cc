@@ -17,7 +17,11 @@
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
 #include "config.h"
+
 #define DRIZZLE_LEX 1
+
+#include "drizzled/sql_reserved_words.h"
+
 #include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
@@ -2161,5 +2165,22 @@ bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
                                             current_index_hint_clause,
                                             str, length));
 }
+
+bool check_for_sql_keyword(drizzled::drizzle_lex_string const& string)
+{
+  if (sql_reserved_words::in_word_set(string.str, string.length))
+      return true;
+
+  return false;
+}
+
+bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
+{
+  if (sql_reserved_words::in_word_set(string.str, string.length))
+      return true;
+
+  return false;
+}
+
 
 } /* namespace drizzled */

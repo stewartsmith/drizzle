@@ -26,8 +26,8 @@ drop schema user2;
 ERROR 42000: Access denied for user 'user1'@'LOCALHOST' to schema 'user2'
 create table t1 (kill_id int);
 insert into t1 values(connection_id());
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
-USER	DB
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+USERNAME	DB
 user1	user1
 user1	user1
 select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
@@ -41,16 +41,16 @@ select @id != connection_id();
 @id != connection_id()
 1
 update t1 set kill_id = connection_id();
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
-USER	DB
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+USERNAME	DB
 user2	user2
 select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
 IF(((@id := kill_id) - kill_id), "NO", "YES")
 YES
 kill @id;
 ERROR HY000: Unknown session id: 1
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
-USER	DB
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+USERNAME	DB
 root	user2
 user1	user1
 user1	user1

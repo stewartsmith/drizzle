@@ -44,6 +44,7 @@
 namespace drizzled
 {
 
+class st_lex_symbol;
 class select_result_interceptor;
 
 /* YACC and LEX Definitions */
@@ -1048,6 +1049,9 @@ private:
 extern void lex_start(Session *session);
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 extern bool is_lex_native_function(const LEX_STRING *name);
+
+bool check_for_sql_keyword(drizzled::st_lex_symbol const&);
+bool check_for_sql_keyword(drizzled::drizzle_lex_string const&);
 
 /**
   @} (End of group Semantic_Analysis)

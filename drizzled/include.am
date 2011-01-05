@@ -876,22 +876,26 @@ BUILT_MAINT_SRC+= \
 
 BUILT_SOURCES+= \
 		$(BUILT_MAINT_SRC) \
-		drizzled/symbol_hash.h \
 		drizzled/function_hash.h \
+		drizzled/sql_reserved_words.h \
+		drizzled/symbol_hash.h \
 		$(PCHHEADERS) 
 
 EXTRA_DIST+= \
 	     $(BUILT_MAINT_SRC) \
-	     drizzled/symbol_hash.gperf \
 	     drizzled/function_hash.gperf \
 	     drizzled/message.mc \
-	     drizzled/probes.d
+	     drizzled/probes.d \
+	     drizzled/sql_reserved_words.gperf \
+	     drizzled/symbol_hash.gperf
 
 CLEANFILES+= \
 	     drizzled/configmake.h \
 	     drizzled/function_hash.h \
 	     drizzled/function_hash.stamp-h \
 	     drizzled/sql_yacc.output \
+	     drizzled/sql_reserved_words.h \
+	     drizzled/sql_reserved_words.stamp-h \
 	     drizzled/symbol_hash.h \
 	     drizzled/symbol_hash.stamp-h \
 	     drizzled/plugin/config.h \
@@ -938,6 +942,7 @@ drizzled/probes.o :  drizzled/probes.d $(DTRACEFILES) config.h
 
 drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h
+drizzled/sql_reserved_words.h: drizzled/sql_reserved_words.stamp-h
 
 .gperf.stamp-h:
 	$(GPERF) -D --initializer-suffix=,0 --struct-type --enum \

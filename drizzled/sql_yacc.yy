@@ -392,7 +392,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 89
+%expect 78
 
 /*
    Comments for TOKENS.
@@ -558,6 +558,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  HOUR_SYM                      /* SQL-2003-R */
 %token  IDENT
 %token  IDENTIFIED_SYM
+%token  IDENTITY_SYM                  /* SQL-2003-R */
 %token  IDENT_QUOTED
 %token  IF
 %token  IGNORE_SYM
@@ -807,10 +808,12 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <lex_str>
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
-        LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident
+        LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias
+        ident
         ident_or_text
+        internal_variable_ident
+        user_variable_ident
         row_format_or_text
-        ident_or_text_or_keyword_or_hostname
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
         engine_option_value
@@ -926,6 +929,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <symbol>
         keyword
         keyword_sp
+        keyword_exception_for_variable
         row_format
 
 %type <charset>
@@ -3052,8 +3056,7 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_trim($5,$3); }
         | USER '(' ')'
           {
-            std::string user_str("user");
-            if (! ($$= reserved_keyword_function(YYSession, user_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, "user", NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3447,17 +3450,17 @@ variable:
         ;
 
 variable_aux:
-          ident_or_text_or_keyword_or_hostname SET_VAR expr
+          user_variable_ident SET_VAR expr
           {
             $$= new Item_func_set_user_var($1, $3);
             Lex->setCacheable(false);
           }
-        | ident_or_text_or_keyword_or_hostname
+        | user_variable_ident
           {
             $$= new Item_func_get_user_var(*YYSession, $1);
             Lex->setCacheable(false);
           }
-        | '@' opt_var_ident_type ident_or_text_or_keyword_or_hostname opt_component
+        | '@' opt_var_ident_type user_variable_ident opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
             if ($3.str && $4.str && check_reserved_words(&$3))
@@ -4386,16 +4389,20 @@ select_var_list:
         ;
 
 select_var_ident: 
-          '@' ident_or_text_or_keyword_or_hostname
+          '@' user_variable_ident
           {
             if (Lex->result)
+            {
               ((select_dumpvar *)Lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
+            }
             else
+            {
               /*
                 The parser won't create select_result instance only
                 if it's an EXPLAIN.
               */
               assert(Lex->describe);
+            }
           }
         ;
 
@@ -4497,11 +4504,11 @@ execute:
 
 
 execute_var_or_string:
-         ident_or_text_or_keyword_or_hostname
+         user_variable_ident
          {
             $$.set($1);
          }
-        | '@' ident_or_text_or_keyword_or_hostname
+        | '@' user_variable_ident
         {
             $$.set($2, true);
         }
@@ -5579,7 +5586,7 @@ fields_or_vars:
 
 field_or_var:
           simple_ident_nospvar {$$= $1;}
-        | '@' ident_or_text_or_keyword_or_hostname
+        | '@' user_variable_ident
           { $$= new Item_user_var_as_out_param($2); }
         ;
 
@@ -5835,7 +5842,15 @@ table_ident:
         ;
 
 IDENT_sys:
-          IDENT { $$= $1; }
+          IDENT 
+          {
+            if (check_for_sql_keyword($1))
+            {
+              my_error(ER_SQL_KEYWORD, MYF(0), $1.length, $1.str);
+              DRIZZLE_YYABORT;
+            }
+            $$= $1;
+          }
         | IDENT_QUOTED
           {
             const CHARSET_INFO * const cs= system_charset_info;
@@ -5878,6 +5893,11 @@ ident:
           IDENT_sys    { $$=$1; }
         | keyword
           {
+            if (check_for_sql_keyword($1))
+            {
+              my_error(ER_SQL_KEYWORD, MYF(0), $1.length, $1.str);
+              DRIZZLE_YYABORT;
+            }
             $$.str= YYSession->strmake($1.str, $1.length);
             $$.length= $1.length;
           }
@@ -5893,10 +5913,10 @@ engine_option_value:
         | TEXT_STRING_sys { $$=$1;}
         ;
 
-ident_or_text_or_keyword_or_hostname:
-          ident           { $$=$1;}
-        | TEXT_STRING_sys { $$=$1;}
-        | LEX_HOSTNAME { $$=$1;}
+keyword_exception_for_variable:
+          TIMESTAMP_SYM         {}
+        | SQL_BUFFER_RESULT     {}
+        | IDENTITY_SYM          {}
         ;
 
 /* Keyword that we allow for identifiers (except SP labels) */
@@ -6057,7 +6077,6 @@ keyword_sp:
         | TEXT_SYM                 {}
         | TRANSACTION_SYM          {}
         | TIME_SYM                 {}
-        | TIMESTAMP_SYM            {}
         | TIMESTAMP_ADD            {}
         | TIMESTAMP_DIFF           {}
         | TYPES_SYM                {}
@@ -6160,7 +6179,7 @@ sys_option_value:
         ;
 
 option_value:
-          '@' ident_or_text_or_keyword_or_hostname equal expr
+          '@' user_variable_ident equal expr
           {
             Lex->var_list.push_back(new set_var_user(new Item_func_set_user_var($2,$4)));
           }
@@ -6170,13 +6189,28 @@ option_value:
           }
         ;
 
+user_variable_ident:
+          internal_variable_ident { $$=$1;}
+        | TEXT_STRING_sys { $$=$1;}
+        | LEX_HOSTNAME { $$=$1;}
+        ;
+
+internal_variable_ident:
+          keyword_exception_for_variable
+          {
+            $$.str= YYSession->strmake($1.str, $1.length);
+            $$.length= $1.length;
+          }
+        | IDENT_sys    { $$=$1; }
+        ;
+
 internal_variable_name:
-          ident
+          internal_variable_ident
           {
             /* We have to lookup here since local vars can shadow sysvars */
             {
               /* Not an SP local variable */
-              sys_var *tmp=find_sys_var($1.str, $1.length);
+              sys_var *tmp= find_sys_var($1.str, $1.length);
               if (!tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;

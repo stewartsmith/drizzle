@@ -51,7 +51,7 @@ connect (con2,localhost,user2,,user2,);
 connection con1;
 
 # Check that we don't see other people's connections
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
 
 # Check that we can kill a process that is owned by our user
 --disable_reconnect
@@ -80,7 +80,7 @@ update t1 set kill_id = connection_id();
 
 # Test that we cannot kill a process owned by someone else
 connection con2;
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
 select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
 
 --error ER_NO_SUCH_THREAD
@@ -88,7 +88,7 @@ kill @id;
 
 # Test that root can see everybody
 connection default;
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
 
 # Test that root can kill someone else
 use user1;
