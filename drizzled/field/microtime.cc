@@ -37,6 +37,9 @@ namespace drizzled
 
 namespace field
 {
+
+static boost::posix_time::ptime epoch(boost::gregorian::date(1970, 1, 1));
+
 Microtime::Microtime(unsigned char *ptr_arg,
                      unsigned char *null_ptr_arg,
                      unsigned char null_bit_arg,
@@ -60,10 +63,10 @@ Microtime::Microtime(bool maybe_null_arg,
 }
 
 int Microtime::store(const char *from,
-                 uint32_t len,
-                 const CHARSET_INFO * const )
+                     uint32_t len,
+                     const CHARSET_INFO * const )
 {
-  Timestamp temporal;
+  MicroTimestamp temporal;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -73,10 +76,15 @@ int Microtime::store(const char *from,
     return 1;
   }
 
-  time_t tmp;
-  temporal.to_time_t(tmp);
+  struct timeval tmp;
+  temporal.to_timeval(tmp);
 
-  pack_num(tmp);
+  uint64_t tmp_seconds= tmp.tv_sec;
+  uint32_t tmp_micro= tmp.tv_sec;
+
+  pack_num(tmp_seconds);
+  pack_num(tmp_micro, ptr +8);
+
   return 0;
 }
 
@@ -103,12 +111,8 @@ int Microtime::store(int64_t from, bool)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  /* 
-   * Try to create a DateTime from the supplied integer.  Throw an error
-   * if unable to create a valid DateTime.  
-   */
-  Timestamp temporal;
-  if (! temporal.from_int64_t(from))
+  MicroTimestamp temporal;
+  if (not temporal.from_int64_t(from))
   {
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
@@ -120,7 +124,9 @@ int Microtime::store(int64_t from, bool)
   time_t tmp;
   temporal.to_time_t(tmp);
 
-  pack_num(tmp);
+  uint64_t tmp_micro= tmp;
+  pack_num(tmp_micro);
+  pack_num(static_cast<uint32_t>(0), ptr +8);
 
   return 0;
 }
@@ -144,12 +150,14 @@ int64_t Microtime::val_int(void)
   /* We must convert into a "timestamp-formatted integer" ... */
   int64_t result;
   temporal.to_int64_t(&result);
+
   return result;
 }
 
 String *Microtime::val_str(String *val_buffer, String *)
 {
   uint64_t temp= 0;
+  uint32_t micro_temp= 0;
   char *to;
   int to_len= field_length + 1;
 
@@ -157,14 +165,20 @@ String *Microtime::val_str(String *val_buffer, String *)
   to= (char *) val_buffer->ptr();
 
   unpack_num(temp);
+  unpack_num(micro_temp, ptr +8);
 
   val_buffer->set_charset(&my_charset_bin);	/* Safety */
 
-  Timestamp temporal;
-  (void) temporal.from_time_t((time_t) temp);
+  struct timeval buffer;
+  buffer.tv_sec= temp;
+  buffer.tv_usec= micro_temp;
+
+  MicroTimestamp temporal;
+  (void) temporal.from_timeval(buffer);
 
   int rlen;
   rlen= temporal.to_string(to, to_len);
+  std::cerr << "->" << rlen << " < " << to_len << std::endl;
   assert(rlen < to_len);
 
   val_buffer->length(rlen);
@@ -174,8 +188,10 @@ String *Microtime::val_str(String *val_buffer, String *)
 bool Microtime::get_date(type::Time *ltime, uint32_t)
 {
   uint64_t temp;
+  uint32_t micro_temp= 0;
 
   unpack_num(temp);
+  unpack_num(micro_temp, ptr +8);
   
   memset(ltime, 0, sizeof(*ltime));
 
@@ -191,6 +207,7 @@ bool Microtime::get_date(type::Time *ltime, uint32_t)
   ltime->hour= temporal.hours();
   ltime->minute= temporal.minutes();
   ltime->second= temporal.seconds();
+  ltime->second_part= temporal.useconds();
 
   return 0;
 }
@@ -203,9 +220,16 @@ bool Microtime::get_time(type::Time *ltime)
 int Microtime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   uint64_t a,b;
+  uint32_t a_micro, b_micro;
 
   unpack_num(a, a_ptr);
+  unpack_num(a_micro, a_ptr +8);
+
   unpack_num(b, b_ptr);
+  unpack_num(b_micro, b_ptr +8);
+
+  if (a == b)
+    return (a_micro < b_micro) ? -1 : (a_micro > b_micro) ? 1 : 0;
 
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
@@ -217,6 +241,7 @@ void Microtime::sort_string(unsigned char *to,uint32_t )
   if ((not getTable()) or (not getTable()->getShare()->db_low_byte_first))
   {
     std::reverse_copy(to, to+pack_length(), ptr);
+    std::reverse_copy(to +8, to+pack_length(), ptr +8);
   }
   else
 #endif
@@ -235,20 +260,10 @@ void Microtime::set_time()
   Session *session= getTable() ? getTable()->in_use : current_session;
   time_t tmp= session->query_start();
   set_notnull();
-  pack_num(tmp);
-}
 
-void Microtime::set_default()
-{
-  if (getTable()->timestamp_field == this &&
-      unireg_check != TIMESTAMP_UN_FIELD)
-  {
-    set_time();
-  }
-  else
-  {
-    Field::set_default();
-  }
+  uint64_t tmp_micro= tmp;
+  pack_num(tmp_micro);
+  pack_num(static_cast<uint32_t>(0), ptr +8);
 }
 
 long Microtime::get_timestamp(bool *null_value)

@@ -1332,6 +1332,32 @@ bool Date::from_time_t(const time_t from)
     return false;
 }
 
+bool DateTime::from_timeval(struct timeval &timeval_arg)
+{
+  struct tm broken_time;
+  struct tm *result;
+
+  result= gmtime_r(&timeval_arg.tv_sec, &broken_time);
+  if (result != NULL)
+  {
+    _years= 1900 + broken_time.tm_year;
+    _months= 1 + broken_time.tm_mon; /* Month is NOT ordinal for struct tm! */
+    _days= broken_time.tm_mday; /* Day IS ordinal for struct tm */
+    _hours= broken_time.tm_hour;
+    _minutes= broken_time.tm_min;
+    _seconds= broken_time.tm_sec;
+    _epoch_seconds= timeval_arg.tv_sec;
+    /* Set hires precision to zero */
+    _useconds= timeval_arg.tv_usec;
+    _nseconds= 0;
+    return is_valid();
+  }
+  else 
+  {
+    return false;
+  }
+}
+
 bool DateTime::from_time_t(const time_t from)
 {
   struct tm broken_time;
@@ -1353,7 +1379,9 @@ bool DateTime::from_time_t(const time_t from)
     return is_valid();
   }
   else 
+  {
     return false;
+  }
 }
 
 void Date::to_time_t(time_t &to) const
@@ -1373,10 +1401,10 @@ void Timestamp::to_time_t(time_t &to) const
   to= _epoch_seconds;
 }
 
-void MicroTimestamp::to_timeval(struct timeval *to) const
+void MicroTimestamp::to_timeval(struct timeval &to) const
 {
-  to->tv_sec= _epoch_seconds;
-  to->tv_usec= _useconds;
+  to.tv_sec= _epoch_seconds;
+  to.tv_usec= _useconds;
 }
 
 void NanoTimestamp::to_timespec(struct timespec *to) const

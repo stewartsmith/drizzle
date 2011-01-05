@@ -1274,12 +1274,30 @@ void Field::pack_num(uint64_t arg, unsigned char *destination)
   int64_tstore(destination, arg);
 }
 
+void Field::pack_num(uint32_t arg, unsigned char *destination)
+{
+  if (not destination)
+    destination= ptr;
+
+  longstore(destination, arg);
+}
+
 uint64_t Field::unpack_num(uint64_t &destination, const unsigned char *arg) const
 {
   if (not arg)
     arg= ptr;
 
   int64_tget(destination, arg);
+
+  return destination;
+}
+
+uint32_t Field::unpack_num(uint32_t &destination, const unsigned char *arg) const
+{
+  if (not arg)
+    arg= ptr;
+
+  longget(destination, arg);
 
   return destination;
 }

@@ -47,14 +47,13 @@ public:
   Microtime(bool maybe_null_arg,
             const char *field_name_arg);
 
-  enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
-  enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
-  enum Item_result cmp_type () const { return INT_RESULT; }
+  enum_field_types type() const { return DRIZZLE_TYPE_MICROTIME;}
+  enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
+  enum Item_result cmp_type () const { return STRING_RESULT; }
   int  store(const char *to,uint32_t length,
              const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int  reset(void) { memset(ptr, 0, max_string_length()); return 0; }
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
@@ -65,7 +64,6 @@ public:
   bool can_be_compared_as_int64_t() const { return false; }
   bool zero_pack() const { return 0; }
   void set_time();
-  virtual void set_default();
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Microtime */
   long get_timestamp(bool *null_value);
@@ -77,7 +75,7 @@ private:
 public:
   static size_t max_string_length()
   {
-    return 8;
+    return 12;
   }
 };
 

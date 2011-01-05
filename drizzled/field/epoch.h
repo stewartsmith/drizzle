@@ -60,15 +60,15 @@ public:
   String *val_str(String*,String *);
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
-  uint32_t pack_length() const { return 8; }
-  void sql_type(String &str) const;
-  bool can_be_compared_as_int64_t() const { return true; }
+  virtual uint32_t pack_length() const { return 8; }
+  virtual void sql_type(String &str) const;
+  virtual bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 0; }
-  void set_time();
+  virtual void set_time();
   virtual void set_default();
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Epoch */
-  long get_timestamp(bool *null_value);
+  virtual long get_timestamp(bool *null_value);
 
   virtual bool is_timestamp() const
   {

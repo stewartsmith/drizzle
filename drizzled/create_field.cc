@@ -306,14 +306,14 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_TIMESTAMP:
       if (not fld_length)
       {
-        length= DateTime::MAX_STRING_LENGTH;
+        length= MicroTimestamp::MAX_STRING_LENGTH;
       }
 
       /* This assert() should be correct due to absence of length
          specifiers for timestamp. Previous manipulation also wasn't
          ever called (from examining lcov)
       */
-      assert(length == (uint32_t)DateTime::MAX_STRING_LENGTH);
+      assert(length == (uint32_t)MicroTimestamp::MAX_STRING_LENGTH);
 
       flags|= UNSIGNED_FLAG;
       if (fld_default_value)

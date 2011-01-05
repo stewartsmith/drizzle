@@ -755,7 +755,9 @@ public:
 protected:
 
   void pack_num(uint64_t arg, unsigned char *destination= NULL);
+  void pack_num(uint32_t arg, unsigned char *destination= NULL);
   uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const;
+  uint32_t unpack_num(uint32_t &destination, const unsigned char *arg= NULL) const;
 };
 
 std::ostream& operator<<(std::ostream& output, const Field &field);

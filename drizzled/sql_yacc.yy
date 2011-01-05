@@ -1641,6 +1641,7 @@ type:
           | TIMESTAMP_SYM
           {
             $$=DRIZZLE_TYPE_TIMESTAMP;
+            Lex->length= 0;
 
             statement::CreateTable *statement=
               (statement::CreateTable *)Lex->statement;
@@ -1651,6 +1652,7 @@ type:
           | MICROSECOND_SYM TIMESTAMP_SYM
           {
             $$=DRIZZLE_TYPE_MICROTIME;
+            Lex->length= 0;
 
             statement::CreateTable *statement=
               (statement::CreateTable *)Lex->statement;
@@ -1909,7 +1911,9 @@ attribute:
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ON UPDATE_SYM NOW_SYM optional_braces
-          { ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local(); }
+          {
+            ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
+          }
         | AUTO_INC
           {
             Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;
