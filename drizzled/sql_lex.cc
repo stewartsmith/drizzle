@@ -265,6 +265,7 @@ void lex_start(Session *session)
   lex->nest_level=0 ;
   lex->allow_sum_func= 0;
   lex->in_sum_func= NULL;
+  lex->type= 0;
 
   lex->is_lex_started= true;
   lex->statement= NULL;

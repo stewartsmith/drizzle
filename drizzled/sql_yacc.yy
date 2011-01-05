@@ -469,7 +469,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CONSISTENT_SYM
 %token  CONSTRAINT                    /* SQL-2003-R */
 %token  CONTAINS_SYM                  /* SQL-2003-N */
-%token  CONTINUE_SYM                  /* SQL-2003-R */
 %token  CONVERT_SYM                   /* SQL-2003-N */
 %token  COUNT_SYM                     /* SQL-2003-N */
 %token  CREATE                        /* SQL-2003-R */
@@ -530,7 +529,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  EXTENDED_SYM
 %token  EXTRACT_SYM                   /* SQL-2003-N */
 %token  FALSE_SYM                     /* SQL-2003-R */
-%token  FETCH_SYM                     /* SQL-2003-R */
 %token  COLUMN_FORMAT_SYM
 %token  FILE_SYM
 %token  FIRST_SYM                     /* SQL-2003-N */
@@ -594,7 +592,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LIST_SYM
 %token  LOAD
 %token  LOCAL_SYM                     /* SQL-2003-R */
-%token  LOCATOR_SYM                   /* SQL-2003-N */
 %token  LOCKS_SYM
 %token  LOCK_SYM
 %token  LOGS_SYM
@@ -5404,10 +5401,6 @@ kill:
             if ($2)
             {
               Lex->type= ONLY_KILL_QUERY;
-            }
-            else
-            {
-              Lex->type= 0;
             }
 
             Lex->value_list.empty();
