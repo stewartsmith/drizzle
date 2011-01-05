@@ -67,13 +67,14 @@ void ReadRecord::init_read_record_idx(Session *,
 }
 
 
-void ReadRecord::init_read_record(Session *session_arg, 
-                                  Table *table_arg,
-                                  optimizer::SqlSelect *select_arg,
-                                  int use_record_cache, 
-                                  bool print_error_arg)
+int ReadRecord::init_read_record(Session *session_arg,
+                                 Table *table_arg,
+                                 optimizer::SqlSelect *select_arg,
+                                 int use_record_cache,
+                                 bool print_error_arg)
 {
   internal::IO_CACHE *tempfile;
+  int error= 0;
 
   session= session_arg;
   table= table_arg;
@@ -114,7 +115,11 @@ void ReadRecord::init_read_record(Session *session_arg,
     io_cache->reinit_io_cache(internal::READ_CACHE,0L,0,0);
     ref_pos=table->cursor->ref;
     if (!table->cursor->inited)
-      table->cursor->startTableScan(0);
+    {
+      error= table->cursor->startTableScan(0);
+      if (error != 0)
+        return error;
+    }
 
     /*
       table->sort.addon_field is checked because if we use addon fields,
@@ -146,7 +151,10 @@ void ReadRecord::init_read_record(Session *session_arg,
   }
   else if (table->sort.record_pointers)
   {
-    table->cursor->startTableScan(0);
+    error= table->cursor->startTableScan(0);
+    if (error != 0)
+      return error;
+
     cache_pos=table->sort.record_pointers;
     cache_end= cache_pos+ table->sort.found_records * ref_length;
     read_record= (table->sort.addon_field ?  rr_unpack_from_buffer : rr_from_pointers);
@@ -154,7 +162,10 @@ void ReadRecord::init_read_record(Session *session_arg,
   else
   {
     read_record= rr_sequential;
-    table->cursor->startTableScan(1);
+    error= table->cursor->startTableScan(1);
+    if (error != 0)
+      return error;
+
     /* We can use record cache if we don't update dynamic length tables */
     if (!table->no_cache &&
         (use_record_cache > 0 ||
@@ -165,7 +176,7 @@ void ReadRecord::init_read_record(Session *session_arg,
     }
   }
 
-  return;
+  return 0;
 } /* init_read_record */
 
 

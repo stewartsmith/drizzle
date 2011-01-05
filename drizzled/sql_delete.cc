@@ -241,7 +241,13 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
 
   if (usable_index==MAX_KEY)
   {
-    info.init_read_record(session,table,select,1,1);
+    if ((error= info.init_read_record(session,table,select,1,1)))
+    {
+      table->print_error(error, MYF(0));
+      delete select;
+      free_underlaid_joins(session, select_lex);
+      return true;
+    }
   }
   else
   {

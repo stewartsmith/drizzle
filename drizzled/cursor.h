@@ -234,7 +234,7 @@ public:
   int ha_open(const TableIdentifier &identifier, int mode, int test_if_locked);
   int startIndexScan(uint32_t idx, bool sorted);
   int endIndexScan();
-  int startTableScan(bool scan);
+  int startTableScan(bool scan) __attribute__ ((warn_unused_result));
   int endTableScan();
   int ha_reset();
 
@@ -535,7 +535,7 @@ private:
     if rnd_init allocates the cursor, second call should position it
     to the start of the table, no need to deallocate and allocate it again
   */
-  virtual int doStartTableScan(bool scan)= 0;
+  virtual int doStartTableScan(bool scan) __attribute__ ((warn_unused_result)) = 0;
   virtual int doEndTableScan() { return 0; }
   virtual int doInsertRecord(unsigned char *)
   {

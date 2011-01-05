@@ -3728,7 +3728,8 @@ int join_init_read_record(JoinTable *tab)
   if (tab->select && tab->select->quick && tab->select->quick->reset())
     return 1;
 
-  tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true);
+  if (tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true))
+    return 1;
 
   return (*tab->read_record.read_record)(&tab->read_record);
 }
@@ -5099,7 +5100,9 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   org_record=(char*) (record=table->getInsertRecord())+offset;
   new_record=(char*) table->getUpdateRecord()+offset;
 
-  cursor->startTableScan(1);
+  if ((error= cursor->startTableScan(1)))
+    goto err;
+
   error=cursor->rnd_next(record);
   for (;;)
   {
@@ -5216,7 +5219,9 @@ int remove_dup_with_hash_index(Session *session,
     return(1);
   }
 
-  cursor->startTableScan(1);
+  if ((error= cursor->startTableScan(1)))
+    goto err;
+
   key_pos= &key_buffer[0];
   for (;;)
   {

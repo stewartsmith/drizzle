@@ -2290,7 +2290,12 @@ int subselect_uniquesubquery_engine::scan_table()
   if (table->cursor->inited)
     table->cursor->endIndexScan();
 
-  table->cursor->startTableScan(1);
+  if ((error= table->cursor->startTableScan(1)))
+  {
+    table->print_error(error, MYF(0));
+    return 1;
+  }
+
   table->cursor->extra_opt(HA_EXTRA_CACHE,
                            current_session->variables.read_buff_size);
   table->null_row= 0;

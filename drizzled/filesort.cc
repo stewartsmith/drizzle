@@ -564,7 +564,8 @@ ha_rows FileSort::find_all_keys(SortParam *param,
   if (! indexfile && ! quick_select)
   {
     next_pos=(unsigned char*) 0;			/* Find records in sequence */
-    file->startTableScan(1);
+    if (file->startTableScan(1))
+      return(HA_POS_ERROR);
     file->extra_opt(HA_EXTRA_CACHE, getSession().variables.read_buff_size);
   }
 
@@ -574,7 +575,8 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     if (select->quick->reset())
       return(HA_POS_ERROR);
 
-    read_record_info.init_read_record(&getSession(), select->quick->head, select, 1, 1);
+    if (read_record_info.init_read_record(&getSession(), select->quick->head, select, 1, 1))
+      return(HA_POS_ERROR);
   }
 
   /* Remember original bitmaps */
