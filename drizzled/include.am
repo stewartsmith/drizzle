@@ -886,6 +886,7 @@ EXTRA_DIST+= \
 	     drizzled/function_hash.gperf \
 	     drizzled/message.mc \
 	     drizzled/probes.d \
+	     drizzled/sql_non_reserved_words.gperf \
 	     drizzled/sql_reserved_words.gperf \
 	     drizzled/symbol_hash.gperf
 
@@ -894,6 +895,8 @@ CLEANFILES+= \
 	     drizzled/function_hash.h \
 	     drizzled/function_hash.stamp-h \
 	     drizzled/sql_yacc.output \
+	     drizzled/sql_non_reserved_words.h \
+	     drizzled/sql_non_reserved_words.stamp-h \
 	     drizzled/sql_reserved_words.h \
 	     drizzled/sql_reserved_words.stamp-h \
 	     drizzled/symbol_hash.h \
