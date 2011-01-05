@@ -37,7 +37,7 @@
 #include "config.h"
 
 #include "drizzled/charset_info.h"
-#include "drizzled/decimal.h"
+#include "drizzled/type/decimal.h"
 #include "drizzled/calendar.h"
 #include "drizzled/temporal.h"
 #include "drizzled/temporal_format.h"
@@ -1025,10 +1025,10 @@ bool Time::from_string(const char *from, size_t from_len)
     current++;
   }
 
-  if (! matched)
+  if (not matched)
     return false;
-  else
-    return is_valid();
+
+  return is_fuzzy_valid();
 }
 
 int Time::to_string(char *to, size_t to_len) const
@@ -1075,10 +1075,10 @@ int MicroTimestamp::to_string(char *to, size_t to_len) const
 		  _hours, _minutes, _seconds, _useconds);
 }
 
-void Time::to_decimal(my_decimal *to) const
+void Time::to_decimal(type::Decimal *to) const
 {
   int64_t time_portion= (((_hours * 100L) + _minutes) * 100L) + _seconds;
-  (void) int2my_decimal(E_DEC_FATAL_ERROR, time_portion, false, to);
+  (void) int2_class_decimal(E_DEC_FATAL_ERROR, time_portion, false, to);
   if (_useconds > 0)
   {
     to->buf[(to->intg-1) / 9 + 1]= _useconds * 1000;
@@ -1086,17 +1086,17 @@ void Time::to_decimal(my_decimal *to) const
   }
 }
 
-void Date::to_decimal(my_decimal *to) const
+void Date::to_decimal(type::Decimal *to) const
 {
   int64_t date_portion= (((_years * 100L) + _months) * 100L) + _days;
-  (void) int2my_decimal(E_DEC_FATAL_ERROR, date_portion, false, to);
+  (void) int2_class_decimal(E_DEC_FATAL_ERROR, date_portion, false, to);
 }
 
-void DateTime::to_decimal(my_decimal *to) const
+void DateTime::to_decimal(type::Decimal *to) const
 {
   int64_t date_portion= (((_years * 100L) + _months) * 100L) + _days;
   int64_t time_portion= (((((date_portion * 100L) + _hours) * 100L) + _minutes) * 100L) + _seconds;
-  (void) int2my_decimal(E_DEC_FATAL_ERROR, time_portion, false, to);
+  (void) int2_class_decimal(E_DEC_FATAL_ERROR, time_portion, false, to);
   if (_useconds > 0)
   {
     to->buf[(to->intg-1) / 9 + 1]= _useconds * 1000;
@@ -1122,6 +1122,14 @@ void Time::to_int32_t(int32_t *to) const
 {
   *to= (_hours * INT32_C(10000)) 
      + (_minutes * INT32_C(100)) 
+     + _seconds;
+}
+
+// We fill the structure based on just int
+void Time::to_uint64_t(uint64_t &to) const
+{
+  to= _hours * 24
+     + _minutes * 60
      + _seconds;
 }
 
@@ -1348,19 +1356,21 @@ bool DateTime::from_time_t(const time_t from)
     return false;
 }
 
-void Date::to_time_t(time_t *to) const
+void Date::to_time_t(time_t &to) const
 {
   if (in_unix_epoch())
   {
-    *to= _epoch_seconds;
+    to= _epoch_seconds;
   }
   else
-    *to= 0;
+  {
+    to= 0;
+  }
 }
 
-void Timestamp::to_time_t(time_t *to) const
+void Timestamp::to_time_t(time_t &to) const
 {
-  *to= _epoch_seconds;
+  to= _epoch_seconds;
 }
 
 void MicroTimestamp::to_timeval(struct timeval *to) const
@@ -1387,6 +1397,19 @@ bool Time::is_valid() const
   return (_years == 0)
       && (_months == 0)
       && (_days == 0)
+      && (_hours <= 23)
+      && (_minutes <= 59)
+      && (_seconds <= 59); /* No Leap second... TIME is for elapsed time... */
+}
+
+bool Time::is_fuzzy_valid() const
+{
+  if (is_valid())
+    return true;
+
+  return (_years >= DRIZZLE_MIN_YEARS_SQL && _years <= DRIZZLE_MAX_YEARS_SQL)
+      && (_months >= 1 && _months <= 12)
+      && (_days >= 1 && _days <= days_in_gregorian_year_month(_years, _months))
       && (_hours <= 23)
       && (_minutes <= 59)
       && (_seconds <= 59); /* No Leap second... TIME is for elapsed time... */

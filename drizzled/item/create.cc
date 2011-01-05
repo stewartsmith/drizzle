@@ -83,6 +83,11 @@
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
 
+#include "drizzled/function/cast/boolean.h"
+#include "drizzled/function/cast/signed.h"
+#include "drizzled/function/cast/time.h"
+#include "drizzled/function/cast/unsigned.h"
+
 using namespace std;
 
 namespace drizzled
@@ -2083,58 +2088,72 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
                  const char *c_len, const char *c_dec,
                  const CHARSET_INFO * const cs)
 {
-  Item *res;
+  Item *res= NULL;
   uint32_t len;
   uint32_t dec;
 
   switch (cast_type) {
+  case ITEM_CAST_SIGNED:
+    res= new (session->mem_root) function::cast::Signed(a);
+    break;
+
+  case ITEM_CAST_UNSIGNED:
+    res= new (session->mem_root) function::cast::Unsigned(a);
+    break;
+
   case ITEM_CAST_BINARY:
     res= new (session->mem_root) Item_func_binary(a);
     break;
+
+  case ITEM_CAST_BOOLEAN:
+    res= new (session->mem_root) function::cast::Boolean(a);
+    break;
+
+  case ITEM_CAST_TIME:
+    res= new (session->mem_root) function::cast::Time(a);
+    break;
+
   case ITEM_CAST_DATE:
     res= new (session->mem_root) Item_date_typecast(a);
     break;
+
   case ITEM_CAST_DATETIME:
     res= new (session->mem_root) Item_datetime_typecast(a);
     break;
+
   case ITEM_CAST_DECIMAL:
-  {
-    len= c_len ? atoi(c_len) : 0;
-    dec= c_dec ? atoi(c_dec) : 0;
-    my_decimal_trim(&len, &dec);
-    if (len < dec)
     {
-      my_error(ER_M_BIGGER_THAN_D, MYF(0), "");
-      return 0;
+      len= c_len ? atoi(c_len) : 0;
+      dec= c_dec ? atoi(c_dec) : 0;
+      class_decimal_trim(&len, &dec);
+      if (len < dec)
+      {
+        my_error(ER_M_BIGGER_THAN_D, MYF(0), "");
+        return 0;
+      }
+      if (len > DECIMAL_MAX_PRECISION)
+      {
+        my_error(ER_TOO_BIG_PRECISION, MYF(0), len, a->name,
+                 DECIMAL_MAX_PRECISION);
+        return 0;
+      }
+      if (dec > DECIMAL_MAX_SCALE)
+      {
+        my_error(ER_TOO_BIG_SCALE, MYF(0), dec, a->name,
+                 DECIMAL_MAX_SCALE);
+        return 0;
+      }
+      res= new (session->mem_root) Item_decimal_typecast(a, len, dec);
+      break;
     }
-    if (len > DECIMAL_MAX_PRECISION)
-    {
-      my_error(ER_TOO_BIG_PRECISION, MYF(0), len, a->name,
-               DECIMAL_MAX_PRECISION);
-      return 0;
-    }
-    if (dec > DECIMAL_MAX_SCALE)
-    {
-      my_error(ER_TOO_BIG_SCALE, MYF(0), dec, a->name,
-               DECIMAL_MAX_SCALE);
-      return 0;
-    }
-    res= new (session->mem_root) Item_decimal_typecast(a, len, dec);
-    break;
-  }
   case ITEM_CAST_CHAR:
-  {
-    len= c_len ? atoi(c_len) : -1;
-    res= create_func_char_cast(session, a, len, cs);
-    break;
+    {
+      len= c_len ? atoi(c_len) : -1;
+      res= create_func_char_cast(session, a, len, cs);
+      break;
+    }
   }
-  default:
-  {
-    assert(0);
-    res= 0;
-    break;
-  }
-  }
+
   return res;
 }
 

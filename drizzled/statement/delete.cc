@@ -45,7 +45,7 @@ bool statement::Delete::execute()
     return true;
   }
 
-  bool res= mysql_delete(session, all_tables, select_lex->where,
+  bool res= delete_query(session, all_tables, select_lex->where,
                          &select_lex->order_list,
                          unit->select_limit_cnt, select_lex->options,
                          false);

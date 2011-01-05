@@ -319,6 +319,10 @@ public:
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
   typedef Session* Ptr;
   typedef boost::shared_ptr<Session> shared_ptr;
+  typedef Session& reference;
+  typedef const Session& const_reference;
+  typedef const Session* const_pointer;
+  typedef Session* pointer;
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -529,7 +533,10 @@ public:
   static const char * const DEFAULT_WHERE;
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
+private:
   plugin::Client *client; /**< Pointer to client object */
+
+public:
 
   void setClient(plugin::Client *client_arg);
 
@@ -601,7 +608,7 @@ public:
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable() const;
+  bool isViewable(identifier::User::const_reference) const;
 
   /**
     Used in error messages to tell user in what part of MySQL we found an
@@ -653,11 +660,31 @@ public:
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* @note the following three members should likely move to Client */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
-  time_t start_time;
-  time_t user_time;
-  uint64_t thr_create_utime; /**< track down slow pthread_create */
-  uint64_t start_utime;
-  uint64_t utime_after_lock;
+
+private:
+  boost::posix_time::ptime _epoch;
+  boost::posix_time::ptime _connect_time;
+  boost::posix_time::ptime _start_timer;
+  boost::posix_time::ptime _end_timer;
+
+  boost::posix_time::ptime _user_time;
+public:
+  uint64_t utime_after_lock; // This used by Innodb.
+
+  void resetUserTime()
+  {
+    _user_time= boost::posix_time::not_a_date_time;
+  }
+
+  const boost::posix_time::ptime &start_timer() const
+  {
+    return _start_timer;
+  }
+
+  void getTimeDifference(boost::posix_time::time_duration &result_arg, const boost::posix_time::ptime &arg) const
+  {
+    result_arg=  arg - _start_timer;
+  }
 
   thr_lock_type update_lock_default;
 
@@ -678,6 +705,7 @@ private:
   */
   query_id_t query_id;
   query_id_t warn_query_id;
+
 public:
   void **getEngineData(const plugin::MonitoredInTransaction *monitored);
   ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
@@ -851,6 +879,12 @@ public:
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
+
+  uint32_t getRowCount() const
+  {
+    return row_count;
+  }
+
   session_id_t thread_id;
   uint32_t tmp_table;
   enum global_read_lock_t
@@ -942,7 +976,7 @@ public:
     can not continue. In particular, disables activation of
     CONTINUE or EXIT handlers of stored routines.
     Reset in the end of processing of the current user request, in
-    @see mysql_reset_session_for_next_command().
+    @see reset_session_for_next_command().
   */
   bool is_fatal_error;
   /**
@@ -1217,6 +1251,7 @@ public:
    */
   static bool schedule(Session::shared_ptr&);
 
+  static void unlink(session_id_t &session_id);
   static void unlink(Session::shared_ptr&);
 
   /*
@@ -1227,64 +1262,89 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  inline time_t query_start() { return start_time; }
-  inline void set_time()
+  time_t query_start()
   {
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    start_utime= utime_after_lock= (mytime-epoch).total_microseconds();
-
-    if (user_time)
-    {
-      start_time= user_time;
-      connect_microseconds= start_utime;
-    }
-    else 
-      start_time= (mytime-epoch).total_seconds();
+    return getCurrentTimestampEpoch();
   }
-  inline void	set_current_time()    { start_time= time(NULL); }
-  inline void	set_time(time_t t)
+
+  void set_time()
   {
-    start_time= user_time= t;
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    uint64_t t_mark= (mytime-epoch).total_microseconds();
+    _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();
+    utime_after_lock= (_start_timer - _epoch).total_microseconds();
+  }
 
-    start_utime= utime_after_lock= t_mark;
+  void set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
+  {
+    _user_time= boost::posix_time::from_time_t(t);
   }
-  void set_time_after_lock()  { 
-     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-     utime_after_lock= (mytime-epoch).total_microseconds();
+
+  void set_time_after_lock()
+  { 
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
+    utime_after_lock= (mytime - _epoch).total_microseconds();
   }
+
+  void set_end_timer()
+  {
+    _end_timer= boost::posix_time::microsec_clock::universal_time();
+    status_var.execution_time_nsec+=(_end_timer - _start_timer).total_microseconds();
+  }
+
+  uint64_t getElapsedTime() const
+  {
+    return (_end_timer - _start_timer).total_microseconds();
+  }
+
   /**
    * Returns the current micro-timestamp
    */
-  inline uint64_t getCurrentTimestamp()  
+  uint64_t getCurrentTimestamp(bool actual= true) const
   { 
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    uint64_t t_mark= (mytime-epoch).total_microseconds();
+    uint64_t t_mark;
+
+    if (actual)
+    {
+      boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
+      t_mark= (mytime - _epoch).total_microseconds();
+    }
+    else
+    {
+      t_mark= (_end_timer - _epoch).total_microseconds();
+    }
 
     return t_mark; 
   }
-  inline uint64_t found_rows(void)
+
+  // We may need to set user on this
+  int64_t getCurrentTimestampEpoch() const
+  { 
+    if (not _user_time.is_not_a_date_time())
+      return (_user_time - _epoch).total_seconds();
+
+    return (_start_timer - _epoch).total_seconds();
+  }
+
+  uint64_t found_rows(void) const
   {
     return limit_found_rows;
   }
+
   /** Returns whether the session is currently inside a transaction */
-  inline bool inTransaction()
+  bool inTransaction() const
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
+
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
+
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const std::string &str,
                               bool allocate_lex_string);
 
   int send_explain_fields(select_result *result);
+
   /**
     Clear the current error, if any.
     We do not clear is_fatal_error or is_fatal_sub_stmt_error since we
@@ -1430,11 +1490,10 @@ public:
    * updates any status variables necessary.
    *
    * @param errcode	Error code to print to console
-   * @param should_lock 1 if we have have to lock LOCK_thread_count
    *
    * @note  For the connection that is doing shutdown, this is called twice
    */
-  void disconnect(uint32_t errcode, bool lock);
+  void disconnect(enum drizzled_error_code errcode= EE_OK);
 
   /**
    * Check if user exists and the password supplied is correct.
@@ -1454,9 +1513,14 @@ public:
    * Returns the timestamp (in microseconds) of when the Session 
    * connected to the server.
    */
-  inline uint64_t getConnectMicroseconds() const
+  uint64_t getConnectMicroseconds() const
   {
-    return connect_microseconds;
+    return (_connect_time - _epoch).total_microseconds();
+  }
+
+  uint64_t getConnectSeconds() const
+  {
+    return (_connect_time - _epoch).total_seconds();
   }
 
   /**
@@ -1577,8 +1641,6 @@ public:
   
   
  private:
- /** Microsecond timestamp of when Session connected */
-  uint64_t connect_microseconds;
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */

@@ -186,7 +186,7 @@ bool TemporalInterval::initFromItem(Item *args,
   return false;
 }
 
-bool TemporalInterval::addDate(DRIZZLE_TIME *ltime, interval_type int_type)
+bool TemporalInterval::addDate(type::Time *ltime, interval_type int_type)
 {
   long period, sign;
 

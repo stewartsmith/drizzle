@@ -56,9 +56,16 @@ public:
   Int64(uint32_t len_arg,bool maybe_null_arg,
         const char *field_name_arg,
         bool unsigned_arg) :
-    Field_num((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0,0,
-              NONE, field_name_arg,0,0,unsigned_arg)
+    Field_num((unsigned char*) 0,
+              len_arg, maybe_null_arg ? (unsigned char*) "": 0,
+              0,
+              NONE,
+              field_name_arg,
+              0,
+              0,
+              unsigned_arg)
     {
+      assert(not unsigned_arg);
     }
 
   enum Item_result result_type () const { return INT_RESULT; }

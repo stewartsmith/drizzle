@@ -135,7 +135,7 @@ TEST(TemporalFormatInitTest, init_temporal_formats_vectorsWithKnownFormats_shoul
 
   EXPECT_EQ(13, known_datetime_formats.size());	
   EXPECT_EQ(8, known_date_formats.size());
-  EXPECT_EQ(6, known_time_formats.size());
+  EXPECT_EQ(11, known_time_formats.size());
   EXPECT_EQ(19, all_temporal_formats.size());
 }
 

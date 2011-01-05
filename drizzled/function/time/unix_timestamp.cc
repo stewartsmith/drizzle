@@ -20,7 +20,7 @@
 #include "config.h"
 
 #include <drizzled/function/time/unix_timestamp.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/session.h>
 
 #include "drizzled/temporal.h"
@@ -30,16 +30,17 @@ namespace drizzled
 
 int64_t Item_func_unix_timestamp::val_int()
 {
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
   assert(fixed == 1);
   if (arg_count == 0)
     return (int64_t) current_session->query_start();
+
   if (args[0]->type() == FIELD_ITEM)
   {                                             // Optimize timestamp field
     Field *field=((Item_field*) args[0])->field;
     if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
-      return ((Field_timestamp*) field)->get_timestamp(&null_value);
+      return ((field::Epoch::pointer) field)->get_timestamp(&null_value);
   }
 
   if (get_arg0_date(&ltime, 0))
@@ -75,7 +76,7 @@ int64_t Item_func_unix_timestamp::val_int()
   }
 
   time_t tmp;
-  temporal.to_time_t(&tmp);
+  temporal.to_time_t(tmp);
 
   return (int64_t) tmp;
 }

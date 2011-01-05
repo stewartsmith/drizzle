@@ -33,7 +33,7 @@ public:
   const char *func_name() const { return "floor"; }
   int64_t int_op();
   double real_op();
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   bool check_argument_count(int n) { return n == 1; }
 };
 

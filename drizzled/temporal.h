@@ -72,7 +72,9 @@
 #include <ostream>
 
 /* Outside forward declarations */
-class my_decimal;
+namespace type {
+class Decimal;
+}
 
 namespace drizzled
 {
@@ -419,7 +421,7 @@ public:
    *
    * @param Pointer to a time_t to convert to
    */
-  virtual void to_time_t(time_t *to) const;
+  virtual void to_time_t(time_t &to) const;
 
   /**
    * Attempts to populate the Date instance based
@@ -433,12 +435,12 @@ public:
   virtual bool from_time_t(const time_t from);
 
   /**
-   * Fills a supplied my_decimal with a representation of
+   * Fills a supplied type::Decimal with a representation of
    * the Date value.
    *
-   * @param Pointer to the my_decimal to fill
+   * @param Pointer to the type::Decimal to fill
    */
-  virtual void to_decimal(my_decimal *to) const;
+  virtual void to_decimal(type::Decimal *to) const;
 
   friend class TemporalInterval;
   friend class Timestamp;
@@ -485,8 +487,10 @@ public:
   bool is_valid_datetime() const {return false;}
   bool is_valid_time() const {return is_valid();}
   bool is_valid_timestamp() const {return false;}
+
   /** Returns whether the temporal value is valid date. */
   bool is_valid() const;
+  bool is_fuzzy_valid() const;
 
   /**
    * Fills a supplied char string with a
@@ -530,6 +534,15 @@ public:
   void to_int32_t(int32_t *to) const;
 
   /**
+   * Fills a supplied 8-byte integer pointer with an
+   * integer representation of the Time
+   * value. It is assume seconds past unix epoch
+   *
+   * @param Integer to fill.
+   */
+  void to_uint64_t(uint64_t &to) const;
+
+  /**
    * Attempts to populate the Time instance based
    * on the contents of a supplied 4-byte integer.
    *
@@ -557,12 +570,12 @@ public:
   bool from_time_t(const time_t from);
 
   /**
-   * Fills a supplied my_decimal with a representation of
+   * Fills a supplied type::Decimal with a representation of
    * the Time value.
    *
-   * @param Pointer to the my_decimal to fill
+   * @param Pointer to the type::Decimal to fill
    */
-  void to_decimal(my_decimal *to) const;
+  void to_decimal(type::Decimal *to) const;
 
   friend class Date;
   friend class DateTime;
@@ -671,12 +684,12 @@ public:
   void to_tm(struct tm *to) const;
 
   /**
-   * Fills a supplied my_decimal with a representation of
+   * Fills a supplied type::Decimal with a representation of
    * the DateTime value.
    *
-   * @param Pointer to the my_decimal to fill
+   * @param Pointer to the type::Decimal to fill
    */
-  void to_decimal(my_decimal *to) const;
+  void to_decimal(type::Decimal *to) const;
 
   friend class Timestamp;
 };
@@ -738,7 +751,7 @@ public:
    *
    * @param Pointer to a time_t to convert to
    */
-  void to_time_t(time_t *to) const;
+  void to_time_t(time_t &to) const;
 };
 
 /**

@@ -101,7 +101,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg) :
 /*
   The following functions form part of the C plugin API
 */
-int mysql_tmpfile(const char *prefix)
+int tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
@@ -175,14 +175,35 @@ Session::Session(plugin::Client *client_arg) :
   lock_id(&main_lock_id),
   thread_stack(NULL),
   security_ctx(identifier::User::make_shared()),
-  user_time(0),
+  where(Session::DEFAULT_WHERE),
+  dbug_sentry(Session_SENTRY_MAGIC),
+  mysys_var(0),
+  command(COM_CONNECT),
+  file_id(0),
+  _epoch(boost::gregorian::date(1970,1,1)),
+  _connect_time(boost::posix_time::microsec_clock::universal_time()),
+  utime_after_lock(0),
   ha_data(plugin::num_trx_monitored_objects),
+  query_id(0),
+  warn_query_id(0),
   concurrent_execute_allowed(true),
   arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
+  options(session_startup_options),
+  row_count_func(-1),
+  sent_row_count(0),
+  examined_row_count(0),
+  used_tables(0),
+  total_warn_count(0),
+  col_access(0),
+  statement_id_counter(0),
+  row_count(0),
+  thread_id(0),
+  tmp_table(0),
   _global_read_lock(NONE),
+  count_cuted_fields(CHECK_FIELD_ERROR_FOR_NULL),
   _killed(NOT_KILLED),
   some_tables_deleted(false),
   no_errors(false),
@@ -207,26 +228,11 @@ Session::Session(plugin::Client *client_arg) :
     will be re-initialized in init_for_queries().
   */
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
-  count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-  col_access= 0;
-  tmp_table= 0;
-  used_tables= 0;
   cuted_fields= sent_row_count= row_count= 0L;
-  row_count_func= -1;
-  statement_id_counter= 0UL;
   // Must be reset to handle error with Session's created for init of mysqld
   lex->current_select= 0;
-  start_time=(time_t) 0;
-  start_utime= 0L;
-  utime_after_lock= 0L;
   memset(&variables, 0, sizeof(variables));
-  thread_id= 0;
-  file_id = 0;
-  query_id= 0;
-  warn_query_id= 0;
-  mysys_var= 0;
   scoreboard_index= -1;
-  dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;  
 
   /* query_cache init */
@@ -235,8 +241,6 @@ Session::Session(plugin::Client *client_arg) :
 
   /* Variables with default values */
   proc_info="login";
-  where= Session::DEFAULT_WHERE;
-  command= COM_CONNECT;
 
   plugin_sessionvar_init(this);
   /*
@@ -246,7 +250,6 @@ Session::Session(plugin::Client *client_arg) :
   */
   variables.pseudo_thread_id= thread_id;
   server_status= SERVER_STATUS_AUTOCOMMIT;
-  options= session_startup_options;
 
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
@@ -258,7 +261,6 @@ Session::Session(plugin::Client *client_arg) :
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
   warn_list.empty();
   memset(warn_count, 0, sizeof(warn_count));
-  total_warn_count= 0;
   memset(&status_var, 0, sizeof(status_var));
 
   /* Initialize sub structures */
@@ -379,7 +381,7 @@ Session::~Session()
 {
   this->checkSentry();
 
-  if (client->isConnected())
+  if (client and client->isConnected())
   {
     assert(security_ctx);
     if (global_system_variables.log_warnings)
@@ -390,12 +392,15 @@ Session::~Session()
                     security_ctx->username().c_str());
     }
 
-    disconnect(0, false);
+    disconnect();
   }
 
   /* Close connection */
-  client->close();
-  delete client;
+  if (client)
+  {
+    client->close();
+    delete client;
+  }
 
   if (cleanup_done == false)
     cleanup();
@@ -537,7 +542,7 @@ bool Session::initGlobals()
 {
   if (storeGlobals())
   {
-    disconnect(ER_OUT_OF_RESOURCES, true);
+    disconnect(ER_OUT_OF_RESOURCES);
     status_var.aborted_connects++;
     return true;
   }
@@ -548,7 +553,7 @@ void Session::run()
 {
   if (initGlobals() || authenticate())
   {
-    disconnect(0, true);
+    disconnect();
     return;
   }
 
@@ -560,7 +565,7 @@ void Session::run()
       break;
   }
 
-  disconnect(0, true);
+  disconnect();
 }
 
 bool Session::schedule(Session::shared_ptr &arg)
@@ -568,11 +573,13 @@ bool Session::schedule(Session::shared_ptr &arg)
   arg->scheduler= plugin::Scheduler::getScheduler();
   assert(arg->scheduler);
 
-  connection_count.increment();
+  ++connection_count;
 
-  if (connection_count > current_global_counters.max_used_connections)
+  long current_connections= connection_count;
+
+  if (current_connections > 0 and static_cast<uint64_t>(current_connections) > current_global_counters.max_used_connections)
   {
-    current_global_counters.max_used_connections= connection_count;
+    current_global_counters.max_used_connections= static_cast<uint64_t>(connection_count);
   }
 
   current_global_counters.connections++;
@@ -610,11 +617,9 @@ bool Session::schedule(Session::shared_ptr &arg)
 /*
   Is this session viewable by the current user?
 */
-bool Session::isViewable() const
+bool Session::isViewable(identifier::User::const_reference user_arg) const
 {
-  return plugin::Authorization::isAuthorized(current_session->user(),
-                                             this,
-                                             false);
+  return plugin::Authorization::isAuthorized(user_arg, this, false);
 }
 
 
@@ -645,7 +650,6 @@ void Session::exit_cond(const char* old_msg)
 
 bool Session::authenticate()
 {
-  lex->start(this);
   if (client->authenticate())
     return false;
 
@@ -671,9 +675,9 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     SchemaIdentifier identifier(in_db);
-    if (mysql_change_db(this, identifier))
+    if (change_db(this, identifier))
     {
-      /* mysql_change_db() has pushed the error message. */
+      /* change_db() has pushed the error message. */
       return false;
     }
   }
@@ -1510,15 +1514,15 @@ bool select_max_min_finder_subselect::cmp_int()
 bool select_max_min_finder_subselect::cmp_decimal()
 {
   Item *maxmin= ((Item_singlerow_subselect *)item)->element_index(0);
-  my_decimal cval, *cvalue= cache->val_decimal(&cval);
-  my_decimal mval, *mvalue= maxmin->val_decimal(&mval);
+  type::Decimal cval, *cvalue= cache->val_decimal(&cval);
+  type::Decimal mval, *mvalue= maxmin->val_decimal(&mval);
   if (fmax)
     return (cache->null_value && !maxmin->null_value) ||
       (!cache->null_value && !maxmin->null_value &&
-       my_decimal_cmp(cvalue, mvalue) > 0) ;
+       class_decimal_cmp(cvalue, mvalue) > 0) ;
   return (maxmin->null_value && !cache->null_value) ||
     (!cache->null_value && !maxmin->null_value &&
-     my_decimal_cmp(cvalue,mvalue) < 0);
+     class_decimal_cmp(cvalue,mvalue) < 0);
 }
 
 bool select_max_min_finder_subselect::cmp_str()
@@ -1651,7 +1655,7 @@ void mark_transaction_to_rollback(Session *session, bool all)
   }
 }
 
-void Session::disconnect(uint32_t errcode, bool should_lock)
+void Session::disconnect(enum drizzled_error_code errcode)
 {
   /* Allow any plugins to cleanup their session variables */
   plugin_sessionvar_cleanup(this);
@@ -1675,25 +1679,16 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     }
   }
 
-  /* Close out our connection to the client */
-  if (should_lock)
-    session::Cache::singleton().mutex().lock();
-
   setKilled(Session::KILL_CONNECTION);
 
   if (client->isConnected())
   {
-    if (errcode)
+    if (errcode != EE_OK)
     {
       /*my_error(errcode, ER(errcode));*/
       client->sendError(errcode, ER(errcode));
     }
     client->close();
-  }
-
-  if (should_lock)
-  {
-    session::Cache::singleton().mutex().unlock();
   }
 }
 
@@ -1790,7 +1785,6 @@ void Open_tables_state::nukeTable(Table *table)
 
   delete table->getMutableShare();
 
-  /* This makes me sad, but we're allocating it via malloc */
   delete table;
 }
 
@@ -1926,7 +1920,7 @@ void Session::close_thread_tables()
   /*
     Note that we need to hold table::Cache::singleton().mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -1964,9 +1958,9 @@ bool Session::openTablesLock(TableList *tables)
       return true;
     close_tables_for_reopen(&tables);
   }
-  if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
+  if ((handle_derived(lex, &derived_prepare) ||
        (
-        mysql_handle_derived(lex, &mysql_derived_filling))))
+        handle_derived(lex, &derived_filling))))
     return true;
 
   return false;

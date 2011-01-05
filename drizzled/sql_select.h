@@ -208,7 +208,7 @@ ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, T
 void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(Join *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
-bool mysql_select(Session *session, Item ***rref_pointer_array,
+bool select_query(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
                   COND *conds, uint32_t og_num, Order *order, Order *group,
                   Item *having, uint64_t select_type,

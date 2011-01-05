@@ -272,7 +272,7 @@ String *Field_blob::val_str(String *,
 }
 
 
-my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
+type::Decimal *Field_blob::val_decimal(type::Decimal *decimal_value)
 {
   const char *blob;
   size_t length;
@@ -286,10 +286,12 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
     length= 0;
   }
   else
+  {
     length= get_length(ptr);
+  }
 
-  str2my_decimal(E_DEC_FATAL_ERROR, blob, length, charset(),
-                 decimal_value);
+  decimal_value->store(E_DEC_FATAL_ERROR, blob, length, charset());
+
   return decimal_value;
 }
 

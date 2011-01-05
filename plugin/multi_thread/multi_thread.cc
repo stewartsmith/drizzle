@@ -55,14 +55,17 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
 
   if (drizzled::internal::my_thread_init())
   {
-    session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
+    session->disconnect(drizzled::ER_OUT_OF_RESOURCES);
     session->status_var.aborted_connects++;
-    killSessionNow(session);
   }
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
+  else
+  {
+    boost::this_thread::at_thread_exit(&internal::my_thread_end);
 
-  session->thread_stack= (char*) &stack_dummy;
-  session->run();
+    session->thread_stack= (char*) &stack_dummy;
+    session->run();
+  }
+
   killSessionNow(session);
   // @todo remove hard spin by disconnection the session first from the
   // thread.
@@ -113,8 +116,15 @@ bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
     return true;
 
   thread_count.increment();
-
-  session->getThread().reset(new boost::thread((boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()))));
+  try
+  {
+    session->getThread().reset(new boost::thread((boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()))));
+  }
+  catch (std::exception&)
+  {
+    thread_count.decrement();
+    return true;
+  }
 
   if (not session->getThread())
   {

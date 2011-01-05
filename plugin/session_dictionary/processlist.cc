@@ -43,16 +43,16 @@ ProcesslistTool::ProcesslistTool() :
   add_field("HOST", NI_MAXHOST);
   add_field("DB", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
   add_field("COMMAND", 16);
-  add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TIME", plugin::TableFunction::SIZE, 0, false);
   add_field("STATE", plugin::TableFunction::STRING, 256, true);
   add_field("INFO", plugin::TableFunction::STRING, PROCESS_LIST_WIDTH, true);
-  add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN);
+  add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 ProcesslistTool::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg)
+  plugin::TableFunction::Generator(arg),
+  session_generator(*getSession().user())
 {
-  now= time(NULL);
 }
 
 ProcesslistTool::Generator::~Generator()
@@ -61,7 +61,7 @@ ProcesslistTool::Generator::~Generator()
 
 bool ProcesslistTool::Generator::populate()
 {
-  drizzled::Session::shared_ptr tmp;
+  drizzled::Session::pointer tmp;
 
   while ((tmp= session_generator))
   {
@@ -102,20 +102,14 @@ bool ProcesslistTool::Generator::populate()
       push(command_name[tmp->command].str, command_name[tmp->command].length);
     }
 
-    /* DRIZZLE_TIME */
-    push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
+    /* type::Time */
+    boost::posix_time::time_duration duration_result;
+    getSession().getTimeDifference(duration_result, getSession().start_timer());
+    duration_result.is_negative() ? push(static_cast<uint64_t>(0)) : push(static_cast<uint64_t>(duration_result.total_seconds()));
 
     /* STATE */
     const char *step= tmp->get_proc_info();
-
-    if (step)
-    {
-      push(step);
-    }
-    else
-    {
-      push();
-    }
+    step ? push(step): push();
 
     /* INFO */
     if (state)

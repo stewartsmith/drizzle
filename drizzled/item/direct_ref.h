@@ -45,10 +45,10 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String* tmp);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool val_bool();
   bool is_null();
-  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
+  bool get_date(type::Time *ltime,uint32_t fuzzydate);
   virtual Ref_Type ref_type() { return DIRECT_REF; }
 };
 

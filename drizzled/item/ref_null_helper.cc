@@ -43,10 +43,10 @@ int64_t Item_ref_null_helper::val_int()
 }
 
 
-my_decimal *Item_ref_null_helper::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_ref_null_helper::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
-  my_decimal *val= (*ref)->val_decimal_result(decimal_value);
+  type::Decimal *val= (*ref)->val_decimal_result(decimal_value);
   owner->was_null|= null_value= (*ref)->null_value;
   return val;
 }
@@ -68,7 +68,7 @@ String* Item_ref_null_helper::val_str(String* s)
   return tmp;
 }
 
-bool Item_ref_null_helper::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
+bool Item_ref_null_helper::get_date(type::Time *ltime, uint32_t fuzzydate)
 {
   return (owner->was_null|= null_value= (*ref)->get_date(ltime, fuzzydate));
 }

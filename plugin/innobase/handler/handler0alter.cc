@@ -29,7 +29,6 @@ Smart ALTER TABLE
 #include <drizzled/field/varstring.h>
 #include "drizzled/internal/my_sys.h"
 
-extern "C" {
 #include "log0log.h"
 #include "row0merge.h"
 #include "srv0srv.h"
@@ -37,7 +36,6 @@ extern "C" {
 #include "trx0roll.h"
 #include "ha_prototypes.h"
 #include "handler0alter.h"
-}
 
 #include "ha_innodb.h"
 #include "handler0vars.h"
@@ -132,7 +130,7 @@ innobase_col_to_mysql(
 
 /*************************************************************//**
 Copies an InnoDB record to table->getInsertRecord(). */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_rec_to_mysql(
 /*==================*/
@@ -182,7 +180,7 @@ null_field:
 
 /*************************************************************//**
 Resets table->getInsertRecord(). */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_rec_reset(
 /*===============*/
@@ -1007,12 +1005,13 @@ ha_innobase::prepare_drop_index(
 		index->to_be_dropped = TRUE;
 	}
 
-	/* If FOREIGN_KEY_CHECK = 1 you may not drop an index defined
+	/* If FOREIGN_KEY_CHECKS = 1 you may not drop an index defined
 	for a foreign key constraint because InnoDB requires that both
-	tables contain indexes for the constraint.  Note that CREATE
-	INDEX id ON table does a CREATE INDEX and DROP INDEX, and we
-	can ignore here foreign keys because a new index for the
-	foreign key has already been created.
+	tables contain indexes for the constraint. Such index can
+	be dropped only if FOREIGN_KEY_CHECKS is set to 0.
+	Note that CREATE INDEX id ON table does a CREATE INDEX and
+	DROP INDEX, and we can ignore here foreign keys because a
+	new index for the foreign key has already been created.
 
 	We check for the foreign key constraints after marking the
 	candidate indexes for deletion, because when we check for an

@@ -47,7 +47,6 @@
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/session.h>
 
 #include <string>
@@ -3902,7 +3901,7 @@ int ha_pbxt::info(uint flag)
 			 * #1	0x0022e1f1 in make_sortkey at filesort.cc:769
 			 * #2	0x0022f1cf in find_all_keys at filesort.cc:619
 			 * #3	0x00230eec in filesort at filesort.cc:243
-			 * #4	0x001b9d89 in mysql_update at sql_update.cc:415
+			 * #4	0x001b9d89 in update_query at sql_update.cc:415
 			 * #5	0x0010db12 in mysql_execute_command at sql_parse.cc:2959
 			 * #6	0x0011480d in mysql_parse at sql_parse.cc:5787
 			 * #7	0x00115afb in dispatch_command at sql_parse.cc:1200
@@ -4195,7 +4194,7 @@ void ha_pbxt::unlock_row()
  *
  * Called from item_sum.cc by Item_func_group_concat::clear(),
  * Item_sum_count_distinct::clear(), and Item_func_group_concat::clear().
- * Called from sql_delete.cc by mysql_delete().
+ * Called from sql_delete.cc by delete_query().
  * Called from sql_select.cc by JOIN::reinit().
  * Called from sql_union.cc by st_select_lex_unit::exec().
  */

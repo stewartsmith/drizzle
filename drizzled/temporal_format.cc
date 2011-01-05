@@ -266,9 +266,8 @@ bool init_temporal_formats()
   /* Compile all the regular expressions for the datetime formats */
   TemporalFormat *tmp;
   struct temporal_format_args current_format_args;
-  int32_t x;
   
-  for (x= 0; x<COUNT_KNOWN_FORMATS; ++x)
+  for (int32_t x= 0; x < COUNT_KNOWN_FORMATS; ++x)
   {
     current_format_args= __format_args[x];
     tmp= new TemporalFormat(current_format_args.pattern);
@@ -293,9 +292,9 @@ bool init_temporal_formats()
       if (current_format_args.second_part_index == 0) /* A time must have seconds. */
         known_date_formats.push_back(tmp);
     }
+
     if (current_format_args.second_part_index > 0) /* A time must have seconds, but may not have minutes or hours */
-      if (current_format_args.year_part_index == 0) /* A time may not have a date part, and date parts must have a year */
-        known_time_formats.push_back(tmp);
+      known_time_formats.push_back(tmp);
   }
   return true;
 }

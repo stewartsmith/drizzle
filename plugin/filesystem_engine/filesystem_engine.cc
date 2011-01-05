@@ -19,7 +19,6 @@
 #include "config.h"
 #include <drizzled/field.h>
 #include <drizzled/field/blob.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -305,7 +304,9 @@ int FilesystemEngine::doGetTableDefinition(Session &,
     if (not table_proto.IsInitialized())
     {
       my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_proto.name().empty() ? " " : table_proto.name().c_str(),
                table_proto.InitializationErrorString().c_str());
+
       return ER_CORRUPT_TABLE_DEFINITION;
     }
 

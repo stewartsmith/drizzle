@@ -31,6 +31,7 @@
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/field/boolean.h"
 #include "drizzled/field/enum.h"
 #include "drizzled/field/null.h"
 #include "drizzled/field/date.h"
@@ -40,12 +41,14 @@
 #include "drizzled/field/int32.h"
 #include "drizzled/field/int64.h"
 #include "drizzled/field/num.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/uuid.h"
 #include "drizzled/temporal.h"
 #include "drizzled/item/string.h"
+
+#include "drizzled/display.h"
 
 #include <algorithm>
 
@@ -140,7 +143,7 @@ void CreateField::create_length_to_internal_length(void)
       break;
     case DRIZZLE_TYPE_DECIMAL:
       key_length= pack_length=
-        my_decimal_get_binary_size(my_decimal_length_to_precision(length,
+        class_decimal_get_binary_size(class_decimal_length_to_precision(length,
                   decimals,
                   flags &
                   UNSIGNED_FLAG),
@@ -246,7 +249,7 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_NULL:
       break;
     case DRIZZLE_TYPE_DECIMAL:
-      my_decimal_trim(&length, &decimals);
+      class_decimal_trim(&length, &decimals);
       if (length > DECIMAL_MAX_PRECISION)
       {
         my_error(ER_TOO_BIG_PRECISION, MYF(0), length, fld_name,
@@ -258,8 +261,8 @@ bool CreateField::init(Session *,
         my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
         return(true);
       }
-      length= my_decimal_precision_to_length(length, decimals, fld_type_modifier & UNSIGNED_FLAG);
-      pack_length= my_decimal_get_binary_size(length, decimals);
+      length= class_decimal_precision_to_length(length, decimals, fld_type_modifier & UNSIGNED_FLAG);
+      pack_length= class_decimal_get_binary_size(length, decimals);
       break;
     case DRIZZLE_TYPE_VARCHAR:
       /*
@@ -354,7 +357,13 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_UUID:
       length= field::Uuid::max_string_length();
       break;
+    case DRIZZLE_TYPE_BOOLEAN:
+      length= field::Boolean::max_string_length();
+      break;
     case DRIZZLE_TYPE_DATETIME:
+      length= DateTime::MAX_STRING_LENGTH;
+      break;
+    case DRIZZLE_TYPE_TIME:
       length= DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_ENUM:
@@ -392,6 +401,42 @@ bool CreateField::init(Session *,
   }
 
   return false; /* success */
+}
+
+std::ostream& operator<<(std::ostream& output, const CreateField &field)
+{
+  output << "CreateField:(";
+  output <<  field.field_name;
+  output << ", ";
+  output << drizzled::display::type(field.type());
+  output << ", { ";
+
+  if (field.flags & NOT_NULL_FLAG)
+    output << " NOT_NULL";
+
+  if (field.flags & PRI_KEY_FLAG)
+    output << ", PRIMARY KEY";
+
+  if (field.flags & UNIQUE_KEY_FLAG)
+    output << ", UNIQUE KEY";
+
+  if (field.flags & MULTIPLE_KEY_FLAG)
+    output << ", MULTIPLE KEY";
+
+  if (field.flags & BLOB_FLAG)
+    output << ", BLOB";
+
+  if (field.flags & UNSIGNED_FLAG)
+    output << ", UNSIGNED";
+
+  if (field.flags & BINARY_FLAG)
+    output << ", BINARY";
+  output << "}, ";
+  if (field.field)
+    output << *field.field;
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace drizzled */

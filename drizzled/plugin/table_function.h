@@ -99,7 +99,8 @@ public:
     BOOLEAN,
     NUMBER,
     STRING,
-    VARBINARY
+    VARBINARY,
+    SIZE
   };
 
   class Generator 

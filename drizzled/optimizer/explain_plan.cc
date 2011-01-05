@@ -563,7 +563,7 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   {
     session->lex->current_select= first;
     unit->set_limit(unit->global_parameters);
-    res= mysql_select(session, 
+    res= select_query(session, 
                       &first->ref_pointer_array,
                       (TableList*) first->table_list.first,
                       first->with_wild, 

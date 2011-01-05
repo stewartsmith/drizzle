@@ -101,7 +101,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "haildb_engine.h"
 
 #include <drizzled/field.h>
-#include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
 #include "drizzled/field/blob.h"
 #include "drizzled/field/enum.h"
 #include <drizzled/session.h>
@@ -486,7 +485,7 @@ uint64_t HailDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
   else
   {
     assert (err == DB_SUCCESS);
-    err= ib_tuple_read_u64(tuple, getTable()->getShare()->fields, &nr);
+    err= ib_tuple_read_u64(tuple, getTable()->getShare()->sizeFields(), &nr);
     nr++;
   }
   ib_tuple_delete(tuple);
@@ -927,7 +926,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 4);
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 8);
     break;
@@ -1972,7 +1971,8 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   if (share->has_hidden_primary_key)
   {
-    err= ib_tuple_write_u64(tuple, getTable()->getShare()->fields, share->hidden_pkey_auto_increment_value.fetch_and_increment());
+    err= ib_tuple_write_u64(tuple, getTable()->getShare()->sizeFields(),
+                            share->hidden_pkey_auto_increment_value.fetch_and_increment());
   }
 
   err= ib_cursor_insert_row(cursor, tuple);
@@ -2513,7 +2513,7 @@ int HailDBCursor::info(uint32_t flag)
 
     err= ib_get_duplicate_key(transaction, &err_table_name, &err_index_name);
 
-    errkey= -1;
+    errkey= UINT32_MAX;
 
     for (unsigned int i = 0; i < getTable()->getShare()->keys; i++)
     {

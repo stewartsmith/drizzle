@@ -43,7 +43,7 @@ bool statement::Replace::execute()
     return true;
   }
 
-  bool res= mysql_insert(session, 
+  bool res= insert_query(session, 
                          all_tables, 
                          session->lex->field_list, 
                          session->lex->many_values,

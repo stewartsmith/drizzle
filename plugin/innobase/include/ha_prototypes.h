@@ -161,8 +161,7 @@ get_innobase_type_from_mysql_type(
 
 /******************************************************************//**
 Get the variable length bounds of the given character set. */
-UNIV_INTERN
-void
+UNIV_INTERN void
 innobase_get_cset_width(
 /*====================*/
 	ulint	cset,		/*!< in: MySQL charset-collation code */

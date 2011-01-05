@@ -46,7 +46,7 @@ using namespace std;
 namespace drizzled
 {
 
-extern my_decimal decimal_zero;
+extern type::Decimal decimal_zero;
 extern plugin::StorageEngine *heap_engine;
 
 /**
@@ -583,7 +583,7 @@ int64_t Item_sum_num::val_int()
 }
 
 
-my_decimal *Item_sum_num::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_sum_num::val_decimal(type::Decimal *decimal_value)
 {
   return val_decimal_from_real(decimal_value);
 }
@@ -596,7 +596,7 @@ Item_sum_int::val_str(String *str)
 }
 
 
-my_decimal *Item_sum_int::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_sum_int::val_decimal(type::Decimal *decimal_value)
 {
   return val_decimal_from_int(decimal_value);
 }
@@ -643,7 +643,7 @@ Item_sum_hybrid::Item_sum_hybrid(Session *session, Item_sum_hybrid *item)
     sum_int= item->sum_int;
     break;
   case DECIMAL_RESULT:
-    my_decimal2decimal(&item->sum_dec, &sum_dec);
+    class_decimal2decimal(&item->sum_dec, &sum_dec);
     break;
   case REAL_RESULT:
     sum= item->sum;
@@ -683,7 +683,7 @@ Item_sum_hybrid::fix_fields(Session *session, Item **ref)
     break;
   case DECIMAL_RESULT:
     max_length= item->max_length;
-    my_decimal_set_zero(&sum_dec);
+    sum_dec.set_zero();
     break;
   case REAL_RESULT:
     max_length= float_length(decimals);
@@ -765,8 +765,8 @@ Item_sum_sum::Item_sum_sum(Session *session, Item_sum_sum *item)
   /* TODO: check if the following assignments are really needed */
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal2decimal(item->dec_buffs, dec_buffs);
-    my_decimal2decimal(item->dec_buffs + 1, dec_buffs + 1);
+    class_decimal2decimal(item->dec_buffs, dec_buffs);
+    class_decimal2decimal(item->dec_buffs + 1, dec_buffs + 1);
   }
   else
     sum= item->sum;
@@ -784,7 +784,7 @@ void Item_sum_sum::clear()
   if (hybrid_type == DECIMAL_RESULT)
   {
     curr_dec_buff= 0;
-    my_decimal_set_zero(dec_buffs);
+    dec_buffs->set_zero();
   }
   else
     sum= 0.0;
@@ -807,11 +807,11 @@ void Item_sum_sum::fix_length_and_dec()
     {
       /* SUM result can't be longer than length(arg) + length(MAX_ROWS) */
       int precision= args[0]->decimal_precision() + DECIMAL_LONGLONG_DIGITS;
-      max_length= my_decimal_precision_to_length(precision, decimals,
+      max_length= class_decimal_precision_to_length(precision, decimals,
                                                  unsigned_flag);
       curr_dec_buff= 0;
       hybrid_type= DECIMAL_RESULT;
-      my_decimal_set_zero(dec_buffs);
+      dec_buffs->set_zero();
       break;
     }
   case ROW_RESULT:
@@ -824,10 +824,10 @@ bool Item_sum_sum::add()
 {
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal value, *val= args[0]->val_decimal(&value);
+    type::Decimal value, *val= args[0]->val_decimal(&value);
     if (!args[0]->null_value)
     {
-      my_decimal_add(E_DEC_FATAL_ERROR, dec_buffs + (curr_dec_buff^1),
+      class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs + (curr_dec_buff^1),
                      val, dec_buffs + curr_dec_buff);
       curr_dec_buff^= 1;
       null_value= 0;
@@ -849,8 +849,7 @@ int64_t Item_sum_sum::val_int()
   if (hybrid_type == DECIMAL_RESULT)
   {
     int64_t result;
-    my_decimal2int(E_DEC_FATAL_ERROR, dec_buffs + curr_dec_buff, unsigned_flag,
-                   &result);
+    (dec_buffs + curr_dec_buff)->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
     return result;
   }
   return (int64_t) rint(val_real());
@@ -861,7 +860,7 @@ double Item_sum_sum::val_real()
 {
   assert(fixed == 1);
   if (hybrid_type == DECIMAL_RESULT)
-    my_decimal2double(E_DEC_FATAL_ERROR, dec_buffs + curr_dec_buff, &sum);
+    class_decimal2double(E_DEC_FATAL_ERROR, dec_buffs + curr_dec_buff, &sum);
   return sum;
 }
 
@@ -874,7 +873,7 @@ String *Item_sum_sum::val_str(String *str)
 }
 
 
-my_decimal *Item_sum_sum::val_decimal(my_decimal *val)
+type::Decimal *Item_sum_sum::val_decimal(type::Decimal *val)
 {
   if (hybrid_type == DECIMAL_RESULT)
     return (dec_buffs + curr_dec_buff);
@@ -937,7 +936,7 @@ struct Hybrid_type_traits_fast_decimal: public
 
   virtual void div(Hybrid_type *val, uint64_t u) const
   {
-    int2my_decimal(E_DEC_FATAL_ERROR, val->integer, 0, val->dec_buf);
+    int2_class_decimal(E_DEC_FATAL_ERROR, val->integer, 0, val->dec_buf);
     val->used_dec_buf_no= 0;
     val->traits= Hybrid_type_traits_decimal::instance();
     val->traits->div(val, u);
@@ -1131,7 +1130,7 @@ double Item_sum_distinct::val_real()
 }
 
 
-my_decimal *Item_sum_distinct::val_decimal(my_decimal *to)
+type::Decimal *Item_sum_distinct::val_decimal(type::Decimal *to)
 {
   calculate_val_and_count();
   if (null_value)
@@ -1231,11 +1230,11 @@ void Item_sum_avg::fix_length_and_dec()
   {
     int precision= args[0]->decimal_precision() + prec_increment;
     decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
-    max_length= my_decimal_precision_to_length(precision, decimals,
+    max_length= class_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
     f_precision= min(precision+DECIMAL_LONGLONG_DIGITS, DECIMAL_MAX_PRECISION);
     f_scale=  args[0]->decimals;
-    dec_bin_size= my_decimal_get_binary_size(f_precision, f_scale);
+    dec_bin_size= class_decimal_get_binary_size(f_precision, f_scale);
   }
   else {
     decimals= min(args[0]->decimals + prec_increment, (unsigned int) NOT_FIXED_DEC);
@@ -1311,10 +1310,10 @@ int64_t Item_sum_avg::val_int()
 }
 
 
-my_decimal *Item_sum_avg::val_decimal(my_decimal *val)
+type::Decimal *Item_sum_avg::val_decimal(type::Decimal *val)
 {
-  my_decimal sum_buff, cnt;
-  const my_decimal *sum_dec;
+  type::Decimal sum_buff, cnt;
+  const type::Decimal *sum_dec;
   assert(fixed == 1);
   if (!count)
   {
@@ -1330,8 +1329,8 @@ my_decimal *Item_sum_avg::val_decimal(my_decimal *val)
     return val_decimal_from_real(val);
 
   sum_dec= dec_buffs + curr_dec_buff;
-  int2my_decimal(E_DEC_FATAL_ERROR, count, 0, &cnt);
-  my_decimal_div(E_DEC_FATAL_ERROR, val, sum_dec, &cnt, prec_increment);
+  int2_class_decimal(E_DEC_FATAL_ERROR, count, 0, &cnt);
+  class_decimal_div(E_DEC_FATAL_ERROR, val, sum_dec, &cnt, prec_increment);
   return val;
 }
 
@@ -1443,7 +1442,7 @@ void Item_sum_variance::fix_length_and_dec()
     {
       int precision= args[0]->decimal_precision()*2 + prec_increment;
       decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
-      max_length= my_decimal_precision_to_length(precision, decimals,
+      max_length= class_decimal_precision_to_length(precision, decimals,
                                                  unsigned_flag);
 
       break;
@@ -1539,7 +1538,7 @@ int64_t Item_sum_variance::val_int()
 }
 
 
-my_decimal *Item_sum_variance::val_decimal(my_decimal *dec_buf)
+type::Decimal *Item_sum_variance::val_decimal(type::Decimal *dec_buf)
 {
   assert(fixed == 1);
   return val_decimal_from_real(dec_buf);
@@ -1603,7 +1602,7 @@ void Item_sum_hybrid::clear()
     sum_int= 0;
     break;
   case DECIMAL_RESULT:
-    my_decimal_set_zero(&sum_dec);
+    sum_dec.set_zero();
     break;
   case REAL_RESULT:
     sum= 0.0;
@@ -1632,7 +1631,7 @@ double Item_sum_hybrid::val_real()
   case INT_RESULT:
     return (double) sum_int;
   case DECIMAL_RESULT:
-    my_decimal2double(E_DEC_FATAL_ERROR, &sum_dec, &sum);
+    class_decimal2double(E_DEC_FATAL_ERROR, &sum_dec, &sum);
     return sum;
   case REAL_RESULT:
     return sum;
@@ -1656,7 +1655,7 @@ int64_t Item_sum_hybrid::val_int()
   case DECIMAL_RESULT:
   {
     int64_t result;
-    my_decimal2int(E_DEC_FATAL_ERROR, &sum_dec, unsigned_flag, &result);
+    sum_dec.val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
     return sum_int;
   }
   default:
@@ -1665,7 +1664,7 @@ int64_t Item_sum_hybrid::val_int()
 }
 
 
-my_decimal *Item_sum_hybrid::val_decimal(my_decimal *val)
+type::Decimal *Item_sum_hybrid::val_decimal(type::Decimal *val)
 {
   assert(fixed == 1);
   if (null_value)
@@ -1673,16 +1672,16 @@ my_decimal *Item_sum_hybrid::val_decimal(my_decimal *val)
 
   switch (hybrid_type) {
   case STRING_RESULT:
-    string2my_decimal(E_DEC_FATAL_ERROR, &value, val);
+    val->store(E_DEC_FATAL_ERROR, &value);
     break;
   case REAL_RESULT:
-    double2my_decimal(E_DEC_FATAL_ERROR, sum, val);
+    double2_class_decimal(E_DEC_FATAL_ERROR, sum, val);
     break;
   case DECIMAL_RESULT:
     val= &sum_dec;
     break;
   case INT_RESULT:
-    int2my_decimal(E_DEC_FATAL_ERROR, sum_int, unsigned_flag, val);
+    int2_class_decimal(E_DEC_FATAL_ERROR, sum_int, unsigned_flag, val);
     break;
   case ROW_RESULT:
     // This case should never be choosen
@@ -1708,7 +1707,7 @@ Item_sum_hybrid::val_str(String *str)
     str->set_real(sum,decimals, &my_charset_bin);
     break;
   case DECIMAL_RESULT:
-    my_decimal2string(E_DEC_FATAL_ERROR, &sum_dec, 0, 0, 0, str);
+    class_decimal2string(E_DEC_FATAL_ERROR, &sum_dec, 0, 0, 0, str);
     return str;
   case INT_RESULT:
     str->set_int(sum_int, unsigned_flag, &my_charset_bin);
@@ -1781,11 +1780,11 @@ bool Item_sum_min::add()
     break;
   case DECIMAL_RESULT:
     {
-      my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
+      type::Decimal value_buff, *val= args[0]->val_decimal(&value_buff);
       if (!args[0]->null_value &&
-          (null_value || (my_decimal_cmp(&sum_dec, val) > 0)))
+          (null_value || (class_decimal_cmp(&sum_dec, val) > 0)))
       {
-        my_decimal2decimal(val, &sum_dec);
+        class_decimal2decimal(val, &sum_dec);
         null_value= 0;
       }
     }
@@ -1844,11 +1843,11 @@ bool Item_sum_max::add()
     break;
   case DECIMAL_RESULT:
     {
-      my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
+      type::Decimal value_buff, *val= args[0]->val_decimal(&value_buff);
       if (!args[0]->null_value &&
-          (null_value || (my_decimal_cmp(val, &sum_dec) > 0)))
+          (null_value || (class_decimal_cmp(val, &sum_dec) > 0)))
       {
-        my_decimal2decimal(val, &sum_dec);
+        class_decimal2decimal(val, &sum_dec);
         null_value= 0;
       }
     }
@@ -2009,7 +2008,7 @@ void Item_sum_hybrid::reset_field()
     }
   case DECIMAL_RESULT:
     {
-      my_decimal value_buff, *arg_dec= args[0]->val_decimal(&value_buff);
+      type::Decimal value_buff, *arg_dec= args[0]->val_decimal(&value_buff);
 
       if (maybe_null)
       {
@@ -2037,7 +2036,7 @@ void Item_sum_sum::reset_field()
 {
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal value, *arg_val= args[0]->val_decimal(&value);
+    type::Decimal value, *arg_val= args[0]->val_decimal(&value);
     if (!arg_val)                               // Null
       arg_val= &decimal_zero;
     result_field->store_decimal(arg_val);
@@ -2072,7 +2071,7 @@ void Item_sum_avg::reset_field()
   if (hybrid_type == DECIMAL_RESULT)
   {
     int64_t tmp;
-    my_decimal value, *arg_dec= args[0]->val_decimal(&value);
+    type::Decimal value, *arg_dec= args[0]->val_decimal(&value);
     if (args[0]->null_value)
     {
       arg_dec= &decimal_zero;
@@ -2080,7 +2079,7 @@ void Item_sum_avg::reset_field()
     }
     else
       tmp= 1;
-    my_decimal2binary(E_DEC_FATAL_ERROR, arg_dec, res, f_precision, f_scale);
+    arg_dec->val_binary(E_DEC_FATAL_ERROR, res, f_precision, f_scale);
     res+= dec_bin_size;
     int8store(res, tmp);
   }
@@ -2124,14 +2123,14 @@ void Item_sum_sum::update_field()
 {
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal value, *arg_val= args[0]->val_decimal(&value);
+    type::Decimal value, *arg_val= args[0]->val_decimal(&value);
     if (!args[0]->null_value)
     {
       if (!result_field->is_null())
       {
-        my_decimal field_value,
+        type::Decimal field_value,
                    *field_val= result_field->val_decimal(&field_value);
-        my_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, field_val);
+        class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, field_val);
         result_field->store_decimal(dec_buffs);
       }
       else
@@ -2176,15 +2175,14 @@ void Item_sum_avg::update_field()
   unsigned char *res=result_field->ptr;
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal value, *arg_val= args[0]->val_decimal(&value);
+    type::Decimal value, *arg_val= args[0]->val_decimal(&value);
     if (!args[0]->null_value)
     {
-      binary2my_decimal(E_DEC_FATAL_ERROR, res,
+      binary2_class_decimal(E_DEC_FATAL_ERROR, res,
                         dec_buffs + 1, f_precision, f_scale);
       field_count= sint8korr(res + dec_bin_size);
-      my_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, dec_buffs + 1);
-      my_decimal2binary(E_DEC_FATAL_ERROR, dec_buffs,
-                        res, f_precision, f_scale);
+      class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, dec_buffs + 1);
+      dec_buffs->val_binary(E_DEC_FATAL_ERROR, res, f_precision, f_scale);
       res+= dec_bin_size;
       field_count++;
       int8store(res, field_count);
@@ -2302,16 +2300,16 @@ void
 Item_sum_hybrid::min_max_update_decimal_field()
 {
   /* TODO: optimize: do not get result_field in case of args[0] is NULL */
-  my_decimal old_val, nr_val;
-  const my_decimal *old_nr= result_field->val_decimal(&old_val);
-  const my_decimal *nr= args[0]->val_decimal(&nr_val);
+  type::Decimal old_val, nr_val;
+  const type::Decimal *old_nr= result_field->val_decimal(&old_val);
+  const type::Decimal *nr= args[0]->val_decimal(&nr_val);
   if (!args[0]->null_value)
   {
     if (result_field->is_null(0))
       old_nr=nr;
     else
     {
-      bool res= my_decimal_cmp(old_nr, nr) > 0;
+      bool res= class_decimal_cmp(old_nr, nr) > 0;
       /* (cmp_sign > 0 && res) || (!(cmp_sign > 0) && !res) */
       if ((cmp_sign > 0) ^ (!res))
         old_nr=nr;
@@ -2368,7 +2366,7 @@ int64_t Item_avg_field::val_int()
 }
 
 
-my_decimal *Item_avg_field::val_decimal(my_decimal *dec_buf)
+type::Decimal *Item_avg_field::val_decimal(type::Decimal *dec_buf)
 {
   // fix_fields() never calls for this Item
   if (hybrid_type == REAL_RESULT)
@@ -2378,11 +2376,11 @@ my_decimal *Item_avg_field::val_decimal(my_decimal *dec_buf)
   if ((null_value= !count))
     return 0;
 
-  my_decimal dec_count, dec_field;
-  binary2my_decimal(E_DEC_FATAL_ERROR,
+  type::Decimal dec_count, dec_field;
+  binary2_class_decimal(E_DEC_FATAL_ERROR,
                     field->ptr, &dec_field, f_precision, f_scale);
-  int2my_decimal(E_DEC_FATAL_ERROR, count, 0, &dec_count);
-  my_decimal_div(E_DEC_FATAL_ERROR, dec_buf,
+  int2_class_decimal(E_DEC_FATAL_ERROR, count, 0, &dec_count);
+  class_decimal_div(E_DEC_FATAL_ERROR, dec_buf,
                  &dec_field, &dec_count, prec_increment);
   return dec_buf;
 }
@@ -2413,13 +2411,13 @@ double Item_std_field::val_real()
 }
 
 
-my_decimal *Item_std_field::val_decimal(my_decimal *dec_buf)
+type::Decimal *Item_std_field::val_decimal(type::Decimal *dec_buf)
 {
   /*
     We can't call val_decimal_from_real() for DECIMAL_RESULT as
     Item_variance_field::val_real() would cause an infinite loop
   */
-  my_decimal tmp_dec, *dec;
+  type::Decimal tmp_dec, *dec;
   double nr;
   if (hybrid_type == REAL_RESULT)
     return val_decimal_from_real(dec_buf);
@@ -2427,11 +2425,11 @@ my_decimal *Item_std_field::val_decimal(my_decimal *dec_buf)
   dec= Item_variance_field::val_decimal(dec_buf);
   if (!dec)
     return 0;
-  my_decimal2double(E_DEC_FATAL_ERROR, dec, &nr);
+  class_decimal2double(E_DEC_FATAL_ERROR, dec, &nr);
   assert(nr >= 0.0);
   nr= sqrt(nr);
-  double2my_decimal(E_DEC_FATAL_ERROR, nr, &tmp_dec);
-  my_decimal_round(E_DEC_FATAL_ERROR, &tmp_dec, decimals, false, dec_buf);
+  double2_class_decimal(E_DEC_FATAL_ERROR, nr, &tmp_dec);
+  class_decimal_round(E_DEC_FATAL_ERROR, &tmp_dec, decimals, false, dec_buf);
   return dec_buf;
 }
 

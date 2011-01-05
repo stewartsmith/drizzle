@@ -354,7 +354,7 @@ static int pbms_create_proto_table(const char *engine_name, const char *name, DT
 				break;
 				
 			case DRIZZLE_TYPE_TIMESTAMP:
-				field->set_type(message::Table::Field::TIMESTAMP);
+				field->set_type(message::Table::Field::EPOCH);
 				break;
 				
 			case DRIZZLE_TYPE_BLOB:

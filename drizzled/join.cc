@@ -1886,7 +1886,6 @@ void Join::cleanup(bool full)
 {
   if (table)
   {
-    JoinTable *tab,*end;
     /*
       Only a sorted table may be cached.  This sorted table is always the
       first non const table in join->table
@@ -1896,6 +1895,11 @@ void Join::cleanup(bool full)
       table[const_tables]->free_io_cache();
       table[const_tables]->filesort_free_buffers(full);
     }
+  }
+
+  if (join_tab)
+  {
+    JoinTable *tab,*end;
 
     if (full)
     {
@@ -1912,6 +1916,7 @@ void Join::cleanup(bool full)
       }
     }
   }
+
   /*
     We are not using tables anymore
     Unlock all tables. We may be in an INSERT .... SELECT statement.
@@ -2043,7 +2048,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
   {
     rollup.state= ROLLUP::STATE_READY;
     if (rollup_make_fields(field_list, send_fields, &func))
-      return(true);     // Should never happen
+      return true;     // Should never happen
   }
   else if (rollup.state == ROLLUP::STATE_NONE)
   {
@@ -2072,11 +2077,13 @@ bool Join::rollup_init()
   tmp_table_param.group_parts= send_group_parts;
 
   if (!(rollup.null_items= (Item_null_result**) session->alloc((sizeof(Item*) +
-                                                sizeof(Item**) +
-                                                sizeof(List<Item>) +
-                        ref_pointer_array_size)
-                        * send_group_parts )))
+                                                                sizeof(Item**) +
+                                                                sizeof(List<Item>) +
+                                                                ref_pointer_array_size)
+                                                               * send_group_parts )))
+  {
     return 1;
+  }
 
   rollup.fields= (List<Item>*) (rollup.null_items + send_group_parts);
   rollup.ref_pointer_arrays= (Item***) (rollup.fields + send_group_parts);
@@ -3022,7 +3029,7 @@ static void calc_group_buffer(Join *join, Order *group)
         break;
 
       case DECIMAL_RESULT:
-        key_length+= my_decimal_get_binary_size(group_item->max_length -
+        key_length+= class_decimal_get_binary_size(group_item->max_length -
                                                 (group_item->decimals ? 1 : 0),
                                                 group_item->decimals);
         break;
@@ -3036,6 +3043,7 @@ static void calc_group_buffer(Join *join, Order *group)
             by 8 as maximum pack length of such fields.
           */
           if (type == DRIZZLE_TYPE_DATE ||
+              type == DRIZZLE_TYPE_TIME ||
               type == DRIZZLE_TYPE_DATETIME ||
               type == DRIZZLE_TYPE_TIMESTAMP)
           {
@@ -3050,6 +3058,7 @@ static void calc_group_buffer(Join *join, Order *group)
             */
             key_length+= group_item->max_length + HA_KEY_BLOB_LENGTH;
           }
+
           break;
         }
 
@@ -5591,16 +5600,27 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
        As we use bitmaps to represent the relation the complexity
        of the algorithm is O((number of tables)^2).
     */
-    for (i= 0, s= stat ; i < table_count ; i++, s++)
+    for (i= 0; i < table_count; i++)
     {
-      for (uint32_t j= 0 ; j < table_count ; j++)
+      uint32_t j;
+      table= stat[i].table;
+
+      if (!table->reginfo.join_tab->dependent)
+        continue;
+
+      for (j= 0, s= stat; j < table_count; j++, s++)
       {
-        table= stat[j].table;
         if (s->dependent & table->map)
+        {
+          table_map was_dependent= s->dependent;
           s->dependent |= table->reginfo.join_tab->dependent;
+          if (i > j && s->dependent != was_dependent)
+          {
+            i= j= 1;
+            break;
+          }
+        }
       }
-      if (s->dependent)
-        s->table->maybe_null= 1;
     }
     /* Catch illegal cross references for outer joins */
     for (i= 0, s= stat ; i < table_count ; i++, s++)
@@ -5611,6 +5631,9 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
         my_message(ER_WRONG_OUTER_JOIN, ER(ER_WRONG_OUTER_JOIN), MYF(0));
         return 1;
       }
+      if (outer_join & s->table->map)
+        s->table->maybe_null= 1;
+
       s->key_dependent= s->dependent;
     }
   }

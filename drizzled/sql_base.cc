@@ -45,7 +45,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/plugin/listen.h>
 #include "drizzled/cached_directory.h"
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/field/null.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
@@ -669,7 +669,7 @@ void Session::unlink_open_table(Table *find)
   /*
     Note that we need to hold table::Cache::singleton().mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -1504,7 +1504,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
   /*
     Note that we need to hold table::Cache::singleton().mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */

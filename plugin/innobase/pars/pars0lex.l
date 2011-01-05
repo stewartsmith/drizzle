@@ -40,7 +40,7 @@ Created 12/14/1997 Heikki Tuuri
 
 #include "univ.i"
 #include "pars0pars.h"
-#include "pars0grm.h"
+#include "pars0grm.hh"
 #include "pars0sym.h"
 #include "mem0mem.h"
 #include "os0proc.h"
@@ -529,7 +529,7 @@ In the state 'id', only two actions are possible (defined below). */
 {ID}		{
 			yylval = sym_tab_add_id(pars_sym_tab_global,
 							(byte*)yytext,
-							ut_strlen(yytext));
+							strlen(yytext));
 			return(PARS_ID_TOKEN);
 }
 

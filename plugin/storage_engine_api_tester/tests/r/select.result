@@ -3,3 +3,4 @@ start transaction with consistent snapshot;
 select * from t2;
 a
 commit;
+drop table t2;

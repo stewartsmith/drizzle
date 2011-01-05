@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_SET_VAR_H
 #define DRIZZLED_SET_VAR_H
 
+#include <boost/shared_ptr.hpp>
+
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/lex_string.h"
@@ -51,8 +53,7 @@ typedef struct charset_info_st CHARSET_INFO;
   Classes for parsing of the SET command
 ****************************************************************************/
 
-class set_var_base :
-  public memory::SqlAlloc
+class set_var_base
 {
 public:
   set_var_base() {}
@@ -94,14 +95,16 @@ class set_var_user: public set_var_base
 {
   Item_func_set_user_var *user_var_item;
 public:
-  set_var_user(Item_func_set_user_var *item) :
+  explicit set_var_user(Item_func_set_user_var *item) :
     user_var_item(item)
   {}
   int check(Session *session);
   int update(Session *session);
 };
 
-int sql_set_variables(Session *session, List<set_var_base> *var_list);
+typedef boost::shared_ptr<set_var_base> SetVarPtr;
+typedef std::vector<SetVarPtr> SetVarVector;
+int sql_set_variables(Session *session, const SetVarVector &var_list);
 
 } /* namespace drizzled */
 

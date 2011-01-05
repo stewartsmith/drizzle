@@ -385,7 +385,7 @@ SELECT * FROM t1 WHERE a=-1 OR a=-2 ;
 a
 SELECT * FROM t1 WHERE a IN (-1, -2);
 a
-CREATE TABLE t2 (a BIGINT);
+CREATE TABLE t2 (a BIGINT UNSIGNED);
 insert into t2 values(13491727406643098568),
 (0x0fffffefffffffff),
 (0x0ffffffeffffffff),

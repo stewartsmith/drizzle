@@ -33,7 +33,7 @@ public:
   const char *func_name() const { return "*"; }
   int64_t int_op();
   double real_op();
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   void result_precision();
 };
 

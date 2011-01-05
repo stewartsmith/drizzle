@@ -39,7 +39,7 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week)
 }
 
 
-uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year)
+uint32_t calc_week(type::Time *l_time, uint32_t week_behaviour, uint32_t *year)
 {
   uint32_t days;
   uint32_t daynr= calc_daynr(l_time->year,l_time->month,l_time->day);
@@ -127,7 +127,7 @@ void get_date_from_daynr(long daynr,
 enum enum_drizzle_timestamp_type
 str_to_datetime_with_warn(const char *str, 
                           uint32_t length, 
-                          DRIZZLE_TIME *l_time,
+                          type::Time *l_time,
                           uint32_t flags)
 {
   int was_cut;
@@ -147,7 +147,7 @@ str_to_datetime_with_warn(const char *str,
 
 
 bool
-str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time)
+str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time)
 {
   int warning;
   bool ret_val= str_to_time(str, length, l_time, &warning);
@@ -158,7 +158,7 @@ str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time)
 }
 
 
-void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from)
+void localtime_to_TIME(type::Time *to, struct tm *from)
 {
   to->neg=0;
   to->second_part=0;
@@ -170,7 +170,15 @@ void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from)
   to->second=   (int) from->tm_sec;
 }
 
-void make_date(const DRIZZLE_TIME *l_time, String *str)
+void make_time(const type::Time *l_time, String *str)
+{
+  str->alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= (uint32_t) my_time_to_str(l_time, str->c_ptr());
+  str->length(length);
+  str->set_charset(&my_charset_bin);
+}
+
+void make_date(const type::Time *l_time, String *str)
 {
   str->alloc(MAX_DATE_STRING_REP_LENGTH);
   uint32_t length= (uint32_t) my_date_to_str(l_time, str->c_ptr());
@@ -179,7 +187,7 @@ void make_date(const DRIZZLE_TIME *l_time, String *str)
 }
 
 
-void make_datetime(const DRIZZLE_TIME *l_time, String *str)
+void make_datetime(const type::Time *l_time, String *str)
 {
   str->alloc(MAX_DATE_STRING_REP_LENGTH);
   uint32_t length= (uint32_t) my_datetime_to_str(l_time, str->c_ptr());
@@ -238,7 +246,7 @@ void make_truncated_value_warning(Session *session,
 
 
 bool
-calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t *seconds_out,
+calc_time_diff(type::Time *l_time1, type::Time *l_time2, int l_sign, int64_t *seconds_out,
                long *microseconds_out)
 {
   long days;

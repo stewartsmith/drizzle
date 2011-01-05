@@ -41,27 +41,28 @@
 #include <drizzled/util/backtrace.h>
 #include <drizzled/function/func.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/function/boolean.h>
 
 using namespace drizzled;
 
 namespace debug {
 
-class Assert :public Item_bool_func
+class Assert :public item::function::Boolean
 {
 public:
   Assert() :
-    Item_bool_func()
+    item::function::Boolean()
   {
     unsigned_flag= true;
   }
 
-  const char *func_name() const { return "assert"; }
-  const char *fully_qualified_func_name() const { return "assert()"; }
+  const char *func_name() const { return "assert_and_crash"; }
+  const char *fully_qualified_func_name() const { return "assert_and_crash()"; }
 
   bool val_bool()
   {
-    drizzled::String _res;
-    drizzled::String *res= args[0]->val_str(&_res);
+    String _res;
+    String *res= args[0]->val_str(&_res);
 
     null_value= false;
 
@@ -85,11 +86,11 @@ public:
   }
 };
 
-class Backtrace :public Item_bool_func
+class Backtrace :public item::function::Boolean
 {
 public:
   Backtrace() :
-    Item_bool_func()
+    item::function::Boolean()
   {
     unsigned_flag= true;
   }
@@ -99,7 +100,7 @@ public:
 
   bool val_bool()
   {
-    drizzled::util::custom_backtrace();
+    util::custom_backtrace();
     return true;
   }
 
@@ -109,11 +110,11 @@ public:
   }
 };
 
-class Crash :public Item_bool_func
+class Crash :public item::function::Boolean
 {
 public:
   Crash() :
-    Item_bool_func()
+    item::function::Boolean()
   { }
 
   const char *func_name() const { return "crash"; }
@@ -136,7 +137,7 @@ public:
 
 static int initialize(drizzled::module::Context &context)
 {
-  context.add(new drizzled::plugin::Create_function<debug::Assert>("assert"));
+  context.add(new drizzled::plugin::Create_function<debug::Assert>("assert_and_crash"));
   context.add(new drizzled::plugin::Create_function<debug::Backtrace>("backtrace"));
   context.add(new drizzled::plugin::Create_function<debug::Crash>("crash"));
 

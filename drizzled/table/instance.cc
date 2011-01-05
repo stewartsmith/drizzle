@@ -52,7 +52,7 @@ Instance::Instance(Session *session, List<CreateField> &field_list) :
   setFields(getMutableShare()->getFields(true));
   field_arg= getMutableShare()->getFields(true);
   getMutableShare()->blob_field.resize(field_count+1);
-  getMutableShare()->fields= field_count;
+  getMutableShare()->setFieldSize(field_count);
   getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
   setup_tmp_table_column_bitmaps();
 
@@ -60,19 +60,22 @@ Instance::Instance(Session *session, List<CreateField> &field_list) :
 
   /* Create all fields and calculate the total length of record */
   List_iterator_fast<CreateField> it(field_list);
+  message::Table::Field null_field;
   while ((cdef= it++))
   {
-    *field_arg= getMutableShare()->make_field(NULL,
-                                                 cdef->length,
-                                                 (cdef->flags & NOT_NULL_FLAG) ? false : true,
-                                                 (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
-                                                 (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
-                                                 cdef->decimals,
-                                                 cdef->sql_type,
-                                                 cdef->charset,
-                                                 cdef->unireg_check,
-                                                 cdef->interval,
-                                                 cdef->field_name);
+    *field_arg= getMutableShare()->make_field(null_field,
+                                              NULL,
+                                              cdef->length,
+                                              (cdef->flags & NOT_NULL_FLAG) ? false : true,
+                                              (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
+                                              (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
+                                              cdef->decimals,
+                                              cdef->sql_type,
+                                              cdef->charset,
+                                              cdef->unireg_check,
+                                              cdef->interval,
+                                              cdef->field_name,
+                                              cdef->flags & UNSIGNED_FLAG ? true : false);
     if (!*field_arg)
     {
       throw "Memory allocation failure";
@@ -323,7 +326,9 @@ Instance::~Instance()
     }
 
     TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
-    getShare()->getEngine()->doDropTable(*in_use, identifier);
+    plugin::StorageEngine::dropTable(*in_use,
+                                     *getShare()->getEngine(),
+                                     identifier);
 
     delete cursor;
   }

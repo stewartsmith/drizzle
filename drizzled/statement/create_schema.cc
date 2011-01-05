@@ -59,7 +59,7 @@ bool statement::CreateSchema::execute()
   }
   else
   {
-    res= mysql_create_db(session, schema_message, is_if_not_exists);
+    res= create_db(session, schema_message, is_if_not_exists);
     if (unlikely(plugin::EventObserver::afterCreateDatabase(*session, path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());

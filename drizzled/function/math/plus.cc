@@ -53,16 +53,16 @@ int64_t Item_func_plus::int_op()
     \# Value of operation as a decimal
 */
 
-my_decimal *Item_func_plus::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_plus::decimal_op(type::Decimal *decimal_value)
 {
-  my_decimal value1, *val1;
-  my_decimal value2, *val2;
+  type::Decimal value1, *val1;
+  type::Decimal value2, *val2;
   val1= args[0]->val_decimal(&value1);
   if ((null_value= args[0]->null_value))
     return 0;
   val2= args[1]->val_decimal(&value2);
   if (!(null_value= (args[1]->null_value ||
-                     (my_decimal_add(E_DEC_FATAL_ERROR, decimal_value, val1,
+                     (class_decimal_add(E_DEC_FATAL_ERROR, decimal_value, val1,
                                      val2) > 3))))
     return decimal_value;
   return 0;

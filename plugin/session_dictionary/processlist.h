@@ -32,7 +32,6 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    time_t now;
     drizzled::generator::Session session_generator;
 
   public:

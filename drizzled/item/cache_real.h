@@ -35,7 +35,7 @@ public:
   double val_real() { assert(fixed == 1); return value; }
   int64_t val_int();
   String* val_str(String *str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type() const { return REAL_RESULT; }
 };
 

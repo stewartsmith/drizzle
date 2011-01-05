@@ -141,9 +141,6 @@ static int test_plugin_options(memory::Root *, module::Module *,
 static void unlock_variables(Session *session, drizzle_system_variables *vars);
 static void cleanup_variables(drizzle_system_variables *vars);
 
-/* declared in set_var.cc */
-extern sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error);
-
 
 /****************************************************************************
   Plugin support code
@@ -499,11 +496,6 @@ void module_shutdown(module::Registry &registry)
   System Variables support
 ****************************************************************************/
 
-
-sys_var *find_sys_var(const char *str, uint32_t length)
-{
-  return intern_find_sys_var(str, length, false);
-}
 
 
 void plugin_sessionvar_init(Session *session)

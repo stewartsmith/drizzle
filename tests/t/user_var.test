@@ -119,13 +119,12 @@ create table t1 select @first_var;
 show create table t1;
 drop table t1;
 
-# This is not supported by Drizzle
---error ER_PARSE_ERROR
 set @first_var= cast(NULL as integer);
-#create table t1 select @first_var;
-#--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
-#show create table t1;
-#drop table t1;
+
+create table t1 select @first_var;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table t1;
+drop table t1;
 
 set @first_var= NULL;
 create table t1 select @first_var;
@@ -155,7 +154,7 @@ select @a;
 # Second part, set user var from large number in table
 # then select it
 CREATE TABLE `bigfailure` (
-  `afield` BIGINT NOT NULL
+  `afield` BIGINT UNSIGNED NOT NULL
 );
 INSERT INTO `bigfailure` VALUES (18446744071710965857);
 SELECT * FROM bigfailure;

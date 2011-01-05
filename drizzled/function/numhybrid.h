@@ -48,7 +48,7 @@ public:
 
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   String *val_str(String*str);
 
   /**
@@ -77,7 +77,7 @@ public:
        - The same pointer it was given, with the area initialized to the
          result of the operation.
   */
-  virtual my_decimal *decimal_op(my_decimal *)= 0;
+  virtual type::Decimal *decimal_op(type::Decimal *)= 0;
 
   /**
      @brief Performs the operation that this functions implements when the
