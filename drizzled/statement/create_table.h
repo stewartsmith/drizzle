@@ -36,14 +36,15 @@ class CreateTable : public Statement
   virtual bool check(const TableIdentifier&);
 
 public:
-  CreateTable(Session *in_session)
-    :
-      Statement(in_session),
-      is_create_table_like(false),
-      is_if_not_exists(false),
-      is_engine_set(false)
+  CreateTable(Session *in_session) :
+    Statement(in_session),
+    change(NULL),
+    default_value(NULL),
+    on_update_value(NULL),
+    is_create_table_like(false),
+    is_if_not_exists(false),
+    is_engine_set(false)
   {
-    memset(&create_info, 0, sizeof(create_info));
   }
 
   bool execute();

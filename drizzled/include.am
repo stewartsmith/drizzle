@@ -90,6 +90,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/epoch.h \
 			      drizzled/field/int32.h \
 			      drizzled/field/int64.h \
+			      drizzled/field/microtime.h \
 			      drizzled/field/null.h \
 			      drizzled/field/num.h \
 			      drizzled/field/real.h \
@@ -526,6 +527,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/field/epoch.cc \
 			   drizzled/field/int32.cc \
 			   drizzled/field/int64.cc \
+			   drizzled/field/microtime.cc \
 			   drizzled/field/null.cc \
 			   drizzled/field/num.cc \
 			   drizzled/field/real.cc \

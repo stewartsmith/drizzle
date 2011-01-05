@@ -1380,6 +1380,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
   case Table::Field::EPOCH:
     destination.append(" TIMESTAMP",  10);
     break;
+  case Table::Field::MICROTIME:
+    destination.append(" MICROSECOND TIMESTAMP",  22);
+    break;
   case Table::Field::DATETIME:
     destination.append(" DATETIME",  9);
     break;
@@ -1415,8 +1418,10 @@ transformFieldDefinitionToSql(const Table::Field &field,
   {
     destination.append(" NOT NULL", 9);
   }
-  else if (field.type() == Table::Field::EPOCH)
+  else if (field.type() == Table::Field::EPOCH or field.type() == Table::Field::MICROTIME)
+  {
     destination.append(" NULL", 5);
+  }
 
   if (field.type() == Table::Field::INTEGER || 
       field.type() == Table::Field::BIGINT)
@@ -1502,6 +1507,8 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
     return Table::Field::INTEGER; /* unreachable */
   case DRIZZLE_TYPE_TIMESTAMP:
     return Table::Field::EPOCH;
+  case DRIZZLE_TYPE_MICROTIME:
+    return Table::Field::MICROTIME;
   case DRIZZLE_TYPE_LONGLONG:
     return Table::Field::BIGINT;
   case DRIZZLE_TYPE_DATETIME:

@@ -1641,6 +1641,7 @@ type:
           | TIMESTAMP_SYM
           {
             $$=DRIZZLE_TYPE_TIMESTAMP;
+            Lex->length= 0;
 
             statement::CreateTable *statement=
               (statement::CreateTable *)Lex->statement;
@@ -1648,16 +1649,17 @@ type:
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::EPOCH);
           }
-          | LONG_SYM TIMESTAMP_SYM
+          | MICROSECOND_SYM TIMESTAMP_SYM
           {
-            $$=DRIZZLE_TYPE_TIMESTAMP;
+            $$=DRIZZLE_TYPE_MICROTIME;
+            Lex->length= 0;
 
             statement::CreateTable *statement=
               (statement::CreateTable *)Lex->statement;
 
             if (statement->current_proto_field)
             {
-              statement->current_proto_field->set_type(message::Table::Field::EPOCH);
+              statement->current_proto_field->set_type(message::Table::Field::MICROTIME);
               statement->current_proto_field->mutable_time_options()->set_microseconds(true);
             }
           }
@@ -1909,7 +1911,9 @@ attribute:
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ON UPDATE_SYM NOW_SYM optional_braces
-          { ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local(); }
+          {
+            ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
+          }
         | AUTO_INC
           {
             Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;

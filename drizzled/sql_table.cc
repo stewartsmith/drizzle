@@ -472,23 +472,21 @@ int prepare_create_field(CreateField *sql_field,
     sql_field->length= 8; // Unireg field length
     (*blob_columns)++;
     break;
-  case DRIZZLE_TYPE_VARCHAR:
-    break;
+
   case DRIZZLE_TYPE_ENUM:
-    if (check_duplicates_in_interval("ENUM",
-                                     sql_field->field_name,
-                                     sql_field->interval,
-                                     sql_field->charset,
-                                     &dup_val_count))
-      return 1;
+    {
+      if (check_duplicates_in_interval("ENUM",
+				       sql_field->field_name,
+				       sql_field->interval,
+				       sql_field->charset,
+				       &dup_val_count))
+      {
+	return 1;
+      }
+    }
     break;
-  case DRIZZLE_TYPE_DATE:  // Rest of string types
-  case DRIZZLE_TYPE_TIME:
-  case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_NULL:
-    break;
-  case DRIZZLE_TYPE_DECIMAL:
-    break;
+
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     /* We should replace old TIMESTAMP fields with their newer analogs */
     if (sql_field->unireg_check == Field::TIMESTAMP_OLD_FIELD)
@@ -504,11 +502,25 @@ int prepare_create_field(CreateField *sql_field,
       }
     }
     else if (sql_field->unireg_check != Field::NONE)
+    {
       (*timestamps_with_niladic)++;
+    }
 
     (*timestamps)++;
-    /* fall-through */
-  default:
+
+    break;
+
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_DATE:  // Rest of string types
+  case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_DECIMAL:
+  case DRIZZLE_TYPE_DOUBLE:
+  case DRIZZLE_TYPE_LONG:
+  case DRIZZLE_TYPE_LONGLONG:
+  case DRIZZLE_TYPE_NULL:
+  case DRIZZLE_TYPE_TIME:
+  case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_VARCHAR:
     break;
   }
 
