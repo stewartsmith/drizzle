@@ -3022,6 +3022,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   */
   if (!(tab= (JoinTable*) session->alloc(sizeof(JoinTable))))
     return(true);
+  new (tab) JoinTable();
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;

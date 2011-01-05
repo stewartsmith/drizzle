@@ -348,7 +348,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
   {
     return 0;
   }
-  if (! (select= new optimizer::SqlSelect))
+  if (! (select= new optimizer::SqlSelect()))
   {
     *error= 1;			// out of memory
     return 0;

@@ -82,11 +82,7 @@ namespace drizzled
   item->marker should be 0 for all items on entry
   Return in cond_value false if condition is impossible (1 = 2)
 *****************************************************************************/
-struct COND_CMP {
-  Item *and_level;
-  Item_func *cmp_func;
-  COND_CMP(Item *a,Item_func *b) :and_level(a),cmp_func(b) {}
-};
+typedef std::pair<Item*, Item_func*> COND_CMP;
 
 void TEST_join(Join *join);
 
