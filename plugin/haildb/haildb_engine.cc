@@ -432,7 +432,10 @@ int HailDBEngine::doRollback(Session* session, bool all)
 
   if (all || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
-    err= ib_trx_rollback(*transaction);
+    if (ib_trx_state(*transaction) == IB_TRX_NOT_STARTED)
+      err= ib_trx_release(*transaction);
+    else
+      err= ib_trx_rollback(*transaction);
 
     if (err != DB_SUCCESS)
       return ib_err_t_to_drizzle_error(session, err);
@@ -441,6 +444,9 @@ int HailDBEngine::doRollback(Session* session, bool all)
   }
   else
   {
+    if (ib_trx_state(*transaction) == IB_TRX_NOT_STARTED)
+      return 0;
+
     err= ib_savepoint_rollback(*transaction, statement_savepoint_name.c_str(),
                                statement_savepoint_name.length());
     if (err != DB_SUCCESS)
