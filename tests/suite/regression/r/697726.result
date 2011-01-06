@@ -1,6 +1,8 @@
 DROP TABLE IF EXISTS `AA`;
-Warnings:
-Note	1051	Unknown table 'AA'
+DROP TABLE IF EXISTS `BB`;
+DROP TABLE IF EXISTS `CC`;
+DROP TABLE IF EXISTS `C`;
+DROP TABLE IF EXISTS `DD`;
 CREATE TABLE `AA` (
 `pk` INT NOT NULL AUTO_INCREMENT,
 `col_char_10` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
@@ -48,9 +50,6 @@ INSERT INTO `AA` VALUES (1,'t',NULL,'','ZDPHP','what','w',9,'s','u',-63886375464
 ALTER TABLE `AA` ENABLE KEYS;
 Warnings:
 Note	1031	Table storage engine for 'AA' doesn't have this option
-DROP TABLE IF EXISTS `BB`;
-Warnings:
-Note	1051	Unknown table 'BB'
 CREATE TABLE `BB` (
 `col_enum_not_null_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
 `col_char_10_key` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
@@ -98,9 +97,6 @@ INSERT INTO `BB` VALUES ('r','m','','','o','DCJRX','IHTVZ','f',NULL,'ANVSO','',3
 ALTER TABLE `BB` ENABLE KEYS;
 Warnings:
 Note	1031	Table storage engine for 'BB' doesn't have this option
-DROP TABLE IF EXISTS `C`;
-Warnings:
-Note	1051	Unknown table 'C'
 CREATE TABLE `C` (
 `pk` INT NOT NULL AUTO_INCREMENT,
 `col_int_key` INT DEFAULT NULL,
@@ -147,9 +143,6 @@ INSERT INTO `C` VALUES (1,NULL,'',2,'t','','d','v','','h',3251880405938208768,'v
 ALTER TABLE `C` ENABLE KEYS;
 Warnings:
 Note	1031	Table storage engine for 'C' doesn't have this option
-DROP TABLE IF EXISTS `CC`;
-Warnings:
-Note	1051	Unknown table 'CC'
 CREATE TABLE `CC` (
 `col_enum_not_null_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
 `col_bigint_not_null` BIGINT NOT NULL,
@@ -197,9 +190,6 @@ INSERT INTO `CC` VALUES ('c',-7783627530979770368,'d','her','n','YUGVN','',7,'',
 ALTER TABLE `CC` ENABLE KEYS;
 Warnings:
 Note	1031	Table storage engine for 'CC' doesn't have this option
-DROP TABLE IF EXISTS `DD`;
-Warnings:
-Note	1051	Unknown table 'DD'
 CREATE TABLE `DD` (
 `col_char_10` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
 `col_bigint_not_null_key` BIGINT NOT NULL,
@@ -242,3 +232,8 @@ KEY `col_char_10_key` (`col_char_10_key`)
 ) ENGINE='InnoDB' COLLATE='utf8_general_ci';
 SELECT    MIN(  table2 . `col_int` ) AS field1 FROM ( (  SELECT   SUBQUERY1_t1 . * FROM ( CC AS SUBQUERY1_t1 LEFT  JOIN C AS SUBQUERY1_t2 ON (SUBQUERY1_t2 . `col_char_10_key` = SUBQUERY1_t1 . `col_char_10_key`  ) )  ) AS table1 STRAIGHT_JOIN ( ( AA AS table2 RIGHT OUTER JOIN DD AS table3 ON (table3 . `col_int_key` = table2 . `col_int_not_null`  ) ) ) ON (table3 . `col_char_255_key` = table2 . `col_char_255_not_null_key`  ) ) WHERE (  table2 . `col_char_255_not_null` > ALL ( SELECT   SUBQUERY2_t1 . `col_char_10_key` AS SUBQUERY2_field1 FROM ( AA AS SUBQUERY2_t1 STRAIGHT_JOIN AA AS SUBQUERY2_t2 ON (SUBQUERY2_t2 . `col_bigint` = SUBQUERY2_t1 . `col_bigint_key`  ) ) WHERE SUBQUERY2_t2 . `col_bigint` != table3 . `col_int_not_null_key` ) ) AND ( table1 . `col_int_key` > 239 AND table1 . `col_int_key` < ( 239 + 220 ) OR table1 . `pk` > 239 AND table1 . `pk` < ( 239 + 206 ) )  HAVING  ( 'c', 'i' )  IN ( SELECT  SQL_SMALL_RESULT SUBQUERY3_t1 . `col_text` AS SUBQUERY3_field1 , MIN(  SUBQUERY3_t1 . `col_text_key` ) AS SUBQUERY3_field2 FROM ( AA AS SUBQUERY3_t1 INNER JOIN ( BB AS SUBQUERY3_t2 INNER JOIN BB AS SUBQUERY3_t3 ON (SUBQUERY3_t3 . `col_int_key` = SUBQUERY3_t2 . `col_int_key`  ) ) ON (SUBQUERY3_t3 . `col_text_key` = SUBQUERY3_t2 . `col_char_255_not_null_key`  ) )    ) ORDER BY field1 DESC, field1;
 field1
+DROP TABLE AA;
+DROP TABLE BB;
+DROP TABLE CC;
+DROP TABLE C;
+DROP TABLE DD;
