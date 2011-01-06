@@ -288,9 +288,12 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
   else
   {
     /* Find the first row through the primary key */
-    (void) startIndexScan(primary_key, 0);
-    error=index_first(buf);
-    (void) endIndexScan();
+    error= startIndexScan(primary_key, 0);
+    if (error == 0)
+    {
+      error=index_first(buf);
+      (void) endIndexScan();
+    }
   }
   return error;
 }
