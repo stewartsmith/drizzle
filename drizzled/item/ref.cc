@@ -247,7 +247,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
                        cached_table->select_lex != outer_context->select_lex);
             }
             prev_subselect_item->used_tables_cache|= from_field->getTable()->map;
-            prev_subselect_item->const_item_cache= 0;
+            prev_subselect_item->const_item_cache= false;
             break;
           }
         }
@@ -255,7 +255,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 
         /* Reference is not found => depend on outer (or just error). */
         prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-        prev_subselect_item->const_item_cache= 0;
+        prev_subselect_item->const_item_cache= false;
 
         outer_context= outer_context->outer_context;
       } while (outer_context);

@@ -823,7 +823,7 @@ void mark_select_range_as_dependent(Session *session,
   {
     Item_subselect *prev_subselect_item= previous_select->master_unit()->item;
     prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
   }
   {
     Item_subselect *prev_subselect_item= previous_select->master_unit()->item;
@@ -838,7 +838,7 @@ void mark_select_range_as_dependent(Session *session,
     }
     else
       prev_subselect_item->used_tables_cache|= found_field->getTable()->map;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
     mark_as_dependent(session, last_select, current_sel, resolved_item,
                       dependent);
   }

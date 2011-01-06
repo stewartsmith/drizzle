@@ -538,7 +538,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
         if (*from_field != view_ref_found)
         {
           prev_subselect_item->used_tables_cache|= (*from_field)->getTable()->map;
-          prev_subselect_item->const_item_cache= 0;
+          prev_subselect_item->const_item_cache= false;
           set_field(*from_field);
           if (!last_checked_context->select_lex->having_fix_field &&
               select->group_list.elements &&
@@ -626,7 +626,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       case it does not matter which used tables bits we set)
     */
     prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
   }
 
   assert(ref != 0);

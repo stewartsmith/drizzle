@@ -244,7 +244,7 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 
   if (engine->uncacheable())
   {
-    const_item_cache= 0;
+    const_item_cache= false;
     if (engine->uncacheable(UNCACHEABLE_RAND))
     {
       used_tables_cache|= RAND_TABLE_BIT;
@@ -394,7 +394,7 @@ void Item_subselect::update_used_tables()
   {
     // did all used tables become static?
     if (!(used_tables_cache & ~engine->upper_select_const_tables()))
-      const_item_cache= 1;
+      const_item_cache= true;
   }
 }
 

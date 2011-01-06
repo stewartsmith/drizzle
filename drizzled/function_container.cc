@@ -26,14 +26,14 @@
 
 using namespace std;
 
-static drizzled::NativeFunctionsMap native_functions_map;
+static drizzled::FunctionContainer::Map _functions_map;
 
 namespace drizzled
 {
 
-NativeFunctionsMap &FunctionContainer::getMap()
+FunctionContainer::Map &FunctionContainer::getMap()
 {
-  return native_functions_map;
+  return _functions_map;
 }
 
 } /* namespace drizzled */

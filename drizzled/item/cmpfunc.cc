@@ -3880,7 +3880,7 @@ Item_cond::fix_fields(Session *session, Item **)
   void *orig_session_marker= session->session_marker;
   unsigned char buff[sizeof(char*)];			// Max local vars in function
   not_null_tables_cache= used_tables_cache= 0;
-  const_item_cache= 1;
+  const_item_cache= true;
 
   if (functype() == COND_OR_FUNC)
     session->session_marker= 0;
@@ -3955,7 +3955,7 @@ void Item_cond::fix_after_pullout(Select_Lex *new_parent, Item **)
   Item *item;
 
   used_tables_cache=0;
-  const_item_cache=1;
+  const_item_cache= true;
 
   and_tables_cache= ~(table_map) 0; // Here and below we do as fix_fields does
   not_null_tables_cache= 0;
@@ -4144,7 +4144,7 @@ void Item_cond::update_used_tables()
   Item *item;
 
   used_tables_cache=0;
-  const_item_cache=1;
+  const_item_cache= true;
   while ((item=li++))
   {
     item->update_used_tables();
@@ -4888,7 +4888,7 @@ Item *Item_bool_rowready_func2::negated_item()
 Item_equal::Item_equal(Item_field *f1, Item_field *f2)
   : item::function::Boolean(), const_item(0), eval_item(0), cond_false(0)
 {
-  const_item_cache= 0;
+  const_item_cache= false;
   fields.push_back(f1);
   fields.push_back(f2);
 }
@@ -4896,7 +4896,7 @@ Item_equal::Item_equal(Item_field *f1, Item_field *f2)
 Item_equal::Item_equal(Item *c, Item_field *f)
   : item::function::Boolean(), eval_item(0), cond_false(0)
 {
-  const_item_cache= 0;
+  const_item_cache= false;
   fields.push_back(f);
   const_item= c;
 }
@@ -4905,7 +4905,7 @@ Item_equal::Item_equal(Item *c, Item_field *f)
 Item_equal::Item_equal(Item_equal *item_equal)
   : item::function::Boolean(), eval_item(0), cond_false(0)
 {
-  const_item_cache= 0;
+  const_item_cache= false;
   List_iterator_fast<Item_field> li(item_equal->fields);
   Item_field *item;
   while ((item= li++))
@@ -4929,7 +4929,7 @@ void Item_equal::add(Item *c)
   func->set_cmp_func();
   func->quick_fix_field();
   if ((cond_false= !func->val_int()))
-    const_item_cache= 1;
+    const_item_cache= true;
 }
 
 void Item_equal::add(Item_field *f)
@@ -5075,7 +5075,7 @@ bool Item_equal::fix_fields(Session *, Item **)
   List_iterator_fast<Item_field> li(fields);
   Item *item;
   not_null_tables_cache= used_tables_cache= 0;
-  const_item_cache= 0;
+  const_item_cache= false;
   while ((item= li++))
   {
     table_map tmp_table_map;
