@@ -368,7 +368,8 @@ int update_query(Session *session, TableList *table_list,
       }
       else
       {
-        info.init_read_record_idx(session, table, 1, used_index);
+        if ((error= info.init_read_record_idx(session, table, 1, used_index)))
+          goto err;
       }
 
       session->set_proc_info("Searching rows for update");
