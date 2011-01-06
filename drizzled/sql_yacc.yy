@@ -1649,10 +1649,10 @@ type:
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::EPOCH);
           }
-          | MICROSECOND_SYM TIMESTAMP_SYM
+          | TIMESTAMP_SYM '(' NUM ')'
           {
             $$=DRIZZLE_TYPE_MICROTIME;
-            Lex->length= 0;
+            Lex->length= $3.str;
 
             statement::CreateTable *statement=
               (statement::CreateTable *)Lex->statement;
