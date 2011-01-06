@@ -30,6 +30,8 @@
 
 #include <sstream>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include "drizzled/temporal.h"
 
 namespace drizzled
@@ -38,7 +40,7 @@ namespace drizzled
 namespace field
 {
 
-static boost::posix_time::ptime epoch(boost::gregorian::date(1970, 1, 1));
+static boost::posix_time::ptime _epoch(boost::gregorian::date(1970, 1, 1));
 
 Microtime::Microtime(unsigned char *ptr_arg,
                      unsigned char *null_ptr_arg,
@@ -80,7 +82,7 @@ int Microtime::store(const char *from,
   temporal.to_timeval(tmp);
 
   uint64_t tmp_seconds= tmp.tv_sec;
-  uint32_t tmp_micro= tmp.tv_sec;
+  uint32_t tmp_micro= tmp.tv_usec;
 
   pack_num(tmp_seconds);
   pack_num(tmp_micro, ptr +8);
@@ -159,7 +161,7 @@ String *Microtime::val_str(String *val_buffer, String *)
   uint64_t temp= 0;
   uint32_t micro_temp= 0;
   char *to;
-  int to_len= field_length + 1;
+  int to_len= field_length + 1 + 8;
 
   val_buffer->alloc(to_len);
   to= (char *) val_buffer->ptr();
@@ -176,12 +178,13 @@ String *Microtime::val_str(String *val_buffer, String *)
   MicroTimestamp temporal;
   (void) temporal.from_timeval(buffer);
 
-  int rlen;
-  rlen= temporal.to_string(to, to_len);
-  std::cerr << "->" << rlen << " < " << to_len << std::endl;
-  assert(rlen < to_len);
+  int rlen= temporal.to_string(to, to_len);
+  assert(rlen <= to_len);
+  if (rlen > MicroTimestamp::MAX_STRING_LENGTH)
+    rlen= MicroTimestamp::MAX_STRING_LENGTH;
 
   val_buffer->length(rlen);
+
   return val_buffer;
 }
 
@@ -258,12 +261,13 @@ void Microtime::sql_type(String &res) const
 void Microtime::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
-  time_t tmp= session->query_start();
-  set_notnull();
 
-  uint64_t tmp_micro= tmp;
-  pack_num(tmp_micro);
-  pack_num(static_cast<uint32_t>(0), ptr +8);
+  uint32_t fractional_seconds= 0;
+  uint64_t epoch_seconds= session->getCurrentTimestampEpoch(fractional_seconds);
+
+  set_notnull();
+  pack_num(epoch_seconds);
+  pack_num(fractional_seconds, ptr +8);
 }
 
 long Microtime::get_timestamp(bool *null_value)

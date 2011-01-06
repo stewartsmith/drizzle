@@ -153,6 +153,7 @@ bool Date::from_string(const char *from, size_t from_len)
   TemporalFormat *current_format;
   std::vector<TemporalFormat *>::iterator current= known_date_formats.begin();
 
+  _useconds= 0; // We may not match on it, so we need to make sure we zero it out.
   while (current != known_date_formats.end())
   {
     current_format= *current;
@@ -1069,10 +1070,10 @@ int DateTime::to_string(char *to, size_t to_len) const
 int MicroTimestamp::to_string(char *to, size_t to_len) const
 {
   return snprintf(to, to_len,
-		  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
-		      " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
-		  _years, _months, _days,
-		  _hours, _minutes, _seconds, _useconds);
+                  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
+                  " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+                  _years, _months, _days,
+                  _hours, _minutes, _seconds, _useconds);
 }
 
 void Time::to_decimal(type::Decimal *to) const

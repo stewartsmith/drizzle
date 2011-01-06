@@ -55,7 +55,7 @@ void Item_func_curdate::fix_length_and_dec()
 void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
-  time_t tmp= session->query_start();
+  time_t tmp= session->getCurrentTimestampEpoch();
 
   (void) cached_temporal.from_time_t(tmp);
 
@@ -74,7 +74,7 @@ void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
 void Item_func_curdate_utc::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
-  time_t tmp= session->query_start();
+  time_t tmp= session->getCurrentTimestampEpoch();
 
   (void) cached_temporal.from_time_t(tmp);
 

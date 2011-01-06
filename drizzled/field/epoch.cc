@@ -88,7 +88,7 @@ namespace field
                const char *field_name_arg,
                drizzled::TableShare *share) :
   Field_str(ptr_arg,
-            MicroTimestamp::MAX_STRING_LENGTH - 1 /* no \0 */,
+            MicroTimestamp::MAX_STRING_LENGTH - 1, /* no \0 */
             null_ptr_arg,
             null_bit_arg,
             field_name_arg,
@@ -108,7 +108,7 @@ namespace field
 Epoch::Epoch(bool maybe_null_arg,
              const char *field_name_arg) :
   Field_str((unsigned char*) NULL,
-            MicroTimestamp::MAX_STRING_LENGTH - 1 /* no \0 */,
+            MicroTimestamp::MAX_STRING_LENGTH - 1, /* no \0 */
             maybe_null_arg ? (unsigned char*) "": 0,
             0,
             field_name_arg,
@@ -342,9 +342,10 @@ void Epoch::sql_type(String &res) const
 void Epoch::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
-  uint64_t tmp= session->query_start();
+  time_t tmp= session->getCurrentTimestampEpoch();
+
   set_notnull();
-  pack_num(tmp);
+  pack_num(static_cast<uint32_t>(tmp));
 }
 
 void Epoch::set_default()

@@ -788,7 +788,7 @@ public:
    * Maximum length of C-String needed to represent type
    * (including '\0').
    */
-  static const int MAX_STRING_LENGTH= 30;
+  static const int MAX_STRING_LENGTH= 27;
 
   /**
    * Fills a supplied timeval pointer with an

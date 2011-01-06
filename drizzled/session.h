@@ -1316,11 +1316,23 @@ public:
   }
 
   // We may need to set user on this
-  int64_t getCurrentTimestampEpoch() const
+  time_t getCurrentTimestampEpoch() const
   { 
     if (not _user_time.is_not_a_date_time())
       return (_user_time - _epoch).total_seconds();
 
+    return (_start_timer - _epoch).total_seconds();
+  }
+
+  time_t getCurrentTimestampEpoch(uint32_t &fraction_arg) const
+  { 
+    if (not _user_time.is_not_a_date_time())
+    {
+      fraction_arg= 0;
+      return (_user_time - _epoch).total_seconds();
+    }
+
+    fraction_arg= _start_timer.time_of_day().fractional_seconds();
     return (_start_timer - _epoch).total_seconds();
   }
 
