@@ -3,6 +3,7 @@
 #
 
 CREATE SCHEMA admin;
+--error 1064,ER_SYNTAX_ERROR
 CREATE SCHEMA temporary;
 
 SELECT SCHEMA();
@@ -28,4 +29,5 @@ SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA=SCHEMA();
 CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
 DROP SCHEMA admin;
+--error 1064,ER_SYNTAX_ERROR
 DROP SCHEMA temporary;

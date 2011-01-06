@@ -1,5 +1,6 @@
 CREATE SCHEMA admin;
 CREATE SCHEMA temporary;
+Got one of the listed errors
 SELECT SCHEMA();
 SCHEMA()
 test
@@ -19,3 +20,4 @@ CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ERROR 42000: Incorrect schema name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 DROP SCHEMA admin;
 DROP SCHEMA temporary;
+Got one of the listed errors

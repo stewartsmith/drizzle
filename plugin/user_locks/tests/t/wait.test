@@ -32,5 +32,5 @@ send SELECT wait(@count_barrier), "con4";
 connection con5;
 set @count_barrier= "count_barrier";
 SELECT WAIT_UNTIL(@count_barrier, 4);
-SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+SELECT USERNAME, INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
 SELECT signal(@count_barrier);

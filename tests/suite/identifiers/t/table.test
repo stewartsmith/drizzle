@@ -3,7 +3,7 @@
 #
 
 CREATE SCHEMA admin;
-CREATE SCHEMA temporary;
+CREATE SCHEMA temporary_a;
 
 SELECT SCHEMA();
 
@@ -16,33 +16,33 @@ CREATE TABLE .admin.t1 (A SERIAL);
 --error ER_WRONG_DB_NAME
 CREATE TABLE `.admin`.t1 (A SERIAL);
 
-CREATE TABLE temporary.t1 (A SERIAL);
-DROP TABLE temporary.t1;
+CREATE TABLE temporary_a.t1 (A SERIAL);
+DROP TABLE temporary_a.t1;
 
 --error ER_SYNTAX_ERROR,1064
-CREATE TABLE .temporary.t1 (A SERIAL);
+CREATE TABLE .temporary_a.t1 (A SERIAL);
 --error ER_WRONG_DB_NAME
-CREATE TABLE `.temporary`.t1 (A SERIAL);
+CREATE TABLE `.temporary_a`.t1 (A SERIAL);
 
 use admin;
 # This will succeed because we parse the . as being the current schema.
-CREATE TABLE .temporary (A SERIAL);
-DROP TABLE .temporary;
+CREATE TABLE .temporary_a (A SERIAL);
+DROP TABLE .temporary_a;
 
 --error ER_WRONG_TABLE_NAME
-CREATE TABLE `.temporary` (A SERIAL);
+CREATE TABLE `.temporary_a` (A SERIAL);
 
-CREATE TABLE `temporary` (A SERIAL);
-DROP TABLE `temporary`;
+CREATE TABLE `temporary_a` (A SERIAL);
+DROP TABLE `temporary_a`;
 
-CREATE TABLE `#temporary` (A SERIAL);
-DROP TABLE `#temporary`;
+CREATE TABLE `#temporary_a` (A SERIAL);
+DROP TABLE `#temporary_a`;
 
 --error 1064
-CREATE TABLE #temporary (A SERIAL);
+CREATE TABLE #temporary_a (A SERIAL);
 
 --error ER_WRONG_TABLE_NAME
-CREATE TABLE `temporary ` (A SERIAL);
+CREATE TABLE `temporary_a ` (A SERIAL);
 
 SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA=SCHEMA();
 
@@ -53,4 +53,4 @@ CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (A SERIAL);
 
 DROP SCHEMA admin;
-DROP SCHEMA temporary;
+DROP SCHEMA temporary_a;

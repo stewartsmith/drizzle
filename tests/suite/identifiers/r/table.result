@@ -1,5 +1,5 @@
 CREATE SCHEMA admin;
-CREATE SCHEMA temporary;
+CREATE SCHEMA temporary_a;
 SELECT SCHEMA();
 SCHEMA()
 test
@@ -9,25 +9,25 @@ CREATE TABLE .admin.t1 (A SERIAL);
 Got one of the listed errors
 CREATE TABLE `.admin`.t1 (A SERIAL);
 ERROR 42000: Incorrect schema name '.admin'
-CREATE TABLE temporary.t1 (A SERIAL);
-DROP TABLE temporary.t1;
-CREATE TABLE .temporary.t1 (A SERIAL);
+CREATE TABLE temporary_a.t1 (A SERIAL);
+DROP TABLE temporary_a.t1;
+CREATE TABLE .temporary_a.t1 (A SERIAL);
 Got one of the listed errors
-CREATE TABLE `.temporary`.t1 (A SERIAL);
-ERROR 42000: Incorrect schema name '.temporary'
+CREATE TABLE `.temporary_a`.t1 (A SERIAL);
+ERROR 42000: Incorrect schema name '.temporary_a'
 use admin;
-CREATE TABLE .temporary (A SERIAL);
-DROP TABLE .temporary;
-CREATE TABLE `.temporary` (A SERIAL);
-ERROR 42000: Incorrect table name 'admin..temporary'
-CREATE TABLE `temporary` (A SERIAL);
-DROP TABLE `temporary`;
-CREATE TABLE `#temporary` (A SERIAL);
-DROP TABLE `#temporary`;
-CREATE TABLE #temporary (A SERIAL);
+CREATE TABLE .temporary_a (A SERIAL);
+DROP TABLE .temporary_a;
+CREATE TABLE `.temporary_a` (A SERIAL);
+ERROR 42000: Incorrect table name 'admin..temporary_a'
+CREATE TABLE `temporary_a` (A SERIAL);
+DROP TABLE `temporary_a`;
+CREATE TABLE `#temporary_a` (A SERIAL);
+DROP TABLE `#temporary_a`;
+CREATE TABLE #temporary_a (A SERIAL);
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
-CREATE TABLE `temporary ` (A SERIAL);
-ERROR 42000: Incorrect table name 'temporary '
+CREATE TABLE `temporary_a ` (A SERIAL);
+ERROR 42000: Incorrect table name 'temporary_a '
 SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA=SCHEMA();
 TABLE_NAME
 CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (A SERIAL);
@@ -35,4 +35,4 @@ Got one of the listed errors
 CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (A SERIAL);
 Got one of the listed errors
 DROP SCHEMA admin;
-DROP SCHEMA temporary;
+DROP SCHEMA temporary_a;
