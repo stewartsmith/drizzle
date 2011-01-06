@@ -76,6 +76,8 @@ public:
   }
 
   bool execute();
+
+  bool isShow() { return true; }
 };
 
 } /* namespace statement */

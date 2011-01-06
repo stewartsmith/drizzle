@@ -34,6 +34,8 @@ ShowSchemas::Generator::Generator(Field **arg) :
   show_dictionary::Show::Generator(arg),
   is_schema_primed(false)
 {
+  if (not isShowQuery())
+   return;
 }
 
 /**
