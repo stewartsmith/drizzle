@@ -394,6 +394,11 @@ po::variables_map &getVariablesMap()
   return vm;
 }
 
+fs::path& getFullDataHome()
+{
+  return full_data_home;
+}
+
 fs::path& getDataHome()
 {
   return data_home;

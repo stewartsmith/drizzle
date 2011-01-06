@@ -23,6 +23,7 @@
 #include "drizzled/session.h"
 #include "drizzled/user_var_entry.h"
 #include "drizzled/plugin/client/concurrent.h"
+#include "drizzled/catalog/local.h"
 #include "drizzled/execute.h"
 
 namespace drizzled
@@ -52,7 +53,7 @@ void Execute::run(std::string &execution_string)
   {
     plugin::client::Concurrent *client= new plugin::client::Concurrent;
     client->pushSQL(execution_string);
-    Session::shared_ptr new_session(new Session(client));
+    Session::shared_ptr new_session= Session::make_shared(client, catalog::local());
 
     // We set the current schema.  @todo do the same with catalog
     util::string::const_shared_ptr schema(_session.schema());
