@@ -251,7 +251,13 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
   }
   else
   {
-    info.init_read_record_idx(session, table, 1, usable_index);
+    if ((error= info.init_read_record_idx(session, table, 1, usable_index)))
+    {
+      table->print_error(error, MYF(0));
+      delete select;
+      free_underlaid_joins(session, select_lex);
+      return true;
+    }
   }
 
   session->set_proc_info("updating");

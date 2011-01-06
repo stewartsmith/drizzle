@@ -48,10 +48,10 @@ void ReadRecord::init_reard_record_sequential()
   read_record= rr_sequential;
 }
 
-void ReadRecord::init_read_record_idx(Session *, 
-                                      Table *table_arg,
-                                      bool print_error_arg, 
-                                      uint32_t idx)
+int ReadRecord::init_read_record_idx(Session *,
+                                     Table *table_arg,
+                                     bool print_error_arg,
+                                     uint32_t idx)
 {
   table_arg->emptyRecord();
   table= table_arg;
@@ -61,9 +61,15 @@ void ReadRecord::init_read_record_idx(Session *,
 
   table->status=0;			/* And it's always found */
   if (not table->cursor->inited)
-    table->cursor->startIndexScan(idx, 1);
+  {
+    int error= table->cursor->startIndexScan(idx, 1);
+    if (error != 0)
+      return error;
+  }
   /* read_record will be changed to rr_index in rr_index_first */
   read_record= rr_index_first;
+
+  return 0;
 }
 
 
