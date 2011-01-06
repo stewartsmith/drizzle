@@ -2472,7 +2472,16 @@ int subselect_uniquesubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, 0);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, 0);
+
+    if (error != 0)
+    {
+      error= table->report_error(error);
+      return (error != 0);
+    }
+  }
+
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
@@ -2585,7 +2594,15 @@ int subselect_indexsubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, 1);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, 1);
+
+    if (error != 0)
+    {
+      error= table->report_error(error);
+      return(error != 0);
+    }
+  }
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
