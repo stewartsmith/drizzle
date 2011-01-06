@@ -392,7 +392,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 78
+%expect 77
 
 /*
    Comments for TOKENS.
@@ -814,6 +814,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
         engine_option_value
+        savepoint_ident
         BIN_NUM TEXT_STRING_filesystem
         opt_constraint constraint opt_ident
 
@@ -6295,8 +6296,7 @@ rollback:
             statement->tx_chain= $3;
             statement->tx_release= $4;
           }
-        | ROLLBACK_SYM opt_work
-          TO_SYM opt_savepoint ident
+        | ROLLBACK_SYM opt_work TO_SYM opt_savepoint savepoint_ident
           {
             Lex->sql_command= SQLCOM_ROLLBACK_TO_SAVEPOINT;
             Lex->statement= new statement::RollbackToSavepoint(YYSession);
@@ -6305,7 +6305,7 @@ rollback:
         ;
 
 savepoint:
-          SAVEPOINT_SYM ident
+          SAVEPOINT_SYM savepoint_ident
           {
             Lex->sql_command= SQLCOM_SAVEPOINT;
             Lex->statement= new statement::Savepoint(YYSession);
@@ -6314,13 +6314,17 @@ savepoint:
         ;
 
 release:
-          RELEASE_SYM SAVEPOINT_SYM ident
+          RELEASE_SYM SAVEPOINT_SYM savepoint_ident
           {
             Lex->sql_command= SQLCOM_RELEASE_SAVEPOINT;
             Lex->statement= new statement::ReleaseSavepoint(YYSession);
             Lex->ident= $3;
           }
         ;
+
+savepoint_ident:
+               IDENT_sys
+               ;
 
 /*
    UNIONS : glue selects together
