@@ -249,8 +249,8 @@ public:
   */
   int ha_external_lock(Session *session, int lock_type);
   int insertRecord(unsigned char * buf) __attribute__ ((warn_unused_result));
-  int updateRecord(const unsigned char * old_data, unsigned char * new_data);
-  int deleteRecord(const unsigned char * buf);
+  int updateRecord(const unsigned char * old_data, unsigned char * new_data) __attribute__ ((warn_unused_result));
+  int deleteRecord(const unsigned char * buf) __attribute__ ((warn_unused_result));
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
