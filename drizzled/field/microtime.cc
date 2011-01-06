@@ -180,8 +180,6 @@ String *Microtime::val_str(String *val_buffer, String *)
 
   int rlen= temporal.to_string(to, to_len);
   assert(rlen <= to_len);
-  if (rlen > MicroTimestamp::MAX_STRING_LENGTH)
-    rlen= MicroTimestamp::MAX_STRING_LENGTH;
 
   val_buffer->length(rlen);
 

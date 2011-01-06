@@ -65,6 +65,7 @@ void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
   now_time->hour= 0;
   now_time->minute= 0;
   now_time->second= 0;
+  now_time->second_part= 0;
 }
 
 /**
@@ -84,6 +85,7 @@ void Item_func_curdate_utc::store_now_in_TIME(type::Time *now_time)
   now_time->hour= 0;
   now_time->minute= 0;
   now_time->second= 0;
+  now_time->second_part= 0;
 }
 
 bool Item_func_curdate::get_temporal(Date &to)

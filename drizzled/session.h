@@ -1332,7 +1332,7 @@ public:
       return (_user_time - _epoch).total_seconds();
     }
 
-    fraction_arg= _start_timer.time_of_day().fractional_seconds();
+    fraction_arg= _start_timer.time_of_day().fractional_seconds() % 1000000;
     return (_start_timer - _epoch).total_seconds();
   }
 
