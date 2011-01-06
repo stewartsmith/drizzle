@@ -856,14 +856,18 @@ int field_conv(Field *to,Field *from)
     return to->store(result.c_ptr_quick(),result.length(),from->charset());
   }
   else if (from->result_type() == REAL_RESULT)
+  {
     return to->store(from->val_real());
+  }
   else if (from->result_type() == DECIMAL_RESULT)
   {
     type::Decimal buff;
     return to->store_decimal(from->val_decimal(&buff));
   }
   else
+  {
     return to->store(from->val_int(), test(from->flags & UNSIGNED_FLAG));
+  }
 }
 
 } /* namespace drizzled */

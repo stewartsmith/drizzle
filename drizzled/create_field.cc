@@ -312,7 +312,6 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_TIMESTAMP:
       length= MicroTimestamp::MAX_STRING_LENGTH;
 
-      flags|= UNSIGNED_FLAG;
       if (fld_default_value)
       {
         /* Grammar allows only NOW() value for ON UPDATE clause */
