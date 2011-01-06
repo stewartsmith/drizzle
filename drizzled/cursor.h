@@ -248,7 +248,7 @@ public:
     and doDeleteRecord() below.
   */
   int ha_external_lock(Session *session, int lock_type);
-  int insertRecord(unsigned char * buf);
+  int insertRecord(unsigned char * buf) __attribute__ ((warn_unused_result));
   int updateRecord(const unsigned char * old_data, unsigned char * new_data);
   int deleteRecord(const unsigned char * buf);
   void ha_release_auto_increment();
