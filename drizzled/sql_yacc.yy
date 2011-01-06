@@ -816,6 +816,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         user_variable_ident
         row_format_or_text
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
+        schema_ident
         opt_component
         engine_option_value
         savepoint_ident
@@ -1111,7 +1112,7 @@ create:
             statement->alter_info.key_list.push_back(key);
             Lex->col_list.empty();
           }
-        | CREATE DATABASE opt_if_not_exists IDENT_sys
+        | CREATE DATABASE opt_if_not_exists schema_ident
           {
             Lex->sql_command=SQLCOM_CREATE_DB;
             Lex->statement= new statement::CreateSchema(YYSession);
@@ -2143,7 +2144,7 @@ alter:
           }
           alter_commands
           {}
-        | ALTER_SYM DATABASE IDENT_sys
+        | ALTER_SYM DATABASE schema_ident
           {
             Lex->sql_command=SQLCOM_ALTER_DB;
             Lex->statement= new statement::AlterSchema(YYSession);
@@ -4464,7 +4465,7 @@ drop:
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
           }
-        | DROP DATABASE if_exists IDENT_sys
+        | DROP DATABASE if_exists schema_ident
           {
             Lex->sql_command= SQLCOM_DROP_DB;
             statement::DropSchema *statement= new statement::DropSchema(YYSession);
@@ -4472,6 +4473,8 @@ drop:
             statement->drop_if_exists=$3;
             Lex->name= $4;
           }
+        ;
+
 table_list:
           table_name
         | table_list ',' table_name
@@ -5836,8 +5839,12 @@ field_ident:
 
 table_ident:
           ident { $$=new Table_ident($1); }
-        | IDENT_sys '.' ident { $$=new Table_ident($1,$3);}
+        | schema_ident '.' ident { $$=new Table_ident($1,$3);}
         | '.' ident { $$=new Table_ident($2);} /* For Delphi */
+        ;
+
+schema_ident:
+          IDENT_sys
         ;
 
 IDENT_sys:
