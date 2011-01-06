@@ -232,9 +232,9 @@ public:
   /* ha_ methods: pubilc wrappers for private virtual API */
 
   int ha_open(const TableIdentifier &identifier, int mode, int test_if_locked);
-  int startIndexScan(uint32_t idx, bool sorted);
+  int startIndexScan(uint32_t idx, bool sorted) __attribute__ ((warn_unused_result));
   int endIndexScan();
-  int startTableScan(bool scan);
+  int startTableScan(bool scan) __attribute__ ((warn_unused_result));
   int endTableScan();
   int ha_reset();
 
@@ -248,9 +248,9 @@ public:
     and doDeleteRecord() below.
   */
   int ha_external_lock(Session *session, int lock_type);
-  int insertRecord(unsigned char * buf);
-  int updateRecord(const unsigned char * old_data, unsigned char * new_data);
-  int deleteRecord(const unsigned char * buf);
+  int insertRecord(unsigned char * buf) __attribute__ ((warn_unused_result));
+  int updateRecord(const unsigned char * old_data, unsigned char * new_data) __attribute__ ((warn_unused_result));
+  int deleteRecord(const unsigned char * buf) __attribute__ ((warn_unused_result));
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
@@ -535,7 +535,7 @@ private:
     if rnd_init allocates the cursor, second call should position it
     to the start of the table, no need to deallocate and allocate it again
   */
-  virtual int doStartTableScan(bool scan)= 0;
+  virtual int doStartTableScan(bool scan) __attribute__ ((warn_unused_result)) = 0;
   virtual int doEndTableScan() { return 0; }
   virtual int doInsertRecord(unsigned char *)
   {

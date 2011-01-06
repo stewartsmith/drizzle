@@ -2290,7 +2290,12 @@ int subselect_uniquesubquery_engine::scan_table()
   if (table->cursor->inited)
     table->cursor->endIndexScan();
 
-  table->cursor->startTableScan(1);
+  if ((error= table->cursor->startTableScan(1)))
+  {
+    table->print_error(error, MYF(0));
+    return 1;
+  }
+
   table->cursor->extra_opt(HA_EXTRA_CACHE,
                            current_session->variables.read_buff_size);
   table->null_row= 0;
@@ -2467,7 +2472,16 @@ int subselect_uniquesubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, 0);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, 0);
+
+    if (error != 0)
+    {
+      error= table->report_error(error);
+      return (error != 0);
+    }
+  }
+
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
@@ -2580,7 +2594,15 @@ int subselect_indexsubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, 1);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, 1);
+
+    if (error != 0)
+    {
+      error= table->report_error(error);
+      return(error != 0);
+    }
+  }
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
