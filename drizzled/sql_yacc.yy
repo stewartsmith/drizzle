@@ -5843,11 +5843,6 @@ table_ident:
 IDENT_sys:
           IDENT 
           {
-            if (check_for_sql_keyword($1))
-            {
-              my_error(ER_SQL_KEYWORD, MYF(0), $1.length, $1.str);
-              DRIZZLE_YYABORT;
-            }
             $$= $1;
           }
         | IDENT_QUOTED
@@ -5892,11 +5887,6 @@ ident:
           IDENT_sys    { $$=$1; }
         | keyword
           {
-            if (check_for_sql_keyword($1))
-            {
-              my_error(ER_SQL_KEYWORD, MYF(0), $1.length, $1.str);
-              DRIZZLE_YYABORT;
-            }
             $$.str= YYSession->strmake($1.str, $1.length);
             $$.length= $1.length;
           }
