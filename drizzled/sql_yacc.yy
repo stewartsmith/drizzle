@@ -427,7 +427,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ASENSITIVE_SYM                /* FUTURE-USE */
 %token  AT_SYM                        /* SQL-2003-R */
 %token  AUTO_INC
-%token  AVG_ROW_LENGTH
 %token  AVG_SYM                       /* SQL-2003-N */
 %token  BEFORE_SYM                    /* SQL-2003-N */
 %token  BEGIN_SYM                     /* SQL-2003-R */
@@ -479,7 +478,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CURSOR_SYM                    /* SQL-2003-R */
 %token  DATABASE
 %token  DATABASES
-%token  DATAFILE_SYM
 %token  DATA_SYM                      /* SQL-2003-N */
 %token  DATETIME_SYM
 %token  DATE_ADD_INTERVAL             /* MYSQL-FUNC */
@@ -674,7 +672,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  RESTRICT
 %token  RETURNS_SYM                   /* SQL-2003-R */
 %token  RETURN_SYM                    /* SQL-2003-R */
-%token  REVERSE_SYM
 %token  REVOKE                        /* SQL-2003-R */
 %token  RIGHT                         /* SQL-2003-R */
 %token  ROLLBACK_SYM                  /* SQL-2003-R */
@@ -3247,16 +3244,6 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_repeat(*YYSession, $3, $5); }
         | REPLACE '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_replace(*YYSession, $3, $5, $7); }
-        | REVERSE_SYM '(' expr ')'
-          {
-            std::string reverse_str("reverse");
-            List<Item> *args= new (YYSession->mem_root) List<Item>;
-            args->push_back($3);
-            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
-            {
-              DRIZZLE_YYABORT;
-            }
-          }
         | TRUNCATE_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
         | WAIT_SYM '(' expr ')'
@@ -5952,7 +5939,6 @@ keyword_sp:
         | ANY_SYM                  {}
         | AT_SYM                   {}
         | AUTO_INC                 {}
-        | AVG_ROW_LENGTH           {}
         | AVG_SYM                  {}
         | BIT_SYM                  {}
         | BOOL_SYM                 {}
@@ -5973,7 +5959,6 @@ keyword_sp:
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
         | DATABASES                {}
-        | DATAFILE_SYM             {}
         | DATETIME_SYM             {}
         | DATE_SYM                 {}
         | DAY_SYM                  {}
@@ -6044,7 +6029,6 @@ keyword_sp:
         | REDUNDANT_SYM            {}
         | REPEATABLE_SYM           {}
         | RETURNS_SYM              {}
-        | REVERSE_SYM              {}
         | ROLLUP_SYM               {}
         | ROUTINE_SYM              {}
         | ROWS_SYM                 {}
