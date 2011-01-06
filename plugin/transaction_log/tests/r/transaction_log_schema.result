@@ -106,6 +106,7 @@ statement {
       schema_name: "my_test_schema"
       table_name:  TABLE_NAME
     }
+    if_exists_clause: true
   }
 }
 

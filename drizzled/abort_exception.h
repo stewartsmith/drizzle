@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010 Monty Taylor
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,32 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#ifndef DRIZZLED_ABORT_EXCEPTION_H
+#define DRIZZLED_ABORT_EXCEPTION_H
 
-#include "drizzled/identifier.h"
-#include "drizzled/identifier/user.h"
+#include <boost/throw_exception.hpp>
+#include <boost/exception/get_error_info.hpp>
+
+#define DRIZZLE_ABORT BOOST_THROW_EXCEPTION(::drizzled::abort_exception())
 
 namespace drizzled
 {
-namespace identifier
-{
 
-User::shared_ptr User::make_shared()
-{
-  return shared_ptr(new User);
+
+class abort_exception :
+  public boost::exception, public std::exception
+{ };
+
 }
 
-void User::getSQLPath(std::string &arg) const
-{
-  if (_user.empty())
-  {
-    arg.append("no user");
-  }
-  else
-  {
-    arg.append(_user);
-  }
-}
-
-} /* namespace identifier */
-} /* namespace drizzled */
+#endif /* DRIZZLED_ABORT_EXCEPTION_H */

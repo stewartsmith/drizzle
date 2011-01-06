@@ -1493,7 +1493,7 @@ public:
    *
    * @note  For the connection that is doing shutdown, this is called twice
    */
-  void disconnect(enum drizzled_error_code errcode= EE_OK);
+  void disconnect(enum error_t errcode= EE_OK);
 
   /**
    * Check if user exists and the password supplied is correct.

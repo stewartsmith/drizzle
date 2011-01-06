@@ -801,7 +801,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
 
   if (result == false)
   {
-    my_error(killed_errno(), MYF(0));
+    my_error(static_cast<drizzled::error_t>(killed_errno()), MYF(0));
   }
   else if ((result == true) && do_release)
   {
@@ -1609,7 +1609,7 @@ void Tmp_Table_Param::cleanup(void)
   if (copy_field)
   {
     delete [] copy_field;
-    save_copy_field= copy_field= 0;
+    save_copy_field= save_copy_field_end= copy_field= copy_field_end= 0;
   }
 }
 
@@ -1655,7 +1655,7 @@ void mark_transaction_to_rollback(Session *session, bool all)
   }
 }
 
-void Session::disconnect(enum drizzled_error_code errcode)
+void Session::disconnect(enum error_t errcode)
 {
   /* Allow any plugins to cleanup their session variables */
   plugin_sessionvar_cleanup(this);

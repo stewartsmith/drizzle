@@ -2034,7 +2034,7 @@ void TransactionServices::createSchema(Session *in_session,
 
 }
 
-void TransactionServices::dropSchema(Session *in_session, const string &schema_name)
+void TransactionServices::dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -2051,7 +2051,7 @@ void TransactionServices::dropSchema(Session *in_session, const string &schema_n
    */
   message::DropSchemaStatement *drop_schema_statement= statement->mutable_drop_schema_statement();
 
-  drop_schema_statement->set_schema_name(schema_name);
+  drop_schema_statement->set_schema_name(identifier.getSchemaName());
 
   finalizeStatementMessage(*statement, in_session);
 
@@ -2063,8 +2063,8 @@ void TransactionServices::dropSchema(Session *in_session, const string &schema_n
 }
 
 void TransactionServices::dropTable(Session *in_session,
-                                    const string &schema_name,
-                                    const string &table_name)
+                                    const TableIdentifier &table,
+                                    bool if_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -2081,10 +2081,12 @@ void TransactionServices::dropTable(Session *in_session,
    */
   message::DropTableStatement *drop_table_statement= statement->mutable_drop_table_statement();
 
+  drop_table_statement->set_if_exists_clause(if_exists);
+
   message::TableMetadata *table_metadata= drop_table_statement->mutable_table_metadata();
 
-  table_metadata->set_schema_name(schema_name);
-  table_metadata->set_table_name(table_name);
+  table_metadata->set_schema_name(table.getSchemaName());
+  table_metadata->set_table_name(table.getTableName());
 
   finalizeStatementMessage(*statement, in_session);
 

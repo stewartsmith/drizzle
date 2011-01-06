@@ -43,10 +43,8 @@ bool statement::DropSchema::execute()
   SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
   if (not check_db_name(session, schema_identifier))
   {
-    std::string path;
-    schema_identifier.getSQLPath(path);
+    my_error(ER_WRONG_DB_NAME, schema_identifier);
 
-    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
     return false;
   }
 

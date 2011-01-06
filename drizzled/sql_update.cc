@@ -413,7 +413,7 @@ int update_query(Session *session, TableList *table_list,
       }
       else
       {
-	select= new optimizer::SqlSelect;
+	select= new optimizer::SqlSelect();
 	select->head=table;
       }
       if (tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))

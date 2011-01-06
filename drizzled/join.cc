@@ -1587,7 +1587,7 @@ void Join::exec()
       if (sort_table_cond)
       {
         if (!curr_table->select)
-          if (!(curr_table->select= new optimizer::SqlSelect))
+          if (!(curr_table->select= new optimizer::SqlSelect()))
             return;
         if (!curr_table->select->cond)
           curr_table->select->cond= sort_table_cond;
@@ -3220,6 +3220,9 @@ static bool get_best_combination(Join *join)
   (JoinTable*) session->alloc(sizeof(JoinTable)*table_count)))
     return(true);
 
+  for (i= 0; i < table_count; i++)
+    new (join_tab+i) JoinTable();
+
   join->full_join=0;
 
   used_tables= OUTER_REF_TABLE_BIT;   // Outer row is already read
@@ -4382,6 +4385,7 @@ static bool make_simple_join(Join *join,Table *tmp_table)
     if (!(join->join_tab_reexec=
           (JoinTable*) join->session->alloc(sizeof(JoinTable))))
       return(true);
+    new (join->join_tab_reexec) JoinTable();
     if (join->tmp_join)
       join->tmp_join->join_tab_reexec= join->join_tab_reexec;
   }
@@ -4402,7 +4406,6 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   join->row_limit=join->unit->select_limit_cnt;
   join->do_send_rows = (join->row_limit) ? 1 : 0;
 
-  join_tab->cache.buff=0;			/* No caching */
   join_tab->table=tmp_table;
   join_tab->select=0;
   join_tab->select_cond=0;

@@ -17,6 +17,7 @@
 
 #define DRIZZLE_LEX 1
 
+#include "drizzled/abort_exception.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
@@ -753,7 +754,7 @@ void parse(Session *session, const char *inBuf, uint32_t length)
         {
           // Just try to catch any random failures that could have come
           // during execution.
-          unireg_abort(1);
+          DRIZZLE_ABORT;
         }
         DRIZZLE_QUERY_EXEC_DONE(0);
       }
@@ -1421,9 +1422,8 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     1	error	; In this case the error messege is sent to the client
 */
 
-bool check_simple_select()
+bool check_simple_select(Session::pointer session)
 {
-  Session *session= current_session;
   LEX *lex= session->lex;
   if (lex->current_select != &lex->select_lex)
   {
@@ -1606,7 +1606,7 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
+bool check_identifier_name(LEX_STRING *str, error_t err_code,
                            uint32_t max_char_length,
                            const char *param_for_err_msg)
 {
@@ -1632,7 +1632,7 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
 
   switch (err_code)
   {
-  case 0:
+  case EE_OK:
     break;
   case ER_WRONG_STRING_LENGTH:
     my_error(err_code, MYF(0), str->str, param_for_err_msg, max_char_length);
@@ -1644,6 +1644,7 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
     assert(0);
     break;
   }
+
   return true;
 }
 

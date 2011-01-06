@@ -2698,13 +2698,13 @@ select_option:
         | SQL_BIG_RESULT   { Lex->current_select->options|= SELECT_BIG_RESULT; }
         | SQL_BUFFER_RESULT
           {
-            if (check_simple_select())
+            if (check_simple_select(YYSession))
               DRIZZLE_YYABORT;
             Lex->current_select->options|= OPTION_BUFFER_RESULT;
           }
         | SQL_CALC_FOUND_ROWS
           {
-            if (check_simple_select())
+            if (check_simple_select(YYSession))
               DRIZZLE_YYABORT;
             Lex->current_select->options|= OPTION_FOUND_ROWS;
           }
