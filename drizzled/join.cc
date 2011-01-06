@@ -1834,7 +1834,9 @@ void Join::join_free()
     for (sl= tmp_unit->first_select(); sl; sl= sl->next_select())
     {
       Item_subselect *subselect= sl->master_unit()->item;
-      bool full_local= full && (!subselect || subselect->is_evaluated());
+      bool full_local= full && (!subselect || 
+                                (subselect->is_evaluated() &&
+                                !subselect->is_uncacheable()));
       /*
         If this join is evaluated, we can fully clean it up and clean up all
         its underlying joins even if they are correlated -- they will not be
