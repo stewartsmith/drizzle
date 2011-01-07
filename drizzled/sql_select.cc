@@ -17,7 +17,7 @@
   @file
 
   @brief
-  mysql_select and join optimization
+  select_query and join optimization
 
   @defgroup Query_Optimizer  Query Optimizer
   @{
@@ -78,7 +78,7 @@ static COND *build_equal_items(Session *session, COND *cond,
 static Item* part_of_refkey(Table *form,Field *field);
 static bool cmp_buffer_with_ref(JoinTable *tab);
 static void change_cond_ref_to_const(Session *session,
-                                     vector<COND_CMP>& save_list,
+                                     list<COND_CMP>& save_list,
                                      Item *and_father,
                                      Item *cond,
                                      Item *field,
@@ -131,13 +131,15 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
     unit->set_limit(unit->global_parameters);
     session->session_marker= 0;
     /*
-      'options' of mysql_select will be set in JOIN, as far as JOIN for
+      'options' of select_query will be set in JOIN, as far as JOIN for
       every PS/SP execution new, we will not need reset this flag if
       setup_tables_done_option changed for next rexecution
     */
-    res= mysql_select(session, &select_lex->ref_pointer_array,
+    res= select_query(session,
+                      &select_lex->ref_pointer_array,
 		      (TableList*) select_lex->table_list.first,
-		      select_lex->with_wild, select_lex->item_list,
+		      select_lex->with_wild,
+                      select_lex->item_list,
 		      select_lex->where,
 		      select_lex->order_list.elements +
 		      select_lex->group_list.elements,
@@ -268,7 +270,7 @@ bool fix_inner_refs(Session *session,
 
 /*****************************************************************************
   Check fields, find best join, do the select and output fields.
-  mysql_select assumes that all tables are already opened
+  select_query assumes that all tables are already opened
 *****************************************************************************/
 
 /*
@@ -348,7 +350,7 @@ void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
   @retval
     true   an error
 */
-bool mysql_select(Session *session,
+bool select_query(Session *session,
                   Item ***rref_pointer_array,
                   TableList *tables, 
                   uint32_t wild_num, 
@@ -929,7 +931,7 @@ bool store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
 
   /*
     we should restore old value of count_cuted_fields because
-    store_val_in_field can be called from mysql_insert
+    store_val_in_field can be called from insert_query
     with select_insert, which make count_cuted_fields= 1
    */
   enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
@@ -2362,7 +2364,7 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
   and_level
 */
 static void change_cond_ref_to_const(Session *session,
-                                     vector<COND_CMP>& save_list,
+                                     list<COND_CMP>& save_list,
                                      Item *and_father,
                                      Item *cond,
                                      Item *field,
@@ -2375,6 +2377,7 @@ static void change_cond_ref_to_const(Session *session,
     Item *item;
     while ((item=li++))
       change_cond_ref_to_const(session, save_list, and_level ? cond : item, item, field, value);
+
     return;
   }
   if (cond->eq_cmp_result() == Item::COND_OK)
@@ -2467,7 +2470,7 @@ Item *remove_additional_cond(Item* conds)
 }
 
 static void propagate_cond_constants(Session *session, 
-                                     vector<COND_CMP>& save_list, 
+                                     list<COND_CMP>& save_list, 
                                      COND *and_father, 
                                      COND *cond)
 {
@@ -2476,7 +2479,7 @@ static void propagate_cond_constants(Session *session,
     bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
     List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
     Item *item;
-    vector<COND_CMP> save;
+    list<COND_CMP> save;
     while ((item=li++))
     {
       propagate_cond_constants(session, save, and_level ? cond : item, item);
@@ -2484,13 +2487,13 @@ static void propagate_cond_constants(Session *session,
     if (and_level)
     {
       // Handle other found items
-      for (vector<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
+      for (list<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
       {
-        Item **args= iter->cmp_func->arguments();
-        if (!args[0]->const_item())
+        Item **args= iter->second->arguments();
+        if (not args[0]->const_item())
         {
-          change_cond_ref_to_const( session, save, iter->and_level,
-                                    iter->and_level, args[0], args[1] );
+          change_cond_ref_to_const(session, save, iter->first,
+                                   iter->first, args[0], args[1] );
         }
       }
     }
@@ -2681,7 +2684,7 @@ COND *optimize_cond(Join *join, COND *conds, List<TableList> *join_list, Item::c
                              &join->cond_equal);
 
     /* change field = field to field = const for each found field = const */
-    vector<COND_CMP> temp;
+    list<COND_CMP> temp;
     propagate_cond_constants(session, temp, conds, conds);
     /*
       Remove all instances of item == item

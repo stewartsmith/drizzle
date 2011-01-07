@@ -1,0 +1,6 @@
+# We don't support zerofill for display, but we support the use of it for
+# unsigned.
+
+CREATE TABLE t1 (A INT ZEROFILL);
+SHOW CREATE TABLE t1;
+DROP TABLE t1;

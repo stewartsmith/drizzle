@@ -31,9 +31,9 @@ testDataInit (prototest.mysql.bitfield.TestField) ... ok
 testDefaultInit (prototest.mysql.bitfield.TestField) ... ok
 testGetAttr (prototest.mysql.bitfield.TestField) ... ok
 testSetAttr (prototest.mysql.bitfield.TestField) ... ok
+testAdminHandshake (__main__.TestHandshake) ... ok
 testDBOverrun (__main__.TestHandshake) ... ok
 testEmptyRangeClientHandshake (__main__.TestHandshake) ... ok
-testMaxRangeClientHandshake (__main__.TestHandshake) ... ok
 testNullClientHandshake (__main__.TestHandshake) ... ok
 testScrambleOverrun (__main__.TestHandshake) ... ok
 testSimple (__main__.TestHandshake) ... ok

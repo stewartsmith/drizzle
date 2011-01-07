@@ -1,8 +1,8 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; i/dent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,18 +64,22 @@
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/field/boolean.h"
 #include "drizzled/field/enum.h"
 #include "drizzled/field/null.h"
 #include "drizzled/field/date.h"
 #include "drizzled/field/decimal.h"
 #include "drizzled/field/real.h"
 #include "drizzled/field/double.h"
-#include "drizzled/field/long.h"
-#include "drizzled/field/int64_t.h"
+#include "drizzled/field/int32.h"
+#include "drizzled/field/int64.h"
+#include "drizzled/field/size.h"
 #include "drizzled/field/num.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/time.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/field/uuid.h"
 
 #include "drizzled/definition/cache.h"
 
@@ -240,7 +244,7 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::DOUBLE:
     field_type= DRIZZLE_TYPE_DOUBLE;
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     field_type= DRIZZLE_TYPE_TIMESTAMP;
     break;
   case message::Table::Field::BIGINT:
@@ -263,6 +267,15 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
     break;
   case message::Table::Field::BLOB:
     field_type= DRIZZLE_TYPE_BLOB;
+    break;
+  case message::Table::Field::UUID:
+    field_type= DRIZZLE_TYPE_UUID;
+    break;
+  case message::Table::Field::BOOLEAN:
+    field_type= DRIZZLE_TYPE_BOOLEAN;
+    break;
+  case message::Table::Field::TIME:
+    field_type= DRIZZLE_TYPE_TIME;
     break;
   default:
     assert(0);
@@ -304,8 +317,11 @@ static Item *default_value_item(enum_field_types field_type,
     abort();
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
+  case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_BOOLEAN:
     default_item= new Item_string(default_value->c_str(),
                                   default_value->length(),
                                   system_charset_info);
@@ -356,7 +372,7 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
       size_t num_parts= index.index_part_size();
       for (size_t y= 0; y < num_parts; ++y)
       {
-        if (index.index_part(y).fieldnr() == in_field->field_index)
+        if (index.index_part(y).fieldnr() == in_field->position())
           return true;
       }
     }
@@ -383,7 +399,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg) :
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
-  fields(0),
+  _field_size(0),
   rec_buff_length(0),
   keys(0),
   key_parts(0),
@@ -393,7 +409,6 @@ TableShare::TableShare(const TableIdentifier::Type type_arg) :
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -449,7 +464,7 @@ TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier:
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
-  fields(0),
+  _field_size(0),
   rec_buff_length(0),
   keys(0),
   key_parts(0),
@@ -459,7 +474,6 @@ TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier:
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -525,7 +539,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
-  fields(0),
+  _field_size(0),
   rec_buff_length(0),
   keys(0),
   key_parts(0),
@@ -535,7 +549,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -604,7 +617,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg,
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
-  fields(0),
+  _field_size(0),
   rec_buff_length(0),
   keys(0),
   key_parts(0),
@@ -614,7 +627,6 @@ TableShare::TableShare(const TableIdentifier::Type type_arg,
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -728,7 +740,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (! table.IsInitialized())
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), table.InitializationErrorString().c_str());
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             table.name().empty() ? " " :  table.name().c_str(),
+             table.InitializationErrorString().c_str());
+
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
@@ -760,16 +775,11 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (! table_charset)
   {
-    char errmsg[100];
-    snprintf(errmsg, sizeof(errmsg),
-             _("Table %s has invalid/unknown collation: %d,%s"),
-             getPath(),
-             table_options.collation_id(),
-             table_options.collation().c_str());
-    errmsg[99]='\0';
+    my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, MYF(0),
+             table_options.collation().c_str(),
+             table.name().c_str());
 
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
-    return ER_CORRUPT_TABLE_DEFINITION;
+    return ER_CORRUPT_TABLE_DEFINITION; // Historical
   }
 
   db_record_offset= 1;
@@ -925,10 +935,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   keys_for_keyread.reset();
   set_prefix(keys_in_use, keys);
 
-  fields= table.field_size();
+  _field_size= table.field_size();
 
-  setFields(fields + 1);
-  field[fields]= NULL;
+  setFields(_field_size + 1);
+  _fields[_field_size]= NULL;
 
   uint32_t local_null_fields= 0;
   reclength= 0;
@@ -936,15 +946,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   std::vector<uint32_t> field_offsets;
   std::vector<uint32_t> field_pack_length;
 
-  field_offsets.resize(fields);
-  field_pack_length.resize(fields);
+  field_offsets.resize(_field_size);
+  field_pack_length.resize(_field_size);
 
   uint32_t interval_count= 0;
   uint32_t interval_parts= 0;
 
   uint32_t stored_columns_reclength= 0;
 
-  for (unsigned int fieldnr= 0; fieldnr < fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < _field_size; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
     if (pfield.constraints().is_nullable())
@@ -990,7 +1000,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-        field_pack_length[fieldnr]= my_decimal_get_binary_size(fo.precision(), fo.scale());
+        field_pack_length[fieldnr]= class_decimal_get_binary_size(fo.precision(), fo.scale());
       }
       break;
     default:
@@ -1040,7 +1050,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   uint32_t interval_nr= 0;
 
-  for (unsigned int fieldnr= 0; fieldnr < fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < _field_size; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
 
@@ -1052,15 +1062,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     if (field_options.field_value_size() > Field_enum::max_supported_elements)
     {
-      char errmsg[100];
-      snprintf(errmsg, sizeof(errmsg),
-               _("ENUM column %s has greater than %d possible values"),
-               pfield.name().c_str(),
-               Field_enum::max_supported_elements);
-      errmsg[99]='\0';
+      my_error(ER_CORRUPT_TABLE_DEFINITION_ENUM, MYF(0), table.name().c_str());
 
-      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
-      return ER_CORRUPT_TABLE_DEFINITION;
+      return ER_CORRUPT_TABLE_DEFINITION_ENUM; // Historical
     }
 
 
@@ -1103,12 +1107,12 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   /* and read the fields */
   interval_nr= 0;
 
-  bool use_hash= fields >= MAX_FIELDS_BEFORE_HASH;
+  bool use_hash= _field_size >= MAX_FIELDS_BEFORE_HASH;
 
   unsigned char* null_pos= getDefaultValues();
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
-  for (unsigned int fieldnr= 0; fieldnr < fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < _field_size; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
 
@@ -1230,11 +1234,11 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
 
-    db_low_byte_first= true; //Cursor->low_byte_first();
     blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
+    // We set field_length in this loop.
     switch (field_type)
     {
     case DRIZZLE_TYPE_BLOB:
@@ -1276,11 +1280,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-        field_length= my_decimal_precision_to_length(fo.precision(), fo.scale(),
+        field_length= class_decimal_precision_to_length(fo.precision(), fo.scale(),
                                                      false);
         break;
       }
-    case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_DATETIME:
       field_length= DateTime::MAX_STRING_LENGTH;
       break;
@@ -1315,25 +1318,58 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_LONGLONG:
       field_length= MAX_BIGINT_WIDTH;
       break;
+    case DRIZZLE_TYPE_UUID:
+      field_length= field::Uuid::max_string_length();
+      break;
+    case DRIZZLE_TYPE_BOOLEAN:
+      field_length= field::Boolean::max_string_length();
+      break;
+    case DRIZZLE_TYPE_TIMESTAMP:
+      field_length= field::Epoch::max_string_length();
+      break;
+    case DRIZZLE_TYPE_TIME:
+      field_length= field::Time::max_string_length();
+      break;
     case DRIZZLE_TYPE_NULL:
       abort(); // Programming error
     }
 
-    Field* f= make_field(record + field_offsets[fieldnr] + data_offset,
-                                field_length,
-                                pfield.constraints().is_nullable(),
-                                null_pos,
-                                null_bit_pos,
-                                decimals,
-                                field_type,
-                                charset,
-                                MTYP_TYPENR(unireg_type),
-                                ((field_type == DRIZZLE_TYPE_ENUM) ?
-                                 &intervals[interval_nr++]
-                                 : (TYPELIB*) 0),
-                                getTableProto()->field(fieldnr).name().c_str());
+    assert(enum_field_types_size == 14);
 
-    field[fieldnr]= f;
+    Field* f= make_field(pfield,
+                         record + field_offsets[fieldnr] + data_offset,
+                         field_length,
+                         pfield.constraints().is_nullable(),
+                         null_pos,
+                         null_bit_pos,
+                         decimals,
+                         field_type,
+                         charset,
+                         MTYP_TYPENR(unireg_type),
+                         ((field_type == DRIZZLE_TYPE_ENUM) ?  &intervals[interval_nr++] : (TYPELIB*) 0),
+                         getTableProto()->field(fieldnr).name().c_str());
+
+    _fields[fieldnr]= f;
+
+    // Insert post make_field code here.
+    switch (field_type)
+    {
+    case DRIZZLE_TYPE_BLOB:
+    case DRIZZLE_TYPE_VARCHAR:
+    case DRIZZLE_TYPE_DOUBLE:
+    case DRIZZLE_TYPE_DECIMAL:
+    case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_TIME:
+    case DRIZZLE_TYPE_DATETIME:
+    case DRIZZLE_TYPE_DATE:
+    case DRIZZLE_TYPE_ENUM:
+    case DRIZZLE_TYPE_LONG:
+    case DRIZZLE_TYPE_LONGLONG:
+    case DRIZZLE_TYPE_NULL:
+    case DRIZZLE_TYPE_UUID:
+    case DRIZZLE_TYPE_BOOLEAN:
+      break;
+    }
 
     // This needs to go, we should be setting the "use" on the field so that
     // it does not reference the share/table.
@@ -1364,8 +1400,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         return local_error;
       }
     }
-    else if (f->real_type() == DRIZZLE_TYPE_ENUM &&
-             (f->flags & NOT_NULL_FLAG))
+    else if (f->real_type() == DRIZZLE_TYPE_ENUM && (f->flags & NOT_NULL_FLAG))
     {
       f->set_notnull();
       f->store((int64_t) 1, true);
@@ -1379,7 +1414,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     f->setTable(NULL);
     f->orig_table= NULL;
 
-    f->field_index= fieldnr;
+    f->setPosition(fieldnr);
     f->comment= comment;
     if (! default_value &&
         ! (f->unireg_check==Field::NEXT_NUMBER) &&
@@ -1390,17 +1425,13 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
     if (f->unireg_check == Field::NEXT_NUMBER)
-      found_next_number_field= &(field[fieldnr]);
-
-    if (timestamp_field == f)
-      timestamp_field_offset= fieldnr;
+      found_next_number_field= &(_fields[fieldnr]);
 
     if (use_hash) /* supposedly this never fails... but comments lie */
     {
-      const char *local_field_name= field[fieldnr]->field_name;
-      name_hash.insert(make_pair(local_field_name, &(field[fieldnr])));
+      const char *local_field_name= _fields[fieldnr]->field_name;
+      name_hash.insert(make_pair(local_field_name, &(_fields[fieldnr])));
     }
-
   }
 
   keyinfo= key_info;
@@ -1425,7 +1456,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     We need to set the unused bits to 1. If the number of bits is a multiple
     of 8 there are no unused bits.
   */
-
   if (null_count & 7)
     *(record + null_count / 8)|= ~(((unsigned char) 1 << (null_count & 7)) - 1);
 
@@ -1456,9 +1486,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         for (uint32_t i= 0; i < keyinfo->key_parts; i++)
         {
           uint32_t fieldnr= key_part[i].fieldnr;
-          if (! fieldnr ||
-              field[fieldnr-1]->null_ptr ||
-              field[fieldnr-1]->key_length() != key_part[i].length)
+          if (not fieldnr ||
+              _fields[fieldnr-1]->null_ptr ||
+              _fields[fieldnr-1]->key_length() != key_part[i].length)
           {
             local_primary_key= MAX_KEY; // Can't be used
             break;
@@ -1473,7 +1503,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         {
           return ENOMEM;
         }
-        local_field= key_part->field= field[key_part->fieldnr-1];
+        local_field= key_part->field= _fields[key_part->fieldnr-1];
         key_part->type= local_field->key_type();
         if (local_field->null_ptr)
         {
@@ -1595,16 +1625,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     blob_field.resize(blob_fields);
     uint32_t *save= &blob_field[0];
     uint32_t k= 0;
-    for (Fields::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
+    for (Fields::iterator iter= _fields.begin(); iter != _fields.end()-1; iter++, k++)
     {
       if ((*iter)->flags & BLOB_FLAG)
         (*save++)= k;
     }
   }
 
-  db_low_byte_first= true; // @todo Question this.
   all_set.clear();
-  all_set.resize(fields);
+  all_set.resize(_field_size);
   all_set.set();
 
   return local_error;
@@ -1662,28 +1691,29 @@ int TableShare::open_table_def(Session& session, const TableIdentifier &identifi
 
   local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 
-  if (local_error != EEXIST)
-  {
-    if (local_error > 0)
+  do {
+    if (local_error != EEXIST)
     {
-      errno= local_error;
-      local_error= 1;
-    }
-    else
-    {
-      if (not table->IsInitialized())
+      if (local_error > 0)
       {
-        local_error= 4;
+        errno= local_error;
+        local_error= 1;
       }
+      else
+      {
+        if (not table->IsInitialized())
+        {
+          local_error= 4;
+        }
+      }
+      break;
     }
-    goto err_not_open;
-  }
 
-  local_error= parse_table_proto(session, *table);
+    local_error= parse_table_proto(session, *table);
 
-  setTableCategory(TABLE_CATEGORY_USER);
+    setTableCategory(TABLE_CATEGORY_USER);
+  } while (0);
 
-err_not_open:
   if (local_error && !error_given)
   {
     error= local_error;
@@ -1808,7 +1838,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
+  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((_field_size+1)* sizeof(Field*)))))
   {
     return local_error;
   }
@@ -1820,9 +1850,9 @@ int TableShare::open_table_from_share_inner(Session *session,
   outparam.null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
-  for (uint32_t i= 0 ; i < fields; i++, field_ptr++)
+  for (uint32_t i= 0 ; i < _field_size; i++, field_ptr++)
   {
-    if (!((*field_ptr)= field[i]->clone(outparam.getMemRoot(), &outparam)))
+    if (!((*field_ptr)= _fields[i]->clone(outparam.getMemRoot(), &outparam)))
       return local_error;
   }
   (*field_ptr)= 0;                              // End marker
@@ -1831,8 +1861,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     outparam.found_next_number_field=
       outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field_offset);
-
+    outparam.timestamp_field= (field::Epoch*) outparam.getField(timestamp_field->position());
 
   /* Fix key->name and key_part->field */
   if (key_parts)
@@ -1881,9 +1910,9 @@ int TableShare::open_table_from_share_inner(Session *session,
 
   /* Allocate bitmaps */
 
-  outparam.def_read_set.resize(fields);
-  outparam.def_write_set.resize(fields);
-  outparam.tmp_set.resize(fields);
+  outparam.def_read_set.resize(_field_size);
+  outparam.def_write_set.resize(_field_size);
+  outparam.tmp_set.resize(_field_size);
   outparam.default_column_bitmaps();
 
   return 0;
@@ -1940,7 +1969,6 @@ int TableShare::open_table_cursor_inner(const TableIdentifier &identifier,
 /* error message when opening a form cursor */
 void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 {
-  int err_no;
   char buff[FN_REFLEN];
   myf errortype= ME_ERROR+ME_WAITTANG;
 
@@ -1960,8 +1988,11 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   case 2:
     {
+      drizzled::error_t err_no;
+
       err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
         ER_FILE_USED : ER_CANT_OPEN_FILE;
+
       my_error(err_no, errortype, normalized_path.str, db_errno);
       break;
     }
@@ -1997,7 +2028,8 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   return;
 } /* open_table_error */
 
-Field *TableShare::make_field(unsigned char *ptr,
+Field *TableShare::make_field(const message::Table::Field &pfield,
+                              unsigned char *ptr,
                               uint32_t field_length,
                               bool is_nullable,
                               unsigned char *null_pos,
@@ -2008,6 +2040,35 @@ Field *TableShare::make_field(unsigned char *ptr,
                               Field::utype unireg_check,
                               TYPELIB *interval,
                               const char *field_name)
+{
+  return make_field(pfield,
+                    ptr,
+                    field_length,
+                    is_nullable,
+                    null_pos,
+                    null_bit,
+                    decimals,
+                    field_type,
+                    field_charset,
+                    unireg_check,
+                    interval,
+                    field_name,
+                    pfield.constraints().is_unsigned());
+}
+
+Field *TableShare::make_field(const message::Table::Field &,
+                              unsigned char *ptr,
+                              uint32_t field_length,
+                              bool is_nullable,
+                              unsigned char *null_pos,
+                              unsigned char null_bit,
+                              uint8_t decimals,
+                              enum_field_types field_type,
+                              const CHARSET_INFO * field_charset,
+                              Field::utype unireg_check,
+                              TYPELIB *interval,
+                              const char *field_name, 
+                              bool is_unsigned)
 {
   if (! is_nullable)
   {
@@ -2024,6 +2085,7 @@ Field *TableShare::make_field(unsigned char *ptr,
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
+  case DRIZZLE_TYPE_UUID:
     field_charset= &my_charset_bin;
   default: break;
   }
@@ -2032,12 +2094,12 @@ Field *TableShare::make_field(unsigned char *ptr,
   {
   case DRIZZLE_TYPE_ENUM:
     return new (&mem_root) Field_enum(ptr,
-                                 field_length,
-                                 null_pos,
-                                 null_bit,
-                                 field_name,
-                                 interval,
-                                 field_charset);
+                                      field_length,
+                                      null_pos,
+                                      null_bit,
+                                      field_name,
+                                      interval,
+                                      field_charset);
   case DRIZZLE_TYPE_VARCHAR:
     setVariableWidth();
     return new (&mem_root) Field_varstring(ptr,field_length,
@@ -2072,33 +2134,61 @@ Field *TableShare::make_field(unsigned char *ptr,
                                    decimals,
                                    false,
                                    false /* is_unsigned */);
+  case DRIZZLE_TYPE_UUID:
+    return new (&mem_root) field::Uuid(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name);
+  case DRIZZLE_TYPE_BOOLEAN:
+    return new (&mem_root) field::Boolean(ptr,
+                                          field_length,
+                                          null_pos,
+                                          null_bit,
+                                          field_name,
+                                          is_unsigned);
   case DRIZZLE_TYPE_LONG:
-    return new (&mem_root) Field_long(ptr,
-                                 field_length,
-                                 null_pos,
-                                 null_bit,
-                                 unireg_check,
-                                 field_name,
-                                 false,
-                                 false /* is_unsigned */);
+    return new (&mem_root) field::Int32(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name);
   case DRIZZLE_TYPE_LONGLONG:
-    return new (&mem_root) Field_int64_t(ptr,
-                                    field_length,
-                                    null_pos,
-                                    null_bit,
-                                    unireg_check,
-                                    field_name,
-                                    false,
-                                    false /* is_unsigned */);
+    {
+      if (is_unsigned)
+      {
+        return new (&mem_root) field::Size(ptr,
+                                           field_length,
+                                           null_pos,
+                                           null_bit,
+                                           unireg_check,
+                                           field_name);
+      }
+
+      return new (&mem_root) field::Int64(ptr,
+                                          field_length,
+                                          null_pos,
+                                          null_bit,
+                                          unireg_check,
+                                          field_name);
+    }
   case DRIZZLE_TYPE_TIMESTAMP:
-    return new (&mem_root) Field_timestamp(ptr,
-                                      field_length,
-                                      null_pos,
-                                      null_bit,
-                                      unireg_check,
-                                      field_name,
-                                      this,
-                                      field_charset);
+    return new (&mem_root) field::Epoch(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name,
+                                        this,
+                                        field_charset);
+  case DRIZZLE_TYPE_TIME:
+    return new (&mem_root) field::Time(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name,
+                                       field_charset);
   case DRIZZLE_TYPE_DATE:
     return new (&mem_root) Field_date(ptr,
                                  null_pos,
@@ -2116,10 +2206,9 @@ Field *TableShare::make_field(unsigned char *ptr,
                                  field_length,
                                  field_name,
                                  field_charset);
-  default: // Impossible (Wrong version)
-    break;
   }
-  return 0;
+  assert(0);
+  abort();
 }
 
 

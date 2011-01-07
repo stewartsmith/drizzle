@@ -1,0 +1,38 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2010 Monty Taylor
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#ifndef DRIZZLED_ABORT_EXCEPTION_H
+#define DRIZZLED_ABORT_EXCEPTION_H
+
+#include <boost/throw_exception.hpp>
+#include <boost/exception/get_error_info.hpp>
+
+#define DRIZZLE_ABORT BOOST_THROW_EXCEPTION(::drizzled::abort_exception())
+
+namespace drizzled
+{
+
+
+class abort_exception :
+  public boost::exception, public std::exception
+{ };
+
+}
+
+#endif /* DRIZZLED_ABORT_EXCEPTION_H */

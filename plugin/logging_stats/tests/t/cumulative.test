@@ -13,14 +13,14 @@ connect (con2, localhost, drizzle,,);
 connection con2;
 INSERT INTO a VALUES (2);
 UPDATE a SET i=9 WHERE i=2;
-SELECT * FROM a;
+SELECT * FROM a ORDER BY i;
 disconnect con2;
 
 
 connect (con3, localhost, drizzle_test,,);
 connection con3;
 INSERT INTO a VALUES (3);
-SELECT * FROM a;
+SELECT * FROM a ORDER BY i;
 UPDATE a SET i=10 WHERE i=3;
 DELETE FROM a WHERE i=10;
 disconnect con3;
@@ -29,10 +29,10 @@ connection default;
 
 # The statistics are incremented after the statements have already returned
 # so its possible a query could be missed if we do not wait
+--sorted_result
 --sleep 1 
-SELECT * FROM DATA_DICTIONARY.CUMULATIVE_SQL_COMMANDS;
+SELECT IF(COUNT_SELECT, "YES", "NO"), IF(COUNT_UPDATE, "YES", "NO"), IF(COUNT_INSERT, "YES", "NO") FROM DATA_DICTIONARY.CUMULATIVE_SQL_COMMANDS WHERE USER != "root" ORDER BY USER;
 
---replace_column 2 # 3 # 7 # 8 #
-SELECT * FROM DATA_DICTIONARY.CUMULATIVE_USER_STATS;
+SELECT USER, IF(DENIED_CONNECTIONS, "NO", "YES"), IF(LOST_CONNECTIONS, "YES", "NO"), IF(DENIED_CONNECTIONS, "YES", "NO"),  IF(ROWS_FETCHED, "YES", "NO"), IF(ROWS_UPDATED, "YES", "NO"), IF(ROWS_INSERTED, "YES", "NO")  FROM DATA_DICTIONARY.CUMULATIVE_USER_STATS WHERE USER != "root" ORDER BY USER;
 
 DROP TABLE a; 

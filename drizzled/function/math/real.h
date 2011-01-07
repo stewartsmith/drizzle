@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ public:
   Item_real_func(Item *a,Item *b) :Item_func(a,b) {}
   Item_real_func(List<Item> &list) :Item_func(list) {}
   String *val_str(String*str);
-  my_decimal *val_decimal(my_decimal *decimal_value);
+  type::Decimal *val_decimal(type::Decimal *decimal_value);
   int64_t val_int();
   enum Item_result result_type () const { return REAL_RESULT; }
   void fix_length_and_dec();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2005 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2005 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase XT
  *
@@ -886,7 +886,7 @@ static xtBool ind_free_block(XTOpenTablePtr ot, XTIndBlockPtr block)
 			 * #9	0x00e0ff0b in ha_pbxt::write_row at ha_pbxt.cc:2340
 			 * #10	0x0023a00f in handler::ha_write_row at handler.cc:4570
 			 * #11	0x001a32c8 in write_record at sql_insert.cc:1568
-			 * #12	0x001ab635 in mysql_insert at sql_insert.cc:812
+			 * #12	0x001ab635 in insert_query at sql_insert.cc:812
 			 * #13	0x0010e068 in mysql_execute_command at sql_parse.cc:3066
 			 * #14	0x0011480d in mysql_parse at sql_parse.cc:5787
 			 * #15	0x00115afb in dispatch_command at sql_parse.cc:1200

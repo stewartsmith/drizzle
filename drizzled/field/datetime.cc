@@ -121,7 +121,7 @@ int Field_datetime::store(int64_t from, bool)
   return 0;
 }
 
-int Field_datetime::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
+int Field_datetime::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type)
 {
   DateTime temporal;
 
@@ -216,7 +216,7 @@ String *Field_datetime::val_str(String *val_buffer,
   return val_buffer;
 }
 
-bool Field_datetime::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
+bool Field_datetime::get_date(type::Time *ltime, uint32_t fuzzydate)
 {
   int64_t tmp=Field_datetime::val_int();
   uint32_t part1,part2;
@@ -235,7 +235,7 @@ bool Field_datetime::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
   return (!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ? 1 : 0;
 }
 
-bool Field_datetime::get_time(DRIZZLE_TIME *ltime)
+bool Field_datetime::get_time(type::Time *ltime)
 {
   return Field_datetime::get_date(ltime,0);
 }

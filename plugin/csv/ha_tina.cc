@@ -43,7 +43,6 @@ TODO:
 #include "config.h"
 #include <drizzled/field.h>
 #include <drizzled/field/blob.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -746,9 +745,10 @@ int ha_tina::find_current_row(unsigned char *buf)
     {
       /* This masks a bug in the logic for a SELECT * */
       (*field)->setWriteSet();
-      if ((*field)->store(buffer.ptr(), buffer.length(), buffer.charset(),
-                          CHECK_FIELD_WARN))
+      if ((*field)->store_and_check(CHECK_FIELD_WARN, buffer.c_ptr(), buffer.length(), buffer.charset()))
+      {
         goto err;
+      }
 
       if ((*field)->flags & BLOB_FLAG)
       {

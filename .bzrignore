@@ -204,8 +204,10 @@ plugin/blackhole/Makefile.in
 plugin/csv/Makefile.in
 plugin/heap/Makefile.in
 plugin/innobase/Makefile.in
+plugin/innobase/include/pars0grm.hh
 plugin/innobase/include/pars0grm.h
 plugin/innobase/pars/pars0grm.c
+plugin/innobase/pars/pars0grm.cc
 plugin/innobase/pars/pars0grm.h
 plugin/innobase/pars/pars0lex.c
 plugin/memcached_functions/start_mc.sh
@@ -333,3 +335,5 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
+docs/man
+.pc

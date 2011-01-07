@@ -332,22 +332,6 @@ bool Schema::readSchemaFile(const drizzled::SchemaIdentifier &schema_identifier,
   return false;
 }
 
-bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
-{
-
-  // This should always be the same value as GLOBAL_TEMPORARY_EXT but be
-  // CASE_UP. --Brian 
-  //
-  // This needs to be done static in here for ordering reasons
-  static SchemaIdentifier TEMPORARY_IDENTIFIER(".TEMPORARY");
-  if (static_cast<const SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
-  {
-    return false;
-  }
-
-  return true;
-}
-
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                    const drizzled::SchemaIdentifier&,
                                    drizzled::TableIdentifier::vector&)

@@ -247,7 +247,7 @@ create table if not exists t1 select 3 as 'a',4 as 'b';
 create table if not exists t1 select 3 as 'a',3 as 'b';
 show warnings;
 --replace_column 3 # 4 # 5 #
-select * from DATA_DICTIONARY.TABLE_DEFINITION_CACHE WHERE TABLE_COUNT > 1 ORDER BY TABLE_SCHEMA, TABLE_NAME;
+select * from DATA_DICTIONARY.TABLE_DEFINITION_CACHE WHERE TABLE_COUNT AND TABLE_SCHEMA = SCHEMA() > 1 ORDER BY TABLE_SCHEMA, TABLE_NAME;
 select * from t1;
 drop table t1;
 
@@ -382,6 +382,7 @@ select * from t2;
 drop table t1, t2;
 
 create table t1 (a int, b int, d int, e bigint, f float(3,2), g double(4,3), h decimal(5,4), j date, k timestamp, l datetime, m enum('a','b'), o char(10));
+SHOW CREATE TABLE t1;
 create table t2 select ifnull(a,a), ifnull(b,b), ifnull(d,d), ifnull(e,e), ifnull(f,f), ifnull(g,g), ifnull(h,h), ifnull(j,j), ifnull(k,k), ifnull(l,l), ifnull(m,m), ifnull(o,o) from t1;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;

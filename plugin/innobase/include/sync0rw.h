@@ -1,7 +1,7 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2010, Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, Google Inc.
+Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2008, Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -287,7 +287,7 @@ ibool
 rw_lock_s_lock_low(
 /*===============*/
 	rw_lock_t*	lock,	/*!< in: pointer to rw-lock */
-	ulint		pass __attribute__((unused)),
+	ulint		/*pass __attribute__((unused))*/,
 				/*!< in: pass value; != 0, if the lock will be
 				passed to another thread to unlock */
 	const char*	file_name, /*!< in: file name where lock requested */

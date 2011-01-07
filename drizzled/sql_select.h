@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -82,11 +82,7 @@ namespace drizzled
   item->marker should be 0 for all items on entry
   Return in cond_value false if condition is impossible (1 = 2)
 *****************************************************************************/
-struct COND_CMP {
-  Item *and_level;
-  Item_func *cmp_func;
-  COND_CMP(Item *a,Item_func *b) :and_level(a),cmp_func(b) {}
-};
+typedef std::pair<Item*, Item_func*> COND_CMP;
 
 void TEST_join(Join *join);
 
@@ -208,7 +204,7 @@ ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, T
 void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(Join *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
-bool mysql_select(Session *session, Item ***rref_pointer_array,
+bool select_query(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
                   COND *conds, uint32_t og_num, Order *order, Order *group,
                   Item *having, uint64_t select_type,

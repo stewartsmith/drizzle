@@ -1,0 +1,38 @@
+CREATE SCHEMA admin;
+CREATE SCHEMA temporary;
+SELECT SCHEMA();
+SCHEMA()
+test
+CREATE TABLE admin.t1 (A SERIAL);
+DROP TABLE admin.t1;
+CREATE TABLE .admin.t1 (A SERIAL);
+Got one of the listed errors
+CREATE TABLE `.admin`.t1 (A SERIAL);
+ERROR 42000: Incorrect schema name '.admin'
+CREATE TABLE temporary.t1 (A SERIAL);
+DROP TABLE temporary.t1;
+CREATE TABLE .temporary.t1 (A SERIAL);
+Got one of the listed errors
+CREATE TABLE `.temporary`.t1 (A SERIAL);
+ERROR 42000: Incorrect schema name '.temporary'
+use admin;
+CREATE TABLE .temporary (A SERIAL);
+DROP TABLE .temporary;
+CREATE TABLE `.temporary` (A SERIAL);
+ERROR 42000: Incorrect table name 'admin..temporary'
+CREATE TABLE `temporary` (A SERIAL);
+DROP TABLE `temporary`;
+CREATE TABLE `#temporary` (A SERIAL);
+DROP TABLE `#temporary`;
+CREATE TABLE #temporary (A SERIAL);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
+CREATE TABLE `temporary ` (A SERIAL);
+ERROR 42000: Incorrect table name 'temporary '
+SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA=SCHEMA();
+TABLE_NAME
+CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (A SERIAL);
+Got one of the listed errors
+CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (A SERIAL);
+Got one of the listed errors
+DROP SCHEMA admin;
+DROP SCHEMA temporary;

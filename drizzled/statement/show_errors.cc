@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ bool statement::ShowErrors::execute()
 {
   bitset<DRIZZLE_ERROR::NUM_ERRORS> warning_levels;
   warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_ERROR);
-  bool res= mysqld_show_warnings(session, warning_levels);
+  bool res= show_warnings(session, warning_levels);
   return res;
 }
 

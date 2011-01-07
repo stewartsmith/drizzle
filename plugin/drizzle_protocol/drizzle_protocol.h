@@ -47,8 +47,18 @@ public:
   in_port_t getPort(void) const;
   static ProtocolCounters *drizzle_counters;
   virtual ProtocolCounters *getCounters(void) const { return drizzle_counters; }
+  drizzled::plugin::Client *getClient(int fd);
 };
 
+class ClientDrizzleProtocol: public ClientMySQLProtocol
+{
+public:
+  ClientDrizzleProtocol(int fd, ProtocolCounters *set_counters): ClientMySQLProtocol(fd, true, set_counters) {}
+
+  static std::vector<std::string> drizzle_admin_ip_addresses;
+  static void drizzle_compose_ip_addresses(std::vector<std::string> options);
+  bool isAdminAllowed(void);
+};
 
 } /* namespace drizzle_protocol */
 } /* namespace drizzle_plugin */

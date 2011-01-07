@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -163,7 +163,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
     return 1; // This can't be skipped
   }
 
-  rc= mysql_rename_table(*session, engine, old_identifier, new_identifier);
+  rc= rename_table(*session, engine, old_identifier, new_identifier);
   if (rc && ! skip_error)
     return true;
 

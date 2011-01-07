@@ -14,16 +14,23 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
-#include <plugin/multi_thread/multi_thread.h>
-#include "drizzled/pthread_globals.h"
-#include <boost/program_options.hpp>
+
+#include <iostream>
+
+#include <drizzled/pthread_globals.h>
 #include <drizzled/module/option_map.h>
 #include <drizzled/errmsg_print.h>
-#include "drizzled/session.h"
-#include "drizzled/session/cache.h"
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/abort_exception.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/gettext.h>
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <boost/program_options.hpp>
+
+#include "multi_thread.h"
 
 namespace po= boost::program_options;
 using namespace std;
@@ -44,26 +51,43 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
 {
   char stack_dummy;
   boost::this_thread::disable_interruption disable_by_default;
+
   Session::shared_ptr session(session::Cache::singleton().find(id));
 
-  if (not session)
+  try
   {
-    std::cerr << "Session killed before thread could execute\n";
-    return;
-  }
-  session->pushInterrupt(&disable_by_default);
 
-  if (drizzled::internal::my_thread_init())
-  {
-    session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
-    session->status_var.aborted_connects++;
+    if (not session)
+    {
+      std::cerr << _("Session killed before thread could execute") << endl;
+      return;
+    }
+    session->pushInterrupt(&disable_by_default);
+
+    if (drizzled::internal::my_thread_init())
+    {
+      session->disconnect(drizzled::ER_OUT_OF_RESOURCES);
+      session->status_var.aborted_connects++;
+    }
+    else
+    {
+      boost::this_thread::at_thread_exit(&internal::my_thread_end);
+
+      session->thread_stack= (char*) &stack_dummy;
+      session->run();
+    }
+
     killSessionNow(session);
   }
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
+  catch (abort_exception& ex)
+  {
+    cout << _("Drizzle has receieved an abort event.") << endl;
+    cout << _("In Function: ") << *::boost::get_error_info<boost::throw_function>(ex) << endl;
+    cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
+    cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
 
-  session->thread_stack= (char*) &stack_dummy;
-  session->run();
-  killSessionNow(session);
+    TransactionServices::singleton().sendShutdownEvent(session.get());
+  }
   // @todo remove hard spin by disconnection the session first from the
   // thread.
   while (not session.unique()) {}
@@ -113,8 +137,15 @@ bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
     return true;
 
   thread_count.increment();
-
-  session->getThread().reset(new boost::thread((boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()))));
+  try
+  {
+    session->getThread().reset(new boost::thread((boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()))));
+  }
+  catch (std::exception&)
+  {
+    thread_count.decrement();
+    return true;
+  }
 
   if (not session->getThread())
   {

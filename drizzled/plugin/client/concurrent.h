@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ public:
   virtual bool store(int64_t) { return false; }
   virtual bool store(uint64_t) { return false; }
   virtual bool store(double, uint32_t, String*) { return false; }
-  virtual bool store(const DRIZZLE_TIME*) { return false; }
+  virtual bool store(const type::Time*) { return false; }
   virtual bool store(const char*) { return false; }
   virtual bool store(const char*, size_t) { return false; }
   virtual bool store(const std::string &) { return false; }

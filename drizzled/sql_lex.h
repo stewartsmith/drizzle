@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -294,7 +294,7 @@ public:
   {}
 
   friend class Select_Lex_Unit;
-  friend bool mysql_new_select(LEX *lex, bool move_down);
+  friend bool new_select(LEX *lex, bool move_down);
 private:
   void fast_exclude();
 };
@@ -628,7 +628,7 @@ public:
     order_list.next= (unsigned char**) &order_list.first;
   }
   /*
-    This method created for reiniting LEX in mysql_admin_table() and can be
+    This method created for reiniting LEX in admin_table() and can be
     used only if you are going remove all Select_Lex & units except belonger
     to LEX (LEX::unit & LEX::select, for other purposes there are
     Select_Lex_Unit::exclude_level & Select_Lex_Unit::exclude_tree
@@ -850,7 +850,7 @@ public:
   List<Lex_Column>    columns;
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
-  List<set_var_base>  var_list;
+  SetVarVector  var_list;
   /*
     A stack of name resolution contexts for the query. This stack is used
     at parse time to set local name resolution contexts for various parts

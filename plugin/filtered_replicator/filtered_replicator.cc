@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -508,6 +508,7 @@ void FilteredReplicator::setTableFilter(const string &input)
   _tab_filter.assign(input);
   tables_to_filter.clear();
   populateFilter(_tab_filter, tables_to_filter);
+  pthread_mutex_unlock(&sysvar_tab_lock);
   pthread_mutex_unlock(&tab_vector_lock);
 }
 

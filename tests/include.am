@@ -1,6 +1,6 @@
 # vim:ft=automake
 # Copyright (C) 2000-2006 MySQL AB
-# Copyright (c) 2010 Monty Taylor
+# Copyright (C) 2010 Monty Taylor
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -23,7 +23,7 @@ EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
 GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
-NORMAL_TESTS =		main,jp,tamil,regression,$(PLUGIN_TESTS)
+NORMAL_TESTS =		main,bool_type,cast,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type,$(PLUGIN_TESTS)
 ALL_TESTS =		main,big,jp,tamil,regression,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr

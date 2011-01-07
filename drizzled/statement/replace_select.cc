@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ bool statement::ReplaceSelect::execute()
     select_lex->table_list.first= (unsigned char*) second_table;
     select_lex->context.table_list=
       select_lex->context.first_name_resolution_table= second_table;
-    res= mysql_insert_select_prepare(session);
+    res= insert_select_prepare(session);
     if (! res && (sel_result= new select_insert(first_table,
                                                 first_table->table,
                                                 &session->lex->field_list,

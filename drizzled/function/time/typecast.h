@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,8 +90,8 @@ public:
   Item_date_typecast(Item *a) :Item_typecast_maybe_null(a) {}
   const char *func_name() const { return "cast_as_date"; }
   String *val_str(String *str);
-  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_date(type::Time *ltime, uint32_t fuzzy_date);
+  bool get_time(type::Time *ltime);
   const char *cast_type() const { return "date"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_DATE; }
   Field *tmp_table_field(Table *table)
@@ -107,7 +107,7 @@ public:
   bool result_as_int64_t() { return true; }
   int64_t val_int();
   double val_real() { return (double) val_int(); }
-  my_decimal *val_decimal(my_decimal *decimal_value)
+  type::Decimal *val_decimal(type::Decimal *decimal_value)
   {
     assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);
@@ -144,7 +144,7 @@ public:
   int64_t val_int();
   double val_real() { return val_real_from_decimal(); }
   double val() { return (double) val_int(); }
-  my_decimal *val_decimal(my_decimal *decimal_value)
+  type::Decimal *val_decimal(type::Decimal *decimal_value)
   {
     assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);

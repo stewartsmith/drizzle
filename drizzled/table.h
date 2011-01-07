@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,7 +47,9 @@ class Select_Lex;
 class COND_EQUAL;
 class SecurityContext;
 class TableList;
-class Field_timestamp;
+namespace field {
+class Epoch;
+}
 class Field_blob;
 
 extern uint64_t refresh_version;
@@ -158,7 +160,7 @@ public:
   KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
-  Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
+  field::Epoch *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
 
   TableList *pos_in_table_list; /* Element referring to this table */
   Order *group;
@@ -280,7 +282,7 @@ public:
     statement then the variable contains TIMESTAMP_NO_AUTO_SET (i.e. 0).
 
     Value of this variable is set for each statement in open_table() and
-    if needed cleared later in statement processing code (see mysql_update()
+    if needed cleared later in statement processing code (see update_query()
     as example).
   */
   timestamp_auto_set_type timestamp_field_type;
@@ -603,26 +605,7 @@ public:
   */
   bool operator<(const Table &right) const
   {
-    int result= strcasecmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
-
-    if (result <  0)
-      return true;
-
-    if (result >  0)
-      return false;
-
-    result= strcasecmp(this->getShare()->getTableName(), right.getShare()->getTableName());
-
-    if (result <  0)
-      return true;
-
-    if (result >  0)
-      return false;
-
-    if (this->getShare()->getTableProto()->type()  < right.getShare()->getTableProto()->type())
-      return true;
-
-    return false;
+    return getShare()->getCacheKey() < right.getShare()->getCacheKey();
   }
 
   static bool compare(const Table *a, const Table *b)

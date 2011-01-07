@@ -194,8 +194,8 @@ int main(int argc, char *argv[])
 
   if (client.client_con_count > 0)
   {
-    client.client_con_list= calloc(client.client_con_count,
-                                   sizeof(client_con_st));
+    client.client_con_list= (client_con_st *)calloc(client.client_con_count,
+                                                    sizeof(client_con_st));
     if (client.client_con_list == NULL)
     {
       printf("calloc:%d\n", errno);
@@ -222,7 +222,9 @@ int main(int argc, char *argv[])
     con= drizzle_con_add_tcp(&(client.drizzle),
                               &(client.client_con_list[x].con),
                               host, port, user, password, db,
-                              client.mysql_protocol ? DRIZZLE_CON_MYSQL : 0);
+                              client.mysql_protocol
+                              ? DRIZZLE_CON_MYSQL
+                              : DRIZZLE_CON_NONE);
     if (con == NULL)
       CLIENT_ERROR("drizzle_con_add_tcp", 0, &client);
     drizzle_con_set_context(&(client.client_con_list[x].con),

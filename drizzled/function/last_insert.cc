@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ int64_t Item_func_last_insert_id::val_int()
     int64_t value= args[0]->val_int();
     null_value= args[0]->null_value;
     /*
-      LAST_INSERT_ID(X) must affect the client's mysql_insert_id() as
+      LAST_INSERT_ID(X) must affect the client's insert_id() as
       documented in the manual. We don't want to touch
       first_successful_insert_id_in_cur_stmt because it would make
       LAST_INSERT_ID(X) take precedence over an generated auto_increment

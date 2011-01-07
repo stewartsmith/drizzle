@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -75,12 +75,12 @@ String *Item_func_format::val_str(String *str)
   if (args[0]->result_type() == DECIMAL_RESULT ||
       args[0]->result_type() == INT_RESULT)
   {
-    my_decimal dec_val, rnd_dec, *res;
+    type::Decimal dec_val, rnd_dec, *res;
     res= args[0]->val_decimal(&dec_val);
     if ((null_value=args[0]->null_value))
       return 0;
-    my_decimal_round(E_DEC_FATAL_ERROR, res, dec, false, &rnd_dec);
-    my_decimal2string(E_DEC_FATAL_ERROR, &rnd_dec, 0, 0, 0, str);
+    class_decimal_round(E_DEC_FATAL_ERROR, res, dec, false, &rnd_dec);
+    class_decimal2string(E_DEC_FATAL_ERROR, &rnd_dec, 0, 0, 0, str);
     str_length= str->length();
     if (rnd_dec.sign())
       str_length--;

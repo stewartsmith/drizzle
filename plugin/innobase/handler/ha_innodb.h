@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2000, 2010, MySQL AB & Innobase Oy. All Rights Reserved.
+Copyright (C) 2000, 2010, MySQL AB & Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -219,8 +219,6 @@ public:
 };
 
 
-extern "C" {
-
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
  */
@@ -239,8 +237,6 @@ uint64_t drizzle_bin_log_file_pos(void);
 */
 int session_slave_thread(const Session *session);
 
-}
-
 typedef struct trx_struct trx_t;
 /********************************************************************//**
 @file Cursor/ha_innodb.h
@@ -248,7 +244,7 @@ Converts an InnoDB error code to a MySQL error code and also tells to MySQL
 about a possible transaction rollback inside InnoDB caused by a lock wait
 timeout or a deadlock.
 @return	MySQL error code */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 convert_error_code_to_mysql(
 /*========================*/
@@ -259,7 +255,7 @@ convert_error_code_to_mysql(
 /*********************************************************************//**
 Allocates an InnoDB transaction for a MySQL Cursor object.
 @return	InnoDB transaction handle */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 trx_t*
 innobase_trx_allocate(
 /*==================*/
@@ -269,7 +265,6 @@ innobase_trx_allocate(
 This function checks each index name for a table against reserved
 system default primary index name 'GEN_CLUST_INDEX'. If a name matches,
 this function pushes an error message to the client, and returns true. */
-extern "C"
 bool
 innobase_index_name_is_reserved(
 /*============================*/

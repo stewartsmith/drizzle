@@ -10,4 +10,4 @@ SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='file_format';
 SET GLOBAL innodb_file_format='broccolini';
 SHOW VARIABLES LIKE 'innodb_file_format';
 SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='file_format';
-
+SET GLOBAL innodb_file_format='Barracuda';

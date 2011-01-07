@@ -27,6 +27,7 @@
 #include "drizzled/message/transaction.pb.h"
 #include <google/protobuf/text_format.h>
 #endif
+#include "drizzled/identifier.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -39,6 +40,9 @@ void init(drizzled::message::Table &arg, const std::string &name_arg, const std:
 void update(drizzled::message::Schema &arg);
 void update(drizzled::message::Table &arg);
 
+bool is_numeric(const drizzled::message::Table::Field &type);
+
+const std::string &type(const drizzled::message::Table::Field &type);
 const std::string &type(drizzled::message::Table::Field::FieldType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption type);
 const std::string &type(bool type);

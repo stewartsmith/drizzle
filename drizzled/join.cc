@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -192,7 +192,10 @@ int Join::prepare(Item ***rref_pointer_array,
   for (table_ptr= select_lex->leaf_tables;
        table_ptr;
        table_ptr= table_ptr->next_leaf)
+  {
     tables++;
+  }
+
 
   if (setup_wild(session, fields_list, &all_fields, wild_num) ||
       select_lex->setup_ref_array(session, og_num) ||
@@ -1584,7 +1587,7 @@ void Join::exec()
       if (sort_table_cond)
       {
         if (!curr_table->select)
-          if (!(curr_table->select= new optimizer::SqlSelect))
+          if (!(curr_table->select= new optimizer::SqlSelect()))
             return;
         if (!curr_table->select->cond)
           curr_table->select->cond= sort_table_cond;
@@ -1883,7 +1886,6 @@ void Join::cleanup(bool full)
 {
   if (table)
   {
-    JoinTable *tab,*end;
     /*
       Only a sorted table may be cached.  This sorted table is always the
       first non const table in join->table
@@ -1893,6 +1895,11 @@ void Join::cleanup(bool full)
       table[const_tables]->free_io_cache();
       table[const_tables]->filesort_free_buffers(full);
     }
+  }
+
+  if (join_tab)
+  {
+    JoinTable *tab,*end;
 
     if (full)
     {
@@ -1909,6 +1916,7 @@ void Join::cleanup(bool full)
       }
     }
   }
+
   /*
     We are not using tables anymore
     Unlock all tables. We may be in an INSERT .... SELECT statement.
@@ -2040,7 +2048,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
   {
     rollup.state= ROLLUP::STATE_READY;
     if (rollup_make_fields(field_list, send_fields, &func))
-      return(true);     // Should never happen
+      return true;     // Should never happen
   }
   else if (rollup.state == ROLLUP::STATE_NONE)
   {
@@ -2069,11 +2077,13 @@ bool Join::rollup_init()
   tmp_table_param.group_parts= send_group_parts;
 
   if (!(rollup.null_items= (Item_null_result**) session->alloc((sizeof(Item*) +
-                                                sizeof(Item**) +
-                                                sizeof(List<Item>) +
-                        ref_pointer_array_size)
-                        * send_group_parts )))
+                                                                sizeof(Item**) +
+                                                                sizeof(List<Item>) +
+                                                                ref_pointer_array_size)
+                                                               * send_group_parts )))
+  {
     return 1;
+  }
 
   rollup.fields= (List<Item>*) (rollup.null_items + send_group_parts);
   rollup.ref_pointer_arrays= (Item***) (rollup.fields + send_group_parts);
@@ -3013,49 +3023,58 @@ static void calc_group_buffer(Join *join, Order *group)
       case REAL_RESULT:
         key_length+= sizeof(double);
         break;
+
       case INT_RESULT:
         key_length+= sizeof(int64_t);
         break;
+
       case DECIMAL_RESULT:
-        key_length+= my_decimal_get_binary_size(group_item->max_length -
+        key_length+= class_decimal_get_binary_size(group_item->max_length -
                                                 (group_item->decimals ? 1 : 0),
                                                 group_item->decimals);
         break;
+
       case STRING_RESULT:
-      {
-        enum enum_field_types type= group_item->field_type();
-        /*
-          As items represented as DATE/TIME fields in the group buffer
-          have STRING_RESULT result type, we increase the length
-          by 8 as maximum pack length of such fields.
-        */
-        if (type == DRIZZLE_TYPE_DATE ||
-            type == DRIZZLE_TYPE_DATETIME ||
-            type == DRIZZLE_TYPE_TIMESTAMP)
         {
-          key_length+= 8;
-        }
-        else
-        {
+          enum enum_field_types type= group_item->field_type();
           /*
-            Group strings are taken as varstrings and require an length field.
-            A field is not yet created by create_tmp_field()
-            and the sizes should match up.
+            As items represented as DATE/TIME fields in the group buffer
+            have STRING_RESULT result type, we increase the length
+            by 8 as maximum pack length of such fields.
           */
-          key_length+= group_item->max_length + HA_KEY_BLOB_LENGTH;
+          if (type == DRIZZLE_TYPE_DATE ||
+              type == DRIZZLE_TYPE_TIME ||
+              type == DRIZZLE_TYPE_DATETIME ||
+              type == DRIZZLE_TYPE_TIMESTAMP)
+          {
+            key_length+= 8;
+          }
+          else
+          {
+            /*
+              Group strings are taken as varstrings and require an length field.
+              A field is not yet created by create_tmp_field()
+              and the sizes should match up.
+            */
+            key_length+= group_item->max_length + HA_KEY_BLOB_LENGTH;
+          }
+
+          break;
         }
-        break;
-      }
-      default:
+
+      case ROW_RESULT:
         /* This case should never be choosen */
         assert(0);
         my_error(ER_OUT_OF_RESOURCES, MYF(ME_FATALERROR));
       }
     }
+
     parts++;
+
     if (group_item->maybe_null)
       null_parts++;
   }
+
   join->tmp_table_param.group_length=key_length+null_parts;
   join->tmp_table_param.group_parts=parts;
   join->tmp_table_param.group_null_parts=null_parts;
@@ -3200,6 +3219,9 @@ static bool get_best_combination(Join *join)
   if (!(join->join_tab=join_tab=
   (JoinTable*) session->alloc(sizeof(JoinTable)*table_count)))
     return(true);
+
+  for (i= 0; i < table_count; i++)
+    new (join_tab+i) JoinTable();
 
   join->full_join=0;
 
@@ -4363,6 +4385,7 @@ static bool make_simple_join(Join *join,Table *tmp_table)
     if (!(join->join_tab_reexec=
           (JoinTable*) join->session->alloc(sizeof(JoinTable))))
       return(true);
+    new (join->join_tab_reexec) JoinTable();
     if (join->tmp_join)
       join->tmp_join->join_tab_reexec= join->join_tab_reexec;
   }
@@ -4383,7 +4406,6 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   join->row_limit=join->unit->select_limit_cnt;
   join->do_send_rows = (join->row_limit) ? 1 : 0;
 
-  join_tab->cache.buff=0;			/* No caching */
   join_tab->table=tmp_table;
   join_tab->select=0;
   join_tab->select_cond=0;
@@ -5581,16 +5603,27 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
        As we use bitmaps to represent the relation the complexity
        of the algorithm is O((number of tables)^2).
     */
-    for (i= 0, s= stat ; i < table_count ; i++, s++)
+    for (i= 0; i < table_count; i++)
     {
-      for (uint32_t j= 0 ; j < table_count ; j++)
+      uint32_t j;
+      table= stat[i].table;
+
+      if (!table->reginfo.join_tab->dependent)
+        continue;
+
+      for (j= 0, s= stat; j < table_count; j++, s++)
       {
-        table= stat[j].table;
         if (s->dependent & table->map)
+        {
+          table_map was_dependent= s->dependent;
           s->dependent |= table->reginfo.join_tab->dependent;
+          if (i > j && s->dependent != was_dependent)
+          {
+            i= j= 1;
+            break;
+          }
+        }
       }
-      if (s->dependent)
-        s->table->maybe_null= 1;
     }
     /* Catch illegal cross references for outer joins */
     for (i= 0, s= stat ; i < table_count ; i++, s++)
@@ -5601,6 +5634,9 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
         my_message(ER_WRONG_OUTER_JOIN, ER(ER_WRONG_OUTER_JOIN), MYF(0));
         return 1;
       }
+      if (outer_join & s->table->map)
+        s->table->maybe_null= 1;
+
       s->key_dependent= s->dependent;
     }
   }

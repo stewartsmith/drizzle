@@ -172,13 +172,19 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var= cast(NULL as integer);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'integer)' at line 1
+create table t1 select @first_var;
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `@first_var` BIGINT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
+drop table t1;
 set @first_var= NULL;
 create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` BLOB
+  `@first_var` BIGINT DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var= concat(NULL);
@@ -203,7 +209,7 @@ select @a;
 @a
 18446744071710965857
 CREATE TABLE `bigfailure` (
-`afield` BIGINT NOT NULL
+`afield` BIGINT UNSIGNED NOT NULL
 );
 INSERT INTO `bigfailure` VALUES (18446744071710965857);
 SELECT * FROM bigfailure;
@@ -226,15 +232,15 @@ afield
 SET @a := (SELECT afield FROM bigfailure);
 SELECT @a;
 @a
--1998585759
+18446744071710965857
 SET @a := (select afield from (SELECT afield FROM bigfailure) as b);
 SELECT @a;
 @a
--1998585759
+18446744071710965857
 SET @a := (select * from bigfailure where afield = (SELECT afield FROM bigfailure));
 SELECT @a;
 @a
--1998585759
+18446744071710965857
 drop table bigfailure;
 create table t1(f1 int, f2 int);
 insert into t1 values (1,2),(2,3),(3,1);

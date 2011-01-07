@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,17 +58,17 @@ int64_t Item_func_minus::int_op()
   See Item_func_plus::decimal_op for comments.
 */
 
-my_decimal *Item_func_minus::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_minus::decimal_op(type::Decimal *decimal_value)
 {
-  my_decimal value1, *val1;
-  my_decimal value2, *val2=
+  type::Decimal value1, *val1;
+  type::Decimal value2, *val2=
 
   val1= args[0]->val_decimal(&value1);
   if ((null_value= args[0]->null_value))
     return 0;
   val2= args[1]->val_decimal(&value2);
   if (!(null_value= (args[1]->null_value ||
-                     (my_decimal_sub(E_DEC_FATAL_ERROR, decimal_value, val1,
+                     (class_decimal_sub(E_DEC_FATAL_ERROR, decimal_value, val1,
                                      val2) > 3))))
     return decimal_value;
   return 0;

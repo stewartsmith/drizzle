@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ bool statement::ChangeSchema::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
 
   SchemaIdentifier identifier(select_lex->db);
-  if (not mysql_change_db(session, identifier))
+  if (not change_db(session, identifier))
   {
     session->my_ok();
   }

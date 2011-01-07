@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,22 +52,26 @@ namespace drizzled
     -1  ERROR, message not sent
 */
 
-int sql_set_variables(Session *session, List<set_var_base> *var_list)
+int sql_set_variables(Session *session, const SetVarVector &var_list)
 {
   int error;
-  List_iterator_fast<set_var_base> it(*var_list);
 
-  set_var_base *var;
-  while ((var=it++))
+  SetVarVector::const_iterator it(var_list.begin());
+
+  while (it != var_list.end())
   {
-    if ((error= var->check(session)))
+    if ((error= (*it)->check(session)))
       goto err;
+    ++it;
   }
   if (!(error= test(session->is_error())))
   {
-    it.rewind();
-    while ((var= it++))
-      error|= var->update(session);         // Returns 0, -1 or 1
+    it= var_list.begin();
+    while (it != var_list.end())
+    {
+      error|= (*it)->update(session);         // Returns 0, -1 or 1
+      ++it;
+    }
   }
 
 err:
@@ -109,7 +113,7 @@ int set_var::check(Session *session)
   if (var->check_type(type))
   {
     int err= type == OPT_GLOBAL ? ER_LOCAL_VARIABLE : ER_GLOBAL_VARIABLE;
-    my_error(err, MYF(0), var->getName().c_str());
+    my_error(static_cast<drizzled::error_t>(err), MYF(0), var->getName().c_str());
     return -1;
   }
   /* value is a NULL pointer if we are using SET ... = DEFAULT */

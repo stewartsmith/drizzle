@@ -1,8 +1,8 @@
 /*****************************************************************************
 
-Copyright (c) 2000, 2010, MySQL AB & Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, 2009 Google Inc.
-Copyright (c) 2009, Percona Inc.
+Copyright (C) 2000, 2010, MySQL AB & Innobase Oy. All Rights Reserved.
+Copyright (C) 2008, 2009 Google Inc.
+Copyright (C) 2009, Percona Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -60,7 +60,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include "drizzled/table.h"
 #include "drizzled/field/blob.h"
 #include "drizzled/field/varstring.h"
-#include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/plugin/daemon.h"
 #include "drizzled/memory/multi_malloc.h"
@@ -72,6 +71,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <boost/scoped_array.hpp>
 #include <boost/filesystem.hpp>
 #include <drizzled/module/option_map.h>
 #include <iostream>
@@ -83,7 +83,6 @@ using namespace std;
 /** @file ha_innodb.cc */
 
 /* Include necessary InnoDB headers */
-extern "C" {
 #include "univ.i"
 #include "buf0lru.h"
 #include "btr0sea.h"
@@ -116,7 +115,6 @@ extern "C" {
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
 #include "mysql_addons.h"
-}
 
 #include "ha_innodb.h"
 #include "data_dictionary.h"
@@ -804,7 +802,7 @@ srv_conc_force_exit_innodb().
 DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
          in non-Cursor code.
 @return true if session is the replication thread */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 thd_is_replication_slave_thread(
 /*============================*/
@@ -878,7 +876,7 @@ rolling back transactions that have edited non-transactional tables.
 DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
          in non-Cursor code.
 @return true if non-transactional tables have been edited */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 thd_has_edited_nontrans_tables(
 /*===========================*/
@@ -890,7 +888,7 @@ thd_has_edited_nontrans_tables(
 /******************************************************************//**
 Returns true if the thread is executing a SELECT statement.
 @return true if session is executing SELECT */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 thd_is_select(
 /*==========*/
@@ -903,7 +901,7 @@ thd_is_select(
 Returns true if the thread supports XA,
 global value of innodb_supports_xa if session is NULL.
 @return true if session has XA support */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 thd_supports_xa(
 /*============*/
@@ -917,7 +915,7 @@ thd_supports_xa(
 /******************************************************************//**
 Returns the lock wait timeout for the current connection.
 @return the lock wait timeout, in seconds */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ulong
 thd_lock_wait_timeout(
 /*==================*/
@@ -932,7 +930,7 @@ thd_lock_wait_timeout(
 
 /******************************************************************//**
 Set the time waited for the lock for the current query. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 thd_set_lock_wait_time(
 /*===================*/
@@ -1024,7 +1022,7 @@ Converts an InnoDB error code to a MySQL error code and also tells to MySQL
 about a possible transaction rollback inside InnoDB caused by a lock wait
 timeout or a deadlock.
 @return MySQL error code */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 convert_error_code_to_mysql(
 /*========================*/
@@ -1098,6 +1096,8 @@ convert_error_code_to_mysql(
     return(HA_ERR_ROW_IS_REFERENCED);
 
   case DB_CANNOT_ADD_CONSTRAINT:
+  case DB_CHILD_NO_INDEX:
+  case DB_PARENT_NO_INDEX:
     return(HA_ERR_CANNOT_ADD_FOREIGN);
 
   case DB_CANNOT_DROP_CONSTRAINT:
@@ -1167,7 +1167,7 @@ convert_error_code_to_mysql(
 
 /*************************************************************//**
 Prints info of a Session object (== user session thread) to the given file. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_mysql_print_thd(
 /*=====================*/
@@ -1177,13 +1177,15 @@ innobase_mysql_print_thd(
            use the default max length */
 {
   Session *session= reinterpret_cast<Session *>(in_session);
+  drizzled::identifier::User::const_shared_ptr user_identifier(session->user());
+
   fprintf(f,
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
           static_cast<uint64_t>(session->getSessionId()),
           static_cast<uint64_t>(session->getQueryId()),
           glob_hostname,
-          session->getSecurityContext().getIp().c_str(),
-          session->getSecurityContext().getUser().c_str()
+          user_identifier->address().c_str(),
+          user_identifier->username().c_str()
   );
   fprintf(f, "\n%s", session->getQueryString()->c_str());
   putc('\n', f);
@@ -1191,7 +1193,7 @@ innobase_mysql_print_thd(
 
 /******************************************************************//**
 Get the variable length bounds of the given character set. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_get_cset_width(
 /*====================*/
@@ -1218,7 +1220,7 @@ innobase_get_cset_width(
 
 /******************************************************************//**
 Converts an identifier to a table name. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_convert_from_table_id(
 /*===========================*/
@@ -1232,7 +1234,7 @@ innobase_convert_from_table_id(
 
 /******************************************************************//**
 Converts an identifier to UTF-8. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_convert_from_id(
 /*=====================*/
@@ -1247,7 +1249,7 @@ innobase_convert_from_id(
 /******************************************************************//**
 Compares NUL-terminated UTF-8 strings case insensitively.
 @return 0 if a=b, <0 if a<b, >1 if a>b */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 innobase_strcasecmp(
 /*================*/
@@ -1259,7 +1261,7 @@ innobase_strcasecmp(
 
 /******************************************************************//**
 Makes all characters in a NUL-terminated UTF-8 string lower case. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_casedn_str(
 /*================*/
@@ -1271,7 +1273,7 @@ innobase_casedn_str(
 /**********************************************************************//**
 Determines the connection character set.
 @return connection character set */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 const void*
 innobase_get_charset(
 /*=================*/
@@ -1280,7 +1282,7 @@ innobase_get_charset(
   return static_cast<Session*>(mysql_session)->charset();
 }
 
-extern "C" UNIV_INTERN
+UNIV_INTERN
 bool
 innobase_isspace(
   const void *cs,
@@ -1300,7 +1302,7 @@ innobase_fast_mutex_init(
 /**********************************************************************//**
 Determines the current SQL statement.
 @return        SQL statement string */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 const char*
 innobase_get_stmt(
 /*==============*/
@@ -1314,7 +1316,6 @@ innobase_get_stmt(
 /*******************************************************************//**
 Map an OS error to an errno value. The OS error number is stored in
 _doserrno and the mapped value is stored in errno) */
-extern "C"
 void __cdecl
 _dosmaperr(
   unsigned long); /*!< in: OS error value */
@@ -1322,7 +1323,7 @@ _dosmaperr(
 /*********************************************************************//**
 Creates a temporary file.
 @return temporary file descriptor, or < 0 on error */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 innobase_mysql_tmpfile(void)
 /*========================*/
@@ -1402,13 +1403,13 @@ innobase_mysql_tmpfile(void)
 /*********************************************************************//**
 Creates a temporary file.
 @return temporary file descriptor, or < 0 on error */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 innobase_mysql_tmpfile(void)
 /*========================*/
 {
   int fd2 = -1;
-  int fd = mysql_tmpfile("ib");
+  int fd = ::drizzled::tmpfile("ib");
   if (fd >= 0) {
     /* Copy the file descriptor, so that the additional resources
     allocated by create_temp_file() can be freed by invoking
@@ -1441,7 +1442,7 @@ The result is always NUL-terminated (provided buf_size > 0) and the
 number of bytes that were written to "buf" is returned (including the
 terminating NUL).
 @return number of bytes that were written */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ulint
 innobase_raw_format(
 /*================*/
@@ -1561,7 +1562,7 @@ innobase_trx_init(
 /*********************************************************************//**
 Allocates an InnoDB transaction for a MySQL Cursor object.
 @return InnoDB transaction handle */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 trx_t*
 innobase_trx_allocate(
 /*==================*/
@@ -1670,7 +1671,8 @@ innobase_convert_identifier(
         FALSE=id is an UTF-8 string */
 {
   char nz[NAME_LEN + 1];
-  char nz2[NAME_LEN + 1 + sizeof srv_mysql50_table_name_prefix];
+  const size_t nz2_size= NAME_LEN + 1 + srv_mysql50_table_name_prefix.size();
+  boost::scoped_array<char> nz2(new char[nz2_size]);
 
   const char* s = id;
   int   q;
@@ -1687,8 +1689,8 @@ innobase_convert_identifier(
     memcpy(nz, id, idlen);
     nz[idlen] = 0;
 
-    s = nz2;
-    idlen = TableIdentifier::filename_to_tablename(nz, nz2, sizeof nz2);
+    s = nz2.get();
+    idlen = TableIdentifier::filename_to_tablename(nz, nz2.get(), nz2_size);
   }
 
   /* See if the identifier needs to be quoted. */
@@ -1742,7 +1744,7 @@ innobase_convert_identifier(
 Convert a table or index name to the MySQL system_charset_info (UTF-8)
 and quote it if needed.
 @return pointer to the end of buf */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 char*
 innobase_convert_name(
 /*==================*/
@@ -1798,7 +1800,7 @@ no_db_name:
 /**********************************************************************//**
 Determines if the currently running transaction has been interrupted.
 @return TRUE if interrupted */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 trx_is_interrupted(
 /*===============*/
@@ -1810,7 +1812,7 @@ trx_is_interrupted(
 /**********************************************************************//**
 Determines if the currently running transaction is in strict mode.
 @return	TRUE if strict */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 trx_is_strict(
 /*==========*/
@@ -2074,6 +2076,7 @@ innobase_init(
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
+  srv_use_native_aio= (vm.count("disable-native-aio")) ? false : true;
   support_xa= (vm.count("disable-xa")) ? false : true;
   btr_search_enabled= (vm.count("disable-adaptive-hash-index")) ? false : true;
 
@@ -2101,16 +2104,17 @@ innobase_init(
 
 #ifdef UNIV_DEBUG
   static const char test_filename[] = "-@";
-  char      test_tablename[sizeof test_filename
-    + sizeof srv_mysql50_table_name_prefix];
-  if ((sizeof test_tablename) - 1
-      != filename_to_tablename(test_filename, test_tablename,
-                               sizeof test_tablename)
-      || strncmp(test_tablename,
-                 srv_mysql50_table_name_prefix,
-                 sizeof srv_mysql50_table_name_prefix)
-      || strcmp(test_tablename
-                + sizeof srv_mysql50_table_name_prefix,
+  const size_t test_tablename_size= sizeof test_filename
+    + srv_mysql50_table_name_prefix.size();
+  boost::scoped_array test_tablename(new char[test_tablename_size]);
+  if ((test_tablename_size) - 1
+      != filename_to_tablename(test_filename, test_tablename.get(),
+                               test_tablename_size)
+      || strncmp(test_tablename.get(),
+                 srv_mysql50_table_name_prefix.c_str(),
+                 srv_mysql50_table_name_prefix.size())
+      || strcmp(test_tablename.get()
+                + srv_mysql50_table_name_prefix.size(),
                 test_filename)) {
     errmsg_printf(ERRMSG_LVL_ERROR, "tablename encoding has been changed");
     goto error;
@@ -2595,10 +2599,7 @@ retry:
       }
     }
 
-                /* Store transaction point for binlog
-    Later logic tests that this is set to _something_. We need
-    that logic to fire, even though we do not have a real name. */
-    trx->mysql_log_file_name = "UNUSED";
+    trx->mysql_log_file_name = NULL;
     trx->mysql_log_offset = 0;
 
     /* Don't do write + flush right now. For group commit
@@ -3715,8 +3716,7 @@ is such that we must use MySQL code to compare them. NOTE that the prototype
 of this function is in rem0cmp.c in InnoDB source code! If you change this
 function, remember to update the prototype there!
 @return 1, 0, -1, if a is greater, equal, less than b, respectively */
-extern "C" UNIV_INTERN
-int
+UNIV_INTERN int
 innobase_mysql_cmp(
 /*===============*/
   int   mysql_type, /*!< in: MySQL type */
@@ -3798,7 +3798,7 @@ Converts a MySQL type to an InnoDB type. Note that this function returns
 the 'mtype' of InnoDB. InnoDB differentiates between MySQL's old <= 4.1
 VARCHAR and the new true VARCHAR in >= 5.0.3 by the 'prtype'.
 @return DATA_BINARY, DATA_VARCHAR, ... */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ulint
 get_innobase_type_from_mysql_type(
 /*==============================*/
@@ -3851,14 +3851,19 @@ get_innobase_type_from_mysql_type(
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_TIMESTAMP:
+  case DRIZZLE_TYPE_ENUM:
     return(DATA_INT);
   case DRIZZLE_TYPE_DOUBLE:
     return(DATA_DOUBLE);
   case DRIZZLE_TYPE_BLOB:
     return(DATA_BLOB);
-  default:
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_UUID:
+    return(DATA_FIXBINARY);
+  case DRIZZLE_TYPE_NULL:
     ut_error;
   }
 
@@ -4283,16 +4288,17 @@ include_field:
     n_requested_fields++;
 
     templ->col_no = i;
+    templ->clust_rec_field_no = dict_col_get_clust_pos(col, clust_index);
+    ut_ad(templ->clust_rec_field_no != ULINT_UNDEFINED);
 
     if (index == clust_index) {
-      templ->rec_field_no = dict_col_get_clust_pos(col, index);
+      templ->rec_field_no = templ->clust_rec_field_no;
     } else {
       templ->rec_field_no = dict_index_get_nth_col_pos(
                 index, i);
-    }
-
-    if (templ->rec_field_no == ULINT_UNDEFINED) {
-      prebuilt->need_to_access_clustered = TRUE;
+      if (templ->rec_field_no == ULINT_UNDEFINED) {
+        prebuilt->need_to_access_clustered = TRUE;
+      }
     }
 
     if (field->null_ptr) {
@@ -4342,9 +4348,7 @@ skip_field:
     for (i = 0; i < n_requested_fields; i++) {
       templ = prebuilt->mysql_template + i;
 
-      templ->rec_field_no = dict_col_get_clust_pos(
-        &index->table->cols[templ->col_no],
-        clust_index);
+      templ->rec_field_no = templ->clust_rec_field_no;
     }
   }
 }
@@ -6331,6 +6335,28 @@ InnobaseEngine::doCreateTable(
                                               query, strlen(query),
                                               norm_name,
                                               lex_identified_temp_table);
+    switch (error) {
+
+    case DB_PARENT_NO_INDEX:
+      push_warning_printf(
+                          &session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          HA_ERR_CANNOT_ADD_FOREIGN,
+                          "Create table '%s' with foreign key constraint"
+                          " failed. There is no index in the referenced"
+                          " table where the referenced columns appear"
+                          " as the first columns.\n", norm_name);
+      break;
+
+    case DB_CHILD_NO_INDEX:
+      push_warning_printf(
+                          &session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          HA_ERR_CANNOT_ADD_FOREIGN,
+                          "Create table '%s' with foreign key constraint"
+                          " failed. There is no index in the referencing"
+                          " table where referencing columns appear"
+                          " as the first columns.\n", norm_name);
+      break;
+    }
 
     error = convert_error_code_to_mysql(error, iflags, NULL);
 
@@ -6921,6 +6947,7 @@ ha_innobase::estimate_rows_upper_bound(void)
   dict_index_t* index;
   uint64_t  estimate;
   uint64_t  local_data_file_length;
+  ulint stat_n_leaf_pages;
 
   /* We do not know if MySQL can call this function before calling
   external_lock(). To be safe, update the session of the current table
@@ -6938,10 +6965,12 @@ ha_innobase::estimate_rows_upper_bound(void)
 
   index = dict_table_get_first_index(prebuilt->table);
 
-  ut_a(index->stat_n_leaf_pages > 0);
+  stat_n_leaf_pages = index->stat_n_leaf_pages;
+
+  ut_a(stat_n_leaf_pages > 0);
 
   local_data_file_length =
-    ((uint64_t) index->stat_n_leaf_pages) * UNIV_PAGE_SIZE;
+    ((uint64_t) stat_n_leaf_pages) * UNIV_PAGE_SIZE;
 
 
   /* Calculate a minimum length for a clustered index record and from
@@ -7154,7 +7183,10 @@ ha_innobase::info(
 
     prebuilt->trx->op_info = "updating table statistics";
 
-    dict_update_statistics(ib_table);
+    dict_update_statistics(ib_table,
+                           FALSE /* update even if stats
+                                    are initialized */);
+
 
     prebuilt->trx->op_info = "returning various info to MySQL";
 
@@ -7171,6 +7203,9 @@ ha_innobase::info(
   }
 
   if (flag & HA_STATUS_VARIABLE) {
+
+    dict_table_stats_lock(ib_table, RW_S_LATCH);
+
     n_rows = ib_table->stat_n_rows;
 
     /* Because we do not protect stat_n_rows by any mutex in a
@@ -7220,6 +7255,8 @@ ha_innobase::info(
         ib_table->stat_sum_of_other_index_sizes)
           * UNIV_PAGE_SIZE;
 
+    dict_table_stats_unlock(ib_table, RW_S_LATCH);
+
     /* Since fsp_get_available_space_in_free_extents() is
     acquiring latches inside InnoDB, we do not call it if we
     are asked by MySQL to avoid locking. Another reason to
@@ -7236,19 +7273,11 @@ ha_innobase::info(
          innodb_crash_recovery is set to a high value. */
       stats.delete_length = 0;
     } else {
-      /* lock the data dictionary to avoid races with
-      ibd_file_missing and tablespace_discarded */
-      row_mysql_lock_data_dictionary(prebuilt->trx);
+      ullint	avail_space;
 
-      /* ib_table->space must be an existent tablespace */
-      if (!ib_table->ibd_file_missing
-          && !ib_table->tablespace_discarded) {
+      avail_space = fsp_get_available_space_in_free_extents(ib_table->space);
 
-        stats.delete_length =
-          fsp_get_available_space_in_free_extents(
-            ib_table->space) * 1024;
-      } else {
-
+      if (avail_space == ULLINT_UNDEFINED) {
         Session*  session;
 
         session= getTable()->in_use;
@@ -7266,9 +7295,9 @@ ha_innobase::info(
           ib_table->name);
 
         stats.delete_length = 0;
+      } else {
+        stats.delete_length = avail_space * 1024;
       }
-
-      row_mysql_unlock_data_dictionary(prebuilt->trx);
     }
 
     stats.check_time = 0;
@@ -7295,6 +7324,8 @@ ha_innobase::info(
                       ib_table->name, num_innodb_index,
                       getTable()->getShare()->keys);
     }
+
+    dict_table_stats_lock(ib_table, RW_S_LATCH);
 
     for (i = 0; i < getTable()->getShare()->sizeKeys(); i++) {
       ulong j;
@@ -7333,8 +7364,6 @@ ha_innobase::info(
           break;
         }
 
-        dict_index_stat_mutex_enter(index);
-
         if (index->stat_n_diff_key_vals[j + 1] == 0) {
 
           rec_per_key = stats.records;
@@ -7342,8 +7371,6 @@ ha_innobase::info(
           rec_per_key = (ha_rows)(stats.records /
            index->stat_n_diff_key_vals[j + 1]);
         }
-
-        dict_index_stat_mutex_exit(index);
 
         /* Since MySQL seems to favor table scans
         too much over index searches, we pretend
@@ -7361,6 +7388,8 @@ ha_innobase::info(
           (ulong) rec_per_key;
       }
     }
+
+    dict_table_stats_unlock(ib_table, RW_S_LATCH);
   }
 
   if (srv_force_recovery >= SRV_FORCE_NO_IBUF_MERGE) {
@@ -7690,8 +7719,6 @@ ha_innobase::get_foreign_key_create_info(void)
   flen = ftell(srv_dict_tmpfile);
   if (flen < 0) {
     flen = 0;
-  } else if (flen > 64000 - 1) {
-    flen = 64000 - 1;
   }
 
   /* allocate buffer for the string, and
@@ -8866,7 +8893,7 @@ characters for prefix indexes using a multibyte character set. The function
 finds charset information and returns length of prefix_len characters in the
 index field in bytes.
 @return number of bytes occupied by the first n characters */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ulint
 innobase_get_at_most_n_mbchars(
 /*===========================*/
@@ -9330,6 +9357,8 @@ static void init_options(drizzled::module::option_context &context)
           "InnoDB version");
   context("use-internal-malloc",
           "Use InnoDB's internal memory allocator instal of the OS memory allocator.");
+  context("disable-native-aio",
+          _("Do not use Native AIO library for IO, even if available"));
   context("change-buffering",
           po::value<string>(&innobase_change_buffering),
           "Buffer changes to reduce random access: OFF, ON, inserting, deleting, changing, or purging.");
@@ -9402,7 +9431,7 @@ int ha_innobase::read_range_next()
 This function checks each index name for a table against reserved
 system default primary index name 'GEN_CLUST_INDEX'. If a name matches,
 this function pushes an warning message to the client, and returns true. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 bool
 innobase_index_name_is_reserved(
 /*============================*/

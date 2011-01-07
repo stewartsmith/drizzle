@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ class Item_func_from_unixtime :public Item_date_func
   String *val_str(String *str);
   const char *func_name() const { return "from_unixtime"; }
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  bool get_date(type::Time *res, uint32_t fuzzy_date);
 };
 
 } /* namespace drizzled */

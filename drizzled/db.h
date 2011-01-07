@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,10 +25,10 @@ namespace drizzled {
 
 namespace message { class Schema; }
 
-bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
-bool mysql_alter_db(Session *session, const message::Schema &schema_message);
-bool mysql_rm_db(Session *session, SchemaIdentifier &identifier, const bool if_exists);
-bool mysql_change_db(Session *session, SchemaIdentifier &identifier);
+bool create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
+bool alter_db(Session *session, const message::Schema &schema_message);
+bool rm_db(Session *session, SchemaIdentifier &identifier, const bool if_exists);
+bool change_db(Session *session, SchemaIdentifier &identifier);
 
 } /* namespace drizzled */
 

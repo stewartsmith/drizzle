@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -500,9 +500,6 @@ struct trx_struct{
 					in that case we must flush the log
 					in trx_commit_complete_for_mysql() */
 	ulint		duplicates;	/*!< TRX_DUP_IGNORE | TRX_DUP_REPLACE */
-	ulint		active_trans;	/*!< 1 - if a transaction in MySQL
- 					is active. 2 - if prepare_commit_mutex
- 					was taken */
 	unsigned	has_search_latch;
 					/* TRUE if this trx has latched the
 					search system latch in S-mode */

@@ -335,7 +335,7 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
 
 bool check_db_name(Session *session, SchemaIdentifier &schema_identifier)
 {
-  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(), schema_identifier))
+  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
   {
     return false;
   }
@@ -521,8 +521,8 @@ void Table::mark_auto_increment_column()
     We must set bit in read set as update_auto_increment() is using the
     store() to check overflow of auto_increment values
   */
-  setReadSet(found_next_number_field->field_index);
-  setWriteSet(found_next_number_field->field_index);
+  setReadSet(found_next_number_field->position());
+  setWriteSet(found_next_number_field->position());
   if (getShare()->next_number_keypart)
     mark_columns_used_by_index_no_reset(getShare()->next_number_index);
 }
@@ -571,7 +571,7 @@ void Table::mark_columns_needed_for_delete()
     for (reg_field= field ; *reg_field ; reg_field++)
     {
       if ((*reg_field)->flags & PART_KEY_FLAG)
-        setReadSet((*reg_field)->field_index);
+        setReadSet((*reg_field)->position());
     }
   }
 }
@@ -620,7 +620,7 @@ void Table::mark_columns_needed_for_update()
     {
       /* Merge keys is all keys that had a column refered to in the query */
       if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
-        setReadSet((*reg_field)->field_index);
+        setReadSet((*reg_field)->position());
     }
   }
 
@@ -965,7 +965,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
             */
             (*argp)->maybe_null=1;
           }
-          new_field->field_index= fieldnr++;
+          new_field->setPosition(fieldnr++);
 	}
       }
     }
@@ -1012,7 +1012,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	group_null_items++;
 	new_field->flags|= GROUP_FLAG;
       }
-      new_field->field_index= fieldnr++;
+      new_field->setPosition(fieldnr++);
       *(reg_field++)= new_field;
     }
     if (!--hidden_field_count)
@@ -1035,7 +1035,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   field_count= fieldnr;
   *reg_field= 0;
   *blob_field= 0;				// End marker
-  table->getMutableShare()->fields= field_count;
+  table->getMutableShare()->setFieldSize(field_count);
 
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
@@ -1507,7 +1507,7 @@ bool Table::compare_records()
     for (Field **ptr= this->field ; *ptr != NULL; ptr++)
     {
       Field *f= *ptr;
-      if (write_set->test(f->field_index))
+      if (write_set->test(f->position()))
       {
         if (f->real_maybe_null())
         {
@@ -1540,7 +1540,7 @@ bool Table::compare_records()
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {
-    if (isWriteSet((*ptr)->field_index) &&
+    if (isWriteSet((*ptr)->position()) &&
 	(*ptr)->cmp_binary_offset(getShare()->rec_buff_length))
       return true;
   }

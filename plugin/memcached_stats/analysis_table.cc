@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2009, Padraig O'Sullivan
+ * Copyright (C) 2009, Padraig O'Sullivan
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

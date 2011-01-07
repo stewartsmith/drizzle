@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,12 +27,13 @@
 
 namespace drizzled {
 
-struct Native_func_registry;
-typedef boost::unordered_map<std::string, Native_func_registry *, util::insensitive_hash, util::insensitive_equal_to> NativeFunctionsMap;
+class Create_func;
 
 class FunctionContainer {
 public:
-  static NativeFunctionsMap &getMap();
+  typedef boost::unordered_map<std::string, Create_func *, util::insensitive_hash, util::insensitive_equal_to> Map;
+
+  static Map &getMap();
 };
 
 } /* namepsace drizzled */

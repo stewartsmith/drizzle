@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -348,7 +348,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
   {
     return 0;
   }
-  if (! (select= new optimizer::SqlSelect))
+  if (! (select= new optimizer::SqlSelect()))
   {
     *error= 1;			// out of memory
     return 0;

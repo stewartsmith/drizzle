@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,8 +32,8 @@ CollationsTool::CollationsTool() :
   add_field("COLLATION_NAME");
   add_field("DESCRIPTION");
   add_field("ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("IS_DEFAULT", plugin::TableFunction::BOOLEAN);
-  add_field("IS_COMPILED", plugin::TableFunction::BOOLEAN);
+  add_field("IS_DEFAULT", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_COMPILED", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("SORTLEN", plugin::TableFunction::NUMBER, 0, false);
 }
 

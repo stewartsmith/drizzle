@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,6 +43,12 @@ public:
   LEX_STRING comment; /**< A comment for this field */
   Item *def; /**< Default value for the new field */
   enum enum_field_types sql_type; /**< The data type of the new field */
+
+  enum_field_types type() const
+  {
+    return sql_type;
+  }
+
   /**
    * At various stages in execution this can be length of field in bytes or
    * max number of characters.
@@ -125,6 +131,8 @@ public:
             uint32_t uint_geom_type,
             enum column_format_type column_format);
 };
+
+std::ostream& operator<<(std::ostream& output, const CreateField &field);
 
 } /* namespace drizzled */
 

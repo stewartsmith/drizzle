@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ namespace drizzled
 String *Item_func_makedate::val_str(String *str)
 {
   assert(fixed == 1);
-  DRIZZLE_TIME l_time;
+  type::Time l_time;
   long daynr=  (long) args[1]->val_int();
   long year= (long) args[0]->val_int();
   long days;
@@ -81,7 +81,7 @@ err:
 int64_t Item_func_makedate::val_int()
 {
   assert(fixed == 1);
-  DRIZZLE_TIME l_time;
+  type::Time l_time;
   long daynr=  (long) args[1]->val_int();
   long year= (long) args[0]->val_int();
   long days;

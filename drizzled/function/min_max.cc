@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ void Item_func_min_max::fix_length_and_dec()
     }
   }
   else if ((cmp_type == DECIMAL_RESULT) || (cmp_type == INT_RESULT))
-    max_length= my_decimal_precision_to_length(max_int_part+decimals, decimals,
+    max_length= class_decimal_precision_to_length(max_int_part+decimals, decimals,
                                             unsigned_flag);
   cached_field_type= agg_field_type(args, arg_count);
 }
@@ -141,60 +141,64 @@ String *Item_func_min_max::val_str(String *str)
   }
   switch (cmp_type) {
   case INT_RESULT:
-  {
-    int64_t nr=val_int();
-    if (null_value)
-      return 0;
-    str->set_int(nr, unsigned_flag, &my_charset_bin);
-    return str;
-  }
-  case DECIMAL_RESULT:
-  {
-    my_decimal dec_buf, *dec_val= val_decimal(&dec_buf);
-    if (null_value)
-      return 0;
-    my_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
-    return str;
-  }
-  case REAL_RESULT:
-  {
-    double nr= val_real();
-    if (null_value)
-      return 0;
-    str->set_real(nr,decimals,&my_charset_bin);
-    return str;
-  }
-  case STRING_RESULT:
-  {
-    String *res= NULL;
-
-    for (uint32_t i=0; i < arg_count ; i++)
     {
-      if (i == 0)
-	res=args[i]->val_str(str);
-      else
-      {
-	String *res2;
-	res2= args[i]->val_str(res == str ? &tmp_value : str);
-	if (res2)
-	{
-	  int cmp= sortcmp(res,res2,collation.collation);
-	  if ((cmp_sign < 0 ? cmp : -cmp) < 0)
-	    res=res2;
-	}
-      }
-      if ((null_value= args[i]->null_value))
+      int64_t nr=val_int();
+      if (null_value)
         return 0;
+      str->set_int(nr, unsigned_flag, &my_charset_bin);
+      return str;
     }
-    res->set_charset(collation.collation);
-    return res;
-  }
+
+  case DECIMAL_RESULT:
+    {
+      type::Decimal dec_buf, *dec_val= val_decimal(&dec_buf);
+      if (null_value)
+        return 0;
+      class_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
+      return str;
+    }
+
+  case REAL_RESULT:
+    {
+      double nr= val_real();
+      if (null_value)
+        return 0;
+      str->set_real(nr,decimals,&my_charset_bin);
+      return str;
+    }
+
+  case STRING_RESULT:
+    {
+      String *res= NULL;
+
+      for (uint32_t i=0; i < arg_count ; i++)
+      {
+        if (i == 0)
+          res=args[i]->val_str(str);
+        else
+        {
+          String *res2;
+          res2= args[i]->val_str(res == str ? &tmp_value : str);
+          if (res2)
+          {
+            int cmp= sortcmp(res,res2,collation.collation);
+            if ((cmp_sign < 0 ? cmp : -cmp) < 0)
+              res=res2;
+          }
+        }
+        if ((null_value= args[i]->null_value))
+          return 0;
+      }
+      res->set_charset(collation.collation);
+      return res;
+    }
+
   case ROW_RESULT:
-  default:
     // This case should never be chosen
     assert(0);
     return 0;
   }
+
   return 0;					// Keep compiler happy
 }
 
@@ -253,10 +257,10 @@ int64_t Item_func_min_max::val_int()
 }
 
 
-my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
+type::Decimal *Item_func_min_max::val_decimal(type::Decimal *dec)
 {
   assert(fixed == 1);
-  my_decimal tmp_buf, *tmp, *res= NULL;
+  type::Decimal tmp_buf, *tmp, *res= NULL;
 
   if (compare_as_dates)
   {
@@ -272,12 +276,12 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
     else
     {
       tmp= args[i]->val_decimal(&tmp_buf);      // Zero if NULL
-      if (tmp && (my_decimal_cmp(tmp, res) * cmp_sign) < 0)
+      if (tmp && (class_decimal_cmp(tmp, res) * cmp_sign) < 0)
       {
         if (tmp == &tmp_buf)
         {
           /* Move value out of tmp_buf as this will be reused on next loop */
-          my_decimal2decimal(tmp, dec);
+          class_decimal2decimal(tmp, dec);
           res= dec;
         }
         else

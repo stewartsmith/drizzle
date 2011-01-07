@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,13 +29,12 @@ namespace drizzled
 bool statement::SetOption::execute()
 {
   TableList *all_tables= session->lex->query_tables;
-  List<set_var_base> *lex_var_list= &session->lex->var_list;
 
   if (session->openTablesLock(all_tables))
   {
     return true;
   }
-  bool res= sql_set_variables(session, lex_var_list);
+  bool res= sql_set_variables(session, session->lex->var_list);
   if (res)
   {
     /*

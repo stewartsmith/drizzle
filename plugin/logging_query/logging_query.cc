@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008,2009 Sun Microsystems
+ *  Copyright (C) 2008, 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -234,15 +234,14 @@ public:
     if (session->examined_row_count < sysvar_logging_query_threshold_big_examined.get())
       return false;
 
-    /* TODO, the session object should have a "utime command completed"
-       inside itself, so be more accurate, and so this doesnt have to
-       keep calling current_utime, which can be slow */
-  
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    uint64_t t_mark= (mytime-epoch).total_microseconds();
+    /*
+      TODO, the session object should have a "utime command completed"
+      inside itself, so be more accurate, and so this doesnt have to
+      keep calling current_utime, which can be slow.
+    */
+    uint64_t t_mark= session->getCurrentTimestamp(false);
 
-    if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow.get()))
+    if (session->getElapsedTime() < (sysvar_logging_query_threshold_slow.get()))
       return false;
 
     Session::QueryString query_string(session->getQueryString());
@@ -274,7 +273,7 @@ public:
               % qs
               % command_name[session->command].str
               % (t_mark - session->getConnectMicroseconds())
-              % (t_mark - session->start_utime)
+              % session->getElapsedTime()
               % (t_mark - session->utime_after_lock)
               % session->sent_row_count
               % session->examined_row_count

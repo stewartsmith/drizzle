@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ bool statement::Update::execute()
   }
   assert(select_lex->offset_limit == 0);
   unit->set_limit(select_lex);
-  bool res= mysql_update(session, 
+  bool res= update_query(session, 
                          all_tables,
                          select_lex->item_list,
                          session->lex->value_list,

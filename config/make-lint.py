@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#  Copyright (C) 2009 Sun Microsystems
+#  Copyright (C) 2009 Sun Microsystems, Inc.
 #  Copyright (C) 2009 Robert Collins
 #
 #  This program is free software; you can redistribute it and/or modify

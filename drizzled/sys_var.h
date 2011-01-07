@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1159,8 +1159,7 @@ struct sys_var_with_base
 drizzle_show_var* enumerate_sys_vars(Session *session);
 void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
-sys_var *find_sys_var(const char *str, uint32_t length=0);
-bool not_all_support_one_shot(List<set_var_base> *var_list);
+sys_var *find_sys_var(const std::string &name);
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);

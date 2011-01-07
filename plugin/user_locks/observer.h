@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- * Copyright (c) 2010, Brian Aker
+ * Copyright (C) 2010 Brian Aker
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

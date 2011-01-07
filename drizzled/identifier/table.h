@@ -2,7 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -59,6 +59,8 @@ class TableIdentifier : public SchemaIdentifier
 public:
   typedef message::Table::TableType Type;
   typedef std::vector <TableIdentifier> vector;
+  typedef const TableIdentifier& const_reference;
+  typedef TableIdentifier& reference;
 
   class Key
   {
@@ -195,9 +197,9 @@ public:
     return type;
   }
 
-  void getSQLPath(std::string &sql_path) const;
+  virtual void getSQLPath(std::string &sql_path) const;
 
-  const std::string &getPath() const;
+  virtual const std::string &getPath() const;
 
   void setPath(const std::string &new_path)
   {
@@ -211,7 +213,7 @@ public:
 
   void copyToTableMessage(message::Table &message) const;
 
-  friend bool operator<(const TableIdentifier &left, const TableIdentifier &right)
+  friend bool operator<(TableIdentifier::const_reference left, TableIdentifier::const_reference right)
   {
     if (left.getKey() < right.getKey())
     {
@@ -221,7 +223,7 @@ public:
     return false;
   }
 
-  friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
+  friend std::ostream& operator<<(std::ostream& output, TableIdentifier::const_reference identifier)
   {
     const char *type_str;
 
@@ -256,7 +258,7 @@ public:
     return output;  // for multiple << operators.
   }
 
-  friend bool operator==(TableIdentifier &left, TableIdentifier &right)
+  friend bool operator==(TableIdentifier::const_reference left, TableIdentifier::const_reference right)
   {
     if (left.getHashValue() == right.getHashValue())
     {
@@ -273,6 +275,7 @@ public:
   static size_t build_tmptable_filename(std::vector<char> &buffer);
 
 public:
+  bool isValid() const;
 
   size_t getHashValue() const
   {

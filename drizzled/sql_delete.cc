@@ -43,7 +43,7 @@ namespace drizzled
   end of dispatch_command().
 */
 
-bool mysql_delete(Session *session, TableList *table_list, COND *conds,
+bool delete_query(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows limit, uint64_t,
                   bool reset_auto_increment)
 {
@@ -71,7 +71,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   session->set_proc_info("init");
   table->map=1;
 
-  if (mysql_prepare_delete(session, table_list, &conds))
+  if (prepare_delete(session, table_list, &conds))
   {
     DRIZZLE_DELETE_DONE(1, 0);
     return true;
@@ -345,7 +345,7 @@ cleanup:
   Prepare items in DELETE statement
 
   SYNOPSIS
-    mysql_prepare_delete()
+    prepare_delete()
     session			- thread handler
     table_list		- global/local table list
     conds		- conditions
@@ -354,7 +354,7 @@ cleanup:
     false OK
     true  error
 */
-int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
+int prepare_delete(Session *session, TableList *table_list, Item **conds)
 {
   Select_Lex *select_lex= &session->lex->select_lex;
 
@@ -393,7 +393,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
   This will work even if the .ISM and .ISD tables are destroyed
 */
 
-bool mysql_truncate(Session& session, TableList *table_list)
+bool truncate(Session& session, TableList *table_list)
 {
   bool error;
   TransactionServices &transaction_services= TransactionServices::singleton();
@@ -401,8 +401,8 @@ bool mysql_truncate(Session& session, TableList *table_list)
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  mysql_init_select(session.lex);
-  error= mysql_delete(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
+  init_select(session.lex);
+  error= delete_query(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)

@@ -135,6 +135,7 @@ bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_
   if (getTable()->in_use->count_cuted_fields &&
       check_int(cs, from, len, end, error))
     return 1;
+
   return 0;
 
 out_of_range:
@@ -156,7 +157,7 @@ out_of_range:
     !=0  error
 */
 
-int Field_num::store_decimal(const my_decimal *val)
+int Field_num::store_decimal(const type::Decimal *val)
 {
   int err= 0;
   int64_t i= convert_decimal2int64_t(val, false, &err);
@@ -177,12 +178,12 @@ int Field_num::store_decimal(const my_decimal *val)
     pointer to decimal buffer with value of field
 */
 
-my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
+type::Decimal* Field_num::val_decimal(type::Decimal *decimal_value)
 {
   assert(result_type() == INT_RESULT);
 
   int64_t nr= val_int();
-  int2my_decimal(E_DEC_FATAL_ERROR, nr, false, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, nr, false, decimal_value);
   return decimal_value;
 }
 

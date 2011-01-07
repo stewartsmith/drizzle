@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,10 +43,13 @@ namespace drizzled
 enum Cast_target
 {
   ITEM_CAST_BINARY,
+  ITEM_CAST_SIGNED,
+  ITEM_CAST_UNSIGNED,
   ITEM_CAST_DATE,
   ITEM_CAST_TIME,
   ITEM_CAST_DATETIME,
   ITEM_CAST_CHAR,
+  ITEM_CAST_BOOLEAN,
   ITEM_CAST_DECIMAL
 };
 

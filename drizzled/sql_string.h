@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -217,13 +217,13 @@ public:
       char *new_ptr;
       if (!(new_ptr= reinterpret_cast<char*>(::realloc(Ptr,arg_length))))
       {
-	Alloced_length = 0;
-	real_alloc(arg_length);
+        Alloced_length = 0;
+        real_alloc(arg_length);
       }
       else
       {
-	Ptr=new_ptr;
-	Alloced_length=arg_length;
+        Ptr=new_ptr;
+        Alloced_length=arg_length;
       }
     }
   }
@@ -272,7 +272,7 @@ public:
     else
     {
       if (realloc(str_length+1))
-	return 1;
+        return 1;
       Ptr[str_length++]=chr;
     }
     return 0;
@@ -338,6 +338,8 @@ public:
 
 bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                              char *end);
+
+std::ostream& operator<<(std::ostream& output, const String &str);
 
 } /* namespace drizzled */
 

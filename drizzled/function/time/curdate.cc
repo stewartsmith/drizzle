@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,10 +49,10 @@ void Item_func_curdate::fix_length_and_dec()
 }
 
 /**
-    Converts current time in time_t to DRIZZLE_TIME represenatation for local
+    Converts current time in time_t to type::Time represenatation for local
     time zone. Defines time zone (local) used for whole CURDATE function.
 */
-void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
+void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
   time_t tmp= session->query_start();
@@ -68,10 +68,10 @@ void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 }
 
 /**
-    Converts current time in time_t to DRIZZLE_TIME represenatation for UTC
+    Converts current time in time_t to type::Time represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_DATE function.
 */
-void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
+void Item_func_curdate_utc::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
   time_t tmp= session->query_start();

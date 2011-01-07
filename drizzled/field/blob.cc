@@ -272,7 +272,7 @@ String *Field_blob::val_str(String *,
 }
 
 
-my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
+type::Decimal *Field_blob::val_decimal(type::Decimal *decimal_value)
 {
   const char *blob;
   size_t length;
@@ -286,10 +286,12 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
     length= 0;
   }
   else
+  {
     length= get_length(ptr);
+  }
 
-  str2my_decimal(E_DEC_FATAL_ERROR, blob, length, charset(),
-                 decimal_value);
+  decimal_value->store(E_DEC_FATAL_ERROR, blob, length, charset());
+
   return decimal_value;
 }
 
@@ -520,7 +522,7 @@ const unsigned char *Field_blob::unpack(unsigned char *,
                                         bool low_byte_first)
 {
   uint32_t const length= get_length(from, low_byte_first);
-  getTable()->setWriteSet(field_index);
+  getTable()->setWriteSet(position());
   store(reinterpret_cast<const char*>(from) + sizeof(uint32_t),
         length, field_charset);
   return(from + sizeof(uint32_t) + length);

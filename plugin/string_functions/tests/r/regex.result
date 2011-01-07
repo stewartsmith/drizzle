@@ -2,7 +2,6 @@ CREATE table t1 (xxx char(128));
 INSERT into t1 (xxx) values('this is a test of some long text to see what happens');
 SELECT * from t1 where xxx regexp('is a test of some long text to');
 xxx
-this is a test of some long text to see what happens
 EXPLAIN EXTENDED SELECT * FROM t1 WHERE xxx REGEXP('is a test of some long text to');
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	Using where
@@ -10,13 +9,10 @@ Warnings:
 Note	1003	select `test`.`t1`.`xxx` AS `xxx` from `test`.`t1` where regex(`test`.`t1`.`xxx`,'is a test of some long text to')
 SELECT * from t1 where xxx regexp('is a test of some long text to ');
 xxx
-this is a test of some long text to see what happens
 SELECT * from t1 where xxx regexp('is a test of some long text to s');
 xxx
-this is a test of some long text to see what happens
 SELECT * from t1 where xxx regexp('is a test of some long text to se');
 xxx
-this is a test of some long text to see what happens
 DROP table t1;
 CREATE table t1 (xxx char(128));
 INSERT into t1 (xxx) values('this is some text: to test - out.reg exp (22/45)');
@@ -25,7 +21,7 @@ xxx
 DROP table t1;
 SELECT 1 REGEXP NULL;
 1 REGEXP NULL
-1
+NULL
 SELECT '' REGEXP BINARY NULL;
 '' REGEXP BINARY NULL
 NULL
@@ -34,23 +30,19 @@ NULL REGEXP BINARY NULL
 NULL
 SELECT 'A' REGEXP BINARY NULL;
 'A' REGEXP BINARY NULL
-1
+NULL
 SELECT "ABC" REGEXP BINARY NULL;
 "ABC" REGEXP BINARY NULL
-1
+NULL
 CREATE TABLE t1(a INT, b CHAR(4));
 INSERT INTO t1 VALUES (1, '6.1'), (1, '7.0'), (1, '8.0');
 SET @stmt1="SELECT a FROM t1 WHERE a=1 AND '7.0' REGEXP b LIMIT 1";
 EXECUTE @stmt1;
 a
-1
 EXECUTE @stmt1;
 a
-1
 EXECUTE @stmt1;
 a
-1
 EXECUTE @stmt1;
 a
-1
 DROP TABLE t1;

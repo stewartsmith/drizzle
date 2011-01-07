@@ -2,6 +2,21 @@
 # included from Top Level Makefile.am
 # All paths should be given relative to the root
 
+#  Copyright (C) 2008 Sun Microsystems, Inc.
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; version 2 of the License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 CLIENT_LDADD= \
 	      drizzled/internal/libinternal.la \
 	      libdrizzle/libdrizzle.la \
@@ -17,6 +32,7 @@ noinst_PROGRAMS+= \
 
 bin_PROGRAMS+= \
 	       client/drizzle \
+               client/drizzleadmin \
 	       client/drizzledump \
 	       client/drizzleimport \
 	       client/drizzleslap
@@ -31,7 +47,6 @@ client_libgetpassword_la_SOURCES= client/get_password.cc
 
 noinst_HEADERS+= \
 		 client/client_priv.h \
-		 client/errname.h \
 		 client/get_password.h \
 		 client/linebuffer.h \
                  client/conclusions.h \
@@ -51,6 +66,14 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				$(LIBZ) \
 				client/libgetpassword.la
 
+client_drizzleadmin_CXXFLAGS=   ${AM_CXXFLAGS} -DDRIZZLE_ADMIN_TOOL
+client_drizzleadmin_SOURCES=    client/drizzle.cc client/linebuffer.cc
+client_drizzleadmin_LDADD=      ${READLINE_LIBS} ${BOOST_LIBS} \
+                                libdrizzle/libdrizzle.la \
+                                $(LIBINTL) \
+                                $(LIBZ) \
+                                client/libgetpassword.la
+
 client_drizzledump_SOURCES= \
 			    client/drizzledump.cc \
 			    client/drizzledump_data.cc \
@@ -66,7 +89,7 @@ client_drizzleslap_SOURCES=	client/drizzleslap.cc
 client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
 
-client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
+client_drizzletest_SOURCES=	client/drizzletest.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
  
 

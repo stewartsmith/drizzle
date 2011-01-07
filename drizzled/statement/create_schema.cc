@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,13 +44,8 @@ bool statement::CreateSchema::execute()
   }
 
   SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
-  if (not check_db_name(session, schema_identifier))
-  {
-    std::string path;
-    schema_identifier.getSQLPath(path);
-    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
+  if (not check(schema_identifier))
     return false;
-  }
 
   drizzled::message::init(schema_message, session->lex->name.str);
 
@@ -64,7 +59,7 @@ bool statement::CreateSchema::execute()
   }
   else
   {
-    res= mysql_create_db(session, schema_message, is_if_not_exists);
+    res= create_db(session, schema_message, is_if_not_exists);
     if (unlikely(plugin::EventObserver::afterCreateDatabase(*session, path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
@@ -74,6 +69,30 @@ bool statement::CreateSchema::execute()
   }
 
   return not res;
+}
+
+bool statement::CreateSchema::check(const SchemaIdentifier &identifier)
+{
+  if (not identifier.isValid())
+    return false;
+
+  if (not plugin::Authorization::isAuthorized(getSession()->user(), identifier))
+    return false;
+
+  if (not is_if_not_exists)
+  {
+    if (plugin::StorageEngine::doesSchemaExist(identifier))
+    {
+      std::string name;
+
+      identifier.getSQLPath(name);
+      my_error(ER_DB_CREATE_EXISTS, MYF(0), name.c_str());
+
+      return false;
+    }
+  }
+
+  return true;
 }
 
 // We don't actually test anything at this point, we assume it is all bad.

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ String *Item_cache_row::val_str(String *)
 }
 
 
-my_decimal *Item_cache_row::val_decimal(my_decimal *)
+type::Decimal *Item_cache_row::val_decimal(type::Decimal *)
 {
   illegal_method_call((const char*)"val_decimal");
   return 0;

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ static int copy_data_between_tables(Session *session,
                                     enum enum_enable_or_disable keys_onoff,
                                     bool error_if_not_empty);
 
-static bool mysql_prepare_alter_table(Session *session,
+static bool prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
                                       const message::Table &original_proto,
@@ -134,20 +134,14 @@ bool statement::AlterTable::execute()
   }
 
   if (not validateCreateTableOption())
-  {
     return true;
-  }
 
   /* ALTER TABLE ends previous transaction */
   if (not session->endActiveTransaction())
-  {
     return true;
-  }
 
   if (not (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
-  {
     return true;
-  }
 
   bool res;
   if (original_table_message->type() == message::Table::STANDARD )
@@ -243,7 +237,7 @@ bool statement::AlterTable::execute()
                  Table instructions
   @retval false  success
 */
-static bool mysql_prepare_alter_table(Session *session,
+static bool prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
                                       const message::Table &original_proto,
@@ -343,11 +337,13 @@ static bool mysql_prepare_alter_table(Session *session,
       new_create_list.push_back(def);
       alter_it.rewind(); /* Change default if ALTER */
       AlterColumn *alter;
+
       while ((alter= alter_it++))
       {
         if (! my_strcasecmp(system_charset_info,field->field_name, alter->name))
           break;
       }
+
       if (alter)
       {
         if (def->sql_type == DRIZZLE_TYPE_BLOB)
@@ -355,6 +351,7 @@ static bool mysql_prepare_alter_table(Session *session,
           my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
           return true;
         }
+
         if ((def->def= alter->def))
         {
           /* Use new default */
@@ -626,6 +623,7 @@ static bool mysql_prepare_alter_table(Session *session,
              alter_info->drop_list.head()->name);
     return true;
   }
+
   if (alter_info->alter_list.elements)
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
@@ -680,7 +678,7 @@ static bool mysql_prepare_alter_table(Session *session,
 }
 
 /* table_list should contain just one table */
-static int mysql_discard_or_import_tablespace(Session *session,
+static int discard_or_import_tablespace(Session *session,
                                               TableList *table_list,
                                               enum tablespace_op_type tablespace_op)
 {
@@ -899,6 +897,12 @@ static bool internal_alter_table(Session *session,
   ha_rows copied= 0;
   ha_rows deleted= 0;
 
+  if (not original_table_identifier.isValid())
+    return true;
+
+  if (not new_table_identifier.isValid())
+    return true;
+
   session->set_proc_info("init");
 
   table->use_all_columns();
@@ -1004,7 +1008,7 @@ static bool internal_alter_table(Session *session,
         held by this thread). So to make actual table renaming and writing
         to binlog atomic we have to put them into the same critical section
         protected by table::Cache::singleton().mutex() mutex. This also removes gap for races between
-        access() and mysql_rename_table() calls.
+        access() and rename_table() calls.
       */
 
       if (error == 0 &&  not (original_table_identifier == new_table_identifier))
@@ -1032,7 +1036,7 @@ static bool internal_alter_table(Session *session,
         }
         else
         {
-          if (mysql_rename_table(*session, original_engine, original_table_identifier, new_table_identifier))
+          if (rename_table(*session, original_engine, original_table_identifier, new_table_identifier))
           {
             error= -1;
           }
@@ -1070,7 +1074,7 @@ static bool internal_alter_table(Session *session,
   /* We have to do full alter table. */
   new_engine= create_info->db_type;
 
-  if (mysql_prepare_alter_table(session, table, create_info, original_proto, create_proto, alter_info))
+  if (prepare_alter_table(session, table, create_info, original_proto, create_proto, alter_info))
   {
     return true;
   }
@@ -1209,7 +1213,7 @@ static bool internal_alter_table(Session *session,
 
     new_table_identifier.setPath(new_table_as_temporary.getPath());
 
-    if (mysql_rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
+    if (rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
     {
       return true;
     }
@@ -1264,7 +1268,7 @@ static bool internal_alter_table(Session *session,
 
     /*
       This leads to the storage engine (SE) not being notified for renames in
-      mysql_rename_table(), because we just juggle with the FRM and nothing
+      rename_table(), because we just juggle with the FRM and nothing
       more. If we have an intermediate table, then we notify the SE that
       it should become the actual table. Later, we will recycle the old table.
       However, in case of ALTER Table RENAME there might be no intermediate
@@ -1275,14 +1279,14 @@ static bool internal_alter_table(Session *session,
                                            old_name, create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
                                          message::Table::TEMPORARY);
 
-    if (mysql_rename_table(*session, original_engine, original_table_identifier, original_table_to_drop))
+    if (rename_table(*session, original_engine, original_table_identifier, original_table_to_drop))
     {
       error= 1;
       plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
     }
     else
     {
-      if (mysql_rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
+      if (rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
       {
         /* Try to get everything back. */
         error= 1;
@@ -1291,7 +1295,7 @@ static bool internal_alter_table(Session *session,
 
         plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
 
-        mysql_rename_table(*session, original_engine, original_table_to_drop, original_table_identifier);
+        rename_table(*session, original_engine, original_table_to_drop, original_table_identifier);
       }
       else
       {
@@ -1358,7 +1362,7 @@ bool alter_table(Session *session,
   if (alter_info->tablespace_op != NO_TABLESPACE_OP)
   {
     /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
-    return mysql_discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
+    return discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
   }
 
   session->set_proc_info("init");
@@ -1634,7 +1638,7 @@ create_temporary_table(Session *session,
 
   create_proto.mutable_engine()->set_name(create_info->db_type->getName());
 
-  error= mysql_create_table(session,
+  error= create_table(session,
                             identifier,
                             create_info, create_proto, alter_info, true, 0, false);
 

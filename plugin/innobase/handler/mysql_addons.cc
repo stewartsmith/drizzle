@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2007, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2007, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -47,7 +47,6 @@ Created November 07, 2007 Vasil Dimov
   @param pointer to Session object
   @return session's id
 */
-extern "C"
 unsigned long session_get_thread_id(const void *ptr)
 {
   const drizzled::Session *session= (const drizzled::Session *)ptr;

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/detail/atomic_count.hpp>
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
@@ -155,7 +156,6 @@ namespace dpo=drizzled::program_options;
 namespace drizzled
 {
 
-#define mysqld_charset &my_charset_utf8_general_ci
 inline void setup_fpu()
 {
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
@@ -321,7 +321,7 @@ const char *in_left_expr_name= "<left expr>";
 const char *in_additional_cond= "<IN COND>";
 const char *in_having_cond= "<IN HAVING>";
 
-my_decimal decimal_zero;
+type::Decimal decimal_zero;
 /* classes for comparation parsing/processing */
 
 FILE *stderror_file=0;
@@ -352,7 +352,7 @@ int cleanup_done;
 
 passwd *user_info;
 
-atomic<uint32_t> connection_count;
+boost::detail::atomic_count connection_count(0);
 
 global_buffer_constraint<uint64_t> global_sort_buffer(0);
 global_buffer_constraint<uint64_t> global_join_buffer(0);
@@ -475,7 +475,7 @@ void close_connections(void)
       break;
     }
     /* Close before unlock, avoiding crash. See LP bug#436685 */
-    list.front()->client->close();
+    list.front()->getClient()->close();
   }
 }
 
@@ -563,7 +563,7 @@ passwd *check_user(const char *user)
   {
     // Allow a numeric uid to be used
     const char *pos;
-    for (pos= user; my_isdigit(mysqld_charset,*pos); pos++) ;
+    for (pos= user; my_isdigit(&my_charset_utf8_general_ci,*pos); pos++) ;
     if (*pos)                                   // Not numeric id
       goto err;
     if (!(tmp_user_info= getpwuid(atoi(user))))
@@ -628,9 +628,17 @@ static void set_root(const char *path)
     session		 Thread handler
 */
 
+void drizzled::Session::unlink(session_id_t &session_id)
+{
+  Session::shared_ptr session= session::Cache::singleton().find(session_id);
+
+  if (session)
+    unlink(session);
+}
+
 void drizzled::Session::unlink(Session::shared_ptr &session)
 {
-  connection_count.decrement();
+  --connection_count;
 
   session->cleanup();
 
@@ -1105,7 +1113,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 {
   time_t curr_time;
   umask(((~internal::my_umask) & 0666));
-  my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
+  decimal_zero.set_zero(); // set decimal_zero constant;
   tzset();			// Set tzname
 
   curr_time= time(NULL);
@@ -2189,8 +2197,6 @@ static void drizzle_init_variables(void)
 #else
   have_symlink=SHOW_OPTION_YES;
 #endif
-
-  connection_count= 0;
 }
 
 
