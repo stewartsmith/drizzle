@@ -5834,7 +5834,7 @@ table_ident:
         ;
 
 schema_name:
-          IDENT_sys
+          ident
         ;
 
 IDENT_sys:
