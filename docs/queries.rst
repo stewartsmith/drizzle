@@ -10,7 +10,7 @@ A query includes a list of columns to be included in a result set; an example of
 
 	SELECT * FROM table_name;
 
-SELECT * FROM is an example of using SELECT with :doc:`/clauses`. The select clause specifies the columns you want to retrieve. The from clause specifies the tables to search. 
+SELECT * FROM is an example of using SELECT with clauses. The select clause specifies the columns you want to retrieve. The from clause specifies the tables to search. 
 
 Keywords and clauses include:
 
