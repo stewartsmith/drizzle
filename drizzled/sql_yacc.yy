@@ -367,7 +367,6 @@ using namespace drizzled;
   enum drizzled::sql_var_t var_type;
   drizzled::Key::Keytype key_type;
   enum drizzled::ha_key_alg key_alg;
-  enum drizzled::column_format_type column_format_type;
   enum drizzled::ha_rkey_function ha_rkey_mode;
   enum drizzled::enum_tx_isolation tx_isolation;
   enum drizzled::Cast_target cast_type;
@@ -534,7 +533,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  EXTENDED_SYM
 %token  EXTRACT_SYM                   /* SQL-2003-N */
 %token  FALSE_SYM                     /* SQL-2003-R */
-%token  COLUMN_FORMAT_SYM
 %token  FILE_SYM
 %token  FIRST_SYM                     /* SQL-2003-N */
 %token  FIXED_SYM
@@ -912,8 +910,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <interval_time_st> interval_time_st
 
 %type <interval_time_st> interval_time_stamp
-
-%type <column_format_type> column_format_types
 
 %type <tx_isolation> isolation_types
 
@@ -1361,12 +1357,6 @@ row_format_or_text:
           }
         ;
 
-column_format_types:
-          DEFAULT     { $$= COLUMN_FORMAT_TYPE_DEFAULT; }
-        | FIXED_SYM   { $$= COLUMN_FORMAT_TYPE_FIXED; }
-        | DYNAMIC_SYM { $$= COLUMN_FORMAT_TYPE_DYNAMIC; };
-
-
 opt_select_from:
           opt_limit_clause {}
         | select_from select_lock_type
@@ -1791,13 +1781,6 @@ attribute:
               constraints= Lex->field()->mutable_constraints();
               constraints->set_is_nullable(true);
             }
-          }
-        | COLUMN_FORMAT_SYM column_format_types
-          {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            statement->column_format= $2;
-            statement->alter_info.flags.set(ALTER_COLUMN_FORMAT);
           }
         | not NULL_SYM
           {
@@ -5953,7 +5936,6 @@ keyword_sp:
         | CHAIN_SYM                {}
         | COALESCE                 {}
         | COLLATION_SYM            {}
-        | COLUMN_FORMAT_SYM        {}
         | COLUMNS                  {}
         | COMMITTED_SYM            {}
         | COMPACT_SYM              {}
