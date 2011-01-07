@@ -806,7 +806,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         user_variable_ident
         row_format_or_text
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
-        schema_ident
+        schema_name
         opt_component
         engine_option_value
         savepoint_ident
@@ -1102,7 +1102,7 @@ create:
             statement->alter_info.key_list.push_back(key);
             Lex->col_list.empty();
           }
-        | CREATE DATABASE opt_if_not_exists schema_ident
+        | CREATE DATABASE opt_if_not_exists schema_name
           {
             Lex->sql_command=SQLCOM_CREATE_DB;
             Lex->statement= new statement::CreateSchema(YYSession);
@@ -2134,7 +2134,7 @@ alter:
           }
           alter_commands
           {}
-        | ALTER_SYM DATABASE schema_ident
+        | ALTER_SYM DATABASE schema_name
           {
             Lex->sql_command=SQLCOM_ALTER_DB;
             Lex->statement= new statement::AlterSchema(YYSession);
@@ -4455,7 +4455,7 @@ drop:
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
           }
-        | DROP DATABASE if_exists schema_ident
+        | DROP DATABASE if_exists schema_name
           {
             Lex->sql_command= SQLCOM_DROP_DB;
             statement::DropSchema *statement= new statement::DropSchema(YYSession);
@@ -5418,7 +5418,7 @@ kill_option:
 /* change database */
 
 use:
-          USE_SYM schema_ident
+          USE_SYM schema_name
           {
             Lex->sql_command=SQLCOM_CHANGE_DB;
             Lex->statement= new statement::ChangeSchema(YYSession);
@@ -5829,11 +5829,11 @@ field_ident:
 
 table_ident:
           ident { $$=new Table_ident($1); }
-        | schema_ident '.' ident { $$=new Table_ident($1,$3);}
+        | schema_name '.' ident { $$=new Table_ident($1,$3);}
         | '.' ident { $$=new Table_ident($2);} /* For Delphi */
         ;
 
-schema_ident:
+schema_name:
           IDENT_sys
         ;
 
