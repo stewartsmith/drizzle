@@ -594,7 +594,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LIKE                          /* SQL-2003-R */
 %token  LIMIT
 %token  LINES
-%token  LIST_SYM
 %token  LOAD
 %token  LOCAL_SYM                     /* SQL-2003-R */
 %token  LOCKS_SYM
@@ -604,8 +603,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LONG_SYM
 %token  LT                            /* OPERATOR */
 %token  MATCH                         /* SQL-2003-R */
-%token  MAX_ROWS
-%token  MAX_SIZE_SYM
 %token  MAX_SYM                       /* SQL-2003-N */
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
 %token  MEDIUM_SYM
@@ -614,7 +611,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  MINUTE_MICROSECOND_SYM
 %token  MINUTE_SECOND_SYM
 %token  MINUTE_SYM                    /* SQL-2003-R */
-%token  MIN_ROWS
 %token  MIN_SYM                       /* SQL-2003-N */
 %token  MODE_SYM
 %token  MODIFIES_SYM                  /* SQL-2003-R */
@@ -651,9 +647,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  OUTER
 %token  OUTFILE
 %token  OUT_SYM                       /* SQL-2003-R */
-%token  PAGE_SYM
 %token  PARTIAL                       /* SQL-2003-N */
-%token  PHASE_SYM
 %token  POSITION_SYM                  /* SQL-2003-N */
 %token  PRECISION                     /* SQL-2003-R */
 %token  PREV_SYM
@@ -664,7 +658,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  QUERY_SYM
 %token  RANGE_SYM                     /* SQL-2003-R */
 %token  READS_SYM                     /* SQL-2003-R */
-%token  READ_ONLY_SYM
 %token  READ_SYM                      /* SQL-2003-N */
 %token  READ_WRITE_SYM
 %token  REAL                          /* SQL-2003-R */
@@ -728,8 +721,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SUBSTRING                     /* SQL-2003-N */
 %token  SUM_SYM                       /* SQL-2003-N */
 %token  SUSPEND_SYM
-%token  SWAPS_SYM
-%token  SWITCHES_SYM
 %token  SYSDATE
 %token  TABLES
 %token  TABLESPACE
@@ -750,7 +741,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TRIM                          /* SQL-2003-N */
 %token  TRUE_SYM                      /* SQL-2003-R */
 %token  TRUNCATE_SYM
-%token  TYPES_SYM
 %token  TYPE_SYM                      /* SQL-2003-N */
 %token  ULONGLONG_NUM
 %token  UNCOMMITTED_SYM               /* SQL-2003-N */
@@ -5428,7 +5418,7 @@ kill_option:
 /* change database */
 
 use:
-          USE_SYM ident
+          USE_SYM schema_ident
           {
             Lex->sql_command=SQLCOM_CHANGE_DB;
             Lex->statement= new statement::ChangeSchema(YYSession);
@@ -6006,18 +5996,14 @@ keyword_sp:
         | KEY_BLOCK_SIZE           {}
         | LAST_SYM                 {}
         | LEVEL_SYM                {}
-        | LIST_SYM                 {}
         | LOCAL_SYM                {}
         | LOCKS_SYM                {}
         | LOGS_SYM                 {}
-        | MAX_ROWS                 {}
-        | MAX_SIZE_SYM             {}
         | MAX_VALUE_SYM            {}
         | MEDIUM_SYM               {}
         | MERGE_SYM                {}
         | MICROSECOND_SYM          {}
         | MINUTE_SYM               {}
-        | MIN_ROWS                 {}
         | MODIFY_SYM               {}
         | MODE_SYM                 {}
         | MONTH_SYM                {}
@@ -6032,15 +6018,12 @@ keyword_sp:
         | ONE_SHOT_SYM             {}
         | ONE_SYM                  {}
         | ONLINE_SYM               {}
-        | PAGE_SYM                 {}
         | PARTIAL                  {}
-        | PHASE_SYM                {}
         | PREV_SYM                 {}
         | PROCESS                  {}
         | PROCESSLIST_SYM          {}
         | QUARTER_SYM              {}
         | QUERY_SYM                {}
-        | READ_ONLY_SYM            {}
         | REDUNDANT_SYM            {}
         | REPEATABLE_SYM           {}
         | RETURNS_SYM              {}
@@ -6062,8 +6045,6 @@ keyword_sp:
         | SUBDATE_SYM              {}
         | SUBJECT_SYM              {}
         | SUSPEND_SYM              {}
-        | SWAPS_SYM                {}
-        | SWITCHES_SYM             {}
         | TABLES                   {}
         | TABLESPACE               {}
         | TEMPORARY_SYM            {}
@@ -6072,7 +6053,6 @@ keyword_sp:
         | TIME_SYM                 {}
         | TIMESTAMP_ADD            {}
         | TIMESTAMP_DIFF           {}
-        | TYPES_SYM                {}
         | TYPE_SYM                 {}
         | UNCOMMITTED_SYM          {}
         | UNDOFILE_SYM             {}
