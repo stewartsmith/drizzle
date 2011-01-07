@@ -180,7 +180,14 @@ Removed commands
 Operators Removed
 -----------------
 
-Bit operators: &&, >>, <<, ~, ^, |, &
+Bit operators: 
+* &&
+* >>
+* <<
+* ~
+* ^
+* |
+* &
 
 Removed functions
 -----------------

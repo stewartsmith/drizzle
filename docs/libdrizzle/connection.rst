@@ -137,9 +137,7 @@ Write client handshake packet to a server.
 Functions for Servers
 ^^^^^^^^^^^^^^^^^^^^^
 
-These functions extend the core connection functions with a set of functions
-for server application use. These functions allow you to set raw handshake
-  information for use with the handshake write functions.
+These functions extend the core connection functions with a set of functions for server application use. These functions allow you to set raw handshake information for use with the handshake write functions.
 
 
 .. c:function:: drizzle_return_t  drizzle_con_listen (drizzle_con_st *con)
