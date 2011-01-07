@@ -21,7 +21,9 @@
 #ifndef DRIZZLED_CATALOG_INSTANCE_H
 #define DRIZZLED_CATALOG_INSTANCE_H
 
+#include <boost/thread/mutex.hpp>
 #include <boost/make_shared.hpp>
+
 #include "drizzled/message/catalog.h"
 #include "drizzled/identifier/session.h"
 
@@ -38,11 +40,15 @@ class Instance
   bool _locked;
   drizzled::session_id_t _lock_id;
   message::catalog::shared_ptr _message;
+  mutable boost::mutex _schema_lock;
+
 
 public:
   typedef boost::shared_ptr<Instance> shared_ptr;
   typedef std::vector<shared_ptr> vector;
   typedef const Instance* const_pointer;
+  typedef const Instance& const_reference;
+  typedef Instance& reference;
 
   Instance(message::catalog::shared_ptr &message_arg)
   {
@@ -118,6 +124,11 @@ public:
     }
 
     return false;
+  }
+
+  boost::mutex &schemaLock()
+  {
+    return _schema_lock;
   }
 };
 

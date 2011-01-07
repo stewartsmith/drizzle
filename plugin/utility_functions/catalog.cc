@@ -33,10 +33,9 @@ namespace utility_functions
 String *Catalog::val_str(String *str)
 {
   assert(fixed == 1);
-  assert(getSession().catalog());
-  assert(not getSession().catalog()->name().empty());
+  assert(not getSession().catalog().name().empty());
 
-  str->copy(getSession().catalog()->name(), system_charset_info);
+  str->copy(getSession().catalog().name(), system_charset_info);
 
   return str;
 }

@@ -1871,9 +1871,14 @@ public:
     return usage;
   }
 
-  catalog::Instance::const_pointer catalog() const
+  catalog::Instance::const_reference catalog() const
   {
-    return _catalog.get();
+    return *(_catalog.get());
+  }
+
+  catalog::Instance::reference catalog()
+  {
+    return *(_catalog.get());
   }
 
 private:
