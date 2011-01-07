@@ -141,7 +141,6 @@ bool is_numeric(const message::Table::Field &field)
   case message::Table::Field::ENUM:
   case message::Table::Field::DATE:
   case message::Table::Field::EPOCH:
-  case message::Table::Field::MICROTIME:
   case message::Table::Field::DATETIME:
   case message::Table::Field::TIME:
   case message::Table::Field::UUID:
@@ -176,8 +175,6 @@ const std::string &type(const message::Table::Field &field)
     return DATE;
   case message::Table::Field::EPOCH:
     return TIMESTAMP;
-  case message::Table::Field::MICROTIME:
-    return MICROTIME;
   case message::Table::Field::DATETIME:
     return DATETIME;
   case message::Table::Field::TIME:
@@ -213,8 +210,6 @@ const std::string &type(drizzled::message::Table::Field::FieldType type)
     return DATE;
   case message::Table::Field::EPOCH:
     return EPOCH;
-  case message::Table::Field::MICROTIME:
-    return MICROTIME;
   case message::Table::Field::DATETIME:
     return DATETIME;
   case message::Table::Field::TIME:

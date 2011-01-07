@@ -707,24 +707,26 @@ static int discard_or_import_tablespace(Session *session,
     return -1;
   }
 
-  error= table->cursor->ha_discard_or_import_tablespace(discard);
+  do {
+    error= table->cursor->ha_discard_or_import_tablespace(discard);
 
-  session->set_proc_info("end");
+    session->set_proc_info("end");
 
-  if (error)
-    goto err;
+    if (error)
+      break;
 
-  /* The ALTER Table is always in its own transaction */
-  error= transaction_services.autocommitOrRollback(session, false);
-  if (not session->endActiveTransaction())
-    error=1;
+    /* The ALTER Table is always in its own transaction */
+    error= transaction_services.autocommitOrRollback(session, false);
+    if (not session->endActiveTransaction())
+      error= 1;
 
-  if (error)
-    goto err;
+    if (error)
+      break;
 
-  write_bin_log(session, *session->getQueryString());
+    write_bin_log(session, *session->getQueryString());
 
-err:
+  } while(0);
+
   (void) transaction_services.autocommitOrRollback(session, error);
   session->tablespace_op=false;
 
@@ -1644,8 +1646,8 @@ create_temporary_table(Session *session,
   create_proto.mutable_engine()->set_name(create_info->db_type->getName());
 
   error= create_table(session,
-                            identifier,
-                            create_info, create_proto, alter_info, true, 0, false);
+                      identifier,
+                      create_info, create_proto, alter_info, true, 0, false);
 
   return error;
 }

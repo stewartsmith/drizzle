@@ -1659,7 +1659,7 @@ type:
 
             if (statement->current_proto_field)
             {
-              statement->current_proto_field->set_type(message::Table::Field::MICROTIME);
+              statement->current_proto_field->set_type(message::Table::Field::EPOCH);
               statement->current_proto_field->mutable_time_options()->set_microseconds(true);
             }
           }

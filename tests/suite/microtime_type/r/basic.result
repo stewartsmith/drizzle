@@ -150,9 +150,9 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	VARCHAR	YES	2003-01-01 00:00:00	NO	
+t1	TIMESTAMP	YES	2003-01-01 00:00:00	NO	
 t2	DATETIME	YES		YES	
-t3	VARCHAR	YES		YES	
+t3	TIMESTAMP	YES		YES	
 drop table t1;
 create table t1 (t1 TIMESTAMP(6) default now(), t2 datetime, t3 TIMESTAMP(6));
 SET TIMESTAMP=1000000002;
@@ -174,9 +174,9 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	VARCHAR	YES	CURRENT_TIMESTAMP	YES	
+t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	
 t2	DATETIME	YES		YES	
-t3	VARCHAR	YES		YES	
+t3	TIMESTAMP	YES		YES	
 drop table t1;
 create table t1 (t1 TIMESTAMP(6) default '2003-01-01 00:00:00' on update now(), t2 datetime);
 SET TIMESTAMP=1000000004;
@@ -200,7 +200,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	VARCHAR	YES	2003-01-01 00:00:00	NO	CURRENT_TIMESTAMP
+t1	TIMESTAMP	YES	2003-01-01 00:00:00	NO	CURRENT_TIMESTAMP
 t2	DATETIME	YES		YES	
 drop table t1;
 create table t1 (t1 TIMESTAMP(6) default now() on update now(), t2 datetime);
@@ -225,7 +225,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	VARCHAR	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
+t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
 t2	DATETIME	YES		YES	
 drop table t1;
 create table t1 (t1 TIMESTAMP(6), t2 datetime, t3 TIMESTAMP(6));
@@ -251,9 +251,9 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	VARCHAR	YES		YES	
+t1	TIMESTAMP	YES		YES	
 t2	DATETIME	YES		YES	
-t3	VARCHAR	YES		YES	
+t3	TIMESTAMP	YES		YES	
 drop table t1;
 create table t1 (t1 TIMESTAMP(6) default current_timestamp on update current_timestamp, t2 datetime);
 SET TIMESTAMP=1000000009;
@@ -277,7 +277,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	VARCHAR	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
+t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
 t2	DATETIME	YES		YES	
 truncate table t1;
 insert into t1 values ('2004-04-01 00:00:00', '2004-04-01 00:00:00');
@@ -441,7 +441,7 @@ show fields from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 id	INTEGER	NO		NO	
 username	VARCHAR	NO		NO	
-posted_on	VARCHAR	NO	CURRENT_TIMESTAMP	NO	
+posted_on	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	
 select is_nullable from data_dictionary.columns where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
 is_nullable
 NO

@@ -233,60 +233,54 @@ TableShare::shared_ptr TableShare::getShareCreate(Session *session,
   return share;
 }
 
-static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
+static enum_field_types proto_field_type_to_drizzle_type(const message::Table::Field &field)
 {
-  enum_field_types field_type;
-
-  switch(proto_field_type)
+  switch(field.type())
   {
   case message::Table::Field::INTEGER:
-    field_type= DRIZZLE_TYPE_LONG;
-    break;
+    return DRIZZLE_TYPE_LONG;
+
   case message::Table::Field::DOUBLE:
-    field_type= DRIZZLE_TYPE_DOUBLE;
-    break;
+    return DRIZZLE_TYPE_DOUBLE;
+
   case message::Table::Field::EPOCH:
-    field_type= DRIZZLE_TYPE_TIMESTAMP;
-    break;
+    if (field.has_time_options() and field.time_options().microseconds())
+      return DRIZZLE_TYPE_MICROTIME;
+
+    return DRIZZLE_TYPE_TIMESTAMP;
+
   case message::Table::Field::BIGINT:
-    field_type= DRIZZLE_TYPE_LONGLONG;
-    break;
+    return DRIZZLE_TYPE_LONGLONG;
+
   case message::Table::Field::DATETIME:
-    field_type= DRIZZLE_TYPE_DATETIME;
-    break;
+    return DRIZZLE_TYPE_DATETIME;
+
   case message::Table::Field::DATE:
-    field_type= DRIZZLE_TYPE_DATE;
-    break;
+    return DRIZZLE_TYPE_DATE;
+
   case message::Table::Field::VARCHAR:
-    field_type= DRIZZLE_TYPE_VARCHAR;
-    break;
+    return DRIZZLE_TYPE_VARCHAR;
+
   case message::Table::Field::DECIMAL:
-    field_type= DRIZZLE_TYPE_DECIMAL;
-    break;
+    return DRIZZLE_TYPE_DECIMAL;
+
   case message::Table::Field::ENUM:
-    field_type= DRIZZLE_TYPE_ENUM;
-    break;
+    return DRIZZLE_TYPE_ENUM;
+
   case message::Table::Field::BLOB:
-    field_type= DRIZZLE_TYPE_BLOB;
-    break;
+    return DRIZZLE_TYPE_BLOB;
+
   case message::Table::Field::UUID:
-    field_type= DRIZZLE_TYPE_UUID;
-    break;
+    return  DRIZZLE_TYPE_UUID;
+
   case message::Table::Field::BOOLEAN:
-    field_type= DRIZZLE_TYPE_BOOLEAN;
-    break;
+    return DRIZZLE_TYPE_BOOLEAN;
+
   case message::Table::Field::TIME:
-    field_type= DRIZZLE_TYPE_TIME;
-    break;
-  case message::Table::Field::MICROTIME:
-    field_type= DRIZZLE_TYPE_MICROTIME;
-    break;
-  default:
-    assert(0);
-    abort(); // Programming error
+    return DRIZZLE_TYPE_TIME;
   }
 
-  return field_type;
+  abort();
 }
 
 static Item *default_value_item(enum_field_types field_type,
@@ -965,8 +959,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     if (pfield.constraints().is_nullable())
       local_null_fields++;
 
-    enum_field_types drizzle_field_type=
-      proto_field_type_to_drizzle_type(pfield.type());
+    enum_field_types drizzle_field_type= proto_field_type_to_drizzle_type(pfield);
 
     field_offsets[fieldnr]= stored_columns_reclength;
 
@@ -1172,7 +1165,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     enum_field_types field_type;
 
-    field_type= proto_field_type_to_drizzle_type(pfield.type());
+    field_type= proto_field_type_to_drizzle_type(pfield);
 
     const CHARSET_INFO *charset= &my_charset_bin;
 

@@ -199,6 +199,7 @@ static int fill_table_proto(message::Table &table_proto,
         enumeration_options->set_collation(field_arg->charset->name);
         break;
       }
+
     case message::Table::Field::BLOB:
       {
         message::Table::Field::StringFieldOptions *string_field_options;
@@ -206,6 +207,14 @@ static int fill_table_proto(message::Table &table_proto,
         string_field_options= attribute->mutable_string_options();
         string_field_options->set_collation_id(field_arg->charset->number);
         string_field_options->set_collation(field_arg->charset->name);
+      }
+
+      break;
+
+    case message::Table::Field::EPOCH:
+      {
+        if (field_arg->sql_type == DRIZZLE_TYPE_MICROTIME)
+          attribute->mutable_time_options()->set_microseconds(true);
       }
 
       break;

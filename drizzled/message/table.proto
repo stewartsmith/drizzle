@@ -79,7 +79,6 @@ message Table {
       UUID = 11;
       TIME = 12;
       BOOLEAN = 13;
-      MICROTIME = 14;
     }
 
     message FieldOptions {
