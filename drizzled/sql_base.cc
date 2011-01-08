@@ -1730,9 +1730,7 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
   set_proc_info("Opening table");
   current_tablenr= 0;
-  while (!(table= openTable(table_list, &refresh)) &&
-         refresh)
-    ;
+  while (!(table= openTable(table_list, &refresh)) && refresh) ;
 
   if (table)
   {
@@ -1741,8 +1739,10 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
     assert(lock == 0);	// You must lock everything at once
     if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
+    {
       if (! (lock= lockTables(&table_list->table, 1, 0, &refresh)))
         table= 0;
+    }
   }
 
   set_proc_info(0);
