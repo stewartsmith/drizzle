@@ -1180,7 +1180,14 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
   return false;
 }
 
+std::ostream& operator<<(std::ostream& output, const StorageEngine &engine)
+{
+  output << "StorageEngine:(";
+  output <<  engine.getName();
+  output << ")";
 
+  return output;
+}
 
 } /* namespace plugin */
 } /* namespace drizzled */

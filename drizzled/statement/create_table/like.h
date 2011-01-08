@@ -18,52 +18,41 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_ALTER_TABLE_H
-#define DRIZZLED_STATEMENT_ALTER_TABLE_H
+#ifndef DRIZZLED_STATEMENT_CREATE_TABLE_LIKE_H
+#define DRIZZLED_STATEMENT_CREATE_TABLE_LIKE_H
 
-#include <drizzled/statement/create_table.h>
+#include "drizzled/statement/create_table.h"
 
 namespace drizzled
 {
 class Session;
-class TableList;
-
-namespace message
-{
-  class Table;
-}
 
 namespace statement
 {
 
-class AlterTable : public CreateTable
+namespace create
+{
+
+namespace table
+{
+
+class Like : public CreateTable
 {
 public:
-  AlterTable(Session *in_session) :
-    CreateTable(in_session)
-  { 
-  }
-
-  virtual bool is_alter() const
+  Like(Session *in_session) :
+      CreateTable(in_session)
   {
-    return true;
   }
 
-  bool execute();
+  bool executeInner(TableIdentifier::const_reference);
 };
+
+} /* namespace table */
+
+} /* namespace create */
 
 } /* namespace statement */
 
-
-bool alter_table(Session *session,
-                 drizzled::TableIdentifier &original_table_identifier,
-                 drizzled::TableIdentifier &new_table_identifier,
-                 HA_CREATE_INFO *create_info,
-                 const message::Table &original_proto,
-                 message::Table &create_proto,
-                 TableList *table_list,
-                 AlterInfo *alter_info,
-                 uint32_t order_num, Order *order, bool ignore);
-
 } /* namespace drizzled */
-#endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */
+
+#endif /* DRIZZLED_STATEMENT_CREATE_TABLE_LIKE_H */

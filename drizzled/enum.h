@@ -309,7 +309,8 @@ enum enum_duplicates
   DUP_UPDATE
 };
 
-enum drizzle_exit_codes {
+enum drizzle_exit_codes
+{
   EXIT_UNSPECIFIED_ERROR = 1,
   EXIT_UNKNOWN_OPTION,
   EXIT_AMBIGUOUS_OPTION,

@@ -67,10 +67,10 @@ CREATE TABLE t1 (
   count int DEFAULT '0' NOT NULL,
   qty int,
   phone char(1) DEFAULT '' NOT NULL,
-  timestamp datetime,
+  timestamp_arg datetime,
   PRIMARY KEY (id),
   KEY token (token(15)),
-  KEY timestamp (timestamp),
+  KEY timestamp_arg (timestamp_arg),
   UNIQUE token_2 (token(75),count,phone)
 );
 

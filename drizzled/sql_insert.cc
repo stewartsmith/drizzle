@@ -1485,7 +1485,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       List<Item> *items,
                                       bool is_if_not_exists,
                                       DrizzleLock **lock,
-				      TableIdentifier &identifier)
+				      TableIdentifier::const_reference identifier)
 {
   TableShare share(message::Table::INTERNAL);
   uint32_t select_field_count= items->elements;
@@ -1577,13 +1577,13 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Table *table= 0;
   {
     if (not create_table_no_lock(session,
-				       identifier,
-				       create_info,
-				       table_proto,
-				       alter_info,
-				       false,
-				       select_field_count,
-				       is_if_not_exists))
+				 identifier,
+				 create_info,
+				 table_proto,
+				 alter_info,
+				 false,
+				 select_field_count,
+				 is_if_not_exists))
     {
       if (create_info->table_existed && not identifier.isTmp())
       {

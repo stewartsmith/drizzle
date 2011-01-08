@@ -18,52 +18,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_ALTER_TABLE_H
-#define DRIZZLED_STATEMENT_ALTER_TABLE_H
+#include "config.h"
+#include <drizzled/show.h>
+#include <drizzled/lock.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/create_table/select.h>
+#include <drizzled/message.h>
+#include <drizzled/identifier.h>
 
-#include <drizzled/statement/create_table.h>
+#include <iostream>
 
 namespace drizzled
 {
-class Session;
-class TableList;
-
-namespace message
-{
-  class Table;
-}
 
 namespace statement
 {
 
-class AlterTable : public CreateTable
+namespace create
 {
-public:
-  AlterTable(Session *in_session) :
-    CreateTable(in_session)
-  { 
-  }
 
-  virtual bool is_alter() const
-  {
-    return true;
-  }
+namespace table
+{
 
-  bool execute();
-};
+bool Select::executeInner(TableIdentifier::const_reference)
+{
+  return false;
+}
+
+} /* namespace table */
+
+} /* namespace create */
 
 } /* namespace statement */
 
-
-bool alter_table(Session *session,
-                 drizzled::TableIdentifier &original_table_identifier,
-                 drizzled::TableIdentifier &new_table_identifier,
-                 HA_CREATE_INFO *create_info,
-                 const message::Table &original_proto,
-                 message::Table &create_proto,
-                 TableList *table_list,
-                 AlterInfo *alter_info,
-                 uint32_t order_num, Order *order, bool ignore);
-
 } /* namespace drizzled */
-#endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */
+
