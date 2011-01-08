@@ -1276,7 +1276,7 @@ bool Session::reopen_tables(bool get_locks, bool)
 {
   Table *table,*next,**prev;
   Table **tables,**tables_ptr;			// For locks
-  bool error=0, not_used;
+  bool error= false;
   const uint32_t flags= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN |
     DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
     DRIZZLE_LOCK_IGNORE_FLUSH;
@@ -1315,6 +1315,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     error= 1;
   }
   *prev=0;
+
   if (tables != tables_ptr)			// Should we get back old locks
   {
     DrizzleLock *local_lock;
@@ -1325,8 +1326,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     */
     some_tables_deleted= false;
 
-    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables),
-                                       flags, &not_used)))
+    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables), flags)))
     {
       /* unused */
     }
@@ -1434,41 +1434,6 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
   }
   if (found)
     locking::broadcast_refresh();
-}
-
-
-/* Wait until all used tables are refreshed */
-
-bool wait_for_tables(Session *session)
-{
-  bool result;
-
-  session->set_proc_info("Waiting for tables");
-  {
-    boost_unique_lock_t lock(table::Cache::singleton().mutex());
-    while (not session->getKilled())
-    {
-      session->some_tables_deleted= false;
-      session->close_old_data_files(false, dropping_tables != 0);
-      if (not table::Cache::singleton().areTablesUsed(session->open_tables, 1))
-      {
-        break;
-      }
-      COND_refresh.wait(lock);
-    }
-    if (session->getKilled())
-      result= true;					// aborted
-    else
-    {
-      /* Now we can open all tables without any interference */
-      session->set_proc_info("Reopen tables");
-      session->version= refresh_version;
-      result= session->reopen_tables(false, false);
-    }
-  }
-  session->set_proc_info(0);
-
-  return result;
 }
 
 
@@ -1730,9 +1695,7 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
   set_proc_info("Opening table");
   current_tablenr= 0;
-  while (!(table= openTable(table_list, &refresh)) &&
-         refresh)
-    ;
+  while (!(table= openTable(table_list, &refresh)) && refresh) ;
 
   if (table)
   {
@@ -1741,8 +1704,10 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
     assert(lock == 0);	// You must lock everything at once
     if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
-      if (! (lock= lockTables(&table_list->table, 1, 0, &refresh)))
-        table= 0;
+    {
+      if (not (lock= lockTables(&table_list->table, 1, 0)))
+        table= NULL;
+    }
   }
 
   set_proc_info(0);
@@ -1798,13 +1763,14 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
 
   if (!(ptr=start=(Table**) session->alloc(sizeof(Table*)*count)))
     return -1;
+
   for (table= tables; table; table= table->next_global)
   {
     if (!table->placeholder())
       *(ptr++)= table->table;
   }
 
-  if (!(session->lock= session->lockTables(start, (uint32_t) (ptr - start), lock_flag, need_reopen)))
+  if (not (session->lock= session->lockTables(start, (uint32_t) (ptr - start), lock_flag)))
   {
     return -1;
   }

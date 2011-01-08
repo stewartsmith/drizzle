@@ -1493,7 +1493,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   List_iterator_fast<Item> it(*items);
   Item *item;
   Field *tmp_field;
-  bool not_used;
 
   if (not (identifier.isTmp()) && create_table->table->db_stat)
   {
@@ -1639,7 +1638,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   }
 
   table->reginfo.lock_type=TL_WRITE;
-  if (! ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
+  if (not ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH)))
   {
     if (*lock)
     {

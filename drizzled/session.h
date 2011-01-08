@@ -908,7 +908,7 @@ public:
     _global_read_lock= arg;
   }
 
-  DrizzleLock *lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen);
+  DrizzleLock *lockTables(Table **tables, uint32_t count, uint32_t flags);
   bool lockGlobalReadLock();
   bool lock_table_names(TableList *table_list);
   bool lock_table_names_exclusively(TableList *table_list);
