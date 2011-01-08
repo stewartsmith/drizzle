@@ -41,6 +41,7 @@ SQL Language:
    :maxdepth: 2
 
    queries
+   functions
    ddl
    dml
    columntypes 
@@ -59,8 +60,8 @@ Advanced Topics:
    :maxdepth: 2
 
    storage_engines
+   using_replication
    logging
-
 
 Configuration:
 ^^^^^^^^^^^^^^
@@ -74,8 +75,6 @@ Plugins:
 ^^^^^^^^
 .. toctree::
    :maxdepth: 2
-
-   plugins/list
 
 Architecture:
 ^^^^^^^^^^^^^

@@ -12,30 +12,6 @@ to be arranged, and exclude all the other details in the table), yielding
 the possibility to store indexes in memory for a table whose data is too
 large to store in memory."
 
-Supported Index Types:
-
-INDEX
-
-
-
-UNIQUE
-
-PRIMARY KEY
-
-HASH
-
-B-tree
-
-
-
-
-
-Drizzle no longer supports FULLTEXT or R-trees
-
-
-
-
-
 
 .. toctree::
    :maxdepth: 2

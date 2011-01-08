@@ -505,6 +505,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_UNSIGNED, N_("Cast to unsigned converted negative integer to it's positive complement: %s"));
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_SIGNED, N_("Invalid cast to signed integer: %s"));
 
+  ADD_ERROR_MESSAGE(ER_SQL_KEYWORD, N_("Identifier '%.*s' is a SQL keyword."));
+
 
   ADD_ERROR_MESSAGE(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));
   ADD_ERROR_MESSAGE(EE_CANT_CHSIZE, N_("Can't change size of file (Errcode: %d)"));

@@ -425,10 +425,10 @@ unix_timestamp('2038-01-17 12:00:00')
 select unix_timestamp('2038-01-19 03:14:07');
 unix_timestamp('2038-01-19 03:14:07')
 2147483647
-CREATE TABLE t1 (datetime datetime, timestamp timestamp, date date);
+CREATE TABLE t1 (datetime_arg datetime, timestamp_arg timestamp, date_arg date);
 INSERT INTO t1 values ("2001-01-02 03:04:05", "2002-01-02 03:04:05", "2003-01-02");
 SELECT * from t1;
-datetime	timestamp	date
+datetime_arg	timestamp_arg	date_arg
 2001-01-02 03:04:05	2002-01-02 03:04:05	2003-01-02
 select date_add("1997-12-31",INTERVAL 1 SECOND);
 date_add("1997-12-31",INTERVAL 1 SECOND)
@@ -436,68 +436,68 @@ date_add("1997-12-31",INTERVAL 1 SECOND)
 select date_add("1997-12-31",INTERVAL "1 1" YEAR_MONTH);
 date_add("1997-12-31",INTERVAL "1 1" YEAR_MONTH)
 1999-01-31
-select date_add(datetime, INTERVAL 1 SECOND) from t1;
-date_add(datetime, INTERVAL 1 SECOND)
+select date_add(datetime_arg, INTERVAL 1 SECOND) from t1;
+date_add(datetime_arg, INTERVAL 1 SECOND)
 2001-01-02 03:04:06
-select date_add(datetime, INTERVAL 1 YEAR) from t1;
-date_add(datetime, INTERVAL 1 YEAR)
+select date_add(datetime_arg, INTERVAL 1 YEAR) from t1;
+date_add(datetime_arg, INTERVAL 1 YEAR)
 2002-01-02 03:04:05
-select date_add(date,INTERVAL 1 SECOND) from t1;
-date_add(date,INTERVAL 1 SECOND)
+select date_add(date_arg, INTERVAL 1 SECOND) from t1;
+date_add(date_arg, INTERVAL 1 SECOND)
 2003-01-02 00:00:01
-select date_add(date,INTERVAL 1 MINUTE) from t1;
-date_add(date,INTERVAL 1 MINUTE)
+select date_add(date_arg, INTERVAL 1 MINUTE) from t1;
+date_add(date_arg, INTERVAL 1 MINUTE)
 2003-01-02 00:01:00
-select date_add(date,INTERVAL 1 HOUR) from t1;
-date_add(date,INTERVAL 1 HOUR)
+select date_add(date_arg, INTERVAL 1 HOUR) from t1;
+date_add(date_arg, INTERVAL 1 HOUR)
 2003-01-02 01:00:00
-select date_add(date,INTERVAL 1 DAY) from t1;
-date_add(date,INTERVAL 1 DAY)
+select date_add(date_arg, INTERVAL 1 DAY) from t1;
+date_add(date_arg, INTERVAL 1 DAY)
 2003-01-03
-select date_add(date,INTERVAL 1 MONTH) from t1;
-date_add(date,INTERVAL 1 MONTH)
+select date_add(date_arg, INTERVAL 1 MONTH) from t1;
+date_add(date_arg, INTERVAL 1 MONTH)
 2003-02-02
-select date_add(date,INTERVAL 1 YEAR) from t1;
-date_add(date,INTERVAL 1 YEAR)
+select date_add(date_arg, INTERVAL 1 YEAR) from t1;
+date_add(date_arg, INTERVAL 1 YEAR)
 2004-01-02
-select date_add(date,INTERVAL "1:1" MINUTE_SECOND) from t1;
-date_add(date,INTERVAL "1:1" MINUTE_SECOND)
+select date_add(date_arg, INTERVAL "1:1" MINUTE_SECOND) from t1;
+date_add(date_arg, INTERVAL "1:1" MINUTE_SECOND)
 2003-01-02 00:01:01
-select date_add(date,INTERVAL "1:1" HOUR_MINUTE) from t1;
-date_add(date,INTERVAL "1:1" HOUR_MINUTE)
+select date_add(date_arg, INTERVAL "1:1" HOUR_MINUTE) from t1;
+date_add(date_arg, INTERVAL "1:1" HOUR_MINUTE)
 2003-01-02 01:01:00
-select date_add(date,INTERVAL "1:1" DAY_HOUR) from t1;
-date_add(date,INTERVAL "1:1" DAY_HOUR)
+select date_add(date_arg, INTERVAL "1:1" DAY_HOUR) from t1;
+date_add(date_arg, INTERVAL "1:1" DAY_HOUR)
 2003-01-03 01:00:00
-select date_add(date,INTERVAL "1 1" YEAR_MONTH) from t1;
-date_add(date,INTERVAL "1 1" YEAR_MONTH)
+select date_add(date_arg, INTERVAL "1 1" YEAR_MONTH) from t1;
+date_add(date_arg, INTERVAL "1 1" YEAR_MONTH)
 2004-02-02
-select date_add(date,INTERVAL "1:1:1" HOUR_SECOND) from t1;
-date_add(date,INTERVAL "1:1:1" HOUR_SECOND)
+select date_add(date_arg, INTERVAL "1:1:1" HOUR_SECOND) from t1;
+date_add(date_arg, INTERVAL "1:1:1" HOUR_SECOND)
 2003-01-02 01:01:01
-select date_add(date,INTERVAL "1 1:1" DAY_MINUTE) from t1;
-date_add(date,INTERVAL "1 1:1" DAY_MINUTE)
+select date_add(date_arg, INTERVAL "1 1:1" DAY_MINUTE) from t1;
+date_add(date_arg, INTERVAL "1 1:1" DAY_MINUTE)
 2003-01-03 01:01:00
-select date_add(date,INTERVAL "1 1:1:1" DAY_SECOND) from t1;
-date_add(date,INTERVAL "1 1:1:1" DAY_SECOND)
+select date_add(date_arg, INTERVAL "1 1:1:1" DAY_SECOND) from t1;
+date_add(date_arg, INTERVAL "1 1:1:1" DAY_SECOND)
 2003-01-03 01:01:01
-select date_add(date,INTERVAL "1" WEEK) from t1;
-date_add(date,INTERVAL "1" WEEK)
+select date_add(date_arg, INTERVAL "1" WEEK) from t1;
+date_add(date_arg, INTERVAL "1" WEEK)
 2003-01-09
-select date_add(date,INTERVAL "1" QUARTER) from t1;
-date_add(date,INTERVAL "1" QUARTER)
+select date_add(date_arg, INTERVAL "1" QUARTER) from t1;
+date_add(date_arg, INTERVAL "1" QUARTER)
 2003-04-02
-select timestampadd(MINUTE, 1, date) from t1;
-timestampadd(MINUTE, 1, date)
+select timestampadd(MINUTE, 1, date_arg) from t1;
+timestampadd(MINUTE, 1, date_arg)
 2003-01-02 00:01:00
-select timestampadd(WEEK, 1, date) from t1;
-timestampadd(WEEK, 1, date)
+select timestampadd(WEEK, 1, date_arg) from t1;
+timestampadd(WEEK, 1, date_arg)
 2003-01-09
-select timestampadd(SQL_TSI_SECOND, 1, date) from t1;
-timestampadd(SQL_TSI_SECOND, 1, date)
+select timestampadd(SQL_TSI_SECOND, 1, date_arg) from t1;
+timestampadd(SQL_TSI_SECOND, 1, date_arg)
 2003-01-02 00:00:01
-select timestampadd(SQL_TSI_FRAC_SECOND, 1, date) from t1;
-timestampadd(SQL_TSI_FRAC_SECOND, 1, date)
+select timestampadd(SQL_TSI_FRAC_SECOND, 1, date_arg) from t1;
+timestampadd(SQL_TSI_FRAC_SECOND, 1, date_arg)
 2003-01-02 00:00:00.000001
 select timestampdiff(MONTH, '2001-02-01', '2001-05-01') as a;
 a

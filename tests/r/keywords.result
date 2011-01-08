@@ -1,13 +1,13 @@
 drop table if exists t1;
-create table t1 (date date, timestamp timestamp,
+create table t1 (date_arg date, timestamp_arg timestamp,
 quarter int, week int, year int, timestampadd int, timestampdiff int);
 insert into t1 values ("97/02/03","1997-01-02",1,2,3,4,5);
 select * from t1;
-date	timestamp	quarter	week	year	timestampadd	timestampdiff
+date_arg	timestamp_arg	quarter	week	year	timestampadd	timestampdiff
 1997-02-03	1997-01-02 00:00:00	1	2	3	4	5
-select t1.date+0,t1.timestamp+0,
+select t1.date_arg+0, t1.timestamp_arg+0,
 t1.quarter+t1.week, t1.year+timestampadd,  timestampdiff from t1;
-t1.date+0	t1.timestamp+0	t1.quarter+t1.week	t1.year+timestampadd	timestampdiff
+t1.date_arg+0	t1.timestamp_arg+0	t1.quarter+t1.week	t1.year+timestampadd	timestampdiff
 19970203	19970102000000	3	7	5
 drop table t1;
 create table events(binlog int);
