@@ -1346,7 +1346,7 @@ static bool internal_alter_table(Session *session,
            (ulong) (copied + deleted), (ulong) deleted,
            (ulong) session->cuted_fields);
   session->my_ok(copied + deleted, 0, 0L, tmp_name);
-  session->some_tables_deleted= 0;
+  session->some_tables_deleted= false;
 
   return false;
 }
