@@ -1,4 +1,6 @@
-/* Copyright (C) 2000-2006 MySQL AB
+/* 
+    Copyright (C) 2011 Brian Aker
+    Copyright (C) 2000-2006 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +19,9 @@
 /**
   @file
 
-  Locking functions for mysql.
+  @note this is out of date, just for historical reference 
+
+  Locking functions for drizzled.
 
   Because of the new concurrent inserts, we must first get external locks
   before getting internal locks.  If we do it in the other order, the status
@@ -30,7 +34,7 @@
   - For each SQL statement lockTables() is called for all involved
     tables.
     - lockTables() will call
-      table_handler->external_lock(session,locktype) for each table.
+      cursor->external_lock(session,locktype) for each table.
       This is followed by a call to thr_multi_lock() for all tables.
 
   - When statement is done, we call unlockTables().
@@ -131,8 +135,8 @@ static void print_lock_error(int error, const char *);
 */
 
 /* Map the return value of thr_lock to an error from errmsg.txt */
-static int thr_lock_errno_to_mysql[]=
-{ 0, 1, ER_LOCK_WAIT_TIMEOUT, ER_LOCK_DEADLOCK };
+static drizzled::error_t thr_lock_errno_to_mysql[]=
+{ EE_OK, EE_ERROR_FIRST, ER_LOCK_WAIT_TIMEOUT, ER_LOCK_DEADLOCK };
 
 
 /**
@@ -168,7 +172,6 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
   DrizzleLock *sql_lock;
   Table *write_lock_used;
   vector<plugin::StorageEngine *> involved_engines;
-  int rc;
 
   *need_reopen= false;
 
@@ -245,6 +248,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
            sql_lock->sizeLock() * sizeof(*sql_lock->getLocks()));
 
     /* Lock on the copied half of the lock data array. */
+    drizzled::error_t rc;
     rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(*this,
                                                      sql_lock->getLocks() +
                                                      sql_lock->sizeLock(),
@@ -255,7 +259,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
       if (sql_lock->sizeTable())
         unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
       reset_lock_data_and_free(&sql_lock);
-      my_error(static_cast<drizzled::error_t>(rc), MYF(0));
+      my_error(rc, MYF(0));
     }
   } while(0);
 
