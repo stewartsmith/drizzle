@@ -202,7 +202,7 @@ typedef constrained_check<uint32_t, 5000, 1> purge_batch_constraint;
 static purge_batch_constraint innodb_purge_batch_size;
 typedef constrained_check<uint32_t, 1, 0> purge_threads_constraint;
 static purge_threads_constraint innodb_n_purge_threads;
-typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+typedef constrained_check<uint32_t, 2, 0> trinary_constraint;
 static trinary_constraint innodb_flush_log_at_trx_commit;
 typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
 static max_dirty_pages_constraint innodb_max_dirty_pages_pct;
@@ -251,7 +251,7 @@ static string innobase_file_format_max;
 /* Below we have boolean-valued start-up parameters, and their default
 values */
 
-typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+typedef constrained_check<uint32_t, 2, 0> trinary_constraint;
 static trinary_constraint innobase_fast_shutdown;
 
 /* "innobase_file_format_check" decides whether we would continue
@@ -2426,7 +2426,7 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value<uint32_t>("purge_threads",
                                                                    innodb_n_purge_threads,
                                                                    purge_threads_update));
-  context.registerVariable(new sys_var_constrained_value<uint16_t>("fast_shutdown", innobase_fast_shutdown));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("fast_shutdown", innobase_fast_shutdown));
   context.registerVariable(new sys_var_std_string("file_format",
                                                   innobase_file_format_name,
                                                   innodb_file_format_name_validate));
@@ -2438,7 +2438,7 @@ innobase_change_buffering_inited_ok:
                                                   innodb_file_format_max_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<int64_t>("log_file_size", innobase_log_file_size));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("flush_log_at_trx_commit",
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush_log_at_trx_commit",
                                                   innodb_flush_log_at_trx_commit));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct",
                                                   innodb_max_dirty_pages_pct));
