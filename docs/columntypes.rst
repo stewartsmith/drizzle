@@ -10,16 +10,6 @@ on these types are by default the full length of the data stored.
 The only difference between the two types is the COLLATION which is
 used. VARBINARY uses a binary collation for all index usage.
 
-VARCHAR Range: 1 to 255 Characters.
-
-VARBINARY Range: 1 to 255 Bytes.
-
-----
-CHAR
-----
-
-CHAR data type maps to a VARCHAR. CHAR will convert to a VARCHAR automatically. 
-
 -------------
 TEXT and BLOB
 -------------
@@ -29,20 +19,12 @@ on these types must specificy the number of character or bytes which should
 be used. The only difference between the two types is the COLLATION which is
 used. A BLOB usees a binary collation for all index usage.
 
-TEXT Range: 1 to 4,294,967,295 Charcters.
-
-BLOB Range: 1 to 4,294,967,295 Bytes. 
-
-
 ---------
 NUMERICAL
 ---------
 
-BIGINT and INTEGER exist as Drizzle's two integer numerical types. BIGINT is a  64bit integer while INTEGER is a 32bit integer.
-
-AUTO_INCREMENT is supported for INT and BIGINT.
-
-INT Range: -2,147,483,647 to 2,147,483,647.
+BIGINT and INTEGER exist as Drizzle's two integer numerical types. BIGINT is
+a 64bit integer while INTEGER is a 32bit integer.
 
 DOUBLE is the systems native double type.
 
@@ -52,11 +34,11 @@ DECIMAL is a fixed precision number.
 TEMPORAL
 --------
 
-DATETIME (Date and Time Value, 64 bit)
+DATETIME
 
-TIMESTAMP (Date and Time Value, 64bit)
+TIMESTAMP
 
-DATE (Date without time)
+DATE
 
 ----
 ENUM
