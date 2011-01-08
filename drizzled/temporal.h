@@ -656,6 +656,7 @@ public:
    * @param time_t to convert from
    */
   bool from_time_t(const time_t from);
+  bool from_timeval(struct timeval &_timeval);
 
   /**
    * Attempts to populate the DateTime instance based
@@ -799,7 +800,7 @@ public:
    *
    * @param timeval to fill.
    */
-  void to_timeval(struct timeval *to) const;
+  void to_timeval(struct timeval &to) const;
 };
 
 /**

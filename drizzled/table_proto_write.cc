@@ -133,7 +133,13 @@ static int fill_table_proto(message::Table &table_proto,
     attribute->set_type(message::internalFieldTypeToFieldProtoType(field_arg->sql_type));
 
     switch (attribute->type()) {
-    default: /* Only deal with types that need extra information */
+    case message::Table::Field::BIGINT:
+    case message::Table::Field::INTEGER:
+    case message::Table::Field::DATE:
+    case message::Table::Field::DATETIME:
+    case message::Table::Field::UUID:
+    case message::Table::Field::TIME:
+    case message::Table::Field::BOOLEAN:
       break;
     case message::Table::Field::DOUBLE:
       {
@@ -199,6 +205,7 @@ static int fill_table_proto(message::Table &table_proto,
         enumeration_options->set_collation(field_arg->charset->name);
         break;
       }
+
     case message::Table::Field::BLOB:
       {
         message::Table::Field::StringFieldOptions *string_field_options;
@@ -206,6 +213,14 @@ static int fill_table_proto(message::Table &table_proto,
         string_field_options= attribute->mutable_string_options();
         string_field_options->set_collation_id(field_arg->charset->number);
         string_field_options->set_collation(field_arg->charset->name);
+      }
+
+      break;
+
+    case message::Table::Field::EPOCH:
+      {
+        if (field_arg->sql_type == DRIZZLE_TYPE_MICROTIME)
+          attribute->mutable_time_options()->set_microseconds(true);
       }
 
       break;
@@ -299,6 +314,7 @@ static int fill_table_proto(message::Table &table_proto,
         if (field_arg->sql_type == DRIZZLE_TYPE_DATE
             || field_arg->sql_type == DRIZZLE_TYPE_TIME
             || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
+            || field_arg->sql_type == DRIZZLE_TYPE_MICROTIME
             || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
         {
           type::Time ltime;
@@ -387,8 +403,7 @@ static int fill_table_proto(message::Table &table_proto,
 
   if (create_info->default_table_charset)
   {
-    table_options->set_collation_id(
-			       create_info->default_table_charset->number);
+    table_options->set_collation_id(create_info->default_table_charset->number);
     table_options->set_collation(create_info->default_table_charset->name);
   }
 

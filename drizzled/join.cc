@@ -1962,7 +1962,9 @@ static void clear_tables(Join *join)
     are not re-calculated.
   */
   for (uint32_t i= join->const_tables; i < join->tables; i++)
+  {
     join->table[i]->mark_as_null_row();   // All fields are NULL
+  }
 }
 
 /**
@@ -2066,7 +2068,6 @@ bool Join::make_sum_func_list(List<Item> &field_list,
 /** Allocate memory needed for other rollup functions. */
 bool Join::rollup_init()
 {
-  uint32_t i,j;
   Item **ref_array;
 
   tmp_table_param.quick_group= 0; // Can't create groups in tmp table
@@ -2095,7 +2096,7 @@ bool Join::rollup_init()
     Prepare space for field list for the different levels
     These will be filled up in rollup_make_fields()
   */
-  for (i= 0 ; i < send_group_parts ; i++)
+  for (uint32_t i= 0 ; i < send_group_parts ; i++)
   {
     rollup.null_items[i]= new (session->mem_root) Item_null_result();
     List<Item> *rollup_fields= &rollup.fields[i];
@@ -2103,11 +2104,15 @@ bool Join::rollup_init()
     rollup.ref_pointer_arrays[i]= ref_array;
     ref_array+= all_fields.elements;
   }
-  for (i= 0 ; i < send_group_parts; i++)
+
+  for (uint32_t i= 0 ; i < send_group_parts; i++)
   {
-    for (j=0 ; j < fields_list.elements ; j++)
+    for (uint32_t j= 0 ; j < fields_list.elements ; j++)
+    {
       rollup.fields[i].push_back(rollup.null_items[i]);
+    }
   }
+
   List_iterator<Item> it(all_fields);
   Item *item;
   while ((item= it++))
@@ -2313,22 +2318,23 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
 */
 int Join::rollup_send_data(uint32_t idx)
 {
-  uint32_t i;
-  for (i= send_group_parts ; i-- > idx ; )
+  for (uint32_t i= send_group_parts ; i-- > idx ; )
   {
     /* Get reference pointers to sum functions in place */
-    memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
-     ref_pointer_array_size);
+    memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i], ref_pointer_array_size);
+
     if ((!having || having->val_int()))
     {
-      if (send_records < unit->select_limit_cnt && do_send_rows &&
-    result->send_data(rollup.fields[i]))
-  return 1;
+      if (send_records < unit->select_limit_cnt && do_send_rows && result->send_data(rollup.fields[i]))
+      {
+        return 1;
+      }
       send_records++;
     }
   }
   /* Restore ref_pointer_array */
   set_items_ref_array(current_ref_pointer_array);
+
   return 0;
 }
 
@@ -2353,8 +2359,7 @@ int Join::rollup_send_data(uint32_t idx)
 */
 int Join::rollup_write_data(uint32_t idx, Table *table_arg)
 {
-  uint32_t i;
-  for (i= send_group_parts ; i-- > idx ; )
+  for (uint32_t i= send_group_parts ; i-- > idx ; )
   {
     /* Get reference pointers to sum functions in place */
     memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
@@ -2379,6 +2384,7 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
   }
   /* Restore ref_pointer_array */
   set_items_ref_array(current_ref_pointer_array);
+
   return 0;
 }
 
@@ -3047,6 +3053,7 @@ static void calc_group_buffer(Join *join, Order *group)
           if (type == DRIZZLE_TYPE_DATE ||
               type == DRIZZLE_TYPE_TIME ||
               type == DRIZZLE_TYPE_DATETIME ||
+              type == DRIZZLE_TYPE_MICROTIME ||
               type == DRIZZLE_TYPE_TIMESTAMP)
           {
             key_length+= 8;

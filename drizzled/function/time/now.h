@@ -37,6 +37,7 @@ protected:
   uint32_t buff_length;
   type::Time ltime;
   DateTime cached_temporal;
+
 public:
   Item_func_now() :Item_date_func() {}
   Item_func_now(Item *a) :Item_date_func(a) {}

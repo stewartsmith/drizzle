@@ -50,6 +50,7 @@ static const std::string DECIMAL("DECIMAL");
 static const std::string DATE("DATE");
 static const std::string EPOCH("EPOCH");
 static const std::string TIMESTAMP("TIMESTAMP");
+static const std::string MICROTIME("MICROTIME");
 static const std::string DATETIME("DATETIME");
 static const std::string TIME("TIME");
 static const std::string UUID("UUID");

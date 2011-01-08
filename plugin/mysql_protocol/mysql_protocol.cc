@@ -543,6 +543,10 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
         pos[6]= 15;
         break;
 
+      case DRIZZLE_TYPE_MICROTIME:
+        pos[6]= 15;
+        break;
+
       case DRIZZLE_TYPE_UUID:
         pos[6]= 15;
         break;

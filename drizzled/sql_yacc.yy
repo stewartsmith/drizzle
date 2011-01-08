@@ -1591,33 +1591,42 @@ field_definition:
             }
             }
           | DATE_SYM
-          {
-            $$=DRIZZLE_TYPE_DATE;
+            {
+              $$=DRIZZLE_TYPE_DATE;
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DATE);
-          }
+              if (Lex->field())
+                Lex->field()->set_type(message::Table::Field::DATE);
+            }
           | TIME_SYM
-          {
-            $$=DRIZZLE_TYPE_TIME;
+            {
+              $$=DRIZZLE_TYPE_TIME;
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::TIME);
-          }
+              if (Lex->field())
+                Lex->field()->set_type(message::Table::Field::TIME);
+            }
           | TIMESTAMP_SYM
-          {
-            $$=DRIZZLE_TYPE_TIMESTAMP;
+            {
+              $$=DRIZZLE_TYPE_TIMESTAMP;
+              Lex->length= 0;
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::EPOCH);
-          }
+              if (Lex->field())
+                Lex->field()->set_type(message::Table::Field::EPOCH);
+            }
+          | TIMESTAMP_SYM '(' NUM ')'
+            {
+              $$=DRIZZLE_TYPE_MICROTIME;
+              Lex->length= $3.str;
+
+              if (Lex->field())
+                Lex->field()->set_type(message::Table::Field::EPOCH);
+            }
           | DATETIME_SYM
-          {
-            $$=DRIZZLE_TYPE_DATETIME;
+            {
+              $$=DRIZZLE_TYPE_DATETIME;
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DATETIME);
-          }
+              if (Lex->field())
+                Lex->field()->set_type(message::Table::Field::DATETIME);
+            }
           | BLOB_SYM
             {
               Lex->charset=&my_charset_bin;
@@ -1818,7 +1827,9 @@ attribute:
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ON UPDATE_SYM NOW_SYM optional_braces
-          { ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local(); }
+          {
+            ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
+          }
         | AUTO_INC
           {
             Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;

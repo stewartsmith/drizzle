@@ -485,7 +485,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                             ER_WARN_TOO_FEW_RECORDS,
                             ER(ER_WARN_TOO_FEW_RECORDS), session->row_count);
 
-        if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
+        if (not field->maybe_null() and field->is_timestamp())
             ((field::Epoch::pointer) field)->set_time();
       }
       else
@@ -602,9 +602,9 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
             return(1);
           }
           field->set_null();
-          if (!field->maybe_null())
+          if (not field->maybe_null())
           {
-            if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+            if (field->is_timestamp())
             {
               ((field::Epoch::pointer) field)->set_time();
             }
@@ -672,7 +672,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                      session->row_count);
             return(1);
           }
-          if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
+          if (not field->maybe_null() and field->is_timestamp())
               ((field::Epoch::pointer) field)->set_time();
           /*
             QQ: We probably should not throw warning for each field.

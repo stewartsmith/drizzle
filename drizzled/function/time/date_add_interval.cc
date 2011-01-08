@@ -66,15 +66,20 @@ void Item_date_add_interval::fix_length_and_dec()
   */
   cached_field_type= DRIZZLE_TYPE_VARCHAR;
   arg0_field_type= args[0]->field_type();
-  if (arg0_field_type == DRIZZLE_TYPE_DATETIME ||
-      arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
+  if (arg0_field_type == DRIZZLE_TYPE_DATETIME or arg0_field_type == DRIZZLE_TYPE_TIMESTAMP or arg0_field_type == DRIZZLE_TYPE_MICROTIME)
+  {
     cached_field_type= DRIZZLE_TYPE_DATETIME;
+  }
   else if (arg0_field_type == DRIZZLE_TYPE_DATE)
   {
     if (int_type <= INTERVAL_DAY || int_type == INTERVAL_YEAR_MONTH)
+    {
       cached_field_type= arg0_field_type;
+    }
     else
+    {
       cached_field_type= DRIZZLE_TYPE_DATETIME;
+    }
   }
 }
 
@@ -115,8 +120,8 @@ String *Item_date_add_interval::val_str(String *str)
   else if (ltime.second_part)
   {
     /* Ensure we've got enough room for our timestamp string. */
-    str->length(DateTime::MAX_STRING_LENGTH);
-    size_t length= snprintf(str->c_ptr(), DateTime::MAX_STRING_LENGTH,
+    str->alloc(MicroTimestamp::MAX_STRING_LENGTH);
+    size_t length= snprintf(str->ptr(), MicroTimestamp::MAX_STRING_LENGTH,
                             "%04u-%02u-%02u %02u:%02u:%02u.%06u",
                             ltime.year,
                             ltime.month,
@@ -124,7 +129,7 @@ String *Item_date_add_interval::val_str(String *str)
                             ltime.hour,
                             ltime.minute,
                             ltime.second,
-                            (uint32_t) ltime.second_part);
+                            ltime.second_part);
     str->length(length);
     str->set_charset(&my_charset_bin);
   }

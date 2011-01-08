@@ -709,24 +709,26 @@ static int discard_or_import_tablespace(Session *session,
     return -1;
   }
 
-  error= table->cursor->ha_discard_or_import_tablespace(discard);
+  do {
+    error= table->cursor->ha_discard_or_import_tablespace(discard);
 
-  session->set_proc_info("end");
+    session->set_proc_info("end");
 
-  if (error)
-    goto err;
+    if (error)
+      break;
 
-  /* The ALTER Table is always in its own transaction */
-  error= transaction_services.autocommitOrRollback(session, false);
-  if (not session->endActiveTransaction())
-    error=1;
+    /* The ALTER Table is always in its own transaction */
+    error= transaction_services.autocommitOrRollback(session, false);
+    if (not session->endActiveTransaction())
+      error= 1;
 
-  if (error)
-    goto err;
+    if (error)
+      break;
 
-  write_bin_log(session, *session->getQueryString());
+    write_bin_log(session, *session->getQueryString());
 
-err:
+  } while(0);
+
   (void) transaction_services.autocommitOrRollback(session, error);
   session->tablespace_op=false;
 
@@ -778,8 +780,11 @@ static bool alter_table_manage_keys(Session *session,
                         ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                         table->getMutableShare()->getTableName());
     error= 0;
-  } else if (error)
+  }
+  else if (error)
+  {
     table->print_error(error, MYF(0));
+  }
 
   return(error);
 }
@@ -1469,7 +1474,7 @@ copy_data_between_tables(Session *session,
 
   List_iterator<CreateField> it(create);
   CreateField *def;
-  copy_end=copy;
+  copy_end= copy;
   for (Field **ptr= to->getFields(); *ptr ; ptr++)
   {
     def=it++;
@@ -1525,8 +1530,10 @@ copy_data_between_tables(Session *session,
   /* Tell handler that we have values for all columns in the to table */
   to->use_all_columns();
   info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+
   if (ignore)
     to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   session->row_count= 0;
   to->restoreRecordAsDefault();        // Create empty record
   while (!(error=info.read_record(&info)))
@@ -1641,8 +1648,8 @@ create_temporary_table(Session *session,
   create_proto.mutable_engine()->set_name(create_info->db_type->getName());
 
   error= create_table(session,
-                            identifier,
-                            create_info, create_proto, alter_info, true, 0, false);
+                      identifier,
+                      create_info, create_proto, alter_info, true, 0, false);
 
   return error;
 }

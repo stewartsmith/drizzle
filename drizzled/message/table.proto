@@ -119,8 +119,7 @@ message Table {
       Do we store microseconds or timezone.
     */
     message TimeFieldOptions {
-      optional bool microseconds = 1 [default = false];
-      optional bool timezone = 2 [default = false];
+      optional bool microseconds = 1;
     }
 
     required string name = 1;

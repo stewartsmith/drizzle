@@ -44,6 +44,7 @@
 #include "drizzled/field/epoch.h"
 #include "drizzled/field/int32.h"
 #include "drizzled/field/int64.h"
+#include "drizzled/field/microtime.h"
 #include "drizzled/field/null.h"
 #include "drizzled/field/real.h"
 #include "drizzled/field/size.h"
@@ -1065,6 +1066,7 @@ bool Item::is_datetime()
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_MICROTIME:
       return true;
     case DRIZZLE_TYPE_BLOB:
     case DRIZZLE_TYPE_VARCHAR:
@@ -1195,8 +1197,13 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   case DRIZZLE_TYPE_DATE:
     field= new Field_date(maybe_null, name, &my_charset_bin);
     break;
+
+  case DRIZZLE_TYPE_MICROTIME:
+    field= new field::Microtime(maybe_null, name);
+    break;
+
   case DRIZZLE_TYPE_TIMESTAMP:
-    field= new field::Epoch(maybe_null, name, &my_charset_bin);
+    field= new field::Epoch(maybe_null, name);
     break;
   case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);
@@ -1400,6 +1407,7 @@ bool Item::send(plugin::Client *client, String *buffer)
       break;
     }
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     {
       type::Time tm;
@@ -1637,6 +1645,7 @@ static Field *create_tmp_field_from_item(Session *,
     */
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
         type == DRIZZLE_TYPE_TIME ||
+        type == DRIZZLE_TYPE_MICROTIME ||
         type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
     {
