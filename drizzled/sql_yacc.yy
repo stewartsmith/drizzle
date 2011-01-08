@@ -5940,7 +5940,7 @@ keyword_sp:
         | COMPACT_SYM              {}
         | COMPRESSED_SYM           {}
         | CONCURRENT               {}
-        | CONNECTION_SYM           {}
+        | CONNECTION_SYM           {} /* Causes conflict because of kill */
         | CONSISTENT_SYM           {}
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
