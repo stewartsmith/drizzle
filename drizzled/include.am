@@ -492,6 +492,7 @@ drizzled_drizzled_LDADD= \
 				$(LTLIBPROTOBUF) \
 				$(LIBTBB) \
 				$(BOOST_LIBS) \
+                                $(LTLIBAIO) \
 				$(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= \
