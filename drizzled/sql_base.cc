@@ -1437,41 +1437,6 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
 }
 
 
-/* Wait until all used tables are refreshed */
-
-bool wait_for_tables(Session *session)
-{
-  bool result;
-
-  session->set_proc_info("Waiting for tables");
-  {
-    boost_unique_lock_t lock(table::Cache::singleton().mutex());
-    while (not session->getKilled())
-    {
-      session->some_tables_deleted= false;
-      session->close_old_data_files(false, dropping_tables != 0);
-      if (not table::Cache::singleton().areTablesUsed(session->open_tables, 1))
-      {
-        break;
-      }
-      COND_refresh.wait(lock);
-    }
-    if (session->getKilled())
-      result= true;					// aborted
-    else
-    {
-      /* Now we can open all tables without any interference */
-      session->set_proc_info("Reopen tables");
-      session->version= refresh_version;
-      result= session->reopen_tables(false, false);
-    }
-  }
-  session->set_proc_info(0);
-
-  return result;
-}
-
-
 /*
   drop tables from locked list
 
