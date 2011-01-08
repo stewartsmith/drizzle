@@ -133,7 +133,13 @@ static int fill_table_proto(message::Table &table_proto,
     attribute->set_type(message::internalFieldTypeToFieldProtoType(field_arg->sql_type));
 
     switch (attribute->type()) {
-    default: /* Only deal with types that need extra information */
+    case message::Table::Field::BIGINT:
+    case message::Table::Field::INTEGER:
+    case message::Table::Field::DATE:
+    case message::Table::Field::DATETIME:
+    case message::Table::Field::UUID:
+    case message::Table::Field::TIME:
+    case message::Table::Field::BOOLEAN:
       break;
     case message::Table::Field::DOUBLE:
       {
@@ -397,8 +403,7 @@ static int fill_table_proto(message::Table &table_proto,
 
   if (create_info->default_table_charset)
   {
-    table_options->set_collation_id(
-			       create_info->default_table_charset->number);
+    table_options->set_collation_id(create_info->default_table_charset->number);
     table_options->set_collation(create_info->default_table_charset->name);
   }
 
