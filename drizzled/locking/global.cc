@@ -126,8 +126,6 @@ static void print_lock_error(int error, const char *);
                                               lockTables() should
                                               notify upper level and rely
                                               on caller doing this.
-    need_reopen                 Out parameter, TRUE if some tables were altered
-                                or deleted and should be reopened by caller.
 
   RETURN
     A lock structure pointer on success.
@@ -167,13 +165,11 @@ static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
   *mysql_lock= 0;
 }
 
-DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen)
+DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
 {
   DrizzleLock *sql_lock;
   Table *write_lock_used;
   vector<plugin::StorageEngine *> involved_engines;
-
-  *need_reopen= false;
 
   do
   {

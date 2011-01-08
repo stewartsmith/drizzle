@@ -1276,7 +1276,7 @@ bool Session::reopen_tables(bool get_locks, bool)
 {
   Table *table,*next,**prev;
   Table **tables,**tables_ptr;			// For locks
-  bool error=0, not_used;
+  bool error= false;
   const uint32_t flags= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN |
     DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
     DRIZZLE_LOCK_IGNORE_FLUSH;
@@ -1315,6 +1315,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     error= 1;
   }
   *prev=0;
+
   if (tables != tables_ptr)			// Should we get back old locks
   {
     DrizzleLock *local_lock;
@@ -1325,8 +1326,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     */
     some_tables_deleted= false;
 
-    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables),
-                                       flags, &not_used)))
+    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables), flags)))
     {
       /* unused */
     }
@@ -1705,8 +1705,8 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
     assert(lock == 0);	// You must lock everything at once
     if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
     {
-      if (! (lock= lockTables(&table_list->table, 1, 0, &refresh)))
-        table= 0;
+      if (not (lock= lockTables(&table_list->table, 1, 0)))
+        table= NULL;
     }
   }
 
@@ -1763,13 +1763,14 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
 
   if (!(ptr=start=(Table**) session->alloc(sizeof(Table*)*count)))
     return -1;
+
   for (table= tables; table; table= table->next_global)
   {
     if (!table->placeholder())
       *(ptr++)= table->table;
   }
 
-  if (!(session->lock= session->lockTables(start, (uint32_t) (ptr - start), lock_flag, need_reopen)))
+  if (not (session->lock= session->lockTables(start, (uint32_t) (ptr - start), lock_flag)))
   {
     return -1;
   }
