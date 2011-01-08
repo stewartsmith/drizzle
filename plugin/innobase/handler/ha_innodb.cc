@@ -9298,7 +9298,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.");
   context("autoextend-increment",
-          po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(8L),
+          po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(64L),
           "Data file autoextend increment in megabytes");
   context("buffer-pool-size",
           po::value<buffer_pool_constraint>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
