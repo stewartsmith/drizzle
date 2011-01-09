@@ -24,7 +24,6 @@ Scope
 
 Introduction:
 -------------
-   
 .. toctree::
    :maxdepth: 2
    
@@ -36,7 +35,6 @@ Introduction:
 
 SQL Language:
 -------------
-
 .. toctree::
    :maxdepth: 2
 
@@ -53,8 +51,8 @@ SQL Language:
    transactional 
    administrative 
 
-Advanced Topics:
-----------------
+User Level Topics:
+------------------
 
 .. toctree::
    :maxdepth: 2
@@ -64,20 +62,15 @@ Advanced Topics:
    logging
 
 Configuration:
-^^^^^^^^^^^^^^
+--------------
 .. toctree::
    :maxdepth: 2
 
    configuration
    options
 
-Plugins:
-^^^^^^^^
-.. toctree::
-   :maxdepth: 2
-
 Architecture:
-^^^^^^^^^^^^^
+-------------
 .. toctree::
    :maxdepth: 2
 
@@ -85,7 +78,7 @@ Architecture:
    replication
 
 Clients:
-^^^^^^^^
+--------
 .. toctree::
    :maxdepth: 2
 
@@ -94,7 +87,7 @@ Clients:
    clients/drizzleadmin.rst
 
 libdrizzle:
-^^^^^^^^^^^
+-----------
 .. toctree::
    :maxdepth: 2
 
@@ -102,7 +95,7 @@ libdrizzle:
    libdrizzle/developer.rst
 
 Testing:
-
+--------
 .. toctree::
    :maxdepth: 2
  
