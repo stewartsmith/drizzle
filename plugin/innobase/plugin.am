@@ -226,6 +226,7 @@ noinst_LTLIBRARIES+= \
 endif
 
 plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_LDDADD= ${LTLIBAIO}
 plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/btr/btr0btr.cc \
                                         plugin/innobase/btr/btr0cur.cc \
