@@ -136,7 +136,7 @@ int update_query(Session *session, TableList *table_list,
   bool		using_limit= limit != HA_POS_ERROR;
   bool		used_key_is_modified;
   bool		transactional_table;
-  int		error;
+  int		error= 0;
   uint		used_index= MAX_KEY, dup_key_found;
   bool          need_sort= true;
   ha_rows	updated, found;
@@ -363,11 +363,13 @@ int update_query(Session *session, TableList *table_list,
 
       if (used_index == MAX_KEY || (select && select->quick))
       {
-        info.init_read_record(session, table, select, 0, true);
+        if ((error= info.init_read_record(session, table, select, 0, true)))
+          goto err;
       }
       else
       {
-        info.init_read_record_idx(session, table, 1, used_index);
+        if ((error= info.init_read_record_idx(session, table, 1, used_index)))
+          goto err;
       }
 
       session->set_proc_info("Searching rows for update");
@@ -433,7 +435,10 @@ int update_query(Session *session, TableList *table_list,
   if (select && select->quick && select->quick->reset())
     goto err;
   table->cursor->try_semi_consistent_read(1);
-  info.init_read_record(session, table, select, 0, true);
+  if ((error= info.init_read_record(session, table, select, 0, true)))
+  {
+    goto err;
+  }
 
   updated= found= 0;
   /*
@@ -580,6 +585,9 @@ int update_query(Session *session, TableList *table_list,
   return ((error >= 0 || session->is_error()) ? 1 : 0);
 
 err:
+  if (error != 0)
+    table->print_error(error,MYF(0));
+
   delete select;
   free_underlaid_joins(session, select_lex);
   if (table->key_read)

@@ -2212,14 +2212,13 @@ int HailDBCursor::doStartTableScan(bool)
   err= ib_cursor_first(cursor);
   if (err != DB_SUCCESS && err != DB_END_OF_INDEX)
   {
-    previous_error= ib_err_t_to_drizzle_error(err);
-    err= ib_cursor_reset(cursor);
-    return previous_error;
+    int reset_err= ib_cursor_reset(cursor);
+    assert(reset_err == DB_SUCCESS);
+    return ib_err_t_to_drizzle_error(err);
   }
 
   advance_cursor= false;
 
-  previous_error= 0;
   return(0);
 }
 
@@ -2315,9 +2314,6 @@ int HailDBCursor::rnd_next(unsigned char *buf)
   ib_err_t err;
   int ret;
 
-  if (previous_error)
-    return previous_error;
-
   if (advance_cursor)
   {
     err= ib_cursor_next(cursor);
@@ -2343,7 +2339,6 @@ int HailDBCursor::doEndTableScan()
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
   in_table_scan= false;
-  previous_error= 0;
   return ib_err_t_to_drizzle_error(err);
 }
 

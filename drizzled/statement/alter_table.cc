@@ -1529,7 +1529,12 @@ copy_data_between_tables(Session *session,
 
   /* Tell handler that we have values for all columns in the to table */
   to->use_all_columns();
-  info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+  error= info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+  if (error)
+  {
+    to->print_error(errno, MYF(0));
+    goto err;
+  }
 
   if (ignore)
     to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);

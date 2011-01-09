@@ -181,11 +181,11 @@ public:
     This is the most basic access method of a table using rnd_init,
     rnd_next and rnd_end. No indexes are used.
 */
-  void init_read_record(Session *session, 
-                        Table *reg_form,
-                        optimizer::SqlSelect *select,
-                        int use_record_cache, 
-                        bool print_errors);
+  int init_read_record(Session *session,
+                       Table *reg_form,
+                       optimizer::SqlSelect *select,
+                       int use_record_cache,
+                       bool print_errors) __attribute__ ((warn_unused_result));
 
   void end_read_record();
 
@@ -205,10 +205,10 @@ public:
                       occurs (except for end-of-records error)
   @param idx          index to scan
                     */
-  void init_read_record_idx(Session *session, 
-                            Table *table,
-                            bool print_error, 
-                            uint32_t idx);
+  int init_read_record_idx(Session *session,
+                           Table *table,
+                           bool print_error,
+                           uint32_t idx) __attribute__ ((warn_unused_result));
 
   void init_reard_record_sequential();
 
