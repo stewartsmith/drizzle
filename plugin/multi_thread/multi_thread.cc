@@ -176,6 +176,9 @@ void MultiThreadScheduler::killSession(Session *session)
 void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
 {
   killSession(session.get());
+
+  session->disconnect();
+
   /* Locks LOCK_thread_count and deletes session */
   Session::unlink(session);
   thread_count.decrement();
