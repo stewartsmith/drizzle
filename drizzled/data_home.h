@@ -27,6 +27,7 @@ namespace drizzled
 
 extern boost::filesystem::path full_data_home;
 
+boost::filesystem::path& getFullDataHome();
 boost::filesystem::path& getDataHome();
 boost::filesystem::path& getDataHomeCatalog();
 

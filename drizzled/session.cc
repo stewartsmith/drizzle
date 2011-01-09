@@ -161,14 +161,13 @@ enum_tx_isolation session_tx_isolation(const Session *session)
   return (enum_tx_isolation)session->variables.tx_isolation;
 }
 
-Session::Session(plugin::Client *client_arg) :
+Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   xa_id(0),
   lex(&main_lex),
   query(new std::string),
   _schema(new std::string("")),
-  catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -218,6 +217,7 @@ Session::Session(plugin::Client *client_arg) :
   transaction_message(NULL),
   statement_message(NULL),
   session_event_observers(NULL),
+  _catalog(catalog_arg),
   use_usage(false)
 {
   client->setSession(this);

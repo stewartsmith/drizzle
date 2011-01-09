@@ -30,6 +30,7 @@ statement {
       engine {
         name: "filesystem"
       }
+      catalog: "LOCAL"
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
       
@@ -253,7 +254,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
+      catalog: "LOCAL"
       
       version: 1
     }

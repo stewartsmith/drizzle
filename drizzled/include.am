@@ -53,6 +53,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/cached_directory.h \
 			      drizzled/cached_item.h \
 			      drizzled/calendar.h \
+			      drizzled/catalog.h \
+			      drizzled/catalog/cache.h \
+			      drizzled/catalog/engine.h \
+			      drizzled/catalog/instance.h \
+			      drizzled/catalog/local.h \
 			      drizzled/charset.h \
 			      drizzled/charset_info.h \
 			      drizzled/check_stack_overrun.h \
@@ -198,6 +203,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/generator/all_indexes.h \
 			      drizzled/generator/all_tables.h \
 			      drizzled/generator/event_observers.h \
+			      drizzled/generator/catalog/cache.h \
+			      drizzled/generator/catalog/message.h \
 			      drizzled/generator/functions.h \
 			      drizzled/generator/schema.h \
 			      drizzled/generator/session.h \
@@ -212,7 +219,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/hybrid_type_traits_decimal.h \
 			      drizzled/hybrid_type_traits_integer.h \
 			      drizzled/identifier.h \
+			      drizzled/identifier/catalog.h \
 			      drizzled/identifier/schema.h \
+			      drizzled/identifier/session.h \
 			      drizzled/identifier/table.h \
 			      drizzled/identifier/user.h \
 			      drizzled/index_hint.h \
@@ -279,6 +288,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/memory/sql_alloc.h \
 			      drizzled/message.h \
 			      drizzled/message/cache.h \
+			      drizzled/message/catalog.h \
+			      drizzled/message/schema.h \
+			      drizzled/message/table.h \
 			      drizzled/module/context.h \
 			      drizzled/module/library.h \
 			      drizzled/module/manifest.h \
@@ -325,6 +337,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin.h \
 			      drizzled/plugin/authentication.h \
 			      drizzled/plugin/authorization.h \
+			      drizzled/plugin/catalog.h \
 			      drizzled/plugin/client.h \
 			      drizzled/plugin/client/concurrent.h \
 			      drizzled/plugin/daemon.h \
@@ -505,6 +518,9 @@ drizzled_drizzled_DEPENDENCIES= \
 drizzled_drizzled_SOURCES= \
 			   drizzled/alter_info.cc \
 			   drizzled/cached_item.cc \
+			   drizzled/catalog.cc \
+			   drizzled/catalog/cache.cc \
+			   drizzled/catalog/local.cc \
 			   drizzled/check_stack_overrun.cc \
 			   drizzled/comp_creator.cc \
 			   drizzled/create_field.cc \
@@ -642,6 +658,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/hybrid_type_traits_decimal.cc \
 			   drizzled/hybrid_type_traits_integer.cc \
 			   drizzled/identifier.cc \
+			   drizzled/identifier/catalog.cc \
 			   drizzled/identifier/schema.cc \
 			   drizzled/identifier/table.cc \
 			   drizzled/identifier/user.cc \
@@ -691,6 +708,9 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/main.cc \
 			   drizzled/message.cc \
 			   drizzled/message/cache.cc \
+			   drizzled/message/catalog.cc \
+			   drizzled/message/schema.cc \
+			   drizzled/message/table.cc \
 			   drizzled/module/context.cc \
 			   drizzled/module/library.cc \
 			   drizzled/module/loader.cc \
@@ -723,6 +743,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/optimizer/sum.cc \
 			   drizzled/plugin/authentication.cc \
 			   drizzled/plugin/authorization.cc \
+			   drizzled/plugin/catalog.cc \
 			   drizzled/plugin/client.cc \
 			   drizzled/plugin/error_message.cc \
 			   drizzled/plugin/event_observer.cc  \
