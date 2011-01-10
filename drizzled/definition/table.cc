@@ -1785,7 +1785,7 @@ int TableShare::open_table_from_share(Session *session,
   if (not error_reported)
     open_table_error(ret, errno, 0);
 
-  delete outparam.cursor;
+  boost::checked_delete(outparam.cursor);
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
   outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root

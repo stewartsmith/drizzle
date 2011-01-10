@@ -67,7 +67,7 @@ static void free_cache_entry(table::Concurrent *table)
     getUnused().unlink(table);
   }
 
-  delete table;
+  boost::checked_delete(table);
 }
 
 void remove_table(table::Concurrent *arg)
