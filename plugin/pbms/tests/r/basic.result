@@ -1,8 +1,6 @@
 CREATE TABLE t1 (a int primary key, b blob);
 insert into t1 values (1, "Hello World");
-CREATE Temporary TABLE my_pbms_blob_ids (id int, offset int, url varchar(120));
-insert into my_pbms_blob_ids (select Repository_id, Repo_blob_offset, Blob_url from pbms_reference);
-drop Temporary table my_pbms_blob_ids;
+select Repository_id, Repo_blob_offset, Blob_url from pbms_reference;
 drop table t1;
 create table autoincbug (id int not null primary key auto_increment, test varchar(10));
 alter table autoincbug auto_increment = 1000;
