@@ -1419,7 +1419,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.has_constraints() && not field.constraints().is_nullable())
+  if (field.has_constraints() && field.constraints().is_notnull())
   {
     destination.append(" NOT NULL", 9);
   }

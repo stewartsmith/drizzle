@@ -30,7 +30,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           is_autoincrement: true

@@ -956,8 +956,14 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   for (unsigned int fieldnr= 0; fieldnr < _field_size; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
-    if (pfield.constraints().is_nullable())
+    if (pfield.constraints().is_nullable()) // Historical reference
+    {
       local_null_fields++;
+    }
+    else if (not pfield.constraints().is_notnull())
+    {
+      local_null_fields++;
+    }
 
     enum_field_types drizzle_field_type= proto_field_type_to_drizzle_type(pfield);
 
@@ -1338,10 +1344,21 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       abort(); // Programming error
     }
 
+    bool is_not_null= false;
+
+    if (not pfield.constraints().is_nullable())
+    {
+      is_not_null= true;
+    }
+    else if (pfield.constraints().is_notnull())
+    {
+      is_not_null= true;
+    }
+
     Field* f= make_field(pfield,
                          record + field_offsets[fieldnr] + data_offset,
                          field_length,
-                         pfield.constraints().is_nullable(),
+                         not is_not_null,
                          null_pos,
                          null_bit_pos,
                          decimals,

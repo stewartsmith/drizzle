@@ -70,14 +70,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -165,14 +165,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -338,14 +338,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -588,14 +588,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -858,14 +858,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -951,14 +951,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -1190,14 +1190,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1325,14 +1325,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
