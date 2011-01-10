@@ -316,22 +316,22 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("enable",
           po::value<bool>(&sysvar_logging_query_enable)->default_value(false)->zero_tokens(),
-          N_("Enable logging to CSV file"));
+          _("Enable logging to CSV file"));
   context("filename",
           po::value<string>(),
-          N_("File to log to"));
+          _("File to log to"));
   context("pcre",
           po::value<string>()->default_value(""),
-          N_("PCRE to match the query against"));
+          _("PCRE to match the query against"));
   context("threshold-slow",
           po::value<uint32_constraint>(&sysvar_logging_query_threshold_slow)->default_value(0),
-          N_("Threshold for logging slow queries, in microseconds"));
+          _("Threshold for logging slow queries, in microseconds"));
   context("threshold-big-resultset",
           po::value<uint32_constraint>(&sysvar_logging_query_threshold_big_resultset)->default_value(0),
-          N_("Threshold for logging big queries, for rows returned"));
+          _("Threshold for logging big queries, for rows returned"));
   context("threshold-big-examined",
           po::value<uint32_constraint>(&sysvar_logging_query_threshold_big_examined)->default_value(0),
-          N_("Threshold for logging big queries, for rows examined"));
+          _("Threshold for logging big queries, for rows examined"));
 }
 
 } /* namespace drizzle_plugin */
