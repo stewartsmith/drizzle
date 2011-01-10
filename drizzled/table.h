@@ -33,7 +33,7 @@
 #include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
-#include "drizzled/definition/table.h"
+#include "drizzled/table/instance.h"
 #include "drizzled/atomics.h"
 #include "drizzled/query_id.h"
 

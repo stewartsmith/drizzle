@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_DEFINITION_CACHE_H
 #define DRIZZLED_DEFINITION_CACHE_H
 
-#include "drizzled/definition/table.h"
+#include "drizzled/table/instance.h"
 
 namespace drizzled {
 

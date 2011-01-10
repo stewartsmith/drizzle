@@ -23,8 +23,8 @@
   instance of table share per one table in the database.
 */
 
-#ifndef DRIZZLED_DEFINITION_TABLE_H
-#define DRIZZLED_DEFINITION_TABLE_H
+#ifndef DRIZZLED_TABLE_INSTANCE_BASE_H
+#define DRIZZLED_TABLE_INSTANCE_BASE_H
 
 #include <string>
 
@@ -726,4 +726,4 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DEFINITION_TABLE_H */
+#endif /* DRIZZLED_TABLE_INSTANCE_BASE_H */

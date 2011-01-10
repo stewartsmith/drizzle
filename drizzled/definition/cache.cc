@@ -27,7 +27,8 @@
 #include "drizzled/session.h"
 #include "drizzled/identifier/table.h"
 #include "drizzled/definition/cache.h"
-#include "drizzled/definition/table.h"
+
+#include "drizzled/table/instance.h"
 
 namespace drizzled {
 
