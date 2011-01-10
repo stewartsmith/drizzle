@@ -1,0 +1,26 @@
+# Test of the schemaregex variable
+# Schemas matching "foo*" should be excluded
+
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+CREATE SCHEMA foo;
+CREATE SCHEMA foobar;
+CREATE SCHEMA bar;
+USE foobar;
+CREATE TABLE foo1 (a INT NOT NULL PRIMARY KEY);
+INSERT INTO foo1 VALUES (1);
+UPDATE foo1 SET a = 2;
+DELETE FROM foo1;
+DROP SCHEMA foo;
+DROP SCHEMA foobar;
+DROP SCHEMA bar;
+
+--echo
+--echo We should only see the 'bar' schema in the log
+--echo
+--exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
