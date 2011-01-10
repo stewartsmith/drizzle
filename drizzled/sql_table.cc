@@ -1049,7 +1049,7 @@ static int prepare_create_table(Session *session,
             {
               message::Table::Field::FieldConstraints *constraints;
               constraints= protofield->mutable_constraints();
-              constraints->set_is_nullable(false);
+              constraints->set_is_notnull(true);
             }
 
           }

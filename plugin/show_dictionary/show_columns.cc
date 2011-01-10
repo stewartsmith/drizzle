@@ -166,7 +166,7 @@ void ShowColumns::Generator::fill()
   pushType(column.type(), column.string_options().collation());
 
   /* Null */
-  push(column.constraints().is_nullable());
+  push(not column.constraints().is_notnull());
 
   /* Default */
   if (column.options().has_default_value())

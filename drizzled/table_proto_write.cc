@@ -83,11 +83,7 @@ static int fill_table_proto(message::Table &table_proto,
 
       if (field_arg->flags & NOT_NULL_FLAG)
       {
-        attribute->mutable_constraints()->set_is_nullable(false);
-      }
-      else
-      {
-        attribute->mutable_constraints()->set_is_nullable(true);
+        attribute->mutable_constraints()->set_is_notnull(true);
       }
 
       if (field_arg->flags & UNSIGNED_FLAG and 
@@ -100,7 +96,7 @@ static int fill_table_proto(message::Table &table_proto,
       attribute->set_name(field_arg->field_name);
     }
 
-    assert((!(field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_nullable());
+    assert(((field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_notnull());
     assert(strcmp(attribute->name().c_str(), field_arg->field_name)==0);
 
 
@@ -122,11 +118,7 @@ static int fill_table_proto(message::Table &table_proto,
 
       if (field_arg->flags & NOT_NULL_FLAG)
       {
-        constraints->set_is_nullable(false);
-      }
-      else
-      {
-        constraints->set_is_nullable(true);
+        constraints->set_is_notnull(true);
       }
     }
 
@@ -279,7 +271,7 @@ static int fill_table_proto(message::Table &table_proto,
       field_options->set_update_expression("CURRENT_TIMESTAMP");
     }
 
-    if (field_arg->def == NULL  && attribute->constraints().is_nullable())
+    if (field_arg->def == NULL  && not attribute->constraints().is_notnull())
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();

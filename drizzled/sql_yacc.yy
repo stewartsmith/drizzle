@@ -1704,7 +1704,7 @@ field_definition:
             {
               message::Table::Field::FieldConstraints *constraints;
               constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_nullable(false);
+              constraints->set_is_notnull(true);
 
               Lex->field()->set_type(message::Table::Field::BIGINT);
             }
@@ -1798,7 +1798,7 @@ attribute:
             {
               message::Table::Field::FieldConstraints *constraints;
               constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_nullable(true);
+              constraints->set_is_notnull(false);
             }
           }
         | COLUMN_FORMAT_SYM column_format_types
@@ -1816,7 +1816,7 @@ attribute:
             {
               message::Table::Field::FieldConstraints *constraints;
               constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_nullable(false);
+              constraints->set_is_notnull(true);
             }
           }
         | DEFAULT now_or_signed_literal
@@ -1839,7 +1839,7 @@ attribute:
               message::Table::Field::FieldConstraints *constraints;
 
               constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_nullable(false);
+              constraints->set_is_notnull(true);
             }
           }
         | SERIAL_SYM DEFAULT VALUE_SYM
@@ -1853,7 +1853,7 @@ attribute:
             {
               message::Table::Field::FieldConstraints *constraints;
               constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_nullable(false);
+              constraints->set_is_notnull(true);
             }
           }
         | opt_primary KEY_SYM
@@ -1867,7 +1867,7 @@ attribute:
             {
               message::Table::Field::FieldConstraints *constraints;
               constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_nullable(false);
+              constraints->set_is_notnull(true);
             }
           }
         | UNIQUE_SYM
