@@ -35,10 +35,9 @@ int64_t Drop::val_int()
     return 0;
   }
 
-  return drizzled::plugin::Catalog::drop(drizzled::identifier::Catalog(res->c_str()));
-
   null_value= false;
-  return 1;
+
+  return drizzled::plugin::Catalog::drop(drizzled::identifier::Catalog(res->c_str()));
 }
 
 } /* namespace functions */
