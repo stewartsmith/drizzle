@@ -232,11 +232,8 @@ catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Cat
 }
 
 
-void plugin::Catalog::removePlugin(plugin::Catalog *arg)
+void plugin::Catalog::removePlugin(plugin::Catalog *)
 {
-  Engines::singleton().catalogs().erase(find(Engines::singleton().catalogs().begin(),
-                                             Engines::singleton().catalogs().end(),
-                                             arg->engine()));
 }
 
 } /* namespace plugin */
