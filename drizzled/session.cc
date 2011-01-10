@@ -51,7 +51,7 @@
 
 #include "drizzled/identifier.h"
 
-#include "drizzled/table/instance.h"
+#include "drizzled/table/singular.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
@@ -2113,11 +2113,11 @@ bool Session::TableMessages::renameTableMessage(const TableIdentifier &from, con
   return true;
 }
 
-table::Instance *Session::getInstanceTable()
+table::Singular *Session::getInstanceTable()
 {
-  temporary_shares.push_back(new table::Instance()); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new table::Singular()); // This will not go into the tableshare cache, so no key is used.
 
-  table::Instance *tmp_share= temporary_shares.back();
+  table::Singular *tmp_share= temporary_shares.back();
 
   assert(tmp_share);
 
@@ -2143,11 +2143,11 @@ table::Instance *Session::getInstanceTable()
   @return
     0 if out of memory, Table object in case of success
 */
-table::Instance *Session::getInstanceTable(List<CreateField> &field_list)
+table::Singular *Session::getInstanceTable(List<CreateField> &field_list)
 {
-  temporary_shares.push_back(new table::Instance(this, field_list)); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
 
-  table::Instance *tmp_share= temporary_shares.back();
+  table::Singular *tmp_share= temporary_shares.back();
 
   assert(tmp_share);
 

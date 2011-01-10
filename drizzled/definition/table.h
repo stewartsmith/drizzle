@@ -57,7 +57,7 @@ class EventObserverList;
 }
 
 namespace table {
-class Instance;
+class Singular;
 }
 
 class Field_blob;
@@ -672,7 +672,7 @@ public:
   }
 
 protected:
-  friend class drizzled::table::Instance;
+  friend class drizzled::table::Singular;
 
   Field *make_field(const message::Table::Field &pfield,
                     unsigned char *ptr,

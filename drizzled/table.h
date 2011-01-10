@@ -850,7 +850,7 @@ bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
 
-#include "drizzled/table/instance.h"
+#include "drizzled/table/singular.h"
 #include "drizzled/table/concurrent.h"
 
 #endif /* DRIZZLED_TABLE_H */

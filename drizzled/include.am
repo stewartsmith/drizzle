@@ -440,7 +440,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table.h \
 			      drizzled/table/cache.h \
 			      drizzled/table/concurrent.h \
-			      drizzled/table/instance.h \
+			      drizzled/table/singular.h \
 			      drizzled/table/placeholder.h \
 			      drizzled/table/shell.h \
 			      drizzled/table/temporary.h \
@@ -814,7 +814,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/table.cc \
 			   drizzled/table/cache.cc \
 			   drizzled/table/concurrent.cc \
-			   drizzled/table/instance.cc \
+			   drizzled/table/singular.cc \
 			   drizzled/table/temporary.cc \
 			   drizzled/table/unused.cc \
 			   drizzled/table_function_container.cc \

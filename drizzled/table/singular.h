@@ -20,8 +20,8 @@
 
 /* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_INSTANCE_H
-#define DRIZZLED_TABLE_INSTANCE_H
+#ifndef DRIZZLED_TABLE_SINGULAR_H
+#define DRIZZLED_TABLE_SINGULAR_H
 
 namespace drizzled
 {
@@ -29,19 +29,19 @@ namespace drizzled
 namespace table
 {
 
-class Instance : public Table
+class Singular : public Table
 {
   TableShare _share;
   bool _has_variable_width;
 
 public:
-  Instance() :
+  Singular() :
     _share(message::Table::INTERNAL),
     _has_variable_width(false)
   {
   }
 
-  Instance(Session *session, List<CreateField> &field_list);
+  Singular(Session *session, List<CreateField> &field_list);
 
   TableShare *getMutableShare(void)
   {
@@ -79,10 +79,10 @@ public:
     _has_variable_width= true;
   }
 
-  ~Instance();
+  ~Singular();
 };
 
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_H */
+#endif /* DRIZZLED_TABLE_SINGULAR_H */
