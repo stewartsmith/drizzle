@@ -148,12 +148,12 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
   int error= 0;
   bool foreign_key_error= false;
 
+  do
   {
-    table::Cache::singleton().mutex().lock(); /* Part 2 of rm a table */
+    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
 
     if (not drop_temporary && session->lock_table_names_exclusively(tables))
     {
-      table::Cache::singleton().mutex().unlock();
       return 1;
     }
 
@@ -172,7 +172,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         continue;
       case -1:
         error= 1;
-        goto err_with_placeholders;
+        break;
       default:
         // temporary table not found
         error= 0;
@@ -195,7 +195,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         if (session->getKilled())
         {
           error= -1;
-          goto err_with_placeholders;
+          break;
         }
       }
       TableIdentifier identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
@@ -208,7 +208,9 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                               ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
                               table->getTableName());
         else
+        {
           error= 1;
+        }
       }
       else
       {
@@ -241,13 +243,10 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         wrong_tables.append(String(table->getTableName(), system_charset_info));
       }
     }
-    /*
-      It's safe to unlock table::Cache::singleton().mutex(): we have an exclusive lock
-      on the table name.
-    */
-    table::Cache::singleton().mutex().unlock();
-  }
-  error= 0;
+
+    tables->unlock_table_names();
+
+  } while (0);
 
   if (wrong_tables.length())
   {
@@ -263,11 +262,6 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     error= 1;
   }
 
-  table::Cache::singleton().mutex().lock(); /* final bit in rm table lock */
-
-err_with_placeholders:
-  tables->unlock_table_names();
-  table::Cache::singleton().mutex().unlock();
   session->no_warnings_for_error= 0;
 
   return error;
