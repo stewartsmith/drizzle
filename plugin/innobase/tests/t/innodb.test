@@ -1051,6 +1051,7 @@ show status like "Innodb_row_lock_time_max";
 show status like "Innodb_row_lock_time_avg";
 
 # Test for innodb_sync_spin_loops variable
+set @my_innodb_sync_spin_loops = @@global.innodb_sync_spin_loops;
 show variables like "innodb_sync_spin_loops";
 set global innodb_sync_spin_loops=1000;
 show variables like "innodb_sync_spin_loops";
@@ -1058,8 +1059,10 @@ set global innodb_sync_spin_loops=0;
 show variables like "innodb_sync_spin_loops";
 set global innodb_sync_spin_loops=20;
 show variables like "innodb_sync_spin_loops";
+set @@global.innodb_sync_spin_loops = @my_innodb_sync_spin_loops;
 
 # Test for innodb_thread_concurrency variable
+set @my_innodb_thread_concurrency = @@global.innodb_thread_concurrency;
 show variables like "innodb_thread_concurrency";
 set global innodb_thread_concurrency=1001;
 show variables like "innodb_thread_concurrency";
@@ -1067,6 +1070,7 @@ set global innodb_thread_concurrency=0;
 show variables like "innodb_thread_concurrency";
 set global innodb_thread_concurrency=16;
 show variables like "innodb_thread_concurrency";
+set @@global.innodb_thread_concurrency = @my_innodb_thread_concurrency;
 
 # Test for innodb_concurrency_tickets variable
 show variables like "innodb_concurrency_tickets";
