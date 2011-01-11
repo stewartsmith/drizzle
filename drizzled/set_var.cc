@@ -85,7 +85,11 @@ err:
 *****************************************************************************/
 set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
                  const LEX_STRING *base_name_arg, Item *value_arg) :
-  var(var_arg), type(type_arg), base(*base_name_arg)
+  uint64_t_value(0),
+  str_value(""),
+  var(var_arg),
+  type(type_arg),
+  base(*base_name_arg)
 {
   /*
     If the set value is a field, change it to a string to allow things like
@@ -100,7 +104,9 @@ set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
       value=value_arg;			/* Give error message later */
   }
   else
-    value=value_arg;
+  {
+    value= value_arg;
+  }
 }
 
 int set_var::check(Session *session)
@@ -164,7 +170,7 @@ int set_var::update(Session *session)
   catch (invalid_option_value &ex)
   {
     /* TODO: Fix this to be typesafe once we have properly typed set_var */
-    string new_val= boost::lexical_cast<string>(save_result.uint32_t_value);
+    string new_val= boost::lexical_cast<string>(uint64_t_value);
     if (boost::get_error_info<invalid_max_info>(ex) != NULL)
     { 
       const uint64_t max_val= *(boost::get_error_info<invalid_max_info>(ex));
@@ -250,12 +256,15 @@ void set_var::setValue(const std::string &new_value)
 
 void set_var::setValue(uint64_t new_value)
 {
-  save_result.uint64_t_value= new_value;
+  uint64_t_value= new_value;
 }
 
 void set_var::updateValue()
 {
-  save_result.uint64_t_value= value->val_int();
+  if (var->show_type() != SHOW_CHAR)
+  {
+    uint64_t_value= value->val_int();
+  }
 }
 
 

@@ -67,21 +67,12 @@ public:
 class set_var :
   public set_var_base
 {
+  uint64_t uint64_t_value;
   std::string str_value;
 public:
   sys_var *var;
   Item *value;
   sql_var_t type;
-  union
-  {
-    const CHARSET_INFO *charset;
-    uint32_t uint32_t_value;
-    uint64_t uint64_t_value;
-    size_t size_t_value;
-    plugin::StorageEngine *storage_engine;
-    Time_zone *time_zone;
-    MY_LOCALE *locale_value;
-  } save_result;
   LEX_STRING base;			/* for structs */
 
   set_var(sql_var_t type_arg, sys_var *var_arg,
@@ -94,7 +85,7 @@ public:
 
   uint64_t getInteger()
   {
-    return save_result.uint64_t_value;
+    return uint64_t_value;
   }
 
 };

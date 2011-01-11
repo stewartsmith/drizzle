@@ -946,7 +946,6 @@ public:
                                  plugin::StorageEngine *drizzle_system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   {  }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1020,7 +1019,6 @@ public:
   sys_var_collation(const char *name_arg)
     :sys_var_session(name_arg, NULL)
   { }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1088,7 +1086,6 @@ public:
   {
     
   }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1129,7 +1126,6 @@ public:
   {
     
   }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
