@@ -58,6 +58,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -183,6 +184,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -271,6 +273,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -383,6 +386,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -488,6 +492,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -618,6 +623,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -745,6 +751,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -819,6 +826,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -890,6 +898,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -983,6 +992,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -1082,6 +1092,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -1176,6 +1187,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -1264,7 +1276,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -1381,6 +1393,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -1478,6 +1491,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -1574,6 +1588,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -1908,6 +1923,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
@@ -2066,6 +2082,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }

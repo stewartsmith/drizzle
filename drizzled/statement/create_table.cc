@@ -76,7 +76,7 @@ bool statement::CreateTable::execute()
   /* Skip first table, which is the table we are creating */
   create_table_list= session->lex->unlink_first_table(&link_to_local);
 
-  drizzled::message::init(createTableMessage(), createTableMessage().name(), create_table_list->getSchemaName(), create_info().db_type->getName());
+  drizzled::message::table::init(createTableMessage(), createTableMessage().name(), create_table_list->getSchemaName(), create_info().db_type->getName());
 
   TableIdentifier new_table_identifier(create_table_list->getSchemaName(),
                                        create_table_list->getTableName(),

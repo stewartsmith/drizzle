@@ -70,6 +70,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }

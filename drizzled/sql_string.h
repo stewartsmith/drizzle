@@ -246,13 +246,14 @@ public:
 
   bool copy();					// Alloc string if not alloced
   bool copy(const String &s);			// Allocate new string
+  bool copy(const std::string&, const CHARSET_INFO * const cs);	// Allocate new string
   bool copy(const char *s,size_t arg_length, const CHARSET_INFO * const cs);	// Allocate new string
   static bool needs_conversion(size_t arg_length,
   			       const CHARSET_INFO * const cs_from, const CHARSET_INFO * const cs_to,
 			       size_t *offset);
   bool set_or_copy_aligned(const char *s, size_t arg_length, const CHARSET_INFO * const cs);
   bool copy(const char*s,size_t arg_length, const CHARSET_INFO * const csfrom,
-	    const CHARSET_INFO * const csto, size_t *errors);
+            const CHARSET_INFO * const csto, size_t *errors);
   bool append(const String &s);
   bool append(const char *s);
   bool append(const char *s,size_t arg_length);
