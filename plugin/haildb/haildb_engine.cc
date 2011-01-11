@@ -409,7 +409,7 @@ int HailDBEngine::doCommit(Session* session, bool all)
   ib_err_t err;
   ib_trx_t *transaction= get_trx(session);
 
-  if (all || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  if (all)
   {
     err= ib_trx_commit(*transaction);
 
