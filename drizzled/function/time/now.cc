@@ -31,6 +31,7 @@ String *Item_func_now::val_str(String *)
 {
   assert(fixed == 1);
   str_value.set(buff, buff_length, &my_charset_bin);
+
   return &str_value;
 }
 
@@ -40,14 +41,14 @@ void Item_func_now::fix_length_and_dec()
   decimals= DATETIME_DEC;
   collation.set(&my_charset_bin);
   
-  memset(&ltime, 0, sizeof(type::Time));
+  ltime.reset();
 
   ltime.time_type= DRIZZLE_TIMESTAMP_DATETIME;
 
   store_now_in_TIME(&ltime);
   value= (int64_t) TIME_to_uint64_t_datetime(&ltime);
 
-  buff_length= (uint) my_datetime_to_str(&ltime, buff);
+  buff_length= (uint) my_TIME_to_str(&ltime, buff);
   max_length= buff_length;
 }
 

@@ -88,6 +88,7 @@ enum enum_drizzle_timestamp_type
   bigger values.
 */
 namespace type {
+
 class Time
 {
 public:
@@ -95,8 +96,25 @@ public:
   unsigned int second_part;
   bool       neg;
   enum enum_drizzle_timestamp_type time_type;
+
+  void reset()
+  {
+    year= month= day= hour= minute= second= second_part= 0;
+    neg= false;
+    time_type= DRIZZLE_TIMESTAMP_DATE;
+  }
 };
+
 }
+
+class String;
+
+void make_time(const type::Time *l_time, String *str);
+
+void make_date(const type::Time *l_time, String *str);
+
+void make_datetime(const type::Time *l_time, String *str);
+
 
 
 bool check_date(const type::Time *ltime, bool not_zero_date,
@@ -159,9 +177,6 @@ void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type);
 */
 #define MAX_DATE_STRING_REP_LENGTH 30
 
-int my_time_to_str(const type::Time *l_time, char *to);
-int my_date_to_str(const type::Time *l_time, char *to);
-int my_datetime_to_str(const type::Time *l_time, char *to);
 int my_TIME_to_str(const type::Time *l_time, char *to);
 
 /*

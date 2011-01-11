@@ -41,7 +41,7 @@ String *Item_func_sysdate_local::val_str(String *)
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
-  buff_length= (uint) my_datetime_to_str(&ltime, buff);
+  buff_length= (uint) my_TIME_to_str(&ltime, buff);
   str_value.set(buff, buff_length, &my_charset_bin);
   return &str_value;
 }

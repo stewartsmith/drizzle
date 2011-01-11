@@ -21,6 +21,7 @@
 #include "drizzled/charset_info.h"
 #include <drizzled/util/test.h>
 #include "drizzled/definitions.h"
+#include <drizzled/sql_string.h>
 
 #include <cstdio>
 #include <algorithm>
@@ -453,7 +454,9 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
                                        DRIZZLE_TIMESTAMP_DATETIME));
 
 err:
-  memset(l_time, 0, sizeof(*l_time));
+
+  l_time->reset();
+
   return(DRIZZLE_TIMESTAMP_ERROR);
 }
 
@@ -1039,7 +1042,7 @@ void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type)
     number of characters written to 'to'
 */
 
-int my_time_to_str(const type::Time *l_time, char *to)
+static int my_time_to_str(const type::Time *l_time, char *to)
 {
   uint32_t extra_hours= 0;
   return sprintf(to, "%s%02u:%02u:%02u",
@@ -1049,7 +1052,7 @@ int my_time_to_str(const type::Time *l_time, char *to)
                          l_time->second);
 }
 
-int my_date_to_str(const type::Time *l_time, char *to)
+static int my_date_to_str(const type::Time *l_time, char *to)
 {
   return sprintf(to, "%04u-%02u-%02u",
                          l_time->year,
@@ -1057,7 +1060,7 @@ int my_date_to_str(const type::Time *l_time, char *to)
                          l_time->day);
 }
 
-int my_datetime_to_str(const type::Time *l_time, char *to)
+static int my_datetime_to_str(const type::Time *l_time, char *to)
 {
   return sprintf(to, "%04u-%02u-%02u %02u:%02u:%02u",
                          l_time->year,
@@ -1099,6 +1102,31 @@ int my_TIME_to_str(const type::Time *l_time, char *to)
   }
 }
 
+void make_time(const type::Time *l_time, String *str)
+{
+  str->alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= (uint32_t) my_time_to_str(l_time, str->c_ptr());
+  str->length(length);
+  str->set_charset(&my_charset_bin);
+}
+
+void make_date(const type::Time *l_time, String *str)
+{
+  str->alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= (uint32_t) my_date_to_str(l_time, str->c_ptr());
+  str->length(length);
+  str->set_charset(&my_charset_bin);
+}
+
+
+void make_datetime(const type::Time *l_time, String *str)
+{
+  str->alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= (uint32_t) my_datetime_to_str(l_time, str->c_ptr());
+  str->length(length);
+  str->set_charset(&my_charset_bin);
+}
+
 
 /*
   Convert datetime value specified as number to broken-down TIME
@@ -1132,7 +1160,7 @@ int64_t number_to_datetime(int64_t nr, type::Time *time_res,
   long part1,part2;
 
   *was_cut= 0;
-  memset(time_res, 0, sizeof(*time_res));
+  time_res->reset();
   time_res->time_type=DRIZZLE_TIMESTAMP_DATE;
 
   if (nr == 0LL || nr >= 10000101000000LL)
@@ -1270,9 +1298,8 @@ uint64_t TIME_to_uint64_t(const type::Time *my_time)
   case DRIZZLE_TIMESTAMP_NONE:
   case DRIZZLE_TIMESTAMP_ERROR:
     return 0ULL;
-  default:
-    assert(0);
   }
+
   return 0;
 }
 
