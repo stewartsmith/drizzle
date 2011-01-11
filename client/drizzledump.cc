@@ -472,99 +472,107 @@ try
 {
   int exit_code;
 
-  po::options_description commandline_options(N_("Options used only in command line"));
+#if defined(ENABLE_NLS)
+# if defined(HAVE_LOCALE_H)
+  setlocale(LC_ALL, "");
+# endif
+  bindtextdomain("drizzle7", LOCALEDIR);
+  textdomain("drizzle7");
+#endif
+
+  po::options_description commandline_options(_("Options used only in command line"));
   commandline_options.add_options()
   ("all-databases,A", po::value<bool>(&opt_alldbs)->default_value(false)->zero_tokens(),
-  N_("Dump all the databases. This will be same as --databases with all databases selected."))
+  _("Dump all the databases. This will be same as --databases with all databases selected."))
   ("all-tablespaces,Y", po::value<bool>(&opt_alltspcs)->default_value(false)->zero_tokens(),
-  N_("Dump all the tablespaces."))
+  _("Dump all the tablespaces."))
   ("complete-insert,c", po::value<bool>(&opt_complete_insert)->default_value(false)->zero_tokens(),
-  N_("Use complete insert statements."))
+  _("Use complete insert statements."))
   ("flush-logs,F", po::value<bool>(&flush_logs)->default_value(false)->zero_tokens(),
-  N_("Flush logs file in server before starting dump. Note that if you dump many databases at once (using the option --databases= or --all-databases), the logs will be flushed for each database dumped. The exception is when using --lock-all-tables in this case the logs will be flushed only once, corresponding to the moment all tables are locked. So if you want your dump and the log flush to happen at the same exact moment you should use --lock-all-tables or --flush-logs"))
+  _("Flush logs file in server before starting dump. Note that if you dump many databases at once (using the option --databases= or --all-databases), the logs will be flushed for each database dumped. The exception is when using --lock-all-tables in this case the logs will be flushed only once, corresponding to the moment all tables are locked. So if you want your dump and the log flush to happen at the same exact moment you should use --lock-all-tables or --flush-logs"))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
-  N_("Continue even if we get an sql-error."))
-  ("help,?", N_("Display this help message and exit."))
+  _("Continue even if we get an sql-error."))
+  ("help,?", _("Display this help message and exit."))
   ("lock-all-tables,x", po::value<bool>(&opt_lock_all_tables)->default_value(false)->zero_tokens(),
-  N_("Locks all tables across all databases. This is achieved by taking a global read lock for the duration of the whole dump. Automatically turns --single-transaction off."))
+  _("Locks all tables across all databases. This is achieved by taking a global read lock for the duration of the whole dump. Automatically turns --single-transaction off."))
   ("single-transaction", po::value<bool>(&opt_single_transaction)->default_value(false)->zero_tokens(),
-  N_("Creates a consistent snapshot by dumping all tables in a single transaction. Works ONLY for tables stored in storage engines which support multiversioning (currently only InnoDB does); the dump is NOT guaranteed to be consistent for other storage engines. While a --single-transaction dump is in process, to ensure a valid dump file (correct table contents), no other connection should use the following statements: ALTER TABLE, DROP TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not isolated from them."))
+  _("Creates a consistent snapshot by dumping all tables in a single transaction. Works ONLY for tables stored in storage engines which support multiversioning (currently only InnoDB does); the dump is NOT guaranteed to be consistent for other storage engines. While a --single-transaction dump is in process, to ensure a valid dump file (correct table contents), no other connection should use the following statements: ALTER TABLE, DROP TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not isolated from them."))
   ("skip-opt", 
-  N_("Disable --opt. Disables --add-drop-table, --add-locks, --create-options, ---extended-insert and --disable-keys."))    
-  ("tables", N_("Overrides option --databases (-B)."))
+  _("Disable --opt. Disables --add-drop-table, --add-locks, --create-options, ---extended-insert and --disable-keys."))    
+  ("tables", _("Overrides option --databases (-B)."))
   ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(10000),
-  N_("Number of rows before each output progress report (requires --verbose)."))
+  _("Number of rows before each output progress report (requires --verbose)."))
   ("verbose,v", po::value<bool>(&verbose)->default_value(false)->zero_tokens(),
-  N_("Print info about the various stages."))
-  ("version,V", N_("Output version information and exit."))
-  ("skip-comments", N_("Turn off Comments"))
-  ("skip-create", N_("Turn off create-options"))
-  ("skip-extended-insert", N_("Turn off extended-insert"))
-  ("skip-dump-date",N_( "Turn off dump date at the end of the output"))
-  ("no-defaults", N_("Do not read from the configuration files"))
+  _("Print info about the various stages."))
+  ("version,V", _("Output version information and exit."))
+  ("skip-comments", _("Turn off Comments"))
+  ("skip-create", _("Turn off create-options"))
+  ("skip-extended-insert", _("Turn off extended-insert"))
+  ("skip-dump-date", _( "Turn off dump date at the end of the output"))
+  ("no-defaults", _("Do not read from the configuration files"))
   ;
 
-  po::options_description dump_options(N_("Options specific to the drizzle client"));
+  po::options_description dump_options(_("Options specific to the drizzle client"));
   dump_options.add_options()
   ("add-drop-database", po::value<bool>(&opt_drop_database)->default_value(false)->zero_tokens(),
-  N_("Add a 'DROP DATABASE' before each create."))
-  ("skip-drop-table", N_("Do not add a 'drop table' before each create."))
+  _("Add a 'DROP DATABASE' before each create."))
+  ("skip-drop-table", _("Do not add a 'drop table' before each create."))
   ("compact", po::value<bool>(&opt_compact)->default_value(false)->zero_tokens(),
-  N_("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys"))
+  _("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys"))
   ("databases,B", po::value<bool>(&opt_databases)->default_value(false)->zero_tokens(),
-  N_("To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output."))
+  _("To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output."))
   ("skip-disable-keys,K",
-  N_("'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will not be put in the output."))
+  _("'ALTER TABLE tb_name DISABLE KEYS;' and 'ALTER TABLE tb_name ENABLE KEYS;' will not be put in the output."))
   ("ignore-table", po::value<string>(),
-  N_("Do not dump the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table.  Each table must be specified with both database and table names, e.g. --ignore-table=database.table"))
+  _("Do not dump the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table.  Each table must be specified with both database and table names, e.g. --ignore-table=database.table"))
   ("insert-ignore", po::value<bool>(&opt_ignore)->default_value(false)->zero_tokens(),
-  N_("Insert rows with INSERT IGNORE."))
+  _("Insert rows with INSERT IGNORE."))
   ("no-autocommit", po::value<bool>(&opt_autocommit)->default_value(false)->zero_tokens(),
-  N_("Wrap a table's data in START TRANSACTION/COMMIT statements."))
+  _("Wrap a table's data in START TRANSACTION/COMMIT statements."))
   ("no-create-db,n", po::value<bool>(&opt_create_db)->default_value(false)->zero_tokens(),
-  N_("'CREATE DATABASE IF NOT EXISTS db_name;' will not be put in the output. The above line will be added otherwise, if --databases or --all-databases option was given."))
+  _("'CREATE DATABASE IF NOT EXISTS db_name;' will not be put in the output. The above line will be added otherwise, if --databases or --all-databases option was given."))
   ("no-data,d", po::value<bool>(&opt_no_data)->default_value(false)->zero_tokens(),
-  N_("No row information."))
+  _("No row information."))
   ("replace", po::value<bool>(&opt_replace_into)->default_value(false)->zero_tokens(),
-  N_("Use REPLACE INTO instead of INSERT INTO."))
+  _("Use REPLACE INTO instead of INSERT INTO."))
   ("destination-type", po::value<string>()->default_value("stdout"),
-  N_("Where to send output to (stdout|database"))
+  _("Where to send output to (stdout|database"))
   ("destination-host", po::value<string>(&opt_destination_host)->default_value("localhost"),
-  N_("Hostname for destination db server (requires --destination-type=database)"))
+  _("Hostname for destination db server (requires --destination-type=database)"))
   ("destination-port", po::value<uint16_t>(&opt_destination_port)->default_value(4427),
-  N_("Port number for destination db server (requires --destination-type=database)"))
+  _("Port number for destination db server (requires --destination-type=database)"))
   ("destination-user", po::value<string>(&opt_destination_user),
-  N_("User name for destination db server (resquires --destination-type=database)"))
+  _("User name for destination db server (resquires --destination-type=database)"))
   ("destination-password", po::value<string>(&opt_destination_password),
-  N_("Password for destination db server (requires --destination-type=database)"))
+  _("Password for destination db server (requires --destination-type=database)"))
   ("destination-database", po::value<string>(&opt_destination_database),
-  N_("The database in the destination db server (requires --destination-type=database, not for use with --all-databases)"))
+  _("The database in the destination db server (requires --destination-type=database, not for use with --all-databases)"))
   ;
 
-  po::options_description client_options(N_("Options specific to the client"));
+  po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
-  N_("Connect to host."))
+  _("Connect to host."))
   ("password,P", po::value<string>(&password)->default_value(PASSWORD_SENTINEL),
-  N_("Password to use when connecting to server. If password is not given it's solicited on the tty."))
+  _("Password to use when connecting to server. If password is not given it's solicited on the tty."))
   ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
-  N_("Port number to use for connection."))
+  _("Port number to use for connection."))
   ("user,u", po::value<string>(&current_user)->default_value(""),
-  N_("User for login if not current user."))
+  _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
-  N_("The protocol of connection (mysql or drizzle)."))
+  _("The protocol of connection (mysql or drizzle)."))
   ;
 
-  po::options_description hidden_options(N_("Hidden Options"));
+  po::options_description hidden_options(_("Hidden Options"));
   hidden_options.add_options()
-  ("database-used", po::value<vector<string> >(), N_("Used to select the database"))
-  ("Table-used", po::value<vector<string> >(), N_("Used to select the tables"))
+  ("database-used", po::value<vector<string> >(), _("Used to select the database"))
+  ("Table-used", po::value<vector<string> >(), _("Used to select the tables"))
   ;
 
-  po::options_description all_options(N_("Allowed Options + Hidden Options"));
+  po::options_description all_options(_("Allowed Options + Hidden Options"));
   all_options.add(commandline_options).add(dump_options).add(client_options).add(hidden_options);
 
-  po::options_description long_options(N_("Allowed Options"));
+  po::options_description long_options(_("Allowed Options"));
   long_options.add(commandline_options).add(dump_options).add(client_options);
 
   std::string system_config_dir_dump(SYSCONFDIR); 

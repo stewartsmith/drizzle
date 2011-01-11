@@ -2008,13 +2008,13 @@ innodb_file_format_max_validate(
     }
 
     if (format_id >= 0) {
-      innobase_file_format_max= 
-        trx_sys_file_format_id_to_name((uint)format_id);
+      innobase_file_format_max.assign(
+                             trx_sys_file_format_id_to_name((uint)format_id));
 
       /* Update the max format id in the system tablespace. */
-      char name_buff[100];
-      strcpy(name_buff, innobase_file_format_max.c_str());
-      if (trx_sys_file_format_max_set(format_id, (const char **)&name_buff))
+      const char *name_buff;
+
+      if (trx_sys_file_format_max_set(format_id, &name_buff))
       {
         errmsg_printf(ERRMSG_LVL_WARN,
                       " [Info] InnoDB: the file format in the system "

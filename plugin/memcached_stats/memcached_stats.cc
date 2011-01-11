@@ -84,7 +84,7 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("servers",
           po::value<std::string>()->default_value(""),
-          N_("List of memcached servers."));
+          _("List of memcached servers."));
 }
 
 } /* namespace drizzle_plugin */

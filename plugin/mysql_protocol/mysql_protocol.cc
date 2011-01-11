@@ -1011,32 +1011,32 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("port",
           po::value<port_constraint>(&port)->default_value(3306),
-          N_("Port number to use for connection or 0 for default to with MySQL "
+          _("Port number to use for connection or 0 for default to with MySQL "
                               "protocol."));
   context("connect-timeout",
           po::value<timeout_constraint>(&connect_timeout)->default_value(10),
-          N_("Connect Timeout."));
+          _("Connect Timeout."));
   context("read-timeout",
           po::value<timeout_constraint>(&read_timeout)->default_value(30),
-          N_("Read Timeout."));
+          _("Read Timeout."));
   context("write-timeout",
           po::value<timeout_constraint>(&write_timeout)->default_value(60),
-          N_("Write Timeout."));
+          _("Write Timeout."));
   context("retry-count",
           po::value<retry_constraint>(&retry_count)->default_value(10),
-          N_("Retry Count."));
+          _("Retry Count."));
   context("buffer-length",
           po::value<buffer_constraint>(&buffer_length)->default_value(16384),
-          N_("Buffer length."));
+          _("Buffer length."));
   context("bind-address",
           po::value<string>()->default_value(""),
-          N_("Address to bind to."));
+          _("Address to bind to."));
   context("max-connections",
           po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters->max_connections)->default_value(1000),
-          N_("Maximum simultaneous connections."));
+          _("Maximum simultaneous connections."));
   context("admin-ip-addresses",
           po::value<vector<string> >()->composing()->notifier(&ClientMySQLProtocol::mysql_compose_ip_addresses),
-          N_("A restrictive IP address list for incoming admin connections."));
+          _("A restrictive IP address list for incoming admin connections."));
 }
 
 static int mysql_protocol_connection_count_func(drizzle_show_var *var, char *buff)

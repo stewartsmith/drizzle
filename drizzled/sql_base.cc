@@ -3887,12 +3887,15 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
     table= (*ptr)->getTable();
     table->auto_increment_field_not_null= false;
   }
+
   while ((field = *ptr++) && ! session->is_error())
   {
     value=v++;
     table= field->getTable();
+
     if (field == table->next_number_field)
       table->auto_increment_field_not_null= true;
+
     if (value->save_in_field(field, 0) < 0)
     {
       if (table)

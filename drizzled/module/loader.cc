@@ -370,7 +370,7 @@ bool plugin_finalize(module::Registry &registry)
   /*
     Now we initialize all remaining plugins
   */
-  std::map<std::string, module::Module *>::const_iterator modules=
+  module::Registry::ModuleMap::const_iterator modules=
     registry.getModulesMap().begin();
     
   while (modules != registry.getModulesMap().end())
@@ -387,6 +387,7 @@ bool plugin_finalize(module::Registry &registry)
       }
     }
   }
+
 
   BOOST_FOREACH(plugin::Plugin::map::value_type value, registry.getPluginsMap())
   {

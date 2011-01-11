@@ -165,12 +165,12 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("path",
           po::value<fs::path>()->default_value(DRIZZLE_UNIX_SOCKET_PATH),
-          N_("Path used for MySQL UNIX Socket Protocol."));
+          _("Path used for MySQL UNIX Socket Protocol."));
   context("clobber",
-          N_("Clobber socket file if one is there already."));
+          _("Clobber socket file if one is there already."));
   context("max-connections",
           po::value<uint32_t>(&Protocol::mysql_unix_counters->max_connections)->default_value(1000),
-          N_("Maximum simultaneous connections."));
+          _("Maximum simultaneous connections."));
 }
 
 } /* namespace mysql_unix_socket_protocol */
