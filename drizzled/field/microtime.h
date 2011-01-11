@@ -50,10 +50,12 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_MICROTIME;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
   enum Item_result cmp_type () const { return STRING_RESULT; }
-  int  store(const char *to,uint32_t length,
-             const CHARSET_INFO * const charset);
-  int  store(double nr);
-  int  store(int64_t nr, bool unsigned_val);
+  int store(const char *to,uint32_t length,
+            const CHARSET_INFO * const charset);
+  int store(double nr);
+  int store(int64_t nr, bool unsigned_val);
+  int store_time(type::Time *ltime, enum enum_drizzle_timestamp_type t_type);
+
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);

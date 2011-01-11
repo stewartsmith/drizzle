@@ -814,7 +814,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
 */
 time_t
 my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
-                  bool *in_dst_time_gap)
+                  bool *in_dst_time_gap, bool skip_timezone)
 {
   uint32_t loop;
   time_t tmp= 0;
@@ -929,7 +929,15 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
                  3600);
 
   current_timezone= my_time_zone;
-  localtime_r(&tmp,&tm_tmp);
+  if (skip_timezone)
+  {
+    gmtime_r(&tmp, &tm_tmp);
+  }
+  else
+  {
+    localtime_r(&tmp,&tm_tmp);
+  }
+
   l_time=&tm_tmp;
   for (loop=0;
        loop < 2 &&
@@ -949,7 +957,14 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
           (long) ((int) t->second - (int) l_time->tm_sec));
     current_timezone+= diff+3600;		/* Compensate for -3600 above */
     tmp+= (time_t) diff;
-    localtime_r(&tmp,&tm_tmp);
+    if (skip_timezone)
+    {
+      gmtime_r(&tmp, &tm_tmp);
+    }
+    else
+    {
+      localtime_r(&tmp, &tm_tmp);
+    }
     l_time=&tm_tmp;
   }
   /*

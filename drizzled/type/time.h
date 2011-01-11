@@ -145,7 +145,7 @@ static inline bool validate_timestamp_range(const type::Time *t)
 
 time_t
 my_system_gmt_sec(const type::Time *t, long *my_timezone,
-                  bool *in_dst_time_gap);
+                  bool *in_dst_time_gap, bool skip_timezone= false);
 
 void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type);
 
