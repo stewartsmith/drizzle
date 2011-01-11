@@ -435,60 +435,91 @@ handle_error(uint32_t ,
   return true;
 }
 
-/**
-   returns ENOENT if the file doesn't exists.
-*/
-int StorageEngine::dropTable(Session& session,
-                             const TableIdentifier &identifier)
+class DropTableByIdentifier: public std::unary_function<EngineVector::value_type, bool>
 {
-  int error= 0;
-  int error_proto;
-  message::table::shared_ptr src_proto;
-  StorageEngine *engine;
+  Session::reference session;
+  TableIdentifier::const_reference identifier;
+  drizzled::error_t &error;
 
-  error_proto= StorageEngine::getTableDefinition(session, identifier, src_proto);
+public:
 
-  if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
+  DropTableByIdentifier(Session::reference session_arg,
+                        TableIdentifier::const_reference identifier_arg,
+                        drizzled::error_t &error_arg) :
+    session(session_arg),
+    identifier(identifier_arg),
+    error(error_arg)
+  { }
+
+  result_type operator() (argument_type engine)
   {
-    std::string error_message;
-    identifier.getSQLPath(error_message);
+    if (not engine->doDoesTableExist(session, identifier))
+      return false;
 
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             error_message.c_str(),
-             src_proto->InitializationErrorString().c_str());
+    int local_error= engine->doDropTable(session, identifier);
 
-    return ER_CORRUPT_TABLE_DEFINITION;
+
+    if (not local_error)
+      return true;
+
+    switch (local_error)
+    {
+    case HA_ERR_NO_SUCH_TABLE:
+    case ENOENT:
+      error= static_cast<drizzled::error_t>(HA_ERR_NO_SUCH_TABLE);
+      return false;
+
+    default:
+      error= static_cast<drizzled::error_t>(local_error);
+      return true;
+    }
+  } 
+};
+
+
+bool StorageEngine::dropTable(Session::reference session,
+                              TableIdentifier::const_reference identifier,
+                              drizzled::error_t &error)
+{
+  error= EE_OK;
+
+  EngineVector::const_iterator iter= std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
+                                                  DropTableByIdentifier(session, identifier, error));
+
+  if (error)
+  {
+    return false;
+  }
+  else if (iter == vector_of_engines.end())
+  {
+    error= ER_BAD_TABLE_ERROR;
+    return false;
   }
 
-  if (src_proto)
-    engine= StorageEngine::findByName(session, src_proto->engine().name());
-  else
-    engine= StorageEngine::findByName(session, "");
+  drizzled::message::Cache::singleton().erase(identifier);
 
-  if (not engine)
-  {
-    std::string error_message;
-    identifier.getSQLPath(error_message);
-
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str(), "");
-
-    return ER_CORRUPT_TABLE_DEFINITION;
-  }
-
-  error= StorageEngine::dropTable(session, *engine, identifier);
-
-  if (error_proto && error == 0)
-    return 0;
-
-  return error;
+  return true;
 }
 
-int StorageEngine::dropTable(Session& session,
-                             StorageEngine &engine,
-                             const TableIdentifier &identifier)
+bool StorageEngine::dropTable(Session& session,
+                              const TableIdentifier &identifier)
 {
-  int error;
+  drizzled::error_t error;
 
+  if (not dropTable(session, identifier, error))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+bool StorageEngine::dropTable(Session::reference session,
+                              StorageEngine &engine,
+                              TableIdentifier::const_reference identifier,
+                              drizzled::error_t &error)
+{
+  error= EE_OK;
   engine.setTransactionReadWrite(session);
   
   if (unlikely(plugin::EventObserver::beforeDropTable(session, identifier)))
@@ -497,7 +528,8 @@ int StorageEngine::dropTable(Session& session,
   }
   else
   {
-    error= engine.doDropTable(session, identifier);
+    error= static_cast<drizzled::error_t>(engine.doDropTable(session, identifier));
+
     if (unlikely(plugin::EventObserver::afterDropTable(session, identifier, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
@@ -506,7 +538,12 @@ int StorageEngine::dropTable(Session& session,
 
   drizzled::message::Cache::singleton().erase(identifier);
 
-  return error;
+  if (error)
+  {
+    return false;
+  }
+
+  return true;
 }
 
 
@@ -554,7 +591,11 @@ int StorageEngine::createTable(Session &session,
                                                  table_message);
     }
 
-    if (error)
+    if (error == ER_TABLE_PERMISSION_DENIED)
+    {
+      my_error(ER_TABLE_PERMISSION_DENIED, identifier);
+    }
+    else if (error)
     {
       std::string path;
       identifier.getSQLPath(path);

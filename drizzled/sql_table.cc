@@ -212,25 +212,28 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
       }
       else
       {
-        error= plugin::StorageEngine::dropTable(*session, identifier);
+        drizzled::error_t local_error;
 
         /* Generate transaction event ONLY when we successfully drop */ 
-        if (error == 0)
+        if (plugin::StorageEngine::dropTable(*session, identifier, local_error))
         {
           TransactionServices &transaction_services= TransactionServices::singleton();
           transaction_services.dropTable(session, identifier, if_exists);
         }
-
-        if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
+        else
         {
-          error= 0;
-          session->clear_error();
-        }
+          if (local_error == HA_ERR_NO_SUCH_TABLE and if_exists)
+          {
+            error= 0;
+            session->clear_error();
+          }
 
-        if (error == HA_ERR_ROW_IS_REFERENCED)
-        {
-          /* the table is referenced by a foreign key constraint */
-          foreign_key_error= true;
+          if (local_error == HA_ERR_ROW_IS_REFERENCED)
+          {
+            /* the table is referenced by a foreign key constraint */
+            foreign_key_error= true;
+          }
+          error= local_error;
         }
       }
 

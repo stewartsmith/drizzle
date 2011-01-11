@@ -81,7 +81,7 @@ public:
 
   int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier&, const drizzled::TableIdentifier&)
   {
-    return EPERM;
+    return HA_ERR_NO_SUCH_TABLE;
   }
 
   int doCreateTable(drizzled::Session&,
@@ -89,12 +89,12 @@ public:
                     const drizzled::TableIdentifier&,
                     drizzled::message::Table&)
   {
-    return EPERM;
+    return drizzled::ER_TABLE_PERMISSION_DENIED;
   }
 
   int doDropTable(drizzled::Session&, const drizzled::TableIdentifier&)
   {
-    return 0;
+    return HA_ERR_NO_SUCH_TABLE;
   }
 
   const char **bas_ext() const 
@@ -107,6 +107,7 @@ public:
                           uint64_t *,
                           uint64_t *)
   {}
+
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifier::vector &set_of_identifiers);
