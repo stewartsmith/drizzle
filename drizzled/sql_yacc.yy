@@ -395,10 +395,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %pure_parser                                    /* We have threads */
 
 /*
-  Currently there are 88 shift/reduce conflicts.
+  Currently there are 70 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 75
+%expect 70
 
 /*
    Comments for TOKENS.
@@ -2537,14 +2537,7 @@ select_from:
 select_options:
           /* empty*/
         | select_option_list
-          {
-            if (Lex->current_select->options & SELECT_DISTINCT &&
-                Lex->current_select->options & SELECT_ALL)
-            {
-              my_error(ER_WRONG_USAGE, MYF(0), "ALL", "DISTINCT");
-              DRIZZLE_YYABORT;
-            }
-          }
+          { }
         ;
 
 select_option_list:
@@ -2552,24 +2545,71 @@ select_option_list:
         | select_option
         ;
 
+select_option_distinct_or_all:
+          DISTINCT
+          {
+            Lex->current_select->options|= SELECT_DISTINCT; 
+
+            if (Lex->current_select->options & SELECT_DISTINCT && Lex->current_select->options & SELECT_ALL)
+            {
+              my_error(ER_WRONG_USAGE, MYF(0), "ALL", "DISTINCT");
+              DRIZZLE_YYABORT;
+            }
+          }
+        | ALL
+          {
+            Lex->current_select->options|= SELECT_ALL; 
+
+            if (Lex->current_select->options & SELECT_DISTINCT && Lex->current_select->options & SELECT_ALL)
+            {
+              my_error(ER_WRONG_USAGE, MYF(0), "ALL", "DISTINCT");
+              DRIZZLE_YYABORT;
+            }
+          }
+        ;
+
+select_option_small_or_big:
+          SQL_SMALL_RESULT
+          {
+            Lex->current_select->options|= SELECT_SMALL_RESULT;
+
+            if (Lex->current_select->options & SELECT_SMALL_RESULT && Lex->current_select->options & SELECT_BIG_RESULT)
+            {
+              my_error(ER_WRONG_USAGE, MYF(0), "SELECT_SMALL_RESULT", "SELECT_SMALL_RESULT");
+              DRIZZLE_YYABORT;
+            }
+          }
+        | SQL_BIG_RESULT
+          {
+            Lex->current_select->options|= SELECT_BIG_RESULT;
+
+            if (Lex->current_select->options & SELECT_SMALL_RESULT && Lex->current_select->options & SELECT_BIG_RESULT)
+            {
+              my_error(ER_WRONG_USAGE, MYF(0), "SELECT_SMALL_RESULT", "SELECT_SMALL_RESULT");
+              DRIZZLE_YYABORT;
+            }
+          }
+        ;
+
+
 select_option:
           STRAIGHT_JOIN { Lex->current_select->options|= SELECT_STRAIGHT_JOIN; }
-        | DISTINCT         { Lex->current_select->options|= SELECT_DISTINCT; }
-        | SQL_SMALL_RESULT { Lex->current_select->options|= SELECT_SMALL_RESULT; }
-        | SQL_BIG_RESULT   { Lex->current_select->options|= SELECT_BIG_RESULT; }
         | SQL_BUFFER_RESULT
           {
             if (check_simple_select(YYSession))
               DRIZZLE_YYABORT;
             Lex->current_select->options|= OPTION_BUFFER_RESULT;
           }
+        | select_option_small_or_big
+          { }
+        | select_option_distinct_or_all
+          { }
         | SQL_CALC_FOUND_ROWS
           {
             if (check_simple_select(YYSession))
               DRIZZLE_YYABORT;
             Lex->current_select->options|= OPTION_FOUND_ROWS;
           }
-        | ALL { Lex->current_select->options|= SELECT_ALL; }
         ;
 
 select_lock_type:
@@ -5957,7 +5997,7 @@ keyword_sp:
         | DATA_SYM                 {}
         | DATABASES                {}
         | DATETIME_SYM             {}
-        | DATE_SYM                 {}
+        | DATE_SYM                 {} /* Create conflict */
         | DAY_SYM                  {}
         | DISABLE_SYM              {}
         | DISCARD                  {}
@@ -6015,7 +6055,7 @@ keyword_sp:
         | PROCESS                  {}
         | PROCESSLIST_SYM          {}
         | QUARTER_SYM              {}
-        | QUERY_SYM                {}
+        | QUERY_SYM                {} // Causes conflict
         | REDUNDANT_SYM            {}
         | REPEATABLE_SYM           {}
         | RETURNS_SYM              {}
@@ -6031,7 +6071,6 @@ keyword_sp:
         | SIMPLE_SYM               {}
         | SHARE_SYM                {}
         | SNAPSHOT_SYM             {}
-        | SQL_BUFFER_RESULT        {}
         | STATUS_SYM               {}
         | STRING_SYM               {}
         | SUBDATE_SYM              {}
@@ -6049,6 +6088,7 @@ keyword_sp:
         | UNCOMMITTED_SYM          {}
         | UNDOFILE_SYM             {}
         | UNKNOWN_SYM              {}
+        | UUID_SYM                 {}
         | USER                     {}
         | VARIABLES                {}
         | VALUE_SYM                {}
