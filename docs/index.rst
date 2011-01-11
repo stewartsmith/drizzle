@@ -49,11 +49,19 @@ SQL Language:
    dynamic 
    getting_information 
    transactional 
-   administrative 
+   administrative
+
+Data Types:
+-----------
+
+.. toctree::
+   :maxdepth: 2
+
+   data_types
+
 
 User Level Topics:
 ------------------
-
 .. toctree::
    :maxdepth: 2
 
@@ -68,6 +76,11 @@ Configuration:
 
    configuration
    options
+
+Plugins:
+^^^^^^^^
+.. toctree::
+   :maxdepth: 2
 
 Architecture:
 -------------
