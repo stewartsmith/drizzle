@@ -48,7 +48,7 @@ extern std::list<HP_INFO *> heap_open_list;
 
 #define test_active(info) \
 if (!(info->update & HA_STATE_AKTIV))\
-{ errno=HA_ERR_NO_ACTIVE_RECORD; return(-1); }
+{ errno= drizzled::HA_ERR_NO_ACTIVE_RECORD; return(-1); }
 #define hp_find_hash(A,B) ((HASH_INFO*) hp_find_block((A),(B)))
 
 	/* Find pos for record and update it in info->current_ptr */

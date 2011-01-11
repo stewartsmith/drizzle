@@ -81,7 +81,7 @@ public:
 
   int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier&, const drizzled::TableIdentifier&)
   {
-    return HA_ERR_NO_SUCH_TABLE;
+    return drizzled::HA_ERR_NO_SUCH_TABLE;
   }
 
   int doCreateTable(drizzled::Session&,
@@ -94,7 +94,7 @@ public:
 
   int doDropTable(drizzled::Session&, const drizzled::TableIdentifier&)
   {
-    return HA_ERR_NO_SUCH_TABLE;
+    return drizzled::HA_ERR_NO_SUCH_TABLE;
   }
 
   const char **bas_ext() const 

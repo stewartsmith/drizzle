@@ -26,7 +26,7 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
   test_active(info);
 
   if (info->opt_flag & READ_CHECK_USED)
-    return(errno);			/* Record changed */
+    return(errno);   /* Record changed */
   share->changed=1;
 
   if ( --(share->records) < share->blength >> 1) share->blength>>=1;
@@ -97,7 +97,7 @@ int hp_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
     gpos=pos;
     if (!(pos=pos->next_key))
     {
-      return(errno=HA_ERR_CRASHED);	/* This shouldn't happend */
+      return(errno= drizzled::HA_ERR_CRASHED);	/* This shouldn't happend */
     }
   }
 
