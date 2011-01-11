@@ -89,15 +89,17 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
+  is_engine_set= not createTableMessage().engine().name().empty();
+
   if (is_engine_set)
   {
-    create_info.db_type= 
-      plugin::StorageEngine::findByName(*session, create_table_message.engine().name());
+    create_info().db_type= 
+      plugin::StorageEngine::findByName(*session, createTableMessage().engine().name());
 
-    if (create_info.db_type == NULL)
+    if (create_info().db_type == NULL)
     {
       my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               create_table_message.engine().name().c_str());
+               createTableMessage().engine().name().c_str());
 
       return true;
     }
@@ -118,12 +120,12 @@ bool statement::AlterTable::execute()
       return true;
     }
 
-    if (not  create_info.db_type)
+    if (not  create_info().db_type)
     {
-      create_info.db_type= 
+      create_info().db_type= 
         plugin::StorageEngine::findByName(*session, original_table_message->engine().name());
 
-      if (not create_info.db_type)
+      if (not create_info().db_type)
       {
         std::string path;
         identifier.getSQLPath(path);
@@ -153,9 +155,9 @@ bool statement::AlterTable::execute()
     res= alter_table(session, 
                      identifier,
                      new_identifier,
-                     &create_info,
+                     &create_info(),
                      *original_table_message,
-                     create_table_message,
+                     createTableMessage(),
                      first_table,
                      &alter_info,
                      select_lex->order_list.elements,
@@ -176,9 +178,9 @@ bool statement::AlterTable::execute()
       res= alter_table(session, 
                        identifier,
                        new_identifier,
-                       &create_info,
+                       &create_info(),
                        *original_table_message,
-                       create_table_message,
+                       createTableMessage(),
                        first_table,
                        &alter_info,
                        select_lex->order_list.elements,
@@ -707,24 +709,26 @@ static int discard_or_import_tablespace(Session *session,
     return -1;
   }
 
-  error= table->cursor->ha_discard_or_import_tablespace(discard);
+  do {
+    error= table->cursor->ha_discard_or_import_tablespace(discard);
 
-  session->set_proc_info("end");
+    session->set_proc_info("end");
 
-  if (error)
-    goto err;
+    if (error)
+      break;
 
-  /* The ALTER Table is always in its own transaction */
-  error= transaction_services.autocommitOrRollback(session, false);
-  if (not session->endActiveTransaction())
-    error=1;
+    /* The ALTER Table is always in its own transaction */
+    error= transaction_services.autocommitOrRollback(session, false);
+    if (not session->endActiveTransaction())
+      error= 1;
 
-  if (error)
-    goto err;
+    if (error)
+      break;
 
-  write_bin_log(session, *session->getQueryString());
+    write_bin_log(session, *session->getQueryString());
 
-err:
+  } while(0);
+
   (void) transaction_services.autocommitOrRollback(session, error);
   session->tablespace_op=false;
 
@@ -776,8 +780,11 @@ static bool alter_table_manage_keys(Session *session,
                         ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                         table->getMutableShare()->getTableName());
     error= 0;
-  } else if (error)
+  }
+  else if (error)
+  {
     table->print_error(error, MYF(0));
+  }
 
   return(error);
 }
@@ -1339,7 +1346,7 @@ static bool internal_alter_table(Session *session,
            (ulong) (copied + deleted), (ulong) deleted,
            (ulong) session->cuted_fields);
   session->my_ok(copied + deleted, 0, 0L, tmp_name);
-  session->some_tables_deleted= 0;
+  session->some_tables_deleted= false;
 
   return false;
 }
@@ -1467,7 +1474,7 @@ copy_data_between_tables(Session *session,
 
   List_iterator<CreateField> it(create);
   CreateField *def;
-  copy_end=copy;
+  copy_end= copy;
   for (Field **ptr= to->getFields(); *ptr ; ptr++)
   {
     def=it++;
@@ -1522,9 +1529,16 @@ copy_data_between_tables(Session *session,
 
   /* Tell handler that we have values for all columns in the to table */
   to->use_all_columns();
-  info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+  error= info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+  if (error)
+  {
+    to->print_error(errno, MYF(0));
+    goto err;
+  }
+
   if (ignore)
     to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   session->row_count= 0;
   to->restoreRecordAsDefault();        // Create empty record
   while (!(error=info.read_record(&info)))
@@ -1639,8 +1653,8 @@ create_temporary_table(Session *session,
   create_proto.mutable_engine()->set_name(create_info->db_type->getName());
 
   error= create_table(session,
-                            identifier,
-                            create_info, create_proto, alter_info, true, 0, false);
+                      identifier,
+                      create_info, create_proto, alter_info, true, 0, false);
 
   return error;
 }

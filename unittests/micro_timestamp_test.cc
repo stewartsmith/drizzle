@@ -101,7 +101,7 @@ TEST_F(MicroTimestampTest, to_timeval)
   uint32_t year= 2009, month= 6, day= 3, hour= 4, minute= 59, second= 1, microsecond= 675;
   TemporalGenerator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
 
-  micro_timestamp.to_timeval(&filled);
+  micro_timestamp.to_timeval(filled);
 
   EXPECT_EQ(1244005141, filled.tv_sec);
   EXPECT_EQ(675, filled.tv_usec);

@@ -1954,13 +1954,14 @@ bool Session::openTablesLock(TableList *tables)
 
     if (not lock_tables(tables, counter, &need_reopen))
       break;
+
     if (not need_reopen)
       return true;
+
     close_tables_for_reopen(&tables);
   }
-  if ((handle_derived(lex, &derived_prepare) ||
-       (
-        handle_derived(lex, &derived_filling))))
+
+  if ((handle_derived(lex, &derived_prepare) || (handle_derived(lex, &derived_filling))))
     return true;
 
   return false;

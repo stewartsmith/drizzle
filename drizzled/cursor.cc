@@ -278,16 +278,22 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
       !(getTable()->index_flags(primary_key) & HA_READ_ORDER))
   {
-    (void) startTableScan(1);
-    while ((error= rnd_next(buf)) == HA_ERR_RECORD_DELETED) ;
-    (void) endTableScan();
+    error= startTableScan(1);
+    if (error == 0)
+    {
+      while ((error= rnd_next(buf)) == HA_ERR_RECORD_DELETED) ;
+      (void) endTableScan();
+    }
   }
   else
   {
     /* Find the first row through the primary key */
-    (void) startIndexScan(primary_key, 0);
-    error=index_first(buf);
-    (void) endIndexScan();
+    error= startIndexScan(primary_key, 0);
+    if (error == 0)
+    {
+      error=index_first(buf);
+      (void) endIndexScan();
+    }
   }
   return error;
 }

@@ -68,14 +68,14 @@ statement {
         name: "id"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "padding"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 200

@@ -44,6 +44,9 @@ ShowIndexes::Generator::Generator(Field **arg) :
   index_iterator(0),
   index_part_iterator(0)
 {
+  if (not isShowQuery())
+    return;
+
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())

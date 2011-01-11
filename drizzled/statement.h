@@ -63,6 +63,8 @@ public:
     return session;
   }
 
+  virtual bool isShow() { return false; }
+
 protected:
 
   /**

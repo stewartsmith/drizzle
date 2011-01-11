@@ -56,6 +56,10 @@ namespace plugin
 class EventObserverList;
 }
 
+namespace table {
+class Instance;
+}
+
 class Field_blob;
 
 class TableShare
@@ -667,6 +671,9 @@ public:
     return output;  // for multiple << operators.
   }
 
+protected:
+  friend class drizzled::table::Instance;
+
   Field *make_field(const message::Table::Field &pfield,
                     unsigned char *ptr,
                     uint32_t field_length,
@@ -694,6 +701,7 @@ public:
                     const char *field_name, 
                     bool is_unsigned);
 
+public:
   int open_table_def(Session& session, const TableIdentifier &identifier);
 
   int open_table_from_share(Session *session,

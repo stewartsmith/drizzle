@@ -65,14 +65,14 @@ bool statement::CreateIndex::execute()
   if (original_table_message->type() == message::Table::STANDARD )
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
-    create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+    create_info().default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
     res= alter_table(session, 
                      identifier,
                      identifier,
-                     &create_info, 
+                     &create_info(), 
                      *original_table_message,
-                     create_table_message, 
+                     createTableMessage(), 
                      first_table,
                      &alter_info,
                      0, (Order*) 0, 0);
@@ -84,14 +84,14 @@ bool statement::CreateIndex::execute()
     assert(table);
     {
       TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
-      create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+      create_info().default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
       res= alter_table(session, 
                        identifier,
                        identifier,
-                       &create_info, 
+                       &create_info(), 
                        *original_table_message,
-                       create_table_message, 
+                       createTableMessage(), 
                        first_table,
                        &alter_info,
                        0, (Order*) 0, 0);

@@ -40,6 +40,9 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
   is_primed(false),
   if_not_exists(false)
 {
+  if (not isShowQuery())
+   return;
+
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowSchema().empty())

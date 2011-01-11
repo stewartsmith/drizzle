@@ -59,7 +59,7 @@ bool statement::CreateSchema::execute()
   }
   else
   {
-    res= create_db(session, schema_message, is_if_not_exists);
+    res= create_db(session, schema_message, session->getLex()->exists());
     if (unlikely(plugin::EventObserver::afterCreateDatabase(*session, path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
@@ -79,7 +79,7 @@ bool statement::CreateSchema::check(const SchemaIdentifier &identifier)
   if (not plugin::Authorization::isAuthorized(getSession()->user(), identifier))
     return false;
 
-  if (not is_if_not_exists)
+  if (not session->getLex()->exists())
   {
     if (plugin::StorageEngine::doesSchemaExist(identifier))
     {

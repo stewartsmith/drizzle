@@ -38,17 +38,14 @@ public:
   typedef Epoch* pointer;
 
   Epoch(unsigned char *ptr_arg,
-        uint32_t len_arg,
         unsigned char *null_ptr_arg,
         unsigned char null_bit_arg,
         enum utype unireg_check_arg,
         const char *field_name_arg,
-        drizzled::TableShare *share,
-        const drizzled::CHARSET_INFO * const cs);
+        drizzled::TableShare *share);
 
   Epoch(bool maybe_null_arg,
-        const char *field_name_arg,
-        const CHARSET_INFO * const cs);
+        const char *field_name_arg);
 
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
@@ -64,21 +61,26 @@ public:
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 8; }
-  void sql_type(String &str) const;
-  bool can_be_compared_as_int64_t() const { return true; }
+  virtual void sql_type(String &str) const;
+  virtual bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 0; }
-  void set_time();
+  virtual void set_time();
   virtual void set_default();
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Epoch */
-  long get_timestamp(bool *null_value);
+  virtual long get_timestamp(bool *null_value);
+
+  virtual bool is_timestamp() const
+  {
+    return true;
+  }
 
 private:
   bool get_date(type::Time *ltime,uint32_t fuzzydate);
   bool get_time(type::Time *ltime);
 
 public:
-  timestamp_auto_set_type get_auto_set_type() const;
+  virtual timestamp_auto_set_type get_auto_set_type() const;
   static size_t max_string_length();
 };
 

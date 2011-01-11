@@ -57,6 +57,9 @@ ShowColumns::Generator::Generator(Field **arg) :
   is_columns_primed(false),
   column_iterator(0)
 {
+  if (not isShowQuery())
+   return;
+
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
@@ -163,7 +166,7 @@ void ShowColumns::Generator::fill()
   pushType(column.type(), column.string_options().collation());
 
   /* Null */
-  push(column.constraints().is_nullable());
+  push(not column.constraints().is_notnull());
 
   /* Default */
   if (column.options().has_default_value())

@@ -39,7 +39,7 @@ ProcesslistTool::ProcesslistTool() :
   plugin::TableFunction("DATA_DICTIONARY", "PROCESSLIST")
 {
   add_field("ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("USER", 16);
+  add_field("USERNAME", 16);
   add_field("HOST", NI_MAXHOST);
   add_field("DB", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
   add_field("COMMAND", 16);

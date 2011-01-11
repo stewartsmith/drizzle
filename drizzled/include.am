@@ -90,6 +90,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/epoch.h \
 			      drizzled/field/int32.h \
 			      drizzled/field/int64.h \
+			      drizzled/field/microtime.h \
 			      drizzled/field/null.h \
 			      drizzled/field/num.h \
 			      drizzled/field/real.h \
@@ -400,6 +401,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/create_index.h \
 			      drizzled/statement/create_schema.h \
 			      drizzled/statement/create_table.h \
+			      drizzled/statement/create_table/like.h \
+			      drizzled/statement/create_table/select.h \
 			      drizzled/statement/delete.h \
 			      drizzled/statement/drop_index.h \
 			      drizzled/statement/drop_schema.h \
@@ -492,6 +495,7 @@ drizzled_drizzled_LDADD= \
 				$(LTLIBPROTOBUF) \
 				$(LIBTBB) \
 				$(BOOST_LIBS) \
+                                $(LTLIBAIO) \
 				$(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= \
@@ -526,6 +530,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/field/epoch.cc \
 			   drizzled/field/int32.cc \
 			   drizzled/field/int64.cc \
+			   drizzled/field/microtime.cc \
 			   drizzled/field/null.cc \
 			   drizzled/field/num.cc \
 			   drizzled/field/real.cc \
@@ -774,6 +779,8 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/statement/create_index.cc \
 			   drizzled/statement/create_schema.cc \
 			   drizzled/statement/create_table.cc \
+			   drizzled/statement/create_table/like.cc \
+			   drizzled/statement/create_table/select.cc \
 			   drizzled/statement/delete.cc \
 			   drizzled/statement/drop_index.cc \
 			   drizzled/statement/drop_schema.cc \
@@ -885,22 +892,29 @@ BUILT_MAINT_SRC+= \
 
 BUILT_SOURCES+= \
 		$(BUILT_MAINT_SRC) \
-		drizzled/symbol_hash.h \
 		drizzled/function_hash.h \
+		drizzled/sql_reserved_words.h \
+		drizzled/symbol_hash.h \
 		$(PCHHEADERS) 
 
 EXTRA_DIST+= \
 	     $(BUILT_MAINT_SRC) \
-	     drizzled/symbol_hash.gperf \
 	     drizzled/function_hash.gperf \
 	     drizzled/message.mc \
-	     drizzled/probes.d
+	     drizzled/probes.d \
+	     drizzled/sql_non_reserved_words.gperf \
+	     drizzled/sql_reserved_words.gperf \
+	     drizzled/symbol_hash.gperf
 
 CLEANFILES+= \
 	     drizzled/configmake.h \
 	     drizzled/function_hash.h \
 	     drizzled/function_hash.stamp-h \
 	     drizzled/sql_yacc.output \
+	     drizzled/sql_non_reserved_words.h \
+	     drizzled/sql_non_reserved_words.stamp-h \
+	     drizzled/sql_reserved_words.h \
+	     drizzled/sql_reserved_words.stamp-h \
 	     drizzled/symbol_hash.h \
 	     drizzled/symbol_hash.stamp-h \
 	     drizzled/plugin/config.h \
@@ -947,6 +961,7 @@ drizzled/probes.o :  drizzled/probes.d $(DTRACEFILES) config.h
 
 drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h
+drizzled/sql_reserved_words.h: drizzled/sql_reserved_words.stamp-h
 
 .gperf.stamp-h:
 	$(GPERF) -D --initializer-suffix=,0 --struct-type --enum \

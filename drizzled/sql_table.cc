@@ -148,12 +148,12 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
   int error= 0;
   bool foreign_key_error= false;
 
+  do
   {
-    table::Cache::singleton().mutex().lock(); /* Part 2 of rm a table */
+    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
 
     if (not drop_temporary && session->lock_table_names_exclusively(tables))
     {
-      table::Cache::singleton().mutex().unlock();
       return 1;
     }
 
@@ -172,7 +172,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         continue;
       case -1:
         error= 1;
-        goto err_with_placeholders;
+        break;
       default:
         // temporary table not found
         error= 0;
@@ -195,7 +195,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         if (session->getKilled())
         {
           error= -1;
-          goto err_with_placeholders;
+          break;
         }
       }
       TableIdentifier identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
@@ -208,7 +208,9 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                               ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
                               table->getTableName());
         else
+        {
           error= 1;
+        }
       }
       else
       {
@@ -241,13 +243,10 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         wrong_tables.append(String(table->getTableName(), system_charset_info));
       }
     }
-    /*
-      It's safe to unlock table::Cache::singleton().mutex(): we have an exclusive lock
-      on the table name.
-    */
-    table::Cache::singleton().mutex().unlock();
-  }
-  error= 0;
+
+    tables->unlock_table_names();
+
+  } while (0);
 
   if (wrong_tables.length())
   {
@@ -263,11 +262,6 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     error= 1;
   }
 
-  table::Cache::singleton().mutex().lock(); /* final bit in rm table lock */
-
-err_with_placeholders:
-  tables->unlock_table_names();
-  table::Cache::singleton().mutex().unlock();
   session->no_warnings_for_error= 0;
 
   return error;
@@ -472,23 +466,21 @@ int prepare_create_field(CreateField *sql_field,
     sql_field->length= 8; // Unireg field length
     (*blob_columns)++;
     break;
-  case DRIZZLE_TYPE_VARCHAR:
-    break;
+
   case DRIZZLE_TYPE_ENUM:
-    if (check_duplicates_in_interval("ENUM",
-                                     sql_field->field_name,
-                                     sql_field->interval,
-                                     sql_field->charset,
-                                     &dup_val_count))
-      return 1;
+    {
+      if (check_duplicates_in_interval("ENUM",
+				       sql_field->field_name,
+				       sql_field->interval,
+				       sql_field->charset,
+				       &dup_val_count))
+      {
+	return 1;
+      }
+    }
     break;
-  case DRIZZLE_TYPE_DATE:  // Rest of string types
-  case DRIZZLE_TYPE_TIME:
-  case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_NULL:
-    break;
-  case DRIZZLE_TYPE_DECIMAL:
-    break;
+
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     /* We should replace old TIMESTAMP fields with their newer analogs */
     if (sql_field->unireg_check == Field::TIMESTAMP_OLD_FIELD)
@@ -504,11 +496,25 @@ int prepare_create_field(CreateField *sql_field,
       }
     }
     else if (sql_field->unireg_check != Field::NONE)
+    {
       (*timestamps_with_niladic)++;
+    }
 
     (*timestamps)++;
-    /* fall-through */
-  default:
+
+    break;
+
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_DATE:  // Rest of string types
+  case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_DECIMAL:
+  case DRIZZLE_TYPE_DOUBLE:
+  case DRIZZLE_TYPE_LONG:
+  case DRIZZLE_TYPE_LONGLONG:
+  case DRIZZLE_TYPE_NULL:
+  case DRIZZLE_TYPE_TIME:
+  case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_VARCHAR:
     break;
   }
 
@@ -516,14 +522,14 @@ int prepare_create_field(CreateField *sql_field,
 }
 
 static int prepare_create_table(Session *session,
-                                      HA_CREATE_INFO *create_info,
-                                      message::Table &create_proto,
-                                      AlterInfo *alter_info,
-                                      bool tmp_table,
-                                      uint32_t *db_options,
-                                      KeyInfo **key_info_buffer,
-                                      uint32_t *key_count,
-                                      int select_field_count)
+                                HA_CREATE_INFO *create_info,
+                                message::Table &create_proto,
+                                AlterInfo *alter_info,
+                                bool tmp_table,
+                                uint32_t *db_options,
+                                KeyInfo **key_info_buffer,
+                                uint32_t *key_count,
+                                int select_field_count)
 {
   const char	*key_name;
   CreateField	*sql_field,*dup_field;
@@ -532,7 +538,7 @@ static int prepare_create_table(Session *session,
   KeyInfo		*key_info;
   KeyPartInfo *key_part_info;
   int		timestamps= 0, timestamps_with_niladic= 0;
-  int		field_no,dup_no;
+  int		dup_no;
   int		select_field_pos,auto_increment=0;
   List_iterator<CreateField> it(alter_info->create_list);
   List_iterator<CreateField> it2(alter_info->create_list);
@@ -544,7 +550,7 @@ static int prepare_create_table(Session *session,
   null_fields=blob_columns=0;
   max_key_length= engine->max_key_length();
 
-  for (field_no=0; (sql_field=it++) ; field_no++)
+  for (int32_t field_no=0; (sql_field=it++) ; field_no++)
   {
     const CHARSET_INFO *save_cs;
 
@@ -554,8 +560,10 @@ static int prepare_create_table(Session *session,
       executing a prepared statement for the second time.
     */
     sql_field->length= sql_field->char_length;
+
     if (!sql_field->charset)
       sql_field->charset= create_info->default_table_charset;
+
     /*
       table_charset is set in ALTER Table if we want change character set
       for all varchar/char columns.
@@ -753,7 +761,10 @@ static int prepare_create_table(Session *session,
     if (not create_proto.engine().name().compare("MyISAM") &&
         ((sql_field->flags & BLOB_FLAG) ||
          (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)))
+    {
       (*db_options)|= HA_OPTION_PACK_RECORD;
+    }
+
     it2.rewind();
   }
 
@@ -977,12 +988,16 @@ static int prepare_create_table(Session *session,
 	     my_strcasecmp(system_charset_info,
 			   column->field_name.str,
 			   sql_field->field_name))
+      {
 	field++;
+      }
+
       if (!sql_field)
       {
 	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
 	return(true);
       }
+
       while ((dup_column= cols2++) != column)
       {
         if (!my_strcasecmp(system_charset_info,
@@ -1015,6 +1030,7 @@ static int prepare_create_table(Session *session,
             return true;
           }
         }
+
         if (! (sql_field->flags & NOT_NULL_FLAG))
         {
           if (key->type == Key::PRIMARY)
@@ -1027,7 +1043,7 @@ static int prepare_create_table(Session *session,
             {
               message::Table::Field::FieldConstraints *constraints;
               constraints= protofield->mutable_constraints();
-              constraints->set_is_nullable(false);
+              constraints->set_is_notnull(true);
             }
 
           }
@@ -1041,6 +1057,7 @@ static int prepare_create_table(Session *session,
             }
           }
         }
+
         if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
         {
           if (column_nr == 0 || (engine->check_flag(HTON_BIT_AUTO_PART_KEY)))
@@ -1165,27 +1182,36 @@ static int prepare_create_table(Session *session,
 	key_info->name=(char*) key_name;
       }
     }
+
     if (!key_info->name || check_column_name(key_info->name))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key_info->name);
       return(true);
     }
+
     if (!(key_info->flags & HA_NULL_PART_KEY))
+    {
       unique_key=1;
+    }
+
     key_info->key_length=(uint16_t) key_length;
+
     if (key_length > max_key_length)
     {
       my_error(ER_TOO_LONG_KEY,MYF(0),max_key_length);
       return(true);
     }
+
     key_info++;
   }
+
   if (!unique_key && !primary_key &&
       (engine->check_flag(HTON_BIT_REQUIRE_PRIMARY_KEY)))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
     return(true);
   }
+
   if (auto_increment > 0)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
