@@ -35,6 +35,7 @@
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
 #include "drizzled/message/table.pb.h"
+#include "drizzled/catalog/local.h"
 #include <string.h>
 
 #include <assert.h>
@@ -49,13 +50,10 @@
 
 namespace drizzled {
 
-static std::string catalog("local");
-
 class SchemaIdentifier : public Identifier
 {
   std::string db;
   std::string db_path;
-  std::string catalog;
 
 public:
   typedef std::vector <SchemaIdentifier> vector;
@@ -75,10 +73,7 @@ public:
     return db;
   }
 
-  const std::string &getCatalogName() const
-  {
-    return catalog;
-  }
+  const std::string &getCatalogName() const;
 
   virtual bool isValid() const;
 
@@ -90,26 +85,14 @@ public:
     return  boost::algorithm::to_upper_copy(left.getSchemaName()) < boost::algorithm::to_upper_copy(right.getSchemaName());
   }
 
-  friend std::ostream& operator<<(std::ostream& output,
-                                  SchemaIdentifier::const_reference identifier)
-  {
-    output << "SchemaIdentifier:(";
-    output <<  identifier.catalog;
-    output << ", ";
-    output <<  identifier.db;
-    output << ", ";
-    output << identifier.getPath();
-    output << ")";
-
-    return output;  // for multiple << operators.
-  }
-
   friend bool operator==(SchemaIdentifier::const_reference left,
                          SchemaIdentifier::const_reference right)
   {
     return boost::iequals(left.getSchemaName(), right.getSchemaName());
   }
 };
+
+std::ostream& operator<<(std::ostream& output, const SchemaIdentifier &identifier);
 
 
 } /* namespace drizzled */

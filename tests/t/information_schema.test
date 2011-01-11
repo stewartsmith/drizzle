@@ -264,8 +264,9 @@ drop table t1,t2;
 #
 --sorted_result
 select 1 as f1 from data_dictionary.tables  where "CHARACTER_SETS"=
-(select cast(table_name as char)  from data_dictionary.tables
- order by table_name limit 1) limit 1;
+(select cast(table_name as char)  from data_dictionary.tables WHERE TABLE_SCHEMA=schema()
+ AND TABLE_NAME = "CHARACTER_SETS"
+ order by table_name limit 1) AND TABLE_SCHEMA=schema() limit 1;
 
 select t.table_name, group_concat(t.table_schema, '.', t.table_name),
        count(*) as num1
