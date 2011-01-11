@@ -521,6 +521,8 @@ bool StorageEngine::dropTable(Session::reference session,
 {
   error= EE_OK;
   engine.setTransactionReadWrite(session);
+
+  assert(identifier.isTmp());
   
   if (unlikely(plugin::EventObserver::beforeDropTable(session, identifier)))
   {
