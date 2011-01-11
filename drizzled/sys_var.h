@@ -468,7 +468,7 @@ public:
 
   bool update(Session *, set_var *var)
   {
-    value= var->save_result.uint32_t_value;
+    value= uint32_t(var->getInteger());
     return false;
   }
 
@@ -516,14 +516,14 @@ inline SHOW_TYPE sys_var_constrained_value<int32_t>::show_type()
 template<>
 inline bool sys_var_constrained_value<uint64_t>::update(Session *, set_var *var)
 {
-  value= var->save_result.uint64_t_value;
+  value= var->getInteger();
   return false;
 }
 
 template<>
 inline bool sys_var_constrained_value<uint32_t>::update(Session *, set_var *var)
 {
-  value= var->save_result.uint32_t_value;
+  value= uint32_t(var->getInteger());
   return false;
 }
 

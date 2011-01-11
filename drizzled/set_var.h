@@ -67,6 +67,7 @@ public:
 class set_var :
   public set_var_base
 {
+  std::string str_value;
 public:
   sys_var *var;
   Item *value;
@@ -87,6 +88,15 @@ public:
           const LEX_STRING *base_name_arg, Item *value_arg);
   int check(Session *session);
   int update(Session *session);
+  void setValue(const std::string &new_value);
+  void setValue(uint64_t new_value);
+  void updateValue();
+
+  uint64_t getInteger()
+  {
+    return save_result.uint64_t_value;
+  }
+
 };
 
 /* User variables like @my_own_variable */

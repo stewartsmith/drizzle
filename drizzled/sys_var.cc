@@ -329,7 +329,7 @@ bool sys_var::check(Session *session, set_var *var)
       my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
     return res;
   }
-  var->save_result.uint64_t_value= var->value->val_int();
+  var->updateValue();
   return 0;
 }
 
@@ -494,7 +494,7 @@ static bool get_unsigned32(Session *session, set_var *var)
 static bool get_unsigned64(Session *, set_var *var)
 {
   if (var->value->unsigned_flag)
-      var->save_result.uint64_t_value=(uint64_t) var->value->val_int();
+      var->updateValue();
   else
   {
     int64_t v= var->value->val_int();
@@ -1425,7 +1425,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
 
 static int check_pseudo_thread_id(Session *, set_var *var)
 {
-  var->save_result.uint64_t_value= var->value->val_int();
+  var->updateValue();
   return 0;
 }
 

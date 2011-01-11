@@ -191,6 +191,19 @@ int set_var::update(Session *session)
                           new_val.c_str(),
                           explanation.c_str());
     }
+    else if (boost::get_error_info<invalid_value>(ex) != NULL)
+    {
+      const std::string str_val= *(boost::get_error_info<invalid_value>(ex));
+      string explanation("(");
+      explanation.append(str_val);
+      explanation.push_back(')');
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_INVALID_OPTION_VALUE,
+                          ER(ER_INVALID_OPTION_VALUE),
+                          var->getName().c_str(),
+                          new_val.c_str(),
+                          explanation.c_str());
+    }
     else
     {
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
@@ -229,5 +242,21 @@ int set_var_user::update(Session *)
   }
   return 0;
 }
+
+void set_var::setValue(const std::string &new_value)
+{
+  str_value= new_value;
+}
+
+void set_var::setValue(uint64_t new_value)
+{
+  save_result.uint64_t_value= new_value;
+}
+
+void set_var::updateValue()
+{
+  save_result.uint64_t_value= value->val_int();
+}
+
 
 } /* namespace drizzled */
