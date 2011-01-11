@@ -1022,13 +1022,18 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
   {
     trx->set_transaction_id(getCurrentTransactionId(in_session));
     in_session->setXaId(0);
-  }  
+  }
   else
-  { 
+  {
+    /* trx and seg id will get set properly elsewhere */
     trx->set_transaction_id(0);
   }
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
+  
+  /* segment info may get set elsewhere as needed */
+  in_transaction.set_segment_id(1);
+  in_transaction.set_end_segment(true);
 }
 
 void TransactionServices::finalizeTransactionMessage(message::Transaction &in_transaction,
@@ -1138,6 +1143,7 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
   {
     /* Remember the transaction ID so we can re-use it */
     uint64_t trx_id= transaction->transaction_context().transaction_id();
+    uint32_t seg_id= transaction->segment_id();
 
     /*
      * Clear the transaction, create a Rollback statement message, 
@@ -1148,6 +1154,8 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
 
     /* Set the transaction ID to match the previous messages */
     transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+    transaction->set_segment_id(seg_id);
+    transaction->set_end_segment(true);
 
     message::Statement *statement= transaction->add_statement();
 
@@ -1260,6 +1268,7 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
+      uint32_t seg_id= transaction->segment_id();
 
       message::InsertData *current_data= statement->mutable_insert_data();
 
@@ -1267,6 +1276,7 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
       *next_segment_id= current_data->segment_id() + 1;
 
       current_data->set_end_segment(false);
+      transaction->set_end_segment(false);
 
       /* 
        * Send the trx message to replicators after finalizing the 
@@ -1286,6 +1296,8 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
 
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
@@ -1458,6 +1470,7 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
+      uint32_t seg_id= transaction->segment_id();
 
       message::UpdateData *current_data= statement->mutable_update_data();
 
@@ -1465,6 +1478,7 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
       *next_segment_id= current_data->segment_id() + 1;
 
       current_data->set_end_segment(false);
+      transaction->set_end_segment(false);
 
       /*
        * Send the trx message to replicators after finalizing the 
@@ -1484,6 +1498,8 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
 
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
@@ -1807,6 +1823,7 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
+      uint32_t seg_id= transaction->segment_id();
 
       message::DeleteData *current_data= statement->mutable_delete_data();
 
@@ -1814,6 +1831,7 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
       *next_segment_id= current_data->segment_id() + 1;
 
       current_data->set_end_segment(false);
+      transaction->set_end_segment(false);
 
       /* 
        * Send the trx message to replicators after finalizing the 
@@ -1833,6 +1851,8 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
 
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
