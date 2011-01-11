@@ -418,6 +418,7 @@ public:
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
   /* TODO-> Make private */
+protected:
   static int deleteDefinitionFromPath(const drizzled::TableIdentifier &identifier);
   static int renameDefinitionFromPath(const drizzled::TableIdentifier &dest, const drizzled::TableIdentifier &src);
   static int writeDefinitionFromPath(const drizzled::TableIdentifier &identifier, message::Table &proto);
