@@ -1904,7 +1904,7 @@ static void innodb_read_ahead_threshold_update(Session *, sql_var_t)
 
 static int innodb_commit_concurrency_validate(Session *session, set_var *var)
 {
-   uint32_t new_value= var->save_result.uint32_t_value;
+   uint64_t new_value= var->getInteger();
 
    if ((innobase_commit_concurrency.get() == 0 && new_value != 0) ||
        (innobase_commit_concurrency.get() != 0 && new_value == 0))
