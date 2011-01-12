@@ -119,6 +119,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -194,6 +196,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 DROP TABLE t1, t2, t3;
 SET GLOBAL transaction_log_truncate_debug= true;

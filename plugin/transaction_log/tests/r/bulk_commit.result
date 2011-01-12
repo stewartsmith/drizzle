@@ -78,6 +78,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -162,6 +164,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: false
 
 transaction_context {
   server_id: 1
@@ -198,6 +202,8 @@ statement {
     }
   }
 }
+segment_id: 2
+end_segment: true
 
 DROP TABLE t;
 SET GLOBAL transaction_log_truncate_debug= true;

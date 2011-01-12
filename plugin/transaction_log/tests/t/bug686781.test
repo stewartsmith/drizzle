@@ -1,0 +1,35 @@
+--disable_query_log
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (a INT NOT NULL PRIMARY KEY, b INT);
+
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+
+let $i=960;
+let $a=0;
+let $alt=0;
+
+START TRANSACTION;
+
+while ($i)
+{
+  eval INSERT INTO t1 (a,b) VALUES ($a, 0);
+  eval UPDATE t1 SET b = 1 WHERE a = $a;
+  inc $a;
+  dec $i;
+}
+
+COMMIT;
+
+--enable_query_log
+
+--echo
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+
+--disable_query_log
+DROP TABLE t1;
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
