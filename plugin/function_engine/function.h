@@ -51,12 +51,12 @@ public:
                     const drizzled::TableIdentifier &,
                     drizzled::message::Table&)
   {
-    return EPERM;
+    return drizzled::ER_TABLE_PERMISSION_DENIED;
   }
 
   int doDropTable(drizzled::Session&, const drizzled::TableIdentifier&)
   { 
-    return EPERM; 
+    return drizzled::HA_ERR_NO_SUCH_TABLE; 
   }
 
   virtual drizzled::Cursor *create(drizzled::Table &table);
