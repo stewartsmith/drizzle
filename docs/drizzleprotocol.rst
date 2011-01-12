@@ -1,5 +1,5 @@
 Drizzle Protocol
-==============
+================
 
 The Drizzle Protocol plugin allows Drizzle compatible clients to connect to Drizzle (currently this is identical to the MySQL Protocol).
 
@@ -33,4 +33,4 @@ There are several server variables to control the Drizzle Protocol.
   Maximum simultaneous connections
 
 **drizzle-protocol.admin-ip-addresses** arg
-  A comma seprated list of IP addresses for admin tools to connect from
+  A comma separated list of IP addresses for admin tools to connect from

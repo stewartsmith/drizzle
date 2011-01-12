@@ -82,6 +82,8 @@ Plugins:
 .. toctree::
    :maxdepth: 2
 
+   drizzleprotocol.rst
+
 Architecture:
 -------------
 .. toctree::
