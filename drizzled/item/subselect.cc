@@ -244,7 +244,7 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 
   if (engine->uncacheable())
   {
-    const_item_cache= 0;
+    const_item_cache= false;
     if (engine->uncacheable(UNCACHEABLE_RAND))
     {
       used_tables_cache|= RAND_TABLE_BIT;
@@ -394,7 +394,7 @@ void Item_subselect::update_used_tables()
   {
     // did all used tables become static?
     if (!(used_tables_cache & ~engine->upper_select_const_tables()))
-      const_item_cache= 1;
+      const_item_cache= true;
   }
 }
 
@@ -2161,21 +2161,9 @@ int subselect_single_select_engine::exec()
       session->lex->current_select= save_select;
       return(join->error ? join->error : 1);
     }
-    if (select_lex->uncacheable.none() && session->lex->describe &&
-        !(join->select_options & SELECT_DESCRIBE) &&
-        join->need_tmp && item->const_item())
-    {
-      /*
-        Force join->join_tmp creation, because this subquery will be replaced
-        by a simple select from the materialization temp table by optimize()
-        called by EXPLAIN and we need to preserve the initial query structure
-        so we can display it.
-       */
-      select_lex->uncacheable.set(UNCACHEABLE_EXPLAIN);
-      select_lex->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
-      if (join->init_save_join_tab())
-        return(1);
-    }
+    if (save_join_if_explain())
+     return(1);
+
     if (item->engine_changed)
     {
       return(1);
@@ -2254,6 +2242,44 @@ int subselect_single_select_engine::exec()
   session->lex->current_select= save_select;
   return(0);
 }
+
+bool 
+subselect_single_select_engine::save_join_if_explain()
+{
+  /*
+    Save this JOIN to join->tmp_join since the original layout will be
+    replaced when JOIN::exec() calls make_simple_join() if:
+     1) We are executing an EXPLAIN query
+     2) An uncacheable flag has not been set for the select_lex. If
+        set, JOIN::optimize() has already saved the JOIN
+     3) Call does not come from select_describe()). If it does,
+        JOIN::exec() will not call make_simple_join() and the JOIN we
+        plan to save will not be replaced anyway.
+     4) A temp table is needed. This is what triggers JOIN::exec() to
+        make a replacement JOIN by calling make_simple_join(). 
+     5) The Item_subselect is cacheable
+  */
+  if (session->lex->describe &&                          // 1
+      select_lex->uncacheable.none() &&                  // 2
+      !(join->select_options & SELECT_DESCRIBE) &&       // 3
+      join->need_tmp &&                                  // 4
+      item->const_item())                                // 5
+  {
+    /*
+      Save this JOIN to join->tmp_join since the original layout will
+      be replaced when JOIN::exec() calls make_simple_join() due to
+      need_tmp==TRUE. The original layout is needed so we can describe
+      the query. No need to do this if uncacheable != 0 since in this
+      case the JOIN has already been saved during JOIN::optimize()
+    */
+    select_lex->uncacheable.set(UNCACHEABLE_EXPLAIN);
+    select_lex->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
+    if (join->init_save_join_tab())
+      return true;
+  }
+  return false;
+}
+
 
 int subselect_union_engine::exec()
 {
@@ -3044,6 +3070,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   */
   if (!(tab= (JoinTable*) session->alloc(sizeof(JoinTable))))
     return(true);
+  new (tab) JoinTable();
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
@@ -3158,6 +3185,10 @@ int subselect_hash_sj_engine::exec()
     session->lex->current_select= materialize_engine->select_lex;
     if ((res= materialize_join->optimize()))
       goto err;
+
+    if (materialize_engine->save_join_if_explain())
+      goto err;
+
     materialize_join->exec();
     if ((res= test(materialize_join->error || session->is_fatal_error)))
       goto err;

@@ -113,7 +113,7 @@ int set_var::check(Session *session)
   if (var->check_type(type))
   {
     int err= type == OPT_GLOBAL ? ER_LOCAL_VARIABLE : ER_GLOBAL_VARIABLE;
-    my_error(err, MYF(0), var->getName().c_str());
+    my_error(static_cast<drizzled::error_t>(err), MYF(0), var->getName().c_str());
     return -1;
   }
   /* value is a NULL pointer if we are using SET ... = DEFAULT */

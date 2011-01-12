@@ -121,6 +121,7 @@ drizzled/sql_builtin.cc
 drizzled/sql_yacc.cc
 drizzled/sql_yacc.h
 drizzled/sql_yacc.output
+drizzled/sql_reserved_words.h
 drizzled/symbol_hash.h
 drizzled/version.h
 dtcollation.gcno

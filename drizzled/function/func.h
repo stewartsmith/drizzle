@@ -67,7 +67,8 @@ public:
 
   Item_func(void):
     _session(*current_session),
-    allowed_arg_cols(1), arg_count(0)
+    allowed_arg_cols(1), arg_count(0),
+    const_item_cache(false)
   {
     with_sum_func= 0;
     collation.set(DERIVATION_SYSCONST);
@@ -75,7 +76,8 @@ public:
 
   Item_func(Item *a):
     _session(*current_session),
-    allowed_arg_cols(1), arg_count(1)
+    allowed_arg_cols(1), arg_count(1),
+    const_item_cache(false)
   {
     args= tmp_arg;
     args[0]= a;
@@ -85,7 +87,8 @@ public:
   
   Item_func(Item *a,Item *b):
     _session(*current_session),
-    allowed_arg_cols(1), arg_count(2)
+    allowed_arg_cols(1), arg_count(2),
+    const_item_cache(false)
   {
     args= tmp_arg;
     args[0]= a; args[1]= b;
@@ -95,7 +98,8 @@ public:
   
   Item_func(Item *a,Item *b,Item *c):
     _session(*current_session),
-    allowed_arg_cols(1)
+    allowed_arg_cols(1),
+    const_item_cache(false)
   {
     arg_count= 0;
     if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*3)))
@@ -109,7 +113,8 @@ public:
   
   Item_func(Item *a,Item *b,Item *c,Item *d):
     _session(*current_session),
-    allowed_arg_cols(1)
+    allowed_arg_cols(1),
+    const_item_cache(false)
   {
     arg_count= 0;
     if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*4)))
@@ -124,7 +129,8 @@ public:
   
   Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
     _session(*current_session),
-    allowed_arg_cols(1)
+    allowed_arg_cols(1),
+    const_item_cache(false)
   {
     arg_count= 5;
     if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*5)))
@@ -187,6 +193,11 @@ public:
   bool get_arg0_time(type::Time *ltime);
 
   bool is_null();
+
+  virtual bool deterministic() const
+  {
+    return false;
+  }
 
   void signal_divide_by_null();
 

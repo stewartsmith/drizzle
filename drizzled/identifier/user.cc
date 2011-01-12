@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include "drizzled/identifier.h"
 #include "drizzled/identifier/user.h"
 
 namespace drizzled
@@ -31,6 +32,17 @@ User::shared_ptr User::make_shared()
   return shared_ptr(new User);
 }
 
+void User::getSQLPath(std::string &arg) const
+{
+  if (_user.empty())
+  {
+    arg.append("no user");
+  }
+  else
+  {
+    arg.append(_user);
+  }
+}
 
 } /* namespace identifier */
 } /* namespace drizzled */

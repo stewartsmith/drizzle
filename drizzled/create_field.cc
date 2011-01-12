@@ -102,7 +102,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
   if (!(flags & (NO_DEFAULT_VALUE_FLAG)) &&
       !(flags & AUTO_INCREMENT_FLAG) &&
       old_field->ptr && orig_field &&
-      (sql_type != DRIZZLE_TYPE_TIMESTAMP ||                /* set def only if */
+      (not old_field->is_timestamp() ||                /* set def only if */
        old_field->getTable()->timestamp_field != old_field ||  /* timestamp field */
        unireg_check == Field::TIMESTAMP_UN_FIELD))        /* has default val */
   {
@@ -227,8 +227,10 @@ bool CreateField::init(Session *,
     it is NOT NULL, not an AUTO_INCREMENT field and not a TIMESTAMP.
   */
   if (!fld_default_value && !(fld_type_modifier & AUTO_INCREMENT_FLAG) &&
-      (fld_type_modifier & NOT_NULL_FLAG) && fld_type != DRIZZLE_TYPE_TIMESTAMP)
+      (fld_type_modifier & NOT_NULL_FLAG) && (fld_type != DRIZZLE_TYPE_TIMESTAMP and fld_type != DRIZZLE_TYPE_MICROTIME))
+  {
     flags|= NO_DEFAULT_VALUE_FLAG;
+  }
 
   if (fld_length && !(length= (uint32_t) atoi(fld_length)))
     fld_length= 0;
@@ -300,19 +302,16 @@ bool CreateField::init(Session *,
         return(true);
       }
       break;
-    case DRIZZLE_TYPE_TIMESTAMP:
-      if (!fld_length)
-      {
-        length= DateTime::MAX_STRING_LENGTH;
-      }
-
-      /* This assert() should be correct due to absence of length
-         specifiers for timestamp. Previous manipulation also wasn't
-         ever called (from examining lcov)
+    case DRIZZLE_TYPE_MICROTIME:
+      /* 
+        This assert() should be correct due to absence of length
+        specifiers for timestamp. Previous manipulation also wasn't
+        ever called (from examining lcov)
       */
-      assert(length == (uint32_t)DateTime::MAX_STRING_LENGTH);
+      assert(fld_type);
+    case DRIZZLE_TYPE_TIMESTAMP:
+      length= MicroTimestamp::MAX_STRING_LENGTH;
 
-      flags|= UNSIGNED_FLAG;
       if (fld_default_value)
       {
         /* Grammar allows only NOW() value for ON UPDATE clause */
@@ -328,8 +327,10 @@ bool CreateField::init(Session *,
           def= 0;
         }
         else
+        {
           unireg_check= (fld_on_update_value ? Field::TIMESTAMP_UN_FIELD:
-                                              Field::NONE);
+                         Field::NONE);
+        }
       }
       else
       {

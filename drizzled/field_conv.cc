@@ -189,7 +189,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
     when set to NULL (TIMESTAMP fields which allow setting to NULL
     are handled by first check).
   */
-  if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+  if (field->is_timestamp())
   {
     ((field::Epoch::pointer) field)->set_time();
     return 0;					// Ok to set time to NULL
@@ -384,7 +384,7 @@ static void do_field_decimal(CopyField *copy)
 static void do_cut_string(CopyField *copy)
 {
   const CHARSET_INFO * const cs= copy->from_field->charset();
-  memcpy(copy->to_ptr,copy->from_ptr,copy->to_length);
+  memcpy(copy->to_ptr, copy->from_ptr, copy->to_length);
 
   /* Check if we loosed any important characters */
   if (cs->cset->scan(cs,
@@ -461,8 +461,10 @@ static void do_varstring1(CopyField *copy)
   {
     length= copy->to_length - 1;
     if (copy->from_field->getTable()->in_use->count_cuted_fields)
+    {
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   *(unsigned char*) copy->to_ptr= (unsigned char) length;
   memcpy(copy->to_ptr+1, copy->from_ptr + 1, length);
@@ -482,8 +484,10 @@ static void do_varstring1_mb(CopyField *copy)
   if (length < from_length)
   {
     if (current_session->count_cuted_fields)
+    {
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   *copy->to_ptr= (unsigned char) length;
   memcpy(copy->to_ptr + 1, from_ptr, length);
@@ -497,8 +501,10 @@ static void do_varstring2(CopyField *copy)
   {
     length=copy->to_length-HA_KEY_BLOB_LENGTH;
     if (copy->from_field->getTable()->in_use->count_cuted_fields)
+    {
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   int2store(copy->to_ptr,length);
   memcpy(copy->to_ptr+HA_KEY_BLOB_LENGTH, copy->from_ptr + HA_KEY_BLOB_LENGTH,
@@ -519,8 +525,10 @@ static void do_varstring2_mb(CopyField *copy)
   if (length < from_length)
   {
     if (current_session->count_cuted_fields)
+    {
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   int2store(copy->to_ptr, length);
   memcpy(copy->to_ptr+HA_KEY_BLOB_LENGTH, from_beg, length);
@@ -620,7 +628,7 @@ void CopyField::set(Field *to,Field *from,bool save)
     }
     else
     {
-      if (to_field->type() == DRIZZLE_TYPE_TIMESTAMP)
+      if (to_field->is_timestamp())
       {
         do_copy= do_copy_timestamp;               // Automatic timestamp
       }
@@ -848,14 +856,18 @@ int field_conv(Field *to,Field *from)
     return to->store(result.c_ptr_quick(),result.length(),from->charset());
   }
   else if (from->result_type() == REAL_RESULT)
+  {
     return to->store(from->val_real());
+  }
   else if (from->result_type() == DECIMAL_RESULT)
   {
     type::Decimal buff;
     return to->store_decimal(from->val_decimal(&buff));
   }
   else
+  {
     return to->store(from->val_int(), test(from->flags & UNSIGNED_FLAG));
+  }
 }
 
 } /* namespace drizzled */

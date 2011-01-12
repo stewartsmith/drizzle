@@ -39,6 +39,14 @@ public:
     Generator(drizzled::Field **arg):
       drizzled::plugin::TableFunction::Generator(arg)
     { }
+
+    bool isShowQuery()
+    {
+      if (getSession().lex->statement->isShow())
+       return true;
+
+      return false;
+    }
   };
 
   Generator *generator(drizzled::Field **arg)

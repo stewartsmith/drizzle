@@ -22,6 +22,17 @@ Differences from innodb_plugin
  * AUTO_INCREMENT behaves the standard way (as in MyISAM)
  * Supports four byte UTF-8 with the same index size
 
+AIO support
+-----------
+
+InnoDB supports Linux native AIO when compiled on platforms that have the
+libaio development files installed (typically a package called libaio-dev or
+libaio-devel).  For more information on the advantages of this please see
+http://blogs.innodb.com/wp/2010/04/innodb-performance-aio-linux/
+
+To confirm that Linux native AIO is enabled execute this command:
+"show global variables like 'innodb_use_native_aio';"
+
 Compatibility with MySQL
 ------------------------
 

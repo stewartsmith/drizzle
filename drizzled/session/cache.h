@@ -53,7 +53,6 @@ public:
     return _mutex;
   }
 
-  void erase(Session::Ptr);
   void erase(Session::shared_ptr&);
   size_t count();
   void insert(Session::shared_ptr &arg);

@@ -56,18 +56,6 @@ size_t Cache::count()
   return cache.size();
 }
 
-void Cache::erase(Session::Ptr arg)
-{
-  BOOST_FOREACH(list::const_reference it, cache)
-  {
-    if (it.get() == arg)
-    {
-      cache.remove(it);
-      return;
-    }
-  }
-}
-
 void Cache::insert(Session::shared_ptr &arg)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
@@ -76,7 +64,9 @@ void Cache::insert(Session::shared_ptr &arg)
 
 void Cache::erase(Session::shared_ptr &arg)
 {
-  cache.erase(remove(cache.begin(), cache.end(), arg));
+  list::iterator iter= std::find(cache.begin(), cache.end(), arg);
+  assert(iter != cache.end());
+  cache.erase(iter);
 }
 
 } /* namespace session */

@@ -202,7 +202,7 @@ typedef constrained_check<uint32_t, 5000, 1> purge_batch_constraint;
 static purge_batch_constraint innodb_purge_batch_size;
 typedef constrained_check<uint32_t, 1, 0> purge_threads_constraint;
 static purge_threads_constraint innodb_n_purge_threads;
-typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+typedef constrained_check<uint32_t, 2, 0> trinary_constraint;
 static trinary_constraint innodb_flush_log_at_trx_commit;
 typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
 static max_dirty_pages_constraint innodb_max_dirty_pages_pct;
@@ -251,7 +251,7 @@ static string innobase_file_format_max;
 /* Below we have boolean-valued start-up parameters, and their default
 values */
 
-typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+typedef constrained_check<uint32_t, 2, 0> trinary_constraint;
 static trinary_constraint innobase_fast_shutdown;
 
 /* "innobase_file_format_check" decides whether we would continue
@@ -2008,13 +2008,13 @@ innodb_file_format_max_validate(
     }
 
     if (format_id >= 0) {
-      innobase_file_format_max= 
-        trx_sys_file_format_id_to_name((uint)format_id);
+      innobase_file_format_max.assign(
+                             trx_sys_file_format_id_to_name((uint)format_id));
 
       /* Update the max format id in the system tablespace. */
-      char name_buff[100];
-      strcpy(name_buff, innobase_file_format_max.c_str());
-      if (trx_sys_file_format_max_set(format_id, (const char **)&name_buff))
+      const char *name_buff;
+
+      if (trx_sys_file_format_max_set(format_id, &name_buff))
       {
         errmsg_printf(ERRMSG_LVL_WARN,
                       " [Info] InnoDB: the file format in the system "
@@ -2426,7 +2426,7 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value<uint32_t>("purge_threads",
                                                                    innodb_n_purge_threads,
                                                                    purge_threads_update));
-  context.registerVariable(new sys_var_constrained_value<uint16_t>("fast_shutdown", innobase_fast_shutdown));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("fast_shutdown", innobase_fast_shutdown));
   context.registerVariable(new sys_var_std_string("file_format",
                                                   innobase_file_format_name,
                                                   innodb_file_format_name_validate));
@@ -2438,7 +2438,7 @@ innobase_change_buffering_inited_ok:
                                                   innodb_file_format_max_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<int64_t>("log_file_size", innobase_log_file_size));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("flush_log_at_trx_commit",
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush_log_at_trx_commit",
                                                   innodb_flush_log_at_trx_commit));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct",
                                                   innodb_max_dirty_pages_pct));
@@ -2599,10 +2599,7 @@ retry:
       }
     }
 
-                /* Store transaction point for binlog
-    Later logic tests that this is set to _something_. We need
-    that logic to fire, even though we do not have a real name. */
-    trx->mysql_log_file_name = "UNUSED";
+    trx->mysql_log_file_name = NULL;
     trx->mysql_log_offset = 0;
 
     /* Don't do write + flush right now. For group commit
@@ -3850,6 +3847,7 @@ get_innobase_type_from_mysql_type(
       return(DATA_VARMYSQL);
     }
   case DRIZZLE_TYPE_DECIMAL:
+  case DRIZZLE_TYPE_MICROTIME:
     return(DATA_FIXBINARY);
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
@@ -9301,7 +9299,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.");
   context("autoextend-increment",
-          po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(8L),
+          po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(64L),
           "Data file autoextend increment in megabytes");
   context("buffer-pool-size",
           po::value<buffer_pool_constraint>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),

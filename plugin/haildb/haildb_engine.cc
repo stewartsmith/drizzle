@@ -904,7 +904,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
 {
   ib_col_attr_t column_attr= IB_COL_NONE;
 
-  if (field.has_constraints() && ! field.constraints().is_nullable())
+  if (field.has_constraints() && field.constraints().is_notnull())
     column_attr= IB_COL_NOT_NULL;
 
   switch (field.type())

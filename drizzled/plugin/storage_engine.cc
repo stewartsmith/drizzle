@@ -768,7 +768,7 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
 
 void StorageEngine::print_error(int error, myf errflag, Table *table)
 {
-  int textno= ER_GET_ERRNO;
+  drizzled::error_t textno= ER_GET_ERRNO;
   switch (error) {
   case EACCES:
     textno=ER_OPEN_AS_READONLY;
@@ -846,7 +846,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     textno=ER_CRASHED_ON_USAGE;
     break;
   case HA_ERR_NOT_A_TABLE:
-    textno= error;
+    textno= static_cast<drizzled::error_t>(error);
     break;
   case HA_ERR_CRASHED_ON_REPAIR:
     textno=ER_CRASHED_ON_REPAIR;
@@ -1180,7 +1180,14 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
   return false;
 }
 
+std::ostream& operator<<(std::ostream& output, const StorageEngine &engine)
+{
+  output << "StorageEngine:(";
+  output <<  engine.getName();
+  output << ")";
 
+  return output;
+}
 
 } /* namespace plugin */
 } /* namespace drizzled */

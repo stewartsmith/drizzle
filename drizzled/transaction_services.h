@@ -27,6 +27,7 @@
 
 #include "drizzled/atomics.h"
 #include "drizzled/message/transaction.pb.h"
+#include "drizzled/identifier/table.h"
 
 namespace drizzled
 {
@@ -291,6 +292,7 @@ public:
    * @param[in] schema message::Schema message describing new schema
    */
   void createSchema(Session *in_session, const message::Schema &schema);
+
   /**
    * Creates a DropSchema Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
@@ -299,7 +301,8 @@ public:
    * @param[in] in_session Pointer to the Session which issued the statement
    * @param[in] schema_name message::Schema message describing new schema
    */
-  void dropSchema(Session *in_session, const std::string &schema_name);
+  void dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier);
+
   /**
    * Creates a CreateTable Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
@@ -315,12 +318,12 @@ public:
    * out to the replicator streams.
    *
    * @param[in] in_session Pointer to the Session which issued the statement
-   * @param[in] schema_name The schema of the table being dropped
-   * @param[in] table_name The table name of the table being dropped
+   * @param[in] table Identifier for the table being dropped
+   * @param[in] if_exists Did the user specify an IF EXISTS clause?
    */
   void dropTable(Session *in_session,
-                     const std::string &schema_name,
-                     const std::string &table_name);
+                 const TableIdentifier &table,
+                 bool if_exists);
   /**
    * Creates a TruncateTable Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing

@@ -91,8 +91,9 @@ message Table {
     }
 
     message FieldConstraints {
-      required bool is_nullable = 1 [default = true];
+      optional bool is_nullable = 1 [default = true]; // Dead option, do not use
       optional bool is_unsigned = 2 [default = false];
+      optional bool is_notnull = 3 [default = false];
       repeated string expression = 16; /* Reserve 0-15 for frequenty accessed attributes */
     }
 
@@ -119,8 +120,7 @@ message Table {
       Do we store microseconds or timezone.
     */
     message TimeFieldOptions {
-      optional bool microseconds = 1 [default = false];
-      optional bool timezone = 2 [default = false];
+      optional bool microseconds = 1;
     }
 
     required string name = 1;

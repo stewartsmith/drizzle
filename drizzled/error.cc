@@ -28,6 +28,8 @@
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 
+#include "drizzled/identifier.h"
+
 #include <boost/unordered_map.hpp>
 #include <exception>
 
@@ -96,12 +98,19 @@ error_handler_func error_handler_hook= NULL;
        ...	variable list
 */
 
-void my_error(drizzled_error_code nr)
+void my_error(error_t nr, drizzled::Identifier::const_reference ref)
+{
+  std::string temp;
+  ref.getSQLPath(temp);
+  my_error(nr, MYF(0), temp.c_str());
+} 
+
+void my_error(error_t nr)
 {
   my_error(nr, MYF(0));
 }
 
-void my_error(int nr, myf MyFlags, ...)
+void my_error(error_t nr, myf MyFlags, ...)
 {
   std::string format;
   va_list args;
@@ -495,6 +504,8 @@ ErrorMap::ErrorMap()
   // Cast errors
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_UNSIGNED, N_("Cast to unsigned converted negative integer to it's positive complement: %s"));
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_SIGNED, N_("Invalid cast to signed integer: %s"));
+
+  ADD_ERROR_MESSAGE(ER_SQL_KEYWORD, N_("Identifier '%.*s' is a SQL keyword."));
 
 
   ADD_ERROR_MESSAGE(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));

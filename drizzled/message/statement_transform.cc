@@ -860,6 +860,13 @@ transformDropTableStatementToSql(const DropTableStatement &statement,
 
   destination.append("DROP TABLE ", 11);
 
+  /* Add the IF EXISTS clause if necessary */
+  if (statement.has_if_exists_clause() &&
+      statement.if_exists_clause() == true)
+  {
+    destination.append("IF EXISTS ", 10);
+  }
+
   destination.push_back(quoted_identifier);
   destination.append(table_metadata.schema_name());
   destination.push_back(quoted_identifier);
@@ -1370,9 +1377,18 @@ transformFieldDefinitionToSql(const Table::Field &field,
   case Table::Field::DATE:
     destination.append(" DATE", 5);
     break;
+
   case Table::Field::EPOCH:
-    destination.append(" TIMESTAMP",  10);
+    if (field.time_options().microseconds())
+    {
+      destination.append(" TIMESTAMP(6)");
+    }
+    else
+    {
+      destination.append(" TIMESTAMP",  10);
+    }
     break;
+
   case Table::Field::DATETIME:
     destination.append(" DATETIME",  9);
     break;
@@ -1403,13 +1419,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.has_constraints() &&
-      ! field.constraints().is_nullable())
+  if (field.has_constraints() && field.constraints().is_notnull())
   {
     destination.append(" NOT NULL", 9);
   }
   else if (field.type() == Table::Field::EPOCH)
+  {
     destination.append(" NULL", 5);
+  }
 
   if (field.type() == Table::Field::INTEGER || 
       field.type() == Table::Field::BIGINT)
@@ -1493,6 +1510,7 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
   case DRIZZLE_TYPE_NULL:
     assert(false); /* Not a user definable type */
     return Table::Field::INTEGER; /* unreachable */
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     return Table::Field::EPOCH;
   case DRIZZLE_TYPE_LONGLONG:

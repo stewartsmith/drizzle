@@ -103,7 +103,7 @@ void plugin::TableFunction::add_field(const char *label,
   field_options= field->mutable_options();
   field_constraints= field->mutable_constraints();
   field_options->set_default_null(is_default_null);
-  field_constraints->set_is_nullable(is_default_null);
+  field_constraints->set_is_notnull(not is_default_null);
 
   switch (type) 
   {

@@ -206,7 +206,7 @@ int update_query(Session *session, TableList *table_list,
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);
-    return -1;
+    return 1;
   }
 
   if (conds)
@@ -246,7 +246,7 @@ int update_query(Session *session, TableList *table_list,
      */
     session->main_da.reset_diagnostics_area();
     free_underlaid_joins(session, select_lex);
-    if (error)
+    if (error || session->is_error())
     {
       DRIZZLE_UPDATE_DONE(1, 0, 0);
       return 1;
@@ -415,7 +415,7 @@ int update_query(Session *session, TableList *table_list,
       }
       else
       {
-	select= new optimizer::SqlSelect;
+	select= new optimizer::SqlSelect();
 	select->head=table;
       }
       if (tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))

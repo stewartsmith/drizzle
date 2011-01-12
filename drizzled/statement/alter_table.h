@@ -44,6 +44,11 @@ public:
   { 
   }
 
+  virtual bool is_alter() const
+  {
+    return true;
+  }
+
   bool execute();
 };
 

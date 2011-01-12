@@ -350,7 +350,7 @@ public:
                                  const unsigned char * key,
                                  key_part_map keypart_map,
                                  enum ha_rkey_function find_flag);
-  virtual int index_next(unsigned char *)
+  virtual int index_next(unsigned char *) __attribute__ ((warn_unused_result))
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_prev(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }

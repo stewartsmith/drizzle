@@ -78,6 +78,7 @@
 #include "drizzled/field/time.h"
 #include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
+#include "drizzled/field/microtime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/uuid.h"
 
@@ -232,57 +233,54 @@ TableShare::shared_ptr TableShare::getShareCreate(Session *session,
   return share;
 }
 
-static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
+static enum_field_types proto_field_type_to_drizzle_type(const message::Table::Field &field)
 {
-  enum_field_types field_type;
-
-  switch(proto_field_type)
+  switch(field.type())
   {
   case message::Table::Field::INTEGER:
-    field_type= DRIZZLE_TYPE_LONG;
-    break;
+    return DRIZZLE_TYPE_LONG;
+
   case message::Table::Field::DOUBLE:
-    field_type= DRIZZLE_TYPE_DOUBLE;
-    break;
+    return DRIZZLE_TYPE_DOUBLE;
+
   case message::Table::Field::EPOCH:
-    field_type= DRIZZLE_TYPE_TIMESTAMP;
-    break;
+    if (field.has_time_options() and field.time_options().microseconds())
+      return DRIZZLE_TYPE_MICROTIME;
+
+    return DRIZZLE_TYPE_TIMESTAMP;
+
   case message::Table::Field::BIGINT:
-    field_type= DRIZZLE_TYPE_LONGLONG;
-    break;
+    return DRIZZLE_TYPE_LONGLONG;
+
   case message::Table::Field::DATETIME:
-    field_type= DRIZZLE_TYPE_DATETIME;
-    break;
+    return DRIZZLE_TYPE_DATETIME;
+
   case message::Table::Field::DATE:
-    field_type= DRIZZLE_TYPE_DATE;
-    break;
+    return DRIZZLE_TYPE_DATE;
+
   case message::Table::Field::VARCHAR:
-    field_type= DRIZZLE_TYPE_VARCHAR;
-    break;
+    return DRIZZLE_TYPE_VARCHAR;
+
   case message::Table::Field::DECIMAL:
-    field_type= DRIZZLE_TYPE_DECIMAL;
-    break;
+    return DRIZZLE_TYPE_DECIMAL;
+
   case message::Table::Field::ENUM:
-    field_type= DRIZZLE_TYPE_ENUM;
-    break;
+    return DRIZZLE_TYPE_ENUM;
+
   case message::Table::Field::BLOB:
-    field_type= DRIZZLE_TYPE_BLOB;
-    break;
+    return DRIZZLE_TYPE_BLOB;
+
   case message::Table::Field::UUID:
-    field_type= DRIZZLE_TYPE_UUID;
-    break;
+    return  DRIZZLE_TYPE_UUID;
+
   case message::Table::Field::BOOLEAN:
-    field_type= DRIZZLE_TYPE_BOOLEAN;
-    break;
+    return DRIZZLE_TYPE_BOOLEAN;
+
   case message::Table::Field::TIME:
-    field_type= DRIZZLE_TYPE_TIME;
-    break;
-  default:
-    assert(0);
-    abort(); // Programming error
+    return DRIZZLE_TYPE_TIME;
   }
 
-  return field_type;
+  abort();
 }
 
 static Item *default_value_item(enum_field_types field_type,
@@ -321,6 +319,7 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_BOOLEAN:
     default_item= new Item_string(default_value->c_str(),
                                   default_value->length(),
@@ -957,11 +956,16 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   for (unsigned int fieldnr= 0; fieldnr < _field_size; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
-    if (pfield.constraints().is_nullable())
+    if (pfield.constraints().is_nullable()) // Historical reference
+    {
       local_null_fields++;
+    }
+    else if (not pfield.constraints().is_notnull())
+    {
+      local_null_fields++;
+    }
 
-    enum_field_types drizzle_field_type=
-      proto_field_type_to_drizzle_type(pfield.type());
+    enum_field_types drizzle_field_type= proto_field_type_to_drizzle_type(pfield);
 
     field_offsets[fieldnr]= stored_columns_reclength;
 
@@ -1167,7 +1171,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     enum_field_types field_type;
 
-    field_type= proto_field_type_to_drizzle_type(pfield.type());
+    field_type= proto_field_type_to_drizzle_type(pfield);
 
     const CHARSET_INFO *charset= &my_charset_bin;
 
@@ -1316,13 +1320,19 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       }
       break;
     case DRIZZLE_TYPE_LONGLONG:
-      field_length= MAX_BIGINT_WIDTH;
+      {
+        uint32_t sign_len= pfield.constraints().is_unsigned() ? 0 : 1;
+        field_length= MAX_BIGINT_WIDTH+sign_len;
+      }
       break;
     case DRIZZLE_TYPE_UUID:
       field_length= field::Uuid::max_string_length();
       break;
     case DRIZZLE_TYPE_BOOLEAN:
       field_length= field::Boolean::max_string_length();
+      break;
+    case DRIZZLE_TYPE_MICROTIME:
+      field_length= field::Microtime::max_string_length();
       break;
     case DRIZZLE_TYPE_TIMESTAMP:
       field_length= field::Epoch::max_string_length();
@@ -1334,12 +1344,21 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       abort(); // Programming error
     }
 
-    assert(enum_field_types_size == 14);
+    bool is_not_null= false;
+
+    if (not pfield.constraints().is_nullable())
+    {
+      is_not_null= true;
+    }
+    else if (pfield.constraints().is_notnull())
+    {
+      is_not_null= true;
+    }
 
     Field* f= make_field(pfield,
                          record + field_offsets[fieldnr] + data_offset,
                          field_length,
-                         pfield.constraints().is_nullable(),
+                         not is_not_null,
                          null_pos,
                          null_bit_pos,
                          decimals,
@@ -1361,6 +1380,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_TIME:
     case DRIZZLE_TYPE_DATETIME:
+    case DRIZZLE_TYPE_MICROTIME:
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_ENUM:
     case DRIZZLE_TYPE_LONG:
@@ -1416,10 +1436,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     f->setPosition(fieldnr);
     f->comment= comment;
-    if (! default_value &&
-        ! (f->unireg_check==Field::NEXT_NUMBER) &&
+    if (not default_value &&
+        not (f->unireg_check==Field::NEXT_NUMBER) &&
         (f->flags & NOT_NULL_FLAG) &&
-        (f->real_type() != DRIZZLE_TYPE_TIMESTAMP))
+        (not f->is_timestamp()))
     {
       f->flags|= NO_DEFAULT_VALUE_FLAG;
     }
@@ -1969,7 +1989,6 @@ int TableShare::open_table_cursor_inner(const TableIdentifier &identifier,
 /* error message when opening a form cursor */
 void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 {
-  int err_no;
   char buff[FN_REFLEN];
   myf errortype= ME_ERROR+ME_WAITTANG;
 
@@ -1989,8 +2008,11 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   case 2:
     {
+      drizzled::error_t err_no;
+
       err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
         ER_FILE_USED : ER_CANT_OPEN_FILE;
+
       my_error(err_no, errortype, normalized_path.str, db_errno);
       break;
     }
@@ -2082,7 +2104,6 @@ Field *TableShare::make_field(const message::Table::Field &,
   {
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_UUID:
     field_charset= &my_charset_bin;
   default: break;
@@ -2171,15 +2192,20 @@ Field *TableShare::make_field(const message::Table::Field &,
                                           unireg_check,
                                           field_name);
     }
+  case DRIZZLE_TYPE_MICROTIME:
+    return new (&mem_root) field::Microtime(ptr,
+                                            null_pos,
+                                            null_bit,
+                                            unireg_check,
+                                            field_name,
+                                            this);
   case DRIZZLE_TYPE_TIMESTAMP:
     return new (&mem_root) field::Epoch(ptr,
-                                        field_length,
                                         null_pos,
                                         null_bit,
                                         unireg_check,
                                         field_name,
-                                        this,
-                                        field_charset);
+                                        this);
   case DRIZZLE_TYPE_TIME:
     return new (&mem_root) field::Time(ptr,
                                        field_length,

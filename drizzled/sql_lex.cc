@@ -17,7 +17,11 @@
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
 #include "config.h"
+
 #define DRIZZLE_LEX 1
+
+#include "drizzled/sql_reserved_words.h"
+
 #include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
@@ -262,12 +266,12 @@ void lex_start(Session *session)
   lex->nest_level=0 ;
   lex->allow_sum_func= 0;
   lex->in_sum_func= NULL;
+  lex->type= 0;
 
   lex->is_lex_started= true;
   lex->statement= NULL;
   
   lex->is_cross= false;
-
   lex->reset();
 }
 
@@ -282,6 +286,9 @@ void LEX::end()
   }
 
   delete result;
+  delete _create_table;
+  _create_table= NULL;
+  _create_field= NULL;
 
   result= 0;
   setCacheable(true);
@@ -1802,6 +1809,11 @@ void Select_Lex::print_limit(Session *, String *str,
   }
 }
 
+LEX::~LEX()
+{
+  delete _create_table;
+}
+
 /**
   @brief Restore the LEX and Session in case of a parse error.
 
@@ -1864,21 +1876,24 @@ void Query_tables_list::reset_query_tables_list(bool init)
     statement parsing. On should use lex_start() function to prepare LEX
     for this.
 */
-LEX::LEX()
-  :
+LEX::LEX() :
     result(0), 
     yacc_yyss(0), 
     yacc_yyvs(0),
+    session(NULL),
     charset(NULL),
     var_list(),
     sql_command(SQLCOM_END), 
+    statement(NULL),
     option_type(OPT_DEFAULT), 
     is_lex_started(0),
     cacheable(true),
-    sum_expr_used(false)
+    sum_expr_used(false),
+    _create_table(NULL),
+    _create_field(NULL),
+    _exists(false)
 {
   reset_query_tables_list(true);
-  statement= NULL;
 }
 
 /**
@@ -2153,5 +2168,22 @@ bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
                                             current_index_hint_clause,
                                             str, length));
 }
+
+bool check_for_sql_keyword(drizzled::drizzle_lex_string const& string)
+{
+  if (sql_reserved_words::in_word_set(string.str, string.length))
+      return true;
+
+  return false;
+}
+
+bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
+{
+  if (sql_reserved_words::in_word_set(string.str, string.length))
+      return true;
+
+  return false;
+}
+
 
 } /* namespace drizzled */

@@ -91,8 +91,8 @@ namespace type {
 class Time
 {
 public:
-  unsigned int  year, month, day, hour, minute, second;
-  unsigned long second_part;
+  unsigned int year, month, day, hour, minute, second;
+  unsigned int second_part;
   bool       neg;
   enum enum_drizzle_timestamp_type time_type;
 };

@@ -173,6 +173,8 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
     delete select;
     free_underlaid_joins(session, select_lex);
     session->row_count_func= 0;
+    if (session->is_error())
+      return true;
     DRIZZLE_DELETE_DONE(0, 0);
     /**
      * Resetting the Diagnostic area to prevent
@@ -390,7 +392,7 @@ int prepare_delete(Session *session, TableList *table_list, Item **conds)
 
   if (select_lex->inner_refs_list.elements &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
-    return(-1);
+    return(true);
 
   return(false);
 }

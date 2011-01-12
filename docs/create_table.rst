@@ -21,6 +21,7 @@ CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
     [engine_options]
 
 create_definition:
+
     column_name column_definition
   | [CONSTRAINT [symbol] ] PRIMARY KEY [index_type]
     (index_column_name, ...)
@@ -33,12 +34,14 @@ create_definition:
   | CHECK (expr)
 
 column_definition:
+
   data_type [NOT NULL | NULL] [DEFAULT default_value]
     [AUTO_INCREMENT] [UNIQUE [KEY] | [PRIMARY] KEY]
     [COMMENT 'string']
     [reference_definition]
 
 data_type:
+
   | INTEGER
   | BIGINT
   | DOUBLE[(length, decimals)]
