@@ -963,7 +963,7 @@ static bool internal_alter_table(Session *session,
     tmp.reset(ALTER_KEYS_ONOFF);
     tmp&= alter_info->flags;
 
-    if (! (tmp.any()) && ! table->getShare()->getType()) // no need to touch frm
+    if (not (tmp.any()) && not table->getShare()->getType()) // no need to touch frm
     {
       switch (alter_info->keys_onoff)
       {
@@ -985,13 +985,15 @@ static bool internal_alter_table(Session *session,
         error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
         /* COND_refresh will be signaled in close_thread_tables() */
         break;
+
       case DISABLE:
         table::Cache::singleton().mutex().lock(); /* DDL wait for/blocker */
         wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
         table::Cache::singleton().mutex().unlock();
-        error=table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+        error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
         /* COND_refresh will be signaled in close_thread_tables() */
         break;
+
       default:
         assert(false);
         error= 0;
@@ -1006,7 +1008,7 @@ static bool internal_alter_table(Session *session,
                             table->getAlias());
       }
 
-      table::Cache::singleton().mutex().lock(); /* Lock to remove all instances of table from table cache before ALTER */
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Lock to remove all instances of table from table cache before ALTER */
       /*
         Unlike to the above case close_cached_table() below will remove ALL
         instances of Table from table cache (it will also remove table lock
@@ -1034,9 +1036,7 @@ static bool internal_alter_table(Session *session,
         */
         if (plugin::StorageEngine::doesTableExist(*session, new_table_identifier))
         {
-          std::string path;
-          new_table_identifier.getSQLPath(path);
-          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+          my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
           error= -1;
         }
         else
@@ -1056,20 +1056,18 @@ static bool internal_alter_table(Session *session,
                             table->getAlias());
       }
 
-      if (error == 0)
+      if (not error)
       {
         TransactionServices &transaction_services= TransactionServices::singleton();
         transaction_services.allocateNewTransactionId();
         write_bin_log(session, *session->getQueryString());
         session->my_ok();
       }
-      else if (error > 0)
+      else if (error > 0) // If we have already set the error, we pass along -1
       {
         table->print_error(error, MYF(0));
-        error= -1;
       }
 
-      table::Cache::singleton().mutex().unlock();
       table_list->table= NULL;
 
       return error;
