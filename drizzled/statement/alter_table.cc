@@ -259,10 +259,10 @@ static bool prepare_alter_table(Session *session,
   message::Table::TableOptions *table_options;
   table_options= table_message.mutable_options();
 
-  if (! (used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
+  if (not (used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
     create_info->default_table_charset= table->getShare()->table_charset;
-  if (! (used_fields & HA_CREATE_USED_AUTO) &&
-      table->found_next_number_field)
+
+  if (not (used_fields & HA_CREATE_USED_AUTO) && table->found_next_number_field)
   {
     /* Table has an autoincrement, copy value to new table */
     table->cursor->info(HA_STATUS_AUTO);
@@ -270,6 +270,7 @@ static bool prepare_alter_table(Session *session,
     if (create_info->auto_increment_value != original_proto.options().auto_increment_value())
       table_options->set_has_user_set_auto_increment_value(false);
   }
+
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
   CreateField *def;
 
@@ -390,17 +391,21 @@ static bool prepare_alter_table(Session *session,
     {
       CreateField *find;
       find_it.rewind();
+
       while ((find= find_it++)) /* Add new columns */
       {
-        if (! my_strcasecmp(system_charset_info,def->after, find->field_name))
+        if (not my_strcasecmp(system_charset_info,def->after, find->field_name))
           break;
       }
-      if (! find)
+
+      if (not find)
       {
         my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->getMutableShare()->getTableName());
         return true;
       }
+
       find_it.after(def); /* Put element after this */
+
       /*
         XXX: hack for Bug#28427.
         If column order has changed, force OFFLINE ALTER Table
@@ -416,6 +421,7 @@ static bool prepare_alter_table(Session *session,
         my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->getQueryString()->c_str());
         return true;
       }
+
       alter_info->build_method= HA_BUILD_OFFLINE;
     }
   }
@@ -429,7 +435,7 @@ static bool prepare_alter_table(Session *session,
     return true;
   }
 
-  if (! new_create_list.elements)
+  if (not new_create_list.elements)
   {
     my_message(ER_CANT_REMOVE_ALL_FIELDS,
                ER(ER_CANT_REMOVE_ALL_FIELDS),
@@ -445,6 +451,7 @@ static bool prepare_alter_table(Session *session,
   {
     char *key_name= key_info->name;
     AlterDrop *drop;
+
     drop_it.rewind();
     while ((drop= drop_it++))
     {
@@ -452,6 +459,7 @@ static bool prepare_alter_table(Session *session,
           ! my_strcasecmp(system_charset_info, key_name, drop->name))
         break;
     }
+
     if (drop)
     {
       drop_it.remove();
@@ -472,13 +480,14 @@ static bool prepare_alter_table(Session *session,
       {
         if (cfield->change)
         {
-          if (! my_strcasecmp(system_charset_info, key_part_name, cfield->change))
+          if (not my_strcasecmp(system_charset_info, key_part_name, cfield->change))
             break;
         }
-        else if (! my_strcasecmp(system_charset_info, key_part_name, cfield->field_name))
+        else if (not my_strcasecmp(system_charset_info, key_part_name, cfield->field_name))
           break;
       }
-      if (! cfield)
+
+      if (not cfield)
 	      continue; /* Field is removed */
       
       uint32_t key_part_length= key_part->length;
@@ -510,7 +519,7 @@ static bool prepare_alter_table(Session *session,
     }
     if (key_parts.elements)
     {
-      KEY_CREATE_INFO key_create_info;
+      key_create_information_st key_create_info;
       Key *key;
       enum Key::Keytype key_type;
       memset(&key_create_info, 0, sizeof(key_create_info));
@@ -815,23 +824,19 @@ static bool lockTableIfDifferent(Session &session,
 
       if (not name_lock)
       {
-        std::string path;
-        new_table_identifier.getSQLPath(path);
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
         return false;
       }
 
       if (plugin::StorageEngine::doesTableExist(session, new_table_identifier))
       {
-        std::string path;
-        new_table_identifier.getSQLPath(path);
-
         /* Table will be closed by Session::executeCommand() */
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
 
-        table::Cache::singleton().mutex().lock(); /* ALTER TABLe */
-        session.unlink_open_table(name_lock);
-        table::Cache::singleton().mutex().unlock();
+        {
+          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+          session.unlink_open_table(name_lock);
+        }
 
         return false;
       }

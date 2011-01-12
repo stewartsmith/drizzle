@@ -90,7 +90,7 @@ typedef struct st_ha_alter_information
 } HA_ALTER_INFO;
 
 
-typedef struct st_key_create_information
+typedef struct key_create_information_st
 {
   enum ha_key_alg algorithm;
   uint32_t block_size;
