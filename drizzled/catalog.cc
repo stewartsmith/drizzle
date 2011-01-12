@@ -26,17 +26,5 @@
 namespace drizzled {
 namespace catalog {
 
-void error(error_t error, const identifier::Catalog &identifier)
-{
-  switch(error)
-  {
-  case LOCKED:
-  case FOUND:
-    my_error(ER_CATALOG_NO_LOCK, MYF(0), identifier.getName().c_str());
-  default:
-    my_error(ER_UNKNOWN_ERROR, MYF(0));
-  }
-}
-
 } /* namespace catalog */
 } /* namespace drizzled */
