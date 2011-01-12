@@ -1008,7 +1008,7 @@ static bool internal_alter_table(Session *session,
 
       if (error == HA_ERR_WRONG_COMMAND)
       {
-        error= 0;
+        error= EE_OK;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                             table->getAlias());
@@ -1024,7 +1024,7 @@ static bool internal_alter_table(Session *session,
         access() and rename_table() calls.
       */
 
-      if (error == 0 &&  not (original_table_identifier == new_table_identifier))
+      if (not error &&  not (original_table_identifier == new_table_identifier))
       {
         session->set_proc_info("rename");
         /*
@@ -1056,7 +1056,7 @@ static bool internal_alter_table(Session *session,
 
       if (error == HA_ERR_WRONG_COMMAND)
       {
-        error= 0;
+        error= EE_OK;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                             table->getAlias());
@@ -1069,7 +1069,7 @@ static bool internal_alter_table(Session *session,
         write_bin_log(session, *session->getQueryString());
         session->my_ok();
       }
-      else if (error > 0) // If we have already set the error, we pass along -1
+      else if (error > EE_OK) // If we have already set the error, we pass along -1
       {
         table->print_error(error, MYF(0));
       }
@@ -1278,7 +1278,7 @@ static bool internal_alter_table(Session *session,
       wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
       session->close_data_files_and_morph_locks(original_table_identifier);
 
-      error= 0;
+      assert(not error);
 
       /*
         This leads to the storage engine (SE) not being notified for renames in
@@ -1293,9 +1293,10 @@ static bool internal_alter_table(Session *session,
                                              old_name, create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
                                              message::Table::TEMPORARY);
 
+      drizzled::error_t rename_error= EE_OK;
       if (rename_table(*session, original_engine, original_table_identifier, original_table_to_drop))
       {
-        error= 1;
+        error= ER_ERROR_ON_RENAME;
         plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
       }
       else
@@ -1303,7 +1304,7 @@ static bool internal_alter_table(Session *session,
         if (rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
         {
           /* Try to get everything back. */
-          error= 1;
+          rename_error= ER_ERROR_ON_RENAME;
 
           plugin::StorageEngine::dropTable(*session, new_table_identifier);
 
@@ -1317,7 +1318,7 @@ static bool internal_alter_table(Session *session,
         }
       }
 
-      if (error)
+      if (rename_error)
       {
         /*
           An error happened while we were holding exclusive name-lock on table
