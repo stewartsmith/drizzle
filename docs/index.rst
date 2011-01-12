@@ -53,12 +53,10 @@ SQL Language:
 
 Data Types:
 -----------
-
 .. toctree::
    :maxdepth: 2
 
    data_types
-
 
 User Level Topics:
 ------------------
