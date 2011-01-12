@@ -203,7 +203,6 @@ protected:
   pthread_mutex_t proto_cache_mutex;
 
 public:
-
   StorageEngine(const std::string name_arg,
                 const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
@@ -223,8 +222,8 @@ protected:
 
   /* Old style cursor errors */
   void print_keydup_error(uint32_t key_nr, const char *msg, Table &table);
-  void print_error(int error, myf errflag, Table *table= NULL);
   virtual bool get_error_message(int error, String *buf);
+
 public:
   virtual void print_error(int error, myf errflag, Table& table);
 

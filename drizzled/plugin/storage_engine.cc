@@ -806,11 +806,6 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
 */
 void StorageEngine::print_error(int error, myf errflag, Table &table)
 {
-  print_error(error, errflag, &table);
-}
-
-void StorageEngine::print_error(int error, myf errflag, Table *table)
-{
   drizzled::error_t textno= ER_GET_ERRNO;
   switch (error) {
   case EACCES:
@@ -832,13 +827,12 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     break;
   case HA_ERR_FOUND_DUPP_KEY:
   {
-    assert(table);
-    uint32_t key_nr= table->get_dup_key(error);
+    uint32_t key_nr= table.get_dup_key(error);
     if ((int) key_nr >= 0)
     {
       const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
 
-      print_keydup_error(key_nr, err_msg, *table);
+      print_keydup_error(key_nr, err_msg, table);
 
       return;
     }
@@ -847,8 +841,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
   }
   case HA_ERR_FOREIGN_DUPLICATE_KEY:
   {
-    assert(table);
-    uint32_t key_nr= table->get_dup_key(error);
+    uint32_t key_nr= table.get_dup_key(error);
     if ((int) key_nr >= 0)
     {
       uint32_t max_length;
@@ -858,7 +851,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
       String str(key,sizeof(key),system_charset_info);
 
       /* Table is opened and defined at this point */
-      key_unpack(&str,table,(uint32_t) key_nr);
+      key_unpack(&str, &table,(uint32_t) key_nr);
       max_length= (DRIZZLE_ERRMSG_SIZE-
                    (uint32_t) strlen(ER(ER_FOREIGN_DUPLICATE_KEY)));
       if (str.length() >= max_length)
@@ -866,7 +859,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
         str.length(max_length-4);
         str.append(STRING_WITH_LEN("..."));
       }
-      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->getShare()->getTableName(),
+      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table.getShare()->getTableName(),
         str.c_ptr(), key_nr+1);
       return;
     }
@@ -943,20 +936,18 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     textno=ER_TABLE_DEF_CHANGED;
     break;
   case HA_ERR_NO_SUCH_TABLE:
-    assert(table);
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table->getShare()->getSchemaName(),
-             table->getShare()->getTableName());
+    my_error(ER_NO_SUCH_TABLE, MYF(0), table.getShare()->getSchemaName(),
+             table.getShare()->getTableName());
     return;
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
     break;
   case HA_ERR_DROP_INDEX_FK:
   {
-    assert(table);
     const char *ptr= "???";
-    uint32_t key_nr= table->get_dup_key(error);
+    uint32_t key_nr= table.get_dup_key(error);
     if ((int) key_nr >= 0)
-      ptr= table->key_info[key_nr].name;
+      ptr= table.key_info[key_nr].name;
     my_error(ER_DROP_INDEX_FK, MYF(0), ptr);
     return;
   }
@@ -1001,7 +992,8 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
       return;
     }
   }
-  my_error(textno, errflag, table->getShare()->getTableName(), error);
+
+  my_error(textno, errflag, table.getShare()->getTableName(), error);
 }
 
 
