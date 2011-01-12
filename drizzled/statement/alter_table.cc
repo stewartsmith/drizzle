@@ -551,7 +551,7 @@ static bool prepare_alter_table(Session *session,
   }
 
   /* Copy over existing foreign keys */
-  for (int j= 0; j < original_proto.fk_constraint_size(); j++)
+  for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
     AlterDrop *drop;
     drop_it.rewind();
@@ -643,7 +643,9 @@ static bool prepare_alter_table(Session *session,
 
   if (not table_message.options().has_comment()
       && table->getMutableShare()->hasComment())
+  {
     table_options->set_comment(table->getMutableShare()->getComment());
+  }
 
   if (table->getShare()->getType())
   {
@@ -693,13 +695,11 @@ static int discard_or_import_tablespace(Session *session,
 {
   Table *table;
   bool discard;
-  int error;
 
   /*
     Note that DISCARD/IMPORT TABLESPACE always is the only operation in an
     ALTER Table
   */
-
   TransactionServices &transaction_services= TransactionServices::singleton();
   session->set_proc_info("discard_or_import_tablespace");
 
@@ -710,12 +710,13 @@ static int discard_or_import_tablespace(Session *session,
    not complain when we lock the table
  */
   session->tablespace_op= true;
-  if (!(table= session->openTableLock(table_list, TL_WRITE)))
+  if (not (table= session->openTableLock(table_list, TL_WRITE)))
   {
     session->tablespace_op= false;
     return -1;
   }
 
+  int error;
   do {
     error= table->cursor->ha_discard_or_import_tablespace(discard);
 
@@ -974,6 +975,7 @@ static bool internal_alter_table(Session *session,
       {
       case LEAVE_AS_IS:
         break;
+
       case ENABLE:
         /*
           wait_while_table_is_used() ensures that table being altered is
@@ -984,24 +986,23 @@ static bool internal_alter_table(Session *session,
           while the fact that the table is still open gives us protection
           from concurrent DDL statements.
         */
-        table::Cache::singleton().mutex().lock(); /* DDL wait for/blocker */
-        wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        table::Cache::singleton().mutex().unlock();
+        {
+          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+          wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+        }
         error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+
         /* COND_refresh will be signaled in close_thread_tables() */
         break;
 
       case DISABLE:
-        table::Cache::singleton().mutex().lock(); /* DDL wait for/blocker */
-        wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        table::Cache::singleton().mutex().unlock();
+        {
+          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+          wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+        }
         error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-        /* COND_refresh will be signaled in close_thread_tables() */
-        break;
 
-      default:
-        assert(false);
-        error= 0;
+        /* COND_refresh will be signaled in close_thread_tables() */
         break;
       }
 
@@ -1416,9 +1417,8 @@ bool alter_table(Session *session,
 
     if (name_lock)
     {
-      table::Cache::singleton().mutex().lock(); /* ALTER TABLe */
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
       session->unlink_open_table(name_lock);
-      table::Cache::singleton().mutex().unlock();
     }
   }
 
@@ -1629,6 +1629,7 @@ copy_data_between_tables(Session *session,
   */
   if (transaction_services.autocommitOrRollback(session, false))
     error=1;
+
   if (! session->endActiveTransaction())
     error=1;
 
