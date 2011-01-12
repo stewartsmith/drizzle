@@ -73,12 +73,6 @@ static bool prepare_alter_table(Session *session,
                                       message::Table &table_message,
                                       AlterInfo *alter_info);
 
-static int create_temporary_table(Session *session,
-                                  TableIdentifier &identifier,
-                                  HA_CREATE_INFO *create_info,
-                                  message::Table &create_message,
-                                  AlterInfo *alter_info);
-
 static Table *open_alter_table(Session *session, Table *table, TableIdentifier &identifier);
 
 bool statement::AlterTable::execute()
@@ -1107,7 +1101,16 @@ static bool internal_alter_table(Session *session,
                                          create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
                                          message::Table::TEMPORARY);
 
-  error= create_temporary_table(session, new_table_as_temporary, create_info, create_proto, alter_info);
+  /*
+    Create a table with a temporary name.
+    We don't log the statement, it will be logged later.
+  */
+  create_proto.set_name(new_table_as_temporary.getTableName());
+  create_proto.mutable_engine()->set_name(create_info->db_type->getName());
+
+  error= create_table(session,
+                      new_table_as_temporary,
+                      create_info, create_proto, alter_info, true, 0, false);
 
   if (error != 0)
   {
@@ -1637,30 +1640,6 @@ copy_data_between_tables(Session *session,
     error=1;
 
   return(error > 0 ? -1 : 0);
-}
-
-static int
-create_temporary_table(Session *session,
-                       TableIdentifier &identifier,
-                       HA_CREATE_INFO *create_info,
-                       message::Table &create_proto,
-                       AlterInfo *alter_info)
-{
-  int error;
-
-  /*
-    Create a table with a temporary name.
-    We don't log the statement, it will be logged later.
-  */
-  create_proto.set_name(identifier.getTableName());
-
-  create_proto.mutable_engine()->set_name(create_info->db_type->getName());
-
-  error= create_table(session,
-                      identifier,
-                      create_info, create_proto, alter_info, true, 0, false);
-
-  return error;
 }
 
 static Table *open_alter_table(Session *session, Table *table, TableIdentifier &identifier)
