@@ -1164,10 +1164,7 @@ static bool internal_alter_table(Session *session,
   {
 
     /*
-      No default value was provided for a DATE/DATETIME field, the
-      current sql_mode doesn't allow the '0000-00-00' value and
-      the table to be altered isn't empty.
-      Report error here.
+      No default value was provided for new fields.
     */
     if (alter_info->error_if_not_empty && session->row_count)
     {
@@ -1205,10 +1202,9 @@ static bool internal_alter_table(Session *session,
         delete new_table;
       }
 
-      table::Cache::singleton().mutex().lock(); /* ALTER TABLE */
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
 
       plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
-      table::Cache::singleton().mutex().unlock();
 
       return true;
     }
