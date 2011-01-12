@@ -1251,86 +1251,84 @@ static bool internal_alter_table(Session *session,
       delete new_table;
     }
 
-    table::Cache::singleton().mutex().lock(); /* ALTER TABLE */
-
-    /*
-      Data is copied. Now we:
-      1) Wait until all other threads close old version of table.
-      2) Close instances of table open by this thread and replace them
-      with exclusive name-locks.
-      3) Rename the old table to a temp name, rename the new one to the
-      old name.
-      4) If we are under LOCK TABLES and don't do ALTER Table ... RENAME
-      we reopen new version of table.
-      5) Write statement to the binary log.
-      6) If we are under LOCK TABLES and do ALTER Table ... RENAME we
-      remove name-locks from list of open tables and table cache.
-      7) If we are not not under LOCK TABLES we rely on close_thread_tables()
-      call to remove name-locks from table cache and list of open table.
-    */
-
-    session->set_proc_info("rename result table");
-
-    snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
-
-    my_casedn_str(files_charset_info, old_name);
-
-    wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
-    session->close_data_files_and_morph_locks(original_table_identifier);
-
-    error= 0;
-
-    /*
-      This leads to the storage engine (SE) not being notified for renames in
-      rename_table(), because we just juggle with the FRM and nothing
-      more. If we have an intermediate table, then we notify the SE that
-      it should become the actual table. Later, we will recycle the old table.
-      However, in case of ALTER Table RENAME there might be no intermediate
-      table. This is when the old and new tables are compatible, according to
-      compare_table(). Then, we need one additional call to
-    */
-    TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
-                                           old_name, create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
-                                         message::Table::TEMPORARY);
-
-    if (rename_table(*session, original_engine, original_table_identifier, original_table_to_drop))
     {
-      error= 1;
-      plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
-    }
-    else
-    {
-      if (rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* ALTER TABLE */
+      /*
+        Data is copied. Now we:
+        1) Wait until all other threads close old version of table.
+        2) Close instances of table open by this thread and replace them
+        with exclusive name-locks.
+        3) Rename the old table to a temp name, rename the new one to the
+        old name.
+        4) If we are under LOCK TABLES and don't do ALTER Table ... RENAME
+        we reopen new version of table.
+        5) Write statement to the binary log.
+        6) If we are under LOCK TABLES and do ALTER Table ... RENAME we
+        remove name-locks from list of open tables and table cache.
+        7) If we are not not under LOCK TABLES we rely on close_thread_tables()
+        call to remove name-locks from table cache and list of open table.
+      */
+
+      session->set_proc_info("rename result table");
+
+      snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
+
+      my_casedn_str(files_charset_info, old_name);
+
+      wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
+      session->close_data_files_and_morph_locks(original_table_identifier);
+
+      error= 0;
+
+      /*
+        This leads to the storage engine (SE) not being notified for renames in
+        rename_table(), because we just juggle with the FRM and nothing
+        more. If we have an intermediate table, then we notify the SE that
+        it should become the actual table. Later, we will recycle the old table.
+        However, in case of ALTER Table RENAME there might be no intermediate
+        table. This is when the old and new tables are compatible, according to
+        compare_table(). Then, we need one additional call to
+      */
+      TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
+                                             old_name, create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
+                                             message::Table::TEMPORARY);
+
+      if (rename_table(*session, original_engine, original_table_identifier, original_table_to_drop))
       {
-        /* Try to get everything back. */
         error= 1;
-
-        plugin::StorageEngine::dropTable(*session, new_table_identifier);
-
         plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
-
-        rename_table(*session, original_engine, original_table_to_drop, original_table_identifier);
       }
       else
       {
-        plugin::StorageEngine::dropTable(*session, original_table_to_drop);
+        if (rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
+        {
+          /* Try to get everything back. */
+          error= 1;
+
+          plugin::StorageEngine::dropTable(*session, new_table_identifier);
+
+          plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
+
+          rename_table(*session, original_engine, original_table_to_drop, original_table_identifier);
+        }
+        else
+        {
+          plugin::StorageEngine::dropTable(*session, original_table_to_drop);
+        }
+      }
+
+      if (error)
+      {
+        /*
+          An error happened while we were holding exclusive name-lock on table
+          being altered. To be safe under LOCK TABLES we should remove placeholders
+          from list of open tables list and table cache.
+        */
+        session->unlink_open_table(table);
+
+        return true;
       }
     }
-
-    if (error)
-    {
-      /*
-        An error happened while we were holding exclusive name-lock on table
-        being altered. To be safe under LOCK TABLES we should remove placeholders
-        from list of open tables list and table cache.
-      */
-      session->unlink_open_table(table);
-      table::Cache::singleton().mutex().unlock();
-
-      return true;
-    }
-
-    table::Cache::singleton().mutex().unlock();
 
     session->set_proc_info("end");
 
