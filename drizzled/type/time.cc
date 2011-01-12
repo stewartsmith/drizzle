@@ -1095,14 +1095,14 @@ int my_TIME_to_str(const type::Time *l_time, char *to)
   case DRIZZLE_TIMESTAMP_NONE:
   case DRIZZLE_TIMESTAMP_ERROR:
     to[0]='\0';
-    return 0;
-  default:
-    assert(0);
-    return 0;
   }
+
+  return 0;
 }
 
-void make_time(const type::Time *l_time, String *str)
+namespace type {
+
+static void make_time(const type::Time *l_time, String *str)
 {
   str->alloc(MAX_DATE_STRING_REP_LENGTH);
   uint32_t length= (uint32_t) my_time_to_str(l_time, str->c_ptr());
@@ -1110,7 +1110,7 @@ void make_time(const type::Time *l_time, String *str)
   str->set_charset(&my_charset_bin);
 }
 
-void make_date(const type::Time *l_time, String *str)
+static void make_date(const type::Time *l_time, String *str)
 {
   str->alloc(MAX_DATE_STRING_REP_LENGTH);
   uint32_t length= (uint32_t) my_date_to_str(l_time, str->c_ptr());
@@ -1119,7 +1119,7 @@ void make_date(const type::Time *l_time, String *str)
 }
 
 
-void make_datetime(const type::Time *l_time, String *str)
+static void make_datetime(const type::Time *l_time, String *str)
 {
   str->alloc(MAX_DATE_STRING_REP_LENGTH);
   uint32_t length= (uint32_t) my_datetime_to_str(l_time, str->c_ptr());
@@ -1127,6 +1127,31 @@ void make_datetime(const type::Time *l_time, String *str)
   str->set_charset(&my_charset_bin);
 }
 
+
+
+void Time::convert(String &str, const enum_drizzle_timestamp_type arg)
+{
+  switch (arg) {
+  case DRIZZLE_TIMESTAMP_DATETIME:
+    make_datetime(this, &str);
+    break;
+
+  case DRIZZLE_TIMESTAMP_DATE:
+    make_date(this, &str);
+    break;
+
+  case DRIZZLE_TIMESTAMP_TIME:
+    make_time(this, &str);
+    break;
+
+  case DRIZZLE_TIMESTAMP_NONE:
+  case DRIZZLE_TIMESTAMP_ERROR:
+    assert(0);
+    break;
+  }
+}
+
+}
 
 /*
   Convert datetime value specified as number to broken-down TIME

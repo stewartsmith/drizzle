@@ -54,7 +54,7 @@ String *Item_func_from_unixtime::val_str(String *str)
     return 0;
   }
 
-  make_datetime(&time_tmp, str);
+  time_tmp.convert(*str);
 
   return str;
 }

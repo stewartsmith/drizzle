@@ -32,6 +32,8 @@
 # endif
 #endif
 
+#include <drizzled/sql_string.h>
+
 namespace drizzled
 {
 
@@ -103,19 +105,11 @@ public:
     neg= false;
     time_type= DRIZZLE_TIMESTAMP_DATE;
   }
+
+  void convert(drizzled::String &str, const enum_drizzle_timestamp_type arg= DRIZZLE_TIMESTAMP_DATETIME);
 };
 
 }
-
-class String;
-
-void make_time(const type::Time *l_time, String *str);
-
-void make_date(const type::Time *l_time, String *str);
-
-void make_datetime(const type::Time *l_time, String *str);
-
-
 
 bool check_date(const type::Time *ltime, bool not_zero_date,
                    uint32_t flags, int *was_cut);
