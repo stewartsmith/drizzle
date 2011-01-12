@@ -1512,7 +1512,6 @@ copy_data_between_tables(Session *session,
       FileSort filesort(*session);
       from->sort.io_cache= new internal::IO_CACHE;
 
-      memset(&tables, 0, sizeof(tables));
       tables.table= from;
       tables.setTableName(const_cast<char *>(from->getMutableShare()->getTableName()));
       tables.alias= const_cast<char *>(tables.getTableName());
