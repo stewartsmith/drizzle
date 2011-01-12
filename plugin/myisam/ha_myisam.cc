@@ -1503,10 +1503,10 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("max-sort-file-size",
           po::value<uint64_t>(&max_sort_file_size)->default_value(INT32_MAX),
-          N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
+          _("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
   context("sort-buffer-size",
           po::value<sort_buffer_constraint>(&sort_buffer_size)->default_value(8192*1024),
-          N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
+          _("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
 }
 
 

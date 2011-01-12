@@ -280,9 +280,8 @@ static bool prepare_alter_table(Session *session,
   CreateField *def;
 
   /* First collect all fields from table which isn't in drop_list */
-  Field **f_ptr;
   Field *field;
-  for (f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
+  for (Field **f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
     AlterDrop *drop;
@@ -302,6 +301,7 @@ static bool prepare_alter_table(Session *session,
         break;
       }
     }
+
     if (drop)
     {
       drop_it.remove();
@@ -319,6 +319,7 @@ static bool prepare_alter_table(Session *session,
           ! my_strcasecmp(system_charset_info, field->field_name, def->change))
 	      break;
     }
+
     if (def)
     {
       /* Field is changed */
@@ -367,6 +368,7 @@ static bool prepare_alter_table(Session *session,
       }
     }
   }
+
   def_it.rewind();
   while ((def= def_it++)) /* Add new columns */
   {
@@ -423,6 +425,7 @@ static bool prepare_alter_table(Session *session,
       alter_info->build_method= HA_BUILD_OFFLINE;
     }
   }
+
   if (alter_info->alter_list.elements)
   {
     my_error(ER_BAD_FIELD_ERROR,
@@ -431,6 +434,7 @@ static bool prepare_alter_table(Session *session,
              table->getMutableShare()->getTableName());
     return true;
   }
+
   if (! new_create_list.elements)
   {
     my_message(ER_CANT_REMOVE_ALL_FIELDS,

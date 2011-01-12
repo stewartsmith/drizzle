@@ -13,6 +13,7 @@ drizzled/drizzled.cc
 drizzled/error.cc
 drizzled/gettext.h
 drizzled/ha_commands.cc
+drizzled/identifier/catalog.cc
 drizzled/identifier/schema.cc
 drizzled/identifier/table.cc
 drizzled/internal/default.cc
@@ -55,8 +56,8 @@ drizzled/tztime.cc
 plugin/auth_file/auth_file.cc
 plugin/auth_http/auth_http.cc
 plugin/auth_ldap/auth_ldap.cc
-plugin/blitzdb/ha_blitz.h
 plugin/blitzdb/ha_blitz.cc
+plugin/blitzdb/ha_blitz.h
 plugin/console/console.cc
 plugin/default_replicator/default_replicator.cc
 plugin/drizzle_protocol/drizzle_protocol.cc

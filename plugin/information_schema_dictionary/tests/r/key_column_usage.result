@@ -336,40 +336,40 @@ PRIMARY KEY  (`workspace_id`)
 ) ;
 select * from information_schema.key_column_usage WHERE table_schema="everything" ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME;
 CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION
-	everything	PRIMARY		everything	branch	branch_id	1
-	everything	PRIMARY		everything	container	container_id	1
-	everything	PRIMARY		everything	document	document_id	1
-	everything	PRIMARY		everything	genstats_attributes	genstats_attributes_id	1
-	everything	PRIMARY		everything	htmlcode	htmlcode_id	1
-	everything	PRIMARY		everything	htmlpage	htmlpage_id	1
-	everything	PRIMARY		everything	image	image_id	1
-	everything	PRIMARY		everything	javascript	javascript_id	1
-	everything	PRIMARY		everything	knowledge_item	knowledge_item_id	1
-	everything	PRIMARY		everything	links	from_node	1
-	everything	PRIMARY		everything	links	linktype	3
-	everything	PRIMARY		everything	links	to_node	2
-	everything	PRIMARY		everything	mail	mail_id	1
-	everything	PRIMARY		everything	node	node_id	1
-	everything	PRIMARY		everything	nodegroup	nodegroup_id	1
-	everything	PRIMARY		everything	nodegroup	rank	2
-	everything	PRIMARY		everything	nodelet	nodelet_id	1
-	everything	PRIMARY		everything	nodemethod	nodemethod_id	1
-	everything	PRIMARY		everything	nodetype	nodetype_id	1
-	everything	PRIMARY		everything	project	project_id	1
-	everything	PRIMARY		everything	project_document	project_document_id	1
-	everything	PRIMARY		everything	question	question_id	1
-	everything	PRIMARY		everything	question	rank	2
-	everything	PRIMARY		everything	redirects	redirects_id	1
-	everything	PRIMARY		everything	releases	releases_id	1
-	everything	PRIMARY		everything	revision	inside_workspace	2
-	everything	PRIMARY		everything	revision	node_id	1
-	everything	PRIMARY		everything	revision	revision_id	3
-	everything	PRIMARY		everything	setting	setting_id	1
-	everything	PRIMARY		everything	symlink	symlink_id	1
-	everything	PRIMARY		everything	themesetting	themesetting_id	1
-	everything	PRIMARY		everything	typeversion	typeversion_id	1
-	everything	PRIMARY		everything	user	user_id	1
-	everything	PRIMARY		everything	version	version_id	1
-	everything	PRIMARY		everything	weblog	entry_id	1
-	everything	PRIMARY		everything	workspace	workspace_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	branch	branch_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	container	container_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	document	document_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	genstats_attributes	genstats_attributes_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	htmlcode	htmlcode_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	htmlpage	htmlpage_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	image	image_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	javascript	javascript_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	knowledge_item	knowledge_item_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	links	from_node	1
+LOCAL	everything	PRIMARY	LOCAL	everything	links	linktype	3
+LOCAL	everything	PRIMARY	LOCAL	everything	links	to_node	2
+LOCAL	everything	PRIMARY	LOCAL	everything	mail	mail_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	node	node_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	nodegroup	nodegroup_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	nodegroup	rank	2
+LOCAL	everything	PRIMARY	LOCAL	everything	nodelet	nodelet_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	nodemethod	nodemethod_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	nodetype	nodetype_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	project	project_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	project_document	project_document_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	question	question_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	question	rank	2
+LOCAL	everything	PRIMARY	LOCAL	everything	redirects	redirects_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	releases	releases_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	revision	inside_workspace	2
+LOCAL	everything	PRIMARY	LOCAL	everything	revision	node_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	revision	revision_id	3
+LOCAL	everything	PRIMARY	LOCAL	everything	setting	setting_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	symlink	symlink_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	themesetting	themesetting_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	typeversion	typeversion_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	user	user_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	version	version_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	weblog	entry_id	1
+LOCAL	everything	PRIMARY	LOCAL	everything	workspace	workspace_id	1
 drop schema everything;

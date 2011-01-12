@@ -44,6 +44,8 @@ statement {
     if_exists_clause: false
   }
 }
+segment_id: 1
+end_segment: true
 
 
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -105,11 +107,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -146,6 +151,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -182,6 +189,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -195,6 +204,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 CHANGE COLUMN padding less_padding VARCHAR(180) NOT NULL"
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -214,5 +225,7 @@ statement {
     if_exists_clause: false
   }
 }
+segment_id: 1
+end_segment: true
 
 SET GLOBAL transaction_log_truncate_debug= true;

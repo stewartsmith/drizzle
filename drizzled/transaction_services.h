@@ -497,18 +497,19 @@ private:
   int sendEvent(Session *session, const message::Event &event);
 
   /**
-   * Helper method which checks the UpdateHeader to determine 
-   * if it needs to be finalized.  
+   * Makes a given Transaction message segmented.
    *
-   * @param[in] statement Statement message container to check 
-   * @param[in] in_table Pointer to the Table being updated
-   * @param[in] old_record Pointer to the old data in the record
-   * @param[in] new_record Pointer to the new data in the record
+   * The given Transaction message will have its segment information set
+   * appropriately and a new Transaction message, containing the same
+   * transaction ID as the supplied Transaction, and is created.
+   *
+   * @param in_session Session pointer
+   * @param transaction Pointer to the Transaction message to segment.
+   *
+   * @returns Returns a pointer to a new Transaction message ready for use.
    */
-  bool useExistingUpdateHeader(message::Statement &statement,
-                               Table *in_table,
-                               const unsigned char *old_record,
-                               const unsigned char *new_record);
+  message::Transaction *segmentTransactionMessage(Session *in_session,
+                                                  message::Transaction *transaction);
 
   plugin::XaStorageEngine *xa_storage_engine;
 };
