@@ -435,61 +435,94 @@ handle_error(uint32_t ,
   return true;
 }
 
-/**
-   returns ENOENT if the file doesn't exists.
-*/
-int StorageEngine::dropTable(Session& session,
-                             const TableIdentifier &identifier)
+class DropTableByIdentifier: public std::unary_function<EngineVector::value_type, bool>
 {
-  int error= 0;
-  int error_proto;
-  message::table::shared_ptr src_proto;
-  StorageEngine *engine;
+  Session::reference session;
+  TableIdentifier::const_reference identifier;
+  drizzled::error_t &error;
 
-  error_proto= StorageEngine::getTableDefinition(session, identifier, src_proto);
+public:
 
-  if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
+  DropTableByIdentifier(Session::reference session_arg,
+                        TableIdentifier::const_reference identifier_arg,
+                        drizzled::error_t &error_arg) :
+    session(session_arg),
+    identifier(identifier_arg),
+    error(error_arg)
+  { }
+
+  result_type operator() (argument_type engine)
   {
-    std::string error_message;
-    identifier.getSQLPath(error_message);
+    if (not engine->doDoesTableExist(session, identifier))
+      return false;
 
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             error_message.c_str(),
-             src_proto->InitializationErrorString().c_str());
+    int local_error= engine->doDropTable(session, identifier);
 
-    return ER_CORRUPT_TABLE_DEFINITION;
+
+    if (not local_error)
+      return true;
+
+    switch (local_error)
+    {
+    case HA_ERR_NO_SUCH_TABLE:
+    case ENOENT:
+      error= static_cast<drizzled::error_t>(HA_ERR_NO_SUCH_TABLE);
+      return false;
+
+    default:
+      error= static_cast<drizzled::error_t>(local_error);
+      return true;
+    }
+  } 
+};
+
+
+bool StorageEngine::dropTable(Session::reference session,
+                              TableIdentifier::const_reference identifier,
+                              drizzled::error_t &error)
+{
+  error= EE_OK;
+
+  EngineVector::const_iterator iter= std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
+                                                  DropTableByIdentifier(session, identifier, error));
+
+  if (error)
+  {
+    return false;
+  }
+  else if (iter == vector_of_engines.end())
+  {
+    error= ER_BAD_TABLE_ERROR;
+    return false;
   }
 
-  if (src_proto)
-    engine= StorageEngine::findByName(session, src_proto->engine().name());
-  else
-    engine= StorageEngine::findByName(session, "");
+  drizzled::message::Cache::singleton().erase(identifier);
 
-  if (not engine)
-  {
-    std::string error_message;
-    identifier.getSQLPath(error_message);
-
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str(), "");
-
-    return ER_CORRUPT_TABLE_DEFINITION;
-  }
-
-  error= StorageEngine::dropTable(session, *engine, identifier);
-
-  if (error_proto && error == 0)
-    return 0;
-
-  return error;
+  return true;
 }
 
-int StorageEngine::dropTable(Session& session,
-                             StorageEngine &engine,
-                             const TableIdentifier &identifier)
+bool StorageEngine::dropTable(Session& session,
+                              const TableIdentifier &identifier)
 {
-  int error;
+  drizzled::error_t error;
 
+  if (not dropTable(session, identifier, error))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+bool StorageEngine::dropTable(Session::reference session,
+                              StorageEngine &engine,
+                              TableIdentifier::const_reference identifier,
+                              drizzled::error_t &error)
+{
+  error= EE_OK;
   engine.setTransactionReadWrite(session);
+
+  assert(identifier.isTmp());
   
   if (unlikely(plugin::EventObserver::beforeDropTable(session, identifier)))
   {
@@ -497,7 +530,8 @@ int StorageEngine::dropTable(Session& session,
   }
   else
   {
-    error= engine.doDropTable(session, identifier);
+    error= static_cast<drizzled::error_t>(engine.doDropTable(session, identifier));
+
     if (unlikely(plugin::EventObserver::afterDropTable(session, identifier, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
@@ -506,7 +540,12 @@ int StorageEngine::dropTable(Session& session,
 
   drizzled::message::Cache::singleton().erase(identifier);
 
-  return error;
+  if (error)
+  {
+    return false;
+  }
+
+  return true;
 }
 
 
@@ -554,7 +593,11 @@ int StorageEngine::createTable(Session &session,
                                                  table_message);
     }
 
-    if (error)
+    if (error == ER_TABLE_PERMISSION_DENIED)
+    {
+      my_error(ER_TABLE_PERMISSION_DENIED, identifier);
+    }
+    else if (error)
     {
       std::string path;
       identifier.getSQLPath(path);
@@ -763,11 +806,6 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
 */
 void StorageEngine::print_error(int error, myf errflag, Table &table)
 {
-  print_error(error, errflag, &table);
-}
-
-void StorageEngine::print_error(int error, myf errflag, Table *table)
-{
   drizzled::error_t textno= ER_GET_ERRNO;
   switch (error) {
   case EACCES:
@@ -789,13 +827,12 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     break;
   case HA_ERR_FOUND_DUPP_KEY:
   {
-    assert(table);
-    uint32_t key_nr= table->get_dup_key(error);
+    uint32_t key_nr= table.get_dup_key(error);
     if ((int) key_nr >= 0)
     {
       const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
 
-      print_keydup_error(key_nr, err_msg, *table);
+      print_keydup_error(key_nr, err_msg, table);
 
       return;
     }
@@ -804,8 +841,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
   }
   case HA_ERR_FOREIGN_DUPLICATE_KEY:
   {
-    assert(table);
-    uint32_t key_nr= table->get_dup_key(error);
+    uint32_t key_nr= table.get_dup_key(error);
     if ((int) key_nr >= 0)
     {
       uint32_t max_length;
@@ -815,7 +851,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
       String str(key,sizeof(key),system_charset_info);
 
       /* Table is opened and defined at this point */
-      key_unpack(&str,table,(uint32_t) key_nr);
+      key_unpack(&str, &table,(uint32_t) key_nr);
       max_length= (DRIZZLE_ERRMSG_SIZE-
                    (uint32_t) strlen(ER(ER_FOREIGN_DUPLICATE_KEY)));
       if (str.length() >= max_length)
@@ -823,7 +859,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
         str.length(max_length-4);
         str.append(STRING_WITH_LEN("..."));
       }
-      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->getShare()->getTableName(),
+      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table.getShare()->getTableName(),
         str.c_ptr(), key_nr+1);
       return;
     }
@@ -900,20 +936,18 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     textno=ER_TABLE_DEF_CHANGED;
     break;
   case HA_ERR_NO_SUCH_TABLE:
-    assert(table);
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table->getShare()->getSchemaName(),
-             table->getShare()->getTableName());
+    my_error(ER_NO_SUCH_TABLE, MYF(0), table.getShare()->getSchemaName(),
+             table.getShare()->getTableName());
     return;
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
     break;
   case HA_ERR_DROP_INDEX_FK:
   {
-    assert(table);
     const char *ptr= "???";
-    uint32_t key_nr= table->get_dup_key(error);
+    uint32_t key_nr= table.get_dup_key(error);
     if ((int) key_nr >= 0)
-      ptr= table->key_info[key_nr].name;
+      ptr= table.key_info[key_nr].name;
     my_error(ER_DROP_INDEX_FK, MYF(0), ptr);
     return;
   }
@@ -958,7 +992,8 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
       return;
     }
   }
-  my_error(textno, errflag, table->getShare()->getTableName(), error);
+
+  my_error(textno, errflag, table.getShare()->getTableName(), error);
 }
 
 

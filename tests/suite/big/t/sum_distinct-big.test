@@ -53,16 +53,14 @@ SELECT SUM(DISTINCT id) sm FROM t1 group by id % 13;
 
 SET max_heap_table_size=16384;
 
-# Drizzle bug 376299
-# please uncomment the test after the bug is fixed
 # to check that max_heap_table_size was actually set (hard limit for minimum
 # max_heap_table_size is set in mysqld.cc):
-#
+
 SHOW variables LIKE 'max_heap_table_size';
 
-#SELECT SUM(DISTINCT id) sm FROM t1;
-#SELECT SUM(DISTINCT id) sm FROM t2;
-#SELECT SUM(DISTINCT id) sm FROM t1 GROUP BY id % 13;
+SELECT SUM(DISTINCT id) sm FROM t1;
+SELECT SUM(DISTINCT id) sm FROM t2;
+SELECT SUM(DISTINCT id) sm FROM t1 GROUP BY id % 13;
 
 DROP TABLE t1;
 DROP TABLE t2;

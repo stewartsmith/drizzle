@@ -38,6 +38,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -69,6 +71,8 @@ statement {
     schema_name: "my_test_schema"
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -110,6 +114,8 @@ statement {
     if_exists_clause: true
   }
 }
+segment_id: 1
+end_segment: true
 
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
@@ -137,6 +143,8 @@ statement {
     schema_name: "my_test_schema"
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -178,6 +186,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER SCHEMA my_test_schema COLLATE utf8_turkish_ci"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -260,6 +270,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 

@@ -37,6 +37,8 @@ statement {
     if_exists_clause: false
   }
 }
+segment_id: 1
+end_segment: true
 
 
 Dump log contents
@@ -105,6 +107,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -141,6 +145,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -177,6 +183,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -196,5 +204,7 @@ statement {
     if_exists_clause: false
   }
 }
+segment_id: 1
+end_segment: true
 
 SET GLOBAL transaction_log_truncate_debug= true;

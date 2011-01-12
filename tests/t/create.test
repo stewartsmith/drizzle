@@ -1213,12 +1213,12 @@ drop table имя_таблицы_в_кодировке_утф8_длиной_бо
 #
 # Bug#25629 CREATE TABLE LIKE does not work with INFORMATION_SCHEMA
 #
---error ER_CANT_CREATE_TABLE
+--error ER_CANT_CREATE_TABLE,ER_TABLE_PERMISSION_DENIED
 create table t1 like data_dictionary.processlist;
 create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 drop table t1;
---error ER_CANT_CREATE_TABLE
+--error ER_CANT_CREATE_TABLE,ER_TABLE_PERMISSION_DENIED
 create temporary table t1 like data_dictionary.processlist;
 create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;

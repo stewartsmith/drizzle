@@ -326,9 +326,11 @@ Instance::~Instance()
     }
 
     TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
+    drizzled::error_t ignored;
     plugin::StorageEngine::dropTable(*in_use,
                                      *getShare()->getEngine(),
-                                     identifier);
+                                     identifier,
+                                     ignored);
 
     delete cursor;
   }
