@@ -557,11 +557,12 @@ bool StorageEngine::dropTable(Session::reference session,
   @retval
    1  error
 */
-int StorageEngine::createTable(Session &session,
-                               const TableIdentifier &identifier,
-                               message::Table& table_message)
+bool StorageEngine::createTable(Session &session,
+                                const TableIdentifier &identifier,
+                                message::Table& table_message)
 {
-  int error= 1;
+  drizzled::error_t error= EE_OK;
+
   TableShare share(identifier);
   table::Shell table(share);
   message::Table tmp_proto;
@@ -569,6 +570,11 @@ int StorageEngine::createTable(Session &session,
   if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, identifier, "", 0, 0, table))
   { 
     // @note Error occured, we should probably do a little more here.
+    // ER_CORRUPT_TABLE_DEFINITION,ER_CORRUPT_TABLE_DEFINITION_ENUM 
+    
+    my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
+
+    return false;
   }
   else
   {
@@ -587,10 +593,10 @@ int StorageEngine::createTable(Session &session,
     {
       share.storage_engine->setTransactionReadWrite(session);
 
-      error= share.storage_engine->doCreateTable(session,
-                                                 table,
-                                                 identifier,
-                                                 table_message);
+      error= static_cast<drizzled::error_t>(share.storage_engine->doCreateTable(session,
+                                                                                table,
+                                                                                identifier,
+                                                                                table_message));
     }
 
     if (error == ER_TABLE_PERMISSION_DENIED)
@@ -607,7 +613,7 @@ int StorageEngine::createTable(Session &session,
     table.delete_table();
   }
 
-  return(error != 0);
+  return(error == EE_OK);
 }
 
 Cursor *StorageEngine::getCursor(Table &arg)

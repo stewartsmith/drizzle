@@ -390,9 +390,9 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static int createTable(Session& session,
-                         const drizzled::TableIdentifier &identifier,
-                         message::Table& table_proto);
+  static bool createTable(Session &session,
+                          const TableIdentifier &identifier,
+                          message::Table& table_message);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 

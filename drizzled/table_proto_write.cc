@@ -604,9 +604,9 @@ bool rea_create_table(Session *session,
 
   assert(table_proto.name() == identifier.getTableName());
 
-  if (plugin::StorageEngine::createTable(*session,
-                                         identifier,
-                                         table_proto))
+  if (not plugin::StorageEngine::createTable(*session,
+                                             identifier,
+                                             table_proto))
   {
     return false;
   }

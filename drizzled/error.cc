@@ -473,9 +473,10 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   ADD_ERROR_MESSAGE(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));
 
-  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition for %s: %s"));
-  ADD_ERROR_MESSAGE(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for %s : %s"));
-  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_ENUM, N_("The number of enum that were required was too high for table %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for '%s' : %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition for '%s': %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_ENUM, N_("The number of enum that were required was too high for table '%s'"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, N_("Corrupt or invalid table definition for '%s'"));
   ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, N_("Collation '%s' for table %s is invalid/unknown"));
 
   ADD_ERROR_MESSAGE(ER_TABLE_DROP, N_("Cannot drop table '%s'"));
