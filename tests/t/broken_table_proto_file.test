@@ -13,7 +13,7 @@ system echo "this is a junk file for test" >> $DRIZZLETEST_VARDIR/master-data/lo
 SHOW TABLE STATUS like 't1';
 --error ER_CORRUPT_TABLE_DEFINITION
 show create table t1;
---error ER_CORRUPT_TABLE_DEFINITION
+--error ER_CORRUPT_TABLE_DEFINITION,ER_BAD_TABLE_ERROR
 drop table if exists t1;
 system rm -f $DRIZZLETEST_VARDIR/master-data/local/test/t1.dfe;
 
