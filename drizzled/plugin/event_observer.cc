@@ -28,7 +28,7 @@
 
 #include "drizzled/session.h"
 #include "drizzled/table_list.h"
-#include "drizzled/definition/table.h"
+#include "drizzled/table/instance.h"
 #include "drizzled/module/registry.h"
 #include "drizzled/plugin/event_observer.h"
 #include <drizzled/util/functors.h>
