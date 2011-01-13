@@ -181,10 +181,35 @@ transaction_context {
   END_TIMESTAMP
 }
 statement {
-  type: RAW_SQL
+  type: ALTER_SCHEMA
   START_TIMESTAMP
   END_TIMESTAMP
-  sql: "ALTER SCHEMA my_test_schema COLLATE utf8_turkish_ci"
+  alter_schema_statement {
+    before {
+      name: "my_test_schema"
+      collation: "utf8_general_ci"
+      engine {
+        name: "filesystem"
+      }
+      catalog: "LOCAL"
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+      
+      version: 1
+    }
+    after {
+      name: "my_test_schema"
+      collation: "utf8_turkish_ci"
+      engine {
+        name: "filesystem"
+      }
+      catalog: "LOCAL"
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+      
+      version: 2
+    }
+  }
 }
 segment_id: 1
 end_segment: true

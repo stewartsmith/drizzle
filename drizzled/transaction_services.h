@@ -28,6 +28,7 @@
 #include "drizzled/atomics.h"
 #include "drizzled/message/transaction.pb.h"
 #include "drizzled/identifier/table.h"
+#include "drizzled/message/schema.h"
 
 namespace drizzled
 {
@@ -302,6 +303,19 @@ public:
    * @param[in] schema_name message::Schema message describing new schema
    */
   void dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier);
+
+  /**
+   * Creates an AlterSchema Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] in_session Pointer to the Session which issued the statement
+   * @param[in] old_schema Original schema definition
+   * @param[in] new_schema New schema definition
+   */
+  void alterSchema(Session *in_session,
+                   const message::schema::shared_ptr &old_schema,
+                   const message::Schema &new_schema);
 
   /**
    * Creates a CreateTable Statement GPB message and adds it
