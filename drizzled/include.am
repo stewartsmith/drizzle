@@ -408,6 +408,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/alter_schema.h \
 			      drizzled/statement/alter_table.h \
 			      drizzled/statement/analyze.h \
+			      drizzled/statement/catalog.h \
+			      drizzled/statement/catalog/create.h \
+			      drizzled/statement/catalog/drop.h \
 			      drizzled/statement/change_schema.h \
 			      drizzled/statement/check.h \
 			      drizzled/statement/commit.h \
@@ -794,6 +797,9 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/statement/alter_schema.cc \
 			   drizzled/statement/alter_table.cc \
 			   drizzled/statement/analyze.cc \
+			   drizzled/statement/catalog.cc \
+			   drizzled/statement/catalog/create.cc \
+			   drizzled/statement/catalog/drop.cc \
 			   drizzled/statement/change_schema.cc \
 			   drizzled/statement/check.cc \
 			   drizzled/statement/commit.cc \

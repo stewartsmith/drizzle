@@ -46,7 +46,6 @@ class Cursor;
 typedef struct st_hash HASH;
 
 class TableShare;
-typedef drizzle_lex_string LEX_STRING;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
