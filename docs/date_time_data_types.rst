@@ -39,8 +39,14 @@ The new table now looks like this:
 |1     |2010-01-10 07:32:43.234567  |
 +------+----------------------------+
 
+DATE
+----
+
+In Drizzle, valid date inputs begin at 0001-01-01 rather than 0000-00-00, which is not a valid date. NULL is also a valid DATE entry.
+
 TIME
 ----
 
 Drizzle's TIME data type has a range of 00:00:00 - 24:59:59, while MySQL's TIME data type has a range of -838:59:59 - 838:59:59.
+
 To prevent data loss to this type when converting from MySQL -> Drizzle, the conversion changes TIME to an INT of the number of seconds. For example, 00:00:00 becomes 0, 01:00:00 becomes 3600, and -01:00:00 becomes -3600.
