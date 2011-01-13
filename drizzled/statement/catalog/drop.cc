@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,11 +20,28 @@
 
 #include "config.h"
 
-#include "drizzled/error.h"
-#include "drizzled/catalog.h"
+#include <drizzled/statement/catalog.h>
 
-namespace drizzled {
-namespace catalog {
+namespace drizzled
+{
+
+namespace statement
+{
+
+namespace catalog
+{
+
+Drop::Drop(Session *in_session, drizzled::lex_string_t &arg) :
+  Catalog(in_session, arg)
+{
+}
+
+bool Drop::authorized()
+{
+  my_error(ER_CATALOG_CANNOT_DROP_PERMISSION, identifier());
+  return false;
+}
 
 } /* namespace catalog */
+} /* namespace statement */
 } /* namespace drizzled */

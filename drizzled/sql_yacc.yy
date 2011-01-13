@@ -452,6 +452,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CASCADED                      /* SQL-2003-R */
 %token  CASE_SYM                      /* SQL-2003-R */
 %token  CAST_SYM                      /* SQL-2003-R */
+%token  CATALOG_SYM
 %token  CHAIN_SYM                     /* SQL-2003-N */
 %token  CHANGE_SYM
 %token  CHAR_SYM                      /* SQL-2003-R */
@@ -805,6 +806,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         row_format_or_text
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         schema_name
+	catalog_name
         opt_component
         engine_option_value
         savepoint_ident
@@ -1053,7 +1055,11 @@ statement:
 /* create a table */
 
 create:
-          CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident
+          CREATE CATALOG_SYM catalog_name
+          {
+            Lex->statement= new statement::catalog::Create(YYSession, $3);
+          }
+        | CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident
           {
             Lex->sql_command= SQLCOM_CREATE_TABLE;
             Lex->statement= new statement::CreateTable(YYSession);
@@ -3232,8 +3238,15 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_collation($3); }
         | DATABASE '(' ')'
           {
-            std::string database_str("database");
-            if (! ($$= reserved_keyword_function(YYSession, database_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, "database", NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+            Lex->setCacheable(false);
+	  }
+        | CATALOG_SYM '(' ')'
+          {
+            if (! ($$= reserved_keyword_function(YYSession, "catalog", NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -4468,7 +4481,11 @@ into_destination:
 */
 
 drop:
-          DROP opt_temporary table_or_tables if_exists table_list
+          DROP CATALOG_SYM catalog_name
+          {
+            Lex->statement= new statement::catalog::Drop(YYSession, $3);
+          }
+        | DROP opt_temporary table_or_tables if_exists table_list
           {
             Lex->sql_command = SQLCOM_DROP_TABLE;
             statement::DropTable *statement= new statement::DropTable(YYSession);
@@ -5867,6 +5884,10 @@ table_ident:
         ;
 
 schema_name:
+          ident
+        ;
+
+catalog_name:
           ident
         ;
 

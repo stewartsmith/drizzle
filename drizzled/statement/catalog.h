@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,62 +18,39 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_H
-#define DRIZZLED_STATEMENT_H
 
-#include <drizzled/definitions.h>
-#include <drizzled/error.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/show.h>
+#ifndef DRIZZLED_STATEMENT_CATALOG_H
+#define DRIZZLED_STATEMENT_CATALOG_H
+
+#include <drizzled/statement.h>
 
 namespace drizzled
 {
 
-class Session;
-class TableList;
-class Item;
-
 namespace statement
 {
 
-/**
- * @class Statement
- * @brief Represents a statement to be executed
- */
-class Statement
+class Catalog : public Statement
 {
+  identifier::Catalog _identifier;
+
 public:
-  Statement(Session *in_session) : 
-    session(in_session)
-  {}
+  Catalog(Session *in_session, drizzled::lex_string_t &arg);
 
-  virtual ~Statement() {}
+  virtual bool authorized()= 0;
 
-  /**
-   * Execute the statement.
-   *
-   * @return true on failure; false on success
-   */
-  virtual bool execute()= 0;
+  bool execute();
 
-  Session *getSession()
+  identifier::Catalog::const_reference identifier() const
   {
-    return session;
+    return _identifier;
   }
-
-  virtual bool isShow() { return false; }
-
-protected:
-
-  /**
-   * A session handler.
-   */
-  Session *session;
 };
 
 } /* namespace statement */
-
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_H */
+#include <drizzled/statement/catalog/create.h>
+#include <drizzled/statement/catalog/drop.h>
+
+#endif /* DRIZZLED_STATEMENT_CATALOG_H */
