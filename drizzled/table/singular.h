@@ -20,8 +20,8 @@
 
 /* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
-#define DRIZZLED_TABLE_PLACEHOLDER_H
+#ifndef DRIZZLED_TABLE_SINGULAR_H
+#define DRIZZLED_TABLE_SINGULAR_H
 
 namespace drizzled
 {
@@ -29,33 +29,60 @@ namespace drizzled
 namespace table
 {
 
-class Placeholder : public table::Concurrent
+class Singular : public Table
 {
-  instance::Shared private_share;
+  TableShare _share;
+  bool _has_variable_width;
 
 public:
-  Placeholder(Session *session, TableIdentifier &identifier) :
-    table::Concurrent(),
-    private_share(identifier)
+  Singular() :
+    _share(message::Table::INTERNAL),
+    _has_variable_width(false)
   {
-    setShare(&private_share);
-    in_use= session;
-
-    locked_by_name= true;
   }
 
-  bool isPlaceHolder(void) const
+  Singular(Session *session, List<CreateField> &field_list);
+
+  TableShare *getMutableShare(void)
   {
-    return true;
+    return &_share;
   }
 
-  void release(void)
+  void setShare(TableShare *)
   {
-    table::instance::release(getMutableShare());
+    assert(0);
   }
+
+  const TableShare *getShare(void) const
+  {
+    return &_share;
+  }
+
+  bool hasShare() const { return true; }
+
+  void release() {};
+
+  bool hasVariableWidth() const
+  {
+    return _has_variable_width;
+  }
+
+  bool create_myisam_tmp_table(KeyInfo *keyinfo,
+                               MI_COLUMNDEF *start_recinfo,
+                               MI_COLUMNDEF **recinfo,
+                               uint64_t options);
+  void setup_tmp_table_column_bitmaps();
+  bool open_tmp_table();
+
+  void setVariableWidth()
+  {
+    _has_variable_width= true;
+  }
+
+  ~Singular();
 };
 
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */
+#endif /* DRIZZLED_TABLE_SINGULAR_H */

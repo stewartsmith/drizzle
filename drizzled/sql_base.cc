@@ -118,7 +118,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
-  TableShare::release(table->getMutableShare());
+  table::instance::release(table->getMutableShare());
   table->setShare(share);
 }
 
