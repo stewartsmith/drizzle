@@ -326,6 +326,10 @@ public:
                                 const drizzled::TableIdentifier &identifier,
                                 message::table::shared_ptr &table_proto,
                                 bool include_temporary_tables= true);
+  static message::table::shared_ptr getTableMessage(Session& session,
+                                                    const drizzled::TableIdentifier &identifier,
+                                                    drizzled::error_t &error,
+                                                    bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::TableIdentifier &identifier,
                              bool include_temporary_tables= true);
@@ -390,9 +394,9 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static int createTable(Session& session,
-                         const drizzled::TableIdentifier &identifier,
-                         message::Table& table_proto);
+  static bool createTable(Session &session,
+                          const TableIdentifier &identifier,
+                          message::Table& table_message);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 

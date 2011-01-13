@@ -98,11 +98,11 @@ error_handler_func error_handler_hook= NULL;
        ...	variable list
 */
 
-void my_error(error_t nr, drizzled::Identifier::const_reference ref)
+void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
 {
   std::string temp;
   ref.getSQLPath(temp);
-  my_error(nr, MYF(0), temp.c_str());
+  my_error(nr, MyFlags, temp.c_str());
 } 
 
 void my_error(error_t nr)
@@ -473,9 +473,10 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   ADD_ERROR_MESSAGE(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));
 
-  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition for %s: %s"));
-  ADD_ERROR_MESSAGE(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for %s : %s"));
-  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_ENUM, N_("The number of enum that were required was too high for table %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for '%s' : %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition for '%s': %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_ENUM, N_("The number of enum that were required was too high for table '%s'"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, N_("Corrupt or invalid table definition for '%s'"));
   ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, N_("Collation '%s' for table %s is invalid/unknown"));
 
   ADD_ERROR_MESSAGE(ER_TABLE_DROP, N_("Cannot drop table '%s'"));

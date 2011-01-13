@@ -2004,7 +2004,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
                                  const TableIdentifier &src_table,
                                  bool is_engine_set)
 {
-  int protoerr= EEXIST;
+  int protoerr;
   message::Table new_proto;
   message::table::shared_ptr src_proto;
 
@@ -2045,20 +2045,19 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 
   /*
     As mysql_truncate don't work on a new table at this stage of
-    creation, instead create the table directly (for both normal
-    and temporary tables).
+    creation, instead create the table directly (for both normal and temporary tables).
   */
-  int err= plugin::StorageEngine::createTable(session,
-                                              destination_identifier,
-                                              new_proto);
+  bool success= plugin::StorageEngine::createTable(session,
+                                                   destination_identifier,
+                                                   new_proto);
 
-  if (err == false && not destination_identifier.isTmp())
+  if (success && not destination_identifier.isTmp())
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     transaction_services.createTable(&session, new_proto);
   }
 
-  return err ? false : true;
+  return success;
 }
 
 /*
@@ -2077,11 +2076,11 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 */
 
 bool create_like_table(Session* session,
-                             const TableIdentifier &destination_identifier,
-                             TableList* table, TableList* src_table,
-                             message::Table &create_table_proto,
-                             bool is_if_not_exists,
-                             bool is_engine_set)
+                       const TableIdentifier &destination_identifier,
+                       TableList* table, TableList* src_table,
+                       message::Table &create_table_proto,
+                       bool is_if_not_exists,
+                       bool is_engine_set)
 {
   bool res= true;
   uint32_t not_used;
