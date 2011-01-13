@@ -25,7 +25,6 @@
 #include <string>
 #include <fstream>
 
-#include <drizzled/message/schema.pb.h>
 #include "drizzled/error.h"
 #include <drizzled/gettext.h>
 #include <drizzled/my_hash.h>
@@ -144,7 +143,9 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
 
 /* db-name is already validated when we come here */
 
-bool alter_db(Session *session, const message::Schema &schema_message)
+bool alter_db(Session *session,
+              const message::Schema &schema_message,
+              const message::schema::shared_ptr &original_schema)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
 
@@ -179,7 +180,7 @@ bool alter_db(Session *session, const message::Schema &schema_message)
 
     if (success)
     {
-      transaction_services.rawStatement(session, *session->getQueryString());
+      transaction_services.alterSchema(session, original_schema, schema_message);
       session->my_ok(1);
     }
     else
