@@ -178,19 +178,33 @@ int Epoch::store(double from)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if (from < 0 || from > 99991231235959.0)
+  uint64_t from_tmp= (uint64_t)from;
+
+  Timestamp temporal;
+  if (not temporal.from_int64_t(from_tmp))
   {
-    /* Convert the double to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; 
-    ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
-  return Epoch::store((int64_t) rint(from), false);
+
+  time_t tmp;
+  temporal.to_time_t(tmp);
+
+  uint64_t tmp_micro= tmp;
+  pack_num(tmp_micro);
+
+  return 0;
+}
+
+int Epoch::store_decimal(const type::Decimal *value)
+{
+  double tmp;
+  value->convert(tmp);
+
+  return store(tmp);
 }
 
 int Epoch::store(int64_t from, bool)
@@ -202,7 +216,7 @@ int Epoch::store(int64_t from, bool)
    * if unable to create a valid DateTime.  
    */
   Timestamp temporal;
-  if (! temporal.from_int64_t(from))
+  if (not temporal.from_int64_t(from))
   {
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));

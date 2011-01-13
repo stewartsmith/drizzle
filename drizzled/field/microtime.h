@@ -55,7 +55,6 @@ public:
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int store_time(type::Time *ltime, enum enum_drizzle_timestamp_type t_type);
-  int store_decimal(const type::Decimal *);
 
   String *val_str(String*,String *);
   double val_real(void);

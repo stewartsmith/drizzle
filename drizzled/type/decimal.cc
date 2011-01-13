@@ -313,6 +313,10 @@ int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const
   return err;
 }
 
+void type::Decimal::convert(double &result) const
+{
+  decimal2double(static_cast<const decimal_t*>(this), &result);
+}
 
 type::Decimal *date2_class_decimal(type::Time *ltime, type::Decimal *dec)
 {

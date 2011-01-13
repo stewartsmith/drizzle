@@ -54,8 +54,8 @@ Microtime::Microtime(unsigned char *ptr_arg,
         unireg_check_arg,
         field_name_arg,
         share)
-  {
-  }
+{
+}
 
 Microtime::Microtime(bool maybe_null_arg,
                      const char *field_name_arg) :
@@ -110,7 +110,7 @@ int Microtime::store(double from)
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   uint64_t from_tmp= (uint64_t)from;
-  type::Time::usec_t fractional_seconds= (type::Time::usec_t)((from - from_tmp) * type::Time::FRACTIONAL_DIGITS);
+  type::Time::usec_t fractional_seconds= (type::Time::usec_t)((from - from_tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS;
 
   MicroTimestamp temporal;
   if (not temporal.from_int64_t(from_tmp))
@@ -130,16 +130,6 @@ int Microtime::store(double from)
   pack_num(fractional_seconds, ptr +8);
 
   return 0;
-}
-
-int Microtime::store_decimal(const type::Decimal *value)
-{
-  char buff[DECIMAL_MAX_STR_LENGTH+1];
-
-  String str(buff, sizeof(buff), &my_charset_bin);
-  class_decimal2string(E_DEC_FATAL_ERROR, value, 0, 0, 0, &str);
-
-  return store(str.ptr(), str.length(), str.charset());
 }
 
 int Microtime::store(int64_t from, bool)
