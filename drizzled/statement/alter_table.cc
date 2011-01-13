@@ -1495,147 +1495,157 @@ copy_data_between_tables(Session *session,
 
   found_count=delete_count=0;
 
-  if (order)
+  do
   {
-    if (to->getShare()->hasPrimaryKey() && to->cursor->primary_key_is_clustered())
+    if (order)
     {
-      char warn_buff[DRIZZLE_ERRMSG_SIZE];
-      snprintf(warn_buff, sizeof(warn_buff),
-               _("order_st BY ignored because there is a user-defined clustered "
-                 "index in the table '%-.192s'"),
-               from->getMutableShare()->getTableName());
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
-                   warn_buff);
-    }
-    else
-    {
-      FileSort filesort(*session);
-      from->sort.io_cache= new internal::IO_CACHE;
-
-      tables.table= from;
-      tables.setTableName(const_cast<char *>(from->getMutableShare()->getTableName()));
-      tables.alias= const_cast<char *>(tables.getTableName());
-      tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
-      error= 1;
-
-      if (session->lex->select_lex.setup_ref_array(session, order_num) ||
-          setup_order(session, session->lex->select_lex.ref_pointer_array,
-                      &tables, fields, all_fields, order) ||
-          !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
-          (from->sort.found_records= filesort.run(from, sortorder, length,
-                                                  (optimizer::SqlSelect *) 0, HA_POS_ERROR,
-                                                  1, examined_rows)) == HA_POS_ERROR)
+      if (to->getShare()->hasPrimaryKey() && to->cursor->primary_key_is_clustered())
       {
-        goto err;
+        char warn_buff[DRIZZLE_ERRMSG_SIZE];
+        snprintf(warn_buff, sizeof(warn_buff),
+                 _("order_st BY ignored because there is a user-defined clustered "
+                   "index in the table '%-.192s'"),
+                 from->getMutableShare()->getTableName());
+        push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+                     warn_buff);
+      }
+      else
+      {
+        FileSort filesort(*session);
+        from->sort.io_cache= new internal::IO_CACHE;
+
+        tables.table= from;
+        tables.setTableName(const_cast<char *>(from->getMutableShare()->getTableName()));
+        tables.alias= const_cast<char *>(tables.getTableName());
+        tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
+        error= 1;
+
+        if (session->lex->select_lex.setup_ref_array(session, order_num) ||
+            setup_order(session, session->lex->select_lex.ref_pointer_array,
+                        &tables, fields, all_fields, order) ||
+            !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
+            (from->sort.found_records= filesort.run(from, sortorder, length,
+                                                    (optimizer::SqlSelect *) 0, HA_POS_ERROR,
+                                                    1, examined_rows)) == HA_POS_ERROR)
+        {
+          break;
+        }
       }
     }
-  }
 
-  /* Tell handler that we have values for all columns in the to table */
-  to->use_all_columns();
-  error= info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
-  if (error)
-  {
-    to->print_error(errno, MYF(0));
-    goto err;
-  }
+    /* Tell handler that we have values for all columns in the to table */
+    to->use_all_columns();
 
-  if (ignore)
-    to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
-
-  session->row_count= 0;
-  to->restoreRecordAsDefault();        // Create empty record
-  while (!(error=info.read_record(&info)))
-  {
-    if (session->getKilled())
+    error= info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+    if (error)
     {
-      session->send_kill_message();
-      error= 1;
+      to->print_error(errno, MYF(0));
+
       break;
     }
-    session->row_count++;
-    /* Return error if source table isn't empty. */
-    if (error_if_not_empty)
+
+    if (ignore)
     {
-      error= 1;
-      break;
-    }
-    if (to->next_number_field)
-    {
-      if (auto_increment_field_copied)
-        to->auto_increment_field_not_null= true;
-      else
-        to->next_number_field->reset();
+      to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
     }
 
-    for (CopyField *copy_ptr= copy; copy_ptr != copy_end ; copy_ptr++)
+    session->row_count= 0;
+    to->restoreRecordAsDefault();        // Create empty record
+    while (not (error=info.read_record(&info)))
     {
-      if (not copy->to_field->hasDefault() and copy->from_null_ptr and  *copy->from_null_ptr & copy->from_bit)
+      if (session->getKilled())
       {
-        copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                    ER_WARN_DATA_TRUNCATED, 1);
-        copy->to_field->reset();
+        session->send_kill_message();
         error= 1;
         break;
       }
-
-      copy_ptr->do_copy(copy_ptr);
-    }
-
-    if (error)
-    {
-      break;
-    }
-
-    prev_insert_id= to->cursor->next_insert_id;
-    error= to->cursor->insertRecord(to->record[0]);
-    to->auto_increment_field_not_null= false;
-
-    if (error)
-    { 
-      if (!ignore || to->cursor->is_fatal_error(error, HA_CHECK_DUP))
-      { 
-        to->print_error(error, MYF(0));
+      session->row_count++;
+      /* Return error if source table isn't empty. */
+      if (error_if_not_empty)
+      {
+        error= 1;
         break;
       }
-      to->cursor->restore_auto_increment(prev_insert_id);
-      delete_count++;
+      if (to->next_number_field)
+      {
+        if (auto_increment_field_copied)
+          to->auto_increment_field_not_null= true;
+        else
+          to->next_number_field->reset();
+      }
+
+      for (CopyField *copy_ptr= copy; copy_ptr != copy_end ; copy_ptr++)
+      {
+        if (not copy->to_field->hasDefault() and copy->from_null_ptr and  *copy->from_null_ptr & copy->from_bit)
+        {
+          copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                      ER_WARN_DATA_TRUNCATED, 1);
+          copy->to_field->reset();
+          error= 1;
+          break;
+        }
+
+        copy_ptr->do_copy(copy_ptr);
+      }
+
+      if (error)
+      {
+        break;
+      }
+
+      prev_insert_id= to->cursor->next_insert_id;
+      error= to->cursor->insertRecord(to->record[0]);
+      to->auto_increment_field_not_null= false;
+
+      if (error)
+      { 
+        if (!ignore || to->cursor->is_fatal_error(error, HA_CHECK_DUP))
+        { 
+          to->print_error(error, MYF(0));
+          break;
+        }
+        to->cursor->restore_auto_increment(prev_insert_id);
+        delete_count++;
+      }
+      else
+      {
+        found_count++;
+      }
     }
-    else
+
+    info.end_read_record();
+    from->free_io_cache();
+    delete [] copy;				// This is never 0
+
+    if (to->cursor->ha_end_bulk_insert() && error <= 0)
     {
-      found_count++;
+      to->print_error(errno, MYF(0));
+      error= 1;
     }
-  }
+    to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
-  info.end_read_record();
-  from->free_io_cache();
-  delete [] copy;				// This is never 0
+    /*
+      Ensure that the new table is saved properly to disk so that we
+      can do a rename
+    */
+    if (transaction_services.autocommitOrRollback(session, false))
+      error= 1;
 
-  if (to->cursor->ha_end_bulk_insert() && error <= 0)
-  {
-    to->print_error(errno, MYF(0));
-    error=1;
-  }
-  to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
+    if (not session->endActiveTransaction())
+      error= 1;
 
-  /*
-    Ensure that the new table is saved properly to disk so that we
-    can do a rename
-  */
-  if (transaction_services.autocommitOrRollback(session, false))
-    error=1;
+  } while (0);
 
-  if (! session->endActiveTransaction())
-    error=1;
-
- err:
   session->abort_on_warning= 0;
   from->free_io_cache();
   *copied= found_count;
   *deleted=delete_count;
   to->cursor->ha_release_auto_increment();
-  if (to->cursor->ha_external_lock(session,F_UNLCK))
+
+  if (to->cursor->ha_external_lock(session, F_UNLCK))
+  {
     error=1;
+  }
 
   return(error > 0 ? -1 : 0);
 }
