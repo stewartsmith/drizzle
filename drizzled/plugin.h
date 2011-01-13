@@ -171,6 +171,7 @@ struct drizzle_value
 extern bool plugin_init(module::Registry &registry,
                         boost::program_options::options_description &long_options);
 extern bool plugin_finalize(module::Registry &registry);
+extern void plugin_startup_window(module::Registry &registry, drizzled::Session &session);
 extern void my_print_help_inc_plugins(option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);
