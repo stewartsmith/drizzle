@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,62 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_H
-#define DRIZZLED_STATEMENT_H
-
-#include <drizzled/definitions.h>
-#include <drizzled/error.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/show.h>
+#ifndef DRIZZLED_STATEMENT_CATALOG_DROP_H
+#define DRIZZLED_STATEMENT_CATALOG_DROP_H
 
 namespace drizzled
 {
 
-class Session;
-class TableList;
-class Item;
-
 namespace statement
 {
 
-/**
- * @class Statement
- * @brief Represents a statement to be executed
- */
-class Statement
+namespace catalog
+{
+
+class Drop :public Catalog
 {
 public:
-  Statement(Session *in_session) : 
-    session(in_session)
-  {}
-
-  virtual ~Statement() {}
-
-  /**
-   * Execute the statement.
-   *
-   * @return true on failure; false on success
-   */
-  virtual bool execute()= 0;
-
-  Session *getSession()
-  {
-    return session;
-  }
-
-  virtual bool isShow() { return false; }
-
-protected:
-
-  /**
-   * A session handler.
-   */
-  Session *session;
+  Drop(Session *in_session, drizzled::lex_string_t &arg);
+  bool authorized();
 };
 
+} /* namespace catalog */
 } /* namespace statement */
-
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_H */
+#endif /* DRIZZLED_STATEMENT_CATALOG_DROP_H */

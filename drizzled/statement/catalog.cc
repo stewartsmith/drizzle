@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,11 +20,29 @@
 
 #include "config.h"
 
-#include "drizzled/error.h"
-#include "drizzled/catalog.h"
+#include <drizzled/session.h>
+#include <drizzled/statement/catalog.h>
 
-namespace drizzled {
-namespace catalog {
+namespace drizzled
+{
 
-} /* namespace catalog */
+namespace statement
+{
+
+Catalog::Catalog(Session *in_session, drizzled::lex_string_t &arg) :
+  Statement(in_session),
+  _identifier(arg)
+{
+  in_session->getLex()->sql_command= SQLCOM_END;
+}
+
+bool Catalog::execute()
+{
+  if (not authorized())
+    return false;
+
+  return true;
+}
+
+} /* namespace statement */
 } /* namespace drizzled */

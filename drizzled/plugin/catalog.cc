@@ -124,12 +124,12 @@ bool Catalog::drop(const identifier::Catalog &identifier)
 
 bool Catalog::lock(const identifier::Catalog &identifier)
 {
-  catalog::error_t error;
+  drizzled::error_t error;
   
   // We insert a lock into the cache, if this fails we bail.
   if (not catalog::Cache::singleton().lock(identifier, error))
   {
-    catalog::error(error, identifier);
+    my_error(error, identifier);
 
     return false;
   }
@@ -140,10 +140,10 @@ bool Catalog::lock(const identifier::Catalog &identifier)
 
 bool Catalog::unlock(const identifier::Catalog &identifier)
 {
-  catalog::error_t error;
+  drizzled::error_t error;
   if (not catalog::Cache::singleton().unlock(identifier, error))
   {
-    catalog::error(error, identifier);
+    my_error(error, identifier);
   }
 
   return false;
@@ -188,7 +188,7 @@ void plugin::Catalog::getMessages(message::catalog::vector &messages)
 
 bool plugin::Catalog::getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message)
 {
-  catalog::error_t error;
+  drizzled::error_t error;
   catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
 
   if (instance and instance->message())
@@ -210,7 +210,7 @@ bool plugin::Catalog::getMessage(const identifier::Catalog &identifier, message:
 
 catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Catalog &identifier)
 {
-  catalog::error_t error;
+  drizzled::error_t error;
   catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
 
   if (instance)
