@@ -371,6 +371,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
+			      drizzled/schema/instance.h \
 			      drizzled/select_create.h \
 			      drizzled/select_dump.h \
 			      drizzled/select_dumpvar.h \
