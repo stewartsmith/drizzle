@@ -8,7 +8,6 @@ client/drizzleslap.cc
 client/drizzletest.cc
 drizzled/cursor.cc
 drizzled/db.cc
-drizzled/definition/table.cc
 drizzled/drizzled.cc
 drizzled/error.cc
 drizzled/gettext.h
