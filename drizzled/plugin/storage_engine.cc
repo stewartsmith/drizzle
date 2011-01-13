@@ -405,11 +405,10 @@ int StorageEngine::getTableDefinition(Session& session,
   return err;
 }
 
-bool StorageEngine::getTableMessage(Session& session,
-                                    const TableIdentifier &identifier,
-                                    message::table::shared_ptr &table_message,
-                                    drizzled::error_t &error,
-                                    bool include_temporary_tables)
+message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
+                                                          TableIdentifier::const_reference identifier,
+                                                          drizzled::error_t &error,
+                                                          bool include_temporary_tables)
 {
   error= static_cast<drizzled::error_t>(ENOENT);
 
@@ -418,16 +417,15 @@ bool StorageEngine::getTableMessage(Session& session,
     Table *table= session.find_temporary_table(identifier);
     if (table)
     {
-      table_message.reset(new message::Table(*table->getShare()->getTableProto()));
       error= EE_OK;
-      return true;
+      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableProto()));
     }
   }
 
   drizzled::message::table::shared_ptr table_ptr;
   if ((table_ptr= drizzled::message::Cache::singleton().find(identifier)))
   {
-    table_message= table_ptr;
+    (void)table_ptr;
   }
 
   message::Table message;
@@ -438,13 +436,13 @@ bool StorageEngine::getTableMessage(Session& session,
   if (iter == vector_of_engines.end())
   {
     error= static_cast<drizzled::error_t>(ENOENT);
-    return false;
+    return message::table::shared_ptr();
   }
-  table_message.reset(new message::Table(message));
+  message::table::shared_ptr table_message(new message::Table(message));
 
   drizzled::message::Cache::singleton().insert(identifier, table_message);
 
-  return (error == static_cast<drizzled::error_t>(EEXIST));
+  return table_message;
 }
 
 /**
