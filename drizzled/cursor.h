@@ -681,11 +681,11 @@ bool create_table_no_lock(Session *session,
                                 bool is_if_not_exists);
 
 bool create_like_table(Session* session,
-                             const TableIdentifier &destination_identifier,
-                             TableList* table, TableList* src_table,
-                             message::Table &create_table_proto,
-                             bool is_if_not_exists,
-                             bool is_engine_set);
+                       TableIdentifier::const_reference destination_identifier,
+                       TableIdentifier::const_reference source_identifier,
+                       message::Table &create_table_proto,
+                       bool is_if_not_exists,
+                       bool is_engine_set);
 
 bool rename_table(Session &session,
                         plugin::StorageEngine *base,

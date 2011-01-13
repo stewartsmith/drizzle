@@ -1999,19 +1999,27 @@ err:
     during the call to plugin::StorageEngine::createTable().
     See bug #28614 for more info.
   */
-static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
-                                 const TableIdentifier &destination_identifier,
-                                 const TableIdentifier &src_table,
+static bool create_table_wrapper(Session &session,
+                                 const message::Table& create_table_proto,
+                                 TableIdentifier::const_reference destination_identifier,
+                                 TableIdentifier::const_reference source_identifier,
                                  bool is_engine_set)
 {
-  int protoerr;
+  // We require an additional table message because during parsing we used
+  // a "new" message and it will not have all of the information that the
+  // source table message would have.
   message::Table new_proto;
-  message::table::shared_ptr src_proto;
+  drizzled::error_t error;
 
-  protoerr= plugin::StorageEngine::getTableDefinition(session,
-                                                      src_table,
-                                                      src_proto);
-  new_proto.CopyFrom(*src_proto);
+  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier, error);
+
+  if (not source_table_message)
+  {
+    my_error(ER_TABLE_UNKNOWN, source_identifier);
+    return false;
+  }
+
+  new_proto.CopyFrom(*source_table_message);
 
   if (destination_identifier.isTmp())
   {
@@ -2031,16 +2039,6 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
     new_proto.set_name(create_table_proto.name());
     new_proto.set_schema(create_table_proto.schema());
     new_proto.set_catalog(create_table_proto.catalog());
-  }
-
-  if (protoerr && protoerr != EEXIST)
-  {
-    if (errno == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0), destination_identifier.getSchemaName().c_str());
-    else
-      my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath().c_str(), errno);
-
-    return false;
   }
 
   /*
@@ -2076,31 +2074,14 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 */
 
 bool create_like_table(Session* session,
-                       const TableIdentifier &destination_identifier,
-                       TableList* table, TableList* src_table,
+                       TableIdentifier::const_reference destination_identifier,
+                       TableIdentifier::const_reference source_identifier,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
                        bool is_engine_set)
 {
   bool res= true;
-  uint32_t not_used;
-
-  /*
-    By opening source table we guarantee that it exists and no concurrent
-    DDL operation will mess with it. Later we also take an exclusive
-    name-lock on target table name, which makes copying of .frm cursor,
-    call to plugin::StorageEngine::createTable() and binlogging atomic
-    against concurrent DML and DDL operations on target table.
-    Thus by holding both these "locks" we ensure that our statement is
-    properly isolated from all concurrent operations which matter.
-  */
-  if (session->open_tables_from_list(&src_table, &not_used))
-    return true;
-
-  TableIdentifier src_identifier(src_table->table->getShare()->getSchemaName(),
-                                 src_table->table->getShare()->getTableName(), src_table->table->getShare()->getType());
-
-
+  bool table_exists= false;
 
   /*
     Check that destination tables does not exist. Note that its name
@@ -2108,7 +2089,6 @@ bool create_like_table(Session* session,
 
     For temporary tables we don't aim to grab locks.
   */
-  bool table_exists= false;
   if (destination_identifier.isTmp())
   {
     if (session->find_temporary_table(destination_identifier))
@@ -2117,8 +2097,11 @@ bool create_like_table(Session* session,
     }
     else
     {
-      bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                             src_identifier, is_engine_set);
+      bool was_created= create_table_wrapper(*session,
+                                             create_table_proto,
+                                             destination_identifier,
+                                             source_identifier,
+                                             is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
         (void) session->rm_temporary_table(destination_identifier, true);
@@ -2163,7 +2146,7 @@ bool create_like_table(Session* session,
       {
         boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* We lock for CREATE TABLE LIKE to copy table definition */
         was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                               src_identifier, is_engine_set);
+                                          source_identifier, is_engine_set);
       }
 
       // So we blew the creation of the table, and we scramble to clean up
@@ -2191,18 +2174,18 @@ bool create_like_table(Session* session,
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff),
-               ER(ER_TABLE_EXISTS_ERROR), table->getTableName());
+               ER(ER_TABLE_EXISTS_ERROR), destination_identifier.getTableName().c_str());
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                   ER_TABLE_EXISTS_ERROR,warn_buff);
-      res= false;
+                   ER_TABLE_EXISTS_ERROR, warn_buff);
+      return false;
     }
-    else
-    {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table->getTableName());
-    }
+
+    my_error(ER_TABLE_EXISTS_ERROR, destination_identifier);
+
+    return true;
   }
 
-  return(res);
+  return res;
 }
 
 
