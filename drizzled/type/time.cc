@@ -886,18 +886,7 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     We are safe with shifts close to MAX_INT32, as there are no known
     time switches on Jan 2038 yet :)
   */
-  if ((t->year == TIMESTAMP_MAX_YEAR) && (t->month == 1) && (t->day > 4))
-  {
-    /*
-      Below we will pass (uint32_t) (t->day - shift) to calc_daynr.
-      As we don't want to get an overflow here, we will shift
-      only safe dates. That's why we have (t->day > 4) above.
-    */
-    t->day-= 2;
-    shift= 2;
-  }
 #ifdef TIME_T_UNSIGNED
-  else
   {
     /*
       We can get 0 in time_t representaion only on 1969, 31 of Dec or on
@@ -1272,8 +1261,9 @@ uint64_t TIME_to_uint64_t_datetime(const type::Time *my_time)
 
 static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
 {
-  return (uint64_t) (my_time->year * 10000UL + my_time->month * 100UL +
-                      my_time->day);
+  return (uint64_t) (my_time->year * 10000UL +
+                     my_time->month * 100UL +
+                     my_time->day);
 }
 
 
@@ -1286,8 +1276,8 @@ static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
 static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
 {
   return (uint64_t) (my_time->hour * 10000UL +
-                      my_time->minute * 100UL +
-                      my_time->second);
+                     my_time->minute * 100UL +
+                     my_time->second);
 }
 
 

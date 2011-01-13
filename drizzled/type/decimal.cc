@@ -320,8 +320,10 @@ type::Decimal *date2_class_decimal(type::Time *ltime, type::Decimal *dec)
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;
   if (ltime->time_type > DRIZZLE_TIMESTAMP_DATE)
     date= ((date*100L + ltime->hour)*100L+ ltime->minute)*100L + ltime->second;
+
   if (int2_class_decimal(E_DEC_FATAL_ERROR, date, false, dec))
     return dec;
+
   if (ltime->second_part)
   {
     dec->buf[(dec->intg-1) / 9 + 1]= ltime->second_part * 1000;

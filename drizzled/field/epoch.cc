@@ -162,7 +162,7 @@ int Epoch::store(const char *from,
 
   if (not temporal.from_string(from, (size_t) len))
   {
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
     return 1;
   }
 
@@ -187,7 +187,7 @@ int Epoch::store(double from)
     ss << from; 
     ss >> tmp;
 
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
   return Epoch::store((int64_t) rint(from), false);
@@ -207,7 +207,7 @@ int Epoch::store(int64_t from, bool)
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
 
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
 

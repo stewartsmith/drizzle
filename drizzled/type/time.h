@@ -41,7 +41,6 @@ extern uint64_t log_10_int[20];
 extern unsigned char days_in_month[];
 
 /* Time handling defaults */
-#define TIMESTAMP_MAX_YEAR 2038
 #define TIMESTAMP_MIN_YEAR (1900 + YY_PART_YEAR - 1)
 #define TIMESTAMP_MAX_VALUE INT32_MAX
 #define TIMESTAMP_MIN_VALUE 1
@@ -94,9 +93,11 @@ namespace type {
 class Time
 {
 public:
+  typedef uint32_t usec_t;
+
   unsigned int year, month, day, hour, minute, second;
-  unsigned int second_part;
-  bool       neg;
+  usec_t second_part;
+  bool neg;
   enum enum_drizzle_timestamp_type time_type;
 
   void reset()
@@ -107,6 +108,8 @@ public:
   }
 
   void convert(drizzled::String &str, const enum_drizzle_timestamp_type arg= DRIZZLE_TIMESTAMP_DATETIME);
+
+  static const uint32_t FRACTIONAL_DIGITS= 1000000;
 };
 
 }
@@ -122,8 +125,7 @@ uint64_t TIME_to_uint64_t_datetime(const type::Time *);
 uint64_t TIME_to_uint64_t(const type::Time *);
 
 
-bool str_to_time(const char *str,uint32_t length, type::Time *l_time,
-                 int *warning);
+bool str_to_time(const char *str,uint32_t length, type::Time *l_time, int *warning);
 
 long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
 uint32_t calc_days_in_year(uint32_t year);
@@ -147,10 +149,10 @@ void init_time(void);
 
 static inline bool validate_timestamp_range(const type::Time *t)
 {
-  if ((t->year > TIMESTAMP_MAX_YEAR || t->year < TIMESTAMP_MIN_YEAR) ||
-      (t->year == TIMESTAMP_MAX_YEAR && (t->month > 1 || t->day > 19)) ||
-      (t->year == TIMESTAMP_MIN_YEAR && (t->month < 12 || t->day < 31)))
+  if ((t->year < TIMESTAMP_MIN_YEAR) or (t->year == TIMESTAMP_MIN_YEAR && (t->month < 12 || t->day < 31)))
+  {
     return false;
+  }
 
   return true;
 }

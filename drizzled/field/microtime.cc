@@ -74,7 +74,7 @@ int Microtime::store(const char *from,
 
   if (not temporal.from_string(from, (size_t) len))
   {
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
     return 1;
   }
 
@@ -109,19 +109,37 @@ int Microtime::store(double from)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if (from < 0 || from > 99991231235959.0)
-  {
-    /* Convert the double to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; 
-    ss >> tmp;
+  uint64_t from_tmp= (uint64_t)from;
+  type::Time::usec_t fractional_seconds= (type::Time::usec_t)((from - from_tmp) * type::Time::FRACTIONAL_DIGITS);
 
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+  MicroTimestamp temporal;
+  if (not temporal.from_int64_t(from_tmp))
+  {
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
+
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
-  return Microtime::store((int64_t) rint(from), false);
+
+  time_t tmp;
+  temporal.to_time_t(tmp);
+
+  uint64_t tmp_micro= tmp;
+  pack_num(tmp_micro);
+  pack_num(fractional_seconds, ptr +8);
+
+  return 0;
+}
+
+int Microtime::store_decimal(const type::Decimal *value)
+{
+  char buff[DECIMAL_MAX_STR_LENGTH+1];
+
+  String str(buff, sizeof(buff), &my_charset_bin);
+  class_decimal2string(E_DEC_FATAL_ERROR, value, 0, 0, 0, &str);
+
+  return store(str.ptr(), str.length(), str.charset());
 }
 
 int Microtime::store(int64_t from, bool)
@@ -134,7 +152,7 @@ int Microtime::store(int64_t from, bool)
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
 
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
 
@@ -150,7 +168,33 @@ int Microtime::store(int64_t from, bool)
 
 double Microtime::val_real(void)
 {
-  return (double) Microtime::val_int();
+  uint64_t temp;
+  type::Time::usec_t micro_temp;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
+  unpack_num(temp);
+  unpack_num(micro_temp, ptr +8);
+
+  Timestamp temporal;
+  (void) temporal.from_time_t((time_t) temp);
+
+  /* We must convert into a "timestamp-formatted integer" ... */
+  int64_t result;
+  temporal.to_int64_t(&result);
+
+  result+= micro_temp % type::Time::FRACTIONAL_DIGITS;
+
+  return result;
+}
+
+type::Decimal *Microtime::val_decimal(type::Decimal *decimal_value)
+{
+  type::Time ltime;
+
+  get_date(&ltime, 0);
+
+  return date2_class_decimal(&ltime, decimal_value);
 }
 
 int64_t Microtime::val_int(void)
@@ -174,7 +218,7 @@ int64_t Microtime::val_int(void)
 String *Microtime::val_str(String *val_buffer, String *)
 {
   uint64_t temp= 0;
-  uint32_t micro_temp= 0;
+  type::Time::usec_t micro_temp= 0;
   char *to;
   int to_len= field_length + 1 + 8;
 
@@ -209,7 +253,7 @@ bool Microtime::get_date(type::Time *ltime, uint32_t)
   unpack_num(temp);
   unpack_num(micro_temp, ptr +8);
   
-  memset(ltime, 0, sizeof(*ltime));
+  ltime->reset();
 
   Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
@@ -225,12 +269,12 @@ bool Microtime::get_date(type::Time *ltime, uint32_t)
   ltime->second= temporal.seconds();
   ltime->second_part= temporal.useconds();
 
-  return 0;
+  return false;
 }
 
 bool Microtime::get_time(type::Time *ltime)
 {
-  return Microtime::get_date(ltime,0);
+  return Microtime::get_date(ltime, 0);
 }
 
 int Microtime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
@@ -275,7 +319,7 @@ void Microtime::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
 
-  uint32_t fractional_seconds= 0;
+  type::Time::usec_t fractional_seconds= 0;
   uint64_t epoch_seconds= session->getCurrentTimestampEpoch(fractional_seconds);
 
   set_notnull();

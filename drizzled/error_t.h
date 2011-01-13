@@ -784,6 +784,7 @@ enum error_t {
   ER_ASSERT,
   ER_ASSERT_NULL,
   ER_TABLE_DROP,
+  ER_INVALID_TIMESTAMP_VALUE,
   ER_INVALID_CAST_TO_BOOLEAN,
 
   // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags

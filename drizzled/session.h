@@ -1324,7 +1324,7 @@ public:
     return (_start_timer - _epoch).total_seconds();
   }
 
-  time_t getCurrentTimestampEpoch(uint32_t &fraction_arg) const
+  time_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
   { 
     if (not _user_time.is_not_a_date_time())
     {
