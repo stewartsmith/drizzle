@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,10 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
-#define DRIZZLED_TABLE_PLACEHOLDER_H
+#ifndef DRIZZLED_TABLE_INSTANCE_H
+#define DRIZZLED_TABLE_INSTANCE_H
+
+#include <drizzled/table/instance/base.h>
+#include <drizzled/table/instance/shared.h>
 
 namespace drizzled
 {
@@ -29,33 +31,11 @@ namespace drizzled
 namespace table
 {
 
-class Placeholder : public table::Concurrent
+namespace instance
 {
-  instance::Shared private_share;
 
-public:
-  Placeholder(Session *session, TableIdentifier &identifier) :
-    table::Concurrent(),
-    private_share(identifier)
-  {
-    setShare(&private_share);
-    in_use= session;
-
-    locked_by_name= true;
-  }
-
-  bool isPlaceHolder(void) const
-  {
-    return true;
-  }
-
-  void release(void)
-  {
-    table::instance::release(getMutableShare());
-  }
-};
-
+} /* namespace instance */
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */
+#endif /* DRIZZLED_TABLE_INSTANCE_H */

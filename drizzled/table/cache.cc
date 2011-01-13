@@ -235,7 +235,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
     table::getUnused().cullByVersion();
 
     /* Remove table from table definition cache if it's not in use */
-    TableShare::release(identifier);
+    table::instance::release(identifier);
 
     if (result && (flags & RTFC_WAIT_OTHER_THREAD_FLAG))
     {
