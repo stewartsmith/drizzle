@@ -70,7 +70,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/data_home.h \
 			      drizzled/db.h \
 			      drizzled/definition/cache.h \
-			      drizzled/definition/table.h \
 			      drizzled/definitions.h \
 			      drizzled/diagnostics_area.h \
 			      drizzled/discrete_interval.h \
@@ -454,8 +453,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table/cache.h \
 			      drizzled/table/concurrent.h \
 			      drizzled/table/instance.h \
+			      drizzled/table/instance/base.h \
+			      drizzled/table/instance/shared.h \
 			      drizzled/table/placeholder.h \
 			      drizzled/table/shell.h \
+			      drizzled/table/singular.h \
 			      drizzled/table/temporary.h \
 			      drizzled/table/unused.h \
 			      drizzled/table_function_container.h \
@@ -528,7 +530,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/current_session.cc \
 			   drizzled/cursor.cc \
 			   drizzled/definition/cache.cc \
-			   drizzled/definition/table.cc \
 			   drizzled/diagnostics_area.cc \
 			   drizzled/display.cc \
 			   drizzled/drizzled.cc \
@@ -835,7 +836,9 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/table.cc \
 			   drizzled/table/cache.cc \
 			   drizzled/table/concurrent.cc \
-			   drizzled/table/instance.cc \
+			   drizzled/table/instance/base.cc \
+			   drizzled/table/instance/shared.cc \
+			   drizzled/table/singular.cc \
 			   drizzled/table/temporary.cc \
 			   drizzled/table/unused.cc \
 			   drizzled/table_function_container.cc \
