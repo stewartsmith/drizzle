@@ -306,10 +306,8 @@ int main(int argc, char **argv)
   if (plugin::Listen::setup())
     unireg_abort(1);
 
-
   assert(plugin::num_trx_monitored_objects > 0);
-  if (drizzle_rm_tmp_tables() ||
-      my_tz_init((Session *)0, default_tz_name))
+  if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop= true;
     select_thread_in_use=0;
@@ -317,7 +315,7 @@ int main(int argc, char **argv)
 
     (void) unlink(pid_file.file_string().c_str());	// Not needed anymore
 
-    exit(1);
+    unireg_abort(1);
   }
 
   errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
@@ -335,6 +333,8 @@ int main(int argc, char **argv)
       currentSession().release();
       currentSession().reset(session.get());
       transaction_services.sendStartupEvent(session.get());
+
+      plugin_startup_window(modules, *(session.get()));
     }
   }
 
@@ -382,8 +382,11 @@ int main(int argc, char **argv)
   /* Wait until cleanup is done */
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+
     while (not ready_to_exit)
+    {
       COND_server_end.wait(scopedLock);
+    }
   }
 
   clean_up(1);
