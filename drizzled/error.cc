@@ -98,11 +98,11 @@ error_handler_func error_handler_hook= NULL;
        ...	variable list
 */
 
-void my_error(error_t nr, drizzled::Identifier::const_reference ref)
+void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
 {
   std::string temp;
   ref.getSQLPath(temp);
-  my_error(nr, MYF(0), temp.c_str());
+  my_error(nr, MyFlags, temp.c_str());
 } 
 
 void my_error(error_t nr)

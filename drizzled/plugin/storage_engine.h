@@ -326,6 +326,11 @@ public:
                                 const drizzled::TableIdentifier &identifier,
                                 message::table::shared_ptr &table_proto,
                                 bool include_temporary_tables= true);
+  static bool getTableMessage(Session& session,
+                              const drizzled::TableIdentifier &identifier,
+                              message::table::shared_ptr &table_proto,
+                              drizzled::error_t &error,
+                              bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::TableIdentifier &identifier,
                              bool include_temporary_tables= true);
