@@ -9,7 +9,7 @@ SELECT DROP_CATALOG("foo");
 DROP_CATALOG("foo")
 1
 SELECT drop_catalog("local");
-ERROR HY000: You can not drop the 'local' catalog.
+ERROR HY000: You cannot drop the 'local' catalog.
 SELECT drop_catalog("does_not_exist");
 ERROR HY000: Catalog 'does_not_exist' does not exist.
 SELECT CATALOG_NAME FROM DATA_DICTIONARY.CATALOGS WHERE CATALOG_NAME != "local" ORDER BY CATALOG_NAME;

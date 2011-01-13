@@ -3198,8 +3198,15 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_collation($3); }
         | DATABASE '(' ')'
           {
-            std::string database_str("database");
-            if (! ($$= reserved_keyword_function(YYSession, database_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, "database", NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+            Lex->setCacheable(false);
+	  }
+        | CATALOG_SYM '(' ')'
+          {
+            if (! ($$= reserved_keyword_function(YYSession, "catalog", NULL)))
             {
               DRIZZLE_YYABORT;
             }

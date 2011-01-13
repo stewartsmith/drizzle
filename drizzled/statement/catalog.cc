@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <drizzled/session.h>
 #include <drizzled/statement/catalog.h>
 
 namespace drizzled
@@ -32,6 +33,7 @@ Catalog::Catalog(Session *in_session, drizzled::lex_string_t &arg) :
   Statement(in_session),
   _identifier(arg)
 {
+  in_session->getLex()->sql_command= SQLCOM_END;
 }
 
 bool Catalog::execute()
