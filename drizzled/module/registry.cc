@@ -40,7 +40,7 @@ namespace drizzled
 
 module::Registry::~Registry()
 {
-  std::map<std::string, plugin::Plugin *>::iterator plugin_iter;
+  plugin::Plugin::map::iterator plugin_iter;
 
   /* Give all plugins a chance to cleanup, before
    * all plugins are deleted.
@@ -64,22 +64,22 @@ module::Registry::~Registry()
 
 #if 0
   @TODO When we delete modules here, we segfault on a bad string. Why?
-    map<string, module::Module *>::iterator module_iter= module_map.begin();
+   ModuleMap::iterator module_iter= module_registry_.begin();
 
-  while (module_iter != module_map.end())
+  while (module_iter != module_registry_.end())
   {
     delete (*module_iter).second;
     ++module_iter;
   }
-  module_map.clear();
+  module_registry_.clear();
 #endif
-  std::map<std::string, module::Library *>::iterator library_iter= library_map.begin();
-  while (library_iter != library_map.end())
+  LibraryMap::iterator library_iter= library_registry_.begin();
+  while (library_iter != library_registry_.end())
   {
     delete (*library_iter).second;
     ++library_iter;
   }
-  library_map.clear();
+  library_registry_.clear();
 }
 
 void module::Registry::shutdown()
@@ -92,9 +92,9 @@ module::Module *module::Registry::find(std::string name)
 {
   std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-  std::map<std::string, module::Module *>::iterator map_iter;
-  map_iter= module_map.find(name);
-  if (map_iter != module_map.end())
+  ModuleMap::iterator map_iter;
+  map_iter= module_registry_.find(name);
+  if (map_iter != module_registry_.end())
     return (*map_iter).second;
   return(0);
 }
@@ -105,7 +105,7 @@ void module::Registry::add(module::Module *handle)
   transform(add_str.begin(), add_str.end(),
             add_str.begin(), ::tolower);
 
-  module_map[add_str]= handle;
+  module_registry_[add_str]= handle;
 }
 
 void module::Registry::remove(module::Module *handle)
@@ -114,7 +114,7 @@ void module::Registry::remove(module::Module *handle)
   std::transform(remove_str.begin(), remove_str.end(),
                  remove_str.begin(), ::tolower);
 
-  module_map.erase(remove_str);
+  module_registry_.erase(remove_str);
 }
 
 void module::Registry::copy(plugin::Plugin::vector &arg)
@@ -133,11 +133,11 @@ vector<module::Module *> module::Registry::getList(bool active)
   module::Module *plugin= NULL;
 
   std::vector<module::Module *> plugins;
-  plugins.reserve(module_map.size());
+  plugins.reserve(module_registry_.size());
 
-  std::map<std::string, module::Module *>::iterator map_iter;
-  for (map_iter= module_map.begin();
-       map_iter != module_map.end();
+  ModuleMap::iterator map_iter;
+  for (map_iter= module_registry_.begin();
+       map_iter != module_registry_.end();
        map_iter++)
   {
     plugin= (*map_iter).second;
@@ -165,7 +165,7 @@ module::Library *module::Registry::addLibrary(const std::string &plugin_name,
   if (library != NULL)
   {
     /* Add this dll to the map */
-    library_map.insert(make_pair(plugin_name, library));
+    library_registry_.insert(make_pair(plugin_name, library));
   }
 
   return library;
@@ -174,19 +174,18 @@ module::Library *module::Registry::addLibrary(const std::string &plugin_name,
 void module::Registry::removeLibrary(const std::string &plugin_name)
 {
   std::map<std::string, module::Library *>::iterator iter=
-    library_map.find(plugin_name);
-  if (iter != library_map.end())
+    library_registry_.find(plugin_name);
+  if (iter != library_registry_.end())
   {
-    library_map.erase(iter);
+    library_registry_.erase(iter);
     delete (*iter).second;
   }
 }
 
 module::Library *module::Registry::findLibrary(const std::string &plugin_name) const
 {
-  std::map<std::string, module::Library *>::const_iterator iter=
-    library_map.find(plugin_name);
-  if (iter != library_map.end())
+  LibraryMap::const_iterator iter= library_registry_.find(plugin_name);
+  if (iter != library_registry_.end())
     return (*iter).second;
   return NULL;
 }

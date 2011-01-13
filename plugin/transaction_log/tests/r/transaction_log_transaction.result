@@ -227,6 +227,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -558,6 +560,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -653,12 +657,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
+      catalog: "LOCAL"
       
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -868,6 +874,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1054,6 +1062,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1123,6 +1133,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1310,6 +1322,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1480,6 +1494,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1614,6 +1630,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1779,6 +1797,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1945,6 +1965,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -2063,6 +2085,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -2302,6 +2326,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -2556,6 +2582,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 

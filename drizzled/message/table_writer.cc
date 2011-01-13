@@ -203,6 +203,7 @@ static void fill_table1(message::Table *table)
   message::Table::TableOptions *tableopts;
 
   table->set_name("t1");
+  table->set_catalog("LOCAL");
   table->set_type(message::Table::INTERNAL);
 
   tableopts= table->mutable_options();
@@ -263,7 +264,7 @@ int main(int argc, char* argv[])
 
   fstream output(vm["table-name"].as<string>().c_str(),
                  ios::out | ios::trunc | ios::binary);
-  if (!table.SerializeToOstream(&output))
+  if (not table.SerializeToOstream(&output))
   {
     cerr << "Failed to write schema." << endl;
     return -1;

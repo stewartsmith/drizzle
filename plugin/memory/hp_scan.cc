@@ -52,7 +52,7 @@ int heap_scan(register HP_INFO *info, unsigned char *record)
       if (pos >= info->next_block)
       {
 	info->update= 0;
-	return(errno= HA_ERR_END_OF_FILE);
+	return(errno=  drizzled::HA_ERR_END_OF_FILE);
       }
     }
     hp_find_record(info, pos);
@@ -60,7 +60,7 @@ int heap_scan(register HP_INFO *info, unsigned char *record)
   if (get_chunk_status(&share->recordspace, info->current_ptr) != CHUNK_STATUS_ACTIVE)
   {
     info->update= HA_STATE_PREV_FOUND | HA_STATE_NEXT_FOUND;
-    return(errno=HA_ERR_RECORD_DELETED);
+    return(errno= drizzled::HA_ERR_RECORD_DELETED);
   }
   info->update= HA_STATE_PREV_FOUND | HA_STATE_NEXT_FOUND | HA_STATE_AKTIV;
   hp_extract_record(share, record, info->current_ptr);

@@ -34,7 +34,7 @@ int heap_rsame(register HP_INFO *info, unsigned char *record, int inx)
   {
     if (inx < -1 || inx >= (int) share->keys)
     {
-      return(errno=HA_ERR_WRONG_INDEX);
+      return(errno= drizzled::HA_ERR_WRONG_INDEX);
     }
     else if (inx != -1)
     {
@@ -51,5 +51,5 @@ int heap_rsame(register HP_INFO *info, unsigned char *record, int inx)
   }
   info->update=0;
 
-  return(errno=HA_ERR_RECORD_DELETED);
+  return(errno= drizzled::HA_ERR_RECORD_DELETED);
 }

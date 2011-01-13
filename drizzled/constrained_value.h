@@ -162,6 +162,7 @@ inline bool greater_than_max<uint64_t, UINT64_MAX>(uint64_t)
 
 typedef boost::error_info<struct tag_invalid_max,uint64_t> invalid_max_info;
 typedef boost::error_info<struct tag_invalid_min,int64_t> invalid_min_info;
+typedef boost::error_info<struct tag_invalid_min,std::string> invalid_value;
 
 template<class T,
   T MAXVAL,

@@ -63,8 +63,7 @@ static size_t build_schema_filename(string &path, const string &db)
 
 SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
   db(db_arg),
-  db_path(""),
-  catalog("LOCAL")
+  db_path("")
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);
@@ -155,6 +154,24 @@ bool SchemaIdentifier::isValid() const
   }
 
   return true;
+}
+
+const std::string &SchemaIdentifier::getCatalogName() const
+{
+  return drizzled::catalog::local_identifier().name();
+}
+
+std::ostream& operator<<(std::ostream& output, const SchemaIdentifier &identifier)
+{
+  output << "SchemaIdentifier:(";
+  output <<  catalog::local_identifier();
+  output << ", ";
+  output <<  identifier.getSchemaName().c_str();
+  output << ", ";
+  output << identifier.getPath().c_str();
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace drizzled */

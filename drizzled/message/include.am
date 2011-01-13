@@ -22,11 +22,13 @@ MESSAGE_LDADD= \
 	       ${LIBUUID} \
 	       ${LTLIBINTL} \
 	       $(GCOV_LIBS) \
-		drizzled/internal/libinternal.la
+	       drizzled/internal/libinternal.la
 
 MESSAGE_AM_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
 noinst_PROGRAMS+= \
+		  drizzled/message/catalog_reader \
+		  drizzled/message/catalog_writer \
 		  drizzled/message/schema_reader \
 		  drizzled/message/schema_writer \
 		  drizzled/message/table_raw_reader \
@@ -41,28 +43,37 @@ drizzled_message_libdrizzledmessage_la_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WE
 drizzled_message_libdrizzledmessage_la_SOURCES = drizzled/message/statement_transform.cc
 drizzled_message_libdrizzledmessage_la_LIBADD= ${LTLIBPROTOBUF} $(GCOV_LIBS) drizzled/libcharset.la
 
-nobase_dist_include_HEADERS+= drizzled/message/statement_transform.h \
-						drizzled/message/schema.h \
-						drizzled/message/table.h
+nobase_dist_include_HEADERS+= \
+			      drizzled/message/statement_transform.h
 
-nodist_drizzled_message_libdrizzledmessage_la_SOURCES = \
-							drizzled/message/event.pb.cc \
-							drizzled/message/engine.pb.cc \
-							drizzled/message/transaction.pb.cc \
-							drizzled/message/schema.pb.cc \
-							drizzled/message/resultset.pb.cc \
-							drizzled/message/table.pb.cc
+nodist_drizzled_message_libdrizzledmessage_la_SOURCES= \
+						       drizzled/message/catalog.pb.cc \
+						       drizzled/message/engine.pb.cc \
+						       drizzled/message/event.pb.cc \
+						       drizzled/message/resultset.pb.cc \
+						       drizzled/message/schema.pb.cc \
+						       drizzled/message/table.pb.cc \
+						       drizzled/message/transaction.pb.cc
 
 nobase_nodist_include_HEADERS+= \
-				drizzled/message/event.pb.h \
+				drizzled/message/catalog.pb.h \
 				drizzled/message/engine.pb.h \
-				drizzled/message/transaction.pb.h \
-				drizzled/message/schema.pb.h \
+				drizzled/message/event.pb.h \
 				drizzled/message/resultset.pb.h \
-				drizzled/message/table.pb.h 
+				drizzled/message/schema.pb.h \
+				drizzled/message/table.pb.h \
+				drizzled/message/transaction.pb.h
 
 noinst_HEADERS+= \
-		drizzled/message/ioutil.h 
+		 drizzled/message/ioutil.h
+
+drizzled_message_catalog_reader_SOURCES =  drizzled/message/catalog_reader.cc
+drizzled_message_catalog_reader_LDADD = ${MESSAGE_LDADD}
+drizzled_message_catalog_reader_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS}
+
+drizzled_message_catalog_writer_SOURCES =  drizzled/message/catalog_writer.cc
+drizzled_message_catalog_writer_LDADD = ${MESSAGE_LDADD}
+drizzled_message_catalog_writer_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS}
 
 drizzled_message_schema_reader_SOURCES =  drizzled/message/schema_reader.cc
 drizzled_message_schema_reader_LDADD = ${MESSAGE_LDADD}
@@ -89,34 +100,38 @@ drizzled_message_transaction_writer_LDADD = ${MESSAGE_LDADD} ${top_builddir}/dri
 drizzled_message_transaction_writer_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
 
 EXTRA_DIST += \
-		${MESSAGE_DIR}/event.proto \
-		${MESSAGE_DIR}/engine.proto \
-		${MESSAGE_DIR}/schema.proto \
-		${MESSAGE_DIR}/table.proto \
-                ${MESSAGE_DIR}/resultset.proto \
-		${MESSAGE_DIR}/transaction.proto
+	      ${MESSAGE_DIR}/catalog.proto \
+	      ${MESSAGE_DIR}/engine.proto \
+	      ${MESSAGE_DIR}/event.proto \
+	      ${MESSAGE_DIR}/resultset.proto \
+	      ${MESSAGE_DIR}/schema.proto \
+	      ${MESSAGE_DIR}/table.proto \
+	      ${MESSAGE_DIR}/transaction.proto
 
 BUILT_SOURCES += \
-		${MESSAGE_DIR}/event.pb.h \
-		${MESSAGE_DIR}/engine.pb.h \
-		${MESSAGE_DIR}/schema.pb.h \
-		${MESSAGE_DIR}/table.pb.h \
-                ${MESSAGE_DIR}/resultset.pb.h \
-		${MESSAGE_DIR}/transaction.pb.h
+		 ${MESSAGE_DIR}/catalog.pb.h \
+		 ${MESSAGE_DIR}/engine.pb.h \
+		 ${MESSAGE_DIR}/event.pb.h \
+		 ${MESSAGE_DIR}/resultset.pb.h \
+		 ${MESSAGE_DIR}/schema.pb.h \
+		 ${MESSAGE_DIR}/table.pb.h \
+		 ${MESSAGE_DIR}/transaction.pb.h
 
 CLEANFILES += \
-	    ${MESSAGE_DIR}/event.pb.h \
-	    ${MESSAGE_DIR}/event.pb.cc \
-	    ${MESSAGE_DIR}/engine.pb.h \
-	    ${MESSAGE_DIR}/engine.pb.cc \
-	    ${MESSAGE_DIR}/schema.pb.h \
-	    ${MESSAGE_DIR}/schema.pb.cc \
-	    ${MESSAGE_DIR}/table.pb.h \
-	    ${MESSAGE_DIR}/table.pb.cc \
-            ${MESSAGE_DIR}/resultset.pb.h \
-            ${MESSAGE_DIR}/resultset.pb.cc \
-	    ${MESSAGE_DIR}/transaction.pb.h \
-	    ${MESSAGE_DIR}/transaction.pb.cc
+	      ${MESSAGE_DIR}/catalog.pb.cc \
+	      ${MESSAGE_DIR}/catalog.pb.h \
+	      ${MESSAGE_DIR}/engine.pb.cc \
+	      ${MESSAGE_DIR}/engine.pb.h \
+	      ${MESSAGE_DIR}/event.pb.cc \
+	      ${MESSAGE_DIR}/event.pb.h \
+	      ${MESSAGE_DIR}/resultset.pb.cc \
+	      ${MESSAGE_DIR}/resultset.pb.h \
+	      ${MESSAGE_DIR}/schema.pb.cc \
+	      ${MESSAGE_DIR}/schema.pb.h \
+	      ${MESSAGE_DIR}/table.pb.cc \
+	      ${MESSAGE_DIR}/table.pb.h \
+	      ${MESSAGE_DIR}/transaction.pb.cc \
+	      ${MESSAGE_DIR}/transaction.pb.h
 
 SUFFIXES += .proto .pb.cc .pb.h
 

@@ -28,31 +28,31 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
   char buf[FN_REFLEN];
 
   if ((btree = tcbdbnew()) == NULL)
-    return HA_ERR_OUT_OF_MEM;
+    return drizzled::HA_ERR_OUT_OF_MEM;
 
   if (!tcbdbsetmutex(btree)) {
     tcbdbdel(btree);
-    return HA_ERR_GENERIC;
+    return drizzled::HA_ERR_GENERIC;
   }
 
   if (blitz_estimated_rows != 0) {
     uint64_t tree_buckets = blitz_estimated_rows / 10;
     if (!tcbdbtune(btree, 0, 0, tree_buckets, -1, -1, 0)) {
       tcbdbdel(btree);
-      return HA_ERR_GENERIC;
+      return drizzled::HA_ERR_GENERIC;
     }
   }
 
   if (!tcbdbsetcmpfunc(btree, blitz_keycmp_cb, this)) {
     tcbdbdel(btree);
-    return HA_ERR_GENERIC;
+    return drizzled::HA_ERR_GENERIC;
   }
 
   snprintf(buf, FN_REFLEN, "%s_%02d%s", path, key_num, BLITZ_INDEX_EXT);
 
   if (!tcbdbopen(btree, buf, mode)) {
     tcbdbdel(btree);
-    return HA_ERR_CRASHED_ON_USAGE;
+    return drizzled::HA_ERR_CRASHED_ON_USAGE;
   }
 
   return 0;
@@ -92,7 +92,7 @@ int BlitzTree::close(void) {
 
   if (!tcbdbclose(btree)) {
     tcbdbdel(btree);
-    return HA_ERR_CRASHED_ON_USAGE;
+    return drizzled::HA_ERR_CRASHED_ON_USAGE;
   }
 
   tcbdbdel(btree);
@@ -127,8 +127,8 @@ int BlitzTree::write(const char *key, const size_t klen) {
 int BlitzTree::write_unique(const char *key, const size_t klen) {
   if (!tcbdbputkeep(btree, key, klen, "", 0)) {
     if (tcbdbecode(btree) == TCEKEEP) {
-      errno = HA_ERR_FOUND_DUPP_KEY;
-      return HA_ERR_FOUND_DUPP_KEY;
+      errno = drizzled::HA_ERR_FOUND_DUPP_KEY;
+      return drizzled::HA_ERR_FOUND_DUPP_KEY;
     }
   }
   return 0;
