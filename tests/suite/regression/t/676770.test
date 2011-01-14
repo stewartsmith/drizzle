@@ -56,7 +56,7 @@ WHERE `col_enum_key` = 923074560
 `col_text_not_null_key`,`pk` LIMIT 1;
 
 --replace_result $DRIZZLETEST_VARDIR DTR_VARDIR
---system grep -n "Sort aborted" $DRIZZLETEST_VARDIR/log/master.err > $DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp
+--system egrep -n "(Sort aborted|676770)" $DRIZZLETEST_VARDIR/log/master.err > $DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp
 
 --replace_result $DRIZZLETEST_VARDIR DTR_VARDIR
 eval SELECT LOAD_FILE('$DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp') ;
