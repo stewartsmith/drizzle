@@ -1,3 +1,6 @@
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1 (
 pk int auto_increment primary key,
@@ -27,6 +30,52 @@ DROP TABLE t1;
 select seapitester_error_inject(0);
 seapitester_error_inject(0)
 0
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_key_parts()
+::max_supported_keys()
+::max_supported_key_part_length()
+::doCreateTable()
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+ROLLBACK
+::SEAPITester()
+BEGIN
+In Transaction
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+ROLLBACK STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+COMMIT
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+ROLLBACK
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 START TRANSACTION;
 CREATE TABLE `test`.`t1` (   `pk` INT NOT NULL AUTO_INCREMENT,   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`pk`) ) ENGINE=STORAGE_ENGINE_API_TESTER COLLATE = utf8_general_ci;
 COMMIT;
@@ -41,3 +90,5 @@ START TRANSACTION;
 DROP TABLE `test`.`t1`;
 COMMIT;
 SET GLOBAL transaction_log_truncate_debug= true;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE

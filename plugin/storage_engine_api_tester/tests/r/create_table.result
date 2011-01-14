@@ -1,2 +1,14 @@
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 CREATE TABLE t1 (a int) ENGINE=STORAGE_ENGINE_API_TESTER;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_keys()
+::doCreateTable()
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 drop table t1;
