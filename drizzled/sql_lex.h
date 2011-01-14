@@ -1051,7 +1051,7 @@ extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 extern bool is_lex_native_function(const LEX_STRING *name);
 
 bool check_for_sql_keyword(drizzled::st_lex_symbol const&);
-bool check_for_sql_keyword(drizzled::drizzle_lex_string const&);
+bool check_for_sql_keyword(drizzled::lex_string_t const&);
 
 /**
   @} (End of group Semantic_Analysis)

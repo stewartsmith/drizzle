@@ -21,19 +21,10 @@
 #ifndef DRIZZLED_CATALOG_H
 #define DRIZZLED_CATALOG_H
 
-#include "drizzled/identifier.h"
+#include <drizzled/identifier.h>
 
 namespace drizzled {
 namespace catalog {
-
-enum error_t {
-  NOT_LOCKED,
-  LOCKED,
-  FOUND,
-  NOT_FOUND
-};
-
-void error(error_t error, const identifier::Catalog &identifier);
 
 } /* namespace catalog */
 } /* namespace drizzled */
