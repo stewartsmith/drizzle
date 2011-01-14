@@ -8,6 +8,7 @@ EXTRA_DIST+= \
 	     docs/conf.py \
 	     docs/Doxyfile \
 	     docs/drizzled_header.html \
+	     docs/plugins/list.rst
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst \
 	     ${top_srcdir}/docs/libdrizzle/*.rst \
