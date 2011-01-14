@@ -3,13 +3,13 @@ Where
 
 The WHERE clause is used to extract only those records that fulfill a specified criterion.
 
-SQL WHERE Syntax ::
+Simple SQL WHERE Syntax ::
 
 	SELECT column_name(s)
 	FROM table_name
 	WHERE column_name operator value
 	
-**WHERE Clause Example**
+**Simple WHERE Clause Example**
 
 The "Persons" table:
 
