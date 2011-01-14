@@ -1,5 +1,5 @@
 --source include/have_linux.inc
---source include/have_valgrind.inc
+--source include/not_valgrind.inc
 SET SESSION storage_engine=pbxt;
 connect (con1,localhost,root,,);
 connect (con2,localhost,root,,);
