@@ -170,32 +170,6 @@ void localtime_to_TIME(type::Time *to, struct tm *from)
   to->second=   (int) from->tm_sec;
 }
 
-void make_time(const type::Time *l_time, String *str)
-{
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_time_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
-}
-
-void make_date(const type::Time *l_time, String *str)
-{
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_date_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
-}
-
-
-void make_datetime(const type::Time *l_time, String *str)
-{
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_datetime_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
-}
-
-
 void make_truncated_value_warning(Session *session, 
                                   DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
@@ -223,6 +197,7 @@ void make_truncated_value_warning(Session *session,
       type_str= "datetime";
       break;
   }
+
   if (field_name)
   {
     cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
@@ -233,12 +208,16 @@ void make_truncated_value_warning(Session *session,
   else
   {
     if (time_type > DRIZZLE_TIMESTAMP_ERROR)
+    {
       cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                          ER(ER_TRUNCATED_WRONG_VALUE),
                          type_str, str.c_ptr());
+    }
     else
+    {
       cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                          ER(ER_WRONG_VALUE), type_str, str.c_ptr());
+    }
   }
   push_warning(session, level,
                ER_TRUNCATED_WRONG_VALUE, warn_buff);

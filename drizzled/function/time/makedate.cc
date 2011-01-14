@@ -58,7 +58,9 @@ String *Item_func_makedate::val_str(String *str)
     get_date_from_daynr(days,&l_time.year,&l_time.month,&l_time.day);
     if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
       goto err;
-    make_date(&l_time, str);
+
+    l_time.convert(*str, DRIZZLE_TIMESTAMP_DATE);
+
     return str;
   }
 

@@ -47,7 +47,8 @@ String *Time::val_str(String *str)
   if (not get_arg0_time(&ltime))
   {
     null_value= 0;
-    make_time(&ltime, str);
+    ltime.convert(*str, DRIZZLE_TIMESTAMP_TIME);
+
     return str;
   }
 

@@ -242,19 +242,19 @@ select unix_timestamp(from_unixtime(2147483648));
 
 # check for invalid dates
 
-# bad year
---error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
+# Legal, Drizzle has 64bit timestamp
 select unix_timestamp('2039-01-20 01:00:00');
+
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1968-01-20 01:00:00');
-# bad month
---error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
+
 select unix_timestamp('2038-02-10 01:00:00');
+
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1969-11-20 01:00:00');
-# bad day
---error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
+
 select unix_timestamp('2038-01-20 01:00:00');
+
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1969-12-30 01:00:00');
 
