@@ -1821,7 +1821,7 @@ public:
   }
 
   /* Reopen operations */
-  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  bool reopen_tables();
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);

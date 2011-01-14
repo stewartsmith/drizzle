@@ -299,7 +299,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
         old locks. This should always succeed (unless some external process
         has removed the tables)
       */
-      result= session->reopen_tables(true, true);
+      result= session->reopen_tables();
 
       /* Set version for table */
       for (Table *table= session->open_tables; table ; table= table->getNext())
@@ -1272,10 +1272,11 @@ void Session::close_data_files_and_morph_locks(const TableIdentifier &identifier
   @return false in case of success, true - otherwise.
 */
 
-bool Session::reopen_tables(bool get_locks, bool)
+bool Session::reopen_tables()
 {
   Table *table,*next,**prev;
-  Table **tables,**tables_ptr;			// For locks
+  Table **tables= 0;			// For locks
+  Table **tables_ptr= 0;			// For locks
   bool error= false;
   const uint32_t flags= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN |
     DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
@@ -1285,7 +1286,6 @@ bool Session::reopen_tables(bool get_locks, bool)
     return false;
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
-  if (get_locks)
   {
     /*
       The ptr is checked later
@@ -1299,10 +1299,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     }
     tables= new Table *[opens];
   }
-  else
-  {
-    tables= &open_tables;
-  }
+
   tables_ptr =tables;
 
   prev= &open_tables;
@@ -1342,12 +1339,11 @@ bool Session::reopen_tables(bool get_locks, bool)
     }
   }
 
-  if (get_locks && tables)
-    delete [] tables;
+  delete [] tables;
 
   locking::broadcast_refresh();
 
-  return(error);
+  return error;
 }
 
 
@@ -1378,7 +1374,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
     */
     if (table->needs_reopen_or_name_lock())
     {
-      found=1;
+      found= true;
       if (table->db_stat)
       {
         if (morph_locks)
@@ -1503,10 +1499,11 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
     }
   }
   *prev=0;
+
   if (found)
     locking::broadcast_refresh();
 
-  return(found);
+  return found;
 }
 
 
@@ -1525,6 +1522,7 @@ void abort_locked_tables(Session *session, const drizzled::TableIdentifier &iden
     {
       /* If MERGE child, forward lock handling to parent. */
       session->abortLock(table);
+      assert(0);
       break;
     }
   }
