@@ -72,7 +72,7 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      UUID
       version: 1
     }
   }
