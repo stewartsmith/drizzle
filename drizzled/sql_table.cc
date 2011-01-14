@@ -2008,7 +2008,7 @@ static bool create_table_wrapper(Session &session,
   // We require an additional table message because during parsing we used
   // a "new" message and it will not have all of the information that the
   // source table message would have.
-  message::Table new_proto;
+  message::Table new_table_message;
   drizzled::error_t error;
 
   message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier, error);
@@ -2019,26 +2019,43 @@ static bool create_table_wrapper(Session &session,
     return false;
   }
 
-  new_proto.CopyFrom(*source_table_message);
+  new_table_message.CopyFrom(*source_table_message);
 
   if (destination_identifier.isTmp())
   {
-    new_proto.set_type(message::Table::TEMPORARY);
+    new_table_message.set_type(message::Table::TEMPORARY);
   }
   else
   {
-    new_proto.set_type(message::Table::STANDARD);
+    new_table_message.set_type(message::Table::STANDARD);
   }
 
   if (is_engine_set)
   {
-    new_proto.mutable_engine()->set_name(create_table_proto.engine().name());
+    new_table_message.mutable_engine()->set_name(create_table_proto.engine().name());
   }
 
   { // We now do a selective copy of elements on to the new table.
-    new_proto.set_name(create_table_proto.name());
-    new_proto.set_schema(create_table_proto.schema());
-    new_proto.set_catalog(create_table_proto.catalog());
+    new_table_message.set_name(create_table_proto.name());
+    new_table_message.set_schema(create_table_proto.schema());
+    new_table_message.set_catalog(create_table_proto.catalog());
+  }
+
+  /* Fix names of foreign keys being added */
+  for (int32_t j= 0; j < new_table_message.fk_constraint_size(); j++)
+  {
+    if (new_table_message.fk_constraint(j).has_name())
+    {
+      std::string name(new_table_message.name());
+      char number[20];
+
+      name.append("_ibfk_");
+      snprintf(number, sizeof(number), "%d", j+1);
+      name.append(number);
+
+      message::Table::ForeignKeyConstraint *pfkey= new_table_message.mutable_fk_constraint(j);
+      pfkey->set_name(name);
+    }
   }
 
   /*
@@ -2047,12 +2064,12 @@ static bool create_table_wrapper(Session &session,
   */
   bool success= plugin::StorageEngine::createTable(session,
                                                    destination_identifier,
-                                                   new_proto);
+                                                   new_table_message);
 
   if (success && not destination_identifier.isTmp())
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(&session, new_proto);
+    transaction_services.createTable(&session, new_table_message);
   }
 
   return success;
