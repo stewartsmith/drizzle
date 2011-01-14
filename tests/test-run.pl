@@ -148,7 +148,7 @@ our $default_top_builddir;
 
 our $opt_usage;
 our $opt_suites;
-our $opt_suites_default= "main,bool_type,cast,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type"; # Default suites to run
+our $opt_suites_default= "main"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
@@ -373,23 +373,23 @@ sub main () {
   }
   else
   {
-    # Figure out which tests we are going to run
+
     if (!$opt_suites)
     {
-      $opt_suites= $opt_suites_default;
 
-      # Check for any extra suites to enable based on the path name
-      my %extra_suites= ();
+        $opt_suites= $opt_suites_default;
 
-      foreach my $dir ( reverse splitdir($glob_basedir) )
-      {
-	my $extra_suite= $extra_suites{$dir};
-	if (defined $extra_suite){
-	  dtr_report("Found extra suite: $extra_suite");
-	  $opt_suites= "$extra_suite,$opt_suites";
-	  last;
-	}
-      }
+        my %extra_suites= ();
+
+        foreach my $dir ( reverse splitdir($glob_basedir) )
+        {
+            my $extra_suite= $extra_suites{$dir};
+            if (defined $extra_suite){
+                dtr_report("Found extra suite: $extra_suite");
+                $opt_suites= "$extra_suite,$opt_suites";
+                last;
+            }
+        }
     }
 
     my $tests= collect_test_cases($opt_suites);
@@ -613,8 +613,6 @@ sub command_line_setup () {
              'help|h'                   => \$opt_usage,
             ) or usage("Can't read options");
 
-  usage("") if $opt_usage;
-
   usage("you cannot specify --gdb and --dbx both!") if 
 	($opt_gdb && $opt_dbx) ||
 	($opt_manual_gdb && $opt_manual_dbx);
@@ -660,6 +658,36 @@ sub command_line_setup () {
   # is the parent directory of the "drizzle-test" directory. For source
   # distributions, TAR binary distributions and some other packages.
   $glob_basedir= dirname($glob_drizzle_test_dir);
+
+  # Figure out which tests we are going to run
+  my $suitedir= "$glob_drizzle_test_dir/suite";
+  if ( -d $suitedir )
+  {
+      opendir(SUITE_DIR, $suitedir)
+          or dtr_error("can't open directory \"$suitedir\": $!");
+
+      while ( my $elem= readdir(SUITE_DIR) )
+      {
+          next if $elem eq ".";
+          next if $elem eq "..";
+          next if $elem eq "big"; # Eats up too much disk
+          next if $elem eq "large_tests"; # Eats up too much disk
+          next if $elem eq "execute"; # Eats up a lot of CPU
+          next if $elem eq "stress"; # Currently fails
+          next if $elem eq "broken"; # Old broken test, mainly unsupported featurs
+
+          my $local_dir= "$suitedir/$elem";
+
+          next unless -d $local_dir;
+          next unless -d "$local_dir/t"; # We want to make sure it has tests
+          next unless -d "$local_dir/r"; # Ditto, results
+
+          $opt_suites_default.= ",$elem";
+      }
+      closedir(SUITE_DIR);
+  }
+
+  usage("") if $opt_usage;
 
   # In the RPM case, binaries and libraries are installed in the
   # default system locations, instead of having our own private base
