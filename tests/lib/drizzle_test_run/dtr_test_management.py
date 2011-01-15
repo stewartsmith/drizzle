@@ -223,6 +223,10 @@ class testManager(test_management.testManager):
 
         # We trim any trailing path delimiters as python returns
         # '' for basedir if the path ends that way
+        # BEGIN horrible hack to accomodate bad location of main suite : /
+        if suite_dir == self.testdir:
+            return 'main'
+        # END horrible hack : /
         if suite_dir.endswith('/'):
             suite_dir=suite_dir[:-1]
         suite_dir_root,suite_dir_basename = os.path.split(suite_dir)
