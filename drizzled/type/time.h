@@ -209,8 +209,6 @@ time_t
 my_system_gmt_sec(const type::Time *t, long *my_timezone,
                   bool *in_dst_time_gap, bool skip_timezone= false);
 
-void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type);
-
 /*
   Required buffer length for my_time_to_str, my_date_to_str,
   my_datetime_to_str and TIME_to_string functions. Note, that the

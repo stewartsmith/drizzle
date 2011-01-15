@@ -998,24 +998,15 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     First check will pass for platforms with signed time_t.
     instruction above (tmp+= shift*86400L) could exceed
     MAX_INT32 (== TIMESTAMP_MAX_VALUE) and overflow will happen.
-    So, tmp < TIMESTAMP_MIN_VALUE will be triggered. On platfroms
-    with unsigned time_t tmp+= shift*86400L might result in a number,
-    larger then TIMESTAMP_MAX_VALUE, so another check will work.
+    So, tmp < TIMESTAMP_MIN_VALUE will be triggered.
   */
-  if ((tmp < TIMESTAMP_MIN_VALUE) || (tmp > TIMESTAMP_MAX_VALUE))
+  if (tmp < TIMESTAMP_MIN_VALUE)
+  {
     tmp= 0;
+  }
 
   return (time_t) tmp;
 } /* my_system_gmt_sec */
-
-
-/* Set type::Time structure to 0000-00-00 00:00:00.000000 */
-
-void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type)
-{
-  memset(tm, 0, sizeof(*tm));
-  tm->time_type= time_type;
-}
 
 
 /*
