@@ -319,7 +319,10 @@ type::Decimal *Item_field::val_decimal_result(type::Decimal *decimal_value)
 bool Item_field::val_bool_result()
 {
   if ((null_value= result_field->is_null()))
+  {
     return false;
+  }
+
   switch (result_field->result_type()) {
   case INT_RESULT:
     return result_field->val_int() != 0;
@@ -366,21 +369,21 @@ bool Item_field::eq(const Item *item, bool) const
     (In cases where we would choose wrong we would have to generate a
     ER_NON_UNIQ_ERROR).
   */
-  return (!my_strcasecmp(system_charset_info, item_field->name,
-			 field_name) &&
-	  (!item_field->table_name || !table_name ||
-	   (!my_strcasecmp(table_alias_charset, item_field->table_name,
-			   table_name) &&
-	    (!item_field->db_name || !db_name ||
-	     (item_field->db_name && !strcasecmp(item_field->db_name,
-					     db_name))))));
+  return (not my_strcasecmp(system_charset_info, item_field->name, field_name) &&
+          (not item_field->table_name || not table_name ||
+           (not my_strcasecmp(table_alias_charset, item_field->table_name, table_name) &&
+            (not item_field->db_name || not db_name ||
+             (item_field->db_name && not my_strcasecmp(system_charset_info, item_field->db_name, db_name))))));
 }
 
 
 table_map Item_field::used_tables() const
 {
   if (field->getTable()->const_table)
+  {
     return 0;					// const item
+  }
+
   return (depended_from ? OUTER_REF_TABLE_BIT : field->getTable()->map);
 }
 

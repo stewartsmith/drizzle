@@ -89,23 +89,23 @@ int Boolean::store(const char *from, uint32_t length, const CHARSET_INFO * const
       return 1; // invalid
     }
   }
-  else if ((length == 5) and (strcasecmp(from, "FALSE") == 0))
+  else if ((length == 5) and (my_strcasecmp(system_charset_info, from, "FALSE") == 0))
   {
     setFalse();
   }
-  if ((length == 4) and (strcasecmp(from, "TRUE") == 0))
+  if ((length == 4) and (my_strcasecmp(system_charset_info, from, "TRUE") == 0))
   {
     setTrue();
   }
-  else if ((length == 5) and (strcasecmp(from, "FALSE") == 0))
+  else if ((length == 5) and (my_strcasecmp(system_charset_info, from, "FALSE") == 0))
   {
     setFalse();
   }
-  else if ((length == 3) and (strcasecmp(from, "YES") == 0))
+  else if ((length == 3) and (my_strcasecmp(system_charset_info, from, "YES") == 0))
   {
     setTrue();
   }
-  else if ((length == 2) and (strcasecmp(from, "NO") == 0))
+  else if ((length == 2) and (my_strcasecmp(system_charset_info, from, "NO") == 0))
   {
     setFalse();
   }

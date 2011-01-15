@@ -421,10 +421,12 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD) &&
-        strcasecmp(table->getSchemaName(), db_name) == 0 &&
-        strcasecmp(table->getTableName(), table_name) == 0)
+    if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD) and
+        my_strcasecmp(system_charset_info, table->getSchemaName(), db_name) == 0 and
+        my_strcasecmp(system_charset_info, table->getTableName(), table_name) == 0)
+    {
       break;
+    }
   }
   return table;
 }
@@ -3584,7 +3586,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     assert(tables->is_leaf_for_name_resolution());
 
     if ((table_name && my_strcasecmp(table_alias_charset, table_name, tables->alias)) ||
-        (db_name && strcasecmp(tables->getSchemaName(),db_name)))
+        (db_name && my_strcasecmp(system_charset_info, tables->getSchemaName(),db_name)))
       continue;
 
     /*
