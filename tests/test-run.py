@@ -25,34 +25,29 @@ from lib.test_mgmt.execution_management import executionManager
 
 # main
 
-try:
-    variables = test_run_options.variables
 
-    # Some system-level work is constant regardless
-    # of the test to be run
-    system_manager = systemManager(variables)
+variables = test_run_options.variables
 
-    # Create our server_manager
-    server_manager = serverManager(system_manager, variables)
+# Some system-level work is constant regardless
+# of the test to be run
+system_manager = systemManager(variables)
 
-    # Get our mode-specific test_manager and test_executor
-    (test_manager,test_executor) = handle_mode(variables, system_manager)
+# Create our server_manager
+server_manager = serverManager(system_manager, variables)
 
-    # Gather our tests for execution
-    test_manager.gather_tests()
+# Get our mode-specific test_manager and test_executor
+(test_manager,test_executor) = handle_mode(variables, system_manager)
 
-    # Initialize test execution manager
-    execution_manager = executionManager(server_manager, system_manager
+# Gather our tests for execution
+test_manager.gather_tests()
+
+# Initialize test execution manager
+execution_manager = executionManager(server_manager, system_manager
                                     , test_manager, test_executor
                                     , variables)
 
-    # Execute our tests!
-    execution_manager.execute_tests()
+# Execute our tests!
+execution_manager.execute_tests()
 
-except Exception, e:
-    print Exception, e
-
-finally:
-    # Cleanup
-    server_manager.cleanup()
+server_manager.cleanup()
 

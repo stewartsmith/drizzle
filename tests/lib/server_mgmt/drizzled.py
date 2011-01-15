@@ -45,7 +45,7 @@ class drizzleServer():
         self.preferred_base_port = 9306
         self.name = name
         self.status = 0 # stopped, 1 = running
-        self.bad_run = 0 # was the last test a failure?  our state is suspect
+        self.failed_test = 0 # was the last test a failure?  our state is suspect
         self.server_start_timeout = 60
 
         # Get our ports
@@ -237,6 +237,10 @@ class drizzleServer():
     def set_server_options(self, server_options):
         """ We update our server_options to the new set """
         self.server_options = server_options
+
+    def reset(self):
+        """ Voodoo to reset ourselves """
+        self.failed_test = 0
          
 
 

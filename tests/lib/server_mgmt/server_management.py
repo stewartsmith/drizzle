@@ -48,6 +48,10 @@ class serverManager:
             we just return a value / message
     
         """
+
+        # Make sure our server is in a decent state, if the last test
+        # failed, then we reset the server
+        self.check_server_status(requester)
         
         # Make sure we have the proper number of servers for this requester
         self.process_server_count( requester, master_count+slave_count
@@ -57,10 +61,10 @@ class serverManager:
         self.evaluate_existing_servers(requester, server_options)
 
         # Fire our servers up
-        self.start_servers(requester, expect_fail)
+        bad_start = self.start_servers(requester, expect_fail)
  
         # Return them to the requester
-        return self.get_server_list(requester)         
+        return (self.get_server_list(requester), bad_start)        
 
 
     
@@ -81,9 +85,25 @@ class serverManager:
 
     def start_servers(self, requester, expect_fail):
         """ Start all servers for the requester """
+        bad_start = 0
         for server in self.get_server_list(requester):
             if server.status == 0:
-                server.start(expect_fail)
+                bad_start += self.start_server(server, requester, expect_fail)
+        return bad_start
+
+    def start_server(self, server, requester, expect_fail):
+        """ Start an individual server and return
+            an error code if it did not start in a timely manner
+ 
+        """
+        bad_start = server.start(expect_fail)
+        if bad_start:
+            # Our server didn't start, we need to return an 
+            # error
+            return 1
+        else:
+            return 0
+             
 
     def stop_server(self, server):
         """ Stop an individual server if it is running """
@@ -164,6 +184,7 @@ class serverManager:
     def reset_server(self, server):
         self.stop_server(server)
         server.restore_snapshot()
+        server.reset()
 
     def reset_servers(self, requester):
         for server in self.servers[requester]:
@@ -197,6 +218,7 @@ class serverManager:
 
     def get_server_list(self, requester):
         """ Return the list of servers assigned to the requester """
+        self.has_servers(requester) # initialize, hacky : (
         return self.servers[requester]
  
     def set_server_list(self, requester, server_list):
@@ -217,12 +239,21 @@ class serverManager:
         server.set_server_options(server_options)
 
     def get_server_count(self):
-       """ Find out how many servers we have out """
-       server_count = 0
-       for server_list in self.servers.values():
-           for server in server_list:
-               server_count = server_count + 1
-       return server_count
+        """ Find out how many servers we have out """
+        server_count = 0
+        for server_list in self.servers.values():
+            for server in server_list:
+                server_count = server_count + 1
+        return server_count
+
+    def check_server_status(self, requester):
+        """ Make sure our servers are good,
+            reset the otherwise.
+
+        """
+        for server in self.get_server_list(requester):
+            if server.failed_test:
+                self.reset_server(server)
 
 
 

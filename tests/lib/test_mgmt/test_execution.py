@@ -67,12 +67,12 @@ class testExecutor():
         """ Get the servers required to execute the testCase """
        
         master_count, slave_count, server_options = self.process_server_reqs()
-        self.current_servers = self.server_manager.request_servers( self.name
+        (self.current_servers,bad_start) = self.server_manager.request_servers( self.name
                                                               , self.workdir
                                                               , master_count
                                                               , slave_count
                                                               , server_options)
-        if self.current_servers == 0:
+        if self.current_servers == 0 or bad_start:
             # error allocating servers, test is a failure
             return 1
         if self.initial_run:
@@ -102,17 +102,23 @@ class testExecutor():
             self.logging.verbose("Executor: %s beginning test execution..." %(self.name))
         while self.test_manager.has_tests() and keep_running == 1:
             self.get_testCase()
-            self.handle_server_reqs()
-            test_status = self.execute_testCase()
+            bad_start = self.handle_server_reqs()
+            test_status = self.execute_testCase(bad_start)
             if test_status == 'fail' and not self.execution_manager.force:
                 self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
                 keep_running = 0
         self.status = 0
 
-    def execute_testCase(self):
+    def execute_testCase(self,bad_start):
         """ Do whatever evil voodoo we must do to execute a testCase """
         if self.verbose:
             self.logging.verbose("Executor: %s executing test: %s" %(self.name, self.current_testcase.fullname))
+
+    def set_server_status(self, test_status):
+        """ We update our servers to indicate if a test passed or failed """
+        for server in self.current_servers:
+            if test_status == 'fail':
+                server.failed_test = 1
 
    
 

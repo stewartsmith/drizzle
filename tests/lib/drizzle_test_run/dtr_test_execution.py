@@ -30,32 +30,39 @@ class dtrTestExecutor(test_execution.testExecutor):
     """
   
 
-    def execute_testCase (self):
+    def execute_testCase (self,bad_start):
         """ Execute a dtr testCase via calls to drizzletest (boo)
             Eventually, we will replace drizzletest with pythonic
             goodness, but we have these classes stored here for the moment
 
         """
-        test_execution.testExecutor.execute_testCase(self)
+        test_execution.testExecutor.execute_testCase(self,bad_start)
         self.status = 0
-    
-        # generate command line
-        drizzletest_cmd = self.generate_drizzletest_call()
-        if self.debug:
-            self.logging.debug(drizzletest_cmd)
 
-        # call drizzletest
-        self.process_environment_reqs()
-        (retcode, output) = self.execute_drizzletest(drizzletest_cmd)
+        if not bad_start:
+        # our servers are started and we are good to go 
+            # generate command line
+            drizzletest_cmd = self.generate_drizzletest_call()
+            if self.debug:
+                self.logging.debug(drizzletest_cmd)
 
-        # analyze results
-        self.current_test_status = self.process_drizzletest_output(retcode, output)
-        self.set_server_status(self.current_test_status)
+            # call drizzletest
+            self.process_environment_reqs()
+            (retcode, output) = self.execute_drizzletest(drizzletest_cmd)
+
+            # analyze results
+            self.current_test_status = self.process_drizzletest_output(retcode, output)
+            self.set_server_status(self.current_test_status)
+ 
+        else:
+        # Our servers didn't start, we mark it a failure
+            self.current_test_status = 'fail'
+            self.set_server_status(self.current_test_status)
+            output = ''
 
         # update the test_manager
         self.test_manager.record_test_result(self.current_testcase,self.current_test_status, output)
 
-        
         return self.current_test_status
 
     def generate_drizzletest_call(self):
@@ -136,8 +143,6 @@ class dtrTestExecutor(test_execution.testExecutor):
 
         self.system_manager.process_environment_reqs(env_reqs, quiet=1)
 
-    def set_server_status(self, test_status):
-        """ We update our server to indicate if a test passed or failed """
-
+   
 
         
