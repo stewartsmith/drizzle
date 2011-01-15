@@ -70,8 +70,7 @@ void Item_func_sysdate_local::fix_length_and_dec()
 }
 
 
-bool Item_func_sysdate_local::get_date(type::Time *res,
-                                       uint32_t )
+bool Item_func_sysdate_local::get_date(type::Time *res, uint32_t )
 {
   store_now_in_TIME(&ltime);
   *res= ltime;

@@ -831,9 +831,9 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     Use temp variable to avoid trashing input data, which could happen in
     case of shift required for boundary dates processing.
   */
-  memcpy(&tmp_time, t_src, sizeof(type::Time));
+  tmp_time= *t_src;
 
-  if (!validate_timestamp_range(t))
+  if (not validate_timestamp_range(t))
     return 0;
 
   /*
@@ -1091,46 +1091,61 @@ int my_TIME_to_str(const type::Time *l_time, char *to)
 
 namespace type {
 
-static void make_time(const type::Time *l_time, String *str)
+void Time::store(const time_t &from, bool use_localtime)
 {
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_time_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
+  store(from, 0, use_localtime);
 }
 
-static void make_date(const type::Time *l_time, String *str)
+void Time::store(const time_t &from, const usec_t &from_fractional_seconds, bool use_localtime)
 {
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_date_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
+  struct tm broken_time;
+  struct tm *result;
+
+  if (use_localtime)
+  {
+    result= localtime_r(&from, &broken_time);
+    _is_local_time= true;
+  }
+  else
+  {
+    result= gmtime_r(&from, &broken_time);
+  }
+
+  if (result != NULL)
+  {
+    year= 1900 + broken_time.tm_year;
+    month= 1 + broken_time.tm_mon;
+    day= broken_time.tm_mday;
+    hour= broken_time.tm_hour;
+    minute= broken_time.tm_min;
+    second= broken_time.tm_sec;
+    second_part= from_fractional_seconds;
+    neg= false;
+
+    time_type= DRIZZLE_TIMESTAMP_DATETIME;
+
+    return;
+  }
+
+  time_type= DRIZZLE_TIMESTAMP_ERROR;
 }
-
-
-static void make_datetime(const type::Time *l_time, String *str)
-{
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_datetime_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
-}
-
-
 
 void Time::convert(String &str, const enum_drizzle_timestamp_type arg)
 {
+  str.alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= 0;
+
   switch (arg) {
   case DRIZZLE_TIMESTAMP_DATETIME:
-    make_datetime(this, &str);
+    length= (uint32_t) my_datetime_to_str(this, str.c_ptr());
     break;
 
   case DRIZZLE_TIMESTAMP_DATE:
-    make_date(this, &str);
+    length= (uint32_t) my_date_to_str(this, str.c_ptr());
     break;
 
   case DRIZZLE_TIMESTAMP_TIME:
-    make_time(this, &str);
+    length= (uint32_t) my_time_to_str(this, str.c_ptr());
     break;
 
   case DRIZZLE_TIMESTAMP_NONE:
@@ -1138,6 +1153,9 @@ void Time::convert(String &str, const enum_drizzle_timestamp_type arg)
     assert(0);
     break;
   }
+
+  str.length(length);
+  str.set_charset(&my_charset_bin);
 }
 
 }

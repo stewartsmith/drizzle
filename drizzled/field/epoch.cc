@@ -283,30 +283,21 @@ String *Epoch::val_str(String *val_buffer, String *)
 bool Epoch::get_date(type::Time *ltime, uint32_t)
 {
   uint64_t temp;
+  time_t time_temp;
 
   unpack_num(temp);
+  time_temp= temp;
   
-  memset(ltime, 0, sizeof(*ltime));
+  ltime->reset();
 
-  Timestamp temporal;
-  (void) temporal.from_time_t((time_t) temp);
-
-  /* @TODO Goodbye the below code when type::Time is finally gone.. */
-
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
-  ltime->year= temporal.years();
-  ltime->month= temporal.months();
-  ltime->day= temporal.days();
-  ltime->hour= temporal.hours();
-  ltime->minute= temporal.minutes();
-  ltime->second= temporal.seconds();
+  ltime->store(time_temp);
 
   return 0;
 }
 
 bool Epoch::get_time(type::Time *ltime)
 {
-  return Epoch::get_date(ltime,0);
+  return Epoch::get_date(ltime, 0);
 }
 
 int Epoch::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)

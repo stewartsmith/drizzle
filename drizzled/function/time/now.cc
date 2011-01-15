@@ -62,15 +62,10 @@ void Item_func_now_local::store_now_in_TIME(type::Time *now_time)
   uint32_t fractional_seconds= 0;
   time_t tmp= session->getCurrentTimestampEpoch(fractional_seconds);
 
-  (void) cached_temporal.from_time_t(tmp);
-
-  now_time->year= cached_temporal.years();
-  now_time->month= cached_temporal.months();
-  now_time->day= cached_temporal.days();
-  now_time->hour= cached_temporal.hours();
-  now_time->minute= cached_temporal.minutes();
-  now_time->second= cached_temporal.seconds();
-  now_time->second_part= fractional_seconds;
+#if 0
+  now_time->store(tmp, fractional_seconds, true);
+#endif
+  now_time->store(tmp, fractional_seconds);
 }
 
 
@@ -84,15 +79,7 @@ void Item_func_now_utc::store_now_in_TIME(type::Time *now_time)
   uint32_t fractional_seconds= 0;
   time_t tmp= session->getCurrentTimestampEpoch(fractional_seconds);
 
-  (void) cached_temporal.from_time_t(tmp);
-
-  now_time->year= cached_temporal.years();
-  now_time->month= cached_temporal.months();
-  now_time->day= cached_temporal.days();
-  now_time->hour= cached_temporal.hours();
-  now_time->minute= cached_temporal.minutes();
-  now_time->second= cached_temporal.seconds();
-  now_time->second_part= fractional_seconds;
+  now_time->store(tmp, fractional_seconds);
 }
 
 bool Item_func_now::get_temporal(DateTime &to)
@@ -101,8 +88,7 @@ bool Item_func_now::get_temporal(DateTime &to)
   return true;
 }
 
-bool Item_func_now::get_date(type::Time *res,
-                             uint32_t )
+bool Item_func_now::get_date(type::Time *res, uint32_t )
 {
   *res= ltime;
   return 0;
