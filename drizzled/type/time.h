@@ -153,7 +153,7 @@ public:
     _is_local_time= false;
   }
 
-  void convert(drizzled::String &str, const enum_drizzle_timestamp_type arg= DRIZZLE_TIMESTAMP_DATETIME);
+  void convert(drizzled::String &str, enum_drizzle_timestamp_type arg= DRIZZLE_TIMESTAMP_DATETIME);
   void store(const time_t &from, bool use_localtime= false);
   void store(const time_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
 

@@ -1121,7 +1121,7 @@ void Time::store(const time_t &from, const usec_t &from_fractional_seconds, bool
   time_type= DRIZZLE_TIMESTAMP_ERROR;
 }
 
-void Time::convert(String &str, const enum_drizzle_timestamp_type arg)
+void Time::convert(String &str, enum_drizzle_timestamp_type arg)
 {
   str.alloc(MAX_DATE_STRING_REP_LENGTH);
   uint32_t length= 0;
