@@ -171,7 +171,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   Session *session= this;
 
   {
-    table::Cache::singleton().mutex().lock(); /* Optionally lock for remove tables from open_cahe if not in use */
+    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Optionally lock for remove tables from open_cahe if not in use */
 
     if (tables == NULL)
     {
@@ -287,9 +287,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
                                                      (table->open_placeholder && wait_for_placeholders)))
           {
             found= true;
-            boost_unique_lock_t scoped(table::Cache::singleton().mutex(), boost::adopt_lock_t());
-            COND_refresh.wait(scoped);
-            scoped.release();
+            COND_refresh.wait(scopedLock);
             break;
           }
         }
@@ -312,8 +310,6 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           table->getMutableShare()->refreshVersion();
       }
     }
-
-    table::Cache::singleton().mutex().unlock();
   }
 
   if (wait_for_refresh)
@@ -332,9 +328,12 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   move one table to free list 
 */
 
-bool Session::free_cached_table()
+bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
 {
   bool found_old_table= false;
+
+  (void)scopedLock;
+
   table::Concurrent *table= static_cast<table::Concurrent *>(open_tables);
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
@@ -386,7 +385,7 @@ void Session::close_open_tables()
 
   while (open_tables)
   {
-    found_old_table|= free_cached_table();
+    found_old_table|= free_cached_table(scoped_lock);
   }
   some_tables_deleted= false;
 

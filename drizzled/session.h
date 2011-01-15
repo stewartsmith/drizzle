@@ -1756,7 +1756,8 @@ public:
   void close_data_files_and_morph_locks(const TableIdentifier &identifier);
 
 private:
-  bool free_cached_table();
+  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+
 public:
 
   /**
