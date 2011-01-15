@@ -115,7 +115,7 @@ class testManager:
 
         """
         # BEGIN horrible hack to accomodate bad location of main suite
-        if self.suitepaths == [self.testdir]:
+        if self.suitepaths == [self.testdir] or suitename == 'main':
             # We treat this as the 'main' suite
             return self.testdir
         # END horrible hack

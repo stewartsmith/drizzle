@@ -101,7 +101,7 @@ class dtrTestExecutor(test_execution.testExecutor):
         """ Drizzletest has run, we now check out what we have """
         if retcode == 0:
             return 'pass'
-        elif retcode == 62:
+        elif retcode == 62 or retcode == 15872:
             return 'skipped'
         elif retcode == 63 or retcode == 1:
             return 'fail'
