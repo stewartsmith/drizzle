@@ -115,7 +115,7 @@ String *Item_date_add_interval::val_str(String *str)
 
   if (ltime.time_type == DRIZZLE_TIMESTAMP_DATE)
   {
-    make_date(&ltime, str);
+    ltime.convert(*str, DRIZZLE_TIMESTAMP_DATE);
   }
   else if (ltime.second_part)
   {
@@ -135,7 +135,7 @@ String *Item_date_add_interval::val_str(String *str)
   }
   else
   {
-    make_datetime(&ltime, str);
+    ltime.convert(*str);
   }
 
   return str;

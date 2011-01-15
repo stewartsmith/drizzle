@@ -32,6 +32,8 @@
 # endif
 #endif
 
+#include <drizzled/sql_string.h>
+
 namespace drizzled
 {
 
@@ -39,7 +41,6 @@ extern uint64_t log_10_int[20];
 extern unsigned char days_in_month[];
 
 /* Time handling defaults */
-#define TIMESTAMP_MAX_YEAR 2038
 #define TIMESTAMP_MIN_YEAR (1900 + YY_PART_YEAR - 1)
 #define TIMESTAMP_MAX_VALUE INT32_MAX
 #define TIMESTAMP_MIN_VALUE 1
@@ -88,16 +89,78 @@ enum enum_drizzle_timestamp_type
   bigger values.
 */
 namespace type {
+
 class Time
 {
 public:
-  unsigned int year, month, day, hour, minute, second;
-  unsigned int second_part;
-  bool       neg;
-  enum enum_drizzle_timestamp_type time_type;
-};
-}
+  typedef uint32_t usec_t;
 
+  Time()
+  {
+    reset();
+  }
+
+  Time(unsigned int year_arg,
+       unsigned int month_arg,
+       unsigned int day_arg,
+       unsigned int hour_arg,
+       unsigned int minute_arg,
+       unsigned int second_arg,
+       usec_t second_part_arg,
+       enum_drizzle_timestamp_type type_arg) :
+    year(year_arg),
+    month(month_arg),
+    day(day_arg),
+    hour(hour_arg),
+    minute(minute_arg),
+    second(second_arg),
+    second_part(second_part_arg),
+    neg(false),
+    time_type(type_arg),
+    _is_local_time(false)
+  {
+  }
+
+  Time(unsigned int hour_arg,
+       unsigned int minute_arg,
+       unsigned int second_arg,
+       usec_t second_part_arg,
+       bool neg_arg) :
+    year(0),
+    month(0),
+    day(0),
+    hour(hour_arg),
+    minute(minute_arg),
+    second(second_arg),
+    second_part(second_part_arg),
+    neg(neg_arg),
+    time_type(DRIZZLE_TIMESTAMP_TIME),
+    _is_local_time(false)
+  {
+  }
+
+  unsigned int year, month, day, hour, minute, second;
+  usec_t second_part;
+  bool neg;
+  enum enum_drizzle_timestamp_type time_type;
+  bool _is_local_time;
+
+  void reset()
+  {
+    year= month= day= hour= minute= second= second_part= 0;
+    neg= false;
+    time_type= DRIZZLE_TIMESTAMP_DATE;
+    _is_local_time= false;
+  }
+
+  void convert(drizzled::String &str, const enum_drizzle_timestamp_type arg= DRIZZLE_TIMESTAMP_DATETIME);
+  void store(const time_t &from, bool use_localtime= false);
+  void store(const time_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
+
+  static const uint32_t FRACTIONAL_DIGITS= 1000000;
+};
+
+}
 
 bool check_date(const type::Time *ltime, bool not_zero_date,
                    uint32_t flags, int *was_cut);
@@ -110,8 +173,7 @@ uint64_t TIME_to_uint64_t_datetime(const type::Time *);
 uint64_t TIME_to_uint64_t(const type::Time *);
 
 
-bool str_to_time(const char *str,uint32_t length, type::Time *l_time,
-                 int *warning);
+bool str_to_time(const char *str,uint32_t length, type::Time *l_time, int *warning);
 
 long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
 uint32_t calc_days_in_year(uint32_t year);
@@ -135,10 +197,10 @@ void init_time(void);
 
 static inline bool validate_timestamp_range(const type::Time *t)
 {
-  if ((t->year > TIMESTAMP_MAX_YEAR || t->year < TIMESTAMP_MIN_YEAR) ||
-      (t->year == TIMESTAMP_MAX_YEAR && (t->month > 1 || t->day > 19)) ||
-      (t->year == TIMESTAMP_MIN_YEAR && (t->month < 12 || t->day < 31)))
+  if ((t->year < TIMESTAMP_MIN_YEAR) or (t->year == TIMESTAMP_MIN_YEAR && (t->month < 12 || t->day < 31)))
+  {
     return false;
+  }
 
   return true;
 }
@@ -146,8 +208,6 @@ static inline bool validate_timestamp_range(const type::Time *t)
 time_t
 my_system_gmt_sec(const type::Time *t, long *my_timezone,
                   bool *in_dst_time_gap, bool skip_timezone= false);
-
-void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type);
 
 /*
   Required buffer length for my_time_to_str, my_date_to_str,
@@ -159,9 +219,6 @@ void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type);
 */
 #define MAX_DATE_STRING_REP_LENGTH 30
 
-int my_time_to_str(const type::Time *l_time, char *to);
-int my_date_to_str(const type::Time *l_time, char *to);
-int my_datetime_to_str(const type::Time *l_time, char *to);
 int my_TIME_to_str(const type::Time *l_time, char *to);
 
 /*

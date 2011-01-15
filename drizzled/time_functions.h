@@ -92,12 +92,6 @@ bool str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time)
 */
 void localtime_to_TIME(type::Time *to, struct tm *from);
 
-void make_time(const type::Time *l_time, String *str);
-
-void make_date(const type::Time *l_time, String *str);
-
-void make_datetime(const type::Time *l_time, String *str);
-
 void make_truncated_value_warning(Session *session, 
                                   DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,

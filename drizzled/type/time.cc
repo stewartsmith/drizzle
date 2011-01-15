@@ -21,6 +21,7 @@
 #include "drizzled/charset_info.h"
 #include <drizzled/util/test.h>
 #include "drizzled/definitions.h"
+#include <drizzled/sql_string.h>
 
 #include <cstdio>
 #include <algorithm>
@@ -453,7 +454,9 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
                                        DRIZZLE_TIMESTAMP_DATETIME));
 
 err:
-  memset(l_time, 0, sizeof(*l_time));
+
+  l_time->reset();
+
   return(DRIZZLE_TIMESTAMP_ERROR);
 }
 
@@ -828,9 +831,9 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     Use temp variable to avoid trashing input data, which could happen in
     case of shift required for boundary dates processing.
   */
-  memcpy(&tmp_time, t_src, sizeof(type::Time));
+  tmp_time= *t_src;
 
-  if (!validate_timestamp_range(t))
+  if (not validate_timestamp_range(t))
     return 0;
 
   /*
@@ -883,18 +886,7 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     We are safe with shifts close to MAX_INT32, as there are no known
     time switches on Jan 2038 yet :)
   */
-  if ((t->year == TIMESTAMP_MAX_YEAR) && (t->month == 1) && (t->day > 4))
-  {
-    /*
-      Below we will pass (uint32_t) (t->day - shift) to calc_daynr.
-      As we don't want to get an overflow here, we will shift
-      only safe dates. That's why we have (t->day > 4) above.
-    */
-    t->day-= 2;
-    shift= 2;
-  }
 #ifdef TIME_T_UNSIGNED
-  else
   {
     /*
       We can get 0 in time_t representaion only on 1969, 31 of Dec or on
@@ -1006,24 +998,15 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     First check will pass for platforms with signed time_t.
     instruction above (tmp+= shift*86400L) could exceed
     MAX_INT32 (== TIMESTAMP_MAX_VALUE) and overflow will happen.
-    So, tmp < TIMESTAMP_MIN_VALUE will be triggered. On platfroms
-    with unsigned time_t tmp+= shift*86400L might result in a number,
-    larger then TIMESTAMP_MAX_VALUE, so another check will work.
+    So, tmp < TIMESTAMP_MIN_VALUE will be triggered.
   */
-  if ((tmp < TIMESTAMP_MIN_VALUE) || (tmp > TIMESTAMP_MAX_VALUE))
+  if (tmp < TIMESTAMP_MIN_VALUE)
+  {
     tmp= 0;
+  }
 
   return (time_t) tmp;
 } /* my_system_gmt_sec */
-
-
-/* Set type::Time structure to 0000-00-00 00:00:00.000000 */
-
-void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type)
-{
-  memset(tm, 0, sizeof(*tm));
-  tm->time_type= time_type;
-}
 
 
 /*
@@ -1039,7 +1022,7 @@ void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type)
     number of characters written to 'to'
 */
 
-int my_time_to_str(const type::Time *l_time, char *to)
+static int my_time_to_str(const type::Time *l_time, char *to)
 {
   uint32_t extra_hours= 0;
   return sprintf(to, "%s%02u:%02u:%02u",
@@ -1049,7 +1032,7 @@ int my_time_to_str(const type::Time *l_time, char *to)
                          l_time->second);
 }
 
-int my_date_to_str(const type::Time *l_time, char *to)
+static int my_date_to_str(const type::Time *l_time, char *to)
 {
   return sprintf(to, "%04u-%02u-%02u",
                          l_time->year,
@@ -1057,7 +1040,7 @@ int my_date_to_str(const type::Time *l_time, char *to)
                          l_time->day);
 }
 
-int my_datetime_to_str(const type::Time *l_time, char *to)
+static int my_datetime_to_str(const type::Time *l_time, char *to)
 {
   return sprintf(to, "%04u-%02u-%02u %02u:%02u:%02u",
                          l_time->year,
@@ -1092,13 +1075,81 @@ int my_TIME_to_str(const type::Time *l_time, char *to)
   case DRIZZLE_TIMESTAMP_NONE:
   case DRIZZLE_TIMESTAMP_ERROR:
     to[0]='\0';
-    return 0;
-  default:
-    assert(0);
-    return 0;
   }
+
+  return 0;
 }
 
+namespace type {
+
+void Time::store(const time_t &from, bool use_localtime)
+{
+  store(from, 0, use_localtime);
+}
+
+void Time::store(const time_t &from, const usec_t &from_fractional_seconds, bool use_localtime)
+{
+  struct tm broken_time;
+  struct tm *result;
+
+  if (use_localtime)
+  {
+    result= localtime_r(&from, &broken_time);
+    _is_local_time= true;
+  }
+  else
+  {
+    result= gmtime_r(&from, &broken_time);
+  }
+
+  if (result != NULL)
+  {
+    year= 1900 + broken_time.tm_year;
+    month= 1 + broken_time.tm_mon;
+    day= broken_time.tm_mday;
+    hour= broken_time.tm_hour;
+    minute= broken_time.tm_min;
+    second= broken_time.tm_sec;
+    second_part= from_fractional_seconds;
+    neg= false;
+
+    time_type= DRIZZLE_TIMESTAMP_DATETIME;
+
+    return;
+  }
+
+  time_type= DRIZZLE_TIMESTAMP_ERROR;
+}
+
+void Time::convert(String &str, const enum_drizzle_timestamp_type arg)
+{
+  str.alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= 0;
+
+  switch (arg) {
+  case DRIZZLE_TIMESTAMP_DATETIME:
+    length= (uint32_t) my_datetime_to_str(this, str.c_ptr());
+    break;
+
+  case DRIZZLE_TIMESTAMP_DATE:
+    length= (uint32_t) my_date_to_str(this, str.c_ptr());
+    break;
+
+  case DRIZZLE_TIMESTAMP_TIME:
+    length= (uint32_t) my_time_to_str(this, str.c_ptr());
+    break;
+
+  case DRIZZLE_TIMESTAMP_NONE:
+  case DRIZZLE_TIMESTAMP_ERROR:
+    assert(0);
+    break;
+  }
+
+  str.length(length);
+  str.set_charset(&my_charset_bin);
+}
+
+}
 
 /*
   Convert datetime value specified as number to broken-down TIME
@@ -1132,7 +1183,7 @@ int64_t number_to_datetime(int64_t nr, type::Time *time_res,
   long part1,part2;
 
   *was_cut= 0;
-  memset(time_res, 0, sizeof(*time_res));
+  time_res->reset();
   time_res->time_type=DRIZZLE_TIMESTAMP_DATE;
 
   if (nr == 0LL || nr >= 10000101000000LL)
@@ -1219,8 +1270,9 @@ uint64_t TIME_to_uint64_t_datetime(const type::Time *my_time)
 
 static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
 {
-  return (uint64_t) (my_time->year * 10000UL + my_time->month * 100UL +
-                      my_time->day);
+  return (uint64_t) (my_time->year * 10000UL +
+                     my_time->month * 100UL +
+                     my_time->day);
 }
 
 
@@ -1233,8 +1285,8 @@ static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
 static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
 {
   return (uint64_t) (my_time->hour * 10000UL +
-                      my_time->minute * 100UL +
-                      my_time->second);
+                     my_time->minute * 100UL +
+                     my_time->second);
 }
 
 
@@ -1270,9 +1322,8 @@ uint64_t TIME_to_uint64_t(const type::Time *my_time)
   case DRIZZLE_TIMESTAMP_NONE:
   case DRIZZLE_TIMESTAMP_ERROR:
     return 0ULL;
-  default:
-    assert(0);
   }
+
   return 0;
 }
 
