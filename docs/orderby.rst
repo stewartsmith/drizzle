@@ -44,3 +44,7 @@ ORDER BY DESC can be used to reverse the order of the result set. ::
 
 	SELECT * FROM Persons
 	ORDER BY LastName DESC;
+
+FIXME: add something about SELECT * without ORDER BY being non-deterministic
+
+FIXME: add something about how ORDER BY is executed. index scan vs filesort

@@ -8,3 +8,4 @@ A type query:
 INSERT INTO A VALUES ("1");
 
 
+FIXME: multi row inserts, performance thereof.
