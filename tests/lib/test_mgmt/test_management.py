@@ -1,0 +1,236 @@
+#! /usr/bin/python
+# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+#
+# Copyright (C) 2010 Patrick Crews
+#
+""" dtr_test_management:
+    code related to the gathering / analysis / management of 
+    the test cases
+    ie - collecting the list of tests in each suite, then
+    gathering additional, relevant information for the test-runner's dtr
+    mode. (traditional diff-based testing)
+
+"""
+
+# imports
+import os
+import re
+import sys
+import thread
+          
+class testManager:
+    """Deals with scanning test directories, gathering test cases, and 
+       collecting per-test information (opt files, etc) for use by the
+       test-runner
+
+    """
+
+    def __init__( self, verbose, debug, engine, dotest, skiptest
+                , suitelist, suitepaths, system_manager, test_cases):
+
+        self.system_manager = system_manager
+        self.logging = system_manager.logging
+        if verbose:
+            self.logging.verbose("Initializing test manager...")
+
+        if dotest:
+            dotest = dotest.strip()
+        if skiptest:
+            skiptest = skiptest.strip()
+        self.skip_keys = [ 'system_manager'
+                         ]
+        self.test_list = []
+        self.total_test_count = 0
+        self.executed_tests = {} # We have a hash of 'status':[test_name..]
+        self.executing_tests = {}
+        self.verbose = verbose
+        self.debug = debug
+        self.engine = engine
+        self.dotest = dotest
+        self.skiptest = skiptest
+        self.suitelist = suitelist
+        
+        self.code_tree = self.system_manager.code_tree
+        self.suitepaths = suitepaths + self.code_tree.suite_paths
+        self.testdir = self.code_tree.testdir
+        self.desired_tests = test_cases
+        self.mutex = thread.allocate_lock()
+        
+        if self.debug:
+            self.logging.debug(self)
+
+    def add_test(self, new_test_case):
+        """ Add a new testCase to our self.test_list """
+        if self.debug: pass
+        self.test_list.append(new_test_case)
+        
+    def gather_tests(self):
+        self.logging.info("Processing test suites...")
+        # BEGIN terrible hack to accomodate the fact that
+        # our 'main' suite is also our testdir : /
+        if self.suitelist is None:
+            self.suitepaths = [self.testdir]
+            self.suitelist = ['main']
+        # END horrible hack
+        for suite in self.suitelist:
+            suite_path = self.find_suite_path(suite)
+            if suite_path:
+                self.process_suite(suite_path)
+            else:
+                self.logging.error("Could not find suite: %s in any of paths: %s" %(suite, ", ".join(self.suitepaths)))
+        self.process_gathered_tests()
+
+    def process_gathered_tests(self):
+        """ We do some post-gathering analysis and whatnot
+            Report an error if there were desired_tests but no tests
+            were found.  Otherwise just report what we found
+    
+        """
+
+        if self.desired_tests and not self.test_list:
+            # We wanted tests, but found none
+            # Probably need to make this smarter at some point
+            # To maybe make sure that we found all of the desired tests...
+            # However, this is a start / placeholder code
+            self.logging.error("Unable to locate any of the desired tests: %s" %(" ,".join(self.desired_tests)))   
+        self.total_test_count = len(self.test_list)     
+        self.logging.info("Found %d test(s) for execution" %(self.total_test_count))
+        
+        if self.debug:
+            self.logging.debug("Found tests:")
+            self.logging.debug("%s" %(self.print_test_list()))
+
+    def find_suite_path(self, suitename):
+        """ We have a suitename, we need to locate the path to
+            the juicy suitedir in one of our suitepaths.
+
+            Theoretically, we could have multiple matches, but
+            such things should never be allowed, so we don't
+            code for it.  We return the first match.
+ 
+            testdir can either be suitepath/suitename or
+            suitepath/suitename/tests.  We test and return the
+            existing path.   Return None if no match found
+
+        """
+        # BEGIN horrible hack to accomodate bad location of main suite
+        if self.suitepaths == [self.testdir]:
+            # We treat this as the 'main' suite
+            return self.testdir
+        # END horrible hack
+        for suitepath in self.suitepaths:
+            suite_path = self.system_manager.find_path([ os.path.join(suitepath,suitename,'tests'),
+                                     os.path.join(suitepath,suitename) ], required = 0 )
+            if suite_path:
+                return suite_path
+        return suite_path
+
+    def process_suite(self,suite_dir):
+        """Process a test suite.
+           This includes searching for tests in test_list and only
+           working with the named tests (all tests in suite is the default)
+           Further processing includes reading the disabled.def file
+           to know which tests to skip, processing the suite.opt file,
+           and processing the individual test cases for data relevant
+           to the rest of the test-runner
+        
+        """
+        if self.verbose:
+                self.logging.verbose("Processing suite: %s" %(suite))
+
+    def has_tests(self):
+        """Return 1 if we have tests in our testlist, 0 otherwise"""
+         
+        return len(self.test_list)
+
+    def get_testCase(self, requester):
+        """return a testCase """
+          
+        test_case = None
+        if self.has_tests():
+            test_case = self.test_list.pop(0)
+            self.record_test_executor(requester, test_case.fullname)
+        return test_case
+
+    def record_test_executor(self, requester, test_name):
+        """ We record the test case and executor name as this could be useful
+            We don't *know* this is needed, but we can always change this 
+            later
+ 
+        """
+
+        self.executing_tests[test_name] = requester
+
+    def record_test_result(self, test_case, test_status, output):
+        """ Accept the results of an executed testCase for further
+            processing.
+ 
+        """
+        if test_status not in self.executed_tests:
+            self.executed_tests[test_status] = [test_case]
+        else:
+            self.executed_tests[test_status].append(test_case)
+        # report
+        self.logging.test_report(test_case.fullname, test_status, output)
+
+
+    def print_test_list(self):
+        test_names = []
+        for test in self.test_list:
+            test_names.append(test.fullname)
+        return "[ %s ]" %(", ".join(test_names))
+
+    def statistical_report(self):
+        """ Report out various testing statistics:
+            Failed/Passed %success
+            list of failed test cases
+          
+        """
+
+        self.logging.write_thick_line()
+        self.logging.info("Test execution complete")
+        self.logging.info("Summary report:")
+        self.report_executed_tests()
+        self.report_failing_tests()
+        
+    def get_executed_test_count(self):
+        """ Return how many tests were executed """
+        total_count = 0
+        for test_list in self.executed_tests.values():
+            total_count = total_count + len(test_list)
+        return total_count
+
+    def report_executed_tests(self):
+        """ Report out tests by status """
+        total_executed_count = self.get_executed_test_count()
+        executed_ratio = (float(total_executed_count)/float(self.total_test_count))
+        executed_percent = executed_ratio * 100
+        self.logging.info("Executed %s/%s test cases, %.2f percent" %( total_executed_count
+                                                                     , self.total_test_count
+                                                                     , executed_percent))
+
+        for test_status in self.executed_tests.keys():
+            status_count = self.get_count_by_status(test_status)
+            test_percent = (float(status_count)/float(total_executed_count))*100
+            self.logging.info("STATUS: %s, %d/%d test cases, %.2f percent executed, %.2f percent found" %( test_status.upper()
+                                                                , status_count
+                                                                , total_executed_count
+                                                                , test_percent 
+                                                                , test_percent*executed_ratio ))
+
+
+    def report_failing_tests(self):
+        failing_tests = []
+        if 'fail' in self.executed_tests:
+            for testcase in self.executed_tests['fail']:
+                failing_tests.append(testcase.fullname)
+            self.logging.info("Failing tests: %s" %(", ".join(failing_tests)))
+
+    def get_count_by_status(self, test_status):
+        """ Return how many tests are in a given test_status """
+        if test_status in self.executed_tests:
+            return len(self.executed_tests[test_status])
+        else:
+            return 0
+
