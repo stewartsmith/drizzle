@@ -37,11 +37,11 @@ namespace plugin
 class AddSchemaNames : 
   public std::unary_function<StorageEngine *, void>
 {
-  SchemaIdentifier::vector &schemas;
+  identifier::Schema::vector &schemas;
 
 public:
 
-  AddSchemaNames(SchemaIdentifier::vector &of_names) :
+  AddSchemaNames(identifier::Schema::vector &of_names) :
     schemas(of_names)
   {
   }
@@ -52,7 +52,7 @@ public:
   }
 };
 
-void StorageEngine::getIdentifiers(Session &session, SchemaIdentifier::vector &schemas)
+void StorageEngine::getIdentifiers(Session &session, identifier::Schema::vector &schemas)
 {
   // Add hook here for engines to register schema.
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
@@ -63,11 +63,11 @@ void StorageEngine::getIdentifiers(Session &session, SchemaIdentifier::vector &s
 
 class StorageEngineGetSchemaDefinition: public std::unary_function<StorageEngine *, bool>
 {
-  const SchemaIdentifier &identifier;
+  const identifier::Schema &identifier;
   message::schema::shared_ptr &schema_proto;
 
 public:
-  StorageEngineGetSchemaDefinition(const SchemaIdentifier &identifier_arg,
+  StorageEngineGetSchemaDefinition(const identifier::Schema &identifier_arg,
                                    message::schema::shared_ptr &schema_proto_arg) :
     identifier(identifier_arg),
     schema_proto(schema_proto_arg) 
@@ -88,7 +88,7 @@ bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identif
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
 
-bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::schema::shared_ptr &proto)
+bool StorageEngine::getSchemaDefinition(const identifier::Schema &identifier, message::schema::shared_ptr &proto)
 {
   EngineVector::iterator iter=
     std::find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
@@ -102,7 +102,7 @@ bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, mess
   return false;
 }
 
-bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
+bool StorageEngine::doesSchemaExist(const identifier::Schema &identifier)
 {
   message::schema::shared_ptr proto;
 
@@ -110,7 +110,7 @@ bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
 }
 
 
-const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &identifier)
+const CHARSET_INFO *StorageEngine::getSchemaCollation(const identifier::Schema &identifier)
 {
   message::schema::shared_ptr schmema_proto;
   bool found;
@@ -178,11 +178,11 @@ class DropSchema :
   public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
-  const SchemaIdentifier &identifier;
+  const identifier::Schema &identifier;
 
 public:
 
-  DropSchema(const SchemaIdentifier &arg, uint64_t &count_arg) :
+  DropSchema(const identifier::Schema &arg, uint64_t &count_arg) :
     success_count(count_arg),
     identifier(arg)
   {
@@ -203,7 +203,7 @@ public:
 };
 
 static bool drop_all_tables_in_schema(Session& session,
-                                      SchemaIdentifier::const_reference identifier,
+                                      identifier::Schema::const_reference identifier,
                                       TableIdentifier::vector &dropped_tables,
                                       uint64_t &deleted)
 {
@@ -231,7 +231,7 @@ static bool drop_all_tables_in_schema(Session& session,
   return true;
 }
 
-bool StorageEngine::dropSchema(Session::reference session, SchemaIdentifier::const_reference identifier)
+bool StorageEngine::dropSchema(Session::reference session, identifier::Schema::const_reference identifier)
 {
   uint64_t deleted= 0;
   bool error= false;

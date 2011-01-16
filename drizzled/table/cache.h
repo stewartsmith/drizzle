@@ -64,7 +64,7 @@ public:
   }
 
   bool areTablesUsed(Table *table, bool wait_for_name_lock);
-  void removeSchema(const SchemaIdentifier &schema_identifier);
+  void removeSchema(const identifier::Schema &schema_identifier);
   bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
   void release(table::instance::Shared *share);
   bool insert(table::Concurrent *arg);

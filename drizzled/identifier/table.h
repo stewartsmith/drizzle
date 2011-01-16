@@ -54,7 +54,7 @@ namespace drizzled {
 
 class Table;
 
-class TableIdentifier : public SchemaIdentifier
+class TableIdentifier : public identifier::Schema
 {
 public:
   typedef message::Table::TableType Type;
@@ -131,10 +131,10 @@ private:
 public:
   TableIdentifier(const Table &table);
                    
-  TableIdentifier( const SchemaIdentifier &schema,
+  TableIdentifier( const identifier::Schema &schema,
                    const std::string &table_name_arg,
                    Type tmp_arg= message::Table::STANDARD) :
-    SchemaIdentifier(schema),
+    Schema(schema),
     type(tmp_arg),
     table_name(table_name_arg)
   { 
@@ -144,7 +144,7 @@ public:
   TableIdentifier( const std::string &db_arg,
                    const std::string &table_name_arg,
                    Type tmp_arg= message::Table::STANDARD) :
-    SchemaIdentifier(db_arg),
+    Schema(db_arg),
     type(tmp_arg),
     table_name(table_name_arg)
   { 
@@ -154,7 +154,7 @@ public:
   TableIdentifier( const std::string &schema_name_arg,
                    const std::string &table_name_arg,
                    const std::string &path_arg ) :
-    SchemaIdentifier(schema_name_arg),
+    Schema(schema_name_arg),
     type(message::Table::TEMPORARY),
     path(path_arg),
     table_name(table_name_arg)
@@ -162,7 +162,7 @@ public:
     init();
   }
 
-  using SchemaIdentifier::compare;
+  using Schema::compare;
 
   bool isTmp() const
   {

@@ -1956,7 +1956,7 @@ void TransactionServices::createSchema(Session *in_session,
 
 }
 
-void TransactionServices::dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier)
+void TransactionServices::dropSchema(Session *in_session, identifier::Schema::const_reference identifier)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())

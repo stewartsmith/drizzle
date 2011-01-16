@@ -302,7 +302,7 @@ public:
    * @param[in] in_session Pointer to the Session which issued the statement
    * @param[in] schema_name message::Schema message describing new schema
    */
-  void dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier);
+  void dropSchema(Session *in_session, identifier::Schema::const_reference identifier);
 
   /**
    * Creates an AlterSchema Statement GPB message and adds it

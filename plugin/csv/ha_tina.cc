@@ -142,12 +142,12 @@ public:
   int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::identifier::Schema &schema_identifier,
                              drizzled::TableIdentifier::vector &set_of_identifiers);
 };
 
 void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                 const drizzled::SchemaIdentifier&,
+                                 const drizzled::identifier::Schema&,
                                  drizzled::TableIdentifier::vector&)
 {
 }

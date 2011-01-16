@@ -665,12 +665,12 @@ class AddTableIdentifier :
   public std::unary_function<StorageEngine *, void>
 {
   CachedDirectory &directory;
-  const SchemaIdentifier &identifier;
+  const identifier::Schema &identifier;
   TableIdentifier::vector &set_of_identifiers;
 
 public:
 
-  AddTableIdentifier(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, TableIdentifier::vector &of_names) :
+  AddTableIdentifier(CachedDirectory &directory_arg, const identifier::Schema &identifier_arg, TableIdentifier::vector &of_names) :
     directory(directory_arg),
     identifier(identifier_arg),
     set_of_identifiers(of_names)
@@ -684,10 +684,10 @@ public:
 };
 
 
-void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifier::vector &set_of_identifiers)
+void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &schema_identifier, TableIdentifier::vector &set_of_identifiers)
 {
-  static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
-  static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
+  static identifier::Schema INFORMATION_SCHEMA_IDENTIFIER("information_schema");
+  static identifier::Schema DATA_DICTIONARY_IDENTIFIER("data_dictionary");
 
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 

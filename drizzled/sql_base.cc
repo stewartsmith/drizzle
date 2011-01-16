@@ -517,7 +517,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
-void Open_tables_state::doGetTableNames(const SchemaIdentifier &schema_identifier,
+void Open_tables_state::doGetTableNames(const identifier::Schema &schema_identifier,
                                         std::set<std::string>& set_of_names)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
@@ -530,13 +530,13 @@ void Open_tables_state::doGetTableNames(const SchemaIdentifier &schema_identifie
 }
 
 void Open_tables_state::doGetTableNames(CachedDirectory &,
-                                        const SchemaIdentifier &schema_identifier,
+                                        const identifier::Schema &schema_identifier,
                                         std::set<std::string> &set_of_names)
 {
   doGetTableNames(schema_identifier, set_of_names);
 }
 
-void Open_tables_state::doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
+void Open_tables_state::doGetTableIdentifiers(const identifier::Schema &schema_identifier,
                                               TableIdentifier::vector &set_of_identifiers)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
@@ -551,7 +551,7 @@ void Open_tables_state::doGetTableIdentifiers(const SchemaIdentifier &schema_ide
 }
 
 void Open_tables_state::doGetTableIdentifiers(CachedDirectory &,
-                                              const SchemaIdentifier &schema_identifier,
+                                              const identifier::Schema &schema_identifier,
                                               TableIdentifier::vector &set_of_identifiers)
 {
   doGetTableIdentifiers(schema_identifier, set_of_identifiers);

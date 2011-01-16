@@ -106,17 +106,17 @@ public:
   bool doDoesTableExist(Session& , const TableIdentifier &);
   int doRenameTable(Session&, const TableIdentifier &, const TableIdentifier &);
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::identifier::Schema &schema_identifier,
                              drizzled::TableIdentifier::vector &set_of_identifiers);
 private:
   void getTableNamesFromFilesystem(drizzled::CachedDirectory &directory,
-                                   const drizzled::SchemaIdentifier &schema_identifier,
+                                   const drizzled::identifier::Schema &schema_identifier,
                                    drizzled::plugin::TableNameList *set_of_names,
                                    drizzled::TableIdentifier::vector *set_of_identifiers);
 };
 
 void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &directory,
-                                                   const drizzled::SchemaIdentifier &schema_identifier,
+                                                   const drizzled::identifier::Schema &schema_identifier,
                                                    drizzled::plugin::TableNameList *set_of_names,
                                                    drizzled::TableIdentifier::vector *set_of_identifiers)
 {
@@ -151,7 +151,7 @@ void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &di
 }
 
 void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                             const drizzled::SchemaIdentifier &schema_identifier,
+                                             const drizzled::identifier::Schema &schema_identifier,
                                              drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   getTableNamesFromFilesystem(directory, schema_identifier, NULL, &set_of_identifiers);

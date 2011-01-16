@@ -62,7 +62,7 @@ bool ShowTables::Generator::nextCore()
       return false;
     }
 
-    SchemaIdentifier identifier(schema_name);
+    identifier::Schema identifier(schema_name);
     plugin::StorageEngine::getIdentifiers(getSession(), identifier, set_of_identifiers);
     table_iterator= set_of_identifiers.begin();
     is_primed= true;

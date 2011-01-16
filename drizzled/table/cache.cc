@@ -136,7 +136,7 @@ We can't use hash_delete when looping hash_elements. We mark them first
 and afterwards delete those marked unused.
 */
 
-void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
+void Cache::removeSchema(const identifier::Schema &schema_identifier)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 

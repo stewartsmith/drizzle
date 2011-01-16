@@ -123,7 +123,7 @@ public:
   int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::identifier::Schema &schema_identifier,
                              drizzled::TableIdentifier::vector &set_of_identifiers);
 };
 

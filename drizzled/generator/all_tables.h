@@ -35,7 +35,7 @@ class AllTables
   TableIdentifier::vector::const_iterator table_iterator;
 
   drizzled::generator::Schema schema_generator;
-  const drizzled::SchemaIdentifier *schema_ptr;
+  const drizzled::identifier::Schema *schema_ptr;
 
   bool table_setup();
 

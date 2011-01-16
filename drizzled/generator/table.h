@@ -37,7 +37,7 @@ class Table
 
 public:
 
-  Table(Session &arg, const SchemaIdentifier &schema_identifier);
+  Table(Session &arg, const identifier::Schema &schema_identifier);
 
   operator const drizzled::message::table::shared_ptr()
   {

@@ -23,10 +23,13 @@
 #include <assert.h>
 #include <boost/lexical_cast.hpp>
 #include "drizzled/identifier.h"
-#include "drizzled/session.h"
 #include "drizzled/internal/my_sys.h"
 
-#include "drizzled/table.h"
+#include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
+
+#include <drizzled/table.h>
 
 #include "drizzled/util/string.h"
 #include "drizzled/util/tablename_to_filename.h"
@@ -42,7 +45,11 @@ using namespace std;
 namespace drizzled
 {
 
-class SchemaIdentifier;
+class Table;
+
+namespace identifier {
+class Schema;
+}
 
 extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
@@ -239,7 +246,7 @@ size_t TableIdentifier::build_table_filename(std::string &in_path, const std::st
 }
 
 TableIdentifier::TableIdentifier(const drizzled::Table &table) :
-  SchemaIdentifier(table.getShare()->getSchemaName()),
+  identifier::Schema(table.getShare()->getSchemaName()),
   type(table.getShare()->getTableType()),
   table_name(table.getShare()->getTableName())
 {
@@ -307,7 +314,7 @@ void TableIdentifier::getSQLPath(std::string &sql_path) const  // @todo this is 
 
 bool TableIdentifier::isValid() const
 {
-  if (not SchemaIdentifier::isValid())
+  if (not identifier::Schema::isValid())
     return false;
 
   bool error= false;

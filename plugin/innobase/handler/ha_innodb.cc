@@ -444,7 +444,7 @@ public:
   doDropSchema(
   /*===================*/
         /* out: error number */
-    const SchemaIdentifier  &identifier); /* in: database path; inside InnoDB the name
+    const identifier::Schema  &identifier); /* in: database path; inside InnoDB the name
         of the last directory in the path is used as
         the database name: for example, in 'mysql/data/test'
         the database name is 'test' */
@@ -511,7 +511,7 @@ public:
   bool doDoesTableExist(drizzled::Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::identifier::Schema &schema_identifier,
                              drizzled::TableIdentifier::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
@@ -540,7 +540,7 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 }
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                           const drizzled::SchemaIdentifier &schema_identifier,
+                                           const drizzled::identifier::Schema &schema_identifier,
                                            drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
@@ -6618,7 +6618,7 @@ Removes all tables in the named database inside InnoDB. */
 bool
 InnobaseEngine::doDropSchema(
 /*===================*/
-                             const SchemaIdentifier &identifier)
+                             const identifier::Schema &identifier)
     /*!< in: database path; inside InnoDB the name
       of the last directory in the path is used as
       the database name: for example, in 'mysql/data/test'
@@ -6668,7 +6668,7 @@ InnobaseEngine::doDropSchema(
 
 void InnobaseEngine::dropTemporarySchema()
 {
-  SchemaIdentifier schema_identifier(GLOBAL_TEMPORARY_EXT);
+  identifier::Schema schema_identifier(GLOBAL_TEMPORARY_EXT);
   trx_t*  trx= NULL;
   string schema_path(GLOBAL_TEMPORARY_EXT);
 

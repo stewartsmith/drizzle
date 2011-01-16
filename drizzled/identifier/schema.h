@@ -49,19 +49,20 @@
 #include <boost/algorithm/string.hpp>
 
 namespace drizzled {
+namespace identifier {
 
-class SchemaIdentifier : public Identifier
+class Schema : public Identifier
 {
   std::string db;
   std::string db_path;
 
 public:
-  typedef std::vector <SchemaIdentifier> vector;
-  typedef const SchemaIdentifier& const_reference;
+  typedef std::vector <Schema> vector;
+  typedef const Schema& const_reference;
 
-  SchemaIdentifier(const std::string &db_arg);
+  Schema(const std::string &db_arg);
 
-  virtual ~SchemaIdentifier()
+  virtual ~Schema()
   { }
 
   virtual void getSQLPath(std::string &arg) const;
@@ -78,23 +79,24 @@ public:
   virtual bool isValid() const;
 
   bool compare(const std::string &arg) const;
-  bool compare(SchemaIdentifier::const_reference) const;
+  bool compare(Schema::const_reference) const;
 
-  friend bool operator<(SchemaIdentifier::const_reference left, SchemaIdentifier::const_reference right)
+  friend bool operator<(Schema::const_reference left, Schema::const_reference right)
   {
     return  boost::algorithm::to_upper_copy(left.getSchemaName()) < boost::algorithm::to_upper_copy(right.getSchemaName());
   }
 
-  friend bool operator==(SchemaIdentifier::const_reference left,
-                         SchemaIdentifier::const_reference right)
+  friend bool operator==(Schema::const_reference left,
+                         Schema::const_reference right)
   {
     return boost::iequals(left.getSchemaName(), right.getSchemaName());
   }
 };
 
-std::ostream& operator<<(std::ostream& output, const SchemaIdentifier &identifier);
+std::ostream& operator<<(std::ostream& output, const Schema&identifier);
 
 
+} /* namespace identifier */
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_IDENTIFIER_SCHEMA_H */

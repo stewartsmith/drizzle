@@ -142,7 +142,7 @@ public:
   bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::identifier::Schema &schema_identifier,
                              drizzled::TableIdentifier::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state)
   {
@@ -157,7 +157,7 @@ public:
 };
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                         const drizzled::SchemaIdentifier&,
+                                         const drizzled::identifier::Schema&,
                                          drizzled::TableIdentifier::vector&)
 {
 }

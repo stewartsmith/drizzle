@@ -4903,7 +4903,7 @@ show_param:
               util::string::const_shared_ptr schema(YYSession->schema());
               if ($2)
               {
-		SchemaIdentifier identifier($2);
+		identifier::Schema identifier($2);
                 column_name.append($2);
                 Lex->select_lex.db= $2;
                 if (not plugin::StorageEngine::doesSchemaExist(identifier))
@@ -4976,7 +4976,7 @@ show_param:
              {
                Lex->select_lex.db= $3;
 
-	       SchemaIdentifier identifier($3);
+	       identifier::Schema identifier($3);
                if (not plugin::StorageEngine::doesSchemaExist(identifier))
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);

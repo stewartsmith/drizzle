@@ -78,11 +78,11 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::SchemaIdentifier::vector&);
+  void doGetSchemaIdentifiers(drizzled::identifier::Schema::vector&);
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
 
-  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier &schema, drizzled::message::schema::shared_ptr &schema_message);
+  bool doGetSchemaDefinition(const drizzled::identifier::Schema &schema, drizzled::message::schema::shared_ptr &schema_message);
 
   int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &, const drizzled::TableIdentifier &)
   {
@@ -90,7 +90,7 @@ public:
   }
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::identifier::Schema &schema_identifier,
                              drizzled::TableIdentifier::vector &set_of_identifiers);
 };
 

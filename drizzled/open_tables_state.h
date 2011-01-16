@@ -155,15 +155,15 @@ public:
   virtual ~Open_tables_state() {}
 
   void doGetTableNames(CachedDirectory &directory,
-                       const SchemaIdentifier &schema_identifier,
+                       const identifier::Schema &schema_identifier,
                        std::set<std::string>& set_of_names);
-  void doGetTableNames(const SchemaIdentifier &schema_identifier,
+  void doGetTableNames(const identifier::Schema &schema_identifier,
                        std::set<std::string>& set_of_names);
 
   void doGetTableIdentifiers(CachedDirectory &directory,
-                             const SchemaIdentifier &schema_identifier,
+                             const identifier::Schema &schema_identifier,
                              TableIdentifier::vector &set_of_identifiers);
-  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
+  void doGetTableIdentifiers(const identifier::Schema &schema_identifier,
                              TableIdentifier::vector &set_of_identifiers);
 
   int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
