@@ -817,12 +817,12 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
   RETURN VALUE
     Time in UTC seconds since Unix Epoch representation.
 */
-time_t
+type::Time::epoch_t
 my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
                   bool *in_dst_time_gap, bool skip_timezone)
 {
   uint32_t loop;
-  time_t tmp= 0;
+  type::Time::epoch_t tmp= 0;
   int shift= 0;
   type::Time tmp_time;
   type::Time *t= &tmp_time;
@@ -917,7 +917,7 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
   }
 #endif
 
-  tmp= (time_t) (((calc_daynr((uint32_t) t->year, (uint32_t) t->month, (uint32_t) t->day) -
+  tmp= (type::Time::epoch_t) (((calc_daynr((uint32_t) t->year, (uint32_t) t->month, (uint32_t) t->day) -
                    (long) days_at_timestart)*86400L + (long) t->hour*3600L +
                   (long) (t->minute*60 + t->second)) + (time_t) my_time_zone -
                  3600);
@@ -925,14 +925,14 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
   current_timezone= my_time_zone;
   if (skip_timezone)
   {
-    util::gmtime_r(&tmp, &tm_tmp);
+    util::gmtime(tmp, &tm_tmp);
   }
   else
   {
-    util::localtime_r(&tmp,&tm_tmp);
+    util::localtime(tmp, &tm_tmp);
   }
 
-  l_time=&tm_tmp;
+  l_time= &tm_tmp;
   for (loop=0;
        loop < 2 &&
 	 (t->hour != (uint32_t) l_time->tm_hour ||
@@ -953,11 +953,11 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     tmp+= (time_t) diff;
     if (skip_timezone)
     {
-      util::gmtime_r(&tmp, &tm_tmp);
+      util::gmtime(tmp, &tm_tmp);
     }
     else
     {
-      localtime_r(&tmp, &tm_tmp);
+      util::localtime(tmp, &tm_tmp);
     }
     l_time=&tm_tmp;
   }
@@ -1007,7 +1007,7 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     tmp= 0;
   }
 
-  return (time_t) tmp;
+  return tmp;
 } /* my_system_gmt_sec */
 
 

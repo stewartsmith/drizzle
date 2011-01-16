@@ -33,8 +33,8 @@ namespace drizzled
 namespace util
 {
 
-struct tm *gmtime_r(const time_t *timer, struct tm *tmbuf);
-struct tm *localtime_r(const time_t *timer, struct tm *tmbuf);
+struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf);
+struct tm *localtime(const type::Time::epoch_t &timer, struct tm *tmbuf);
 time_t mktime(struct tm *tmbuf);
 
 } /* namespace util */

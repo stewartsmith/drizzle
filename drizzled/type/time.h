@@ -94,6 +94,7 @@ class Time
 {
 public:
   typedef uint32_t usec_t;
+  typedef int64_t epoch_t;
 
   Time()
   {

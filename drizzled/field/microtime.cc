@@ -95,7 +95,7 @@ int Microtime::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type )
   long my_timezone;
   bool in_dst_time_gap;
 
-  time_t time_tmp= my_system_gmt_sec(ltime, &my_timezone, &in_dst_time_gap, true);
+  type::Time::epoch_t time_tmp= my_system_gmt_sec(ltime, &my_timezone, &in_dst_time_gap, true);
   uint64_t tmp_seconds= time_tmp;
   uint32_t tmp_micro= ltime->second_part;
 

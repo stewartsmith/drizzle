@@ -31,6 +31,9 @@
 // SUCH DAMAGE.
 // 
 
+#include "config.h"
+
+#include <drizzled/type/time.h>
 #include <drizzled/util/gmtime.h>
 
 namespace drizzled
@@ -45,11 +48,11 @@ namespace util
 #define FIRSTSUNDAY(timp)       (((timp)->tm_yday - (timp)->tm_wday + 420) % 7)
 #define FIRSTDAYOF(timp)        (((timp)->tm_wday - (timp)->tm_yday + 420) % 7)
 
-#define TIME_MAX                2147483647L
+#define TIME_MAX                INT64_MIN
 
 int _daylight = 0;                  // Non-zero if daylight savings time is used
 long _dstbias = 0;                  // Offset for Daylight Saving Time
-long _timezone = 0;                 // Difference in seconds between GMT and local time
+type::Time::epoch_t _timezone = 0;                 // Difference in seconds between GMT and local time
 const char *_tzname[2] = {"GMT", "GMT"};  // Standard/daylight savings time zone names
 
 const char *_days[] = 
@@ -86,20 +89,19 @@ const int _ytab[2][12] =
   {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 };
 
-struct tm *gmtime_r(const time_t *timer, struct tm *tmbuf)
+struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
 {
-  time_t time = *timer;
-  unsigned long dayclock, dayno;
+  uint64_t dayclock, dayno;
   int year = EPOCH_YR;
 
-  dayclock = (unsigned long) time % SECS_DAY;
-  dayno = (unsigned long) time / SECS_DAY;
+  dayclock = (uint64_t) timer % SECS_DAY;
+  dayno = (uint64_t) timer / SECS_DAY;
 
   tmbuf->tm_sec = dayclock % 60;
   tmbuf->tm_min = (dayclock % 3600) / 60;
   tmbuf->tm_hour = dayclock / 3600;
   tmbuf->tm_wday = (dayno + 4) % 7; // Day 0 was a thursday
-  while (dayno >= (unsigned long) YEARSIZE(year)) 
+  while (dayno >= (uint64_t) YEARSIZE(year)) 
   {
     dayno -= YEARSIZE(year);
     year++;
@@ -107,7 +109,7 @@ struct tm *gmtime_r(const time_t *timer, struct tm *tmbuf)
   tmbuf->tm_year = year - YEAR0;
   tmbuf->tm_yday = dayno;
   tmbuf->tm_mon = 0;
-  while (dayno >= (unsigned long) _ytab[LEAPYEAR(year)][tmbuf->tm_mon]) 
+  while (dayno >= (uint64_t) _ytab[LEAPYEAR(year)][tmbuf->tm_mon]) 
   {
     dayno -= _ytab[LEAPYEAR(year)][tmbuf->tm_mon];
     tmbuf->tm_mon++;
@@ -118,12 +120,12 @@ struct tm *gmtime_r(const time_t *timer, struct tm *tmbuf)
   return tmbuf;
 }
 
-struct tm *localtime_r(const time_t *timer, struct tm *tmbuf)
+struct tm *localtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
 {
-  time_t t;
+  type::Time::epoch_t t;
 
-  t = *timer - _timezone;
-  return util::gmtime_r(&t, tmbuf);
+  t = timer - _timezone;
+  return util::gmtime(t, tmbuf);
 }
 
 time_t mktime(struct tm *tmbuf)
