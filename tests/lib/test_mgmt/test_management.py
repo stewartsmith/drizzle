@@ -192,7 +192,9 @@ class testManager:
         self.logging.info("Test execution complete")
         self.logging.info("Summary report:")
         self.report_executed_tests()
-        self.report_failing_tests()
+        self.report_tests_by_status('fail')
+        self.report_tests_by_status('skipped')
+        self.report_tests_by_status('disabled')
         
     def get_executed_test_count(self):
         """ Return how many tests were executed """
@@ -220,12 +222,12 @@ class testManager:
                                                                 , test_percent*executed_ratio ))
 
 
-    def report_failing_tests(self):
-        failing_tests = []
-        if 'fail' in self.executed_tests:
-            for testcase in self.executed_tests['fail']:
-                failing_tests.append(testcase.fullname)
-            self.logging.info("Failing tests: %s" %(", ".join(failing_tests)))
+    def report_tests_by_status(self, status):
+        matching_tests = []
+        if status in self.executed_tests:
+            for testcase in self.executed_tests[status]:
+                matching_tests.append(testcase.fullname)
+            self.logging.info("%s tests: %s" %(status.upper(), ", ".join(matching_tests)))
 
     def get_count_by_status(self, test_status):
         """ Return how many tests are in a given test_status """
