@@ -8,7 +8,6 @@ drop table if exists t1,t2;
 #
 # Bug #19263: variables.test doesn't clean up after itself (I/II -- save)
 #
-set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
 set @my_max_join_size             =@@global.max_join_size;
 set @my_mysql_protocol_buffer_length =@@global.mysql_protocol_buffer_length;
@@ -173,7 +172,6 @@ set bulk_insert_buffer_size=100;
 set join_buffer_size=100;
 set last_insert_id=1;
 set max_allowed_packet=100;
-set global max_connect_errors=100;
 set max_heap_table_size=100;
 set max_join_size=100;
 set max_sort_length=100;
@@ -467,7 +465,6 @@ show variables like 'hostname';
 #
 --error ER_UNKNOWN_SYSTEM_VARIABLE
 set global flush_time                =@my_flush_time;
-set global max_connect_errors        =@my_max_connect_errors;
 set global max_heap_table_size       =@my_max_heap_table_size;
 set global max_join_size             =@my_max_join_size;
 # No default
@@ -485,7 +482,6 @@ SHOW LOCAL VARIABLES LIKE 'max_join_size';
 set GLOBAL bulk_insert_buffer_size=DEFAULT;
 set GLOBAL join_buffer_size=DEFAULT;
 set GLOBAL max_allowed_packet=DEFAULT;
-set GLOBAL max_connect_errors=DEFAULT;
 set GLOBAL max_heap_table_size=DEFAULT;
 set GLOBAL max_join_size=DEFAULT;
 set GLOBAL max_sort_length=DEFAULT;
