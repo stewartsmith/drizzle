@@ -115,7 +115,7 @@ TEST(calendar_in_unix_epoch_range_test, OneSecondAfterMaxOfRange)
 {
   uint32_t year= 2038, month= 1, day= 19, hour= 3, minute= 14, second= 8;
 
-  ASSERT_FALSE(in_unix_epoch_range(year, month, day, hour, minute, second));
+  ASSERT_TRUE(in_unix_epoch_range(year, month, day, hour, minute, second));
 }
 
 TEST(calendar_in_unix_epoch_range_test, InsideRange)

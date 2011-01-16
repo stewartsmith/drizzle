@@ -214,7 +214,10 @@ String *Item_datetime_typecast::val_str(String *str)
       str->set_charset(&my_charset_bin);
     }
     else
-      make_datetime(&ltime, str);
+    {
+      ltime.convert(*str);
+    }
+
     return str;
   }
 
@@ -261,7 +264,8 @@ String *Item_date_typecast::val_str(String *str)
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
       !str->alloc(MAX_DATE_STRING_REP_LENGTH))
   {
-    make_date(&ltime, str);
+    ltime.convert(*str, DRIZZLE_TIMESTAMP_DATE);
+
     return str;
   }
 

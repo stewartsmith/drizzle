@@ -54,7 +54,7 @@ String *Item_func_from_unixtime::val_str(String *str)
     return 0;
   }
 
-  make_datetime(&time_tmp, str);
+  time_tmp.convert(*str);
 
   return str;
 }
@@ -73,7 +73,27 @@ int64_t Item_func_from_unixtime::val_int()
 
 bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
 {
-  uint64_t tmp= (uint64_t)(args[0]->val_int());
+  uint64_t tmp= 0;
+  type::Time::usec_t fractional_tmp= 0;
+
+  switch (args[0]->result_type()) {
+  case REAL_RESULT:
+  case ROW_RESULT:
+  case DECIMAL_RESULT:
+  case STRING_RESULT:
+    {
+      double double_tmp= args[0]->val_real();
+
+      tmp= (uint64_t)(double_tmp);
+      fractional_tmp=  (type::Time::usec_t)((double_tmp - tmp) * 1000000);
+
+      break;
+    }
+  case INT_RESULT:
+    tmp= (uint64_t)(args[0]->val_int());
+    break;
+  }
+
   /*
     "tmp > TIMESTAMP_MAX_VALUE" check also covers case of negative
     from_unixtime() argument since tmp is unsigned.
@@ -82,7 +102,7 @@ bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
     return 1;
 
   Timestamp temporal;
-  if (! temporal.from_time_t((time_t) tmp))
+  if (not temporal.from_time_t((time_t) tmp))
   {
     null_value= true;
     std::string tmp_string(boost::lexical_cast<std::string>(tmp));
@@ -90,7 +110,7 @@ bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
     return 0;
   }
   
-  memset(ltime, 0, sizeof(*ltime));
+  ltime->reset();
 
   ltime->year= temporal.years();
   ltime->month= temporal.months();
@@ -98,6 +118,7 @@ bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
   ltime->hour= temporal.hours();
   ltime->minute= temporal.minutes();
   ltime->second= temporal.seconds();
+  ltime->second_part= fractional_tmp;
   ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
 
   return 0;
