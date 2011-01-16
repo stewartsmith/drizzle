@@ -31,14 +31,12 @@
 // SUCH DAMAGE.
 // 
 
+#include <drizzled/util/gmtime.h>
+
 namespace drizzled
 {
 namespace util
 {
-
-
-#include <time.h>
-
 #define YEAR0                   1900
 #define EPOCH_YR                1970
 #define SECS_DAY                (24L * 60L * 60L)
@@ -52,7 +50,7 @@ namespace util
 int _daylight = 0;                  // Non-zero if daylight savings time is used
 long _dstbias = 0;                  // Offset for Daylight Saving Time
 long _timezone = 0;                 // Difference in seconds between GMT and local time
-char *_tzname[2] = {"GMT", "GMT"};  // Standard/daylight savings time zone names
+const char *_tzname[2] = {"GMT", "GMT"};  // Standard/daylight savings time zone names
 
 const char *_days[] = 
 {
@@ -125,7 +123,7 @@ struct tm *localtime_r(const time_t *timer, struct tm *tmbuf)
   time_t t;
 
   t = *timer - _timezone;
-  return gmtime_r(&t, tmbuf);
+  return util::gmtime_r(&t, tmbuf);
 }
 
 time_t mktime(struct tm *tmbuf)

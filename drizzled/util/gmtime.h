@@ -25,6 +25,8 @@
 #ifndef DRIZZLED_UTIL_GMTIME_H
 #define DRIZZLED_UTIL_GMTIME_H
 
+#include <time.h>
+
 namespace drizzled
 {
 

@@ -17,6 +17,8 @@
 
 #include "drizzled/type/time.h"
 
+#include <drizzled/util/gmtime.h>
+
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include <drizzled/util/test.h>
@@ -923,11 +925,11 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
   current_timezone= my_time_zone;
   if (skip_timezone)
   {
-    gmtime_r(&tmp, &tm_tmp);
+    util::gmtime_r(&tmp, &tm_tmp);
   }
   else
   {
-    localtime_r(&tmp,&tm_tmp);
+    util::localtime_r(&tmp,&tm_tmp);
   }
 
   l_time=&tm_tmp;
@@ -951,7 +953,7 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
     tmp+= (time_t) diff;
     if (skip_timezone)
     {
-      gmtime_r(&tmp, &tm_tmp);
+      util::gmtime_r(&tmp, &tm_tmp);
     }
     else
     {
