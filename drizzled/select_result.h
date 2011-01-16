@@ -62,7 +62,7 @@ public:
    ** Functions to provide a interface to select results
    *****************************************************************************/
 
-  virtual void send_error(uint32_t errcode, const char *err);
+  virtual void send_error(drizzled::error_t errcode, const char *err);
 
   /*
     Cleanup instance of this class for next execution of a prepared

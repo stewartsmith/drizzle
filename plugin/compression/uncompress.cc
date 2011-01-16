@@ -35,7 +35,7 @@ String *Item_func_uncompress::val_str(String *str)
   String *res= args[0]->val_str(str);
   ulong new_size;
   int err;
-  uint32_t code;
+  drizzled::error_t code;
 
   if (!res)
     goto err;
