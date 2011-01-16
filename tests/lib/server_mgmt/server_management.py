@@ -173,8 +173,27 @@ class serverManager:
             else:
                 # We need to reset what is running and change the server
                 # options
+                server_options = self.filter_server_options(server_options)
                 self.reset_server(server)
                 self.update_server_options(server, server_options)
+
+    def filter_server_options(self, server_options):
+        """ Remove a list of options we don't want passed to the server
+            these are test-case specific options.
+ 
+            NOTE: It is a bad hack to allow test-runner commands
+            to mix with server options willy-nilly in master-opt files
+            as we do.  We need to kill this at some point : (
+
+        """
+        remove_options = [ '--restart'
+                         , '--skip-stack-trace'
+                         , '--skip-core-file'
+                         ]
+        for remove_option in remove_options:
+            if remove_option in server_options:
+                server_options.remove(remove_option)
+        return server_options
             
     
     def compare_options(self, optlist1, optlist2):

@@ -109,10 +109,12 @@ class testExecutor():
                 keep_running = 0
         self.status = 0
 
-    def execute_testCase(self,bad_start):
+    def execute_testCase(self, bad_start):
         """ Do whatever evil voodoo we must do to execute a testCase """
         if self.verbose:
             self.logging.verbose("Executor: %s executing test: %s" %(self.name, self.current_testcase.fullname))
+        if bad_start:
+            self.logging.warning("Problem starting server(s) for test...failing test case")
 
     def set_server_status(self, test_status):
         """ We update our servers to indicate if a test passed or failed """

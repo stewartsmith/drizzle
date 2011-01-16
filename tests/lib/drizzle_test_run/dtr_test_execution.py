@@ -38,7 +38,6 @@ class dtrTestExecutor(test_execution.testExecutor):
         """
         test_execution.testExecutor.execute_testCase(self,bad_start)
         self.status = 0
-
         if not bad_start:
         # our servers are started and we are good to go 
             # generate command line
