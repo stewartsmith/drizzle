@@ -113,13 +113,14 @@ void drizzle_reset_errors(Session *session, bool force)
 */
 
 DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-                          uint32_t code, const char *msg)
+                            drizzled::error_t code, const char *msg)
 {
   DRIZZLE_ERROR *err= 0;
 
-  if (level == DRIZZLE_ERROR::WARN_LEVEL_NOTE &&
-      !(session->options & OPTION_SQL_NOTES))
-    return(0);
+  if (level == DRIZZLE_ERROR::WARN_LEVEL_NOTE && !(session->options & OPTION_SQL_NOTES))
+  {
+    return NULL;
+  }
 
   if (session->getQueryId() != session->getWarningQueryId())
     drizzle_reset_errors(session, 0);
@@ -149,11 +150,14 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   {
     /* We have to use warn_root, as mem_root is freed after each query */
     if ((err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg)))
+    {
       session->warn_list.push_back(err, &session->warn_root);
+    }
   }
   session->warn_count[(uint32_t) level]++;
   session->total_warn_count++;
-  return(err);
+
+  return err;
 }
 
 /*
@@ -168,7 +172,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 */
 
 void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-			 uint32_t code, const char *format, ...)
+			 drizzled::error_t code, const char *format, ...)
 {
   va_list args;
   char    warning[ERRMSGSIZE+20];
@@ -177,7 +181,6 @@ void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level lev
   vsnprintf(warning, sizeof(warning), format, args);
   va_end(args);
   push_warning(session, level, code, warning);
-  return;
 }
 
 

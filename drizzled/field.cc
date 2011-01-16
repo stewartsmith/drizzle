@@ -1172,7 +1172,7 @@ uint32_t pack_length_to_packflag(uint32_t type)
 *****************************************************************************/
 
 bool Field::set_warning(DRIZZLE_ERROR::enum_warning_level level,
-                        uint32_t code,
+                        drizzled::error_t code,
                         int cuted_increment)
 {
   /*
@@ -1192,7 +1192,7 @@ bool Field::set_warning(DRIZZLE_ERROR::enum_warning_level level,
 
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
-                                 unsigned int code,
+                                 drizzled::error_t code,
                                  const char *str, 
                                  uint32_t str_length,
                                  enum enum_drizzle_timestamp_type ts_type, 
@@ -1207,7 +1207,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 }
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
-                                 uint32_t code,
+                                 drizzled::error_t code,
                                  int64_t nr, 
                                  enum enum_drizzle_timestamp_type ts_type,
                                  int cuted_increment)
@@ -1224,7 +1224,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 }
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
-                                 const uint32_t code,
+                                 const drizzled::error_t code,
                                  double nr, 
                                  enum enum_drizzle_timestamp_type ts_type)
 {

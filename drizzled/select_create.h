@@ -60,7 +60,7 @@ public:
   int prepare(List<Item> &list, Select_Lex_Unit *u);
 
   void store_values(List<Item> &values);
-  void send_error(uint32_t errcode,const char *err);
+  void send_error(drizzled::error_t errcode,const char *err);
   bool send_eof();
   void abort();
   virtual bool can_rollback_data() { return true; }

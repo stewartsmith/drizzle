@@ -298,8 +298,8 @@ void Session::push_internal_handler(Internal_error_handler *handler)
   m_internal_handler= handler;
 }
 
-bool Session::handle_error(uint32_t sql_errno, const char *message,
-                       DRIZZLE_ERROR::enum_warning_level level)
+bool Session::handle_error(drizzled::error_t sql_errno, const char *message,
+                           DRIZZLE_ERROR::enum_warning_level level)
 {
   if (m_internal_handler)
   {
@@ -954,7 +954,7 @@ int Session::send_explain_fields(select_result *result)
   return (result->send_fields(field_list));
 }
 
-void select_result::send_error(uint32_t errcode, const char *err)
+void select_result::send_error(drizzled::error_t errcode, const char *err)
 {
   my_message(errcode, err, MYF(0));
 }
@@ -963,7 +963,7 @@ void select_result::send_error(uint32_t errcode, const char *err)
   Handling writing to file
 ************************************************************************/
 
-void select_to_file::send_error(uint32_t errcode,const char *err)
+void select_to_file::send_error(drizzled::error_t errcode,const char *err)
 {
   my_message(errcode, err, MYF(0));
   if (file > 0)
@@ -1618,8 +1618,8 @@ void Tmp_Table_Param::cleanup(void)
 
 void Session::send_kill_message() const
 {
-  int err= killed_errno();
-  if (err)
+  drizzled::error_t err= static_cast<drizzled::error_t>(killed_errno());
+  if (err != EE_OK)
     my_message(err, ER(err), MYF(0));
 }
 

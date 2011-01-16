@@ -455,7 +455,7 @@ class Ha_delete_table_error_handler: public Internal_error_handler
 {
 public:
   Ha_delete_table_error_handler() : Internal_error_handler() {}
-  virtual bool handle_error(uint32_t sql_errno,
+  virtual bool handle_error(drizzled::error_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
                             Session *session);
@@ -465,7 +465,7 @@ public:
 
 bool
 Ha_delete_table_error_handler::
-handle_error(uint32_t ,
+handle_error(drizzled::error_t ,
              const char *message,
              DRIZZLE_ERROR::enum_warning_level ,
              Session *)
