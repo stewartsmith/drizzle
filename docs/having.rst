@@ -41,8 +41,8 @@ The result-set will look like this:
 
 ======    ===============
 userID    SUM(OrderPrice)
-======    ===============            
-022       150                  
+======    ===============
+022       150
 ======    ===============
 
 Now we want to find if userIDs "131", "256", or "175" spent less than $50 on Activities.
@@ -58,7 +58,7 @@ The result-set would be:
 
 ======    ===============
 userID    SUM(OrderPrice)
-======    ===============            
+======    ===============
 256       10
-175       20                  
+175       20
 ======    ===============

@@ -1127,7 +1127,7 @@ SELECT table_schema, table_name, row_format
 FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	DEFAULT
+test	t1	COMPACT
 
 # - change ROW_FORMAT and check;
 
@@ -1137,7 +1137,7 @@ SELECT table_schema, table_name, row_format
 FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	DEFAULT
+test	t1	REDUNDANT
 
 # - that's it, cleanup.
 

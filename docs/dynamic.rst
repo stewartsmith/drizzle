@@ -26,3 +26,5 @@ the following: ::
 The query will run in a new session and will execute as the user that
 launched it. It can be killed via KILL and the system limit on total number
 of sessions will be enforced.
+
+FIXME: EXECUTE executes the statements inside an explicit transaction.

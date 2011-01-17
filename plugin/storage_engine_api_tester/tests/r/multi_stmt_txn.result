@@ -1,3 +1,6 @@
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 create table t1 (a int) engine=storage_engine_api_tester;
 begin;
 select * from t1;
@@ -5,6 +8,30 @@ a
 select * from t1;
 a
 commit;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_keys()
+::doCreateTable()
+::SEAPITester()
+BEGIN
+In Transaction
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+COMMIT
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 drop table t1;
 create table t1 (a int) engine=storage_engine_api_tester;
 begin;
@@ -27,3 +54,47 @@ a
 1
 commit;
 drop table t1;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_keys()
+::doCreateTable()
+::SEAPITester()
+BEGIN
+In Transaction
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+COMMIT
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0

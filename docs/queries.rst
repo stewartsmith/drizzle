@@ -1,4 +1,4 @@
-Executing Queries 
+Executing Queries
 =================
 
 Queries retrieve data from a database based on specific criteria. They
