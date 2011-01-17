@@ -192,13 +192,13 @@ void FilteredReplicator::parseStatementTableMetadata(const message::Statement &i
     }
     case message::Statement::CREATE_TABLE:
     {
-      // in_schema_name.assign(in_statement.create_table_statement().table().name());
+      in_schema_name.assign(in_statement.create_table_statement().table().schema());
       in_table_name.assign(in_statement.create_table_statement().table().name());
       break;
     }
     case message::Statement::ALTER_TABLE:
     {
-      // in_schema_name.assign(in_statement.alter_table_statement().table().name());
+      in_schema_name.assign(in_statement.alter_table_statement().after().schema());
       in_table_name.assign(in_statement.alter_table_statement().after().name());
       break;
     }
@@ -498,6 +498,7 @@ void FilteredReplicator::setSchemaFilter(const string &input)
   _sch_filter.assign(input);
   schemas_to_filter.clear();
   populateFilter(_sch_filter, schemas_to_filter);
+  pthread_mutex_unlock(&sysvar_sch_lock);
   pthread_mutex_unlock(&sch_vector_lock);
 }
 
@@ -574,16 +575,16 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("filteredschemas",
           po::value<string>(&sysvar_filtered_replicator_sch_filters)->default_value(""),
-          N_("List of schemas to filter"));
+          N_("Comma-separated list of schemas to exclude"));
   context("filteredtables",
           po::value<string>(&sysvar_filtered_replicator_tab_filters)->default_value(""),
-          N_("List of tables to filter"));
+          N_("Comma-separated list of tables to exclude"));
   context("schemaregex", 
           po::value<string>()->default_value(""),
-          N_("Regular expression to apply to schemas to filter"));
+          N_("Regular expression to apply to schemas to exclude"));
   context("tableregex", 
           po::value<string>()->default_value(""),
-          N_("Regular expression to apply to tables to filter"));
+          N_("Regular expression to apply to tables to exclude"));
 }
 
 } /* namespace drizzle_plugin */

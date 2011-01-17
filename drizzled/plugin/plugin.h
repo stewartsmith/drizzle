@@ -46,7 +46,8 @@ private:
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin &);
 public:
-  typedef std::map<std::string, Plugin *> map;
+  typedef std::pair<const std::string, const std::string> map_key;
+  typedef std::map<const map_key, plugin::Plugin *> map;
   typedef std::vector<Plugin *> vector;
 
   explicit Plugin(const std::string &name, const std::string &type_name);

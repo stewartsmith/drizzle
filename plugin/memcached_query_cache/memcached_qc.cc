@@ -385,13 +385,13 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("servers",
           po::value<string>()->default_value("127.0.0.1:11211"),
-          N_("List of memcached servers."));
+          _("List of memcached servers."));
   context("expiry",
           po::value<uint64_constraint>(&expiry_time)->default_value(1000),
-          N_("Expiry time of memcached entries"));
+          _("Expiry time of memcached entries"));
   context("enable",
           po::value<bool>(&sysvar_memcached_qc_enable)->default_value(false)->zero_tokens(),
-          N_("Enable Memcached Query Cache"));
+          _("Enable Memcached Query Cache"));
 }
 
 DRIZZLE_DECLARE_PLUGIN

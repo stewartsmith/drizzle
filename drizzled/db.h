@@ -26,7 +26,7 @@ namespace drizzled {
 namespace message { class Schema; }
 
 bool create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
-bool alter_db(Session *session, const message::Schema &schema_message);
+bool alter_db(Session *session, const message::Schema &schema_message, const message::schema::shared_ptr &original_schema);
 bool rm_db(Session *session, SchemaIdentifier &identifier, const bool if_exists);
 bool change_db(Session *session, SchemaIdentifier &identifier);
 

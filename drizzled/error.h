@@ -79,7 +79,7 @@ void add_error_message(uint32_t error_code, const std::string &error_name,
                        const std::string& message);
 #define DRIZZLE_ADD_ERROR_MESSAGE(code, msg) add_error_message(code, STRINGIFY_ARG(code), msg)
 
-void my_error(error_t nr, drizzled::Identifier::const_reference ref);
+void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags= MYF(0));
 void my_error(error_t nr);
 void my_error(error_t nr, myf MyFlags, ...);
 void my_message(uint32_t my_err, const char *str, myf MyFlags);

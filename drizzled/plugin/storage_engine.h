@@ -32,6 +32,8 @@
 #include "drizzled/cached_directory.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 
+#include <drizzled/error_t.h>
+
 #include <bitset>
 #include <string>
 #include <vector>
@@ -46,7 +48,6 @@ class Cursor;
 typedef struct st_hash HASH;
 
 class TableShare;
-typedef drizzle_lex_string LEX_STRING;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
@@ -201,7 +202,6 @@ protected:
   pthread_mutex_t proto_cache_mutex;
 
 public:
-
   StorageEngine(const std::string name_arg,
                 const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
@@ -221,8 +221,8 @@ protected:
 
   /* Old style cursor errors */
   void print_keydup_error(uint32_t key_nr, const char *msg, Table &table);
-  void print_error(int error, myf errflag, Table *table= NULL);
   virtual bool get_error_message(int error, String *buf);
+
 public:
   virtual void print_error(int error, myf errflag, Table& table);
 
@@ -313,6 +313,7 @@ public:
   friend class StorageEngineDoesTableExist;
   friend class StorageEngineGetSchemaDefinition;
   friend class StorageEngineGetTableDefinition;
+  friend class DropTableByIdentifier;
 
   int renameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
@@ -324,6 +325,10 @@ public:
                                 const drizzled::TableIdentifier &identifier,
                                 message::table::shared_ptr &table_proto,
                                 bool include_temporary_tables= true);
+  static message::table::shared_ptr getTableMessage(Session& session,
+                                                    const drizzled::TableIdentifier &identifier,
+                                                    drizzled::error_t &error,
+                                                    bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::TableIdentifier &identifier,
                              bool include_temporary_tables= true);
@@ -334,11 +339,18 @@ public:
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
-  static int dropTable(Session& session,
-                       const drizzled::TableIdentifier &identifier);
-  static int dropTable(Session& session,
-                       StorageEngine &engine,
-                       const drizzled::TableIdentifier &identifier);
+
+  static bool dropTable(Session& session,
+                        const drizzled::TableIdentifier &identifier);
+  static bool dropTable(Session& session,
+                        const drizzled::TableIdentifier &identifier,
+                        drizzled::error_t &error);
+
+  static bool dropTable(Session& session,
+                        StorageEngine &engine,
+                        TableIdentifier::const_reference identifier,
+                        drizzled::error_t &error);
+
   static void getIdentifiers(Session &session,
                              const SchemaIdentifier &schema_identifier,
                              TableIdentifier::vector &set_of_identifiers);
@@ -381,9 +393,9 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static int createTable(Session& session,
-                         const drizzled::TableIdentifier &identifier,
-                         message::Table& table_proto);
+  static bool createTable(Session &session,
+                          const TableIdentifier &identifier,
+                          message::Table& table_message);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
@@ -408,6 +420,7 @@ public:
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
   /* TODO-> Make private */
+protected:
   static int deleteDefinitionFromPath(const drizzled::TableIdentifier &identifier);
   static int renameDefinitionFromPath(const drizzled::TableIdentifier &dest, const drizzled::TableIdentifier &src);
   static int writeDefinitionFromPath(const drizzled::TableIdentifier &identifier, message::Table &proto);

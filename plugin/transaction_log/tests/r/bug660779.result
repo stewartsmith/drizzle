@@ -64,6 +64,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 BEGIN;
 UPDATE t1 SET col_int1 = (col_int1 + 1) WHERE col_int2 = 1;
@@ -155,6 +157,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 CREATE TABLE t2 (pk INT NOT NULL AUTO_INCREMENT PRIMARY KEY, a INT);
 INSERT INTO t2 (a) VALUES (1),(2), (NULL);
@@ -214,6 +218,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 DROP TABLE t1;
 DROP TABLE t2;

@@ -98,11 +98,11 @@ error_handler_func error_handler_hook= NULL;
        ...	variable list
 */
 
-void my_error(error_t nr, drizzled::Identifier::const_reference ref)
+void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
 {
   std::string temp;
   ref.getSQLPath(temp);
-  my_error(nr, MYF(0), temp.c_str());
+  my_error(nr, MyFlags, temp.c_str());
 } 
 
 void my_error(error_t nr)
@@ -473,12 +473,15 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   ADD_ERROR_MESSAGE(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));
 
-  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition for %s: %s"));
-  ADD_ERROR_MESSAGE(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for %s : %s"));
-  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_ENUM, N_("The number of enum that were required was too high for table %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for '%s' : %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition for '%s': %s"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_ENUM, N_("The number of enum that were required was too high for table '%s'"));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, N_("Corrupt or invalid table definition for '%s'"));
   ADD_ERROR_MESSAGE(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, N_("Collation '%s' for table %s is invalid/unknown"));
 
   ADD_ERROR_MESSAGE(ER_TABLE_DROP, N_("Cannot drop table '%s'"));
+  ADD_ERROR_MESSAGE(ER_TABLE_DROP_ERROR_OCCURRED, N_("Error occurred while dropping table '%s'"));
+  ADD_ERROR_MESSAGE(ER_TABLE_PERMISSION_DENIED, N_("Permission denied to create '%s'"));
 
   ADD_ERROR_MESSAGE(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   ADD_ERROR_MESSAGE(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
@@ -549,6 +552,18 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(EE_DIR, find(ER_CANT_READ_DIR));
   ADD_ERROR_MESSAGE(EE_STAT, find(ER_CANT_GET_STAT));
   ADD_ERROR_MESSAGE(EE_DISK_FULL, find(ER_DISK_FULL));
+  
+  // Catalog related errors
+  ADD_ERROR_MESSAGE(ER_CATALOG_CANNOT_CREATE, N_("Cannot create catalog '%s'."));
+  ADD_ERROR_MESSAGE(ER_CATALOG_CANNOT_CREATE_PERMISSION, N_("Permission is denied to create '%s' catalog."));
+  ADD_ERROR_MESSAGE(ER_CATALOG_CANNOT_DROP, N_("Cannot drop catalog '%s'."));
+  ADD_ERROR_MESSAGE(ER_CATALOG_CANNOT_DROP_PERMISSION, N_("Permission is denied to drop '%s' catalog."));
+  ADD_ERROR_MESSAGE(ER_CATALOG_DOES_NOT_EXIST, N_("Catalog '%s' does not exist."));
+  ADD_ERROR_MESSAGE(ER_CATALOG_NO_DROP_LOCAL, N_("You cannot drop the 'local' catalog."));
+  ADD_ERROR_MESSAGE(ER_CATALOG_NO_LOCK, N_("Could not gain lock on '%s'."));
+  ADD_ERROR_MESSAGE(ER_CORRUPT_CATALOG_DEFINITION, N_("Corrupt or invalid catalog definition for '%s' : '%s'."));
+  ADD_ERROR_MESSAGE(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name."));
+
 
 }
 

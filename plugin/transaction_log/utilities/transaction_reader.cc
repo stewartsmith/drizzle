@@ -469,30 +469,30 @@ int main(int argc, char* argv[])
    */
   po::options_description desc("Program options");
   desc.add_options()
-    ("help", N_("Display help and exit"))
-    ("use-innodb-replication-log", N_("Read from the innodb transaction log"))
+    ("help", _("Display help and exit"))
+    ("use-innodb-replication-log", _("Read from the innodb transaction log"))
     ("user,u", po::value<string>(&current_user)->default_value(""), 
-      N_("User for login if not current user."))
+      _("User for login if not current user."))
     ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0), 
-      N_("Port number to use for connection."))
+      _("Port number to use for connection."))
     ("password,P", po::value<string>(&opt_password)->default_value(""), 
-      N_("Password to use when connecting to server"))
+      _("Password to use when connecting to server"))
     ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
-      N_("The protocol of connection (mysql or drizzle)."))
-    ("checksum", N_("Perform checksum"))
-    ("ignore-events", N_("Ignore event messages"))
-    ("input-file", po::value< vector<string> >(), N_("Transaction log file"))
-    ("raw", N_("Print raw Protobuf messages instead of SQL"))
+      _("The protocol of connection (mysql or drizzle)."))
+    ("checksum", _("Perform checksum"))
+    ("ignore-events", _("Ignore event messages"))
+    ("input-file", po::value< vector<string> >(), _("Transaction log file"))
+    ("raw", _("Print raw Protobuf messages instead of SQL"))
     ("start-pos",
       po::value<int>(&opt_start_pos),
-      N_("Start reading from the given file position"))
+      _("Start reading from the given file position"))
     ("start-transaction-id",
       po::value<uint64_t>(&opt_start_transaction_id),
-      N_("Only output for the given transaction ID and later"))
+      _("Only output for the given transaction ID and later"))
     ("transaction-id",
       po::value<uint64_t>(&opt_transaction_id),
-      N_("Only output for the given transaction ID"))
-    ("summarize", N_("Summarize message contents"));
+      _("Only output for the given transaction ID"))
+    ("summarize", _("Summarize message contents"));
 
   /*
    * We allow one positional argument that will be transaction file name

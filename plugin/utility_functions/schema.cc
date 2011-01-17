@@ -39,7 +39,7 @@ String *Schema::val_str(String *str)
     return 0;
   }
 
-  str->copy(schema->c_str(), schema->size(), system_charset_info);
+  str->copy(*schema, system_charset_info);
 
   return str;
 }

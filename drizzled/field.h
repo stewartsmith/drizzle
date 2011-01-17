@@ -93,6 +93,7 @@ public:
    */
 private:
   Table *table;
+
 public:
   Table *getTable()
   {
@@ -805,6 +806,7 @@ class CopyField :public memory::SqlAlloc
   */
   typedef void Copy_func(CopyField*);
   Copy_func *get_copy_func(Field *to, Field *from);
+
 public:
   unsigned char *from_ptr;
   unsigned char *to_ptr;
@@ -819,8 +821,23 @@ public:
   Field *to_field;
   String tmp;					// For items
 
-  CopyField() {}
-  ~CopyField() {}
+  CopyField() :
+    from_ptr(0),
+    to_ptr(0),
+    from_null_ptr(0),
+    to_null_ptr(0),
+    null_row(0),
+    from_bit(0),
+    to_bit(0),
+    from_length(0),
+    to_length(0),
+    from_field(0),
+    to_field(0)
+  {}
+
+  ~CopyField()
+  {}
+
   void set(Field *to,Field *from,bool save);	// Field to field
   void set(unsigned char *to,Field *from);		// Field to string
   void (*do_copy)(CopyField *);

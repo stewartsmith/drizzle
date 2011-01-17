@@ -1,0 +1,8 @@
+SELECT CREATE_CATALOG("foo");
+CREATE_CATALOG("foo")
+1
+SELECT CREATE_CATALOG("foo");
+ERROR HY000: Cannot create catalog 'foo'.
+SELECT DROP_CATALOG("foo");
+DROP_CATALOG("foo")
+1

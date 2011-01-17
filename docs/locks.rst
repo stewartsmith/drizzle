@@ -20,6 +20,8 @@ SELECT is_used_lock();
 
 If a session should exit, whatever locks it was holding will be deleted.
 
+FIXME: deleted or released? are locks recursive?
+
 Please note, get_lock() was designed to be compatible with MySQL. If you
 hold any locks when calling get_lock() they will be released. For this
 reason you may want to consider calling get_locks() instead.

@@ -208,7 +208,7 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("max-threads",
           po::value<max_threads_constraint>(&max_threads)->default_value(2048),
-          N_("Maximum number of user threads available."));
+          _("Maximum number of user threads available."));
 }
 
 DRIZZLE_DECLARE_PLUGIN

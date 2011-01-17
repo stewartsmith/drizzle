@@ -91,147 +91,6 @@ namespace drizzled
 
 extern size_t table_def_size;
 
-/*****************************************************************************
-  Functions to handle table definition cach (TableShare)
- *****************************************************************************/
-
-/*
-  Mark that we are not using table share anymore.
-
-  SYNOPSIS
-  release()
-  share		Table share
-
-  IMPLEMENTATION
-  If ref_count goes to zero and (we have done a refresh or if we have
-  already too many open table shares) then delete the definition.
-*/
-
-void TableShare::release(TableShare *share)
-{
-  bool to_be_deleted= false;
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
-
-  share->lock();
-  if (!--share->ref_count)
-  {
-    to_be_deleted= true;
-  }
-  share->unlock();
-
-  if (to_be_deleted)
-  {
-    definition::Cache::singleton().erase(share->getCacheKey());
-  }
-}
-
-void TableShare::release(TableShare::shared_ptr &share)
-{
-  bool to_be_deleted= false;
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
-
-  share->lock();
-  if (!--share->ref_count)
-  {
-    to_be_deleted= true;
-  }
-  share->unlock();
-
-  if (to_be_deleted)
-  {
-    definition::Cache::singleton().erase(share->getCacheKey());
-  }
-}
-
-void TableShare::release(const TableIdentifier &identifier)
-{
-  TableShare::shared_ptr share= definition::Cache::singleton().find(identifier.getKey());
-  if (share)
-  {
-    share->version= 0;                          // Mark for delete
-    if (share->ref_count == 0)
-    {
-      definition::Cache::singleton().erase(identifier.getKey());
-    }
-  }
-}
-
-
-static TableShare::shared_ptr foundTableShare(TableShare::shared_ptr share)
-{
-  /*
-    We found an existing table definition. Return it if we didn't get
-    an error when reading the table definition from file.
-  */
-
-  /* We must do a lock to ensure that the structure is initialized */
-  if (share->error)
-  {
-    /* Table definition contained an error */
-    share->open_table_error(share->error, share->open_errno, share->errarg);
-
-    return TableShare::shared_ptr();
-  }
-
-  share->incrementTableCount();
-
-  return share;
-}
-
-/*
-  Get TableShare for a table.
-
-  get_table_share()
-  session			Thread handle
-  table_list		Table that should be opened
-  key			Table cache key
-  key_length		Length of key
-  error			out: Error code from open_table_def()
-
-  IMPLEMENTATION
-  Get a table definition from the table definition cache.
-  If it doesn't exist, create a new from the table definition file.
-
-  NOTES
-  We must have wrlock on table::Cache::singleton().mutex() when we come here
-  (To be changed later)
-
-  RETURN
-  0  Error
-#  Share for table
-*/
-
-TableShare::shared_ptr TableShare::getShareCreate(Session *session, 
-                                                  const TableIdentifier &identifier,
-                                                  int &in_error)
-{
-  TableShare::shared_ptr share;
-
-  in_error= 0;
-
-  /* Read table definition from cache */
-  if ((share= definition::Cache::singleton().find(identifier.getKey())))
-    return foundTableShare(share);
-
-  share.reset(new TableShare(message::Table::STANDARD, identifier));
-  
-  if (share->open_table_def(*session, identifier))
-  {
-    in_error= share->error;
-
-    return TableShare::shared_ptr();
-  }
-  share->ref_count++;				// Mark in use
-  
-  plugin::EventObserver::registerTableEvents(*share);
-
-  bool ret= definition::Cache::singleton().insert(identifier.getKey(), share);
-
-  if (not ret)
-    return TableShare::shared_ptr();
-
-  return share;
-}
 
 static enum_field_types proto_field_type_to_drizzle_type(const message::Table::Field &field)
 {
@@ -395,7 +254,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg) :
   table_proto(NULL),
   storage_engine(NULL),
   tmp_table(type_arg),
-  ref_count(0),
+  _ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
   _field_size(0),
@@ -460,7 +319,7 @@ TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier:
   table_proto(NULL),
   storage_engine(NULL),
   tmp_table(message::Table::INTERNAL),
-  ref_count(0),
+  _ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
   _field_size(0),
@@ -535,7 +394,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   table_proto(NULL),
   storage_engine(NULL),
   tmp_table(identifier.getType()),
-  ref_count(0),
+  _ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
   _field_size(0),
@@ -613,7 +472,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg,
   table_proto(NULL),
   storage_engine(NULL),
   tmp_table(type_arg),
-  ref_count(0),
+  _ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
   _field_size(0),
@@ -704,8 +563,6 @@ void TableShare::init(const char *new_table_name,
 
 TableShare::~TableShare() 
 {
-  assert(ref_count == 0);
-
   storage_engine= NULL;
 
   delete table_proto;
@@ -1785,7 +1642,7 @@ int TableShare::open_table_from_share(Session *session,
   if (not error_reported)
     open_table_error(ret, errno, 0);
 
-  delete outparam.cursor;
+  boost::checked_delete(outparam.cursor);
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
   outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
