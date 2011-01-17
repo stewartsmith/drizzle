@@ -219,7 +219,7 @@ static bool drop_all_tables_in_schema(Session& session,
     table::Cache::singleton().removeTable(&session, *it,
                                           RTFC_WAIT_OTHER_THREAD_FLAG |
                                           RTFC_CHECK_KILLED_FLAG);
-    if (plugin::StorageEngine::dropTable(session, *it))
+    if (not plugin::StorageEngine::dropTable(session, *it))
     {
       my_error(ER_TABLE_DROP, *it);
       return false;

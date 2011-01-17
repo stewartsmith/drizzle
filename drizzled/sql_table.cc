@@ -214,25 +214,28 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
       }
       else
       {
-        error= plugin::StorageEngine::dropTable(*session, identifier);
+        drizzled::error_t local_error;
 
         /* Generate transaction event ONLY when we successfully drop */ 
-        if (error == 0)
+        if (plugin::StorageEngine::dropTable(*session, identifier, local_error))
         {
           TransactionServices &transaction_services= TransactionServices::singleton();
           transaction_services.dropTable(session, identifier, if_exists);
         }
-
-        if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
+        else
         {
-          error= 0;
-          session->clear_error();
-        }
+          if (local_error == HA_ERR_NO_SUCH_TABLE and if_exists)
+          {
+            error= 0;
+            session->clear_error();
+          }
 
-        if (error == HA_ERR_ROW_IS_REFERENCED)
-        {
-          /* the table is referenced by a foreign key constraint */
-          foreign_key_error= true;
+          if (local_error == HA_ERR_ROW_IS_REFERENCED)
+          {
+            /* the table is referenced by a foreign key constraint */
+            foreign_key_error= true;
+          }
+          error= local_error;
         }
       }
 
@@ -2001,7 +2004,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
                                  const TableIdentifier &src_table,
                                  bool is_engine_set)
 {
-  int protoerr= EEXIST;
+  int protoerr;
   message::Table new_proto;
   message::table::shared_ptr src_proto;
 
@@ -2042,20 +2045,19 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 
   /*
     As mysql_truncate don't work on a new table at this stage of
-    creation, instead create the table directly (for both normal
-    and temporary tables).
+    creation, instead create the table directly (for both normal and temporary tables).
   */
-  int err= plugin::StorageEngine::createTable(session,
-                                              destination_identifier,
-                                              new_proto);
+  bool success= plugin::StorageEngine::createTable(session,
+                                                   destination_identifier,
+                                                   new_proto);
 
-  if (err == false && not destination_identifier.isTmp())
+  if (success && not destination_identifier.isTmp())
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     transaction_services.createTable(&session, new_proto);
   }
 
-  return err ? false : true;
+  return success;
 }
 
 /*
@@ -2074,11 +2076,11 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 */
 
 bool create_like_table(Session* session,
-                             const TableIdentifier &destination_identifier,
-                             TableList* table, TableList* src_table,
-                             message::Table &create_table_proto,
-                             bool is_if_not_exists,
-                             bool is_engine_set)
+                       const TableIdentifier &destination_identifier,
+                       TableList* table, TableList* src_table,
+                       message::Table &create_table_proto,
+                       bool is_if_not_exists,
+                       bool is_engine_set)
 {
   bool res= true;
   uint32_t not_used;

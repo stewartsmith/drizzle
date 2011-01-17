@@ -95,7 +95,7 @@ public:
 
   int doRenameTable(Session&, const drizzled::TableIdentifier&, const drizzled::TableIdentifier&)
   {
-    return EPERM;
+    return HA_ERR_NO_SUCH_TABLE;
   }
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
@@ -153,7 +153,7 @@ int TableProtoTesterEngine::doCreateTable(Session&,
 
 int TableProtoTesterEngine::doDropTable(Session&, const drizzled::TableIdentifier&)
 {
-  return EPERM;
+  return HA_ERR_NO_SUCH_TABLE;
 }
 
 static void fill_table1(message::Table &table)

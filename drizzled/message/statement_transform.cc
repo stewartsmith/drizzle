@@ -318,6 +318,16 @@ transformStatementToSql(const Statement &source,
       sql_strings.push_back(destination);
     }
     break;
+  case Statement::ALTER_SCHEMA:
+    {
+      assert(source.has_alter_schema_statement());
+      string destination;
+      error= transformAlterSchemaStatementToSql(source.alter_schema_statement(),
+                                                destination,
+                                                sql_variant);
+      sql_strings.push_back(destination);
+    }
+    break;
   case Statement::SET_VARIABLE:
     {
       assert(source.has_set_variable_statement());
@@ -803,6 +813,37 @@ transformDeleteStatementToSql(const DeleteHeader &header,
       destination.push_back(')');
   }
   return error;
+}
+
+enum TransformSqlError
+transformAlterSchemaStatementToSql(const AlterSchemaStatement &statement,
+                                   string &destination,
+                                   enum TransformSqlVariant sql_variant)
+{
+  const Schema &before= statement.before();
+  const Schema &after= statement.after();
+
+  /* Make sure we are given the before and after for the same object */
+  if (before.uuid() != after.uuid())
+    return UUID_MISMATCH;
+
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
+  destination.append("ALTER SCHEMA ");
+  destination.push_back(quoted_identifier);
+  destination.append(before.name());
+  destination.push_back(quoted_identifier);
+
+  /*
+   * Diff our schemas. Currently, only collation can change so a
+   * diff of the two structures is not really necessary.
+   */
+  destination.append(" COLLATE = ");
+  destination.append(after.collation());
+
+  return NONE;
 }
 
 enum TransformSqlError

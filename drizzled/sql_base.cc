@@ -118,7 +118,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
-  TableShare::release(table->getMutableShare());
+  table::instance::release(table->getMutableShare());
   table->setShare(share);
 }
 
@@ -730,7 +730,7 @@ void Session::drop_open_table(Table *table, const TableIdentifier &identifier)
       that something has happened.
     */
     unlink_open_table(table);
-    plugin::StorageEngine::dropTable(*this, identifier);
+    (void)plugin::StorageEngine::dropTable(*this, identifier);
   }
 }
 
@@ -3887,12 +3887,15 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
     table= (*ptr)->getTable();
     table->auto_increment_field_not_null= false;
   }
+
   while ((field = *ptr++) && ! session->is_error())
   {
     value=v++;
     table= field->getTable();
+
     if (field == table->next_number_field)
       table->auto_increment_field_not_null= true;
+
     if (value->save_in_field(field, 0) < 0)
     {
       if (table)
@@ -3908,18 +3911,16 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
 
 bool drizzle_rm_tmp_tables()
 {
-  Session *session;
 
   assert(drizzle_tmpdir.size());
+  Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
 
-  if (!(session= new Session(plugin::Listen::getNullClient())))
+  if (not session)
     return true;
-  session->thread_stack= (char*) &session;
+  session->thread_stack= (char*) session.get();
   session->storeGlobals();
 
   plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir.c_str());
-
-  delete session;
 
   return false;
 }

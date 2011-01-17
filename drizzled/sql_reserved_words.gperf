@@ -334,9 +334,6 @@ enum keyword_t {
 };
 
 } // namespace sql
-} // namespace drizzled
-
-using namespace drizzled;
 
 struct keyword_st
 {
@@ -652,5 +649,7 @@ XMLROOT, sql::XMLROOT
 XMLSERIALIZE, sql::XMLSERIALIZE
 YEAR, sql::YEAR
 %%
+
+} // namespace drizzled
 
 #endif /* DRIZZLED_SQL_RESERVED_WORDS_H */

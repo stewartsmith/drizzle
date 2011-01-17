@@ -19,6 +19,8 @@
 # We then use the transaction_reader in plugin/transaction_log/utilities to read the events.
 #
 
+select seapitester_clear_engine_state_history();
+
 --disable_warnings
 DROP TABLE IF EXISTS t1;
 --enable_warnings
@@ -48,8 +50,14 @@ DROP TABLE t1;
 select seapitester_error_inject(0);
 # Read in the transaction.log.
 
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
+
 --exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
+
+select * from data_dictionary.seapitester_engine_state_history;
 

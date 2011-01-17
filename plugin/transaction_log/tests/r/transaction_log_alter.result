@@ -26,6 +26,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 RENAME TO t1_new_name"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -115,12 +117,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -210,12 +214,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -252,6 +258,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 RENAME to t1_new_name"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -295,6 +303,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -370,11 +380,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -409,6 +422,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL AFTER a"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -443,6 +458,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL FIRST"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -477,6 +494,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL FIRST, ADD COLUMN d BLOB AFTER a"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -511,6 +530,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP COLUMN b"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -545,6 +566,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP COLUMN b, DROP COLUMN d"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -620,11 +643,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -661,6 +687,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DISABLE KEYS"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -691,6 +719,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ENABLE KEYS"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -725,6 +755,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD INDEX b_key (b,a)"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -753,6 +785,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP INDEX b_key"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -787,6 +821,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD INDEX b_key (b(10),a)"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -815,6 +851,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP INDEX b_key"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -903,11 +941,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -983,11 +1024,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1022,6 +1066,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ALTER COLUMN b SET DEFAULT 999"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1057,6 +1103,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ALTER COLUMN b DROP DEFAULT"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1098,6 +1146,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 CHANGE COLUMN b new_b_name CHAR(500) DEFAULT \'I am not an int now\' FIRST"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1139,6 +1189,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 MODIFY COLUMN b CHAR(50) DEFAULT \'I am now a CHAR field\' AFTER c"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1229,11 +1281,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1276,6 +1331,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 MODIFY COLUMN b INT NOT NULL"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1370,11 +1427,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1404,6 +1464,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t2 ADD CONSTRAINT fk_constraint_t2 FOREIGN KEY(b) REFERENCES t1(b) ON DELETE SET NULL ON UPDATE CASCADE"
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1432,6 +1494,8 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t2 DROP FOREIGN KEY fk_constraint_t2"
 }
+segment_id: 1
+end_segment: true
 
 
 

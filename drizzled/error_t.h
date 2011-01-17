@@ -56,6 +56,66 @@ enum error_t {
   EE_FILE_NOT_CLOSED,
   EE_ERROR_LAST= EE_FILE_NOT_CLOSED,
 
+  HA_ERR_KEY_NOT_FOUND= 120,        /* Didn't find key on read or update */
+  HA_ERR_FOUND_DUPP_KEY= 121,       /* Dupplicate key on write */
+  HA_ERR_INTERNAL_ERROR=  122,      /* Internal error */
+  HA_ERR_RECORD_CHANGED= 123,       /* Uppdate with is recoverable */
+  HA_ERR_WRONG_INDEX= 124,          /* Wrong index given to function */
+  HA_ERR_CRASHED= 126,              /* Indexfile is crashed */
+  HA_ERR_WRONG_IN_RECORD= 127,      /* Record-file is crashed */
+  HA_ERR_OUT_OF_MEM= 128,           /* Record-file is crashed */
+  HA_ERR_NOT_A_TABLE= 130,          /* not a MYI file - no signature */
+  HA_ERR_WRONG_COMMAND= 131,        /* Command not supported */
+  HA_ERR_OLD_FILE= 132,             /* old databasfile */
+  HA_ERR_NO_ACTIVE_RECORD= 133,     /* No record read in update() */
+  HA_ERR_RECORD_DELETED= 134,       /* A record is not there */
+  HA_ERR_RECORD_FILE_FULL= 135,     /* No more room in file */
+  HA_ERR_INDEX_FILE_FULL= 136,      /* No more room in file */
+  HA_ERR_END_OF_FILE= 137,          /* end in next/prev/first/last */
+  HA_ERR_UNSUPPORTED= 138,          /* unsupported extension used */
+  HA_ERR_TO_BIG_ROW= 139,           /* Too big row */
+  HA_WRONG_CREATE_OPTION= 140,      /* Wrong create option */
+  HA_ERR_FOUND_DUPP_UNIQUE= 141,    /* Dupplicate unique on write */
+  HA_ERR_UNKNOWN_CHARSET = 142,     /* Can't open charset */
+  HA_ERR_WRONG_MRG_TABLE_DEF= 143,  /* conflicting tables in MERGE */
+  HA_ERR_CRASHED_ON_REPAIR=144,     /* Last (automatic?) repair failed */
+  HA_ERR_CRASHED_ON_USAGE= 145,     /* Table must be repaired */
+  HA_ERR_LOCK_WAIT_TIMEOUT= 146,
+  HA_ERR_LOCK_TABLE_FULL=  147,
+  HA_ERR_READ_ONLY_TRANSACTION= 148, /* Updates not allowed */
+  HA_ERR_LOCK_DEADLOCK = 149,
+  HA_ERR_CANNOT_ADD_FOREIGN= 150,    /* Cannot add a foreign key constr. */
+  HA_ERR_NO_REFERENCED_ROW= 151,     /* Cannot add a child row */
+  HA_ERR_ROW_IS_REFERENCED= 152,     /* Cannot delete a parent row */
+  HA_ERR_NO_SAVEPOINT= 153,          /* No savepoint with that name */
+  HA_ERR_NON_UNIQUE_BLOCK_SIZE= 154, /* Non unique key block size */
+  HA_ERR_NO_SUCH_TABLE= 155,         /* The table does not exist in engine */
+  HA_ERR_TABLE_EXIST= 156,           /* The table existed in storage engine */
+  HA_ERR_NO_CONNECTION= 157,         /* Could not connect to storage engine */
+  HA_ERR_NULL_IN_SPATIAL= 158,       /* NULLs are not supported in spatial index */
+  HA_ERR_TABLE_DEF_CHANGED= 159,     /* The table changed in storage engine */
+  HA_ERR_NO_PARTITION_FOUND= 160,    /* There's no partition in table for given value */
+  HA_ERR_RBR_LOGGING_FAILED= 161,    /* Row-based binlogging of row failed */
+  HA_ERR_DROP_INDEX_FK= 162,         /* Index needed in foreign key constr */
+  HA_ERR_FOREIGN_DUPLICATE_KEY= 163, // Upholding foreign key constraints would lead to a duplicate key error
+  HA_ERR_TABLE_NEEDS_UPGRADE= 164,   /* The table changed in storage engine */
+  HA_ERR_TABLE_READONLY= 165,        /* The table is not writable */
+  HA_ERR_AUTOINC_READ_FAILED= 166,   /* Failed to get next autoinc value */
+  HA_ERR_AUTOINC_ERANGE= 167,        /* Failed to set row autoinc value */
+  HA_ERR_GENERIC= 168,               /* Generic error */
+  HA_ERR_RECORD_IS_THE_SAME= 169,    /* row not actually updated: new values same as the old values */
+  HA_ERR_LOGGING_IMPOSSIBLE= 170,    /* It is not possible to log this statement */
+  HA_ERR_TABLESPACE_EXIST= 171,
+  HA_ERR_CORRUPT_EVENT= 172,         /* The event was corrupt, leading to illegal data being read */
+  HA_ERR_NEW_FILE= 173,              /* New file format */
+  HA_ERR_ROWS_EVENT_APPLY= 174,      /* The event could not be processed no other hanlder error happened */
+  HA_ERR_INITIALIZATION= 175,        /* Error during initialization */
+  HA_ERR_FILE_TOO_SHORT= 176,        /* File too short */
+  HA_ERR_WRONG_CRC= 177,             /* Wrong CRC on page */
+  HA_ERR_LOCK_OR_ACTIVE_TRANSACTION= 178,
+  HA_ERR_NO_SUCH_TABLESPACE= 179,
+  HA_ERR_TABLESPACE_NOT_EMPTY= 180,
+
   ER_ERROR_FIRST= 1000,
   ER_UNUSED1000= ER_ERROR_FIRST,
   ER_UNUSED1001,
@@ -777,6 +837,7 @@ enum error_t {
   ER_INVALID_UUID_TIME,
   ER_CORRUPT_TABLE_DEFINITION_ENUM,
   ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION,
+  ER_CORRUPT_TABLE_DEFINITION_UNKNOWN,
   ER_INVALID_CAST_TO_SIGNED,
   ER_INVALID_CAST_TO_UNSIGNED,
   ER_SQL_KEYWORD,
@@ -784,6 +845,16 @@ enum error_t {
   ER_ASSERT,
   ER_ASSERT_NULL,
   ER_TABLE_DROP,
+  ER_CATALOG_CANNOT_CREATE,
+  ER_CATALOG_CANNOT_CREATE_PERMISSION,
+  ER_CATALOG_CANNOT_DROP,
+  ER_CATALOG_CANNOT_DROP_PERMISSION,
+  ER_CATALOG_DOES_NOT_EXIST,
+  ER_CATALOG_NO_DROP_LOCAL,
+  ER_CATALOG_NO_LOCK,
+  ER_CORRUPT_CATALOG_DEFINITION,
+  ER_TABLE_DROP_ERROR_OCCURRED,
+  ER_TABLE_PERMISSION_DENIED,
   ER_INVALID_CAST_TO_BOOLEAN,
 
   // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags

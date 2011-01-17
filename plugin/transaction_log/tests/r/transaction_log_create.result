@@ -58,11 +58,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -181,11 +184,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -267,11 +273,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -377,11 +386,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -480,11 +492,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -608,11 +623,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -733,11 +751,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -805,11 +826,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -874,11 +898,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -965,11 +992,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1062,11 +1092,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1154,11 +1187,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1240,12 +1276,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1355,11 +1393,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1450,11 +1491,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1544,11 +1588,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1876,11 +1923,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -2032,11 +2082,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 

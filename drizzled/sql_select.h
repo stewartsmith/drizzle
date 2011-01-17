@@ -177,12 +177,6 @@ void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok);
 void add_not_null_conds(Join *join);
 uint32_t max_part_bit(key_part_map bits);
 COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab);
-Order *create_distinct_group(Session *session,
-                                Item **ref_pointer_array,
-                                Order *order,
-                                List<Item> &fields,
-                                List<Item> &all_fields,
-                                bool *all_order_by_fields_used);
 bool eq_ref_table(Join *join, Order *start_order, JoinTable *tab);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
 int remove_dup_with_hash_index(Session *session, 

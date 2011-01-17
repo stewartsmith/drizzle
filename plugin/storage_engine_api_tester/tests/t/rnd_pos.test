@@ -4,6 +4,8 @@
 #
 set storage_engine=storage_engine_api_tester;
 
+select seapitester_clear_engine_state_history();
+
 # This failed because of syntax. Changed int(5) to int.
 CREATE TABLE t1 (
   aufnr varchar(12) NOT NULL default '',
@@ -20,6 +22,9 @@ UPDATE t1 SET t1.xstatus_vor = Greatest(t1.xstatus_vor,1) WHERE t1.aufnr =
 ASC LIMIT 1;
 
 drop table t1;
+
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
 
 # and again with a primary key
 
@@ -39,6 +44,9 @@ ASC LIMIT 1;
 
 drop table t1;
 
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
 # and again with a unique key that becomes the clustered key
 
 create table t1 (a int, b int, c int);
@@ -46,3 +54,7 @@ create table t1 (a int, b int, c int);
 alter table t1 add unique(a,b);
 
 drop table t1;
+
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+

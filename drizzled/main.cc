@@ -61,6 +61,7 @@
 #include "drizzled/signal_handler.h"
 #include "drizzled/replication_services.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/catalog/local.h"
 
 #include "drizzled/util/backtrace.h"
 
@@ -221,12 +222,11 @@ int main(int argc, char **argv)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle", LOCALEDIR);
-  textdomain("drizzle");
+  bindtextdomain("drizzle7", LOCALEDIR);
+  textdomain("drizzle7");
 #endif
 
   module::Registry &modules= module::Registry::singleton();
-  plugin::Client *client;
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
@@ -328,24 +328,27 @@ int main(int argc, char **argv)
 
   /* Send server startup event */
   {
-    Session *session;
+    Session::shared_ptr session;
 
-    if ((session= new Session(plugin::Listen::getNullClient())))
+    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
     {
       currentSession().release();
-      currentSession().reset(session);
-      transaction_services.sendStartupEvent(session);
-      delete session;
+      currentSession().reset(session.get());
+      transaction_services.sendStartupEvent(session.get());
     }
   }
 
 
-  /* Listen for new connections and start new session for each connection
+  /* 
+    Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
-     should be shutdown. */
+     should be shutdown.
+   */
+  plugin::Client *client;
   while ((client= plugin::Listen::getClient()) != NULL)
   {
-    Session::shared_ptr session(new Session(client));
+    Session::shared_ptr session;
+    session= Session::make_shared(client, catalog::local());
 
     if (not session)
     {
@@ -360,14 +363,13 @@ int main(int argc, char **argv)
 
   /* Send server shutdown event */
   {
-    Session *session;
+    Session::shared_ptr session;
 
-    if ((session= new Session(plugin::Listen::getNullClient())))
+    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
     {
       currentSession().release();
-      currentSession().reset(session);
-      transaction_services.sendShutdownEvent(session);
-      delete session;
+      currentSession().reset(session.get());
+      transaction_services.sendShutdownEvent(session.get());
     }
   }
 

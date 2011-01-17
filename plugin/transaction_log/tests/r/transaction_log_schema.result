@@ -30,6 +30,7 @@ statement {
       engine {
         name: "filesystem"
       }
+      catalog: "LOCAL"
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
       UUID
@@ -37,6 +38,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -68,6 +71,8 @@ statement {
     schema_name: "my_test_schema"
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -109,6 +114,8 @@ statement {
     if_exists_clause: true
   }
 }
+segment_id: 1
+end_segment: true
 
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
@@ -136,6 +143,8 @@ statement {
     schema_name: "my_test_schema"
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -172,11 +181,38 @@ transaction_context {
   END_TIMESTAMP
 }
 statement {
-  type: RAW_SQL
+  type: ALTER_SCHEMA
   START_TIMESTAMP
   END_TIMESTAMP
-  sql: "ALTER SCHEMA my_test_schema COLLATE utf8_turkish_ci"
+  alter_schema_statement {
+    before {
+      name: "my_test_schema"
+      collation: "utf8_general_ci"
+      engine {
+        name: "filesystem"
+      }
+      catalog: "LOCAL"
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+      UUID
+      version: 1
+    }
+    after {
+      name: "my_test_schema"
+      collation: "utf8_turkish_ci"
+      engine {
+        name: "filesystem"
+      }
+      catalog: "LOCAL"
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+      UUID
+      version: 2
+    }
+  }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -253,12 +289,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
+      catalog: "LOCAL"
       UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
