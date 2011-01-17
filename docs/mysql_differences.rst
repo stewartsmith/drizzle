@@ -176,6 +176,7 @@ Removed commands
  * CREATE FUNCTION
  * CONVERT
  * SET NAMES
+ * Multi-table delete and multi-table update code was removed and can be accomplished through subqueries. More detailed information can be found in the :doc:`dml` section.
 
 Operators Removed
 -----------------
