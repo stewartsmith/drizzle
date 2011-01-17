@@ -16,7 +16,6 @@ Mathematical operators are provided for many Drizzle types. ::
 	!           factorial            5 !         120
 	!!          factorial            !! 5        120
 	@           absolute value       @ -5.0      5
-	#           bitwise XOR          17 # 5      20
 	========    ==================   ==========  ======
 
 

@@ -12,12 +12,6 @@ The following are examples of aggregate functions:
 
 **AVG**:  Return the average value of the argument. (Does not work with temporal values unless first converted to numeric values.)
 
-**BIT_AND**:  Return bitwise and
-
-**BIT_OR**:  Return bitwise or
-
-**BIT_XOR**:  Return bitwise xor
-
 :doc:`count`
 (DISTINCT):  Return the count of a number of different values
 
