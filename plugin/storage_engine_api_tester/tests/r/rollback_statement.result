@@ -1,4 +1,20 @@
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 create table t1 (a int not null) engine=storage_engine_api_tester;
 insert into t1 values (1), (NULL), (2);
 ERROR 23000: Column 'a' cannot be null
 drop table t1;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_keys()
+::doCreateTable()
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+ROLLBACK
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0

@@ -49,16 +49,19 @@ static int lex_one_token(void *arg, void *yysession);
 static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
   Order *order;
+
   if (!(order = (Order *) session->alloc(sizeof(Order))))
-    return(1);
+    return true;
+
   order->item_ptr= item;
   order->item= &order->item_ptr;
   order->asc = asc;
   order->free_me=0;
   order->used=0;
   order->counter_used= 0;
-  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return(0);
+  list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
+
+  return false;
 }
 
 /**
@@ -68,8 +71,8 @@ const LEX_STRING null_lex_str= {NULL, 0};
 
 Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
-                                   unsigned int length)
-: m_session(session),
+                                   unsigned int length) :
+  m_session(session),
   yylineno(1),
   yytoklen(0),
   yylval(NULL),
@@ -2169,7 +2172,7 @@ bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
                                             str, length));
 }
 
-bool check_for_sql_keyword(drizzled::drizzle_lex_string const& string)
+bool check_for_sql_keyword(drizzled::lex_string_t const& string)
 {
   if (sql_reserved_words::in_word_set(string.str, string.length))
       return true;

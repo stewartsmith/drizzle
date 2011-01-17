@@ -385,29 +385,6 @@
 }
 
 
-# https://bugs.launchpad.net/drizzle/+bug/582486
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Value8
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Value4
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Cond
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-
 # https://bugs.launchpad.net/drizzle/+bug/582495
 {
    Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)

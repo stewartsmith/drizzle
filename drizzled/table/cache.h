@@ -23,9 +23,18 @@
 #define DRIZZLED_TABLE_CACHE_H
 
 #include <boost/unordered_map.hpp>
+#include <drizzled/identifier.h>
+#include <drizzled/table/instance.h>
 
 namespace drizzled {
+
+class Session;
+
 namespace table {
+
+namespace instance {
+class Shared;
+} 
 
 class Concurrent;
 
@@ -57,7 +66,7 @@ public:
   bool areTablesUsed(Table *table, bool wait_for_name_lock);
   void removeSchema(const SchemaIdentifier &schema_identifier);
   bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
-  void release(TableShare *share);
+  void release(table::instance::Shared *share);
   bool insert(table::Concurrent *arg);
 
   boost::mutex &mutex()

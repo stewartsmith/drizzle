@@ -1992,6 +1992,40 @@ void TransactionServices::dropSchema(Session *in_session, SchemaIdentifier::cons
   cleanupTransactionMessage(transaction, in_session);
 }
 
+void TransactionServices::alterSchema(Session *in_session,
+                                      const message::schema::shared_ptr &old_schema,
+                                      const message::Schema &new_schema)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::ALTER_SCHEMA, in_session);
+
+  /* 
+   * Construct the specialized AlterSchemaStatement message and attach
+   * it to the generic Statement message
+   */
+  message::AlterSchemaStatement *alter_schema_statement= statement->mutable_alter_schema_statement();
+
+  message::Schema *before= alter_schema_statement->mutable_before();
+  message::Schema *after= alter_schema_statement->mutable_after();
+
+  *before= *old_schema;
+  *after= new_schema;
+
+  finalizeStatementMessage(*statement, in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
+}
+
 void TransactionServices::dropTable(Session *in_session,
                                     const TableIdentifier &table,
                                     bool if_exists)

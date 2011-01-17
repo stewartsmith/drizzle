@@ -46,7 +46,6 @@ struct charset_info_st;
 
 
 class sys_var;
-typedef drizzle_lex_string LEX_STRING;
 struct option;
 
 extern boost::filesystem::path plugin_dir;

@@ -31,10 +31,13 @@
 
 #include <boost/unordered_map.hpp>
 
+#include "engine_state_history.h"
+
 using namespace std;
 using namespace drizzled;
 
 string engine_state;
+
 typedef multimap<string, string> state_multimap;
 typedef multimap<string, string>::value_type state_pair;
 typedef multimap<string, string>::iterator state_multimap_iter;
@@ -131,6 +134,7 @@ static inline void ENGINE_NEW_STATE(const string &new_state)
   }
 
   engine_state= new_state;
+  engine_state_history.push_back(new_state);
 
   cerr << "\tENGINE STATE : " << engine_state << endl;
 }
@@ -527,6 +531,8 @@ static int seapi_tester_init(drizzled::module::Context &context)
   context.add(new plugin::SEAPITester(engine_name));
 
   context.add(new plugin::Create_function<SEAPITesterErrorInjectFunc>("seapitester_error_inject"));
+
+  engine_state_history_table_initialize(context);
 
   return 0;
 }

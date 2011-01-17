@@ -1,5 +1,5 @@
 COMMIT
-========================
+======
 
 COMMIT [WORK] [AND [NO] CHAIN] [[NO] RELEASE]
 

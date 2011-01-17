@@ -48,7 +48,6 @@ class Cursor;
 typedef struct st_hash HASH;
 
 class TableShare;
-typedef drizzle_lex_string LEX_STRING;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
@@ -326,6 +325,10 @@ public:
                                 const drizzled::TableIdentifier &identifier,
                                 message::table::shared_ptr &table_proto,
                                 bool include_temporary_tables= true);
+  static message::table::shared_ptr getTableMessage(Session& session,
+                                                    const drizzled::TableIdentifier &identifier,
+                                                    drizzled::error_t &error,
+                                                    bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::TableIdentifier &identifier,
                              bool include_temporary_tables= true);
@@ -390,9 +393,9 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static int createTable(Session& session,
-                         const drizzled::TableIdentifier &identifier,
-                         message::Table& table_proto);
+  static bool createTable(Session &session,
+                          const TableIdentifier &identifier,
+                          message::Table& table_message);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 

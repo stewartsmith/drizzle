@@ -61,7 +61,18 @@ static void build_schema_filename(string &path, const string &name_arg)
 Catalog::Catalog(const std::string &name_arg) :
   _name(name_arg)
 { 
-  assert(not name_arg.empty());
+  init();
+}
+
+Catalog::Catalog(const drizzled::LEX_STRING &name_arg) :
+  _name(name_arg.str, name_arg.length)
+{
+  init();
+}
+
+void  Catalog::init()
+{ 
+  assert(not _name.empty());
 
   build_schema_filename(path, _name);
   assert(path.length()); // TODO throw exception, this is a possibility

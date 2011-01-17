@@ -188,7 +188,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     query_id.next();
   }
 
-  /* TODO: set session->lex->sql_command to SQLCOM_END here */
+  /* @todo set session->lex->sql_command to SQLCOM_END here */
 
   plugin::Logging::preDo(session);
   if (unlikely(plugin::EventObserver::beforeStatement(*session)))
