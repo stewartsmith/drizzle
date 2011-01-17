@@ -51,7 +51,7 @@
 
 #include "drizzled/identifier.h"
 
-#include "drizzled/table/instance.h"
+#include "drizzled/table/singular.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
@@ -65,7 +65,9 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <climits>
+
 #include <boost/filesystem.hpp>
+#include <boost/checked_delete.hpp>
 
 #include "drizzled/util/backtrace.h"
 
@@ -362,7 +364,7 @@ void Session::cleanup(void)
        iter++)
   {
     user_var_entry *entry= (*iter).second;
-    delete entry;
+    boost::checked_delete(entry);
   }
   user_vars.clear();
 
@@ -399,7 +401,8 @@ Session::~Session()
   if (client)
   {
     client->close();
-    delete client;
+    boost::checked_delete(client);
+    client= NULL;
   }
 
   if (cleanup_done == false)
@@ -421,7 +424,7 @@ Session::~Session()
 
   for (PropertyMap::iterator iter= life_properties.begin(); iter != life_properties.end(); iter++)
   {
-    delete (*iter).second;
+    boost::checked_delete((*iter).second);
   }
   life_properties.clear();
 }
@@ -1608,7 +1611,7 @@ void Tmp_Table_Param::cleanup(void)
   /* Fix for Intel compiler */
   if (copy_field)
   {
-    delete [] copy_field;
+    boost::checked_array_delete(copy_field);
     save_copy_field= save_copy_field_end= copy_field= copy_field_end= 0;
   }
 }
@@ -1783,9 +1786,9 @@ void Open_tables_state::nukeTable(Table *table)
   TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
   rm_temporary_table(table_type, identifier);
 
-  delete table->getMutableShare();
+  boost::checked_delete(table->getMutableShare());
 
-  delete table;
+  boost::checked_delete(table);
 }
 
 /** Clear most status variables. */
@@ -1829,7 +1832,7 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
 
   if (not returnable.second)
   {
-    delete entry;
+    boost::checked_delete(entry);
   }
 
   return entry;
@@ -2111,11 +2114,11 @@ bool Session::TableMessages::renameTableMessage(const TableIdentifier &from, con
   return true;
 }
 
-table::Instance *Session::getInstanceTable()
+table::Singular *Session::getInstanceTable()
 {
-  temporary_shares.push_back(new table::Instance()); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new table::Singular()); // This will not go into the tableshare cache, so no key is used.
 
-  table::Instance *tmp_share= temporary_shares.back();
+  table::Singular *tmp_share= temporary_shares.back();
 
   assert(tmp_share);
 
@@ -2141,11 +2144,11 @@ table::Instance *Session::getInstanceTable()
   @return
     0 if out of memory, Table object in case of success
 */
-table::Instance *Session::getInstanceTable(List<CreateField> &field_list)
+table::Singular *Session::getInstanceTable(List<CreateField> &field_list)
 {
-  temporary_shares.push_back(new table::Instance(this, field_list)); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
 
-  table::Instance *tmp_share= temporary_shares.back();
+  table::Singular *tmp_share= temporary_shares.back();
 
   assert(tmp_share);
 

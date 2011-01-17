@@ -28,8 +28,8 @@ namespace generator {
 
 class TableDefinitionCache
 {
-  drizzled::TableShare::vector local_vector;
-  drizzled::TableShare::vector::iterator iter;
+  drizzled::table::instance::Shared::vector local_vector;
+  drizzled::table::instance::Shared::vector::iterator iter;
 
 public:
 

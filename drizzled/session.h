@@ -1858,8 +1858,8 @@ public:
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
-  table::Instance *getInstanceTable();
-  table::Instance *getInstanceTable(List<CreateField> &field_list);
+  table::Singular *getInstanceTable();
+  table::Singular *getInstanceTable(List<CreateField> &field_list);
 
 private:
   bool resetUsage()
@@ -1899,7 +1899,7 @@ private:
   // This lives throughout the life of Session
   bool use_usage;
   PropertyMap life_properties;
-  std::vector<table::Instance *> temporary_shares;
+  std::vector<table::Singular *> temporary_shares;
   struct rusage usage;
 };
 

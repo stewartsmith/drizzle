@@ -1,2 +1,5 @@
+select seapitester_clear_engine_state_history();
 CREATE TABLE t1 (a int) ENGINE=STORAGE_ENGINE_API_TESTER;
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
 drop table t1;

@@ -15,4 +15,4 @@ or
 REPLACE INTO table_1 VALUES (4);
 
 
-REPLACE is an extension to the SQL Standard that firtst appeared in MySQL.
+REPLACE is an extension to the SQL Standard that first appeared in MySQL.

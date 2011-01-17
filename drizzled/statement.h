@@ -44,9 +44,8 @@ namespace statement
 class Statement
 {
 public:
-  Statement(Session *in_session)
-    : 
-      session(in_session)
+  Statement(Session *in_session) : 
+    session(in_session)
   {}
 
   virtual ~Statement() {}

@@ -23,8 +23,8 @@
   instance of table share per one table in the database.
 */
 
-#ifndef DRIZZLED_DEFINITION_TABLE_H
-#define DRIZZLED_DEFINITION_TABLE_H
+#ifndef DRIZZLED_TABLE_INSTANCE_BASE_H
+#define DRIZZLED_TABLE_INSTANCE_BASE_H
 
 #include <string>
 
@@ -38,7 +38,13 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/util/string.h"
 
+#include "drizzled/lex_string.h"
+#include "drizzled/key_map.h"
+ 
 #include "drizzled/table/cache.h"
+ 
+#include <drizzled/field.h>
+
 
 namespace drizzled
 {
@@ -54,10 +60,11 @@ const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
 namespace plugin
 {
 class EventObserverList;
+class StorageEngine;
 }
 
 namespace table {
-class Instance;
+class Singular;
 }
 
 class Field_blob;
@@ -80,14 +87,13 @@ public:
              const TableIdentifier &identifier,
              char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
-  ~TableShare();
+  virtual ~TableShare();
 
 private:
   /** Category of this table. */
   enum_table_category table_category;
 
 public:
-
   bool isTemporaryCategory() const
   {
     return (table_category == TABLE_CATEGORY_TEMPORARY);
@@ -102,6 +108,7 @@ public:
   typedef std::vector<Field *> Fields;
 private:
   Fields _fields;
+
 public:
   const Fields getFields() const
   {
@@ -207,6 +214,7 @@ private:
                    arg.begin(), ::toupper);
     _keynames.push_back(arg);
   }
+
 public:
   bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position) const
   {
@@ -234,21 +242,16 @@ public:
 private:
   std::vector<TYPELIB> intervals;			/* pointer to interval info */
 
-  boost::mutex mutex;                /* For locking the share  */
-  boost::condition_variable cond;			/* To signal that share is ready */
+public:
+  virtual void lock()
+  { }
 
+  virtual void unlock()
+  { }
 
-  void lock()
-  {
-    mutex.lock();
-  }
-
-  void unlock()
-  {
-    mutex.unlock();
-  }
-
+private:
   std::vector<unsigned char> default_values;		/* row with default values */
+
 public:
   // @note This needs to be made to be const in the future
   unsigned char *getDefaultValues()
@@ -260,7 +263,7 @@ public:
     default_values.resize(arg);
   }
 
-  const CHARSET_INFO *table_charset; /* Default charset of string fields */
+  const charset_info_st *table_charset; /* Default charset of string fields */
 
   boost::dynamic_bitset<> all_set;
 
@@ -501,19 +504,24 @@ public:
   }
 
 private:
-  uint32_t ref_count;       /* How many Table objects uses this */
+  uint32_t _ref_count;       /* How many Table objects uses this */
 
 public:
   uint32_t getTableCount() const
   {
-    return ref_count;
+    return _ref_count;
   }
 
   void incrementTableCount()
   {
     lock();
-    ref_count++;
+    _ref_count++;
     unlock();
+  }
+
+  uint32_t decrementTableCount()
+  {
+    return --_ref_count;
   }
 
   uint32_t null_bytes;
@@ -649,9 +657,6 @@ public:
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
-  static void release(TableShare *share);
-  static void release(TableShare::shared_ptr &share);
-  static void release(const TableIdentifier &identifier);
   static TableShare::shared_ptr getShareCreate(Session *session, 
                                                const TableIdentifier &identifier,
                                                int &error);
@@ -672,7 +677,7 @@ public:
   }
 
 protected:
-  friend class drizzled::table::Instance;
+  friend class drizzled::table::Singular;
 
   Field *make_field(const message::Table::Field &pfield,
                     unsigned char *ptr,
@@ -682,7 +687,7 @@ protected:
                     unsigned char null_bit,
                     uint8_t decimals,
                     enum_field_types field_type,
-                    const CHARSET_INFO * field_charset,
+                    const charset_info_st * field_charset,
                     Field::utype unireg_check,
                     TYPELIB *interval,
                     const char *field_name);
@@ -695,7 +700,7 @@ protected:
                     unsigned char null_bit,
                     uint8_t decimals,
                     enum_field_types field_type,
-                    const CHARSET_INFO * field_charset,
+                    const charset_info_st * field_charset,
                     Field::utype unireg_check,
                     TYPELIB *interval,
                     const char *field_name, 
@@ -726,4 +731,4 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DEFINITION_TABLE_H */
+#endif /* DRIZZLED_TABLE_INSTANCE_BASE_H */

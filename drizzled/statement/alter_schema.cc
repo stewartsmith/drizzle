@@ -85,7 +85,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= alter_db(session, schema_message);
+  bool res= alter_db(session, schema_message, old_definition);
 
   return not res;
 }

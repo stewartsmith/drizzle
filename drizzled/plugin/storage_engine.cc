@@ -289,13 +289,13 @@ class StorageEngineGetTableDefinition: public std::unary_function<StorageEngine 
   Session& session;
   const TableIdentifier &identifier;
   message::Table &table_message;
-  int &err;
+  drizzled::error_t &err;
 
 public:
   StorageEngineGetTableDefinition(Session& session_arg,
                                   const TableIdentifier &identifier_arg,
                                   message::Table &table_message_arg,
-                                  int &err_arg) :
+                                  drizzled::error_t &err_arg) :
     session(session_arg), 
     identifier(identifier_arg),
     table_message(table_message_arg), 
@@ -306,9 +306,9 @@ public:
     int ret= engine->doGetTableDefinition(session, identifier, table_message);
 
     if (ret != ENOENT)
-      err= ret;
+      err= static_cast<drizzled::error_t>(ret);
 
-    return err == EEXIST || err != ENOENT;
+    return err == static_cast<drizzled::error_t>(EEXIST) or err != static_cast<drizzled::error_t>(ENOENT);
   }
 };
 
@@ -371,7 +371,7 @@ int StorageEngine::getTableDefinition(Session& session,
                                       message::table::shared_ptr &table_message,
                                       bool include_temporary_tables)
 {
-  int err= ENOENT;
+  drizzled::error_t err= static_cast<drizzled::error_t>(ENOENT);
 
   if (include_temporary_tables)
   {
@@ -403,6 +403,46 @@ int StorageEngine::getTableDefinition(Session& session,
  drizzled::message::Cache::singleton().insert(identifier, table_message);
 
   return err;
+}
+
+message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
+                                                          TableIdentifier::const_reference identifier,
+                                                          drizzled::error_t &error,
+                                                          bool include_temporary_tables)
+{
+  error= static_cast<drizzled::error_t>(ENOENT);
+
+  if (include_temporary_tables)
+  {
+    Table *table= session.find_temporary_table(identifier);
+    if (table)
+    {
+      error= EE_OK;
+      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableProto()));
+    }
+  }
+
+  drizzled::message::table::shared_ptr table_ptr;
+  if ((table_ptr= drizzled::message::Cache::singleton().find(identifier)))
+  {
+    (void)table_ptr;
+  }
+
+  message::Table message;
+  EngineVector::iterator iter=
+    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
+                 StorageEngineGetTableDefinition(session, identifier, message, error));
+
+  if (iter == vector_of_engines.end())
+  {
+    error= static_cast<drizzled::error_t>(ENOENT);
+    return message::table::shared_ptr();
+  }
+  message::table::shared_ptr table_message(new message::Table(message));
+
+  drizzled::message::Cache::singleton().insert(identifier, table_message);
+
+  return table_message;
 }
 
 /**
@@ -557,11 +597,12 @@ bool StorageEngine::dropTable(Session::reference session,
   @retval
    1  error
 */
-int StorageEngine::createTable(Session &session,
-                               const TableIdentifier &identifier,
-                               message::Table& table_message)
+bool StorageEngine::createTable(Session &session,
+                                const TableIdentifier &identifier,
+                                message::Table& table_message)
 {
-  int error= 1;
+  drizzled::error_t error= EE_OK;
+
   TableShare share(identifier);
   table::Shell table(share);
   message::Table tmp_proto;
@@ -569,6 +610,11 @@ int StorageEngine::createTable(Session &session,
   if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, identifier, "", 0, 0, table))
   { 
     // @note Error occured, we should probably do a little more here.
+    // ER_CORRUPT_TABLE_DEFINITION,ER_CORRUPT_TABLE_DEFINITION_ENUM 
+    
+    my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
+
+    return false;
   }
   else
   {
@@ -587,10 +633,10 @@ int StorageEngine::createTable(Session &session,
     {
       share.storage_engine->setTransactionReadWrite(session);
 
-      error= share.storage_engine->doCreateTable(session,
-                                                 table,
-                                                 identifier,
-                                                 table_message);
+      error= static_cast<drizzled::error_t>(share.storage_engine->doCreateTable(session,
+                                                                                table,
+                                                                                identifier,
+                                                                                table_message));
     }
 
     if (error == ER_TABLE_PERMISSION_DENIED)
@@ -607,7 +653,7 @@ int StorageEngine::createTable(Session &session,
     table.delete_table();
   }
 
-  return(error != 0);
+  return(error == EE_OK);
 }
 
 Cursor *StorageEngine::getCursor(Table &arg)

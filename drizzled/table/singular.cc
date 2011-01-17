@@ -36,7 +36,7 @@ namespace drizzled
 namespace table
 {
 
-Instance::Instance(Session *session, List<CreateField> &field_list) :
+Singular::Singular(Session *session, List<CreateField> &field_list) :
   _share(message::Table::INTERNAL),
   _has_variable_width(false)
 {
@@ -138,7 +138,7 @@ Instance::Instance(Session *session, List<CreateField> &field_list) :
   }
 }
 
-bool Instance::open_tmp_table()
+bool Singular::open_tmp_table()
 {
   int error;
   
@@ -185,7 +185,7 @@ bool Instance::open_tmp_table()
      true  - Error
 */
 
-bool Instance::create_myisam_tmp_table(KeyInfo *keyinfo,
+bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
                                                  MI_COLUMNDEF *start_recinfo,
                                                  MI_COLUMNDEF **recinfo,
                                                  uint64_t options)
@@ -294,7 +294,7 @@ bool Instance::create_myisam_tmp_table(KeyInfo *keyinfo,
     a tmp_set bitmap to be used by things like filesort.
 */
 
-void Instance::setup_tmp_table_column_bitmaps()
+void Singular::setup_tmp_table_column_bitmaps()
 {
   uint32_t field_count= getShare()->sizeFields();
 
@@ -308,7 +308,7 @@ void Instance::setup_tmp_table_column_bitmaps()
   default_column_bitmaps();
 }
 
-Instance::~Instance()
+Singular::~Singular()
 {
   const char *save_proc_info;
 
