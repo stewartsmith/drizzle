@@ -260,22 +260,25 @@ $ drizzledump --all-databases --host=mysql-host --user=mysql-user --password --d
 
 When you migrate from MySQL to Drizzle, the following conversions are required:
 
-MyISAM -> InnoDB
-FullText -> drop it (with stderr warning)
-int unsigned -> bigint
-tinyint -> int
-smallint -> int
-mediumint -> int
-tinytext -> text
-mediumtext -> text
-longtext -> text
-tinyblob -> blob
-mediumblob -> blob
-longblob -> blob
-time -> int (of seconds)
-year -> int
-set -> text
-date/datetime default 0000-00-00 -> default NULL (Currently, ALL date columns have their DEFAULT set to NULL on migration)
-date/datetime NOT NULL columns -> NULL
-any date data containing 0000-00-00 -> NULL
-enum-> DEFAULT NULL
+ * MyISAM -> InnoDB
+ * FullText -> drop it (with stderr warning)
+ * int unsigned -> bigint
+ * tinyint -> int
+ * smallint -> int
+ * mediumint -> int
+ * tinytext -> text
+ * mediumtext -> text
+ * longtext -> text
+ * tinyblob -> blob
+ * mediumblob -> blob
+ * longblob -> blob
+ * time -> int (of seconds)
+ * year -> int
+ * set -> text
+ * date/datetime default 0000-00-00 -> default NULL (Currently, ALL date columns have their DEFAULT set to NULL on migration)
+ * date/datetime NOT NULL columns -> NULL
+ * any date data containing 0000-00-00 -> NULL
+ * TIME -> INT of the number of seconds*
+ * enum-> DEFAULT NULL
+
+* This prevents data loss since MySQL's TIME data type has a range of -838:59:59 - 838:59:59, and Drizzle's TIME type has a range of 00:00:00 - 23:59:61.999999.
