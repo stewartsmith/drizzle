@@ -241,8 +241,7 @@ bool TemporalInterval::addDate(type::Time *ltime, interval_type int_type)
     /* Day number from year 0 to 9999-12-31 */
     if ((uint64_t) daynr > MAX_DAY_NUMBER)
       goto invalid_date;
-    get_date_from_daynr((long) daynr, &ltime->year, &ltime->month,
-        &ltime->day);
+    get_date_from_daynr((long) daynr, &ltime->year, &ltime->month, &ltime->day);
     break;
   case INTERVAL_DAY:
   case INTERVAL_WEEK:

@@ -158,18 +158,6 @@ str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time)
 }
 
 
-void localtime_to_TIME(type::Time *to, struct tm *from)
-{
-  to->neg=0;
-  to->second_part=0;
-  to->year=	(int) ((from->tm_year+1900) % 10000);
-  to->month=	(int) from->tm_mon+1;
-  to->day=	(int) from->tm_mday;
-  to->hour=	(int) from->tm_hour;
-  to->minute=	(int) from->tm_min;
-  to->second=   (int) from->tm_sec;
-}
-
 void make_truncated_value_warning(Session *session, 
                                   DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,

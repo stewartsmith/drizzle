@@ -87,11 +87,6 @@ enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str,
 */
 bool str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time);
 
-/*
-  Convert a system time structure to TIME
-*/
-void localtime_to_TIME(type::Time *to, struct tm *from);
-
 void make_truncated_value_warning(Session *session, 
                                   DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,

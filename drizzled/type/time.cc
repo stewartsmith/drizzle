@@ -728,7 +728,7 @@ void init_time(void)
   bool not_used;
 
   seconds= (time_t) time((time_t*) 0);
-  localtime_r(&seconds,&tm_tmp);
+  localtime_r(&seconds, &tm_tmp);
   l_time= &tm_tmp;
   my_time_zone=		3600;		/* Comp. for -3600 in my_gmt_sec */
   my_time.year=		(uint32_t) l_time->tm_year+1900;
@@ -1083,6 +1083,22 @@ int my_TIME_to_str(const type::Time *l_time, char *to)
 }
 
 namespace type {
+
+void Time::store(const struct tm &from)
+{
+  _is_local_time= false;
+  neg= 0;
+  second_part= 0;
+  year=	(int32_t) ((from.tm_year+1900) % 10000);
+  month= (int32_t) from.tm_mon+1;
+  day= (int32_t) from.tm_mday;
+  hour=	(int32_t) from.tm_hour;
+  minute= (int32_t) from.tm_min;
+  second= (int32_t) from.tm_sec;
+
+  time_type= DRIZZLE_TIMESTAMP_DATETIME;
+}
+
 
 void Time::store(const time_t &from, bool use_localtime)
 {

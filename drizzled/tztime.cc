@@ -51,7 +51,7 @@ public:
   Time_zone_system() {}                       /* Remove gcc warning */
   virtual time_t TIME_to_gmt_sec(const type::Time *t,
                                     bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(type::Time *tmp, time_t t) const;
+  virtual void gmt_sec_to_TIME(type::Time *tmp, type::Time::epoch_t t) const;
   virtual const String * get_name() const;
 };
 
@@ -80,7 +80,7 @@ public:
  * @return
  * Corresponding time_t value or 0 in case of error
  */
-time_t
+type::Time::epoch_t
 Time_zone_system::TIME_to_gmt_sec(const type::Time *t, bool *in_dst_time_gap) const
 {
   long not_used;
@@ -103,14 +103,9 @@ Time_zone_system::TIME_to_gmt_sec(const type::Time *t, bool *in_dst_time_gap) co
  * the 1902 easily.
  */
 void
-Time_zone_system::gmt_sec_to_TIME(type::Time *tmp, time_t t) const
+Time_zone_system::gmt_sec_to_TIME(type::Time *tmp, type::Time::epoch_t t) const
 {
-  struct tm tmp_tm;
-  time_t tmp_t= (time_t)t;
-
-  localtime_r(&tmp_t, &tmp_tm);
-  localtime_to_TIME(tmp, &tmp_tm);
-  tmp->time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  tmp->store(t);
 }
 
 

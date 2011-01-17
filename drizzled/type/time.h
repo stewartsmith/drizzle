@@ -101,12 +101,12 @@ public:
     reset();
   }
 
-  Time(unsigned int year_arg,
-       unsigned int month_arg,
-       unsigned int day_arg,
-       unsigned int hour_arg,
-       unsigned int minute_arg,
-       unsigned int second_arg,
+  Time(uint32_t year_arg,
+       uint32_t month_arg,
+       uint32_t day_arg,
+       uint32_t hour_arg,
+       uint32_t minute_arg,
+       uint32_t second_arg,
        usec_t second_part_arg,
        enum_drizzle_timestamp_type type_arg) :
     year(year_arg),
@@ -122,9 +122,9 @@ public:
   {
   }
 
-  Time(unsigned int hour_arg,
-       unsigned int minute_arg,
-       unsigned int second_arg,
+  Time(uint32_t hour_arg,
+       uint32_t minute_arg,
+       uint32_t second_arg,
        usec_t second_part_arg,
        bool neg_arg) :
     year(0),
@@ -140,7 +140,7 @@ public:
   {
   }
 
-  unsigned int year, month, day, hour, minute, second;
+  uint32_t year, month, day, hour, minute, second;
   usec_t second_part;
   bool neg;
   enum enum_drizzle_timestamp_type time_type;
@@ -155,8 +155,9 @@ public:
   }
 
   void convert(drizzled::String &str, enum_drizzle_timestamp_type arg= DRIZZLE_TIMESTAMP_DATETIME);
-  void store(const time_t &from, bool use_localtime= false);
-  void store(const time_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
+  void store(const type::Time::epoch_t &from, bool use_localtime= false);
+  void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
+  void store(const struct tm &from);
 
   static const uint32_t FRACTIONAL_DIGITS= 1000000;
 };
