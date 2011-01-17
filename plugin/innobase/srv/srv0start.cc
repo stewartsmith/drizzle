@@ -1174,44 +1174,45 @@ innobase_start_or_create_for_mysql(void)
 
 #endif
 
-	if (srv_file_flush_method_str.empty()) {
+	if (srv_file_flush_method_str == NULL) {
 		/* These are the default options */
 
 		srv_unix_file_flush_method = SRV_UNIX_FSYNC;
 
 		srv_win_file_flush_method = SRV_WIN_IO_UNBUFFERED;
 #ifndef __WIN__
-	} else if (srv_file_flush_method_str == "fsync") {
+	} else if (0 == ut_strcmp(srv_file_flush_method_str, "fsync")) {
 		srv_unix_file_flush_method = SRV_UNIX_FSYNC;
 
-	} else if (srv_file_flush_method_str == "O_DSYNC") {
+	} else if (0 == ut_strcmp(srv_file_flush_method_str, "O_DSYNC")) {
 		srv_unix_file_flush_method = SRV_UNIX_O_DSYNC;
 
-	} else if (srv_file_flush_method_str == "O_DIRECT") {
+	} else if (0 == ut_strcmp(srv_file_flush_method_str, "O_DIRECT")) {
 		srv_unix_file_flush_method = SRV_UNIX_O_DIRECT;
 
-	} else if (srv_file_flush_method_str == "littlesync") {
+	} else if (0 == ut_strcmp(srv_file_flush_method_str, "littlesync")) {
 		srv_unix_file_flush_method = SRV_UNIX_LITTLESYNC;
 
-	} else if (srv_file_flush_method_str == "nosync") {
+	} else if (0 == ut_strcmp(srv_file_flush_method_str, "nosync")) {
 		srv_unix_file_flush_method = SRV_UNIX_NOSYNC;
 #else
-	} else if (srv_file_flush_method_str == "normal") {
+	} else if (0 == ut_strcmp(srv_file_flush_method_str, "normal")) {
 		srv_win_file_flush_method = SRV_WIN_IO_NORMAL;
 		srv_use_native_aio = FALSE;
 
-	} else if (srv_file_flush_method_str == "unbuffered") {
+	} else if (0 == ut_strcmp(srv_file_flush_method_str, "unbuffered")) {
 		srv_win_file_flush_method = SRV_WIN_IO_UNBUFFERED;
 		srv_use_native_aio = FALSE;
 
-	} else if (srv_file_flush_method_str == "async_unbuffered") {
+	} else if (0 == ut_strcmp(srv_file_flush_method_str,
+				  "async_unbuffered")) {
 		srv_win_file_flush_method = SRV_WIN_IO_UNBUFFERED;
 #endif
 	} else {
 		fprintf(stderr,
 			"InnoDB: Unrecognized value %s for"
 			" innodb_flush_method\n",
-			srv_file_flush_method_str.c_str());
+			srv_file_flush_method_str);
 		return(DB_ERROR);
 	}
 
