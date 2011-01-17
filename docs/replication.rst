@@ -26,6 +26,9 @@ Configuration Options
 
     ``drizzle> set @@replicate_query = 1;``
 
+    The stored query should be used as a guide only, and never executed
+    on a slave to perform replication as this will lead to incorrect results.
+
 Message Definitions
 -------------------
 
@@ -121,6 +124,9 @@ Each Statement message contains a type member which indicates how readers
 of the Statement should construct the inner Statement subclass representing
 a data change.
 
+Statements are recorded seperatley as sometimes individual statements
+have to be rolled back.
+
 
 .. _bulk-operations:
 
@@ -209,6 +215,8 @@ will do the following:
 
 Handling ROLLBACKs
 ------------------
+
+Both transactions and individual statements may be rolled back.
 
 When a transaction is rolled back, one of two things happen depending
 on whether the transaction is made up of either a single Transaction

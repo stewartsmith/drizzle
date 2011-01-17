@@ -358,7 +358,7 @@ ibool
 trx_sys_file_format_max_set(
 /*========================*/
 	ulint		format_id,	/*!< in: file format id */
-	const char**	name);		/*!< out: max file format name or
+	std::string&	name);		/*!< out: max file format name or
 					NULL if not needed. */
 /*****************************************************************//**
 Get the name representation of the file format from its id.
@@ -383,7 +383,7 @@ UNIV_INTERN
 ibool
 trx_sys_file_format_max_upgrade(
 /*============================*/
-	const char**	name,		/*!< out: max file format name */
+	std::string 	&name,		/*!< out: max file format name */
 	ulint		format_id);	/*!< in: file format identifier */
 #else /* !UNIV_HOTBACKUP */
 /*****************************************************************//**

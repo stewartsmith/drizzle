@@ -1,9 +1,9 @@
 Numeric Data Types
 ==================
 
-Drizzle does not support TINYINT, SMALLINT or MEDIUMINT. Integer operations have been optimized around 32- and 64-bit integers.
-
 BIGINT and INTEGER exist as Drizzle's two integer numerical types. BIGINT is a 64-bit integer, while INTEGER is a 32-bit integer.
+
+Drizzle does not support TINYINT, SMALLINT or MEDIUMINT. Integer operations have been optimized around 32- and 64-bit integers.
 
 +---------+--------------+---------------------+--------------------------------------------+
 |Name     |Storage Size  |Description          |Range                                       |

@@ -8,7 +8,8 @@ VARCHAR and VARBINARY
 A VARCHAR or VARBINARY type is used to store variable length data. Indexes
 on these types are by default the full length of the data stored.
 The only difference between the two types is the COLLATION which is
-used. VARBINARY uses a binary collation for all index usage.
+used. VARBINARY uses a binary collation for all index usage. VARCHAR can only
+contain valid UTF-8 characters.
 
 -------------
 TEXT and BLOB
@@ -17,7 +18,8 @@ TEXT and BLOB
 A TEXT or BLOB type is used to store data which is over XXX in size. Indexes
 on these types must specificy the number of character or bytes which should
 be used. The only difference between the two types is the COLLATION which is
-used. A BLOB usees a binary collation for all index usage.
+used. A BLOB usees a binary collation for all index usage. A TEXT column
+can only contain valid UTF-8 characters.
 
 ---------
 NUMERICAL

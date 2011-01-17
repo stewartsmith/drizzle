@@ -17,3 +17,5 @@ ENUM
 ----
 
 Enum (enumerated) types are static lists of strings that are defined on table creation. They can be used to represent a collection of string types that are sorted based on the order that they are created.
+
+TODO - UTF-8. Multiple collations.

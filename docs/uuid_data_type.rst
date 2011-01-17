@@ -12,3 +12,5 @@ A UUID consists of 32 hexadecimal digits, displayed in 5 groups separated by hyp
 550e8400-e29b-41d4-a716-446655440000
 
 UUIDs are documented as part of ISO/IEC 11578:1996 "Information technology – Open Systems Interconnection – Remote Procedure Call (RPC)" and more recently in ITU-T Rec. X.667 | ISO/IEC 9834-8:2005. The IETF published Standards Track RFC 4122 that is technically equivalent with ITU-T Rec. X.667 | ISO/IEC 9834-8.
+
+Drizzle uses libuuid to generate UUID values.
