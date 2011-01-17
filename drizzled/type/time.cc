@@ -1089,38 +1089,23 @@ void Time::store(const time_t &from, bool use_localtime)
   store(from, 0, use_localtime);
 }
 
-void Time::store(const time_t &from, const usec_t &from_fractional_seconds, bool use_localtime)
+void Time::store(const time_t &from_arg, const usec_t &from_fractional_seconds, bool use_localtime)
 {
-  struct tm broken_time;
-  struct tm *result;
+  epoch_t from= from_arg;
 
   if (use_localtime)
   {
-    result= localtime_r(&from, &broken_time);
+    util::localtime(from, *this);
     _is_local_time= true;
   }
   else
   {
-    result= gmtime_r(&from, &broken_time);
+    util::gmtime(from, *this);
   }
 
-  if (result != NULL)
-  {
-    year= 1900 + broken_time.tm_year;
-    month= 1 + broken_time.tm_mon;
-    day= broken_time.tm_mday;
-    hour= broken_time.tm_hour;
-    minute= broken_time.tm_min;
-    second= broken_time.tm_sec;
-    second_part= from_fractional_seconds;
-    neg= false;
-
-    time_type= DRIZZLE_TIMESTAMP_DATETIME;
-
-    return;
-  }
-
-  time_type= DRIZZLE_TIMESTAMP_ERROR;
+  // Since time_t/epoch_t doesn't have fractional seconds, we have to
+  // collect them outside of the gmtime function.
+  second_part= from_fractional_seconds;
 }
 
 void Time::convert(String &str, enum_drizzle_timestamp_type arg)

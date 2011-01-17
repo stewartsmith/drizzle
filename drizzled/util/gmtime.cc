@@ -120,6 +120,43 @@ struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
   return tmbuf;
 }
 
+void gmtime(const type::Time::epoch_t &timer, type::Time &tmbuf)
+{
+  uint64_t dayclock, dayno;
+  int32_t year= EPOCH_YR;
+
+  tmbuf.reset();
+
+  dayclock= (uint64_t) timer % SECS_DAY;
+  dayno= (uint64_t) timer / SECS_DAY;
+
+  tmbuf.second= dayclock % 60;
+  tmbuf.minute= (dayclock % 3600) / 60;
+  tmbuf.hour= dayclock / 3600;
+  while (dayno >= (uint64_t) YEARSIZE(year)) 
+  {
+    dayno -= YEARSIZE(year);
+    year++;
+  }
+  tmbuf.year= year;
+  while (dayno >= (uint64_t) _ytab[LEAPYEAR(year)][tmbuf.month]) 
+  {
+    dayno -= _ytab[LEAPYEAR(year)][tmbuf.month];
+    tmbuf.month++;
+  }
+  tmbuf.month++;
+  tmbuf.day= dayno +1;
+  tmbuf.time_type= DRIZZLE_TIMESTAMP_DATETIME;
+}
+
+void localtime(const type::Time::epoch_t &timer, type::Time &tmbuf)
+{
+  type::Time::epoch_t t;
+
+  t = timer - _timezone;
+  return util::gmtime(t, tmbuf);
+}
+
 struct tm *localtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
 {
   type::Time::epoch_t t;
