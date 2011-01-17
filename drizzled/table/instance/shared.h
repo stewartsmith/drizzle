@@ -28,8 +28,9 @@ namespace drizzled
 {
 
 class TableShare;
-class identifier::Table;
 class Session;
+
+namespace identifier { class Table; }
 
 namespace table
 {
