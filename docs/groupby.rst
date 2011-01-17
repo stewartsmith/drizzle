@@ -10,7 +10,6 @@ SQL GROUP BY Syntax ::
 	WHERE column_name operator value
 	GROUP BY column_name
 
-	
 **GROUP BY Clause Example**
 
 The "Activities" table:
@@ -36,7 +35,7 @@ Running the following simple query::
 	SELECT userID
 	FROM activities
 	GROUP BY userID;
- 
+
 Returns:
 
 +---------+
@@ -56,7 +55,7 @@ Returns:
 However, GROUP BY is much more powerful when used with an aggregate function. Let's say you want to find the total amount spent by each unique User.
 
 You could use the following SQL statement: ::
-	
+
 	SELECT userID,SUM(ActivityCost) AS "Activity Total"
 	FROM Activities
 	GROUP BY userID;
@@ -66,17 +65,17 @@ The result-set will look like this:
 ======    ==============
 userID    Activity Total
 ======    ==============
-131       85             
-256       10             
-022       150            
-175       20             
+131       85
+256       10
+022       150
+175       20
 ======    ==============
 
 With the aggregate SUM() function, SQL can calculate how much each unique user has spent on activities over time.
 
 We can also use the GROUP BY statement on more than one column, like this: ::
-	
-	SELECT userID,ActivityDate,SUM(ActivityCost) 
+
+	SELECT userID,ActivityDate,SUM(ActivityCost)
 	FROM Activities
 	GROUP BY userID,ActivityDate;
 
