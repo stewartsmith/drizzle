@@ -90,7 +90,7 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
 
-  TableIdentifier identifier(getTable()->getShare()->getSchemaName(),
+  identifier::Table identifier(getTable()->getShare()->getSchemaName(),
                              getTable()->getShare()->getTableName(),
                              getTable()->getShare()->getType());
 
@@ -210,7 +210,7 @@ ha_rows Cursor::records() { return stats.records; }
 uint64_t Cursor::tableSize() { return stats.index_file_length + stats.data_file_length; }
 uint64_t Cursor::rowSize() { return getTable()->getRecordLength() + getTable()->sizeFields(); }
 
-int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+int Cursor::doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked)
 {
   return open(identifier.getPath().c_str(), mode, test_if_locked);
 }
@@ -221,7 +221,7 @@ int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if
   Try O_RDONLY if cannot open as O_RDWR
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
-int Cursor::ha_open(const TableIdentifier &identifier,
+int Cursor::ha_open(const identifier::Table &identifier,
                     int mode,
                     int test_if_locked)
 {

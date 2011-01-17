@@ -68,7 +68,7 @@ class TableFunction : public Plugin
   TableFunction& operator=(const TableFunction &);
 
   message::Table proto;
-  TableIdentifier identifier;
+  identifier::Table identifier;
   std::string local_path;
   std::string original_table_label;
 

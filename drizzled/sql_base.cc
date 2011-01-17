@@ -110,8 +110,8 @@ void close_handle_and_leave_table_as_lock(Table *table)
     This has to be done to ensure that the table share is removed from
     the table defintion cache as soon as the last instance is removed
   */
-  TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
-  const TableIdentifier::Key &key(identifier.getKey());
+  identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
+  const identifier::Table::Key &key(identifier.getKey());
   TableShare *share= new TableShare(identifier.getType(),
                                     identifier,
                                     const_cast<char *>(key.vector()),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
@@ -233,7 +233,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       bool found= false;
       for (TableList *table= tables; table; table= table->next_local)
       {
-        TableIdentifier identifier(table->getSchemaName(), table->getTableName());
+        identifier::Table identifier(table->getSchemaName(), table->getTableName());
         if (table::Cache::singleton().removeTable(session, identifier,
                                     RTFC_OWNED_BY_Session_FLAG))
         {
@@ -537,13 +537,13 @@ void Open_tables_state::doGetTableNames(CachedDirectory &,
 }
 
 void Open_tables_state::doGetTableIdentifiers(const identifier::Schema &schema_identifier,
-                                              TableIdentifier::vector &set_of_identifiers)
+                                              identifier::Table::vector &set_of_identifiers)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
-      set_of_identifiers.push_back(TableIdentifier(table->getShare()->getSchemaName(),
+      set_of_identifiers.push_back(identifier::Table(table->getShare()->getSchemaName(),
                                                    table->getShare()->getTableName(),
                                                    table->getShare()->getPath()));
     }
@@ -552,12 +552,12 @@ void Open_tables_state::doGetTableIdentifiers(const identifier::Schema &schema_i
 
 void Open_tables_state::doGetTableIdentifiers(CachedDirectory &,
                                               const identifier::Schema &schema_identifier,
-                                              TableIdentifier::vector &set_of_identifiers)
+                                              identifier::Table::vector &set_of_identifiers)
 {
   doGetTableIdentifiers(schema_identifier, set_of_identifiers);
 }
 
-bool Open_tables_state::doDoesTableExist(const TableIdentifier &identifier)
+bool Open_tables_state::doDoesTableExist(const identifier::Table &identifier)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
@@ -573,7 +573,7 @@ bool Open_tables_state::doDoesTableExist(const TableIdentifier &identifier)
   return false;
 }
 
-int Open_tables_state::doGetTableDefinition(const TableIdentifier &identifier,
+int Open_tables_state::doGetTableDefinition(const identifier::Table &identifier,
                                   message::Table &table_proto)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
@@ -592,7 +592,7 @@ int Open_tables_state::doGetTableDefinition(const TableIdentifier &identifier,
   return ENOENT;
 }
 
-Table *Open_tables_state::find_temporary_table(const TableIdentifier &identifier)
+Table *Open_tables_state::find_temporary_table(const identifier::Table &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
@@ -630,7 +630,7 @@ Table *Open_tables_state::find_temporary_table(const TableIdentifier &identifier
   @retval -1  the table is in use by a outer query
 */
 
-int Open_tables_state::drop_temporary_table(const drizzled::TableIdentifier &identifier)
+int Open_tables_state::drop_temporary_table(const drizzled::identifier::Table &identifier)
 {
   Table *table;
 
@@ -662,7 +662,7 @@ int Open_tables_state::drop_temporary_table(const drizzled::TableIdentifier &ide
 
 void Session::unlink_open_table(Table *find)
 {
-  const TableIdentifier::Key find_key(find->getShare()->getCacheKey());
+  const identifier::Table::Key find_key(find->getShare()->getCacheKey());
   Table **prev;
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
 
@@ -716,7 +716,7 @@ void Session::unlink_open_table(Table *find)
   table that was locked with LOCK TABLES.
 */
 
-void Session::drop_open_table(Table *table, const TableIdentifier &identifier)
+void Session::drop_open_table(Table *table, const identifier::Table &identifier)
 {
   if (table->getShare()->getType())
   {
@@ -791,14 +791,14 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
   case of failure.
 */
 
-table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::TableIdentifier &arg)
+table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::identifier::Table &arg)
 {
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
 
   /*
     Create a table entry with the right key and with an old refresh version
   */
-  TableIdentifier identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
+  identifier::Table identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder *table= new table::Placeholder(this, identifier);
 
   if (not table::Cache::singleton().insert(table))
@@ -833,9 +833,9 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::Tabl
   @retval  true   Error occured (OOM)
   @retval  false  Success. 'table' parameter set according to above rules.
 */
-bool Session::lock_table_name_if_not_cached(const TableIdentifier &identifier, Table **table)
+bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table)
 {
-  const TableIdentifier::Key &key(identifier.getKey());
+  const identifier::Table::Key &key(identifier.getKey());
 
   boost_unique_lock_t scope_lock(table::Cache::singleton().mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
@@ -912,8 +912,8 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   if (getKilled())
     return NULL;
 
-  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
-  const TableIdentifier::Key &key(identifier.getKey());
+  identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
+  const identifier::Table::Key &key(identifier.getKey());
   table::CacheRange ppp;
 
   /*
@@ -1115,7 +1115,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
         if (table_list->isCreate())
         {
-          TableIdentifier  lock_table_identifier(table_list->getSchemaName(), table_list->getTableName(), message::Table::STANDARD);
+          identifier::Table  lock_table_identifier(table_list->getSchemaName(), table_list->getTableName(), message::Table::STANDARD);
 
           if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
           {
@@ -1222,7 +1222,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   the strings are used in a loop even after the share may be freed.
 */
 
-void Session::close_data_files_and_morph_locks(const TableIdentifier &identifier)
+void Session::close_data_files_and_morph_locks(const identifier::Table &identifier)
 {
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle()); /* Adjust locks at the end of ALTER TABLEL */
 
@@ -1461,7 +1461,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
 */
 
 
-Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &identifier)
+Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &identifier)
 {
   Table *table,*next,**prev, *found= 0;
   prev= &session->open_tables;
@@ -1516,7 +1516,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
   other threads trying to get the lock.
 */
 
-void abort_locked_tables(Session *session, const drizzled::TableIdentifier &identifier)
+void abort_locked_tables(Session *session, const drizzled::identifier::Table &identifier)
 {
   Table *table;
   for (table= session->open_tables; table ; table= table->getNext())
@@ -1597,7 +1597,7 @@ restart:
      * to see if it exists so that an unauthorized user cannot phish for
      * table/schema information via error messages
      */
-    TableIdentifier the_table(tables->getSchemaName(), tables->getTableName());
+    identifier::Table the_table(tables->getSchemaName(), tables->getTableName());
     if (not plugin::Authorization::isAuthorized(user(), the_table))
     {
       result= -1;                               // Fatal error
@@ -1799,7 +1799,7 @@ RETURN
 #  Table object
 */
 
-Table *Open_tables_state::open_temporary_table(const TableIdentifier &identifier,
+Table *Open_tables_state::open_temporary_table(const identifier::Table &identifier,
                                                bool link_in_list)
 {
   assert(identifier.isTmp());
@@ -1807,7 +1807,7 @@ Table *Open_tables_state::open_temporary_table(const TableIdentifier &identifier
 
   table::Temporary *new_tmp_table= new table::Temporary(identifier.getType(),
                                                         identifier,
-                                                        const_cast<char *>(const_cast<TableIdentifier&>(identifier).getPath().c_str()),
+                                                        const_cast<char *>(const_cast<identifier::Table&>(identifier).getPath().c_str()),
                                                         static_cast<uint32_t>(identifier.getPath().length()));
   if (not new_tmp_table)
     return NULL;

@@ -146,7 +146,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   plugin::StorageEngine *engine= NULL;
   message::table::shared_ptr table_proto;
 
-  TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
+  identifier::Table old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
   if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, table_proto) != EEXIST)
   {
@@ -156,7 +156,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   engine= plugin::StorageEngine::findByName(*session, table_proto->engine().name());
 
-  TableIdentifier new_identifier(new_db, new_alias, message::Table::STANDARD);
+  identifier::Table new_identifier(new_db, new_alias, message::Table::STANDARD);
   if (plugin::StorageEngine::doesTableExist(*session, new_identifier))
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);

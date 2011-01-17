@@ -68,31 +68,31 @@ public:
   // Below are table methods that we don't implement (and don't need)
 
   int doGetTableDefinition(drizzled::Session&,
-                           const drizzled::TableIdentifier&,
+                           const drizzled::identifier::Table&,
                            drizzled::message::Table&)
   {
     return ENOENT;
   }
 
-  bool doDoesTableExist(drizzled::Session&, const drizzled::TableIdentifier&)
+  bool doDoesTableExist(drizzled::Session&, const drizzled::identifier::Table&)
   {
     return false;
   }
 
-  int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier&, const drizzled::TableIdentifier&)
+  int doRenameTable(drizzled::Session&, const drizzled::identifier::Table&, const drizzled::identifier::Table&)
   {
     return drizzled::HA_ERR_NO_SUCH_TABLE;
   }
 
   int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
-                    const drizzled::TableIdentifier&,
+                    const drizzled::identifier::Table&,
                     drizzled::message::Table&)
   {
     return drizzled::ER_TABLE_PERMISSION_DENIED;
   }
 
-  int doDropTable(drizzled::Session&, const drizzled::TableIdentifier&)
+  int doDropTable(drizzled::Session&, const drizzled::identifier::Table&)
   {
     return drizzled::HA_ERR_NO_SUCH_TABLE;
   }
@@ -110,7 +110,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             drizzled::identifier::Table::vector &set_of_identifiers);
 };
 
 #endif /* PLUGIN_SCHEMA_ENGINE_SCHEMA_H */

@@ -55,7 +55,7 @@ Cursor *Function::create(Table &table)
 }
 
 int Function::doGetTableDefinition(Session &,
-                                   const TableIdentifier &identifier,
+                                   const identifier::Table &identifier,
                                    message::Table &table_proto)
 {
   drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
@@ -96,7 +96,7 @@ bool Function::doGetSchemaDefinition(const identifier::Schema &schema_identifier
   return true;
 }
 
-bool Function::doCanCreateTable(const drizzled::TableIdentifier &table_identifier)
+bool Function::doCanCreateTable(const drizzled::identifier::Table &table_identifier)
 {
   if (static_cast<const identifier::Schema&>(table_identifier) == INFORMATION_SCHEMA_IDENTIFIER)
   {
@@ -111,7 +111,7 @@ bool Function::doCanCreateTable(const drizzled::TableIdentifier &table_identifie
   return true;
 }
 
-bool Function::doDoesTableExist(Session&, const TableIdentifier &identifier)
+bool Function::doDoesTableExist(Session&, const identifier::Table &identifier)
 {
   drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
 
@@ -124,14 +124,14 @@ bool Function::doDoesTableExist(Session&, const TableIdentifier &identifier)
 
 void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                      const drizzled::identifier::Schema &schema_identifier,
-                                     drizzled::TableIdentifier::vector &set_of_identifiers)
+                                     drizzled::identifier::Table::vector &set_of_identifiers)
 {
   set<std::string> set_of_names;
   drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
 
   for (set<std::string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
-    set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter, drizzled::message::Table::FUNCTION));
+    set_of_identifiers.push_back(identifier::Table(schema_identifier, *iter, drizzled::message::Table::FUNCTION));
   }
 }
 

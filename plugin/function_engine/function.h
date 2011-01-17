@@ -48,13 +48,13 @@ public:
 
   int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
-                    const drizzled::TableIdentifier &,
+                    const drizzled::identifier::Table &,
                     drizzled::message::Table&)
   {
     return drizzled::ER_TABLE_PERMISSION_DENIED;
   }
 
-  int doDropTable(drizzled::Session&, const drizzled::TableIdentifier&)
+  int doDropTable(drizzled::Session&, const drizzled::identifier::Table&)
   { 
     return drizzled::HA_ERR_NO_SUCH_TABLE; 
   }
@@ -71,27 +71,27 @@ public:
     return drizzled::plugin::TableFunction::getFunction(path);
   }
 
-  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
+  bool doCanCreateTable(const drizzled::identifier::Table &identifier);
 
 
   int doGetTableDefinition(drizzled::Session &session,
-                           const drizzled::TableIdentifier &identifier,
+                           const drizzled::identifier::Table &identifier,
                            drizzled::message::Table &table_message);
 
   void doGetSchemaIdentifiers(drizzled::identifier::Schema::vector&);
 
-  bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const drizzled::identifier::Table &identifier);
 
   bool doGetSchemaDefinition(const drizzled::identifier::Schema &schema, drizzled::message::schema::shared_ptr &schema_message);
 
-  int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &, const drizzled::TableIdentifier &)
+  int doRenameTable(drizzled::Session&, const drizzled::identifier::Table &, const drizzled::identifier::Table &)
   {
     return EPERM;
   }
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             drizzled::identifier::Table::vector &set_of_identifiers);
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */

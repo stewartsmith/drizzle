@@ -2019,7 +2019,7 @@ void TransactionServices::alterSchema(Session *in_session,
 }
 
 void TransactionServices::dropTable(Session *in_session,
-                                    const TableIdentifier &table,
+                                    const identifier::Table &table,
                                     bool if_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();

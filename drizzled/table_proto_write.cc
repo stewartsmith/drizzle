@@ -578,7 +578,7 @@ bool fill_table_proto(message::Table &table_proto,
 */
 
 bool rea_create_table(Session *session,
-                      const TableIdentifier &identifier,
+                      const identifier::Table &identifier,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_fields,

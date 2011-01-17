@@ -83,7 +83,7 @@ public:
 /*
   Return value is "if parsed"
 */
-bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::schema::shared_ptr &proto)
+bool StorageEngine::getSchemaDefinition(const drizzled::identifier::Table &identifier, message::schema::shared_ptr &proto)
 {
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
@@ -204,14 +204,14 @@ public:
 
 static bool drop_all_tables_in_schema(Session& session,
                                       identifier::Schema::const_reference identifier,
-                                      TableIdentifier::vector &dropped_tables,
+                                      identifier::Table::vector &dropped_tables,
                                       uint64_t &deleted)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   plugin::StorageEngine::getIdentifiers(session, identifier, dropped_tables);
 
-  for (TableIdentifier::vector::iterator it= dropped_tables.begin();
+  for (identifier::Table::vector::iterator it= dropped_tables.begin();
        it != dropped_tables.end();
        it++)
   {
@@ -235,7 +235,7 @@ bool StorageEngine::dropSchema(Session::reference session, identifier::Schema::c
 {
   uint64_t deleted= 0;
   bool error= false;
-  TableIdentifier::vector dropped_tables;
+  identifier::Table::vector dropped_tables;
   message::Schema schema_proto;
 
   do
@@ -244,10 +244,10 @@ bool StorageEngine::dropSchema(Session::reference session, identifier::Schema::c
     // shadowing (ie temp over standard table)
     {
       // Lets delete the temporary tables first outside of locks.  
-      TableIdentifier::vector set_of_identifiers;
+      identifier::Table::vector set_of_identifiers;
       session.doGetTableIdentifiers(identifier, set_of_identifiers);
 
-      for (TableIdentifier::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
+      for (identifier::Table::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
       {
         if (session.drop_temporary_table(*iter))
         {

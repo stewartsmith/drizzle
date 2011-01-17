@@ -32,8 +32,8 @@ class Table
   Session &session;
   message::table::shared_ptr table;
 
-  TableIdentifier::vector table_names;
-  TableIdentifier::vector::const_iterator table_iterator;
+  identifier::Table::vector table_names;
+  identifier::Table::vector::const_iterator table_iterator;
 
 public:
 
@@ -54,11 +54,11 @@ public:
     return message::table::shared_ptr();
   }
 
-  operator const drizzled::TableIdentifier*()
+  operator const drizzled::identifier::Table*()
   {
     while (table_iterator != table_names.end())
     {
-      const drizzled::TableIdentifier *_ptr= &(*table_iterator);
+      const drizzled::identifier::Table *_ptr= &(*table_iterator);
       table_iterator++;
 
       return _ptr;

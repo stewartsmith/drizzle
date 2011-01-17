@@ -56,8 +56,8 @@ public:
 
 
 bool alter_table(Session *session,
-                 drizzled::TableIdentifier &original_table_identifier,
-                 drizzled::TableIdentifier &new_table_identifier,
+                 drizzled::identifier::Table &original_table_identifier,
+                 drizzled::identifier::Table &new_table_identifier,
                  HA_CREATE_INFO *create_info,
                  const message::Table &original_proto,
                  message::Table &create_proto,

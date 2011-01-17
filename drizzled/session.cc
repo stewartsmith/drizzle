@@ -1783,7 +1783,7 @@ void Open_tables_state::nukeTable(Table *table)
   table->free_io_cache();
   table->delete_table();
 
-  TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
+  identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
   rm_temporary_table(table_type, identifier);
 
   boost::checked_delete(table->getMutableShare());
@@ -1976,7 +1976,7 @@ bool Session::openTablesLock(TableList *tables)
   might be an issue (lame engines).
 */
 
-bool Open_tables_state::rm_temporary_table(const TableIdentifier &identifier, bool best_effort)
+bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, bool best_effort)
 {
   if (not plugin::StorageEngine::dropTable(*static_cast<Session *>(this), identifier))
   {
@@ -1994,7 +1994,7 @@ bool Open_tables_state::rm_temporary_table(const TableIdentifier &identifier, bo
   return false;
 }
 
-bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const TableIdentifier &identifier)
+bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const identifier::Table &identifier)
 {
   drizzled::error_t error;
   assert(base);
@@ -2046,14 +2046,14 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
   }
 }
 
-bool Session::TableMessages::storeTableMessage(const TableIdentifier &identifier, message::Table &table_message)
+bool Session::TableMessages::storeTableMessage(const identifier::Table &identifier, message::Table &table_message)
 {
   table_message_cache.insert(make_pair(identifier.getPath(), table_message));
 
   return true;
 }
 
-bool Session::TableMessages::removeTableMessage(const TableIdentifier &identifier)
+bool Session::TableMessages::removeTableMessage(const identifier::Table &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2067,7 +2067,7 @@ bool Session::TableMessages::removeTableMessage(const TableIdentifier &identifie
   return true;
 }
 
-bool Session::TableMessages::getTableMessage(const TableIdentifier &identifier, message::Table &table_message)
+bool Session::TableMessages::getTableMessage(const identifier::Table &identifier, message::Table &table_message)
 {
   TableMessageCache::iterator iter;
 
@@ -2081,7 +2081,7 @@ bool Session::TableMessages::getTableMessage(const TableIdentifier &identifier, 
   return true;
 }
 
-bool Session::TableMessages::doesTableMessageExist(const TableIdentifier &identifier)
+bool Session::TableMessages::doesTableMessageExist(const identifier::Table &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2095,7 +2095,7 @@ bool Session::TableMessages::doesTableMessageExist(const TableIdentifier &identi
   return true;
 }
 
-bool Session::TableMessages::renameTableMessage(const TableIdentifier &from, const TableIdentifier &to)
+bool Session::TableMessages::renameTableMessage(const identifier::Table &from, const identifier::Table &to)
 {
   TableMessageCache::iterator iter;
 

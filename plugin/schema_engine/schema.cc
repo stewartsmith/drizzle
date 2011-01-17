@@ -334,6 +334,6 @@ bool Schema::readSchemaFile(const drizzled::identifier::Schema &schema_identifie
 
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                    const drizzled::identifier::Schema&,
-                                   drizzled::TableIdentifier::vector&)
+                                   drizzled::identifier::Table::vector&)
 {
 }

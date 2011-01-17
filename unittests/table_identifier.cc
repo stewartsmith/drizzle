@@ -28,7 +28,7 @@ using namespace drizzled;
 
 TEST(table_identifier_test_standard, Create)
 {
-  TableIdentifier identifier("test", "a");
+  identifier::Table identifier("test", "a");
   EXPECT_EQ("test/a", identifier.getPath());
   std::string path;
   identifier.getSQLPath(path);
@@ -37,7 +37,7 @@ TEST(table_identifier_test_standard, Create)
 
 TEST(table_identifier_test_temporary, Create)
 {
-  TableIdentifier identifier("test", "a", message::Table::TEMPORARY);
+  identifier::Table identifier("test", "a", message::Table::TEMPORARY);
   EXPECT_EQ("/#sql", identifier.getPath().substr(0, 5));
   std::string path;
   identifier.getSQLPath(path);
@@ -46,7 +46,7 @@ TEST(table_identifier_test_temporary, Create)
 
 TEST(table_identifier_test_internal, Create)
 {
-  TableIdentifier identifier("test", "a", message::Table::TEMPORARY);
+  identifier::Table identifier("test", "a", message::Table::TEMPORARY);
   EXPECT_EQ("/#sql", identifier.getPath().substr(0, 5));
   std::string path;
   identifier.getSQLPath(path);
@@ -57,7 +57,7 @@ TEST(table_identifier_test_build_tmptable_filename, Static)
 {
   std::vector<char> pathname;
 
-  TableIdentifier::build_tmptable_filename(pathname);
+  identifier::Table::build_tmptable_filename(pathname);
 
   EXPECT_GT(pathname.size(), 0);
   EXPECT_GT(strlen(&pathname[0]), 0);
@@ -65,9 +65,9 @@ TEST(table_identifier_test_build_tmptable_filename, Static)
 
 TEST(table_identifier_test_key, Key)
 {
-  TableIdentifier identifier("test", "a");
+  identifier::Table identifier("test", "a");
 
-  const TableIdentifier::Key key= identifier.getKey();
+  const identifier::Table::Key key= identifier.getKey();
 
   EXPECT_EQ(key.size(), 7);
   EXPECT_EQ(key.vector()[0], 't');
@@ -81,8 +81,8 @@ TEST(table_identifier_test_key, Key)
 
 TEST(table_identifier_test_key, KeyCompare)
 {
-  TableIdentifier identifier("test", "a");
-  TableIdentifier identifier2("test", "a");
+  identifier::Table identifier("test", "a");
+  identifier::Table identifier2("test", "a");
 
   EXPECT_EQ((identifier.getKey() == identifier.getKey()), true);
 }

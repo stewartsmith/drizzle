@@ -336,7 +336,7 @@ public:
    * @param[in] if_exists Did the user specify an IF EXISTS clause?
    */
   void dropTable(Session *in_session,
-                 const TableIdentifier &table,
+                 const identifier::Table &table,
                  bool if_exists);
   /**
    * Creates a TruncateTable Statement GPB message and adds it

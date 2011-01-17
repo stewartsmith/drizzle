@@ -178,7 +178,7 @@ public:
   int doStartTableScan(bool scan) { CURSOR_NEW_STATE("::doStartTableScan()"); return realCursor->doStartTableScan(scan); }
   int doEndTableScan() { CURSOR_NEW_STATE("::doEndTableScan()"); return realCursor->doEndTableScan(); }
 
-  int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  int doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked);
 
   THR_LOCK_DATA **store_lock(Session *,
                                      THR_LOCK_DATA **to,
@@ -218,7 +218,7 @@ private:
   Session* user_session;
 };
 
-int SEAPITesterCursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+int SEAPITesterCursor::doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked)
 {
   CURSOR_NEW_STATE("::doOpen()");
 
@@ -365,25 +365,25 @@ public:
 
   int doCreateTable(Session&,
                     Table&,
-                    const drizzled::TableIdentifier &identifier,
+                    const drizzled::identifier::Table &identifier,
                     drizzled::message::Table& create_proto);
 
-  int doDropTable(Session&, const TableIdentifier &identifier);
+  int doDropTable(Session&, const identifier::Table &identifier);
 
   int doRenameTable(drizzled::Session& session,
-                    const drizzled::TableIdentifier& from,
-                    const drizzled::TableIdentifier& to)
+                    const drizzled::identifier::Table& from,
+                    const drizzled::identifier::Table& to)
     { return getRealEngine()->renameTable(session, from, to); }
 
   int doGetTableDefinition(Session& ,
-                           const TableIdentifier &,
+                           const identifier::Table &,
                            drizzled::message::Table &);
 
-  bool doDoesTableExist(Session&, const TableIdentifier &identifier);
+  bool doDoesTableExist(Session&, const identifier::Table &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
                              const drizzled::identifier::Schema &,
-                             drizzled::TableIdentifier::vector &);
+                             drizzled::identifier::Table::vector &);
 
   virtual int doStartTransaction(Session *session,
                                  start_transaction_option_t options);
@@ -430,21 +430,21 @@ public:
 
 };
 
-bool SEAPITester::doDoesTableExist(Session &session, const TableIdentifier &identifier)
+bool SEAPITester::doDoesTableExist(Session &session, const identifier::Table &identifier)
 {
   return getRealEngine()->doDoesTableExist(session, identifier);
 }
 
 void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &cd,
                                         const drizzled::identifier::Schema &si,
-                                        drizzled::TableIdentifier::vector &ti)
+                                        drizzled::identifier::Table::vector &ti)
 {
   return getRealEngine()->doGetTableIdentifiers(cd, si, ti);
 }
 
 int SEAPITester::doCreateTable(Session& session,
                                Table& table,
-                               const drizzled::TableIdentifier &identifier,
+                               const drizzled::identifier::Table &identifier,
                                drizzled::message::Table& create_proto)
 {
   ENGINE_NEW_STATE("::doCreateTable()");
@@ -455,13 +455,13 @@ int SEAPITester::doCreateTable(Session& session,
   return r;
 }
 
-int SEAPITester::doDropTable(Session& session, const TableIdentifier &identifier)
+int SEAPITester::doDropTable(Session& session, const identifier::Table &identifier)
 {
   return getRealEngine()->doDropTable(session, identifier);
 }
 
 int SEAPITester::doGetTableDefinition(Session& session,
-                                      const TableIdentifier &identifier,
+                                      const identifier::Table &identifier,
                                       drizzled::message::Table &table)
 {
   return getRealEngine()->doGetTableDefinition(session, identifier, table);

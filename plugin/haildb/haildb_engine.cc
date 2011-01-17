@@ -165,30 +165,30 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    const drizzled::TableIdentifier &identifier,
+                    const drizzled::identifier::Table &identifier,
                     drizzled::message::Table& proto);
 
-  int doDropTable(Session&, const TableIdentifier &identifier);
+  int doDropTable(Session&, const identifier::Table &identifier);
 
   int doRenameTable(drizzled::Session&,
-                    const drizzled::TableIdentifier&,
-                    const drizzled::TableIdentifier&);
+                    const drizzled::identifier::Table&,
+                    const drizzled::identifier::Table&);
 
   int doGetTableDefinition(Session& session,
-                           const TableIdentifier &identifier,
+                           const identifier::Table &identifier,
                            drizzled::message::Table &table_proto);
 
-  bool doDoesTableExist(Session&, const TableIdentifier &identifier);
+  bool doDoesTableExist(Session&, const identifier::Table &identifier);
 
 private:
   void getTableNamesInSchemaFromHailDB(const drizzled::SchemaIdentifier &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
-                                       drizzled::TableIdentifier::vector *identifiers);
+                                       drizzled::identifier::Table::vector *identifiers);
 
 public:
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
                              const drizzled::SchemaIdentifier &schema,
-                             drizzled::TableIdentifier::vector &identifiers);
+                             drizzled::identifier::Table::vector &identifiers);
 
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 1000; }
@@ -791,7 +791,7 @@ static const char* table_path_to_haildb_name(const char* name)
   return &name[l];
 }
 
-static void TableIdentifier_to_haildb_name(const TableIdentifier &identifier, std::string *str)
+static void TableIdentifier_to_haildb_name(const identifier::Table &identifier, std::string *str)
 {
   str->assign(table_path_to_haildb_name(identifier.getPath().c_str()));
 }
@@ -1026,7 +1026,7 @@ static ib_tbl_fmt_t parse_ib_table_format(const std::string &value)
 
 int HailDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
-                                        const drizzled::TableIdentifier &identifier,
+                                        const drizzled::identifier::Table &identifier,
                                         drizzled::message::Table& table_message)
 {
   ib_tbl_sch_t haildb_table_schema= NULL;
@@ -1282,7 +1282,7 @@ rollback:
 }
 
 int HailDBEngine::doDropTable(Session &session,
-                                      const TableIdentifier &identifier)
+                                      const identifier::Table &identifier)
 {
   ib_trx_t haildb_schema_transaction;
   ib_err_t haildb_err;
@@ -1364,7 +1364,7 @@ int HailDBEngine::doDropTable(Session &session,
   return 0;
 }
 
-static ib_err_t rename_table_message(ib_trx_t transaction, const TableIdentifier &from_identifier, const TableIdentifier &to_identifier)
+static ib_err_t rename_table_message(ib_trx_t transaction, const identifier::Table &from_identifier, const identifier::Table &to_identifier)
 {
   ib_crsr_t cursor;
   ib_tpl_t search_tuple;
@@ -1455,8 +1455,8 @@ rollback:
 }
 
 int HailDBEngine::doRenameTable(drizzled::Session &session,
-                                        const drizzled::TableIdentifier &from,
-                                        const drizzled::TableIdentifier &to)
+                                        const drizzled::identifier::Table &from,
+                                        const drizzled::identifier::Table &to)
 {
   ib_trx_t haildb_schema_transaction;
   ib_err_t err;
@@ -1512,7 +1512,7 @@ rollback:
 void HailDBEngine::getTableNamesInSchemaFromHailDB(
                                  const drizzled::SchemaIdentifier &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
-                                 drizzled::TableIdentifier::vector *identifiers)
+                                 drizzled::identifier::Table::vector *identifiers)
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
@@ -1542,7 +1542,7 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
     {
       BOOST_FOREACH(std::string table_name, haildb_system_table_names)
       {
-        identifiers->push_back(TableIdentifier(schema.getSchemaName(),
+        identifiers->push_back(identifier::Table(schema.getSchemaName(),
                                                table_name));
       }
     }
@@ -1585,7 +1585,7 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
       if (set_of_names)
         set_of_names->insert(just_table_name);
       if (identifiers)
-        identifiers->push_back(TableIdentifier(schema.getSchemaName(), just_table_name));
+        identifiers->push_back(identifier::Table(schema.getSchemaName(), just_table_name));
     }
 
 
@@ -1605,7 +1605,7 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
 
 void HailDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
                                                  const drizzled::SchemaIdentifier &schema,
-                                                 drizzled::TableIdentifier::vector &identifiers)
+                                                 drizzled::identifier::Table::vector &identifiers)
 {
   getTableNamesInSchemaFromHailDB(schema, NULL, &identifiers);
 }
@@ -1730,7 +1730,7 @@ rollback_close_err:
 }
 
 int HailDBEngine::doGetTableDefinition(Session &session,
-                                               const TableIdentifier &identifier,
+                                               const identifier::Table &identifier,
                                                drizzled::message::Table &table)
 {
   ib_crsr_t haildb_cursor= NULL;
@@ -1759,7 +1759,7 @@ int HailDBEngine::doGetTableDefinition(Session &session,
 }
 
 bool HailDBEngine::doDoesTableExist(Session &,
-                                    const TableIdentifier& identifier)
+                                    const identifier::Table& identifier)
 {
   ib_crsr_t haildb_cursor;
   string haildb_table_name;

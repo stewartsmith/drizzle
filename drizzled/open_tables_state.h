@@ -82,13 +82,13 @@ private:
 
 public:
   /* Work with temporary tables */
-  Table *find_temporary_table(const TableIdentifier &identifier);
+  Table *find_temporary_table(const identifier::Table &identifier);
 
   void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
-  bool rm_temporary_table(plugin::StorageEngine *base, const TableIdentifier &identifier);
-  bool rm_temporary_table(const drizzled::TableIdentifier &identifier, bool best_effort= false);
-  Table *open_temporary_table(const drizzled::TableIdentifier &identifier,
+  int drop_temporary_table(const drizzled::identifier::Table &identifier);
+  bool rm_temporary_table(plugin::StorageEngine *base, const identifier::Table &identifier);
+  bool rm_temporary_table(const drizzled::identifier::Table &identifier, bool best_effort= false);
+  Table *open_temporary_table(const drizzled::identifier::Table &identifier,
                               bool link_in_list= true);
 
   virtual query_id_t getQueryId()  const= 0;
@@ -162,13 +162,13 @@ public:
 
   void doGetTableIdentifiers(CachedDirectory &directory,
                              const identifier::Schema &schema_identifier,
-                             TableIdentifier::vector &set_of_identifiers);
+                             identifier::Table::vector &set_of_identifiers);
   void doGetTableIdentifiers(const identifier::Schema &schema_identifier,
-                             TableIdentifier::vector &set_of_identifiers);
+                             identifier::Table::vector &set_of_identifiers);
 
-  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
+  int doGetTableDefinition(const drizzled::identifier::Table &identifier,
                            message::Table &table_proto);
-  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(const drizzled::identifier::Table &identifier);
 
 
   Open_tables_state(uint64_t version_arg);
