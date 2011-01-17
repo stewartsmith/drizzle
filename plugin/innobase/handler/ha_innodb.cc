@@ -9247,13 +9247,13 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&innobase_single_data_file)->default_value(false)->zero_tokens(),
           "Stores each InnoDB table to an .ibd file in the database dir.");
   context("file-format-max",
-          po::value<string>(&innobase_file_format_max)->default_value("Barracuda"),
+          po::value<string>(&innobase_file_format_max)->default_value("Antelope"),
           "The highest file format in the tablespace.");
   context("file-format-check",
           po::value<bool>(&innobase_file_format_check)->default_value(true)->zero_tokens(),
           "Whether to perform system file format check.");
   context("file-format",
-          po::value<string>(&innobase_file_format_name)->default_value("Barracuda"),
+          po::value<string>(&innobase_file_format_name)->default_value("Antelope"),
           "File format to use for new tables in .ibd files.");
   context("flush-log-at-trx-commit",
           po::value<trinary_constraint>(&innodb_flush_log_at_trx_commit)->default_value(1),
