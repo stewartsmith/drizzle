@@ -1056,7 +1056,7 @@ ibool
 trx_sys_file_format_max_write(
 /*==========================*/
 	ulint		format_id,	/*!< in: file format id */
-	std::string&	name)		/*!< out: max file format name, can
+	const char**	name)		/*!< out: max file format name, can
 					be NULL */
 {
 	mtr_t		mtr;
@@ -1075,7 +1075,9 @@ trx_sys_file_format_max_write(
 	ptr = buf_block_get_frame(block) + TRX_SYS_FILE_FORMAT_TAG;
 	tag_value = format_id + TRX_SYS_FILE_FORMAT_TAG_MAGIC_N;
 
-        name = file_format_max.name;
+	if (name) {
+		*name = file_format_max.name;
+	}
 
 	mlog_write_ull(ptr, tag_value, &mtr);
 
@@ -1197,7 +1199,7 @@ ibool
 trx_sys_file_format_max_set(
 /*========================*/
 	ulint		format_id,	/*!< in: file format id */
-	std::string 	&name)		/*!< out: max file format name or
+	const char**	name)		/*!< out: max file format name or
 					NULL if not needed. */
 {
 	ibool		ret = FALSE;
@@ -1217,13 +1219,6 @@ trx_sys_file_format_max_set(
 	return(ret);
 }
 
-static ibool
-trx_sys_file_format_max_set(ulint           format_id)
-{
-  std::string unused;
-  return trx_sys_file_format_max_set(format_id, unused);
-}
-
 /********************************************************************//**
 Tags the system table space with minimum format id if it has not been
 tagged yet.
@@ -1240,7 +1235,7 @@ trx_sys_file_format_tag_init(void)
 
 	/* If format_id is not set then set it to the minimum. */
 	if (format_id == ULINT_UNDEFINED) {
-		trx_sys_file_format_max_set(DICT_TF_FORMAT_MIN);
+		trx_sys_file_format_max_set(DICT_TF_FORMAT_MIN, NULL);
 	}
 }
 
@@ -1252,12 +1247,12 @@ UNIV_INTERN
 ibool
 trx_sys_file_format_max_upgrade(
 /*============================*/
-	std::string &name,		/*!< out: max file format name */
+	const char**	name,		/*!< out: max file format name */
 	ulint		format_id)	/*!< in: file format identifier */
 {
 	ibool		ret = FALSE;
 
-	ut_a(not name.empty());
+	ut_a(name);
 	ut_a(file_format_max.name != NULL);
 	ut_a(format_id <= DICT_TF_FORMAT_MAX);
 

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 #  Copyright (C) 2009 Sun Microsystems, Inc.
-#  Copyright (C) 2010, 2011 Monty Taylor
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -244,19 +243,6 @@ AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title
     with_%(name)s_plugin="%(enabled)s"
     requested_%(name)s_plugin="no"
   ])
-AC_ARG_WITH([static-%(name_with_dashes)s-plugin],[
-AS_HELP_STRING([--with-static-%(name_with_dashes)s-plugin],[Build Archive Storage Engine. @<:@default=%(static_yesno)s@:>@])
-AS_HELP_STRING([--without-static-%(name_with_dashes)s-plugin],[Disable building Archive Storage Engine])
-  ],[
-    with_static_%(name)s_plugin=${withval}
-  ],[
-    with_static_%(name)s_plugin=%(static_yesno)s
-])
-AS_IF([test "x${with_static_%(name)s_plugin}" = "xyes" -o "x${with_all_static}" = "xyes"],[
-  shared_%(name)s_plugin=no
-  ],[
-  shared_%(name)s_plugin=yes
-])
 AC_ARG_ENABLE([%(name_with_dashes)s-plugin],[
 dnl indented wierd to make the help output correct
 AS_HELP_STRING([--enable-%(name_with_dashes)s-plugin],[Enable loading %(title)s by default. @<:@default=%(default_yesno)s@:>@])
@@ -286,24 +272,20 @@ AS_IF([test %(build_conditional)s],
 """ % plugin)
   if not plugin['unconditional']:
     plugin_ac.write("""
-AM_CONDITIONAL([%(static_build_conditional_tag)s],
-               [test %(build_conditional)s -a ! %(shared_build)s])
-AM_CONDITIONAL([%(shared_build_conditional_tag)s],
-               [test %(build_conditional)s -a %(shared_build)s])
 AM_CONDITIONAL([%(build_conditional_tag)s],
                [test %(build_conditional)s])
     """ % plugin)
 
   plugin_ac.write("""
-AS_IF([test "x$with_%(name)s_plugin" = "xyes"],[
+AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
+    [
 """ % plugin)
   if plugin['testsuite']:
     plugin_ac.write("""
       pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
     """ % plugin)
-  plugin_ac.write("""
-      AS_IF([test "x${with_static_%(name)s_plugin}" = "xyes" -o "x${with_all_static}" = "xyes"],[
-
+  if plugin['static']:
+    plugin_ac.write("""
         AS_IF([test "x$enable_%(name)s_plugin" = "xyes"],[
           pandora_builtin_load_list="%(module_name)s,${pandora_builtin_load_list}"
           pandora_builtin_load_symbols_list="_drizzled_%(module_name)s_plugin_,${pandora_builtin_load_symbols_list}"
@@ -312,13 +294,15 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],[
         pandora_builtin_list="%(module_name)s,${pandora_builtin_list}"
         pandora_builtin_symbols_list="_drizzled_%(module_name)s_plugin_,${pandora_builtin_symbols_list}"
         pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(libname)s.la"
-     ],[
+    """ % plugin)
+
+  else:
+    plugin_ac.write("""
         AS_IF([test "x$enable_%(name)s_plugin" = "xyes"],[
           pandora_default_plugin_list="%(name)s,${pandora_default_plugin_list}"
         ])
-    ])
     """ % plugin)
-  plugin_ac.write("])\n")
+  plugin_ac.write("      ])\n")
 
 def fix_file_paths(plugin, files):
   # TODO: determine path to plugin dir relative to top_srcdir... append it to
@@ -363,13 +347,7 @@ def expand_plugin_ini(plugin):
       plugin['extra_dist']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['extra_dist'].split()])
 
 
-    if plugin['static']:
-      plugin['static_yesno']="yes"
-    else:
-      plugin['static_yesno']="no"
     plugin['build_conditional_tag']= "BUILD_%s_PLUGIN" % plugin['name'].upper()
-    plugin['shared_build_conditional_tag']= "BUILD_%s_PLUGIN_SHARED" % plugin['name'].upper()
-    plugin['static_build_conditional_tag']= "BUILD_%s_PLUGIN_STATIC" % plugin['name'].upper()
     plugin['name_with_dashes']= plugin['name'].replace('_','-')
     if plugin.has_key('build_conditional'):
       plugin['has_build_conditional']=True
@@ -377,7 +355,6 @@ def expand_plugin_ini(plugin):
     else:
       plugin['has_build_conditional']=False
       plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
-    plugin['shared_build']='"x${shared_%(name)s_plugin}" = "xyes"' %plugin
 
     if plugin['install']:
       plugin['library_type']= 'pkgplugin'
@@ -541,10 +518,11 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
     plugin_am.write("EXTRA_DIST += %(rel_path)s/%(dist_testsuite)s\n" % plugin)
   if plugin['docs'] is not None:
     plugin_am.write("EXTRA_DIST += ${top_srcdir}/%(rel_path)s/docs/*.rst\n" % plugin)
-  plugin_am.write("""
+  if plugin['static']:
+    plugin_am.write("""
 %(root_plugin_dir)s_%(plugin_prefix)s%(name)s_dir=${top_srcdir}/%(rel_path)s
 EXTRA_DIST += %(rel_path)s/plugin.ini
-if %(static_build_conditional_tag)s
+if %(build_conditional_tag)s
   noinst_LTLIBRARIES+=%(root_plugin_dir)s/%(libname)s.la
   %(root_plugin_dir)s_%(libname)s_la_LIBADD=%(libs)s
   %(root_plugin_dir)s_%(libname)s_la_DEPENDENCIES=%(libs)s
@@ -556,8 +534,12 @@ if %(static_build_conditional_tag)s
   check_PROGRAMS += %(tests)s
   PANDORA_DYNAMIC_LDADDS+=${top_builddir}/%(root_plugin_dir)s/%(libname)s.la
 endif
+""" % plugin)
+  else:
+    plugin_am.write("""
+%(root_plugin_dir)s_%(plugin_prefix)s%(name)s_dir=${top_srcdir}/%(rel_path)s
 EXTRA_DIST += %(rel_path)s/plugin.ini
-if %(shared_build_conditional_tag)s
+if %(build_conditional_tag)s
   %(library_type)s_LTLIBRARIES+=%(root_plugin_dir)s/%(libname)s.la
   %(root_plugin_dir)s_%(libname)s_la_LDFLAGS=-avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
   %(root_plugin_dir)s_%(libname)s_la_LIBADD=%(libs)s
@@ -680,15 +662,6 @@ PANDORA_DYNAMIC_LDADDS=
 if not os.path.exists("config/pandora-plugin.ac") or "write" in actions:
   plugin_ac_file = ChangeProtectedFile(os.path.join('config', 'pandora-plugin.ac'))
   plugin_ac_file.write("dnl Generated file, run make to rebuild\n")
-  plugin_ac_file.write("""
-AC_ARG_WITH([all-static],[
-AS_HELP_STRING([--with-all-static],[Link all plugins staticly into the server @<:@default=no@:>@])
-],[
-    with_all_static="$withval"
-    ],[
-    with_all_static=no
-])
-  """)
 
 if os.path.exists("docs/plugins"):
   if not os.path.exists("docs/plugins/list.rst") or "write" in actions:

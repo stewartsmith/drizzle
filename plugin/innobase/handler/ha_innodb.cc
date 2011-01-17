@@ -240,15 +240,13 @@ are determined in innobase_init below: */
 std::string innobase_data_home_dir;
 std::string innobase_data_file_path;
 std::string innobase_log_group_home_dir;
-static string innobase_change_buffering;
 static string innobase_file_format_name;
+static string innobase_change_buffering;
+
 /* The highest file format being used in the database. The value can be
 set by user, however, it will be adjusted to the newer file format if
 a table of such format is created/opened. */
 static string innobase_file_format_max;
-
-static bool innobase_single_data_file= false;
-
 
 /* Below we have boolean-valued start-up parameters, and their default
 values */
@@ -627,7 +625,7 @@ static
 uint
 innobase_file_format_name_lookup(
 /*=============================*/
-  const string &format_name);   /*!< in: pointer to file format
+  const char* format_name);   /*!< in: pointer to file format
             name */
 /************************************************************//**
 Validate the file format check config parameters, as a side effect it
@@ -637,7 +635,7 @@ static
 int
 innobase_file_format_validate_and_set(
 /*================================*/
-  const string &format_max);    /*!< in: parameter value */
+  const char* format_max);    /*!< in: parameter value */
 
 static const char innobase_engine_name[]= "InnoDB";
 
@@ -1932,17 +1930,15 @@ innodb_file_format_name_validate(
   Session*      , /*!< in: thread handle */
   set_var *var)
 {
-  const char *str_value_ptr= var->value->str_value.ptr();
-  const string file_format_input(str_value_ptr ? str_value_ptr : "");
-  if (file_format_input.empty())
-  {
+  const char *file_format_input = var->value->str_value.ptr();
+  if (file_format_input == NULL)
     return 1;
-  }
-  else
-  {
+
+  if (file_format_input != NULL) {
     uint  format_id;
 
-    format_id = innobase_file_format_name_lookup(file_format_input);
+    format_id = innobase_file_format_name_lookup(
+      file_format_input);
 
     if (format_id <= DICT_TF_FORMAT_MAX) {
       innobase_file_format_name =
@@ -2016,13 +2012,13 @@ innodb_file_format_max_validate(
                              trx_sys_file_format_id_to_name((uint)format_id));
 
       /* Update the max format id in the system tablespace. */
-      std::string name_buff;
+      const char *name_buff;
 
-      if (trx_sys_file_format_max_set(format_id, name_buff))
+      if (trx_sys_file_format_max_set(format_id, &name_buff))
       {
         errmsg_printf(ERRMSG_LVL_WARN,
                       " [Info] InnoDB: the file format in the system "
-                      "tablespace is now set to %s.\n", name_buff.c_str());
+                      "tablespace is now set to %s.\n", name_buff);
         innobase_file_format_max= name_buff;
       }
       return(0);
@@ -2041,6 +2037,7 @@ innodb_file_format_max_validate(
 
   return(1);
 }
+
 
 /*********************************************************************//**
 Opens an InnoDB database.
@@ -2075,7 +2072,6 @@ innobase_init(
 
   /* Inverted Booleans */
 
-  srv_file_per_table= not innobase_single_data_file;
   innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
@@ -2191,7 +2187,8 @@ mem_free_and_error:
   /* Validate the file format by animal name */
   if (vm.count("file-format"))
   {
-    format_id= innobase_file_format_name_lookup(vm["file-format"].as<string>());
+    format_id = innobase_file_format_name_lookup(
+                                                 vm["file-format"].as<string>().c_str());
 
     if (format_id > DICT_TF_FORMAT_MAX) {
 
@@ -2259,6 +2256,11 @@ innobase_change_buffering_inited_ok:
   innobase_change_buffering = innobase_change_buffering_values[ibuf_use];
 
   /* --------------------------------------------------*/
+
+  if (vm.count("flush-method") != 0)
+  {
+    srv_file_flush_method_str = (char *)vm["flush-method"].as<string>().c_str();
+  }
 
   srv_n_log_groups = (ulint) innobase_mirrored_log_groups;
   srv_n_log_files = (ulint) innobase_log_files_in_group;
@@ -2391,7 +2393,7 @@ innobase_change_buffering_inited_ok:
 
   context.registerVariable(new sys_var_const_string_val("data-home-dir", innobase_data_home_dir));
   context.registerVariable(new sys_var_const_string_val("flush-method", 
-                                                        vm["flush-method"].as<string>()));
+                                                        vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
   context.registerVariable(new sys_var_const_string_val("log-group-home-dir", innobase_log_group_home_dir));
   context.registerVariable(new sys_var_const_string_val("data-file-path", innobase_data_file_path));
   context.registerVariable(new sys_var_const_string_val("version", vm["version"].as<string>()));
@@ -2425,15 +2427,15 @@ innobase_change_buffering_inited_ok:
                                                                    innodb_n_purge_threads,
                                                                    purge_threads_update));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("fast_shutdown", innobase_fast_shutdown));
-  context.registerVariable(new sys_var_std_string("file_format_max",
-                                                  innobase_file_format_max,
-                                                  innodb_file_format_max_validate));
   context.registerVariable(new sys_var_std_string("file_format",
                                                   innobase_file_format_name,
                                                   innodb_file_format_name_validate));
   context.registerVariable(new sys_var_std_string("change_buffering",
                                                   innobase_change_buffering,
                                                   innodb_change_buffering_validate));
+  context.registerVariable(new sys_var_std_string("file_format_max",
+                                                  innobase_file_format_max,
+                                                  innodb_file_format_max_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<int64_t>("log_file_size", innobase_log_file_size));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush_log_at_trx_commit",
@@ -3579,8 +3581,11 @@ ha_innobase::doOpen(const identifier::Table &identifier,
     /* We update the highest file format in the system table
     space, if this table has higher file format setting. */
 
-    trx_sys_file_format_max_upgrade(innobase_file_format_max,
+    char changed_file_format_max[100];
+    strcpy(changed_file_format_max, innobase_file_format_max.c_str());
+    trx_sys_file_format_max_upgrade((const char **)&changed_file_format_max,
       dict_table_get_format(prebuilt->table));
+    innobase_file_format_max= changed_file_format_max;
   }
 
   /* Only if the table has an AUTOINC column. */
@@ -6379,8 +6384,11 @@ InnobaseEngine::doCreateTable(
     /* We update the highest file format in the system table
       space, if this table has higher file format setting. */
 
-    trx_sys_file_format_max_upgrade(innobase_file_format_max,
+    char changed_file_format_max[100];
+    strcpy(changed_file_format_max, innobase_file_format_max.c_str());
+    trx_sys_file_format_max_upgrade((const char **)&changed_file_format_max,
       dict_table_get_format(innobase_table));
+    innobase_file_format_max= changed_file_format_max;
   }
 
   /* Note: We can't call update_session() as prebuilt will not be
@@ -9163,19 +9171,19 @@ static
 uint
 innobase_file_format_name_lookup(
 /*=============================*/
-  const std::string &format_name)  /*!< in: pointer to file format name */
+  const char* format_name)  /*!< in: pointer to file format name */
 {
   char* endp;
   uint  format_id;
 
-  ut_a(not format_name.empty());
+  ut_a(format_name != NULL);
 
   /* The format name can contain the format id itself instead of
   the name and we check for that. */
-  format_id = (uint) strtoul(format_name.c_str(), &endp, 10);
+  format_id = (uint) strtoul(format_name, &endp, 10);
 
   /* Check for valid parse. */
-  if (*endp == '\0' && format_name[0] != '\0') {
+  if (*endp == '\0' && *format_name != '\0') {
 
     if (format_id <= DICT_TF_FORMAT_MAX) {
 
@@ -9185,9 +9193,11 @@ innobase_file_format_name_lookup(
 
     for (format_id = 0; format_id <= DICT_TF_FORMAT_MAX;
          format_id++) {
-      const char* name = trx_sys_file_format_id_to_name(format_id);
+      const char* name;
 
-      if (!innobase_strcasecmp(format_name.c_str(), name)) {
+      name = trx_sys_file_format_id_to_name(format_id);
+
+      if (!innobase_strcasecmp(format_name, name)) {
 
         return(format_id);
       }
@@ -9205,7 +9215,7 @@ static
 int
 innobase_file_format_validate_and_set(
 /*================================*/
-  const string &format_max) /*!< in: parameter value */
+  const char* format_max) /*!< in: parameter value */
 {
   uint    format_id;
 
@@ -9243,31 +9253,23 @@ static void init_options(drizzled::module::option_context &context)
   context("purge-threads",
           po::value<purge_threads_constraint>(&innodb_n_purge_threads)->default_value(0),
           "Purge threads can be either 0 or 1. Defalut is 0.");
-  context("disable-file-per-table",
-          po::value<bool>(&innobase_single_data_file)->default_value(false)->zero_tokens(),
-          "Stores each InnoDB table to an .ibd file in the database dir.");
+  context("file-per-table",
+          po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
+           "Stores each InnoDB table to an .ibd file in the database dir.");
   context("file-format-max",
-          po::value<string>(&innobase_file_format_max)->default_value("Barracuda"),
+          po::value<string>(&innobase_file_format_max)->default_value("Antelope"),
           "The highest file format in the tablespace.");
   context("file-format-check",
           po::value<bool>(&innobase_file_format_check)->default_value(true)->zero_tokens(),
           "Whether to perform system file format check.");
   context("file-format",
-          po::value<string>(&innobase_file_format_name)->default_value("Barracuda"),
+          po::value<string>(&innobase_file_format_name)->default_value("Antelope"),
           "File format to use for new tables in .ibd files.");
   context("flush-log-at-trx-commit",
           po::value<trinary_constraint>(&innodb_flush_log_at_trx_commit)->default_value(1),
           "Set to 0 (write and flush once per second), 1 (write and flush at each commit) or 2 (write at commit, flush once per second).");
   context("flush-method",
-          po::value<string>(&srv_file_flush_method_str)->default_value(
-#if defined(TARGET_OS_LINUX)
-                            "O_DIRECT"
-#elif defined(__WIN__)
-                            "normal"
-#else
-                            "fsync"
-#endif
-                            ),
+          po::value<string>(),
           "With which method to flush data.");
   context("log-group-home-dir",
           po::value<string>(),

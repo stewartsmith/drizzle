@@ -320,7 +320,7 @@ plugin_innobase_libinnobase_la_SOURCES= \
 # and unused/undefeind stuf, but are generated anyway 
 plugin_innobase_libpars_la_CFLAGS= \
 				   ${AM_CFLAGS} \
-				   ${PERMISSIVE_C_WARNINGS} \
+				   ${PERMISSIVE_WARNINGS} \
 				   -DUNIV_NONINL \
 				   -I$(top_builddir)/plugin/innobase/include \
 				   -I$(top_srcdir)/plugin/innobase/include \
