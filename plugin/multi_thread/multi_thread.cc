@@ -220,7 +220,7 @@ DRIZZLE_DECLARE_PLUGIN
   "One Thread Per Session Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

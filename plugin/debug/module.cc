@@ -153,7 +153,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Useful functions for programmers to debug the server.",
   PLUGIN_LICENSE_BSD,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -24,12 +24,30 @@
 #include "drizzled/module/module.h"
 #include "drizzled/sys_var.h"
 #include "drizzled/util/functors.h"
+#include "drizzled/util/tokenize.h"
 
 namespace drizzled
 {
 
 namespace module
 {
+
+Module::Module(const Manifest *manifest_arg,
+       Library *library_arg) :
+  name(manifest_arg->name),
+  manifest(manifest_arg),
+  plugin_dl(library_arg),
+  isInited(false),
+  system_vars(),
+  sys_vars(),
+  depends_()
+{
+  if (manifest->depends != NULL)
+  {
+    tokenize(manifest->depends, depends_, ",", true);
+  }
+  assert(manifest != NULL);
+}
 
 Module::~Module()
 {

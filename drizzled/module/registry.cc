@@ -96,7 +96,7 @@ module::Module *module::Registry::find(std::string name)
   map_iter= module_registry_.find(name);
   if (map_iter != module_registry_.end())
     return (*map_iter).second;
-  return(0);
+  return NULL;
 }
 
 void module::Registry::add(module::Module *handle)

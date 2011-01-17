@@ -1323,7 +1323,7 @@ DRIZZLE_DECLARE_PLUGIN
   "CSV storage engine",
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
-  NULL,                       /* system variables                */
+  NULL,                       /* depends */
   NULL                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -3532,7 +3532,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Transactional Storage Engine using the HailDB Library",
   PLUGIN_LICENSE_GPL,
   haildb_init,     /* Plugin Init */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

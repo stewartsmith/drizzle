@@ -98,7 +98,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Memcached Stats as I_S tables"),
   PLUGIN_LICENSE_BSD,
   drizzle_plugin::init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   drizzle_plugin::init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -473,7 +473,7 @@ DRIZZLE_DECLARE_PLUGIN
   "/dev/null storage engine (anything you write to it disappears)",
   PLUGIN_LICENSE_GPL,
   blackhole_init,     /* Plugin Init */
-  NULL,               /* system variables */
+  NULL,               /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
