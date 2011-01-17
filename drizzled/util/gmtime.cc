@@ -146,7 +146,7 @@ void gmtime(const type::Time::epoch_t &timer, type::Time &tmbuf)
   }
   tmbuf.month++;
   tmbuf.day= dayno +1;
-  tmbuf.time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  tmbuf.time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 }
 
 void localtime(const type::Time::epoch_t &timer, type::Time &tmbuf)

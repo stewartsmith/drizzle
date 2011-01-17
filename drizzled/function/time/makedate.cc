@@ -59,7 +59,7 @@ String *Item_func_makedate::val_str(String *str)
     if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
       goto err;
 
-    l_time.convert(*str, DRIZZLE_TIMESTAMP_DATE);
+    l_time.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
 
     return str;
   }

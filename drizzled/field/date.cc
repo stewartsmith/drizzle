@@ -124,12 +124,11 @@ int Field_date::store(int64_t from, bool)
 }
 
 int Field_date::store_time(type::Time *ltime,
-                              enum enum_drizzle_timestamp_type time_type)
+                           type::timestamp_t time_type)
 {
   long tmp;
   int error= 0;
-  if (time_type == DRIZZLE_TIMESTAMP_DATE ||
-      time_type == DRIZZLE_TIMESTAMP_DATETIME)
+  if (time_type == type::DRIZZLE_TIMESTAMP_DATE || time_type == type::DRIZZLE_TIMESTAMP_DATETIME)
   {
     tmp= ltime->year*10000 + ltime->month*100 + ltime->day;
 
@@ -140,12 +139,12 @@ int Field_date::store_time(type::Time *ltime,
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-      ltime->convert(str, DRIZZLE_TIMESTAMP_DATE);
+      ltime->convert(str, type::DRIZZLE_TIMESTAMP_DATE);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
-                           str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATE, 1);
+                           str.ptr(), str.length(), type::DRIZZLE_TIMESTAMP_DATE, 1);
     }
 
-    if (not error && ltime->time_type != DRIZZLE_TIMESTAMP_DATE &&
+    if (not error && ltime->time_type != type::DRIZZLE_TIMESTAMP_DATE &&
         (ltime->hour || ltime->minute || ltime->second || ltime->second_part))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
@@ -153,7 +152,7 @@ int Field_date::store_time(type::Time *ltime,
       ltime->convert(str);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                            ER_WARN_DATA_TRUNCATED,
-                           str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATE, 1);
+                           str.ptr(), str.length(), type::DRIZZLE_TIMESTAMP_DATE, 1);
       error= 3;
     }
   }
@@ -163,7 +162,9 @@ int Field_date::store_time(type::Time *ltime,
     error= 1;
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
+
   int4store(ptr,tmp);
+
   return error;
 }
 
@@ -217,7 +218,7 @@ bool Field_date::get_date(type::Time *ltime,uint32_t fuzzydate)
   ltime->day=		(int) (tmp%100);
   ltime->month= 	(int) (tmp/100%100);
   ltime->year= 		(int) (tmp/10000);
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
+  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATE;
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= ltime->neg= 0;
   return ((!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ?
           1 : 0);

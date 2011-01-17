@@ -174,7 +174,7 @@ bool check_date(const type::Time *ltime, bool not_zero_date,
 
 #define MAX_DATE_PARTS 8
 
-enum enum_drizzle_timestamp_type
+type::timestamp_t
 str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
                 uint32_t flags, int *was_cut)
 {
@@ -197,7 +197,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
   if (str == end || ! my_isdigit(&my_charset_utf8_general_ci, *str))
   {
     *was_cut= 1;
-    return(DRIZZLE_TIMESTAMP_NONE);
+    return(type::DRIZZLE_TIMESTAMP_NONE);
   }
 
   is_internal_format= 0;
@@ -244,7 +244,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
         if (flags & TIME_DATETIME_ONLY)
         {
           *was_cut= 1;
-          return(DRIZZLE_TIMESTAMP_NONE);   /* Can't be a full datetime */
+          return(type::DRIZZLE_TIMESTAMP_NONE);   /* Can't be a full datetime */
         }
         /* Date field.  Set hour, minutes and seconds to 0 */
         date[0]= date[1]= date[2]= date[3]= date[4]= 0;
@@ -286,7 +286,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
     if (tmp_value > 999999)                     /* Impossible date part */
     {
       *was_cut= 1;
-      return(DRIZZLE_TIMESTAMP_NONE);
+      return(type::DRIZZLE_TIMESTAMP_NONE);
     }
     date[i]=tmp_value;
     not_zero_date|= tmp_value;
@@ -323,7 +323,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
         if (!(allow_space & (1 << i)))
         {
           *was_cut= 1;
-          return(DRIZZLE_TIMESTAMP_NONE);
+          return(type::DRIZZLE_TIMESTAMP_NONE);
         }
         found_space= 1;
       }
@@ -354,7 +354,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
   if (found_delimitier && !found_space && (flags & TIME_DATETIME_ONLY))
   {
     *was_cut= 1;
-    return(DRIZZLE_TIMESTAMP_NONE);          /* Can't be a datetime */
+    return(type::DRIZZLE_TIMESTAMP_NONE);          /* Can't be a datetime */
   }
 
   str= last_field_pos;
@@ -372,7 +372,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
     if (!year_length)                           /* Year must be specified */
     {
       *was_cut= 1;
-      return(DRIZZLE_TIMESTAMP_NONE);
+      return(type::DRIZZLE_TIMESTAMP_NONE);
     }
 
     l_time->year=               date[(uint32_t) format_position[0]];
@@ -440,7 +440,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
     goto err;
 
   l_time->time_type= (number_of_fields <= 3 ?
-                      DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME);
+                      type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME);
 
   for (; str != end ; str++)
   {
@@ -452,14 +452,14 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
   }
 
   return(l_time->time_type=
-              (number_of_fields <= 3 ? DRIZZLE_TIMESTAMP_DATE :
-                                       DRIZZLE_TIMESTAMP_DATETIME));
+              (number_of_fields <= 3 ? type::DRIZZLE_TIMESTAMP_DATE :
+                                       type::DRIZZLE_TIMESTAMP_DATETIME));
 
 err:
 
   l_time->reset();
 
-  return(DRIZZLE_TIMESTAMP_ERROR);
+  return(type::DRIZZLE_TIMESTAMP_ERROR);
 }
 
 
@@ -508,20 +508,19 @@ bool str_to_time(const char *str, uint32_t length, type::Time *l_time,
     length--;
   }
   if (str == end)
-    return 1;
+    return true;
 
   /* Check first if this is a full TIMESTAMP */
   if (length >= 12)
   {                                             /* Probably full timestamp */
     int was_cut;
-    enum enum_drizzle_timestamp_type
-      res= str_to_datetime(str, length, l_time,
-                           (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), &was_cut);
-    if ((int) res >= (int) DRIZZLE_TIMESTAMP_ERROR)
+    type::timestamp_t res= str_to_datetime(str, length, l_time,
+                                           (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), &was_cut);
+    if ((int) res >= (int) type::DRIZZLE_TIMESTAMP_ERROR)
     {
       if (was_cut)
         *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
-      return res == DRIZZLE_TIMESTAMP_ERROR;
+      return res == type::DRIZZLE_TIMESTAMP_ERROR;
     }
   }
 
@@ -649,7 +648,7 @@ fractional:
   l_time->minute=       date[2];
   l_time->second=       date[3];
   l_time->second_part=  date[4];
-  l_time->time_type= DRIZZLE_TIMESTAMP_TIME;
+  l_time->time_type= type::DRIZZLE_TIMESTAMP_TIME;
 
   /* Check if the value is valid and fits into type::Time range */
   if (check_time_range(l_time, warning))
@@ -737,7 +736,7 @@ void init_time(void)
   my_time.hour=		(uint32_t) l_time->tm_hour;
   my_time.minute=	(uint32_t) l_time->tm_min;
   my_time.second=	(uint32_t) l_time->tm_sec;
-  my_time.time_type=	DRIZZLE_TIMESTAMP_NONE;
+  my_time.time_type=	type::DRIZZLE_TIMESTAMP_NONE;
   my_time.second_part=  0;
   my_time.neg=          false;
   my_system_gmt_sec(&my_time, &my_time_zone, &not_used); /* Init my_time_zone */
@@ -1068,14 +1067,17 @@ static int my_datetime_to_str(const type::Time *l_time, char *to)
 int my_TIME_to_str(const type::Time *l_time, char *to)
 {
   switch (l_time->time_type) {
-  case DRIZZLE_TIMESTAMP_DATETIME:
+  case type::DRIZZLE_TIMESTAMP_DATETIME:
     return my_datetime_to_str(l_time, to);
-  case DRIZZLE_TIMESTAMP_DATE:
+
+  case type::DRIZZLE_TIMESTAMP_DATE:
     return my_date_to_str(l_time, to);
-  case DRIZZLE_TIMESTAMP_TIME:
+
+  case type::DRIZZLE_TIMESTAMP_TIME:
     return my_time_to_str(l_time, to);
-  case DRIZZLE_TIMESTAMP_NONE:
-  case DRIZZLE_TIMESTAMP_ERROR:
+
+  case type::DRIZZLE_TIMESTAMP_NONE:
+  case type::DRIZZLE_TIMESTAMP_ERROR:
     to[0]='\0';
   }
 
@@ -1097,6 +1099,12 @@ void Time::store(const struct tm &from)
   second= (int32_t) from.tm_sec;
 
   time_type= DRIZZLE_TIMESTAMP_DATETIME;
+}
+
+void Time::store(const struct timeval &from)
+{
+  store(from.tv_sec, (usec_t)from.tv_usec);
+  time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 }
 
 
@@ -1124,7 +1132,7 @@ void Time::store(const time_t &from_arg, const usec_t &from_fractional_seconds, 
   second_part= from_fractional_seconds;
 }
 
-void Time::convert(String &str, enum_drizzle_timestamp_type arg)
+void Time::convert(String &str, timestamp_t arg)
 {
   str.alloc(MAX_DATE_STRING_REP_LENGTH);
   uint32_t length= 0;
@@ -1187,11 +1195,11 @@ int64_t number_to_datetime(int64_t nr, type::Time *time_res,
 
   *was_cut= 0;
   time_res->reset();
-  time_res->time_type=DRIZZLE_TIMESTAMP_DATE;
+  time_res->time_type=type::DRIZZLE_TIMESTAMP_DATE;
 
   if (nr == 0LL || nr >= 10000101000000LL)
   {
-    time_res->time_type=DRIZZLE_TIMESTAMP_DATETIME;
+    time_res->time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
     goto ok;
   }
   if (nr < 101)
@@ -1218,7 +1226,7 @@ int64_t number_to_datetime(int64_t nr, type::Time *time_res,
   if (nr < 101000000L)
     goto err;
 
-  time_res->time_type=DRIZZLE_TIMESTAMP_DATETIME;
+  time_res->time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 
   if (nr <= (YY_PART_YEAR-1) * 10000000000LL + 1231235959LL)
   {
@@ -1316,14 +1324,17 @@ static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
 uint64_t TIME_to_uint64_t(const type::Time *my_time)
 {
   switch (my_time->time_type) {
-  case DRIZZLE_TIMESTAMP_DATETIME:
+  case type::DRIZZLE_TIMESTAMP_DATETIME:
     return TIME_to_uint64_t_datetime(my_time);
-  case DRIZZLE_TIMESTAMP_DATE:
+
+  case type::DRIZZLE_TIMESTAMP_DATE:
     return TIME_to_uint64_t_date(my_time);
-  case DRIZZLE_TIMESTAMP_TIME:
+
+  case type::DRIZZLE_TIMESTAMP_TIME:
     return TIME_to_uint64_t_time(my_time);
-  case DRIZZLE_TIMESTAMP_NONE:
-  case DRIZZLE_TIMESTAMP_ERROR:
+
+  case type::DRIZZLE_TIMESTAMP_NONE:
+  case type::DRIZZLE_TIMESTAMP_ERROR:
     return 0ULL;
   }
 

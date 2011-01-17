@@ -73,10 +73,10 @@ void get_date_from_daynr(long daynr,
   NOTE
     See description of str_to_datetime() for more information.
 */
-enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, 
-                                                           uint32_t length,
-                                                           type::Time *l_time, 
-                                                           uint32_t flags);
+type::timestamp_t str_to_datetime_with_warn(const char *str, 
+                                            uint32_t length,
+                                            type::Time *l_time, 
+                                            uint32_t flags);
 
 /*
   Convert a time string to a type::Time struct and produce a warning
@@ -91,7 +91,7 @@ void make_truncated_value_warning(Session *session,
                                   DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
                                   uint32_t str_length, 
-                                  enum enum_drizzle_timestamp_type time_type,
+                                  type::timestamp_t time_type,
                                   const char *field_name);
 
 /*

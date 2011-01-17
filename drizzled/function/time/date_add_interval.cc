@@ -113,9 +113,9 @@ String *Item_date_add_interval::val_str(String *str)
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
 
-  if (ltime.time_type == DRIZZLE_TIMESTAMP_DATE)
+  if (ltime.time_type == type::DRIZZLE_TIMESTAMP_DATE)
   {
-    ltime.convert(*str, DRIZZLE_TIMESTAMP_DATE);
+    ltime.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
   }
   else if (ltime.second_part)
   {
@@ -149,7 +149,7 @@ int64_t Item_date_add_interval::val_int()
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return (int64_t) 0;
   date = (ltime.year*100L + ltime.month)*100L + ltime.day;
-  return ltime.time_type == DRIZZLE_TIMESTAMP_DATE ? date :
+  return ltime.time_type == type::DRIZZLE_TIMESTAMP_DATE ? date :
     ((date*100L + ltime.hour)*100L+ ltime.minute)*100L + ltime.second;
 }
 

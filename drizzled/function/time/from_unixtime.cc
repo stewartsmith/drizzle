@@ -101,25 +101,8 @@ bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
   if ((null_value= (args[0]->null_value || tmp > TIMESTAMP_MAX_VALUE)))
     return 1;
 
-  Timestamp temporal;
-  if (not temporal.from_time_t((time_t) tmp))
-  {
-    null_value= true;
-    std::string tmp_string(boost::lexical_cast<std::string>(tmp));
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(0), tmp_string.c_str());
-    return 0;
-  }
-  
   ltime->reset();
-
-  ltime->year= temporal.years();
-  ltime->month= temporal.months();
-  ltime->day= temporal.days();
-  ltime->hour= temporal.hours();
-  ltime->minute= temporal.minutes();
-  ltime->second= temporal.seconds();
-  ltime->second_part= fractional_tmp;
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  ltime->store(tmp, fractional_tmp);
 
   return 0;
 }

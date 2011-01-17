@@ -121,7 +121,7 @@ int Field_datetime::store(int64_t from, bool)
   return 0;
 }
 
-int Field_datetime::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type)
+int Field_datetime::store_time(type::Time *ltime, type::timestamp_t)
 {
   DateTime temporal;
 
@@ -223,7 +223,7 @@ bool Field_datetime::get_date(type::Time *ltime, uint32_t fuzzydate)
   part1=(uint32_t) (tmp/INT64_C(1000000));
   part2=(uint32_t) (tmp - (uint64_t) part1*INT64_C(1000000));
 
-  ltime->time_type=	DRIZZLE_TIMESTAMP_DATETIME;
+  ltime->time_type=	type::DRIZZLE_TIMESTAMP_DATETIME;
   ltime->neg=		0;
   ltime->second_part=	0;
   ltime->second=	(int) (part2%100);

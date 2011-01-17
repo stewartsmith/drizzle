@@ -373,7 +373,7 @@ using namespace drizzled;
   const drizzled::CHARSET_INFO *charset;
   drizzled::thr_lock_type lock_type;
   drizzled::interval_type interval, interval_time_st;
-  enum drizzled::enum_drizzle_timestamp_type date_time_type;
+  drizzled::type::timestamp_t date_time_type;
   drizzled::Select_Lex *select_lex;
   drizzled::chooser_compare_func_creator boolfunc2creator;
   struct drizzled::st_lex *lex;

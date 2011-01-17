@@ -243,15 +243,18 @@ int64_t Item_datetime_typecast::val_int()
 bool Item_date_typecast::get_date(type::Time *ltime, uint32_t )
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
+
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
+  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATE;
+
   return res;
 }
 
 
 bool Item_date_typecast::get_time(type::Time *ltime)
 {
-  memset(ltime, 0, sizeof(type::Time));
+  ltime->reset();
+
   return args[0]->null_value;
 }
 
@@ -264,7 +267,7 @@ String *Item_date_typecast::val_str(String *str)
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
       !str->alloc(MAX_DATE_STRING_REP_LENGTH))
   {
-    ltime.convert(*str, DRIZZLE_TIMESTAMP_DATE);
+    ltime.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
 
     return str;
   }

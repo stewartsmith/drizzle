@@ -211,7 +211,7 @@ bool TemporalInterval::addDate(type::Time *ltime, interval_type int_type)
   case INTERVAL_DAY_MINUTE:
   case INTERVAL_DAY_HOUR:
     int64_t sec, days, daynr, microseconds, extra_sec;
-    ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME; // Return full date
+    ltime->time_type= type::DRIZZLE_TIMESTAMP_DATETIME; // Return full date
     microseconds= ltime->second_part + sign*second_part;
     extra_sec= microseconds/1000000L;
     microseconds= microseconds%1000000L;

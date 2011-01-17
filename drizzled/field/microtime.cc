@@ -90,7 +90,7 @@ int Microtime::store(const char *from,
   return 0;
 }
 
-int Microtime::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type )
+int Microtime::store_time(type::Time *ltime, type::timestamp_t )
 {
   long my_timezone;
   bool in_dst_time_gap;
@@ -250,7 +250,7 @@ bool Microtime::get_date(type::Time *ltime, uint32_t)
 
   /* @TODO Goodbye the below code when type::Time is finally gone.. */
 
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
   ltime->year= temporal.years();
   ltime->month= temporal.months();
   ltime->day= temporal.days();

@@ -245,7 +245,7 @@ int Item::save_time_in_field(Field *field)
   if (get_time(&ltime))
     return set_field_to_null(field);
   field->set_notnull();
-  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_TIME);
+  return field->store_time(&ltime, type::DRIZZLE_TIMESTAMP_TIME);
 }
 
 int Item::save_date_in_field(Field *field)
@@ -254,7 +254,7 @@ int Item::save_date_in_field(Field *field)
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return set_field_to_null(field);
   field->set_notnull();
-  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
+  return field->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 /**
@@ -470,7 +470,7 @@ bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
       String tmp(buff,sizeof(buff), &my_charset_bin),*res;
       if (!(res=val_str(&tmp)) ||
           str_to_datetime_with_warn(res->ptr(), res->length(),
-                                    ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
+                                    ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
       {
         break;
       }
@@ -484,7 +484,7 @@ bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
         char buff[22], *end;
         end= internal::int64_t10_to_str(value, buff, -10);
         make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                     buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE, NULL);
+                                     buff, (int) (end-buff), type::DRIZZLE_TIMESTAMP_NONE, NULL);
         break;
       }
     }

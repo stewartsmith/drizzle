@@ -43,7 +43,7 @@ void Item_func_now::fix_length_and_dec()
   
   ltime.reset();
 
-  ltime.time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 
   store_now_in_TIME(&ltime);
   value= (int64_t) TIME_to_uint64_t_datetime(&ltime);
@@ -98,7 +98,7 @@ bool Item_func_now::get_date(type::Time *res, uint32_t )
 int Item_func_now::save_in_field(Field *to, bool )
 {
   to->set_notnull();
-  return to->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
+  return to->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 } /* namespace drizzled */

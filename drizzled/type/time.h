@@ -69,13 +69,6 @@ extern unsigned char days_in_month[];
 #define TIME_MAX_VALUE_SECONDS (TIME_MAX_HOUR * 3600L + \
                                 TIME_MAX_MINUTE * 60L + TIME_MAX_SECOND)
 
-enum enum_drizzle_timestamp_type
-{
-  DRIZZLE_TIMESTAMP_NONE= -2, DRIZZLE_TIMESTAMP_ERROR= -1,
-  DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
-};
-
-
 /*
   Structure which is used to represent datetime values inside Drizzle.
 
@@ -89,6 +82,14 @@ enum enum_drizzle_timestamp_type
   bigger values.
 */
 namespace type {
+
+enum timestamp_t
+{
+  DRIZZLE_TIMESTAMP_NONE= -2, DRIZZLE_TIMESTAMP_ERROR= -1,
+  DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
+};
+
+
 
 class Time
 {
@@ -108,7 +109,7 @@ public:
        uint32_t minute_arg,
        uint32_t second_arg,
        usec_t second_part_arg,
-       enum_drizzle_timestamp_type type_arg) :
+       timestamp_t type_arg) :
     year(year_arg),
     month(month_arg),
     day(day_arg),
@@ -143,7 +144,7 @@ public:
   uint32_t year, month, day, hour, minute, second;
   usec_t second_part;
   bool neg;
-  enum enum_drizzle_timestamp_type time_type;
+  timestamp_t time_type;
   bool _is_local_time;
 
   void reset()
@@ -154,10 +155,16 @@ public:
     _is_local_time= false;
   }
 
-  void convert(drizzled::String &str, enum_drizzle_timestamp_type arg= DRIZZLE_TIMESTAMP_DATETIME);
+  timestamp_t type() const
+  {
+    return time_type;
+  }
+
+  void convert(drizzled::String &str, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void store(const type::Time::epoch_t &from, bool use_localtime= false);
   void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
   void store(const struct tm &from);
+  void store(const struct timeval &from);
 
   static const uint32_t FRACTIONAL_DIGITS= 1000000;
 };
@@ -166,9 +173,9 @@ public:
 
 bool check_date(const type::Time *ltime, bool not_zero_date,
                    uint32_t flags, int *was_cut);
-enum enum_drizzle_timestamp_type
-str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
-                uint32_t flags, int *was_cut);
+
+type::timestamp_t str_to_datetime(const char *str, uint32_t length, type::Time *l_time, uint32_t flags, int *was_cut);
+
 int64_t number_to_datetime(int64_t nr, type::Time *time_res,
                             uint32_t flags, int *was_cut);
 uint64_t TIME_to_uint64_t_datetime(const type::Time *);

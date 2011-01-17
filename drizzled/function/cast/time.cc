@@ -31,10 +31,10 @@ bool Time::get_time(type::Time *ltime)
 {
   bool res= get_arg0_time(ltime);
 
-  if (ltime->time_type == DRIZZLE_TIMESTAMP_DATETIME)
+  if (ltime->time_type == type::DRIZZLE_TIMESTAMP_DATETIME)
     ltime->year= ltime->month= ltime->day= 0;
 
-  ltime->time_type= DRIZZLE_TIMESTAMP_TIME;
+  ltime->time_type= type::DRIZZLE_TIMESTAMP_TIME;
 
   return res;
 }
@@ -47,7 +47,7 @@ String *Time::val_str(String *str)
   if (not get_arg0_time(&ltime))
   {
     null_value= 0;
-    ltime.convert(*str, DRIZZLE_TIMESTAMP_TIME);
+    ltime.convert(*str, type::DRIZZLE_TIMESTAMP_TIME);
 
     return str;
   }
