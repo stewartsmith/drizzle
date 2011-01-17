@@ -462,33 +462,38 @@ Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
 
 bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
 {
-  if (result_type() == STRING_RESULT)
+  do
   {
-    char buff[40];
-    String tmp(buff,sizeof(buff), &my_charset_bin),*res;
-    if (!(res=val_str(&tmp)) ||
-        str_to_datetime_with_warn(res->ptr(), res->length(),
-                                  ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
-      goto err;
-  }
-  else
-  {
-    int64_t value= val_int();
-    int was_cut;
-    if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
+    if (result_type() == STRING_RESULT)
     {
-      char buff[22], *end;
-      end= internal::int64_t10_to_str(value, buff, -10);
-      make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                   buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
-                                   NULL);
-      goto err;
+      char buff[40];
+      String tmp(buff,sizeof(buff), &my_charset_bin),*res;
+      if (!(res=val_str(&tmp)) ||
+          str_to_datetime_with_warn(res->ptr(), res->length(),
+                                    ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
+      {
+        break;
+      }
     }
-  }
-  return false;
+    else
+    {
+      int64_t value= val_int();
+      int was_cut;
+      if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
+      {
+        char buff[22], *end;
+        end= internal::int64_t10_to_str(value, buff, -10);
+        make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                     buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE, NULL);
+        break;
+      }
+    }
 
-err:
-  memset(ltime, 0, sizeof(*ltime));
+    return false;
+  } while (0);
+
+  ltime->reset();
+
   return true;
 }
 
@@ -496,12 +501,13 @@ bool Item::get_time(type::Time *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str(&tmp)) ||
-      str_to_time_with_warn(res->ptr(), res->length(), ltime))
+  if (!(res=val_str(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), ltime))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime->reset();
+
     return true;
   }
+
   return false;
 }
 
