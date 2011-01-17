@@ -245,19 +245,7 @@ bool Microtime::get_date(type::Time *ltime, uint32_t)
   
   ltime->reset();
 
-  Timestamp temporal;
-  (void) temporal.from_time_t((time_t) temp);
-
-  /* @TODO Goodbye the below code when type::Time is finally gone.. */
-
-  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
-  ltime->year= temporal.years();
-  ltime->month= temporal.months();
-  ltime->day= temporal.days();
-  ltime->hour= temporal.hours();
-  ltime->minute= temporal.minutes();
-  ltime->second= temporal.seconds();
-  ltime->second_part= temporal.useconds();
+  ltime->store(temp, micro_temp);
 
   return false;
 }

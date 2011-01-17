@@ -1130,6 +1130,7 @@ void Time::store(const time_t &from_arg, const usec_t &from_fractional_seconds, 
   // Since time_t/epoch_t doesn't have fractional seconds, we have to
   // collect them outside of the gmtime function.
   second_part= from_fractional_seconds;
+  time_type= DRIZZLE_TIMESTAMP_DATETIME;
 }
 
 void Time::convert(String &str, timestamp_t arg)
