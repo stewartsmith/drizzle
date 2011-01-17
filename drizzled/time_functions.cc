@@ -107,15 +107,15 @@ void get_date_from_daynr(long daynr,
     {
       if (day_of_year > 31+28)
       {
-	day_of_year--;
-	if (day_of_year == 31+28)
-	  leap_day=1;		/* Handle leapyears leapday */
+        day_of_year--;
+        if (day_of_year == 31+28)
+          leap_day=1;		/* Handle leapyears leapday */
       }
     }
     *ret_month=1;
     for (month_pos= days_in_month ;
-	 day_of_year > (uint32_t) *month_pos ;
-	 day_of_year-= *(month_pos++), (*ret_month)++)
+         day_of_year > (uint32_t) *month_pos ;
+         day_of_year-= *(month_pos++), (*ret_month)++)
       ;
     *ret_year=year;
     *ret_day=day_of_year+leap_day;
@@ -174,16 +174,16 @@ void make_truncated_value_warning(Session *session,
   str[str_length]= 0;               // Ensure we have end 0 for snprintf
 
   switch (time_type) {
-    case DRIZZLE_TIMESTAMP_DATE:
-      type_str= "date";
-      break;
-    case DRIZZLE_TIMESTAMP_TIME:
-      type_str= "time";
-      break;
-    case DRIZZLE_TIMESTAMP_DATETIME:  // FALLTHROUGH
-    default:
-      type_str= "datetime";
-      break;
+  case DRIZZLE_TIMESTAMP_DATE:
+    type_str= "date";
+    break;
+  case DRIZZLE_TIMESTAMP_TIME:
+    type_str= "time";
+    break;
+  case DRIZZLE_TIMESTAMP_DATETIME:  // FALLTHROUGH
+  default:
+    type_str= "datetime";
+    break;
   }
 
   if (field_name)
@@ -230,25 +230,25 @@ calc_time_diff(type::Time *l_time1, type::Time *l_time2, int l_sign, int64_t *se
   else
   {
     days= calc_daynr((uint32_t) l_time1->year,
-		     (uint32_t) l_time1->month,
-		     (uint32_t) l_time1->day);
+                     (uint32_t) l_time1->month,
+                     (uint32_t) l_time1->day);
     if (l_time2->time_type == DRIZZLE_TIMESTAMP_TIME)
       days-= l_sign * (long)l_time2->day;
     else
       days-= l_sign*calc_daynr((uint32_t) l_time2->year,
-			       (uint32_t) l_time2->month,
-			       (uint32_t) l_time2->day);
+                               (uint32_t) l_time2->month,
+                               (uint32_t) l_time2->day);
   }
 
   microseconds= ((int64_t)days*86400L +
                  (int64_t)(l_time1->hour*3600L +
-                            l_time1->minute*60L +
-                            l_time1->second) -
+                           l_time1->minute*60L +
+                           l_time1->second) -
                  l_sign*(int64_t)(l_time2->hour*3600L +
-                                   l_time2->minute*60L +
-                                   l_time2->second)) * 1000000L +
-                (int64_t)l_time1->second_part -
-                l_sign*(int64_t)l_time2->second_part;
+                                  l_time2->minute*60L +
+                                  l_time2->second)) * 1000000L +
+    (int64_t)l_time1->second_part -
+    l_sign*(int64_t)l_time2->second_part;
 
   neg= 0;
   if (microseconds < 0)
