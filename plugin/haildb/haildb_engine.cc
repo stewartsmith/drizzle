@@ -181,13 +181,13 @@ public:
   bool doDoesTableExist(Session&, const identifier::Table &identifier);
 
 private:
-  void getTableNamesInSchemaFromHailDB(const drizzled::SchemaIdentifier &schema,
+  void getTableNamesInSchemaFromHailDB(const drizzled::identifier::Schema &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
                                        drizzled::identifier::Table::vector *identifiers);
 
 public:
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
-                             const drizzled::SchemaIdentifier &schema,
+                             const drizzled::identifier::Schema &schema,
                              drizzled::identifier::Table::vector &identifiers);
 
   /* The following defines can be increased if necessary */
@@ -1510,7 +1510,7 @@ rollback:
 }
 
 void HailDBEngine::getTableNamesInSchemaFromHailDB(
-                                 const drizzled::SchemaIdentifier &schema,
+                                 const drizzled::identifier::Schema &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
                                  drizzled::identifier::Table::vector *identifiers)
 {
@@ -1604,7 +1604,7 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
 }
 
 void HailDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
-                                                 const drizzled::SchemaIdentifier &schema,
+                                                 const drizzled::identifier::Schema &schema,
                                                  drizzled::identifier::Table::vector &identifiers)
 {
   getTableNamesInSchemaFromHailDB(schema, NULL, &identifiers);
