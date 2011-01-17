@@ -109,6 +109,7 @@ bool plugin::ErrorMessage::vprintf(Session *session, int priority,
   std::vector<plugin::ErrorMessage *>::iterator iter=
     std::find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
                  Print(session, priority, format, ap)); 
+
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

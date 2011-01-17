@@ -1481,7 +1481,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       List<Item> *items,
                                       bool is_if_not_exists,
                                       DrizzleLock **lock,
-				      TableIdentifier::const_reference identifier)
+				      identifier::Table::const_reference identifier)
 {
   TableShare share(message::Table::INTERNAL);
   uint32_t select_field_count= items->elements;

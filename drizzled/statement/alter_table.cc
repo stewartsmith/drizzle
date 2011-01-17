@@ -73,7 +73,7 @@ static bool prepare_alter_table(Session *session,
                                       message::Table &table_message,
                                       AlterInfo *alter_info);
 
-static Table *open_alter_table(Session *session, Table *table, TableIdentifier &identifier);
+static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier);
 
 bool statement::AlterTable::execute()
 {
@@ -105,7 +105,7 @@ bool statement::AlterTable::execute()
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::table::shared_ptr original_table_message;
   {
-    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
       std::string path;
@@ -142,8 +142,8 @@ bool statement::AlterTable::execute()
   bool res;
   if (original_table_message->type() == message::Table::STANDARD )
   {
-    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
-    TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
+    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
                                    session->lex->name.str ? session->lex->name.str : first_table->getTableName());
 
     res= alter_table(session, 
@@ -160,12 +160,12 @@ bool statement::AlterTable::execute()
   }
   else
   {
-    TableIdentifier catch22(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
     Table *table= session->find_temporary_table(catch22);
     assert(table);
     {
-      TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
-      TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
+      identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
+      identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
                                      session->lex->name.str ? session->lex->name.str : first_table->getTableName(),
                                      table->getMutableShare()->getPath());
 
@@ -798,8 +798,8 @@ static bool alter_table_manage_keys(Session *session,
 }
 
 static bool lockTableIfDifferent(Session &session,
-                                 TableIdentifier &original_table_identifier,
-                                 TableIdentifier &new_table_identifier,
+                                 identifier::Table &original_table_identifier,
+                                 identifier::Table &new_table_identifier,
                                  Table *name_lock)
 {
   /* Check that we are not trying to rename to an existing table */
@@ -891,8 +891,8 @@ static bool lockTableIfDifferent(Session &session,
 
 static bool internal_alter_table(Session *session,
                                  Table *table,
-                                 TableIdentifier &original_table_identifier,
-                                 TableIdentifier &new_table_identifier,
+                                 identifier::Table &original_table_identifier,
+                                 identifier::Table &new_table_identifier,
                                  HA_CREATE_INFO *create_info,
                                  const message::Table &original_proto,
                                  message::Table &create_proto,
@@ -1100,7 +1100,7 @@ static bool internal_alter_table(Session *session,
     case we just use it as is. Neither of these tables require locks in order to  be
     filled.
   */
-  TableIdentifier new_table_as_temporary(original_table_identifier.getSchemaName(),
+  identifier::Table new_table_as_temporary(original_table_identifier.getSchemaName(),
                                          tmp_name,
                                          create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
                                          message::Table::TEMPORARY);
@@ -1289,7 +1289,7 @@ static bool internal_alter_table(Session *session,
         table. This is when the old and new tables are compatible, according to
         compare_table(). Then, we need one additional call to
       */
-      TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
+      identifier::Table original_table_to_drop(original_table_identifier.getSchemaName(),
                                              old_name, create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
                                              message::Table::TEMPORARY);
 
@@ -1358,8 +1358,8 @@ static bool internal_alter_table(Session *session,
 }
 
 bool alter_table(Session *session,
-                 TableIdentifier &original_table_identifier,
-                 TableIdentifier &new_table_identifier,
+                 identifier::Table &original_table_identifier,
+                 identifier::Table &new_table_identifier,
                  HA_CREATE_INFO *create_info,
                  const message::Table &original_proto,
                  message::Table &create_proto,
@@ -1650,7 +1650,7 @@ copy_data_between_tables(Session *session,
   return(error > 0 ? -1 : 0);
 }
 
-static Table *open_alter_table(Session *session, Table *table, TableIdentifier &identifier)
+static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier)
 {
   Table *new_table;
 

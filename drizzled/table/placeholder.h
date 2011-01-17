@@ -34,7 +34,7 @@ class Placeholder : public table::Concurrent
   instance::Shared private_share;
 
 public:
-  Placeholder(Session *session, TableIdentifier &identifier) :
+  Placeholder(Session *session, identifier::Table &identifier) :
     table::Concurrent(),
     private_share(identifier)
   {

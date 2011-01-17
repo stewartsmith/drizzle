@@ -86,7 +86,7 @@ public:
   virtual bool fast_key_read() { return 1;}
   drizzled::ha_rows estimate_rows_upper_bound() { return HA_POS_ERROR; }
 
-  int doOpen(const drizzled::TableIdentifier &, int, uint32_t);
+  int doOpen(const drizzled::identifier::Table &, int, uint32_t);
   int close(void);
   int doStartTableScan(bool scan=1);
   int rnd_next(unsigned char *);

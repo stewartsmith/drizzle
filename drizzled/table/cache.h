@@ -38,7 +38,7 @@ class Shared;
 
 class Concurrent;
 
-typedef boost::unordered_multimap< TableIdentifier::Key, Concurrent *> CacheMap;
+typedef boost::unordered_multimap< identifier::Table::Key, Concurrent *> CacheMap;
 typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRange;
 
 class Cache 
@@ -64,8 +64,8 @@ public:
   }
 
   bool areTablesUsed(Table *table, bool wait_for_name_lock);
-  void removeSchema(const SchemaIdentifier &schema_identifier);
-  bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
+  void removeSchema(const identifier::Schema &schema_identifier);
+  bool removeTable(Session *session, identifier::Table &identifier, uint32_t flags);
   void release(table::instance::Shared *share);
   bool insert(table::Concurrent *arg);
 

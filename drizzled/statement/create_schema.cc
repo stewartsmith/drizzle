@@ -43,7 +43,7 @@ bool statement::CreateSchema::execute()
     return true;
   }
 
-  SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
+  identifier::Schema schema_identifier(string(session->lex->name.str, session->lex->name.length));
   if (not check(schema_identifier))
     return false;
 
@@ -71,7 +71,7 @@ bool statement::CreateSchema::execute()
   return not res;
 }
 
-bool statement::CreateSchema::check(const SchemaIdentifier &identifier)
+bool statement::CreateSchema::check(const identifier::Schema &identifier)
 {
   if (not identifier.isValid())
     return false;

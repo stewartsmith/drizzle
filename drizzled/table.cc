@@ -333,7 +333,7 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
     true ok
 */
 
-bool check_db_name(Session *session, SchemaIdentifier &schema_identifier)
+bool check_db_name(Session *session, identifier::Schema &schema_identifier)
 {
   if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
   {

@@ -40,7 +40,7 @@ class AlterInfo;
 class Cursor;
 
 namespace message { class Table; }
-class TableIdentifier;
+class identifier::Table;
 
 int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);

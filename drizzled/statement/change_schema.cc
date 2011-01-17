@@ -35,7 +35,7 @@ bool statement::ChangeSchema::execute()
 {
   Select_Lex *select_lex= &session->lex->select_lex;
 
-  SchemaIdentifier identifier(select_lex->db);
+  identifier::Schema identifier(select_lex->db);
   if (not change_db(session, identifier))
   {
     session->my_ok();

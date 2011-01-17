@@ -86,14 +86,14 @@ public:
 
   int doCreateTable(Session &,
                     Table &table_arg,
-                    const drizzled::TableIdentifier &identifier,
+                    const drizzled::identifier::Table &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& ,
-                           const drizzled::TableIdentifier &,
+                           const drizzled::identifier::Table &,
                            drizzled::message::Table &);
 
-  int doDropTable(Session&, const TableIdentifier &);
+  int doDropTable(Session&, const identifier::Table &);
 
   /* operations on FilesystemTableShare */
   FilesystemTableShare *findOpenTable(const string table_name);
@@ -103,22 +103,22 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
-  bool doDoesTableExist(Session& , const TableIdentifier &);
-  int doRenameTable(Session&, const TableIdentifier &, const TableIdentifier &);
+  bool doDoesTableExist(Session& , const identifier::Table &);
+  int doRenameTable(Session&, const identifier::Table &, const identifier::Table &);
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
 private:
   void getTableNamesFromFilesystem(drizzled::CachedDirectory &directory,
-                                   const drizzled::SchemaIdentifier &schema_identifier,
+                                   const drizzled::identifier::Schema &schema_identifier,
                                    drizzled::plugin::TableNameList *set_of_names,
-                                   drizzled::TableIdentifier::vector *set_of_identifiers);
+                                   drizzled::identifier::Table::vector *set_of_identifiers);
 };
 
 void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &directory,
-                                                   const drizzled::SchemaIdentifier &schema_identifier,
+                                                   const drizzled::identifier::Schema &schema_identifier,
                                                    drizzled::plugin::TableNameList *set_of_names,
-                                                   drizzled::TableIdentifier::vector *set_of_identifiers)
+                                                   drizzled::identifier::Table::vector *set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
@@ -140,24 +140,24 @@ void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &di
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= identifier::Table::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       uname[file_name_len - sizeof(FILESYSTEM_EXT) + 1]= '\0';
       if (set_of_names)
         set_of_names->insert(uname);
       if (set_of_identifiers)
-        set_of_identifiers->push_back(TableIdentifier(schema_identifier, uname));
+        set_of_identifiers->push_back(identifier::Table(schema_identifier, uname));
     }
   }
 }
 
 void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                             const drizzled::SchemaIdentifier &schema_identifier,
-                                             drizzled::TableIdentifier::vector &set_of_identifiers)
+                                             const drizzled::identifier::Schema &schema_identifier,
+                                             drizzled::identifier::Table::vector &set_of_identifiers)
 {
   getTableNamesFromFilesystem(directory, schema_identifier, NULL, &set_of_identifiers);
 }
 
-int FilesystemEngine::doDropTable(Session &, const TableIdentifier &identifier)
+int FilesystemEngine::doDropTable(Session &, const identifier::Table &identifier)
 {
   string new_path(identifier.getPath());
   new_path+= FILESYSTEM_EXT;
@@ -169,7 +169,7 @@ int FilesystemEngine::doDropTable(Session &, const TableIdentifier &identifier)
   return err;
 }
 
-bool FilesystemEngine::doDoesTableExist(Session &, const TableIdentifier &identifier)
+bool FilesystemEngine::doDoesTableExist(Session &, const identifier::Table &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(FILESYSTEM_EXT);
@@ -281,7 +281,7 @@ static int parseTaggedFile(const FormatInfo &fi, vector< map<string, string> > &
 }
 
 int FilesystemEngine::doGetTableDefinition(Session &,
-                                           const drizzled::TableIdentifier &identifier,
+                                           const drizzled::identifier::Table &identifier,
                                            drizzled::message::Table &table_proto)
 {
   string new_path(identifier.getPath());
@@ -463,7 +463,7 @@ FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, 
 {
 }
 
-int FilesystemCursor::doOpen(const drizzled::TableIdentifier &identifier, int, uint32_t)
+int FilesystemCursor::doOpen(const drizzled::identifier::Table &identifier, int, uint32_t)
 {
   if (!(share= get_share(identifier.getPath().c_str())))
     return ENOENT;
@@ -893,7 +893,7 @@ int FilesystemCursor::doDeleteRecord(const unsigned char *)
   return 0;
 }
 
-int FilesystemEngine::doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to)
+int FilesystemEngine::doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to)
 {
   if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), FILESYSTEM_EXT))
     return errno;
@@ -907,9 +907,9 @@ bool FilesystemEngine::validateCreateTableOption(const std::string &key,
 }
 
 int FilesystemEngine::doCreateTable(Session &,
-                        Table&,
-                        const drizzled::TableIdentifier &identifier,
-                        drizzled::message::Table &proto)
+                                    Table&,
+                                    const drizzled::identifier::Table &identifier,
+                                    drizzled::message::Table &proto)
 {
   FormatInfo format;
   format.parseFromTable(&proto);

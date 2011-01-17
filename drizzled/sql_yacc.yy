@@ -4903,7 +4903,7 @@ show_param:
               util::string::const_shared_ptr schema(YYSession->schema());
               if ($2)
               {
-		SchemaIdentifier identifier($2);
+		identifier::Schema identifier($2);
                 column_name.append($2);
                 Lex->select_lex.db= $2;
                 if (not plugin::StorageEngine::doesSchemaExist(identifier))
@@ -4976,7 +4976,7 @@ show_param:
              {
                Lex->select_lex.db= $3;
 
-	       SchemaIdentifier identifier($3);
+	       identifier::Schema identifier($3);
                if (not plugin::StorageEngine::doesSchemaExist(identifier))
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);
@@ -5031,7 +5031,7 @@ show_param:
              }
 
              {
-               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
+               drizzled::identifier::Table identifier(select->getShowSchema().c_str(), $3->table.str);
                if (not plugin::StorageEngine::doesTableExist(*YYSession, identifier))
                {
                    my_error(ER_NO_SUCH_TABLE, MYF(0),
@@ -5077,7 +5077,7 @@ show_param:
              }
 
              {
-               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
+               drizzled::identifier::Table identifier(select->getShowSchema().c_str(), $3->table.str);
                if (not plugin::StorageEngine::doesTableExist(*YYSession, identifier))
                {
                    my_error(ER_NO_SUCH_TABLE, MYF(0),
@@ -5338,7 +5338,7 @@ describe:
              }
 
              {
-               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $2->table.str);
+               drizzled::identifier::Table identifier(select->getShowSchema().c_str(), $2->table.str);
                if (not plugin::StorageEngine::doesTableExist(*YYSession, identifier))
                {
                    my_error(ER_NO_SUCH_TABLE, MYF(0),

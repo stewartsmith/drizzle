@@ -238,7 +238,7 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
   return false;
 }
 
-TableShare::TableShare(const TableIdentifier::Type type_arg) :
+TableShare::TableShare(const identifier::Table::Type type_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
   timestamp_field(NULL),
@@ -294,7 +294,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg) :
 
   if (type_arg == message::Table::INTERNAL)
   {
-    TableIdentifier::build_tmptable_filename(private_key_for_cache.vectorPtr());
+    identifier::Table::build_tmptable_filename(private_key_for_cache.vectorPtr());
     init(private_key_for_cache.vector(), private_key_for_cache.vector());
   }
   else
@@ -303,7 +303,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg) :
   }
 }
 
-TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier::Key &key) :// Used by placeholder
+TableShare::TableShare(const identifier::Table &identifier, const identifier::Table::Key &key) :// Used by placeholder
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
   timestamp_field(NULL),
@@ -378,7 +378,7 @@ TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier:
 }
 
 
-TableShare::TableShare(const TableIdentifier &identifier) : // Just used during createTable()
+TableShare::TableShare(const identifier::Table &identifier) : // Just used during createTable()
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
   timestamp_field(NULL),
@@ -453,8 +453,8 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
 /*
   Used for shares that will go into the cache.
 */
-TableShare::TableShare(const TableIdentifier::Type type_arg,
-                       const TableIdentifier &identifier,
+TableShare::TableShare(const identifier::Table::Type type_arg,
+                       const identifier::Table &identifier,
                        char *path_arg,
                        uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
@@ -528,7 +528,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg,
   }
   else
   {
-    TableIdentifier::build_table_filename(_path, db.str, table_name.str, false);
+    identifier::Table::build_table_filename(_path, db.str, table_name.str, false);
   }
 
   if ((path_buff= (char *)mem_root.alloc_root(_path.length() + 1)))
@@ -573,7 +573,7 @@ TableShare::~TableShare()
   mem_root.free_root(MYF(0));                 // Free's share
 }
 
-void TableShare::setIdentifier(const TableIdentifier &identifier_arg)
+void TableShare::setIdentifier(const identifier::Table &identifier_arg)
 {
   private_key_for_cache= identifier_arg.getKey();
 
@@ -1556,7 +1556,7 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
   6    Unknown .frm version
 */
 
-int TableShare::open_table_def(Session& session, const TableIdentifier &identifier)
+int TableShare::open_table_def(Session& session, const identifier::Table &identifier)
 {
   int local_error;
   bool error_given;
@@ -1625,7 +1625,7 @@ int TableShare::open_table_def(Session& session, const TableIdentifier &identifi
   7    Table definition has changed in engine
 */
 int TableShare::open_table_from_share(Session *session,
-                                      const TableIdentifier &identifier,
+                                      const identifier::Table &identifier,
                                       const char *alias,
                                       uint32_t db_stat, uint32_t ha_open_flags,
                                       Table &outparam)
@@ -1795,7 +1795,7 @@ int TableShare::open_table_from_share_inner(Session *session,
   return 0;
 }
 
-int TableShare::open_table_cursor_inner(const TableIdentifier &identifier,
+int TableShare::open_table_cursor_inner(const identifier::Table &identifier,
                                         uint32_t db_stat, uint32_t ha_open_flags,
                                         Table &outparam,
                                         bool &error_reported)

@@ -40,7 +40,7 @@ namespace create
 namespace table
 {
 
-bool Like::executeInner(TableIdentifier::const_reference)
+bool Like::executeInner(identifier::Table::const_reference)
 {
   return false;
 }

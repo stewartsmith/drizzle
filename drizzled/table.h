@@ -845,7 +845,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
-bool check_db_name(Session *session, SchemaIdentifier &schema);
+bool check_db_name(Session *session, identifier::Schema &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
