@@ -20,14 +20,12 @@ Of the SQL date and time types, Drizzle supports:
 TIMESTAMP
 ---------
 
-To create a TIMESTAMP column that uses microseconds you simply need to specify TIMESTAMP(6) in your table definition, for example: ::
+To create a TIMESTAMP column that uses microseconds you simply need to specify TIMESTAMP in your table definition, for example: ::
 
 	CREATE TABLE `t1` (
 	`a` INT DEFAULT NULL,
-	`b` TIMESTAMP(6) NULL DEFAULT NULL
+	`b` TIMESTAMP NULL DEFAULT NULL
 	) ENGINE=InnoDB
-
-FIXME: why the number 6 ?
 
 You can then use the following (but note that ON DEFAULT/UPDATE CURRENT_TIMESTAMP works with microseconds as well): ::
 
