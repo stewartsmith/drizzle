@@ -41,6 +41,9 @@ using namespace std;
 namespace drizzled
 {
 
+namespace identifier
+{
+
 extern string drizzle_tmpdir;
 extern pid_t current_pid;
 
@@ -61,7 +64,7 @@ static size_t build_schema_filename(string &path, const string &db)
   return path.length();
 }
 
-SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
+Schema::Schema(const std::string &db_arg) :
   db(db_arg),
   db_path("")
 { 
@@ -77,32 +80,32 @@ SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
 
   if (not db_arg.empty())
   {
-    drizzled::build_schema_filename(db_path, db);
+    build_schema_filename(db_path, db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
 }
 
-void SchemaIdentifier::getSQLPath(std::string &arg) const
+void Schema::getSQLPath(std::string &arg) const
 {
   arg= db;
 }
 
-const std::string &SchemaIdentifier::getPath() const
+const std::string &Schema::getPath() const
 {
   return db_path;
 }
 
-bool SchemaIdentifier::compare(const std::string &arg) const
+bool Schema::compare(const std::string &arg) const
 {
   return boost::iequals(arg, db);
 }
 
-bool SchemaIdentifier::compare(SchemaIdentifier::const_reference arg) const
+bool Schema::compare(Schema::const_reference arg) const
 {
   return boost::iequals(arg.getSchemaName(), db);
 }
 
-bool SchemaIdentifier::isValid() const
+bool Schema::isValid() const
 {
   bool error= false;
 
@@ -156,14 +159,14 @@ bool SchemaIdentifier::isValid() const
   return true;
 }
 
-const std::string &SchemaIdentifier::getCatalogName() const
+const std::string &Schema::getCatalogName() const
 {
   return drizzled::catalog::local_identifier().name();
 }
 
-std::ostream& operator<<(std::ostream& output, const SchemaIdentifier &identifier)
+std::ostream& operator<<(std::ostream& output, const Schema&identifier)
 {
-  output << "SchemaIdentifier:(";
+  output << "identifier::Schema:(";
   output <<  catalog::local_identifier();
   output << ", ";
   output <<  identifier.getSchemaName().c_str();
@@ -174,4 +177,5 @@ std::ostream& operator<<(std::ostream& output, const SchemaIdentifier &identifie
   return output;  // for multiple << operators.
 }
 
+} /* namespace identifier */
 } /* namespace drizzled */

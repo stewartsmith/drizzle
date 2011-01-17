@@ -51,16 +51,17 @@
 #include <boost/functional/hash.hpp>
 
 namespace drizzled {
-
 class Table;
 
-class TableIdentifier : public SchemaIdentifier
+namespace identifier {
+
+class Table : public identifier::Schema
 {
 public:
   typedef message::Table::TableType Type;
-  typedef std::vector <TableIdentifier> vector;
-  typedef const TableIdentifier& const_reference;
-  typedef TableIdentifier& reference;
+  typedef std::vector <Table> vector;
+  typedef const Table& const_reference;
+  typedef Table& reference;
 
   class Key
   {
@@ -129,32 +130,33 @@ private:
   }
 
 public:
-  TableIdentifier(const Table &table);
+
+  Table(const drizzled::Table &table);
                    
-  TableIdentifier( const SchemaIdentifier &schema,
-                   const std::string &table_name_arg,
-                   Type tmp_arg= message::Table::STANDARD) :
-    SchemaIdentifier(schema),
+  Table(const identifier::Schema &schema,
+        const std::string &table_name_arg,
+        Type tmp_arg= message::Table::STANDARD) :
+    Schema(schema),
     type(tmp_arg),
     table_name(table_name_arg)
   { 
     init();
   }
 
-  TableIdentifier( const std::string &db_arg,
+  Table( const std::string &db_arg,
                    const std::string &table_name_arg,
                    Type tmp_arg= message::Table::STANDARD) :
-    SchemaIdentifier(db_arg),
+    Schema(db_arg),
     type(tmp_arg),
     table_name(table_name_arg)
   { 
     init();
   }
 
-  TableIdentifier( const std::string &schema_name_arg,
+  Table( const std::string &schema_name_arg,
                    const std::string &table_name_arg,
                    const std::string &path_arg ) :
-    SchemaIdentifier(schema_name_arg),
+    Schema(schema_name_arg),
     type(message::Table::TEMPORARY),
     path(path_arg),
     table_name(table_name_arg)
@@ -162,7 +164,7 @@ public:
     init();
   }
 
-  using SchemaIdentifier::compare;
+  using Schema::compare;
 
   bool isTmp() const
   {
@@ -213,7 +215,7 @@ public:
 
   void copyToTableMessage(message::Table &message) const;
 
-  friend bool operator<(TableIdentifier::const_reference left, TableIdentifier::const_reference right)
+  friend bool operator<(Table::const_reference left, Table::const_reference right)
   {
     if (left.getKey() < right.getKey())
     {
@@ -223,11 +225,11 @@ public:
     return false;
   }
 
-  friend std::ostream& operator<<(std::ostream& output, TableIdentifier::const_reference identifier)
+  friend std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
   {
     const char *type_str;
 
-    output << "TableIdentifier:(";
+    output << "Table:(";
     output <<  identifier.getSchemaName();
     output << ", ";
     output << identifier.getTableName();
@@ -258,7 +260,7 @@ public:
     return output;  // for multiple << operators.
   }
 
-  friend bool operator==(TableIdentifier::const_reference left, TableIdentifier::const_reference right)
+  friend bool operator==(Table::const_reference left, Table::const_reference right)
   {
     if (left.getHashValue() == right.getHashValue())
     {
@@ -288,9 +290,10 @@ public:
   }
 };
 
-std::size_t hash_value(TableIdentifier const& b);
-std::size_t hash_value(TableIdentifier::Key const& b);
+std::size_t hash_value(Table const& b);
+std::size_t hash_value(Table::Key const& b);
 
+} /* namespace identifier */
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_IDENTIFIER_TABLE_H */

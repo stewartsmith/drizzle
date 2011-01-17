@@ -68,7 +68,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
   if (session->getKilled())
     return true;
 
-  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
+  identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
   if (open_unireg_entry(session, table_list->getTableName(), identifier))
   {
     intern_close_table();
@@ -121,7 +121,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
 
 int table::Concurrent::open_unireg_entry(Session *session,
                                          const char *alias,
-                                         TableIdentifier &identifier)
+                                         identifier::Table &identifier)
 {
   int error;
   TableShare::shared_ptr share;

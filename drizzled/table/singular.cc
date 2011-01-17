@@ -142,7 +142,7 @@ bool Singular::open_tmp_table()
 {
   int error;
   
-  TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getPath());
+  identifier::Table identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getPath());
   if ((error=cursor->ha_open(identifier,
                              O_RDWR,
                              HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
@@ -325,7 +325,7 @@ Singular::~Singular()
       cursor->closeMarkForDelete(getShare()->getTableName());
     }
 
-    TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
+    identifier::Table identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
     drizzled::error_t ignored;
     plugin::StorageEngine::dropTable(*in_use,
                                      *getShare()->getEngine(),

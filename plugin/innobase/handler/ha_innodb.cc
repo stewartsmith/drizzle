@@ -446,7 +446,7 @@ public:
   doDropSchema(
   /*===================*/
         /* out: error number */
-    const SchemaIdentifier  &identifier); /* in: database path; inside InnoDB the name
+    const identifier::Schema  &identifier); /* in: database path; inside InnoDB the name
         of the last directory in the path is used as
         the database name: for example, in 'mysql/data/test'
         the database name is 'test' */
@@ -485,10 +485,10 @@ public:
 
   UNIV_INTERN int doCreateTable(Session &session,
                                 Table &form,
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 message::Table&);
-  UNIV_INTERN int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
-  UNIV_INTERN int doDropTable(Session &session, const TableIdentifier &identifier);
+  UNIV_INTERN int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
+  UNIV_INTERN int doDropTable(Session &session, const identifier::Table &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -507,14 +507,14 @@ public:
   }
 
   int doGetTableDefinition(drizzled::Session& session,
-                           const TableIdentifier &identifier,
+                           const identifier::Table &identifier,
                            drizzled::message::Table &table_proto);
 
-  bool doDoesTableExist(drizzled::Session& session, const TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const identifier::Table &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
 
@@ -542,8 +542,8 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 }
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                           const drizzled::SchemaIdentifier &schema_identifier,
-                                           drizzled::TableIdentifier::vector &set_of_identifiers)
+                                           const drizzled::identifier::Schema &schema_identifier,
+                                           drizzled::identifier::Table::vector &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -574,14 +574,14 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
            Using schema_identifier here to stop unused warning, could use
            definition.schema() instead
         */
-        TableIdentifier identifier(schema_identifier.getSchemaName(), definition.name());
+        identifier::Table identifier(schema_identifier.getSchemaName(), definition.name());
         set_of_identifiers.push_back(identifier);
       }
     }
   }
 }
 
-bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
+bool InnobaseEngine::doDoesTableExist(Session &session, const identifier::Table &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
@@ -598,7 +598,7 @@ bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &i
 }
 
 int InnobaseEngine::doGetTableDefinition(Session &session,
-                                         const TableIdentifier &identifier,
+                                         const identifier::Table &identifier,
                                          message::Table &table_proto)
 {
   string proto_path(identifier.getPath());
@@ -1692,7 +1692,7 @@ innobase_convert_identifier(
     nz[idlen] = 0;
 
     s = nz2.get();
-    idlen = TableIdentifier::filename_to_tablename(nz, nz2.get(), nz2_size);
+    idlen = identifier::Table::filename_to_tablename(nz, nz2.get(), nz2_size);
   }
 
   /* See if the identifier needs to be quoted. */
@@ -3347,7 +3347,7 @@ database.
 @return 1 if error, 0 if success */
 UNIV_INTERN
 int
-ha_innobase::doOpen(const TableIdentifier &identifier,
+ha_innobase::doOpen(const identifier::Table &identifier,
                     int   mode,   /*!< in: not used */
                     uint    test_if_locked) /*!< in: not used */
 {
@@ -6118,7 +6118,7 @@ InnobaseEngine::doCreateTable(
 /*================*/
   Session         &session, /*!< in: Session */
   Table&    form,   /*!< in: information on table columns and indexes */
-        const TableIdentifier &identifier,
+        const identifier::Table &identifier,
         message::Table& create_proto)
 {
   int   error;
@@ -6519,7 +6519,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session &session,
-        const TableIdentifier &identifier)
+        const identifier::Table &identifier)
 {
   int error;
   trx_t*  parent_trx;
@@ -6610,7 +6610,7 @@ Removes all tables in the named database inside InnoDB. */
 bool
 InnobaseEngine::doDropSchema(
 /*===================*/
-                             const SchemaIdentifier &identifier)
+                             const identifier::Schema &identifier)
     /*!< in: database path; inside InnoDB the name
       of the last directory in the path is used as
       the database name: for example, in 'mysql/data/test'
@@ -6660,7 +6660,7 @@ InnobaseEngine::doDropSchema(
 
 void InnobaseEngine::dropTemporarySchema()
 {
-  SchemaIdentifier schema_identifier(GLOBAL_TEMPORARY_EXT);
+  identifier::Schema schema_identifier(GLOBAL_TEMPORARY_EXT);
   trx_t*  trx= NULL;
   string schema_path(GLOBAL_TEMPORARY_EXT);
 
@@ -6746,7 +6746,7 @@ innobase_rename_table(
 /*********************************************************************//**
 Renames an InnoDB table.
 @return 0 or error code */
-UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
+UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const identifier::Table &from, const identifier::Table &to)
 {
   // A temp table alter table/rename is a shallow rename and only the
   // definition needs to be updated.
@@ -7771,12 +7771,12 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
       i++;
     }
     db_name[i] = 0;
-    ulen= TableIdentifier::filename_to_tablename(db_name, uname, sizeof(uname));
+    ulen= identifier::Table::filename_to_tablename(db_name, uname, sizeof(uname));
     LEX_STRING *tmp_referenced_db = session->make_lex_string(NULL, uname, ulen, true);
 
     /* Table name */
     tmp_buff += i + 1;
-    ulen= TableIdentifier::filename_to_tablename(tmp_buff, uname, sizeof(uname));
+    ulen= identifier::Table::filename_to_tablename(tmp_buff, uname, sizeof(uname));
     LEX_STRING *tmp_referenced_table = session->make_lex_string(NULL, uname, ulen, true);
 
     /** Foreign Fields **/

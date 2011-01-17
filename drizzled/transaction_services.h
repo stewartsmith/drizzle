@@ -302,7 +302,7 @@ public:
    * @param[in] in_session Pointer to the Session which issued the statement
    * @param[in] schema_name message::Schema message describing new schema
    */
-  void dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier);
+  void dropSchema(Session *in_session, identifier::Schema::const_reference identifier);
 
   /**
    * Creates an AlterSchema Statement GPB message and adds it
@@ -336,7 +336,7 @@ public:
    * @param[in] if_exists Did the user specify an IF EXISTS clause?
    */
   void dropTable(Session *in_session,
-                 const TableIdentifier &table,
+                 const identifier::Table &table,
                  bool if_exists);
   /**
    * Creates a TruncateTable Statement GPB message and adds it

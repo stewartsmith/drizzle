@@ -52,7 +52,7 @@ ShowIndexes::Generator::Generator(Field **arg) :
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
   {
     table_name.append(select->getShowTable().c_str());
-    TableIdentifier identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
+    identifier::Table identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
 
     is_tables_primed= plugin::StorageEngine::getTableDefinition(getSession(),
                                                                 identifier,

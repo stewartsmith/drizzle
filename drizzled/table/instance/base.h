@@ -77,14 +77,14 @@ public:
   typedef boost::shared_ptr<TableShare> shared_ptr;
   typedef std::vector <shared_ptr> vector;
 
-  TableShare(const TableIdentifier::Type type_arg);
+  TableShare(const identifier::Table::Type type_arg);
 
-  TableShare(const TableIdentifier &identifier, const TableIdentifier::Key &key); // Used by placeholder
+  TableShare(const identifier::Table &identifier, const identifier::Table::Key &key); // Used by placeholder
 
-  TableShare(const TableIdentifier &identifier); // Just used during createTable()
+  TableShare(const identifier::Table &identifier); // Just used during createTable()
 
-  TableShare(const TableIdentifier::Type type_arg,
-             const TableIdentifier &identifier,
+  TableShare(const identifier::Table::Type type_arg,
+             const identifier::Table &identifier,
              char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
   virtual ~TableShare();
@@ -278,7 +278,7 @@ public:
     To ensure this one can use set_table_cache() methods.
   */
 private:
-  TableIdentifier::Key private_key_for_cache; // This will not exist in the final design.
+  identifier::Table::Key private_key_for_cache; // This will not exist in the final design.
   std::vector<char> private_normalized_path; // This will not exist in the final design.
   LEX_STRING db;                        /* Pointer to db */
   LEX_STRING table_name;                /* Table name (for open) */
@@ -296,7 +296,7 @@ public:
     return path.str;
   }
 
-  const TableIdentifier::Key& getCacheKey() const // This should never be called when we aren't looking at a cache.
+  const identifier::Table::Key& getCacheKey() const // This should never be called when we aren't looking at a cache.
   {
     assert(private_key_for_cache.size());
     return private_key_for_cache;
@@ -495,10 +495,10 @@ public:
   }
 
 private:
-  TableIdentifier::Type tmp_table;
+  identifier::Table::Type tmp_table;
 public:
 
-  TableIdentifier::Type getType() const
+  identifier::Table::Type getType() const
   {
     return tmp_table;
   }
@@ -632,7 +632,7 @@ public:
     NOTES
   */
 
-  void setIdentifier(const TableIdentifier &identifier_arg);
+  void setIdentifier(const identifier::Table &identifier_arg);
 
   /*
     Initialize share for temporary tables
@@ -658,7 +658,7 @@ public:
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
   static TableShare::shared_ptr getShareCreate(Session *session, 
-                                               const TableIdentifier &identifier,
+                                               const identifier::Table &identifier,
                                                int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
@@ -707,10 +707,10 @@ protected:
                     bool is_unsigned);
 
 public:
-  int open_table_def(Session& session, const TableIdentifier &identifier);
+  int open_table_def(Session& session, const identifier::Table &identifier);
 
   int open_table_from_share(Session *session,
-                            const TableIdentifier &identifier,
+                            const identifier::Table &identifier,
                             const char *alias,
                             uint32_t db_stat, uint32_t ha_open_flags,
                             Table &outparam);
@@ -719,12 +719,13 @@ private:
                                   const char *alias,
                                   uint32_t db_stat,
                                   Table &outparam);
-  int open_table_cursor_inner(const TableIdentifier &identifier,
+  int open_table_cursor_inner(const identifier::Table &identifier,
                               uint32_t db_stat, uint32_t ha_open_flags,
                               Table &outparam,
                               bool &error_reported);
 public:
   int parse_table_proto(Session& session, message::Table &table);
+
 private:
   int inner_parse_table_proto(Session& session, message::Table &table);
 };

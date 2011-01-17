@@ -47,7 +47,7 @@ ShowCreateTable::Generator::Generator(Field **arg) :
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
   {
-    TableIdentifier identifier(select->getShowSchema(), select->getShowTable());
+    identifier::Table identifier(select->getShowSchema(), select->getShowTable());
 
     int error= plugin::StorageEngine::getTableDefinition(getSession(),
                                                          identifier,

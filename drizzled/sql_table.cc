@@ -87,7 +87,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     let's fetch the database default character set and
     apply it to the table.
   */
-  SchemaIdentifier identifier(db);
+  identifier::Schema identifier(db);
   if (create_info->default_table_charset == NULL)
     create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 }
@@ -162,7 +162,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
     for (table= tables; table; table= table->next_local)
     {
-      TableIdentifier tmp_identifier(table->getSchemaName(), table->getTableName());
+      identifier::Table tmp_identifier(table->getSchemaName(), table->getTableName());
 
       error= session->drop_temporary_table(tmp_identifier);
 
@@ -198,7 +198,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
           break;
         }
       }
-      TableIdentifier identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
+      identifier::Table identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
       if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
       {
@@ -1296,7 +1296,7 @@ static bool prepare_blob_field(Session *,
 }
 
 static bool locked_create_event(Session *session,
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1432,7 +1432,7 @@ static bool locked_create_event(Session *session,
 */
 
 bool create_table_no_lock(Session *session,
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 HA_CREATE_INFO *create_info,
 				message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1484,7 +1484,7 @@ bool create_table_no_lock(Session *session,
   @note the following two methods implement create [temporary] table.
 */
 static bool drizzle_create_table(Session *session,
-                                 const TableIdentifier &identifier,
+                                 const identifier::Table &identifier,
                                  HA_CREATE_INFO *create_info,
                                  message::Table &table_proto,
                                  AlterInfo *alter_info,
@@ -1543,7 +1543,7 @@ static bool drizzle_create_table(Session *session,
   Database locking aware wrapper for create_table_no_lock(),
 */
 bool create_table(Session *session,
-                        const TableIdentifier &identifier,
+                        const identifier::Table &identifier,
                         HA_CREATE_INFO *create_info,
 			message::Table &table_proto,
                         AlterInfo *alter_info,
@@ -1639,8 +1639,8 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 bool
 rename_table(Session &session,
                    plugin::StorageEngine *base,
-                   const TableIdentifier &from,
-                   const TableIdentifier &to)
+                   const identifier::Table &from,
+                   const identifier::Table &to)
 {
   int error= 0;
 
@@ -1706,7 +1706,7 @@ void wait_while_table_is_used(Session *session, Table *table,
   session->abortLock(table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
+  identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
   table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
@@ -1857,7 +1857,7 @@ static bool admin_table(Session* session, TableList* tables,
       const char *old_message=session->enter_cond(COND_refresh, table::Cache::singleton().mutex(),
                                                   "Waiting to get writelock");
       session->abortLock(table->table);
-      TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
+      identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
       table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
       if (session->getKilled())
@@ -1959,7 +1959,7 @@ send_result:
         else
         {
           boost::unique_lock<boost::mutex> lock(table::Cache::singleton().mutex());
-	  TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
+	  identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
           table::Cache::singleton().removeTable(session, identifier, RTFC_NO_FLAG);
         }
       }
@@ -2000,8 +2000,8 @@ err:
     See bug #28614 for more info.
   */
 static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
-                                 const TableIdentifier &destination_identifier,
-                                 const TableIdentifier &src_table,
+                                 const identifier::Table &destination_identifier,
+                                 const identifier::Table &src_table,
                                  bool is_engine_set)
 {
   int protoerr;
@@ -2076,7 +2076,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 */
 
 bool create_like_table(Session* session,
-                       const TableIdentifier &destination_identifier,
+                       const identifier::Table &destination_identifier,
                        TableList* table, TableList* src_table,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
@@ -2097,10 +2097,8 @@ bool create_like_table(Session* session,
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier src_identifier(src_table->table->getShare()->getSchemaName(),
+  identifier::Table src_identifier(src_table->table->getShare()->getSchemaName(),
                                  src_table->table->getShare()->getTableName(), src_table->table->getShare()->getType());
-
-
 
   /*
     Check that destination tables does not exist. Note that its name

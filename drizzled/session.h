@@ -1482,7 +1482,7 @@ public:
     @param level the error level
     @return true if the error is handled
   */
-  virtual bool handle_error(uint32_t sql_errno, const char *message,
+  virtual bool handle_error(drizzled::error_t sql_errno, const char *message,
                             DRIZZLE_ERROR::enum_warning_level level);
 
   /**
@@ -1753,7 +1753,7 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
-  void close_data_files_and_morph_locks(const TableIdentifier &identifier);
+  void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
 private:
   bool free_cached_table();
@@ -1790,12 +1790,12 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, const TableIdentifier &identifier);
+  void drop_open_table(Table *table, const identifier::Table &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  table::Placeholder *table_cache_insert_placeholder(const TableIdentifier &identifier);
-  bool lock_table_name_if_not_cached(const TableIdentifier &identifier, Table **table);
+  table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
+  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
 
@@ -1804,13 +1804,13 @@ public:
     TableMessageCache table_message_cache;
 
   public:
-    bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-    bool removeTableMessage(const TableIdentifier &identifier);
-    bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-    bool doesTableMessageExist(const TableIdentifier &identifier);
-    bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
-
+    bool storeTableMessage(const identifier::Table &identifier, message::Table &table_message);
+    bool removeTableMessage(const identifier::Table &identifier);
+    bool getTableMessage(const identifier::Table &identifier, message::Table &table_message);
+    bool doesTableMessageExist(const identifier::Table &identifier);
+    bool renameTableMessage(const identifier::Table &from, const identifier::Table &to);
   };
+
 private:
   TableMessages _table_message_cache;
 

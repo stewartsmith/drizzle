@@ -41,7 +41,7 @@ bool statement::AlterSchema::execute()
   if (not validateSchemaOptions())
     return true;
 
-  SchemaIdentifier schema_identifier(string(db->str, db->length));
+  identifier::Schema schema_identifier(string(db->str, db->length));
 
   if (not check_db_name(session, schema_identifier))
   {
@@ -50,7 +50,7 @@ bool statement::AlterSchema::execute()
     return false;
   }
 
-  SchemaIdentifier identifier(db->str);
+  identifier::Schema identifier(db->str);
   if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 

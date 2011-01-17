@@ -55,7 +55,7 @@ public:
    * @returns true if the user cannot access the schema
    */
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              SchemaIdentifier::const_reference schema)= 0;
+                              identifier::Schema::const_reference schema)= 0;
 
   /**
    * Should we restrict the current user's access to this table?
@@ -67,7 +67,7 @@ public:
    * @returns true if the user cannot access the table
    */
   virtual bool restrictTable(const drizzled::identifier::User &user_ctx,
-                             TableIdentifier &table);
+                             identifier::Table &table);
 
   /**
    * Should we restrict the current user's access to see this process?
@@ -83,12 +83,12 @@ public:
 
   /** Server API method for checking schema authorization */
   static bool isAuthorized(drizzled::identifier::User::const_shared_ptr user_ctx,
-                           SchemaIdentifier::const_reference schema_identifier,
+                           identifier::Schema::const_reference schema_identifier,
                            bool send_error= true);
 
   /** Server API method for checking table authorization */
   static bool isAuthorized(drizzled::identifier::User::const_shared_ptr user_ctx,
-                           TableIdentifier &table_identifier,
+                           identifier::Table &table_identifier,
                            bool send_error= true);
 
   /** Server API method for checking process authorization */
@@ -106,7 +106,7 @@ public:
    * to a set of schema names (for use in the context of getSchemaNames
    */
   static void pruneSchemaNames(drizzled::identifier::User::const_shared_ptr user_ctx,
-                               SchemaIdentifier::vector &set_of_schemas);
+                               identifier::Schema::vector &set_of_schemas);
   
   /**
    * Standard plugin system registration hooks
@@ -117,7 +117,7 @@ public:
 };
 
 inline bool Authorization::restrictTable(const drizzled::identifier::User &user_ctx,
-                                         TableIdentifier &table)
+                                         identifier::Table &table)
 {
   return restrictSchema(user_ctx, table);
 }
