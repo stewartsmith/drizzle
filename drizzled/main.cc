@@ -277,8 +277,6 @@ int main(int argc, char **argv)
     }
 
     full_data_home= fs::system_complete(getDataHome());
-    getDataHomeCatalog()= "./";
-    getDataHome()= "../";
   }
 
 
