@@ -1756,7 +1756,8 @@ public:
   void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
 private:
-  bool free_cached_table();
+  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+
 public:
 
   /**
@@ -1821,7 +1822,7 @@ public:
   }
 
   /* Reopen operations */
-  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  bool reopen_tables();
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);

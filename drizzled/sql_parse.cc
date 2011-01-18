@@ -974,8 +974,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables ;
 	 tables=tables->next_local)
     {
-      if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
+      if (not my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
+	  not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;

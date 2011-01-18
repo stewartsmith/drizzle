@@ -171,7 +171,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   Session *session= this;
 
   {
-    table::Cache::singleton().mutex().lock(); /* Optionally lock for remove tables from open_cahe if not in use */
+    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Optionally lock for remove tables from open_cahe if not in use */
 
     if (tables == NULL)
     {
@@ -287,9 +287,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
                                                      (table->open_placeholder && wait_for_placeholders)))
           {
             found= true;
-            boost_unique_lock_t scoped(table::Cache::singleton().mutex(), boost::adopt_lock_t());
-            COND_refresh.wait(scoped);
-            scoped.release();
+            COND_refresh.wait(scopedLock);
             break;
           }
         }
@@ -299,7 +297,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
         old locks. This should always succeed (unless some external process
         has removed the tables)
       */
-      result= session->reopen_tables(true, true);
+      result= session->reopen_tables();
 
       /* Set version for table */
       for (Table *table= session->open_tables; table ; table= table->getNext())
@@ -312,8 +310,6 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           table->getMutableShare()->refreshVersion();
       }
     }
-
-    table::Cache::singleton().mutex().unlock();
   }
 
   if (wait_for_refresh)
@@ -332,9 +328,12 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   move one table to free list 
 */
 
-bool Session::free_cached_table()
+bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
 {
   bool found_old_table= false;
+
+  (void)scopedLock;
+
   table::Concurrent *table= static_cast<table::Concurrent *>(open_tables);
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
@@ -386,7 +385,7 @@ void Session::close_open_tables()
 
   while (open_tables)
   {
-    found_old_table|= free_cached_table();
+    found_old_table|= free_cached_table(scoped_lock);
   }
   some_tables_deleted= false;
 
@@ -422,10 +421,12 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD) &&
-        strcasecmp(table->getSchemaName(), db_name) == 0 &&
-        strcasecmp(table->getTableName(), table_name) == 0)
+    if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD) and
+        my_strcasecmp(system_charset_info, table->getSchemaName(), db_name) == 0 and
+        my_strcasecmp(system_charset_info, table->getTableName(), table_name) == 0)
+    {
       break;
+    }
   }
   return table;
 }
@@ -1272,10 +1273,11 @@ void Session::close_data_files_and_morph_locks(const identifier::Table &identifi
   @return false in case of success, true - otherwise.
 */
 
-bool Session::reopen_tables(bool get_locks, bool)
+bool Session::reopen_tables()
 {
   Table *table,*next,**prev;
-  Table **tables,**tables_ptr;			// For locks
+  Table **tables= 0;			// For locks
+  Table **tables_ptr= 0;			// For locks
   bool error= false;
   const uint32_t flags= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN |
     DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
@@ -1285,7 +1287,6 @@ bool Session::reopen_tables(bool get_locks, bool)
     return false;
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
-  if (get_locks)
   {
     /*
       The ptr is checked later
@@ -1299,10 +1300,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     }
     tables= new Table *[opens];
   }
-  else
-  {
-    tables= &open_tables;
-  }
+
   tables_ptr =tables;
 
   prev= &open_tables;
@@ -1342,12 +1340,11 @@ bool Session::reopen_tables(bool get_locks, bool)
     }
   }
 
-  if (get_locks && tables)
-    delete [] tables;
+  delete [] tables;
 
   locking::broadcast_refresh();
 
-  return(error);
+  return error;
 }
 
 
@@ -1378,7 +1375,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
     */
     if (table->needs_reopen_or_name_lock())
     {
-      found=1;
+      found= true;
       if (table->db_stat)
       {
         if (morph_locks)
@@ -1503,10 +1500,11 @@ Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &i
     }
   }
   *prev=0;
+
   if (found)
     locking::broadcast_refresh();
 
-  return(found);
+  return found;
 }
 
 
@@ -1525,6 +1523,7 @@ void abort_locked_tables(Session *session, const drizzled::identifier::Table &id
     {
       /* If MERGE child, forward lock handling to parent. */
       session->abortLock(table);
+      assert(0);
       break;
     }
   }
@@ -3587,7 +3586,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     assert(tables->is_leaf_for_name_resolution());
 
     if ((table_name && my_strcasecmp(table_alias_charset, table_name, tables->alias)) ||
-        (db_name && strcasecmp(tables->getSchemaName(),db_name)))
+        (db_name && my_strcasecmp(system_charset_info, tables->getSchemaName(),db_name)))
       continue;
 
     /*

@@ -1037,6 +1037,7 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
     if (getKilled())
       result=1;
   }
+
   if (not abort_on_refresh && not result)
     protect_against_global_read_lock++;
 

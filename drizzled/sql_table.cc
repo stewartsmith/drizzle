@@ -141,7 +141,7 @@ void write_bin_log(Session *session, const std::string &query)
 */
 
 int rm_table_part2(Session *session, TableList *tables, bool if_exists,
-                         bool drop_temporary)
+                   bool drop_temporary)
 {
   TableList *table;
   String wrong_tables;
