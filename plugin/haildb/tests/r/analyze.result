@@ -1,0 +1,48 @@
+create table t1 (a bigint);
+insert into t1 values(0);
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+drop table t1;
+create table t1 (a bigint);
+insert into t1 values(0);
+delete from t1;
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+drop table t1;
+create table t1 (a bigint);
+insert into t1 values(0);
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+drop table t1;
+create TEMPORARY table t1 (a varchar(10), key key1(a)) collate=utf8_general_ci engine=myisam;
+insert into t1 values ('hello');
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	note	The storage engine for the table doesn't support analyze
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	note	The storage engine for the table doesn't support analyze
+drop table t1;
+create temporary table t1(a int, index(a));
+insert into t1 values('1'),('2'),('3'),('4'),('5');
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+show index from t1;
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
+drop table t1;
+End of 4.1 tests
+End of 5.0 tests
