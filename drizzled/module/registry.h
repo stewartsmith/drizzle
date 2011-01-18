@@ -30,6 +30,24 @@
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/plugin.h"
 
+#define BOOST_NO_HASH 1
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
+
+namespace drizzled
+{
+  enum vertex_properties_t { vertex_properties };
+}
+
+namespace boost
+{
+  template <> struct property_kind<drizzled::vertex_properties_t>
+  {
+    typedef vertex_property_tag type;
+  };
+}
+
 namespace drizzled
 {
 
@@ -38,25 +56,54 @@ namespace module
 class Module;
 class Library;
 
+struct ModuleVertex
+{
+  Module *module;
+};
+
 class Registry
 {
 public:
+
+  typedef std::pair<std::string, std::string> ModuleEdge;
+  typedef boost::adjacency_list<boost::vecS,
+                               boost::vecS,
+                               boost::bidirectionalS, 
+                               boost::property<boost::vertex_color_t,
+                                               boost::default_color_type,
+                                 boost::property<vertex_properties_t, ModuleVertex> >
+                      > ModuleGraph;
+  typedef boost::graph_traits<ModuleGraph>::vertex_descriptor Vertex;
+  typedef std::vector<Vertex> VertexList;
+
+  typedef boost::graph_traits<ModuleGraph>::vertex_iterator vertex_iter;
+
   typedef std::map<std::string, Library *> LibraryMap;
   typedef std::map<std::string, Module *> ModuleMap;
 private:
   LibraryMap library_registry_;
   ModuleMap module_registry_;
+  ModuleGraph depend_graph_; 
   
   plugin::Plugin::map plugin_registry;
 
   Registry()
    : module_registry_(),
+     depend_graph_(),
      plugin_registry()
   { }
 
   Registry(const Registry&);
   Registry& operator=(const Registry&);
   ~Registry();
+
+  ModuleVertex& properties(const Vertex& v)
+  {
+     boost::property_map<ModuleGraph, vertex_properties_t>::type param=
+       boost::get(vertex_properties, depend_graph_);
+     return param[v];
+  }
+
 public:
 
   static Registry& singleton()
