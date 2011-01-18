@@ -36,7 +36,7 @@ class Time;
 
 /**
   This class represents abstract time zone and provides
-  basic interface for type::Time <-> time_t conversion.
+  basic interface for type::Time <-> type::Time::epoch_t conversion.
   Actual time zones which are specified by DB, or via offset
   or use system functions are its descendants.
 */
@@ -46,14 +46,14 @@ public:
   Time_zone() {}                              /* Remove gcc warning */
   /**
     Converts local time in broken down type::Time representation to
-    time_t (UTC seconds since Epoch) represenation.
+    type::Time::epoch_t (UTC seconds since Epoch) represenation.
     Returns 0 in case of error. Sets in_dst_time_gap to true if date provided
     falls into spring time-gap (or lefts it untouched otherwise).
   */
   virtual type::Time::epoch_t TIME_to_gmt_sec(const type::Time *t,
                                               bool *in_dst_time_gap) const = 0;
   /**
-    Converts time in time_t representation to local time in
+    Converts time in type::Time::epoch_t representation to local time in
     broken down type::Time representation.
   */
   virtual void gmt_sec_to_TIME(type::Time *tmp, type::Time::epoch_t t) const = 0;
