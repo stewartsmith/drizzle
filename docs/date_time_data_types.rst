@@ -20,14 +20,12 @@ Of the SQL date and time types, Drizzle supports:
 TIMESTAMP
 ---------
 
-To create a TIMESTAMP column that uses microseconds you simply need to specify TIMESTAMP(6) in your table definition, for example: ::
+To create a TIMESTAMP column that uses microseconds you simply need to specify TIMESTAMP in your table definition, for example: ::
 
 	CREATE TABLE `t1` (
 	`a` INT DEFAULT NULL,
-	`b` TIMESTAMP(6) NULL DEFAULT NULL
+	`b` TIMESTAMP NULL DEFAULT NULL
 	) ENGINE=InnoDB
-
-FIXME: why the number 6 ?
 
 You can then use the following (but note that ON DEFAULT/UPDATE CURRENT_TIMESTAMP works with microseconds as well): ::
 
@@ -49,10 +47,10 @@ In Drizzle, valid date inputs begin at 0001-01-01 rather than 0000-00-00, which 
 TIME
 ----
 
-Drizzle's TIME data type has a range of 00:00:00 - 24:59:59, while MySQL's TIME data type has a range of -838:59:59 - 838:59:59.
+Drizzle's TIME data type has a range of 00:00:00 - 23:59:61.999999, while MySQL's TIME data type has a range of -838:59:59 - 838:59:59.
 
-FIXME: should be to 23hrs. in fact, to be compliant, it should be to at a minimum 23:59:61.999999.
-
-FIXME: should also mention that this brings Drizzle closer to the SQL standard. Negative time is not meant to be there at all.
+This brings Drizzle closer to the SQL standard. Negative time is not meant to be there at all.
 
 To prevent data loss to this type when converting from MySQL -> Drizzle, the conversion changes TIME to an INT of the number of seconds. For example, 00:00:00 becomes 0, 01:00:00 becomes 3600, and -01:00:00 becomes -3600.
+
+More information on this can be found in the "MySQL Migration Using Drizzledump" section of the :doc:`clients/drizzledump` chapter.

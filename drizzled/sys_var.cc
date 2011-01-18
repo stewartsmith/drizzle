@@ -149,8 +149,6 @@ static sys_var_session_uint64_t	sys_join_buffer_size("join_buffer_size",
                                                      &drizzle_system_variables::join_buff_size);
 static sys_var_session_uint32_t	sys_max_allowed_packet("max_allowed_packet",
                                                        &drizzle_system_variables::max_allowed_packet);
-static sys_var_uint64_t_ptr	sys_max_connect_errors("max_connect_errors",
-                                               &max_connect_errors);
 static sys_var_session_uint64_t	sys_max_error_count("max_error_count",
                                                   &drizzle_system_variables::max_error_count);
 static sys_var_session_uint64_t	sys_max_heap_table_size("max_heap_table_size",
@@ -1548,7 +1546,6 @@ int sys_var_init()
     add_sys_var_to_list(&sys_last_insert_id, my_long_options);
     add_sys_var_to_list(&sys_lc_time_names, my_long_options);
     add_sys_var_to_list(&sys_max_allowed_packet, my_long_options);
-    add_sys_var_to_list(&sys_max_connect_errors, my_long_options);
     add_sys_var_to_list(&sys_max_error_count, my_long_options);
     add_sys_var_to_list(&sys_max_heap_table_size, my_long_options);
     add_sys_var_to_list(&sys_max_join_size, my_long_options);

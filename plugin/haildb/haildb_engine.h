@@ -115,6 +115,7 @@ public:
                           uint64_t *nb_reserved_values);
 
   int reset();
+  int analyze(drizzled::Session* session);
 
 private:
   ib_id_t table_id;

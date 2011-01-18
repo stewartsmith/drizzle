@@ -151,7 +151,7 @@ pkgplugin_LTLIBRARIES=%(libname)s.la
 %(libname)s_la_LDFLAGS=-avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
 %(libname)s_la_LIBADD=%(libs)s
 %(libname)s_la_DEPENDENCIES=%(libs)s
-%(libname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(module_name)s -DPANDORA_MODULE_AUTHOR='"%(author)s"' -DPANDORA_MODULE_TITLE='"%(title)s"' -DPANDORA_MODULE_VERSION='"%(version)s"' -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
+%(libname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(module_name)s -DPANDORA_MODULE_AUTHOR='%(author)s' -DPANDORA_MODULE_TITLE='%(title)s' -DPANDORA_MODULE_VERSION='%(version)s' -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
 %(libname)s_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
 %(libname)s_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 %(libname)s_la_SOURCES=%(sources)s
@@ -527,7 +527,7 @@ if %(build_conditional_tag)s
   %(root_plugin_dir)s_%(libname)s_la_LIBADD=%(libs)s
   %(root_plugin_dir)s_%(libname)s_la_DEPENDENCIES=%(libs)s
   %(root_plugin_dir)s_%(libname)s_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
-  %(root_plugin_dir)s_%(libname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_MODULE_NAME=%(module_name)s -DPANDORA_MODULE_AUTHOR='"%(author)s"' -DPANDORA_MODULE_TITLE='"%(title)s"' -DPANDORA_MODULE_VERSION='"%(version)s"' -DPANDORA_MODULE_LICENSE=%(license)s -DPANDORA_MODULE_DEPENDENCIES='"%(dependencies)s"' %(cppflags)s
+  %(root_plugin_dir)s_%(libname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_MODULE_NAME=%(module_name)s -DPANDORA_MODULE_AUTHOR='%(author)s' -DPANDORA_MODULE_TITLE='%(title)s' -DPANDORA_MODULE_VERSION='%(version)s' -DPANDORA_MODULE_LICENSE=%(license)s -DPANDORA_MODULE_DEPENDENCIES='%(dependencies)s' %(cppflags)s
   %(root_plugin_dir)s_%(libname)s_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   %(root_plugin_dir)s_%(libname)s_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
   %(root_plugin_dir)s_%(libname)s_la_SOURCES=%(sources)s
@@ -544,7 +544,7 @@ if %(build_conditional_tag)s
   %(root_plugin_dir)s_%(libname)s_la_LDFLAGS=-avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
   %(root_plugin_dir)s_%(libname)s_la_LIBADD=%(libs)s
   %(root_plugin_dir)s_%(libname)s_la_DEPENDENCIES=%(libs)s
-  %(root_plugin_dir)s_%(libname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(module_name)s -DPANDORA_MODULE_AUTHOR='"%(author)s"' -DPANDORA_MODULE_TITLE='"%(title)s"' -DPANDORA_MODULE_VERSION='"%(version)s"' -DPANDORA_MODULE_LICENSE=%(license)s -DPANDORA_MODULE_DEPENDENCIES='"%(dependencies)s"' %(cppflags)s
+  %(root_plugin_dir)s_%(libname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(module_name)s -DPANDORA_MODULE_AUTHOR='%(author)s' -DPANDORA_MODULE_TITLE='%(title)s' -DPANDORA_MODULE_VERSION='%(version)s' -DPANDORA_MODULE_LICENSE=%(license)s -DPANDORA_MODULE_DEPENDENCIES='%(dependencies)s' %(cppflags)s
   %(root_plugin_dir)s_%(libname)s_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   %(root_plugin_dir)s_%(libname)s_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
   %(root_plugin_dir)s_%(libname)s_la_SOURCES=%(sources)s
