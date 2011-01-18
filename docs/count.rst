@@ -22,10 +22,10 @@ Take the following "Nodes" table, where 'nodes' are user-contributed content:
 The SQL COUNT function returns the number of rows in a table satisfying the criteria specified in the WHERE clause. If we want to count how many orders has made a customer with CustomerName of Smith, we will use the following SQL COUNT expression: ::
 
 	SELECT COUNT * FROM Nodes
-	WHERE UserName = 'Smith'
+	WHERE UserName = "Smith";
 
 In the above statement, the COUNT keyword returns the number 3, because the user Smith has 3 total nodes.
 
 If you don’t specify a WHERE clause when using the COUNT keyword, your statement will simply return the total number of rows in the table, which would be 6 in this example: ::
 
-	SELECT COUNT * FROM Nodes
+	SELECT COUNT * FROM Nodes;
