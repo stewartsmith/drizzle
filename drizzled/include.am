@@ -297,6 +297,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/module/option_context.h \
 			      drizzled/module/option_map.h \
 			      drizzled/module/registry.h \
+			      drizzled/module/vertex.h \
 			      drizzled/my_hash.h \
 			      drizzled/name_resolution_context.h \
 			      drizzled/name_resolution_context_state.h \

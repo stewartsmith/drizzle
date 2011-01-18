@@ -29,24 +29,8 @@
 #include "drizzled/unireg.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/module/vertex.h"
 
-#define BOOST_NO_HASH 1
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/topological_sort.hpp>
-
-namespace drizzled
-{
-  enum vertex_properties_t { vertex_properties };
-}
-
-namespace boost
-{
-  template <> struct property_kind<drizzled::vertex_properties_t>
-  {
-    typedef vertex_property_tag type;
-  };
-}
 
 namespace drizzled
 {
@@ -56,10 +40,6 @@ namespace module
 class Module;
 class Library;
 
-struct ModuleVertex
-{
-  Module *module;
-};
 
 class Registry
 {
@@ -71,19 +51,19 @@ public:
                                boost::bidirectionalS, 
                                boost::property<boost::vertex_color_t,
                                                boost::default_color_type,
-                                 boost::property<vertex_properties_t, ModuleVertex> >
-                      > ModuleGraph;
-  typedef boost::graph_traits<ModuleGraph>::vertex_descriptor Vertex;
-  typedef std::vector<Vertex> VertexList;
+                                 boost::property<vertex_properties_t, Vertex> >
+                      > Graph;
+  typedef boost::graph_traits<Graph>::vertex_descriptor VertexDesc;
+  typedef std::vector<VertexDesc> VertexList;
 
-  typedef boost::graph_traits<ModuleGraph>::vertex_iterator vertex_iter;
+  typedef boost::graph_traits<Graph>::vertex_iterator vertex_iter;
 
   typedef std::map<std::string, Library *> LibraryMap;
   typedef std::map<std::string, Module *> ModuleMap;
 private:
   LibraryMap library_registry_;
   ModuleMap module_registry_;
-  ModuleGraph depend_graph_; 
+  Graph depend_graph_; 
   
   plugin::Plugin::map plugin_registry;
 
@@ -97,9 +77,9 @@ private:
   Registry& operator=(const Registry&);
   ~Registry();
 
-  ModuleVertex& properties(const Vertex& v)
+  Vertex& properties(const VertexDesc& v)
   {
-     boost::property_map<ModuleGraph, vertex_properties_t>::type param=
+     boost::property_map<Graph, vertex_properties_t>::type param=
        boost::get(vertex_properties, depend_graph_);
      return param[v];
   }

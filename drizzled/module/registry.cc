@@ -107,10 +107,9 @@ void module::Registry::add(module::Module *handle)
 
   module_registry_[add_str]= handle;
 
-  ModuleVertex vertex_info;
-  vertex_info.module= handle;
+  Vertex vertex_info(add_str, handle);
 
-  Vertex handle_vertex= boost::add_vertex(depend_graph_);
+  VertexDesc handle_vertex= boost::add_vertex(depend_graph_);
   properties(handle_vertex)= vertex_info;
 }
 
