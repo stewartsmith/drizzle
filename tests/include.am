@@ -33,6 +33,7 @@ TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 		--top-srcdir=../${top_srcdir} \
 		--top-builddir=../${top_builddir} \
 		--vardir=../${top_builddir}/tests/var \
+		--reorder \
 		--suitepath=../${top_srcdir}/plugin \
 		--testdir=../${top_srcdir}/tests \
 		--dtr-build-thread=$$$$
@@ -42,6 +43,7 @@ TEST_RUN_MEM= $(PERL) -I../$(top_srcdir)/tests/lib \
 	      --top-srcdir=../${top_srcdir} \
 	      --top-builddir=../${top_builddir} \
 	      --mem \
+	      --reorder \
 	      --suitepath=../${top_srcdir}/plugin \
 	      --testdir=../${top_srcdir}/tests \
 	      --dtr-build-thread=$$$$
