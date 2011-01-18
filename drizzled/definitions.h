@@ -197,7 +197,6 @@ namespace drizzled
 /* The following can also be changed from the command line */
 #define DEFAULT_CONCURRENCY	10
 #define FLUSH_TIME		0		/**< Don't flush tables */
-#define MAX_CONNECT_ERRORS	10		///< errors before disabling host
 
 /* Bits from testflag */
 enum test_flag_bit

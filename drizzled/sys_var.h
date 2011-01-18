@@ -65,7 +65,6 @@ extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
-extern uint64_t max_connect_errors;
 extern back_log_constraints back_log;
 extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
