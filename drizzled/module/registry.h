@@ -45,19 +45,6 @@ class Registry
 {
 public:
 
-  typedef std::pair<std::string, std::string> ModuleEdge;
-  typedef boost::adjacency_list<boost::vecS,
-                               boost::vecS,
-                               boost::bidirectionalS, 
-                               boost::property<boost::vertex_color_t,
-                                               boost::default_color_type,
-                                 boost::property<vertex_properties_t, Vertex> >
-                      > Graph;
-  typedef boost::graph_traits<Graph>::vertex_descriptor VertexDesc;
-  typedef std::vector<VertexDesc> VertexList;
-
-  typedef boost::graph_traits<Graph>::vertex_iterator vertex_iter;
-
   typedef std::map<std::string, Library *> LibraryMap;
   typedef std::map<std::string, Module *> ModuleMap;
   typedef std::vector<Module *> ModuleList;
@@ -68,10 +55,13 @@ private:
   
   plugin::Plugin::map plugin_registry;
 
+  bool deps_built_;
+
   Registry()
    : module_registry_(),
      depend_graph_(),
-     plugin_registry()
+     plugin_registry(),
+     deps_built_(false)
   { }
 
   Registry(const Registry&);
@@ -85,6 +75,7 @@ private:
      return param[v];
   }
 
+  void buildDeps();
 public:
 
   static Registry& singleton()

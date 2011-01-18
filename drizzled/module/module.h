@@ -57,6 +57,7 @@ public:
 private:
   const std::string name;
   const Manifest *manifest;
+  VertexDesc vertex_;
 
 public:
   Library *plugin_dl;
@@ -101,6 +102,15 @@ public:
     return depends_;
   }
 
+  void setVertexDesc(VertexDesc vertex)
+  {
+    vertex_= vertex;
+  }
+
+  VertexDesc getVertexDesc()
+  {
+    return vertex_;
+  }
 };
 
 } /* namespace module */

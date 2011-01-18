@@ -88,6 +88,19 @@ public:
   }
 };
 
+typedef std::pair<std::string, std::string> ModuleEdge;
+typedef boost::adjacency_list<boost::vecS,
+        boost::vecS,
+        boost::bidirectionalS, 
+        boost::property<boost::vertex_color_t,
+        boost::default_color_type,
+        boost::property<vertex_properties_t, Vertex> >
+          > Graph;
+typedef boost::graph_traits<Graph>::vertex_descriptor VertexDesc;
+typedef std::vector<VertexDesc> VertexList;
+
+typedef boost::graph_traits<Graph>::vertex_iterator vertex_iter;
+
 } /* namespace module */
 } /* namespace vertex */
 

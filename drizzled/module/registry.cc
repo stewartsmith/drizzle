@@ -29,6 +29,7 @@
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
 #include "drizzled/cursor.h"
+#include "drizzled/abort_exception.h"
 
 #include <boost/bind.hpp>
 
@@ -107,61 +108,11 @@ void module::Registry::add(module::Module *handle)
 
   module_registry_[add_str]= handle;
 
-  VertexDesc handle_vertex;
   Vertex vertex_info(add_str, handle);
-
-  /* It's possible we could have added a vertex without a module attached
-     as part of adding dependency edges */
-  bool found_vertex= false;
-  vertex_iter vertexes= boost::vertices(depend_graph_).first;
-  while (vertexes != vertices(depend_graph_).second)
-  {
-    if (properties(*vertexes).getName() == add_str)
-    {
-      found_vertex= true;
-      break;
-    }
-    ++vertexes;
-  }
-  if (found_vertex)
-  {
-    handle_vertex= *vertexes;
-  }
-  else
-  {
-    handle_vertex= boost::add_vertex(depend_graph_);
-  }
+  VertexDesc handle_vertex= boost::add_vertex(depend_graph_);
   properties(handle_vertex)= vertex_info;
 
-
-  Module::Depends::const_iterator handle_deps= handle->getDepends().begin();
-  while (handle_deps != handle->getDepends().end())
-  {
-    std::string dep_str((*handle_deps));
-    transform(dep_str.begin(), dep_str.end(),
-              dep_str.begin(), ::tolower);
-
-    bool found_dep= false;
-    vertex_iter it= boost::vertices(depend_graph_).first;
-    while (it != vertices(depend_graph_).second)
-    {
-      if (properties(*it).getName() == dep_str)
-      {
-        found_dep= true;
-        add_edge(handle_vertex, *it, depend_graph_);
-        break;
-      }
-      ++it;
-    }
-    if (not found_dep)
-    {
-      Vertex dep_vertex_info(dep_str);
-      VertexDesc dep_vertex= boost::add_vertex(depend_graph_);
-      properties(dep_vertex)= dep_vertex_info;
-    }
-
-    ++handle_deps;
-  }
+  handle->setVertexDesc(handle_vertex);
 
 }
 
@@ -185,27 +136,70 @@ void module::Registry::copy(plugin::Plugin::vector &arg)
   assert(arg.size() == plugin_registry.size());
 }
 
+void module::Registry::buildDeps()
+{
+  ModuleMap::iterator map_iter= module_registry_.begin();
+  while (map_iter != module_registry_.end())
+  {
+    Module *handle= (*map_iter).second;
+    Module::Depends::const_iterator handle_deps= handle->getDepends().begin();
+    while (handle_deps != handle->getDepends().end())
+    {
+      std::string dep_str((*handle_deps));
+      transform(dep_str.begin(), dep_str.end(),
+                dep_str.begin(), ::tolower);
+
+      bool found_dep= false;
+      vertex_iter it= boost::vertices(depend_graph_).first;
+      while (it != vertices(depend_graph_).second)
+      {
+        if (properties(*it).getName() == dep_str)
+        {
+          found_dep= true;
+          add_edge(handle->getVertexDesc(), *it, depend_graph_);
+          break;
+        }
+        ++it;
+      }
+      if (not found_dep)
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Couldn't process plugin module dependencies. "
+                        "%s depends on %s but %s is not to be loaded.\n"),
+                      handle->getName().c_str(),
+                      dep_str.c_str(), dep_str.c_str());
+        DRIZZLE_ABORT;
+      }
+
+      ++handle_deps;
+    }
+    ++map_iter;
+  }
+  deps_built_= true;
+}
+
 module::Registry::ModuleList module::Registry::getList()
 {
+  if (not deps_built_)
+  {
+    buildDeps();
+  }
+
   std::vector<module::Module *> plugins;
 
-  std::cout << "In module::Registry::getList" << std::endl;
-  
   VertexList vertex_list;
 
   boost::topological_sort(depend_graph_, std::back_inserter(vertex_list));
 
-  std::cout << "plugin load ordering: ";
   for (VertexList::iterator i = vertex_list.begin();
        i != vertex_list.end(); ++i)
   {
-    std::cout << properties(*i).getName() << " ";
-    if (properties(*i).getModule() != NULL)
+    Module *mod_ptr= properties(*i).getModule();
+    if (mod_ptr != NULL)
     {
-      plugins.push_back(properties(*i).getModule());
+      plugins.push_back(mod_ptr);
     }  
   }
-  std::cout << std::endl;
 
   return plugins;
 }

@@ -52,7 +52,7 @@ DRIZZLE_DECLARE_PLUGIN
   "This implements the default file based Schema engine.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  NULL,               /* depends */
+  "signal_handler",               /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
