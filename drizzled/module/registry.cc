@@ -106,6 +106,12 @@ void module::Registry::add(module::Module *handle)
             add_str.begin(), ::tolower);
 
   module_registry_[add_str]= handle;
+
+  ModuleVertex vertex_info;
+  vertex_info.module= handle;
+
+  Vertex handle_vertex= boost::add_vertex(depend_graph_);
+  properties(handle_vertex)= vertex_info;
 }
 
 void module::Registry::remove(module::Module *handle)
