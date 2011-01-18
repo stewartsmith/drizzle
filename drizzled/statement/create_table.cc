@@ -129,7 +129,8 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
   Select_Lex *select_lex= &session->lex->select_lex;
   TableList *select_tables= session->lex->query_tables;
 
-  do {
+  do 
+  {
     if (select_lex->item_list.elements)		// With select
     {
       Select_Lex_Unit *unit= &session->lex->unit;
@@ -201,8 +202,8 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
       {
         res= create_like_table(session, 
                                new_table_identifier,
-                               create_table_list, 
-                               select_tables,
+                               identifier::Table(select_tables->getSchemaName(),
+                                                 select_tables->getTableName()),
                                createTableMessage(),
                                session->getLex()->exists(),
                                is_engine_set);
