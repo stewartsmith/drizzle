@@ -40,6 +40,7 @@ SQL Language:
 
    queries
    functions
+   data_types
    ddl
    dml
    columntypes 
@@ -50,13 +51,6 @@ SQL Language:
    getting_information 
    transactional 
    administrative
-
-Data Types:
------------
-.. toctree::
-   :maxdepth: 2
-
-   data_types
 
 User Level Topics:
 ------------------
