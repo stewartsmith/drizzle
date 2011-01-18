@@ -410,12 +410,12 @@ String *Item_func_date_format::val_str(String *str)
     goto null_date;
 
   if (fixed_length)
-    size=max_length;
+    size= max_length;
   else
-    size=format_length(format);
+    size= format_length(format);
 
-  if (size < MAX_DATE_STRING_REP_LENGTH)
-    size= MAX_DATE_STRING_REP_LENGTH;
+  if (size < type::Time::MAX_STRING_LENGTH)
+    size= type::Time::MAX_STRING_LENGTH;
 
   if (format == str)
     str= &value;				// Save result here

@@ -48,7 +48,7 @@ String *Item_func_from_unixtime::val_str(String *str)
   if (get_date(&time_tmp, 0))
     return 0;
 
-  if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
+  if (str->alloc(type::Time::MAX_STRING_LENGTH))
   {
     null_value= 1;
     return 0;

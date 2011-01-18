@@ -89,6 +89,13 @@ enum timestamp_t
   DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
 };
 
+/*
+  datatime_t while being stored in an integer is actually a formatted value.
+*/
+struct datatime_t {
+  int64_t value;
+};
+
 
 
 class Time
@@ -161,12 +168,15 @@ public:
   }
 
   void convert(drizzled::String &str, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
+  void convert(char *str, size_t &to_length, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
+
   void store(const type::Time::epoch_t &from, bool use_localtime= false);
   void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
   void store(const struct tm &from);
   void store(const struct timeval &from);
 
   static const uint32_t FRACTIONAL_DIGITS= 1000000;
+  static const size_t MAX_STRING_LENGTH= 32;   // +32 to make my_snprintf_{8bit|ucs2} happy
 };
 
 }
@@ -217,18 +227,6 @@ static inline bool validate_timestamp_range(const type::Time *t)
 time_t
 my_system_gmt_sec(const type::Time *t, long *my_timezone,
                   bool *in_dst_time_gap, bool skip_timezone= false);
-
-/*
-  Required buffer length for my_time_to_str, my_date_to_str,
-  my_datetime_to_str and TIME_to_string functions. Note, that the
-  caller is still responsible to check that given TIME structure
-  has values in valid ranges, otherwise size of the buffer could
-  be not enough. We also rely on the fact that even wrong values
-  sent using binary protocol fit in this buffer.
-*/
-#define MAX_DATE_STRING_REP_LENGTH 30
-
-int my_TIME_to_str(const type::Time *l_time, char *to);
 
 /*
   Available interval types used in any statement.

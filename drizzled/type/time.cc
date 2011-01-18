@@ -1025,64 +1025,52 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
 
 static int my_time_to_str(const type::Time *l_time, char *to)
 {
+  int32_t length;
   uint32_t extra_hours= 0;
-  return sprintf(to, "%s%02u:%02u:%02u",
-                         (l_time->neg ? "-" : ""),
-                         extra_hours+ l_time->hour,
-                         l_time->minute,
-                         l_time->second);
+
+  length= sprintf(to, "%s%02u:%02u:%02u",
+                  (l_time->neg ? "-" : ""),
+                  extra_hours+ l_time->hour,
+                  l_time->minute,
+                  l_time->second);
+  if (length < 0)
+    return 0;
+
+  return static_cast<size_t>(length); 
 }
 
 static int my_date_to_str(const type::Time *l_time, char *to)
 {
-  return sprintf(to, "%04u-%02u-%02u",
+  int32_t length;
+  length= sprintf(to, "%04u-%02u-%02u",
                          l_time->year,
                          l_time->month,
                          l_time->day);
+  if (length < 0)
+    return 0;
+
+  return static_cast<size_t>(length); 
 }
 
-static int my_datetime_to_str(const type::Time *l_time, char *to)
+static size_t my_datetime_to_str(const type::Time *l_time, char *to, size_t to_len)
 {
-  return sprintf(to, "%04u-%02u-%02u %02u:%02u:%02u",
-                         l_time->year,
-                         l_time->month,
-                         l_time->day,
-                         l_time->hour,
-                         l_time->minute,
-                         l_time->second);
+  int32_t length;
+  length= snprintf(to, to_len,
+                   "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
+                   " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+                   l_time->year,
+                   l_time->month,
+                   l_time->day,
+                   l_time->hour,
+                   l_time->minute,
+                   l_time->second,
+                   l_time->second_part);
+  if (length < 0)
+    return 0;
+
+  return static_cast<size_t>(length); 
 }
 
-
-/*
-  Convert struct DATE/TIME/DATETIME value to string using built-in
-  MySQL time conversion formats.
-
-  SYNOPSIS
-    my_TIME_to_string()
-
-  NOTE
-    The string must have at least MAX_DATE_STRING_REP_LENGTH bytes reserved.
-*/
-
-int my_TIME_to_str(const type::Time *l_time, char *to)
-{
-  switch (l_time->time_type) {
-  case type::DRIZZLE_TIMESTAMP_DATETIME:
-    return my_datetime_to_str(l_time, to);
-
-  case type::DRIZZLE_TIMESTAMP_DATE:
-    return my_date_to_str(l_time, to);
-
-  case type::DRIZZLE_TIMESTAMP_TIME:
-    return my_time_to_str(l_time, to);
-
-  case type::DRIZZLE_TIMESTAMP_NONE:
-  case type::DRIZZLE_TIMESTAMP_ERROR:
-    to[0]='\0';
-  }
-
-  return 0;
-}
 
 namespace type {
 
@@ -1135,30 +1123,36 @@ void Time::store(const time_t &from_arg, const usec_t &from_fractional_seconds, 
 
 void Time::convert(String &str, timestamp_t arg)
 {
-  str.alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= 0;
+  str.alloc(MAX_STRING_LENGTH);
+  size_t length= MAX_STRING_LENGTH;
 
+  convert(str.c_ptr(), length, arg);
+
+  str.length(length);
+  str.set_charset(&my_charset_bin);
+}
+
+void Time::convert(char *str, size_t &to_length, timestamp_t arg)
+{
   switch (arg) {
   case DRIZZLE_TIMESTAMP_DATETIME:
-    length= (uint32_t) my_datetime_to_str(this, str.c_ptr());
+    to_length= my_datetime_to_str(this, str, to_length);
     break;
 
   case DRIZZLE_TIMESTAMP_DATE:
-    length= (uint32_t) my_date_to_str(this, str.c_ptr());
+    to_length= (uint32_t) my_date_to_str(this, str);
     break;
 
   case DRIZZLE_TIMESTAMP_TIME:
-    length= (uint32_t) my_time_to_str(this, str.c_ptr());
+    to_length= (uint32_t) my_time_to_str(this, str);
     break;
 
   case DRIZZLE_TIMESTAMP_NONE:
   case DRIZZLE_TIMESTAMP_ERROR:
     assert(0);
+    to_length= 0;
     break;
   }
-
-  str.length(length);
-  str.set_charset(&my_charset_bin);
 }
 
 }

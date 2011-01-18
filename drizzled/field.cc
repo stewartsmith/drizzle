@@ -1038,9 +1038,11 @@ bool Field::get_time(type::Time *ltime)
 
 int Field::store_time(type::Time *ltime, type::timestamp_t)
 {
-  char buff[MAX_DATE_STRING_REP_LENGTH];
-  uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);
-  return store(buff, length, &my_charset_bin);
+  String tmp;
+
+  ltime->convert(tmp);
+
+  return store(tmp.ptr(), tmp.length(), &my_charset_bin);
 }
 
 bool Field::optimize_range(uint32_t idx, uint32_t)

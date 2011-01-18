@@ -46,10 +46,13 @@ void Item_func_now::fix_length_and_dec()
   ltime.time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 
   store_now_in_TIME(&ltime);
+
   value= (int64_t) TIME_to_uint64_t_datetime(&ltime);
 
-  buff_length= (uint) my_TIME_to_str(&ltime, buff);
-  max_length= buff_length;
+  size_t length= type::Time::MAX_STRING_LENGTH;
+  ltime.convert(buff, length);
+
+  max_length= buff_length= length;
 }
 
 /**

@@ -134,11 +134,11 @@ int Field_datetime::store_time(type::Time *ltime, type::timestamp_t)
 
   if (! temporal.is_valid())
   {
-    char tmp_string[MAX_DATE_STRING_REP_LENGTH];
+    char tmp_string[type::Time::MAX_STRING_LENGTH];
     size_t tmp_string_len;
 
-    tmp_string_len= temporal.to_string(tmp_string, MAX_DATE_STRING_REP_LENGTH);
-    assert(tmp_string_len < MAX_DATE_STRING_REP_LENGTH);
+    tmp_string_len= temporal.to_string(tmp_string, type::Time::MAX_STRING_LENGTH);
+    assert(tmp_string_len < type::Time::MAX_STRING_LENGTH);
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp_string);
     return 1;
   }

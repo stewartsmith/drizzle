@@ -137,7 +137,7 @@ int Field_date::store_time(type::Time *ltime,
                     (current_session->variables.sql_mode &
                      (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
     {
-      char buff[MAX_DATE_STRING_REP_LENGTH];
+      char buff[type::Time::MAX_STRING_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
       ltime->convert(str, type::DRIZZLE_TIMESTAMP_DATE);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
@@ -147,7 +147,7 @@ int Field_date::store_time(type::Time *ltime,
     if (not error && ltime->time_type != type::DRIZZLE_TIMESTAMP_DATE &&
         (ltime->hour || ltime->minute || ltime->second || ltime->second_part))
     {
-      char buff[MAX_DATE_STRING_REP_LENGTH];
+      char buff[type::Time::MAX_STRING_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
       ltime->convert(str);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE,

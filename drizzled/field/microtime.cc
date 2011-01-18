@@ -209,28 +209,15 @@ String *Microtime::val_str(String *val_buffer, String *)
 {
   uint64_t temp= 0;
   type::Time::usec_t micro_temp= 0;
-  char *to;
-  int to_len= field_length + 1 + 8;
-
-  val_buffer->alloc(to_len);
-  to= (char *) val_buffer->ptr();
 
   unpack_num(temp);
   unpack_num(micro_temp, ptr +8);
 
-  val_buffer->set_charset(&my_charset_bin);	/* Safety */
+  type::Time tmp_time;
+  tmp_time.store(temp, micro_temp);
 
-  struct timeval buffer;
-  buffer.tv_sec= temp;
-  buffer.tv_usec= micro_temp;
+  tmp_time.convert(*val_buffer);
 
-  MicroTimestamp temporal;
-  (void) temporal.from_timeval(buffer);
-
-  int rlen= temporal.to_string(to, to_len);
-  assert(rlen <= to_len);
-
-  val_buffer->length(rlen);
 
   return val_buffer;
 }
