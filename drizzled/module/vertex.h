@@ -56,6 +56,10 @@ public:
     name_(""),
     module_(NULL)
   { }
+  explicit Vertex(const std::string& name) :
+    name_(name),
+    module_(NULL)
+  { }
   Vertex(const std::string& name, Module *module) :
     name_(name),
     module_(module)
@@ -74,7 +78,11 @@ public:
   {
     return name_;
   }
-  const Module* getModule() const
+  void setModule(Module *module)
+  {
+    module_= module;
+  }
+  Module* getModule()
   {
     return module_;
   }

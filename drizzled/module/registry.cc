@@ -107,10 +107,62 @@ void module::Registry::add(module::Module *handle)
 
   module_registry_[add_str]= handle;
 
+  VertexDesc handle_vertex;
   Vertex vertex_info(add_str, handle);
 
-  VertexDesc handle_vertex= boost::add_vertex(depend_graph_);
+  /* It's possible we could have added a vertex without a module attached
+     as part of adding dependency edges */
+  bool found_vertex= false;
+  vertex_iter vertexes= boost::vertices(depend_graph_).first;
+  while (vertexes != vertices(depend_graph_).second)
+  {
+    if (properties(*vertexes).getName() == add_str)
+    {
+      found_vertex= true;
+      break;
+    }
+    ++vertexes;
+  }
+  if (found_vertex)
+  {
+    handle_vertex= *vertexes;
+  }
+  else
+  {
+    handle_vertex= boost::add_vertex(depend_graph_);
+  }
   properties(handle_vertex)= vertex_info;
+
+
+  Module::Depends::const_iterator handle_deps= handle->getDepends().begin();
+  while (handle_deps != handle->getDepends().end())
+  {
+    std::string dep_str((*handle_deps));
+    transform(dep_str.begin(), dep_str.end(),
+              dep_str.begin(), ::tolower);
+
+    bool found_dep= false;
+    vertex_iter it= boost::vertices(depend_graph_).first;
+    while (it != vertices(depend_graph_).second)
+    {
+      if (properties(*it).getName() == dep_str)
+      {
+        found_dep= true;
+        add_edge(handle_vertex, *it, depend_graph_);
+        break;
+      }
+      ++it;
+    }
+    if (not found_dep)
+    {
+      Vertex dep_vertex_info(dep_str);
+      VertexDesc dep_vertex= boost::add_vertex(depend_graph_);
+      properties(dep_vertex)= dep_vertex_info;
+    }
+
+    ++handle_deps;
+  }
+
 }
 
 void module::Registry::remove(module::Module *handle)
@@ -133,24 +185,27 @@ void module::Registry::copy(plugin::Plugin::vector &arg)
   assert(arg.size() == plugin_registry.size());
 }
 
-vector<module::Module *> module::Registry::getList(bool active)
+module::Registry::ModuleList module::Registry::getList()
 {
-  module::Module *plugin= NULL;
-
   std::vector<module::Module *> plugins;
-  plugins.reserve(module_registry_.size());
 
-  ModuleMap::iterator map_iter;
-  for (map_iter= module_registry_.begin();
-       map_iter != module_registry_.end();
-       map_iter++)
+  std::cout << "In module::Registry::getList" << std::endl;
+  
+  VertexList vertex_list;
+
+  boost::topological_sort(depend_graph_, std::back_inserter(vertex_list));
+
+  std::cout << "plugin load ordering: ";
+  for (VertexList::iterator i = vertex_list.begin();
+       i != vertex_list.end(); ++i)
   {
-    plugin= (*map_iter).second;
-    if (active)
-      plugins.push_back(plugin);
-    else if (plugin->isInited)
-      plugins.push_back(plugin);
+    std::cout << properties(*i).getName() << " ";
+    if (properties(*i).getModule() != NULL)
+    {
+      plugins.push_back(properties(*i).getModule());
+    }  
   }
+  std::cout << std::endl;
 
   return plugins;
 }

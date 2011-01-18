@@ -60,6 +60,7 @@ public:
 
   typedef std::map<std::string, Library *> LibraryMap;
   typedef std::map<std::string, Module *> ModuleMap;
+  typedef std::vector<Module *> ModuleList;
 private:
   LibraryMap library_registry_;
   ModuleMap module_registry_;
@@ -102,7 +103,7 @@ public:
 
   void remove(Module *module);
 
-  std::vector<Module *> getList(bool active);
+  std::vector<Module *> getList();
 
   const plugin::Plugin::map &getPluginsMap() const
   {
