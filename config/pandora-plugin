@@ -543,7 +543,9 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
     plugin_am.write("EXTRA_DIST += ${top_srcdir}/%(rel_path)s/docs/*.rst\n" % plugin)
   plugin_am.write("""
 %(root_plugin_dir)s_%(plugin_prefix)s%(name)s_dir=${top_srcdir}/%(rel_path)s
-EXTRA_DIST += %(rel_path)s/plugin.ini
+# Include sources in EXTRA_DIST because we might not build this, but we
+# still want the sources to wind up in a tarball
+EXTRA_DIST += %(rel_path)s/plugin.ini %(sources)s
 if %(static_build_conditional_tag)s
   noinst_LTLIBRARIES+=%(root_plugin_dir)s/%(libname)s.la
   %(root_plugin_dir)s_%(libname)s_la_LIBADD=%(libs)s
