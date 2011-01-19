@@ -2106,18 +2106,17 @@ string_list:
 alter:
           ALTER_SYM build_method opt_ignore TABLE_SYM table_ident
           {
-            Lex->sql_command= SQLCOM_ALTER_TABLE;
-            statement::AlterTable *statement= new statement::AlterTable(YYSession);
+            statement::AlterTable *statement= new statement::AlterTable(YYSession, $5, $2);
             Lex->statement= statement;
             Lex->duplicates= DUP_ERROR;
-            if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL,
-                                                     TL_OPTION_UPDATING))
+            if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL, TL_OPTION_UPDATING))
+            {
               DRIZZLE_YYABORT;
+            }
 
             Lex->col_list.empty();
             Lex->select_lex.init_order();
             Lex->select_lex.db= const_cast<char *>(((TableList*) Lex->select_lex.table_list.first)->getSchemaName());
-            statement->alter_info.build_method= $2;
           }
           alter_commands
           {}

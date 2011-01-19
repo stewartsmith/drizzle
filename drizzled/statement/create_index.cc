@@ -28,6 +28,17 @@
 namespace drizzled
 {
 
+namespace statement
+{
+
+CreateIndex::CreateIndex(Session *in_session, Table_ident *ident) :
+    CreateTable(in_session)
+{
+  (void)ident;
+}
+
+}
+
 bool statement::CreateIndex::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
