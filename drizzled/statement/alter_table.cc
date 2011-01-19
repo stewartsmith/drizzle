@@ -526,14 +526,15 @@ static bool prepare_alter_table(Session *session,
     }
     if (key_parts.elements)
     {
-      key_create_information_st key_create_info;
+      key_create_information_st key_create_info= default_key_create_info;
       Key *key;
-      enum Key::Keytype key_type;
-      memset(&key_create_info, 0, sizeof(key_create_info));
+      Key::Keytype key_type;
 
       key_create_info.algorithm= key_info->algorithm;
+
       if (key_info->flags & HA_USES_BLOCK_SIZE)
         key_create_info.block_size= key_info->block_size;
+
       if (key_info->flags & HA_USES_COMMENT)
         key_create_info.comment= key_info->comment;
 
@@ -545,7 +546,9 @@ static bool prepare_alter_table(Session *session,
           key_type= Key::UNIQUE;
       }
       else
+      {
         key_type= Key::MULTIPLE;
+      }
 
       key= new Key(key_type,
                    key_name,
