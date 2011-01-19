@@ -1062,19 +1062,13 @@ create:
         | CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident
           {
             Lex->sql_command= SQLCOM_CREATE_TABLE;
-            Lex->statement= new statement::CreateTable(YYSession);
+            Lex->statement= new statement::CreateTable(YYSession, $5, $2);
 
             if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL,
                                                      TL_OPTION_UPDATING,
                                                      TL_WRITE))
               DRIZZLE_YYABORT;
             Lex->col_list.empty();
-
-            Lex->table()->set_name($5->table.str);
-	    if ($2)
-	      Lex->table()->set_type(message::Table::TEMPORARY);
-	    else
-	      Lex->table()->set_type(message::Table::STANDARD);
           }
           create_table_definition
           {
