@@ -6,6 +6,8 @@
 Welcome to Drizzle's documentation!
 ===================================
 
+.. image:: logo.png
+
 Drizzle is a transactional, relational, community-driven open source database that is forked from the popular MySQL database.
 
 The Drizzle team has removed non-essential code, re-factored the remaining code and modernized the code base moving to C++.
@@ -28,6 +30,7 @@ Introduction:
    :maxdepth: 2
    
    preface
+   license
    what_is_drizzle
    brief_history_of_drizzle
    how_to_report_a_bug
