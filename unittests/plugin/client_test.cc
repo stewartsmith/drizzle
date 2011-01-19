@@ -46,7 +46,7 @@ public:
 TEST_F(ClientTest, store_drizzle_time_datetime)
 {
   //TODO: is the sign intentionally ignored in the case of a datetime?
-  type::Time dt= { 2010, 4, 5, 23, 45, 3, 777, true, DRIZZLE_TIMESTAMP_DATETIME};
+  type::Time dt(2010, 4, 5, 23, 45, 3, 777, type::DRIZZLE_TIMESTAMP_DATETIME);
   char expected[]= "2010-04-05 23:45:03.000777";
 
   client.store(&dt);
@@ -57,7 +57,7 @@ TEST_F(ClientTest, store_drizzle_time_datetime)
 TEST_F(ClientTest, store_drizzle_time_date)
 {
   //TODO: is the sign intentionally ignored in the case of a date?
-  type::Time dt= { 2010, 4, 5, 0, 0, 0, 0, true, DRIZZLE_TIMESTAMP_DATE};
+  type::Time dt(2010, 4, 5, 0, 0, 0, 0, type::DRIZZLE_TIMESTAMP_DATE);
   char expected[]= "2010-04-05";
   
   client.store(&dt);
@@ -67,7 +67,7 @@ TEST_F(ClientTest, store_drizzle_time_date)
 
 TEST_F(ClientTest, store_drizzle_time_time)
 {
-  type::Time dt= { 2010, 4, 5, 23, 45, 3, 777, true, DRIZZLE_TIMESTAMP_TIME};
+  type::Time dt(23, 45, 3, 777, true);
   char expected[]= "-23:45:03.000777";
   
   client.store(&dt);

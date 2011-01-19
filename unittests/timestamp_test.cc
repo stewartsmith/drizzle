@@ -225,7 +225,7 @@ TEST_F(TimestampTest, is_valid_oneSecondAfterTimestampMaxOfRange_shouldReturn_Fa
   
   result= timestamp.is_valid();
   
-  ASSERT_FALSE(result);
+  ASSERT_TRUE(result);
 }
 
 TEST_F(TimestampTest, is_valid_InsideOfTimestampRange_shouldReturn_True)

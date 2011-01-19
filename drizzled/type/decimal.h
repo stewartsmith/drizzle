@@ -23,8 +23,13 @@ namespace drizzled
 {
 
 typedef enum
-{TRUNCATE=0, HALF_EVEN, HALF_UP, CEILING, FLOOR}
-  decimal_round_mode;
+{
+  TRUNCATE= 0,
+  HALF_EVEN,
+  HALF_UP,
+  CEILING,
+  FLOOR
+} decimal_round_mode;
 typedef int32_t decimal_digit_t;
 
 typedef struct st_decimal_t {
@@ -179,96 +184,96 @@ inline int check_result(uint32_t mask, int result)
 
 namespace type {
 /**
-  type::Decimal class limits 'decimal_t' type to what we need in MySQL.
+  type Decimal class limits 'decimal_t' type to what we need in MySQL.
 
   It contains internally all necessary space needed by the instance so
   no extra memory is needed. One should call fix_buffer_pointer() function
   when he moves type::Decimal objects in memory.
 */
 
-class Decimal :public decimal_t
+class Decimal : public decimal_t
+{
+  decimal_digit_t buffer[DECIMAL_BUFF_LENGTH];
+
+public:
+
+  void init()
   {
-    decimal_digit_t buffer[DECIMAL_BUFF_LENGTH];
-
-  public:
-
-    void init()
-    {
-      len= DECIMAL_BUFF_LENGTH;
-      buf= buffer;
+    len= DECIMAL_BUFF_LENGTH;
+    buf= buffer;
 #if !defined (HAVE_VALGRIND)
-      /* Set buffer to 'random' value to find wrong buffer usage */
-      for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
-        buffer[i]= i;
+    /* Set buffer to 'random' value to find wrong buffer usage */
+    for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
+      buffer[i]= i;
 #endif
-    }
+  }
 
-    Decimal()
+  Decimal()
+  {
+    init();
+  }
+  void fix_buffer_pointer() { buf= buffer; }
+  bool sign() const { return decimal_t::sign; }
+  void sign(bool s) { decimal_t::sign= s; }
+  uint32_t precision() const { return intg + frac; }
+
+  int val_int32(uint32_t mask, bool unsigned_flag, int64_t *l) const
+  {
+    type::Decimal rounded;
+    /* decimal_round can return only E_DEC_TRUNCATED */
+    decimal_round(static_cast<const decimal_t*>(this), &rounded, 0, HALF_UP);
+    return check_result(mask, (unsigned_flag ?
+                               decimal2uint64_t(&rounded, reinterpret_cast<uint64_t *>(l)) :
+                               decimal2int64_t(&rounded, l)));
+  }
+
+  int string_length() const
+  {
+    return decimal_string_size(this);
+  }
+
+  int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
+
+
+  int set_zero()
+  {
+    decimal_make_zero(static_cast<decimal_t*> (this));
+    return 0;
+  }
+
+
+  bool is_zero() const
+  {
+    return decimal_is_zero(static_cast<const decimal_t*>(this));
+  }
+
+
+  int store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset);
+
+  int store(uint32_t mask, char *str, char **end)
+  {
+    return check_result_and_overflow(mask, string2decimal(str, static_cast<decimal_t*>(this), end));
+  }
+
+  int store(uint32_t mask, const String *str)
+  {
+    return store(mask, str->ptr(), str->length(), str->charset());
+  }
+
+  int check_result_and_overflow(uint32_t mask, int result)
+  {
+    if (check_result(mask, result) & E_DEC_OVERFLOW)
     {
-      init();
+      bool _sign= sign();
+      fix_buffer_pointer();
+      max_internal_decimal(this);
+      sign(_sign);
     }
-    void fix_buffer_pointer() { buf= buffer; }
-    bool sign() const { return decimal_t::sign; }
-    void sign(bool s) { decimal_t::sign= s; }
-    uint32_t precision() const { return intg + frac; }
+    return result;
+  }
 
-    int val_int32(uint32_t mask, bool unsigned_flag, int64_t *l) const
-    {
-      type::Decimal rounded;
-      /* decimal_round can return only E_DEC_TRUNCATED */
-      decimal_round(static_cast<const decimal_t*>(this), &rounded, 0, HALF_UP);
-      return check_result(mask, (unsigned_flag ?
-                                 decimal2uint64_t(&rounded, reinterpret_cast<uint64_t *>(l)) :
-                                 decimal2int64_t(&rounded, l)));
-    }
-
-    int string_length() const
-    {
-      return decimal_string_size(this);
-    }
-
-    int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
-
-
-    int set_zero()
-    {
-      decimal_make_zero(static_cast<decimal_t*> (this));
-      return 0;
-    }
-
-
-    bool is_zero() const
-    {
-      return decimal_is_zero(static_cast<const decimal_t*>(this));
-    }
-
-
-    int store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset);
-
-    int store(uint32_t mask, char *str, char **end)
-    {
-      return check_result_and_overflow(mask, string2decimal(str, static_cast<decimal_t*>(this), end));
-    }
-
-    int store(uint32_t mask, const String *str)
-    {
-      return store(mask, str->ptr(), str->length(), str->charset());
-    }
-
-    int check_result_and_overflow(uint32_t mask, int result)
-    {
-      if (check_result(mask, result) & E_DEC_OVERFLOW)
-      {
-        bool _sign= sign();
-        fix_buffer_pointer();
-        max_internal_decimal(this);
-        sign(_sign);
-      }
-      return result;
-}
-
-
-  };
+  void convert(double &value) const;
+};
 
 } // type
 

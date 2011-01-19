@@ -50,10 +50,13 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
   enum Item_result cmp_type () const { return INT_RESULT; }
-  int  store(const char *to,uint32_t length,
-             const CHARSET_INFO * const charset);
-  int  store(double nr);
-  int  store(int64_t nr, bool unsigned_val);
+
+  int store(const char *to,uint32_t length,
+            const CHARSET_INFO * const charset);
+  int store(double nr);
+  int store(int64_t nr, bool unsigned_val);
+  int store_decimal(const type::Decimal *value);
+
   int  reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0; return 0; }
   double val_real(void);
   int64_t val_int(void);

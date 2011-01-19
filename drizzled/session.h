@@ -1270,7 +1270,7 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  time_t query_start()
+  type::Time::epoch_t query_start()
   {
     return getCurrentTimestampEpoch();
   }
@@ -1306,9 +1306,9 @@ public:
   /**
    * Returns the current micro-timestamp
    */
-  uint64_t getCurrentTimestamp(bool actual= true) const
+  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
   { 
-    uint64_t t_mark;
+    type::Time::epoch_t t_mark;
 
     if (actual)
     {
@@ -1324,7 +1324,7 @@ public:
   }
 
   // We may need to set user on this
-  time_t getCurrentTimestampEpoch() const
+  type::Time::epoch_t getCurrentTimestampEpoch() const
   { 
     if (not _user_time.is_not_a_date_time())
       return (_user_time - _epoch).total_seconds();
@@ -1332,7 +1332,7 @@ public:
     return (_start_timer - _epoch).total_seconds();
   }
 
-  time_t getCurrentTimestampEpoch(uint32_t &fraction_arg) const
+  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
   { 
     if (not _user_time.is_not_a_date_time())
     {

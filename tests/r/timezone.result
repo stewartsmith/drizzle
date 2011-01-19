@@ -3,7 +3,7 @@ FROM_UNIXTIME(24*3600)
 DROP TABLE IF EXISTS t1;
 select @a:=FROM_UNIXTIME(1);
 @a:=FROM_UNIXTIME(1)
-1970-01-01 00:00:01
+1970-01-01 00:00:01.000000
 select unix_timestamp(@a);
 unix_timestamp(@a)
 1
@@ -45,4 +45,5 @@ select unix_timestamp('2038-01-19 03:14:07');
 unix_timestamp('2038-01-19 03:14:07')
 2147483647
 select unix_timestamp('2038-01-19 03:14:08');
-ERROR HY000: Received an invalid value '2038-01-19 03:14:08' for a UNIX timestamp.
+unix_timestamp('2038-01-19 03:14:08')
+2147483648
