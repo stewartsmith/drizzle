@@ -3932,7 +3932,7 @@ enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_recor
               error=join->result->send_data(*join->fields) ? 1 : 0;
             join->send_records++;
           }
-          if (join->rollup.state != ROLLUP::STATE_NONE && error <= 0)
+          if (join->rollup.getState() != Rollup::STATE_NONE && error <= 0)
           {
             if (join->rollup_send_data((uint32_t) (idx+1)))
               error= 1;
@@ -4022,7 +4022,7 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
             return NESTED_LOOP_ERROR;
           }
         }
-        if (join->rollup.state != ROLLUP::STATE_NONE)
+        if (join->rollup.getState() != Rollup::STATE_NONE)
         {
           if (join->rollup_write_data((uint32_t) (idx+1), table))
             return NESTED_LOOP_ERROR;

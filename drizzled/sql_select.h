@@ -56,14 +56,76 @@ enum_nested_loop_state sub_select(Join *join,JoinTable *join_tab, bool end_of_re
 enum_nested_loop_state end_send_group(Join *join, JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state end_write_group(Join *join, JoinTable *join_tab, bool end_of_records);
 
-typedef struct st_rollup
+class Rollup
 {
+public:
   enum State { STATE_NONE, STATE_INITED, STATE_READY };
+
+  Rollup()
+  :
+  state(),
+  null_items(NULL),
+  ref_pointer_arrays(NULL),
+  fields()
+  {}
+  
+  Rollup(State in_state,
+         Item_null_result **in_null_items,
+         Item ***in_ref_pointer_arrays,
+         List<Item> *in_fields)
+  :
+  state(in_state),
+  null_items(in_null_items),
+  ref_pointer_arrays(in_ref_pointer_arrays),
+  fields(in_fields)
+  {}
+  
+  State getState() const
+  {
+    return state;
+  }
+
+  void setState(State in_state)
+  {
+    state= in_state;
+  }
+ 
+  Item_null_result **getNullItems() const
+  {
+    return null_items;
+  }
+
+  void setNullItems(Item_null_result **in_null_items)
+  {
+    null_items= in_null_items;
+  }
+
+  Item ***getRefPointerArrays() const
+  {
+    return ref_pointer_arrays;
+  }
+
+  void setRefPointerArrays(Item ***in_ref_pointer_arrays)
+  {
+    ref_pointer_arrays= in_ref_pointer_arrays;
+  }
+
+  List<Item> *getFields() const
+  {
+    return fields;
+  }
+
+  void setFields(List<Item> *in_fields)
+  {
+    fields= in_fields;
+  }
+  
+private:
   State state;
   Item_null_result **null_items;
   Item ***ref_pointer_arrays;
   List<Item> *fields;
-} ROLLUP;
+};
 
 } /* namespace drizzled */
 
