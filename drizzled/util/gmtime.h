@@ -37,7 +37,6 @@ struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf);
 void gmtime(const type::Time::epoch_t &timer, type::Time &tmbuf);
 struct tm *localtime(const type::Time::epoch_t &timer, struct tm *tmbuf);
 void localtime(const type::Time::epoch_t &timer,  type::Time &tmbuf);
-time_t mktime(struct tm *tmbuf);
 
 } /* namespace util */
 } /* namespace drizzled */

@@ -165,6 +165,8 @@ struct tm *localtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
   return util::gmtime(t, tmbuf);
 }
 
+// We don't use this code.
+#if 0
 time_t mktime(struct tm *tmbuf)
 {
   long day, year;
@@ -235,7 +237,8 @@ time_t mktime(struct tm *tmbuf)
   // The code only works when year (1970) is not a leapyear.
   tm_year = tmbuf->tm_year + YEAR0;
 
-  if (TIME_MAX / 365 < tm_year - year) overflow++;
+  if (TIME_MAX / 365 < tm_year - year)
+    overflow++;
   day = (tm_year - year) * 365;
   if (TIME_MAX - day < (tm_year - year) / 4 + 1) overflow++;
   day += (tm_year - year) / 4 + ((tm_year % 4) && tm_year % 4 < year % 4);
@@ -279,6 +282,7 @@ time_t mktime(struct tm *tmbuf)
   if ((time_t) seconds != seconds) return (time_t) -1;
   return (time_t) seconds;
 }
+#endif
 
 } /* namespace util */
 } /* namespace drizzled */
