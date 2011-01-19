@@ -1096,12 +1096,12 @@ void Time::store(const struct timeval &from)
 }
 
 
-void Time::store(const time_t &from, bool use_localtime)
+void Time::store(const type::Time::epoch_t &from, bool use_localtime)
 {
   store(from, 0, use_localtime);
 }
 
-void Time::store(const time_t &from_arg, const usec_t &from_fractional_seconds, bool use_localtime)
+void Time::store(const type::Time::epoch_t &from_arg, const usec_t &from_fractional_seconds, bool use_localtime)
 {
   epoch_t from= from_arg;
 

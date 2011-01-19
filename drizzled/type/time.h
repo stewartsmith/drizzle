@@ -224,7 +224,7 @@ static inline bool validate_timestamp_range(const type::Time *t)
   return true;
 }
 
-time_t
+type::Time::epoch_t
 my_system_gmt_sec(const type::Time *t, long *my_timezone,
                   bool *in_dst_time_gap, bool skip_timezone= false);
 
