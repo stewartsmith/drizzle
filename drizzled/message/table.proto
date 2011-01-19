@@ -94,6 +94,7 @@ message Table {
       optional bool is_nullable = 1 [default = true]; // Dead option, do not use
       optional bool is_unsigned = 2 [default = false];
       optional bool is_notnull = 3 [default = false];
+      optional bool is_unique = 4 [default = false];
       repeated string expression = 16; /* Reserve 0-15 for frequenty accessed attributes */
     }
 

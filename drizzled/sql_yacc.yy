@@ -1694,13 +1694,12 @@ field_definition:
         | SERIAL_SYM
           {
             $$=DRIZZLE_TYPE_LONGLONG;
-            Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG);
+            Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG);
 
             if (Lex->field())
             {
-              message::Table::Field::FieldConstraints *constraints;
-              constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_notnull(true);
+              Lex->field()->mutable_constraints()->set_is_notnull(true);
+              Lex->field()->mutable_constraints()->set_is_unsigned(true);
 
               Lex->field()->set_type(message::Table::Field::BIGINT);
             }
@@ -1789,13 +1788,6 @@ attribute:
           NULL_SYM
           {
             Lex->type&= ~ NOT_NULL_FLAG;
-
-            if (Lex->field())
-            {
-              message::Table::Field::FieldConstraints *constraints;
-              constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_notnull(false);
-            }
           }
         | not NULL_SYM
           {
@@ -1803,9 +1795,7 @@ attribute:
 
             if (Lex->field())
             {
-              message::Table::Field::FieldConstraints *constraints;
-              constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_notnull(true);
+              Lex->field()->mutable_constraints()->set_is_notnull(true);
             }
           }
         | DEFAULT now_or_signed_literal
@@ -1825,24 +1815,20 @@ attribute:
 
             if (Lex->field())
             {
-              message::Table::Field::FieldConstraints *constraints;
-
-              constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_notnull(true);
+              Lex->field()->mutable_constraints()->set_is_notnull(true);
             }
           }
         | SERIAL_SYM DEFAULT VALUE_SYM
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG;
+            Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
 
             if (Lex->field())
             {
-              message::Table::Field::FieldConstraints *constraints;
-              constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_notnull(true);
+              Lex->field()->mutable_constraints()->set_is_notnull(true);
+              Lex->field()->mutable_constraints()->set_is_unsigned(true);
             }
           }
         | opt_primary KEY_SYM
@@ -1854,9 +1840,7 @@ attribute:
 
             if (Lex->field())
             {
-              message::Table::Field::FieldConstraints *constraints;
-              constraints= Lex->field()->mutable_constraints();
-              constraints->set_is_notnull(true);
+              Lex->field()->mutable_constraints()->set_is_notnull(true);
             }
           }
         | UNIQUE_SYM
@@ -1865,6 +1849,11 @@ attribute:
 
             Lex->type|= UNIQUE_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+            if (Lex->field())
+            {
+              Lex->field()->mutable_constraints()->set_is_unique(true);
+            }
           }
         | UNIQUE_SYM KEY_SYM
           {
@@ -1872,6 +1861,11 @@ attribute:
 
             Lex->type|= UNIQUE_KEY_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+            if (Lex->field())
+            {
+              Lex->field()->mutable_constraints()->set_is_unique(true);
+            }
           }
         | COMMENT_SYM TEXT_STRING_sys
           {
