@@ -85,7 +85,7 @@ bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
       double double_tmp= args[0]->val_real();
 
       tmp= (uint64_t)(double_tmp);
-      fractional_tmp=  (type::Time::usec_t)((double_tmp - tmp) * 1000000);
+      fractional_tmp=  (type::Time::usec_t)((uint64_t)((double_tmp - tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS);
 
       break;
     }
