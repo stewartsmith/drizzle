@@ -726,7 +726,7 @@ static int discard_or_import_tablespace(Session *session,
       break;
 
     /* The ALTER Table is always in its own transaction */
-    error= transaction_services.autocommitOrRollback(session, false);
+    error= transaction_services.autocommitOrRollback(*session, false);
     if (not session->endActiveTransaction())
       error= 1;
 
@@ -737,7 +737,7 @@ static int discard_or_import_tablespace(Session *session,
 
   } while(0);
 
-  (void) transaction_services.autocommitOrRollback(session, error);
+  (void) transaction_services.autocommitOrRollback(*session, error);
   session->tablespace_op=false;
 
   if (error == 0)
@@ -1628,7 +1628,7 @@ copy_data_between_tables(Session *session,
       Ensure that the new table is saved properly to disk so that we
       can do a rename
     */
-    if (transaction_services.autocommitOrRollback(session, false))
+    if (transaction_services.autocommitOrRollback(*session, false))
       error= 1;
 
     if (not session->endActiveTransaction())

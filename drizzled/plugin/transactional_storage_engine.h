@@ -68,14 +68,14 @@ public:
   virtual int startTransaction(Session *session, start_transaction_option_t options)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForTransaction(session, this, this);
+    transaction_services.registerResourceForTransaction(*session, this, this);
     return doStartTransaction(session, options);
   }
 
   virtual void startStatement(Session *session)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForStatement(session, this, this);
+    transaction_services.registerResourceForStatement(*session, this, this);
     doStartStatement(session);
   }
 

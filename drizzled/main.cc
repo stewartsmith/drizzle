@@ -334,7 +334,7 @@ int main(int argc, char **argv)
     {
       currentSession().release();
       currentSession().reset(session.get());
-      transaction_services.sendStartupEvent(session.get());
+      transaction_services.sendStartupEvent(*session.get());
     }
   }
 
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
     {
       currentSession().release();
       currentSession().reset(session.get());
-      transaction_services.sendShutdownEvent(session.get());
+      transaction_services.sendShutdownEvent(*session.get());
     }
   }
 
