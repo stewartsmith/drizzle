@@ -50,6 +50,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/message/statement_transform.h"
 
+#include "drizzled/statement/show.h"
+
 
 #include <sys/stat.h>
 
@@ -142,5 +144,61 @@ int get_quote_char_for_identifier()
 {
   return '`';
 }
+
+namespace show {
+
+bool buildDescribe(Session *session, Table_ident *ident)
+{
+  session->getLex()->lock_option= TL_READ;
+  init_select(session->getLex());
+  session->getLex()->current_select->parsing_place= SELECT_LIST;
+  session->getLex()->sql_command= SQLCOM_SELECT;
+  drizzled::statement::Show *select= new statement::Show(session);
+  session->getLex()->statement= select;
+  session->getLex()->select_lex.db= 0;
+
+  util::string::const_shared_ptr schema(session->schema());
+  if (ident->db.str)
+  {
+    select->setShowPredicate(ident->db.str, ident->table.str);
+  }
+  else if (schema)
+  {
+    select->setShowPredicate(*schema, ident->table.str);
+  }
+  else
+  {
+    my_error(ER_NO_DB_ERROR, MYF(0));
+    return false;
+  }
+
+  {
+    drizzled::identifier::Table identifier(select->getShowSchema().c_str(), ident->table.str);
+    if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+    {
+      my_error(ER_NO_SUCH_TABLE, MYF(0),
+               select->getShowSchema().c_str(), 
+               ident->table.str);
+    }
+  }
+
+  if (prepare_new_schema_table(session, session->getLex(), "SHOW_COLUMNS"))
+  {
+    return false;
+  }
+
+  if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                  context,
+                                                  NULL, NULL, "*")))
+  {
+    return false;
+  }
+
+  (session->lex->current_select->with_wild)++;
+
+  return true;
+}
+
+} /* namespace drizzled */
 
 } /* namespace drizzled */

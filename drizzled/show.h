@@ -53,6 +53,12 @@ int wild_case_compare(const CHARSET_INFO * const cs,
 
 int get_quote_char_for_identifier();
 
+namespace show {
+
+bool buildDescribe(Session *session, Table_ident *ident);
+
+} // namespace show
+
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_SHOW_H */

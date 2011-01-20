@@ -5301,50 +5301,10 @@ show_wild:
 describe:
           describe_command table_ident
           {
-            Lex->lock_option= TL_READ;
-            init_select(Lex);
-            Lex->current_select->parsing_place= SELECT_LIST;
-            Lex->sql_command= SQLCOM_SELECT;
-            drizzled::statement::Show *select= new statement::Show(YYSession);
-            Lex->statement= select;
-            Lex->select_lex.db= 0;
-
-             util::string::const_shared_ptr schema(YYSession->schema());
-             if ($2->db.str)
-             {
-               select->setShowPredicate($2->db.str, $2->table.str);
-             }
-             else if (schema)
-             {
-               select->setShowPredicate(*schema, $2->table.str);
-             }
-             else
-             {
-               my_error(ER_NO_DB_ERROR, MYF(0));
-               DRIZZLE_YYABORT;
-             }
-
-             {
-               drizzled::identifier::Table identifier(select->getShowSchema().c_str(), $2->table.str);
-               if (not plugin::StorageEngine::doesTableExist(*YYSession, identifier))
-               {
-                   my_error(ER_NO_SUCH_TABLE, MYF(0),
-                            select->getShowSchema().c_str(), 
-                            $2->table.str);
-               }
-             }
-
-             if (prepare_new_schema_table(YYSession, Lex, "SHOW_COLUMNS"))
-               DRIZZLE_YYABORT;
-
-             if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
-                                                           context,
-                                                           NULL, NULL, "*")))
-             {
-               DRIZZLE_YYABORT;
-             }
-             (YYSession->lex->current_select->with_wild)++;
-
+            if (not show::buildDescribe(YYSession, $2))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
           opt_describe_column {}
         | describe_command opt_extended_describe
