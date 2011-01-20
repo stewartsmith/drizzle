@@ -1300,41 +1300,7 @@ static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
   Convert struct type::Time (date and time split into year/month/day/hour/...
   to a number in format YYYYMMDDHHMMSS (DATETIME),
   YYYYMMDD (DATE)  or HHMMSS (TIME).
-
-  SYNOPSIS
-    TIME_to_uint64_t()
-
-  DESCRIPTION
-    The function is used when we need to convert value of time item
-    to a number if it's used in numeric context, i. e.:
-    SELECT NOW()+1, CURDATE()+0, CURTIMIE()+0;
-    SELECT ?+1;
-
-  NOTE
-    This function doesn't check that given type::Time structure members are
-    in valid range. If they are not, return value won't reflect any
-    valid date either.
 */
-
-uint64_t TIME_to_uint64_t(const type::Time *my_time)
-{
-  switch (my_time->time_type) {
-  case type::DRIZZLE_TIMESTAMP_DATETIME:
-    return TIME_to_uint64_t_datetime(my_time);
-
-  case type::DRIZZLE_TIMESTAMP_DATE:
-    return TIME_to_uint64_t_date(my_time);
-
-  case type::DRIZZLE_TIMESTAMP_TIME:
-    return TIME_to_uint64_t_time(my_time);
-
-  case type::DRIZZLE_TIMESTAMP_NONE:
-  case type::DRIZZLE_TIMESTAMP_ERROR:
-    return 0ULL;
-  }
-
-  return 0;
-}
 
 namespace type {
 

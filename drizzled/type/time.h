@@ -190,7 +190,6 @@ type::timestamp_t str_to_datetime(const char *str, uint32_t length, type::Time *
 int64_t number_to_datetime(int64_t nr, type::Time *time_res,
                             uint32_t flags, int *was_cut);
 uint64_t TIME_to_uint64_t_datetime(const type::Time *);
-uint64_t TIME_to_uint64_t(const type::Time *);
 
 
 bool str_to_time(const char *str,uint32_t length, type::Time *l_time, int *warning);
