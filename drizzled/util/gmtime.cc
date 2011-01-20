@@ -94,6 +94,9 @@ struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
   uint64_t dayclock, dayno;
   int year = EPOCH_YR;
 
+  if (timer < 0)
+    return NULL;
+
   dayclock = (uint64_t) timer % SECS_DAY;
   dayno = (uint64_t) timer / SECS_DAY;
 
@@ -124,6 +127,9 @@ void gmtime(const type::Time::epoch_t &timer, type::Time &tmbuf)
 {
   uint64_t dayclock, dayno;
   int32_t year= EPOCH_YR;
+
+  if (timer < 0)
+    return;
 
   tmbuf.reset();
 
