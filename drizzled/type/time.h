@@ -169,6 +169,7 @@ public:
 
   void convert(drizzled::String &str, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(char *str, size_t &to_length, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
+  void convert(uint64_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
 
   void store(const type::Time::epoch_t &from, bool use_localtime= false);
   void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);

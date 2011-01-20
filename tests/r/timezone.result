@@ -45,5 +45,4 @@ select unix_timestamp('2038-01-19 03:14:07');
 unix_timestamp('2038-01-19 03:14:07')
 2147483647
 select unix_timestamp('2038-01-19 03:14:08');
-unix_timestamp('2038-01-19 03:14:08')
-2147483648
+ERROR HY000: Received an invalid value '2038-01-19 03:14:08' for a UNIX timestamp.

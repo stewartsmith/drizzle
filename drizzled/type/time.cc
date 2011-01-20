@@ -1336,4 +1336,30 @@ uint64_t TIME_to_uint64_t(const type::Time *my_time)
   return 0;
 }
 
+namespace type {
+
+void Time::convert(uint64_t &datetime, timestamp_t arg)
+{
+  switch (arg)
+  {
+  case type::DRIZZLE_TIMESTAMP_DATETIME:
+    datetime= TIME_to_uint64_t_datetime(this);
+    break;
+
+  case type::DRIZZLE_TIMESTAMP_DATE:
+    datetime= TIME_to_uint64_t_date(this);
+    break;
+
+  case type::DRIZZLE_TIMESTAMP_TIME:
+    datetime= TIME_to_uint64_t_time(this);
+    break;
+
+  case type::DRIZZLE_TIMESTAMP_NONE:
+  case type::DRIZZLE_TIMESTAMP_ERROR:
+    datetime= 0;
+  }
+}
+
+} // namespace type
+
 } /* namespace drizzled */

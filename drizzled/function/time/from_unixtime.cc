@@ -35,7 +35,7 @@ void Item_func_from_unixtime::fix_length_and_dec()
   session= current_session;
   collation.set(&my_charset_bin);
   decimals= DATETIME_DEC;
-  max_length=DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length=type::Time::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   maybe_null= 1;
 }
 
@@ -68,7 +68,10 @@ int64_t Item_func_from_unixtime::val_int()
   if (get_date(&time_tmp, 0))
     return 0;
 
-  return (int64_t) TIME_to_uint64_t_datetime(&time_tmp);
+  uint64_t ret;
+  time_tmp.convert(ret);
+
+  return (int64_t) ret;
 }
 
 bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
@@ -89,6 +92,7 @@ bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
 
       break;
     }
+
   case INT_RESULT:
     tmp= (uint64_t)(args[0]->val_int());
     break;

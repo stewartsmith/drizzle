@@ -476,6 +476,7 @@ INSERT INTO t1 (b) VALUES('1969-12-31 23:59:59');
 --echo
 
 --echo Testing MAX+1 TIMESTAMP
+--ERROR ER_INVALID_TIMESTAMP_VALUE
 INSERT INTO t1 (b) VALUES('2038-01-19 03:14:08');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
