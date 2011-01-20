@@ -71,7 +71,7 @@ TEST_F(NanoTimestampTest, is_valid_oneMicroSecondAfterNanoTimestampMaxOfRange_sh
 
   result= nano_timestamp.is_valid();
 
-  ASSERT_TRUE(result);
+  ASSERT_FALSE(result);
 }
 
 TEST_F(NanoTimestampTest, is_valid_InsideOfNanoTimestampRange_shouldReturn_True)

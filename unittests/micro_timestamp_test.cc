@@ -71,7 +71,7 @@ TEST_F(MicroTimestampTest, is_valid_oneMicroSecondAfterMicroTimestampMaxOfRange_
 
   result= micro_timestamp.is_valid();
 
-  ASSERT_TRUE(result);
+  ASSERT_FALSE(result);
 }
 
 TEST_F(MicroTimestampTest, is_valid_InsideOfMicroTimestampRange_shouldReturn_True)
