@@ -1331,9 +1331,7 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
       return error;
     }
@@ -1353,9 +1351,7 @@ static bool locked_create_event(Session *session,
       */
       if (definition::Cache::singleton().find(identifier.getKey()))
       {
-        std::string path;
-        identifier.getSQLPath(path);
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
         return error;
       }
@@ -1511,9 +1507,7 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, identifier);
       result= true;
     }
   }

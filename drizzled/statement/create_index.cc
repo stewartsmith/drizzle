@@ -50,9 +50,7 @@ bool statement::CreateIndex::execute()
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
+      my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
     }
   }

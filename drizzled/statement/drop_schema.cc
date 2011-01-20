@@ -38,6 +38,7 @@ bool statement::DropSchema::execute()
   {
     return true;
   }
+
   identifier::Schema schema_identifier(string(session->lex->name.str, session->lex->name.length));
   if (not check_db_name(session, schema_identifier))
   {
@@ -45,6 +46,7 @@ bool statement::DropSchema::execute()
 
     return false;
   }
+
   if (session->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
@@ -53,12 +55,12 @@ bool statement::DropSchema::execute()
     return true;
   }
   
-  bool res = true;
+  bool res= true;
   std::string path;
   schema_identifier.getSQLPath(path);
   if (unlikely(plugin::EventObserver::beforeDropDatabase(*session, path))) 
   {
-    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
+    my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
   }
   else
   {
