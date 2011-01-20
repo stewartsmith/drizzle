@@ -112,17 +112,17 @@ t2	t4	t6	t8	t10	t12	t14
 drop table t1;
 create table t1 (ix timestamp);
 insert into t1 values (0),(20030101010160),(20030101016001),(20030101240101),(20030132010101),(20031301010101),(20031200000000),(20030000000000);
-ERROR HY000: Received an invalid value '0' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '0'.
 select ix+0 from t1;
 ix+0
 truncate table t1;
 insert into t1 values ("00000000000000"),("20030101010160"),("20030101016001"),("20030101240101"),("20030132010101"),("20031301010101"),("20031200000000"),("20030000000000");
-ERROR HY000: Received an invalid value '00000000000000' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '00000000000000'.
 select ix+0 from t1;
 ix+0
 truncate table t1;
 insert into t1 values ("0000-00-00 00:00:00 some trailer"),("2003-01-01 00:00:00 some trailer");
-ERROR HY000: Received an invalid value '0000-00-00 00:00:00 some trailer' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '0000-00-00 00:00:00 some trailer'.
 select ix+0 from t1;
 ix+0
 drop table t1;

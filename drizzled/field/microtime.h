@@ -54,11 +54,13 @@ public:
             const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
-  int store_time(type::Time *ltime, enum enum_drizzle_timestamp_type t_type);
+  int store_time(type::Time *ltime, type::timestamp_t t_type);
 
+  String *val_str(String*,String *);
   double val_real(void);
   int64_t val_int(void);
-  String *val_str(String*,String *);
+  type::Decimal *val_decimal(type::Decimal *decimal_value);
+
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 12; }

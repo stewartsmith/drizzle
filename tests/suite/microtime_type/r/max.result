@@ -1,0 +1,8 @@
+CREATE TABLE t2 (
+_value TIMESTAMP(6)
+);
+INSERT into t2 VALUES ("20660101000000.00000");
+ERROR HY000: Received an invalid timestamp value '20660101000000.00000'.
+SELECT _value FROM t2;
+_value
+DROP TABLE t2;

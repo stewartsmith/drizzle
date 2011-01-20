@@ -35,7 +35,7 @@ void Item_func_from_unixtime::fix_length_and_dec()
   session= current_session;
   collation.set(&my_charset_bin);
   decimals= DATETIME_DEC;
-  max_length=DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length=type::Time::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   maybe_null= 1;
 }
 
@@ -48,13 +48,13 @@ String *Item_func_from_unixtime::val_str(String *str)
   if (get_date(&time_tmp, 0))
     return 0;
 
-  if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
+  if (str->alloc(type::Time::MAX_STRING_LENGTH))
   {
     null_value= 1;
     return 0;
   }
 
-  make_datetime(&time_tmp, str);
+  time_tmp.convert(*str);
 
   return str;
 }
@@ -68,12 +68,36 @@ int64_t Item_func_from_unixtime::val_int()
   if (get_date(&time_tmp, 0))
     return 0;
 
-  return (int64_t) TIME_to_uint64_t_datetime(&time_tmp);
+  uint64_t ret;
+  time_tmp.convert(ret);
+
+  return (int64_t) ret;
 }
 
 bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
 {
-  uint64_t tmp= (uint64_t)(args[0]->val_int());
+  uint64_t tmp= 0;
+  type::Time::usec_t fractional_tmp= 0;
+
+  switch (args[0]->result_type()) {
+  case REAL_RESULT:
+  case ROW_RESULT:
+  case DECIMAL_RESULT:
+  case STRING_RESULT:
+    {
+      double double_tmp= args[0]->val_real();
+
+      tmp= (uint64_t)(double_tmp);
+      fractional_tmp=  (type::Time::usec_t)((uint64_t)((double_tmp - tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS);
+
+      break;
+    }
+
+  case INT_RESULT:
+    tmp= (uint64_t)(args[0]->val_int());
+    break;
+  }
+
   /*
     "tmp > TIMESTAMP_MAX_VALUE" check also covers case of negative
     from_unixtime() argument since tmp is unsigned.
@@ -81,24 +105,8 @@ bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
   if ((null_value= (args[0]->null_value || tmp > TIMESTAMP_MAX_VALUE)))
     return 1;
 
-  Timestamp temporal;
-  if (! temporal.from_time_t((time_t) tmp))
-  {
-    null_value= true;
-    std::string tmp_string(boost::lexical_cast<std::string>(tmp));
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(0), tmp_string.c_str());
-    return 0;
-  }
-  
-  memset(ltime, 0, sizeof(*ltime));
-
-  ltime->year= temporal.years();
-  ltime->month= temporal.months();
-  ltime->day= temporal.days();
-  ltime->hour= temporal.hours();
-  ltime->minute= temporal.minutes();
-  ltime->second= temporal.seconds();
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  ltime->reset();
+  ltime->store(tmp, fractional_tmp);
 
   return 0;
 }

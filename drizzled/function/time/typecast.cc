@@ -214,7 +214,10 @@ String *Item_datetime_typecast::val_str(String *str)
       str->set_charset(&my_charset_bin);
     }
     else
-      make_datetime(&ltime, str);
+    {
+      ltime.convert(*str);
+    }
+
     return str;
   }
 
@@ -240,15 +243,18 @@ int64_t Item_datetime_typecast::val_int()
 bool Item_date_typecast::get_date(type::Time *ltime, uint32_t )
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
+
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
+  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATE;
+
   return res;
 }
 
 
 bool Item_date_typecast::get_time(type::Time *ltime)
 {
-  memset(ltime, 0, sizeof(type::Time));
+  ltime->reset();
+
   return args[0]->null_value;
 }
 
@@ -259,9 +265,10 @@ String *Item_date_typecast::val_str(String *str)
   type::Time ltime;
 
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
-      !str->alloc(MAX_DATE_STRING_REP_LENGTH))
+      !str->alloc(type::Time::MAX_STRING_LENGTH))
   {
-    make_date(&ltime, str);
+    ltime.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
+
     return str;
   }
 

@@ -33,7 +33,7 @@ drop table t1;
 create table t1 (a int not null auto_increment, primary key (a), t timestamp null, c char(10) default "hello", i int);
 insert into t1 values (default,default,default,default);
 insert into t1 values (default,default,default,default);
---error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
+--error ER_INVALID_TIMESTAMP_VALUE # Bad timestamp
 insert into t1 values (4,0,"a",5);
 insert into t1 values (default,default,default,default);
 select a,t is not null,c,i from t1;
