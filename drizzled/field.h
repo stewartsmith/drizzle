@@ -623,7 +623,7 @@ public:
       0 otherwise
   */
   bool set_warning(DRIZZLE_ERROR::enum_warning_level,
-                   unsigned int code,
+                   drizzled::error_t code,
                    int cuted_increment);
   /**
     Produce warning or note about datetime string data saved into field.
@@ -641,7 +641,7 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            uint32_t code,
+                            drizzled::error_t code,
                             const char *str,
                             uint32_t str_len,
                             enum enum_drizzle_timestamp_type ts_type,
@@ -661,7 +661,7 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            uint32_t code,
+                            drizzled::error_t code,
                             int64_t nr,
                             enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment);
@@ -679,7 +679,7 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            const uint32_t code,
+                            const drizzled::error_t code,
                             double nr,
                             enum enum_drizzle_timestamp_type ts_type);
   bool check_overflow(int op_result)

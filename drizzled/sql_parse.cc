@@ -209,7 +209,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     string tmp(packet, packet_length);
 
-    SchemaIdentifier identifier(tmp);
+    identifier::Schema identifier(tmp);
 
     if (not change_db(session, identifier))
     {
@@ -921,7 +921,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     my_casedn_str(files_charset_info, table->db.str);
 
-    SchemaIdentifier schema_identifier(string(table->db.str));
+    identifier::Schema schema_identifier(string(table->db.str));
     if (not check_db_name(session, schema_identifier))
     {
 
@@ -974,8 +974,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables ;
 	 tables=tables->next_local)
     {
-      if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
+      if (not my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
+	  not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;

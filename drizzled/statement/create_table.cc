@@ -78,7 +78,7 @@ bool statement::CreateTable::execute()
 
   drizzled::message::table::init(createTableMessage(), createTableMessage().name(), create_table_list->getSchemaName(), create_info().db_type->getName());
 
-  TableIdentifier new_table_identifier(create_table_list->getSchemaName(),
+  identifier::Table new_table_identifier(create_table_list->getSchemaName(),
                                        create_table_list->getTableName(),
                                        createTableMessage().type());
 
@@ -123,13 +123,14 @@ bool statement::CreateTable::execute()
   return res;
 }
 
-bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_table_identifier)
+bool statement::CreateTable::executeInner(identifier::Table::const_reference new_table_identifier)
 {
   bool res= false;
   Select_Lex *select_lex= &session->lex->select_lex;
   TableList *select_tables= session->lex->query_tables;
 
-  do {
+  do 
+  {
     if (select_lex->item_list.elements)		// With select
     {
       Select_Lex_Unit *unit= &session->lex->unit;
@@ -201,8 +202,8 @@ bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_t
       {
         res= create_like_table(session, 
                                new_table_identifier,
-                               create_table_list, 
-                               select_tables,
+                               identifier::Table(select_tables->getSchemaName(),
+                                                 select_tables->getTableName()),
                                createTableMessage(),
                                session->getLex()->exists(),
                                is_engine_set);
@@ -237,7 +238,7 @@ bool statement::CreateTable::executeInner(TableIdentifier::const_reference new_t
   return res;
 }
 
-bool statement::CreateTable::check(const TableIdentifier &identifier)
+bool statement::CreateTable::check(const identifier::Table &identifier)
 {
   // Check table name for validity
   if (not identifier.isValid())

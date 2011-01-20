@@ -40,7 +40,7 @@ class AlterInfo;
 class Cursor;
 
 namespace message { class Table; }
-class TableIdentifier;
+namespace identifier { class Table; }
 
 int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);
@@ -50,11 +50,11 @@ void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
 bool check_table(Session* session, TableList* table_list,
-                       HA_CHECK_OPT* check_opt);
+                 HA_CHECK_OPT* check_opt);
 bool analyze_table(Session* session, TableList* table_list,
-                         HA_CHECK_OPT* check_opt);
+                   HA_CHECK_OPT* check_opt);
 bool optimize_table(Session* session, TableList* table_list,
-                          HA_CHECK_OPT* check_opt);
+                    HA_CHECK_OPT* check_opt);
 
 void write_bin_log(Session *session, const std::string &query);
 

@@ -34,7 +34,7 @@ namespace statement
 
 class CreateSchema : public Statement
 {
-  bool check(const SchemaIdentifier &identifier);
+  bool check(const identifier::Schema &identifier);
 
 public:
   CreateSchema(Session *in_session) :

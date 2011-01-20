@@ -58,14 +58,14 @@ const ErrorMap::ErrorMessageMap& ErrorMap::get_error_message_map()
   return get_error_map().mapping_;
 }
 
-void add_error_message(uint32_t error_code,
+void add_error_message(drizzled::error_t error_code,
                        const std::string &error_name,
                        const std::string &message)
 {
   get_error_map().add(error_code, error_name, message);
 }
 
-const char * error_message(unsigned int code)
+const char * error_message(drizzled::error_t code)
 {
   try
   {
@@ -141,7 +141,7 @@ void my_error(error_t nr, myf MyFlags, ...)
       ...	variable list
 */
 
-void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
+void my_printf_error(drizzled::error_t error, const char *format, myf MyFlags, ...)
 {
   va_list args;
   char ebuff[ERRMSGSIZE+20];
@@ -150,7 +150,6 @@ void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
   (void) vsnprintf (ebuff, sizeof(ebuff), format, args);
   va_end(args);
   (*error_handler_hook)(error, ebuff, MyFlags);
-  return;
 }
 
 /*
@@ -163,7 +162,7 @@ void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
       MyFlags	Flags
 */
 
-void my_message(uint32_t error, const char *str, register myf MyFlags)
+void my_message(drizzled::error_t error, const char *str, register myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }
@@ -171,7 +170,7 @@ void my_message(uint32_t error, const char *str, register myf MyFlags)
 
 // Insert the message for the error.  If the error already has an existing
 // mapping, an error is logged, but the function continues.
-void ErrorMap::add(uint32_t error_num,
+void ErrorMap::add(drizzled::error_t error_num,
                    const std::string &error_name,
                    const std::string &message)
 {
@@ -186,7 +185,7 @@ void ErrorMap::add(uint32_t error_num,
   }
 }
 
-const std::string &ErrorMap::find(uint32_t error_num) const
+const std::string &ErrorMap::find(drizzled::error_t error_num) const
 {
   ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
   if (pos == mapping_.end())
@@ -482,6 +481,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_TABLE_DROP, N_("Cannot drop table '%s'"));
   ADD_ERROR_MESSAGE(ER_TABLE_DROP_ERROR_OCCURRED, N_("Error occurred while dropping table '%s'"));
   ADD_ERROR_MESSAGE(ER_TABLE_PERMISSION_DENIED, N_("Permission denied to create '%s'"));
+  ADD_ERROR_MESSAGE(ER_TABLE_UNKNOWN, N_("Unknown table '%s'"));
 
   ADD_ERROR_MESSAGE(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   ADD_ERROR_MESSAGE(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));

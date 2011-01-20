@@ -48,7 +48,7 @@ public:
 
   int open_unireg_entry(Session *session,
                         const char *alias,
-                        TableIdentifier &identifier);
+                        identifier::Table &identifier);
   bool reopen_name_locked_table(TableList* table_list, Session *session);
   virtual void release(void);
 };

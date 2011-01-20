@@ -51,9 +51,9 @@ public:
     cache.rehash(arg);
   }
 
-  table::instance::Shared::shared_ptr find(const TableIdentifier::Key &identifier);
-  void erase(const TableIdentifier::Key &identifier);
-  bool insert(const TableIdentifier::Key &identifier, table::instance::Shared::shared_ptr share);
+  table::instance::Shared::shared_ptr find(const identifier::Table::Key &identifier);
+  void erase(const identifier::Table::Key &identifier);
+  bool insert(const identifier::Table::Key &identifier, table::instance::Shared::shared_ptr share);
 
 protected:
   friend class drizzled::generator::TableDefinitionCache;
@@ -61,7 +61,7 @@ protected:
   void CopyFrom(table::instance::Shared::vector &vector);
 
 private:
-  typedef boost::unordered_map< TableIdentifier::Key, table::instance::Shared::shared_ptr> Map;
+  typedef boost::unordered_map< identifier::Table::Key, table::instance::Shared::shared_ptr> Map;
 
   Map cache;
   boost::mutex _mutex;

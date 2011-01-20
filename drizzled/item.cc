@@ -915,9 +915,11 @@ static Item** find_field_in_group_list(Item *find_item, Order *group_list)
         if (cur_field->db_name && db_name)
         {
           /* If field_name is also qualified by a database name. */
-          if (strcasecmp(cur_field->db_name, db_name))
+          if (my_strcasecmp(system_charset_info, cur_field->db_name, db_name))
+          {
             /* Same field names, different databases. */
             return NULL;
+          }
           ++cur_match_degree;
         }
       }

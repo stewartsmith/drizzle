@@ -1325,13 +1325,9 @@ void select_insert::store_values(List<Item> &values)
     fill_record(session, table->getFields(), values, true);
 }
 
-void select_insert::send_error(uint32_t errcode,const char *err)
+void select_insert::send_error(drizzled::error_t errcode,const char *err)
 {
-
-
   my_message(errcode, err, MYF(0));
-
-  return;
 }
 
 
@@ -1485,7 +1481,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       List<Item> *items,
                                       bool is_if_not_exists,
                                       DrizzleLock **lock,
-				      TableIdentifier::const_reference identifier)
+				      identifier::Table::const_reference identifier)
 {
   TableShare share(message::Table::INTERNAL);
   uint32_t select_field_count= items->elements;
@@ -1734,7 +1730,7 @@ void select_create::store_values(List<Item> &values)
 }
 
 
-void select_create::send_error(uint32_t errcode,const char *err)
+void select_create::send_error(drizzled::error_t errcode,const char *err)
 {
   /*
     This will execute any rollbacks that are necessary before writing
@@ -1748,8 +1744,6 @@ void select_create::send_error(uint32_t errcode,const char *err)
 
   */
   select_insert::send_error(errcode, err);
-
-  return;
 }
 
 

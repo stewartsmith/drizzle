@@ -33,7 +33,7 @@ namespace statement
 
 class CreateTable : public Statement
 {
-  virtual bool check(const TableIdentifier&);
+  virtual bool check(const identifier::Table&);
 
 public:
   CreateTable(Session *in_session) :
@@ -55,7 +55,7 @@ public:
   }
 
   bool execute();
-  virtual bool executeInner(TableIdentifier::const_reference);
+  virtual bool executeInner(identifier::Table::const_reference);
 
 public:
   message::Table &createTableMessage()

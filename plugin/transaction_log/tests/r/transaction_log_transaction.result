@@ -658,7 +658,7 @@ statement {
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
       catalog: "LOCAL"
-      
+      UUID
       version: 1
     }
   }

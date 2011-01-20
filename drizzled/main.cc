@@ -77,7 +77,7 @@ static uint32_t thr_kill_signal;
   All global error messages are sent here where the first one is stored
   for the client.
 */
-static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
@@ -106,10 +106,12 @@ static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
     {
       if (! session->main_da.is_error())            // Return only first message
       {
-        if (error == 0)
+        if (error == EE_OK)
           error= ER_UNKNOWN_ERROR;
+
         if (str == NULL)
           str= ER(error);
+
         session->main_da.set_error_status(error, str);
       }
     }
@@ -275,8 +277,6 @@ int main(int argc, char **argv)
     }
 
     full_data_home= fs::system_complete(getDataHome());
-    getDataHomeCatalog()= "./";
-    getDataHome()= "../";
   }
 
 
