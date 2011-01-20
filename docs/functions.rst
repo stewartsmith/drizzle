@@ -9,5 +9,6 @@ Several SQL functions are built into Drizzle--functions perform calculations on 
    logical
    mathematical 
    aggregatefunctions
+   string
    scalarfunctions
   
