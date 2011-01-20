@@ -98,22 +98,5 @@ TEST(atomic_operations, decrement)
   EXPECT_EQ(199, u235.decrement());
 }
 
-/*
-TEST(atomic_operations, increment_assign)
-{
-  atomic<uint32_t> u235;
-  u235.fetch_and_store(200);
-
-  EXPECT_EQ(242, u235+=42);
-}
-
-TEST(atomic_operations, decrement_assign)
-{
-  atomic<uint32_t> u235;
-  u235.fetch_and_store(200);
-
-  EXPECT_EQ(158, u235-=42);
-}
-*/
-
+/* TODO: add tests for += and -= when supported */
 
