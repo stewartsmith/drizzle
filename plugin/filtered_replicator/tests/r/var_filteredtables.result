@@ -11,7 +11,7 @@ DROP TABLE t2;
 
 We should only see events for t1 table in the log
 
-START TRANSACTION;
+SET AUTOCOMMIT=0;
 CREATE TABLE `test`.`t1` (   `a` INT NOT NULL,   PRIMARY KEY (`a`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
@@ -23,7 +23,7 @@ COMMIT;
 START TRANSACTION;
 DELETE FROM `test`.`t1` WHERE `a`=2;
 COMMIT;
-START TRANSACTION;
+SET AUTOCOMMIT=0;
 DROP TABLE `test`.`t1`;
 COMMIT;
 SET GLOBAL transaction_log_truncate_debug= true;
