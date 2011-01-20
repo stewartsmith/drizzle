@@ -126,9 +126,3 @@ TEST(pthread_atomic_operations, decrement)
   EXPECT_EQ(199, u235.decrement());
 }
 
-// these don't build for whatever reason
-//  EXPECT_EQ(242, u235+=42);
-//  EXPECT_EQ(200, u235-=42);
-
-
-
