@@ -140,6 +140,34 @@ static bool printStatement(const message::Statement &statement, string &output)
   return true;
 }
 
+static bool isDDLStatement(const message::Statement &statement)
+{
+  bool isDDL;
+
+  switch (statement.type())
+  {
+    case (message::Statement::TRUNCATE_TABLE):
+    case (message::Statement::CREATE_SCHEMA):
+    case (message::Statement::ALTER_SCHEMA):
+    case (message::Statement::DROP_SCHEMA):
+    case (message::Statement::CREATE_TABLE):
+    case (message::Statement::ALTER_TABLE):
+    case (message::Statement::DROP_TABLE):
+    case (message::Statement::RAW_SQL):
+    {
+      isDDL= true;
+      break;
+    }
+    default:
+    {
+      isDDL= false;
+      break;
+    }
+  }
+  
+  return isDDL;
+}
+
 static bool isEndStatement(const message::Statement &statement)
 {
   switch (statement.type())
@@ -370,23 +398,30 @@ static bool printTransaction(const message::Transaction &transaction,
   }
 
   size_t num_statements= transaction.statement_size();
-  size_t x;
-
-  /*
-   * One way to determine when a new transaction begins is when the
-   * transaction id changes (if all transactions have their GPB messages
-   * grouped together, which this program will). We check that here.
-   */
-  if (trx.transaction_id() != last_trx_id)
-    cout << "START TRANSACTION;" << endl;
-
-  last_trx_id= trx.transaction_id();
-
   vector<string> cached_statement_sql;
 
-  for (x= 0; x < num_statements; ++x)
+  for (size_t x= 0; x < num_statements; ++x)
   {
     const message::Statement &statement= transaction.statement(x);
+
+    /* Transactional DDL not supported yet. Use AUTOCOMMIT for DDL. */
+    if (x == 0)
+    {
+      /* Transaction ID change means new transaction to start */
+      if (trx.transaction_id() != last_trx_id)
+      {
+        if (isDDLStatement(statement))
+        {
+          cout << "SET AUTOCOMMIT=0;" << endl;
+        }
+        else
+        {
+          cout << "START TRANSACTION;" << endl;
+        }
+      }
+  
+      last_trx_id= trx.transaction_id();
+    }
 
     if (should_commit)
       should_commit= isEndStatement(statement);
