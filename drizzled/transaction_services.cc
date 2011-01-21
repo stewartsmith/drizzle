@@ -576,6 +576,13 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
 
   bool is_real_trans= normal_transaction || session->transaction.all.getResourceContexts().empty();
+  bool all= normal_transaction;
+
+  /* If we're in autocommit then we have a real transaction to commit
+     (except if it's BEGIN)
+  */
+  if (! session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+    all= true;
 
   if (resource_contexts.empty() == false)
   {
@@ -590,7 +597,7 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaCommit(session, normal_transaction)))
+        if ((err= resource_context->getXaResourceManager()->xaCommit(session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -602,7 +609,7 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->commit(session, normal_transaction)))
+        if ((err= resource_context->getTransactionalStorageEngine()->commit(session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;

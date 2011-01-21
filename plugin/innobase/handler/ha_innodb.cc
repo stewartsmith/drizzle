@@ -2573,9 +2573,8 @@ InnobaseEngine::doCommit(
     trx_search_latch_release_if_reserved(trx);
   }
 
-  if (all
-    || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) {
-
+  if (all)
+  {
     /* We were instructed to commit the whole transaction, or
     this is an SQL statement end and autocommit is on */
 

@@ -490,7 +490,7 @@ void SEAPITester::doEndStatement(Session *session)
 
 int SEAPITester::doCommit(Session *session, bool all)
 {
-  if (all     || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  if (all)
   {
     ENGINE_NEW_STATE("COMMIT");
     ENGINE_NEW_STATE("::SEAPITester()");
