@@ -24,7 +24,7 @@ TIMESTAMP and TIMESTAMP(6)
 
 The regular TIMESTAMP data type does not store fractional seconds, and uses 4 bytes of storage.
 
-To create a TIMESTAMP column that uses microseconds you simply need to specify TIMESTAMP(6) in your table definition. The (6) stands for microsecond granularity (since a microsecond is one millionth of a second). This means that fractional seconds are stored and returned with the field.
+To create a TIMESTAMP column that uses microseconds you simply need to specify TIMESTAMP(6) in your table definition. The (6) stands for microsecond granularity (since a microsecond is one millionth of a second). This means that fractional seconds are stored and returned with the field, and it uses 4 more bytes of storage than TIMESTAMP.
 
 For example: ::
 
@@ -55,9 +55,9 @@ TIME
 
 Drizzle's TIME data type has a range of 00:00:00 - 23:59:61.999999, while MySQL's TIME data type has a range of -838:59:59 - 838:59:59.
 
-This brings Drizzle closer to the SQL standard. Negative time is not meant to be there at all.
+This brings Drizzle closer to the SQL standard. Negative time is not meant to be supported.
 
-To prevent data loss to this type when converting from MySQL -> Drizzle, the conversion changes TIME to an INT of the number of seconds. For example, 00:00:00 becomes 0, 01:00:00 becomes 3600, and -01:00:00 becomes -3600.
+To prevent data loss to this type when converting from MySQL -> Drizzle, the conversion process changes TIME to an INT of the number of seconds. For example, 00:00:00 becomes 0, 01:00:00 becomes 3600, and -01:00:00 becomes -3600.
 
 More information on this can be found in the "MySQL Migration Using Drizzledump" section of the :doc:`clients/drizzledump` chapter.
 
