@@ -92,6 +92,7 @@ Clients:
    clients/drizzle.rst
    clients/drizzledump.rst
    clients/drizzleadmin.rst
+   clients/errors.rst
 
 libdrizzle:
 -----------
