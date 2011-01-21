@@ -30,6 +30,7 @@ SELECT * from t1 order by a;
 a
 1
 2
+COMMIT;
 DROP TABLE t1;
 SET AUTOCOMMIT= 0;
 SHOW STATUS LIKE 'Handler_commit%';
@@ -39,6 +40,7 @@ BEGIN;
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
 Handler_commit	0
+COMMIT;
 DROP SCHEMA IF EXISTS boundaries;
 Warnings:
 Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
@@ -54,10 +56,10 @@ SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
 Handler_commit	1
 BEGIN;
+COMMIT;
 DROP SCHEMA IF EXISTS boundaries;
 Warnings:
 Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
-COMMIT;
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
 Handler_commit	2
@@ -110,6 +112,7 @@ INSERT into commit_test VALUES (10);
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
 Handler_commit	4
+COMMIT;
 drop table commit_test;
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
@@ -155,5 +158,6 @@ SELECT t1_trx.k, t1_trx.v
 FROM t1_trx
 INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
 k	v
+COMMIT;
 DROP TABLE t1_trx;
 DROP TABLE t1_non_trx;

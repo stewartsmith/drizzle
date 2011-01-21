@@ -36,6 +36,7 @@ COMMIT;
 BEGIN;
 SELECT * from t1 order by a;
 
+COMMIT;
 DROP TABLE t1;
 
 disconnect a;
@@ -59,6 +60,7 @@ BEGIN;
 
 SHOW STATUS LIKE 'Handler_commit%';
 
+COMMIT;
 DROP SCHEMA IF EXISTS boundaries;
 
 # Expect 1 commit count since above DROP SCHEMA
@@ -82,8 +84,8 @@ SET AUTOCOMMIT= 1;
 
 SHOW STATUS LIKE 'Handler_commit%';
 BEGIN;
-DROP SCHEMA IF EXISTS boundaries;
 COMMIT;
+DROP SCHEMA IF EXISTS boundaries;
 
 SHOW STATUS LIKE 'Handler_commit%';
 CREATE TABLE commit_test (a int);
@@ -126,6 +128,7 @@ INSERT into commit_test VALUES (10);
 
 
 SHOW STATUS LIKE 'Handler_commit%';
+COMMIT;
 drop table commit_test;
 SHOW STATUS LIKE 'Handler_commit%';
 # Tests a number of things related to transactions:
@@ -182,5 +185,6 @@ SELECT t1_trx.k, t1_trx.v
 FROM t1_trx
 INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
 
+COMMIT;
 DROP TABLE t1_trx;
 DROP TABLE t1_non_trx;
