@@ -1145,6 +1145,24 @@ void Time::convert(char *str, size_t &to_length, timestamp_t arg)
 
   case DRIZZLE_TIMESTAMP_TIME:
     to_length= (uint32_t) my_time_to_str(this, str);
+    {
+      int32_t length;
+      uint32_t extra_hours= 0;
+
+      length= snprintf(str, to_length,
+                       "%s%02u:%02u:%02u",
+                      (neg ? "-" : ""),
+                      extra_hours+ hour,
+                      minute,
+                      second);
+      if (length < 0)
+      {
+        to_length= 0;
+        break;
+      }
+
+      to_length= length;
+    }
     break;
 
   case DRIZZLE_TIMESTAMP_NONE:
@@ -1183,8 +1201,8 @@ void Time::convert(char *str, size_t &to_length, timestamp_t arg)
     Datetime value in YYYYMMDDHHMMSS format.
 */
 
-int64_t number_to_datetime(int64_t nr, type::Time *time_res,
-                            uint32_t flags, int *was_cut)
+static int64_t number_to_datetime(int64_t nr, type::Time *time_res,
+                                  uint32_t flags, int *was_cut)
 {
   long part1,part2;
 
@@ -1257,6 +1275,14 @@ int64_t number_to_datetime(int64_t nr, type::Time *time_res,
   *was_cut= 1;
   return -1LL;
 }
+
+
+namespace type {
+void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags, int *was_cut)
+{
+  ret= number_to_datetime(nr, this, flags, was_cut);
+}
+} // namespace type
 
 
 /* Convert time value to integer in YYYYMMDDHHMMSS format */

@@ -92,11 +92,15 @@ enum timestamp_t
 /*
   datatime_t while being stored in an integer is actually a formatted value.
 */
-struct datatime_t {
-  int64_t value;
-};
+typedef int64_t datetime_t;
 
+inline bool is_valid(const datetime_t &value)
+{
+  if (value == -1L)
+    return false;
 
+  return true;
+}
 
 class Time
 {
@@ -169,7 +173,8 @@ public:
 
   void convert(drizzled::String &str, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(char *str, size_t &to_length, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
-  void convert(int64_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
+  void convert(datetime_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
+  void convert(datetime_t &ret, int64_t nr, uint32_t flags, int *was_cut);
 
   void store(const type::Time::epoch_t &from, bool use_localtime= false);
   void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
@@ -187,8 +192,6 @@ bool check_date(const type::Time *ltime, bool not_zero_date,
 
 type::timestamp_t str_to_datetime(const char *str, uint32_t length, type::Time *l_time, uint32_t flags, int *was_cut);
 
-int64_t number_to_datetime(int64_t nr, type::Time *time_res,
-                            uint32_t flags, int *was_cut);
 bool str_to_time(const char *str,uint32_t length, type::Time *l_time, int *warning);
 
 long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
