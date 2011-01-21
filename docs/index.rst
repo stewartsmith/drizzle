@@ -33,6 +33,16 @@ Introduction:
    how_to_report_a_bug
    mysql_differences
 
+Compiling and Installing:
+-------------------------
+.. toctree::
+   :maxdepth: 2
+
+   installing/requirements
+   installing/from_source
+   installing/ubuntu
+   installing/redhat
+
 SQL Language:
 -------------
 .. toctree::
