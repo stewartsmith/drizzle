@@ -746,6 +746,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/optimizer/sel_imerge.cc \
 			   drizzled/optimizer/sel_tree.cc \
 			   drizzled/optimizer/sum.cc \
+			   drizzled/parser.cc \
 			   drizzled/plugin/authentication.cc \
 			   drizzled/plugin/authorization.cc \
 			   drizzled/plugin/catalog.cc \
