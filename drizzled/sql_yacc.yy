@@ -4890,13 +4890,13 @@ show_param:
           }
         | WARNINGS opt_limit_clause_init
           {
-            Lex->sql_command = SQLCOM_SHOW_WARNS;
-            Lex->statement= new statement::ShowWarnings(YYSession);
+            if (not show::buildWarnings(YYSession))
+              DRIZZLE_YYABORT;
           }
         | ERRORS opt_limit_clause_init
           {
-            Lex->sql_command = SQLCOM_SHOW_ERRORS;
-            Lex->statement= new statement::ShowErrors(YYSession);
+            if (not show::buildErrors(YYSession))
+              DRIZZLE_YYABORT;
           }
         | opt_var_type STATUS_SYM show_wild
           {

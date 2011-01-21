@@ -51,6 +51,8 @@
 #include "drizzled/message/statement_transform.h"
 
 #include "drizzled/statement/show.h"
+#include "drizzled/statement/show_errors.h"
+#include "drizzled/statement/show_warnings.h"
 
 
 #include <sys/stat.h>
@@ -345,6 +347,22 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
     return false;
 
   (session->lex->current_select->with_wild)++;
+
+  return true;
+}
+
+bool buildWarnings(Session *session)
+{
+  session->getLex()->sql_command = SQLCOM_SHOW_WARNS;
+  session->getLex()->statement= new statement::ShowWarnings(session);
+
+  return true;
+}
+
+bool buildErrors(Session *session)
+{
+  session->getLex()->sql_command = SQLCOM_SHOW_ERRORS;
+  session->getLex()->statement= new statement::ShowErrors(session);
 
   return true;
 }
