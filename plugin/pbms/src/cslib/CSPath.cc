@@ -54,8 +54,10 @@ CSPath::~CSPath()
 
 CSFile *CSPath::try_CreateAndOpen(CSThread *self, int mode, bool retry)
 {
+	volatile CSFile *fh = NULL;
+	
 	try_(a) {
-		return openFile(mode | CSFile::CREATE); // success, do not try again.
+		fh = openFile(mode | CSFile::CREATE); // success, do not try again.
 	}
 	catch_(a) {
 		if (retry || !CSFile::isDirNotFound(&self->myException))
@@ -69,7 +71,7 @@ CSFile *CSPath::try_CreateAndOpen(CSThread *self, int mode, bool retry)
 
 	}
 	cont_(a);
-	return NULL; 
+	return (CSFile *) fh; 
 }
 
 CSFile *CSPath::createFile(int mode)

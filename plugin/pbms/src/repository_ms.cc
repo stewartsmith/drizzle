@@ -235,7 +235,6 @@ void MSRepoFile::sendBlob(MSOpenTable *otab, uint64_t offset, uint64_t req_offse
 	if (storage_type == MS_STANDARD_STORAGE) {
 		char hex_checksum[33];
 		cs_bin_to_hex(33, hex_checksum, 16, blob_head.rb_blob_checksum_md5d.val);
-		hex_checksum[32] = 0;
 		stream->addHeader(MS_CHECKSUM_TAG, hex_checksum);
 	}
 	

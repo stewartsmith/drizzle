@@ -741,6 +741,7 @@ size_t cs_hex_to_bin(size_t size, void *bin, const char *hex)
 
 #define HEX_DIGIT(x)	((x) <= 9 ? '0' + (x) : 'A' + ((x) - 10))
 
+// NOTE: cs_bin_to_hex() Always null terminates the result.
 void cs_bin_to_hex(size_t size, char *hex, size_t len, const void *v_bin)
 {
 	const u_char *bin = (u_char *) v_bin;

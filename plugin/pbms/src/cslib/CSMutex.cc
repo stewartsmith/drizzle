@@ -34,6 +34,7 @@ extern int gettimeofday(struct timeval *tv, struct timezone *tz);
 #include <sys/time.h>
 #endif
 
+#include <unistd.h>
 
 #include "CSException.h"
 #include "CSMutex.h"

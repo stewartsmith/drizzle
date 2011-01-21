@@ -158,7 +158,7 @@ static void *genericBase64Decode(const char *data, size_t len, void *decode_buff
 	if (decode_buffer)
 		decoding = (u_char *) decode_buffer;
 	else
-	decoding = (u_char *) cs_malloc((len/ 4) * 3);
+		decoding = (u_char *) cs_malloc((len/ 4) * 3);
 	
 	wptr= decoding;
 	
