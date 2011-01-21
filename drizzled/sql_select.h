@@ -56,14 +56,76 @@ enum_nested_loop_state sub_select(Join *join,JoinTable *join_tab, bool end_of_re
 enum_nested_loop_state end_send_group(Join *join, JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state end_write_group(Join *join, JoinTable *join_tab, bool end_of_records);
 
-typedef struct st_rollup
+class Rollup
 {
+public:
   enum State { STATE_NONE, STATE_INITED, STATE_READY };
+
+  Rollup()
+  :
+  state(),
+  null_items(NULL),
+  ref_pointer_arrays(NULL),
+  fields()
+  {}
+  
+  Rollup(State in_state,
+         Item_null_result **in_null_items,
+         Item ***in_ref_pointer_arrays,
+         List<Item> *in_fields)
+  :
+  state(in_state),
+  null_items(in_null_items),
+  ref_pointer_arrays(in_ref_pointer_arrays),
+  fields(in_fields)
+  {}
+  
+  State getState() const
+  {
+    return state;
+  }
+
+  void setState(State in_state)
+  {
+    state= in_state;
+  }
+ 
+  Item_null_result **getNullItems() const
+  {
+    return null_items;
+  }
+
+  void setNullItems(Item_null_result **in_null_items)
+  {
+    null_items= in_null_items;
+  }
+
+  Item ***getRefPointerArrays() const
+  {
+    return ref_pointer_arrays;
+  }
+
+  void setRefPointerArrays(Item ***in_ref_pointer_arrays)
+  {
+    ref_pointer_arrays= in_ref_pointer_arrays;
+  }
+
+  List<Item> *getFields() const
+  {
+    return fields;
+  }
+
+  void setFields(List<Item> *in_fields)
+  {
+    fields= in_fields;
+  }
+  
+private:
   State state;
   Item_null_result **null_items;
   Item ***ref_pointer_arrays;
   List<Item> *fields;
-} ROLLUP;
+};
 
 } /* namespace drizzled */
 
@@ -177,12 +239,6 @@ void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok);
 void add_not_null_conds(Join *join);
 uint32_t max_part_bit(key_part_map bits);
 COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab);
-Order *create_distinct_group(Session *session,
-                                Item **ref_pointer_array,
-                                Order *order,
-                                List<Item> &fields,
-                                List<Item> &all_fields,
-                                bool *all_order_by_fields_used);
 bool eq_ref_table(Join *join, Order *start_order, JoinTable *tab);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
 int remove_dup_with_hash_index(Session *session, 

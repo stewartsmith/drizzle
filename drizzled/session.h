@@ -53,6 +53,9 @@
 #include "drizzled/diagnostics_area.h"
 #include "drizzled/plugin/authorization.h"
 
+#include "drizzled/catalog/instance.h"
+#include "drizzled/catalog/local.h"
+
 #include <boost/unordered_map.hpp>
 
 #include <boost/thread/thread.hpp>
@@ -310,7 +313,6 @@ struct Ha_data
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
-typedef int64_t session_id_t;
 
 class Session : public Open_tables_state
 {
@@ -323,6 +325,12 @@ public:
   typedef const Session& const_reference;
   typedef const Session* const_pointer;
   typedef Session* pointer;
+
+  static shared_ptr make_shared(plugin::Client *client, catalog::Instance::shared_ptr instance_arg)
+  {
+    assert(instance_arg);
+    return boost::make_shared<Session>(client, instance_arg);
+  }
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -521,7 +529,7 @@ public:
 
     return util::string::const_shared_ptr(new std::string(""));
   }
-  std::string catalog;
+
   /* current cache key */
   std::string query_cache_key;
   /**
@@ -908,7 +916,7 @@ public:
     _global_read_lock= arg;
   }
 
-  DrizzleLock *lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen);
+  DrizzleLock *lockTables(Table **tables, uint32_t count, uint32_t flags);
   bool lockGlobalReadLock();
   bool lock_table_names(TableList *table_list);
   bool lock_table_names_exclusively(TableList *table_list);
@@ -1148,7 +1156,7 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(plugin::Client *client_arg);
+  Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
   virtual ~Session();
 
   void cleanup(void);
@@ -1262,7 +1270,7 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  time_t query_start()
+  type::Time::epoch_t query_start()
   {
     return getCurrentTimestampEpoch();
   }
@@ -1298,9 +1306,9 @@ public:
   /**
    * Returns the current micro-timestamp
    */
-  uint64_t getCurrentTimestamp(bool actual= true) const
+  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
   { 
-    uint64_t t_mark;
+    type::Time::epoch_t t_mark;
 
     if (actual)
     {
@@ -1316,11 +1324,23 @@ public:
   }
 
   // We may need to set user on this
-  int64_t getCurrentTimestampEpoch() const
+  type::Time::epoch_t getCurrentTimestampEpoch() const
   { 
     if (not _user_time.is_not_a_date_time())
       return (_user_time - _epoch).total_seconds();
 
+    return (_start_timer - _epoch).total_seconds();
+  }
+
+  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
+  { 
+    if (not _user_time.is_not_a_date_time())
+    {
+      fraction_arg= 0;
+      return (_user_time - _epoch).total_seconds();
+    }
+
+    fraction_arg= _start_timer.time_of_day().fractional_seconds() % 1000000;
     return (_start_timer - _epoch).total_seconds();
   }
 
@@ -1462,7 +1482,7 @@ public:
     @param level the error level
     @return true if the error is handled
   */
-  virtual bool handle_error(uint32_t sql_errno, const char *message,
+  virtual bool handle_error(drizzled::error_t sql_errno, const char *message,
                             DRIZZLE_ERROR::enum_warning_level level);
 
   /**
@@ -1733,10 +1753,11 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
-  void close_data_files_and_morph_locks(const TableIdentifier &identifier);
+  void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
 private:
-  bool free_cached_table();
+  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+
 public:
 
   /**
@@ -1770,12 +1791,12 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, const TableIdentifier &identifier);
+  void drop_open_table(Table *table, const identifier::Table &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  table::Placeholder *table_cache_insert_placeholder(const TableIdentifier &identifier);
-  bool lock_table_name_if_not_cached(const TableIdentifier &identifier, Table **table);
+  table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
+  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
 
@@ -1784,13 +1805,13 @@ public:
     TableMessageCache table_message_cache;
 
   public:
-    bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-    bool removeTableMessage(const TableIdentifier &identifier);
-    bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-    bool doesTableMessageExist(const TableIdentifier &identifier);
-    bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
-
+    bool storeTableMessage(const identifier::Table &identifier, message::Table &table_message);
+    bool removeTableMessage(const identifier::Table &identifier);
+    bool getTableMessage(const identifier::Table &identifier, message::Table &table_message);
+    bool doesTableMessageExist(const identifier::Table &identifier);
+    bool renameTableMessage(const identifier::Table &from, const identifier::Table &to);
   };
+
 private:
   TableMessages _table_message_cache;
 
@@ -1801,7 +1822,7 @@ public:
   }
 
   /* Reopen operations */
-  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  bool reopen_tables();
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);
@@ -1838,8 +1859,8 @@ public:
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
-  table::Instance *getInstanceTable();
-  table::Instance *getInstanceTable(List<CreateField> &field_list);
+  table::Singular *getInstanceTable();
+  table::Singular *getInstanceTable(List<CreateField> &field_list);
 
 private:
   bool resetUsage()
@@ -1863,11 +1884,23 @@ public:
     return usage;
   }
 
+  catalog::Instance::const_reference catalog() const
+  {
+    return *(_catalog.get());
+  }
+
+  catalog::Instance::reference catalog()
+  {
+    return *(_catalog.get());
+  }
+
 private:
+  catalog::Instance::shared_ptr _catalog;
+
   // This lives throughout the life of Session
   bool use_usage;
   PropertyMap life_properties;
-  std::vector<table::Instance *> temporary_shares;
+  std::vector<table::Singular *> temporary_shares;
   struct rusage usage;
 };
 

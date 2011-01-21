@@ -47,6 +47,9 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   is_primed(false),
   scopedLock(table::Cache::singleton().mutex())
 {
+  if (not isShowQuery())
+   return;
+
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   schema_predicate.append(select->getShowSchema());

@@ -33,7 +33,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -58,11 +58,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -104,7 +107,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -145,14 +148,14 @@ statement {
         name: "e"
         type: DATE
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "f"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 63
@@ -181,11 +184,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -227,7 +233,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -237,7 +243,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -267,11 +273,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -313,7 +322,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -323,7 +332,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -342,7 +351,7 @@ statement {
         name: "d"
         type: EPOCH
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -377,11 +386,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -423,7 +435,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -433,7 +445,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -480,11 +492,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -526,7 +541,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -536,7 +551,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -608,11 +623,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -654,7 +672,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -664,7 +682,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -733,11 +751,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -780,7 +801,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -805,11 +826,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -849,7 +873,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -874,11 +898,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -920,14 +947,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -965,11 +992,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1007,7 +1037,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1062,11 +1092,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1109,14 +1142,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -1154,11 +1187,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1195,14 +1231,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -1240,12 +1276,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1290,14 +1328,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 1000
@@ -1355,11 +1393,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1401,14 +1442,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 1000
@@ -1450,11 +1491,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1496,14 +1540,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 63
@@ -1544,11 +1588,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1615,7 +1662,7 @@ statement {
         name: "autoinc_int_field"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           is_autoincrement: true
@@ -1628,14 +1675,14 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
       }
       field {
         name: "not_null_bigint_field"
         type: BIGINT
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1645,14 +1692,14 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
       }
       field {
         name: "not_null_int_field"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1662,7 +1709,7 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
         string_options {
           length: 100
@@ -1674,7 +1721,7 @@ statement {
         name: "not_null_varchar_field"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 100
@@ -1689,7 +1736,7 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
         enumeration_values {
           collation_id: 45
@@ -1702,7 +1749,7 @@ statement {
         name: "not_null_enum_field"
         type: ENUM
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         enumeration_values {
           collation_id: 45
@@ -1718,14 +1765,14 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
       }
       field {
         name: "not_null_date_field"
         type: DATE
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1735,14 +1782,14 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
       }
       field {
         name: "not_null_datetime_field"
         type: DATETIME
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1752,7 +1799,7 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
         string_options {
           collation_id: 63
@@ -1763,7 +1810,7 @@ statement {
         name: "not_null_blob_field"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 63
@@ -1777,7 +1824,7 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
         string_options {
           collation_id: 45
@@ -1788,7 +1835,7 @@ statement {
         name: "not_null_text_field"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 45
@@ -1802,14 +1849,14 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
       }
       field {
         name: "not_null_timestamp_field"
         type: EPOCH
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1819,14 +1866,14 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
       }
       field {
         name: "not_null_double_field"
         type: DOUBLE
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1836,7 +1883,7 @@ statement {
           default_null: true
         }
         constraints {
-          is_nullable: true
+          is_notnull: false
         }
         numeric_options {
           scale: 2
@@ -1847,7 +1894,7 @@ statement {
         name: "not_null_decimal_field"
         type: DECIMAL
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           scale: 2
@@ -1876,11 +1923,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1930,7 +1980,7 @@ statement {
         name: "id"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           is_autoincrement: true
@@ -1940,7 +1990,7 @@ statement {
         name: "key1"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 10
@@ -1952,14 +2002,14 @@ statement {
         name: "key2"
         type: DOUBLE
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "key3"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 63
@@ -2032,11 +2082,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 

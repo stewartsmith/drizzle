@@ -31,6 +31,10 @@ namespace schema {
 
 typedef boost::shared_ptr <message::Schema> shared_ptr;
 
+shared_ptr make_shared(const std::string &name_arg);
+void init(drizzled::message::Schema &arg, const std::string &name_arg);
+
+
 } // namespace schema
 } // namespace message
 } // namespace drizzled

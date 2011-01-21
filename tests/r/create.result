@@ -362,15 +362,15 @@ t2	CREATE TABLE `t2` (
 select * from t2;
 id	name
 create table t3 like t1;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.t3' already exists
 create table t3 like mysqltest.t3;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.t3' already exists
 create table non_existing_database.t1 like t1;
 ERROR 42000: Unknown schema 'non_existing_database'
-create table t3 like non_existing_table;
-ERROR 42S02: Table 'test.non_existing_table' doesn't exist
+create table t4 like non_existing_table;
+ERROR HY000: Unknown table 'test.non_existing_table'
 create temporary table t3 like t1;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.#t3' already exists
 drop table t1, t2, t3;
 drop database mysqltest;
 SET SESSION storage_engine="MEMORY";
@@ -1460,13 +1460,13 @@ Table	Create Table
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 create table t1 like data_dictionary.processlist;
-ERROR HY000: Can't create table 'test.t1' (errno: 1)
+Got one of the listed errors
 create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `ID` BIGINT NOT NULL,
-  `USER` VARCHAR(16) NOT NULL,
+  `USERNAME` VARCHAR(16) NOT NULL,
   `HOST` VARCHAR(1025) NOT NULL,
   `DB` VARCHAR(256) DEFAULT NULL,
   `COMMAND` VARCHAR(16) NOT NULL,
@@ -1477,13 +1477,13 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 like data_dictionary.processlist;
-ERROR HY000: Can't create table 'test.#t1' (errno: 138)
+Got one of the listed errors
 create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `ID` BIGINT NOT NULL,
-  `USER` VARCHAR(16) NOT NULL,
+  `USERNAME` VARCHAR(16) NOT NULL,
   `HOST` VARCHAR(1025) NOT NULL,
   `DB` VARCHAR(256) DEFAULT NULL,
   `COMMAND` VARCHAR(16) NOT NULL,

@@ -318,6 +318,16 @@ transformStatementToSql(const Statement &source,
       sql_strings.push_back(destination);
     }
     break;
+  case Statement::ALTER_SCHEMA:
+    {
+      assert(source.has_alter_schema_statement());
+      string destination;
+      error= transformAlterSchemaStatementToSql(source.alter_schema_statement(),
+                                                destination,
+                                                sql_variant);
+      sql_strings.push_back(destination);
+    }
+    break;
   case Statement::SET_VARIABLE:
     {
       assert(source.has_set_variable_statement());
@@ -803,6 +813,37 @@ transformDeleteStatementToSql(const DeleteHeader &header,
       destination.push_back(')');
   }
   return error;
+}
+
+enum TransformSqlError
+transformAlterSchemaStatementToSql(const AlterSchemaStatement &statement,
+                                   string &destination,
+                                   enum TransformSqlVariant sql_variant)
+{
+  const Schema &before= statement.before();
+  const Schema &after= statement.after();
+
+  /* Make sure we are given the before and after for the same object */
+  if (before.uuid() != after.uuid())
+    return UUID_MISMATCH;
+
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
+  destination.append("ALTER SCHEMA ");
+  destination.push_back(quoted_identifier);
+  destination.append(before.name());
+  destination.push_back(quoted_identifier);
+
+  /*
+   * Diff our schemas. Currently, only collation can change so a
+   * diff of the two structures is not really necessary.
+   */
+  destination.append(" COLLATE = ");
+  destination.append(after.collation());
+
+  return NONE;
 }
 
 enum TransformSqlError
@@ -1377,9 +1418,18 @@ transformFieldDefinitionToSql(const Table::Field &field,
   case Table::Field::DATE:
     destination.append(" DATE", 5);
     break;
+
   case Table::Field::EPOCH:
-    destination.append(" TIMESTAMP",  10);
+    if (field.time_options().microseconds())
+    {
+      destination.append(" TIMESTAMP(6)");
+    }
+    else
+    {
+      destination.append(" TIMESTAMP",  10);
+    }
     break;
+
   case Table::Field::DATETIME:
     destination.append(" DATETIME",  9);
     break;
@@ -1410,13 +1460,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.has_constraints() &&
-      ! field.constraints().is_nullable())
+  if (field.has_constraints() && field.constraints().is_notnull())
   {
     destination.append(" NOT NULL", 9);
   }
   else if (field.type() == Table::Field::EPOCH)
+  {
     destination.append(" NULL", 5);
+  }
 
   if (field.type() == Table::Field::INTEGER || 
       field.type() == Table::Field::BIGINT)
@@ -1500,6 +1551,7 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
   case DRIZZLE_TYPE_NULL:
     assert(false); /* Not a user definable type */
     return Table::Field::INTEGER; /* unreachable */
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     return Table::Field::EPOCH;
   case DRIZZLE_TYPE_LONGLONG:

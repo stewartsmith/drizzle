@@ -1,5 +1,5 @@
 --source include/have_linux.inc
---source include/have_valgrind.inc
+--source include/not_valgrind.inc
 SET SESSION storage_engine=pbxt;
 create table t1 (a int, b int not null, c int null, d int not null, pk int primary key);
 show create table t1;

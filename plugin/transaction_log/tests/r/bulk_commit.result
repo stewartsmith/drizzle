@@ -32,7 +32,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           is_autoincrement: true
@@ -72,11 +72,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -161,6 +164,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: false
 
 transaction_context {
   server_id: 1
@@ -197,6 +202,8 @@ statement {
     }
   }
 }
+segment_id: 2
+end_segment: true
 
 DROP TABLE t;
 SET GLOBAL transaction_log_truncate_debug= true;

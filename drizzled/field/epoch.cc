@@ -82,19 +82,17 @@ namespace field
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
   Epoch::Epoch(unsigned char *ptr_arg,
-               uint32_t,
                unsigned char *null_ptr_arg,
                unsigned char null_bit_arg,
                enum utype unireg_check_arg,
                const char *field_name_arg,
-               drizzled::TableShare *share,
-               const drizzled::CHARSET_INFO * const cs) :
+               drizzled::TableShare *share) :
   Field_str(ptr_arg,
-            DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+            MicroTimestamp::MAX_STRING_LENGTH - 1, /* no \0 */
             null_ptr_arg,
             null_bit_arg,
             field_name_arg,
-            cs)
+            &my_charset_bin)
 {
   unireg_check= unireg_check_arg;
   if (! share->getTimestampField() && unireg_check != NONE)
@@ -108,14 +106,13 @@ namespace field
 }
 
 Epoch::Epoch(bool maybe_null_arg,
-             const char *field_name_arg,
-             const CHARSET_INFO * const cs) :
+             const char *field_name_arg) :
   Field_str((unsigned char*) NULL,
-            DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+            MicroTimestamp::MAX_STRING_LENGTH - 1, /* no \0 */
             maybe_null_arg ? (unsigned char*) "": 0,
             0,
             field_name_arg,
-            cs)
+            &my_charset_bin)
 {
   if (unireg_check != TIMESTAMP_DN_FIELD)
     flags|= ON_UPDATE_NOW_FLAG;
@@ -165,14 +162,15 @@ int Epoch::store(const char *from,
 
   if (not temporal.from_string(from, (size_t) len))
   {
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
     return 1;
   }
 
   time_t tmp;
   temporal.to_time_t(tmp);
 
-  pack_num(tmp);
+  uint64_t time_tmp= tmp;
+  pack_num(time_tmp);
   return 0;
 }
 
@@ -180,19 +178,33 @@ int Epoch::store(double from)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if (from < 0 || from > 99991231235959.0)
-  {
-    /* Convert the double to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; 
-    ss >> tmp;
+  uint64_t from_tmp= (uint64_t)from;
 
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+  Timestamp temporal;
+  if (not temporal.from_int64_t(from_tmp))
+  {
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
+
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
-  return Epoch::store((int64_t) rint(from), false);
+
+  time_t tmp;
+  temporal.to_time_t(tmp);
+
+  uint64_t tmp_micro= tmp;
+  pack_num(tmp_micro);
+
+  return 0;
+}
+
+int Epoch::store_decimal(const type::Decimal *value)
+{
+  double tmp;
+  value->convert(tmp);
+
+  return store(tmp);
 }
 
 int Epoch::store(int64_t from, bool)
@@ -204,19 +216,20 @@ int Epoch::store(int64_t from, bool)
    * if unable to create a valid DateTime.  
    */
   Timestamp temporal;
-  if (! temporal.from_int64_t(from))
+  if (not temporal.from_int64_t(from))
   {
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
 
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
 
   time_t tmp;
   temporal.to_time_t(tmp);
 
-  pack_num(tmp);
+  uint64_t tmp64= tmp;
+  pack_num(tmp64);
 
   return 0;
 }
@@ -270,30 +283,21 @@ String *Epoch::val_str(String *val_buffer, String *)
 bool Epoch::get_date(type::Time *ltime, uint32_t)
 {
   uint64_t temp;
+  type::Time::epoch_t time_temp;
 
   unpack_num(temp);
+  time_temp= temp;
   
-  memset(ltime, 0, sizeof(*ltime));
+  ltime->reset();
 
-  Timestamp temporal;
-  (void) temporal.from_time_t((time_t) temp);
-
-  /* @TODO Goodbye the below code when type::Time is finally gone.. */
-
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
-  ltime->year= temporal.years();
-  ltime->month= temporal.months();
-  ltime->day= temporal.days();
-  ltime->hour= temporal.hours();
-  ltime->minute= temporal.minutes();
-  ltime->second= temporal.seconds();
+  ltime->store(time_temp);
 
   return 0;
 }
 
 bool Epoch::get_time(type::Time *ltime)
 {
-  return Epoch::get_date(ltime,0);
+  return Epoch::get_date(ltime, 0);
 }
 
 int Epoch::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
@@ -343,9 +347,10 @@ void Epoch::sql_type(String &res) const
 void Epoch::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
-  time_t tmp= session->query_start();
+  time_t tmp= session->getCurrentTimestampEpoch();
+
   set_notnull();
-  pack_num(tmp);
+  pack_num(static_cast<uint32_t>(tmp));
 }
 
 void Epoch::set_default()

@@ -227,6 +227,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -558,6 +560,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -606,7 +610,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           is_autoincrement: true
@@ -616,7 +620,7 @@ statement {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -654,12 +658,14 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -869,6 +875,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1055,6 +1063,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1124,6 +1134,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1311,6 +1323,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1481,6 +1495,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1615,6 +1631,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1780,6 +1798,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -1946,6 +1966,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -2064,6 +2086,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -2303,6 +2327,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 
@@ -2557,6 +2583,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
 

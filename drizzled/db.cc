@@ -25,7 +25,6 @@
 #include <string>
 #include <fstream>
 
-#include <drizzled/message/schema.pb.h>
 #include "drizzled/error.h"
 #include <drizzled/gettext.h>
 #include <drizzled/my_hash.h>
@@ -46,8 +45,6 @@
 
 #include <boost/thread/mutex.hpp>
 
-boost::mutex LOCK_create_db;
-
 #include "drizzled/internal/my_sys.h"
 
 #define MAX_DROP_TABLE_Q_LEN      1024
@@ -58,7 +55,7 @@ namespace drizzled
 {
 
 static void change_db_impl(Session *session);
-static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
+static void change_db_impl(Session *session, identifier::Schema &schema_identifier);
 
 /*
   Create a database
@@ -88,12 +85,12 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
 
   /*
     Do not create database if another thread is holding read lock.
-    Wait for global read lock before acquiring LOCK_create_db.
+    Wait for global read lock before acquiring session->catalog()->schemaLock().
     After wait_if_global_read_lock() we have protection against another
-    global read lock. If we would acquire LOCK_create_db first,
+    global read lock. If we would acquire session->catalog()->schemaLock() first,
     another thread could step in and get the global read lock before we
     reach wait_if_global_read_lock(). If this thread tries the same as we
-    (admin a db), it would then go and wait on LOCK_create_db...
+    (admin a db), it would then go and wait on session->catalog()->schemaLock()...
     Furthermore wait_if_global_read_lock() checks if the current thread
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
@@ -108,10 +105,10 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
 
   // @todo push this lock down into the engine
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_create_db);
+    boost::mutex::scoped_lock scopedLock(session->catalog().schemaLock());
 
     // Check to see if it exists already.  
-    SchemaIdentifier schema_identifier(schema_message.name());
+    identifier::Schema schema_identifier(schema_message.name());
     if (plugin::StorageEngine::doesSchemaExist(schema_identifier))
     {
       if (not is_if_not_exists)
@@ -146,18 +143,20 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
 
 /* db-name is already validated when we come here */
 
-bool alter_db(Session *session, const message::Schema &schema_message)
+bool alter_db(Session *session,
+              const message::Schema &schema_message,
+              const message::schema::shared_ptr &original_schema)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   /*
     Do not alter database if another thread is holding read lock.
-    Wait for global read lock before acquiring LOCK_create_db.
+    Wait for global read lock before acquiring session->catalog()->schemaLock().
     After wait_if_global_read_lock() we have protection against another
-    global read lock. If we would acquire LOCK_create_db first,
+    global read lock. If we would acquire session->catalog()->schemaLock() first,
     another thread could step in and get the global read lock before we
     reach wait_if_global_read_lock(). If this thread tries the same as we
-    (admin a db), it would then go and wait on LOCK_create_db...
+    (admin a db), it would then go and wait on session->catalog()->schemaLock()...
     Furthermore wait_if_global_read_lock() checks if the current thread
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
@@ -167,9 +166,9 @@ bool alter_db(Session *session, const message::Schema &schema_message)
 
   bool success;
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_create_db);
+    boost::mutex::scoped_lock scopedLock(session->catalog().schemaLock());
 
-    SchemaIdentifier schema_idenifier(schema_message.name());
+    identifier::Schema schema_idenifier(schema_message.name());
     if (not plugin::StorageEngine::doesSchemaExist(schema_idenifier))
     {
       my_error(ER_SCHEMA_DOES_NOT_EXIST, schema_idenifier);
@@ -181,7 +180,7 @@ bool alter_db(Session *session, const message::Schema &schema_message)
 
     if (success)
     {
-      transaction_services.rawStatement(session, *session->getQueryString());
+      transaction_services.alterSchema(session, original_schema, schema_message);
       session->my_ok(1);
     }
     else
@@ -212,18 +211,18 @@ bool alter_db(Session *session, const message::Schema &schema_message)
     ERROR Error
 */
 
-bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_exists)
+bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool if_exists)
 {
   bool error= false;
 
   /*
     Do not drop database if another thread is holding read lock.
-    Wait for global read lock before acquiring LOCK_create_db.
+    Wait for global read lock before acquiring session->catalog()->schemaLock().
     After wait_if_global_read_lock() we have protection against another
-    global read lock. If we would acquire LOCK_create_db first,
+    global read lock. If we would acquire session->catalog()->schemaLock() first,
     another thread could step in and get the global read lock before we
     reach wait_if_global_read_lock(). If this thread tries the same as we
-    (admin a db), it would then go and wait on LOCK_create_db...
+    (admin a db), it would then go and wait on session->catalog()->schemaLock()...
     Furthermore wait_if_global_read_lock() checks if the current thread
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
@@ -235,7 +234,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
 
   do
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_create_db);
+    boost::mutex::scoped_lock scopedLock(session->catalog().schemaLock());
 
     /* See if the schema exists */
     if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
@@ -339,7 +338,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
     @retval true  Error
 */
 
-bool change_db(Session *session, SchemaIdentifier &schema_identifier)
+bool change_db(Session *session, identifier::Schema &schema_identifier)
 {
 
   if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
@@ -382,7 +381,7 @@ bool change_db(Session *session, SchemaIdentifier &schema_identifier)
   @param new_db_charset Character set of the new database.
 */
 
-static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier)
+static void change_db_impl(Session *session, identifier::Schema &schema_identifier)
 {
   /* 1. Change current database in Session. */
 

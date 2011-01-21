@@ -177,7 +177,11 @@ int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
   /* index_merge currently doesn't support "using index" at all */
   cursor->extra(HA_EXTRA_NO_KEYREAD);
   /* start table scan */
-  read_record.init_read_record(session, head, (optimizer::SqlSelect*) 0, 1, 1);
+  if ((result= read_record.init_read_record(session, head, (optimizer::SqlSelect*) 0, 1, 1)))
+  {
+    head->print_error(result, MYF(0));
+    return 0;
+  }
   return result;
 }
 

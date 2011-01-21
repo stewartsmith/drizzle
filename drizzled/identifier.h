@@ -37,7 +37,9 @@ public:
 
 } // namespace drizzled
 
+#include "drizzled/identifier/catalog.h"
 #include "drizzled/identifier/schema.h"
+#include "drizzled/identifier/session.h"
 #include "drizzled/identifier/table.h"
 #include "drizzled/identifier/user.h"
 

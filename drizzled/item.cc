@@ -44,6 +44,7 @@
 #include "drizzled/field/epoch.h"
 #include "drizzled/field/int32.h"
 #include "drizzled/field/int64.h"
+#include "drizzled/field/microtime.h"
 #include "drizzled/field/null.h"
 #include "drizzled/field/real.h"
 #include "drizzled/field/size.h"
@@ -244,7 +245,7 @@ int Item::save_time_in_field(Field *field)
   if (get_time(&ltime))
     return set_field_to_null(field);
   field->set_notnull();
-  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_TIME);
+  return field->store_time(&ltime, type::DRIZZLE_TIMESTAMP_TIME);
 }
 
 int Item::save_date_in_field(Field *field)
@@ -253,7 +254,7 @@ int Item::save_date_in_field(Field *field)
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return set_field_to_null(field);
   field->set_notnull();
-  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
+  return field->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 /**
@@ -461,33 +462,38 @@ Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
 
 bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
 {
-  if (result_type() == STRING_RESULT)
+  do
   {
-    char buff[40];
-    String tmp(buff,sizeof(buff), &my_charset_bin),*res;
-    if (!(res=val_str(&tmp)) ||
-        str_to_datetime_with_warn(res->ptr(), res->length(),
-                                  ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
-      goto err;
-  }
-  else
-  {
-    int64_t value= val_int();
-    int was_cut;
-    if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
+    if (result_type() == STRING_RESULT)
     {
-      char buff[22], *end;
-      end= internal::int64_t10_to_str(value, buff, -10);
-      make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                   buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
-                                   NULL);
-      goto err;
+      char buff[40];
+      String tmp(buff,sizeof(buff), &my_charset_bin),*res;
+      if (!(res=val_str(&tmp)) ||
+          str_to_datetime_with_warn(res->ptr(), res->length(),
+                                    ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
+      {
+        break;
+      }
     }
-  }
-  return false;
+    else
+    {
+      int64_t value= val_int();
+      int was_cut;
+      if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
+      {
+        char buff[22], *end;
+        end= internal::int64_t10_to_str(value, buff, -10);
+        make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                     buff, (int) (end-buff), type::DRIZZLE_TIMESTAMP_NONE, NULL);
+        break;
+      }
+    }
 
-err:
-  memset(ltime, 0, sizeof(*ltime));
+    return false;
+  } while (0);
+
+  ltime->reset();
+
   return true;
 }
 
@@ -495,12 +501,13 @@ bool Item::get_time(type::Time *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str(&tmp)) ||
-      str_to_time_with_warn(res->ptr(), res->length(), ltime))
+  if (!(res=val_str(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), ltime))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime->reset();
+
     return true;
   }
+
   return false;
 }
 
@@ -823,7 +830,7 @@ void mark_select_range_as_dependent(Session *session,
   {
     Item_subselect *prev_subselect_item= previous_select->master_unit()->item;
     prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
   }
   {
     Item_subselect *prev_subselect_item= previous_select->master_unit()->item;
@@ -838,7 +845,7 @@ void mark_select_range_as_dependent(Session *session,
     }
     else
       prev_subselect_item->used_tables_cache|= found_field->getTable()->map;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
     mark_as_dependent(session, last_select, current_sel, resolved_item,
                       dependent);
   }
@@ -914,9 +921,11 @@ static Item** find_field_in_group_list(Item *find_item, Order *group_list)
         if (cur_field->db_name && db_name)
         {
           /* If field_name is also qualified by a database name. */
-          if (strcasecmp(cur_field->db_name, db_name))
+          if (my_strcasecmp(system_charset_info, cur_field->db_name, db_name))
+          {
             /* Same field names, different databases. */
             return NULL;
+          }
           ++cur_match_degree;
         }
       }
@@ -1065,6 +1074,7 @@ bool Item::is_datetime()
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_MICROTIME:
       return true;
     case DRIZZLE_TYPE_BLOB:
     case DRIZZLE_TYPE_VARCHAR:
@@ -1195,8 +1205,13 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   case DRIZZLE_TYPE_DATE:
     field= new Field_date(maybe_null, name, &my_charset_bin);
     break;
+
+  case DRIZZLE_TYPE_MICROTIME:
+    field= new field::Microtime(maybe_null, name);
+    break;
+
   case DRIZZLE_TYPE_TIMESTAMP:
-    field= new field::Epoch(maybe_null, name, &my_charset_bin);
+    field= new field::Epoch(maybe_null, name);
     break;
   case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);
@@ -1400,6 +1415,7 @@ bool Item::send(plugin::Client *client, String *buffer)
       break;
     }
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     {
       type::Time tm;
@@ -1637,6 +1653,7 @@ static Field *create_tmp_field_from_item(Session *,
     */
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
         type == DRIZZLE_TYPE_TIME ||
+        type == DRIZZLE_TYPE_MICROTIME ||
         type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
     {

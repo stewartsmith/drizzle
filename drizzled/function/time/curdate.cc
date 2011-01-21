@@ -37,7 +37,7 @@ void Item_func_curdate::fix_length_and_dec()
 
   /* We don't need to set second_part and neg because they already 0 */
   ltime.hour= ltime.minute= ltime.second= 0;
-  ltime.time_type= DRIZZLE_TIMESTAMP_DATE;
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATE;
 
   /** 
    * @TODO Remove ltime completely when timezones are reworked.  Using this
@@ -55,7 +55,7 @@ void Item_func_curdate::fix_length_and_dec()
 void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
-  time_t tmp= session->query_start();
+  time_t tmp= session->getCurrentTimestampEpoch();
 
   (void) cached_temporal.from_time_t(tmp);
 
@@ -65,6 +65,7 @@ void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
   now_time->hour= 0;
   now_time->minute= 0;
   now_time->second= 0;
+  now_time->second_part= 0;
 }
 
 /**
@@ -74,7 +75,7 @@ void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
 void Item_func_curdate_utc::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
-  time_t tmp= session->query_start();
+  time_t tmp= session->getCurrentTimestampEpoch();
 
   (void) cached_temporal.from_time_t(tmp);
 
@@ -84,6 +85,7 @@ void Item_func_curdate_utc::store_now_in_TIME(type::Time *now_time)
   now_time->hour= 0;
   now_time->minute= 0;
   now_time->second= 0;
+  now_time->second_part= 0;
 }
 
 bool Item_func_curdate::get_temporal(Date &to)

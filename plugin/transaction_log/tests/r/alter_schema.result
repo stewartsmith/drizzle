@@ -1,0 +1,5 @@
+ALTER SCHEMA alter_schema_test COLLATE = utf8_bin;
+
+SET AUTOCOMMIT=0;
+ALTER SCHEMA `alter_schema_test` COLLATE = utf8_bin;
+COMMIT;

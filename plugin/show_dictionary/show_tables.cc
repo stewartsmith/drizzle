@@ -36,6 +36,9 @@ ShowTables::Generator::Generator(drizzled::Field **arg) :
   show_dictionary::Show::Generator(arg),
   is_primed(false)
 {
+  if (not isShowQuery())
+   return;
+
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowSchema().empty())
@@ -59,7 +62,7 @@ bool ShowTables::Generator::nextCore()
       return false;
     }
 
-    SchemaIdentifier identifier(schema_name);
+    identifier::Schema identifier(schema_name);
     plugin::StorageEngine::getIdentifiers(getSession(), identifier, set_of_identifiers);
     table_iterator= set_of_identifiers.begin();
     is_primed= true;

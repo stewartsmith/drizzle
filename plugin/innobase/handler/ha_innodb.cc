@@ -202,7 +202,7 @@ typedef constrained_check<uint32_t, 5000, 1> purge_batch_constraint;
 static purge_batch_constraint innodb_purge_batch_size;
 typedef constrained_check<uint32_t, 1, 0> purge_threads_constraint;
 static purge_threads_constraint innodb_n_purge_threads;
-typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+typedef constrained_check<uint32_t, 2, 0> trinary_constraint;
 static trinary_constraint innodb_flush_log_at_trx_commit;
 typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
 static max_dirty_pages_constraint innodb_max_dirty_pages_pct;
@@ -251,7 +251,7 @@ static string innobase_file_format_max;
 /* Below we have boolean-valued start-up parameters, and their default
 values */
 
-typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+typedef constrained_check<uint32_t, 2, 0> trinary_constraint;
 static trinary_constraint innobase_fast_shutdown;
 
 /* "innobase_file_format_check" decides whether we would continue
@@ -444,7 +444,7 @@ public:
   doDropSchema(
   /*===================*/
         /* out: error number */
-    const SchemaIdentifier  &identifier); /* in: database path; inside InnoDB the name
+    const identifier::Schema  &identifier); /* in: database path; inside InnoDB the name
         of the last directory in the path is used as
         the database name: for example, in 'mysql/data/test'
         the database name is 'test' */
@@ -483,10 +483,10 @@ public:
 
   UNIV_INTERN int doCreateTable(Session &session,
                                 Table &form,
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 message::Table&);
-  UNIV_INTERN int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
-  UNIV_INTERN int doDropTable(Session &session, const TableIdentifier &identifier);
+  UNIV_INTERN int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
+  UNIV_INTERN int doDropTable(Session &session, const identifier::Table &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -505,14 +505,14 @@ public:
   }
 
   int doGetTableDefinition(drizzled::Session& session,
-                           const TableIdentifier &identifier,
+                           const identifier::Table &identifier,
                            drizzled::message::Table &table_proto);
 
-  bool doDoesTableExist(drizzled::Session& session, const TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const identifier::Table &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
 
@@ -540,8 +540,8 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 }
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                           const drizzled::SchemaIdentifier &schema_identifier,
-                                           drizzled::TableIdentifier::vector &set_of_identifiers)
+                                           const drizzled::identifier::Schema &schema_identifier,
+                                           drizzled::identifier::Table::vector &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -572,14 +572,14 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
            Using schema_identifier here to stop unused warning, could use
            definition.schema() instead
         */
-        TableIdentifier identifier(schema_identifier.getSchemaName(), definition.name());
+        identifier::Table identifier(schema_identifier.getSchemaName(), definition.name());
         set_of_identifiers.push_back(identifier);
       }
     }
   }
 }
 
-bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
+bool InnobaseEngine::doDoesTableExist(Session &session, const identifier::Table &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
@@ -596,7 +596,7 @@ bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &i
 }
 
 int InnobaseEngine::doGetTableDefinition(Session &session,
-                                         const TableIdentifier &identifier,
+                                         const identifier::Table &identifier,
                                          message::Table &table_proto)
 {
   string proto_path(identifier.getPath());
@@ -1690,7 +1690,7 @@ innobase_convert_identifier(
     nz[idlen] = 0;
 
     s = nz2.get();
-    idlen = TableIdentifier::filename_to_tablename(nz, nz2.get(), nz2_size);
+    idlen = identifier::Table::filename_to_tablename(nz, nz2.get(), nz2_size);
   }
 
   /* See if the identifier needs to be quoted. */
@@ -1904,7 +1904,7 @@ static void innodb_read_ahead_threshold_update(Session *, sql_var_t)
 
 static int innodb_commit_concurrency_validate(Session *session, set_var *var)
 {
-   uint32_t new_value= var->save_result.uint32_t_value;
+   uint64_t new_value= var->getInteger();
 
    if ((innobase_commit_concurrency.get() == 0 && new_value != 0) ||
        (innobase_commit_concurrency.get() != 0 && new_value == 0))
@@ -2008,13 +2008,13 @@ innodb_file_format_max_validate(
     }
 
     if (format_id >= 0) {
-      innobase_file_format_max= 
-        trx_sys_file_format_id_to_name((uint)format_id);
+      innobase_file_format_max.assign(
+                             trx_sys_file_format_id_to_name((uint)format_id));
 
       /* Update the max format id in the system tablespace. */
-      char name_buff[100];
-      strcpy(name_buff, innobase_file_format_max.c_str());
-      if (trx_sys_file_format_max_set(format_id, (const char **)&name_buff))
+      const char *name_buff;
+
+      if (trx_sys_file_format_max_set(format_id, &name_buff))
       {
         errmsg_printf(ERRMSG_LVL_WARN,
                       " [Info] InnoDB: the file format in the system "
@@ -2426,7 +2426,7 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value<uint32_t>("purge_threads",
                                                                    innodb_n_purge_threads,
                                                                    purge_threads_update));
-  context.registerVariable(new sys_var_constrained_value<uint16_t>("fast_shutdown", innobase_fast_shutdown));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("fast_shutdown", innobase_fast_shutdown));
   context.registerVariable(new sys_var_std_string("file_format",
                                                   innobase_file_format_name,
                                                   innodb_file_format_name_validate));
@@ -2438,7 +2438,7 @@ innobase_change_buffering_inited_ok:
                                                   innodb_file_format_max_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<int64_t>("log_file_size", innobase_log_file_size));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("flush_log_at_trx_commit",
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush_log_at_trx_commit",
                                                   innodb_flush_log_at_trx_commit));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct",
                                                   innodb_max_dirty_pages_pct));
@@ -3349,7 +3349,7 @@ database.
 @return 1 if error, 0 if success */
 UNIV_INTERN
 int
-ha_innobase::doOpen(const TableIdentifier &identifier,
+ha_innobase::doOpen(const identifier::Table &identifier,
                     int   mode,   /*!< in: not used */
                     uint    test_if_locked) /*!< in: not used */
 {
@@ -3847,6 +3847,7 @@ get_innobase_type_from_mysql_type(
       return(DATA_VARMYSQL);
     }
   case DRIZZLE_TYPE_DECIMAL:
+  case DRIZZLE_TYPE_MICROTIME:
     return(DATA_FIXBINARY);
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
@@ -6122,7 +6123,7 @@ InnobaseEngine::doCreateTable(
 /*================*/
   Session         &session, /*!< in: Session */
   Table&    form,   /*!< in: information on table columns and indexes */
-        const TableIdentifier &identifier,
+        const identifier::Table &identifier,
         message::Table& create_proto)
 {
   int   error;
@@ -6526,7 +6527,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session &session,
-        const TableIdentifier &identifier)
+        const identifier::Table &identifier)
 {
   int error;
   trx_t*  parent_trx;
@@ -6617,7 +6618,7 @@ Removes all tables in the named database inside InnoDB. */
 bool
 InnobaseEngine::doDropSchema(
 /*===================*/
-                             const SchemaIdentifier &identifier)
+                             const identifier::Schema &identifier)
     /*!< in: database path; inside InnoDB the name
       of the last directory in the path is used as
       the database name: for example, in 'mysql/data/test'
@@ -6667,7 +6668,7 @@ InnobaseEngine::doDropSchema(
 
 void InnobaseEngine::dropTemporarySchema()
 {
-  SchemaIdentifier schema_identifier(GLOBAL_TEMPORARY_EXT);
+  identifier::Schema schema_identifier(GLOBAL_TEMPORARY_EXT);
   trx_t*  trx= NULL;
   string schema_path(GLOBAL_TEMPORARY_EXT);
 
@@ -6753,7 +6754,7 @@ innobase_rename_table(
 /*********************************************************************//**
 Renames an InnoDB table.
 @return 0 or error code */
-UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
+UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const identifier::Table &from, const identifier::Table &to)
 {
   // A temp table alter table/rename is a shallow rename and only the
   // definition needs to be updated.
@@ -7778,12 +7779,12 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
       i++;
     }
     db_name[i] = 0;
-    ulen= TableIdentifier::filename_to_tablename(db_name, uname, sizeof(uname));
+    ulen= identifier::Table::filename_to_tablename(db_name, uname, sizeof(uname));
     LEX_STRING *tmp_referenced_db = session->make_lex_string(NULL, uname, ulen, true);
 
     /* Table name */
     tmp_buff += i + 1;
-    ulen= TableIdentifier::filename_to_tablename(tmp_buff, uname, sizeof(uname));
+    ulen= identifier::Table::filename_to_tablename(tmp_buff, uname, sizeof(uname));
     LEX_STRING *tmp_referenced_table = session->make_lex_string(NULL, uname, ulen, true);
 
     /** Foreign Fields **/
@@ -9254,16 +9255,16 @@ static void init_options(drizzled::module::option_context &context)
           "Purge threads can be either 0 or 1. Defalut is 0.");
   context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
-          "Stores each InnoDB table to an .ibd file in the database dir.");
-  context("file-format",
-          po::value<string>(&innobase_file_format_name)->default_value("Antelope"),
-          "File format to use for new tables in .ibd files.");
+           "Stores each InnoDB table to an .ibd file in the database dir.");
   context("file-format-max",
           po::value<string>(&innobase_file_format_max)->default_value("Antelope"),
           "The highest file format in the tablespace.");
   context("file-format-check",
           po::value<bool>(&innobase_file_format_check)->default_value(true)->zero_tokens(),
           "Whether to perform system file format check.");
+  context("file-format",
+          po::value<string>(&innobase_file_format_name)->default_value("Antelope"),
+          "File format to use for new tables in .ibd files.");
   context("flush-log-at-trx-commit",
           po::value<trinary_constraint>(&innodb_flush_log_at_trx_commit)->default_value(1),
           "Set to 0 (write and flush once per second), 1 (write and flush at each commit) or 2 (write at commit, flush once per second).");
@@ -9298,7 +9299,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.");
   context("autoextend-increment",
-          po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(8L),
+          po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(64L),
           "Data file autoextend increment in megabytes");
   context("buffer-pool-size",
           po::value<buffer_pool_constraint>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),

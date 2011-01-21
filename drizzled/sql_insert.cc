@@ -1325,13 +1325,9 @@ void select_insert::store_values(List<Item> &values)
     fill_record(session, table->getFields(), values, true);
 }
 
-void select_insert::send_error(uint32_t errcode,const char *err)
+void select_insert::send_error(drizzled::error_t errcode,const char *err)
 {
-
-
   my_message(errcode, err, MYF(0));
-
-  return;
 }
 
 
@@ -1485,7 +1481,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       List<Item> *items,
                                       bool is_if_not_exists,
                                       DrizzleLock **lock,
-				      TableIdentifier &identifier)
+				      identifier::Table::const_reference identifier)
 {
   TableShare share(message::Table::INTERNAL);
   uint32_t select_field_count= items->elements;
@@ -1493,7 +1489,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   List_iterator_fast<Item> it(*items);
   Item *item;
   Field *tmp_field;
-  bool not_used;
 
   if (not (identifier.isTmp()) && create_table->table->db_stat)
   {
@@ -1577,13 +1572,13 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Table *table= 0;
   {
     if (not create_table_no_lock(session,
-				       identifier,
-				       create_info,
-				       table_proto,
-				       alter_info,
-				       false,
-				       select_field_count,
-				       is_if_not_exists))
+				 identifier,
+				 create_info,
+				 table_proto,
+				 alter_info,
+				 false,
+				 select_field_count,
+				 is_if_not_exists))
     {
       if (create_info->table_existed && not identifier.isTmp())
       {
@@ -1607,7 +1602,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
           if (concurrent_table->reopen_name_locked_table(create_table, session))
           {
-            plugin::StorageEngine::dropTable(*session, identifier);
+            (void)plugin::StorageEngine::dropTable(*session, identifier);
           }
           else
           {
@@ -1616,7 +1611,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         }
         else
         {
-          plugin::StorageEngine::dropTable(*session, identifier);
+          (void)plugin::StorageEngine::dropTable(*session, identifier);
         }
       }
       else
@@ -1639,7 +1634,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   }
 
   table->reginfo.lock_type=TL_WRITE;
-  if (! ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
+  if (not ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH)))
   {
     if (*lock)
     {
@@ -1735,7 +1730,7 @@ void select_create::store_values(List<Item> &values)
 }
 
 
-void select_create::send_error(uint32_t errcode,const char *err)
+void select_create::send_error(drizzled::error_t errcode,const char *err)
 {
   /*
     This will execute any rollbacks that are necessary before writing
@@ -1749,8 +1744,6 @@ void select_create::send_error(uint32_t errcode,const char *err)
 
   */
   select_insert::send_error(errcode, err);
-
-  return;
 }
 
 

@@ -65,7 +65,6 @@ extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
-extern uint64_t max_connect_errors;
 extern back_log_constraints back_log;
 extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
@@ -468,7 +467,7 @@ public:
 
   bool update(Session *, set_var *var)
   {
-    value= var->save_result.uint32_t_value;
+    value= uint32_t(var->getInteger());
     return false;
   }
 
@@ -516,14 +515,14 @@ inline SHOW_TYPE sys_var_constrained_value<int32_t>::show_type()
 template<>
 inline bool sys_var_constrained_value<uint64_t>::update(Session *, set_var *var)
 {
-  value= var->save_result.uint64_t_value;
+  value= var->getInteger();
   return false;
 }
 
 template<>
 inline bool sys_var_constrained_value<uint32_t>::update(Session *, set_var *var)
 {
-  value= var->save_result.uint32_t_value;
+  value= uint32_t(var->getInteger());
   return false;
 }
 
@@ -946,7 +945,6 @@ public:
                                  plugin::StorageEngine *drizzle_system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   {  }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1020,7 +1018,6 @@ public:
   sys_var_collation(const char *name_arg)
     :sys_var_session(name_arg, NULL)
   { }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1088,7 +1085,6 @@ public:
   {
     
   }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1129,7 +1125,6 @@ public:
   {
     
   }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {

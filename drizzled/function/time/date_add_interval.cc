@@ -66,15 +66,20 @@ void Item_date_add_interval::fix_length_and_dec()
   */
   cached_field_type= DRIZZLE_TYPE_VARCHAR;
   arg0_field_type= args[0]->field_type();
-  if (arg0_field_type == DRIZZLE_TYPE_DATETIME ||
-      arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
+  if (arg0_field_type == DRIZZLE_TYPE_DATETIME or arg0_field_type == DRIZZLE_TYPE_TIMESTAMP or arg0_field_type == DRIZZLE_TYPE_MICROTIME)
+  {
     cached_field_type= DRIZZLE_TYPE_DATETIME;
+  }
   else if (arg0_field_type == DRIZZLE_TYPE_DATE)
   {
     if (int_type <= INTERVAL_DAY || int_type == INTERVAL_YEAR_MONTH)
+    {
       cached_field_type= arg0_field_type;
+    }
     else
+    {
       cached_field_type= DRIZZLE_TYPE_DATETIME;
+    }
   }
 }
 
@@ -108,15 +113,15 @@ String *Item_date_add_interval::val_str(String *str)
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
 
-  if (ltime.time_type == DRIZZLE_TIMESTAMP_DATE)
+  if (ltime.time_type == type::DRIZZLE_TIMESTAMP_DATE)
   {
-    make_date(&ltime, str);
+    ltime.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
   }
   else if (ltime.second_part)
   {
     /* Ensure we've got enough room for our timestamp string. */
-    str->length(DateTime::MAX_STRING_LENGTH);
-    size_t length= snprintf(str->c_ptr(), DateTime::MAX_STRING_LENGTH,
+    str->alloc(MicroTimestamp::MAX_STRING_LENGTH);
+    size_t length= snprintf(str->ptr(), MicroTimestamp::MAX_STRING_LENGTH,
                             "%04u-%02u-%02u %02u:%02u:%02u.%06u",
                             ltime.year,
                             ltime.month,
@@ -124,13 +129,13 @@ String *Item_date_add_interval::val_str(String *str)
                             ltime.hour,
                             ltime.minute,
                             ltime.second,
-                            (uint32_t) ltime.second_part);
+                            ltime.second_part);
     str->length(length);
     str->set_charset(&my_charset_bin);
   }
   else
   {
-    make_datetime(&ltime, str);
+    ltime.convert(*str);
   }
 
   return str;
@@ -144,7 +149,7 @@ int64_t Item_date_add_interval::val_int()
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return (int64_t) 0;
   date = (ltime.year*100L + ltime.month)*100L + ltime.day;
-  return ltime.time_type == DRIZZLE_TIMESTAMP_DATE ? date :
+  return ltime.time_type == type::DRIZZLE_TIMESTAMP_DATE ? date :
     ((date*100L + ltime.hour)*100L+ ltime.minute)*100L + ltime.second;
 }
 

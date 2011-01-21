@@ -138,9 +138,13 @@ int Field_str::store(double nr)
   if (error)
   {
     if (getTable()->in_use->abort_on_warning)
+    {
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+    }
     else
+    {
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   return store(buff, length, charset());
 }

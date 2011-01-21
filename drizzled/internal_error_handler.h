@@ -61,7 +61,7 @@ public:
     @param session the calling thread
     @return true if the error is handled
   */
-  virtual bool handle_error(uint32_t sql_errno,
+  virtual bool handle_error(drizzled::error_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
                             Session *session) = 0;

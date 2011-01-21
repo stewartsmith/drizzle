@@ -32,6 +32,8 @@
 # endif
 #endif
 
+#include <drizzled/sql_string.h>
+
 namespace drizzled
 {
 
@@ -39,7 +41,6 @@ extern uint64_t log_10_int[20];
 extern unsigned char days_in_month[];
 
 /* Time handling defaults */
-#define TIMESTAMP_MAX_YEAR 2038
 #define TIMESTAMP_MIN_YEAR (1900 + YY_PART_YEAR - 1)
 #define TIMESTAMP_MAX_VALUE INT32_MAX
 #define TIMESTAMP_MIN_VALUE 1
@@ -68,13 +69,6 @@ extern unsigned char days_in_month[];
 #define TIME_MAX_VALUE_SECONDS (TIME_MAX_HOUR * 3600L + \
                                 TIME_MAX_MINUTE * 60L + TIME_MAX_SECOND)
 
-enum enum_drizzle_timestamp_type
-{
-  DRIZZLE_TIMESTAMP_NONE= -2, DRIZZLE_TIMESTAMP_ERROR= -1,
-  DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
-};
-
-
 /*
   Structure which is used to represent datetime values inside Drizzle.
 
@@ -88,30 +82,118 @@ enum enum_drizzle_timestamp_type
   bigger values.
 */
 namespace type {
+
+enum timestamp_t
+{
+  DRIZZLE_TIMESTAMP_NONE= -2, DRIZZLE_TIMESTAMP_ERROR= -1,
+  DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
+};
+
+/*
+  datatime_t while being stored in an integer is actually a formatted value.
+*/
+struct datatime_t {
+  int64_t value;
+};
+
+
+
 class Time
 {
 public:
-  unsigned int  year, month, day, hour, minute, second;
-  unsigned long second_part;
-  bool       neg;
-  enum enum_drizzle_timestamp_type time_type;
-};
-}
+  typedef uint32_t usec_t;
+  typedef int64_t epoch_t;
 
+  Time()
+  {
+    reset();
+  }
+
+  Time(uint32_t year_arg,
+       uint32_t month_arg,
+       uint32_t day_arg,
+       uint32_t hour_arg,
+       uint32_t minute_arg,
+       uint32_t second_arg,
+       usec_t second_part_arg,
+       timestamp_t type_arg) :
+    year(year_arg),
+    month(month_arg),
+    day(day_arg),
+    hour(hour_arg),
+    minute(minute_arg),
+    second(second_arg),
+    second_part(second_part_arg),
+    neg(false),
+    time_type(type_arg),
+    _is_local_time(false)
+  {
+  }
+
+  Time(uint32_t hour_arg,
+       uint32_t minute_arg,
+       uint32_t second_arg,
+       usec_t second_part_arg,
+       bool neg_arg) :
+    year(0),
+    month(0),
+    day(0),
+    hour(hour_arg),
+    minute(minute_arg),
+    second(second_arg),
+    second_part(second_part_arg),
+    neg(neg_arg),
+    time_type(DRIZZLE_TIMESTAMP_TIME),
+    _is_local_time(false)
+  {
+  }
+
+  uint32_t year, month, day, hour, minute, second;
+  usec_t second_part;
+  bool neg;
+  timestamp_t time_type;
+  bool _is_local_time;
+
+  void reset()
+  {
+    year= month= day= hour= minute= second= second_part= 0;
+    neg= false;
+    time_type= DRIZZLE_TIMESTAMP_DATE;
+    _is_local_time= false;
+  }
+
+  timestamp_t type() const
+  {
+    return time_type;
+  }
+
+  void convert(drizzled::String &str, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
+  void convert(char *str, size_t &to_length, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
+  void convert(uint64_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
+
+  void store(const type::Time::epoch_t &from, bool use_localtime= false);
+  void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
+  void store(const struct tm &from);
+  void store(const struct timeval &from);
+
+  static const uint32_t FRACTIONAL_DIGITS= 1000000;
+  static const size_t MAX_STRING_LENGTH= 32;   // +32 to make my_snprintf_{8bit|ucs2} happy
+};
+
+}
 
 bool check_date(const type::Time *ltime, bool not_zero_date,
                    uint32_t flags, int *was_cut);
-enum enum_drizzle_timestamp_type
-str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
-                uint32_t flags, int *was_cut);
+
+type::timestamp_t str_to_datetime(const char *str, uint32_t length, type::Time *l_time, uint32_t flags, int *was_cut);
+
 int64_t number_to_datetime(int64_t nr, type::Time *time_res,
                             uint32_t flags, int *was_cut);
 uint64_t TIME_to_uint64_t_datetime(const type::Time *);
 uint64_t TIME_to_uint64_t(const type::Time *);
 
 
-bool str_to_time(const char *str,uint32_t length, type::Time *l_time,
-                 int *warning);
+bool str_to_time(const char *str,uint32_t length, type::Time *l_time, int *warning);
 
 long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
 uint32_t calc_days_in_year(uint32_t year);
@@ -135,34 +217,17 @@ void init_time(void);
 
 static inline bool validate_timestamp_range(const type::Time *t)
 {
-  if ((t->year > TIMESTAMP_MAX_YEAR || t->year < TIMESTAMP_MIN_YEAR) ||
-      (t->year == TIMESTAMP_MAX_YEAR && (t->month > 1 || t->day > 19)) ||
-      (t->year == TIMESTAMP_MIN_YEAR && (t->month < 12 || t->day < 31)))
+  if ((t->year < TIMESTAMP_MIN_YEAR) or (t->year == TIMESTAMP_MIN_YEAR && (t->month < 12 || t->day < 31)))
+  {
     return false;
+  }
 
   return true;
 }
 
-time_t
+type::Time::epoch_t
 my_system_gmt_sec(const type::Time *t, long *my_timezone,
-                  bool *in_dst_time_gap);
-
-void set_zero_time(type::Time *tm, enum enum_drizzle_timestamp_type time_type);
-
-/*
-  Required buffer length for my_time_to_str, my_date_to_str,
-  my_datetime_to_str and TIME_to_string functions. Note, that the
-  caller is still responsible to check that given TIME structure
-  has values in valid ranges, otherwise size of the buffer could
-  be not enough. We also rely on the fact that even wrong values
-  sent using binary protocol fit in this buffer.
-*/
-#define MAX_DATE_STRING_REP_LENGTH 30
-
-int my_time_to_str(const type::Time *l_time, char *to);
-int my_date_to_str(const type::Time *l_time, char *to);
-int my_datetime_to_str(const type::Time *l_time, char *to);
-int my_TIME_to_str(const type::Time *l_time, char *to);
+                  bool *in_dst_time_gap, bool skip_timezone= false);
 
 /*
   Available interval types used in any statement.

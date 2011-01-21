@@ -231,10 +231,10 @@ public:
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
-  int ha_open(const TableIdentifier &identifier, int mode, int test_if_locked);
-  int startIndexScan(uint32_t idx, bool sorted);
+  int ha_open(const identifier::Table &identifier, int mode, int test_if_locked);
+  int startIndexScan(uint32_t idx, bool sorted) __attribute__ ((warn_unused_result));
   int endIndexScan();
-  int startTableScan(bool scan);
+  int startTableScan(bool scan) __attribute__ ((warn_unused_result));
   int endTableScan();
   int ha_reset();
 
@@ -248,9 +248,9 @@ public:
     and doDeleteRecord() below.
   */
   int ha_external_lock(Session *session, int lock_type);
-  int insertRecord(unsigned char * buf);
-  int updateRecord(const unsigned char * old_data, unsigned char * new_data);
-  int deleteRecord(const unsigned char * buf);
+  int insertRecord(unsigned char * buf) __attribute__ ((warn_unused_result));
+  int updateRecord(const unsigned char * old_data, unsigned char * new_data) __attribute__ ((warn_unused_result));
+  int deleteRecord(const unsigned char * buf) __attribute__ ((warn_unused_result));
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
@@ -350,7 +350,7 @@ public:
                                  const unsigned char * key,
                                  key_part_map keypart_map,
                                  enum ha_rkey_function find_flag);
-  virtual int index_next(unsigned char *)
+  virtual int index_next(unsigned char *) __attribute__ ((warn_unused_result))
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_prev(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }
@@ -524,7 +524,7 @@ private:
   */
 
   virtual int open(const char *, int , uint32_t ) { assert(0); return -1; }
-  virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  virtual int doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked);
   virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
   virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }
@@ -535,7 +535,7 @@ private:
     if rnd_init allocates the cursor, second call should position it
     to the start of the table, no need to deallocate and allocate it again
   */
-  virtual int doStartTableScan(bool scan)= 0;
+  virtual int doStartTableScan(bool scan) __attribute__ ((warn_unused_result)) = 0;
   virtual int doEndTableScan() { return 0; }
   virtual int doInsertRecord(unsigned char *)
   {
@@ -665,7 +665,7 @@ int prepare_create_field(CreateField *sql_field,
                          int *timestamps, int *timestamps_with_niladic);
 
 bool create_table(Session *session,
-                        const TableIdentifier &identifier,
+                        const identifier::Table &identifier,
                         HA_CREATE_INFO *create_info,
                         message::Table &table_proto,
                         AlterInfo *alter_info,
@@ -673,7 +673,7 @@ bool create_table(Session *session,
                         bool is_if_not_exists);
 
 bool create_table_no_lock(Session *session,
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -681,16 +681,16 @@ bool create_table_no_lock(Session *session,
                                 bool is_if_not_exists);
 
 bool create_like_table(Session* session,
-                             const TableIdentifier &destination_identifier,
-                             TableList* table, TableList* src_table,
-                             message::Table &create_table_proto,
-                             bool is_if_not_exists,
-                             bool is_engine_set);
+                       identifier::Table::const_reference destination_identifier,
+                       identifier::Table::const_reference source_identifier,
+                       message::Table &create_table_proto,
+                       bool is_if_not_exists,
+                       bool is_engine_set);
 
 bool rename_table(Session &session,
                         plugin::StorageEngine *base,
-                        const TableIdentifier &old_identifier,
-                        const TableIdentifier &new_identifier);
+                        const identifier::Table &old_identifier,
+                        const identifier::Table &new_identifier);
 
 bool prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, Order *order);
@@ -723,8 +723,8 @@ bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
-Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
-void abort_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
+Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &identifier);
+void abort_locked_tables(Session *session, const drizzled::identifier::Table &identifier);
 extern Field *not_found_field;
 extern Field *view_ref_found;
 

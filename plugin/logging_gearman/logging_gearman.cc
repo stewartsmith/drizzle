@@ -299,10 +299,10 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("host",
           po::value<std::string>()->default_value("localhost"),
-          N_("Hostname for logging to a Gearman server"));
+          _("Hostname for logging to a Gearman server"));
   context("function",
           po::value<std::string>()->default_value("drizzlelog"),
-          N_("Gearman Function to send logging to"));
+          _("Gearman Function to send logging to"));
 }
 
 } /* namespace drizzle_plugin */

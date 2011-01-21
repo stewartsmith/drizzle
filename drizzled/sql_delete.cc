@@ -173,6 +173,8 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
     delete select;
     free_underlaid_joins(session, select_lex);
     session->row_count_func= 0;
+    if (session->is_error())
+      return true;
     DRIZZLE_DELETE_DONE(0, 0);
     /**
      * Resetting the Diagnostic area to prevent
@@ -241,11 +243,23 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
 
   if (usable_index==MAX_KEY)
   {
-    info.init_read_record(session,table,select,1,1);
+    if ((error= info.init_read_record(session,table,select,1,1)))
+    {
+      table->print_error(error, MYF(0));
+      delete select;
+      free_underlaid_joins(session, select_lex);
+      return true;
+    }
   }
   else
   {
-    info.init_read_record_idx(session, table, 1, usable_index);
+    if ((error= info.init_read_record_idx(session, table, 1, usable_index)))
+    {
+      table->print_error(error, MYF(0));
+      delete select;
+      free_underlaid_joins(session, select_lex);
+      return true;
+    }
   }
 
   session->set_proc_info("updating");
@@ -378,7 +392,7 @@ int prepare_delete(Session *session, TableList *table_list, Item **conds)
 
   if (select_lex->inner_refs_list.elements &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
-    return(-1);
+    return(true);
 
   return(false);
 }

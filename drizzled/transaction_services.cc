@@ -1022,13 +1022,18 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
   {
     trx->set_transaction_id(getCurrentTransactionId(in_session));
     in_session->setXaId(0);
-  }  
+  }
   else
-  { 
+  {
+    /* trx and seg id will get set properly elsewhere */
     trx->set_transaction_id(0);
   }
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
+  
+  /* segment info may get set elsewhere as needed */
+  in_transaction.set_segment_id(1);
+  in_transaction.set_end_segment(true);
 }
 
 void TransactionServices::finalizeTransactionMessage(message::Transaction &in_transaction,
@@ -1138,6 +1143,7 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
   {
     /* Remember the transaction ID so we can re-use it */
     uint64_t trx_id= transaction->transaction_context().transaction_id();
+    uint32_t seg_id= transaction->segment_id();
 
     /*
      * Clear the transaction, create a Rollback statement message, 
@@ -1148,6 +1154,8 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
 
     /* Set the transaction ID to match the previous messages */
     transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+    transaction->set_segment_id(seg_id);
+    transaction->set_end_segment(true);
 
     message::Statement *statement= transaction->add_statement();
 
@@ -1226,108 +1234,112 @@ void TransactionServices::rollbackStatementMessage(Session *in_session)
     finalizeStatementMessage(*current_statement, in_session);
   }
 }
+
+message::Transaction *TransactionServices::segmentTransactionMessage(Session *in_session,
+                                                                     message::Transaction *transaction)
+{
+  uint64_t trx_id= transaction->transaction_context().transaction_id();
+  uint32_t seg_id= transaction->segment_id();
   
+  transaction->set_end_segment(false);
+  commitTransactionMessage(in_session);
+  transaction= getActiveTransactionMessage(in_session, false);
+  
+  /* Set the transaction ID to match the previous messages */
+  transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+  transaction->set_segment_id(seg_id + 1);
+  transaction->set_end_segment(true);
+
+  return transaction;
+}
+
 message::Statement &TransactionServices::getInsertStatement(Session *in_session,
                                                             Table *in_table,
                                                             uint32_t *next_segment_id)
 {
   message::Statement *statement= in_session->getStatementMessage();
   message::Transaction *transaction= NULL;
-
-  /* 
-   * Check the type for the current Statement message, if it is anything
-   * other then INSERT we need to call finalize, this will ensure a 
-   * new InsertStatement is created. If it is of type INSERT check
-   * what table the INSERT belongs to, if it is a different table
-   * call finalize, so a new InsertStatement can be created. 
+  
+  /*
+   * If statement is NULL, this is a new statement.
+   * If statement is NOT NULL, this a continuation of the same statement.
+   * This is because autocommitOrRollback() finalizes the statement so that
+   * we guarantee only one Statement message per statement (i.e., we no longer
+   * share a single GPB message for multiple statements).
    */
-  if (statement != NULL && statement->type() != message::Statement::INSERT)
-  {
-    finalizeStatementMessage(*statement, in_session);
-    statement= in_session->getStatementMessage();
-  } 
-  else if (statement != NULL)
+  if (statement == NULL)
   {
     transaction= getActiveTransactionMessage(in_session);
 
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+        in_session->variables.transaction_message_threshold)
+    {
+      transaction= segmentTransactionMessage(in_session, transaction);
+    }
+
+    statement= transaction->add_statement();
+    setInsertHeader(*statement, in_session, in_table);
+    in_session->setStatementMessage(statement);
+  }
+  else
+  {
+    transaction= getActiveTransactionMessage(in_session);
+    
     /*
      * If we've passed our threshold for the statement size (possible for
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-      in_session->variables.transaction_message_threshold)
+        in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
-
+      uint32_t seg_id= transaction->segment_id();
+      
       message::InsertData *current_data= statement->mutable_insert_data();
-
+      
       /* Caller should use this value when adding a new record */
       *next_segment_id= current_data->segment_id() + 1;
-
+      
       current_data->set_end_segment(false);
-
+      transaction->set_end_segment(false);
+      
       /* 
        * Send the trx message to replicators after finalizing the 
        * statement and transaction. This will also set the Transaction
        * and Statement objects in Session to NULL.
        */
       commitTransactionMessage(in_session);
-
+      
       /*
        * Statement and Transaction should now be NULL, so new ones will get
        * created. We reuse the transaction id since we are segmenting
        * one transaction.
        */
-      statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
       assert(transaction != NULL);
 
+      statement= transaction->add_statement();
+      setInsertHeader(*statement, in_session, in_table);
+      in_session->setStatementMessage(statement);
+            
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
-      const message::InsertHeader &insert_header= statement->insert_header();
-      string old_table_name= insert_header.table_metadata().table_name();
-     
-      string current_table_name;
-      (void) in_table->getShare()->getTableName(current_table_name);
-
-      if (current_table_name.compare(old_table_name))
-      {
-        finalizeStatementMessage(*statement, in_session);
-        statement= in_session->getStatementMessage();
-      }
-      else
-      {
-        /* carry forward the existing segment id */
-        const message::InsertData &current_data= statement->insert_data();
-        *next_segment_id= current_data.segment_id();
-      }
+      /*
+       * Continuation of the same statement. Carry forward the existing
+       * segment id.
+       */
+      const message::InsertData &current_data= statement->insert_data();
+      *next_segment_id= current_data.segment_id();
     }
-  } 
-
-  if (statement == NULL)
-  {
-    /*
-     * Transaction will be non-NULL only if we had to segment it due to
-     * transaction size above.
-     */
-    if (transaction == NULL)
-      transaction= getActiveTransactionMessage(in_session);
-
-    /* 
-     * Transaction message initialized and set, but no statement created
-     * yet.  We construct one and initialize it, here, then return the
-     * message after attaching the new Statement message pointer to the 
-     * Session for easy retrieval later...
-     */
-    statement= transaction->add_statement();
-    setInsertHeader(*statement, in_session, in_table);
-    in_session->setStatementMessage(statement);
   }
+  
   return *statement;
 }
 
@@ -1433,164 +1445,87 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
   message::Transaction *transaction= NULL;
 
   /*
-   * Check the type for the current Statement message, if it is anything
-   * other then UPDATE we need to call finalize, this will ensure a
-   * new UpdateStatement is created. If it is of type UPDATE check
-   * what table the UPDATE belongs to, if it is a different table
-   * call finalize, so a new UpdateStatement can be created.
+   * If statement is NULL, this is a new statement.
+   * If statement is NOT NULL, this a continuation of the same statement.
+   * This is because autocommitOrRollback() finalizes the statement so that
+   * we guarantee only one Statement message per statement (i.e., we no longer
+   * share a single GPB message for multiple statements).
    */
-  if (statement != NULL && statement->type() != message::Statement::UPDATE)
-  {
-    finalizeStatementMessage(*statement, in_session);
-    statement= in_session->getStatementMessage();
-  }
-  else if (statement != NULL)
+  if (statement == NULL)
   {
     transaction= getActiveTransactionMessage(in_session);
-
+    
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+        in_session->variables.transaction_message_threshold)
+    {
+      transaction= segmentTransactionMessage(in_session, transaction);
+    }
+    
+    statement= transaction->add_statement();
+    setUpdateHeader(*statement, in_session, in_table, old_record, new_record);
+    in_session->setStatementMessage(statement);
+  }
+  else
+  {
+    transaction= getActiveTransactionMessage(in_session);
+    
     /*
      * If we've passed our threshold for the statement size (possible for
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-      in_session->variables.transaction_message_threshold)
+        in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
-
+      uint32_t seg_id= transaction->segment_id();
+      
       message::UpdateData *current_data= statement->mutable_update_data();
-
+      
       /* Caller should use this value when adding a new record */
       *next_segment_id= current_data->segment_id() + 1;
-
+      
       current_data->set_end_segment(false);
-
-      /*
+      transaction->set_end_segment(false);
+      
+      /* 
        * Send the trx message to replicators after finalizing the 
        * statement and transaction. This will also set the Transaction
        * and Statement objects in Session to NULL.
        */
       commitTransactionMessage(in_session);
-
+      
       /*
        * Statement and Transaction should now be NULL, so new ones will get
        * created. We reuse the transaction id since we are segmenting
        * one transaction.
        */
-      statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
       assert(transaction != NULL);
-
+      
+      statement= transaction->add_statement();
+      setUpdateHeader(*statement, in_session, in_table, old_record, new_record);
+      in_session->setStatementMessage(statement);
+      
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
-      if (useExistingUpdateHeader(*statement, in_table, old_record, new_record))
-      {
-        /* carry forward the existing segment id */
-        const message::UpdateData &current_data= statement->update_data();
-        *next_segment_id= current_data.segment_id();
-      } 
-      else 
-      {
-        finalizeStatementMessage(*statement, in_session);
-        statement= in_session->getStatementMessage();
-      }
+      /*
+       * Continuation of the same statement. Carry forward the existing
+       * segment id.
+       */
+      const message::UpdateData &current_data= statement->update_data();
+      *next_segment_id= current_data.segment_id();
     }
   }
-
-  if (statement == NULL)
-  {
-    /*
-     * Transaction will be non-NULL only if we had to segment it due to
-     * transaction size above.
-     */
-    if (transaction == NULL)
-      transaction= getActiveTransactionMessage(in_session);
-
-    /* 
-     * Transaction message initialized and set, but no statement created
-     * yet.  We construct one and initialize it, here, then return the
-     * message after attaching the new Statement message pointer to the 
-     * Session for easy retrieval later...
-     */
-    statement= transaction->add_statement();
-    setUpdateHeader(*statement, in_session, in_table, old_record, new_record);
-    in_session->setStatementMessage(statement);
-  }
+  
   return *statement;
 }
-
-bool TransactionServices::useExistingUpdateHeader(message::Statement &statement,
-                                                  Table *in_table,
-                                                  const unsigned char *old_record,
-                                                  const unsigned char *new_record)
-{
-  const message::UpdateHeader &update_header= statement.update_header();
-  string old_table_name= update_header.table_metadata().table_name();
-
-  string current_table_name;
-  (void) in_table->getShare()->getTableName(current_table_name);
-  if (current_table_name.compare(old_table_name))
-  {
-    return false;
-  }
-  else
-  {
-    /* Compare the set fields in the existing UpdateHeader and see if they
-     * match the updated fields in the new record, if they do not we must
-     * create a new UpdateHeader 
-     */
-    size_t num_set_fields= update_header.set_field_metadata_size();
-
-    Field *current_field;
-    Field **table_fields= in_table->getFields();
-    in_table->setReadSet();
-
-    size_t num_calculated_updated_fields= 0;
-    bool found= false;
-    while ((current_field= *table_fields++) != NULL)
-    {
-      if (num_calculated_updated_fields > num_set_fields)
-      {
-        break;
-      }
-
-      if (isFieldUpdated(current_field, in_table, old_record, new_record))
-      {
-        /* check that this field exists in the UpdateHeader record */
-        found= false;
-
-        for (size_t x= 0; x < num_set_fields; ++x)
-        {
-          const message::FieldMetadata &field_metadata= update_header.set_field_metadata(x);
-          string name= field_metadata.name();
-          if (name.compare(current_field->field_name) == 0)
-          {
-            found= true;
-            ++num_calculated_updated_fields;
-            break;
-          } 
-        }
-        if (! found)
-        {
-          break;
-        } 
-      }
-    }
-
-    if ((num_calculated_updated_fields == num_set_fields) && found)
-    {
-      return true;
-    } 
-    else 
-    {
-      return false;
-    }
-  }
-}  
 
 void TransactionServices::setUpdateHeader(message::Statement &statement,
                                           Session *in_session,
@@ -1782,98 +1717,85 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
   message::Transaction *transaction= NULL;
 
   /*
-   * Check the type for the current Statement message, if it is anything
-   * other then DELETE we need to call finalize, this will ensure a
-   * new DeleteStatement is created. If it is of type DELETE check
-   * what table the DELETE belongs to, if it is a different table
-   * call finalize, so a new DeleteStatement can be created.
+   * If statement is NULL, this is a new statement.
+   * If statement is NOT NULL, this a continuation of the same statement.
+   * This is because autocommitOrRollback() finalizes the statement so that
+   * we guarantee only one Statement message per statement (i.e., we no longer
+   * share a single GPB message for multiple statements).
    */
-  if (statement != NULL && statement->type() != message::Statement::DELETE)
-  {
-    finalizeStatementMessage(*statement, in_session);
-    statement= in_session->getStatementMessage();
-  }
-  else if (statement != NULL)
+  if (statement == NULL)
   {
     transaction= getActiveTransactionMessage(in_session);
-
+    
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+        in_session->variables.transaction_message_threshold)
+    {
+      transaction= segmentTransactionMessage(in_session, transaction);
+    }
+    
+    statement= transaction->add_statement();
+    setDeleteHeader(*statement, in_session, in_table);
+    in_session->setStatementMessage(statement);
+  }
+  else
+  {
+    transaction= getActiveTransactionMessage(in_session);
+    
     /*
      * If we've passed our threshold for the statement size (possible for
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-      in_session->variables.transaction_message_threshold)
+        in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
-
+      uint32_t seg_id= transaction->segment_id();
+      
       message::DeleteData *current_data= statement->mutable_delete_data();
-
+      
       /* Caller should use this value when adding a new record */
       *next_segment_id= current_data->segment_id() + 1;
-
+      
       current_data->set_end_segment(false);
-
+      transaction->set_end_segment(false);
+      
       /* 
        * Send the trx message to replicators after finalizing the 
        * statement and transaction. This will also set the Transaction
        * and Statement objects in Session to NULL.
        */
       commitTransactionMessage(in_session);
-
+      
       /*
        * Statement and Transaction should now be NULL, so new ones will get
        * created. We reuse the transaction id since we are segmenting
        * one transaction.
        */
-      statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
       assert(transaction != NULL);
-
+      
+      statement= transaction->add_statement();
+      setDeleteHeader(*statement, in_session, in_table);
+      in_session->setStatementMessage(statement);
+      
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
-      const message::DeleteHeader &delete_header= statement->delete_header();
-      string old_table_name= delete_header.table_metadata().table_name();
-
-      string current_table_name;
-      (void) in_table->getShare()->getTableName(current_table_name);
-      if (current_table_name.compare(old_table_name))
-      {
-        finalizeStatementMessage(*statement, in_session);
-        statement= in_session->getStatementMessage();
-      }
-      else
-      {
-        /* carry forward the existing segment id */
-        const message::DeleteData &current_data= statement->delete_data();
-        *next_segment_id= current_data.segment_id();
-      }
+      /*
+       * Continuation of the same statement. Carry forward the existing
+       * segment id.
+       */
+      const message::DeleteData &current_data= statement->delete_data();
+      *next_segment_id= current_data.segment_id();
     }
   }
-
-  if (statement == NULL)
-  {
-    /*
-     * Transaction will be non-NULL only if we had to segment it due to
-     * transaction size above.
-     */
-    if (transaction == NULL)
-      transaction= getActiveTransactionMessage(in_session);
-
-    /* 
-     * Transaction message initialized and set, but no statement created
-     * yet.  We construct one and initialize it, here, then return the
-     * message after attaching the new Statement message pointer to the 
-     * Session for easy retrieval later...
-     */
-    statement= transaction->add_statement();
-    setDeleteHeader(*statement, in_session, in_table);
-    in_session->setStatementMessage(statement);
-  }
+  
   return *statement;
 }
 
@@ -2034,7 +1956,7 @@ void TransactionServices::createSchema(Session *in_session,
 
 }
 
-void TransactionServices::dropSchema(Session *in_session, SchemaIdentifier::const_reference identifier)
+void TransactionServices::dropSchema(Session *in_session, identifier::Schema::const_reference identifier)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -2062,8 +1984,42 @@ void TransactionServices::dropSchema(Session *in_session, SchemaIdentifier::cons
   cleanupTransactionMessage(transaction, in_session);
 }
 
+void TransactionServices::alterSchema(Session *in_session,
+                                      const message::schema::shared_ptr &old_schema,
+                                      const message::Schema &new_schema)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::ALTER_SCHEMA, in_session);
+
+  /* 
+   * Construct the specialized AlterSchemaStatement message and attach
+   * it to the generic Statement message
+   */
+  message::AlterSchemaStatement *alter_schema_statement= statement->mutable_alter_schema_statement();
+
+  message::Schema *before= alter_schema_statement->mutable_before();
+  message::Schema *after= alter_schema_statement->mutable_after();
+
+  *before= *old_schema;
+  *after= new_schema;
+
+  finalizeStatementMessage(*statement, in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
+}
+
 void TransactionServices::dropTable(Session *in_session,
-                                    const TableIdentifier &table,
+                                    const identifier::Table &table,
                                     bool if_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();

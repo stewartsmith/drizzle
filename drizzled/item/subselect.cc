@@ -244,7 +244,7 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 
   if (engine->uncacheable())
   {
-    const_item_cache= 0;
+    const_item_cache= false;
     if (engine->uncacheable(UNCACHEABLE_RAND))
     {
       used_tables_cache|= RAND_TABLE_BIT;
@@ -394,7 +394,7 @@ void Item_subselect::update_used_tables()
   {
     // did all used tables become static?
     if (!(used_tables_cache & ~engine->upper_select_const_tables()))
-      const_item_cache= 1;
+      const_item_cache= true;
   }
 }
 
@@ -2140,10 +2140,6 @@ void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **)
   assert(0);
 }
 
-int  init_read_record_seq(JoinTable *tab);
-int join_read_always_key_or_null(JoinTable *tab);
-int join_read_next_same_or_null(ReadRecord *info);
-
 int subselect_single_select_engine::exec()
 {
   char const *save_where= session->where;
@@ -2316,7 +2312,12 @@ int subselect_uniquesubquery_engine::scan_table()
   if (table->cursor->inited)
     table->cursor->endIndexScan();
 
-  table->cursor->startTableScan(1);
+  if ((error= table->cursor->startTableScan(1)))
+  {
+    table->print_error(error, MYF(0));
+    return 1;
+  }
+
   table->cursor->extra_opt(HA_EXTRA_CACHE,
                            current_session->variables.read_buff_size);
   table->null_row= 0;
@@ -2493,7 +2494,16 @@ int subselect_uniquesubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, 0);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, 0);
+
+    if (error != 0)
+    {
+      error= table->report_error(error);
+      return (error != 0);
+    }
+  }
+
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
@@ -2606,7 +2616,15 @@ int subselect_indexsubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, 1);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, 1);
+
+    if (error != 0)
+    {
+      error= table->report_error(error);
+      return(error != 0);
+    }
+  }
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),

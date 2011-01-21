@@ -103,7 +103,7 @@ void TablesTool::Generator::fill()
   push(getTableMessage().name());
 
   /* TABLE_TYPE */
-  if (drizzled::TableIdentifier::isView(getTableMessage().type()))
+  if (drizzled::identifier::Table::isView(getTableMessage().type()))
   {
     push("VIEW");
   }
@@ -133,10 +133,24 @@ void TablesTool::Generator::fill()
   }
 
   /* ENGINE */
-  push(getTableMessage().engine().name());
+  const drizzled::message::Engine &engine= getTableMessage().engine();
+  push(engine.name());
 
   /* ROW_FORMAT */
-  push("DEFAULT");
+  bool row_format_sent= false;
+  for (ssize_t it= 0; it < engine.options_size(); it++)
+  {
+    const drizzled::message::Engine::Option &opt= engine.options(it);
+    if (opt.name().compare("ROW_FORMAT") == 0)
+    {
+      row_format_sent= true;
+      push(opt.state());
+      break;
+    }
+  }
+
+  if (not row_format_sent)
+    push("DEFAULT");
 
   /* TABLE_COLLATION */
   push(getTableMessage().options().collation());

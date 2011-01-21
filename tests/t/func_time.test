@@ -242,19 +242,22 @@ select unix_timestamp(from_unixtime(2147483648));
 
 # check for invalid dates
 
-# bad year
+# Legal, Drizzle has 64bit timestamp
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('2039-01-20 01:00:00');
+
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1968-01-20 01:00:00');
-# bad month
+
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('2038-02-10 01:00:00');
+
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1969-11-20 01:00:00');
-# bad day
+
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('2038-01-20 01:00:00');
+
 --error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1969-12-30 01:00:00');
 
@@ -271,36 +274,36 @@ select unix_timestamp('2038-01-19 03:14:07');
 # Test types from + INTERVAL
 #
 
-CREATE TABLE t1 (datetime datetime, timestamp timestamp, date date);
+CREATE TABLE t1 (datetime_arg datetime, timestamp_arg timestamp, date_arg date);
 INSERT INTO t1 values ("2001-01-02 03:04:05", "2002-01-02 03:04:05", "2003-01-02");
 SELECT * from t1;
 select date_add("1997-12-31",INTERVAL 1 SECOND);
 select date_add("1997-12-31",INTERVAL "1 1" YEAR_MONTH);
 
-select date_add(datetime, INTERVAL 1 SECOND) from t1;
-select date_add(datetime, INTERVAL 1 YEAR) from t1;
+select date_add(datetime_arg, INTERVAL 1 SECOND) from t1;
+select date_add(datetime_arg, INTERVAL 1 YEAR) from t1;
 
-select date_add(date,INTERVAL 1 SECOND) from t1;
-select date_add(date,INTERVAL 1 MINUTE) from t1;
-select date_add(date,INTERVAL 1 HOUR) from t1;
-select date_add(date,INTERVAL 1 DAY) from t1;
-select date_add(date,INTERVAL 1 MONTH) from t1;
-select date_add(date,INTERVAL 1 YEAR) from t1;
-select date_add(date,INTERVAL "1:1" MINUTE_SECOND) from t1;
-select date_add(date,INTERVAL "1:1" HOUR_MINUTE) from t1;
-select date_add(date,INTERVAL "1:1" DAY_HOUR) from t1;
-select date_add(date,INTERVAL "1 1" YEAR_MONTH) from t1;
-select date_add(date,INTERVAL "1:1:1" HOUR_SECOND) from t1;
-select date_add(date,INTERVAL "1 1:1" DAY_MINUTE) from t1;
-select date_add(date,INTERVAL "1 1:1:1" DAY_SECOND) from t1;
-select date_add(date,INTERVAL "1" WEEK) from t1;
-select date_add(date,INTERVAL "1" QUARTER) from t1;
-select timestampadd(MINUTE, 1, date) from t1;
-select timestampadd(WEEK, 1, date) from t1;
-select timestampadd(SQL_TSI_SECOND, 1, date) from t1;
+select date_add(date_arg, INTERVAL 1 SECOND) from t1;
+select date_add(date_arg, INTERVAL 1 MINUTE) from t1;
+select date_add(date_arg, INTERVAL 1 HOUR) from t1;
+select date_add(date_arg, INTERVAL 1 DAY) from t1;
+select date_add(date_arg, INTERVAL 1 MONTH) from t1;
+select date_add(date_arg, INTERVAL 1 YEAR) from t1;
+select date_add(date_arg, INTERVAL "1:1" MINUTE_SECOND) from t1;
+select date_add(date_arg, INTERVAL "1:1" HOUR_MINUTE) from t1;
+select date_add(date_arg, INTERVAL "1:1" DAY_HOUR) from t1;
+select date_add(date_arg, INTERVAL "1 1" YEAR_MONTH) from t1;
+select date_add(date_arg, INTERVAL "1:1:1" HOUR_SECOND) from t1;
+select date_add(date_arg, INTERVAL "1 1:1" DAY_MINUTE) from t1;
+select date_add(date_arg, INTERVAL "1 1:1:1" DAY_SECOND) from t1;
+select date_add(date_arg, INTERVAL "1" WEEK) from t1;
+select date_add(date_arg, INTERVAL "1" QUARTER) from t1;
+select timestampadd(MINUTE, 1, date_arg) from t1;
+select timestampadd(WEEK, 1, date_arg) from t1;
+select timestampadd(SQL_TSI_SECOND, 1, date_arg) from t1;
 # mysqltest.c discards an expected 'deprecated' warning on prepare stage
 --disable_ps_protocol
-select timestampadd(SQL_TSI_FRAC_SECOND, 1, date) from t1;
+select timestampadd(SQL_TSI_FRAC_SECOND, 1, date_arg) from t1;
 --enable_ps_protocol
 
 select timestampdiff(MONTH, '2001-02-01', '2001-05-01') as a;

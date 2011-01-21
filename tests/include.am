@@ -23,8 +23,8 @@ EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
 GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
-NORMAL_TESTS =		main,bool_type,cast,ddl_transactions,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type,$(PLUGIN_TESTS)
-ALL_TESTS =		main,big,jp,tamil,regression,$(PLUGIN_TESTS)
+NORMAL_TESTS =		main,bool_type,cast,ddl_transactions,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type,microtime_type,$(PLUGIN_TESTS)
+ALL_TESTS =		main,big,jp,tamil,regression,microtime_type,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr
 
@@ -33,6 +33,7 @@ TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 		--top-srcdir=../${top_srcdir} \
 		--top-builddir=../${top_builddir} \
 		--vardir=../${top_builddir}/tests/var \
+		--reorder \
 		--suitepath=../${top_srcdir}/plugin \
 		--testdir=../${top_srcdir}/tests \
 		--dtr-build-thread=$$$$
@@ -42,6 +43,7 @@ TEST_RUN_MEM= $(PERL) -I../$(top_srcdir)/tests/lib \
 	      --top-srcdir=../${top_srcdir} \
 	      --top-builddir=../${top_builddir} \
 	      --mem \
+	      --reorder \
 	      --suitepath=../${top_srcdir}/plugin \
 	      --testdir=../${top_srcdir}/tests \
 	      --dtr-build-thread=$$$$

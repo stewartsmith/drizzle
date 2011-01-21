@@ -32,8 +32,8 @@ class Schema
   Session &session;
   message::schema::shared_ptr schema;
 
-  SchemaIdentifier::vector schema_names;
-  SchemaIdentifier::vector::const_iterator schema_iterator;
+  identifier::Schema::vector schema_names;
+  identifier::Schema::vector::const_iterator schema_iterator;
 
 public:
 
@@ -43,7 +43,7 @@ public:
   {
     while (schema_iterator != schema_names.end())
     {
-      SchemaIdentifier schema_identifier(*schema_iterator);
+      identifier::Schema schema_identifier(*schema_iterator);
       bool is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
       schema_iterator++;
 
@@ -54,11 +54,11 @@ public:
     return message::schema::shared_ptr();
   }
 
-  operator const drizzled::SchemaIdentifier*()
+  operator const drizzled::identifier::Schema*()
   {
     while (schema_iterator != schema_names.end())
     {
-      const drizzled::SchemaIdentifier *_ptr= &(*schema_iterator);
+      const drizzled::identifier::Schema *_ptr= &(*schema_iterator);
       schema_iterator++;
 
       return _ptr;

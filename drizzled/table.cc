@@ -54,7 +54,7 @@
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
 
-#include "drizzled/table/instance.h"
+#include "drizzled/table/singular.h"
 
 #include "drizzled/table_proto.h"
 
@@ -333,7 +333,7 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
     true ok
 */
 
-bool check_db_name(Session *session, SchemaIdentifier &schema_identifier)
+bool check_db_name(Session *session, identifier::Schema &schema_identifier)
 {
   if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
   {
@@ -838,7 +838,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  table::Instance *table;
+  table::Singular *table;
   table= session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
   if (not table->getMemRoot()->multi_alloc_root(0,

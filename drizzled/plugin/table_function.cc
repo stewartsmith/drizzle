@@ -35,21 +35,10 @@ static TableFunctionContainer table_functions;
 
 void plugin::TableFunction::init()
 {
-  drizzled::message::Engine *engine;
-  drizzled::message::Table::TableOptions *table_options;
-
-  proto.set_name(getTableLabel());
-  proto.set_schema(identifier.getSchemaName());
+  drizzled::message::table::init(proto, getTableLabel(), identifier.getSchemaName(), "FunctionEngine");
   proto.set_type(drizzled::message::Table::FUNCTION);
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
-
-  table_options= proto.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= proto.mutable_engine();
-  engine->set_name("FunctionEngine");
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
@@ -103,7 +92,7 @@ void plugin::TableFunction::add_field(const char *label,
   field_options= field->mutable_options();
   field_constraints= field->mutable_constraints();
   field_options->set_default_null(is_default_null);
-  field_constraints->set_is_nullable(is_default_null);
+  field_constraints->set_is_notnull(not is_default_null);
 
   switch (type) 
   {

@@ -2047,7 +2047,7 @@ int item_create_init()
   {
     func_name.assign(func->name.str, func->name.length);
 
-    FunctionContainer::getMap()[func_name]= func;
+    FunctionContainer::getMap()[func_name]= func->builder;
   }
 
   return 0;
@@ -2057,18 +2057,16 @@ int item_create_init()
 Create_func *
 find_native_function_builder(LEX_STRING name)
 {
-  Native_func_registry *func;
   Create_func *builder= NULL;
 
   string func_name(name.str, name.length);
 
-  NativeFunctionsMap::iterator func_iter=
+  FunctionContainer::Map::iterator func_iter=
     FunctionContainer::getMap().find(func_name);
 
   if (func_iter != FunctionContainer::getMap().end())
   {
-    func= (*func_iter).second;
-    builder= func->builder;
+    builder= (*func_iter).second;
   }
 
   return builder;

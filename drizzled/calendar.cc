@@ -333,28 +333,37 @@ uint32_t days_in_gregorian_year_month(uint32_t year, uint32_t month)
  * @param Minute
  * @param Second
  */
-bool in_unix_epoch_range(uint32_t year
-                       , uint32_t month
-                       , uint32_t day
-                       , uint32_t hour
-                       , uint32_t minute
-                       , uint32_t second)
+bool in_unix_epoch_range(uint32_t year,
+                         uint32_t month,
+                         uint32_t day,
+                         uint32_t hour,
+                         uint32_t minute,
+                         uint32_t second)
 {
   if (month == 0 || day == 0)
     return false;
+
   if (year < UNIX_EPOCH_MAX_YEARS
       && year >= UNIX_EPOCH_MIN_YEARS)
     return true;
+
   if (year < UNIX_EPOCH_MIN_YEARS)
     return false;
+
   if (year == UNIX_EPOCH_MAX_YEARS)
   {
     if (month > 1)
+    {
       return false;
+    }
     if (day > 19)
+    {
       return false;
+    }
     else if (day < 19)
+    {
       return true;
+    }
     else
     {
       /* We are on the final day of UNIX Epoch */

@@ -1,0 +1,17 @@
+CREATE TABLE t1 (    
+    _value decimal(20,6)
+ );
+  
+INSERT INTO t1 VALUES ("20030101000000.90000"), ("20030101000000.00000"), ("20030101000000.123456") ;
+--sorted_result
+SELECT _value FROM t1;
+
+CREATE TABLE t2 (
+  _value TIMESTAMP(6)
+);
+  
+INSERT INTO t2 SELECT _value from t1;
+--sorted_result
+SELECT _value FROM t2;
+    
+DROP TABLE t1,t2;

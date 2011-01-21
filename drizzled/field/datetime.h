@@ -63,7 +63,7 @@ public:
   int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int store_time(type::Time *ltime, enum enum_drizzle_timestamp_type type);
+  int store_time(type::Time *ltime, type::timestamp_t type);
   int reset(void)
   {
     ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0;

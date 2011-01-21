@@ -1,0 +1,235 @@
+--disable_warnings
+DROP TABLE IF EXISTS `AA`;
+DROP TABLE IF EXISTS `BB`;
+DROP TABLE IF EXISTS `CC`;
+DROP TABLE IF EXISTS `C`;
+DROP TABLE IF EXISTS `DD`;
+--enable_warnings
+
+CREATE TABLE `AA` (
+  `pk` INT NOT NULL AUTO_INCREMENT,
+  `col_char_10` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_bigint` BIGINT DEFAULT NULL,
+  `col_text` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_10_key` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_10_not_null` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_char_255` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_int` INT DEFAULT NULL,
+  `col_enum_not_null_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_enum` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_bigint_not_null_key` BIGINT NOT NULL,
+  `col_char_255_not_null_key` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_int_not_null_key` INT NOT NULL,
+  `col_bigint_not_null` BIGINT NOT NULL,
+  `col_char_255_not_null` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_char_10_not_null_key` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_int_key` INT DEFAULT NULL,
+  `col_text_not_null` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_char_255_key` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_enum_not_null` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_bigint_key` BIGINT DEFAULT NULL,
+  `col_text_key` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_text_not_null_key` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_int_not_null` INT NOT NULL,
+  `col_enum_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_char_10_key` (`col_char_10_key`),
+  KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+  KEY `col_bigint_not_null_key` (`col_bigint_not_null_key`),
+  KEY `col_char_255_not_null_key` (`col_char_255_not_null_key`),
+  KEY `col_int_not_null_key` (`col_int_not_null_key`),
+  KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+  KEY `col_int_key` (`col_int_key`),
+  KEY `col_char_255_key` (`col_char_255_key`),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_text_key` (`col_text_key`(255)),
+  KEY `col_text_not_null_key` (`col_text_not_null_key`(255)),
+  KEY `col_enum_key` (`col_enum_key`)
+) ENGINE='InnoDB' COLLATE='utf8_general_ci';
+
+ALTER TABLE `AA` DISABLE KEYS;
+INSERT INTO `AA` VALUES (1,'t',NULL,'','ZDPHP','what','w',9,'s','u',-6388637546401759232,'well',-523436032,-8847321467969339392,'think','at',2071265280,'','LPUJD','o',NULL,'','',-1974206464,'w'),(2,'JULPJ',7,'','AIJUR','of','n',-1692139520,'p','u',5,'on',1,4369336063479513088,'were','VDMDI',1,'','don\'t','j',NULL,'','',3,'f'),(3,'here',NULL,'','NEMIU','a','r',4,'n','u',1,'ASUNK',621543424,-4336122016227655680,'SDQKX','WPTIG',NULL,'','think','i',-2842897264777625600,'','',-274595840,'v'),(4,'didn\'t',6,'','HMHFF','BYTHJ','PUKQU',9,'o','n',-9123448420122492928,'d',880148480,-2739595948324814848,'TQVBJ','your',1734213632,'','on','o',NULL,'','',295501824,'d'),(5,'the',4,'','XIXMV','w','not',-1091567616,'b','w',9,'m',1963982848,1417789457691574272,'t','q',1505558528,'','YTUNQ','v',3557843705622691840,'','',9,'q'),(6,'UYRFL',5333950808666931200,'','k','QPWUT','NZDDR',126156800,'c','o',6,'to',8,7526922352219652096,'l','OOQXU',8,'','o','d',-4628011567076605952,'','',2,'d'),(7,'is',NULL,'','GJZBY','as','have',534904832,'p','q',5,'t',1445462016,8631711635808976896,'just','RDODX',NULL,'','so','f',-5755881798756204544,'','',-1601306624,'g'),(8,'f',-941533797097144320,'','UGMMS','hey','OGLVA',8,'i','j',5903374686552588288,'m',0,-840765755434729472,'we','e',-1685520384,'','get','c',NULL,'','',-1770323968,'v'),(9,'KKWBL',NULL,'','p','TWEJA','didn\'t',NULL,'f','l',2,'USQVA',-747241472,-4598175219545276416,'v','FEKXH',NULL,'','l','e',NULL,'','',256311296,'e'),(10,'g',NULL,'','RMZLQ','e','t',NULL,'p','g',-3207125884641214464,'FUBQO',6,8817766595414720512,'going','GTHOM',-1431502848,'','h','g',-5719290051783819264,'','',4,'c');
+ALTER TABLE `AA` ENABLE KEYS;
+
+CREATE TABLE `BB` (
+  `col_enum_not_null_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_char_10_key` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_text_not_null` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_text_not_null_key` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_char_255_not_null` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_char_10_not_null_key` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_char_255_not_null_key` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_char_10_not_null` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_bigint_key` BIGINT DEFAULT NULL,
+  `col_char_255_key` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_text` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_bigint_not_null` BIGINT NOT NULL,
+  `col_bigint_not_null_key` BIGINT NOT NULL,
+  `col_enum` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_enum_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `pk` INT NOT NULL AUTO_INCREMENT,
+  `col_enum_not_null` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_char_255` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_text_key` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_int` INT DEFAULT NULL,
+  `col_int_not_null_key` INT NOT NULL,
+  `col_char_10` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_int_key` INT DEFAULT NULL,
+  `col_bigint` BIGINT DEFAULT NULL,
+  `col_int_not_null` INT NOT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+  KEY `col_char_10_key` (`col_char_10_key`),
+  KEY `col_text_not_null_key` (`col_text_not_null_key`(255)),
+  KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+  KEY `col_char_255_not_null_key` (`col_char_255_not_null_key`),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_char_255_key` (`col_char_255_key`),
+  KEY `col_bigint_not_null_key` (`col_bigint_not_null_key`),
+  KEY `col_enum_key` (`col_enum_key`),
+  KEY `col_text_key` (`col_text_key`(255)),
+  KEY `col_int_not_null_key` (`col_int_not_null_key`),
+  KEY `col_int_key` (`col_int_key`)
+) ENGINE='InnoDB' COLLATE='utf8_general_ci';
+
+ALTER TABLE `BB` DISABLE KEYS;
+INSERT INTO `BB` VALUES ('r','m','','','o','DCJRX','IHTVZ','f',NULL,'ANVSO','',3,9,'q','m',1,'x','okay','',NULL,1,'f',NULL,NULL,763953152),('a','YRWSW','','','a','x','a','GQPHI',NULL,'JBJPT','',8,5351965207176413184,'e','q',2,'k','r','',7,1,'KTDNH',4,3,-132513792),('s','VOAVR','','','have','ZMHDL','s','her',-647673921411219456,'KAHJT','',4,1,'t','e',3,'i','with','',-1276510208,-1536425984,'was',-628359168,NULL,3),('i','b','','','u','SJGHS','d','you',-5702401553181179904,'q','',3832844757869002752,-3462142213541068800,'c','x',4,'u','here','',-2097610752,-1443495936,'from',-2114322432,NULL,-1349844992),('w','we','','','o','his','TTNNK','but',NULL,'l','',-6077044747183063040,1,'c','g',5,'p','I\'m','',1040384000,2,'u',105971712,1,-2019688448),('v','you\'re','','','r','m','GKTRR','XDMGU',4,'ULWFL','',-1773010878300422144,-1844786997361639424,'a','m',6,'t','LFCPQ','',434044928,0,'TTTFE',2,2945917106253725696,-38207488),('d','mean','','','on','i','ZZDWO','NGHIX',NULL,'YOIXU','',-2657968205078724608,6715992944316252160,'i','t',7,'d','now','',622526464,8,'k',NULL,NULL,3),('f','did','','','IMULJ','d','up','u',8,'that\'s','',2,8,'w','p',8,'n','mean','',NULL,476315648,'XPLMI',NULL,0,8),('y','SXUOG','','','DXSXG','from','would','l',NULL,'ZPPIG','',0,-8004022437744214016,'e','i',9,'q','f','',NULL,5,'b',-607322112,-6115325344015712256,-1129054208),('o','NWDRM','','','y','h','JNAFV','MDJAH',NULL,'like','',-637540822249635840,4,'m','j',10,'q','f','',5,5,'go',0,NULL,-415629312);
+ALTER TABLE `BB` ENABLE KEYS;
+
+CREATE TABLE `C` (
+  `pk` INT NOT NULL AUTO_INCREMENT,
+  `col_int_key` INT DEFAULT NULL,
+  `col_text_not_null_key` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_bigint_key` BIGINT DEFAULT NULL,
+  `col_char_10_not_null` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_text_key` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_10_not_null_key` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_enum` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_text_not_null` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_enum_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_bigint_not_null_key` BIGINT NOT NULL,
+  `col_enum_not_null` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_int_not_null_key` INT NOT NULL,
+  `col_char_255` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_int` INT DEFAULT NULL,
+  `col_text` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_enum_not_null_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_char_10` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_bigint_not_null` BIGINT NOT NULL,
+  `col_int_not_null` INT NOT NULL,
+  `col_char_255_not_null` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_char_255_not_null_key` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_char_10_key` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_255_key` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_bigint` BIGINT DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_int_key` (`col_int_key`),
+  KEY `col_text_not_null_key` (`col_text_not_null_key`(255)),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_text_key` (`col_text_key`(255)),
+  KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+  KEY `col_enum_key` (`col_enum_key`),
+  KEY `col_bigint_not_null_key` (`col_bigint_not_null_key`),
+  KEY `col_int_not_null_key` (`col_int_not_null_key`),
+  KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+  KEY `col_char_255_not_null_key` (`col_char_255_not_null_key`),
+  KEY `col_char_10_key` (`col_char_10_key`)
+) ENGINE='InnoDB' COLLATE='utf8_general_ci';
+
+ALTER TABLE `C` DISABLE KEYS;
+INSERT INTO `C` VALUES (1,NULL,'',2,'t','','d','v','','h',3251880405938208768,'v',0,'q',NULL,'','n','h',1,6,'look','TYZGK','b','JRKMQ',NULL);
+ALTER TABLE `C` ENABLE KEYS;
+
+CREATE TABLE `CC` (
+  `col_enum_not_null_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_bigint_not_null` BIGINT NOT NULL,
+  `col_enum` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_char_10_not_null_key` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_char_255_key` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_10` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_text_key` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_bigint_not_null_key` BIGINT NOT NULL,
+  `col_text_not_null_key` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_char_255_not_null` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_enum_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_char_10_not_null` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_int_key` INT DEFAULT NULL,
+  `col_char_255` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_text_not_null` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_char_255_not_null_key` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_bigint_key` BIGINT DEFAULT NULL,
+  `pk` INT NOT NULL AUTO_INCREMENT,
+  `col_enum_not_null` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_int_not_null` INT NOT NULL,
+  `col_char_10_key` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_bigint` BIGINT DEFAULT NULL,
+  `col_int_not_null_key` INT NOT NULL,
+  `col_int` INT DEFAULT NULL,
+  `col_text` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+  KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+  KEY `col_char_255_key` (`col_char_255_key`),
+  KEY `col_text_key` (`col_text_key`(255)),
+  KEY `col_bigint_not_null_key` (`col_bigint_not_null_key`),
+  KEY `col_text_not_null_key` (`col_text_not_null_key`(255)),
+  KEY `col_enum_key` (`col_enum_key`),
+  KEY `col_int_key` (`col_int_key`),
+  KEY `col_char_255_not_null_key` (`col_char_255_not_null_key`),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_char_10_key` (`col_char_10_key`),
+  KEY `col_int_not_null_key` (`col_int_not_null_key`)
+) ENGINE='InnoDB' COLLATE='utf8_general_ci';
+
+ALTER TABLE `CC` DISABLE KEYS;
+INSERT INTO `CC` VALUES ('c',-7783627530979770368,'d','her','n','YUGVN','',7,'','QHIQV','p','her',-1463025664,'h','','i',3,1,'k',9,'the',NULL,-1665335296,6,''),('s',8,'m','b','y','v','',3848325881588088832,'','go','i','z',1,'h','','XECLG',NULL,2,'f',2,'f',NULL,0,NULL,''),('n',7638949392950493184,'u','of','u','DXDTX','',4,'','c','g','w',NULL,'b','','d',8,3,'e',0,'CHXCP',NULL,1736638464,2,''),('q',-7019141494233628672,'c','at','UCLWU','KPDSD','',6,'','DEETD','z','RORBZ',6,'now','','t',NULL,4,'v',-1205207040,'o',-8003459487790792704,-2136604672,6,''),('m',3667900421516558336,'e','i','XVHGM','good','',5,'','j','j','IQJUR',6,'m','','u',-8566972391165526016,5,'u',-330170368,'then',-5505087594507010048,3,7,''),('e',6,'h','to','with','i','',6,'','ROAMX','l','not',-1792737280,'TDARB','','o',3465238438284886016,6,'v',7,'PUPFZ',7,309592064,-1207828480,''),('w',2,'k','CXDDJ','h','f','',1605814742134292480,'','NSVBV','y','can',NULL,'with','','c',5,7,'l',-858259456,'GBRLW',-8935986085633196032,4,NULL,''),('n',3910531851441143808,'u','can','x','hey','',1,'','PPDOK','v','IEPYU',NULL,'the','','at',5086534304138264576,8,'h',-1265565696,'JIOBF',NULL,1614217216,6,''),('y',-9206202063275425792,'t','would','right','oh','',-7137923934405525504,'','ADFCV','b','RGTJJ',-697434112,'this','','ZNRQD',-5575456338684674048,9,'u',532217856,'t',NULL,1822883840,1,''),('t',-1597651967809683456,'s','he','RZAZJ','LTSIE','',4883027895976460288,'','out','f','DADPE',5,'UAPWE','','here',4584101470709743616,10,'k',-1106640896,'GSUJC',9,1,NULL,''),('x',3,'u','f','VHXUA','do','',6967350098518867968,'','m','c','look',NULL,'your','','o',4,11,'p',7,'h',NULL,0,NULL,''),('h',-6085770471461093376,'w','f','what','y','',3,'','RAJGC','n','z',-590413824,'as','','x',-562387003467890688,12,'b',-2060517376,'e',NULL,8,NULL,''),('d',-944348546864250880,'e','f','of','AUKYO','',-7884677047618895872,'','TQNOC','j','FQLWT',-1361444864,'what','','u',-4543569074063409152,13,'s',9,'IICAV',NULL,248709120,-1179058176,''),('s',-27866022694354944,'t','p','RSOJW','up','',8794404172347736064,'','w','p','here',4,'IDXNH','','LDJHS',NULL,14,'a',3,'ICGLZ',NULL,8,1126301696,''),('k',7793760630141353984,'q','n','UVLHT','got','',4,'','he\'s','w','UBPGM',-1007222784,'no','','UPJBO',5726326926201585664,15,'w',1633353728,'s',NULL,-1300496384,NULL,''),('z',-659495870433067008,'k','QCGNP','WZOHX','will','',-3242591731706757120,'','ABEII','u','VWQFM',1,'say','','m',NULL,16,'e',621150208,'SLJVT',1,1776549888,1104019456,''),('k',3549962406274793472,'o','that','c','get','',8247216817622220800,'','SILLP','g','VXPYX',1218904064,'s','','good',2685552752796368896,17,'f',6,'h',-8750775550957584384,2053242880,4,''),('k',7,'o','m','a','t','',5122844576133939200,'','of','k','VRQML',-173867008,'MCUHK','','some',4,18,'q',8,'e',NULL,-2143551488,2026766336,''),('y',8,'d','FIUID','s','n','',4,'','w','q','of',1303904256,'i','','your',5556878990221770752,19,'w',7,'of',NULL,1,1,''),('e',8739798026865868800,'z','CZCWK','b','DKZIN','',8613697237299494912,'','VVVBK','l','n',NULL,'GXVMO','','BDKSY',NULL,20,'y',1232142336,'CMAUM',3070047570983124992,7,NULL,''),('p',3782742212014505984,'g','why','d','about','',-8593431038976327680,'','I\'m','d','JZBVS',4,'v','','HOAIC',5,21,'h',1089404928,'p',7,1946615808,NULL,''),('o',4,'o','YXJPP','o','h','',6891633329783701504,'','no','t','h',NULL,'ADXXT','','it\'s',5,22,'g',2,'there',6,-141492224,NULL,''),('w',4448712006911918080,'s','something','want','r','',3885480578513895424,'','TNXHZ','y','go',-1373306880,'KYHAK','','EFUWM',8,23,'o',-1999896576,'FROKO',9,1,-1219493888,''),('m',9,'x','it','d','c','',0,'','out','a','x',-1661861888,'XTLNH','','h',NULL,24,'j',-858324992,'q',-6693193471202689024,2062483456,8,''),('k',3,'h','DHJTY','LJVHC','v','',4,'','NLBWI','c','OJATA',NULL,'l','','back',6,25,'y',2034565120,'USSFF',1313362241331920896,2115698688,NULL,''),('k',6,'a','HSTGV','ZGGCX','okay','',1,'','y','y','for',NULL,'been','','ZGLZY',8460574849968898048,26,'v',-2020933632,'MHEWI',NULL,-1325596672,NULL,''),('q',9,'t','d','YQKLF','ARMAV','',1,'','AZRPX','b','LXAZV',1,'UVJON','','h',NULL,27,'k',108658688,'MGUNW',5610077760820084736,1,-1950089216,''),('m',1,'q','your','UMPOJ','y','',9,'','and','p','get',NULL,'what','','SUIER',8,28,'n',-1947402240,'I',NULL,759889920,NULL,''),('h',-7365355715587735552,'k','w','look','NJMOR','',-2527082340908269568,'','be','z','have',2,'SXOHN','','h',NULL,29,'x',-1483669504,'would',NULL,9,NULL,''),('o',0,'p','v','tell','XPTLS','',-5241627016305836032,'','g','s','are',1109327872,'one','','yeah',5,30,'h',2,'w',1208935024972267520,-1726873600,655032320,''),('k',6,'k','in','LRXXL','z','',-2621657933083049984,'','that\'s','n','ERNAA',-118751232,'KKCIJ','','f',-8727694602867310592,31,'q',711720960,'QQRWR',7,1,NULL,''),('z',-1549519746792161280,'q','PMLVN','r','want','',4523865825693663232,'','TYUDQ','a','l',NULL,'e','','b',2,32,'x',4,'MILUI',1,8,50003968,''),('k',-8939363785353723904,'i','the','h','WJNIY','',1,'','to','s','I\'ll',NULL,'there','','e',NULL,33,'g',0,'think',NULL,381353984,NULL,''),('v',4783667229197598720,'b','how','JXXVC','just','',7,'','HCHKH','t','one',1,'CWAMZ','','TYOJE',NULL,34,'a',2,'OLMSJ',6,-1951727616,0,''),('f',-5740682150013829120,'d','CRMEL','u','NXTLD','',-3023041249872445440,'','HHRIW','a','t',NULL,'PKVKK','','l',NULL,35,'f',412811264,'he',1008806316530991104,-1688338432,-829816832,''),('j',6,'e','of','YYBGB','well','',4378906212687675392,'','something','g','that',-758710272,'how','','s',9,36,'r',3,'PRZKV',NULL,6,7,''),('y',-2614339583688572928,'q','are','good','you\'re','',-3253287780821762048,'','VFIHW','m','c',NULL,'s','','TJUWY',4,37,'c',4,'XSTUZ',-1036953814202056704,-1386217472,-1486618624,''),('q',2,'w','JHJXF','at','and','',-3071454945866678272,'','v','x','e',NULL,'VZIRM','','i',4537095149599064064,38,'t',335544320,'AQEZP',0,680787968,NULL,''),('a',1266074445244530688,'r','ZVIEW','ok','FLKCN','',5,'','or','g','YBXRB',7,'would','','he\'s',4,39,'x',-1573322752,'she',-1007680416624148480,8,NULL,''),('w',2,'x','well','l','but','',-7354096716519309312,'','ZIVJA','b','ZJOYQ',4,'PMMXJ','','they',3300294101932441600,40,'m',-1445724160,'ASQVK',NULL,3,4,''),('w',1045116588526665728,'v','say','b','RYFVG','',907756799891865600,'','a','z','your',1064828928,'l','','EOKCZ',1509550300099248128,41,'j',1,'n',NULL,8,NULL,''),('i',-2407736950782951424,'g','so','SRCDU','u','',-8496603646987862016,'','really','c','SKXAZ',-228655104,'because','','have',NULL,42,'u',7,'PWKPB',6249307432929984512,9,NULL,''),('d',1488158201869238272,'p','f','AVYST','of','',561824053514469376,'','l','q','z',1790443520,'s','','AILLJ',1423700432202498048,43,'i',998375424,'SLXQG',2054485855011078144,-1370816512,838598656,''),('s',3,'e','BJMCL','PICIT','y','',-3481001036980682752,'','b','o','e',1,'j','','when',7180145180912123904,44,'w',1,'BJDGL',7,6,NULL,''),('p',2,'m','AOQRI','ZHZSN','HVBAT','',-3790623511362404352,'','can\'t','z','x',NULL,'ENYMM','','z',NULL,45,'d',6,'they',6,4,6,''),('w',4,'f','j','KOEDZ','at','',6,'','e','z','IDAHS',NULL,'NALEJ','','how',9,46,'f',6,'UYZTE',NULL,612171776,NULL,''),('b',7,'b','j','get','he','',-6035667925606596608,'','GBCFY','w','y',-184877056,'j','','PLXXM',3,47,'l',6,'XPRML',NULL,9,7,''),('w',405605441440055296,'a','k','o','it','',-8033014360345411584,'','I\'m','j','k',NULL,'WBQJG','','I\'m',NULL,48,'d',4,'q',1,693370880,NULL,''),('r',3,'v','XHBMU','u','a','',9,'','really','m','she',NULL,'the','','j',NULL,49,'g',1413349376,'GQCUF',NULL,1978990592,NULL,''),('v',6,'z','p','l','RAWAA','',1601874092460343296,'','x','k','PEOEH',1216348160,'when','','p',6,50,'b',-1399783424,'no',3,4,NULL,''),('m',0,'o','ZMJSK','back','XRWZK','',2,'','t','r','h',3,'j','','MAYVO',-1346294813607067648,51,'a',5,'i',5792192070751879168,-40304640,1,''),('w',2,'t','GQQKH','v','VDKIB','',8,'','that\'s','b','going',NULL,'YDPIL','','but',3,52,'a',4,'ACZBN',4,-562626560,NULL,''),('o',8,'m','g','e','FLKLA','',8821707245088669696,'','m','m','g',-927203328,'in','','LTNZB',NULL,53,'u',1834352640,'we',-5826532017910579200,6,NULL,''),('p',-7327919543685218304,'f','b','ADHPF','it','',8599060538510540800,'','that\'s','b','WEBIB',NULL,'u','','w',1,54,'w',9,'SQXDZ',-896497800823439360,6,9,''),('s',2536089540163010560,'p','HOVCE','think','SWVIZ','',-3512244759395565568,'','ZOJHR','l','LELPS',NULL,'PGNUT','','p',NULL,55,'m',37158912,'up',NULL,4,NULL,''),('k',-1899674617820217344,'f','h','it\'s','QKGPF','',1176002452697120768,'','is','q','is',NULL,'PRIRL','','NIEKA',2282199111169998848,56,'k',1434648576,'ULTKC',8092687055408070656,6,5,''),('t',4173710954665607168,'k','like','DGUAA','d','',116812115334922240,'','is','g','CFRMJ',NULL,'going','','you\'re',5,57,'d',1995636736,'and',NULL,0,9,''),('p',2,'f','hey','JCFMA','SAMGC','',2672886378844389376,'','EEPKF','w','get',NULL,'what','','you\'re',NULL,58,'c',2,'g',9,-1440415744,NULL,''),('z',-1252282171385708544,'h','something','ELUOD','GTYIM','',-4945515340806225920,'','could','f','okay',-902955008,'so','','HOCZS',NULL,59,'p',8,'something',2622220883036471296,9,1,''),('s',3,'d','up','got','z','',2,'','GKQZW','a','m',6,'s','','for',NULL,60,'m',-1991114752,'GKJRD',NULL,-883687424,NULL,''),('h',6,'c','FYCMV','know','i','',3,'','RCNWQ','q','ULAIC',-1673199616,'SKLHU','','IVLTX',7144960808823291904,61,'u',8,'about',-298926425266716672,5,3,''),('w',-8769071424443777024,'n','didn\'t','you','m','',5,'','NHZNA','f','t',NULL,'good','','k',5246693565886627840,62,'n',2,'who',-4785919029011283968,8,-367132672,''),('x',4,'g','and','m','z','',6809442636584189952,'','good','x','e',437256192,'RKNFX','','EREVA',-1391330809880772608,63,'p',-2013528064,'he',NULL,79429632,494338048,''),('r',9,'l','the','DRVDY','w','',3742491290344882176,'','for','k','have',NULL,'o','','his',NULL,64,'i',7,'they',7816278628278206464,4128768,NULL,''),('h',-981503243790057472,'c','get','ZHGCG','IWNIK','',-5334513758620352512,'','b','p','be',NULL,'q','','o',NULL,65,'s',1269104640,'now',6905425603642523648,-1750990848,-1524498432,''),('s',-2323294457769754624,'j','KLRML','BGZPA','ARIIT','',0,'','or','s','HDZJS',NULL,'for','','EBVAW',NULL,66,'z',563675136,'y',4275041946281443328,1545011200,-1934360576,''),('h',5119185401436700672,'z','something','who','x','',4149504106668490752,'','KIRFL','e','XLZFV',NULL,'AQMZT','','r',688206318057553920,67,'e',707330048,'XENHX',6995216121213222912,3,8,''),('k',4547791198714068992,'b','o','who','LEWQN','',0,'','LVGPL','w','time',9,'to','','b',NULL,68,'e',-460324864,'NLQCE',1008524841554280448,-959643648,4,''),('p',6,'m','XSGGU','c','NDWUZ','',5553782765477953536,'','OFRAA','s','they',663027712,'p','','TSTUG',2,69,'n',436142080,'VPNNH',NULL,1,7,''),('a',4,'l','p','j','ONPMP','',0,'','see','p','p',7,'NMBJB','','THLWB',-1628332740271144960,70,'q',-1233977344,'y',NULL,1,-2020737024,''),('d',6537256334104985600,'s','WCXQO','why','go','',0,'','she','p','a',-946601984,'been','','FQGXL',5,71,'s',-602931200,'CSCMR',NULL,6,3,''),('o',5,'v','i','as','with','',2126824924025716736,'','WXQHP','k','h',4,'JNJUC','','q',NULL,72,'v',6,'like',7,1964769280,NULL,''),('w',2,'u','be','FCEXC','p','',9,'','ONRPG','s','w',1440546816,'tell','','k',-2474165045286666240,73,'g',741867520,'or',9,1,-1140260864,''),('r',-7531144476870311936,'b','with','YKPNY','QDVDA','',0,'','for','m','FKYPK',NULL,'s','','x',4961277939502022656,74,'h',2045575168,'be',4,4,1428291584,''),('j',-9085449298266554368,'h','VHYZD','a','g','',1,'','because','y','NGVYQ',NULL,'going','','b',NULL,75,'f',2,'e',7,-117506048,NULL,''),('u',-6421007168723484672,'v','HSAMR','yeah','about','',5,'','okay','l','e',NULL,'had','','her',-18577348462903296,76,'s',-1779499008,'r',-2204793492574568448,0,NULL,''),('u',4418312709427167232,'s','like','r','or','',-7407858437071044608,'','u','v','n',-1573847040,'k','','just',NULL,77,'d',6,'d',8,1717436416,NULL,''),('v',5,'i','about','USLEC','y','',9,'','hey','g','is',5,'CGFWS','','l',6,78,'r',1460862976,'KXXSH',-8616793462043312128,1473773568,-769458176,''),('t',6,'a','TYLTM','t','y','',-7013230519722704896,'','x','k','be',NULL,'then','','JTMZC',7026459843628105728,79,'v',6,'p',5,140902400,-1734606848,''),('p',6,'c','e','l','IXRJA','',4358358539387797504,'','want','c','x',7,'go','','MBXTA',-2624472682850156544,80,'b',8,'YAFIS',NULL,4,-20316160,''),('k',-8411035254067822592,'u','get','was','have','',1582452319067308032,'','s','f','z',1601765376,'FVURH','','SNZJB',2,81,'j',1401683968,'q',-6935543426150563840,1398669312,1570177024,''),('r',6667297773345308672,'y','CGEDL','k','e','',4,'','FPPCI','n','u',NULL,'can\'t','','good',NULL,82,'v',-853671936,'NKXQI',-5810769419214782464,-1045561344,1922367488,''),('f',6964253873775050752,'j','YGXZE','YPOKT','his','',5,'','j','f','BEWSS',3,'x','','KSSFV',NULL,83,'g',58261504,'a',2,-817299456,NULL,''),('s',4,'u','me','l','it\'s','',1,'','h','s','v',2,'n','','YLRKV',9,84,'z',7,'b',3173911837389357056,7,1,''),('r',6522619635316031488,'y','you','him','k','',-6658009099113857024,'','r','k','RRVTO',2,'BLWIN','','get',5849894440977563648,85,'j',0,'think',-8396398555278868480,-976027648,-545914880,''),('e',8308859837521854464,'l','d','z','KBOSL','',8,'','r','r','so',NULL,'USTRU','','oh',2431943798780067840,86,'d',-1865809920,'DFSPQ',NULL,1135542272,NULL,''),('q',5,'u','DZGZP','if','z','',4969722188803342336,'','KDUBP','j','they',-1942159360,'HYHTO','','s',3,87,'o',-1795358720,'DGWPO',2106840200679260160,8,1715929088,''),('v',-4958463189734916096,'l','BMSHF','would','HCLTG','',7378022089539715072,'','z','p','I\'m',0,'EREDQ','','s',0,88,'i',1723465728,'o',NULL,6,1095761920,''),('b',7,'y','x','FUXSO','look','',7459649832785805312,'','it','a','j',329711616,'AHFBE','','m',NULL,89,'i',-1031340032,'o',NULL,2,7,''),('b',-6384415421751099392,'t','h','LHGMF','yeah','',-7707347812291182592,'','l','k','e',NULL,'PWLKN','','come',NULL,90,'y',9,'right',NULL,1,5,''),('m',5,'x','DBABG','he\'s','from','',2,'','DVZBO','x','HFCDU',1573584896,'did','','but',5,91,'m',5,'her',6,-1602879488,647233536,''),('r',-4107564335138603008,'e','out','EMMOE','in','',-6240581708651954176,'','know','z','his',3,'but','','EFENG',8,92,'y',-938999808,'v',NULL,4,-67567616,''),('a',702843016846508032,'d','p','they','e','',1,'','q','k','b',NULL,'LGFXO','','BQJKP',-8458886000108634112,93,'h',-2075787264,'will',NULL,6,NULL,''),('g',4,'f','z','w','all','',8,'','VJPJF','r','TMDSQ',1155465216,'YWGHE','','HIQES',0,94,'r',379453440,'oh',NULL,-336789504,NULL,''),('p',3,'x','HAZXZ','LBMUR','she','',5,'','KFVBY','i','that\'s',NULL,'so','','b',966585070024392704,95,'l',347734016,'mean',NULL,1,8,''),('b',5294544311927439360,'g','BJZPD','x','o','',3,'','y','l','e',0,'who','','z',3,96,'n',0,'d',NULL,-1887174656,-1215365120,''),('l',-2425751349292433408,'v','HSHTG','t','BNQEN','',6449436141371260928,'','KNZIH','n','OCMPJ',1,'MYSQS','','come',NULL,97,'a',4,'ok',1,8,NULL,''),('s',4220435800799576064,'m','she','EYOBT','is','',-508625282916155392,'','know','c','b',8,'okay','','s',2,98,'o',4,'BCJXG',7372111115028791296,-1159266304,3,''),('e',9,'w','yeah','j','want','',3,'','come','r','o',-142409728,'HQDFN','','to',NULL,99,'b',1025703936,'j',NULL,523763712,NULL,''),('s',3,'c','MPHAQ','HONLB','WUHSW','',9218586962250694656,'','a','h','ZMYQY',-1333723136,'can\'t','','LFFMZ',-573364527559606272,100,'o',1,'k',NULL,1434124288,2,'');
+ALTER TABLE `CC` ENABLE KEYS;
+
+CREATE TABLE `DD` (
+  `col_char_10` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_bigint_not_null_key` BIGINT NOT NULL,
+  `col_int_not_null` INT NOT NULL,
+  `col_int_key` INT DEFAULT NULL,
+  `col_text_not_null_key` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_char_255_not_null_key` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_enum_not_null_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_char_255_not_null` VARCHAR(255) NOT NULL COLLATE utf8_general_ci,
+  `col_bigint_key` BIGINT DEFAULT NULL,
+  `col_enum` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_text` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_10_not_null_key` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_int_not_null_key` INT NOT NULL,
+  `col_enum_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_char_255` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_enum_not_null` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_bigint_not_null` BIGINT NOT NULL,
+  `col_text_not_null` TEXT NOT NULL COLLATE utf8_general_ci,
+  `pk` INT NOT NULL AUTO_INCREMENT,
+  `col_char_255_key` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_10_not_null` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_int` INT DEFAULT NULL,
+  `col_text_key` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_bigint` BIGINT DEFAULT NULL,
+  `col_char_10_key` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_bigint_not_null_key` (`col_bigint_not_null_key`),
+  KEY `col_int_key` (`col_int_key`),
+  KEY `col_text_not_null_key` (`col_text_not_null_key`(255)),
+  KEY `col_char_255_not_null_key` (`col_char_255_not_null_key`),
+  KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+  KEY `col_int_not_null_key` (`col_int_not_null_key`),
+  KEY `col_enum_key` (`col_enum_key`),
+  KEY `col_char_255_key` (`col_char_255_key`),
+  KEY `col_text_key` (`col_text_key`(255)),
+  KEY `col_char_10_key` (`col_char_10_key`)
+) ENGINE='InnoDB' COLLATE='utf8_general_ci';
+
+SELECT    MIN(  table2 . `col_int` ) AS field1 FROM ( (  SELECT   SUBQUERY1_t1 . * FROM ( CC AS SUBQUERY1_t1 LEFT  JOIN C AS SUBQUERY1_t2 ON (SUBQUERY1_t2 . `col_char_10_key` = SUBQUERY1_t1 . `col_char_10_key`  ) )  ) AS table1 STRAIGHT_JOIN ( ( AA AS table2 RIGHT OUTER JOIN DD AS table3 ON (table3 . `col_int_key` = table2 . `col_int_not_null`  ) ) ) ON (table3 . `col_char_255_key` = table2 . `col_char_255_not_null_key`  ) ) WHERE (  table2 . `col_char_255_not_null` > ALL ( SELECT   SUBQUERY2_t1 . `col_char_10_key` AS SUBQUERY2_field1 FROM ( AA AS SUBQUERY2_t1 STRAIGHT_JOIN AA AS SUBQUERY2_t2 ON (SUBQUERY2_t2 . `col_bigint` = SUBQUERY2_t1 . `col_bigint_key`  ) ) WHERE SUBQUERY2_t2 . `col_bigint` != table3 . `col_int_not_null_key` ) ) AND ( table1 . `col_int_key` > 239 AND table1 . `col_int_key` < ( 239 + 220 ) OR table1 . `pk` > 239 AND table1 . `pk` < ( 239 + 206 ) )  HAVING  ( 'c', 'i' )  IN ( SELECT  SQL_SMALL_RESULT SUBQUERY3_t1 . `col_text` AS SUBQUERY3_field1 , MIN(  SUBQUERY3_t1 . `col_text_key` ) AS SUBQUERY3_field2 FROM ( AA AS SUBQUERY3_t1 INNER JOIN ( BB AS SUBQUERY3_t2 INNER JOIN BB AS SUBQUERY3_t3 ON (SUBQUERY3_t3 . `col_int_key` = SUBQUERY3_t2 . `col_int_key`  ) ) ON (SUBQUERY3_t3 . `col_text_key` = SUBQUERY3_t2 . `col_char_255_not_null_key`  ) )    ) ORDER BY field1 DESC, field1;
+
+DROP TABLE AA;
+DROP TABLE BB;
+DROP TABLE CC;
+DROP TABLE C;
+DROP TABLE DD; 

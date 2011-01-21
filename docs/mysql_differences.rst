@@ -112,6 +112,7 @@ Partitioning
 
 INFORMATION_SCHEMA
 ------------------
+
 The INFORMATION_SCHEMA provides access to database metadata.
 
 The INFORMATION_SCHEMA in Drizzle is strictly ANSI compliant. If you write
@@ -176,11 +177,19 @@ Removed commands
  * CREATE FUNCTION
  * CONVERT
  * SET NAMES
+ * Multi-table delete and multi-table update code was removed and can be accomplished through subqueries. More detailed information can be found in the :doc:`dml` section.
 
 Operators Removed
 -----------------
 
-Bit operators: &&, >>, <<, ~, ^, |, &
+Bit operators
+ * &&
+ * >>
+ * <<
+ * ~
+ * ^
+ * '|'
+ * &
 
 Removed functions
 -----------------
@@ -191,6 +200,7 @@ Removed functions
 
 Keywords removed
 ----------------
+
  * BIT_AND
  * BIT_OR
  * BIT_XOR

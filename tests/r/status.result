@@ -33,18 +33,12 @@ Variable_name	Value
 Last_query_cost	#
 drop table t1;
 FLUSH STATUS;
-SHOW STATUS LIKE 'max_used_connections';
-Variable_name	Value
-Max_used_connections	1
-SELECT * FROM data_dictionary.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
-VARIABLE_NAME	VARIABLE_VALUE
-Max_used_connections	1
-SHOW STATUS LIKE 'max_used_connections';
-Variable_name	Value
-Max_used_connections	3
-SELECT * FROM data_dictionary.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
-VARIABLE_NAME	VARIABLE_VALUE
-Max_used_connections	3
+SELECT ASSERT(VARIABLE_VALUE = 1) FROM data_dictionary.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
+ASSERT(VARIABLE_VALUE = 1)
+1
+SELECT ASSERT(VARIABLE_VALUE >= 3) FROM data_dictionary.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
+ASSERT(VARIABLE_VALUE >= 3)
+1
 CREATE TABLE t1 ( a INT );
 INSERT INTO t1 VALUES (1), (2);
 SELECT a FROM t1 LIMIT 1;

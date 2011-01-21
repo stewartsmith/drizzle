@@ -45,6 +45,7 @@
 #include "drizzled/field/time.h"
 #include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
+#include "drizzled/field/microtime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/uuid.h"
 #include "drizzled/time_functions.h"
@@ -92,6 +93,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_DOUBLE -> */
   {
@@ -122,6 +125,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_BOOLEAN
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_NULL -> */
@@ -154,6 +159,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_BOOLEAN,
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_UUID,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_MICROTIME,
   },
   /* DRIZZLE_TYPE_TIMESTAMP -> */
   {
@@ -185,6 +192,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_LONGLONG -> */
   {
@@ -214,6 +223,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_BOOLEAN
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_DATETIME -> */
@@ -246,6 +257,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_DATE -> */
   {
@@ -276,6 +289,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_BOOLEAN
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_VARCHAR -> */
@@ -308,6 +323,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_DECIMAL -> */
   {
@@ -338,6 +355,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_BOOLEAN
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_ENUM -> */
@@ -370,6 +389,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
    },
   /* DRIZZLE_TYPE_BLOB -> */
   {
@@ -400,6 +421,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_BOOLEAN
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_TIME -> */
@@ -432,6 +455,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_UUID,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_BOOLEAN -> */
   {
@@ -462,6 +487,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_BOOLEAN
     DRIZZLE_TYPE_BOOLEAN,
     //DRIZZLE_TYPE_UUID
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_UUID -> */
@@ -494,6 +521,41 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_UUID,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
+  },
+  /* DRIZZLE_TYPE_MICROTIME -> */
+  {
+    //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_DOUBLE
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_NULL
+    DRIZZLE_TYPE_MICROTIME,
+    //DRIZZLE_TYPE_TIMESTAMP
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_LONGLONG
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_DATETIME
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_DATE
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_VARCHAR
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_DECIMAL
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_VARCHAR,
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_BLOB
+    DRIZZLE_TYPE_BLOB,
+    //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_TIME,
+    //DRIZZLE_TYPE_BOOLEAN
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_UUID
+    DRIZZLE_TYPE_UUID,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_MICROTIME,
   },
 };
 
@@ -526,6 +588,8 @@ static Item_result field_types_result_type [enum_field_types_size]=
   //DRIZZLE_TYPE_BOOLEAN
   STRING_RESULT,
   //DRIZZLE_TYPE_UUID
+  STRING_RESULT,
+  //DRIZZLE_TYPE_MICROTIME
   STRING_RESULT,
 };
 
@@ -951,7 +1015,7 @@ bool Field::get_date(type::Time *ltime,uint32_t fuzzydate)
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   if (!(res=val_str_internal(&tmp)) || str_to_datetime_with_warn(res->ptr(), res->length(),
-                                                                 ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
+                                                                 ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
   {
     return 1;
   }
@@ -972,11 +1036,13 @@ bool Field::get_time(type::Time *ltime)
   return 0;
 }
 
-int Field::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type)
+int Field::store_time(type::Time *ltime, type::timestamp_t)
 {
-  char buff[MAX_DATE_STRING_REP_LENGTH];
-  uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);
-  return store(buff, length, &my_charset_bin);
+  String tmp;
+
+  ltime->convert(tmp);
+
+  return store(tmp.ptr(), tmp.length(), &my_charset_bin);
 }
 
 bool Field::optimize_range(uint32_t idx, uint32_t)
@@ -1047,17 +1113,22 @@ bool Field_enum::eq_def(Field *field)
 {
   if (!Field::eq_def(field))
     return 0;
+
   TYPELIB *from_lib=((Field_enum*) field)->typelib;
 
   if (typelib->count < from_lib->count)
     return 0;
+
   for (uint32_t i=0 ; i < from_lib->count ; i++)
+  {
     if (my_strnncoll(field_charset,
                      (const unsigned char*)typelib->type_names[i],
                      strlen(typelib->type_names[i]),
                      (const unsigned char*)from_lib->type_names[i],
                      strlen(from_lib->type_names[i])))
       return 0;
+  }
+
   return 1;
 }
 
@@ -1066,6 +1137,8 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   switch (type) {
   case DRIZZLE_TYPE_VARCHAR: return (length + (length < 256 ? 1: 2));
   case DRIZZLE_TYPE_UUID: return field::Uuid::max_string_length();
+  case DRIZZLE_TYPE_MICROTIME: return field::Microtime::max_string_length();
+  case DRIZZLE_TYPE_TIMESTAMP: return field::Epoch::max_string_length();
   case DRIZZLE_TYPE_BOOLEAN: return field::Boolean::max_string_length();
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
@@ -1073,7 +1146,6 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   case DRIZZLE_TYPE_DOUBLE: return sizeof(double);
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_LONGLONG: return 8;	/* Don't crash if no int64_t */
   case DRIZZLE_TYPE_NULL: return 0;
   case DRIZZLE_TYPE_BLOB: return 4 + portable_sizeof_char_ptr;
@@ -1102,7 +1174,7 @@ uint32_t pack_length_to_packflag(uint32_t type)
 *****************************************************************************/
 
 bool Field::set_warning(DRIZZLE_ERROR::enum_warning_level level,
-                        uint32_t code,
+                        drizzled::error_t code,
                         int cuted_increment)
 {
   /*
@@ -1122,10 +1194,10 @@ bool Field::set_warning(DRIZZLE_ERROR::enum_warning_level level,
 
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
-                                 unsigned int code,
+                                 drizzled::error_t code,
                                  const char *str, 
                                  uint32_t str_length,
-                                 enum enum_drizzle_timestamp_type ts_type, 
+                                 type::timestamp_t ts_type, 
                                  int cuted_increment)
 {
   Session *session= table ? table->in_use : current_session;
@@ -1137,9 +1209,9 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 }
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
-                                 uint32_t code,
+                                 drizzled::error_t code,
                                  int64_t nr, 
-                                 enum enum_drizzle_timestamp_type ts_type,
+                                 type::timestamp_t ts_type,
                                  int cuted_increment)
 {
   Session *session= table ? table->in_use : current_session;
@@ -1154,9 +1226,9 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 }
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
-                                 const uint32_t code,
+                                 const drizzled::error_t code,
                                  double nr, 
-                                 enum enum_drizzle_timestamp_type ts_type)
+                                 type::timestamp_t ts_type)
 {
   Session *session= table ? table->in_use : current_session;
   if (session->really_abort_on_warning() ||
@@ -1204,12 +1276,30 @@ void Field::pack_num(uint64_t arg, unsigned char *destination)
   int64_tstore(destination, arg);
 }
 
+void Field::pack_num(uint32_t arg, unsigned char *destination)
+{
+  if (not destination)
+    destination= ptr;
+
+  longstore(destination, arg);
+}
+
 uint64_t Field::unpack_num(uint64_t &destination, const unsigned char *arg) const
 {
   if (not arg)
     arg= ptr;
 
   int64_tget(destination, arg);
+
+  return destination;
+}
+
+uint32_t Field::unpack_num(uint32_t &destination, const unsigned char *arg) const
+{
+  if (not arg)
+    arg= ptr;
+
+  longget(destination, arg);
 
   return destination;
 }

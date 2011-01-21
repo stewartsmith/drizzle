@@ -31,6 +31,7 @@ String *Item_func_now::val_str(String *)
 {
   assert(fixed == 1);
   str_value.set(buff, buff_length, &my_charset_bin);
+
   return &str_value;
 }
 
@@ -40,15 +41,18 @@ void Item_func_now::fix_length_and_dec()
   decimals= DATETIME_DEC;
   collation.set(&my_charset_bin);
   
-  memset(&ltime, 0, sizeof(type::Time));
+  ltime.reset();
 
-  ltime.time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 
   store_now_in_TIME(&ltime);
+
   value= (int64_t) TIME_to_uint64_t_datetime(&ltime);
 
-  buff_length= (uint) my_datetime_to_str(&ltime, buff);
-  max_length= buff_length;
+  size_t length= type::Time::MAX_STRING_LENGTH;
+  ltime.convert(buff, length);
+
+  max_length= buff_length= length;
 }
 
 /**
@@ -58,16 +62,13 @@ void Item_func_now::fix_length_and_dec()
 void Item_func_now_local::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
-  time_t tmp= session->query_start();
+  uint32_t fractional_seconds= 0;
+  time_t tmp= session->getCurrentTimestampEpoch(fractional_seconds);
 
-  (void) cached_temporal.from_time_t(tmp);
-
-  now_time->year= cached_temporal.years();
-  now_time->month= cached_temporal.months();
-  now_time->day= cached_temporal.days();
-  now_time->hour= cached_temporal.hours();
-  now_time->minute= cached_temporal.minutes();
-  now_time->second= cached_temporal.seconds();
+#if 0
+  now_time->store(tmp, fractional_seconds, true);
+#endif
+  now_time->store(tmp, fractional_seconds);
 }
 
 
@@ -78,16 +79,10 @@ void Item_func_now_local::store_now_in_TIME(type::Time *now_time)
 void Item_func_now_utc::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
-  time_t tmp= session->query_start();
+  uint32_t fractional_seconds= 0;
+  time_t tmp= session->getCurrentTimestampEpoch(fractional_seconds);
 
-  (void) cached_temporal.from_time_t(tmp);
-
-  now_time->year= cached_temporal.years();
-  now_time->month= cached_temporal.months();
-  now_time->day= cached_temporal.days();
-  now_time->hour= cached_temporal.hours();
-  now_time->minute= cached_temporal.minutes();
-  now_time->second= cached_temporal.seconds();
+  now_time->store(tmp, fractional_seconds);
 }
 
 bool Item_func_now::get_temporal(DateTime &to)
@@ -96,8 +91,7 @@ bool Item_func_now::get_temporal(DateTime &to)
   return true;
 }
 
-bool Item_func_now::get_date(type::Time *res,
-                             uint32_t )
+bool Item_func_now::get_date(type::Time *res, uint32_t )
 {
   *res= ltime;
   return 0;
@@ -107,7 +101,7 @@ bool Item_func_now::get_date(type::Time *res,
 int Item_func_now::save_in_field(Field *to, bool )
 {
   to->set_notnull();
-  return to->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
+  return to->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 } /* namespace drizzled */

@@ -320,9 +320,7 @@ static int pbms_create_proto_table(const char *engine_name, const char *name, DT
 			
 		field_constraints= field->mutable_constraints();
 		if (info->field_flags & NOT_NULL_FLAG)
-			field_constraints->set_is_nullable(false);
-		else
-			field_constraints->set_is_nullable(true);
+			field_constraints->set_is_notnull(true);
 		
 		if (info->field_flags & UNSIGNED_FLAG)
 			field_constraints->set_is_unsigned(true);

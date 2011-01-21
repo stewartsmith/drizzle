@@ -41,7 +41,7 @@ bool statement::AlterSchema::execute()
   if (not validateSchemaOptions())
     return true;
 
-  SchemaIdentifier schema_identifier(string(db->str, db->length));
+  identifier::Schema schema_identifier(string(db->str, db->length));
 
   if (not check_db_name(session, schema_identifier))
   {
@@ -50,7 +50,7 @@ bool statement::AlterSchema::execute()
     return false;
   }
 
-  SchemaIdentifier identifier(db->str);
+  identifier::Schema identifier(db->str);
   if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 
@@ -66,8 +66,10 @@ bool statement::AlterSchema::execute()
     @todo right now the logic for alter schema is just sitting here, at some point this should be packaged up in a class/etc.
   */
 
+  // First initialize the schema message
+  drizzled::message::schema::init(schema_message, old_definition->name());
+
   // We set the name from the old version to keep case preference
-  schema_message.set_name(old_definition->name());
   schema_message.set_version(old_definition->version());
   schema_message.set_uuid(old_definition->uuid());
   schema_message.mutable_engine()->set_name(old_definition->engine().name());
@@ -81,7 +83,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= alter_db(session, schema_message);
+  bool res= alter_db(session, schema_message, old_definition);
 
   return not res;
 }

@@ -49,7 +49,7 @@ int BlitzData::shutdown() {
 /* Similar to UNIX touch(1) but generates a tuned TCHDB file. */
 int BlitzData::create_data_table(drizzled::message::Table &proto,
                                  drizzled::Table &table_info,
-                                 const drizzled::TableIdentifier &identifier) {
+                                 const drizzled::identifier::Table &identifier) {
 
   std::string path = identifier.getPath() + BLITZ_DATA_EXT;
 

@@ -33,10 +33,11 @@ class Item_func_now :public Item_date_func
 {
 protected:
   int64_t value;
-  char buff[20*2+32];   // +32 to make my_snprintf_{8bit|ucs2} happy
+  char buff[type::Time::MAX_STRING_LENGTH];
   uint32_t buff_length;
   type::Time ltime;
   DateTime cached_temporal;
+
 public:
   Item_func_now() :Item_date_func() {}
   Item_func_now(Item *a) :Item_date_func(a) {}

@@ -93,6 +93,7 @@ public:
    */
 private:
   Table *table;
+
 public:
   Table *getTable()
   {
@@ -210,7 +211,7 @@ public:
     @note
       Needs to be changed if/when we want to support different time formats.
   */
-  virtual int store_time(type::Time *ltime, enum enum_drizzle_timestamp_type t_type);
+  virtual int store_time(type::Time *ltime, type::timestamp_t t_type);
   virtual double val_real()=0;
   virtual int64_t val_int()=0;
   virtual type::Decimal *val_decimal(type::Decimal *);
@@ -285,6 +286,11 @@ public:
    *  false This Field is NOT equally defined to supplied Field
    */
   virtual bool eq_def(Field *field);
+
+  virtual bool is_timestamp() const
+  {
+    return false;
+  }
 
   /**
    * Returns size (in bytes) used to store field data in memory
@@ -617,7 +623,7 @@ public:
       0 otherwise
   */
   bool set_warning(DRIZZLE_ERROR::enum_warning_level,
-                   unsigned int code,
+                   drizzled::error_t code,
                    int cuted_increment);
   /**
     Produce warning or note about datetime string data saved into field.
@@ -635,10 +641,10 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            uint32_t code,
+                            drizzled::error_t code,
                             const char *str,
                             uint32_t str_len,
-                            enum enum_drizzle_timestamp_type ts_type,
+                            type::timestamp_t ts_type,
                             int cuted_increment);
   /**
     Produce warning or note about integer datetime value saved into field.
@@ -655,9 +661,9 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            uint32_t code,
+                            drizzled::error_t code,
                             int64_t nr,
-                            enum enum_drizzle_timestamp_type ts_type,
+                            type::timestamp_t ts_type,
                             int cuted_increment);
   /**
     Produce warning or note about double datetime data saved into field.
@@ -673,9 +679,9 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            const uint32_t code,
+                            const drizzled::error_t code,
                             double nr,
-                            enum enum_drizzle_timestamp_type ts_type);
+                            type::timestamp_t ts_type);
   bool check_overflow(int op_result)
   {
     return (op_result == E_DEC_OVERFLOW);
@@ -750,7 +756,9 @@ public:
 protected:
 
   void pack_num(uint64_t arg, unsigned char *destination= NULL);
+  void pack_num(uint32_t arg, unsigned char *destination= NULL);
   uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const;
+  uint32_t unpack_num(uint32_t &destination, const unsigned char *arg= NULL) const;
 };
 
 std::ostream& operator<<(std::ostream& output, const Field &field);
@@ -798,6 +806,7 @@ class CopyField :public memory::SqlAlloc
   */
   typedef void Copy_func(CopyField*);
   Copy_func *get_copy_func(Field *to, Field *from);
+
 public:
   unsigned char *from_ptr;
   unsigned char *to_ptr;
@@ -812,8 +821,23 @@ public:
   Field *to_field;
   String tmp;					// For items
 
-  CopyField() {}
-  ~CopyField() {}
+  CopyField() :
+    from_ptr(0),
+    to_ptr(0),
+    from_null_ptr(0),
+    to_null_ptr(0),
+    null_row(0),
+    from_bit(0),
+    to_bit(0),
+    from_length(0),
+    to_length(0),
+    from_field(0),
+    to_field(0)
+  {}
+
+  ~CopyField()
+  {}
+
   void set(Field *to,Field *from,bool save);	// Field to field
   void set(unsigned char *to,Field *from);		// Field to string
   void (*do_copy)(CopyField *);

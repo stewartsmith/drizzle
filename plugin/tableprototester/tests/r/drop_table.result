@@ -1,2 +1,2 @@
 DROP TABLE t1;
-ERROR HY000: Corrupt or invalid table definition for test.t1: 
+Got one of the listed errors

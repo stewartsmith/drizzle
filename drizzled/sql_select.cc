@@ -3053,7 +3053,15 @@ int do_select(Join *join, List<Item> *fields, Table *table)
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
         table->getShare()->sizeKeys() && !table->cursor->inited)
-      table->cursor->startIndexScan(0, 0);
+    {
+      int tmp_error;
+      tmp_error= table->cursor->startIndexScan(0, 0);
+      if (tmp_error != 0)
+      {
+        table->print_error(tmp_error, MYF(0));
+        return -1;
+      }
+    }
   }
   /* Set up select_end */
   Next_select_func end_select= setup_end_select_func(join);
@@ -3531,7 +3539,11 @@ int join_read_key(JoinTable *tab)
 
   if (!table->cursor->inited)
   {
-    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+    error= table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+    if (error != 0)
+    {
+      table->print_error(error, MYF(0));
+    }
   }
 
   /* TODO: Why don't we do "Late NULLs Filtering" here? */
@@ -3579,7 +3591,11 @@ int join_read_always_key(JoinTable *tab)
 
   /* Initialize the index first */
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+    if (error != 0)
+      return table->report_error(error);
+  }
 
   /* Perform "Late NULLs Filtering" (see internals manual for explanations) */
   for (uint32_t i= 0 ; i < tab->ref.key_parts ; i++)
@@ -3613,7 +3629,11 @@ int join_read_last_key(JoinTable *tab)
   Table *table= tab->table;
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+    if (error != 0)
+      return table->report_error(error);
+  }
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
   if ((error=table->cursor->index_read_last_map(table->getInsertRecord(),
@@ -3728,7 +3748,8 @@ int join_init_read_record(JoinTable *tab)
   if (tab->select && tab->select->quick && tab->select->quick->reset())
     return 1;
 
-  tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true);
+  if (tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true))
+    return 1;
 
   return (*tab->read_record.read_record)(&tab->read_record);
 }
@@ -3761,7 +3782,14 @@ int join_read_first(JoinTable *tab)
   }
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->index, tab->sorted);
+  {
+    error= table->cursor->startIndexScan(tab->index, tab->sorted);
+    if (error != 0)
+    {
+      table->report_error(error);
+      return -1;
+    }
+  }
   if ((error=tab->table->cursor->index_first(tab->table->getInsertRecord())))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
@@ -3820,7 +3848,11 @@ int join_read_last(JoinTable *tab)
   tab->read_record.index=tab->index;
   tab->read_record.record=table->getInsertRecord();
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->index, 1);
+  {
+    error= table->cursor->startIndexScan(tab->index, 1);
+    if (error != 0)
+      return table->report_error(error);
+  }
   if ((error= tab->table->cursor->index_last(tab->table->getInsertRecord())))
     return table->report_error(error);
 
@@ -3900,7 +3932,7 @@ enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_recor
               error=join->result->send_data(*join->fields) ? 1 : 0;
             join->send_records++;
           }
-          if (join->rollup.state != ROLLUP::STATE_NONE && error <= 0)
+          if (join->rollup.getState() != Rollup::STATE_NONE && error <= 0)
           {
             if (join->rollup_send_data((uint32_t) (idx+1)))
               error= 1;
@@ -3990,7 +4022,7 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
             return NESTED_LOOP_ERROR;
           }
         }
-        if (join->rollup.state != ROLLUP::STATE_NONE)
+        if (join->rollup.getState() != Rollup::STATE_NONE)
         {
           if (join->rollup_write_data((uint32_t) (idx+1), table))
             return NESTED_LOOP_ERROR;
@@ -5099,7 +5131,9 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   org_record=(char*) (record=table->getInsertRecord())+offset;
   new_record=(char*) table->getUpdateRecord()+offset;
 
-  cursor->startTableScan(1);
+  if ((error= cursor->startTableScan(1)))
+    goto err;
+
   error=cursor->rnd_next(record);
   for (;;)
   {
@@ -5216,7 +5250,9 @@ int remove_dup_with_hash_index(Session *session,
     return(1);
   }
 
-  cursor->startTableScan(1);
+  if ((error= cursor->startTableScan(1)))
+    goto err;
+
   key_pos= &key_buffer[0];
   for (;;)
   {

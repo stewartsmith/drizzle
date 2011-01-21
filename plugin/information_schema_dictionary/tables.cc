@@ -41,7 +41,7 @@ Tables::Generator::Generator(drizzled::Field **arg) :
 
 bool Tables::Generator::populate()
 {
-  const drizzled::TableIdentifier *identifier;
+  const drizzled::identifier::Table *identifier;
 
   while ((identifier= generator))
   {

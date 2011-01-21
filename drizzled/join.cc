@@ -728,7 +728,7 @@ int Join::optimize()
   }
   if (group_list || tmp_table_param.sum_func_count)
   {
-    if (! hidden_group_fields && rollup.state == ROLLUP::STATE_NONE)
+    if (! hidden_group_fields && rollup.getState() == Rollup::STATE_NONE)
       select_distinct=0;
   }
   else if (select_distinct && tables - const_tables == 1)
@@ -792,7 +792,7 @@ int Join::optimize()
   {
     Order *old_group_list;
     group_list= remove_constants(this, (old_group_list= group_list), conds,
-                                 rollup.state == ROLLUP::STATE_NONE,
+                                 rollup.getState() == Rollup::STATE_NONE,
                                  &simple_group);
     if (session->is_error())
     {
@@ -1834,7 +1834,9 @@ void Join::join_free()
     for (sl= tmp_unit->first_select(); sl; sl= sl->next_select())
     {
       Item_subselect *subselect= sl->master_unit()->item;
-      bool full_local= full && (!subselect || subselect->is_evaluated());
+      bool full_local= full && (!subselect || 
+                                (subselect->is_evaluated() &&
+                                !subselect->is_uncacheable()));
       /*
         If this join is evaluated, we can fully clean it up and clean up all
         its underlying joins even if they are correlated -- they will not be
@@ -1960,7 +1962,9 @@ static void clear_tables(Join *join)
     are not re-calculated.
   */
   for (uint32_t i= join->const_tables; i < join->tables; i++)
+  {
     join->table[i]->mark_as_null_row();   // All fields are NULL
+  }
 }
 
 /**
@@ -1981,7 +1985,7 @@ bool Join::alloc_func_list()
     If we are using rollup, we need a copy of the summary functions for
     each level
   */
-  if (rollup.state != ROLLUP::STATE_NONE)
+  if (rollup.getState() != Rollup::STATE_NONE)
     func_count*= (send_group_parts+1);
 
   group_parts= send_group_parts;
@@ -2044,18 +2048,18 @@ bool Join::make_sum_func_list(List<Item> &field_list,
          ((Item_sum *)item)->depended_from() == select_lex))
       *func++= (Item_sum*) item;
   }
-  if (before_group_by && rollup.state == ROLLUP::STATE_INITED)
+  if (before_group_by && rollup.getState() == Rollup::STATE_INITED)
   {
-    rollup.state= ROLLUP::STATE_READY;
+    rollup.setState(Rollup::STATE_READY);
     if (rollup_make_fields(field_list, send_fields, &func))
       return true;     // Should never happen
   }
-  else if (rollup.state == ROLLUP::STATE_NONE)
+  else if (rollup.getState() == Rollup::STATE_NONE)
   {
     for (uint32_t i=0 ; i <= send_group_parts ;i++)
       sum_funcs_end[i]= func;
   }
-  else if (rollup.state == ROLLUP::STATE_READY)
+  else if (rollup.getState() == Rollup::STATE_READY)
     return(false);                         // Don't put end marker
   *func=0;          // End marker
   return(false);
@@ -2064,11 +2068,10 @@ bool Join::make_sum_func_list(List<Item> &field_list,
 /** Allocate memory needed for other rollup functions. */
 bool Join::rollup_init()
 {
-  uint32_t i,j;
   Item **ref_array;
 
   tmp_table_param.quick_group= 0; // Can't create groups in tmp table
-  rollup.state= ROLLUP::STATE_INITED;
+  rollup.setState(Rollup::STATE_INITED);
 
   /*
     Create pointers to the different sum function groups
@@ -2076,36 +2079,41 @@ bool Join::rollup_init()
   */
   tmp_table_param.group_parts= send_group_parts;
 
-  if (!(rollup.null_items= (Item_null_result**) session->alloc((sizeof(Item*) +
+  rollup.setNullItems((Item_null_result**) session->alloc((sizeof(Item*) +
                                                                 sizeof(Item**) +
                                                                 sizeof(List<Item>) +
                                                                 ref_pointer_array_size)
-                                                               * send_group_parts )))
+                                                               * send_group_parts ));
+  if (! rollup.getNullItems())
   {
     return 1;
   }
 
-  rollup.fields= (List<Item>*) (rollup.null_items + send_group_parts);
-  rollup.ref_pointer_arrays= (Item***) (rollup.fields + send_group_parts);
-  ref_array= (Item**) (rollup.ref_pointer_arrays+send_group_parts);
+  rollup.setFields((List<Item>*) (rollup.getNullItems() + send_group_parts));
+  rollup.setRefPointerArrays((Item***) (rollup.getFields() + send_group_parts));
+  ref_array= (Item**) (rollup.getRefPointerArrays()+send_group_parts);
 
   /*
     Prepare space for field list for the different levels
     These will be filled up in rollup_make_fields()
   */
-  for (i= 0 ; i < send_group_parts ; i++)
+  for (uint32_t i= 0 ; i < send_group_parts ; i++)
   {
-    rollup.null_items[i]= new (session->mem_root) Item_null_result();
-    List<Item> *rollup_fields= &rollup.fields[i];
+    rollup.getNullItems()[i]= new (session->mem_root) Item_null_result();
+    List<Item> *rollup_fields= &rollup.getFields()[i];
     rollup_fields->empty();
-    rollup.ref_pointer_arrays[i]= ref_array;
+    rollup.getRefPointerArrays()[i]= ref_array;
     ref_array+= all_fields.elements;
   }
-  for (i= 0 ; i < send_group_parts; i++)
+
+  for (uint32_t i= 0 ; i < send_group_parts; i++)
   {
-    for (j=0 ; j < fields_list.elements ; j++)
-      rollup.fields[i].push_back(rollup.null_items[i]);
+    for (uint32_t j= 0 ; j < fields_list.elements ; j++)
+    {
+      rollup.getFields()[i].push_back(rollup.getNullItems()[i]);
+    }
   }
+
   List_iterator<Item> it(all_fields);
   Item *item;
   while ((item= it++))
@@ -2212,8 +2220,8 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     uint32_t pos= send_group_parts - level -1;
     bool real_fields= 0;
     Item *item;
-    List_iterator<Item> new_it(rollup.fields[pos]);
-    Item **ref_array_start= rollup.ref_pointer_arrays[pos];
+    List_iterator<Item> new_it(rollup.getFields()[pos]);
+    Item **ref_array_start= rollup.getRefPointerArrays()[pos];
     Order *start_group;
 
     /* Point to first hidden field */
@@ -2311,22 +2319,23 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
 */
 int Join::rollup_send_data(uint32_t idx)
 {
-  uint32_t i;
-  for (i= send_group_parts ; i-- > idx ; )
+  for (uint32_t i= send_group_parts ; i-- > idx ; )
   {
     /* Get reference pointers to sum functions in place */
-    memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
-     ref_pointer_array_size);
+    memcpy(ref_pointer_array, rollup.getRefPointerArrays()[i], ref_pointer_array_size);
+
     if ((!having || having->val_int()))
     {
-      if (send_records < unit->select_limit_cnt && do_send_rows &&
-    result->send_data(rollup.fields[i]))
-  return 1;
+      if (send_records < unit->select_limit_cnt && do_send_rows && result->send_data(rollup.getFields()[i]))
+      {
+        return 1;
+      }
       send_records++;
     }
   }
   /* Restore ref_pointer_array */
   set_items_ref_array(current_ref_pointer_array);
+
   return 0;
 }
 
@@ -2351,17 +2360,16 @@ int Join::rollup_send_data(uint32_t idx)
 */
 int Join::rollup_write_data(uint32_t idx, Table *table_arg)
 {
-  uint32_t i;
-  for (i= send_group_parts ; i-- > idx ; )
+  for (uint32_t i= send_group_parts ; i-- > idx ; )
   {
     /* Get reference pointers to sum functions in place */
-    memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
+    memcpy(ref_pointer_array, rollup.getRefPointerArrays()[i],
            ref_pointer_array_size);
     if ((!having || having->val_int()))
     {
       int write_error;
       Item *item;
-      List_iterator_fast<Item> it(rollup.fields[i]);
+      List_iterator_fast<Item> it(rollup.getFields()[i]);
       while ((item= it++))
       {
         if (item->type() == Item::NULL_ITEM && item->is_result_field())
@@ -2377,6 +2385,7 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
   }
   /* Restore ref_pointer_array */
   set_items_ref_array(current_ref_pointer_array);
+
   return 0;
 }
 
@@ -3045,6 +3054,7 @@ static void calc_group_buffer(Join *join, Order *group)
           if (type == DRIZZLE_TYPE_DATE ||
               type == DRIZZLE_TYPE_TIME ||
               type == DRIZZLE_TYPE_DATETIME ||
+              type == DRIZZLE_TYPE_MICROTIME ||
               type == DRIZZLE_TYPE_TIMESTAMP)
           {
             key_length+= 8;

@@ -125,7 +125,7 @@ static void fill_table(message::Table *table, const char *name)
     field->set_name(buffer);
     field->set_type(message::Table::Field::VARCHAR);
 
-    field_constraints->set_is_nullable((x % 2));
+    field_constraints->set_is_notnull((x % 2));
 
     string_field_options->set_length(rand() % 100);
 
@@ -166,7 +166,7 @@ static void fill_table(message::Table *table, const char *name)
     field->set_type(message::Table::Field::DECIMAL);
 
     field_constraints= field->mutable_constraints();
-    field_constraints->set_is_nullable(true);
+    field_constraints->set_is_notnull(false);
 
     numeric_field_options= field->mutable_numeric_options();
     numeric_field_options->set_precision(8);
@@ -203,6 +203,7 @@ static void fill_table1(message::Table *table)
   message::Table::TableOptions *tableopts;
 
   table->set_name("t1");
+  table->set_catalog("LOCAL");
   table->set_type(message::Table::INTERNAL);
 
   tableopts= table->mutable_options();
@@ -263,7 +264,7 @@ int main(int argc, char* argv[])
 
   fstream output(vm["table-name"].as<string>().c_str(),
                  ios::out | ios::trunc | ios::binary);
-  if (!table.SerializeToOstream(&output))
+  if (not table.SerializeToOstream(&output))
   {
     cerr << "Failed to write schema." << endl;
     return -1;

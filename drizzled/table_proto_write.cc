@@ -43,11 +43,11 @@ using namespace std;
 
 namespace drizzled {
 
-static int fill_table_proto(message::Table &table_proto,
-                            List<CreateField> &create_fields,
-                            HA_CREATE_INFO *create_info,
-                            uint32_t keys,
-                            KeyInfo *key_info)
+bool fill_table_proto(message::Table &table_proto,
+                      List<CreateField> &create_fields,
+                      HA_CREATE_INFO *create_info,
+                      uint32_t keys,
+                      KeyInfo *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
@@ -56,7 +56,7 @@ static int fill_table_proto(message::Table &table_proto,
   if (create_fields.elements > MAX_FIELDS)
   {
     my_error(ER_TOO_MANY_FIELDS, MYF(0), ER(ER_TOO_MANY_FIELDS));
-    return(1);
+    return true;
   }
 
   assert(strcmp(table_proto.engine().name().c_str(),
@@ -83,11 +83,7 @@ static int fill_table_proto(message::Table &table_proto,
 
       if (field_arg->flags & NOT_NULL_FLAG)
       {
-        attribute->mutable_constraints()->set_is_nullable(false);
-      }
-      else
-      {
-        attribute->mutable_constraints()->set_is_nullable(true);
+        attribute->mutable_constraints()->set_is_notnull(true);
       }
 
       if (field_arg->flags & UNSIGNED_FLAG and 
@@ -100,7 +96,7 @@ static int fill_table_proto(message::Table &table_proto,
       attribute->set_name(field_arg->field_name);
     }
 
-    assert((!(field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_nullable());
+    assert(((field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_notnull());
     assert(strcmp(attribute->name().c_str(), field_arg->field_name)==0);
 
 
@@ -109,7 +105,7 @@ static int fill_table_proto(message::Table &table_proto,
     if (field_arg->sql_type == DRIZZLE_TYPE_NULL)
     {
       my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), table_proto.name().c_str(), -1);
-      return -1;
+      return true;
     }
 
     if (field_arg->flags & UNSIGNED_FLAG and 
@@ -119,21 +115,18 @@ static int fill_table_proto(message::Table &table_proto,
 
       field_arg->sql_type= DRIZZLE_TYPE_LONGLONG;
       constraints->set_is_unsigned(true);
-
-      if (field_arg->flags & NOT_NULL_FLAG)
-      {
-        constraints->set_is_nullable(false);
-      }
-      else
-      {
-        constraints->set_is_nullable(true);
-      }
     }
 
     attribute->set_type(message::internalFieldTypeToFieldProtoType(field_arg->sql_type));
 
     switch (attribute->type()) {
-    default: /* Only deal with types that need extra information */
+    case message::Table::Field::BIGINT:
+    case message::Table::Field::INTEGER:
+    case message::Table::Field::DATE:
+    case message::Table::Field::DATETIME:
+    case message::Table::Field::UUID:
+    case message::Table::Field::TIME:
+    case message::Table::Field::BOOLEAN:
       break;
     case message::Table::Field::DOUBLE:
       {
@@ -199,6 +192,7 @@ static int fill_table_proto(message::Table &table_proto,
         enumeration_options->set_collation(field_arg->charset->name);
         break;
       }
+
     case message::Table::Field::BLOB:
       {
         message::Table::Field::StringFieldOptions *string_field_options;
@@ -206,6 +200,14 @@ static int fill_table_proto(message::Table &table_proto,
         string_field_options= attribute->mutable_string_options();
         string_field_options->set_collation_id(field_arg->charset->number);
         string_field_options->set_collation(field_arg->charset->name);
+      }
+
+      break;
+
+    case message::Table::Field::EPOCH:
+      {
+        if (field_arg->sql_type == DRIZZLE_TYPE_MICROTIME)
+          attribute->mutable_time_options()->set_microseconds(true);
       }
 
       break;
@@ -232,7 +234,7 @@ static int fill_table_proto(message::Table &table_proto,
 	my_error(ER_WRONG_STRING_LENGTH, MYF(0),
 		 field_arg->comment.str,"COLUMN COMMENT",
 		 (uint32_t) COLUMN_COMMENT_MAXLEN);
-	return(1);
+	return true;
       }
 
       if (! use_existing_fields)
@@ -264,7 +266,7 @@ static int fill_table_proto(message::Table &table_proto,
       field_options->set_update_expression("CURRENT_TIMESTAMP");
     }
 
-    if (field_arg->def == NULL  && attribute->constraints().is_nullable())
+    if (field_arg->def == NULL  && not attribute->constraints().is_notnull())
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
@@ -293,12 +295,13 @@ static int fill_table_proto(message::Table &table_proto,
 	   < default_value->length()))
 	{
 	  my_error(ER_INVALID_DEFAULT, MYF(0), field_arg->field_name);
-	  return 1;
+	  return true;
 	}
 
         if (field_arg->sql_type == DRIZZLE_TYPE_DATE
             || field_arg->sql_type == DRIZZLE_TYPE_TIME
             || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
+            || field_arg->sql_type == DRIZZLE_TYPE_MICROTIME
             || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
         {
           type::Time ltime;
@@ -307,7 +310,7 @@ static int fill_table_proto(message::Table &table_proto,
           {
             my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR),
                      default_value->c_str());
-            return 1;
+            return true;
           }
 
           /* We now do the casting down to the appropriate type.
@@ -381,14 +384,13 @@ static int fill_table_proto(message::Table &table_proto,
       my_error(ER_WRONG_STRING_LENGTH, MYF(0),
                table_options->comment().c_str(),"Table COMMENT",
                (uint32_t) TABLE_COMMENT_MAXLEN);
-      return(1);
+      return true;
     }
   }
 
   if (create_info->default_table_charset)
   {
-    table_options->set_collation_id(
-			       create_info->default_table_charset->number);
+    table_options->set_collation_id(create_info->default_table_charset->number);
     table_options->set_collation(create_info->default_table_charset->name);
   }
 
@@ -478,7 +480,7 @@ static int fill_table_proto(message::Table &table_proto,
 	my_error(ER_WRONG_STRING_LENGTH, MYF(0),
 		 key_info[i].comment.str,"Index COMMENT",
 		 (uint32_t) TABLE_COMMENT_MAXLEN);
-	return(1);
+	return true;
       }
 
       idx->set_comment(key_info[i].comment.str);
@@ -529,7 +531,7 @@ static int fill_table_proto(message::Table &table_proto,
              table_proto.name().c_str(),
              table_proto.InitializationErrorString().c_str());
 
-    return 1;
+    return true;
   }
 
   /*
@@ -549,11 +551,11 @@ static int fill_table_proto(message::Table &table_proto,
                table_proto.name().c_str(),
                table_proto.InitializationErrorString().c_str());
 
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
 /*
@@ -576,7 +578,7 @@ static int fill_table_proto(message::Table &table_proto,
 */
 
 bool rea_create_table(Session *session,
-                      const TableIdentifier &identifier,
+                      const identifier::Table &identifier,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_fields,
@@ -585,13 +587,15 @@ bool rea_create_table(Session *session,
   assert(table_proto.has_name());
   if (fill_table_proto(table_proto, create_fields, create_info,
                        keys, key_info))
+  {
     return false;
+  }
 
   assert(table_proto.name() == identifier.getTableName());
 
-  if (plugin::StorageEngine::createTable(*session,
-                                         identifier,
-                                         table_proto))
+  if (not plugin::StorageEngine::createTable(*session,
+                                             identifier,
+                                             table_proto))
   {
     return false;
   }

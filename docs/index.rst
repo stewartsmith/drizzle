@@ -24,7 +24,6 @@ Scope
 
 Introduction:
 -------------
-   
 .. toctree::
    :maxdepth: 2
    
@@ -36,11 +35,12 @@ Introduction:
 
 SQL Language:
 -------------
-
 .. toctree::
    :maxdepth: 2
 
    queries
+   functions
+   data_types
    ddl
    dml
    columntypes 
@@ -50,20 +50,19 @@ SQL Language:
    dynamic 
    getting_information 
    transactional 
-   administrative 
+   administrative
 
-Advanced Topics:
-----------------
-
+User Level Topics:
+------------------
 .. toctree::
    :maxdepth: 2
 
    storage_engines
+   using_replication
    logging
 
-
 Configuration:
-^^^^^^^^^^^^^^
+--------------
 .. toctree::
    :maxdepth: 2
 
@@ -78,7 +77,7 @@ Plugins:
    plugins/list
 
 Architecture:
-^^^^^^^^^^^^^
+-------------
 .. toctree::
    :maxdepth: 2
 
@@ -86,7 +85,7 @@ Architecture:
    replication
 
 Clients:
-^^^^^^^^
+--------
 .. toctree::
    :maxdepth: 2
 
@@ -95,7 +94,7 @@ Clients:
    clients/drizzleadmin.rst
 
 libdrizzle:
-^^^^^^^^^^^
+-----------
 .. toctree::
    :maxdepth: 2
 
@@ -103,7 +102,7 @@ libdrizzle:
    libdrizzle/developer.rst
 
 Testing:
-
+--------
 .. toctree::
    :maxdepth: 2
  

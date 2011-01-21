@@ -62,7 +62,8 @@ void Item_func::set_arguments(List<Item> &list)
 
 Item_func::Item_func(List<Item> &list) :
   _session(*current_session),
-  allowed_arg_cols(1)
+  allowed_arg_cols(1),
+  const_item_cache(false)
 {
   collation.set(DERIVATION_SYSCONST);
   set_arguments(list);
@@ -134,7 +135,7 @@ Item_func::fix_fields(Session *session, Item **)
   unsigned char buff[STACK_BUFF_ALLOC];      // Max argument in function
   session->session_marker= 0;
   used_tables_cache= not_null_tables_cache= 0;
-  const_item_cache=1;
+  const_item_cache= true;
 
   if (check_stack_overrun(session, STACK_MIN_SIZE, buff))
     return true;        // Fatal error if flag is set!
@@ -189,7 +190,7 @@ void Item_func::fix_after_pullout(Select_Lex *new_parent,
   Item **arg,**arg_end;
 
   used_tables_cache= not_null_tables_cache= 0;
-  const_item_cache=1;
+  const_item_cache= false;
 
   if (arg_count)
   {
@@ -354,7 +355,7 @@ void Item_func::split_sum_func(Session *session, Item **ref_pointer_array,
 void Item_func::update_used_tables()
 {
   used_tables_cache=0;
-  const_item_cache=1;
+  const_item_cache= true;
   for (uint32_t i=0 ; i < arg_count ; i++)
   {
     args[i]->update_used_tables();
