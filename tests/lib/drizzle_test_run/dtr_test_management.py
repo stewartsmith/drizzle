@@ -29,7 +29,7 @@ class testCase:
  
     """
     def __init__(self, system_manager, test_case=None, test_name=None, suite_name=None
-                 , test_server_options=[], test_path=None, result_path=None
+                 , suite_path=None, test_server_options=[], test_path=None, result_path=None
                  , comment=None, master_sh=None
                  , disable=0, innodb_test=1 
                  , need_debug=0, debug=0):
@@ -39,6 +39,7 @@ class testCase:
         self.testcase = test_case
         self.testname = test_name
         self.suitename = suite_name
+        self.suitepath = suite_path
         self.fullname = "%s.%s" %(suite_name, test_name)
         self.testpath = test_path
         self.resultpath = result_path
@@ -155,7 +156,7 @@ class testManager(test_management.testManager):
                                  suite_name, test_server_options,testdir, 
                                  resultdir, disabled_tests)  
         test_case = testCase(self.system_manager, test_case, test_name, suite_name, 
-                             test_server_options,test_path, result_path,
+                             suite_dir, test_server_options,test_path, result_path,
                              debug=self.debug)      
         return test_case
 
@@ -245,7 +246,7 @@ class testManager(test_management.testManager):
 
         """
         found_options = []
-        opt_files = ['master.opt','suite.opt']
+        opt_files = ['t/master.opt','t/suite.opt']
         for opt_file in opt_files:
             found_options = found_options + self.process_opt_file(os.path.join(suite_dir,opt_file))
         return found_options
@@ -304,7 +305,6 @@ class testManager(test_management.testManager):
  
         """
         found_options = []
-
         if not os.path.exists(opt_file_path):
             return found_options
 

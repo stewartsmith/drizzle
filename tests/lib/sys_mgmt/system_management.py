@@ -270,7 +270,19 @@ class systemManager:
         """ We create a symlink to source named link_name """
         if self.debug:
             self.logging.debug("Creating symlink from %s to %s" %(source, link_name))
+        if os.path.exists(link_name) or os.path.islink(link_name):
+            os.remove(link_name)
         return os.symlink(source, link_name)
+
+    def create_symlinks(self, needed_symlinks):
+        """ We created the symlinks in needed_symlinks 
+            We expect it to be tuples in source, link_name format
+
+        """
+        
+        for needed_symlink in needed_symlinks:
+            source, link_name = needed_symlink
+            self.create_symlink(source, link_name)
 
     def join_env_var_values(self, value_list):
         """ Utility to join multiple values into a nice string

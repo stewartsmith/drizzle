@@ -29,7 +29,6 @@ class dtrTestExecutor(test_execution.testExecutor):
 
     """
   
-
     def execute_testCase (self,bad_start):
         """ Execute a dtr testCase via calls to drizzletest (boo)
             Eventually, we will replace drizzletest with pythonic
@@ -46,6 +45,7 @@ class dtrTestExecutor(test_execution.testExecutor):
                 self.logging.debug(drizzletest_cmd)
 
             # call drizzletest
+            self.process_symlink_reqs()
             self.process_environment_reqs()
             (retcode, output) = self.execute_drizzletest(drizzletest_cmd)
 
@@ -142,6 +142,20 @@ class dtrTestExecutor(test_execution.testExecutor):
 
         self.system_manager.process_environment_reqs(env_reqs, quiet=1)
 
+    def process_symlink_reqs(self):
+        """ Create any symlinks we may need """
+        needed_symlinks = []
+
+        # handle filesystem_engine 
+        if self.current_testcase.suitename == 'filesystem_engine':
+            needed_symlinks.append(( os.path.join(self.current_testcase.suitepath
+                                  , 't')
+                                  , os.path.join(self.master_server.vardir
+                                  , "filesystem_ln")))
+
+        self.system_manager.create_symlinks(needed_symlinks)
+
+    
    
 
         
