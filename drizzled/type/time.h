@@ -183,12 +183,12 @@ public:
 
   static const uint32_t FRACTIONAL_DIGITS= 1000000;
   static const size_t MAX_STRING_LENGTH= 32;   // +32 to make my_snprintf_{8bit|ucs2} happy
+
+  bool check(bool not_zero_date, uint32_t flags, int *was_cut) const;
 };
 
 }
 
-bool check_date(const type::Time *ltime, bool not_zero_date,
-                   uint32_t flags, int *was_cut);
 
 type::timestamp_t str_to_datetime(const char *str, uint32_t length, type::Time *l_time, uint32_t flags, int *was_cut);
 

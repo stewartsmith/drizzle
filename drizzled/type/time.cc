@@ -93,8 +93,8 @@ uint32_t calc_days_in_year(uint32_t year)
     1  error
 */
 
-bool check_date(const type::Time *ltime, bool not_zero_date,
-                   uint32_t flags, int *was_cut)
+static bool check_date(const type::Time *ltime, bool not_zero_date,
+                       uint32_t flags, int *was_cut)
 {
   if (not_zero_date)
   {
@@ -119,6 +119,15 @@ bool check_date(const type::Time *ltime, bool not_zero_date,
   }
   return false;
 }
+
+namespace type {
+
+bool Time::check(bool not_zero_date, uint32_t flags, int *was_cut) const
+{
+  return check_date(this, not_zero_date, flags, was_cut);
+}
+
+} // namespace type
 
 
 /*
