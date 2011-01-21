@@ -132,7 +132,7 @@ class drizzleServer():
         """
         if self.verbose:
             self.logging.verbose("Starting server: %s.%s" %(self.owner, self.name))
-        start_cmd = "%s %s --mysql-protocol.port=%d --mysql-protocol.connect-timeout=60 --mysql-unix-socket-protocol.path=%s --pid-file=%s --drizzle-protocol.port=%d --datadir=%s --tmpdir=%s --innodb.data-file-path=ibdata1:20M:autoextend %s %s > %s 2>&1 & " % ( self.server_path
+        start_cmd = "%s %s --mysql-protocol.port=%d --mysql-protocol.connect-timeout=60 --mysql-unix-socket-protocol.path=%s --pid-file=%s --drizzle-protocol.port=%d --datadir=%s --tmpdir=%s --innodb.data-file-path=ibdata1:20M:autoextend --sort-buffer-size=256K --max-heap-table-size=1M %s %s > %s 2>&1 & " % ( self.server_path
                                                , self.process_server_options()
                                                , self.master_port
                                                , self.socket_file

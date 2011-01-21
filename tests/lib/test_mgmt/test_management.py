@@ -215,11 +215,11 @@ class testManager:
         for test_status in self.executed_tests.keys():
             status_count = self.get_count_by_status(test_status)
             test_percent = (float(status_count)/float(total_executed_count))*100
-            self.logging.info("STATUS: %s, %d/%d test cases, %.2f percent executed, %.2f percent found" %( test_status.upper()
+            self.logging.info("STATUS: %s, %d/%d test cases, %.2f percent executed" %( test_status.upper()
                                                                 , status_count
                                                                 , total_executed_count
                                                                 , test_percent 
-                                                                , test_percent*executed_ratio ))
+                                                                ))
 
 
     def report_tests_by_status(self, status):
