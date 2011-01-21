@@ -125,7 +125,7 @@ bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct
   }
   if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
   {
-    my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
     my_parse_error(&pass);
     return true;
   }
@@ -153,7 +153,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
   Select_Lex * sel= lex->current_select;
   if (sel->set_braces(1))
   {
-    my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
     my_parse_error(&pass);
     return true;
   }
@@ -162,7 +162,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
       sel->master_unit()->first_select()->linkage ==
       UNION_TYPE)
   {
-    my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
     my_parse_error(&pass);
     return true;
   }
@@ -207,7 +207,7 @@ Item* reserved_keyword_function(Session *session, const std::string &name, List<
 */
 void my_parse_error(void *arg)
 {
- struct my_parse_error_st *ptr= (struct my_parse_error_st *)arg;
+  parser::error_t *ptr= (parser::error_t *)arg;
 
   const char *s= ptr->s;
   Session *session= ptr->session;
@@ -220,6 +220,17 @@ void my_parse_error(void *arg)
                   (yytext ? yytext : ""),
                   lip->yylineno);
 }
+
+bool check_reserved_words(LEX_STRING *name)
+{
+  if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
+      !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
+      !my_strcasecmp(system_charset_info, name->str, "SESSION"))
+    return true;
+
+  return false;
+}
+
 
 
 } // namespace parser

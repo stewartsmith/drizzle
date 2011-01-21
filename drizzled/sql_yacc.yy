@@ -67,7 +67,7 @@ int yylex(void *yylval, void *yysession);
 #define DRIZZLE_YYABORT_UNLESS(A)         \
   if (!(A))                             \
   {                                     \
-    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };\
+    parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };\
     parser::my_parse_error(&pass);\
     DRIZZLE_YYABORT;                      \
   }
@@ -89,15 +89,6 @@ class True;
 class False;
 }
 
-
-static bool check_reserved_words(LEX_STRING *name)
-{
-  if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
-      !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
-      !my_strcasecmp(system_charset_info, name->str, "SESSION"))
-    return true;
-  return false;
-}
 
 /**
   @brief Bison callback to report a syntax/OOM error
@@ -134,7 +125,7 @@ static void DRIZZLEerror(const char *s)
   if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
     s= ER(ER_SYNTAX_ERROR);
 
-  struct my_parse_error_st pass= { s, session };
+  parser::error_t pass= { s, session };
   parser::my_parse_error(&pass);
 }
 
@@ -161,24 +152,24 @@ using namespace drizzled;
   drizzled::Key_part_spec *key_part;
   const drizzled::plugin::Function *udf;
   drizzled::TableList *table_list;
-  enum drizzled::enum_field_types field_val;
-  struct drizzled::sys_var_with_base variable;
-  enum drizzled::sql_var_t var_type;
+  drizzled::enum_field_types field_val;
+  drizzled::sys_var_with_base variable;
+  drizzled::sql_var_t var_type;
   drizzled::Key::Keytype key_type;
-  enum drizzled::ha_key_alg key_alg;
-  enum drizzled::ha_rkey_function ha_rkey_mode;
-  enum drizzled::enum_tx_isolation tx_isolation;
-  enum drizzled::Cast_target cast_type;
+  drizzled::ha_key_alg key_alg;
+  drizzled::ha_rkey_function ha_rkey_mode;
+  drizzled::enum_tx_isolation tx_isolation;
+  drizzled::Cast_target cast_type;
   const drizzled::CHARSET_INFO *charset;
   drizzled::thr_lock_type lock_type;
   drizzled::interval_type interval, interval_time_st;
-  enum drizzled::enum_drizzle_timestamp_type date_time_type;
+  drizzled::enum_drizzle_timestamp_type date_time_type;
   drizzled::Select_Lex *select_lex;
   drizzled::chooser_compare_func_creator boolfunc2creator;
-  struct drizzled::st_lex *lex;
-  enum drizzled::index_hint_type index_hint;
-  enum drizzled::enum_filetype filetype;
-  enum drizzled::ha_build_method build_method;
+  drizzled::st_lex *lex;
+  drizzled::index_hint_type index_hint;
+  drizzled::enum_filetype filetype;
+  drizzled::ha_build_method build_method;
   drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;
   drizzled::execute_string_t execute_string;
 }
@@ -2279,14 +2270,14 @@ select_init2:
             Select_Lex * sel= Lex->current_select;
             if (Lex->current_select->set_braces(0))
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
@@ -3285,9 +3276,9 @@ variable_aux:
         | '@' opt_var_ident_type user_variable_ident opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
-            if ($3.str && $4.str && check_reserved_words(&$3))
+            if ($3.str && $4.str && parser::check_reserved_words(&$3))
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
@@ -3329,7 +3320,7 @@ in_sum_expr:
           {
             if (Lex->current_select->inc_in_sum_expr())
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
@@ -3617,7 +3608,7 @@ table_factor:
             {
               if (sel->set_braces(1))
               {
-                struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+                parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
                 parser::my_parse_error(&pass);
                 DRIZZLE_YYABORT;
               }
@@ -3682,7 +3673,7 @@ table_factor:
             else if (($3->select_lex && $3->select_lex->master_unit()->is_union()) || $5)
             {
               /* simple nested joins cannot have aliases or unions */
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
@@ -3718,14 +3709,14 @@ select_init2_derived:
             Select_Lex * sel= Lex->current_select;
             if (Lex->current_select->set_braces(0))
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
@@ -3763,7 +3754,7 @@ select_derived:
               DRIZZLE_YYABORT;
             if (!$3 && $$)
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
@@ -3775,7 +3766,7 @@ select_derived2:
             Lex->derived_tables|= DERIVED_SUBQUERY;
             if (not Lex->expr_allows_subselect)
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
@@ -3804,7 +3795,7 @@ select_derived_init:
             if (!sel->embedding || sel->end_nested_join(Lex->session))
             {
               /* we are not in parentheses */
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
@@ -5862,7 +5853,7 @@ subselect_start:
           {
             if (not Lex->expr_allows_subselect)
             {
-              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
               parser::my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }

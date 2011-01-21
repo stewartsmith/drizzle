@@ -124,18 +124,19 @@ class True;
 class False;
 }
 
-struct my_parse_error_st {
+namespace parser {
+
+struct error_t {
   const char *s;
   Session *session;
 };
-
-namespace parser {
 
 Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal, Item *expr);
 bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct);
 bool setup_select_in_parentheses(Session *session, LEX *lex);
 Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list);
 void my_parse_error(void *arg);
+bool check_reserved_words(LEX_STRING *name);
 
 } // namespace parser
 } // namespace drizzled
