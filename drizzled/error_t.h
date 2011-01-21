@@ -859,10 +859,10 @@ enum error_t {
   ER_TABLE_UNKNOWN,
 
   ER_INVALID_CAST_TO_BOOLEAN,
-
+  ER_TRANSACTIONAL_DDL_NOT_SUPPORTED,
   // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags
   // instead of numbers in error messages in test.
-  ER_ERROR_LAST= ER_INVALID_CAST_TO_BOOLEAN
+  ER_ERROR_LAST=   ER_TRANSACTIONAL_DDL_NOT_SUPPORTED
 };
 
 

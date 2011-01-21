@@ -653,6 +653,7 @@ drop table if exists t2;
 CREATE TABLE t2 (a int, b int, primary key (a));
 BEGIN;
 INSERT INTO t2 values(100,100);
+COMMIT;
 --error ER_DUP_ENTRY
 CREATE TABLE IF NOT EXISTS t2 (primary key (a)) select * from t1;
 SELECT * from t2;

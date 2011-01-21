@@ -1,0 +1,6 @@
+CREATE TABLE t1 (a int);
+begin;
+--error ER_TRANSACTIONAL_DDL_NOT_SUPPORTED
+RENAME TABLE t1 to t2;
+commit;
+DROP TABLE IF EXISTS t1,t2;

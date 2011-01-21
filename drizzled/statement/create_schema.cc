@@ -38,8 +38,9 @@ bool statement::CreateSchema::execute()
   if (not validateSchemaOptions())
     return true;
 
-  if (not session->endActiveTransaction())
+  if (session->inTransaction())
   {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 

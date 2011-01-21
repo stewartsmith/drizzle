@@ -34,25 +34,21 @@ namespace drizzled
 
 bool statement::DropSchema::execute()
 {
-  if (! session->endActiveTransaction())
+  if (session->inTransaction())
   {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
+
   identifier::Schema schema_identifier(string(session->lex->name.str, session->lex->name.length));
+
   if (not check_db_name(session, schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
     return false;
   }
-  if (session->inTransaction())
-  {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
-        ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
-        MYF(0));
-    return true;
-  }
-  
+
   bool res = true;
   std::string path;
   schema_identifier.getSQLPath(path);
