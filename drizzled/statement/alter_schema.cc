@@ -59,9 +59,7 @@ bool statement::AlterSchema::execute()
 
   if (session->inTransaction())
   {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
-               MYF(0));
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
   /*

@@ -35,6 +35,13 @@ bool statement::RenameTable::execute()
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   TableList *table;
+
+  if (session->inTransaction())
+  {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
+    return true;
+  }
+
   for (table= first_table; table; table= table->next_local->next_local)
   {
     TableList old_list, new_list;
@@ -46,7 +53,7 @@ bool statement::RenameTable::execute()
     new_list= table->next_local[0];
   }
 
-  if (! session->endActiveTransaction() || renameTables(first_table))
+  if (renameTables(first_table))
   {
     return true;
   }

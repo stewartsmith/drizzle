@@ -82,6 +82,7 @@ insert into  t2 select SQL_BIG_RESULT t1.* from t1, t2 t, t3 where  t1.id1 = t.i
 select count(*) from t2;
 count(*)
 25500
+COMMIT;
 drop table t1,t2,t3;
 create table t1 (a int, b int);
 insert into t1 (a,b) values (a,b);

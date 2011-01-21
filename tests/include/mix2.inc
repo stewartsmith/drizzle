@@ -2163,6 +2163,7 @@ eval create $temp table t1 (g geometry not null, spatial gk(g)) engine=$engine_t
 eval create $temp table t1 ( a int ) ENGINE=$engine_type;
 BEGIN;
 INSERT INTO t1 VALUES (1);
+COMMIT;
 eval ALTER TABLE t1 ENGINE=$engine_type;
 DROP TABLE t1;
 
