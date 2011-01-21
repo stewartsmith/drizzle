@@ -56,6 +56,7 @@ int get_quote_char_for_identifier();
 namespace show {
 
 bool buildDescribe(Session *session, Table_ident *ident);
+bool buildCreateSchema(Session *session, LEX_STRING &ident);
 
 } // namespace show
 
