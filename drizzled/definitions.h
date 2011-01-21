@@ -510,6 +510,10 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 #define uint64_t2double(A) ((double) (uint64_t) (A))
 #endif
 
+#ifndef int64_t2double
+#define int64_t2double(A) ((double) (int64_t) (A))
+#endif
+
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif

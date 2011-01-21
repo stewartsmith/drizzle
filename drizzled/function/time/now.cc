@@ -47,7 +47,7 @@ void Item_func_now::fix_length_and_dec()
 
   store_now_in_TIME(&ltime);
 
-  value= (int64_t) TIME_to_uint64_t_datetime(&ltime);
+  ltime.convert(value);
 
   size_t length= type::Time::MAX_STRING_LENGTH;
   ltime.convert(buff, length);

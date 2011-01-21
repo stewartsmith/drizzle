@@ -1261,24 +1261,24 @@ int64_t number_to_datetime(int64_t nr, type::Time *time_res,
 
 /* Convert time value to integer in YYYYMMDDHHMMSS format */
 
-uint64_t TIME_to_uint64_t_datetime(const type::Time *my_time)
+static int64_t TIME_to_int64_t_datetime(const type::Time *my_time)
 {
-  return ((uint64_t) (my_time->year * 10000UL +
-                       my_time->month * 100UL +
-                       my_time->day) * 1000000ULL +
-          (uint64_t) (my_time->hour * 10000UL +
-                       my_time->minute * 100UL +
-                       my_time->second));
+  return ((int64_t) (my_time->year * 10000UL +
+                     my_time->month * 100UL +
+                     my_time->day) * 1000000ULL +
+          (int64_t) (my_time->hour * 10000UL +
+                     my_time->minute * 100UL +
+                     my_time->second));
 }
 
 
 /* Convert type::Time value to integer in YYYYMMDD format */
 
-static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
+static int64_t TIME_to_int64_t_date(const type::Time *my_time)
 {
-  return (uint64_t) (my_time->year * 10000UL +
-                     my_time->month * 100UL +
-                     my_time->day);
+  return (int64_t) (my_time->year * 10000UL +
+                    my_time->month * 100UL +
+                    my_time->day);
 }
 
 
@@ -1288,11 +1288,11 @@ static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
   it's assumed that days have been converted to hours already.
 */
 
-static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
+static int64_t TIME_to_int64_t_time(const type::Time *my_time)
 {
-  return (uint64_t) (my_time->hour * 10000UL +
-                     my_time->minute * 100UL +
-                     my_time->second);
+  return (int64_t) (my_time->hour * 10000UL +
+                    my_time->minute * 100UL +
+                    my_time->second);
 }
 
 
@@ -1304,20 +1304,20 @@ static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
 
 namespace type {
 
-void Time::convert(uint64_t &datetime, timestamp_t arg)
+void Time::convert(int64_t &datetime, timestamp_t arg)
 {
   switch (arg)
   {
   case type::DRIZZLE_TIMESTAMP_DATETIME:
-    datetime= TIME_to_uint64_t_datetime(this);
+    datetime= TIME_to_int64_t_datetime(this);
     break;
 
   case type::DRIZZLE_TIMESTAMP_DATE:
-    datetime= TIME_to_uint64_t_date(this);
+    datetime= TIME_to_int64_t_date(this);
     break;
 
   case type::DRIZZLE_TIMESTAMP_TIME:
-    datetime= TIME_to_uint64_t_time(this);
+    datetime= TIME_to_int64_t_time(this);
     break;
 
   case type::DRIZZLE_TIMESTAMP_NONE:

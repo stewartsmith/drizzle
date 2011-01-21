@@ -68,7 +68,7 @@ int64_t Item_func_from_unixtime::val_int()
   if (get_date(&time_tmp, 0))
     return 0;
 
-  uint64_t ret;
+  int64_t ret;
   time_tmp.convert(ret);
 
   return (int64_t) ret;
