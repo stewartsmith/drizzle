@@ -61,6 +61,7 @@ bool buildTemporaryTables(Session *session);
 bool buildTableStatus(Session *session, const char *ident);
 bool buildDescribe(Session *session, Table_ident *ident);
 bool buildCreateSchema(Session *session, LEX_STRING &ident);
+bool buildVariables(Session *session, const drizzled::sql_var_t is_global);
 
 } // namespace show
 
