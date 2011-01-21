@@ -5,9 +5,14 @@
 # Copyright (C) 2010 Patrick Crews
 #
 
-""" test-run.py
+""" dbqp.py
 
-Main script for the Drizzle test-runner
+DataBase Quality Platform - system for executing various
+testing systems and the helper code 
+
+Currently only executing drizzle-test-run tests
+But we can compose various combinations of servers, system,
+and test definitions to produce various results
 
 """
 

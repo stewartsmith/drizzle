@@ -83,10 +83,10 @@ class portManager:
 
     def check_port_status(self, port):
         """ Check if a port is in use, via the catalog file 
-            which all copies of test-run.py should use
+            which all copies of dbqp.py should use
 
             Not *really* sure how well this works with multiple
-            test-run.py instances...we'll see if we even need it 
+            dbqp.py instances...we'll see if we even need it 
             to work 
 
         """
