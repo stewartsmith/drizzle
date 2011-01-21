@@ -126,7 +126,7 @@ bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct
   if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
   {
     parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(&pass);
+    my_parse_error(pass);
     return true;
   }
   /* This counter shouldn't be incremented for UNION parts */
@@ -154,7 +154,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
   if (sel->set_braces(1))
   {
     parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(&pass);
+    my_parse_error(pass);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -163,7 +163,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
       UNION_TYPE)
   {
     parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(&pass);
+    my_parse_error(pass);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -205,18 +205,13 @@ Item* reserved_keyword_function(Session *session, const std::string &name, List<
   a parse error is discovered internally by the Bison generated
   parser.
 */
-void my_parse_error(void *arg)
+void my_parse_error(parser::error_t &arg)
 {
-  parser::error_t *ptr= (parser::error_t *)arg;
-
-  const char *s= ptr->s;
-  Session *session= ptr->session;
-
-  Lex_input_stream *lip= session->m_lip;
+  Lex_input_stream *lip= arg.session->m_lip;
 
   const char *yytext= lip->get_tok_start();
   /* Push an error into the error stack */
-  my_printf_error(ER_PARSE_ERROR,  ER(ER_PARSE_ERROR), MYF(0), s,
+  my_printf_error(ER_PARSE_ERROR,  ER(ER_PARSE_ERROR), MYF(0), arg.s,
                   (yytext ? yytext : ""),
                   lip->yylineno);
 }

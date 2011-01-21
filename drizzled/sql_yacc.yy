@@ -68,7 +68,7 @@ int yylex(void *yylval, void *yysession);
   if (!(A))                             \
   {                                     \
     parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };\
-    parser::my_parse_error(&pass);\
+    parser::my_parse_error(pass);\
     DRIZZLE_YYABORT;                      \
   }
 
@@ -126,7 +126,7 @@ static void DRIZZLEerror(const char *s)
     s= ER(ER_SYNTAX_ERROR);
 
   parser::error_t pass= { s, session };
-  parser::my_parse_error(&pass);
+  parser::my_parse_error(pass);
 }
 
 } /* namespace drizzled; */
@@ -2271,14 +2271,14 @@ select_init2:
             if (Lex->current_select->set_braces(0))
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3279,7 +3279,7 @@ variable_aux:
             if ($3.str && $4.str && parser::check_reserved_words(&$3))
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
             if (!($$= get_system_var(YYSession, $2, $3, $4)))
@@ -3321,7 +3321,7 @@ in_sum_expr:
             if (Lex->current_select->inc_in_sum_expr())
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3609,7 +3609,7 @@ table_factor:
               if (sel->set_braces(1))
               {
                 parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-                parser::my_parse_error(&pass);
+                parser::my_parse_error(pass);
                 DRIZZLE_YYABORT;
               }
               /* select in braces, can't contain global parameters */
@@ -3674,7 +3674,7 @@ table_factor:
             {
               /* simple nested joins cannot have aliases or unions */
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
             else
@@ -3710,14 +3710,14 @@ select_init2_derived:
             if (Lex->current_select->set_braces(0))
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3755,7 +3755,7 @@ select_derived:
             if (!$3 && $$)
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3767,7 +3767,7 @@ select_derived2:
             if (not Lex->expr_allows_subselect)
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
             if (Lex->current_select->linkage == GLOBAL_OPTIONS_TYPE || new_select(Lex, 1))
@@ -3796,7 +3796,7 @@ select_derived_init:
             {
               /* we are not in parentheses */
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
             embedding= Lex->current_select->embedding;
@@ -5854,7 +5854,7 @@ subselect_start:
             if (not Lex->expr_allows_subselect)
             {
               parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(&pass);
+              parser::my_parse_error(pass);
               DRIZZLE_YYABORT;
             }
             /*
