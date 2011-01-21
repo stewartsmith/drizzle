@@ -2697,9 +2697,8 @@ InnobaseEngine::doRollback(
 
   row_unlock_table_autoinc_for_mysql(trx);
 
-  if (all
-    || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-
+  if (all)
+  {
     error = trx_rollback_for_mysql(trx);
   } else {
     error = trx_rollback_last_sql_stat_for_mysql(trx);

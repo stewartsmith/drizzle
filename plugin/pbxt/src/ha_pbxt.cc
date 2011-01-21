@@ -5738,12 +5738,10 @@ int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool real_commit)
 	return err;
 }
 
-int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool)
+int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool real_commit)
 {
         int err = 0;
         XTThreadPtr self = (XTThreadPtr) *thd->getEngineData(pbxt_hton);
-
-        bool real_commit = !session_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
 
 	XT_PRINT1(self, "PBXTStorageEngine::doRollback(real_commit = %s)\n", real_commit ? "true" : "false");
 

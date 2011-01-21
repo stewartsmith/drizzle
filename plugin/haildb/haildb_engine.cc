@@ -430,7 +430,7 @@ int HailDBEngine::doRollback(Session* session, bool all)
   ib_err_t err;
   ib_trx_t *transaction= get_trx(session);
 
-  if (all || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  if (all)
   {
     if (ib_trx_state(*transaction) == IB_TRX_NOT_STARTED)
       err= ib_trx_release(*transaction);
