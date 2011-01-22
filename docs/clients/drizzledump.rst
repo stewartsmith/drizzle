@@ -246,17 +246,21 @@ MySQL to Drizzle using :program:`drizzledump`.
 :program:`drizzledump` will automatically detect whether it is talking to a
 MySQL or Drizzle database server.  If it is connected to a MySQL server it will
 automatically convert all the structures and data into a Drizzle compatible 
-format.
+format.  It will, however, by default try to connect via. port 4427 so to
+connect to a MySQL server a port must be specified.
 
 So, simply connecting to a MySQL server with :program:`drizzledump` as follows
 will give you a Drizzle compatible output::
 
-$ drizzledump --all-databases --host=mysql-host --user=mysql-user --password > dumpfile.sql
+$ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password > dumpfile.sql
 
 Additionally :program:`drizzledump` can now dump from MySQL and import directly
 into a Drizzle server as follows::
 
-$ drizzledump --all-databases --host=mysql-host --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
+$ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
+
+Please take special note of :ref:`old-passwords-label` if you have connection
+issues from :program:`drizzledump` to your MySQL server.
 
 When you migrate from MySQL to Drizzle, the following conversions are required:
 

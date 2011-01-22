@@ -467,6 +467,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_LOAD_DATA_INVALID_COLUMN, N_("Invalid column reference (%-.64s) in LOAD DATA"));
   ADD_ERROR_MESSAGE(ER_INVALID_UNIX_TIMESTAMP_VALUE, N_("Received an invalid value '%s' for a UNIX timestamp."));
   ADD_ERROR_MESSAGE(ER_INVALID_DATETIME_VALUE, N_("Received an invalid datetime value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_TIMESTAMP_VALUE, N_("Received an invalid timestamp value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_NULL_ARGUMENT, N_("Received a NULL argument for function '%s'."));
   ADD_ERROR_MESSAGE(ER_ARGUMENT_OUT_OF_RANGE, N_("Received an out-of-range argument '%s' for function '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
@@ -534,6 +535,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_BOOLEAN_VALUE, N_("Received an invalid BOOLEAN value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_BOOLEAN, N_("Invalid cast to BOOLEAN: '%s'."));
 
+  // Transactional DDL
+  ADD_ERROR_MESSAGE(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, N_("Transactional DDL not supported"));
   // ASSERT Message
   ADD_ERROR_MESSAGE(ER_ASSERT, N_("Assertion '%s' failed."));
   ADD_ERROR_MESSAGE(ER_ASSERT_NULL, N_("Assertion '%s' failed, the result was NULL."));

@@ -36,6 +36,7 @@ COMMIT;
 BEGIN;
 SELECT * from t1 order by a;
 
+COMMIT;
 DROP TABLE t1;
 
 disconnect a;

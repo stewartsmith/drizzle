@@ -1015,7 +1015,7 @@ bool Field::get_date(type::Time *ltime,uint32_t fuzzydate)
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   if (!(res=val_str_internal(&tmp)) || str_to_datetime_with_warn(res->ptr(), res->length(),
-                                                                 ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
+                                                                 ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
   {
     return 1;
   }
@@ -1036,11 +1036,13 @@ bool Field::get_time(type::Time *ltime)
   return 0;
 }
 
-int Field::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type)
+int Field::store_time(type::Time *ltime, type::timestamp_t)
 {
-  char buff[MAX_DATE_STRING_REP_LENGTH];
-  uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);
-  return store(buff, length, &my_charset_bin);
+  String tmp;
+
+  ltime->convert(tmp);
+
+  return store(tmp.ptr(), tmp.length(), &my_charset_bin);
 }
 
 bool Field::optimize_range(uint32_t idx, uint32_t)
@@ -1195,7 +1197,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
                                  drizzled::error_t code,
                                  const char *str, 
                                  uint32_t str_length,
-                                 enum enum_drizzle_timestamp_type ts_type, 
+                                 type::timestamp_t ts_type, 
                                  int cuted_increment)
 {
   Session *session= table ? table->in_use : current_session;
@@ -1209,7 +1211,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
                                  drizzled::error_t code,
                                  int64_t nr, 
-                                 enum enum_drizzle_timestamp_type ts_type,
+                                 type::timestamp_t ts_type,
                                  int cuted_increment)
 {
   Session *session= table ? table->in_use : current_session;
@@ -1226,7 +1228,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
                                  const drizzled::error_t code,
                                  double nr, 
-                                 enum enum_drizzle_timestamp_type ts_type)
+                                 type::timestamp_t ts_type)
 {
   Session *session= table ? table->in_use : current_session;
   if (session->really_abort_on_warning() ||

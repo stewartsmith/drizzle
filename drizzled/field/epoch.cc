@@ -162,7 +162,7 @@ int Epoch::store(const char *from,
 
   if (not temporal.from_string(from, (size_t) len))
   {
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
     return 1;
   }
 
@@ -178,19 +178,33 @@ int Epoch::store(double from)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if (from < 0 || from > 99991231235959.0)
-  {
-    /* Convert the double to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; 
-    ss >> tmp;
+  uint64_t from_tmp= (uint64_t)from;
 
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+  Timestamp temporal;
+  if (not temporal.from_int64_t(from_tmp))
+  {
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
+
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
-  return Epoch::store((int64_t) rint(from), false);
+
+  time_t tmp;
+  temporal.to_time_t(tmp);
+
+  uint64_t tmp_micro= tmp;
+  pack_num(tmp_micro);
+
+  return 0;
+}
+
+int Epoch::store_decimal(const type::Decimal *value)
+{
+  double tmp;
+  value->convert(tmp);
+
+  return store(tmp);
 }
 
 int Epoch::store(int64_t from, bool)
@@ -202,12 +216,12 @@ int Epoch::store(int64_t from, bool)
    * if unable to create a valid DateTime.  
    */
   Timestamp temporal;
-  if (! temporal.from_int64_t(from))
+  if (not temporal.from_int64_t(from))
   {
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
 
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
 
@@ -269,30 +283,21 @@ String *Epoch::val_str(String *val_buffer, String *)
 bool Epoch::get_date(type::Time *ltime, uint32_t)
 {
   uint64_t temp;
+  type::Time::epoch_t time_temp;
 
   unpack_num(temp);
+  time_temp= temp;
   
-  memset(ltime, 0, sizeof(*ltime));
+  ltime->reset();
 
-  Timestamp temporal;
-  (void) temporal.from_time_t((time_t) temp);
-
-  /* @TODO Goodbye the below code when type::Time is finally gone.. */
-
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
-  ltime->year= temporal.years();
-  ltime->month= temporal.months();
-  ltime->day= temporal.days();
-  ltime->hour= temporal.hours();
-  ltime->minute= temporal.minutes();
-  ltime->second= temporal.seconds();
+  ltime->store(time_temp);
 
   return 0;
 }
 
 bool Epoch::get_time(type::Time *ltime)
 {
-  return Epoch::get_date(ltime,0);
+  return Epoch::get_date(ltime, 0);
 }
 
 int Epoch::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)

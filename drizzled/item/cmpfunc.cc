@@ -697,20 +697,20 @@ WHERE col= 'j'
 */
 
 static uint64_t
-get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_type warn_type,
+get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
                   char *warn_name, bool *error_arg)
 {
   uint64_t value= 0;
   int error;
   type::Time l_time;
-  enum enum_drizzle_timestamp_type ret;
+  type::timestamp_t ret;
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,
                        (TIME_FUZZY_DATE | MODE_INVALID_DATES |
                         (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
                        &error);
 
-  if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
+  if (ret == type::DRIZZLE_TIMESTAMP_DATETIME || ret == type::DRIZZLE_TIMESTAMP_DATE)
   {
     /*
       Do not return yet, we may still want to throw a "trailing garbage"
@@ -993,8 +993,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
   {
     bool error;
     enum_field_types f_type= warn_item->field_type();
-    enum enum_drizzle_timestamp_type t_type= f_type ==
-      DRIZZLE_TYPE_DATE ? DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME;
+    type::timestamp_t t_type= f_type == DRIZZLE_TYPE_DATE ? type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME;
     value= get_date_from_str(session, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current

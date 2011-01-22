@@ -12,10 +12,10 @@ DROP SCHEMA bar;
 
 We should only see the 'bar' schema in the log
 
-START TRANSACTION;
+SET AUTOCOMMIT=0;
 CREATE SCHEMA `bar` COLLATE utf8_general_ci;
 COMMIT;
-START TRANSACTION;
+SET AUTOCOMMIT=0;
 DROP SCHEMA `bar`;
 COMMIT;
 SET GLOBAL transaction_log_truncate_debug= true;

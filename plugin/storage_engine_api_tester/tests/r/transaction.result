@@ -103,6 +103,7 @@ SELECT t1_trx.k, t1_trx.v
 FROM t1_trx
 INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
 k	v
+COMMIT;
 DROP TABLE t1_trx;
 DROP TABLE t1_non_trx;
 select * from data_dictionary.seapitester_engine_state_history;

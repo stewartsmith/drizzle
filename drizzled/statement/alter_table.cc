@@ -132,9 +132,11 @@ bool statement::AlterTable::execute()
   if (not validateCreateTableOption())
     return true;
 
-  /* ALTER TABLE ends previous transaction */
-  if (not session->endActiveTransaction())
+  if (session->inTransaction())
+  {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
+  }
 
   if (not (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
     return true;
