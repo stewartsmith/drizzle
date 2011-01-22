@@ -2391,7 +2391,7 @@ iOpenCount(0)
 MSSystemTableShare::~MSSystemTableShare()
 {
 #ifdef DRIZZLED
-	myThrLock.unlock();
+	myThrLock.deinit();
 #else
 	thr_lock_delete(&myThrLock);
 #endif
