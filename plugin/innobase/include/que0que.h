@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -381,6 +381,9 @@ struct que_thr_struct{
 					thus far */
 	ulint		lock_state;	/*!< lock state of thread (table or
 					row) */
+	ulint		fk_cascade_depth; /*!< maximum cascading call depth
+					supported for foreign key constraint
+					related delete/updates */
 };
 
 #define QUE_THR_MAGIC_N		8476583

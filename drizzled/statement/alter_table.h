@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,6 +44,11 @@ public:
   { 
   }
 
+  virtual bool is_alter() const
+  {
+    return true;
+  }
+
   bool execute();
 };
 
@@ -51,8 +56,8 @@ public:
 
 
 bool alter_table(Session *session,
-                 drizzled::TableIdentifier &original_table_identifier,
-                 drizzled::TableIdentifier &new_table_identifier,
+                 drizzled::identifier::Table &original_table_identifier,
+                 drizzled::identifier::Table &new_table_identifier,
                  HA_CREATE_INFO *create_info,
                  const message::Table &original_proto,
                  message::Table &create_proto,

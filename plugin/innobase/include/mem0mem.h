@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -232,7 +232,7 @@ the C compiler. Is like malloc of C. The buffer must be freed
 with mem_free.
 @return	own: free storage */
 UNIV_INLINE
-void*
+void *
 mem_alloc_func(
 /*===========*/
 	ulint		n,		/*!< in: requested size in bytes */

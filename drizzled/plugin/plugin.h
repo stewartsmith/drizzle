@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ private:
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin &);
 public:
-  typedef std::map<std::string, Plugin *> map;
+  typedef std::pair<const std::string, const std::string> map_key;
+  typedef std::map<const map_key, plugin::Plugin *> map;
   typedef std::vector<Plugin *> vector;
 
   explicit Plugin(const std::string &name, const std::string &type_name);

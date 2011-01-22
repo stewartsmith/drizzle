@@ -5,6 +5,7 @@ COMMIT;
 UPDATE t1 SET id = 2 WHERE id != 2 LIMIT 0;
 SAVEPOINT A;
 End Test of Bug 534806
+COMMIT;
 DROP TABLE t1;
 CREATE TABLE t1 (id INT NOT NULL PRIMARY KEY);
 START TRANSACTION;
@@ -45,6 +46,7 @@ id
 2
 3
 4
+COMMIT;
 DROP TABLE t1;
 Start Test of Bug 542299
 CREATE TABLE t1 (a int,id integer auto_increment,b int,/*Indices*/key (a ),primary key (id)) ENGINE=innodb;
@@ -57,3 +59,5 @@ SAVEPOINT A;
 INSERT INTO t1 ( a, b ) VALUES ( 1 , 9 );
 ROLLBACK TO SAVEPOINT A;
 End Test of Bug 542299
+COMMIT;
+DROP TABLE t1;

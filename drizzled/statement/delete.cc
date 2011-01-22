@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ bool statement::Delete::execute()
     return true;
   }
 
-  bool res= mysql_delete(session, all_tables, select_lex->where,
+  bool res= delete_query(session, all_tables, select_lex->where,
                          &select_lex->order_list,
                          unit->select_limit_cnt, select_lex->options,
                          false);

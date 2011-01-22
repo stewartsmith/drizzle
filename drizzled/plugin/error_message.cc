@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -109,6 +109,7 @@ bool plugin::ErrorMessage::vprintf(Session *session, int priority,
   std::vector<plugin::ErrorMessage *>::iterator iter=
     std::find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
                  Print(session, priority, format, ap)); 
+
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

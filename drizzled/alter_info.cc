@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@ AlterInfo::AlterInfo() :
   tablespace_op(NO_TABLESPACE_OP),
   no_parts(0),
   build_method(HA_BUILD_DEFAULT),
-  datetime_field(NULL),
   error_if_not_empty(false)
 {}
 

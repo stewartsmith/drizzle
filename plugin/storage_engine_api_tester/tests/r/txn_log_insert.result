@@ -1,0 +1,94 @@
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+pk int auto_increment primary key,
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+) engine=storage_engine_api_tester;
+SELECT seapitester_error_inject(1);
+seapitester_error_inject(1)
+1
+INSERT INTO t1 (id,padding) values (40, "boo"),(41,"scary");
+Got one of the listed errors
+begin;
+INSERT INTO t1 (id,padding) VALUES (1, "I love testing.");
+INSERT INTO t1 (id,padding) VALUES (2, "I hate testing.");
+Got one of the listed errors
+update t1 set padding="bar" where id=1;
+commit;
+INSERT INTO t1 (id,padding) VALUES (2, "I hate testing.");
+INSERT INTO t1 (id,padding) VALUES (3, "I hate testing too.");
+Got one of the listed errors
+COMMIT;
+select * from t1;
+pk	id	padding
+2	1	bar
+3	2	I hate testing.
+DROP TABLE t1;
+select seapitester_error_inject(0);
+seapitester_error_inject(0)
+0
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_key_parts()
+::max_supported_keys()
+::max_supported_key_part_length()
+::doCreateTable()
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+ROLLBACK
+::SEAPITester()
+BEGIN
+In Transaction
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+ROLLBACK STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+COMMIT
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+ROLLBACK
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+SET AUTOCOMMIT=0;
+CREATE TABLE `test`.`t1` (   `pk` INT NOT NULL AUTO_INCREMENT,   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`pk`) ) ENGINE=STORAGE_ENGINE_API_TESTER COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`pk`,`id`,`padding`) VALUES (2,1,'I love testing.');
+UPDATE `test`.`t1` SET `padding`='bar' WHERE `pk`=2;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`pk`,`id`,`padding`) VALUES (3,2,'I hate testing.');
+COMMIT;
+SET AUTOCOMMIT=0;
+DROP TABLE `test`.`t1`;
+COMMIT;
+SET GLOBAL transaction_log_truncate_debug= true;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE

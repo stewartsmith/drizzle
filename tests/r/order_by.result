@@ -439,7 +439,7 @@ PRIMARY KEY  (gid),
 KEY component_id (cid)
 ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (103853,108),(103867,108),(103962,108),(104505,108),(104619,108),(104620,108);
-ALTER TABLE t1 add skr int not null;
+ALTER TABLE t1 add skr int default 42 not null;
 CREATE TEMPORARY TABLE t2 (
 gid int NOT NULL default '0',
 uid int NOT NULL default '1',
@@ -454,7 +454,7 @@ uid int NOT NULL auto_increment,
 PRIMARY KEY  (uid)
 ) ENGINE=MyISAM;
 INSERT INTO t3 VALUES (1),(15),(27),(75),(117),(250);
-ALTER TABLE t3 add skr int not null;
+ALTER TABLE t3 add skr int default 42 not null;
 select t1.gid, t2.sid, t3.uid from t2, t1, t3 where t2.gid = t1.gid and t2.uid = t3.uid order by t3.uid, t1.gid;
 gid	sid	uid
 104620	5	15

@@ -8,15 +8,21 @@ EXTRA_DIST+= \
 	     docs/conf.py \
 	     docs/Doxyfile \
 	     docs/drizzled_header.html \
+	     docs/plugins/list.rst \
+	     docs/plugins/haildb/index.rst \
+	     docs/plugins/innobase/index.rst \
+	     docs/plugins/mysql_protocol/index.rst \
+	     docs/plugins/transaction_log/index.rst \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst \
 	     ${top_srcdir}/docs/libdrizzle/*.rst \
+	     ${top_srcdir}/docs/installing/*.rst \
              ${top_srcdir}/docs/testing/*.rst
 
 # Makefile for Sphinx documentation
 #
 
-SPHINXOPTS    = -D release=${PANDORA_RELEASE_VERSION}
+SPHINXOPTS    = -W -D release=${PANDORA_RELEASE_VERSION}
 PAPER         =
 SPHINX_BUILDDIR      = ${top_builddir}/docs
 

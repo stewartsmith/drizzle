@@ -24,6 +24,7 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
 #include <iostream>
+#include <netinet/in.h> /* for in_port_t */
 
 namespace drizzled
 {
@@ -161,6 +162,7 @@ inline bool greater_than_max<uint64_t, UINT64_MAX>(uint64_t)
 
 typedef boost::error_info<struct tag_invalid_max,uint64_t> invalid_max_info;
 typedef boost::error_info<struct tag_invalid_min,int64_t> invalid_min_info;
+typedef boost::error_info<struct tag_invalid_min,std::string> invalid_value;
 
 template<class T,
   T MAXVAL,
@@ -200,6 +202,9 @@ protected:
 
 typedef constrained_check<uint64_t, UINT64_MAX, 0> uint64_constraint;
 typedef constrained_check<uint32_t, UINT32_MAX, 0> uint32_constraint;
+typedef constrained_check<uint64_t, UINT64_MAX, 1> uint64_nonzero_constraint;
+typedef constrained_check<uint32_t, UINT32_MAX, 1> uint32_nonzero_constraint;
+typedef drizzled::constrained_check<in_port_t, 65535, 0> port_constraint;
 
 typedef constrained_check<uint32_t,65535,1> back_log_constraints;
 

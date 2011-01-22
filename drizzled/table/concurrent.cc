@@ -28,6 +28,8 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
 
+#include <drizzled/table/instance.h>
+
 #include "drizzled/table.h"
 
 namespace drizzled
@@ -66,7 +68,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
   if (session->getKilled())
     return true;
 
-  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
+  identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
   if (open_unireg_entry(session, table_list->getTableName(), identifier))
   {
     intern_close_table();
@@ -119,7 +121,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
 
 int table::Concurrent::open_unireg_entry(Session *session,
                                          const char *alias,
-                                         TableIdentifier &identifier)
+                                         identifier::Table &identifier)
 {
   int error;
   TableShare::shared_ptr share;
@@ -127,9 +129,9 @@ int table::Concurrent::open_unireg_entry(Session *session,
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
 retry:
-  if (not (share= TableShare::getShareCreate(session,
-                                             identifier,
-                                             error)))
+  if (not (share= table::instance::Shared::make_shared(session,
+                                                       identifier,
+                                                       error)))
   {
     return 1;
   }
@@ -148,7 +150,7 @@ retry:
       share->resetVersion();                        // Mark share as old
       if (discover_retry_count++)               // Retry once
       {
-        TableShare::release(share);
+        table::instance::release(share);
         return 1;
       }
 
@@ -173,11 +175,12 @@ retry:
       */
       if (share->getTableCount() != 1)
       {
-        TableShare::release(share);
+        table::instance::release(share);
         return 1;
       }
+
       /* Free share and wait until it's released by all threads */
-      TableShare::release(share);
+      table::instance::release(share);
 
       if (not session->getKilled())
       {
@@ -185,10 +188,11 @@ retry:
         session->clear_error();                 // Clear error message
         goto retry;
       }
+
       return 1;
     }
 
-    TableShare::release(share);
+    table::instance::release(share);
 
     return 1;
   }
@@ -204,7 +208,7 @@ void table::Concurrent::release(void)
   // delete if this happens.
   if (getShare()->getType() == message::Table::STANDARD)
   {
-    TableShare::release(getMutableShare());
+    table::instance::release(getMutableShare());
   }
   else
   {

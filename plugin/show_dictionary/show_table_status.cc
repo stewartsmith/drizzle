@@ -47,13 +47,17 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   is_primed(false),
   scopedLock(table::Cache::singleton().mutex())
 {
+  if (not isShowQuery())
+   return;
+
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   schema_predicate.append(select->getShowSchema());
 
-  if (schema_predicate.empty())
+  util::string::const_shared_ptr schema(getSession().schema());
+  if (schema_predicate.empty() and schema)
   {
-    schema_predicate.append(getSession().db);
+    schema_predicate.append(*schema);
   }
 
   if (not schema_predicate.empty())

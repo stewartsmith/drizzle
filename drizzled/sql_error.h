@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/lex_string.h"
 
+#include <drizzled/error_t.h>
+
 #include <bitset>
 
 namespace drizzled
@@ -32,30 +34,40 @@ class DRIZZLE_ERROR: public memory::SqlAlloc
 {
 public:
   static const uint32_t NUM_ERRORS= 4;
-  enum enum_warning_level
-  { WARN_LEVEL_NOTE, WARN_LEVEL_WARN, WARN_LEVEL_ERROR, WARN_LEVEL_END};
+  enum enum_warning_level {
+    WARN_LEVEL_NOTE,
+    WARN_LEVEL_WARN,
+    WARN_LEVEL_ERROR,
+    WARN_LEVEL_END
+  };
 
-  uint32_t code;
+  drizzled::error_t code;
   enum_warning_level level;
   char *msg;
 
-  DRIZZLE_ERROR(Session *session, uint32_t code_arg, enum_warning_level level_arg,
-	      const char *msg_arg)
-    :code(code_arg), level(level_arg)
+  DRIZZLE_ERROR(Session *session,
+                drizzled::error_t code_arg,
+                enum_warning_level level_arg,
+                const char *msg_arg) :
+    code(code_arg),
+    level(level_arg)
   {
     if (msg_arg)
       set_msg(session, msg_arg);
   }
+
   void set_msg(Session *session, const char *msg_arg);
 };
 
 DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-                          uint32_t code, const char *msg);
+                            drizzled::error_t code, const char *msg);
+
 void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-			 uint32_t code, const char *format, ...);
+                         drizzled::error_t code, const char *format, ...);
+
 void drizzle_reset_errors(Session *session, bool force);
-bool mysqld_show_warnings(Session *session, 
-                          std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
+bool show_warnings(Session *session, 
+                   std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
 
 extern const LEX_STRING warning_level_names[];
 

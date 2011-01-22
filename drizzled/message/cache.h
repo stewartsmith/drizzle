@@ -30,7 +30,7 @@
 namespace drizzled {
 namespace message {
 
-typedef boost::unordered_map< drizzled::TableIdentifier::Key, drizzled::message::table::shared_ptr> Map;
+typedef boost::unordered_map< drizzled::identifier::Table::Key, drizzled::message::table::shared_ptr> Map;
 
 class Cache
 {
@@ -55,10 +55,10 @@ public:
     cache.rehash(arg);
   }
 
-  drizzled::message::table::shared_ptr find(const TableIdentifier &identifier);
-  void erase(const TableIdentifier &identifier);
-  bool insert(const TableIdentifier &identifier, drizzled::message::table::shared_ptr share);
-  bool insert(const TableIdentifier &identifier, message::Table &share);
+  drizzled::message::table::shared_ptr find(const identifier::Table &identifier);
+  void erase(const identifier::Table &identifier);
+  bool insert(const identifier::Table &identifier, drizzled::message::table::shared_ptr share);
+  bool insert(const identifier::Table &identifier, message::Table &share);
 };
 
 } /* namespace message */

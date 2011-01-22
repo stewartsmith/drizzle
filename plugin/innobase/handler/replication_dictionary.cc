@@ -23,7 +23,6 @@
 #include "replication_dictionary.h"
 #include "drizzled/current_session.h"
 
-extern "C" {
 #include "univ.i"
 #include "btr0sea.h"
 #include "os0file.h"
@@ -56,7 +55,6 @@ extern "C" {
 #include "mysql_addons.h"
 #include "create_replication.h"
 #include "read_replication.h"
-}
 #include "handler0vars.h"
 
 #include "drizzled/replication_services.h"

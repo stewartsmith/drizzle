@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,17 +36,18 @@ int64_t Item_func_neg::int_op()
 {
   int64_t value= args[0]->val_int();
   null_value= args[0]->null_value;
+
   return -value;
 }
 
 
-my_decimal *Item_func_neg::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_neg::decimal_op(type::Decimal *decimal_value)
 {
-  my_decimal val, *value= args[0]->val_decimal(&val);
+  type::Decimal val, *value= args[0]->val_decimal(&val);
   if (!(null_value= args[0]->null_value))
   {
-    my_decimal2decimal(value, decimal_value);
-    my_decimal_neg(decimal_value);
+    class_decimal2decimal(value, decimal_value);
+    class_decimal_neg(decimal_value);
     return decimal_value;
   }
   return 0;
@@ -85,8 +86,7 @@ void Item_func_neg::fix_length_and_dec()
       hybrid_type= DECIMAL_RESULT;
     }
   }
-  unsigned_flag= 0;
-  return;
+  unsigned_flag= false;
 }
 
 } /* namespace drizzled */

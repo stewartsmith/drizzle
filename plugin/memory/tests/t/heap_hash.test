@@ -18,7 +18,7 @@ update t1 set b=5 where a=4;
 update t1 set b=b+1 where a>=3;
 replace t1 values (3,3);
 select * from t1;
-alter table t1 add c int not null, add key using HASH (c,a);
+alter table t1 add c int DEFAULT 42 not null, add key using HASH (c,a);
 drop table t1;
 
 create temporary table t1 (a int not null,b int not null, primary key using HASH (a)) engine=MEMORY comment="testing heaps";
@@ -108,7 +108,7 @@ create temporary table t1 (btn char(10) not null, key using HASH (btn)) engine=M
 insert into t1 values ("hello"),("hello"),("hello"),("hello"),("hello"),("a"),("b"),("c"),("d"),("e"),("f"),("g"),("h"),("i");
 explain select * from t1 where btn like "q%";
 select * from t1 where btn like "q%";
-alter table t1 add column new_col char(1) not null, add key using HASH (btn,new_col), drop key btn;
+alter table t1 add column new_col char(1) default "Y" not null, add key using HASH (btn,new_col), drop key btn;
 update t1 set new_col=left(btn,1);
 explain select * from t1 where btn="a";
 explain select * from t1 where btn="a" and new_col="a";

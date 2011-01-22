@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Monty Taylor
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,9 +24,11 @@
 #include <bitset>
 #include <boost/program_options.hpp>
 
-#include "drizzled/atomics.h"
+#include <boost/detail/atomic_count.hpp>
+
 #include "drizzled/global_buffer.h"
 #include "drizzled/definitions.h"
+
 struct passwd;
 
 namespace drizzled
@@ -38,7 +40,7 @@ class Registry;
 }
 
 extern std::bitset<12> test_flags;
-extern atomic<uint32_t> connection_count;
+extern boost::detail::atomic_count connection_count;
 extern const char *load_default_groups[];
 extern bool volatile select_thread_in_use;
 extern bool volatile abort_loop;

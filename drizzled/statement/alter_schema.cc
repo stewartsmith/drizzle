@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,37 +41,35 @@ bool statement::AlterSchema::execute()
   if (not validateSchemaOptions())
     return true;
 
-  SchemaIdentifier schema_identifier(string(db->str, db->length));
+  identifier::Schema schema_identifier(string(db->str, db->length));
 
   if (not check_db_name(session, schema_identifier))
   {
-    std::string path;
-    schema_identifier.getSQLPath(path);
-    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
+    my_error(ER_WRONG_DB_NAME, schema_identifier);
 
     return false;
   }
 
-  SchemaIdentifier identifier(db->str);
+  identifier::Schema identifier(db->str);
   if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
   {
-    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), db->str);
+    my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 
     return true;
   }
 
   if (session->inTransaction())
   {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
-               MYF(0));
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
   /*
     @todo right now the logic for alter schema is just sitting here, at some point this should be packaged up in a class/etc.
   */
 
+  // First initialize the schema message
+  drizzled::message::schema::init(schema_message, old_definition->name());
+
   // We set the name from the old version to keep case preference
-  schema_message.set_name(old_definition->name());
   schema_message.set_version(old_definition->version());
   schema_message.set_uuid(old_definition->uuid());
   schema_message.mutable_engine()->set_name(old_definition->engine().name());
@@ -85,7 +83,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= mysql_alter_db(session, schema_message);
+  bool res= alter_db(session, schema_message, old_definition);
 
   return not res;
 }

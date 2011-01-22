@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -183,7 +183,7 @@ public:
   double val_real();
   int64_t val_int ();
   String *val_str (String *);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool val_bool();
   enum Item_result result_type() const;
   enum_field_types field_type() const;
@@ -251,7 +251,7 @@ public:
   int64_t val_int();
   double val_real();
   String *val_str(String*);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool val_bool();
   void fix_length_and_dec();
   virtual void print(String *str, enum_query_type query_type);
@@ -368,7 +368,7 @@ public:
   int64_t val_int();
   double val_real();
   String *val_str(String*);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   void update_null_value () { (void) val_bool(); }
   bool val_bool();
   void top_level_item() { abort_on_null=1; }
@@ -512,6 +512,7 @@ public:
   bool is_executed() const { return executed; }
   bool no_rows();
   virtual enum_engine_type engine_type() { return SINGLE_SELECT_ENGINE; }
+  bool save_join_if_explain();
 
   friend class subselect_hash_sj_engine;
   friend class Item_in_subselect;

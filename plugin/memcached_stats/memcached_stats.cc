@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2009, Padraig O'Sullivan
+ * Copyright (C) 2009, Padraig O'Sullivan
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,7 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("servers",
           po::value<std::string>()->default_value(""),
-          N_("List of memcached servers."));
+          _("List of memcached servers."));
 }
 
 } /* namespace drizzle_plugin */

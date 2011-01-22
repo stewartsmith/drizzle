@@ -175,7 +175,7 @@ public:
     (void)buffer;
     return store_ret_val;
   };
-  virtual bool store(const drizzled::DRIZZLE_TIME *from)
+  virtual bool store(const drizzled::type::Time *from)
   {
     return Client::store(from);
   }
@@ -231,7 +231,7 @@ public:
     authenticate_return = value;
   }
 
-  virtual bool authenticate(const drizzled::SecurityContext &sctx, const std::string &passwd)
+  virtual bool authenticate(const drizzled::identifier::User &sctx, const std::string &passwd)
   {
     (void)sctx;
     (void)passwd;

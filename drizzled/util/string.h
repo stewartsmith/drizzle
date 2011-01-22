@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- * Copyright (c) 2010, Brian Aker
+ * Copyright (C) 2010 Brian Aker
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,12 @@ namespace drizzled
 
 namespace util
 {
+
+
+namespace string {
+typedef boost::shared_ptr<std::string> shared_ptr;
+typedef boost::shared_ptr<const std::string> const_shared_ptr;
+}
 
 struct insensitive_equal_to : std::binary_function<std::string, std::string, bool>
 {

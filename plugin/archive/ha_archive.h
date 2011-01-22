@@ -93,7 +93,7 @@ public:
 			 uint32_t key_len,
                          drizzled::ha_rkey_function find_flag);
   int index_next(unsigned char * buf);
-  int doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  int doOpen(const drizzled::identifier::Table &identifier, int mode, uint32_t test_if_locked);
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   int doInsertRecord(unsigned char * buf);

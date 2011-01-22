@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -178,10 +178,13 @@ store the charset-collation number; one byte is left unused, though */
 /* Pack mbminlen, mbmaxlen to mbminmaxlen. */
 #define DATA_MBMINMAXLEN(mbminlen, mbmaxlen)	\
 	((mbmaxlen) * DATA_MBMAX + (mbminlen))
-/* Get mbminlen from mbminmaxlen. */
-#define DATA_MBMINLEN(mbminmaxlen) UNIV_EXPECT(((mbminmaxlen) % DATA_MBMAX), 1)
+/* Get mbminlen from mbminmaxlen. Cast the result of UNIV_EXPECT to ulint
+because in GCC it returns a long. */
+#define DATA_MBMINLEN(mbminmaxlen) ((ulint) \
+                                    UNIV_EXPECT(((mbminmaxlen) % DATA_MBMAX), \
+                                                1))
 /* Get mbmaxlen from mbminmaxlen. */
-#define DATA_MBMAXLEN(mbminmaxlen) ((mbminmaxlen) / DATA_MBMAX)
+#define DATA_MBMAXLEN(mbminmaxlen) ((ulint) ((mbminmaxlen) / DATA_MBMAX))
 
 #ifndef UNIV_HOTBACKUP
 /*********************************************************************//**

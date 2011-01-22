@@ -1,0 +1,12 @@
+--replace_column 1 #
+
+SELECT COUNT(ERROR_NAME) FROM DATA_DICTIONARY.ERRORS;
+
+CREATE TABLE error_names SELECT ERROR_NAME FROM DATA_DICTIONARY.ERRORS;
+
+--replace_column 1 #
+SELECT COUNT(*) FROM error_names;
+
+DROP TABLE error_names;
+
+

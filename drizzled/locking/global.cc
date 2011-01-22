@@ -1,4 +1,6 @@
-/* Copyright (C) 2000-2006 MySQL AB
+/* 
+    Copyright (C) 2011 Brian Aker
+    Copyright (C) 2000-2006 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +19,9 @@
 /**
   @file
 
-  Locking functions for mysql.
+  @note this is out of date, just for historical reference 
+
+  Locking functions for drizzled.
 
   Because of the new concurrent inserts, we must first get external locks
   before getting internal locks.  If we do it in the other order, the status
@@ -30,7 +34,7 @@
   - For each SQL statement lockTables() is called for all involved
     tables.
     - lockTables() will call
-      table_handler->external_lock(session,locktype) for each table.
+      cursor->external_lock(session,locktype) for each table.
       This is followed by a call to thr_multi_lock() for all tables.
 
   - When statement is done, we call unlockTables().
@@ -122,8 +126,6 @@ static void print_lock_error(int error, const char *);
                                               lockTables() should
                                               notify upper level and rely
                                               on caller doing this.
-    need_reopen                 Out parameter, TRUE if some tables were altered
-                                or deleted and should be reopened by caller.
 
   RETURN
     A lock structure pointer on success.
@@ -131,8 +133,8 @@ static void print_lock_error(int error, const char *);
 */
 
 /* Map the return value of thr_lock to an error from errmsg.txt */
-static int thr_lock_errno_to_mysql[]=
-{ 0, 1, ER_LOCK_WAIT_TIMEOUT, ER_LOCK_DEADLOCK };
+static drizzled::error_t thr_lock_errno_to_mysql[]=
+{ EE_OK, EE_ERROR_FIRST, ER_LOCK_WAIT_TIMEOUT, ER_LOCK_DEADLOCK };
 
 
 /**
@@ -163,23 +165,18 @@ static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
   *mysql_lock= 0;
 }
 
-DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen)
+DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
 {
   DrizzleLock *sql_lock;
   Table *write_lock_used;
   vector<plugin::StorageEngine *> involved_engines;
-  int rc;
 
-  *need_reopen= false;
-
-  for (;;)
+  do
   {
-    if (! (sql_lock= get_lock_data(tables, count, true,
-                                   &write_lock_used)))
+    if (! (sql_lock= get_lock_data(tables, count, true, &write_lock_used)))
       break;
 
-    if (global_read_lock && write_lock_used &&
-        ! (flags & DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK))
+    if (global_read_lock && write_lock_used and (not (flags & DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK)))
     {
       /*
 	Someone has issued LOCK ALL TABLES FOR READ and we want a write lock
@@ -191,11 +188,12 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
         reset_lock_data_and_free(&sql_lock);
 	break;
       }
+
       if (version != refresh_version)
       {
         /* Clear the lock type of all lock data to avoid reusage. */
         reset_lock_data_and_free(&sql_lock);
-	goto retry;
+	break;
       }
     }
     
@@ -208,12 +206,15 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
     {
       size_t num_tables= sql_lock->sizeTable();
       plugin::StorageEngine *engine;
-      set<size_t> involved_slots;
+      std::set<size_t> involved_slots;
+
       for (size_t x= 1; x <= num_tables; x++, tables++)
       {
         engine= (*tables)->cursor->getEngine();
+
         if (involved_slots.count(engine->getId()) > 0)
           continue; /* already added to involved engines */
+
         involved_engines.push_back(engine);
         involved_slots.insert(engine->getId());
       }
@@ -241,75 +242,22 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
     memcpy(sql_lock->getLocks() + sql_lock->sizeLock(),
            sql_lock->getLocks(),
            sql_lock->sizeLock() * sizeof(*sql_lock->getLocks()));
+
     /* Lock on the copied half of the lock data array. */
+    drizzled::error_t rc;
     rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(*this,
                                                      sql_lock->getLocks() +
                                                      sql_lock->sizeLock(),
                                                      sql_lock->sizeLock(),
                                                      this->lock_id)];
-    if (rc > 1)                                 /* a timeout or a deadlock */
+    if (rc)                                 /* a timeout or a deadlock */
     {
       if (sql_lock->sizeTable())
         unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
       reset_lock_data_and_free(&sql_lock);
       my_error(rc, MYF(0));
-      break;
     }
-    else if (rc == 1)                           /* aborted */
-    {
-      some_tables_deleted= true;		// Try again
-      sql_lock->setLock(0);                  // Locks are already freed
-      // Fall through: unlock, reset lock data, free and retry
-    }
-    else if (not some_tables_deleted || (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
-    {
-      /*
-        Thread was killed or lock aborted. Let upper level close all
-        used tables and retry or give error.
-      */
-      break;
-    }
-    else if (not open_tables)
-    {
-      // Only using temporary tables, no need to unlock
-      some_tables_deleted= false;
-      break;
-    }
-    set_proc_info(0);
-
-    /* going to retry, unlock all tables */
-    if (sql_lock->sizeLock())
-        sql_lock->unlock(sql_lock->sizeLock());
-
-    if (sql_lock->sizeTable())
-      unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
-
-    /*
-      If thr_multi_lock fails it resets lock type for tables, which
-      were locked before (and including) one that caused error. Lock
-      type for other tables preserved.
-    */
-    reset_lock_data_and_free(&sql_lock);
-
-    /*
-     * Notify all involved engines that the
-     * SQL statement has ended
-     */
-    for_each(involved_engines.begin(),
-             involved_engines.end(),
-             bind2nd(mem_fun(&plugin::StorageEngine::endStatement), this));
-retry:
-    if (flags & DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN)
-    {
-      *need_reopen= true;
-      break;
-    }
-
-    if (wait_for_tables(this))
-    {
-      break;					// Couldn't open tables
-    }
-  }
+  } while(0);
 
   set_proc_info(0);
   if (getKilled())
@@ -321,7 +269,9 @@ retry:
       sql_lock= NULL;
     }
   }
+
   set_time_after_lock();
+
   return (sql_lock);
 }
 
@@ -666,8 +616,8 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
 
 int Session::lock_table_name(TableList *table_list)
 {
-  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
-  const TableIdentifier::Key &key(identifier.getKey());
+  identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
+  const identifier::Table::Key &key(identifier.getKey());
 
   {
     /* Only insert the table if we haven't insert it already */
@@ -874,7 +824,7 @@ void TableList::unlock_table_names(TableList *last_table)
 
 static void print_lock_error(int error, const char *table)
 {
-  int textno;
+  drizzled::error_t textno;
 
   switch (error) {
   case HA_ERR_LOCK_WAIT_TIMEOUT:
@@ -1087,6 +1037,7 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
     if (getKilled())
       result=1;
   }
+
   if (not abort_on_refresh && not result)
     protect_against_global_read_lock++;
 

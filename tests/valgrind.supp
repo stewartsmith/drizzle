@@ -298,6 +298,16 @@
 }
 {
    azwrite_row issue in libazio
+   Memcheck:Cond
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:azwrite
+   fun:azwrite_row
+   ...
+}
+{
+   azwrite_row issue in libazio
    Memcheck:Value8
    fun:memcpy
    ...
@@ -311,6 +321,26 @@
    fun:memcpy
    ...
    fun:deflate
+   fun:azwrite_row
+   ...
+}
+{
+   azwrite_row issue in libazio
+   Memcheck:Value8
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:azwrite
+   fun:azwrite_row
+   ...
+}
+{
+   azwrite_row issue in libazio
+   Memcheck:Value4
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:azwrite
    fun:azwrite_row
    ...
 }
@@ -355,29 +385,6 @@
 }
 
 
-# https://bugs.launchpad.net/drizzle/+bug/582486
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Value8
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Value4
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Cond
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-
 # https://bugs.launchpad.net/drizzle/+bug/582495
 {
    Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
@@ -393,6 +400,24 @@
    Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
    Memcheck:Param
    write(buf)
+   ...
+   fun:_ZN8drizzled8internal8my_writeEiPKhmi
+   ...
+   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEybPy
+   ...
+}
+{
+   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
+   Memcheck:Param
+   ...
+   fun:_ZN8drizzled8internal8my_writeEiPKhmi
+   ...
+   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
+   ...
+}
+{
+   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
+   Memcheck:Param
    ...
    fun:_ZN8drizzled8internal8my_writeEiPKhmi
    ...

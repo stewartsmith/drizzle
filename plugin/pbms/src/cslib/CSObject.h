@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -146,7 +146,7 @@ private:
 };
 
 #ifdef DEBUG
-#define new			new(__FUNC__, __FILE__, __LINE__)
+#define new                    new(__FUNC__, __FILE__, __LINE__)
 
 #define retain()	retain(__FUNC__, __FILE__, __LINE__)
 #define release()	release(__FUNC__, __FILE__, __LINE__)

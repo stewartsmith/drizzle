@@ -590,6 +590,7 @@ Note	1051	Unknown table 't2'
 CREATE TABLE t2 (a int, b int, primary key (a));
 BEGIN;
 INSERT INTO t2 values(100,100);
+COMMIT;
 CREATE TABLE IF NOT EXISTS t2 (primary key (a)) select * from t1;
 ERROR 23000: Duplicate entry '1' for key 'PRIMARY'
 SELECT * from t2;
@@ -1127,7 +1128,7 @@ SELECT table_schema, table_name, row_format
 FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	DEFAULT
+test	t1	COMPACT
 
 # - change ROW_FORMAT and check;
 
@@ -1137,7 +1138,7 @@ SELECT table_schema, table_name, row_format
 FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	DEFAULT
+test	t1	REDUNDANT
 
 # - that's it, cleanup.
 
@@ -1172,9 +1173,6 @@ DROP TABLE t1;
 set @my_innodb_autoextend_increment=@@global.innodb_autoextend_increment;
 set global innodb_autoextend_increment=8;
 set global innodb_autoextend_increment=@my_innodb_autoextend_increment;
-set @my_innodb_commit_concurrency=@@global.innodb_commit_concurrency;
-set global innodb_commit_concurrency=0;
-set global innodb_commit_concurrency=@my_innodb_commit_concurrency;
 End of 5.0 tests
 CREATE TABLE `t2` (
 `k` int NOT NULL auto_increment,
@@ -1352,3 +1350,35 @@ DROP TABLE t2;
 DROP TABLE t1;
 SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 End of 5.1 tests
+#
+# Test for bug #39932 "create table fails if column for FK is in different
+#                      case than in corr index".
+#
+drop tables if exists t1, t2;
+create table t1 (pk int primary key) engine=InnoDB;
+# Even although the below statement uses uppercased field names in
+# foreign key definition it still should be able to find explicitly
+# created supporting index. So it should succeed and should not
+# create any additional supporting indexes.
+create table t2 (fk int, key x (fk),
+constraint x foreign key (FK) references t1 (PK)) engine=InnoDB;
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `fk` INT DEFAULT NULL,
+  KEY `x` (`fk`),
+  CONSTRAINT `x` FOREIGN KEY (`FK`) REFERENCES `t1` (`PK`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+drop table t2, t1;
+#
+# Bug#55826: create table .. select crashes with when KILL_BAD_DATA 
+#  is returned
+#
+CREATE TABLE t1(a INT) ENGINE=innodb;
+INSERT INTO t1 VALUES (0);
+CREATE TABLE t2 
+SELECT LEAST((SELECT '' FROM t1),NOW()) FROM `t1`;
+ERROR 22007: Incorrect datetime value: '' for column 'NOW()' at row 1
+DROP TABLE IF EXISTS t1,t2;
+Warnings:
+Note	1051	Unknown table 't2'

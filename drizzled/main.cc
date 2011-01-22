@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -61,6 +61,7 @@
 #include "drizzled/signal_handler.h"
 #include "drizzled/replication_services.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/catalog/local.h"
 
 #include "drizzled/util/backtrace.h"
 
@@ -76,7 +77,7 @@ static uint32_t thr_kill_signal;
   All global error messages are sent here where the first one is stored
   for the client.
 */
-static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
@@ -105,10 +106,12 @@ static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
     {
       if (! session->main_da.is_error())            // Return only first message
       {
-        if (error == 0)
+        if (error == EE_OK)
           error= ER_UNKNOWN_ERROR;
+
         if (str == NULL)
           str= ER(error);
+
         session->main_da.set_error_status(error, str);
       }
     }
@@ -199,15 +202,10 @@ static void init_signals(void)
   return;
 }
 
-static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char* filename,
-                       int line, const string& message) throw(const char *)
+static void GoogleProtoErrorThrower(google::protobuf::LogLevel level,
+                                    const char* ,
+                                    int, const string& ) throw(const char *)
 {
-  (void)filename;
-  (void)line;
-  (void)message;
-  std::cerr << "\n";
-  drizzled::util::custom_backtrace();
-  std::cerr << "\n";
   switch(level)
   {
   case google::protobuf::LOGLEVEL_INFO:
@@ -216,7 +214,6 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   case google::protobuf::LOGLEVEL_ERROR:
   case google::protobuf::LOGLEVEL_FATAL:
   default:
-    std::cerr << "GoogleProtoErrorThrower(" << filename << ", " << line << ", " << message << ")";
     throw("error in google protocol buffer parsing");
   }
 }
@@ -227,12 +224,11 @@ int main(int argc, char **argv)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle", LOCALEDIR);
-  textdomain("drizzle");
+  bindtextdomain("drizzle7", LOCALEDIR);
+  textdomain("drizzle7");
 #endif
 
   module::Registry &modules= module::Registry::singleton();
-  plugin::Client *client;
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
@@ -281,8 +277,6 @@ int main(int argc, char **argv)
     }
 
     full_data_home= fs::system_complete(getDataHome());
-    getDataHomeCatalog()= "./";
-    getDataHome()= "../";
   }
 
 
@@ -334,24 +328,27 @@ int main(int argc, char **argv)
 
   /* Send server startup event */
   {
-    Session *session;
+    Session::shared_ptr session;
 
-    if ((session= new Session(plugin::Listen::getNullClient())))
+    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
     {
       currentSession().release();
-      currentSession().reset(session);
-      transaction_services.sendStartupEvent(session);
-      delete session;
+      currentSession().reset(session.get());
+      transaction_services.sendStartupEvent(session.get());
     }
   }
 
 
-  /* Listen for new connections and start new session for each connection
+  /* 
+    Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
-     should be shutdown. */
+     should be shutdown.
+   */
+  plugin::Client *client;
   while ((client= plugin::Listen::getClient()) != NULL)
   {
-    Session::shared_ptr session(new Session(client));
+    Session::shared_ptr session;
+    session= Session::make_shared(client, catalog::local());
 
     if (not session)
     {
@@ -366,14 +363,13 @@ int main(int argc, char **argv)
 
   /* Send server shutdown event */
   {
-    Session *session;
+    Session::shared_ptr session;
 
-    if ((session= new Session(plugin::Listen::getNullClient())))
+    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
     {
       currentSession().release();
-      currentSession().reset(session);
-      transaction_services.sendShutdownEvent(session);
-      delete session;
+      currentSession().reset(session.get());
+      transaction_services.sendShutdownEvent(session.get());
     }
   }
 

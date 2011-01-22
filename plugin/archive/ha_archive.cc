@@ -131,7 +131,7 @@ void ArchiveEngine::deleteOpenTable(const string &table_name)
 }
 
 
-int ArchiveEngine::doDropTable(Session&, const TableIdentifier &identifier)
+int ArchiveEngine::doDropTable(Session&, const identifier::Table &identifier)
 {
   string new_path(identifier.getPath());
 
@@ -148,7 +148,7 @@ int ArchiveEngine::doDropTable(Session&, const TableIdentifier &identifier)
 }
 
 int ArchiveEngine::doGetTableDefinition(Session&,
-                                        const TableIdentifier &identifier,
+                                        const identifier::Table &identifier,
                                         drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
@@ -413,7 +413,7 @@ int ha_archive::init_archive_reader()
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
+int ha_archive::doOpen(const identifier::Table &identifier, int , uint32_t )
 {
   int rc= 0;
   share= get_share(identifier.getPath().c_str(), &rc);
@@ -499,7 +499,7 @@ int ha_archive::close(void)
 
 int ArchiveEngine::doCreateTable(Session &,
                                  Table& table_arg,
-                                 const drizzled::TableIdentifier &identifier,
+                                 const drizzled::identifier::Table &identifier,
                                  drizzled::message::Table& proto)
 {
   int error= 0;
@@ -1031,8 +1031,8 @@ int ha_archive::optimize()
           field->setReadSet();
 
           uint64_t auto_value=
-            (uint64_t) field->val_int(getTable()->getInsertRecord() +
-                                       field->offset(getTable()->getInsertRecord()));
+            (uint64_t) field->val_int_internal(getTable()->getInsertRecord() +
+                                               field->offset(getTable()->getInsertRecord()));
           if (share->archive_write.auto_increment < auto_value)
             stats.auto_increment_value=
               (share->archive_write.auto_increment= auto_value) + 1;
@@ -1247,7 +1247,7 @@ int ha_archive::check(Session* session)
   }
 }
 
-int ArchiveEngine::doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to)
+int ArchiveEngine::doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to)
 {
   int error= 0;
 
@@ -1265,7 +1265,7 @@ int ArchiveEngine::doRenameTable(Session&, const TableIdentifier &from, const Ta
 }
 
 bool ArchiveEngine::doDoesTableExist(Session&,
-                                     const TableIdentifier &identifier)
+                                     const identifier::Table &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(ARZ);
@@ -1279,8 +1279,8 @@ bool ArchiveEngine::doDoesTableExist(Session&,
 }
 
 void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                          const drizzled::SchemaIdentifier &schema_identifier,
-                                          drizzled::TableIdentifier::vector &set_of_identifiers)
+                                          const drizzled::identifier::Schema &schema_identifier,
+                                          drizzled::identifier::Table::vector &set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
@@ -1302,11 +1302,11 @@ void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= identifier::Table::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
 
-      set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
+      set_of_identifiers.push_back(identifier::Table(schema_identifier, uname));
     }
   }
 }

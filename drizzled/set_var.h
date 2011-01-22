@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,11 +20,8 @@
 #ifndef DRIZZLED_SET_VAR_H
 #define DRIZZLED_SET_VAR_H
 
-/*#include "drizzled/function/func.h"
-#include "drizzled/function/set_user_var.h"
-#include "drizzled/item/string.h"
-#include "drizzled/item/field.h"
-*/
+#include <boost/shared_ptr.hpp>
+
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/lex_string.h"
@@ -56,8 +53,7 @@ typedef struct charset_info_st CHARSET_INFO;
   Classes for parsing of the SET command
 ****************************************************************************/
 
-class set_var_base :
-  public memory::SqlAlloc
+class set_var_base
 {
 public:
   set_var_base() {}
@@ -71,26 +67,27 @@ public:
 class set_var :
   public set_var_base
 {
+  uint64_t uint64_t_value;
+  std::string str_value;
 public:
   sys_var *var;
   Item *value;
   sql_var_t type;
-  union
-  {
-    const CHARSET_INFO *charset;
-    uint32_t uint32_t_value;
-    uint64_t uint64_t_value;
-    size_t size_t_value;
-    plugin::StorageEngine *storage_engine;
-    Time_zone *time_zone;
-    MY_LOCALE *locale_value;
-  } save_result;
   LEX_STRING base;			/* for structs */
 
   set_var(sql_var_t type_arg, sys_var *var_arg,
           const LEX_STRING *base_name_arg, Item *value_arg);
   int check(Session *session);
   int update(Session *session);
+  void setValue(const std::string &new_value);
+  void setValue(uint64_t new_value);
+  void updateValue();
+
+  uint64_t getInteger()
+  {
+    return uint64_t_value;
+  }
+
 };
 
 /* User variables like @my_own_variable */
@@ -99,14 +96,16 @@ class set_var_user: public set_var_base
 {
   Item_func_set_user_var *user_var_item;
 public:
-  set_var_user(Item_func_set_user_var *item) :
+  explicit set_var_user(Item_func_set_user_var *item) :
     user_var_item(item)
   {}
   int check(Session *session);
   int update(Session *session);
 };
 
-int sql_set_variables(Session *session, List<set_var_base> *var_list);
+typedef boost::shared_ptr<set_var_base> SetVarPtr;
+typedef std::vector<SetVarPtr> SetVarVector;
+int sql_set_variables(Session *session, const SetVarVector &var_list);
 
 } /* namespace drizzled */
 

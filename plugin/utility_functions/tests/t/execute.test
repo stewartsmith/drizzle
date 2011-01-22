@@ -1,0 +1,8 @@
+# Simple test of execute
+
+CREATE TABLE t1 (A VARCHAR(150));
+SET @execute= "SELECT WAIT('barrier')";
+INSERT INTO t1 VALUES (@execute), (@execute), (@execute);
+SELECT EXECUTE(A) FROM t1;
+
+DROP TABLE t1;

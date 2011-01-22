@@ -15,11 +15,12 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 nobase_dist_include_HEADERS+= \
+			      drizzled/util/storable.h \
+			      drizzled/util/string.h \
                               drizzled/util/backtrace.h \
                               drizzled/util/convert.h \
                               drizzled/util/functors.h \
-			      drizzled/util/storable.h \
-			      drizzled/util/string.h \
+                              drizzled/util/gmtime.h \
                               drizzled/util/tablename_to_filename.h \
                               drizzled/util/test.h \
                               drizzled/util/tokenize.h
@@ -28,5 +29,6 @@ noinst_LTLIBRARIES+= drizzled/util/libutil.la
 drizzled_util_libutil_la_SOURCES= \
                                   drizzled/util/backtrace.cc \
                                   drizzled/util/convert.cc \
+                                  drizzled/util/gmtime.cc \
                                   drizzled/util/tablename_to_filename.cc
 

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@ namespace drizzled
 {
 
 class sys_var;
-class sys_var_pluginvar; /* opaque */
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
 
@@ -66,7 +65,6 @@ extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
-extern uint64_t max_connect_errors;
 extern back_log_constraints back_log;
 extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
@@ -90,13 +88,17 @@ class sys_var
 {
 protected:
   std::string name; /**< The name of the variable */
+  sys_check_func check_func;
   sys_after_update_func after_update; /**< Function pointer triggered after the variable's value is updated */
   struct option *option_limits; /**< Updated by by sys_var_init() */
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
 public:
-  sys_var(const std::string &name_arg, sys_after_update_func func= NULL)
+  sys_var(const std::string &name_arg,
+          sys_after_update_func func= NULL,
+          sys_check_func check_func_arg= NULL)
     :
     name(name_arg),
+    check_func(check_func_arg),
     after_update(func),
     option_limits(NULL),
     m_allow_empty_value(true)
@@ -177,10 +179,6 @@ public:
   }
   Item *item(Session *session, sql_var_t type, const LEX_STRING *base);
   virtual bool is_readonly() const
-  {
-    return 0;
-  }
-  virtual sys_var_pluginvar *cast_pluginvar()
   {
     return 0;
   }
@@ -360,16 +358,17 @@ class sys_var_str :public sys_var
 public:
   char *value;					// Pointer to allocated string
   uint32_t value_length;
-  sys_check_func check_func;
   sys_update_func update_func;
   sys_set_default_func set_default_func;
   sys_var_str(const char *name_arg,
               sys_check_func check_func_arg,
               sys_update_func update_func_arg,
               sys_set_default_func set_default_func_arg,
-              char *value_arg)
-    :sys_var(name_arg), value(value_arg), check_func(check_func_arg),
-    update_func(update_func_arg),set_default_func(set_default_func_arg)
+              char *value_arg) :
+    sys_var(name_arg, NULL, check_func_arg),
+    value(value_arg),
+    update_func(update_func_arg),
+    set_default_func(set_default_func_arg)
   {  }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var)
@@ -450,6 +449,13 @@ public:
     default_value(value_arg.get())
   { }
 
+  sys_var_constrained_value(const char *name_arg,
+                            constrained_value<T> &value_arg,
+                            sys_check_func check_func_arg) :
+    sys_var(name_arg, NULL, check_func_arg),
+    value(value_arg),
+    default_value(value_arg.get())
+  { }
 
 public:
   bool is_readonly() const
@@ -461,7 +467,7 @@ public:
 
   bool update(Session *, set_var *var)
   {
-    value= var->save_result.uint32_t_value;
+    value= uint32_t(var->getInteger());
     return false;
   }
 
@@ -509,14 +515,14 @@ inline SHOW_TYPE sys_var_constrained_value<int32_t>::show_type()
 template<>
 inline bool sys_var_constrained_value<uint64_t>::update(Session *, set_var *var)
 {
-  value= var->save_result.uint64_t_value;
+  value= var->getInteger();
   return false;
 }
 
 template<>
 inline bool sys_var_constrained_value<uint32_t>::update(Session *, set_var *var)
 {
-  value= var->save_result.uint32_t_value;
+  value= uint32_t(var->getInteger());
   return false;
 }
 
@@ -939,7 +945,6 @@ public:
                                  plugin::StorageEngine *drizzle_system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   {  }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1013,7 +1018,6 @@ public:
   sys_var_collation(const char *name_arg)
     :sys_var_session(name_arg, NULL)
   { }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1081,7 +1085,6 @@ public:
   {
     
   }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1122,7 +1125,6 @@ public:
   {
     
   }
-  bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
   {
@@ -1150,12 +1152,9 @@ struct sys_var_with_base
 */
 
 drizzle_show_var* enumerate_sys_vars(Session *session);
-void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
-void drizzle_del_plugin_sysvar();
 void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
-sys_var *find_sys_var(const char *str, uint32_t length=0);
-bool not_all_support_one_shot(List<set_var_base> *var_list);
+sys_var *find_sys_var(const std::string &name);
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);

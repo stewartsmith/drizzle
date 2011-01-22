@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1997, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1997, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -40,7 +40,7 @@ Created 12/14/1997 Heikki Tuuri
 
 #include "univ.i"
 #include "pars0pars.h"
-#include "pars0grm.h"
+#include "pars0grm.hh"
 #include "pars0sym.h"
 #include "mem0mem.h"
 #include "os0proc.h"
@@ -529,7 +529,7 @@ In the state 'id', only two actions are possible (defined below). */
 {ID}		{
 			yylval = sym_tab_add_id(pars_sym_tab_global,
 							(byte*)yytext,
-							ut_strlen(yytext));
+							strlen(yytext));
 			return(PARS_ID_TOKEN);
 }
 

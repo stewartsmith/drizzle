@@ -1,1 +1,1 @@
---transaction-log.enable --scheduler=multi_thread
+--transaction-log.enable --scheduler=multi_thread --transaction-message-threshold=128k

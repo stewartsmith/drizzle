@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -101,7 +101,6 @@ os_thread_create(
 						function */
 	os_thread_id_t*		thread_id);	/*!< out: id of the created
 						thread, or NULL */
-
 /*****************************************************************//**
 Exits the current thread. */
 UNIV_INTERN

@@ -1,4 +1,4 @@
-#  Copyright (C) 2009 Sun Microsystems
+#  Copyright (C) 2009 Sun Microsystems, Inc.
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@ EXTRA_DIST= \
 	    config/autorun.sh \
 	    config/config.rpath \
 	    config/drizzle.ver \
+	    config/link-warning.h \
 	    config/make-lint.py \
 	    config/pandora_vc_revinfo \
 	    config/pre_hook.sh \

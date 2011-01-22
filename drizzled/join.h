@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -141,7 +141,7 @@ public:
 
   Session	*session;
   List<Item> *fields;
-  List<Item> &fields_list; /**< hold field list passed to mysql_select */
+  List<Item> &fields_list; /**< hold field list passed to select_query */
   List<TableList> *join_list; /**< list of joined tables in reverse order */
   /** unit structure (with global parameters) for this select */
   Select_Lex_Unit *unit;
@@ -180,7 +180,7 @@ public:
   DrizzleLock *lock;
 
   Join *tmp_join; /**< copy of this Join to be used with temporary tables */
-  ROLLUP rollup;				/**< Used with rollup */
+  Rollup rollup;				/**< Used with rollup */
   DYNAMIC_ARRAY keyuse;
   Item::cond_result cond_value;
   Item::cond_result having_value;
@@ -196,10 +196,10 @@ public:
   int error;
 
   Order *order;
-  Order *group_list; /**< hold parameters of mysql_select */
+  Order *group_list; /**< hold parameters of select_query */
   COND *conds;                            // ---"---
   Item *conds_history; /**< store WHERE for explain */
-  TableList *tables_list; /**< hold 'tables' parameter of mysql_select */
+  TableList *tables_list; /**< hold 'tables' parameter of select_query */
   COND_EQUAL *cond_equal;
   JoinTable *return_tab; /**< used only for outer joins */
   Item **ref_pointer_array; /**< used pointer reference for this select */
@@ -306,7 +306,7 @@ public:
     memset(&keyuse, 0, sizeof(keyuse));
     tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
-    rollup.state= ROLLUP::STATE_NONE;
+    rollup.setState(Rollup::STATE_NONE);
   }
 
   /** 
@@ -395,7 +395,7 @@ public:
     memset(&keyuse, 0, sizeof(keyuse));
     tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
-    rollup.state= ROLLUP::STATE_NONE;
+    rollup.setState(Rollup::STATE_NONE);
   }
 
   int prepare(Item ***rref_pointer_array, 

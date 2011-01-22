@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <gtest/gtest.h>
-#include <drizzled/decimal.h>
+#include <drizzled/type/decimal.h>
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
 
@@ -280,7 +280,7 @@ TEST_F(TimeTest, from_time_t)
 
 TEST_F(TimeTest, to_decimal)
 {
-  drizzled::my_decimal to;
+  drizzled::type::Decimal to;
   TemporalGenerator::TimeGen::make_time(&sample_time, 8, 4, 9, 56);
 
   sample_time.to_decimal(&to);

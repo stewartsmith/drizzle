@@ -1,0 +1,31 @@
+# Test REGEX function
+CREATE table t1 (xxx char(128));
+INSERT into t1 (xxx) values('this is a test of some long text to see what happens');
+SELECT * from t1 where xxx regexp('is a test of some long text to');
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE xxx REGEXP('is a test of some long text to');
+SELECT * from t1 where xxx regexp('is a test of some long text to ');
+SELECT * from t1 where xxx regexp('is a test of some long text to s');
+SELECT * from t1 where xxx regexp('is a test of some long text to se');
+DROP table t1;
+
+CREATE table t1 (xxx char(128));
+INSERT into t1 (xxx) values('this is some text: to test - out.reg exp (22/45)');
+SELECT * from t1 where xxx REGEXP '^this is some text: to test - out\\.regexp [[(][0-9]+[/\\][0-9]+[])][ ]*$';
+DROP table t1;
+
+SELECT 1 REGEXP NULL;
+
+SELECT '' REGEXP BINARY NULL;
+SELECT NULL REGEXP BINARY NULL;
+SELECT 'A' REGEXP BINARY NULL;
+SELECT "ABC" REGEXP BINARY NULL;
+
+CREATE TABLE t1(a INT, b CHAR(4));
+INSERT INTO t1 VALUES (1, '6.1'), (1, '7.0'), (1, '8.0');
+SET @stmt1="SELECT a FROM t1 WHERE a=1 AND '7.0' REGEXP b LIMIT 1";
+EXECUTE @stmt1;
+EXECUTE @stmt1;
+EXECUTE @stmt1;
+EXECUTE @stmt1;
+DROP TABLE t1;
+

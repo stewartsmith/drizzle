@@ -105,7 +105,7 @@ INSERT INTO t1 (b) VALUES(-9223372036854775809);
 
 --echo Testing MAX+1 BIGINT
 --echo NOTE: Bug#316221 - 2**63 incorrectly inserted into bigint
-#--ERROR ER_WARN_DATA_OUT_OF_RANGE
+--ERROR ER_WARN_DATA_OUT_OF_RANGE
 INSERT INTO t1 (b) VALUES(9223372036854775808);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -470,13 +470,13 @@ INSERT INTO t1 (b) VALUES('2038-01-19 03:14:07');
 --echo
 
 --echo Testing MIN-1 TIMESTAMP
---ERROR 1685 
+--ERROR ER_INVALID_TIMESTAMP_VALUE 
 INSERT INTO t1 (b) VALUES('1969-12-31 23:59:59');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing MAX+1 TIMESTAMP
---ERROR 1685 
+--ERROR ER_INVALID_TIMESTAMP_VALUE
 INSERT INTO t1 (b) VALUES('2038-01-19 03:14:08');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -497,19 +497,19 @@ INSERT INTO t1 (b) VALUES(NULL);
 --echo
 
 --echo Testing BAD INPUT TIMESTAMP1
---ERROR 1685 
+--ERROR ER_INVALID_TIMESTAMP_VALUE 
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT TIMESTAMP2
---ERROR 1685
+--ERROR ER_INVALID_TIMESTAMP_VALUE
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT TIMESTAMP3
---ERROR 1685 
+--ERROR ER_INVALID_TIMESTAMP_VALUE 
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:65');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo

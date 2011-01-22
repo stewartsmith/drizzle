@@ -23,7 +23,7 @@
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
 #include "drizzled/sql_base.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
@@ -98,7 +98,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Copy the newly read columns into the new record. */
   for (field_p= table->getFields(); (field= *field_p); field_p++)
   {
-    if (unique_map.test(field->field_index))
+    if (unique_map.test(field->position()))
     {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
     }
@@ -112,7 +112,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   Process usual UPDATE
 
   SYNOPSIS
-    mysql_update()
+    update_query()
     session			thread handler
     fields		fields for update
     values		values of fields for update
@@ -127,7 +127,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     1  - error
 */
 
-int mysql_update(Session *session, TableList *table_list,
+int update_query(Session *session, TableList *table_list,
                  List<Item> &fields, List<Item> &values, COND *conds,
                  uint32_t order_num, Order *order,
                  ha_rows limit, enum enum_duplicates,
@@ -136,8 +136,7 @@ int mysql_update(Session *session, TableList *table_list,
   bool		using_limit= limit != HA_POS_ERROR;
   bool		used_key_is_modified;
   bool		transactional_table;
-  bool		can_compare_record;
-  int		error;
+  int		error= 0;
   uint		used_index= MAX_KEY, dup_key_found;
   bool          need_sort= true;
   ha_rows	updated, found;
@@ -164,7 +163,7 @@ int mysql_update(Session *session, TableList *table_list,
   table->covering_keys= table->getShare()->keys_in_use;
   table->quick_keys.reset();
 
-  if (mysql_prepare_update(session, table_list, &conds, order_num, order))
+  if (prepare_update(session, table_list, &conds, order_num, order))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);
     return 1;
@@ -190,7 +189,7 @@ int mysql_update(Session *session, TableList *table_list,
       if (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
           table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH)
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
   }
@@ -207,7 +206,7 @@ int mysql_update(Session *session, TableList *table_list,
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);
-    return -1;
+    return 1;
   }
 
   if (conds)
@@ -247,7 +246,7 @@ int mysql_update(Session *session, TableList *table_list,
      */
     session->main_da.reset_diagnostics_area();
     free_underlaid_joins(session, select_lex);
-    if (error)
+    if (error || session->is_error())
     {
       DRIZZLE_UPDATE_DONE(1, 0, 0);
       return 1;
@@ -364,11 +363,13 @@ int mysql_update(Session *session, TableList *table_list,
 
       if (used_index == MAX_KEY || (select && select->quick))
       {
-        info.init_read_record(session, table, select, 0, true);
+        if ((error= info.init_read_record(session, table, select, 0, true)))
+          goto err;
       }
       else
       {
-        info.init_read_record_idx(session, table, 1, used_index);
+        if ((error= info.init_read_record_idx(session, table, 1, used_index)))
+          goto err;
       }
 
       session->set_proc_info("Searching rows for update");
@@ -414,7 +415,7 @@ int mysql_update(Session *session, TableList *table_list,
       }
       else
       {
-	select= new optimizer::SqlSelect;
+	select= new optimizer::SqlSelect();
 	select->head=table;
       }
       if (tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
@@ -434,7 +435,10 @@ int mysql_update(Session *session, TableList *table_list,
   if (select && select->quick && select->quick->reset())
     goto err;
   table->cursor->try_semi_consistent_read(1);
-  info.init_read_record(session, table, select, 0, true);
+  if ((error= info.init_read_record(session, table, select, 0, true)))
+  {
+    goto err;
+  }
 
   updated= found= 0;
   /*
@@ -459,14 +463,6 @@ int mysql_update(Session *session, TableList *table_list,
   if (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ))
     table->prepare_for_position();
 
-  /*
-    We can use compare_record() to optimize away updates if
-    the table handler is returning all columns OR if
-    if all updated columns are read
-  */
-  can_compare_record= (! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
-                       table->write_set->is_subset_of(*table->read_set));
-
   while (not (error=info.read_record(&info)) && not session->getKilled())
   {
     if (not (select && select->skip_record()))
@@ -476,24 +472,11 @@ int mysql_update(Session *session, TableList *table_list,
 
       table->storeRecord();
       if (fill_record(session, fields, values))
-      {
-        /*
-         * If we updated some rows before this one failed (updated > 0),
-         * then we will need to undo adding those records to the
-         * replication Statement message.
-         */
-        if (updated > 0)
-        {
-          TransactionServices &ts= TransactionServices::singleton();
-          ts.removeStatementRecords(session, updated);
-        }
-
         break;
-      }
 
       found++;
 
-      if (!can_compare_record || table->compare_record())
+      if (! table->records_are_comparable() || table->compare_records())
       {
         /* Non-batched update */
         error= table->cursor->updateRecord(table->getUpdateRecord(),
@@ -602,6 +585,9 @@ int mysql_update(Session *session, TableList *table_list,
   return ((error >= 0 || session->is_error()) ? 1 : 0);
 
 err:
+  if (error != 0)
+    table->print_error(error,MYF(0));
+
   delete select;
   free_underlaid_joins(session, select_lex);
   if (table->key_read)
@@ -619,7 +605,7 @@ err:
   Prepare items in UPDATE statement
 
   SYNOPSIS
-    mysql_prepare_update()
+    prepare_update()
     session			- thread handler
     table_list		- global/local table list
     conds		- conditions
@@ -630,7 +616,7 @@ err:
     false OK
     true  error
 */
-bool mysql_prepare_update(Session *session, TableList *table_list,
+bool prepare_update(Session *session, TableList *table_list,
 			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;

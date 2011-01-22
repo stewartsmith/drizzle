@@ -653,6 +653,7 @@ drop table if exists t2;
 CREATE TABLE t2 (a int, b int, primary key (a));
 BEGIN;
 INSERT INTO t2 values(100,100);
+COMMIT;
 --error ER_DUP_ENTRY
 CREATE TABLE IF NOT EXISTS t2 (primary key (a)) select * from t1;
 SELECT * from t2;
@@ -915,9 +916,10 @@ set @my_innodb_autoextend_increment=@@global.innodb_autoextend_increment;
 set global innodb_autoextend_increment=8;
 set global innodb_autoextend_increment=@my_innodb_autoextend_increment;
 
-set @my_innodb_commit_concurrency=@@global.innodb_commit_concurrency;
-set global innodb_commit_concurrency=0;
-set global innodb_commit_concurrency=@my_innodb_commit_concurrency;
+# BUG: 
+# set @my_innodb_commit_concurrency=@@global.innodb_commit_concurrency;
+# set global innodb_commit_concurrency=0;
+# set global innodb_commit_concurrency=@my_innodb_commit_concurrency;
 
 --echo End of 5.0 tests
 

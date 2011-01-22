@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,18 +56,6 @@ size_t Cache::count()
   return cache.size();
 }
 
-void Cache::erase(Session::Ptr arg)
-{
-  BOOST_FOREACH(list::const_reference it, cache)
-  {
-    if (it.get() == arg)
-    {
-      cache.remove(it);
-      return;
-    }
-  }
-}
-
 void Cache::insert(Session::shared_ptr &arg)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
@@ -76,7 +64,9 @@ void Cache::insert(Session::shared_ptr &arg)
 
 void Cache::erase(Session::shared_ptr &arg)
 {
-  cache.erase(remove(cache.begin(), cache.end(), arg));
+  list::iterator iter= std::find(cache.begin(), cache.end(), arg);
+  assert(iter != cache.end());
+  cache.erase(iter);
 }
 
 } /* namespace session */

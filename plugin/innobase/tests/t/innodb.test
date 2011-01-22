@@ -228,6 +228,7 @@ select * from t1;
 delete from t1;
 commit;
 select * from t1;
+commit;
 drop table t1;
 
 #
@@ -235,9 +236,9 @@ drop table t1;
 #
 
 create table t1 (a integer) engine=innodb;
-start transaction;
 rename table t1 to t2;
 create table t1 (b integer) engine=innodb;
+start transaction;
 insert into t1 values (1);
 rollback;
 drop table t1;
@@ -260,6 +261,7 @@ INSERT INTO t1  SET _userid='marc@anyware.co.uk';
 COMMIT;
 SELECT * FROM t1;
 SELECT _userid FROM t1 WHERE _userid='marc@anyware.co.uk';
+COMMIT;
 drop table t1;
 set autocommit=1;
 
@@ -304,7 +306,7 @@ insert into t1 values ('1','1'),('5','2'),('2','3'),('3','4'),('4','4');
 select * from t1;
 update t1 set col2='7' where col1='4';
 select * from t1;
-alter table t1 add co3 int not null;
+ALTER TABLE t1 ADD co3 INT DEFAULT 42 NOT NULL;
 select * from t1;
 update t1 set col2='9' where col1='2';
 select * from t1;
@@ -549,6 +551,7 @@ show tables from mysqltest;
 set autocommit=0;
 create table t1 (a int not null) engine= innodb;
 insert into t1 values(1),(2);
+commit;
 truncate table t1;
 commit;
 truncate table t1;
@@ -1051,6 +1054,7 @@ show status like "Innodb_row_lock_time_max";
 show status like "Innodb_row_lock_time_avg";
 
 # Test for innodb_sync_spin_loops variable
+set @my_innodb_sync_spin_loops = @@global.innodb_sync_spin_loops;
 show variables like "innodb_sync_spin_loops";
 set global innodb_sync_spin_loops=1000;
 show variables like "innodb_sync_spin_loops";
@@ -1058,8 +1062,10 @@ set global innodb_sync_spin_loops=0;
 show variables like "innodb_sync_spin_loops";
 set global innodb_sync_spin_loops=20;
 show variables like "innodb_sync_spin_loops";
+set @@global.innodb_sync_spin_loops = @my_innodb_sync_spin_loops;
 
 # Test for innodb_thread_concurrency variable
+set @my_innodb_thread_concurrency = @@global.innodb_thread_concurrency;
 show variables like "innodb_thread_concurrency";
 set global innodb_thread_concurrency=1001;
 show variables like "innodb_thread_concurrency";
@@ -1067,6 +1073,7 @@ set global innodb_thread_concurrency=0;
 show variables like "innodb_thread_concurrency";
 set global innodb_thread_concurrency=16;
 show variables like "innodb_thread_concurrency";
+set @@global.innodb_thread_concurrency = @my_innodb_thread_concurrency;
 
 # Test for innodb_concurrency_tickets variable
 show variables like "innodb_concurrency_tickets";
@@ -1616,6 +1623,7 @@ set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 insert into t1 select * from t2;
 update t1 set b = (select e from t2 where a = d);
+commit;
 create table t3(d int not null, e int, primary key(d)) engine=innodb
 select * from t2;
 commit;
@@ -1810,6 +1818,7 @@ drop table t2, t1;
 CREATE TABLE t1 ( a int ) ENGINE=innodb;
 BEGIN;
 INSERT INTO t1 VALUES (1);
+COMMIT;
 ALTER TABLE t1 ENGINE=innodb;
 DROP TABLE t1;
 

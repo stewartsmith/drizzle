@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ typedef struct st_ha_alter_information
 } HA_ALTER_INFO;
 
 
-typedef struct st_key_create_information
+typedef struct key_create_information_st
 {
   enum ha_key_alg algorithm;
   uint32_t block_size;

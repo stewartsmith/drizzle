@@ -74,8 +74,11 @@ message Table {
       BIGINT = 5;
       DECIMAL = 6;
       DATE = 7;
-      TIMESTAMP = 9;
+      EPOCH = 9;
       DATETIME = 10;
+      UUID = 11;
+      TIME = 12;
+      BOOLEAN = 13;
     }
 
     message FieldOptions {
@@ -88,8 +91,9 @@ message Table {
     }
 
     message FieldConstraints {
-      required bool is_nullable = 1 [default = true];
+      optional bool is_nullable = 1 [default = true]; // Dead option, do not use
       optional bool is_unsigned = 2 [default = false];
+      optional bool is_notnull = 3 [default = false];
       repeated string expression = 16; /* Reserve 0-15 for frequenty accessed attributes */
     }
 
@@ -112,12 +116,20 @@ message Table {
       repeated string field_value = 4;
     }
 
+    /*
+      Do we store microseconds or timezone.
+    */
+    message TimeFieldOptions {
+      optional bool microseconds = 1;
+    }
+
     required string name = 1;
     required FieldType type = 2;
     optional FieldOptions options = 4;
     optional FieldConstraints constraints = 5;
     optional NumericFieldOptions numeric_options = 6;
     optional StringFieldOptions string_options = 7;
+    optional TimeFieldOptions time_options = 8;
 
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional EnumerationValues enumeration_values = 17;

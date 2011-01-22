@@ -2,13 +2,9 @@
 Notable MySQL Differences
 =========================
 
-Drizzle was forked from the (now defunct) MySQL 6.0 tree. Since then there
-have been a lot of changes. Some areas are similar, others unrecognisable.
+Drizzle was forked from the (now defunct) MySQL 6.0 tree in 2008. Since then there have been a lot of changes. Drizzle is in some ways similar to MySQL, and in other ways, unrecognizable.
 
-This section aims to explore some of the notable differences between MySQL
-and Drizzle.
-
-This section was originally adapted from the Drizzle Wiki.
+This section of documentation aims to explore some of the notable differences between MySQL and Drizzle, and has been modified from its original state on the Drizzle Wiki.
 
 Usage
 -----
@@ -17,15 +13,14 @@ Usage
  * Drizzle is optimized for massively concurrent environments. If we have the
    choice of improving performance for 1024 simultaneous connections to the
    detriment of performance with only 64 connections, we will take that choice.
- * Designed for modern POSIX systems
+ * It is designed for modern POSIX systems
  * Microsoft Windows is not a supported platform (neither is HP-UX or IRIX).
- * No timezones. Everything is UTC.
+ * Drizzle doesn't use timezones. Everything is UTC.
 
 Installation
 ------------
 
- * No scripts/mysql_install_db or similar. A "just works" installation
-   mentality without administrative overhead.
+ * No scripts/mysql_install_db or similar. Drizzle aims for a "just works" installation, without administrative overhead.
  * No system database that needs upgrading between versions.
  * Drizzle can listen on the Drizzle port (4427) and/or MySQL port (3306)
    and speak the respective protocols.
@@ -33,14 +28,14 @@ Installation
 Architecture
 ------------
 
-Drizzle is designed around the concept of being a micro-kernel. There should
+Drizzle is designed around the concept of being a microkernel. There should
 be a small core of the server with most functionality being provided through
 small, efficient and hard to misuse plugin interfaces. The goal is a small,
-light weight kernel which is easy to maintain, understand and extend.
+light weight kernel that is easy to maintain, understand and extend.
 
-Drizzle is written in C++ making use of the Standard Template Library (STL)
+Drizzle is written in C++ and makes use of the Standard Template Library (STL)
 and Boost. Only where performance or correctness proves to be inadequate will
-we consider rolling our own, and our preference is to fix the upstream library
+we consider rolling our own; our preference is to fix the upstream library
 instead.
 
 Network protocol
@@ -49,24 +44,26 @@ Network protocol
 Pluggable network protocols allow Drizzle to speak one (or more) of several
 protocols. Currently we support the MySQL protocol (compatible with existing
 MySQL client libraries) and the Drizzle protocol which is still under
-development but aims for several important differences:
+development.
+
+The Drizzle protocol embodies several important differences from MySQL:
 
  * Client sends first packet instead of server
- * built in sharding
- * multi statement support (without using a semicolon to separate them)
- * room for expansion to include NoSQL type commands inline with SQL.
+ * Built in sharding
+ * Multi statement support (without using a semicolon to separate them)
+ * Room for expansion to include NoSQL type commands inline with SQL.
 
-There is also a console plugin that instead of providing access over a network
-socket, allows access from the current tty.
+There is also a console plugin -- instead of providing access over a network
+socket, this plugin allows access from the current tty.
 
 Plugin API
 ----------
 
-Existing plugin APIs inherited from MySQL have been reworked.
+The existing plugin APIs that Drizzle inherited from MySQL have been reworked.
 
- * User Defined Functions (UDFs) now follow the same API as within the
+ * User Defined Functions (UDFs) now follow the same API as a given
    server instead of a different C API. This means that UDFs are on the
-   exact same level as builtin functions.
+   exact same level as built-in functions.
  * Storage Engine API has had some parts extensively reworked, especially
    around transactions and DDL.
  * Logging is now pluggable
@@ -82,20 +79,20 @@ Existing plugin APIs inherited from MySQL have been reworked.
 Stored Procedures
 -----------------
 
-Drizzle does not currently have any plugins implement stored procedures. We
+Drizzle does not currently have any plugins that implement stored procedures. We
 viewed the implementation in MySQL to be non-optimal, bloating the parser
-and only supporting one language (SQL2003 stored procedures) which was not
+and only supporting one language (SQL2003 stored procedures), which was not
 well known.
 
 Fundamentally, stored procedures usually are not the correct architectural
 decision for applications that need to scale. Pushing more computation down
 into the database (which is the trickiest layer to scale) isn't a good idea.
 
-We do recognise that the ability to reduce the time row locks are held
-by using stored procedures is valuable, but think the same advantage can
-be gotten with improved batching of commands over the wire instead of adding
+We do recognize that the ability to reduce the time row locks are held
+by using stored procedures is valuable, but think we can achieve the same 
+advantage by improved batching of commands over the wire instead of adding and
 administering stored procedures to the list of things that can go wrong in
-admisistering the database.
+administering the database.
 
 Triggers
 --------
@@ -108,13 +105,15 @@ Views
 -----
 
 SQL Views are not currently supported in Drizzle. We believe they should be
-implemented via a query rewrite plugin. See the `Query Rewrite Blueprint <https://blueprints.launchpad.net/drizzle/+spec/query-rewrite>`_ on launchpad.
+implemented via a query rewrite plugin. See the `Query Rewrite Blueprint <https://blueprints.launchpad.net/Drizzle/+spec/query-rewrite>`_ on launchpad.
 
 Partitioning
 ------------
 
 INFORMATION_SCHEMA
 ------------------
+
+The INFORMATION_SCHEMA provides access to database metadata.
 
 The INFORMATION_SCHEMA in Drizzle is strictly ANSI compliant. If you write
 a query to any of the tables in the INFORMATION_SCHEMA in Drizzle, you can
@@ -128,7 +127,7 @@ This allows developers to easily know if the query is portable or not.
 Authentication, Authorization and Access
 ----------------------------------------
 
-Plugins. Currently there are PAM and HTTP AUTH plugins for authentication.
+Authentication lies in Drizzle plugins. Currently there are PAM and HTTP AUTH plugins for authentication.
 Through the PAM plugin, you can use any PAM module (such as LDAP).
 
 Command line clients
@@ -139,7 +138,7 @@ We've stopped the confusion: -p means port and -P means password.
 No gotcha of using the unix socket when localhost is specified and then
 connecting you to the wrong database server.
 
-There is no drizzleadmin command.
+There is no Drizzle admin command.
 
 Storage Engines
 ---------------
@@ -157,7 +156,7 @@ FRM Files
 ---------
 
 There are no FRM files in Drizzle. Engines now own their own metadata.
-Some choose to still store these in files on disk. These are now in a
+Some still choose to store these in files on disk. These are now in a
 documented file format (using the google protobuf library).
 
 SHOW commands
@@ -178,11 +177,19 @@ Removed commands
  * CREATE FUNCTION
  * CONVERT
  * SET NAMES
+ * Multi-table delete and multi-table update code was removed and can be accomplished through subqueries. More detailed information can be found in the :doc:`dml` section.
 
 Operators Removed
 -----------------
 
-Bit operators: &&, >>, <<, ~, ^, |, &
+Bit operators
+ * &&
+ * >>
+ * <<
+ * ~
+ * ^
+ * '|'
+ * &
 
 Removed functions
 -----------------
@@ -193,6 +200,7 @@ Removed functions
 
 Keywords removed
 ----------------
+
  * BIT_AND
  * BIT_OR
  * BIT_XOR

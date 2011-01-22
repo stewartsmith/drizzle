@@ -1,0 +1,72 @@
+# Tests a number of things related to transactions:
+# 
+# 1. Interaction of more than one engine in a transaction
+# 2. Correct commit and rollback behaviour
+# 3. XA protocol communication and recovery
+
+select seapitester_clear_engine_state_history();
+
+
+--disable_warnings
+DROP TABLE IF EXISTS t1_trx, t1_non_trx;
+--enable_warnings
+
+SET AUTOCOMMIT= 0;
+
+CREATE TABLE t1_trx (
+  k VARCHAR(10) NOT NULL
+, v VARCHAR(10) NOT NULL
+, PRIMARY KEY (k)
+) ENGINE=storage_engine_api_tester;
+
+CREATE TEMPORARY TABLE t1_non_trx (
+  k VARCHAR(10) NOT NULL
+, v VARCHAR(10) NOT NULL
+, PRIMARY KEY (k)
+) ENGINE=MyISAM;
+
+START TRANSACTION;
+
+INSERT INTO t1_trx VALUES ('key1','value1');
+INSERT INTO t1_trx VALUES ('key2','value2');
+
+INSERT INTO t1_non_trx VALUES ('key1','value1');
+INSERT INTO t1_non_trx VALUES ('key2','value2');
+
+ROLLBACK;
+
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
+--echo Expected warning about non-trx data changes not being rolled back
+
+SELECT * FROM t1_trx;
+SELECT * FROM t1_non_trx;
+
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
+START TRANSACTION;
+
+INSERT INTO t1_trx VALUES ('key1','value1');
+INSERT INTO t1_trx VALUES ('key2','value2');
+
+SELECT t1_trx.k, t1_trx.v
+FROM t1_trx
+INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
+
+ROLLBACK;
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
+SELECT t1_trx.k, t1_trx.v
+FROM t1_trx
+INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
+
+COMMIT;
+DROP TABLE t1_trx;
+DROP TABLE t1_non_trx;
+
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+

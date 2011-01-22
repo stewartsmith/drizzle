@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,16 +34,16 @@ String *Item_date::val_str(String *str)
   if (! get_temporal(temporal))
     return (String *) NULL; /* get_temporal throws error. */
 
-  if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
+  if (str->alloc(type::Time::MAX_STRING_LENGTH))
   {
     null_value= true;
     return (String *) NULL;
   }
 
   /* Convert the Date to a string and return it */
-  int new_length;
-  new_length= temporal.to_string(str->c_ptr(), MAX_DATE_STRING_REP_LENGTH);
-  assert(new_length < MAX_DATE_STRING_REP_LENGTH);
+  size_t new_length;
+  new_length= temporal.to_string(str->c_ptr(), type::Time::MAX_STRING_LENGTH);
+  assert(new_length < type::Time::MAX_STRING_LENGTH);
   str->length(new_length);
   return str;
 }

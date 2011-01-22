@@ -28,7 +28,7 @@
 namespace drizzled
 {
 
-extern my_decimal decimal_zero;
+extern type::Decimal decimal_zero;
 
 /****************************************************************************
  ** File_decimal
@@ -52,11 +52,11 @@ Field_decimal::Field_decimal(unsigned char *ptr_arg,
            dec_arg, zero_arg,
            unsigned_arg)
 {
-  precision= my_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
+  precision= class_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   assert((precision <= DECIMAL_MAX_PRECISION) &&
          (dec <= DECIMAL_MAX_SCALE));
-  bin_size= my_decimal_get_binary_size(precision, dec);
+  bin_size= class_decimal_get_binary_size(precision, dec);
 }
 
 Field_decimal::Field_decimal(uint32_t len_arg,
@@ -74,11 +74,11 @@ Field_decimal::Field_decimal(uint32_t len_arg,
            0,
            unsigned_arg)
 {
-  precision= my_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
+  precision= class_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   assert((precision <= DECIMAL_MAX_PRECISION) &&
          (dec <= DECIMAL_MAX_SCALE));
-  bin_size= my_decimal_get_binary_size(precision, dec);
+  bin_size= class_decimal_get_binary_size(precision, dec);
 }
 
 
@@ -96,10 +96,10 @@ int Field_decimal::reset(void)
   @param sign              sign of value which caused overflow
 */
 
-void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
+void Field_decimal::set_value_on_overflow(type::Decimal *decimal_value,
                                           bool sign)
 {
-  max_my_decimal(decimal_value, precision, decimals());
+  max_Decimal(decimal_value, precision, decimals());
   if (sign)
     decimal_value->sign(true);
 
@@ -114,7 +114,7 @@ void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
   If it does, stores the decimal in the buffer using binary format.
   Otherwise sets maximal number that can be stored in the field.
 
-  @param decimal_value   my_decimal
+  @param decimal_value   type::Decimal
 
   @retval
   0 ok
@@ -122,20 +122,21 @@ void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
   1 error
 */
 
-bool Field_decimal::store_value(const my_decimal *decimal_value)
+bool Field_decimal::store_value(const type::Decimal *decimal_value)
 {
-  int error= my_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
-                                         decimal_value, ptr, precision, dec);
+  int error= decimal_value->val_binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, ptr, precision, dec);
+
   if (warn_if_overflow(error))
   {
     if (error != E_DEC_TRUNCATED)
     {
-      my_decimal buff;
+      type::Decimal buff;
       set_value_on_overflow(&buff, decimal_value->sign());
-      my_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
+      buff.val_binary(E_DEC_FATAL_ERROR, ptr, precision, dec);
     }
     error= 1;
   }
+
   return(error);
 }
 
@@ -144,14 +145,13 @@ int Field_decimal::store(const char *from, uint32_t length,
                          const CHARSET_INFO * const charset_arg)
 {
   int err;
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if ((err= str2my_decimal(E_DEC_FATAL_ERROR &
+  if ((err= decimal_value.store(E_DEC_FATAL_ERROR &
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
-                           from, length, charset_arg,
-                           &decimal_value)) &&
+                           from, length, charset_arg)) &&
       getTable()->in_use->abort_on_warning)
   {
     /* Because "from" is not NUL-terminated and we use %s in the ER() */
@@ -187,7 +187,7 @@ int Field_decimal::store(const char *from, uint32_t length,
                           ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                           "decimal", from_as_str.c_ptr(), field_name,
                           (uint32_t) getTable()->in_use->row_count);
-      my_decimal_set_zero(&decimal_value);
+      decimal_value.set_zero();
 
       break;
     }
@@ -200,18 +200,18 @@ int Field_decimal::store(const char *from, uint32_t length,
 
 /**
   @todo
-  Fix following when double2my_decimal when double2decimal
+  Fix following when double2_class_decimal when double2decimal
   will return E_DEC_TRUNCATED always correctly
 */
 
 int Field_decimal::store(double nr)
 {
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
   int err;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  err= double2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, nr,
+  err= double2_class_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, nr,
                          &decimal_value);
   if (err)
   {
@@ -230,12 +230,12 @@ int Field_decimal::store(double nr)
 
 int Field_decimal::store(int64_t nr, bool unsigned_val)
 {
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
   int err;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if ((err= int2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
+  if ((err= int2_class_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
                            nr, unsigned_val, &decimal_value)))
   {
     if (check_overflow(err))
@@ -251,28 +251,28 @@ int Field_decimal::store(int64_t nr, bool unsigned_val)
 }
 
 
-int Field_decimal::store_decimal(const my_decimal *decimal_value)
+int Field_decimal::store_decimal(const type::Decimal *decimal_value)
 {
   return store_value(decimal_value);
 }
 
 
-int Field_decimal::store_time(DRIZZLE_TIME *ltime,
-                              enum enum_drizzle_timestamp_type )
+int Field_decimal::store_time(type::Time *ltime,
+                              type::timestamp_t )
 {
-  my_decimal decimal_value;
-  return store_value(date2my_decimal(ltime, &decimal_value));
+  type::Decimal decimal_value;
+  return store_value(date2_class_decimal(ltime, &decimal_value));
 }
 
 
 double Field_decimal::val_real(void)
 {
   double dbl;
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  my_decimal2double(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), &dbl);
+  class_decimal2double(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), &dbl);
 
   return dbl;
 }
@@ -281,21 +281,21 @@ double Field_decimal::val_real(void)
 int64_t Field_decimal::val_int(void)
 {
   int64_t i;
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  my_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), false, &i);
+  val_decimal(&decimal_value)->val_int32(E_DEC_FATAL_ERROR, false, &i);
 
   return i;
 }
 
 
-my_decimal* Field_decimal::val_decimal(my_decimal *decimal_value)
+type::Decimal* Field_decimal::val_decimal(type::Decimal *decimal_value)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  binary2my_decimal(E_DEC_FATAL_ERROR, ptr, decimal_value,
+  binary2_class_decimal(E_DEC_FATAL_ERROR, ptr, decimal_value,
                     precision, dec);
   return(decimal_value);
 }
@@ -304,12 +304,12 @@ my_decimal* Field_decimal::val_decimal(my_decimal *decimal_value)
 String *Field_decimal::val_str(String *val_buffer,
                                String *)
 {
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
   uint32_t fixed_precision= decimal_precision ? precision : 0;
-  my_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
+  class_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
                     fixed_precision, dec, '0', val_buffer);
   return val_buffer;
 }
@@ -352,7 +352,7 @@ uint32_t Field_decimal::pack_length_from_metadata(uint32_t field_metadata)
 {
   uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
   uint32_t const source_decimal= field_metadata & 0x00ff;
-  uint32_t const source_size= my_decimal_get_binary_size(source_precision,
+  uint32_t const source_size= class_decimal_get_binary_size(source_precision,
                                                          source_decimal);
   return (source_size);
 }
@@ -394,7 +394,7 @@ Field_decimal::unpack(unsigned char* to,
   uint32_t from_precision= (param_data & 0xff00) >> 8U;
   uint32_t from_decimal= param_data & 0x00ff;
   uint32_t length=pack_length();
-  uint32_t from_pack_len= my_decimal_get_binary_size(from_precision, from_decimal);
+  uint32_t from_pack_len= class_decimal_get_binary_size(from_precision, from_decimal);
   uint32_t len= (param_data && (from_pack_len < length)) ?
     from_pack_len : length;
   if ((from_pack_len && (from_pack_len < length)) ||

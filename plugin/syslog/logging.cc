@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -77,19 +77,19 @@ bool logging::Syslog::post(drizzled::Session *session)
   if (session->examined_row_count < _threshold_big_examined)
     return false;
   
-  /* TODO, the session object should have a "utime command completed"
-     inside itself, so be more accurate, and so this doesnt have to
-     keep calling current_utime, which can be slow */
-  
-  boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-  boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-  uint64_t t_mark= (mytime-epoch).total_microseconds();
+  /*
+    TODO, the session object should have a "utime command completed"
+    inside itself, so be more accurate, and so this doesnt have to
+    keep calling current_utime, which can be slow.
+  */
+  uint64_t t_mark= session->getCurrentTimestamp(false);
 
   // return if query was not too slow
-  if ((t_mark - session->start_utime) < _threshold_slow)
+  if (session->getElapsedTime() < _threshold_slow)
     return false;
   
   drizzled::Session::QueryString query_string(session->getQueryString());
+  drizzled::util::string::const_shared_ptr schema(session->schema());
 
   WrapSyslog::singleton()
     .log(_facility, _priority,
@@ -102,14 +102,14 @@ bool logging::Syslog::post(drizzled::Session *session)
          " tmp_table=%ld total_warn_count=%ld\n",
          (unsigned long) session->thread_id,
          (unsigned long) session->getQueryId(),
-         (int) session->getSchema().length(),
-         session->getSchema().empty() ? "" : session->getSchema().c_str(),
+         (int) schema->size(),
+         schema->empty() ? "" : schema->c_str(),
          (int) query_string->length(), 
          query_string->empty() ? "" : query_string->c_str(),
          (int) drizzled::command_name[session->command].length,
          drizzled::command_name[session->command].str,
          (unsigned long long) (t_mark - session->getConnectMicroseconds()),
-         (unsigned long long) (t_mark - session->start_utime),
+         (unsigned long long) (session->getElapsedTime()),
          (unsigned long long) (t_mark - session->utime_after_lock),
          (unsigned long) session->sent_row_count,
          (unsigned long) session->examined_row_count,

@@ -1,0 +1,96 @@
+set storage_engine=storage_engine_api_tester;
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+CREATE TABLE t1 (
+aufnr varchar(12) NOT NULL default '',
+plnfl varchar(6) NOT NULL default '',
+vornr varchar(4) NOT NULL default '',
+xstatus_vor int NOT NULL default '0'
+);
+INSERT INTO t1 VALUES ('40004712','000001','0010',9);
+INSERT INTO t1 VALUES ('40004712','000001','0020',0);
+UPDATE t1 SET t1.xstatus_vor = Greatest(t1.xstatus_vor,1) WHERE t1.aufnr =
+"40004712" AND t1.plnfl = "000001" AND t1.vornr > "0010" ORDER BY t1.vornr
+ASC LIMIT 1;
+drop table t1;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_keys()
+::doCreateTable()
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+CREATE TABLE t1 (
+aufnr varchar(12) NOT NULL default '',
+plnfl varchar(6) NOT NULL default '',
+vornr varchar(4) NOT NULL default '' primary key,
+xstatus_vor int NOT NULL default '0'
+);
+INSERT INTO t1 VALUES ('40004712','000001','0010',9);
+INSERT INTO t1 VALUES ('40004712','000001','0020',0);
+UPDATE t1 SET t1.xstatus_vor = Greatest(t1.xstatus_vor,1) WHERE t1.aufnr =
+"40004712" AND t1.plnfl = "000001" AND t1.vornr > "0010" ORDER BY t1.vornr
+ASC LIMIT 1;
+drop table t1;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_key_parts()
+::max_supported_keys()
+::max_supported_key_part_length()
+::doCreateTable()
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+create table t1 (a int, b int, c int);
+alter table t1 add unique(a,b);
+drop table t1;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_keys()
+::doCreateTable()
+::SEAPITester()
+START STATEMENT
+::max_supported_key_length()
+::max_supported_key_parts()
+::max_supported_keys()
+::max_supported_key_part_length()
+::max_supported_key_part_length()
+::doCreateTable()
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0

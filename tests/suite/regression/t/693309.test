@@ -1,0 +1,36 @@
+--disable_warnings
+DROP TABLE IF EXISTS `aa`;
+DROP TABLE IF EXISTS `bb`;
+--enable_warnings
+
+CREATE TABLE `aa` (
+  `pk` INT NOT NULL AUTO_INCREMENT,
+  `col_char_1024` VARCHAR(1024) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_int` INT DEFAULT NULL,
+  `col_text_not_null` TEXT NOT NULL COLLATE utf8_general_ci,
+  `col_bigint_key` BIGINT DEFAULT NULL,
+  `col_int_not_null` INT NOT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_bigint_key` (`col_bigint_key`)
+) ENGINE='InnoDB' COLLATE='utf8_general_ci';
+
+INSERT INTO `aa` VALUES (1,'w',9,'',NULL,-1974206464),(2,'n',-1692139520,'',NULL,3),(3,'r',4,'',-2842897264777625600,-274595840),(4,'PUKQU',9,'',NULL,295501824),(5,'not',-1091567616,'',3557843705622691840,9),(6,'NZDDR',126156800,'',-4628011567076605952,2),(7,'have',534904832,'',-5755881798756204544,-1601306624),(8,'OGLVA',8,'',NULL,-1770323968),(9,'didn\'t',NULL,'',NULL,256311296),(10,'t',NULL,'',-5719290051783819264,4);
+
+CREATE TABLE `bb` (
+  `col_char_10_not_null_key` VARCHAR(10) NOT NULL COLLATE utf8_general_ci,
+  `col_bigint_key` BIGINT DEFAULT NULL,
+  `pk` INT NOT NULL AUTO_INCREMENT,
+  `col_text_key` TEXT COLLATE utf8_general_ci DEFAULT NULL,
+  `col_int_not_null_key` INT NOT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_text_key` (`col_text_key`(255)),
+  KEY `col_int_not_null_key` (`col_int_not_null_key`)
+) ENGINE='InnoDB' COLLATE='utf8_general_ci';
+
+INSERT INTO `bb` VALUES ('DCJRX',NULL,1,'',1),('x',NULL,2,'',1),('ZMHDL',-647673921411219456,3,'',-1536425984),('SJGHS',-5702401553181179904,4,'',-1443495936),('his',NULL,5,'',2),('m',4,6,'',0),('i',NULL,7,'',8),('d',8,8,'',476315648),('from',NULL,9,'',5),('h',NULL,10,'',5);
+
+SELECT DISTINCT OUTR . `col_char_1024` AS X FROM AA AS OUTR WHERE ( OUTR . `col_bigint_key` , OUTR . `col_int` ) IN ( SELECT DISTINCT INNR . `col_int_not_null_key` AS X , INNR . `col_bigint_key` AS Y FROM BB AS INNR WHERE INNR . `col_text_key` <> INNR . `col_char_10_not_null_key` OR OUTR . `col_bigint_key` < 1  ) AND ( OUTR . `pk` > 2 XOR OUTR . `col_text_not_null` > 'f' )  ORDER BY OUTR . `col_int_not_null` , OUTR . `pk`;
+
+DROP TABLE `aa`,`bb`;

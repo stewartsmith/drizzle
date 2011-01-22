@@ -22,6 +22,7 @@
 
 #include "drizzled/statement/execute.h"
 #include "drizzled/session.h"
+#include "drizzled/execute.h"
 #include "drizzled/user_var_entry.h"
 #include "drizzled/plugin/listen.h"
 #include "drizzled/plugin/client.h"
@@ -31,7 +32,7 @@
 namespace drizzled
 {
 
-void mysql_parse(drizzled::Session *session, const char *inBuf, uint32_t length);
+void parse(drizzled::Session *session, const char *inBuf, uint32_t length);
 
 namespace statement
 {
@@ -114,58 +115,16 @@ bool statement::Execute::execute_shell()
 
   if (is_concurrent)
   {
-    boost_thread_shared_ptr thread;
-
-    if (getSession()->isConcurrentExecuteAllowed())
-    {
-      plugin::client::Concurrent *client= new plugin::client::Concurrent;
-      std::string execution_string(to_execute.str, to_execute.length);
-      client->pushSQL(execution_string);
-      Session::shared_ptr new_session(new Session(client));
-
-      // We set the current schema.  @todo do the same with catalog
-      if (not getSession()->getSchema().empty())
-        new_session->set_db(getSession()->getSchema());
-
-      new_session->setConcurrentExecute(false);
-
-      // Overwrite the context in the next session, with what we have in our
-      // session. Eventually we will allow someone to change the effective
-      // user.
-      new_session->getSecurityContext()= getSession()->getSecurityContext();
-
-      if (Session::schedule(new_session))
-      {
-        Session::unlink(new_session);
-      }
-      else if (should_wait)
-      {
-        thread= new_session->getThread();
-      }
-    }
-    else
+    if (not getSession()->isConcurrentExecuteAllowed())
     {
       my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
       return false;
     }
 
-    if (should_wait && thread && thread->joinable())
-    {
-      // We want to make sure that we can be killed
-      boost::this_thread::restore_interruption dl(getSession()->getThreadInterupt());
-      try {
-        thread->join();
-      }
-      catch(boost::thread_interrupted const&)
-      {
-        // Just surpress and return the error
-        my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
-
-        return false;
-      }
-    }
+    drizzled::Execute executer(*getSession(), should_wait);
+    executer.run(to_execute.str, to_execute.length);
   }
-  else 
+  else // Non-concurrent run.
   {
     if (is_quiet)
     {
@@ -260,7 +219,7 @@ bool statement::Execute::execute_shell()
     }
     else
     {
-      mysql_parse(getSession(), to_execute.str, to_execute.length);
+      parse(getSession(), to_execute.str, to_execute.length);
     }
   }
 

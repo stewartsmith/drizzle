@@ -25,6 +25,7 @@
 
 #include <drizzled/gettext.h>
 #include "drizzled/plugin/function.h"
+#include <drizzled/function_container.h>
 
 #include "drizzled/util/string.h"
 
@@ -40,6 +41,14 @@ const plugin::Function::UdfMap &plugin::Function::getMap()
 
 bool plugin::Function::addPlugin(const plugin::Function *udf)
 {
+  if (FunctionContainer::getMap().find(udf->getName()) != FunctionContainer::getMap().end())
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("A function named %s already exists!\n"),
+                  udf->getName().c_str());
+    return true;
+  }
+
   if (udf_registry.find(udf->getName()) != udf_registry.end())
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -47,6 +56,7 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
                   udf->getName().c_str());
     return true;
   }
+
   std::pair<UdfMap::iterator, bool> ret=
     udf_registry.insert(make_pair(udf->getName(), udf));
   if (ret.second == false)
@@ -55,6 +65,7 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
                   _("Could not add Function!\n"));
     return true;
   }
+
   return false;
 }
 

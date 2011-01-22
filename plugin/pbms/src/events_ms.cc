@@ -78,7 +78,7 @@ static bool insertRecord(const char *db, const char *table_name, char *possible_
 	}
 	
 	// Tell PBMS to add a reference to the BLOB.
-	err = MSEngine::referenceBlob(db, table_name, &blob_url_buffer, blob_url, field->field_index, &result);
+	err = MSEngine::referenceBlob(db, table_name, &blob_url_buffer, blob_url, field->position(), &result);
 	if (err) {
 		// If it fails log the error and continue to try and release any other BLOBs in the row.
 		fprintf(stderr, "PBMSEvents: referenceBlob(\"%s.%s\", \"%s\" ) error (%d):'%s'\n", 

@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2009-2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2009-2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,6 +58,7 @@ namespace plugin
  */
 class TransactionalStorageEngine :public StorageEngine
 {
+  friend class SEAPITester;
 public:
   TransactionalStorageEngine(const std::string name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);

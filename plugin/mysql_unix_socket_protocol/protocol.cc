@@ -51,6 +51,8 @@ namespace mysql_unix_socket_protocol
 
 static bool clobber= false;
 
+ProtocolCounters *Protocol::mysql_unix_counters= new ProtocolCounters();
+
 Protocol::~Protocol()
 {
   fs::remove(_unix_socket_path);
@@ -68,11 +70,13 @@ static int init(drizzled::module::Context &context)
   fs::path uds_path(vm["path"].as<fs::path>());
   if (not fs::exists(uds_path))
   {
-    context.add(new Protocol("mysql_unix_socket_protocol",
+    Protocol *listen_obj= new Protocol("mysql_unix_socket_protocol",
                              true,
-                             uds_path));
+                             uds_path);
+    context.add(listen_obj);
     context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
     context.registerVariable(new sys_var_bool_ptr_readonly("clobber", &clobber));
+    context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &Protocol::mysql_unix_counters->max_connections));
   }
   else
   {
@@ -147,15 +151,26 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   return false;
 }
 
+plugin::Client *Protocol::getClient(int fd)
+{
+  int new_fd;
+  new_fd= acceptTcp(fd);
+  if (new_fd == -1)
+    return NULL;
+
+  return new ClientMySQLUnixSocketProtocol(new_fd, _using_mysql41_protocol, getCounters());
+}
 
 static void init_options(drizzled::module::option_context &context)
 {
   context("path",
           po::value<fs::path>()->default_value(DRIZZLE_UNIX_SOCKET_PATH),
-          N_("Path used for MySQL UNIX Socket Protocol."));
+          _("Path used for MySQL UNIX Socket Protocol."));
   context("clobber",
-          N_("Clobber socket file if one is there already."));
-
+          _("Clobber socket file if one is there already."));
+  context("max-connections",
+          po::value<uint32_t>(&Protocol::mysql_unix_counters->max_connections)->default_value(1000),
+          _("Maximum simultaneous connections."));
 }
 
 } /* namespace mysql_unix_socket_protocol */

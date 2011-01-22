@@ -219,6 +219,20 @@ bool String::copy(const String &str)
   return false;
 }
 
+bool String::copy(const std::string& arg, const CHARSET_INFO * const cs)	// Allocate new string
+{
+  if (alloc(arg.size()))
+    return true;
+
+  if ((str_length= arg.size()))
+    memcpy(Ptr, arg.c_str(), arg.size());
+
+  Ptr[arg.size()]= 0;
+  str_charset= cs;
+
+  return false;
+}
+
 bool String::copy(const char *str,size_t arg_length, const CHARSET_INFO * const cs)
 {
   if (alloc(arg_length))
@@ -229,7 +243,6 @@ bool String::copy(const char *str,size_t arg_length, const CHARSET_INFO * const 
   str_charset=cs;
   return false;
 }
-
 
 /*
   Checks that the source string can be just copied to the destination string
@@ -818,6 +831,17 @@ bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                              char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
+}
+
+std::ostream& operator<<(std::ostream& output, const String &str)
+{
+  output << "String:(";
+  output <<  const_cast<String&>(str).c_str();
+  output << ", ";
+  output << str.length();
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace drizzled */

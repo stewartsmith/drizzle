@@ -106,7 +106,7 @@ create temporary table t1 (a int not null, b VARCHAR(10), INDEX (b) ) COMMENT="t
 show create table t1;
 alter table t1 ROW_FORMAT=dynamic;
 show create table t1;
-ALTER TABLE t1 COMMENT="", ROW_FORMAT='default';
+ALTER TABLE t1 COMMENT="", ROW_FORMAT=default;
 show create table t1;
 drop table t1;
 

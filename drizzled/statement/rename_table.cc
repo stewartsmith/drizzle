@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,6 +35,13 @@ bool statement::RenameTable::execute()
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   TableList *table;
+
+  if (session->inTransaction())
+  {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
+    return true;
+  }
+
   for (table= first_table; table; table= table->next_local->next_local)
   {
     TableList old_list, new_list;
@@ -46,7 +53,7 @@ bool statement::RenameTable::execute()
     new_list= table->next_local[0];
   }
 
-  if (! session->endActiveTransaction() || renameTables(first_table))
+  if (renameTables(first_table))
   {
     return true;
   }
@@ -146,7 +153,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   plugin::StorageEngine *engine= NULL;
   message::table::shared_ptr table_proto;
 
-  TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
+  identifier::Table old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
   if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, table_proto) != EEXIST)
   {
@@ -156,14 +163,14 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   engine= plugin::StorageEngine::findByName(*session, table_proto->engine().name());
 
-  TableIdentifier new_identifier(new_db, new_alias, message::Table::STANDARD);
+  identifier::Table new_identifier(new_db, new_alias, message::Table::STANDARD);
   if (plugin::StorageEngine::doesTableExist(*session, new_identifier))
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
     return 1; // This can't be skipped
   }
 
-  rc= mysql_rename_table(*session, engine, old_identifier, new_identifier);
+  rc= rename_table(*session, engine, old_identifier, new_identifier);
   if (rc && ! skip_error)
     return true;
 

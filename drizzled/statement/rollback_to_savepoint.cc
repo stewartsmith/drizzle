@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
  */
 
 #include "config.h"
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/statement/rollback_to_savepoint.h>
+#include "drizzled/show.h"
+#include "drizzled/session.h"
+#include "drizzled/statement/rollback_to_savepoint.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/named_savepoint.h"
 #include "drizzled/util/functors.h"
@@ -35,6 +35,21 @@ namespace drizzled
 
 bool statement::RollbackToSavepoint::execute()
 {
+  /*
+   * If AUTOCOMMIT is off and resource contexts are empty then we need
+   * to start a transaction. It will be empty when ROLLBACK TO SAVEPOINT
+   * starts the transaction. Table affecting statements do this work in
+   * lockTables() by calling startStatement().
+   */
+  if ( (session->options & OPTION_NOT_AUTOCOMMIT) &&
+       (session->transaction.all.getResourceContexts().empty() == true) )
+  {
+    if (session->startTransaction() == false)
+    {
+      return false;
+    }
+  }
+
   /*
    * Handle these situations:
    *

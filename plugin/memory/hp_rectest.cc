@@ -22,7 +22,7 @@ int hp_rectest(register HP_INFO *info, register const unsigned char *old_record)
 
   if (hp_compare_record_data_to_chunkset(info->getShare(), old_record, info->current_ptr))
   {
-    return((errno=HA_ERR_RECORD_CHANGED)); /* Record have changed */
+    return((errno= drizzled::HA_ERR_RECORD_CHANGED)); /* Record have changed */
   }
 
   return(0);

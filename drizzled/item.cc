@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,19 +34,23 @@
 
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
+
 #include "drizzled/field/blob.h"
-#include "drizzled/field/enum.h"
-#include "drizzled/field/null.h"
 #include "drizzled/field/date.h"
-#include "drizzled/field/decimal.h"
-#include "drizzled/field/real.h"
-#include "drizzled/field/double.h"
-#include "drizzled/field/long.h"
-#include "drizzled/field/int64_t.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
+#include "drizzled/field/decimal.h"
+#include "drizzled/field/double.h"
+#include "drizzled/field/enum.h"
+#include "drizzled/field/epoch.h"
+#include "drizzled/field/int32.h"
+#include "drizzled/field/int64.h"
+#include "drizzled/field/microtime.h"
+#include "drizzled/field/null.h"
+#include "drizzled/field/real.h"
+#include "drizzled/field/size.h"
+#include "drizzled/field/time.h"
 #include "drizzled/field/varstring.h"
+
 #include "drizzled/internal/m_string.h"
 
 #include <cstdio>
@@ -92,22 +96,27 @@ bool Item::val_bool()
   {
     case INT_RESULT:
       return val_int() != 0;
+
     case DECIMAL_RESULT:
     {
-      my_decimal decimal_value;
-      my_decimal *val= val_decimal(&decimal_value);
+      type::Decimal decimal_value;
+      type::Decimal *val= val_decimal(&decimal_value);
       if (val)
-        return !my_decimal_is_zero(val);
+        return not val->is_zero();
       return false;
     }
+
     case REAL_RESULT:
     case STRING_RESULT:
       return val_real() != 0.0;
+
     case ROW_RESULT:
-    default:
       assert(0);
-      return false;
+      abort();
   }
+
+  assert(0);
+  abort();
 }
 
 String *Item::val_string_from_real(String *str)
@@ -132,36 +141,36 @@ String *Item::val_string_from_int(String *str)
 
 String *Item::val_string_from_decimal(String *str)
 {
-  my_decimal dec_buf, *dec= val_decimal(&dec_buf);
+  type::Decimal dec_buf, *dec= val_decimal(&dec_buf);
   if (null_value)
     return NULL;
 
-  my_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
-  my_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, 0, str);
+  class_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
+  class_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, 0, str);
   return str;
 }
 
-my_decimal *Item::val_decimal_from_real(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_real(type::Decimal *decimal_value)
 {
   double nr= val_real();
   if (null_value)
     return NULL;
 
-  double2my_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
+  double2_class_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
   return (decimal_value);
 }
 
-my_decimal *Item::val_decimal_from_int(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_int(type::Decimal *decimal_value)
 {
   int64_t nr= val_int();
   if (null_value)
     return NULL;
 
-  int2my_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
   return decimal_value;
 }
 
-my_decimal *Item::val_decimal_from_string(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_string(type::Decimal *decimal_value)
 {
   String *res;
   char *end_ptr;
@@ -169,11 +178,10 @@ my_decimal *Item::val_decimal_from_string(my_decimal *decimal_value)
     return NULL;
 
   end_ptr= (char*) res->ptr()+ res->length();
-  if (str2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
+  if (decimal_value->store(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
                      res->ptr(), 
                      res->length(), 
-                     res->charset(),
-                     decimal_value) & E_DEC_BAD_NUM)
+                     res->charset()) & E_DEC_BAD_NUM)
   {
     push_warning_printf(current_session, 
                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -184,39 +192,39 @@ my_decimal *Item::val_decimal_from_string(my_decimal *decimal_value)
   return decimal_value;
 }
 
-my_decimal *Item::val_decimal_from_date(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_date(type::Decimal *decimal_value)
 {
   assert(fixed);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
   {
-    my_decimal_set_zero(decimal_value);
+    decimal_value->set_zero();
     null_value= 1;                               // set NULL, stop processing
     return NULL;
   }
-  return date2my_decimal(&ltime, decimal_value);
+  return date2_class_decimal(&ltime, decimal_value);
 }
 
-my_decimal *Item::val_decimal_from_time(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_time(type::Decimal *decimal_value)
 {
   assert(fixed);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_time(&ltime))
   {
-    my_decimal_set_zero(decimal_value);
+    decimal_value->set_zero();
     return NULL;
   }
-  return date2my_decimal(&ltime, decimal_value);
+  return date2_class_decimal(&ltime, decimal_value);
 }
 
 double Item::val_real_from_decimal()
 {
   /* Note that fix_fields may not be called for Item_avg_field items */
   double result;
-  my_decimal value_buff, *dec_val= val_decimal(&value_buff);
+  type::Decimal value_buff, *dec_val= val_decimal(&value_buff);
   if (null_value)
     return 0.0;
-  my_decimal2double(E_DEC_FATAL_ERROR, dec_val, &result);
+  class_decimal2double(E_DEC_FATAL_ERROR, dec_val, &result);
   return result;
 }
 
@@ -224,29 +232,29 @@ int64_t Item::val_int_from_decimal()
 {
   /* Note that fix_fields may not be called for Item_avg_field items */
   int64_t result;
-  my_decimal value, *dec_val= val_decimal(&value);
+  type::Decimal value, *dec_val= val_decimal(&value);
   if (null_value)
     return 0;
-  my_decimal2int(E_DEC_FATAL_ERROR, dec_val, unsigned_flag, &result);
+  dec_val->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
   return result;
 }
 
 int Item::save_time_in_field(Field *field)
 {
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_time(&ltime))
     return set_field_to_null(field);
   field->set_notnull();
-  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_TIME);
+  return field->store_time(&ltime, type::DRIZZLE_TIMESTAMP_TIME);
 }
 
 int Item::save_date_in_field(Field *field)
 {
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return set_field_to_null(field);
   field->set_notnull();
-  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
+  return field->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 /**
@@ -332,14 +340,14 @@ uint32_t Item::decimal_precision() const
   Item_result restype= result_type();
 
   if ((restype == DECIMAL_RESULT) || (restype == INT_RESULT))
-    return min(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
+    return min(class_decimal_length_to_precision(max_length, decimals, unsigned_flag),
                (uint32_t) DECIMAL_MAX_PRECISION);
   return min(max_length, (uint32_t) DECIMAL_MAX_PRECISION);
 }
 
 int Item::decimal_int_part() const
 {
-  return my_decimal_int_part(decimal_precision(), decimals);
+  return class_decimal_int_part(decimal_precision(), decimals);
 }
 
 void Item::print(String *str, enum_query_type)
@@ -452,52 +460,58 @@ Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
   return conv->safe ? conv : NULL;
 }
 
-bool Item::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
 {
-  if (result_type() == STRING_RESULT)
+  do
   {
-    char buff[40];
-    String tmp(buff,sizeof(buff), &my_charset_bin),*res;
-    if (!(res=val_str(&tmp)) ||
-        str_to_datetime_with_warn(res->ptr(), res->length(),
-                                  ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
-      goto err;
-  }
-  else
-  {
-    int64_t value= val_int();
-    int was_cut;
-    if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
+    if (result_type() == STRING_RESULT)
     {
-      char buff[22], *end;
-      end= internal::int64_t10_to_str(value, buff, -10);
-      make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                   buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
-                                   NULL);
-      goto err;
+      char buff[40];
+      String tmp(buff,sizeof(buff), &my_charset_bin),*res;
+      if (!(res=val_str(&tmp)) ||
+          str_to_datetime_with_warn(res->ptr(), res->length(),
+                                    ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
+      {
+        break;
+      }
     }
-  }
-  return false;
+    else
+    {
+      int64_t value= val_int();
+      int was_cut;
+      if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
+      {
+        char buff[22], *end;
+        end= internal::int64_t10_to_str(value, buff, -10);
+        make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                     buff, (int) (end-buff), type::DRIZZLE_TIMESTAMP_NONE, NULL);
+        break;
+      }
+    }
 
-err:
-  memset(ltime, 0, sizeof(*ltime));
+    return false;
+  } while (0);
+
+  ltime->reset();
+
   return true;
 }
 
-bool Item::get_time(DRIZZLE_TIME *ltime)
+bool Item::get_time(type::Time *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str(&tmp)) ||
-      str_to_time_with_warn(res->ptr(), res->length(), ltime))
+  if (!(res=val_str(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), ltime))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime->reset();
+
     return true;
   }
+
   return false;
 }
 
-bool Item::get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Item::get_date_result(type::Time *ltime,uint32_t fuzzydate)
 {
   return get_date(ltime,fuzzydate);
 }
@@ -816,7 +830,7 @@ void mark_select_range_as_dependent(Session *session,
   {
     Item_subselect *prev_subselect_item= previous_select->master_unit()->item;
     prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
   }
   {
     Item_subselect *prev_subselect_item= previous_select->master_unit()->item;
@@ -831,7 +845,7 @@ void mark_select_range_as_dependent(Session *session,
     }
     else
       prev_subselect_item->used_tables_cache|= found_field->getTable()->map;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
     mark_as_dependent(session, last_select, current_sel, resolved_item,
                       dependent);
   }
@@ -907,9 +921,11 @@ static Item** find_field_in_group_list(Item *find_item, Order *group_list)
         if (cur_field->db_name && db_name)
         {
           /* If field_name is also qualified by a database name. */
-          if (strcasecmp(cur_field->db_name, db_name))
+          if (my_strcasecmp(system_charset_info, cur_field->db_name, db_name))
+          {
             /* Same field names, different databases. */
             return NULL;
+          }
           ++cur_match_degree;
         }
       }
@@ -936,8 +952,8 @@ static Item** find_field_in_group_list(Item *find_item, Order *group_list)
 
   if (found_group)
     return found_group->item;
-  else
-    return NULL;
+
+  return NULL;
 }
 
 Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select_Lex *select)
@@ -1002,7 +1018,7 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
 }
 
 void Item::init_make_field(SendField *tmp_field,
-			   enum enum_field_types field_type_arg)
+                           enum enum_field_types field_type_arg)
 {
   char *empty_name= (char*) "";
   tmp_field->db_name=	empty_name;
@@ -1044,24 +1060,37 @@ enum_field_types Item::field_type() const
   case REAL_RESULT:    
     return DRIZZLE_TYPE_DOUBLE;
   case ROW_RESULT:
-  default:
     assert(0);
-    return DRIZZLE_TYPE_VARCHAR;
   }
+
+  abort();
 }
 
 bool Item::is_datetime()
 {
   switch (field_type())
   {
+    case DRIZZLE_TYPE_TIME:
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_MICROTIME:
       return true;
-    default:
-      break;
+    case DRIZZLE_TYPE_BLOB:
+    case DRIZZLE_TYPE_VARCHAR:
+    case DRIZZLE_TYPE_DOUBLE:
+    case DRIZZLE_TYPE_DECIMAL:
+    case DRIZZLE_TYPE_ENUM:
+    case DRIZZLE_TYPE_LONG:
+    case DRIZZLE_TYPE_LONGLONG:
+    case DRIZZLE_TYPE_NULL:
+    case DRIZZLE_TYPE_UUID:
+    case DRIZZLE_TYPE_BOOLEAN:
+      return false;
   }
-  return false;
+
+  assert(0);
+  abort();
 }
 
 String *Item::check_well_formed_result(String *str, bool send_error)
@@ -1146,7 +1175,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     The field functions defines a field to be not null if null_ptr is not 0
   */
   unsigned char *null_ptr= maybe_null ? (unsigned char*) "" : 0;
-  Field *field;
+  Field *field= NULL;
 
   switch (field_type()) {
   case DRIZZLE_TYPE_DECIMAL:
@@ -1161,16 +1190,14 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
                                  unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONG:
-    field= new Field_long((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			  name, 0, unsigned_flag);
+    field= new field::Int32((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE, name);
     break;
   case DRIZZLE_TYPE_LONGLONG:
-    field= new Field_int64_t((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			      name, 0, unsigned_flag);
+    field= new field::Int64((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE, name);
     break;
   case DRIZZLE_TYPE_DOUBLE:
     field= new Field_double((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			    name, decimals, 0, unsigned_flag);
+                            name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
     field= new Field_null((unsigned char*) 0, max_length, name, &my_charset_bin);
@@ -1178,16 +1205,22 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   case DRIZZLE_TYPE_DATE:
     field= new Field_date(maybe_null, name, &my_charset_bin);
     break;
+
+  case DRIZZLE_TYPE_MICROTIME:
+    field= new field::Microtime(maybe_null, name);
+    break;
+
   case DRIZZLE_TYPE_TIMESTAMP:
-    field= new Field_timestamp(maybe_null, name, &my_charset_bin);
+    field= new field::Epoch(maybe_null, name);
     break;
   case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);
     break;
-  default:
-    /* This case should never be chosen */
-    assert(0);
-    /* Fall through to make_string_field() */
+  case DRIZZLE_TYPE_TIME:
+    field= new field::Time(maybe_null, name, &my_charset_bin);
+    break;
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
@@ -1195,6 +1228,8 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
       field= new Field_blob(max_length, maybe_null, name, collation.collation);
     break;					// Blob handled outside of case
   }
+  assert(field);
+
   if (field)
     field->init(table);
   return field;
@@ -1246,8 +1281,8 @@ int Item::save_in_field(Field *field, bool no_conversions)
   }
   else if (result_type() == DECIMAL_RESULT)
   {
-    my_decimal decimal_value;
-    my_decimal *value= val_decimal(&decimal_value);
+    type::Decimal decimal_value;
+    type::Decimal *value= val_decimal(&decimal_value);
     if (null_value)
       return set_field_to_null_with_conversions(field, no_conversions);
     field->set_notnull();
@@ -1329,58 +1364,70 @@ bool Item::send(plugin::Client *client, String *buffer)
   enum_field_types f_type;
 
   switch ((f_type=field_type())) {
-  default:
+  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_VARCHAR:
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_DECIMAL:
-  {
-    String *res;
-    if ((res=val_str(buffer)))
-      result= client->store(res->ptr(),res->length());
-    break;
-  }
-  case DRIZZLE_TYPE_LONG:
-  {
-    int64_t nr;
-    nr= val_int();
-    if (!null_value)
-      result= client->store((int32_t)nr);
-    break;
-  }
-  case DRIZZLE_TYPE_LONGLONG:
-  {
-    int64_t nr;
-    nr= val_int();
-    if (!null_value)
     {
-      if (unsigned_flag)
-        result= client->store((uint64_t)nr);
-      else
-        result= client->store((int64_t)nr);
+      String *res;
+      if ((res=val_str(buffer)))
+        result= client->store(res->ptr(),res->length());
+      break;
     }
-    break;
-  }
+  case DRIZZLE_TYPE_LONG:
+    {
+      int64_t nr;
+      nr= val_int();
+      if (!null_value)
+        result= client->store((int32_t)nr);
+      break;
+    }
+  case DRIZZLE_TYPE_LONGLONG:
+    {
+      int64_t nr;
+      nr= val_int();
+      if (!null_value)
+      {
+        if (unsigned_flag)
+          result= client->store((uint64_t)nr);
+        else
+          result= client->store((int64_t)nr);
+      }
+      break;
+    }
   case DRIZZLE_TYPE_DOUBLE:
-  {
-    double nr= val_real();
-    if (!null_value)
-      result= client->store(nr, decimals, buffer);
-    break;
-  }
+    {
+      double nr= val_real();
+      if (!null_value)
+        result= client->store(nr, decimals, buffer);
+      break;
+    }
+  case DRIZZLE_TYPE_TIME:
+    {
+      type::Time tm;
+      get_time(&tm);
+      if (not null_value)
+        result= client->store(&tm);
+      break;
+    }
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
-  {
-    DRIZZLE_TIME tm;
-    get_date(&tm, TIME_FUZZY_DATE);
-    if (!null_value)
-      result= client->store(&tm);
-    break;
-  }
+    {
+      type::Time tm;
+      get_date(&tm, TIME_FUZZY_DATE);
+      if (!null_value)
+        result= client->store(&tm);
+      break;
+    }
   }
   if (null_value)
     result= client->store();
+
   return result;
 }
 
@@ -1388,13 +1435,16 @@ Item_result item_cmp_type(Item_result a,Item_result b)
 {
   if (a == STRING_RESULT && b == STRING_RESULT)
     return STRING_RESULT;
+
   if (a == INT_RESULT && b == INT_RESULT)
     return INT_RESULT;
   else if (a == ROW_RESULT || b == ROW_RESULT)
     return ROW_RESULT;
+
   if ((a == INT_RESULT || a == DECIMAL_RESULT) &&
       (b == INT_RESULT || b == DECIMAL_RESULT))
     return DECIMAL_RESULT;
+
   return REAL_RESULT;
 }
 
@@ -1410,82 +1460,81 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
 
   switch (res_type) {
   case STRING_RESULT:
-  {
-    char buff[MAX_FIELD_WIDTH];
-    String tmp(buff,sizeof(buff),&my_charset_bin),*result;
-    result=item->val_str(&tmp);
-    if (item->null_value)
-      new_item= new Item_null(name);
-    else
     {
-      uint32_t length= result->length();
-      char *tmp_str= memory::sql_strmake(result->ptr(), length);
-      new_item= new Item_string(name, tmp_str, length, result->charset());
+      char buff[MAX_FIELD_WIDTH];
+      String tmp(buff,sizeof(buff),&my_charset_bin),*result;
+      result=item->val_str(&tmp);
+      if (item->null_value)
+        new_item= new Item_null(name);
+      else
+      {
+        uint32_t length= result->length();
+        char *tmp_str= memory::sql_strmake(result->ptr(), length);
+        new_item= new Item_string(name, tmp_str, length, result->charset());
+      }
+      break;
     }
-    break;
-  }
   case INT_RESULT:
-  {
-    int64_t result=item->val_int();
-    uint32_t length=item->max_length;
-    bool null_value=item->null_value;
-    new_item= (null_value ? (Item*) new Item_null(name) :
-               (Item*) new Item_int(name, result, length));
-    break;
-  }
+    {
+      int64_t result=item->val_int();
+      uint32_t length=item->max_length;
+      bool null_value=item->null_value;
+      new_item= (null_value ? (Item*) new Item_null(name) :
+                 (Item*) new Item_int(name, result, length));
+      break;
+    }
   case ROW_RESULT:
-  if (item->type() == Item::ROW_ITEM && comp_item->type() == Item::ROW_ITEM)
-  {
-    /*
-      Substitute constants only in Item_rows. Don't affect other Items
-      with ROW_RESULT (eg Item_singlerow_subselect).
+    if (item->type() == Item::ROW_ITEM && comp_item->type() == Item::ROW_ITEM)
+    {
+      /*
+        Substitute constants only in Item_rows. Don't affect other Items
+        with ROW_RESULT (eg Item_singlerow_subselect).
 
-      For such Items more optimal is to detect if it is constant and replace
-      it with Item_row. This would optimize queries like this:
-      SELECT * FROM t1 WHERE (a,b) = (SELECT a,b FROM t2 LIMIT 1);
-    */
-    Item_row *item_row= (Item_row*) item;
-    Item_row *comp_item_row= (Item_row*) comp_item;
-    uint32_t col;
-    new_item= 0;
-    /*
-      If item and comp_item are both Item_rows and have same number of cols
-      then process items in Item_row one by one.
-      We can't ignore NULL values here as this item may be used with <=>, in
-      which case NULL's are significant.
-    */
-    assert(item->result_type() == comp_item->result_type());
-    assert(item_row->cols() == comp_item_row->cols());
-    col= item_row->cols();
-    while (col-- > 0)
-      resolve_const_item(session, item_row->addr(col),
-                         comp_item_row->element_index(col));
-    break;
-  }
-  /* Fallthrough */
+        For such Items more optimal is to detect if it is constant and replace
+        it with Item_row. This would optimize queries like this:
+        SELECT * FROM t1 WHERE (a,b) = (SELECT a,b FROM t2 LIMIT 1);
+      */
+      Item_row *item_row= (Item_row*) item;
+      Item_row *comp_item_row= (Item_row*) comp_item;
+      uint32_t col;
+      new_item= 0;
+      /*
+        If item and comp_item are both Item_rows and have same number of cols
+        then process items in Item_row one by one.
+        We can't ignore NULL values here as this item may be used with <=>, in
+        which case NULL's are significant.
+      */
+      assert(item->result_type() == comp_item->result_type());
+      assert(item_row->cols() == comp_item_row->cols());
+      col= item_row->cols();
+      while (col-- > 0)
+        resolve_const_item(session, item_row->addr(col),
+                           comp_item_row->element_index(col));
+      break;
+    }
+    /* Fallthrough */
   case REAL_RESULT:
-  {						// It must REAL_RESULT
-    double result= item->val_real();
-    uint32_t length=item->max_length,decimals=item->decimals;
-    bool null_value=item->null_value;
-    new_item= (null_value ? (Item*) new Item_null(name) : (Item*)
-               new Item_float(name, result, decimals, length));
-    break;
-  }
+    {						// It must REAL_RESULT
+      double result= item->val_real();
+      uint32_t length=item->max_length,decimals=item->decimals;
+      bool null_value=item->null_value;
+      new_item= (null_value ? (Item*) new Item_null(name) : (Item*)
+                 new Item_float(name, result, decimals, length));
+      break;
+    }
   case DECIMAL_RESULT:
-  {
-    my_decimal decimal_value;
-    my_decimal *result= item->val_decimal(&decimal_value);
-    uint32_t length= item->max_length, decimals= item->decimals;
-    bool null_value= item->null_value;
-    new_item= (null_value ?
-               (Item*) new Item_null(name) :
-               (Item*) new Item_decimal(name, result, length, decimals));
-    break;
+    {
+      type::Decimal decimal_value;
+      type::Decimal *result= item->val_decimal(&decimal_value);
+      uint32_t length= item->max_length, decimals= item->decimals;
+      bool null_value= item->null_value;
+      new_item= (null_value ?
+                 (Item*) new Item_null(name) :
+                 (Item*) new Item_decimal(name, result, length, decimals));
+      break;
+    }
   }
-  default:
-    assert(0);
-  }
+
   if (new_item)
     session->change_item_tree(ref, new_item);
 }
@@ -1504,24 +1553,28 @@ bool field_is_equal_to_item(Field *field,Item *item)
     item_result=item->val_str(&item_tmp);
     if (item->null_value)
       return 1;					// This must be true
-    field->val_str(&field_tmp);
-    return !stringcmp(&field_tmp,item_result);
+    field->val_str_internal(&field_tmp);
+    return not stringcmp(&field_tmp,item_result);
   }
+
   if (res_type == INT_RESULT)
     return 1;					// Both where of type int
+
   if (res_type == DECIMAL_RESULT)
   {
-    my_decimal item_buf, *item_val,
+    type::Decimal item_buf, *item_val,
                field_buf, *field_val;
     item_val= item->val_decimal(&item_buf);
     if (item->null_value)
       return 1;					// This must be true
     field_val= field->val_decimal(&field_buf);
-    return !my_decimal_cmp(item_val, field_val);
+    return !class_decimal_cmp(item_val, field_val);
   }
+
   double result= item->val_real();
   if (item->null_value)
     return 1;
+
   return result == field->val_real();
 }
 
@@ -1557,27 +1610,39 @@ static Field *create_tmp_field_from_item(Session *,
                                          uint32_t convert_blob_length)
 {
   bool maybe_null= item->maybe_null;
-  Field *new_field;
+  Field *new_field= NULL;
 
   switch (item->result_type()) {
   case REAL_RESULT:
     new_field= new Field_double(item->max_length, maybe_null,
                                 item->name, item->decimals, true);
     break;
+
   case INT_RESULT:
     /*
       Select an integer type with the minimal fit precision.
       MY_INT32_NUM_DECIMAL_DIGITS is sign inclusive, don't consider the sign.
       Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into
-      Field_long : make them Field_int64_t.
+      Int32 -> make them field::Int64.
     */
-    if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
-      new_field=new Field_int64_t(item->max_length, maybe_null,
-                                   item->name, item->unsigned_flag);
+    if (item->unsigned_flag)
+    {
+      new_field= new field::Size(item->max_length, maybe_null,
+                                  item->name, item->unsigned_flag);
+    }
+    else if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
+    {
+      new_field= new field::Int64(item->max_length, maybe_null,
+                                  item->name, item->unsigned_flag);
+    }
     else
-      new_field=new Field_long(item->max_length, maybe_null,
-                               item->name, item->unsigned_flag);
+    {
+      new_field= new field::Int32(item->max_length, maybe_null,
+                                  item->name, item->unsigned_flag);
+    }
+
     break;
+
   case STRING_RESULT:
     assert(item->collation.collation);
 
@@ -1587,6 +1652,8 @@ static Field *create_tmp_field_from_item(Session *,
       To preserve type they needed to be handled separately.
     */
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
+        type == DRIZZLE_TYPE_TIME ||
+        type == DRIZZLE_TYPE_MICROTIME ||
         type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
     {
@@ -1610,63 +1677,67 @@ static Field *create_tmp_field_from_item(Session *,
     }
     new_field->set_derivation(item->collation.derivation);
     break;
+
   case DECIMAL_RESULT:
-  {
-    uint8_t dec= item->decimals;
-    uint8_t intg= ((Item_decimal *) item)->decimal_precision() - dec;
-    uint32_t len= item->max_length;
-
-    /*
-      Trying to put too many digits overall in a DECIMAL(prec,dec)
-      will always throw a warning. We must limit dec to
-      DECIMAL_MAX_SCALE however to prevent an assert() later.
-    */
-
-    if (dec > 0)
     {
-      signed int overflow;
-
-      dec= min(dec, (uint8_t)DECIMAL_MAX_SCALE);
+      uint8_t dec= item->decimals;
+      uint8_t intg= ((Item_decimal *) item)->decimal_precision() - dec;
+      uint32_t len= item->max_length;
 
       /*
-        If the value still overflows the field with the corrected dec,
-        we'll throw out decimals rather than integers. This is still
-        bad and of course throws a truncation warning.
-        +1: for decimal point
+        Trying to put too many digits overall in a DECIMAL(prec,dec)
+        will always throw a warning. We must limit dec to
+        DECIMAL_MAX_SCALE however to prevent an assert() later.
       */
 
-      overflow= my_decimal_precision_to_length(intg + dec, dec,
-                                               item->unsigned_flag) - len;
+      if (dec > 0)
+      {
+        signed int overflow;
 
-      if (overflow > 0)
-        dec= max(0, dec - overflow);            // too long, discard fract
-      else
-        len-= item->decimals - dec;             // corrected value fits
+        dec= min(dec, (uint8_t)DECIMAL_MAX_SCALE);
+
+        /*
+          If the value still overflows the field with the corrected dec,
+          we'll throw out decimals rather than integers. This is still
+          bad and of course throws a truncation warning.
+          +1: for decimal point
+        */
+
+        overflow= class_decimal_precision_to_length(intg + dec, dec,
+                                                 item->unsigned_flag) - len;
+
+        if (overflow > 0)
+          dec= max(0, dec - overflow);            // too long, discard fract
+        else
+          len-= item->decimals - dec;             // corrected value fits
+      }
+
+      new_field= new Field_decimal(len,
+                                   maybe_null,
+                                   item->name,
+                                   dec,
+                                   item->unsigned_flag);
+      break;
     }
 
-    new_field= new Field_decimal(len,
-                                 maybe_null,
-                                 item->name,
-                                 dec,
-                                 item->unsigned_flag);
-    break;
-  }
   case ROW_RESULT:
-  default:
     // This case should never be choosen
     assert(0);
-    new_field= 0;
-    break;
+    abort();
   }
+
   if (new_field)
     new_field->init(table);
 
   if (copy_func && item->is_result_field())
     *((*copy_func)++) = item;			// Save for copy_funcs
+
   if (modify_item)
     item->set_result_field(new_field);
+
   if (item->type() == Item::NULL_ITEM)
     new_field->is_created_from_null_item= true;
+
   return new_field;
 }
 
@@ -1723,6 +1794,7 @@ Field *create_tmp_field(Session *session,
         field->result_field= result;
     }
     else
+    {
       result= create_tmp_field_from_field(session, (*from_field= field->field),
                                           orig_item ? orig_item->name :
                                           item->name,
@@ -1730,6 +1802,7 @@ Field *create_tmp_field(Session *session,
                                           modify_item ? field :
                                           NULL,
                                           convert_blob_length);
+    }
     if (orig_type == Item::REF_ITEM && orig_modify)
       ((Item_ref*)orig_item)->set_result_field(result);
     if (field->field->eq_def(result))
@@ -1767,6 +1840,47 @@ Field *create_tmp_field(Session *session,
   default:					// Dosen't have to be stored
     return NULL;
   }
+}
+
+std::ostream& operator<<(std::ostream& output, const Item &item)
+{
+  switch (item.type())
+  {
+  case drizzled::Item::SUBSELECT_ITEM :
+  case drizzled::Item::FIELD_ITEM :
+  case drizzled::Item::SUM_FUNC_ITEM :
+  case drizzled::Item::STRING_ITEM :
+  case drizzled::Item::INT_ITEM :
+  case drizzled::Item::REAL_ITEM :
+  case drizzled::Item::NULL_ITEM :
+  case drizzled::Item::VARBIN_ITEM :
+  case drizzled::Item::COPY_STR_ITEM :
+  case drizzled::Item::FIELD_AVG_ITEM :
+  case drizzled::Item::DEFAULT_VALUE_ITEM :
+  case drizzled::Item::PROC_ITEM :
+  case drizzled::Item::COND_ITEM :
+  case drizzled::Item::REF_ITEM :
+  case drizzled::Item::FIELD_STD_ITEM :
+  case drizzled::Item::FIELD_VARIANCE_ITEM :
+  case drizzled::Item::INSERT_VALUE_ITEM :
+  case drizzled::Item::ROW_ITEM:
+  case drizzled::Item::CACHE_ITEM :
+  case drizzled::Item::TYPE_HOLDER :
+  case drizzled::Item::PARAM_ITEM :
+  case drizzled::Item::DECIMAL_ITEM :
+  case drizzled::Item::FUNC_ITEM :
+  case drizzled::Item::BOOLEAN_ITEM :
+    {
+      output << "Item:(";
+      output <<  item.full_name();
+      output << ", ";
+      output << drizzled::display::type(item.type());
+      output << ")";
+    }
+    break;
+  }
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace drizzled */

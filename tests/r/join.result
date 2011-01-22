@@ -74,10 +74,10 @@ token varchar(100) DEFAULT '' NOT NULL,
 count int DEFAULT '0' NOT NULL,
 qty int,
 phone char(1) DEFAULT '' NOT NULL,
-timestamp datetime,
+timestamp_arg datetime,
 PRIMARY KEY (id),
 KEY token (token(15)),
-KEY timestamp (timestamp),
+KEY timestamp_arg (timestamp_arg),
 UNIQUE token_2 (token(75),count,phone)
 );
 INSERT INTO t1 VALUES (21,'e45703b64de71482360de8fec94c3ade',3,7800,'n','1999-12-23 17:22:21');

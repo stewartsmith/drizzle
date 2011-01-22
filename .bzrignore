@@ -121,6 +121,7 @@ drizzled/sql_builtin.cc
 drizzled/sql_yacc.cc
 drizzled/sql_yacc.h
 drizzled/sql_yacc.output
+drizzled/sql_reserved_words.h
 drizzled/symbol_hash.h
 drizzled/version.h
 dtcollation.gcno
@@ -204,8 +205,10 @@ plugin/blackhole/Makefile.in
 plugin/csv/Makefile.in
 plugin/heap/Makefile.in
 plugin/innobase/Makefile.in
+plugin/innobase/include/pars0grm.hh
 plugin/innobase/include/pars0grm.h
 plugin/innobase/pars/pars0grm.c
+plugin/innobase/pars/pars0grm.cc
 plugin/innobase/pars/pars0grm.h
 plugin/innobase/pars/pars0lex.c
 plugin/memcached_functions/start_mc.sh
@@ -214,7 +217,11 @@ plugin/myisam/Makefile.in
 plugin/myisam/myisamchk
 plugin/myisam/myisamlog
 plugin/myisam/myisampack
+plugin/storage_engine_api_tester/cursor_states_to_dot
+plugin/storage_engine_api_tester/engine_states_to_dot
+plugin/transaction_log/utilities/transaction_reader
 po/POTFILES
+po/drizzle7.pot
 po/remove-potcdate.sed
 po/stamp-it
 po/stamp-po
@@ -329,7 +336,9 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
-po/drizzle7.pot
-plugin/transaction_log/utilities/transaction_reader
-plugin/storage_engine_api_tester/engine_states_to_dot
-plugin/storage_engine_api_tester/cursor_states_to_dot
+docs/man
+.pc
+drizzled/message/catalog.pb.cc
+drizzled/message/catalog.pb.h
+drizzled/message/catalog_reader
+drizzled/message/catalog_writer

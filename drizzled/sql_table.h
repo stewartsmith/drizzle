@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,21 +40,21 @@ class AlterInfo;
 class Cursor;
 
 namespace message { class Table; }
-class TableIdentifier;
+namespace identifier { class Table; }
 
-int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
+int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);
 void close_cached_table(Session *session, Table *table);
 
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_check_table(Session* session, TableList* table_list,
-                       HA_CHECK_OPT* check_opt);
-bool mysql_analyze_table(Session* session, TableList* table_list,
-                         HA_CHECK_OPT* check_opt);
-bool mysql_optimize_table(Session* session, TableList* table_list,
-                          HA_CHECK_OPT* check_opt);
+bool check_table(Session* session, TableList* table_list,
+                 HA_CHECK_OPT* check_opt);
+bool analyze_table(Session* session, TableList* table_list,
+                   HA_CHECK_OPT* check_opt);
+bool optimize_table(Session* session, TableList* table_list,
+                    HA_CHECK_OPT* check_opt);
 
 void write_bin_log(Session *session, const std::string &query);
 

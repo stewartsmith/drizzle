@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -40,7 +40,6 @@
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 
 #define my_strdup(a,b) strdup(a)
@@ -115,7 +114,7 @@ public:
 	int doCommit(Session *, bool);
 	int doRollback(Session *, bool);
 	Cursor *create(Table& table);
-	bool doDropSchema(const drizzled::SchemaIdentifier&);
+	bool doDropSchema(const drizzled::identifier::Schema&);
 	
 	/*
 	* Indicates to a storage engine the start of a
@@ -136,26 +135,26 @@ public:
 		(void) session;
 	}
 	
-	int doCreateTable(Session&, Table&, const TableIdentifier& ident, drizzled::message::Table& );	
-	int doDropTable(Session &, const TableIdentifier& );
+	int doCreateTable(Session&, Table&, const identifier::Table& ident, drizzled::message::Table& );	
+	int doDropTable(Session &, const identifier::Table& );
 	
-	int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+	int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 	
         void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
-                                   const drizzled::SchemaIdentifier &schema,
-                                   drizzled::TableIdentifier::vector &set_of_identifiers) 
+                                   const drizzled::identifier::Schema &schema,
+                                   drizzled::identifier::Table::vector &set_of_identifiers) 
 	{
 		std::set<std::string> set_of_names;
 		
 		doGetTableNames(dir, schema, set_of_names);
 		for (std::set<std::string>::iterator set_iter = set_of_names.begin(); set_iter != set_of_names.end(); ++set_iter)
 		{
-			set_of_identifiers.push_back(TableIdentifier(schema, *set_iter));
+			set_of_identifiers.push_back(identifier::Table(schema, *set_iter));
 		}
 	}
 	
 	void doGetTableNames(CachedDirectory&, 
-					const SchemaIdentifier &schema, 
+					const identifier::Schema &schema, 
 					std::set<std::string> &set_of_names) 
 	{
 		bool isPBMS = schema.compare("PBMS");
@@ -169,7 +168,7 @@ public:
 	int doReleaseSavepoint(Session *session, NamedSavepoint &savepoint);
 	const char **bas_ext() const;
 
-  int doGetTableDefinition(Session&, const TableIdentifier &identifier,
+  int doGetTableDefinition(Session&, const identifier::Table &identifier,
                                           drizzled::message::Table &table_proto)
   {
 		int err;
@@ -187,7 +186,7 @@ public:
 		return EEXIST;
   }
 
-	bool doDoesTableExist(Session&, const TableIdentifier &identifier)
+	bool doDoesTableExist(Session&, const identifier::Table &identifier)
 	{
 		const char *tab_name = identifier.getTableName().c_str();
 		const char *db_name = identifier.getSchemaName().c_str();
@@ -435,7 +434,7 @@ static int pbms_savepoint_release(handlerton *hton, THD *thd, void *sv)
 #endif
 
 #ifdef DRIZZLED
-bool  PBMSStorageEngine::doDropSchema(const drizzled::SchemaIdentifier &schema)
+bool  PBMSStorageEngine::doDropSchema(const drizzled::identifier::Schema &schema)
 {
 	CSThread *self;
 	PBMSResultRec result;
@@ -1045,19 +1044,19 @@ THR_LOCK_DATA **ha_pbms::store_lock(THD *, THR_LOCK_DATA **to, enum thr_lock_typ
 
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::doCreateTable(Session&, Table&, const TableIdentifier& , drizzled::message::Table& )
+int PBMSStorageEngine::doCreateTable(Session&, Table&, const identifier::Table& , drizzled::message::Table& )
 {
 	/* You cannot create PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );
 }
 
-int PBMSStorageEngine::doDropTable(Session &, const TableIdentifier& )
+int PBMSStorageEngine::doDropTable(Session &, const identifier::Table& )
 {
 	/* You cannot delete PBMS tables. */
 	return( 0 );
 }
 
-int PBMSStorageEngine::doRenameTable(Session&, const TableIdentifier &, const TableIdentifier &)
+int PBMSStorageEngine::doRenameTable(Session&, const identifier::Table &, const identifier::Table &)
 {
 	/* You cannot rename PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );

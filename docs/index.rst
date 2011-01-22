@@ -24,23 +24,33 @@ Scope
 
 Introduction:
 -------------
-
 .. toctree::
    :maxdepth: 2
-
+   
    preface
    what_is_drizzle
    brief_history_of_drizzle
    how_to_report_a_bug
    mysql_differences
 
+Compiling and Installing:
+-------------------------
+.. toctree::
+   :maxdepth: 2
+
+   installing/requirements
+   installing/from_source
+   installing/ubuntu
+   installing/redhat
+
 SQL Language:
 -------------
-
 .. toctree::
    :maxdepth: 2
 
    queries
+   functions
+   data_types
    ddl
    dml
    columntypes 
@@ -50,20 +60,19 @@ SQL Language:
    dynamic 
    getting_information 
    transactional 
-   administrative 
+   administrative
 
-Advanced Topics:
-----------------
-
+User Level Topics:
+------------------
 .. toctree::
    :maxdepth: 2
 
    storage_engines
+   using_replication
    logging
 
-
 Configuration:
-^^^^^^^^^^^^^^
+--------------
 .. toctree::
    :maxdepth: 2
 
@@ -78,7 +87,7 @@ Plugins:
    plugins/list
 
 Architecture:
-^^^^^^^^^^^^^
+-------------
 .. toctree::
    :maxdepth: 2
 
@@ -86,15 +95,17 @@ Architecture:
    replication
 
 Clients:
-^^^^^^^^
+--------
 .. toctree::
    :maxdepth: 2
 
    clients/drizzle.rst
    clients/drizzledump.rst
+   clients/drizzleadmin.rst
+   clients/errors.rst
 
 libdrizzle:
-^^^^^^^^^^^
+-----------
 .. toctree::
    :maxdepth: 2
 
@@ -102,7 +113,7 @@ libdrizzle:
    libdrizzle/developer.rst
 
 Testing:
-
+--------
 .. toctree::
    :maxdepth: 2
  

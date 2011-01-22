@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2006, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2006, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -161,8 +161,7 @@ get_innobase_type_from_mysql_type(
 
 /******************************************************************//**
 Get the variable length bounds of the given character set. */
-UNIV_INTERN
-void
+UNIV_INTERN void
 innobase_get_cset_width(
 /*====================*/
 	ulint	cset,		/*!< in: MySQL charset-collation code */

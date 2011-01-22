@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -217,13 +217,13 @@ public:
       char *new_ptr;
       if (!(new_ptr= reinterpret_cast<char*>(::realloc(Ptr,arg_length))))
       {
-	Alloced_length = 0;
-	real_alloc(arg_length);
+        Alloced_length = 0;
+        real_alloc(arg_length);
       }
       else
       {
-	Ptr=new_ptr;
-	Alloced_length=arg_length;
+        Ptr=new_ptr;
+        Alloced_length=arg_length;
       }
     }
   }
@@ -246,13 +246,14 @@ public:
 
   bool copy();					// Alloc string if not alloced
   bool copy(const String &s);			// Allocate new string
+  bool copy(const std::string&, const CHARSET_INFO * const cs);	// Allocate new string
   bool copy(const char *s,size_t arg_length, const CHARSET_INFO * const cs);	// Allocate new string
   static bool needs_conversion(size_t arg_length,
   			       const CHARSET_INFO * const cs_from, const CHARSET_INFO * const cs_to,
 			       size_t *offset);
   bool set_or_copy_aligned(const char *s, size_t arg_length, const CHARSET_INFO * const cs);
   bool copy(const char*s,size_t arg_length, const CHARSET_INFO * const csfrom,
-	    const CHARSET_INFO * const csto, size_t *errors);
+            const CHARSET_INFO * const csto, size_t *errors);
   bool append(const String &s);
   bool append(const char *s);
   bool append(const char *s,size_t arg_length);
@@ -272,7 +273,7 @@ public:
     else
     {
       if (realloc(str_length+1))
-	return 1;
+        return 1;
       Ptr[str_length++]=chr;
     }
     return 0;
@@ -338,6 +339,8 @@ public:
 
 bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                              char *end);
+
+std::ostream& operator<<(std::ostream& output, const String &str);
 
 } /* namespace drizzled */
 

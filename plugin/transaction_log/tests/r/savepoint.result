@@ -1,0 +1,203 @@
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+CREATE TABLE t1(a INT NOT NULL AUTO_INCREMENT, b VARCHAR(10), c VARCHAR(10), PRIMARY KEY(a));
+CREATE TABLE t2(a INT NOT NULL AUTO_INCREMENT, b VARCHAR(10), c VARCHAR(10), PRIMARY KEY(a));
+CREATE TABLE t3(a INT NOT NULL AUTO_INCREMENT, b VARCHAR(10), c VARCHAR(10), PRIMARY KEY(a));
+INSERT INTO t1 (b,c) VALUES ('1','ok'), ('3','ok');
+INSERT INTO t2 (b,c) VALUES ('2','ok'), ('4','ok');
+INSERT INTO t3 (b,c) VALUES ('1','ok'), ('2','ok'), ('3','ok'), ('4','ok'), ('5','ok'), ('6','ok'), ('7','ok'), ('8','ok'), ('9','ok'), ('10','ok');
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Test deadlock
+
+SET AUTOCOMMIT=OFF;
+START TRANSACTION;
+UPDATE t1 SET c = 'trx1' WHERE a > 0;
+SAVEPOINT A;
+
+Should have one savepoint: A
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+SAVEPOINT_NAME
+A
+
+SET AUTOCOMMIT=OFF;
+START TRANSACTION;
+UPDATE t2 SET a = a*3;
+UPDATE t1 SET b = 'trx2' WHERE a > 0;
+DELETE FROM t2 WHERE a > 0;
+ERROR 40001: Deadlock found when trying to get lock; try restarting transaction
+
+Should have no savepoints
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+SAVEPOINT_NAME
+
+SAVEPOINT A;
+UPDATE t3 SET c = 'TRX1a' WHERE a < 10 ORDER BY b LIMIT 4;
+UPDATE t3 SET b = 'TRX1b' WHERE a < 10 ORDER BY c LIMIT 4;
+ROLLBACK TO SAVEPOINT A;
+SAVEPOINT A;
+ROLLBACK;
+START TRANSACTION;
+
+Definitely should have no savepoints
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+SAVEPOINT_NAME
+
+UPDATE t3 SET b = 'TRX1c' WHERE a > 7;
+ROLLBACK TO SAVEPOINT A;
+ERROR 42000: SAVEPOINT A does not exist
+COMMIT;
+COMMIT;
+
+SELECT * FROM t1;
+a	b	c
+1	trx2	ok
+2	trx2	ok
+
+SELECT * FROM t2;
+a	b	c
+3	2	ok
+6	4	ok
+
+SELECT * FROM t3;
+a	b	c
+1	1	ok
+2	2	ok
+3	3	ok
+4	4	ok
+5	5	ok
+6	6	ok
+7	7	ok
+8	TRX1c	ok
+9	TRX1c	ok
+10	TRX1c	ok
+
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log', ENTRY_OFFSET) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+PRINT_TRANSACTION_MESSAGE('transaction.log', ENTRY_OFFSET)
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: UPDATE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  sql: "UPDATE t3 SET b = \'TRX1c\' WHERE a > 7"
+  update_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t3"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    set_field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  update_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "8"
+      after_value: "TRX1c"
+      is_null: false
+    }
+    record {
+      key_value: "9"
+      after_value: "TRX1c"
+      is_null: false
+    }
+    record {
+      key_value: "10"
+      after_value: "TRX1c"
+      is_null: false
+    }
+  }
+}
+segment_id: 1
+end_segment: true
+
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: UPDATE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  sql: "UPDATE t2 SET a = a*3"
+  update_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t2"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    set_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+  }
+  update_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "1"
+      after_value: "3"
+      is_null: false
+    }
+    record {
+      key_value: "2"
+      after_value: "6"
+      is_null: false
+    }
+  }
+}
+statement {
+  type: UPDATE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  sql: "UPDATE t1 SET b = \'trx2\' WHERE a > 0"
+  update_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    set_field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  update_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "1"
+      after_value: "trx2"
+      is_null: false
+    }
+    record {
+      key_value: "2"
+      after_value: "trx2"
+      is_null: false
+    }
+  }
+}
+segment_id: 1
+end_segment: true
+
+DROP TABLE t1, t2, t3;
+SET GLOBAL transaction_log_truncate_debug= true;

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ namespace drizzled
 String *Item_func_makedate::val_str(String *str)
 {
   assert(fixed == 1);
-  DRIZZLE_TIME l_time;
+  type::Time l_time;
   long daynr=  (long) args[1]->val_int();
   long year= (long) args[0]->val_int();
   long days;
@@ -56,9 +56,11 @@ String *Item_func_makedate::val_str(String *str)
   {
     null_value=0;
     get_date_from_daynr(days,&l_time.year,&l_time.month,&l_time.day);
-    if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
+    if (str->alloc(type::Time::MAX_STRING_LENGTH))
       goto err;
-    make_date(&l_time, str);
+
+    l_time.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
+
     return str;
   }
 
@@ -81,7 +83,7 @@ err:
 int64_t Item_func_makedate::val_int()
 {
   assert(fixed == 1);
-  DRIZZLE_TIME l_time;
+  type::Time l_time;
   long daynr=  (long) args[1]->val_int();
   long year= (long) args[0]->val_int();
   long days;

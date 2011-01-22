@@ -31,7 +31,6 @@
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/table.h"
-#include "drizzled/field/timestamp.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/plugin/daemon.h"
 
@@ -117,15 +116,15 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    const TableIdentifier &identifier,
+                    const identifier::Table &identifier,
                     message::Table&);
 
-  int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+  int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 
-  int doDropTable(Session&, const TableIdentifier &identifier);
+  int doDropTable(Session&, const identifier::Table &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const TableIdentifier &identifier,
+                           const identifier::Table &identifier,
                            message::Table &table_message);
 
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
@@ -140,11 +139,11 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
-  bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
+  bool doDoesTableExist(Session& session, const identifier::Table &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state)
   {
     (void)state;
@@ -158,18 +157,18 @@ public:
 };
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                         const drizzled::SchemaIdentifier&,
-                                         drizzled::TableIdentifier::vector&)
+                                         const drizzled::identifier::Schema&,
+                                         drizzled::identifier::Table::vector&)
 {
 }
 
-bool MyisamEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
+bool MyisamEngine::doDoesTableExist(Session &session, const identifier::Table &identifier)
 {
   return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 int MyisamEngine::doGetTableDefinition(Session &session,
-                                       const TableIdentifier &identifier,
+                                       const identifier::Table &identifier,
                                        message::Table &table_message)
 {
   if (session.getMessageCache().getTableMessage(identifier, table_message))
@@ -567,7 +566,7 @@ const char *ha_myisam::index_type(uint32_t )
 }
 
 /* Name is here without an extension */
-int ha_myisam::doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+int ha_myisam::doOpen(const drizzled::identifier::Table &identifier, int mode, uint32_t test_if_locked)
 {
   MI_KEYDEF *keyinfo;
   MI_COLUMNDEF *recinfo= 0;
@@ -1329,7 +1328,7 @@ int ha_myisam::delete_all_rows()
 }
 
 int MyisamEngine::doDropTable(Session &session,
-                              const TableIdentifier &identifier)
+                              const identifier::Table &identifier)
 {
   session.getMessageCache().removeTableMessage(identifier);
 
@@ -1347,7 +1346,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 
 int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 message::Table& create_proto)
 {
   int error;
@@ -1393,7 +1392,7 @@ int MyisamEngine::doCreateTable(Session &session,
 }
 
 
-int MyisamEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
+int MyisamEngine::doRenameTable(Session &session, const identifier::Table &from, const identifier::Table &to)
 {
   session.getMessageCache().renameTableMessage(from, to);
 
@@ -1504,10 +1503,10 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("max-sort-file-size",
           po::value<uint64_t>(&max_sort_file_size)->default_value(INT32_MAX),
-          N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
+          _("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
   context("sort-buffer-size",
           po::value<sort_buffer_constraint>(&sort_buffer_size)->default_value(8192*1024),
-          N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
+          _("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
 }
 
 

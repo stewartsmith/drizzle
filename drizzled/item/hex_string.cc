@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -75,12 +75,12 @@ int64_t Item_hex_string::val_int()
 }
 
 
-my_decimal *Item_hex_string::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_hex_string::val_decimal(type::Decimal *decimal_value)
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
   uint64_t value= (uint64_t)val_int();
-  int2my_decimal(E_DEC_FATAL_ERROR, value, true, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, true, decimal_value);
   return (decimal_value);
 }
 

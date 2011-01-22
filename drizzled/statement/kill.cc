@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,13 +27,13 @@
 namespace drizzled
 {
 
-static bool kill_one_thread(session_id_t id, bool only_kill_query)
+bool statement::Kill::kill(session_id_t id, bool only_kill_query)
 {
-  drizzled::Session::shared_ptr session= session::Cache::singleton().find(id);
+  drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id);
 
-  if (session and session->isViewable())
+  if (session_param and session_param->isViewable(*getSession()->user()))
   {
-    session->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+    session_param->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
     return true;
   }
 
@@ -52,7 +52,7 @@ bool statement::Kill::execute()
     return true;
   }
 
-  if (kill_one_thread(static_cast<session_id_t>(it->val_int()), session->lex->type & ONLY_KILL_QUERY))
+  if (kill(static_cast<session_id_t>(it->val_int()), session->lex->type & ONLY_KILL_QUERY))
   {
     session->my_ok();
   }

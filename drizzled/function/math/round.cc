@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ void Item_func_round::fix_length_and_dec()
 
     precision-= decimals_delta - length_increase;
     decimals= min(decimals_to_set, DECIMAL_MAX_SCALE);
-    max_length= my_decimal_precision_to_length(precision, decimals,
+    max_length= class_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
     break;
   }
@@ -212,9 +212,9 @@ int64_t Item_func_round::int_op()
 }
 
 
-my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_round::decimal_op(type::Decimal *decimal_value)
 {
-  my_decimal val, *value= args[0]->val_decimal(&val);
+  type::Decimal val, *value= args[0]->val_decimal(&val);
   int64_t dec= args[1]->val_int();
 
   if (dec >= 0 || args[1]->unsigned_flag)
@@ -223,7 +223,7 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
     dec= INT_MIN;
 
   if (!(null_value= (args[0]->null_value || args[1]->null_value ||
-                     my_decimal_round(E_DEC_FATAL_ERROR, value, (int) dec,
+                     class_decimal_round(E_DEC_FATAL_ERROR, value, (int) dec,
                                       truncate, decimal_value) > 1)))
   {
     decimal_value->frac= decimals;

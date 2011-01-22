@@ -1,3 +1,29 @@
+2010-09-06	The InnoDB Team
+	* dict/dict0load.c, innodb_bug53756.test innodb_bug53756.result
+	Fix Bug #53756 	ALTER TABLE ADD PRIMARY KEY affects crash recovery
+
+2010-08-24	The InnoDB Team
+
+	* handler/ha_innodb.c, dict/dict0dict.c:
+	Fix Bug #55832 selects crash too easily when innodb_force_recovery>3
+
+2010-08-03	The InnoDB Team
+	* include/dict0dict.h, include/dict0dict.ic, row/row0mysql.c:
+	Fix Bug#54678 InnoDB, TRUNCATE, ALTER, I_S SELECT, crash or deadlock
+
+2010-08-03	The InnoDB Team
+
+
+	* include/ut0mem.h, ut/ut0mem.c:
+	Fix Bug #55627 segv in ut_free pars_lexer_close innobase_shutdown
+	innodb-use-sys-malloc=0
+
+2010-08-01	The InnoDB Team
+
+	* handler/ha_innodb.cc
+	Fix Bug #55382 Assignment with SELECT expressions takes unexpected
+	S locks in READ COMMITTED
+
 2010-07-27	The InnoDB Team
 
 	* include/mem0pool.h, mem/mem0mem.c, mem/mem0pool.c, srv/srv0start.c:
@@ -22,8 +48,8 @@
 
 2010-06-29	The InnoDB Team
 
-	* btr/btr0cur.c, include/btr0cur.h,
-	include/row0mysql.h, row/row0merge.c, row/row0sel.c:
+	* btr/btr0cur.c, include/btr0cur.h, include/row0mysql.h,
+	row/row0merge.c, row/row0sel.c:
 	Fix Bug#54358 READ UNCOMMITTED access failure of off-page DYNAMIC
 	or COMPRESSED columns
 
@@ -60,7 +86,7 @@
 
 	* dict/dict0load.c, fil/fil0fil.c:
 	Fix Bug#54658: InnoDB: Warning: allocated tablespace %lu,
-	old maximum was 0 (introduced in Bug #53578 fix)
+	old maximum was 0 (introduced in Bug#53578 fix)
 
 2010-06-16	The InnoDB Team
 
@@ -185,6 +211,21 @@
 	in InnoDB 5.1+
 
 2010-04-26	The InnoDB Team
+
+	* btr/btr0cur.c, dict/dict0dict.c, dict/dict0load.c,
+	handler/ha_innodb.cc, include/dict0dict.h, row/row0mysql.c,
+	innodb_bug53046.result, innodb_bug53046.test:
+	Fix Bug#53046 dict_update_statistics_low can still be run
+	concurrently on same table
+
+2010-11-03	The InnoDB Team
+
+	* fil/fil0fil.c, fsp/fsp0fsp.c, handler/ha_innodb.cc,
+	include/fil0fil.h, include/univ.i:
+	Fix Bug #54538 - use of exclusive innodb dictionary lock limits
+	performance.
+
+2010-11-02	The InnoDB Team
 
 	* row/row0sel.c:
 	Fix Bug#52663 Lost update incrementing column value under
@@ -428,6 +469,18 @@
 	transactions will cause assert.
 
 2009-12-02	The InnoDB Team
+
+	* handler/ha_innodb.cc, innodb_bug56143.result, innodb_bug56143.test:
+	Fix Bug#56143 too many foreign keys causes output of show create
+	table to become invalid
+
+2010-10-14	The InnoDB Team
+
+	* dict/dict0dict.c, handler/handler0alter.cc, include/dict0dict.h
+	row/row0merge.c:
+	Fix Bug #55084 Innodb crash and corruption after alter table
+
+2010-11-10	The InnoDB Team
 
 	* srv/srv0start.c:
 	Display the zlib version number at startup.

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,21 +37,24 @@
 #include "drizzled/util/storable.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/pthread_globals.h"
-
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include <map>
-#include <string>
+#include <algorithm>
 #include <bitset>
 #include <deque>
+#include <map>
+#include <string>
 
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/open_tables_state.h"
 #include "drizzled/internal_error_handler.h"
 #include "drizzled/diagnostics_area.h"
 #include "drizzled/plugin/authorization.h"
+
+#include "drizzled/catalog/instance.h"
+#include "drizzled/catalog/local.h"
 
 #include <boost/unordered_map.hpp>
 
@@ -59,6 +62,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/make_shared.hpp>
+
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -308,7 +313,6 @@ struct Ha_data
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
-typedef int64_t session_id_t;
 
 class Session : public Open_tables_state
 {
@@ -317,6 +321,16 @@ public:
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
   typedef Session* Ptr;
   typedef boost::shared_ptr<Session> shared_ptr;
+  typedef Session& reference;
+  typedef const Session& const_reference;
+  typedef const Session* const_pointer;
+  typedef Session* pointer;
+
+  static shared_ptr make_shared(plugin::Client *client, catalog::Instance::shared_ptr instance_arg)
+  {
+    assert(instance_arg);
+    return boost::make_shared<Session>(client, instance_arg);
+  }
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -416,7 +430,8 @@ public:
 
   void resetQueryString()
   {
-    return query.reset(new std::string);
+    query.reset();
+    _state.reset();
   }
 
   /*
@@ -428,9 +443,67 @@ public:
   {
     QueryString tmp_string(getQueryString());
 
+    if (not tmp_string)
+    {
+      length= 0;
+      return NULL;
+    }
+
     length= tmp_string->length();
     char *to_return= strmake(tmp_string->c_str(), tmp_string->length());
     return to_return;
+  }
+
+  class State {
+    std::vector <char> _query;
+
+  public:
+    typedef boost::shared_ptr<State> const_shared_ptr;
+
+    State(const char *in_packet, size_t in_packet_length)
+    {
+      if (in_packet_length)
+      {
+        size_t minimum= std::min(in_packet_length, static_cast<size_t>(PROCESS_LIST_WIDTH));
+        _query.resize(minimum + 1);
+        memcpy(&_query[0], in_packet, minimum);
+      }
+      else
+      {
+        _query.resize(0);
+      }
+    }
+
+    const char *query() const
+    {
+      if (_query.size())
+        return &_query[0];
+
+      return "";
+    }
+
+    const char *query(size_t &size) const
+    {
+      if (_query.size())
+      {
+        size= _query.size() -1;
+        return &_query[0];
+      }
+
+      size= 0;
+      return "";
+    }
+  protected:
+    friend class Session;
+    typedef boost::shared_ptr<State> shared_ptr;
+  };
+private:
+  State::shared_ptr  _state; 
+public:
+
+  State::const_shared_ptr state()
+  {
+    return _state;
   }
 
   /**
@@ -445,13 +518,18 @@ public:
     the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
-  std::string db;
+private:
+  util::string::shared_ptr _schema;
+public:
 
-  const std::string &getSchema() const
+  util::string::const_shared_ptr schema() const
   {
-    return db;
+    if (_schema)
+      return _schema;
+
+    return util::string::const_shared_ptr(new std::string(""));
   }
-  std::string catalog;
+
   /* current cache key */
   std::string query_cache_key;
   /**
@@ -463,7 +541,10 @@ public:
   static const char * const DEFAULT_WHERE;
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
+private:
   plugin::Client *client; /**< Pointer to client object */
+
+public:
 
   void setClient(plugin::Client *client_arg);
 
@@ -500,7 +581,7 @@ public:
   char *thread_stack;
 
 private:
-  SecurityContext security_ctx;
+  identifier::User::shared_ptr security_ctx;
 
   int32_t scoreboard_index;
 
@@ -509,14 +590,17 @@ private:
     assert(this->dbug_sentry == Session_SENTRY_MAGIC);
   }
 public:
-  const SecurityContext& getSecurityContext() const
+  identifier::User::const_shared_ptr user() const
   {
-    return security_ctx;
+    if (security_ctx)
+      return security_ctx;
+
+    return identifier::User::const_shared_ptr();
   }
 
-  SecurityContext& getSecurityContext()
+  void setUser(identifier::User::shared_ptr arg)
   {
-    return security_ctx;
+    security_ctx= arg;
   }
 
   int32_t getScoreboardIndex()
@@ -532,7 +616,7 @@ public:
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable() const;
+  bool isViewable(identifier::User::const_reference) const;
 
   /**
     Used in error messages to tell user in what part of MySQL we found an
@@ -584,11 +668,31 @@ public:
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* @note the following three members should likely move to Client */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
-  time_t start_time;
-  time_t user_time;
-  uint64_t thr_create_utime; /**< track down slow pthread_create */
-  uint64_t start_utime;
-  uint64_t utime_after_lock;
+
+private:
+  boost::posix_time::ptime _epoch;
+  boost::posix_time::ptime _connect_time;
+  boost::posix_time::ptime _start_timer;
+  boost::posix_time::ptime _end_timer;
+
+  boost::posix_time::ptime _user_time;
+public:
+  uint64_t utime_after_lock; // This used by Innodb.
+
+  void resetUserTime()
+  {
+    _user_time= boost::posix_time::not_a_date_time;
+  }
+
+  const boost::posix_time::ptime &start_timer() const
+  {
+    return _start_timer;
+  }
+
+  void getTimeDifference(boost::posix_time::time_duration &result_arg, const boost::posix_time::ptime &arg) const
+  {
+    result_arg=  arg - _start_timer;
+  }
 
   thr_lock_type update_lock_default;
 
@@ -609,6 +713,7 @@ private:
   */
   query_id_t query_id;
   query_id_t warn_query_id;
+
 public:
   void **getEngineData(const plugin::MonitoredInTransaction *monitored);
   ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
@@ -782,6 +887,12 @@ public:
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
+
+  uint32_t getRowCount() const
+  {
+    return row_count;
+  }
+
   session_id_t thread_id;
   uint32_t tmp_table;
   enum global_read_lock_t
@@ -805,7 +916,7 @@ public:
     _global_read_lock= arg;
   }
 
-  DrizzleLock *lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen);
+  DrizzleLock *lockTables(Table **tables, uint32_t count, uint32_t flags);
   bool lockGlobalReadLock();
   bool lock_table_names(TableList *table_list);
   bool lock_table_names_exclusively(TableList *table_list);
@@ -864,6 +975,7 @@ public:
     return &_killed;
   }
 
+  bool is_admin_connection;
   bool some_tables_deleted;
   bool no_errors;
   bool password;
@@ -872,7 +984,7 @@ public:
     can not continue. In particular, disables activation of
     CONTINUE or EXIT handlers of stored routines.
     Reset in the end of processing of the current user request, in
-    @see mysql_reset_session_for_next_command().
+    @see reset_session_for_next_command().
   */
   bool is_fatal_error;
   /**
@@ -1044,7 +1156,7 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(plugin::Client *client_arg);
+  Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
   virtual ~Session();
 
   void cleanup(void);
@@ -1147,6 +1259,7 @@ public:
    */
   static bool schedule(Session::shared_ptr&);
 
+  static void unlink(session_id_t &session_id);
   static void unlink(Session::shared_ptr&);
 
   /*
@@ -1157,64 +1270,101 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  inline time_t query_start() { return start_time; }
-  inline void set_time()
+  type::Time::epoch_t query_start()
   {
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    start_utime= utime_after_lock= (mytime-epoch).total_microseconds();
-
-    if (user_time)
-    {
-      start_time= user_time;
-      connect_microseconds= start_utime;
-    }
-    else 
-      start_time= (mytime-epoch).total_seconds();
+    return getCurrentTimestampEpoch();
   }
-  inline void	set_current_time()    { start_time= time(NULL); }
-  inline void	set_time(time_t t)
+
+  void set_time()
   {
-    start_time= user_time= t;
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    uint64_t t_mark= (mytime-epoch).total_microseconds();
+    _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();
+    utime_after_lock= (_start_timer - _epoch).total_microseconds();
+  }
 
-    start_utime= utime_after_lock= t_mark;
+  void set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
+  {
+    _user_time= boost::posix_time::from_time_t(t);
   }
-  void set_time_after_lock()  { 
-     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-     utime_after_lock= (mytime-epoch).total_microseconds();
+
+  void set_time_after_lock()
+  { 
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
+    utime_after_lock= (mytime - _epoch).total_microseconds();
   }
+
+  void set_end_timer()
+  {
+    _end_timer= boost::posix_time::microsec_clock::universal_time();
+    status_var.execution_time_nsec+=(_end_timer - _start_timer).total_microseconds();
+  }
+
+  uint64_t getElapsedTime() const
+  {
+    return (_end_timer - _start_timer).total_microseconds();
+  }
+
   /**
    * Returns the current micro-timestamp
    */
-  inline uint64_t getCurrentTimestamp()  
+  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
   { 
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    uint64_t t_mark= (mytime-epoch).total_microseconds();
+    type::Time::epoch_t t_mark;
+
+    if (actual)
+    {
+      boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
+      t_mark= (mytime - _epoch).total_microseconds();
+    }
+    else
+    {
+      t_mark= (_end_timer - _epoch).total_microseconds();
+    }
 
     return t_mark; 
   }
-  inline uint64_t found_rows(void)
+
+  // We may need to set user on this
+  type::Time::epoch_t getCurrentTimestampEpoch() const
+  { 
+    if (not _user_time.is_not_a_date_time())
+      return (_user_time - _epoch).total_seconds();
+
+    return (_start_timer - _epoch).total_seconds();
+  }
+
+  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
+  { 
+    if (not _user_time.is_not_a_date_time())
+    {
+      fraction_arg= 0;
+      return (_user_time - _epoch).total_seconds();
+    }
+
+    fraction_arg= _start_timer.time_of_day().fractional_seconds() % 1000000;
+    return (_start_timer - _epoch).total_seconds();
+  }
+
+  uint64_t found_rows(void) const
   {
     return limit_found_rows;
   }
+
   /** Returns whether the session is currently inside a transaction */
-  inline bool inTransaction()
+  bool inTransaction() const
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
+
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
+
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const std::string &str,
                               bool allocate_lex_string);
 
   int send_explain_fields(select_result *result);
+
   /**
     Clear the current error, if any.
     We do not clear is_fatal_error or is_fatal_sub_stmt_error since we
@@ -1309,12 +1459,8 @@ public:
     database usually involves other actions, like switching other database
     attributes including security context. In the future, this operation
     will be made private and more convenient interface will be provided.
-
-    @return Operation status
-      @retval false Success
-      @retval true  Out-of-memory error
   */
-  bool set_db(const std::string &new_db);
+  void set_db(const std::string &new_db);
 
   /*
     Copy the current database to the argument. Use the current arena to
@@ -1336,7 +1482,7 @@ public:
     @param level the error level
     @return true if the error is handled
   */
-  virtual bool handle_error(uint32_t sql_errno, const char *message,
+  virtual bool handle_error(drizzled::error_t sql_errno, const char *message,
                             DRIZZLE_ERROR::enum_warning_level level);
 
   /**
@@ -1364,11 +1510,10 @@ public:
    * updates any status variables necessary.
    *
    * @param errcode	Error code to print to console
-   * @param should_lock 1 if we have have to lock LOCK_thread_count
    *
    * @note  For the connection that is doing shutdown, this is called twice
    */
-  void disconnect(uint32_t errcode, bool lock);
+  void disconnect(enum error_t errcode= EE_OK);
 
   /**
    * Check if user exists and the password supplied is correct.
@@ -1388,9 +1533,14 @@ public:
    * Returns the timestamp (in microseconds) of when the Session 
    * connected to the server.
    */
-  inline uint64_t getConnectMicroseconds() const
+  uint64_t getConnectMicroseconds() const
   {
-    return connect_microseconds;
+    return (_connect_time - _epoch).total_microseconds();
+  }
+
+  uint64_t getConnectSeconds() const
+  {
+    return (_connect_time - _epoch).total_seconds();
   }
 
   /**
@@ -1511,8 +1661,6 @@ public:
   
   
  private:
- /** Microsecond timestamp of when Session connected */
-  uint64_t connect_microseconds;
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */
@@ -1605,10 +1753,11 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
-  void close_data_files_and_morph_locks(const TableIdentifier &identifier);
+  void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
 private:
-  bool free_cached_table();
+  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+
 public:
 
   /**
@@ -1642,12 +1791,12 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, const TableIdentifier &identifier);
+  void drop_open_table(Table *table, const identifier::Table &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  table::Placeholder *table_cache_insert_placeholder(const TableIdentifier &identifier);
-  bool lock_table_name_if_not_cached(const TableIdentifier &identifier, Table **table);
+  table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
+  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
 
@@ -1656,13 +1805,13 @@ public:
     TableMessageCache table_message_cache;
 
   public:
-    bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-    bool removeTableMessage(const TableIdentifier &identifier);
-    bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-    bool doesTableMessageExist(const TableIdentifier &identifier);
-    bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
-
+    bool storeTableMessage(const identifier::Table &identifier, message::Table &table_message);
+    bool removeTableMessage(const identifier::Table &identifier);
+    bool getTableMessage(const identifier::Table &identifier, message::Table &table_message);
+    bool doesTableMessageExist(const identifier::Table &identifier);
+    bool renameTableMessage(const identifier::Table &from, const identifier::Table &to);
   };
+
 private:
   TableMessages _table_message_cache;
 
@@ -1673,7 +1822,7 @@ public:
   }
 
   /* Reopen operations */
-  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  bool reopen_tables();
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);
@@ -1710,8 +1859,8 @@ public:
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
-  table::Instance *getInstanceTable();
-  table::Instance *getInstanceTable(List<CreateField> &field_list);
+  table::Singular *getInstanceTable();
+  table::Singular *getInstanceTable(List<CreateField> &field_list);
 
 private:
   bool resetUsage()
@@ -1735,11 +1884,23 @@ public:
     return usage;
   }
 
+  catalog::Instance::const_reference catalog() const
+  {
+    return *(_catalog.get());
+  }
+
+  catalog::Instance::reference catalog()
+  {
+    return *(_catalog.get());
+  }
+
 private:
+  catalog::Instance::shared_ptr _catalog;
+
   // This lives throughout the life of Session
   bool use_usage;
   PropertyMap life_properties;
-  std::vector<table::Instance *> temporary_shares;
+  std::vector<table::Singular *> temporary_shares;
   struct rusage usage;
 };
 

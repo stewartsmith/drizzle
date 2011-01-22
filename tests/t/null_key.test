@@ -33,7 +33,7 @@ create table t2 like t1;
 create temporary table t2 like t1;
 show create table t2;
 insert into t2 select * from t1;
-alter table t1 modify b blob not null, add c int not null, drop key a, add unique key (a,b(20),c), drop key b, add key (b(10));
+alter table t1 modify b blob not null, add c int DEFAULT 42 not null, drop key a, add unique key (a,b(20),c), drop key b, add key (b(10));
 # @TODO Should this be a MyISAM-specific test or not?
 # Ignore "rows" in output -- inaccurate for InnoDB
 --replace_column 9 X

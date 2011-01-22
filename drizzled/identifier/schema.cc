@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +41,9 @@ using namespace std;
 namespace drizzled
 {
 
+namespace identifier
+{
+
 extern string drizzle_tmpdir;
 extern pid_t current_pid;
 
@@ -61,10 +64,9 @@ static size_t build_schema_filename(string &path, const string &db)
   return path.length();
 }
 
-SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
+Schema::Schema(const std::string &db_arg) :
   db(db_arg),
-  db_path(""),
-  catalog("LOCAL")
+  db_path("")
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);
@@ -78,53 +80,102 @@ SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
 
   if (not db_arg.empty())
   {
-    drizzled::build_schema_filename(db_path, db);
+    build_schema_filename(db_path, db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
 }
 
-void SchemaIdentifier::getSQLPath(std::string &arg) const
+void Schema::getSQLPath(std::string &arg) const
 {
-  arg.append(getSchemaName());
+  arg= db;
 }
 
-const std::string &SchemaIdentifier::getPath() const
+const std::string &Schema::getPath() const
 {
   return db_path;
 }
 
-bool SchemaIdentifier::compare(const std::string &arg) const
+bool Schema::compare(const std::string &arg) const
 {
   return boost::iequals(arg, db);
 }
 
-bool SchemaIdentifier::isValid() const
+bool Schema::compare(Schema::const_reference arg) const
 {
-  if (db.empty())
-    return false;
+  return boost::iequals(arg.getSchemaName(), db);
+}
 
-  if (db.size() > NAME_LEN)
-    return false;
+bool Schema::isValid() const
+{
+  bool error= false;
 
-  if (db.at(db.length() -1) == ' ')
-    return false;
-
-  const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
-
-  int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),
-                                          NAME_CHAR_LEN, &well_formed_error);
-
-  if (well_formed_error)
+  do
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", db.c_str());
+    if (db.empty())
+    {
+      error= true;
+      break;
+    }
+
+    if (db.size() > NAME_LEN)
+    {
+      error= true;
+      break;
+    }
+
+    if (db.at(db.length() -1) == ' ')
+    {
+      error= true;
+      break;
+    }
+
+    if (db.at(0) == '.')
+    {
+      error= true;
+      break;
+    }
+
+    {
+      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+
+      int well_formed_error;
+      uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),
+                                              NAME_CHAR_LEN, &well_formed_error);
+      if (well_formed_error or db.length() != res)
+      {
+        error= true;
+        break;
+      }
+    }
+  } while (0);
+
+  if (error)
+  {
+    my_error(ER_WRONG_DB_NAME, *this);
+
     return false;
   }
-
-  if (db.length() != res)
-    return false;
 
   return true;
 }
 
+const std::string &Schema::getCatalogName() const
+{
+  return drizzled::catalog::local_identifier().name();
+}
+
+std::ostream& operator<<(std::ostream& output, const Schema&identifier)
+{
+  output << "identifier::Schema:(";
+  output <<  catalog::local_identifier();
+  output << ", ";
+  output <<  identifier.getSchemaName().c_str();
+  output << ", ";
+  output << identifier.getPath().c_str();
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
+} /* namespace identifier */
 } /* namespace drizzled */

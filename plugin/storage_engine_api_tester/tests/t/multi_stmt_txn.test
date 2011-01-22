@@ -1,0 +1,24 @@
+select seapitester_clear_engine_state_history();
+create table t1 (a int) engine=storage_engine_api_tester;
+begin;
+select * from t1;
+select * from t1;
+commit;
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+drop table t1;
+
+create table t1 (a int) engine=storage_engine_api_tester;
+begin;
+select * from t1;
+insert into t1 values (1);
+insert into t1 values (1);
+insert into t1 values (1);
+select * from t1;
+insert into t1 values (1);
+select * from t1;
+commit;
+drop table t1;
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+

@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -200,6 +200,8 @@ ulint
 dict_load_foreigns(
 /*===============*/
 	const char*	table_name,	/*!< in: table name */
+	ibool		check_recursive,/*!< in: Whether to check recursive
+					load of tables chained by FK */
 	ibool		check_charsets);/*!< in: TRUE=check charsets
 					compatibility */
 /********************************************************************//**

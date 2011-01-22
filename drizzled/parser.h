@@ -66,12 +66,15 @@
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/statement/analyze.h>
+#include <drizzled/statement/catalog.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/commit.h>
 #include <drizzled/statement/create_index.h>
 #include <drizzled/statement/create_schema.h>
 #include <drizzled/statement/create_table.h>
+#include <drizzled/statement/create_table/like.h>
+#include <drizzled/statement/create_table/select.h>
 #include <drizzled/statement/delete.h>
 #include <drizzled/statement/drop_index.h>
 #include <drizzled/statement/drop_schema.h>
@@ -104,5 +107,7 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
 #include "drizzled/internal/m_string.h"
+
+#include "drizzled/item/boolean.h"
 
 #endif /* DRIZZLED_PARSER_H */

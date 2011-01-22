@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -85,9 +85,6 @@ ut_rnd_gen_ulint(void)
 /*==================*/
 {
 	ulint	rnd;
-	ulint	n_bits;
-
-	n_bits = 8 * sizeof(ulint);
 
 	ut_rnd_ulint_counter = UT_RND1 * ut_rnd_ulint_counter + UT_RND2;
 

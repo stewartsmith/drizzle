@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -247,7 +247,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
                        cached_table->select_lex != outer_context->select_lex);
             }
             prev_subselect_item->used_tables_cache|= from_field->getTable()->map;
-            prev_subselect_item->const_item_cache= 0;
+            prev_subselect_item->const_item_cache= false;
             break;
           }
         }
@@ -255,7 +255,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 
         /* Reference is not found => depend on outer (or just error). */
         prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-        prev_subselect_item->const_item_cache= 0;
+        prev_subselect_item->const_item_cache= false;
 
         outer_context= outer_context->outer_context;
       } while (outer_context);
@@ -430,7 +430,7 @@ String *Item_ref::str_result(String* str)
 }
 
 
-my_decimal *Item_ref::val_decimal_result(my_decimal *decimal_value)
+type::Decimal *Item_ref::val_decimal_result(type::Decimal *decimal_value)
 {
   if (result_field)
   {
@@ -451,22 +451,25 @@ bool Item_ref::val_bool_result()
     switch (result_field->result_type()) {
     case INT_RESULT:
       return result_field->val_int() != 0;
+
     case DECIMAL_RESULT:
-    {
-      my_decimal decimal_value;
-      my_decimal *val= result_field->val_decimal(&decimal_value);
-      if (val)
-        return !my_decimal_is_zero(val);
-      return 0;
-    }
+      {
+        type::Decimal decimal_value;
+        type::Decimal *val= result_field->val_decimal(&decimal_value);
+        if (val)
+          return not val->is_zero();
+        return 0;
+      }
+
     case REAL_RESULT:
     case STRING_RESULT:
       return result_field->val_real() != 0.0;
+
     case ROW_RESULT:
-    default:
       assert(0);
     }
   }
+
   return val_bool();
 }
 
@@ -514,15 +517,15 @@ bool Item_ref::is_null()
 }
 
 
-bool Item_ref::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Item_ref::get_date(type::Time *ltime,uint32_t fuzzydate)
 {
   return (null_value=(*ref)->get_date_result(ltime,fuzzydate));
 }
 
 
-my_decimal *Item_ref::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_ref::val_decimal(type::Decimal *decimal_value)
 {
-  my_decimal *val= (*ref)->val_decimal_result(decimal_value);
+  type::Decimal *val= (*ref)->val_decimal_result(decimal_value);
   null_value= (*ref)->null_value;
   return val;
 }

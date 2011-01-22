@@ -9,3 +9,5 @@ CREATE INDEX table_1_index ON table_1 (a,b);
 
 This would create an index on table_t named  table_1_index that convered
 columns a and b.
+
+FIXME: how this is implemented currently. i.e. no fast add index

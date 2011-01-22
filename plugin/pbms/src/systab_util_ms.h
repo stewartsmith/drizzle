@@ -1,6 +1,6 @@
 #ifndef __SYSTAB_UTIL_H__
 #define __SYSTAB_UTIL_H__
-/* Copyright (c) 2009 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2009 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *

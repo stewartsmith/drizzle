@@ -1,0 +1,44 @@
+# we are going to have everything owned by a particular connection
+connect (barrier_owner,localhost,root,,);
+connection barrier_owner;
+set @my_barrier= "barrier";
+SELECT CREATE_BARRIER(@my_barrier);
+set @my_barrier= "barrier";
+SELECT CREATE_BARRIER(@my_barrier);
+CREATE TABLE t1 (A VARCHAR(150));
+SET @execute= "SELECT WAIT('barrier')";
+INSERT INTO t1 VALUES (@execute), (@execute), (@execute);
+
+
+connection default;
+set @my_barrier= "barrier";
+SELECT USER_BARRIER_NAME FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@my_barrier;
+SELECT SIGNAL(@my_barrier);
+
+SELECT EXECUTE(A) FROM t1;
+SELECT WAIT_UNTIL(@my_barrier, 3);
+ 
+### Now lets see what the processlist shows.
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+SELECT SIGNAL(@my_barrier);
+
+
+#
+# We now repeat the test above, but we will check that we can kill the
+# children we created.
+#
+TRUNCATE t1;
+# Now we are going to add a way to identify our children.
+SET @execute= "SELECT WAIT('barrier'), 2";
+INSERT INTO t1 VALUES (@execute), (@execute), (@execute);
+
+SELECT EXECUTE(A) FROM t1;
+SELECT WAIT_UNTIL(@my_barrier, 3);
+
+### Now lets see what the processlist shows.
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+# Kill!
+SELECT IF(KILL(ID), "YES", "NO") FROM DATA_DICTIONARY.PROCESSLIST WHERE INFO LIKE "%2";
+SELECT SIGNAL(@my_barrier);
+
+DROP TABLE t1;

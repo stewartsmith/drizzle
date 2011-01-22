@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -39,12 +39,19 @@ as the two-way list base node. The base node contains pointers
 to both ends of the list and a count of nodes in the list (excluding
 the base node from the count).
 @param TYPE	the name of the list node data type */
-#define UT_LIST_BASE_NODE_T(TYPE)\
-struct {\
-	ulint	count;	/*!< count of nodes in list */\
-	TYPE *	start;	/*!< pointer to list start, NULL if empty */\
-	TYPE *	end;	/*!< pointer to list end, NULL if empty */\
-}\
+#ifdef __cplusplus
+template<class T>
+class ut_list_base_node
+{
+public:
+  size_t count;	/*!< count of nodes in list */\
+  T *	start;	/*!< pointer to list start, NULL if empty */\
+  T *	end;	/*!< pointer to list end, NULL if empty */\
+};
+#define UT_LIST_BASE_NODE_T(TYPE) ut_list_base_node<TYPE>
+#else
+#define UT_LIST_BASE_NODE_T(TYPE) int
+#endif
 
 /*******************************************************************//**
 This macro expands to the unnamed type definition of a struct which
@@ -220,8 +227,12 @@ Gets the first node in a two-way list.
 Gets the last node in a two-way list.
 @param BASE	the base node (not a pointer to it)
 @return		last node, or NULL if the list is empty */
+#ifdef __cplusplus
 #define UT_LIST_GET_LAST(BASE)\
 	(BASE).end
+#else
+#define UT_LIST_GET_LAST(BASE) (BASE= NULL)
+#endif
 
 /********************************************************************//**
 Checks the consistency of a two-way list.

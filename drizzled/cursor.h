@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -145,6 +145,7 @@ inline key_part_map make_prev_keypart_map(T a)
 */
 class Cursor
 {
+  friend class SEAPITesterCursor;
   Table &table;               /* The current open table */
   plugin::StorageEngine &engine;      /* storage engine of this Cursor */
 
@@ -230,10 +231,10 @@ public:
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
-  int ha_open(const TableIdentifier &identifier, int mode, int test_if_locked);
-  int startIndexScan(uint32_t idx, bool sorted);
+  int ha_open(const identifier::Table &identifier, int mode, int test_if_locked);
+  int startIndexScan(uint32_t idx, bool sorted) __attribute__ ((warn_unused_result));
   int endIndexScan();
-  int startTableScan(bool scan);
+  int startTableScan(bool scan) __attribute__ ((warn_unused_result));
   int endTableScan();
   int ha_reset();
 
@@ -247,9 +248,9 @@ public:
     and doDeleteRecord() below.
   */
   int ha_external_lock(Session *session, int lock_type);
-  int insertRecord(unsigned char * buf);
-  int updateRecord(const unsigned char * old_data, unsigned char * new_data);
-  int deleteRecord(const unsigned char * buf);
+  int insertRecord(unsigned char * buf) __attribute__ ((warn_unused_result));
+  int updateRecord(const unsigned char * old_data, unsigned char * new_data) __attribute__ ((warn_unused_result));
+  int deleteRecord(const unsigned char * buf) __attribute__ ((warn_unused_result));
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
@@ -349,7 +350,7 @@ public:
                                  const unsigned char * key,
                                  key_part_map keypart_map,
                                  enum ha_rkey_function find_flag);
-  virtual int index_next(unsigned char *)
+  virtual int index_next(unsigned char *) __attribute__ ((warn_unused_result))
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_prev(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }
@@ -523,7 +524,7 @@ private:
   */
 
   virtual int open(const char *, int , uint32_t ) { assert(0); return -1; }
-  virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  virtual int doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked);
   virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
   virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }
@@ -534,7 +535,7 @@ private:
     if rnd_init allocates the cursor, second call should position it
     to the start of the table, no need to deallocate and allocate it again
   */
-  virtual int doStartTableScan(bool scan)= 0;
+  virtual int doStartTableScan(bool scan) __attribute__ ((warn_unused_result)) = 0;
   virtual int doEndTableScan() { return 0; }
   virtual int doInsertRecord(unsigned char *)
   {
@@ -654,66 +655,66 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
                    uint64_t setup_tables_done_option);
 void free_underlaid_joins(Session *session, Select_Lex *select);
 
-bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
+bool handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,
                                                       TableList *table));
-bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
-bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
+bool derived_prepare(Session *session, LEX *lex, TableList *t);
+bool derived_filling(Session *session, LEX *lex, TableList *t);
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic);
 
-bool mysql_create_table(Session *session,
-                        const TableIdentifier &identifier,
+bool create_table(Session *session,
+                        const identifier::Table &identifier,
                         HA_CREATE_INFO *create_info,
                         message::Table &table_proto,
                         AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count,
                         bool is_if_not_exists);
 
-bool mysql_create_table_no_lock(Session *session,
-                                const TableIdentifier &identifier,
+bool create_table_no_lock(Session *session,
+                                const identifier::Table &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
                                 bool tmp_table, uint32_t select_field_count,
                                 bool is_if_not_exists);
 
-bool mysql_create_like_table(Session* session,
-                             const TableIdentifier &destination_identifier,
-                             TableList* table, TableList* src_table,
-                             message::Table &create_table_proto,
-                             bool is_if_not_exists,
-                             bool is_engine_set);
+bool create_like_table(Session* session,
+                       identifier::Table::const_reference destination_identifier,
+                       identifier::Table::const_reference source_identifier,
+                       message::Table &create_table_proto,
+                       bool is_if_not_exists,
+                       bool is_engine_set);
 
-bool mysql_rename_table(Session &session,
+bool rename_table(Session &session,
                         plugin::StorageEngine *base,
-                        const TableIdentifier &old_identifier,
-                        const TableIdentifier &new_identifier);
+                        const identifier::Table &old_identifier,
+                        const identifier::Table &new_identifier);
 
-bool mysql_prepare_update(Session *session, TableList *table_list,
+bool prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, Order *order);
-int mysql_update(Session *session,TableList *tables,List<Item> &fields,
+int update_query(Session *session,TableList *tables,List<Item> &fields,
                  List<Item> &values,COND *conds,
                  uint32_t order_num, Order *order, ha_rows limit,
                  enum enum_duplicates handle_duplicates, bool ignore);
-bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
+bool prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,
                           List<Item> &update_fields,
                           List<Item> &update_values, enum_duplicates duplic,
                           COND **where, bool select_insert,
                           bool check_fields, bool abort_on_warning);
-bool mysql_insert(Session *session,TableList *table,List<Item> &fields,
+bool insert_query(Session *session,TableList *table,List<Item> &fields,
                   List<List_item> &values, List<Item> &update_fields,
                   List<Item> &update_values, enum_duplicates flag,
                   bool ignore);
 int check_that_all_fields_are_given_values(Session *session, Table *entry,
                                            TableList *table_list);
-int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds);
-bool mysql_delete(Session *session, TableList *table_list, COND *conds,
+int prepare_delete(Session *session, TableList *table_list, Item **conds);
+bool delete_query(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
-bool mysql_truncate(Session& session, TableList *table_list);
+bool truncate(Session& session, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
@@ -722,8 +723,8 @@ bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
-Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
-void abort_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
+Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &identifier);
+void abort_locked_tables(Session *session, const drizzled::identifier::Table &identifier);
 extern Field *not_found_field;
 extern Field *view_ref_found;
 

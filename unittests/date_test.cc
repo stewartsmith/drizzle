@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <gtest/gtest.h>
-#include <drizzled/decimal.h>
+#include <drizzled/type/decimal.h>
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
 
@@ -439,7 +439,7 @@ TEST_F(DateTest, to_time_t)
   time_t time;
   TemporalGenerator::DateGen::make_date(&date, 1990, 9, 9);
   
-  date.to_time_t(&time);
+  date.to_time_t(time);
   
   ASSERT_EQ(652838400, time);
 }
@@ -461,7 +461,7 @@ TEST_F(DateTest, from_time_t)
 
 TEST_F(DateTest, to_decimal)
 {
-  drizzled::my_decimal to;
+  drizzled::type::Decimal to;
   TemporalGenerator::DateGen::make_date(&date, 1987, 5, 6);
 
   date.to_decimal(&to);

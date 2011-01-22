@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2007, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2007, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -33,10 +33,7 @@ Created November 07, 2007 Vasil Dimov
 *******************************************************/
 
 #if defined(BUILD_DRIZZLE)
-#if defined(__cplusplus)
-extern "C"
-{
-#else
+#if !defined(__cplusplus)
 #include <stdbool.h>
 #endif
 /**
@@ -46,9 +43,6 @@ extern "C"
   @param session  user thread connection handle
   @return  thread id
 */
-#if defined(__cplusplus)
-extern "C"
-#endif
 unsigned long session_get_thread_id(const void *session);
 
 /**
@@ -66,7 +60,4 @@ int session_non_transactional_update(const void *session);
 */
 void session_mark_transaction_to_rollback(void *session, bool all);
 
-#if defined(__cplusplus)
-}
-#endif
 #endif

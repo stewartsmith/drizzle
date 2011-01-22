@@ -25,8 +25,11 @@
 
 #include <string>
 
-class ReplicationLog: public drizzled::plugin::TransactionApplier 
+class ReplicationLog :
+  public drizzled::plugin::TransactionApplier 
 {
+  ReplicationLog(const ReplicationLog&);
+  ReplicationLog& operator=(const ReplicationLog&);
 public:
   ReplicationLog();
 

@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,14 +26,14 @@
 
 using namespace std;
 
-static drizzled::NativeFunctionsMap native_functions_map;
+static drizzled::FunctionContainer::Map _functions_map;
 
 namespace drizzled
 {
 
-NativeFunctionsMap &FunctionContainer::getMap()
+FunctionContainer::Map &FunctionContainer::getMap()
 {
-  return native_functions_map;
+  return _functions_map;
 }
 
 } /* namespace drizzled */

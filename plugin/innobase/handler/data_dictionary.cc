@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2007, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2007, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -22,7 +22,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include "drizzled/current_session.h"
 
-extern "C" {
 #include "trx0i_s.h"
 #include "trx0trx.h" /* for TRX_QUE_STATE_STR_MAX_LEN */
 #include "buf0buddy.h" /* for i_s_cmpmem */
@@ -34,7 +33,6 @@ extern "C" {
 #include "dict0load.h"	/* for file sys_tables related info. */
 #include "dict0mem.h"
 #include "dict0types.h"
-}
 #include "handler0vars.h"
 
 using namespace drizzled;
@@ -897,14 +895,15 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
     push(static_cast<int64_t>(row->trx_weight));
     push(static_cast<uint64_t>(row->trx_mysql_thread_id));
     if (row->trx_query)
-    {
       push(row->trx_query);
-    }
     else
-    {
       push();
-    }
-    push(row->trx_operation_state);
+
+    if (row->trx_operation_state)
+      push(row->trx_operation_state);
+    else
+      push();
+
 //    push(row->trx_tables_in_use);
     push(static_cast<uint64_t>(row->trx_tables_locked));
     push(static_cast<uint64_t>(row->trx_lock_structs));
@@ -915,7 +914,11 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
     push(row->trx_isolation_level);
     push(static_cast<uint64_t>(row->trx_unique_checks));
     push(static_cast<uint64_t>(row->trx_foreign_key_checks));
-    push(row->trx_foreign_key_error);
+    if (row->trx_foreign_key_error)
+      push(row->trx_foreign_key_error);
+    else
+      push();
+
     push(static_cast<uint64_t>(row->trx_has_search_latch));
     push(static_cast<uint64_t>(row->trx_search_latch_timeout));
 }

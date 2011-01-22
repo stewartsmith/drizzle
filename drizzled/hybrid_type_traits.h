@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,10 @@ class Item;
 class Field;
 class Hybrid_type;
 class String;
-class my_decimal;
+
+namespace type {
+class Decimal;
+}
 
 /* Hybryd_type_traits interface + default implementation for REAL_RESULT */
 
@@ -51,7 +54,7 @@ public:
   virtual int64_t val_int(Hybrid_type *val,
                           bool unsigned_flag) const;
   virtual double val_real(Hybrid_type *val) const;
-  virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
+  virtual type::Decimal *val_decimal(Hybrid_type *val, type::Decimal *buf) const;
   virtual String *val_str(Hybrid_type *val, String *buf,
                           uint8_t decimals) const;
 

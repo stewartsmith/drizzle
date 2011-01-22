@@ -263,22 +263,22 @@ col1	col2
 2	3
 3	4
 4	7
-alter table t1 add co3 int not null;
+alter table t1 add co3 int DEFAULT 42 not null;
 select * from t1;
 col1	col2	co3
-1	1	0
-5	2	0
-2	3	0
-3	4	0
-4	7	0
+1	1	42
+5	2	42
+2	3	42
+3	4	42
+4	7	42
 update t1 set col2='9' where col1='2';
 select * from t1;
 col1	col2	co3
-1	1	0
-5	2	0
-2	9	0
-3	4	0
-4	7	0
+1	1	42
+5	2	42
+2	9	42
+3	4	42
+4	7	42
 drop table t1;
 create TEMPORARY table t1 (a int not null , b int, primary key (a)) engine = MyISAM;
 create TEMPORARY table t2 (a int not null , b int, primary key (a)) engine = MEMORY;
@@ -873,10 +873,12 @@ create TEMPORARY table t1 (col1 int)ENGINE=MyISAM;
 create TEMPORARY table t2 (col1 int,stamp TIMESTAMP,INDEX stamp_idx
 (stamp))ENGINE=MyISAM;
 insert into t1 values (1),(2),(3);
-insert into t2 values (1, 20020204130000),(2, 20020204130000),(4,20020204310000 ),(5,20020204230000);
-ERROR HY000: Received an invalid value '20020204310000' for a UNIX timestamp.
-SELECT col1 FROM t1 UNION SELECT col1 FROM t2 WHERE stamp <
-'20020204120000' GROUP BY col1;
+insert into t2 values (1, 20020204130000);
+insert into t2 values (2, 20020204130000);
+insert into t2 values (4, 20020204310000);
+ERROR HY000: Received an invalid timestamp value '20020204310000'.
+insert into t2 values (5, 20020204230000);
+SELECT col1 FROM t1 UNION SELECT col1 FROM t2 WHERE stamp < '20020204120000' GROUP BY col1;
 col1
 1
 2
@@ -1658,5 +1660,6 @@ drop table t1,t2;
 create TEMPORARY table t1 ( a int ) ENGINE=MyISAM;
 BEGIN;
 INSERT INTO t1 VALUES (1);
+COMMIT;
 ALTER TABLE t1 ENGINE=MyISAM;
 DROP TABLE t1;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -143,7 +143,7 @@ public:
 		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->record[0]);
 		assumed_str_field->table->use_all_columns();
 #endif
-		value = assumed_str_field->val_str(value);
+		value = assumed_str_field->val_str_internal(value);
 		
 		assumed_str_field->ptr = old_ptr;
 	}

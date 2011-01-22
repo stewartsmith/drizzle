@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,9 +44,8 @@ namespace statement
 class Statement
 {
 public:
-  Statement(Session *in_session)
-    : 
-      session(in_session)
+  Statement(Session *in_session) : 
+    session(in_session)
   {}
 
   virtual ~Statement() {}
@@ -62,6 +61,8 @@ public:
   {
     return session;
   }
+
+  virtual bool isShow() { return false; }
 
 protected:
 

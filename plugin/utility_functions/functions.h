@@ -24,10 +24,14 @@
 #include <drizzled/function/func.h>
 #include <drizzled/plugin/function.h>
 
+#include "plugin/utility_functions/assert.h"
 #include "plugin/utility_functions/catalog.h"
+#include "plugin/utility_functions/execute.h"
 #include "plugin/utility_functions/global_read_lock.h"
 #include "plugin/utility_functions/kill.h"
+#include "plugin/utility_functions/result_type.h"
 #include "plugin/utility_functions/schema.h"
+#include "plugin/utility_functions/typeof.h"
 #include "plugin/utility_functions/user.h"
 
 #endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Joseph Daly <skinny.moey@gmail.com>
+ * Copyright (C) 2010 Joseph Daly <skinny.moey@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -166,8 +166,8 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
       {
         scoreboard_slot->setInUse(true);
         scoreboard_slot->setSessionId(session->getSessionId());
-        scoreboard_slot->setUser(session->getSecurityContext().getUser());
-        scoreboard_slot->setIp(session->getSecurityContext().getIp());
+        scoreboard_slot->setUser(session->user()->username());
+        scoreboard_slot->setIp(session->user()->address());
         session->setScoreboardIndex(slot_index);
         LOCK_scoreboard_vector->unlock();
         return scoreboard_slot; 

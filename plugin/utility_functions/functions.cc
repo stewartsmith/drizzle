@@ -26,11 +26,15 @@ using namespace drizzled;
 
 static int init(drizzled::module::Context &context)
 {
+  context.add(new plugin::Create_function<utility_functions::Assert>("assert"));
   context.add(new plugin::Create_function<utility_functions::Catalog>("catalog"));
-  context.add(new plugin::Create_function<utility_functions::Schema>("database"));
-  context.add(new plugin::Create_function<utility_functions::User>("user"));
+  context.add(new plugin::Create_function<utility_functions::Execute>("execute"));
   context.add(new plugin::Create_function<utility_functions::GlobalReadLock>("global_read_lock"));
+  context.add(new plugin::Create_function<utility_functions::ResultType>("result_type"));
   context.add(new plugin::Create_function<utility_functions::Kill>("kill"));
+  context.add(new plugin::Create_function<utility_functions::Schema>("database"));
+  context.add(new plugin::Create_function<utility_functions::Typeof>("typeof"));
+  context.add(new plugin::Create_function<utility_functions::User>("user"));
 
   return 0;
 }
@@ -39,7 +43,7 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "Utility Functions",
-  "1.2",
+  "1.4",
   "Brian Aker, Stewart Smith",
   "Utility Functions.",
   PLUGIN_LICENSE_GPL,

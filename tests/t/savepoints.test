@@ -12,7 +12,7 @@ UPDATE t1 SET id = 2 WHERE id != 2 LIMIT 0;
 SAVEPOINT A;
 
 --echo End Test of Bug 534806
-
+COMMIT;
 DROP TABLE t1;
 
 # Let's test the non-edge case for SAVEPOINTS:
@@ -62,6 +62,7 @@ COMMIT;
 
 # t1 should have 1,2,3,4 in it.
 SELECT * FROM t1;
+COMMIT;
 DROP TABLE t1;
 
 # 
@@ -81,3 +82,5 @@ INSERT INTO t1 ( a, b ) VALUES ( 1 , 9 );
 ROLLBACK TO SAVEPOINT A;
 
 --echo End Test of Bug 542299
+COMMIT;
+DROP TABLE t1;

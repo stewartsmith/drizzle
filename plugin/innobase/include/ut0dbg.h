@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -46,6 +46,9 @@ extern ulint	ut_dbg_zero;
 
 /*************************************************************//**
 Report a failed assertion. */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void
 ut_dbg_assertion_failed(

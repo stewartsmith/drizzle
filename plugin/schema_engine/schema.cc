@@ -30,7 +30,6 @@
 #include "drizzled/data_home.h"
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/transaction_services.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -81,10 +80,10 @@ void Schema::prime()
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
       continue;
 
-    SchemaIdentifier filename(entry->filename);
+    identifier::Schema filename(entry->filename);
     if (readSchemaFile(filename, schema_message))
     {
-      SchemaIdentifier schema_identifier(schema_message.name());
+      identifier::Schema schema_identifier(schema_message.name());
 
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
@@ -98,7 +97,7 @@ void Schema::prime()
   mutex.unlock();
 }
 
-void Schema::doGetSchemaIdentifiers(SchemaIdentifier::vector &set_of_names)
+void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
 {
   mutex.lock_shared();
   {
@@ -106,13 +105,13 @@ void Schema::doGetSchemaIdentifiers(SchemaIdentifier::vector &set_of_names)
          iter != schema_cache.end();
          iter++)
     {
-      set_of_names.push_back(SchemaIdentifier((*iter).second->name()));
+      set_of_names.push_back(identifier::Schema((*iter).second->name()));
     }
   }
   mutex.unlock_shared();
 }
 
-bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::schema::shared_ptr &schema_message)
+bool Schema::doGetSchemaDefinition(const identifier::Schema &schema_identifier, message::schema::shared_ptr &schema_message)
 {
   mutex.lock_shared();
   SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
@@ -131,7 +130,7 @@ bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, me
 
 bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 {
-  SchemaIdentifier schema_identifier(schema_message.name());
+  identifier::Schema schema_identifier(schema_message.name());
 
   if (mkdir(schema_identifier.getPath().c_str(), 0777) == -1)
     return false;
@@ -156,13 +155,10 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   }
   mutex.unlock();
 
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.allocateNewTransactionId();
-
   return true;
 }
 
-bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
+bool Schema::doDropSchema(const identifier::Schema &schema_identifier)
 {
   message::schema::shared_ptr schema_message;
 
@@ -199,15 +195,12 @@ bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
   schema_cache.erase(schema_identifier.getPath());
   mutex.unlock();
 
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.allocateNewTransactionId();
-
   return true;
 }
 
 bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 {
-  SchemaIdentifier schema_identifier(schema_message.name());
+  identifier::Schema schema_identifier(schema_message.name());
 
   if (access(schema_identifier.getPath().c_str(), F_OK))
     return false;
@@ -227,9 +220,6 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
       }
     }
     mutex.unlock();
-
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.allocateNewTransactionId();
   }
 
   return true;
@@ -240,7 +230,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   @note we do the rename to make it crash safe.
 */
-bool Schema::writeSchemaFile(const SchemaIdentifier &schema_identifier, const message::Schema &db)
+bool Schema::writeSchemaFile(const identifier::Schema &schema_identifier, const message::Schema &db)
 {
   char schema_file_tmp[FN_REFLEN];
   string schema_file(schema_identifier.getPath());
@@ -306,7 +296,7 @@ bool Schema::writeSchemaFile(const SchemaIdentifier &schema_identifier, const me
 }
 
 
-bool Schema::readSchemaFile(const drizzled::SchemaIdentifier &schema_identifier, drizzled::message::Schema &schema)
+bool Schema::readSchemaFile(const drizzled::identifier::Schema &schema_identifier, drizzled::message::Schema &schema)
 {
   string db_opt_path(schema_identifier.getPath());
 
@@ -342,24 +332,8 @@ bool Schema::readSchemaFile(const drizzled::SchemaIdentifier &schema_identifier,
   return false;
 }
 
-bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
-{
-
-  // This should always be the same value as GLOBAL_TEMPORARY_EXT but be
-  // CASE_UP. --Brian 
-  //
-  // This needs to be done static in here for ordering reasons
-  static SchemaIdentifier TEMPORARY_IDENTIFIER(".TEMPORARY");
-  if (static_cast<const SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
-  {
-    return false;
-  }
-
-  return true;
-}
-
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                   const drizzled::SchemaIdentifier&,
-                                   drizzled::TableIdentifier::vector&)
+                                   const drizzled::identifier::Schema&,
+                                   drizzled::identifier::Table::vector&)
 {
 }

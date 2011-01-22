@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 
     buffer_size+= (size_t)read_size;
 
-    buffer= realloc(buffer, buffer_size + BUFFER_CHUNK);
+    buffer= (char *)realloc(buffer, buffer_size + BUFFER_CHUNK);
     if (buffer == NULL)
     {
       printf("realloc:%d\n", errno);

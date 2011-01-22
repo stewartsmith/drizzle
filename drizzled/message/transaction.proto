@@ -547,6 +547,7 @@ message Statement
     CREATE_TABLE = 8; /* A CREATE TABLE statement */
     ALTER_TABLE = 9; /* An ALTER TABLE statement */
     DROP_TABLE = 10; /* A DROP TABLE statement */
+    ROLLBACK_STATEMENT = 11; /* ROLLBACK current statement */
     SET_VARIABLE = 98; /* A SET statement */
     RAW_SQL = 99; /* A raw SQL statement */
   }
@@ -574,7 +575,7 @@ message Statement
   optional CreateTableStatement create_table_statement = 15;
   optional AlterTableStatement alter_table_statement = 16;
   optional DropTableStatement drop_table_statement = 17;  
-  optional SetVariableStatement set_variable_statement = 18;  
+  optional SetVariableStatement set_variable_statement = 18;
 }
 
 /*
@@ -591,4 +592,30 @@ message Transaction
   required TransactionContext transaction_context = 1;
   repeated Statement statement = 2;
   optional Event event = 3;
+
+  /*
+   * A single transaction in the database can possibly be represented with
+   * multiple protobuf Transaction messages if the message grows too large.
+   * This can happen if you have a bulk transaction, or a single statement
+   * affecting a very large number of rows, or just a large transaction with
+   * many statements/changes.
+   *
+   * For the first two examples, it is likely that the Statement sub-message
+   * itself will get segmented, causing another Transaction message to be
+   * created to hold the rest of the Statement's row changes. In these cases,
+   * it is enough to look at the segment information stored in the Statement
+   * message.
+   *
+   * For the last example, the Statement sub-messages may or may not be
+   * segmented, but we could still need to split the Statements up into
+   * multiple Transaction messages to keep the Transaction message size from
+   * growing too large. In this case, the segment information in the Statement
+   * submessages is not helpful if the Statement isn't segmented. We need this
+   * information in the Transaction message itself.
+   *
+   * These values should be set appropriately whether or not the Statement
+   * sub-messages are segmented.
+   */
+  optional uint32 segment_id = 4; /* Segment number of the Transaction msg */
+  optional bool end_segment = 5;  /* FALSE if Transaction msg is split into multiples */
 }

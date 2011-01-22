@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week)
 }
 
 
-uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year)
+uint32_t calc_week(type::Time *l_time, uint32_t week_behaviour, uint32_t *year)
 {
   uint32_t days;
   uint32_t daynr= calc_daynr(l_time->year,l_time->month,l_time->day);
@@ -107,15 +107,15 @@ void get_date_from_daynr(long daynr,
     {
       if (day_of_year > 31+28)
       {
-	day_of_year--;
-	if (day_of_year == 31+28)
-	  leap_day=1;		/* Handle leapyears leapday */
+        day_of_year--;
+        if (day_of_year == 31+28)
+          leap_day=1;		/* Handle leapyears leapday */
       }
     }
     *ret_month=1;
     for (month_pos= days_in_month ;
-	 day_of_year > (uint32_t) *month_pos ;
-	 day_of_year-= *(month_pos++), (*ret_month)++)
+         day_of_year > (uint32_t) *month_pos ;
+         day_of_year-= *(month_pos++), (*ret_month)++)
       ;
     *ret_year=year;
     *ret_day=day_of_year+leap_day;
@@ -124,14 +124,13 @@ void get_date_from_daynr(long daynr,
 }
 
 
-enum enum_drizzle_timestamp_type
-str_to_datetime_with_warn(const char *str, 
-                          uint32_t length, 
-                          DRIZZLE_TIME *l_time,
-                          uint32_t flags)
+type::timestamp_t str_to_datetime_with_warn(const char *str, 
+                                            uint32_t length, 
+                                            type::Time *l_time,
+                                            uint32_t flags)
 {
   int was_cut;
-  enum enum_drizzle_timestamp_type ts_type;
+  type::timestamp_t ts_type;
   Session *session= current_session;
 
   ts_type= str_to_datetime(str, length, l_time,
@@ -139,7 +138,7 @@ str_to_datetime_with_warn(const char *str,
                                      (MODE_INVALID_DATES |
                                       MODE_NO_ZERO_DATE))),
                            &was_cut);
-  if (was_cut || ts_type <= DRIZZLE_TIMESTAMP_ERROR)
+  if (was_cut || ts_type <= type::DRIZZLE_TIMESTAMP_ERROR)
     make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, ts_type,  NULL);
   return ts_type;
@@ -147,44 +146,14 @@ str_to_datetime_with_warn(const char *str,
 
 
 bool
-str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time)
+str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time)
 {
   int warning;
   bool ret_val= str_to_time(str, length, l_time, &warning);
   if (ret_val || warning)
     make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, DRIZZLE_TIMESTAMP_TIME, NULL);
+                                 str, length, type::DRIZZLE_TIMESTAMP_TIME, NULL);
   return ret_val;
-}
-
-
-void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from)
-{
-  to->neg=0;
-  to->second_part=0;
-  to->year=	(int) ((from->tm_year+1900) % 10000);
-  to->month=	(int) from->tm_mon+1;
-  to->day=	(int) from->tm_mday;
-  to->hour=	(int) from->tm_hour;
-  to->minute=	(int) from->tm_min;
-  to->second=   (int) from->tm_sec;
-}
-
-void make_date(const DRIZZLE_TIME *l_time, String *str)
-{
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_date_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
-}
-
-
-void make_datetime(const DRIZZLE_TIME *l_time, String *str)
-{
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_datetime_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
 }
 
 
@@ -192,7 +161,7 @@ void make_truncated_value_warning(Session *session,
                                   DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
 				                          uint32_t str_length,
-                                  enum enum_drizzle_timestamp_type time_type,
+                                  type::timestamp_t time_type,
                                   const char *field_name)
 {
   char warn_buff[DRIZZLE_ERRMSG_SIZE];
@@ -204,17 +173,20 @@ void make_truncated_value_warning(Session *session,
   str[str_length]= 0;               // Ensure we have end 0 for snprintf
 
   switch (time_type) {
-    case DRIZZLE_TIMESTAMP_DATE:
-      type_str= "date";
-      break;
-    case DRIZZLE_TIMESTAMP_TIME:
-      type_str= "time";
-      break;
-    case DRIZZLE_TIMESTAMP_DATETIME:  // FALLTHROUGH
-    default:
-      type_str= "datetime";
-      break;
+  case type::DRIZZLE_TIMESTAMP_DATE:
+    type_str= "date";
+    break;
+
+  case type::DRIZZLE_TIMESTAMP_TIME:
+    type_str= "time";
+    break;
+
+  case type::DRIZZLE_TIMESTAMP_DATETIME:  // FALLTHROUGH
+  default:
+    type_str= "datetime";
+    break;
   }
+
   if (field_name)
   {
     cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
@@ -224,13 +196,17 @@ void make_truncated_value_warning(Session *session,
   }
   else
   {
-    if (time_type > DRIZZLE_TIMESTAMP_ERROR)
+    if (time_type > type::DRIZZLE_TIMESTAMP_ERROR)
+    {
       cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                          ER(ER_TRUNCATED_WRONG_VALUE),
                          type_str, str.c_ptr());
+    }
     else
+    {
       cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                          ER(ER_WRONG_VALUE), type_str, str.c_ptr());
+    }
   }
   push_warning(session, level,
                ER_TRUNCATED_WRONG_VALUE, warn_buff);
@@ -238,7 +214,7 @@ void make_truncated_value_warning(Session *session,
 
 
 bool
-calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t *seconds_out,
+calc_time_diff(type::Time *l_time1, type::Time *l_time2, int l_sign, int64_t *seconds_out,
                long *microseconds_out)
 {
   long days;
@@ -250,30 +226,30 @@ calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t
     the second argument should be TIMESTAMP_TIME also.
     We should check it before calc_time_diff call.
   */
-  if (l_time1->time_type == DRIZZLE_TIMESTAMP_TIME)  // Time value
+  if (l_time1->time_type == type::DRIZZLE_TIMESTAMP_TIME)  // Time value
     days= (long)l_time1->day - l_sign * (long)l_time2->day;
   else
   {
     days= calc_daynr((uint32_t) l_time1->year,
-		     (uint32_t) l_time1->month,
-		     (uint32_t) l_time1->day);
-    if (l_time2->time_type == DRIZZLE_TIMESTAMP_TIME)
+                     (uint32_t) l_time1->month,
+                     (uint32_t) l_time1->day);
+    if (l_time2->time_type == type::DRIZZLE_TIMESTAMP_TIME)
       days-= l_sign * (long)l_time2->day;
     else
       days-= l_sign*calc_daynr((uint32_t) l_time2->year,
-			       (uint32_t) l_time2->month,
-			       (uint32_t) l_time2->day);
+                               (uint32_t) l_time2->month,
+                               (uint32_t) l_time2->day);
   }
 
   microseconds= ((int64_t)days*86400L +
                  (int64_t)(l_time1->hour*3600L +
-                            l_time1->minute*60L +
-                            l_time1->second) -
+                           l_time1->minute*60L +
+                           l_time1->second) -
                  l_sign*(int64_t)(l_time2->hour*3600L +
-                                   l_time2->minute*60L +
-                                   l_time2->second)) * 1000000L +
-                (int64_t)l_time1->second_part -
-                l_sign*(int64_t)l_time2->second_part;
+                                  l_time2->minute*60L +
+                                  l_time2->second)) * 1000000L +
+    (int64_t)l_time1->second_part -
+    l_sign*(int64_t)l_time2->second_part;
 
   neg= 0;
   if (microseconds < 0)

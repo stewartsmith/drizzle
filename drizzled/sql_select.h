@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,14 +56,76 @@ enum_nested_loop_state sub_select(Join *join,JoinTable *join_tab, bool end_of_re
 enum_nested_loop_state end_send_group(Join *join, JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state end_write_group(Join *join, JoinTable *join_tab, bool end_of_records);
 
-typedef struct st_rollup
+class Rollup
 {
+public:
   enum State { STATE_NONE, STATE_INITED, STATE_READY };
+
+  Rollup()
+  :
+  state(),
+  null_items(NULL),
+  ref_pointer_arrays(NULL),
+  fields()
+  {}
+  
+  Rollup(State in_state,
+         Item_null_result **in_null_items,
+         Item ***in_ref_pointer_arrays,
+         List<Item> *in_fields)
+  :
+  state(in_state),
+  null_items(in_null_items),
+  ref_pointer_arrays(in_ref_pointer_arrays),
+  fields(in_fields)
+  {}
+  
+  State getState() const
+  {
+    return state;
+  }
+
+  void setState(State in_state)
+  {
+    state= in_state;
+  }
+ 
+  Item_null_result **getNullItems() const
+  {
+    return null_items;
+  }
+
+  void setNullItems(Item_null_result **in_null_items)
+  {
+    null_items= in_null_items;
+  }
+
+  Item ***getRefPointerArrays() const
+  {
+    return ref_pointer_arrays;
+  }
+
+  void setRefPointerArrays(Item ***in_ref_pointer_arrays)
+  {
+    ref_pointer_arrays= in_ref_pointer_arrays;
+  }
+
+  List<Item> *getFields() const
+  {
+    return fields;
+  }
+
+  void setFields(List<Item> *in_fields)
+  {
+    fields= in_fields;
+  }
+  
+private:
   State state;
   Item_null_result **null_items;
   Item ***ref_pointer_arrays;
   List<Item> *fields;
-} ROLLUP;
+};
 
 } /* namespace drizzled */
 
@@ -82,11 +144,7 @@ namespace drizzled
   item->marker should be 0 for all items on entry
   Return in cond_value false if condition is impossible (1 = 2)
 *****************************************************************************/
-struct COND_CMP {
-  Item *and_level;
-  Item_func *cmp_func;
-  COND_CMP(Item *a,Item_func *b) :and_level(a),cmp_func(b) {}
-};
+typedef std::pair<Item*, Item_func*> COND_CMP;
 
 void TEST_join(Join *join);
 
@@ -181,12 +239,6 @@ void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok);
 void add_not_null_conds(Join *join);
 uint32_t max_part_bit(key_part_map bits);
 COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab);
-Order *create_distinct_group(Session *session,
-                                Item **ref_pointer_array,
-                                Order *order,
-                                List<Item> &fields,
-                                List<Item> &all_fields,
-                                bool *all_order_by_fields_used);
 bool eq_ref_table(Join *join, Order *start_order, JoinTable *tab);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
 int remove_dup_with_hash_index(Session *session, 
@@ -208,7 +260,7 @@ ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, T
 void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(Join *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
-bool mysql_select(Session *session, Item ***rref_pointer_array,
+bool select_query(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
                   COND *conds, uint32_t og_num, Order *order, Order *group,
                   Item *having, uint64_t select_type,

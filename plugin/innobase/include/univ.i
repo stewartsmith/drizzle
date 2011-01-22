@@ -1,8 +1,8 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2010, Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, Google Inc.
-Copyright (c) 2009, Sun Microsystems, Inc.
+Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2008 Google Inc.
+Copyright (C) 2009 Sun Microsystems, Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -52,7 +52,7 @@ Created 1/20/1994 Heikki Tuuri
 
 #define INNODB_VERSION_MAJOR	1
 #define INNODB_VERSION_MINOR	1
-#define INNODB_VERSION_BUGFIX	2
+#define INNODB_VERSION_BUGFIX	4
 
 /* The following is the InnoDB version as shown in
 SELECT plugin_version FROM information_schema.plugins;
@@ -83,18 +83,6 @@ have not figured out how to apply the visibility=hidden attribute to
 the virtual method table (vtable) in GCC 3. */
 # define ha_innobase ha_innodb
 #endif /* MYSQL_DYNAMIC_PLUGIN */
-
-/* if any of the following macros are not defined we are missing fundamental
- * and important symbols
- */
-#if !defined(HAVE_GCC_ATOMIC_BUILTINS) \
- && !defined(HAVE_IB_ATOMIC_PTHREAD_T_GCC) \
- && !defined(HAVE_SOLARIS_ATOMICS) \
- && !defined(HAVE_IB_ATOMIC_PTHREAD_T_SOLARIS) \
- && !defined(SIZEOF_PTHREAD_T) \
- && !defined(IB_HAVE_PAUSE_INSTRUCTION)
-# error There is a problem in the configure setup
-#endif
 
 #if (defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)) && !defined(MYSQL_SERVER) && !defined(__WIN__)
 # undef __WIN__
@@ -150,9 +138,11 @@ Sun Studio */
 # endif
 
 # if defined(__GNUC__)
+#  define UNIV_WARN_UNUSED_RESULT_NONNULL __attribute__((nonnull, warn_unused_result))
 #  define UNIV_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
 #else
 #  define UNIV_WARN_UNUSED_RESULT
+#  define UNIV_WARN_UNUSED_RESULT_NONNULL
 #endif
 
 # ifdef HAVE_PREAD
@@ -416,6 +406,9 @@ typedef unsigned long long int	ullint;
 
 /** The generic InnoDB system object identifier data type */
 typedef ib_uint64_t	ib_id_t;
+
+/* THe 'undefined' value for ullint */
+#define ULLINT_UNDEFINED        ((ullint)(-1))
 
 /* This 'ibool' type is used within Innobase. Remember that different included
 headers may define 'bool' differently. Do not assume that 'bool' is a ulint! */

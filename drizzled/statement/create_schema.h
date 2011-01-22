@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,23 +34,13 @@ namespace statement
 
 class CreateSchema : public Statement
 {
+  bool check(const identifier::Schema &identifier);
+
 public:
-  CreateSchema(Session *in_session)
-    :
-      Statement(in_session),
-      is_if_not_exists(false)
+  CreateSchema(Session *in_session) :
+    Statement(in_session),
+    is_if_not_exists(false)
   {
-    schema_message.set_creation_timestamp(time(NULL));
-    schema_message.set_update_timestamp(time(NULL));
-
-    /* 36 characters for uuid string +1 for NULL */
-    uuid_t uu;
-    char uuid_string[37];
-    uuid_generate_random(uu);
-    uuid_unparse(uu, uuid_string);
-    schema_message.set_uuid(uuid_string, 36);
-
-    schema_message.set_version(1);
   }
 
   bool execute();

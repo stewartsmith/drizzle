@@ -30,13 +30,60 @@ void load_cursor_state_transitions(state_multimap &states);
 
 void load_cursor_state_transitions(state_multimap &states)
 {
-  states.insert(state_pair("Cursor()", "::open()"));
-  states.insert(state_pair("::open()", "::store_lock()"));
-  states.insert(state_pair("::store_lock()", "::doStartTableScan()"));
-  states.insert(state_pair("::open()", "::doStartTableScan()"));
+  states.insert(state_pair("Cursor()", "::doOpen()"));
+  states.insert(state_pair("::doOpen()", "::store_lock()"));
+
+  // only in alter table
+  states.insert(state_pair("::doOpen()", "::external_lock()"));
+
+  states.insert(state_pair("::doOpen()", "::close()"));
+  states.insert(state_pair("::close()", "Cursor()"));
+
+  states.insert(state_pair("::reset()", "::doOpen()"));
+  states.insert(state_pair("::doEndTableScan()", "::reset()"));
+  states.insert(state_pair("locked", "::reset()"));
+
+  // we can always set a new lock
+  states.insert(state_pair("::store_lock()", "::store_lock()"));
+  states.insert(state_pair("locked", "::store_lock()"));
+
+  states.insert(state_pair("::store_lock()", "::external_lock()"));
+  states.insert(state_pair("::external_lock()", "locked"));
+  states.insert(state_pair("locked", "::external_lock()"));
+
+  states.insert(state_pair("locked", "::info()"));
+  states.insert(state_pair("::info()", "locked"));
+
+  states.insert(state_pair("locked", "::close()"));
+  states.insert(state_pair("locked", "::doStartTableScan()"));
   states.insert(state_pair("::doStartTableScan()", "::rnd_next()"));
+  states.insert(state_pair("::doStartTableScan()", "::rnd_pos()"));
+  states.insert(state_pair("::rnd_pos()", "::rnd_pos()"));
+  states.insert(state_pair("::rnd_pos()", "::doUpdateRecord()"));
+
+  states.insert(state_pair("::rnd_pos()", "::doEndTableScan()"));
+  states.insert(state_pair("locked", "::doEndTableScan()"));
+
   states.insert(state_pair("::rnd_next()", "::doEndTableScan()"));
+  states.insert(state_pair("::rnd_next()", "::rnd_next()"));
+  states.insert(state_pair("::doEndTableScan()", "::close()"));
+  states.insert(state_pair("::doEndTableScan()", "::doStartTableScan()"));
+
+  // below two are bugs - sholud call endtablescan
+  states.insert(state_pair("::rnd_next()", "::store_lock()"));
+  states.insert(state_pair("::rnd_next()", "::close()"));
+
+  states.insert(state_pair("::rnd_next()", "::position()"));
+  states.insert(state_pair("::position()", "::rnd_next()"));
+  states.insert(state_pair("::rnd_next()", "::doUpdateRecord()"));
+
   states.insert(state_pair("::doEndTableScan()", "Cursor()"));
-  states.insert(state_pair("::store_lock()", "::doInsertRecord()"));
-  states.insert(state_pair("::doInsertRecord()", "::store_lock()"));
+  states.insert(state_pair("::doEndTableScan()", "::store_lock()"));
+  states.insert(state_pair("locked", "::doInsertRecord()"));
+  states.insert(state_pair("::doInsertRecord()", "::external_lock()"));
+  states.insert(state_pair("::doInsertRecord()", "::doInsertRecord()"));
+  states.insert(state_pair("::doInsertRecord()", "::reset()"));
+
+  states.insert(state_pair("::doUpdateRecord()", "::doEndTableScan()"));
+  states.insert(state_pair("::doUpdateRecord()", "::rnd_next()"));
 }

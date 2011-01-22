@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  Authors: 
  *
@@ -137,7 +137,7 @@ public:
    * @retval true date was added and value stored properly
    * @retval false result of addition is a null value
    */
-  bool addDate(DRIZZLE_TIME *ltime, interval_type int_type);
+  bool addDate(type::Time *ltime, interval_type int_type);
 
 private:
 

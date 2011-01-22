@@ -1,4 +1,4 @@
-CHECK 
+CHECK
 =====
 
 CHECK TABLE table_name

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -197,7 +197,6 @@ namespace drizzled
 /* The following can also be changed from the command line */
 #define DEFAULT_CONCURRENCY	10
 #define FLUSH_TIME		0		/**< Don't flush tables */
-#define MAX_CONNECT_ERRORS	10		///< errors before disabling host
 
 /* Bits from testflag */
 enum test_flag_bit

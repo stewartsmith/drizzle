@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/sql_string.h"
-#include "drizzled/decimal.h"
+#include "drizzled/type/decimal.h"
 
 namespace drizzled
 {
@@ -73,7 +73,7 @@ public:
 class Cached_item_decimal :public Cached_item
 {
   Item *item;
-  my_decimal value;
+  type::Decimal value;
 public:
   Cached_item_decimal(Item *item_par);
   bool cmp(void);

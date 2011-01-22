@@ -46,7 +46,6 @@ namespace drizzle_plugin
 /**
  * rabbitmq port
  */
-typedef drizzled::constrained_check<in_port_t, 65535, 0> port_constraint;
 static port_constraint sysvar_rabbitmq_port;
 
 
@@ -153,28 +152,28 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("host", 
           po::value<string>()->default_value("localhost"),
-          N_("Host name to connect to"));
+          _("Host name to connect to"));
   context("port",
           po::value<port_constraint>(&sysvar_rabbitmq_port)->default_value(5672),
-          N_("Port to connect to"));
+          _("Port to connect to"));
   context("virtualhost",
           po::value<string>()->default_value("/"),
-          N_("RabbitMQ virtualhost"));
+          _("RabbitMQ virtualhost"));
   context("username",
           po::value<string>()->default_value("guest"),
-          N_("RabbitMQ username"));
+          _("RabbitMQ username"));
   context("password",
           po::value<string>()->default_value("guest"),
-          N_("RabbitMQ password"));
+          _("RabbitMQ password"));
   context("use-replicator",
           po::value<string>()->default_value("default_replicator"),
-          N_("Name of the replicator plugin to use (default='default_replicator')"));
+          _("Name of the replicator plugin to use (default='default_replicator')"));
   context("exchange",
           po::value<string>()->default_value("ReplicationExchange"),
-          N_("Name of RabbitMQ exchange to publish to"));
+          _("Name of RabbitMQ exchange to publish to"));
   context("routingkey",
           po::value<string>()->default_value("ReplicationRoutingKey"),
-          N_("Name of RabbitMQ routing key to use"));
+          _("Name of RabbitMQ routing key to use"));
 }
 
 } /* namespace drizzle_plugin */
