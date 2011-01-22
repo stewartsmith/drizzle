@@ -52,7 +52,7 @@ SQL Language:
    :maxdepth: 2
 
    queries
-   functions
+   functions/overview
    data_types
    ddl
    dml
