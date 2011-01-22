@@ -55,14 +55,21 @@ int64_t Item_func_sysdate_local::val_int()
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
-  return (int64_t) TIME_to_uint64_t_datetime(&ltime);
+  int64_t tmp;
+  ltime.convert(tmp);
+
+  return tmp;
 }
 
 double Item_func_sysdate_local::val_real()
 {
   assert(fixed == 1);
+
   store_now_in_TIME(&ltime);
-  return uint64_t2double(TIME_to_uint64_t_datetime(&ltime));
+  int64_t tmp;
+  ltime.convert(tmp);
+
+  return int64_t2double(tmp);
 }
 
 

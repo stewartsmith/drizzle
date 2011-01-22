@@ -93,8 +93,8 @@ uint32_t calc_days_in_year(uint32_t year)
     1  error
 */
 
-bool check_date(const type::Time *ltime, bool not_zero_date,
-                   uint32_t flags, int *was_cut)
+static bool check_date(const type::Time *ltime, bool not_zero_date,
+                       uint32_t flags, int *was_cut)
 {
   if (not_zero_date)
   {
@@ -119,6 +119,15 @@ bool check_date(const type::Time *ltime, bool not_zero_date,
   }
   return false;
 }
+
+namespace type {
+
+bool Time::check(bool not_zero_date, uint32_t flags, int *was_cut) const
+{
+  return check_date(this, not_zero_date, flags, was_cut);
+}
+
+} // namespace type
 
 
 /*
@@ -1145,6 +1154,24 @@ void Time::convert(char *str, size_t &to_length, timestamp_t arg)
 
   case DRIZZLE_TIMESTAMP_TIME:
     to_length= (uint32_t) my_time_to_str(this, str);
+    {
+      int32_t length;
+      uint32_t extra_hours= 0;
+
+      length= snprintf(str, to_length,
+                       "%s%02u:%02u:%02u",
+                      (neg ? "-" : ""),
+                      extra_hours+ hour,
+                      minute,
+                      second);
+      if (length < 0)
+      {
+        to_length= 0;
+        break;
+      }
+
+      to_length= length;
+    }
     break;
 
   case DRIZZLE_TIMESTAMP_NONE:
@@ -1183,8 +1210,8 @@ void Time::convert(char *str, size_t &to_length, timestamp_t arg)
     Datetime value in YYYYMMDDHHMMSS format.
 */
 
-int64_t number_to_datetime(int64_t nr, type::Time *time_res,
-                            uint32_t flags, int *was_cut)
+static int64_t number_to_datetime(int64_t nr, type::Time *time_res,
+                                  uint32_t flags, int *was_cut)
 {
   long part1,part2;
 
@@ -1259,26 +1286,34 @@ int64_t number_to_datetime(int64_t nr, type::Time *time_res,
 }
 
 
+namespace type {
+void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags, int *was_cut)
+{
+  ret= number_to_datetime(nr, this, flags, was_cut);
+}
+} // namespace type
+
+
 /* Convert time value to integer in YYYYMMDDHHMMSS format */
 
-uint64_t TIME_to_uint64_t_datetime(const type::Time *my_time)
+static int64_t TIME_to_int64_t_datetime(const type::Time *my_time)
 {
-  return ((uint64_t) (my_time->year * 10000UL +
-                       my_time->month * 100UL +
-                       my_time->day) * 1000000ULL +
-          (uint64_t) (my_time->hour * 10000UL +
-                       my_time->minute * 100UL +
-                       my_time->second));
+  return ((int64_t) (my_time->year * 10000UL +
+                     my_time->month * 100UL +
+                     my_time->day) * 1000000ULL +
+          (int64_t) (my_time->hour * 10000UL +
+                     my_time->minute * 100UL +
+                     my_time->second));
 }
 
 
 /* Convert type::Time value to integer in YYYYMMDD format */
 
-static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
+static int64_t TIME_to_int64_t_date(const type::Time *my_time)
 {
-  return (uint64_t) (my_time->year * 10000UL +
-                     my_time->month * 100UL +
-                     my_time->day);
+  return (int64_t) (my_time->year * 10000UL +
+                    my_time->month * 100UL +
+                    my_time->day);
 }
 
 
@@ -1288,11 +1323,11 @@ static uint64_t TIME_to_uint64_t_date(const type::Time *my_time)
   it's assumed that days have been converted to hours already.
 */
 
-static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
+static int64_t TIME_to_int64_t_time(const type::Time *my_time)
 {
-  return (uint64_t) (my_time->hour * 10000UL +
-                     my_time->minute * 100UL +
-                     my_time->second);
+  return (int64_t) (my_time->hour * 10000UL +
+                    my_time->minute * 100UL +
+                    my_time->second);
 }
 
 
@@ -1300,58 +1335,24 @@ static uint64_t TIME_to_uint64_t_time(const type::Time *my_time)
   Convert struct type::Time (date and time split into year/month/day/hour/...
   to a number in format YYYYMMDDHHMMSS (DATETIME),
   YYYYMMDD (DATE)  or HHMMSS (TIME).
-
-  SYNOPSIS
-    TIME_to_uint64_t()
-
-  DESCRIPTION
-    The function is used when we need to convert value of time item
-    to a number if it's used in numeric context, i. e.:
-    SELECT NOW()+1, CURDATE()+0, CURTIMIE()+0;
-    SELECT ?+1;
-
-  NOTE
-    This function doesn't check that given type::Time structure members are
-    in valid range. If they are not, return value won't reflect any
-    valid date either.
 */
-
-uint64_t TIME_to_uint64_t(const type::Time *my_time)
-{
-  switch (my_time->time_type) {
-  case type::DRIZZLE_TIMESTAMP_DATETIME:
-    return TIME_to_uint64_t_datetime(my_time);
-
-  case type::DRIZZLE_TIMESTAMP_DATE:
-    return TIME_to_uint64_t_date(my_time);
-
-  case type::DRIZZLE_TIMESTAMP_TIME:
-    return TIME_to_uint64_t_time(my_time);
-
-  case type::DRIZZLE_TIMESTAMP_NONE:
-  case type::DRIZZLE_TIMESTAMP_ERROR:
-    return 0ULL;
-  }
-
-  return 0;
-}
 
 namespace type {
 
-void Time::convert(uint64_t &datetime, timestamp_t arg)
+void Time::convert(int64_t &datetime, timestamp_t arg)
 {
   switch (arg)
   {
   case type::DRIZZLE_TIMESTAMP_DATETIME:
-    datetime= TIME_to_uint64_t_datetime(this);
+    datetime= TIME_to_int64_t_datetime(this);
     break;
 
   case type::DRIZZLE_TIMESTAMP_DATE:
-    datetime= TIME_to_uint64_t_date(this);
+    datetime= TIME_to_int64_t_date(this);
     break;
 
   case type::DRIZZLE_TIMESTAMP_TIME:
-    datetime= TIME_to_uint64_t_time(this);
+    datetime= TIME_to_int64_t_time(this);
     break;
 
   case type::DRIZZLE_TIMESTAMP_NONE:

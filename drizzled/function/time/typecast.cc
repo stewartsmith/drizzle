@@ -236,7 +236,10 @@ int64_t Item_datetime_typecast::val_int()
     return 0;
   }
 
-  return TIME_to_uint64_t_datetime(&ltime);
+  int64_t tmp;
+  ltime.convert(tmp);
+
+  return tmp;
 }
 
 
