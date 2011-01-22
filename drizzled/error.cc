@@ -98,6 +98,11 @@ error_handler_func error_handler_hook= NULL;
        ...	variable list
 */
 
+void my_error(const std::string &ref, error_t nr, myf MyFlags)
+{
+  my_error(nr, MyFlags, ref.c_str());
+} 
+
 void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
 {
   std::string temp;

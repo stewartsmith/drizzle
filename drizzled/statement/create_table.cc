@@ -31,6 +31,49 @@
 namespace drizzled
 {
 
+namespace statement {
+
+CreateTable::CreateTable(Session *in_session, Table_ident *ident, bool is_temporary) :
+  Statement(in_session),
+  change(NULL),
+  default_value(NULL),
+  on_update_value(NULL),
+  is_engine_set(false),
+  is_create_table_like(false),
+  lex_identified_temp_table(false),
+  link_to_local(false),
+  create_table_list(NULL)
+{
+  createTableMessage().set_name(ident->table.str, ident->table.length);
+#if 0
+  createTableMessage().set_schema(ident->db.str, ident->db.length);
+#endif
+
+  if (is_temporary)
+  {
+    createTableMessage().set_type(message::Table::TEMPORARY);
+  }
+  else
+  {
+    createTableMessage().set_type(message::Table::STANDARD);
+  }
+}
+
+CreateTable::CreateTable(Session *in_session) :
+  Statement(in_session),
+  change(NULL),
+  default_value(NULL),
+  on_update_value(NULL),
+  is_engine_set(false),
+  is_create_table_like(false),
+  lex_identified_temp_table(false),
+  link_to_local(false),
+  create_table_list(NULL)
+{
+}
+
+} // namespace statement
+
 bool statement::CreateTable::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;

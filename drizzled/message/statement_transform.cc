@@ -1404,7 +1404,15 @@ transformFieldDefinitionToSql(const Table::Field &field,
     destination.append(" INT", 4);
     break;
   case Table::Field::BIGINT:
-    destination.append(" BIGINT", 7);
+    if (field.has_constraints() and
+        field.constraints().is_unsigned())
+    {
+      destination.append(" BIGINT UNSIGNED", sizeof(" BIGINT UNSIGNED") -1);
+    }
+    else
+    {
+      destination.append(" BIGINT", 7);
+    }
     break;
   case Table::Field::DECIMAL:
     {
@@ -1438,17 +1446,6 @@ transformFieldDefinitionToSql(const Table::Field &field,
     break;
   }
 
-  if (field.type() == Table::Field::INTEGER || 
-      field.type() == Table::Field::BIGINT)
-  {
-    if (field.has_constraints() &&
-        field.constraints().has_is_unsigned() &&
-        field.constraints().is_unsigned())
-    {
-      destination.append(" UNSIGNED", 9);
-    }
-  }
-
   if (field.type() == Table::Field::BLOB ||
       field.type() == Table::Field::VARCHAR)
   {
@@ -1458,6 +1455,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
       destination.append(" COLLATE ", 9);
       destination.append(field.string_options().collation());
     }
+  }
+
+  if (field.has_constraints() and field.constraints().is_unique())
+  {
+    destination.append(" UNIQUE", sizeof(" UNIQUE") -1);
   }
 
   if (field.has_constraints() && field.constraints().is_notnull())
@@ -1494,7 +1496,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
   {
     const string &v= field.options().default_bin_value();
     if (v.length() == 0)
+    {
       destination.append(" DEFAULT ''", 11);
+    }
     else
     {
       destination.append(" DEFAULT 0x", 11);

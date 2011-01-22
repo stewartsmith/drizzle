@@ -63,7 +63,7 @@ bool statement::CreateSchema::execute()
     res= create_db(session, schema_message, session->getLex()->exists());
     if (unlikely(plugin::EventObserver::afterCreateDatabase(*session, path, res)))
     {
-      my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
+      my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
       res = false;
     }
 
@@ -84,10 +84,7 @@ bool statement::CreateSchema::check(const identifier::Schema &identifier)
   {
     if (plugin::StorageEngine::doesSchemaExist(identifier))
     {
-      std::string name;
-
-      identifier.getSQLPath(name);
-      my_error(ER_DB_CREATE_EXISTS, MYF(0), name.c_str());
+      my_error(ER_DB_CREATE_EXISTS, identifier);
 
       return false;
     }

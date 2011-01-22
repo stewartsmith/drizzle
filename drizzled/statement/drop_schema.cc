@@ -49,12 +49,20 @@ bool statement::DropSchema::execute()
     return false;
   }
 
+  if (session->inTransaction())
+  {
+    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
+        ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
+        MYF(0));
+    return true;
+  }
+  
   bool res = true;
   std::string path;
   schema_identifier.getSQLPath(path);
   if (unlikely(plugin::EventObserver::beforeDropDatabase(*session, path))) 
   {
-    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
+    my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
   }
   else
   {

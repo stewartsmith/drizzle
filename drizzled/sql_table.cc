@@ -1331,9 +1331,7 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
       return error;
     }
@@ -1353,9 +1351,7 @@ static bool locked_create_event(Session *session,
       */
       if (definition::Cache::singleton().find(identifier.getKey()))
       {
-        std::string path;
-        identifier.getSQLPath(path);
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
         return error;
       }
@@ -1458,10 +1454,10 @@ bool create_table_no_lock(Session *session,
 
   /* Build a Table object to pass down to the engine, and the do the actual create. */
   if (not prepare_create_table(session, create_info, table_proto, alter_info,
-                                     internal_tmp_table,
-                                     &db_options,
-                                     &key_info_buffer, &key_count,
-                                     select_field_count))
+                               internal_tmp_table,
+                               &db_options,
+                               &key_info_buffer, &key_count,
+                               select_field_count))
   {
     boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
@@ -1511,9 +1507,7 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, identifier);
       result= true;
     }
   }

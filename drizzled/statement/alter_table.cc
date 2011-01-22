@@ -75,6 +75,18 @@ static bool prepare_alter_table(Session *session,
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier);
 
+namespace statement {
+
+AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_build_method build_arg) :
+  CreateTable(in_session)
+{ 
+  in_session->lex->sql_command= SQLCOM_ALTER_TABLE;
+  (void)ident;
+  alter_info.build_method= build_arg;
+}
+
+} // namespace statement
+
 bool statement::AlterTable::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
@@ -92,8 +104,7 @@ bool statement::AlterTable::execute()
 
     if (create_info().db_type == NULL)
     {
-      my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               createTableMessage().engine().name().c_str());
+      my_error(createTableMessage().engine().name(), ER_UNKNOWN_STORAGE_ENGINE, MYF(0));
 
       return true;
     }
@@ -108,9 +119,7 @@ bool statement::AlterTable::execute()
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
+      my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
     }
 
@@ -121,9 +130,7 @@ bool statement::AlterTable::execute()
 
       if (not create_info().db_type)
       {
-        std::string path;
-        identifier.getSQLPath(path);
-        my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
+        my_error(ER_BAD_TABLE_ERROR, identifier);
         return true;
       }
     }
@@ -420,7 +427,7 @@ static bool prepare_alter_table(Session *session,
       */
       if (alter_info->build_method == HA_BUILD_ONLINE)
       {
-        my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->getQueryString()->c_str());
+        my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
         return true;
       }
 
@@ -521,14 +528,15 @@ static bool prepare_alter_table(Session *session,
     }
     if (key_parts.elements)
     {
-      key_create_information_st key_create_info;
+      key_create_information_st key_create_info= default_key_create_info;
       Key *key;
-      enum Key::Keytype key_type;
-      memset(&key_create_info, 0, sizeof(key_create_info));
+      Key::Keytype key_type;
 
       key_create_info.algorithm= key_info->algorithm;
+
       if (key_info->flags & HA_USES_BLOCK_SIZE)
         key_create_info.block_size= key_info->block_size;
+
       if (key_info->flags & HA_USES_COMMENT)
         key_create_info.comment= key_info->comment;
 
@@ -540,7 +548,9 @@ static bool prepare_alter_table(Session *session,
           key_type= Key::UNIQUE;
       }
       else
+      {
         key_type= Key::MULTIPLE;
+      }
 
       key= new Key(key_type,
                    key_name,
@@ -812,9 +822,7 @@ static bool lockTableIfDifferent(Session &session,
 
       if (session.find_temporary_table(new_table_identifier))
       {
-        std::string path;
-        new_table_identifier.getSQLPath(path);
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
         return false;
       }
     }
@@ -951,9 +959,7 @@ static bool internal_alter_table(Session *session,
   if (original_engine->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
       new_engine->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED))
   {
-    std::string path;
-    new_table_identifier.getSQLPath(path);
-    my_error(ER_ILLEGAL_HA, MYF(0), path.c_str());
+    my_error(ER_ILLEGAL_HA, new_table_identifier);
 
     return true;
   }
