@@ -88,7 +88,9 @@ class serverManager:
         bad_start = 0
         for server in self.get_server_list(requester):
             if server.status == 0:
-                bad_start += self.start_server(server, requester, expect_fail)
+                bad_start = bad_start + self.start_server( server
+                                                         , requester
+                                                         , expect_fail)
         return bad_start
 
     def start_server(self, server, requester, expect_fail):
