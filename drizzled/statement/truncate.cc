@@ -28,8 +28,8 @@ namespace drizzled
 
 bool statement::Truncate::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  if (! session->endActiveTransaction())
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  if (! getSession()->endActiveTransaction())
   {
     return true;
   }
@@ -37,7 +37,7 @@ bool statement::Truncate::execute()
    * Don't allow this within a transaction because we want to use
    * re-generate table
    */
-  if (session->inTransaction())
+  if (getSession()->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
                ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
@@ -45,7 +45,7 @@ bool statement::Truncate::execute()
     return true;
   }
 
-  return truncate(*session, first_table);
+  return truncate(*getSession(), first_table);
 }
 
 } /* namespace drizzled */

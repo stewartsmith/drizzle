@@ -28,20 +28,20 @@ namespace drizzled
 
 bool statement::StartTransaction::execute()
 {
-  if (session->transaction.xid_state.xa_state != XA_NOTR)
+  if (getSession()->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
-        xa_state_names[session->transaction.xid_state.xa_state]);
+        xa_state_names[getSession()->transaction.xid_state.xa_state]);
     return false;
   }
   /*
      Breakpoints for backup testing.
    */
-  if (! session->startTransaction(start_transaction_opt))
+  if (! getSession()->startTransaction(start_transaction_opt))
   {
     return true;
   }
-  session->my_ok();
+  getSession()->my_ok();
   return false;
 }
 

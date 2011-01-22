@@ -87,13 +87,13 @@ static bool rm_table(Session *session, TableList *tables, bool if_exists, bool d
 
 bool statement::DropTable::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *all_tables= getSession()->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
 
   if (not drop_temporary)
   {
-    if (not session->endActiveTransaction())
+    if (not getSession()->endActiveTransaction())
     {
       return true;
     }
@@ -101,7 +101,7 @@ bool statement::DropTable::execute()
 
   /* DDL and binlog write order protected by table::Cache::singleton().mutex() */
 
-  return rm_table(session, first_table, drop_if_exists, drop_temporary);
+  return rm_table(getSession(), first_table, drop_if_exists, drop_temporary);
 }
 
 } /* namespace drizzled */

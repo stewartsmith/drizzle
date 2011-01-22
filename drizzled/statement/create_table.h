@@ -60,7 +60,7 @@ public:
 public:
   message::Table &createTableMessage()
   {
-    return *session->lex->table();
+    return *getSession()->lex->table();
   };
 
 private:

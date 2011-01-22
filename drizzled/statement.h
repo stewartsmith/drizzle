@@ -45,7 +45,7 @@ class Statement
 {
 public:
   Statement(Session *in_session) : 
-    session(in_session)
+    _session(in_session)
   {}
 
   virtual ~Statement() {}
@@ -59,17 +59,16 @@ public:
 
   Session *getSession()
   {
-    return session;
+    return _session;
   }
 
   virtual bool isShow() { return false; }
 
-protected:
-
+private:
   /**
    * A session handler.
    */
-  Session *session;
+  Session *_session;
 };
 
 } /* namespace statement */
