@@ -321,7 +321,7 @@ class testManager(test_management.testManager):
             if options:
                 for option in options:
                     if option:
-                        if 'restart' in option:
+                        if 'restart' in option or '#' in option:
                             option = 'restart'
                         found_options.append('--%s' %(option.strip()))
         opt_file.close()

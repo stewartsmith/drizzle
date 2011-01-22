@@ -315,7 +315,7 @@ temporal_format.gcno
 tests/Makefile.in
 tests/dtr
 tests/dtr@
-tests/dtr_work
+tests/dbqp_work
 tests/install_test_db
 tests/mtr
 tests/mtr@

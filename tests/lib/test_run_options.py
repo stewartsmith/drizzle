@@ -37,7 +37,7 @@ parser= optparse.OptionParser()
 testdir_default = os.path.abspath(os.getcwd())
 server_default = os.path.abspath(os.path.join(testdir_default,
                                        '../drizzled/drizzled'))
-workdir_default = os.path.join(testdir_default,'dtr_work')
+workdir_default = os.path.join(testdir_default,'dbqp_work')
 clientbindir_default = os.path.abspath(os.path.join(testdir_default,
                                        '../client'))
 basedir_default = os.path.split(testdir_default)[0]

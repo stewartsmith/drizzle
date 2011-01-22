@@ -220,7 +220,7 @@ class serverManager:
             (naturally)
  
         """
-
+        server_options = self.filter_server_options(server_options)
         current_count = self.has_servers(requester)
         if desired_count > current_count:
             for i in range(desired_count - current_count):
