@@ -665,20 +665,20 @@ int prepare_create_field(CreateField *sql_field,
                          int *timestamps, int *timestamps_with_niladic);
 
 bool create_table(Session *session,
-                        const identifier::Table &identifier,
-                        HA_CREATE_INFO *create_info,
-                        message::Table &table_proto,
-                        AlterInfo *alter_info,
-                        bool tmp_table, uint32_t select_field_count,
-                        bool is_if_not_exists);
+                  const identifier::Table &identifier,
+                  HA_CREATE_INFO *create_info,
+                  message::Table &table_proto,
+                  AlterInfo *alter_info,
+                  bool tmp_table, uint32_t select_field_count,
+                  bool is_if_not_exists);
 
 bool create_table_no_lock(Session *session,
-                                const identifier::Table &identifier,
-                                HA_CREATE_INFO *create_info,
-                                message::Table &table_proto,
-                                AlterInfo *alter_info,
-                                bool tmp_table, uint32_t select_field_count,
-                                bool is_if_not_exists);
+                          const identifier::Table &identifier,
+                          HA_CREATE_INFO *create_info,
+                          message::Table &table_proto,
+                          AlterInfo *alter_info,
+                          bool tmp_table, uint32_t select_field_count,
+                          bool is_if_not_exists);
 
 bool create_like_table(Session* session,
                        identifier::Table::const_reference destination_identifier,

@@ -28,16 +28,15 @@ namespace drizzled
 
 bool statement::Truncate::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
 
-  if (session->inTransaction())
+  if (getSession()->inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
-
-  return truncate(*session, first_table);
+  return truncate(*getSession(), first_table);
 }
 
 } /* namespace drizzled */
