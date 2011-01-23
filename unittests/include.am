@@ -17,8 +17,9 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-
+if HAVE_BOOST_TEST
 check_PROGRAMS += unittests/unittests
+endif
 
 noinst_HEADERS += \
 		  unittests/plugin/plugin_stubs.h \
@@ -38,9 +39,24 @@ unit: unittests/unittests
 unittests_unittests_SOURCES = \
                               unittests/main.cc \
 			      unittests/atomics_test.cc \
-			      unittests/calendar_test.cc 
+			      unittests/calendar_test.cc \
+			      unittests/constrained_value.cc \
+			      unittests/date_test.cc \
+			      unittests/date_time_test.cc \
+			      unittests/global_buffer_test.cc \
+			      unittests/libdrizzle_test.cc \
+			      unittests/micro_timestamp_test.cc \
+			      unittests/nano_timestamp_test.cc \
+			      unittests/option_context.cc \
+			      unittests/pthread_atomics_test.cc \
+			      unittests/table_identifier.cc \
+			      unittests/temporal_format_test.cc \
+			      unittests/temporal_generator.cc  \
+			      unittests/timestamp_test.cc \
+			      unittests/time_test.cc \
+			      unittests/utf8_test.cc
 
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
-  ${drizzled_drizzled_LDADD} -lboost_unit_test_framework ${BOOST_LIBS} \
-  libdrizzle/libdrizzle.la
+  ${drizzled_drizzled_LDADD} ${BOOST_LIBS} libdrizzle/libdrizzle.la \
+  ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}

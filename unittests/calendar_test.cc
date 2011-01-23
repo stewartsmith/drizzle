@@ -19,8 +19,8 @@
  */
 
 #include "config.h"
-
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include <drizzled/calendar.h>
 

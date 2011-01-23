@@ -19,17 +19,46 @@
  */
 
 #include "config.h"
+
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
+
+# if defined(__SUNPRO_CC)
+#  include <drizzled/atomic/sun_studio.h>
+# endif
+
+# if !defined(__ICC) && (defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(__SUNPRO_CC))
+#  include <drizzled/atomic/gcc_traits.h>
+#  define ATOMIC_TRAITS internal::gcc_traits
+# else  /* use pthread impl */
+#  define ATOMIC_TRAITS internal::pthread_traits
+# endif
+
+#include <pthread.h>
+#include <drizzled/atomic/pthread_traits.h>
 
 #include <drizzled/atomics.h>
 
 using namespace drizzled;
 
-BOOST_AUTO_TEST_SUITE(AtomicOperations)
+template<typename T>
+struct atomic_pthread {
+};
+
+#   define __DRIZZLE_DECL_ATOMIC_PTHREAD(T)                              \
+  template<> struct atomic_pthread<T>                                   \
+  : internal::atomic_impl<T,T, internal::pthread_traits<T,T> > {         \
+    atomic_pthread<T>()                                                 \
+      : internal::atomic_impl<T,T, internal::pthread_traits<T,T> >() {}  \
+    T operator=( T rhs ) { return store_with_release(rhs); }            \
+  };
+
+__DRIZZLE_DECL_ATOMIC_PTHREAD(unsigned int)
+
+BOOST_AUTO_TEST_SUITE(PthreadAtomicOperations)
 BOOST_AUTO_TEST_CASE(fetch_and_store)
 {
-  atomic<uint32_t> u235;
+  atomic_pthread<uint32_t> u235;
 
   BOOST_REQUIRE_EQUAL(0, u235.fetch_and_store(1));
 
@@ -41,7 +70,7 @@ BOOST_AUTO_TEST_CASE(fetch_and_store)
 
 BOOST_AUTO_TEST_CASE(fetch_and_increment)
 {
-  atomic<uint32_t> u235;
+  atomic_pthread<uint32_t> u235;
 
   BOOST_REQUIRE_EQUAL(0, u235.fetch_and_increment());
   BOOST_REQUIRE_EQUAL(1, u235);
@@ -49,7 +78,7 @@ BOOST_AUTO_TEST_CASE(fetch_and_increment)
 
 BOOST_AUTO_TEST_CASE(fetch_and_add)
 {
-  atomic<uint32_t> u235;
+  atomic_pthread<uint32_t> u235;
 
   BOOST_REQUIRE_EQUAL(0, u235.fetch_and_add(2));
   BOOST_REQUIRE_EQUAL(2, u235);
@@ -57,7 +86,7 @@ BOOST_AUTO_TEST_CASE(fetch_and_add)
 
 BOOST_AUTO_TEST_CASE(add_and_fetch)
 {
-  atomic<uint32_t> u235;
+  atomic_pthread<uint32_t> u235;
 
   BOOST_REQUIRE_EQUAL(10, u235.add_and_fetch(10));
   BOOST_REQUIRE_EQUAL(10, u235);
@@ -65,7 +94,7 @@ BOOST_AUTO_TEST_CASE(add_and_fetch)
 
 BOOST_AUTO_TEST_CASE(fetch_and_decrement)
 {
-  atomic<uint32_t> u235;
+  atomic_pthread<uint32_t> u235;
 
   u235.fetch_and_store(15);
 
@@ -75,7 +104,7 @@ BOOST_AUTO_TEST_CASE(fetch_and_decrement)
 
 BOOST_AUTO_TEST_CASE(compare_and_swap)
 {
-  atomic<uint32_t> u235;
+  atomic_pthread<uint32_t> u235;
 
   u235.fetch_and_store(100);
 
@@ -86,20 +115,16 @@ BOOST_AUTO_TEST_CASE(compare_and_swap)
 
 BOOST_AUTO_TEST_CASE(increment)
 {
-  atomic<uint32_t> u235;
+  atomic_pthread<uint32_t> u235;
   u235.fetch_and_store(200);
   BOOST_REQUIRE_EQUAL(201, u235.increment());
 }
 
 BOOST_AUTO_TEST_CASE(decrement)
 {
-  atomic<uint32_t> u235;
+  atomic_pthread<uint32_t> u235;
   u235.fetch_and_store(200);
 
   BOOST_REQUIRE_EQUAL(199, u235.decrement());
 }
-
 BOOST_AUTO_TEST_SUITE_END()
-
-/* TODO: add tests for += and -= when supported */
-

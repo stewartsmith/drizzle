@@ -83,7 +83,7 @@ PANDORA_DRIZZLE_BUILD
 AC_DEFINE([BUILDING_DRIZZLED],[1],
           [Define indicating we are building and not consuming drizzle.])
 
-PANDORA_HAVE_LIBGTEST
+PANDORA_HAVE_BOOST_TEST
 PANDORA_HAVE_LIBSQLITE3
 
 AC_CHECK_FUNC(inet_ntoa, [], [AC_CHECK_LIB(nsl, inet_ntoa)])
