@@ -227,6 +227,45 @@ bool check_reserved_words(LEX_STRING *name)
 }
 
 
+/**
+  @brief Bison callback to report a syntax/OOM error
+
+  This function is invoked by the bison-generated parser
+  when a syntax error, a parse error or an out-of-memory
+  condition occurs. This function is not invoked when the
+  parser is requested to abort by semantic action code
+  by means of YYABORT or YYACCEPT macros. This is why these
+  macros should not be used (use DRIZZLE_YYABORT/DRIZZLE_YYACCEPT
+  instead).
+
+  The parser will abort immediately after invoking this callback.
+
+  This function is not for use in semantic actions and is internal to
+  the parser, as it performs some pre-return cleanup.
+  In semantic actions, please use parser::my_parse_error or my_error to
+  push an error into the error stack and DRIZZLE_YYABORT
+  to abort from the parser.
+*/
+void errorOn(const char *s)
+{
+  Session *session= current_session;
+
+  /*
+    Restore the original LEX if it was replaced when parsing
+    a stored procedure. We must ensure that a parsing error
+    does not leave any side effects in the Session.
+  */
+  LEX::cleanup_lex_after_parse_error(session);
+
+  /* "parse error" changed into "syntax error" between bison 1.75 and 1.875 */
+  if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
+    s= ER(ER_SYNTAX_ERROR);
+
+  parser::error_t pass= { s, session };
+  parser::my_parse_error(pass);
+}
+
+
 
 } // namespace parser
 } // namespace drizzled

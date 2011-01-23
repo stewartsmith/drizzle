@@ -137,6 +137,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex);
 Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list);
 void my_parse_error(parser::error_t &arg);
 bool check_reserved_words(LEX_STRING *name);
+void errorOn(const char *s);
 
 } // namespace parser
 } // namespace drizzled
