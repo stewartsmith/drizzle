@@ -206,8 +206,13 @@ class testManager:
     def report_executed_tests(self):
         """ Report out tests by status """
         total_executed_count = self.get_executed_test_count()
-        executed_ratio = (float(total_executed_count)/float(self.total_test_count))
-        executed_percent = executed_ratio * 100
+        if self.total_test_count:
+            executed_ratio = (float(total_executed_count)/float(self.total_test_count))
+            executed_percent = executed_ratio * 100
+        else:
+        # We prevent division by 0 if we didn't find any tests to execute
+            executed_ratio = 0
+            executed_percent = 0
         self.logging.info("Executed %s/%s test cases, %.2f percent" %( total_executed_count
                                                                      , self.total_test_count
                                                                      , executed_percent))

@@ -59,5 +59,8 @@ except Exception, e:
    print Exception, e
 
 finally:
-    server_manager.cleanup()
+# TODO - make a more robust cleanup
+# At the moment, runaway servers are our biggest concern
+    if server_manager:
+        server_manager.cleanup()
 
