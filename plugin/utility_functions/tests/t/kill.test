@@ -5,9 +5,15 @@ connect (con3,localhost,bob,,);
 connect (con4,localhost,bob,,);
 connect (con5,localhost,bob,,);
 
+connection con1;
+connection con2;
+connection con3;
+connection con4;
+connection con5;
+
 connection default;
-SELECT COUNT(ID) FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+SELECT COUNT(ID) FROM DATA_DICTIONARY.PROCESSLIST WHERE ID != CONNECTION_ID() AND USERNAME="bob" ORDER BY ID;
 SELECT IF(KILL(id), "YES", "NO") FROM DATA_DICTIONARY.PROCESSLIST WHERE ID != CONNECTION_ID() AND USERNAME="bob";
-SELECT count(ID) FROM DATA_DICTIONARY.PROCESSLIST WHERE COMMAND != "Killed";
+SELECT count(ID) FROM DATA_DICTIONARY.PROCESSLIST WHERE COMMAND != "Killed" AND USERNAME="bob" and ID != CONNECTION_ID();
 --error 1713
 SELECT KILL(CONNECTION_ID());
