@@ -59,6 +59,7 @@ namespace drizzled
 #define MAX_REF_PARTS 16			/* Max parts used as ref */
 #define MAX_KEY_LENGTH 4096			/* max possible key */
 #define MAX_KEY_LENGTH_DECIMAL_WIDTH 4          /* strlen("4096") */
+
 #if SIZEOF_OFF_T > 4
 #define MAX_REFLENGTH 8				/* Max length for record ref */
 #else
@@ -105,14 +106,6 @@ namespace drizzled
   wildcards in class Item_func_like.
 */
 #define MIN_TURBOBM_PATTERN_LEN 3
-
-/*
-   Defines for binary logging.
-   Do not decrease the value of BIN_LOG_HEADER_SIZE.
-   Do not even increase it before checking code.
-*/
-
-#define BIN_LOG_HEADER_SIZE    4
 
 /* Below are #defines that used to be in mysql_priv.h */
 /***************************************************************************
