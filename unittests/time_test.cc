@@ -20,7 +20,9 @@
 
 #include "config.h"
 
-#include <gtest/gtest.h>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
+
 #include <drizzled/type/decimal.h>
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
@@ -29,7 +31,7 @@
 
 using namespace drizzled;
 
-class TimeTest: public ::testing::Test
+class TimeTest
 {
 protected:
   Time sample_time;
@@ -38,7 +40,7 @@ protected:
   
   Time identical_with_sample_time, before_sample_time, after_sample_time;
   
-  virtual void SetUp()
+  TimeTest()
   {
     TemporalGenerator::TimeGen::make_time(&sample_time, 18, 34, 59);
     
@@ -66,230 +68,231 @@ protected:
   }
 };
 
-TEST_F(TimeTest, operatorEqual_ComparingWithIdencticalTime_ShouldReturn_True)
+BOOST_FIXTURE_TEST_SUITE(TimeTestSuite, TimeTest)
+BOOST_AUTO_TEST_CASE(operatorEqual_ComparingWithIdencticalTime_ShouldReturn_True)
 {
   this->result= (this->sample_time == this->identical_with_sample_time);
   
-  ASSERT_TRUE(this->result);
+  BOOST_REQUIRE(this->result);
 }
 
-TEST_F(TimeTest, operatorEqual_ComparingWithDifferentTemporal_ShouldReturn_False)
+BOOST_AUTO_TEST_CASE(operatorEqual_ComparingWithDifferentTemporal_ShouldReturn_False)
 {
   this->result= (this->sample_time == this->before_sample_time);
   
-  ASSERT_FALSE(this->result);
+  BOOST_REQUIRE(not this->result);
 }
 
-TEST_F(TimeTest, operatorNotEqual_ComparingWithIdencticalTemporal_ShouldReturn_False)
+BOOST_AUTO_TEST_CASE(operatorNotEqual_ComparingWithIdencticalTemporal_ShouldReturn_False)
 { 
   this->result= (this->sample_time != this->identical_with_sample_time);
   
-  ASSERT_FALSE(this->result);
+  BOOST_REQUIRE(not this->result);
 }
 
-TEST_F(TimeTest, operatorNotEqual_ComparingWithDifferentTemporal_ShouldReturn_True)
+BOOST_AUTO_TEST_CASE(operatorNotEqual_ComparingWithDifferentTemporal_ShouldReturn_True)
 {
   this->result= (this->sample_time != this->before_sample_time);
   
-  ASSERT_TRUE(this->result);
+  BOOST_REQUIRE(this->result);
 }
 
-TEST_F(TimeTest, operatorGreaterThan_ComparingWithIdenticalTemporal_ShouldReturn_False)
+BOOST_AUTO_TEST_CASE(operatorGreaterThan_ComparingWithIdenticalTemporal_ShouldReturn_False)
 {
   this->result= (this->sample_time > this->identical_with_sample_time);
   
-  ASSERT_FALSE(this->result);
+  BOOST_REQUIRE(not this->result);
 }
 
-TEST_F(TimeTest, operatorGreaterThan_ComparingWithLaterTemporal_ShouldReturn_False)
+BOOST_AUTO_TEST_CASE(operatorGreaterThan_ComparingWithLaterTemporal_ShouldReturn_False)
 {
   this->result= (this->sample_time > this->after_sample_time);
   
-  ASSERT_FALSE(this->result);
+  BOOST_REQUIRE(not this->result);
 }
 
-TEST_F(TimeTest, operatorGreaterThan_ComparingWithEarlierTemporal_ShouldReturn_True)
+BOOST_AUTO_TEST_CASE(operatorGreaterThan_ComparingWithEarlierTemporal_ShouldReturn_True)
 {
   this->result= (this->sample_time > this->before_sample_time);
   
-  ASSERT_TRUE(this->result);
+  BOOST_REQUIRE(this->result);
 }
 
-TEST_F(TimeTest, operatorGreaterThanOrEqual_ComparingWithIdenticalTemporal_ShouldReturn_True)
+BOOST_AUTO_TEST_CASE(operatorGreaterThanOrEqual_ComparingWithIdenticalTemporal_ShouldReturn_True)
 {
   this->result= (this->sample_time >= this->identical_with_sample_time);
   
-  ASSERT_TRUE(this->result);
+  BOOST_REQUIRE(this->result);
 }
 
-TEST_F(TimeTest, operatorGreaterThanOrEqual_ComparingWithLaterTemporal_ShouldReturn_False)
+BOOST_AUTO_TEST_CASE(operatorGreaterThanOrEqual_ComparingWithLaterTemporal_ShouldReturn_False)
 {
   this->result= (this->sample_time >= this->after_sample_time);
   
-  ASSERT_FALSE(this->result);
+  BOOST_REQUIRE(not this->result);
 }
 
-TEST_F(TimeTest, operatorGreaterThanOrEqual_ComparingWithEarlierTemporal_ShouldReturn_True)
+BOOST_AUTO_TEST_CASE(operatorGreaterThanOrEqual_ComparingWithEarlierTemporal_ShouldReturn_True)
 {
   this->result= (this->sample_time >= this->before_sample_time);
   
-  ASSERT_TRUE(this->result);
+  BOOST_REQUIRE(this->result);
 }
 
-TEST_F(TimeTest, operatorLessThan_ComparingWithIdenticalTemporal_ShouldReturn_False)
+BOOST_AUTO_TEST_CASE(operatorLessThan_ComparingWithIdenticalTemporal_ShouldReturn_False)
 {
   this->result= (this->sample_time < this->identical_with_sample_time);
   
-  ASSERT_FALSE(this->result);
+  BOOST_REQUIRE(not this->result);
 }
 
-TEST_F(TimeTest, operatorLessThan_ComparingWithLaterTemporal_ShouldReturn_True)
+BOOST_AUTO_TEST_CASE(operatorLessThan_ComparingWithLaterTemporal_ShouldReturn_True)
 {
   this->result= (this->sample_time < this->after_sample_time);
   
-  ASSERT_TRUE(this->result);
+  BOOST_REQUIRE(this->result);
 }
 
-TEST_F(TimeTest, operatorLessThan_ComparingWithEarlierTemporal_ShouldReturn_False)
+BOOST_AUTO_TEST_CASE(operatorLessThan_ComparingWithEarlierTemporal_ShouldReturn_False)
 {
   this->result= (this->sample_time < this->before_sample_time);
   
-  ASSERT_FALSE(this->result);
+  BOOST_REQUIRE(not this->result);
 }
 
-TEST_F(TimeTest, operatorLessThanOrEqual_ComparingWithIdenticalTemporal_ShouldReturn_True)
+BOOST_AUTO_TEST_CASE(operatorLessThanOrEqual_ComparingWithIdenticalTemporal_ShouldReturn_True)
 {
   this->result= (this->sample_time <= this->identical_with_sample_time);
   
-  ASSERT_TRUE(this->result);
+  BOOST_REQUIRE(this->result);
 }
 
-TEST_F(TimeTest, operatorLessThanOrEqual_ComparingWithLaterTemporal_ShouldReturn_True)
+BOOST_AUTO_TEST_CASE(operatorLessThanOrEqual_ComparingWithLaterTemporal_ShouldReturn_True)
 {
   this->result= (this->sample_time <= this->after_sample_time);
   
-  ASSERT_TRUE(this->result);
+  BOOST_REQUIRE(this->result);
 }
 
-TEST_F(TimeTest, operatorLessThanOrEqual_ComparingWithEarlierTemporal_ShouldReturn_False)
+BOOST_AUTO_TEST_CASE(operatorLessThanOrEqual_ComparingWithEarlierTemporal_ShouldReturn_False)
 {
   this->result= (this->sample_time <= this->before_sample_time);
   
-  ASSERT_FALSE(this->result);
+  BOOST_REQUIRE(not this->result);
 }
 
-TEST_F(TimeTest, is_valid_onValidTime_shouldReturn_True)
+BOOST_AUTO_TEST_CASE(is_valid_onValidTime_shouldReturn_True)
 {
   result= sample_time.is_valid();
   
-  ASSERT_TRUE(result);
+  BOOST_REQUIRE(result);
 }
 
-TEST_F(TimeTest, is_valid_onValidMinimalTime_shouldReturn_True)
+BOOST_AUTO_TEST_CASE(is_valid_onValidMinimalTime_shouldReturn_True)
 {
   TemporalGenerator::TemporalGen::make_min_time(&sample_time);
   
   result= sample_time.is_valid();
   
-  ASSERT_TRUE(result);
+  BOOST_REQUIRE(result);
 }
 
-TEST_F(TimeTest, is_valid_onValidMaximalTime_shouldReturn_True)
+BOOST_AUTO_TEST_CASE(is_valid_onValidMaximalTime_shouldReturn_True)
 {
   TemporalGenerator::TemporalGen::make_max_time(&sample_time);
   
   result= sample_time.is_valid();
   
-  ASSERT_TRUE(result);
+  BOOST_REQUIRE(result);
 }
 
-TEST_F(TimeTest, is_valid_onInvalidTimeWithHourAboveMaximum23_shouldReturn_False)
+BOOST_AUTO_TEST_CASE(is_valid_onInvalidTimeWithHourAboveMaximum23_shouldReturn_False)
 {
   sample_time.set_hours(24);
   
   result= sample_time.is_valid();
   
-  ASSERT_FALSE(result);
+  BOOST_REQUIRE(not result);
 }
 
-TEST_F(TimeTest, is_valid_onInvalidTimeWithMinutesAboveMaximum59_shouldReturn_False)
+BOOST_AUTO_TEST_CASE(is_valid_onInvalidTimeWithMinutesAboveMaximum59_shouldReturn_False)
 {
   sample_time.set_minutes(60);
   
   result= sample_time.is_valid();
   
-  ASSERT_FALSE(result);
+  BOOST_REQUIRE(not result);
 }
 
-TEST_F(TimeTest, is_valid_onInvalidTimeWithSecondsAboveMaximum59_shouldReturn_False)
+BOOST_AUTO_TEST_CASE(is_valid_onInvalidTimeWithSecondsAboveMaximum59_shouldReturn_False)
 {
   sample_time.set_seconds(60);
   
   result= sample_time.is_valid();
   
-  ASSERT_FALSE(result);
+  BOOST_REQUIRE(not result);
 }
 
-TEST_F(TimeTest, to_string_shouldProduce_colonSeperatedTimeElements)
+BOOST_AUTO_TEST_CASE(to_string_shouldProduce_colonSeperatedTimeElements)
 {
   char expected[Time::MAX_STRING_LENGTH]= "18:34:59";
   char returned[Time::MAX_STRING_LENGTH];
   
   sample_time.to_string(returned, Time::MAX_STRING_LENGTH);
   
-  ASSERT_STREQ(expected, returned);  
+  BOOST_REQUIRE_EQUAL(expected, returned);  
 }
 
-TEST_F(TimeTest, to_string_nullBuffer_shouldReturnProperLengthAnyway)
+BOOST_AUTO_TEST_CASE(to_string_nullBuffer_shouldReturnProperLengthAnyway)
 {
   int length= sample_time.to_string(NULL, 0);
   
-  ASSERT_EQ(Time::MAX_STRING_LENGTH - 1, length);  
+  BOOST_REQUIRE_EQUAL(Time::MAX_STRING_LENGTH - 1, length);  
 }
 
-TEST_F(TimeTest, to_int32_t)
+BOOST_AUTO_TEST_CASE(to_int32_t)
 {
   int32_t representation;
 
   sample_time.to_int32_t(&representation);
 
-  ASSERT_EQ(representation, 183459);
+  BOOST_REQUIRE_EQUAL(representation, 183459);
 }
 
-TEST_F(TimeTest, from_int32_t_shouldPopulateTimeCorrectly)
+BOOST_AUTO_TEST_CASE(from_int32_t_shouldPopulateTimeCorrectly)
 {
   sample_time.from_int32_t(183459);
   
   assign_time_values();;
   
-  EXPECT_EQ(18, hours);
-  EXPECT_EQ(34, minutes);
-  EXPECT_EQ(59, seconds);
+  BOOST_REQUIRE_EQUAL(18, hours);
+  BOOST_REQUIRE_EQUAL(34, minutes);
+  BOOST_REQUIRE_EQUAL(59, seconds);
 }
 
-TEST_F(TimeTest, from_time_t)
+BOOST_AUTO_TEST_CASE(from_time_t)
 {
   sample_time.from_time_t(59588);
   
   assign_time_values();
   
-  EXPECT_EQ(16, hours);  
-  EXPECT_EQ(33, minutes);
-  EXPECT_EQ(8, seconds);
+  BOOST_REQUIRE_EQUAL(16, hours);  
+  BOOST_REQUIRE_EQUAL(33, minutes);
+  BOOST_REQUIRE_EQUAL(8, seconds);
 }
 
-TEST_F(TimeTest, to_decimal)
+BOOST_AUTO_TEST_CASE(to_decimal)
 {
   drizzled::type::Decimal to;
   TemporalGenerator::TimeGen::make_time(&sample_time, 8, 4, 9, 56);
 
   sample_time.to_decimal(&to);
   
-  ASSERT_EQ(80409, to.buf[0]);
-  ASSERT_EQ(56000, to.buf[1]);
+  BOOST_REQUIRE_EQUAL(80409, to.buf[0]);
+  BOOST_REQUIRE_EQUAL(56000, to.buf[1]);
 }
 
-TEST_F(TimeTest, from_string_invalidString_shouldReturn_False)
+BOOST_AUTO_TEST_CASE(from_string_invalidString_shouldReturn_False)
 {
   char invalid_string[Time::MAX_STRING_LENGTH]= "1o:34:59";
   
@@ -297,51 +300,52 @@ TEST_F(TimeTest, from_string_invalidString_shouldReturn_False)
   result= sample_time.from_string(invalid_string, strlen(invalid_string));
   deinit_temporal_formats();
   
-  ASSERT_FALSE(result);
+  BOOST_REQUIRE(not result);
 }
 
-TEST_F(TimeTest, from_string_validString_minuteAndSecond_shouldPopulateCorrectly)
+BOOST_AUTO_TEST_CASE(from_string_validString_minuteAndSecond_shouldPopulateCorrectly)
 {
   char valid_string[Time::MAX_STRING_LENGTH]= "4:52";
 
   from_string(valid_string);
 
-  EXPECT_EQ(4, minutes);
-  EXPECT_EQ(52, seconds);
+  BOOST_REQUIRE_EQUAL(4, minutes);
+  BOOST_REQUIRE_EQUAL(52, seconds);
 }
 
-TEST_F(TimeTest, from_string_validString_minuteAndSecondNoColon_shouldPopulateCorrectly)
+BOOST_AUTO_TEST_CASE(from_string_validString_minuteAndSecondNoColon_shouldPopulateCorrectly)
 {
   char valid_string[Time::MAX_STRING_LENGTH]= "3456";
   
   from_string(valid_string);
   
-  EXPECT_EQ(34, minutes);
-  EXPECT_EQ(56, seconds);
+  BOOST_REQUIRE_EQUAL(34, minutes);
+  BOOST_REQUIRE_EQUAL(56, seconds);
 }
 
-TEST_F(TimeTest, from_string_validString_secondsOnly_shouldPopulateCorrectly)
+BOOST_AUTO_TEST_CASE(from_string_validString_secondsOnly_shouldPopulateCorrectly)
 {
   char valid_string[Time::MAX_STRING_LENGTH]= "59";
   
   from_string(valid_string);
   
-  EXPECT_EQ(59, seconds);
+  BOOST_REQUIRE_EQUAL(59, seconds);
 }
+BOOST_AUTO_TEST_SUITE_END()
 
-class TimeFromStringTest: public ::testing::TestWithParam<const char*>
+class TimeFromStringTest
 {
   protected:
     Time time;
     bool result;
     uint32_t hours, minutes, seconds;
     
-    virtual void SetUp()
+    TimeFromStringTest()
     {
       init_temporal_formats();
     }
     
-    virtual void TearDown()
+    ~TimeFromStringTest()
     {
       deinit_temporal_formats();
     }
@@ -354,28 +358,28 @@ class TimeFromStringTest: public ::testing::TestWithParam<const char*>
     }
 };
 
-TEST_P(TimeFromStringTest, from_string)
+BOOST_FIXTURE_TEST_SUITE(TimeFromStringTestSuite, TimeFromStringTest)
+BOOST_AUTO_TEST_CASE(from_string)
 {
-  const char *valid_string= GetParam();
+  const char *valid_strings[]= {"080409",
+                                "80409",
+                                "08:04:09",
+                                "8:04:09",
+                                "8:04:9",
+                                "8:4:9"};
+  for (int it= 0; it < 6; it++)
+  {
+    const char *valid_string= valid_strings[it];
 
-  result= time.from_string(valid_string, strlen(valid_string));
-  ASSERT_TRUE(result);
+    result= time.from_string(valid_string, strlen(valid_string));
+    BOOST_REQUIRE(result);
   
-  assign_time_values();
+    assign_time_values();
 
-  EXPECT_EQ(8, hours);
-  EXPECT_EQ(4, minutes);
-  EXPECT_EQ(9, seconds);
+    BOOST_REQUIRE_EQUAL(8, hours);
+    BOOST_REQUIRE_EQUAL(4, minutes);
+    BOOST_REQUIRE_EQUAL(9, seconds);
+  }
 }
-
-/* TODO:for some reason this was not declared by the macro, needs clarification*/
-testing::internal::ParamGenerator<const char*> gtest_ValidStringTimeFromStringTest_EvalGenerator_();
-
-INSTANTIATE_TEST_CASE_P(ValidString, TimeFromStringTest,
-                        ::testing::Values("080409",
-                                          "80409",
-                                          "08:04:09",
-                                          "8:04:09",
-                                          "8:04:9",
-                                          "8:4:9"));
+BOOST_AUTO_TEST_SUITE_END()
                                           
