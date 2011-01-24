@@ -710,7 +710,7 @@ Cursor::ha_delete_all_rows()
      */
     Session *const session= getTable()->in_use;
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.truncateTable(session, getTable());
+    transaction_services.truncateTable(*session, *getTable());
   }
 
   return result;
@@ -1311,7 +1311,7 @@ static bool log_row_for_replication(Table* table,
      * CREATE TABLE will commit the transaction containing
      * it).
      */
-    result= transaction_services.insertRecord(session, table);
+    result= transaction_services.insertRecord(*session, *table);
     break;
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
@@ -1340,20 +1340,20 @@ static bool log_row_for_replication(Table* table,
        * as the row to delete (this is the conflicting row), so
        * we need to notify TransactionService to use that row.
        */
-      transaction_services.deleteRecord(session, table, true);
+      transaction_services.deleteRecord(*session, *table, true);
       /* 
        * We set the "current" statement message to NULL.  This triggers
        * the replication services component to generate a new statement
        * message for the inserted record which will come next.
        */
-      transaction_services.finalizeStatementMessage(*session->getStatementMessage(), session);
+      transaction_services.finalizeStatementMessage(*session->getStatementMessage(), *session);
     }
     else
     {
       if (before_record == NULL)
-        result= transaction_services.insertRecord(session, table);
+        result= transaction_services.insertRecord(*session, *table);
       else
-        transaction_services.updateRecord(session, table, before_record, after_record);
+        transaction_services.updateRecord(*session, *table, before_record, after_record);
     }
     break;
   case SQLCOM_INSERT:
@@ -1366,17 +1366,17 @@ static bool log_row_for_replication(Table* table,
      * an update.
      */
     if (before_record == NULL)
-      result= transaction_services.insertRecord(session, table);
+      result= transaction_services.insertRecord(*session, *table);
     else
-      transaction_services.updateRecord(session, table, before_record, after_record);
+      transaction_services.updateRecord(*session, *table, before_record, after_record);
     break;
 
   case SQLCOM_UPDATE:
-    transaction_services.updateRecord(session, table, before_record, after_record);
+    transaction_services.updateRecord(*session, *table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
-    transaction_services.deleteRecord(session, table);
+    transaction_services.deleteRecord(*session, *table);
     break;
   default:
     break;
