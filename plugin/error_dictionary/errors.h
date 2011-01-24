@@ -40,6 +40,7 @@ public:
   {
     const drizzled::ErrorMap::ErrorMessageMap& _error_map;
     drizzled::ErrorMap::ErrorMessageMap::const_iterator _iter;
+
   public:
     Generator(drizzled::Field **arg);
 

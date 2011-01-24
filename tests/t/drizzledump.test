@@ -453,49 +453,49 @@ create table t3(a varchar(30) primary key, b int not null);
 --disable_query_log
 select '------ Testing with illegal table names ------' as test_sequence ;
 --enable_query_log
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "\d-2-1.sql" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\t1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\\t1" 2>&1
  
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\\\\t1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "t\1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments  mysqldump_test_db  "t\\1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "t/1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T%1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T'1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_1" 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_" 2>&1
 
 --disable_query_log
 select '------ Testing with illegal database names ------' as test_sequence ;
 --enable_query_log
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_d 2>&1
 
---error 2
+--error EE_CANTCREATEFILE
 --exec $DRIZZLE_DUMP --compact --skip-comments "mysqld\ump_test_db" 2>&1
 
 drop table t1, t2, t3;
@@ -634,7 +634,7 @@ select * from words2;
 # Drop table "words" and run with threads, should fail
 drop table words;
 --replace_regex /.*mysqlimport(\.exe)*/mysql-import/
---error 1
+--error EE_ERROR_FIRST
 --exec $DRIZZLE_IMPORT --silent --use-threads=2 test $DRIZZLETEST_VARDIR/tmp/t1.txt $DRIZZLETEST_VARDIR/tmp/t2.txt $DRIZZLETEST_VARDIR/std_data_ln/words.dat $DRIZZLETEST_VARDIR/std_data_ln/words2.dat 2>&1
 
 drop table t1;

@@ -161,7 +161,7 @@ rollback to savepoint savept3;
 rollback to savepoint savept2;
 release savepoint `my_savepoint`;
 select n from t1;
---error 1305
+--error ER_SP_DOES_NOT_EXIST
 rollback to savepoint `my_savepoint`;
 rollback to savepoint savept2;
 insert into t1 values (8);
