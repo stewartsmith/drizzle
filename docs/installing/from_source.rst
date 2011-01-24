@@ -23,7 +23,6 @@ dependencies installed:
  * libboost-program-options-dev
  * libboost-regex-dev
  * libboost-thread-dev
- * libgtest (1.5.0)
  * libpcre3-dev
  * libreadline5-dev | libreadline-dev
  * libtool
