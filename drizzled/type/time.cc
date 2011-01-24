@@ -1054,39 +1054,6 @@ static int my_time_to_str(const type::Time *l_time, char *to)
   return static_cast<size_t>(length); 
 }
 
-static int my_date_to_str(const type::Time *l_time, char *to)
-{
-  int32_t length;
-  length= sprintf(to, "%04u-%02u-%02u",
-                         l_time->year,
-                         l_time->month,
-                         l_time->day);
-  if (length < 0)
-    return 0;
-
-  return static_cast<size_t>(length); 
-}
-
-static size_t my_datetime_to_str(const type::Time *l_time, char *to, size_t to_len)
-{
-  int32_t length;
-  length= snprintf(to, to_len,
-                   "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
-                   " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
-                   l_time->year,
-                   l_time->month,
-                   l_time->day,
-                   l_time->hour,
-                   l_time->minute,
-                   l_time->second,
-                   l_time->second_part);
-  if (length < 0)
-    return 0;
-
-  return static_cast<size_t>(length); 
-}
-
-
 namespace type {
 
 void Time::store(const struct tm &from)
@@ -1151,15 +1118,46 @@ void Time::convert(char *str, size_t &to_length, timestamp_t arg)
 {
   switch (arg) {
   case DRIZZLE_TIMESTAMP_DATETIME:
-    to_length= my_datetime_to_str(this, str, to_length);
+    {
+      int32_t length;
+      length= snprintf(to, to_length,
+                       "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
+                       " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+                       l_time->year,
+                       l_time->month,
+                       l_time->day,
+                       l_time->hour,
+                       l_time->minute,
+                       l_time->second,
+                       l_time->second_part);
+      if (length < 0)
+      {
+        to_length= 0;
+        break;
+      }
+
+      to_length= length;
+    }
     break;
 
   case DRIZZLE_TIMESTAMP_DATE:
-    to_length= (uint32_t) my_date_to_str(this, str);
+    {
+      int32_t length;
+      length= snprintf(to, to_length, "%04u-%02u-%02u",
+                       l_time->year,
+                       l_time->month,
+                       l_time->day);
+      if (length < 0)
+      {
+        to_length= 0;
+        break;
+      }
+
+      to_length= length;
+    }
     break;
 
   case DRIZZLE_TIMESTAMP_TIME:
-    to_length= (uint32_t) my_time_to_str(this, str);
     {
       int32_t length;
       uint32_t extra_hours= 0;
