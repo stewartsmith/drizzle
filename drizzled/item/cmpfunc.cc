@@ -705,10 +705,9 @@ get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
   type::Time l_time;
   type::timestamp_t ret;
 
-  ret= str_to_datetime(str->ptr(), str->length(), &l_time,
-                       (TIME_FUZZY_DATE | MODE_INVALID_DATES |
-                        (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
-                       &error);
+  ret= l_time.store(str->ptr(), str->length(),
+                    (TIME_FUZZY_DATE | MODE_INVALID_DATES | (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
+                    error);
 
   if (ret == type::DRIZZLE_TIMESTAMP_DATETIME || ret == type::DRIZZLE_TIMESTAMP_DATE)
   {

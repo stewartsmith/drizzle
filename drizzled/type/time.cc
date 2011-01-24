@@ -72,20 +72,22 @@ uint32_t calc_days_in_year(uint32_t year)
           366 : 365);
 }
 
+
+namespace type {
 /**
   @brief Check datetime value for validity according to flags.
 
   @param[in]  ltime          Date to check.
   @param[in]  not_zero_date  ltime is not the zero date
   @param[in]  flags          flags to check
-                             (see str_to_datetime() flags in drizzle_time.h)
+                             (see store() flags in drizzle_time.h)
   @param[out] was_cut        set to 2 if value was invalid according to flags.
                              (Feb 29 in non-leap etc.)  This remains unchanged
                              if value is not invalid.
 
   @details Here we assume that year and month is ok!
     If month is 0 we allow any date. (This only happens if we allow zero
-    date parts in str_to_datetime())
+    date parts in store())
     Disallow dates with zero year and non-zero month and/or day.
 
   @return
@@ -93,26 +95,25 @@ uint32_t calc_days_in_year(uint32_t year)
     1  error
 */
 
-static bool check_date(const type::Time *ltime, bool not_zero_date,
-                       uint32_t flags, int *was_cut)
+bool Time::check(bool not_zero_date, uint32_t flags, int &was_cut) const
 {
   if (not_zero_date)
   {
     if ((((flags & TIME_NO_ZERO_IN_DATE) || !(flags & TIME_FUZZY_DATE)) &&
-         (ltime->month == 0 || ltime->day == 0)) ||
-        (!(flags & TIME_INVALID_DATES) &&
-         ltime->month && ltime->day > days_in_month[ltime->month-1] &&
-         (ltime->month != 2 || calc_days_in_year(ltime->year) != 366 ||
-          ltime->day != 29)))
+         (month == 0 || day == 0)) ||
+        (not (flags & TIME_INVALID_DATES) &&
+         month && day > days_in_month[month-1] &&
+         (month != 2 || calc_days_in_year(year) != 366 ||
+          day != 29)))
     {
-      *was_cut= 2;
+      was_cut= 2;
       return true;
     }
   }
   else if (flags & TIME_NO_ZERO_DATE)
   {
     /*
-      We don't set *was_cut here to signal that the problem was a zero date
+      We don't set &was_cut here to signal that the problem was a zero date
       and not an invalid date
     */
     return true;
@@ -120,21 +121,11 @@ static bool check_date(const type::Time *ltime, bool not_zero_date,
   return false;
 }
 
-namespace type {
-
-bool Time::check(bool not_zero_date, uint32_t flags, int *was_cut) const
-{
-  return check_date(this, not_zero_date, flags, was_cut);
-}
-
-} // namespace type
-
-
 /*
   Convert a timestamp string to a type::Time value.
 
   SYNOPSIS
-    str_to_datetime()
+    store()
     str                 String to parse
     length              Length of string
     l_time              Date is stored here
@@ -146,7 +137,7 @@ bool Time::check(bool not_zero_date, uint32_t flags, int *was_cut) const
                         TIME_INVALID_DATES	Allow 2000-02-31
     was_cut             0	Value OK
 			1       If value was cut during conversion
-			2	check_date(date,flags) considers date invalid
+			2	check(date,flags) considers date invalid
 
   DESCRIPTION
     At least the following formats are recogniced (based on number of digits)
@@ -183,9 +174,7 @@ bool Time::check(bool not_zero_date, uint32_t flags, int *was_cut) const
 
 #define MAX_DATE_PARTS 8
 
-type::timestamp_t
-str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
-                uint32_t flags, int *was_cut)
+type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, int &was_cut)
 {
   uint32_t field_length, year_length=4, digits, i, number_of_fields;
   uint32_t date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
@@ -198,14 +187,14 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
   bool found_delimitier= 0, found_space= 0;
   uint32_t frac_pos, frac_len;
 
-  *was_cut= 0;
+  was_cut= 0;
 
   /* Skip space at start */
   for (; str != end && my_isspace(&my_charset_utf8_general_ci, *str) ; str++)
     ;
   if (str == end || ! my_isdigit(&my_charset_utf8_general_ci, *str))
   {
-    *was_cut= 1;
+    was_cut= 1;
     return(type::DRIZZLE_TIMESTAMP_NONE);
   }
 
@@ -252,7 +241,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
       {
         if (flags & TIME_DATETIME_ONLY)
         {
-          *was_cut= 1;
+          was_cut= 1;
           return(type::DRIZZLE_TIMESTAMP_NONE);   /* Can't be a full datetime */
         }
         /* Date field.  Set hour, minutes and seconds to 0 */
@@ -294,7 +283,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
     date_len[i]= (uint32_t) (str - start);
     if (tmp_value > 999999)                     /* Impossible date part */
     {
-      *was_cut= 1;
+      was_cut= 1;
       return(type::DRIZZLE_TIMESTAMP_NONE);
     }
     date[i]=tmp_value;
@@ -331,7 +320,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
       {
         if (!(allow_space & (1 << i)))
         {
-          *was_cut= 1;
+          was_cut= 1;
           return(type::DRIZZLE_TIMESTAMP_NONE);
         }
         found_space= 1;
@@ -362,7 +351,7 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
   }
   if (found_delimitier && !found_space && (flags & TIME_DATETIME_ONLY))
   {
-    *was_cut= 1;
+    was_cut= 1;
     return(type::DRIZZLE_TIMESTAMP_NONE);          /* Can't be a datetime */
   }
 
@@ -380,54 +369,54 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
     year_length= date_len[(uint32_t) format_position[0]];
     if (!year_length)                           /* Year must be specified */
     {
-      *was_cut= 1;
+      was_cut= 1;
       return(type::DRIZZLE_TIMESTAMP_NONE);
     }
 
-    l_time->year=               date[(uint32_t) format_position[0]];
-    l_time->month=              date[(uint32_t) format_position[1]];
-    l_time->day=                date[(uint32_t) format_position[2]];
-    l_time->hour=               date[(uint32_t) format_position[3]];
-    l_time->minute=             date[(uint32_t) format_position[4]];
-    l_time->second=             date[(uint32_t) format_position[5]];
+    this->year=               date[(uint32_t) format_position[0]];
+    this->month=              date[(uint32_t) format_position[1]];
+    this->day=                date[(uint32_t) format_position[2]];
+    this->hour=               date[(uint32_t) format_position[3]];
+    this->minute=             date[(uint32_t) format_position[4]];
+    this->second=             date[(uint32_t) format_position[5]];
 
     frac_pos= (uint32_t) format_position[6];
     frac_len= date_len[frac_pos];
     if (frac_len < 6)
       date[frac_pos]*= (uint32_t) log_10_int[6 - frac_len];
-    l_time->second_part= date[frac_pos];
+    this->second_part= date[frac_pos];
 
     if (format_position[7] != (unsigned char) 255)
     {
-      if (l_time->hour > 12)
+      if (this->hour > 12)
       {
-        *was_cut= 1;
+        was_cut= 1;
         goto err;
       }
-      l_time->hour= l_time->hour%12 + add_hours;
+      this->hour= this->hour%12 + add_hours;
     }
   }
   else
   {
-    l_time->year=       date[0];
-    l_time->month=      date[1];
-    l_time->day=        date[2];
-    l_time->hour=       date[3];
-    l_time->minute=     date[4];
-    l_time->second=     date[5];
+    this->year=       date[0];
+    this->month=      date[1];
+    this->day=        date[2];
+    this->hour=       date[3];
+    this->minute=     date[4];
+    this->second=     date[5];
     if (date_len[6] < 6)
       date[6]*= (uint32_t) log_10_int[6 - date_len[6]];
-    l_time->second_part=date[6];
+    this->second_part=date[6];
   }
-  l_time->neg= 0;
+  this->neg= 0;
 
   if (year_length == 2 && not_zero_date)
-    l_time->year+= (l_time->year < YY_PART_YEAR ? 2000 : 1900);
+    this->year+= (this->year < YY_PART_YEAR ? 2000 : 1900);
 
   if (number_of_fields < 3 ||
-      l_time->year > 9999 || l_time->month > 12 ||
-      l_time->day > 31 || l_time->hour > 23 ||
-      l_time->minute > 59 || l_time->second > 59)
+      this->year > 9999 || this->month > 12 ||
+      this->day > 31 || this->hour > 23 ||
+      this->minute > 59 || this->second > 59)
   {
     /* Only give warning for a zero date if there is some garbage after */
     if (!not_zero_date)                         /* If zero date */
@@ -441,36 +430,36 @@ str_to_datetime(const char *str, uint32_t length, type::Time *l_time,
         }
       }
     }
-    *was_cut= test(not_zero_date);
+    was_cut= test(not_zero_date);
     goto err;
   }
 
-  if (check_date(l_time, not_zero_date != 0, flags, was_cut))
+  if (check(not_zero_date != 0, flags, was_cut))
     goto err;
 
-  l_time->time_type= (number_of_fields <= 3 ?
+  this->time_type= (number_of_fields <= 3 ?
                       type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME);
 
   for (; str != end ; str++)
   {
     if (!my_isspace(&my_charset_utf8_general_ci,*str))
     {
-      *was_cut= 1;
+      was_cut= 1;
       break;
     }
   }
 
-  return(l_time->time_type=
-              (number_of_fields <= 3 ? type::DRIZZLE_TIMESTAMP_DATE :
-                                       type::DRIZZLE_TIMESTAMP_DATETIME));
+  return(time_type= (number_of_fields <= 3 ? type::DRIZZLE_TIMESTAMP_DATE :
+                     type::DRIZZLE_TIMESTAMP_DATETIME));
 
 err:
 
-  l_time->reset();
+  reset();
 
-  return(type::DRIZZLE_TIMESTAMP_ERROR);
+  return type::DRIZZLE_TIMESTAMP_ERROR;
 }
 
+} // namespace type
 
 /*
  Convert a time string to a type::Time struct.
@@ -523,12 +512,12 @@ bool str_to_time(const char *str, uint32_t length, type::Time *l_time,
   if (length >= 12)
   {                                             /* Probably full timestamp */
     int was_cut;
-    type::timestamp_t res= str_to_datetime(str, length, l_time,
-                                           (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), &was_cut);
+    type::timestamp_t res= l_time->store(str, length, (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), was_cut);
     if ((int) res >= (int) type::DRIZZLE_TIMESTAMP_ERROR)
     {
       if (was_cut)
         *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
+
       return res == type::DRIZZLE_TIMESTAMP_ERROR;
     }
   }
@@ -843,7 +832,7 @@ my_system_gmt_sec(const type::Time *t_src, long *my_timezone,
   */
   tmp_time= *t_src;
 
-  if (not validate_timestamp_range(t))
+  if (not t->isValidEpoch())
     return 0;
 
   /*
@@ -1192,10 +1181,10 @@ void Time::convert(char *str, size_t &to_length, timestamp_t arg)
     number_to_datetime()
       nr         - datetime value as number
       time_res   - pointer for structure for broken-down representation
-      flags      - flags to use in validating date, as in str_to_datetime()
+      flags      - flags to use in validating date, as in store()
       was_cut    0      Value ok
                  1      If value was cut during conversion
-                 2      check_date(date,flags) considers date invalid
+                 2      check(date,flags) considers date invalid
 
   DESCRIPTION
     Convert a datetime value of formats YYMMDD, YYYYMMDD, YYMMDDHHMSS,
@@ -1211,11 +1200,11 @@ void Time::convert(char *str, size_t &to_length, timestamp_t arg)
 */
 
 static int64_t number_to_datetime(int64_t nr, type::Time *time_res,
-                                  uint32_t flags, int *was_cut)
+                                  uint32_t flags, int &was_cut)
 {
   long part1,part2;
 
-  *was_cut= 0;
+  was_cut= 0;
   time_res->reset();
   time_res->time_type=type::DRIZZLE_TIMESTAMP_DATE;
 
@@ -1273,21 +1262,23 @@ static int64_t number_to_datetime(int64_t nr, type::Time *time_res,
   if (time_res->year <= 9999 && time_res->month <= 12 &&
       time_res->day <= 31 && time_res->hour <= 23 &&
       time_res->minute <= 59 && time_res->second <= 59 &&
-      !check_date(time_res, (nr != 0), flags, was_cut))
+      not time_res->check((nr != 0), flags, was_cut))
+  {
     return nr;
+  }
 
   /* Don't want to have was_cut get set if NO_ZERO_DATE was violated. */
   if (!nr && (flags & TIME_NO_ZERO_DATE))
     return -1LL;
 
  err:
-  *was_cut= 1;
+  was_cut= 1;
   return -1LL;
 }
 
 
 namespace type {
-void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags, int *was_cut)
+void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags, int &was_cut)
 {
   ret= number_to_datetime(nr, this, flags, was_cut);
 }
