@@ -204,6 +204,8 @@ const std::string &ErrorMap::find(drizzled::error_t error_num) const
 // Constructor sets the default mappings.
 ErrorMap::ErrorMap()
 {
+  ADD_ERROR_MESSAGE(EE_OK, N_("SUCCESS"));
+  ADD_ERROR_MESSAGE(EE_ERROR_FIRST, N_("Error on first"));
   ADD_ERROR_MESSAGE(ER_NO, N_("NO"));
   ADD_ERROR_MESSAGE(ER_YES, N_("YES"));
   ADD_ERROR_MESSAGE(ER_CANT_CREATE_FILE, N_("Can't create file '%-.200s' (errno: %d)"));
