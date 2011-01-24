@@ -26,6 +26,11 @@
 #include "drizzled/message/catalog.h"
 
 namespace drizzled {
+namespace plugin {
+
+class Catalog;
+
+} // namespace plugin
 namespace catalog {
 
 class Engine
@@ -33,6 +38,9 @@ class Engine
 public:
   typedef boost::shared_ptr<Engine> shared_ptr;
   typedef std::vector<shared_ptr> vector;
+
+protected:
+  friend class drizzled::plugin::Catalog;
 
   Engine()
   { };
