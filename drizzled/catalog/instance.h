@@ -60,6 +60,12 @@ public:
     _message= message_arg;
   };
 
+  static shared_ptr make_shared(message::catalog::shared_ptr &message_arg)
+  {
+    assert(not message_arg->name().empty());
+    return boost::make_shared<Instance>(message_arg);
+  };
+
   static shared_ptr create(message::catalog::shared_ptr &message_arg)
   {
     assert(not message_arg->name().empty());

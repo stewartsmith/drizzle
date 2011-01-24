@@ -89,7 +89,7 @@ void Schema::prime()
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
       if (ret.second == false)
-     {
+      {
         abort(); // If this has happened, something really bad is going down.
       }
     }

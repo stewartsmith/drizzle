@@ -54,13 +54,13 @@ Catalog::~Catalog()
 {
 }
 
-bool Catalog::create(const identifier::Catalog &identifier)
+bool Catalog::create(identifier::Catalog::const_reference identifier)
 {
   message::catalog::shared_ptr message= message::catalog::make_shared(identifier);
   return create(identifier, message);
 }
 
-bool Catalog::create(const identifier::Catalog &identifier, message::catalog::shared_ptr &message)
+bool Catalog::create(identifier::Catalog::const_reference identifier, message::catalog::shared_ptr &message)
 {
   assert(message);
 
@@ -89,7 +89,7 @@ bool Catalog::create(const identifier::Catalog &identifier, message::catalog::sh
   return true;
 }
 
-bool Catalog::drop(const identifier::Catalog &identifier)
+bool Catalog::drop(identifier::Catalog::const_reference identifier)
 {
   if (identifier == drizzled::catalog::local_identifier())
   {
@@ -122,7 +122,7 @@ bool Catalog::drop(const identifier::Catalog &identifier)
   return true;
 }
 
-bool Catalog::lock(const identifier::Catalog &identifier)
+bool Catalog::lock(identifier::Catalog::const_reference identifier)
 {
   drizzled::error_t error;
   
@@ -138,7 +138,7 @@ bool Catalog::lock(const identifier::Catalog &identifier)
 }
 
 
-bool Catalog::unlock(const identifier::Catalog &identifier)
+bool Catalog::unlock(identifier::Catalog::const_reference identifier)
 {
   drizzled::error_t error;
   if (not catalog::Cache::singleton().unlock(identifier, error))
@@ -156,7 +156,7 @@ bool plugin::Catalog::addPlugin(plugin::Catalog *arg)
   return false;
 }
 
-bool plugin::Catalog::exist(const identifier::Catalog &identifier)
+bool plugin::Catalog::exist(identifier::Catalog::const_reference identifier)
 {
   if (catalog::Cache::singleton().exist(identifier))
     return true;
@@ -186,29 +186,27 @@ void plugin::Catalog::getMessages(message::catalog::vector &messages)
   }
 }
 
-bool plugin::Catalog::getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message)
+message::catalog::shared_ptr plugin::Catalog::getMessage(identifier::Catalog::const_reference identifier)
 {
   drizzled::error_t error;
   catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
+  message::catalog::shared_ptr message;
 
   if (instance and instance->message())
   {
-    message= instance->message();
-
-    if (message)
-      return message;
+    return instance->message();
   }
 
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
-    if (ref->getMessage(identifier, message))
-      return true;
+    if ((message= ref->getMessage(identifier)))
+      return message;
   }
 
-  return false;
+  return message;
 }
 
-catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Catalog &identifier)
+catalog::Instance::shared_ptr plugin::Catalog::getInstance(identifier::Catalog::const_reference identifier)
 {
   drizzled::error_t error;
   catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
@@ -218,8 +216,10 @@ catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Cat
 
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
-    if (ref->getInstance(identifier, instance))
+    message::catalog::shared_ptr message;
+    if (message= ref->getMessage(identifier))
     {
+      instance= catalog::Instance::make_shared(message);
       // If this should fail inserting into the cache, we are in a world of
       // pain.
       catalog::Cache::singleton().insert(identifier, instance, error);
