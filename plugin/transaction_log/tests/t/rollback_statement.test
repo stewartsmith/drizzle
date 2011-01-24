@@ -39,7 +39,7 @@ insert into src (d) values (NULL);
 --enable_query_log
 
 START TRANSACTION;
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT into dst SELECT * from src ORDER BY pk ASC;
 COMMIT;
 
@@ -64,7 +64,7 @@ CREATE TABLE dst (pk int auto_increment primary key, d varchar(5) not null);
 --echo
 START TRANSACTION;
 INSERT INTO src (d) VALUES ('aaa'), ('bbb'), (NULL);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO dst (d) SELECT d FROM src ORDER BY pk;
 INSERT INTO dst (d) VALUES ('xyz');
 COMMIT;
