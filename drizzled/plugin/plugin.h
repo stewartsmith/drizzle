@@ -26,6 +26,9 @@
 
 namespace drizzled
 {
+
+class Session;
+
 namespace module
 {
 class Module;
@@ -64,6 +67,10 @@ public:
 
   // This is run after all plugins have been initialized.
   virtual void prime()
+  {
+  }
+
+  virtual void startup(drizzled::Session &)
   {
   }
  
