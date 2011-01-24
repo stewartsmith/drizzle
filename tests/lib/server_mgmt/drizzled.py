@@ -187,7 +187,7 @@ class drizzleServer():
 
     def ping(self, quiet= False):
         """Pings the server. Returns True if server is up and running, False otherwise."""
-        ping_cmd= "%s --ping --port=%d " % (self.drizzle_client_path, self.master_port)
+        ping_cmd= "%s --ping --port=%d --user=root" % (self.drizzle_client_path, self.master_port)
         if not quiet:
             self.logging.info("Pinging Drizzled server on port %d" % self.master_port)
         (retcode, output)= self.system_manager.execute_cmd(ping_cmd, must_pass = 0)
