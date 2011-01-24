@@ -265,7 +265,42 @@ void errorOn(const char *s)
   parser::my_parse_error(pass);
 }
 
+bool buildOrderBy(Session *session)
+{
+  Select_Lex *sel= session->getLex()->current_select;
+  Select_Lex_Unit *unit= sel-> master_unit();
 
+  if (sel->linkage != GLOBAL_OPTIONS_TYPE &&
+      sel->olap != UNSPECIFIED_OLAP_TYPE &&
+      (sel->linkage != UNION_TYPE || sel->braces))
+  {
+    my_error(ER_WRONG_USAGE, MYF(0),
+             "CUBE/ROLLUP", "ORDER BY");
+    return false;
+  }
+
+  if (session->getLex()->sql_command != SQLCOM_ALTER_TABLE && !unit->fake_select_lex)
+  {
+    /*
+      A query of the of the form (SELECT ...) ORDER BY order_list is
+      executed in the same way as the query
+      SELECT ... ORDER BY order_list
+      unless the SELECT construct contains ORDER BY or LIMIT clauses.
+      Otherwise we create a fake Select_Lex if it has not been created
+      yet.
+    */
+    Select_Lex *first_sl= unit->first_select();
+    if (!unit->is_union() &&
+        (first_sl->order_list.elements ||
+         first_sl->select_limit) &&           
+        unit->add_fake_select_lex(session->getLex()->session))
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 } // namespace parser
 } // namespace drizzled

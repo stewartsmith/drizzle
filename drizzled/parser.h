@@ -138,6 +138,7 @@ Item* reserved_keyword_function(Session *session, const std::string &name, List<
 void my_parse_error(parser::error_t &arg);
 bool check_reserved_words(LEX_STRING *name);
 void errorOn(const char *s);
+bool buildOrderBy(Session *session);
 
 } // namespace parser
 } // namespace drizzled

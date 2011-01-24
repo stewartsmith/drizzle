@@ -4054,42 +4054,23 @@ opt_order_clause:
 order_clause:
           ORDER_SYM BY
           {
-            Select_Lex *sel= Lex->current_select;
-            Select_Lex_Unit *unit= sel-> master_unit();
-            if (sel->linkage != GLOBAL_OPTIONS_TYPE &&
-                sel->olap != UNSPECIFIED_OLAP_TYPE &&
-                (sel->linkage != UNION_TYPE || sel->braces))
-            {
-              my_error(ER_WRONG_USAGE, MYF(0),
-                       "CUBE/ROLLUP", "ORDER BY");
+            if (not parser::buildOrderBy(YYSession))
               DRIZZLE_YYABORT;
-            }
-            if (Lex->sql_command != SQLCOM_ALTER_TABLE && !unit->fake_select_lex)
-            {
-              /*
-                A query of the of the form (SELECT ...) ORDER BY order_list is
-                executed in the same way as the query
-                SELECT ... ORDER BY order_list
-                unless the SELECT construct contains ORDER BY or LIMIT clauses.
-                Otherwise we create a fake Select_Lex if it has not been created
-                yet.
-              */
-              Select_Lex *first_sl= unit->first_select();
-              if (!unit->is_union() &&
-                  (first_sl->order_list.elements ||
-                   first_sl->select_limit) &&           
-                  unit->add_fake_select_lex(Lex->session))
-                DRIZZLE_YYABORT;
-            }
           }
           order_list
         ;
 
 order_list:
           order_list ',' order_ident order_dir
-          { if (YYSession->add_order_to_list($3,(bool) $4)) DRIZZLE_YYABORT; }
+          {
+            if (YYSession->add_order_to_list($3,(bool) $4))
+              DRIZZLE_YYABORT;
+          }
         | order_ident order_dir
-          { if (YYSession->add_order_to_list($1,(bool) $2)) DRIZZLE_YYABORT; }
+          {
+            if (YYSession->add_order_to_list($1,(bool) $2))
+              DRIZZLE_YYABORT;
+          }
         ;
 
 order_dir:
