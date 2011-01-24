@@ -125,8 +125,7 @@ bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct
   }
   if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
   {
-    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(pass);
+    my_parse_error(session->m_lip);
     return true;
   }
   /* This counter shouldn't be incremented for UNION parts */
@@ -153,8 +152,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
   Select_Lex * sel= lex->current_select;
   if (sel->set_braces(1))
   {
-    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(pass);
+    my_parse_error(session->m_lip);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -162,8 +160,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
       sel->master_unit()->first_select()->linkage ==
       UNION_TYPE)
   {
-    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(pass);
+    my_parse_error(session->m_lip);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -205,15 +202,20 @@ Item* reserved_keyword_function(Session *session, const std::string &name, List<
   a parse error is discovered internally by the Bison generated
   parser.
 */
-void my_parse_error(parser::error_t &arg)
+void my_parse_error(Lex_input_stream *lip)
 {
-  Lex_input_stream *lip= arg.session->m_lip;
+  assert(lip);
 
   const char *yytext= lip->get_tok_start();
   /* Push an error into the error stack */
-  my_printf_error(ER_PARSE_ERROR,  ER(ER_PARSE_ERROR), MYF(0), arg.s,
+  my_printf_error(ER_PARSE_ERROR,  ER(ER_PARSE_ERROR), MYF(0), ER(ER_SYNTAX_ERROR),
                   (yytext ? yytext : ""),
                   lip->yylineno);
+}
+
+void my_parse_error(const char *message)
+{
+  my_printf_error(ER_PARSE_ERROR_UNKNOWN, ER(ER_PARSE_ERROR_UNKNOWN), MYF(0), message);
 }
 
 bool check_reserved_words(LEX_STRING *name)
@@ -259,10 +261,13 @@ void errorOn(const char *s)
 
   /* "parse error" changed into "syntax error" between bison 1.75 and 1.875 */
   if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
-    s= ER(ER_SYNTAX_ERROR);
-
-  parser::error_t pass= { s, session };
-  parser::my_parse_error(pass);
+  {
+    parser::my_parse_error(session->m_lip);
+  }
+  else
+  {
+    parser::my_parse_error(s);
+  }
 }
 
 bool buildOrderBy(Session *session)
