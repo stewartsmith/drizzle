@@ -191,21 +191,6 @@ namespace drizzled
 #define DEFAULT_CONCURRENCY	10
 #define FLUSH_TIME		0		/**< Don't flush tables */
 
-/* Bits from testflag */
-enum test_flag_bit
-{
-  TEST_PRINT_CACHED_TABLES= 1,
-  TEST_NO_KEY_GROUP,
-  TEST_MIT_THREAD,
-  TEST_KEEP_TMP_TABLES,
-  TEST_READCHECK, /**< Force use of readcheck */
-  TEST_NO_EXTRA,
-  TEST_CORE_ON_SIGNAL, /**< Give core if signal */
-  TEST_NO_STACKTRACE,
-  TEST_SIGINT, /**< Allow sigint on threads */
-  TEST_SYNCHRONIZATION /**< get server to do sleep in some places */
-};
-
 /* Bits for different SQL modes modes (including ANSI mode) */
 #define MODE_NO_ZERO_DATE		(2)
 #define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)

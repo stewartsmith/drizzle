@@ -69,6 +69,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/cursor.h \
 			      drizzled/data_home.h \
 			      drizzled/db.h \
+			      drizzled/debug.h \
 			      drizzled/definition/cache.h \
 			      drizzled/definitions.h \
 			      drizzled/diagnostics_area.h \
@@ -532,6 +533,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/create_field.cc \
 			   drizzled/current_session.cc \
 			   drizzled/cursor.cc \
+			   drizzled/debug.cc \
 			   drizzled/definition/cache.cc \
 			   drizzled/diagnostics_area.cc \
 			   drizzled/display.cc \
