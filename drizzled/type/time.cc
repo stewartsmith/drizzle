@@ -467,8 +467,6 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags)
   return store(str, length, flags, was_cut);
 }
 
-} // namespace type
-
 /*
  Convert a time string to a type::Time struct.
 
@@ -494,8 +492,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags)
      1  error
 */
 
-bool str_to_time(const char *str, uint32_t length, type::Time *l_time,
-                    int *warning)
+bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp_t arg)
 {
   uint32_t date[5];
   uint64_t value;
@@ -503,13 +500,15 @@ bool str_to_time(const char *str, uint32_t length, type::Time *l_time,
   bool found_days,found_hours;
   uint32_t state;
 
-  l_time->neg=0;
-  *warning= 0;
+  assert(arg == DRIZZLE_TIMESTAMP_TIME);
+
+  this->neg=0;
+  warning= 0;
   for (; str != end && my_isspace(&my_charset_utf8_general_ci,*str) ; str++)
     length--;
   if (str != end && *str == '-')
   {
-    l_time->neg=1;
+    this->neg=1;
     str++;
     length--;
   }
@@ -520,11 +519,11 @@ bool str_to_time(const char *str, uint32_t length, type::Time *l_time,
   if (length >= 12)
   {                                             /* Probably full timestamp */
     int was_cut;
-    type::timestamp_t res= l_time->store(str, length, (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), was_cut);
+    type::timestamp_t res= this->store(str, length, (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), was_cut);
     if ((int) res >= (int) type::DRIZZLE_TIMESTAMP_ERROR)
     {
       if (was_cut)
-        *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
+        warning|= DRIZZLE_TIME_WARN_TRUNCATED;
 
       return res == type::DRIZZLE_TIMESTAMP_ERROR;
     }
@@ -604,9 +603,14 @@ fractional:
         value= value*10 + (uint32_t) (unsigned char) (*str - '0');
     }
     if (field_length > 0)
+    {
       value*= (long) log_10_int[field_length];
+    }
     else if (field_length < 0)
-      *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
+    {
+      warning|= DRIZZLE_TIME_WARN_TRUNCATED;
+    }
+
     date[4]= (uint32_t) value;
   }
   else
@@ -647,17 +651,17 @@ fractional:
       date[4] > UINT_MAX)
     return 1;
 
-  l_time->year=         0;                      /* For protocol::store_time */
-  l_time->month=        0;
-  l_time->day=          date[0];
-  l_time->hour=         date[1];
-  l_time->minute=       date[2];
-  l_time->second=       date[3];
-  l_time->second_part=  date[4];
-  l_time->time_type= type::DRIZZLE_TIMESTAMP_TIME;
+  this->year=         0;                      /* For protocol::store_time */
+  this->month=        0;
+  this->day=          date[0];
+  this->hour=         date[1];
+  this->minute=       date[2];
+  this->second=       date[3];
+  this->second_part=  date[4];
+  this->time_type= type::DRIZZLE_TIMESTAMP_TIME;
 
   /* Check if the value is valid and fits into type::Time range */
-  if (check_time_range(l_time, warning))
+  if (check_time_range(this, &warning))
   {
     return 1;
   }
@@ -669,13 +673,16 @@ fractional:
     {
       if (!my_isspace(&my_charset_utf8_general_ci,*str))
       {
-        *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
+        warning|= DRIZZLE_TIME_WARN_TRUNCATED;
         break;
       }
     } while (++str != end);
   }
   return 0;
 }
+
+} // namespace type
+
 
 
 /*

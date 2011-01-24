@@ -180,6 +180,8 @@ public:
   void convert(datetime_t &ret, int64_t nr, uint32_t flags, int &was_cut);
 
 
+
+  bool store(const char *str,uint32_t length, int &warning, type::timestamp_t arg= DRIZZLE_TIMESTAMP_TIME);
   type::timestamp_t store(const char *str, uint32_t length, uint32_t flags, int &was_cut);
   type::timestamp_t store(const char *str, uint32_t length, uint32_t flags);
   void store(const type::Time::epoch_t &from, bool use_localtime= false);
@@ -204,8 +206,6 @@ public:
 };
 
 }
-
-bool str_to_time(const char *str,uint32_t length, type::Time *l_time, int *warning);
 
 long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
 uint32_t calc_days_in_year(uint32_t year);

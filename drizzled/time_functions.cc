@@ -150,7 +150,7 @@ bool
 str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time)
 {
   int warning;
-  bool ret_val= str_to_time(str, length, l_time, &warning);
+  bool ret_val= l_time->store(str, length, warning, type::DRIZZLE_TIMESTAMP_TIME);
   if (ret_val || warning)
     make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, type::DRIZZLE_TIMESTAMP_TIME, NULL);
