@@ -252,13 +252,6 @@ void errorOn(const char *s)
 {
   Session *session= current_session;
 
-  /*
-    Restore the original LEX if it was replaced when parsing
-    a stored procedure. We must ensure that a parsing error
-    does not leave any side effects in the Session.
-  */
-  LEX::cleanup_lex_after_parse_error(session);
-
   /* "parse error" changed into "syntax error" between bison 1.75 and 1.875 */
   if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
   {

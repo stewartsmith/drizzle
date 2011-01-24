@@ -60,7 +60,6 @@ int yylex(void *yylval, void *yysession);
 #define DRIZZLE_YYABORT                         \
   do                                          \
   {                                           \
-    LEX::cleanup_lex_after_parse_error(YYSession);\
     YYABORT;                                  \
   } while (0)
 
