@@ -133,9 +133,10 @@ public:
     }
     while (cin.eof() == false && cin.fail() == true);
 
-    if ((*packet_length == 1 && cin.eof() == true) ||
-        !strncasecmp(*packet + 1, "quit", 4) ||
-        !strncasecmp(*packet + 1, "exit", 4))
+    if ((*packet_length == 1 && cin.eof() == true) or
+        not strncasecmp(*packet + 1, "quit", 4) or
+        not strncasecmp(*packet + 1, "exit", 4) or
+        not strncasecmp(*packet + 1, "shutdown", sizeof("shutdown") -1))
     {
       is_dead= true;
       *packet_length= 1;
@@ -363,16 +364,16 @@ static void init_options(drizzled::module::option_context &context)
   context("password",
           po::value<string>(),
           N_("Password to use for auth."));
-  context("db",
+  context("schema",
           po::value<string>(),
-          N_("Default database to use."));
+          N_("Default schema to use."));
 }
 
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "console",
-  "0.1",
+  "0.2",
   "Eric Day",
   "Console Client",
   PLUGIN_LICENSE_BSD,
