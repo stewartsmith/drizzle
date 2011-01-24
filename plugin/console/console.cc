@@ -271,6 +271,11 @@ public:
     printDebug("wasAborted");
     return false;
   }
+
+  bool isConsole()
+  {
+    return true;
+  }
 };
 
 class ListenConsole: public plugin::Listen

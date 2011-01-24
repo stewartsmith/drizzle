@@ -1,0 +1,190 @@
+connect (a,localhost,root,,);
+connect (b,localhost,root,,);
+
+connection a;
+--echo A
+CREATE TABLE t1 (a int);
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+BEGIN;
+INSERT INTO t1 values (1);
+
+connection b;
+--echo B
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+BEGIN;
+SELECT * from t1;
+
+connection a;
+--echo A
+INSERT INTO t1 values (2);
+
+connection b;
+--echo B
+SELECT * from t1;
+COMMIT;
+BEGIN;
+SELECT * FROM t1;
+
+connection a;
+--echo A
+COMMIT;
+
+connection b;
+--echo B
+SELECT * from t1 order by a;
+COMMIT;
+BEGIN;
+SELECT * from t1 order by a;
+
+COMMIT;
+DROP TABLE t1;
+
+disconnect a;
+disconnect b;
+connection default;
+# This is a test of various SQL statements
+# and looks at the statement and transaction
+# boundaries (start/end) to ensure they are sane
+
+SET AUTOCOMMIT= 0;
+
+# Expect 0 commit count since nothing 
+# has yet happened...
+
+SHOW STATUS LIKE 'Handler_commit%';
+
+BEGIN;
+
+# Expect 0 commit count since nothing 
+# has yet been committed...
+
+SHOW STATUS LIKE 'Handler_commit%';
+
+COMMIT;
+DROP SCHEMA IF EXISTS boundaries;
+
+# Expect 1 commit count since above DROP SCHEMA
+# will implicitly call COMMIT.
+#
+# When we get transactional DDL, should be 0.
+SHOW STATUS LIKE 'Handler_commit%';
+
+COMMIT;
+
+# Expect 1 commit count since 
+# an explicit call to COMMIT was made
+# even though nothing was changed...
+
+SHOW STATUS LIKE 'Handler_commit%';
+
+
+## Enable AUOTOCOMMIT
+#
+SET AUTOCOMMIT= 1;
+
+SHOW STATUS LIKE 'Handler_commit%';
+BEGIN;
+COMMIT;
+DROP SCHEMA IF EXISTS boundaries;
+
+SHOW STATUS LIKE 'Handler_commit%';
+CREATE TABLE commit_test (a int);
+SHOW STATUS LIKE 'Handler_commit%';
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+INSERT into commit_test VALUES (10), (20);
+SHOW STATUS LIKE 'Handler_commit%';
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+
+BEGIN;
+
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+
+COMMIT;
+
+SHOW STATUS LIKE 'Handler_commit%';
+BEGIN;
+
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+
+ROLLBACK;
+
+SHOW STATUS LIKE 'Handler_commit%';
+BEGIN;
+
+
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+
+SET AUTOCOMMIT= 0;
+INSERT into commit_test VALUES (10);
+INSERT into commit_test VALUES (10);
+
+
+SHOW STATUS LIKE 'Handler_commit%';
+COMMIT;
+drop table commit_test;
+SHOW STATUS LIKE 'Handler_commit%';
+# Tests a number of things related to transactions:
+# 
+# 1. Interaction of more than one engine in a transaction
+# 2. Correct commit and rollback behaviour
+# 3. XA protocol communication and recovery
+
+--disable_warnings
+DROP TABLE IF EXISTS t1_trx, t1_non_trx;
+--enable_warnings
+
+SET AUTOCOMMIT= 0;
+
+CREATE TABLE t1_trx (
+  k VARCHAR(10) NOT NULL
+, v VARCHAR(10) NOT NULL
+, PRIMARY KEY (k)
+) ENGINE=InnoDB;
+
+CREATE TEMPORARY TABLE t1_non_trx (
+  k VARCHAR(10) NOT NULL
+, v VARCHAR(10) NOT NULL
+, PRIMARY KEY (k)
+) ENGINE=MyISAM;
+
+START TRANSACTION;
+
+INSERT INTO t1_trx VALUES ('key1','value1');
+INSERT INTO t1_trx VALUES ('key2','value2');
+
+INSERT INTO t1_non_trx VALUES ('key1','value1');
+INSERT INTO t1_non_trx VALUES ('key2','value2');
+
+ROLLBACK;
+
+--echo Expected warning about non-trx data changes not being rolled back
+
+SELECT * FROM t1_trx;
+SELECT * FROM t1_non_trx;
+
+START TRANSACTION;
+
+INSERT INTO t1_trx VALUES ('key1','value1');
+INSERT INTO t1_trx VALUES ('key2','value2');
+
+SELECT t1_trx.k, t1_trx.v
+FROM t1_trx
+INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
+
+ROLLBACK;
+
+SELECT t1_trx.k, t1_trx.v
+FROM t1_trx
+INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
+
+COMMIT;
+DROP TABLE t1_trx;
+DROP TABLE t1_non_trx;

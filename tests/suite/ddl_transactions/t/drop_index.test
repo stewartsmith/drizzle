@@ -1,0 +1,6 @@
+CREATE TABLE t1 (a int, index a_idx (a));
+BEGIN;
+--error ER_TRANSACTIONAL_DDL_NOT_SUPPORTED
+DROP INDEX a_idx on t1;
+commit;
+drop table t1;

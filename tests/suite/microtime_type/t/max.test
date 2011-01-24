@@ -1,0 +1,11 @@
+# Just a quick test to make sure we are not limited to the old max
+CREATE TABLE t2 (
+  _value TIMESTAMP(6)
+);
+
+--error ER_INVALID_TIMESTAMP_VALUE
+INSERT into t2 VALUES ("20660101000000.00000");
+
+SELECT _value FROM t2;
+    
+DROP TABLE t2;

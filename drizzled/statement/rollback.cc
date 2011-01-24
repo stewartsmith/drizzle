@@ -28,11 +28,12 @@ namespace drizzled
 
 bool statement::Rollback::execute()
 {
-  if (! session->endTransaction(tx_release ? ROLLBACK_RELEASE : tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
+  if (not getSession()->endTransaction(tx_release ? ROLLBACK_RELEASE : tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
   {
     return true;
   }
-  session->my_ok();
+  getSession()->my_ok();
+
   return false;
 }
 

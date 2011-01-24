@@ -239,11 +239,11 @@ bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool i
     /* See if the schema exists */
     if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
     {
-      std::string path;
-      schema_identifier.getSQLPath(path);
-
       if (if_exists)
       {
+        std::string path;
+        schema_identifier.getSQLPath(path);
+
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
                             path.c_str());
@@ -349,8 +349,6 @@ bool change_db(Session *session, identifier::Schema &schema_identifier)
 
   if (not check_db_name(session, schema_identifier))
   {
-    std::string path;
-    schema_identifier.getSQLPath(path);
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
     return true;

@@ -36,18 +36,8 @@ class CreateTable : public Statement
   virtual bool check(const identifier::Table&);
 
 public:
-  CreateTable(Session *in_session) :
-      Statement(in_session),
-      change(NULL),
-      default_value(NULL),
-      on_update_value(NULL),
-      is_engine_set(false),
-      is_create_table_like(false),
-      lex_identified_temp_table(false),
-      link_to_local(false),
-      create_table_list(NULL)
-  {
-  }
+  CreateTable(Session *in_session, Table_ident *ident, bool is_temporary);
+  CreateTable(Session *in_session);
 
   virtual bool is_alter() const
   {
@@ -60,7 +50,7 @@ public:
 public:
   message::Table &createTableMessage()
   {
-    return *session->lex->table();
+    return *getSession()->lex->table();
   };
 
 private:

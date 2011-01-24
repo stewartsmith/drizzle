@@ -36,7 +36,8 @@ bool statement::ShowWarnings::execute()
   warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_NOTE);
   warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_WARN);
   warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_ERROR);
-  bool res= show_warnings(session, warning_levels);
+  bool res= show_warnings(getSession(), warning_levels);
+
   return res;
 }
 

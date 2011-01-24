@@ -35,10 +35,10 @@ namespace drizzled
 
 bool statement::Savepoint::execute()
 {
-  if (! (session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  if (! (getSession()->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
   {
     /* AUTOCOMMIT is on and not in a BEGIN */
-    session->my_ok();
+    getSession()->my_ok();
   }
   else
   {
@@ -48,10 +48,10 @@ bool statement::Savepoint::execute()
      * transaction. Table affecting statements do this work in lockTables()
      * by calling startStatement().
      */
-    if ( (session->options & OPTION_NOT_AUTOCOMMIT) &&
-         (session->transaction.all.getResourceContexts().empty() == true) )
+    if ( (getSession()->options & OPTION_NOT_AUTOCOMMIT) &&
+         (getSession()->transaction.all.getResourceContexts().empty() == true) )
     {
-      if (session->startTransaction() == false)
+      if (getSession()->startTransaction() == false)
       {
         return false;
       }
@@ -62,7 +62,7 @@ bool statement::Savepoint::execute()
      * the same name, delete it.
      */
     TransactionServices &transaction_services= TransactionServices::singleton();
-    deque<NamedSavepoint> &savepoints= session->transaction.savepoints;
+    deque<NamedSavepoint> &savepoints= getSession()->transaction.savepoints;
     deque<NamedSavepoint>::iterator iter;
 
     for (iter= savepoints.begin();
@@ -72,8 +72,8 @@ bool statement::Savepoint::execute()
       NamedSavepoint &sv= *iter;
       const string &sv_name= sv.getName();
       if (my_strnncoll(system_charset_info,
-                       (unsigned char *) session->lex->ident.str,
-                       session->lex->ident.length,
+                       (unsigned char *) getSession()->lex->ident.str,
+                       getSession()->lex->ident.length,
                        (unsigned char *) sv_name.c_str(),
                        sv_name.size()) == 0)
         break;
@@ -81,20 +81,20 @@ bool statement::Savepoint::execute()
     if (iter != savepoints.end())
     {
       NamedSavepoint &sv= *iter;
-      (void) transaction_services.releaseSavepoint(session, sv);
+      (void) transaction_services.releaseSavepoint(getSession(), sv);
       savepoints.erase(iter);
     }
     
-    NamedSavepoint newsv(session->lex->ident.str, session->lex->ident.length);
+    NamedSavepoint newsv(getSession()->lex->ident.str, getSession()->lex->ident.length);
 
-    if (transaction_services.setSavepoint(session, newsv))
+    if (transaction_services.setSavepoint(getSession(), newsv))
     {
       return true;
     }
     else
     {
       savepoints.push_front(newsv);
-      session->my_ok();
+      getSession()->my_ok();
     }
   }
   return false;
