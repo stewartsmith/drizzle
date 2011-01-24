@@ -147,10 +147,7 @@ AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x${pandora_cv_boost_profile}"
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
- support-files/libdrizzle.pc dnl
- support-files/drizzle.server support-files/drizzle-log-rotate
  support-files/smf/install.sh dnl
- support-files/drizzle.spec dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)
 
