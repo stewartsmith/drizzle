@@ -104,6 +104,11 @@ public:
    */
   virtual bool authenticate(void)= 0;
 
+  virtual bool isConsole()
+  {
+    return false;
+  }
+
   /**
    * Read command from client.
    */

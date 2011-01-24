@@ -41,8 +41,12 @@ String *Item_func_sysdate_local::val_str(String *)
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
-  buff_length= (uint) my_datetime_to_str(&ltime, buff);
-  str_value.set(buff, buff_length, &my_charset_bin);
+
+  size_t length= type::Time::MAX_STRING_LENGTH;
+  ltime.convert(buff, length);
+  buff_length= length;
+  str_value.set(buff, length, &my_charset_bin);
+
   return &str_value;
 }
 
@@ -51,14 +55,21 @@ int64_t Item_func_sysdate_local::val_int()
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
-  return (int64_t) TIME_to_uint64_t_datetime(&ltime);
+  int64_t tmp;
+  ltime.convert(tmp);
+
+  return tmp;
 }
 
 double Item_func_sysdate_local::val_real()
 {
   assert(fixed == 1);
+
   store_now_in_TIME(&ltime);
-  return uint64_t2double(TIME_to_uint64_t_datetime(&ltime));
+  int64_t tmp;
+  ltime.convert(tmp);
+
+  return int64_t2double(tmp);
 }
 
 
@@ -70,8 +81,7 @@ void Item_func_sysdate_local::fix_length_and_dec()
 }
 
 
-bool Item_func_sysdate_local::get_date(type::Time *res,
-                                       uint32_t )
+bool Item_func_sysdate_local::get_date(type::Time *res, uint32_t )
 {
   store_now_in_TIME(&ltime);
   *res= ltime;
@@ -83,7 +93,8 @@ int Item_func_sysdate_local::save_in_field(Field *to, bool )
 {
   store_now_in_TIME(&ltime);
   to->set_notnull();
-  to->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
+  to->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
+
   return 0;
 }
 

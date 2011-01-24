@@ -564,6 +564,13 @@ int TransactionServices::commitPhaseOne(Session::reference session,
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
 
   bool is_real_trans= normal_transaction || session.transaction.all.getResourceContexts().empty();
+  bool all= normal_transaction;
+
+  /* If we're in autocommit then we have a real transaction to commit
+     (except if it's BEGIN)
+  */
+  if (! session_test_options(&session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+    all= true;
 
   if (resource_contexts.empty() == false)
   {
@@ -578,7 +585,7 @@ int TransactionServices::commitPhaseOne(Session::reference session,
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaCommit(&session, normal_transaction)))
+        if ((err= resource_context->getXaResourceManager()->xaCommit(&session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -590,7 +597,7 @@ int TransactionServices::commitPhaseOne(Session::reference session,
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->commit(&session, normal_transaction)))
+        if ((err= resource_context->getTransactionalStorageEngine()->commit(&session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -624,6 +631,7 @@ int TransactionServices::rollbackTransaction(Session::reference session,
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
 
   bool is_real_trans= normal_transaction || session.transaction.all.getResourceContexts().empty();
+  bool all = normal_transaction || !session_test_options(&session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
 
   /*
     We must not rollback the normal transaction if a statement
@@ -645,7 +653,7 @@ int TransactionServices::rollbackTransaction(Session::reference session,
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaRollback(&session, normal_transaction)))
+        if ((err= resource_context->getXaResourceManager()->xaRollback(&session, all)))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
@@ -657,7 +665,7 @@ int TransactionServices::rollbackTransaction(Session::reference session,
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->rollback(&session, normal_transaction)))
+        if ((err= resource_context->getTransactionalStorageEngine()->rollback(&session, all)))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
@@ -677,7 +685,7 @@ int TransactionServices::rollbackTransaction(Session::reference session,
      * a rollback statement with the corresponding transaction ID
      * to rollback.
      */
-    if (normal_transaction)
+    if (all)
       rollbackTransactionMessage(session);
     else
       rollbackStatementMessage(session);

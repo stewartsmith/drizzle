@@ -896,11 +896,11 @@ void store_position_for_column(const char *name)
 */
 
 TableList *Select_Lex::add_table_to_list(Session *session,
-					                     Table_ident *table,
-					                     LEX_STRING *alias,
-					                     const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
-					                     thr_lock_type lock_type,
-					                     List<Index_hint> *index_hints_arg,
+                                         Table_ident *table,
+                                         LEX_STRING *alias,
+                                         const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
+                                         thr_lock_type lock_type,
+                                         List<Index_hint> *index_hints_arg,
                                          LEX_STRING *option)
 {
   TableList *ptr;

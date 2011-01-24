@@ -1,9 +1,9 @@
 # Make sure the parser is still ok with having a UUID function
 SELECT LENGTH(UUID());
 
---error 1064
+--error ER_PARSE_ERROR
 CREATE UUID ( a int );
 
---error 1064
+--error ER_PARSE_ERROR
 CREATE bad ( UUID int );
 

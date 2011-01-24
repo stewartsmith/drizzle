@@ -5723,13 +5723,11 @@ int PBXTStorageEngine::doReleaseSavepoint(drizzled::Session* thd, drizzled::Name
 	return xt_ha_pbxt_thread_error_for_mysql(thd, xt_ha_thd_to_self(thd), false);
 }
 
-int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool)
+int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool real_commit)
 {
 	int err = 0;
 	XTThreadPtr self = (XTThreadPtr) *thd->getEngineData(pbxt_hton);
 
-	bool real_commit = !session_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
-	
 	XT_PRINT1(self, "PBXTStorageEngine::doCommit(real_commit = %s)\n", real_commit ? "true" : "false");
 
 	if (real_commit && self) {
@@ -5740,12 +5738,10 @@ int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool)
 	return err;
 }
 
-int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool)
+int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool real_commit)
 {
         int err = 0;
         XTThreadPtr self = (XTThreadPtr) *thd->getEngineData(pbxt_hton);
-
-        bool real_commit = !session_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
 
 	XT_PRINT1(self, "PBXTStorageEngine::doRollback(real_commit = %s)\n", real_commit ? "true" : "false");
 

@@ -1121,8 +1121,7 @@ convert_error_code_to_mysql(
 
   case DB_TOO_BIG_RECORD:
     my_error(ER_TOO_BIG_ROWSIZE, MYF(0),
-       page_get_free_space_of_empty(flags
-                  & DICT_TF_COMPACT) / 2);
+             page_get_free_space_of_empty(flags & DICT_TF_COMPACT) / 2);
     return(HA_ERR_TO_BIG_ROW);
 
   case DB_NO_SAVEPOINT:
@@ -2573,9 +2572,8 @@ InnobaseEngine::doCommit(
     trx_search_latch_release_if_reserved(trx);
   }
 
-  if (all
-    || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) {
-
+  if (all)
+  {
     /* We were instructed to commit the whole transaction, or
     this is an SQL statement end and autocommit is on */
 
@@ -2698,9 +2696,8 @@ InnobaseEngine::doRollback(
 
   row_unlock_table_autoinc_for_mysql(trx);
 
-  if (all
-    || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-
+  if (all)
+  {
     error = trx_rollback_for_mysql(trx);
   } else {
     error = trx_rollback_last_sql_stat_for_mysql(trx);

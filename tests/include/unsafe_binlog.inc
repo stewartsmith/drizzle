@@ -116,6 +116,7 @@ connection b;
 set autocommit = 0;
 insert into t1 select * from t2;
 update t1 set b = (select e from t2 where a = d);
+COMMIT;
 eval create table t3(d int not null, e int, primary key(d)) engine = $engine_type
 select * from t2;
 commit;

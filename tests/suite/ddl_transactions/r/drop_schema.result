@@ -1,0 +1,6 @@
+CREATE SCHEMA foo;
+BEGIN;
+DROP SCHEMA foo;
+ERROR HY000: Transactional DDL not supported
+commit;
+DROP SCHEMA foo;

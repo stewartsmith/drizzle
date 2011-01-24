@@ -1,0 +1,14 @@
+create table t1 (a int not null);
+insert into t1 values (1), (NULL), (2);
+ERROR 23000: Column 'a' cannot be null
+begin;
+insert into t1 values (42);
+insert into t1 values (1), (NULL), (2);
+ERROR 23000: Column 'a' cannot be null
+select * from t1;
+a
+42
+rollback;
+select * from t1;
+a
+drop table t1;

@@ -1,0 +1,7 @@
+CREATE TABLE t1 (a int);
+insert into t1 values (1),(2),(42);
+BEGIN;
+--error ER_TRANSACTIONAL_DDL_NOT_SUPPORTED
+TRUNCATE TABLE t1;
+COMMIT;
+DROP TABLE t1;

@@ -15,7 +15,7 @@ id	padding
 2	I hate testing.
 COMMIT;
 DROP TABLE t1;
-START TRANSACTION;
+SET AUTOCOMMIT=0;
 CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
@@ -24,12 +24,12 @@ COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
 COMMIT;
-START TRANSACTION;
+SET AUTOCOMMIT=0;
 DROP TABLE `test`.`t1`;
 COMMIT;
 
 Generating statements for innodb replication log
-START TRANSACTION;
+SET AUTOCOMMIT=0;
 CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
@@ -38,7 +38,7 @@ COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
 COMMIT;
-START TRANSACTION;
+SET AUTOCOMMIT=0;
 DROP TABLE `test`.`t1`;
 COMMIT;
 SET GLOBAL transaction_log_truncate_debug= true;

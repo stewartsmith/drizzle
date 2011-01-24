@@ -133,5 +133,5 @@ DROP TABLE t1;
 
 --echo # Cleanup
 --echo # remove drizzledumpfile
---error 0,1
+--error EE_OK,EE_ERROR_FIRST
 --remove_file $drizzledumpfile

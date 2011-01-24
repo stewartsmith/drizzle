@@ -38,31 +38,32 @@ bool statement::CreateSchema::execute()
   if (not validateSchemaOptions())
     return true;
 
-  if (not session->endActiveTransaction())
+  if (getSession()->inTransaction())
   {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
-  identifier::Schema schema_identifier(string(session->lex->name.str, session->lex->name.length));
+  identifier::Schema schema_identifier(string(getSession()->lex->name.str, getSession()->lex->name.length));
   if (not check(schema_identifier))
     return false;
 
-  drizzled::message::schema::init(schema_message, session->lex->name.str);
+  drizzled::message::schema::init(schema_message, getSession()->lex->name.str);
 
   bool res = false;
   std::string path;
   schema_identifier.getSQLPath(path);
 
-  if (unlikely(plugin::EventObserver::beforeCreateDatabase(*session, path)))
+  if (unlikely(plugin::EventObserver::beforeCreateDatabase(*getSession(), path)))
   {
     my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
   }
   else
   {
-    res= create_db(session, schema_message, session->getLex()->exists());
-    if (unlikely(plugin::EventObserver::afterCreateDatabase(*session, path, res)))
+    res= create_db(getSession(), schema_message, getSession()->getLex()->exists());
+    if (unlikely(plugin::EventObserver::afterCreateDatabase(*getSession(), path, res)))
     {
-      my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
+      my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
       res = false;
     }
 
@@ -79,14 +80,11 @@ bool statement::CreateSchema::check(const identifier::Schema &identifier)
   if (not plugin::Authorization::isAuthorized(getSession()->user(), identifier))
     return false;
 
-  if (not session->getLex()->exists())
+  if (not getSession()->getLex()->exists())
   {
     if (plugin::StorageEngine::doesSchemaExist(identifier))
     {
-      std::string name;
-
-      identifier.getSQLPath(name);
-      my_error(ER_DB_CREATE_EXISTS, MYF(0), name.c_str());
+      my_error(ER_DB_CREATE_EXISTS, identifier);
 
       return false;
     }

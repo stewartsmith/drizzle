@@ -29,6 +29,10 @@
 #include "drizzled/cursor.h"
 #include "drizzled/data_home.h"
 
+#include <drizzled/pthread_globals.h>
+
+#include <drizzled/execute.h>
+
 #include "drizzled/internal/my_sys.h"
 
 #include <fcntl.h>
@@ -68,8 +72,7 @@ void Schema::prime()
 {
   CachedDirectory directory(getDataHomeCatalog().file_string(), CachedDirectory::DIRECTORY);
   CachedDirectory::Entries files= directory.getEntries();
-
-  mutex.lock();
+  boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
 
   for (CachedDirectory::Entries::iterator fileIter= files.begin();
        fileIter != files.end(); fileIter++)
@@ -80,6 +83,7 @@ void Schema::prime()
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
       continue;
 
+
     identifier::Schema filename(entry->filename);
     if (readSchemaFile(filename, schema_message))
     {
@@ -89,12 +93,15 @@ void Schema::prime()
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
       if (ret.second == false)
-     {
+      {
         abort(); // If this has happened, something really bad is going down.
       }
     }
   }
-  mutex.unlock();
+}
+
+void Schema::startup(drizzled::Session &)
+{
 }
 
 void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
@@ -142,8 +149,8 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
     return false;
   }
 
-  mutex.lock();
   {
+    boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
     pair<SchemaCache::iterator, bool> ret=
       schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
@@ -153,7 +160,6 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
       abort(); // If this has happened, something really bad is going down.
     }
   }
-  mutex.unlock();
 
   return true;
 }
@@ -191,9 +197,8 @@ bool Schema::doDropSchema(const identifier::Schema &schema_identifier)
     cerr << dir;
   }
 
-  mutex.lock();
+  boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
   schema_cache.erase(schema_identifier.getPath());
-  mutex.unlock();
 
   return true;
 }
@@ -207,19 +212,16 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   if (writeSchemaFile(schema_identifier, schema_message))
   {
-    mutex.lock();
+    boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
+    schema_cache.erase(schema_identifier.getPath());
+
+    pair<SchemaCache::iterator, bool> ret=
+      schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
+
+    if (ret.second == false)
     {
-      schema_cache.erase(schema_identifier.getPath());
-
-      pair<SchemaCache::iterator, bool> ret=
-        schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
-
-      if (ret.second == false)
-      {
-        abort(); // If this has happened, something really bad is going down.
-      }
+      abort(); // If this has happened, something really bad is going down.
     }
-    mutex.unlock();
   }
 
   return true;

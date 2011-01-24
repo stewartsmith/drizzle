@@ -33,6 +33,8 @@ namespace statement
 class CreateIndex : public CreateTable
 {
 public:
+  CreateIndex(Session *in_session, Table_ident *ident);
+
   CreateIndex(Session *in_session) :
     CreateTable(in_session)
   {}

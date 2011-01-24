@@ -1,0 +1,8 @@
+CREATE TABLE t1 (a INT UNIQUE);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT UNIQUE DEFAULT NULL,
+  UNIQUE KEY `a` (`a`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE t1;

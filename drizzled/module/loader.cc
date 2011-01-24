@@ -397,6 +397,17 @@ bool plugin_finalize(module::Registry &registry)
   return false;
 }
 
+/*
+  Window of opportunity for plugins to issue any queries with the database up and running but with no user's connected.
+*/
+void plugin_startup_window(module::Registry &registry, drizzled::Session &session)
+{
+  BOOST_FOREACH(plugin::Plugin::map::value_type value, registry.getPluginsMap())
+  {
+    value.second->startup(session);
+  }
+}
+
 class PrunePlugin :
   public unary_function<string, bool>
 {
