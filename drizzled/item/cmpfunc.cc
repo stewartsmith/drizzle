@@ -701,7 +701,7 @@ get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
                   char *warn_name, bool *error_arg)
 {
   int64_t value= 0;
-  int error;
+  type::cut_t error= type::VALID;
   type::Time l_time;
   type::timestamp_t ret;
 
@@ -721,10 +721,10 @@ get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
   else
   {
     *error_arg= true;
-    error= 1;                                   /* force warning */
+    error= type::CUT;                                   /* force warning */
   }
 
-  if (error > 0)
+  if (error != type::VALID)
   {
     make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),

@@ -95,7 +95,7 @@ namespace type {
     1  error
 */
 
-bool Time::check(bool not_zero_date, uint32_t flags, int &was_cut) const
+bool Time::check(bool not_zero_date, uint32_t flags, type::cut_t &was_cut) const
 {
   if (not_zero_date)
   {
@@ -106,7 +106,7 @@ bool Time::check(bool not_zero_date, uint32_t flags, int &was_cut) const
          (month != 2 || calc_days_in_year(year) != 366 ||
           day != 29)))
     {
-      was_cut= 2;
+      was_cut= type::INVALID;
       return true;
     }
   }
@@ -174,7 +174,7 @@ bool Time::check(bool not_zero_date, uint32_t flags, int &was_cut) const
 
 #define MAX_DATE_PARTS 8
 
-type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, int &was_cut)
+type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, type::cut_t &was_cut)
 {
   uint32_t field_length, year_length=4, digits, i, number_of_fields;
   uint32_t date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
@@ -187,14 +187,15 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
   bool found_delimitier= 0, found_space= 0;
   uint32_t frac_pos, frac_len;
 
-  was_cut= 0;
+  was_cut= type::VALID;
 
   /* Skip space at start */
   for (; str != end && my_isspace(&my_charset_utf8_general_ci, *str) ; str++)
     ;
+
   if (str == end || ! my_isdigit(&my_charset_utf8_general_ci, *str))
   {
-    was_cut= 1;
+    was_cut= type::CUT;
     return(type::DRIZZLE_TIMESTAMP_NONE);
   }
 
@@ -241,7 +242,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
       {
         if (flags & TIME_DATETIME_ONLY)
         {
-          was_cut= 1;
+          was_cut= type::CUT;
           return(type::DRIZZLE_TIMESTAMP_NONE);   /* Can't be a full datetime */
         }
         /* Date field.  Set hour, minutes and seconds to 0 */
@@ -283,7 +284,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
     date_len[i]= (uint32_t) (str - start);
     if (tmp_value > 999999)                     /* Impossible date part */
     {
-      was_cut= 1;
+      was_cut= type::CUT;
       return(type::DRIZZLE_TIMESTAMP_NONE);
     }
     date[i]=tmp_value;
@@ -320,7 +321,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
       {
         if (!(allow_space & (1 << i)))
         {
-          was_cut= 1;
+          was_cut= type::CUT;
           return(type::DRIZZLE_TIMESTAMP_NONE);
         }
         found_space= 1;
@@ -351,7 +352,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
   }
   if (found_delimitier && !found_space && (flags & TIME_DATETIME_ONLY))
   {
-    was_cut= 1;
+    was_cut= type::CUT;
     return(type::DRIZZLE_TIMESTAMP_NONE);          /* Can't be a datetime */
   }
 
@@ -371,7 +372,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
       year_length= date_len[(uint32_t) format_position[0]];
       if (!year_length)                           /* Year must be specified */
       {
-        was_cut= 1;
+        was_cut= type::CUT;
         return(type::DRIZZLE_TIMESTAMP_NONE);
       }
 
@@ -392,7 +393,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
       {
         if (this->hour > 12)
         {
-          was_cut= 1;
+          was_cut= type::CUT;
           break;
         }
         this->hour= this->hour%12 + add_hours;
@@ -432,7 +433,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
           }
         }
       }
-      was_cut= test(not_zero_date);
+      was_cut= test(not_zero_date) ? type::CUT : type::VALID;
       break;
     }
 
@@ -448,7 +449,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
     {
       if (!my_isspace(&my_charset_utf8_general_ci,*str))
       {
-        was_cut= 1;
+        was_cut= type::CUT;
         break;
       }
     }
@@ -463,7 +464,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
 
 type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags)
 {
-  int was_cut;
+  type::cut_t was_cut;
   return store(str, length, flags, was_cut);
 }
 
@@ -518,11 +519,11 @@ bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp
   /* Check first if this is a full TIMESTAMP */
   if (length >= 12)
   {                                             /* Probably full timestamp */
-    int was_cut;
+    type::cut_t was_cut;
     type::timestamp_t res= this->store(str, length, (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), was_cut);
     if ((int) res >= (int) type::DRIZZLE_TIMESTAMP_ERROR)
     {
-      if (was_cut)
+      if (was_cut != type::VALID)
         warning|= DRIZZLE_TIME_WARN_TRUNCATED;
 
       return res == type::DRIZZLE_TIMESTAMP_ERROR;
@@ -1022,39 +1023,6 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, boo
   }
 } /* my_system_gmt_sec */
 
-} //namespace type
-
-
-/*
-  Functions to convert time/date/datetime value to a string,
-  using default format.
-  This functions don't check that given type::Time structure members are
-  in valid range. If they are not, return value won't reflect any
-  valid date either. Additionally, make_time doesn't take into
-  account time->day member: it's assumed that days have been converted
-  to hours already.
-
-  RETURN
-    number of characters written to 'to'
-*/
-
-static int my_time_to_str(const type::Time *l_time, char *to)
-{
-  int32_t length;
-  uint32_t extra_hours= 0;
-
-  length= sprintf(to, "%s%02u:%02u:%02u",
-                  (l_time->neg ? "-" : ""),
-                  extra_hours+ l_time->hour,
-                  l_time->minute,
-                  l_time->second);
-  if (length < 0)
-    return 0;
-
-  return static_cast<size_t>(length); 
-}
-
-namespace type {
 
 void Time::store(const struct tm &from)
 {
@@ -1116,74 +1084,54 @@ void Time::convert(String &str, timestamp_t arg)
 
 void Time::convert(char *str, size_t &to_length, timestamp_t arg)
 {
+  int32_t length= 0;
   switch (arg) {
   case DRIZZLE_TIMESTAMP_DATETIME:
-    {
-      int32_t length;
-      length= snprintf(to, to_length,
-                       "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
-                       " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
-                       l_time->year,
-                       l_time->month,
-                       l_time->day,
-                       l_time->hour,
-                       l_time->minute,
-                       l_time->second,
-                       l_time->second_part);
-      if (length < 0)
-      {
-        to_length= 0;
-        break;
-      }
-
-      to_length= length;
-    }
+    length= snprintf(str, to_length,
+                     "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
+                     " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+                     year,
+                     month,
+                     day,
+                     hour,
+                     minute,
+                     second,
+                     second_part);
     break;
 
   case DRIZZLE_TIMESTAMP_DATE:
-    {
-      int32_t length;
-      length= snprintf(to, to_length, "%04u-%02u-%02u",
-                       l_time->year,
-                       l_time->month,
-                       l_time->day);
-      if (length < 0)
-      {
-        to_length= 0;
-        break;
-      }
-
-      to_length= length;
-    }
+    length= snprintf(str, to_length, "%04u-%02u-%02u",
+                     year,
+                     month,
+                     day);
     break;
 
   case DRIZZLE_TIMESTAMP_TIME:
     {
-      int32_t length;
       uint32_t extra_hours= 0;
 
       length= snprintf(str, to_length,
                        "%s%02u:%02u:%02u",
-                      (neg ? "-" : ""),
-                      extra_hours+ hour,
-                      minute,
-                      second);
-      if (length < 0)
-      {
-        to_length= 0;
-        break;
-      }
-
-      to_length= length;
+                       (neg ? "-" : ""),
+                       extra_hours+ hour,
+                       minute,
+                       second);
     }
     break;
 
   case DRIZZLE_TIMESTAMP_NONE:
   case DRIZZLE_TIMESTAMP_ERROR:
     assert(0);
-    to_length= 0;
     break;
   }
+
+  if (length < 0)
+  {
+    to_length= 0;
+    return;
+  }
+
+  to_length= length;
 }
 
 }
@@ -1215,11 +1163,11 @@ void Time::convert(char *str, size_t &to_length, timestamp_t arg)
 */
 
 static int64_t number_to_datetime(int64_t nr, type::Time *time_res,
-                                  uint32_t flags, int &was_cut)
+                                  uint32_t flags, type::cut_t &was_cut)
 {
   long part1,part2;
 
-  was_cut= 0;
+  was_cut= type::VALID;
   time_res->reset();
   time_res->time_type=type::DRIZZLE_TIMESTAMP_DATE;
 
@@ -1287,13 +1235,20 @@ static int64_t number_to_datetime(int64_t nr, type::Time *time_res,
     return -1LL;
 
  err:
-  was_cut= 1;
+  was_cut= type::CUT;
   return -1LL;
 }
 
 
 namespace type {
-void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags, int &was_cut)
+
+void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags)
+{
+  type::cut_t was_cut;
+  ret= number_to_datetime(nr, this, flags, was_cut);
+}
+
+void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags, type::cut_t &was_cut)
 {
   ret= number_to_datetime(nr, this, flags, was_cut);
 }
@@ -1305,7 +1260,7 @@ void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags, int &was_cut)
 */
 
 
-void Time::convert(int64_t &datetime, timestamp_t arg)
+void Time::convert(datetime_t &datetime, timestamp_t arg)
 {
   switch (arg)
   {

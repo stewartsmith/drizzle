@@ -129,7 +129,7 @@ type::timestamp_t str_to_datetime_with_warn(const char *str,
                                             type::Time *l_time,
                                             uint32_t flags)
 {
-  int was_cut;
+  type::cut_t was_cut= type::VALID;
   type::timestamp_t ts_type;
   Session *session= current_session;
 

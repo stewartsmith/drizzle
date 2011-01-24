@@ -132,10 +132,11 @@ int Field_date::store_time(type::Time *ltime,
   {
     tmp= ltime->year*10000 + ltime->month*100 + ltime->day;
 
+    type::cut_t cut_error= type::VALID;
     if (ltime->check(tmp != 0,
                      (TIME_FUZZY_DATE |
                       (current_session->variables.sql_mode &
-                       (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), error))
+                       (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), cut_error))
     {
       char buff[type::Time::MAX_STRING_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
@@ -143,6 +144,8 @@ int Field_date::store_time(type::Time *ltime,
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), type::DRIZZLE_TIMESTAMP_DATE, 1);
     }
+
+    error= static_cast<int>(cut_error);
 
     if (not error && ltime->time_type != type::DRIZZLE_TIMESTAMP_DATE &&
         (ltime->hour || ltime->minute || ltime->second || ltime->second_part))

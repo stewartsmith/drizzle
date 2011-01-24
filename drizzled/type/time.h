@@ -91,6 +91,13 @@ enum timestamp_t
   DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
 };
 
+enum cut_t
+{
+  VALID= 0,
+  CUT= 1,
+  INVALID= 2
+};
+
 /*
   datatime_t while being stored in an integer is actually a formatted value.
 */
@@ -177,7 +184,7 @@ public:
   void convert(char *str, size_t &to_length, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(datetime_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags);
-  void convert(datetime_t &ret, int64_t nr, uint32_t flags, int &was_cut);
+  void convert(datetime_t &ret, int64_t nr, uint32_t flags, type::cut_t &was_cut);
   void convert(type::Time::epoch_t &epoch, long *my_timezone,
                bool *in_dst_time_gap, bool skip_timezone= false) const;
 
@@ -185,7 +192,7 @@ public:
 
 
   bool store(const char *str,uint32_t length, int &warning, type::timestamp_t arg= DRIZZLE_TIMESTAMP_TIME);
-  type::timestamp_t store(const char *str, uint32_t length, uint32_t flags, int &was_cut);
+  type::timestamp_t store(const char *str, uint32_t length, uint32_t flags, type::cut_t &was_cut);
   type::timestamp_t store(const char *str, uint32_t length, uint32_t flags);
   void store(const type::Time::epoch_t &from, bool use_localtime= false);
   void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
@@ -196,7 +203,7 @@ public:
   static const uint32_t FRACTIONAL_DIGITS= 1000000;
   static const size_t MAX_STRING_LENGTH= 32;   // +32 to make my_snprintf_{8bit|ucs2} happy
 
-  bool check(bool not_zero_date, uint32_t flags, int &was_cut) const;
+  bool check(bool not_zero_date, uint32_t flags, type::cut_t &was_cut) const;
 
   inline bool isValidEpoch() const
   {
