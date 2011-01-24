@@ -84,7 +84,9 @@ type::Time::epoch_t
 Time_zone_system::TIME_to_gmt_sec(const type::Time *t, bool *in_dst_time_gap) const
 {
   long not_used;
-  return my_system_gmt_sec(t, &not_used, in_dst_time_gap);
+  type::Time::epoch_t tmp;
+  t->convert(tmp, &not_used, in_dst_time_gap);
+  return tmp;
 }
 
 

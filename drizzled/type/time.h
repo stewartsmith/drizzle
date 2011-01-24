@@ -178,6 +178,9 @@ public:
   void convert(datetime_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags, int &was_cut);
+  void convert(type::Time::epoch_t &epoch, long *my_timezone,
+               bool *in_dst_time_gap, bool skip_timezone= false) const;
+
 
 
 
@@ -188,6 +191,7 @@ public:
   void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
   void store(const struct tm &from);
   void store(const struct timeval &from);
+
 
   static const uint32_t FRACTIONAL_DIGITS= 1000000;
   static const size_t MAX_STRING_LENGTH= 32;   // +32 to make my_snprintf_{8bit|ucs2} happy
@@ -212,10 +216,6 @@ uint32_t calc_days_in_year(uint32_t year);
 uint32_t year_2000_handling(uint32_t year);
 
 void init_time(void);
-
-type::Time::epoch_t
-my_system_gmt_sec(const type::Time *t, long *my_timezone,
-                  bool *in_dst_time_gap, bool skip_timezone= false);
 
 /*
   Available interval types used in any statement.
