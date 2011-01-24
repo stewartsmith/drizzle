@@ -364,99 +364,107 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
     date[i++]= 0;
   }
 
-  if (!is_internal_format)
+  do 
   {
-    year_length= date_len[(uint32_t) format_position[0]];
-    if (!year_length)                           /* Year must be specified */
+    if (not is_internal_format)
     {
-      was_cut= 1;
-      return(type::DRIZZLE_TIMESTAMP_NONE);
-    }
-
-    this->year=               date[(uint32_t) format_position[0]];
-    this->month=              date[(uint32_t) format_position[1]];
-    this->day=                date[(uint32_t) format_position[2]];
-    this->hour=               date[(uint32_t) format_position[3]];
-    this->minute=             date[(uint32_t) format_position[4]];
-    this->second=             date[(uint32_t) format_position[5]];
-
-    frac_pos= (uint32_t) format_position[6];
-    frac_len= date_len[frac_pos];
-    if (frac_len < 6)
-      date[frac_pos]*= (uint32_t) log_10_int[6 - frac_len];
-    this->second_part= date[frac_pos];
-
-    if (format_position[7] != (unsigned char) 255)
-    {
-      if (this->hour > 12)
+      year_length= date_len[(uint32_t) format_position[0]];
+      if (!year_length)                           /* Year must be specified */
       {
         was_cut= 1;
-        goto err;
+        return(type::DRIZZLE_TIMESTAMP_NONE);
       }
-      this->hour= this->hour%12 + add_hours;
-    }
-  }
-  else
-  {
-    this->year=       date[0];
-    this->month=      date[1];
-    this->day=        date[2];
-    this->hour=       date[3];
-    this->minute=     date[4];
-    this->second=     date[5];
-    if (date_len[6] < 6)
-      date[6]*= (uint32_t) log_10_int[6 - date_len[6]];
-    this->second_part=date[6];
-  }
-  this->neg= 0;
 
-  if (year_length == 2 && not_zero_date)
-    this->year+= (this->year < YY_PART_YEAR ? 2000 : 1900);
+      this->year=               date[(uint32_t) format_position[0]];
+      this->month=              date[(uint32_t) format_position[1]];
+      this->day=                date[(uint32_t) format_position[2]];
+      this->hour=               date[(uint32_t) format_position[3]];
+      this->minute=             date[(uint32_t) format_position[4]];
+      this->second=             date[(uint32_t) format_position[5]];
 
-  if (number_of_fields < 3 ||
-      this->year > 9999 || this->month > 12 ||
-      this->day > 31 || this->hour > 23 ||
-      this->minute > 59 || this->second > 59)
-  {
-    /* Only give warning for a zero date if there is some garbage after */
-    if (!not_zero_date)                         /* If zero date */
-    {
-      for (; str != end ; str++)
+      frac_pos= (uint32_t) format_position[6];
+      frac_len= date_len[frac_pos];
+      if (frac_len < 6)
+        date[frac_pos]*= (uint32_t) log_10_int[6 - frac_len];
+      this->second_part= date[frac_pos];
+
+      if (format_position[7] != (unsigned char) 255)
       {
-        if (!my_isspace(&my_charset_utf8_general_ci, *str))
+        if (this->hour > 12)
         {
-          not_zero_date= 1;                     /* Give warning */
+          was_cut= 1;
           break;
         }
+        this->hour= this->hour%12 + add_hours;
       }
     }
-    was_cut= test(not_zero_date);
-    goto err;
-  }
-
-  if (check(not_zero_date != 0, flags, was_cut))
-    goto err;
-
-  this->time_type= (number_of_fields <= 3 ?
-                      type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME);
-
-  for (; str != end ; str++)
-  {
-    if (!my_isspace(&my_charset_utf8_general_ci,*str))
+    else
     {
-      was_cut= 1;
+      this->year=       date[0];
+      this->month=      date[1];
+      this->day=        date[2];
+      this->hour=       date[3];
+      this->minute=     date[4];
+      this->second=     date[5];
+      if (date_len[6] < 6)
+        date[6]*= (uint32_t) log_10_int[6 - date_len[6]];
+      this->second_part=date[6];
+    }
+    this->neg= 0;
+
+    if (year_length == 2 && not_zero_date)
+      this->year+= (this->year < YY_PART_YEAR ? 2000 : 1900);
+
+    if (number_of_fields < 3 ||
+        this->year > 9999 || this->month > 12 ||
+        this->day > 31 || this->hour > 23 ||
+        this->minute > 59 || this->second > 59)
+    {
+      /* Only give warning for a zero date if there is some garbage after */
+      if (!not_zero_date)                         /* If zero date */
+      {
+        for (; str != end ; str++)
+        {
+          if (!my_isspace(&my_charset_utf8_general_ci, *str))
+          {
+            not_zero_date= 1;                     /* Give warning */
+            break;
+          }
+        }
+      }
+      was_cut= test(not_zero_date);
       break;
     }
-  }
 
-  return(time_type= (number_of_fields <= 3 ? type::DRIZZLE_TIMESTAMP_DATE :
-                     type::DRIZZLE_TIMESTAMP_DATETIME));
+    if (check(not_zero_date != 0, flags, was_cut))
+    {
+      break;
+    }
 
-err:
+    this->time_type= (number_of_fields <= 3 ?
+                      type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME);
+
+    for (; str != end ; str++)
+    {
+      if (!my_isspace(&my_charset_utf8_general_ci,*str))
+      {
+        was_cut= 1;
+        break;
+      }
+    }
+
+    return(time_type= (number_of_fields <= 3 ? type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME));
+  } while (0);
 
   reset();
 
   return type::DRIZZLE_TIMESTAMP_ERROR;
+}
+
+type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags)
+{
+  int was_cut;
+  return store(str, length, flags, was_cut);
 }
 
 } // namespace type
@@ -1282,45 +1290,6 @@ void Time::convert(datetime_t &ret, int64_t nr, uint32_t flags, int &was_cut)
 {
   ret= number_to_datetime(nr, this, flags, was_cut);
 }
-} // namespace type
-
-
-/* Convert time value to integer in YYYYMMDDHHMMSS format */
-
-static int64_t TIME_to_int64_t_datetime(const type::Time *my_time)
-{
-  return ((int64_t) (my_time->year * 10000UL +
-                     my_time->month * 100UL +
-                     my_time->day) * 1000000ULL +
-          (int64_t) (my_time->hour * 10000UL +
-                     my_time->minute * 100UL +
-                     my_time->second));
-}
-
-
-/* Convert type::Time value to integer in YYYYMMDD format */
-
-static int64_t TIME_to_int64_t_date(const type::Time *my_time)
-{
-  return (int64_t) (my_time->year * 10000UL +
-                    my_time->month * 100UL +
-                    my_time->day);
-}
-
-
-/*
-  Convert type::Time value to integer in HHMMSS format.
-  This function doesn't take into account time->day member:
-  it's assumed that days have been converted to hours already.
-*/
-
-static int64_t TIME_to_int64_t_time(const type::Time *my_time)
-{
-  return (int64_t) (my_time->hour * 10000UL +
-                    my_time->minute * 100UL +
-                    my_time->second);
-}
-
 
 /*
   Convert struct type::Time (date and time split into year/month/day/hour/...
@@ -1328,22 +1297,25 @@ static int64_t TIME_to_int64_t_time(const type::Time *my_time)
   YYYYMMDD (DATE)  or HHMMSS (TIME).
 */
 
-namespace type {
 
 void Time::convert(int64_t &datetime, timestamp_t arg)
 {
   switch (arg)
   {
+    // Convert to YYYYMMDDHHMMSS format
   case type::DRIZZLE_TIMESTAMP_DATETIME:
-    datetime= TIME_to_int64_t_datetime(this);
+    datetime= ((int64_t) (year * 10000UL + month * 100UL + day) * 1000000ULL +
+               (int64_t) (hour * 10000UL + minute * 100UL + second));
     break;
 
+    // Convert to YYYYMMDD
   case type::DRIZZLE_TIMESTAMP_DATE:
-    datetime= TIME_to_int64_t_date(this);
+    datetime= (year * 10000UL + month * 100UL + day);
     break;
 
+    // Convert to HHMMSS
   case type::DRIZZLE_TIMESTAMP_TIME:
-    datetime= TIME_to_int64_t_time(this);
+    datetime= (hour * 10000UL + minute * 100UL + second);
     break;
 
   case type::DRIZZLE_TIMESTAMP_NONE:
