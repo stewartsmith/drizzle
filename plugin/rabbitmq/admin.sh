@@ -34,23 +34,26 @@
 export RABBITMQ_NODENAME="drizzle_test"
 export RABBITMQ_NODE_IP_ADDRESS="0.0.0.0"
 
-dir=$RABBITMQ_NODENAME
-rm -rf $dir
-mkdir -p $dir/logs
-mkdir $dir/mnesia
+DIR=$RABBITMQ_NODENAME
+rm -rf $DIR
+mkdir -p $DIR/logs
+mkdir $DIR/mnesia
 
-export RABBITMQ_MNESIA_BASE="`pwd`/$dir/mnesia"
-export RABBITMQ_LOG_BASE="`pwd`/$dir/logs"
+export RABBITMQ_MNESIA_BASE="`pwd`/$DIR/mnesia"
+export RABBITMQ_LOG_BASE="`pwd`/$DIR/logs"
 
 
 startup()
 {
    /usr/lib/rabbitmq/bin/rabbitmq-server -detached
+   sleep 5
 }
 
 shutdown()
 {
-  /usr/lib/rabbitmq/bin/rabbitmqctl -n $RABBITMQ_NODENAME stop
+  /usr/lib/rabbitmq/bin/rabbitmqctl -q -n $RABBITMQ_NODENAME stop
+  sleep 5
+  rm -rf $DIR
 }
 
 restart()
