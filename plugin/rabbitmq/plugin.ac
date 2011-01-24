@@ -13,6 +13,7 @@ AC_LIB_HAVE_LINKFLAGS(rabbitmq,,
   [
 amqp_new_connection();
 ])
-AS_IF([test "$ac_cv_librabbitmq" = "no"],
- [AC_MSG_WARN([Couldn't find rabbitmq c client support, rabbitmq log will not be built.])])
+AC_PATH_PROG([RABBITMQ_BINARY],[rabbitmq-server],[no],[/usr/sbin:$PATH])
+AS_IF([test "$ac_cv_librabbitmq" = "no" -o "x${RABBITMQ_BINARY}" = "xno"],
+ [AC_MSG_WARN([Couldn't find both rabbitmq c client and server support, rabbitmq plugin will not be built.])])
 
