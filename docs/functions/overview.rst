@@ -7,7 +7,8 @@ Several SQL functions are built into Drizzle--functions perform calculations on 
    :maxdepth: 2
 
    logical
-   mathematical 
+   mathematical
+   datetime
    aggregatefunctions
    string
    scalarfunctions
