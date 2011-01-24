@@ -157,17 +157,18 @@ class drizzleServer():
             # We make sure the server is running and return False if not 
             if timer == timeout and not self.ping(quiet= True):
                 self.logging.error(( "Server failed to start within %d seconds.  This could be a problem with the test machine or the server itself" %(timeout)))
-                retcode = 1
+                server_retcode = 1
      
         if server_retcode == 0:
             self.status = 1 # we are running
 
-        if server_retcode != 0 and not expect_fail:
-            self.logging.error("Server startup command: %s failed with error code %d" %( start_cmd
+        if server_retcode != 0 and not expect_fail and self.debug:
+            self.logging.debug("Server startup command: %s failed with error code %d" %( start_cmd
                                                                                   , server_retcode))
         elif server_retcode == 0 and expect_fail:
+        # catch a startup that should have failed and report
             self.logging.error("Server startup command :%s expected to fail, but succeeded" %(start_cmd))
-        return server_retcode and expect_fail
+        return server_retcode ^ expect_fail
 
     def stop(self):
         """ Stop the server """
@@ -186,7 +187,7 @@ class drizzleServer():
 
     def ping(self, quiet= False):
         """Pings the server. Returns True if server is up and running, False otherwise."""
-        ping_cmd= "%s --ping --port=%d --user=root" % (self.drizzle_client_path, self.master_port)
+        ping_cmd= "%s --ping --port=%d " % (self.drizzle_client_path, self.master_port)
         if not quiet:
             self.logging.info("Pinging Drizzled server on port %d" % self.master_port)
         (retcode, output)= self.system_manager.execute_cmd(ping_cmd, must_pass = 0)

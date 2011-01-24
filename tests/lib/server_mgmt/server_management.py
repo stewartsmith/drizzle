@@ -109,7 +109,7 @@ class serverManager:
 
     def stop_server(self, server):
         """ Stop an individual server if it is running """
-        if server.status == 1:
+        if server.status == 1 or server.ping(quiet=True):
             server.stop()
 
     def stop_servers(self, requester):
