@@ -220,25 +220,25 @@ String *Time::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Time::get_date(type::Time *ltime, uint32_t)
+bool Time::get_date(type::Time &ltime, uint32_t)
 {
-  memset(ltime, 0, sizeof(*ltime));
+  ltime.reset();
 
   drizzled::Time temporal;
   unpack_time(temporal);
 
-  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
-  ltime->year= temporal.years();
-  ltime->month= temporal.months();
-  ltime->day= temporal.days();
-  ltime->hour= temporal.hours();
-  ltime->minute= temporal.minutes();
-  ltime->second= temporal.seconds();
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
+  ltime.year= temporal.years();
+  ltime.month= temporal.months();
+  ltime.day= temporal.days();
+  ltime.hour= temporal.hours();
+  ltime.minute= temporal.minutes();
+  ltime.second= temporal.seconds();
 
   return 0;
 }
 
-bool Time::get_time(type::Time *ltime)
+bool Time::get_time(type::Time &ltime)
 {
   return Time::get_date(ltime, 0);
 }
