@@ -848,13 +848,7 @@ create:
           }
         | CREATE build_method
           {
-            statement::CreateIndex *statement= new statement::CreateIndex(YYSession);
-            Lex->statement= statement;
-
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-            statement->alter_info.build_method= $2;
-            Lex->col_list.empty();
-            statement->change=NULL;
+            Lex->statement= new statement::CreateIndex(YYSession, $2);
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
