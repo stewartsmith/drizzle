@@ -30,8 +30,6 @@
 namespace drizzled
 {
 
-extern boost::mutex LOCK_global_system_variables;
-
 typedef boost::unique_lock<boost::mutex>  boost_unique_lock_t;
 
 typedef boost::shared_ptr<boost::thread> boost_thread_shared_ptr;

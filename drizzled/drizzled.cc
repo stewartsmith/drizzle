@@ -338,9 +338,6 @@ MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
 
-/* Thread specific variables */
-boost::mutex LOCK_global_system_variables;
-
 boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
