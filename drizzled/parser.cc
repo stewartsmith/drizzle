@@ -314,5 +314,21 @@ void buildEngineOption(Session *session, const char *key, uint64_t value)
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
+void buildSchemaOption(Session *session, const char *key, const LEX_STRING &value)
+{
+  statement::CreateSchema *statement= (statement::CreateSchema *)session->getLex()->statement;
+  message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+  opt->set_name(key);
+  opt->set_state(value.str, value.length);
+}
+
+void buildSchemaOption(Session *session, const char *key, uint64_t value)
+{
+  statement::CreateSchema *statement= (statement::CreateSchema *)session->getLex()->statement;
+  message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+  opt->set_name(key);
+  opt->set_state(boost::lexical_cast<std::string>(value));
+}
+
 } // namespace parser
 } // namespace drizzled

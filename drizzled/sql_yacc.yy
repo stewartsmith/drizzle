@@ -971,30 +971,18 @@ opt_database_custom_options:
 
 custom_database_option:
           ident_or_text
-        {
-          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
-        }
+          {
+            statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+            statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
+          }
         | ident_or_text equal ident_or_text
-        {
-          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
-
-          opt->set_name($1.str);
-          opt->set_state($3.str);
-        }
+          {
+            parser::buildSchemaOption(YYSession, $1.str, $3);
+          }
         | ident_or_text equal ulonglong_num
-        {
-          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          char number_as_string[22];
-
-          snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
-
-          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
-
-          opt->set_name($1.str);
-          opt->set_state(number_as_string);
-        }
+          {
+            parser::buildSchemaOption(YYSession, $1.str, $3);
+          }
         ;
 
 opt_table_options:

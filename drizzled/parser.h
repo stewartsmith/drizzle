@@ -137,6 +137,8 @@ void errorOn(const char *s);
 bool buildOrderBy(Session *session);
 void buildEngineOption(Session *session, const char *key, const LEX_STRING &value);
 void buildEngineOption(Session *session, const char *key, uint64_t value);
+void buildSchemaOption(Session *session, const char *key, const LEX_STRING &value);
+void buildSchemaOption(Session *session, const char *key, uint64_t value);
 
 } // namespace parser
 } // namespace drizzled
