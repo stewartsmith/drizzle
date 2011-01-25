@@ -183,7 +183,7 @@ type::Decimal *Microtime::val_decimal(type::Decimal *decimal_value)
 {
   type::Time ltime;
 
-  get_date(&ltime, 0);
+  get_date(ltime, 0);
 
   return date2_class_decimal(&ltime, decimal_value);
 }
@@ -223,7 +223,7 @@ String *Microtime::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Microtime::get_date(type::Time *ltime, uint32_t)
+bool Microtime::get_date(type::Time &ltime, uint32_t)
 {
   uint64_t temp;
   uint32_t micro_temp= 0;
@@ -231,14 +231,14 @@ bool Microtime::get_date(type::Time *ltime, uint32_t)
   unpack_num(temp);
   unpack_num(micro_temp, ptr +8);
   
-  ltime->reset();
+  ltime.reset();
 
-  ltime->store(temp, micro_temp);
+  ltime.store(temp, micro_temp);
 
   return false;
 }
 
-bool Microtime::get_time(type::Time *ltime)
+bool Microtime::get_time(type::Time &ltime)
 {
   return Microtime::get_date(ltime, 0);
 }

@@ -78,8 +78,8 @@ public:
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 1; }
-  bool get_date(type::Time *ltime,uint32_t fuzzydate);
-  bool get_time(type::Time *ltime);
+  bool get_date(type::Time &ltime,uint32_t fuzzydate);
+  bool get_time(type::Time &ltime);
 };
 
 } /* namespace drizzled */

@@ -73,8 +73,8 @@ public:
   long get_timestamp(bool *null_value);
 
 private:
-  bool get_date(type::Time *ltime,uint32_t fuzzydate);
-  bool get_time(type::Time *ltime);
+  bool get_date(type::Time &ltime,uint32_t fuzzydate);
+  bool get_time(type::Time &ltime);
 
 public:
   static size_t max_string_length()

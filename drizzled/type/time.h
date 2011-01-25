@@ -188,8 +188,7 @@ public:
   void convert(type::Time::epoch_t &epoch, long *my_timezone,
                bool *in_dst_time_gap, bool skip_timezone= false) const;
 
-
-
+  void truncate(const timestamp_t arg);
 
   bool store(const char *str,uint32_t length, int &warning, type::timestamp_t arg= DRIZZLE_TIMESTAMP_TIME);
   type::timestamp_t store(const char *str, uint32_t length, uint32_t flags, type::cut_t &was_cut);

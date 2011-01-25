@@ -590,8 +590,8 @@ public:
   }
   void copy_from_tmp(int offset);
   uint32_t fill_cache_field(CacheField *copy);
-  virtual bool get_date(type::Time *ltime,uint32_t fuzzydate);
-  virtual bool get_time(type::Time *ltime);
+  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate);
+  virtual bool get_time(type::Time &ltime);
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }

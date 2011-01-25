@@ -1010,12 +1010,12 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Field::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   if (!(res=val_str_internal(&tmp)) || str_to_datetime_with_warn(res->ptr(), res->length(),
-                                                                 ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
+                                                                 &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
   {
     return 1;
   }
@@ -1023,12 +1023,12 @@ bool Field::get_date(type::Time *ltime,uint32_t fuzzydate)
   return 0;
 }
 
-bool Field::get_time(type::Time *ltime)
+bool Field::get_time(type::Time &ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
-  if (!(res=val_str_internal(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), ltime))
+  if (!(res=val_str_internal(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), &ltime))
   {
     return 1;
   }

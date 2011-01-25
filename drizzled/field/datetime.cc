@@ -216,26 +216,27 @@ String *Field_datetime::val_str(String *val_buffer,
   return val_buffer;
 }
 
-bool Field_datetime::get_date(type::Time *ltime, uint32_t fuzzydate)
+bool Field_datetime::get_date(type::Time &ltime, uint32_t fuzzydate)
 {
   int64_t tmp=Field_datetime::val_int();
   uint32_t part1,part2;
   part1=(uint32_t) (tmp/INT64_C(1000000));
   part2=(uint32_t) (tmp - (uint64_t) part1*INT64_C(1000000));
 
-  ltime->time_type=	type::DRIZZLE_TIMESTAMP_DATETIME;
-  ltime->neg=		0;
-  ltime->second_part=	0;
-  ltime->second=	(int) (part2%100);
-  ltime->minute=	(int) (part2/100%100);
-  ltime->hour=		(int) (part2/10000);
-  ltime->day=		(int) (part1%100);
-  ltime->month= 	(int) (part1/100%100);
-  ltime->year= 		(int) (part1/10000);
-  return (!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ? 1 : 0;
+  ltime.time_type=	type::DRIZZLE_TIMESTAMP_DATETIME;
+  ltime.neg=		0;
+  ltime.second_part=	0;
+  ltime.second=	(int) (part2%100);
+  ltime.minute=	(int) (part2/100%100);
+  ltime.hour=		(int) (part2/10000);
+  ltime.day=		(int) (part1%100);
+  ltime.month= 	(int) (part1/100%100);
+  ltime.year= 		(int) (part1/10000);
+
+  return (!(fuzzydate & TIME_FUZZY_DATE) && (!ltime.month || !ltime.day)) ? 1 : 0;
 }
 
-bool Field_datetime::get_time(type::Time *ltime)
+bool Field_datetime::get_time(type::Time &ltime)
 {
   return Field_datetime::get_date(ltime,0);
 }

@@ -196,7 +196,7 @@ type::Decimal *Item::val_decimal_from_date(type::Decimal *decimal_value)
 {
   assert(fixed);
   type::Time ltime;
-  if (get_date(&ltime, TIME_FUZZY_DATE))
+  if (get_date(ltime, TIME_FUZZY_DATE))
   {
     decimal_value->set_zero();
     null_value= 1;                               // set NULL, stop processing
@@ -209,7 +209,7 @@ type::Decimal *Item::val_decimal_from_time(type::Decimal *decimal_value)
 {
   assert(fixed);
   type::Time ltime;
-  if (get_time(&ltime))
+  if (get_time(ltime))
   {
     decimal_value->set_zero();
     return NULL;
@@ -245,7 +245,7 @@ int Item::save_time_in_field(Field *field)
 {
   type::Time ltime;
 
-  if (get_time(&ltime))
+  if (get_time(ltime))
     return set_field_to_null(field);
 
   field->set_notnull();
@@ -257,7 +257,7 @@ int Item::save_date_in_field(Field *field)
 {
   type::Time ltime;
 
-  if (get_date(&ltime, TIME_FUZZY_DATE))
+  if (get_date(ltime, TIME_FUZZY_DATE))
     return set_field_to_null(field);
 
   field->set_notnull();
@@ -470,7 +470,7 @@ Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
   return conv->safe ? conv : NULL;
 }
 
-bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Item::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   do
   {
@@ -480,7 +480,7 @@ bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
       String tmp(buff,sizeof(buff), &my_charset_bin),*res;
       if (!(res=val_str(&tmp)) ||
           str_to_datetime_with_warn(res->ptr(), res->length(),
-                                    ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
+                                    &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
       {
         break;
       }
@@ -490,7 +490,7 @@ bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
       int64_t value= val_int();
       type::datetime_t date_value;
 
-      ltime->convert(date_value, value, fuzzydate);
+      ltime.convert(date_value, value, fuzzydate);
 
       if (not type::is_valid(date_value))
       {
@@ -505,18 +505,18 @@ bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
     return false;
   } while (0);
 
-  ltime->reset();
+  ltime.reset();
 
   return true;
 }
 
-bool Item::get_time(type::Time *ltime)
+bool Item::get_time(type::Time &ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), ltime))
+  if (!(res=val_str(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), &ltime))
   {
-    ltime->reset();
+    ltime.reset();
 
     return true;
   }
@@ -524,9 +524,9 @@ bool Item::get_time(type::Time *ltime)
   return false;
 }
 
-bool Item::get_date_result(type::Time *ltime,uint32_t fuzzydate)
+bool Item::get_date_result(type::Time &ltime,uint32_t fuzzydate)
 {
-  return get_date(ltime,fuzzydate);
+  return get_date(ltime, fuzzydate);
 }
 
 bool Item::is_null()
@@ -1422,7 +1422,7 @@ bool Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_TIME:
     {
       type::Time tm;
-      get_time(&tm);
+      get_time(tm);
       if (not null_value)
         result= client->store(&tm);
       break;
@@ -1432,7 +1432,7 @@ bool Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_TIMESTAMP:
     {
       type::Time tm;
-      get_date(&tm, TIME_FUZZY_DATE);
+      get_date(tm, TIME_FUZZY_DATE);
       if (!null_value)
         result= client->store(&tm);
       break;

@@ -215,21 +215,22 @@ String *Field_date::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Field_date::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Field_date::get_date(type::Time &ltime, uint32_t fuzzydate)
 {
   uint32_t tmp=(uint32_t) uint4korr(ptr);
-  ltime->day=		(int) (tmp%100);
-  ltime->month= 	(int) (tmp/100%100);
-  ltime->year= 		(int) (tmp/10000);
-  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATE;
-  ltime->hour= ltime->minute= ltime->second= ltime->second_part= ltime->neg= 0;
-  return ((!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ?
+  ltime.day=		(int) (tmp%100);
+  ltime.month= 	(int) (tmp/100%100);
+  ltime.year= 		(int) (tmp/10000);
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATE;
+  ltime.hour= ltime.minute= ltime.second= ltime.second_part= ltime.neg= 0;
+
+  return ((!(fuzzydate & TIME_FUZZY_DATE) && (!ltime.month || !ltime.day)) ?
           1 : 0);
 }
 
-bool Field_date::get_time(type::Time *ltime)
+bool Field_date::get_time(type::Time &ltime)
 {
-  return Field_date::get_date(ltime,0);
+  return Field_date::get_date(ltime ,0);
 }
 
 int Field_date::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)

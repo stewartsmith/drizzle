@@ -1071,6 +1071,15 @@ void Time::store(const type::Time::epoch_t &from_arg, const usec_t &from_fractio
   time_type= DRIZZLE_TIMESTAMP_DATETIME;
 }
 
+// Only implemented for one case, extend as needed.
+void Time::truncate(const timestamp_t arg)
+{
+  assert(arg == type::DRIZZLE_TIMESTAMP_TIME);
+  year= month= day= 0;
+
+  time_type= arg;
+}
+
 void Time::convert(String &str, timestamp_t arg)
 {
   str.alloc(MAX_STRING_LENGTH);
