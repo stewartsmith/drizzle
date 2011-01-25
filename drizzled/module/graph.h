@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Monty Taylor
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,15 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#ifndef DRIZZLED_MODULE_GRAPH_H
+#define DRIZZLED_MODULE_GRAPH_H
 
-#include <algorithm>
+#include "drizzled/module/vertex.h"
 
-#include "drizzled/module/module.h"
-#include "drizzled/sys_var.h"
-#include "drizzled/util/functors.h"
-#include "drizzled/util/tokenize.h"
-#include "drizzled/module/vertex_handle.h"
 
 namespace drizzled
 {
@@ -33,32 +29,33 @@ namespace drizzled
 namespace module
 {
 
-Module::Module(const Manifest *manifest_arg,
-       Library *library_arg) :
-  name(manifest_arg->name),
-  manifest(manifest_arg),
-  vertex_(NULL),
-  plugin_dl(library_arg),
-  isInited(false),
-  system_vars(),
-  sys_vars(),
-  depends_()
+class Graph
 {
-  if (manifest->depends != NULL)
-  {
-    tokenize(manifest->depends, depends_, ",", true);
-  }
-  assert(manifest != NULL);
-}
 
-Module::~Module()
-{
-  std::for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
-  if (vertex_ != NULL)
+private:
+  VertexGraph graph_;
+
+  Graph(const Graph&);
+  Graph& operator=(const Graph&);
+
+public:
+  Graph() :
+    graph_()
+  { }
+
+  VertexGraph& getGraph()
   {
-    delete vertex_;
+    return graph_;
   }
-}
+
+  Vertex& properties(const VertexDesc& v)
+  {
+     boost::property_map<VertexGraph, vertex_properties_t>::type param=
+       boost::get(vertex_properties, graph_);
+     return param[v];
+  }
+};
 
 } /* namespace module */
 } /* namespace drizzled */
+#endif /* DRIZZLED_MODULE_GRAPH_H */

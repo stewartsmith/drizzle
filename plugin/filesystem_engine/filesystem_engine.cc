@@ -956,7 +956,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Filesystem Engine",
   PLUGIN_LICENSE_GPL,
   filesystem_init_func, /* Plugin Init */
-  NULL,                       /* system variables                */
+  NULL,                       /* depends */
   NULL                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

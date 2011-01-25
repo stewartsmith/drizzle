@@ -839,7 +839,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
-  NULL,                       /* system variables                */
+  NULL,                       /* depends */
   NULL                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

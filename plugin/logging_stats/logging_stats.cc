@@ -389,7 +389,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("User Statistics as DATA_DICTIONARY tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -29,8 +29,8 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    std::vector<drizzled::module::Module *> modules;
-    std::vector<drizzled::module::Module *>::iterator it;
+    drizzled::module::Registry::ModuleList modules;
+    drizzled::module::Registry::ModuleList::iterator it;
 
   public:
     Generator(drizzled::Field **arg);

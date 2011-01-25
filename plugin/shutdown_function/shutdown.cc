@@ -85,7 +85,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Cause the database to shutdown.",
   PLUGIN_LICENSE_BSD,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
