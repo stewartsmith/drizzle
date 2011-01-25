@@ -553,6 +553,11 @@ public:
     return client;
   }
 
+  plugin::Client *getClient() const
+  {
+    return client;
+  }
+
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
 

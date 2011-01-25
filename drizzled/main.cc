@@ -348,7 +348,7 @@ int main(int argc, char **argv)
   while ((client= plugin::Listen::getClient()) != NULL)
   {
     Session::shared_ptr session;
-    session= Session::make_shared(client, catalog::local());
+    session= Session::make_shared(client, client->catalog());
 
     if (not session)
     {

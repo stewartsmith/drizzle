@@ -92,6 +92,23 @@ void Engine::getMessages(drizzled::message::catalog::vector &messages)
   prime(messages);
 }
 
+drizzled::message::catalog::shared_ptr Engine::getMessage(drizzled::identifier::Catalog::const_reference identifier)
+{
+  if (drizzled::catalog::local_identifier() == identifier)
+  {
+    return drizzled::message::catalog::make_shared(identifier);
+  }
+
+  drizzled::message::catalog::shared_ptr message;
+  if ((message= readFile(identifier)))
+  {
+    assert(message);
+    return message;
+  }
+
+  return drizzled::message::catalog::shared_ptr();
+}
+
 void Engine::prime(drizzled::message::catalog::vector &messages)
 {
   bool found_local= false;
@@ -110,7 +127,7 @@ void Engine::prime(drizzled::message::catalog::vector &messages)
 
     drizzled::identifier::Catalog identifier(entry->filename);
 
-    if (readFile(identifier, message))
+    if (message= readFile(identifier))
     {
       messages.push_back(message);
 
@@ -191,7 +208,7 @@ bool Engine::writeFile(const drizzled::identifier::Catalog &identifier, drizzled
 }
 
 
-bool Engine::readFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message)
+drizzled::message::catalog::shared_ptr Engine::readFile(drizzled::identifier::Catalog::const_reference identifier)
 {
   std::string path(identifier.getPath());
 
@@ -206,10 +223,15 @@ bool Engine::readFile(const drizzled::identifier::Catalog &identifier, drizzled:
 
   if (input.good())
   {
-    message= drizzled::message::catalog::make_shared(identifier);
+    drizzled::message::catalog::shared_ptr message= drizzled::message::catalog::make_shared(identifier);
+
+    if (not message)
+      return drizzled::message::catalog::shared_ptr();
+
+
     if (message->ParseFromIstream(&input))
     {
-      return true;
+      return message;
     }
 
     drizzled::my_error(drizzled::ER_CORRUPT_CATALOG_DEFINITION, MYF(0), path.c_str(),
@@ -220,7 +242,7 @@ bool Engine::readFile(const drizzled::identifier::Catalog &identifier, drizzled:
     perror(path.c_str());
   }
 
-  return false;
+  return drizzled::message::catalog::shared_ptr();
 }
 
 } /* namespace catalog */
