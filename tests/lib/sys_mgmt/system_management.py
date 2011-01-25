@@ -39,7 +39,7 @@ class systemManager:
             self.logging.verbose("Initializing system manager...")
 
         self.skip_keys = [ 'code_tree'
-                         , 'ld_preload'
+                         , 'ld_lib_paths'
                          , 'port_manager'
                          , 'logging_manager'
                          , 'environment_reqs'
@@ -59,7 +59,7 @@ class systemManager:
         # Make sure the tree we are testing looks good
         self.code_tree = self.get_code_tree(variables, tree_type)
 
-        self.ld_preload = self.code_tree.ld_preloads
+        self.ld_lib_paths = self.code_tree.ld_lib_paths
 
         # Some ENV vars are system-standard
         # We describe and set them here and now
@@ -74,8 +74,8 @@ class systemManager:
                                 , 'TOP_BUILDDIR' : (self.code_tree.builddir,0,0)
                                 , 'DRIZZLE_TEST_DIR' : (self.code_tree.testdir,0,0)
                                 , 'DTR_BUILD_THREAD' : ("-69.5",0,0)
-                                #, 'LD_PRELOAD' : (self.ld_preload,1,1)
-                                #, 'DYLD_LIBRARY_PATH' : (self.ld_preload,1,1)
+                                , 'LD_LIBRARY_PATH' : (self.ld_lib_paths,1,1)
+                                , 'DYLD_LIBRARY_PATH' : (self.ld_lib_paths,1,1)
                                 }
         # set the env vars we need
         self.process_environment_reqs(self.environment_reqs)

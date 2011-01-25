@@ -21,7 +21,7 @@ class serverManager:
     """
 
     def __init__(self, system_manager, variables):
-        self.skip_keys = [ 'ld_preload'
+        self.skip_keys = [ 'ld_lib_paths'
                          , 'system_manager'
                          ]
         self.debug = variables['debug']
@@ -34,7 +34,7 @@ class serverManager:
         self.code_tree = system_manager.code_tree
         self.servers = {}
         # We track this
-        self.ld_preload = system_manager.ld_preload
+        self.ld_lib_paths = system_manager.ld_lib_paths
         self.mutex = thread.allocate_lock()
 
         if self.debug:

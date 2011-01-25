@@ -41,7 +41,7 @@ class drizzleTree(codeTree):
     def __init__(self, variables,system_manager):
         self.system_manager = system_manager
         self.logging = self.system_manager.logging
-        self.skip_keys = ['ld_preloads']
+        self.skip_keys = ['ld_lib_paths']
         self.debug = variables['debug']
         self.verbose = variables['verbose']
         self.basedir = self.system_manager.find_path([variables['basedir']])
@@ -97,7 +97,7 @@ class drizzleTree(codeTree):
         self.type = 'Drizzle'
 
         self.process_server_version()
-        self.ld_preloads = self.get_ld_preloads()
+        self.ld_lib_paths = self.get_ld_lib_paths()
          
         self.report()
 
@@ -129,23 +129,23 @@ class drizzleTree(codeTree):
         self.server_platform = data_string.split(' ')[0].strip()
         self.server_comment = data_string.replace(self.server_platform,'').strip()
 
-    def get_ld_preloads(self):
-        """ Return a list of paths we want added to LD_PRELOAD
+    def get_ld_lib_paths(self):
+        """ Return a list of paths we want added to LD_LIB variables
 
             These are processed later by the system manager, but we want to 
             specify them here (for a drizzle source tree) and now
   
         """
-        ld_preload_paths = []
+        ld_lib_paths = []
         if self.source_dist:
-            ld_preload_paths = [ os.path.join(self.basedir,"libdrizzleclient/.libs/")
+            ld_lib_paths = [ os.path.join(self.basedir,"libdrizzleclient/.libs/")
                                , os.path.join(self.basedir,"mysys/.libs/")
                                , os.path.join(self.basedir,"mystrings/.libs/")
                                , os.path.join(self.basedir,"drizzled/.libs/")
 			                         , "/usr/local/lib"
                                ]
         else:
-            ld_preload_paths = [ os.path.join(self.basedir,"lib")]
-        return ld_preload_paths
+            ld_lib_paths = [ os.path.join(self.basedir,"lib")]
+        return ld_lib_paths
 
         
