@@ -29,9 +29,12 @@ from lib.test_mgmt.execution_management import executionManager
 
 
 # main
-
-
 variables = test_run_options.variables
+system_manager = None
+server_manager = None
+test_manager = None
+test_executor = None
+execution_manager = None
 
 try:
     # Some system-level work is constant regardless
@@ -57,6 +60,9 @@ try:
 
 except Exception, e:
    print Exception, e
+
+except KeyboardInterrupt:
+  print "\n\nDetected <Ctrl>+c, shutting down and cleaning up..."
 
 finally:
 # TODO - make a more robust cleanup

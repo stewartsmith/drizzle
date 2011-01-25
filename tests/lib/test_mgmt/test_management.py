@@ -30,6 +30,7 @@ class testManager:
                 , suitelist, suitepaths, system_manager, test_cases):
 
         self.system_manager = system_manager
+        self.time_manager = system_manager.time_manager
         self.logging = system_manager.logging
         if verbose:
             self.logging.verbose("Initializing test manager...")
@@ -41,6 +42,7 @@ class testManager:
         self.skip_keys = [ 'system_manager'
                          ]
         self.test_list = []
+        self.first_test = 1
         self.total_test_count = 0
         self.executed_tests = {} # We have a hash of 'status':[test_name..]
         self.executing_tests = {}
@@ -146,7 +148,10 @@ class testManager:
 
     def get_testCase(self, requester):
         """return a testCase """
-          
+        if self.first_test:
+            # we start our timer
+            self.time_manager.start('total_time','total_time')
+            self.first_test = 0
         test_case = None
         if self.has_tests():
             test_case = self.test_list.pop(0)
@@ -162,7 +167,7 @@ class testManager:
 
         self.executing_tests[test_name] = requester
 
-    def record_test_result(self, test_case, test_status, output):
+    def record_test_result(self, test_case, test_status, output, exec_time):
         """ Accept the results of an executed testCase for further
             processing.
  
@@ -172,7 +177,8 @@ class testManager:
         else:
             self.executed_tests[test_status].append(test_case)
         # report
-        self.logging.test_report(test_case.fullname, test_status, output)
+        self.logging.test_report( test_case.fullname, test_status
+                                , exec_time, output)
 
 
     def print_test_list(self):
@@ -187,14 +193,29 @@ class testManager:
             list of failed test cases
           
         """
-
+        # This is probably hacky, but I'll think of a better
+        # location later.  When we are ready to see our
+        # statistical report, we know to stop the total time timer
+        total_exec_time = self.time_manager.stop('total_time')
         self.logging.write_thick_line()
-        self.logging.info("Test execution complete")
+        self.logging.info("Test execution complete in %d seconds" %(total_exec_time))
         self.logging.info("Summary report:")
         self.report_executed_tests()
-        self.report_tests_by_status('fail')
-        self.report_tests_by_status('skipped')
-        self.report_tests_by_status('disabled')
+        self.report_test_statuses()
+        self.time_manager.summary_report()
+
+    def report_test_statuses(self):
+        """ Method to report out various test statuses we
+            care about
+
+        """
+        test_statuses = [ 'fail'
+                        , 'timeout'
+                        , 'skipped'
+                        , 'disabled'
+                        ]
+        for test_status in test_statuses:
+            self.report_tests_by_status(test_status)
         
     def get_executed_test_count(self):
         """ Return how many tests were executed """

@@ -38,13 +38,17 @@ class testExecutor():
         self.logging = self.system_manager.logging
         self.test_manager = self.execution_manager.test_manager
         self.server_manager = self.execution_manager.server_manager
+        self.time_manager = self.system_manager.time_manager
         self.name = name
         self.master_server = None
         self.record_flag=self.execution_manager.record_flag
         self.environment_vars = {}
         self.current_servers = []
         self.current_testcase = None    
-        self.current_test_status = None   
+        self.current_test_status = None
+        self.current_test_retcode = None
+        self.current_test_output = None
+        self.current_test_exec_time = 0
         self.dirset = { self.name : { 'log': None } }
         self.workdir = self.system_manager.create_dirset( self.system_manager.workdir
                                                         , self.dirset)
@@ -103,18 +107,29 @@ class testExecutor():
         while self.test_manager.has_tests() and keep_running == 1:
             self.get_testCase()
             bad_start = self.handle_server_reqs()
-            test_status = self.execute_testCase(bad_start)
-            if test_status == 'fail' and not self.execution_manager.force:
+            if bad_start:
+                # Our servers didn't start, we mark it a failure
+                self.logging.warning("Problem starting server(s) for test...failing test case")
+                self.current_test_status = 'fail'
+                self.set_server_status(self.current_test_status)
+                output = ''
+            else:
+                self.execute_testCase()
+            self.test_manager.record_test_result( self.current_testcase
+                                                , self.current_test_status
+                                                , self.current_test_output
+                                                , self.current_test_exec_time )
+            if self.current_test_status == 'fail' and not self.execution_manager.force:
                 self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
                 keep_running = 0
         self.status = 0
 
-    def execute_testCase(self, bad_start):
+    def execute_testCase(self):
         """ Do whatever evil voodoo we must do to execute a testCase """
         if self.verbose:
             self.logging.verbose("Executor: %s executing test: %s" %(self.name, self.current_testcase.fullname))
-        if bad_start:
-            self.logging.warning("Problem starting server(s) for test...failing test case")
+
+            
 
     def set_server_status(self, test_status):
         """ We update our servers to indicate if a test passed or failed """

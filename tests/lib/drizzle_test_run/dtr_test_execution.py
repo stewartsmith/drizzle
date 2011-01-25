@@ -29,40 +29,29 @@ class dtrTestExecutor(test_execution.testExecutor):
 
     """
   
-    def execute_testCase (self,bad_start):
+    def execute_testCase (self):
         """ Execute a dtr testCase via calls to drizzletest (boo)
             Eventually, we will replace drizzletest with pythonic
             goodness, but we have these classes stored here for the moment
 
         """
-        test_execution.testExecutor.execute_testCase(self,bad_start)
+        test_execution.testExecutor.execute_testCase(self)
         self.status = 0
-        if not bad_start:
-        # our servers are started and we are good to go 
-            # generate command line
-            drizzletest_cmd = self.generate_drizzletest_call()
-            if self.debug:
-                self.logging.debug(drizzletest_cmd)
 
-            # call drizzletest
-            self.process_symlink_reqs()
-            self.process_environment_reqs()
-            (retcode, output) = self.execute_drizzletest(drizzletest_cmd)
+        # generate command line
+        drizzletest_cmd = self.generate_drizzletest_call()
+        if self.debug:
+            self.logging.debug(drizzletest_cmd)
 
-            # analyze results
-            self.current_test_status = self.process_drizzletest_output(retcode, output)
-            self.set_server_status(self.current_test_status)
+        # call drizzletest
+        self.process_symlink_reqs()
+        self.process_environment_reqs()
+        self.execute_drizzletest(drizzletest_cmd)
+
+        # analyze results
+        self.current_test_status = self.process_drizzletest_output()
+        self.set_server_status(self.current_test_status)
  
-        else:
-        # Our servers didn't start, we mark it a failure
-            self.current_test_status = 'fail'
-            self.set_server_status(self.current_test_status)
-            output = ''
-
-        # update the test_manager
-        self.test_manager.record_test_result(self.current_testcase,self.current_test_status, output)
-
-        return self.current_test_status
 
     def generate_drizzletest_call(self):
         """ Produce the command line we use to call drizzletest
@@ -96,15 +85,22 @@ class dtrTestExecutor(test_execution.testExecutor):
             We use subprocess as we can pass os.environ dicts and whatnot 
 
         """
+        testcase_name = self.current_testcase.fullname
+        self.time_manager.start(testcase_name,'test')
+        retcode, output = self.system_manager.execute_cmd( drizzletest_cmd
+                                                         , must_pass = 0 )
+        execution_time = int(self.time_manager.stop(testcase_name)*1000) # millisec
 
-        retcode, output = commands.getstatusoutput(drizzletest_cmd)
         if self.debug:
             self.logging.debug("drizzletest_retcode: %d" %(retcode))
             self.logging.debug("drizzletest_output: %s" %(output))
-        return (retcode, output)
+        self.current_test_retcode = retcode
+        self.current_test_output = output
+        self.current_test_exec_time = execution_time
 
-    def process_drizzletest_output(self, retcode, output):
+    def process_drizzletest_output(self):
         """ Drizzletest has run, we now check out what we have """
+        retcode = self.current_test_retcode
         if retcode == 0:
             return 'pass'
         elif retcode == 62 or retcode == 15872:

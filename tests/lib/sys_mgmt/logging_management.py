@@ -30,7 +30,7 @@ class loggingManager():
     def __init__(self, variables):
 
         self.log_file = sys.stdout
-        self.report_fmt = '{0:46} [ {1} ]'
+        self.report_fmt = '{0:<60} {1} {2:>15}'
         self.report_started = 0  
         self.thick_line = '='*80
         self.thin_line = '-'*80     
@@ -69,14 +69,17 @@ class loggingManager():
 
 
 
-    def test_report(self, test_name, test_status, additional_output=None):
+    def test_report( self, test_name, test_status
+                   , execution_time, additional_output=None):
         """ We use this method to deal with writing out the test report
 
         """
         if not self.report_started:
             self.report_started = 1
             self.write_report_header()
-        msg = self.report_fmt.format(test_name, test_status)
+        test_status = "[ %s ]" %(test_status)
+        msg = self.report_fmt.format( test_name, test_status
+                                    , execution_time)
         self._write_message("", msg)
         if additional_output:
             additional_output=additional_output.split('\n')
@@ -86,7 +89,7 @@ class loggingManager():
 
     def write_report_header(self):
         self.write_thick_line()
-        self.test_report("TEST NAME", "RESULT")
+        self.test_report("TEST NAME", "RESULT", "TIME (ms)")
         self.write_thick_line()
 
     def write_thin_line(self):

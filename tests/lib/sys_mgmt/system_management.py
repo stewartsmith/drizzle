@@ -24,6 +24,7 @@ import commands
 
 from lib.sys_mgmt.port_management import portManager
 from lib.sys_mgmt.logging_management import loggingManager
+from lib.sys_mgmt.time_management import timeManager
 
 class systemManager:
     """Class to deal with the basics of system-level interaction
@@ -53,6 +54,7 @@ class systemManager:
         self.start_dirty = variables['startdirty']
         
         self.port_manager = portManager(self,variables['debug'])
+        self.time_manager = timeManager(self)
             
         # Make sure the tree we are testing looks good
         self.code_tree = self.get_code_tree(variables, tree_type)
