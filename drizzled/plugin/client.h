@@ -109,6 +109,11 @@ public:
     return false;
   }
 
+  virtual  catalog::Instance::shared_ptr catalog()
+  {
+    return catalog::local();
+  }
+
   /**
    * Read command from client.
    */

@@ -37,7 +37,8 @@ class Catalog : public Statement
 public:
   Catalog(Session *in_session, drizzled::lex_string_t &arg);
 
-  virtual bool authorized()= 0;
+  virtual bool authorized() const= 0;
+  virtual bool perform() const= 0;
 
   bool execute();
 

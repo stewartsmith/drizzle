@@ -33,6 +33,15 @@ namespace drizzled {
 namespace message {
 namespace schema {
 
+shared_ptr make_shared(identifier::Schema::const_reference identifier)
+{
+  shared_ptr shared(new message::Schema);
+
+  init(*shared, identifier.getSchemaName());
+
+  return shared;
+}
+
 shared_ptr make_shared(const std::string &name_arg)
 {
   shared_ptr shared(new message::Schema);
