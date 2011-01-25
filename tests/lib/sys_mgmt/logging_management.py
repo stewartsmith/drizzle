@@ -30,7 +30,7 @@ class loggingManager():
     def __init__(self, variables):
 
         self.log_file = sys.stdout
-        self.report_fmt = '{0:<55} {1} {2:>15}'
+        self.report_fmt = '{0:<55} {1} {2:>12}'
         self.report_started = 0  
         self.thick_line = '='*80
         self.thin_line = '-'*80     
