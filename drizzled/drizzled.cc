@@ -229,7 +229,6 @@ static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-bool volatile ready_to_exit;
 char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
@@ -341,7 +340,6 @@ SHOW_COMP_OPTION have_symlink;
 boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
-boost::condition_variable COND_server_end;
 
 /* Static variables */
 
@@ -516,13 +514,8 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
-  {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    ready_to_exit= true;
 
-    /* do the broadcast inside the lock to ensure that my_end() is not called */
-    COND_server_end.notify_all();
-  }
+  session::Cache::singleton().shutdownFirst();
 
   /*
     The following lines may never be executed as the main thread may have
@@ -2079,7 +2072,7 @@ static void drizzle_init_variables(void)
   getDebug().reset();
   wake_thread=0;
   abort_loop= select_thread_in_use= false;
-  ready_to_exit= shutdown_in_progress= 0;
+  shutdown_in_progress= 0;
   drizzled_user= drizzled_chroot= 0;
   memset(&current_global_counters, 0, sizeof(current_global_counters));
   key_map_full.set();

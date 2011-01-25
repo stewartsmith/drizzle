@@ -36,7 +36,6 @@ typedef boost::shared_ptr<boost::thread> boost_thread_shared_ptr;
 
 extern boost::condition_variable_any COND_refresh;
 extern boost::condition_variable COND_thread_count;
-extern boost::condition_variable COND_server_end;
 extern pthread_t signal_thread;
 
 } /* namespace drizzled */
