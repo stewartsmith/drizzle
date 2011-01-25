@@ -112,9 +112,11 @@ The time zone offset from UTC, measured in seconds.
 
 **week**
 
-Returns the week number that a day is in. The ISO-8601 week starts on Monday. Accordingly, the first week of a year contains January 4 of that year.
+Returns the week number that a day is in. Weeks are numbered according to ISO 8601:1988.
 
-It's possible for early January dates to be part of the 52nd or 53rd week of the previous year. For example, 2006-01-01 was part of the 52nd week of year 2005. ::
+ISO 8601:1988 means that if the week containing January 1 has four or more days in the new year, then it is week 1; otherwise it is the last week of the previous year, and the next week is week 1. The ISO-8601 week starts on Monday.
+
+It's possible for early January dates to be part of the 52nd or 53rd week of the previous year. For example, 2011-01-01 was part of the 52nd week of year 2010. ::
 
 	SELECT EXTRACT(WEEK FROM TIMESTAMP '2010-01-25 12:44:06');
 
