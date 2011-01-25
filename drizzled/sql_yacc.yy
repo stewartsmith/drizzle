@@ -5445,9 +5445,6 @@ set:
           SET_SYM opt_option
           {
             Lex->statement= new statement::SetOption(YYSession);
-            init_select(Lex);
-            Lex->option_type=OPT_SESSION;
-            Lex->var_list.empty();
           }
           option_value_list
           {}
@@ -5464,11 +5461,9 @@ option_value_list:
         ;
 
 option_type_value:
-          {
-          }
+          { }
           ext_option_value
-          {
-          }
+          { }
         ;
 
 option_type:
@@ -5630,20 +5625,14 @@ opt_savepoint:
 commit:
           COMMIT_SYM opt_work opt_chain opt_release
           {
-            statement::Commit *statement= new statement::Commit(YYSession);
-            Lex->statement= statement;
-            statement->tx_chain= $3;
-            statement->tx_release= $4;
+            Lex->statement= new statement::Commit(YYSession, $3, $4);
           }
         ;
 
 rollback:
           ROLLBACK_SYM opt_work opt_chain opt_release
           {
-            statement::Rollback *statement= new statement::Rollback(YYSession);
-            Lex->statement= statement;
-            statement->tx_chain= $3;
-            statement->tx_release= $4;
+            Lex->statement= new statement::Rollback(YYSession, $3, $4);
           }
         | ROLLBACK_SYM opt_work TO_SYM opt_savepoint savepoint_ident
           {

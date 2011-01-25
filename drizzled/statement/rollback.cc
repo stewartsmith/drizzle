@@ -26,7 +26,18 @@
 namespace drizzled
 {
 
-bool statement::Rollback::execute()
+namespace statement
+{
+
+Rollback::Rollback(Session *in_session, bool tx_chain_arg, bool tx_release_arg) :
+  Statement(in_session),
+  tx_chain(tx_chain_arg),
+  tx_release(tx_release_arg)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_ROLLBACK;
+  }
+
+bool Rollback::execute()
 {
   if (not getSession()->endTransaction(tx_release ? ROLLBACK_RELEASE : tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
   {
@@ -37,5 +48,5 @@ bool statement::Rollback::execute()
   return false;
 }
 
+} /* namespace statement */
 } /* namespace drizzled */
-

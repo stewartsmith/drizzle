@@ -33,12 +33,7 @@ namespace statement
 class SetOption : public Statement
 {
 public:
-  SetOption(Session *in_session) :
-    Statement(in_session)
-  {
-    getSession()->getLex()->sql_command= SQLCOM_SET_OPTION;
-    one_shot_set= false;
-  }
+  SetOption(Session *in_session);
 
   bool execute();
   bool one_shot_set;
