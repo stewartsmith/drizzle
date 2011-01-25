@@ -1040,33 +1040,19 @@ custom_engine_option:
           }
         |  ROW_FORMAT_SYM equal row_format_or_text
           {
-	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
-
-            opt->set_name("ROW_FORMAT");
-            opt->set_state($3.str);
+            parser::buildEngineOption(YYSession, "ROW_FORMAT", $3);
           }
         |  FILE_SYM equal TEXT_STRING_sys
           {
-	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
-
-            opt->set_name("FILE");
-            opt->set_state($3.str);
+            parser::buildEngineOption(YYSession, "FILE", $3);
           }
         |  ident_or_text equal engine_option_value
           {
-	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
-
-            opt->set_name($1.str);
-            opt->set_state($3.str);
+            parser::buildEngineOption(YYSession, $1.str, $3);
           }
         | ident_or_text equal ulonglong_num
           {
-            char number_as_string[22];
-            snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
-
-	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
-            opt->set_name($1.str);
-            opt->set_state(number_as_string);
+            parser::buildEngineOption(YYSession, $1.str, $3);
           }
         | default_collation
         ;
@@ -3898,7 +3884,9 @@ table_alias:
 opt_table_alias:
           /* empty */ { $$=0; }
         | table_alias ident
-          { $$= (drizzled::LEX_STRING*) memory::sql_memdup(&$2,sizeof(drizzled::LEX_STRING)); }
+          {
+            $$= (drizzled::LEX_STRING*) memory::sql_memdup(&$2,sizeof(drizzled::LEX_STRING));
+          }
         ;
 
 opt_all:

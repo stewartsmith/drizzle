@@ -300,5 +300,19 @@ bool buildOrderBy(Session *session)
   return true;
 }
 
+void buildEngineOption(Session *session, const char *key, const LEX_STRING &value)
+{
+  message::Engine::Option *opt= session->getLex()->table()->mutable_engine()->add_options();
+  opt->set_name(key);
+  opt->set_state(value.str, value.length);
+}
+
+void buildEngineOption(Session *session, const char *key, uint64_t value)
+{
+  drizzled::message::Engine::Option *opt= session->getLex()->table()->mutable_engine()->add_options();
+  opt->set_name(key);
+  opt->set_state(boost::lexical_cast<std::string>(value));
+}
+
 } // namespace parser
 } // namespace drizzled

@@ -135,6 +135,8 @@ void my_parse_error(const char *message);
 bool check_reserved_words(LEX_STRING *name);
 void errorOn(const char *s);
 bool buildOrderBy(Session *session);
+void buildEngineOption(Session *session, const char *key, const LEX_STRING &value);
+void buildEngineOption(Session *session, const char *key, uint64_t value);
 
 } // namespace parser
 } // namespace drizzled
