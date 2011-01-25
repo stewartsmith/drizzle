@@ -4550,10 +4550,10 @@ opt_table_sym:
 show:
           SHOW
           {
-            Lex->wild=0;
             Lex->lock_option= TL_READ;
             init_select(Lex);
             Lex->current_select->parsing_place= SELECT_LIST;
+            "
           }
           show_param
           {}
