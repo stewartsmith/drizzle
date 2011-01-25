@@ -101,7 +101,7 @@ bool Item_func_now::get_date(type::Time *res, uint32_t )
 int Item_func_now::save_in_field(Field *to, bool )
 {
   to->set_notnull();
-  return to->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
+  return to->store_time(ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 } /* namespace drizzled */

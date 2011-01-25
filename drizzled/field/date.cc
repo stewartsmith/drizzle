@@ -123,36 +123,36 @@ int Field_date::store(int64_t from, bool)
   return 0;
 }
 
-int Field_date::store_time(type::Time *ltime,
+int Field_date::store_time(type::Time &ltime,
                            type::timestamp_t time_type)
 {
   long tmp;
   int error= 0;
   if (time_type == type::DRIZZLE_TIMESTAMP_DATE || time_type == type::DRIZZLE_TIMESTAMP_DATETIME)
   {
-    tmp= ltime->year*10000 + ltime->month*100 + ltime->day;
+    tmp= ltime.year*10000 + ltime.month*100 + ltime.day;
 
     type::cut_t cut_error= type::VALID;
-    if (ltime->check(tmp != 0,
+    if (ltime.check(tmp != 0,
                      (TIME_FUZZY_DATE |
                       (current_session->variables.sql_mode &
                        (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), cut_error))
     {
       char buff[type::Time::MAX_STRING_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-      ltime->convert(str, type::DRIZZLE_TIMESTAMP_DATE);
+      ltime.convert(str, type::DRIZZLE_TIMESTAMP_DATE);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), type::DRIZZLE_TIMESTAMP_DATE, 1);
     }
 
     error= static_cast<int>(cut_error);
 
-    if (not error && ltime->time_type != type::DRIZZLE_TIMESTAMP_DATE &&
-        (ltime->hour || ltime->minute || ltime->second || ltime->second_part))
+    if (not error && ltime.time_type != type::DRIZZLE_TIMESTAMP_DATE &&
+        (ltime.hour || ltime.minute || ltime.second || ltime.second_part))
     {
       char buff[type::Time::MAX_STRING_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-      ltime->convert(str);
+      ltime.convert(str);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                            ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), type::DRIZZLE_TIMESTAMP_DATE, 1);

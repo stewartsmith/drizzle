@@ -54,7 +54,7 @@ public:
             const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
-  int store_time(type::Time *ltime, type::timestamp_t t_type);
+  int store_time(type::Time &ltime, type::timestamp_t t_type);
 
   String *val_str(String*,String *);
   double val_real(void);

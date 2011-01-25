@@ -211,7 +211,7 @@ public:
     @note
       Needs to be changed if/when we want to support different time formats.
   */
-  virtual int store_time(type::Time *ltime, type::timestamp_t t_type);
+  virtual int store_time(type::Time &ltime, type::timestamp_t t_type);
   virtual double val_real()=0;
   virtual int64_t val_int()=0;
   virtual type::Decimal *val_decimal(type::Decimal *);

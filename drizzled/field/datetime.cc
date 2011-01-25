@@ -121,16 +121,16 @@ int Field_datetime::store(int64_t from, bool)
   return 0;
 }
 
-int Field_datetime::store_time(type::Time *ltime, type::timestamp_t)
+int Field_datetime::store_time(type::Time &ltime, type::timestamp_t)
 {
   DateTime temporal;
 
-  temporal.set_years(ltime->year);
-  temporal.set_months(ltime->month);
-  temporal.set_days(ltime->day);
-  temporal.set_hours(ltime->hour);
-  temporal.set_minutes(ltime->minute);
-  temporal.set_seconds(ltime->second);
+  temporal.set_years(ltime.year);
+  temporal.set_months(ltime.month);
+  temporal.set_days(ltime.day);
+  temporal.set_hours(ltime.hour);
+  temporal.set_minutes(ltime.minute);
+  temporal.set_seconds(ltime.second);
 
   if (! temporal.is_valid())
   {
@@ -147,7 +147,7 @@ int Field_datetime::store_time(type::Time *ltime, type::timestamp_t)
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable().getShare().db_low_byte_first)
   {
     int8store(ptr, int_value);
   }

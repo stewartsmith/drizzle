@@ -1036,11 +1036,11 @@ bool Field::get_time(type::Time *ltime)
   return 0;
 }
 
-int Field::store_time(type::Time *ltime, type::timestamp_t)
+int Field::store_time(type::Time &ltime, type::timestamp_t)
 {
   String tmp;
 
-  ltime->convert(tmp);
+  ltime.convert(tmp);
 
   return store(tmp.ptr(), tmp.length(), &my_charset_bin);
 }

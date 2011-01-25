@@ -233,28 +233,36 @@ int64_t Item::val_int_from_decimal()
   /* Note that fix_fields may not be called for Item_avg_field items */
   int64_t result;
   type::Decimal value, *dec_val= val_decimal(&value);
+
   if (null_value)
     return 0;
   dec_val->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
+
   return result;
 }
 
 int Item::save_time_in_field(Field *field)
 {
   type::Time ltime;
+
   if (get_time(&ltime))
     return set_field_to_null(field);
+
   field->set_notnull();
-  return field->store_time(&ltime, type::DRIZZLE_TIMESTAMP_TIME);
+
+  return field->store_time(ltime, type::DRIZZLE_TIMESTAMP_TIME);
 }
 
 int Item::save_date_in_field(Field *field)
 {
   type::Time ltime;
+
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return set_field_to_null(field);
+
   field->set_notnull();
-  return field->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
+
+  return field->store_time(ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 /**
@@ -265,7 +273,9 @@ int Item::save_str_value_in_field(Field *field, String *result)
 {
   if (null_value)
     return set_field_to_null(field);
+
   field->set_notnull();
+
   return field->store(result->ptr(), result->length(), collation.collation);
 }
 

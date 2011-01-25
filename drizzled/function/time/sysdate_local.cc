@@ -93,7 +93,7 @@ int Item_func_sysdate_local::save_in_field(Field *to, bool )
 {
   store_now_in_TIME(&ltime);
   to->set_notnull();
-  to->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
+  to->store_time(ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 
   return 0;
 }
