@@ -546,7 +546,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Test the Storage Engine API callls are in correct order",
   PLUGIN_LICENSE_GPL,
   seapi_tester_init,     /* Plugin Init */
-  NULL, /* system variables */
+  NULL, /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

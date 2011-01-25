@@ -62,6 +62,7 @@
 #include "drizzled/replication_services.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/catalog/local.h"
+#include "drizzled/abort_exception.h"
 
 #include <drizzled/debug.h>
 
@@ -291,8 +292,22 @@ int main(int argc, char **argv)
     server_id= 1;
   }
 
-  if (init_server_components(modules))
+  try
+  {
+    if (init_server_components(modules))
+      DRIZZLE_ABORT;
+  }
+  catch (abort_exception& ex)
+  {
+#if defined(DEBUG)
+    cout << _("Drizzle has receieved an abort event.") << endl;
+    cout << _("In Function: ") << *::boost::get_error_info<boost::throw_function>(ex) << endl;
+    cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
+    cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
+#endif
     unireg_abort(1);
+  }
+
 
   /**
    * This check must be done after init_server_components for now

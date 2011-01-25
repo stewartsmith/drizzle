@@ -1519,7 +1519,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
-  NULL,           /* system variables */
+  NULL,           /* depends */
   init_options                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

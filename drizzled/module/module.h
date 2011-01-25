@@ -46,30 +46,29 @@ namespace module
 {
 
 class Library;
+class VertexHandle;
 
 /* A plugin module */
 class Module
 {
-  const std::string name;
-  const Manifest *manifest;
-
 public:
   typedef std::vector<sys_var *> Variables;
+  typedef std::vector<std::string> Depends;
+
+private:
+  const std::string name;
+  const Manifest *manifest;
+  VertexHandle *vertex_;
+
+public:
   Library *plugin_dl;
   bool isInited;
   Variables system_vars;         /* server variables for this plugin */
   Variables sys_vars;
+  Depends depends_;
+
   Module(const Manifest *manifest_arg,
-         Library *library_arg) :
-    name(manifest_arg->name),
-    manifest(manifest_arg),
-    plugin_dl(library_arg),
-    isInited(false),
-    system_vars(),
-    sys_vars()
-  {
-    assert(manifest != NULL);
-  }
+         Library *library_arg);
 
   ~Module();
 
@@ -97,6 +96,21 @@ public:
   Variables &getSysVars()
   {
     return system_vars;
+  }
+
+  const Depends &getDepends() const
+  {
+    return depends_;
+  }
+
+  void setVertexHandle(VertexHandle *vertex)
+  {
+    vertex_= vertex;
+  }
+
+  VertexHandle *getVertexHandle()
+  {
+    return vertex_;
   }
 };
 

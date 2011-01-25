@@ -53,7 +53,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Archive storage engine",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  NULL,   /* system variables                */
+  NULL,   /* depends */
   NULL                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

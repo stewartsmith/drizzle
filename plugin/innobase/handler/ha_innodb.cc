@@ -9397,7 +9397,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Supports transactions, row-level locking, and foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options /* reserved */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -427,7 +427,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("An example events Plugin"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

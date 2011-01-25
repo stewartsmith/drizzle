@@ -109,7 +109,7 @@ DRIZZLE_DECLARE_PLUGIN
   "reverses a string",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

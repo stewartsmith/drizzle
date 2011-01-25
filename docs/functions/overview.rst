@@ -6,7 +6,10 @@ Several SQL functions are built into Drizzle--functions perform calculations on 
 .. toctree::
    :maxdepth: 2
 
-   mathematical 
+   logical
+   mathematical
+   datetime
    aggregatefunctions
+   string
    scalarfunctions
   

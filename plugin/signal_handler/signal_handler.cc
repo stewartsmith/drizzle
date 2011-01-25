@@ -280,10 +280,6 @@ static int init(drizzled::module::Context& context)
 }
 
 
-static drizzle_sys_var* system_variables[]= {
-  NULL
-};
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -293,7 +289,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Default Signal Handler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  system_variables,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
