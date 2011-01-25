@@ -5647,24 +5647,21 @@ rollback:
           }
         | ROLLBACK_SYM opt_work TO_SYM opt_savepoint savepoint_ident
           {
-            Lex->statement= new statement::RollbackToSavepoint(YYSession);
-            Lex->ident= $5;
+            Lex->statement= new statement::RollbackToSavepoint(YYSession, $5);
           }
         ;
 
 savepoint:
           SAVEPOINT_SYM savepoint_ident
           {
-            Lex->statement= new statement::Savepoint(YYSession);
-            Lex->ident= $2;
+            Lex->statement= new statement::Savepoint(YYSession, $2);
           }
         ;
 
 release:
           RELEASE_SYM SAVEPOINT_SYM savepoint_ident
           {
-            Lex->statement= new statement::ReleaseSavepoint(YYSession);
-            Lex->ident= $3;
+            Lex->statement= new statement::ReleaseSavepoint(YYSession, $3);
           }
         ;
 
