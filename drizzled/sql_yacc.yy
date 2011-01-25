@@ -973,9 +973,7 @@ custom_database_option:
           ident_or_text
         {
           statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
-
-          opt->set_name($1.str);
+          statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
         }
         | ident_or_text equal ident_or_text
         {
@@ -3710,6 +3708,7 @@ select_derived:
 
             if (!($$= $1->end_nested_join(Lex->session)) && $3)
               DRIZZLE_YYABORT;
+
             if (!$3 && $$)
             {
               parser::my_parse_error(YYSession->m_lip);
