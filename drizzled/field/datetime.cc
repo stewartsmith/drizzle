@@ -61,7 +61,7 @@ int Field_datetime::store(const char *from,
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
   {
     int8store(ptr, int_value);
   }
@@ -111,7 +111,7 @@ int Field_datetime::store(int64_t from, bool)
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
   {
     int8store(ptr, int_value);
   }
@@ -147,13 +147,14 @@ int Field_datetime::store_time(type::Time &ltime, type::timestamp_t)
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable().getShare().db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
   {
     int8store(ptr, int_value);
   }
   else
 #endif
     int64_tstore(ptr, int_value);
+
   return 0;
 }
 
@@ -169,7 +170,7 @@ int64_t Field_datetime::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
     j=sint8korr(ptr);
   else
 #endif
@@ -188,7 +189,7 @@ String *Field_datetime::val_str(String *val_buffer,
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
     tmp=sint8korr(ptr);
   else
 #endif
@@ -245,7 +246,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
   {
     a=sint8korr(a_ptr);
     b=sint8korr(b_ptr);
@@ -263,7 +264,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_datetime::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!getTable() || !getTable()->getShare()->db_low_byte_first)
+  if (not getTable() || not getTable()->isDatabaseLowByteFirst())
   {
     to[0] = ptr[0];
     to[1] = ptr[1];
