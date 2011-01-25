@@ -35,12 +35,17 @@ parser= optparse.OptionParser()
 # find some default values
 # assume we are in-tree testing in general and operating from root/test(?)
 testdir_default = os.path.abspath(os.getcwd())
+
 server_default = os.path.abspath(os.path.join(testdir_default,
                                        '../drizzled/drizzled'))
+
 workdir_default = os.path.join(testdir_default,'dbqp_work')
+
 clientbindir_default = os.path.abspath(os.path.join(testdir_default,
                                        '../client'))
+
 basedir_default = os.path.split(testdir_default)[0]
+
 
 # system_control_group - things like verbose, debug, etc
 # test-runner affecting options
@@ -131,12 +136,13 @@ test_control_group.add_option(
 parser.add_option_group(test_control_group)
 # end test_control_group
 
-# environment options
-# define where to find our drizzled, client dirs, working dirs, etc
-environment_control_group = optparse.OptionGroup(parser, 
-                            "Options for defining the testing environment")
+# test subject control group
+# terrible name for options tht define the server / code
+# that is under test
+test_subject_control_group = optparse.OptionGroup(parser,
+                                 "Options for defining the code that will be under test")
 
-environment_control_group.add_option(
+test_subject_control_group.add_option(
     "--basedir"
   , dest="basedir"
   , type='string'
@@ -144,7 +150,7 @@ environment_control_group.add_option(
   , help = "Pass this argument to signal to the test-runner that this is an in-tree test.  We automatically set a number of variables relative to the argument (client-bindir, serverdir, testdir) [%default]"
   )
 
-environment_control_group.add_option(
+test_subject_control_group.add_option(
     "--serverdir"
   , dest="serverpath"
   , type='string'
@@ -152,13 +158,30 @@ environment_control_group.add_option(
   , help = "Path to the server executable.  [%default]"
   )
 
-environment_control_group.add_option(
+test_subject_control_group.add_option(
     "--client-bindir"
   , dest="clientbindir"
   , type = 'string'
   , default = "auto-search"
   , help = "Path to the directory containing client program binaries for use in testing [%default]"
   )
+
+test_subject_control_group.add_option(
+    "--engine"
+   , dest="engine"
+   , default = 'innodb'
+   , help="Start drizzled using the specified engine [%default]"
+   )    
+
+
+parser.add_option_group(test_subject_control_group)
+# end test subject control group
+
+
+# environment options
+# define where to find our drizzled, client dirs, working dirs, etc
+environment_control_group = optparse.OptionGroup(parser, 
+                            "Options for defining the testing environment")
 
 environment_control_group.add_option(
     "--testdir"
@@ -185,14 +208,6 @@ environment_control_group.add_option(
   )
 
 environment_control_group.add_option(
-    "--libeatmydata"
-  , dest="libeatmydata"
-  , action='store_true'
-  , default=False
-  , help = "Use libeatmydata to disable fsync calls.  This greatly speeds up test execution, but data durability is nil.  Sets LD_PRELOAD to include the libeatmydata library [%default]"
-  )
-
-environment_control_group.add_option(
     "--start-dirty"
   , dest="startdirty"
   , action='store_true'
@@ -212,12 +227,40 @@ environment_control_group.add_option(
 parser.add_option_group(environment_control_group)
 # end environment control group
 
-parser.add_option(
-    "--engine"
-   , dest="engine"
-   , default = 'innodb'
-   , help="Start drizzled using the specified engine [%default]"
-   )    
+analysis_control_group = optparse.OptionGroup(parser, 
+                            "Options for defining the tools we use for code analysis (valgrind, gprof, gcov, etc)")
+
+analysis_control_group.add_option(
+    "--valgrind"
+  , dest="valgrind"
+  , action='store_true'
+  , default = False
+  , help = "Run drizzletest and drizzled executables using valgrind with default options [%default]"
+  )
+analysis_control_group.add_option(
+    "--valgrind-option"
+  , dest="valgrindarglist"
+  , type='string'
+  , action="append"
+  , help = "Pass an option to valgrind (overrides/removes default valgrind options)"
+  )
+
+parser.add_option_group(analysis_control_group)
+
+debugger_control_group = optparse.OptionGroup(parser,
+                           "Options for controlling the use of debuggers with test execution")
+
+debugger_control_group.add_option(
+    "--gdb"
+  , dest="gdb"
+  , action='store_true'
+  , default=False
+  , help="Start the drizzled server(s) in gdb"
+  )
+
+parser.add_option_group(debugger_control_group)
+
+
 
 
 
