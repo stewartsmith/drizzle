@@ -1,0 +1,7 @@
+# Display UNIQUE constraint if specified on the definition.
+
+CREATE TABLE t1 (a INT UNIQUE);
+
+SHOW CREATE TABLE t1;
+
+DROP TABLE t1;

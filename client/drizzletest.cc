@@ -843,7 +843,6 @@ static void check_command_args(struct st_command *command,
 
 static void handle_command_error(struct st_command *command, uint32_t error)
 {
-
   if (error != 0)
   {
     uint32_t i;
@@ -870,7 +869,6 @@ static void handle_command_error(struct st_command *command, uint32_t error)
         command->first_word_len, command->query,
         command->expected_errors.err[0].code.errnum);
   }
-  return;
 }
 
 
@@ -2480,7 +2478,6 @@ static void do_remove_file(struct st_command *command)
 
   error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2515,7 +2512,6 @@ static void do_copy_file(struct st_command *command)
   error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
                   MYF(MY_DONT_OVERWRITE_FILE)) != 0);
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2553,7 +2549,6 @@ static void do_chmod_file(struct st_command *command)
     die("You must write a 4 digit octal number for mode");
 
   handle_command_error(command, chmod(ds_file.c_str(), mode));
-  return;
 }
 
 
@@ -2583,7 +2578,6 @@ static void do_file_exist(struct st_command *command)
 
   error= (access(ds_filename.c_str(), F_OK) != 0);
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2612,7 +2606,6 @@ static void do_mkdir(struct st_command *command)
 
   error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
   handle_command_error(command, error);
-  return;
 }
 
 /*
@@ -2640,7 +2633,6 @@ static void do_rmdir(struct st_command *command)
 
   error= rmdir(ds_dirname.c_str()) != 0;
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2879,7 +2871,6 @@ static void do_diff_files(struct st_command *command)
   }
 
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2929,8 +2920,6 @@ static void do_send_quit(struct st_command *command)
 
   if (drizzle_quit(&con->con,&result, &ret))
     drizzle_result_free(&result);
-
-  return;
 }
 
 
@@ -3027,7 +3016,6 @@ static void do_perl(struct st_command *command)
   internal::my_delete(temp_file_path, MYF(0));
 
   handle_command_error(command, WEXITSTATUS(error));
-  return;
 }
 
 

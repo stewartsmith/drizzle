@@ -479,7 +479,9 @@ bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
     {
       int64_t value= val_int();
       int was_cut;
-      if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
+      type::datetime_t date_value;
+      ltime->convert(date_value, value, fuzzydate, &was_cut);
+      if (not type::is_valid(date_value))
       {
         char buff[22], *end;
         end= internal::int64_t10_to_str(value, buff, -10);

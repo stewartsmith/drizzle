@@ -98,6 +98,11 @@ error_handler_func error_handler_hook= NULL;
        ...	variable list
 */
 
+void my_error(const std::string &ref, error_t nr, myf MyFlags)
+{
+  my_error(nr, MyFlags, ref.c_str());
+} 
+
 void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
 {
   std::string temp;
@@ -199,6 +204,8 @@ const std::string &ErrorMap::find(drizzled::error_t error_num) const
 // Constructor sets the default mappings.
 ErrorMap::ErrorMap()
 {
+  ADD_ERROR_MESSAGE(EE_OK, N_("SUCCESS"));
+  ADD_ERROR_MESSAGE(EE_ERROR_FIRST, N_("Error on first"));
   ADD_ERROR_MESSAGE(ER_NO, N_("NO"));
   ADD_ERROR_MESSAGE(ER_YES, N_("YES"));
   ADD_ERROR_MESSAGE(ER_CANT_CREATE_FILE, N_("Can't create file '%-.200s' (errno: %d)"));

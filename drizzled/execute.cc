@@ -85,16 +85,23 @@ void Execute::run(std::string &execution_string)
   if (wait && thread && thread->joinable())
   {
     // We want to make sure that we can be killed
-    boost::this_thread::restore_interruption dl(_session.getThreadInterupt());
-    try {
-      thread->join();
-    }
-    catch(boost::thread_interrupted const&)
+    if (_session.getThread())
     {
-      // Just surpress and return the error
-      my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+      boost::this_thread::restore_interruption dl(_session.getThreadInterupt());
 
-      return;
+      try {
+        thread->join();
+      }
+      catch(boost::thread_interrupted const&)
+      {
+        // Just surpress and return the error
+        my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+        return;
+      }
+    }
+    else
+    {
+      thread->join();
     }
   }
 }

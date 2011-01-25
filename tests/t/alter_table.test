@@ -16,7 +16,7 @@ col6 int not null, to_be_deleted int);
 insert into t1 values (2,4,3,5,"PENDING",1,7);
 SELECT * FROM t1;
 
---error 1714
+--error ER_INVALID_ALTER_TABLE_FOR_NOT_NULL
 alter table t1
 add column col4_5 varchar(20) not null after col4,
 add column col7 varchar(30) not null after col5,

@@ -22,7 +22,8 @@
 
 #include <string>
 
-#include <gtest/gtest.h>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include <drizzled/constrained_value.h>
 #include <boost/lexical_cast.hpp>
@@ -31,27 +32,27 @@ using namespace drizzled;
 
 namespace po= boost::program_options;
 
-TEST(constrained_value, raw_usage)
+BOOST_AUTO_TEST_SUITE(ConstrainedValue)
+BOOST_AUTO_TEST_CASE(raw_usage)
 {
   constrained_check<uint64_t,1024,1,10> val(1);
 
-  EXPECT_EQ(UINT64_C(1), (uint64_t)val);
+  BOOST_REQUIRE_EQUAL(UINT64_C(1), (uint64_t)val);
 
-  ASSERT_THROW(val= 1025 , po::validation_error);
-  ASSERT_THROW(val= 0 , po::validation_error);
+  BOOST_REQUIRE_THROW(val= 1025 , po::validation_error);
+  BOOST_REQUIRE_THROW(val= 0 , po::validation_error);
 
   val= 25;
 
-  EXPECT_EQ(20, (uint64_t)val);
+  BOOST_REQUIRE_EQUAL(20, (uint64_t)val);
 }
 
-TEST(constrained_value, lexical_cast_usage)
+BOOST_AUTO_TEST_CASE(lexical_cast_usage)
 {
   constrained_check<uint64_t,1024,1,10> val(1);
 
   std::string string_val= boost::lexical_cast<std::string>(val);
 
-  EXPECT_EQ(std::string("1"), string_val);
+  BOOST_REQUIRE_EQUAL(std::string("1"), string_val);
 }
-
-
+BOOST_AUTO_TEST_SUITE_END()

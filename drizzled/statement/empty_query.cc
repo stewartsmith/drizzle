@@ -28,7 +28,7 @@ namespace drizzled
 
 bool statement::EmptyQuery::execute()
 {
-  session->my_ok();
+  getSession()->my_ok();
   return false;
 }
 

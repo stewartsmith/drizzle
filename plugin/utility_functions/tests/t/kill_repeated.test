@@ -1,13 +1,18 @@
 # Test creating a bunch of connections, and then killing them.
-connect (con1,localhost,root,,);
-connect (con2,localhost,root,,);
-connect (con3,localhost,root,,);
-connect (con4,localhost,root,,);
-connect (con5,localhost,root,,);
+connect (con1,localhost,bob,,);
+connect (con2,localhost,bob,,);
+connect (con3,localhost,bob,,);
+connect (con4,localhost,bob,,);
+connect (con5,localhost,bob,,);
+
+connection con1;
+connection con2;
+connection con3;
+connection con4;
+connection con5;
 
 connection default;
-CREATE TABLE CONNECTIONS SELECT ID FROM DATA_DICTIONARY.PROCESSLIST WHERE ID != CONNECTION_ID();
-INSERT INTO CONNECTIONS SELECT ID FROM DATA_DICTIONARY.PROCESSLIST WHERE ID != CONNECTION_ID();
+CREATE TABLE CONNECTIONS SELECT ID FROM DATA_DICTIONARY.PROCESSLIST WHERE ID != CONNECTION_ID() AND username="bob";
 SELECT IF (KILL(id), "YES", "NO") FROM CONNECTIONS ORDER BY RAND();
-SELECT count(ID) FROM DATA_DICTIONARY.PROCESSLIST WHERE COMMAND != "Killed";
+SELECT count(ID) FROM DATA_DICTIONARY.PROCESSLIST WHERE COMMAND != "Killed" AND USERNAME="bob";
 DROP TABLE CONNECTIONS;

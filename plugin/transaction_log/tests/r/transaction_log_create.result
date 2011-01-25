@@ -1674,9 +1674,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_notnull: false
-        }
       }
       field {
         name: "not_null_bigint_field"
@@ -1691,9 +1688,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_notnull: false
-        }
       }
       field {
         name: "not_null_int_field"
@@ -1707,9 +1701,6 @@ statement {
         type: VARCHAR
         options {
           default_null: true
-        }
-        constraints {
-          is_notnull: false
         }
         string_options {
           length: 100
@@ -1734,9 +1725,6 @@ statement {
         type: ENUM
         options {
           default_null: true
-        }
-        constraints {
-          is_notnull: false
         }
         enumeration_values {
           collation_id: 45
@@ -1764,9 +1752,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_notnull: false
-        }
       }
       field {
         name: "not_null_date_field"
@@ -1781,9 +1766,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_notnull: false
-        }
       }
       field {
         name: "not_null_datetime_field"
@@ -1797,9 +1779,6 @@ statement {
         type: BLOB
         options {
           default_null: true
-        }
-        constraints {
-          is_notnull: false
         }
         string_options {
           collation_id: 63
@@ -1823,9 +1802,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_notnull: false
-        }
         string_options {
           collation_id: 45
           collation: "utf8_general_ci"
@@ -1848,9 +1824,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_notnull: false
-        }
       }
       field {
         name: "not_null_timestamp_field"
@@ -1865,9 +1838,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_notnull: false
-        }
       }
       field {
         name: "not_null_double_field"
@@ -1881,9 +1851,6 @@ statement {
         type: DECIMAL
         options {
           default_null: true
-        }
-        constraints {
-          is_notnull: false
         }
         numeric_options {
           scale: 2

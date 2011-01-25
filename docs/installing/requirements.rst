@@ -17,7 +17,8 @@ Every build of Drizzle is currently tested on:
  * Apple OSX 10.6.4
 
 We recommend using these platforms with Drizzle, older version may have various
-unforseen difficulties when compiling and/or installing.
+unforseen difficulties when compiling and/or installing.  Drizzle is tested on
+both 32bit and 64bit platforms but we recommend using a 64bit platform.
 
 Software Requirements
 ---------------------

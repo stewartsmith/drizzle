@@ -10,7 +10,7 @@ SELECT SCHEMA();
 CREATE TABLE admin.t1 (A SERIAL);
 DROP TABLE admin.t1;
 
---error ER_SYNTAX_ERROR,1064
+--error ER_SYNTAX_ERROR,ER_PARSE_ERROR
 CREATE TABLE .admin.t1 (A SERIAL);
 
 --error ER_WRONG_DB_NAME
@@ -19,7 +19,7 @@ CREATE TABLE `.admin`.t1 (A SERIAL);
 CREATE TABLE temporary.t1 (A SERIAL);
 DROP TABLE temporary.t1;
 
---error ER_SYNTAX_ERROR,1064
+--error ER_SYNTAX_ERROR,ER_PARSE_ERROR
 CREATE TABLE .temporary.t1 (A SERIAL);
 --error ER_WRONG_DB_NAME
 CREATE TABLE `.temporary`.t1 (A SERIAL);
@@ -38,7 +38,7 @@ DROP TABLE `temporary`;
 CREATE TABLE `#temporary` (A SERIAL);
 DROP TABLE `#temporary`;
 
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE #temporary (A SERIAL);
 
 --error ER_WRONG_TABLE_NAME

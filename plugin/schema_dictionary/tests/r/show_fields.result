@@ -5,7 +5,7 @@ a	BIGINT	NO		NO
 show create table a;
 Table	Create Table
 a	CREATE TABLE `a` (
-  `a` BIGINT NOT NULL AUTO_INCREMENT,
+  `a` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   UNIQUE KEY `a` (`a`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 create table b ( b int);
