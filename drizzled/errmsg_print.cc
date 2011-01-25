@@ -37,6 +37,7 @@ namespace drizzled
 void sql_perror(const char *message)
 {
   char errmsg[STRERROR_MAX];
+  errmsg[0]= 0;
   strerror_r(errno, errmsg, sizeof(errmsg));
   errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s\n", message, errmsg);
 }
