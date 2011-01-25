@@ -1661,9 +1661,6 @@ int TableShare::open_table_from_share_inner(Session *session,
   unsigned char *record= NULL;
   Field **field_ptr;
 
-  /* Parsing of partitioning information from .frm needs session->lex set up. */
-  assert(session->lex->is_lex_started);
-
   local_error= 1;
   outparam.resetTable(session, this, db_stat);
 

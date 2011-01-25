@@ -62,6 +62,11 @@ public:
     return _session;
   }
 
+  Session *getSession() const
+  {
+    return _session;
+  }
+
   virtual bool isShow() { return false; }
 
 private:

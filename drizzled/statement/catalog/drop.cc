@@ -21,6 +21,10 @@
 #include "config.h"
 
 #include <drizzled/statement/catalog.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/session.h>
+
+#include <drizzled/plugin/catalog.h>
 
 namespace drizzled
 {
@@ -36,10 +40,20 @@ Drop::Drop(Session *in_session, drizzled::lex_string_t &arg) :
 {
 }
 
-bool Drop::authorized()
+bool Drop::authorized() const
 {
+  if (getSession()->getClient()->isConsole())
+  {
+    return true;
+  }
+
   my_error(ER_CATALOG_CANNOT_DROP_PERMISSION, identifier());
   return false;
+}
+
+bool Drop::perform() const
+{
+  return plugin::Catalog::drop(identifier::Catalog(identifier()));
 }
 
 } /* namespace catalog */

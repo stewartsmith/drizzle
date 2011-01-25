@@ -144,11 +144,13 @@ class CreateSchema :
   public std::unary_function<StorageEngine *, void>
 {
   const drizzled::message::Schema &schema_message;
+  uint64_t &success_count;
 
 public:
 
-  CreateSchema(const drizzled::message::Schema &arg) :
-    schema_message(arg)
+  CreateSchema(const drizzled::message::Schema &arg, uint64_t &success_count_arg) :
+    schema_message(arg),
+    success_count(success_count_arg)
   {
   }
 
@@ -159,6 +161,7 @@ public:
 
     if (success) 
     {
+      success_count++;
       TransactionServices &transaction_services= TransactionServices::singleton();
       transaction_services.allocateNewTransactionId();
     }
@@ -168,10 +171,17 @@ public:
 bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
 {
   // Add hook here for engines to register schema.
+  uint64_t success_count= 0;
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-                CreateSchema(schema_message));
+                CreateSchema(schema_message, success_count));
 
-  return true;
+  if (success_count) 
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.allocateNewTransactionId();
+  }
+
+  return (bool)success_count;
 }
 
 class DropSchema : 
@@ -323,8 +333,6 @@ public:
     if (success)
     {
       success_count++;
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.allocateNewTransactionId();
     }
   }
 };
@@ -335,6 +343,12 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
                 AlterSchema(schema_message, success_count));
+
+  if (success_count)
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.allocateNewTransactionId();
+  }
 
   return success_count ? true : false;
 }

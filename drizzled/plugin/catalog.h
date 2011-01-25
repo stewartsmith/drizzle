@@ -32,6 +32,9 @@ namespace drizzled
 namespace plugin
 {
 
+/* 
+  This object handles the aggregate of all operations for any/all of the Catalog engines.
+*/
 class Catalog : public Plugin {
   /* Disable default constructors */
   Catalog();
@@ -48,25 +51,25 @@ public:
 
   virtual catalog::Engine::shared_ptr engine()= 0;
 
-  static bool create(const identifier::Catalog &);
-  static bool create(const identifier::Catalog &, message::catalog::shared_ptr &);
-  static bool drop(const identifier::Catalog &);
+  static bool create(identifier::Catalog::const_reference);
+  static bool create(identifier::Catalog::const_reference, message::catalog::shared_ptr &);
+  static bool drop(identifier::Catalog::const_reference);
 
-  static bool lock(const identifier::Catalog &);
-  static bool unlock(const identifier::Catalog &);
+  static bool lock(identifier::Catalog::const_reference);
+  static bool unlock(identifier::Catalog::const_reference);
 
   // Required for plugin interface
   static bool addPlugin(plugin::Catalog *plugin);
   static void removePlugin(plugin::Catalog *plugin);
 
   // Get Meta information
-  static bool exist(const identifier::Catalog &identifier);
+  static bool exist(identifier::Catalog::const_reference);
   static void getIdentifiers(identifier::Catalog::vector &identifiers);
   static void getMessages(message::catalog::vector &messages);
-  static bool getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message);
+  static message::catalog::shared_ptr getMessage(identifier::Catalog::const_reference);
 
   // Get Instance
-  static catalog::Instance::shared_ptr getInstance(const identifier::Catalog &identifier);
+  static catalog::Instance::shared_ptr getInstance(identifier::Catalog::const_reference);
 };
 
 } /* namespace plugin */
