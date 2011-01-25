@@ -11,6 +11,7 @@
 """
 # imports
 import thread
+import time
 
 class serverManager:
     """ code that handles the server objects
@@ -81,7 +82,6 @@ class serverManager:
           from lib.server_mgmt.drizzled import drizzleServer as server_type
         new_server = server_type( server_name, self, server_options
                                 , requester, workdir )
-        self.log_server(new_server, requester)
 
     def start_servers(self, requester, expect_fail):
         """ Start all servers for the requester """
@@ -109,6 +109,14 @@ class serverManager:
 
     def stop_server(self, server):
         """ Stop an individual server if it is running """
+        if server.tried_start:
+            # we expect that we issued the command to start
+            # the server but it isn't up and running
+            # we kill a bit of time waiting for it
+            attempts_remain = 10
+            while not server.ping(quiet= True) and attempts_remain:
+                time.sleep(1)
+                attempts_remain = attempts_remain - 1
         if server.status == 1 or server.ping(quiet=True):
             server.stop()
 

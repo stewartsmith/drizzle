@@ -38,6 +38,9 @@ class drizzleServer():
         self.owner = requester
         self.server_options = server_options
         self.server_manager = server_manager
+        # We register with server_manager asap
+        self.server_manager.log_server(self, requester)
+
         self.system_manager = self.server_manager.system_manager
         self.logging = self.system_manager.logging
         self.no_secure_file_priv = self.server_manager.no_secure_file_priv
@@ -45,6 +48,7 @@ class drizzleServer():
         self.preferred_base_port = 9306
         self.name = name
         self.status = 0 # stopped, 1 = running
+        self.tried_start = 0
         self.failed_test = 0 # was the last test a failure?  our state is suspect
         self.server_start_timeout = 60
 
@@ -147,6 +151,12 @@ class drizzleServer():
         if self.debug:
             self.logging.debug("Starting server with:")
             self.logging.debug("%s" %(start_cmd))
+        # we signal we tried to start as an attempt
+        # to catch the case where a server is just 
+        # starting up and the user ctrl-c's
+        # we don't know the server is running (still starting up)
+        # so we give it a few minutes
+        self.tried_start = 1
         server_retcode = os.system(start_cmd)
         
         timer = 0
@@ -168,6 +178,7 @@ class drizzleServer():
         elif server_retcode == 0 and expect_fail:
         # catch a startup that should have failed and report
             self.logging.error("Server startup command :%s expected to fail, but succeeded" %(start_cmd))
+        self.tried_start = 0 
         return server_retcode ^ expect_fail
 
     def stop(self):

@@ -68,7 +68,7 @@ class timeManager:
         for record_type in records.keys():
             if record_type != 'total_time': # skip this it would be silly
                 type_total_time = self.get_total_time(records[record_type])
-                self.logging.info("Spent %d / %d seconds on type: %s" % ( type_total_time
+                self.logging.info("Spent %d / %d seconds on: %s(s)" % ( type_total_time
                                                                         , total_time
                                                                         , record_type.upper()
                                                                         ))
