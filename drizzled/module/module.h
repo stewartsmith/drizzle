@@ -46,6 +46,7 @@ namespace module
 {
 
 class Library;
+class VertexHandle;
 
 /* A plugin module */
 class Module
@@ -57,7 +58,7 @@ public:
 private:
   const std::string name;
   const Manifest *manifest;
-  VertexDesc vertex_;
+  VertexHandle *vertex_;
 
 public:
   Library *plugin_dl;
@@ -102,12 +103,12 @@ public:
     return depends_;
   }
 
-  void setVertexDesc(VertexDesc vertex)
+  void setVertexHandle(VertexHandle *vertex)
   {
     vertex_= vertex;
   }
 
-  VertexDesc getVertexDesc()
+  VertexHandle *getVertexHandle()
   {
     return vertex_;
   }

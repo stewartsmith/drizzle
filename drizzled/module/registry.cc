@@ -25,6 +25,8 @@
 
 #include "drizzled/module/registry.h"
 #include "drizzled/module/library.h"
+#include "drizzled/module/graph.h"
+#include "drizzled/module/vertex_handle.h"
 
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
@@ -37,6 +39,13 @@ using namespace std;
 
 namespace drizzled
 {
+
+module::Registry::Registry() :
+  module_registry_(),
+  depend_graph_(new module::Graph()),
+  plugin_registry(),
+  deps_built_(false)
+{ }
 
 
 module::Registry::~Registry()
@@ -109,10 +118,10 @@ void module::Registry::add(module::Module *handle)
   module_registry_[add_str]= handle;
 
   Vertex vertex_info(add_str, handle);
-  VertexDesc handle_vertex= boost::add_vertex(depend_graph_);
-  properties(handle_vertex)= vertex_info;
+  VertexDesc handle_vertex= boost::add_vertex(depend_graph_->getGraph());
+  depend_graph_->properties(handle_vertex)= vertex_info;
 
-  handle->setVertexDesc(handle_vertex);
+  handle->setVertexHandle(new VertexHandle(handle_vertex));
 
 }
 
@@ -150,13 +159,13 @@ void module::Registry::buildDeps()
                 dep_str.begin(), ::tolower);
 
       bool found_dep= false;
-      vertex_iter it= boost::vertices(depend_graph_).first;
-      while (it != vertices(depend_graph_).second)
+      vertex_iter it= boost::vertices(depend_graph_->getGraph()).first;
+      while (it != vertices(depend_graph_->getGraph()).second)
       {
-        if (properties(*it).getName() == dep_str)
+        if (depend_graph_->properties(*it).getName() == dep_str)
         {
           found_dep= true;
-          add_edge(handle->getVertexDesc(), *it, depend_graph_);
+          add_edge(handle->getVertexHandle()->getVertexDesc(), *it, depend_graph_->getGraph());
           break;
         }
         ++it;
@@ -189,12 +198,12 @@ module::Registry::ModuleList module::Registry::getList()
 
   VertexList vertex_list;
 
-  boost::topological_sort(depend_graph_, std::back_inserter(vertex_list));
+  boost::topological_sort(depend_graph_->getGraph(), std::back_inserter(vertex_list));
 
   for (VertexList::iterator i = vertex_list.begin();
        i != vertex_list.end(); ++i)
   {
-    Module *mod_ptr= properties(*i).getModule();
+    Module *mod_ptr= depend_graph_->properties(*i).getModule();
     if (mod_ptr != NULL)
     {
       plugins.push_back(mod_ptr);

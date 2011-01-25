@@ -25,11 +25,12 @@
 #include <map>
 #include <algorithm>
 
+#include <boost/scoped_ptr.hpp>
+
 #include "drizzled/gettext.h"
 #include "drizzled/unireg.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/module/vertex.h"
 
 
 namespace drizzled
@@ -39,6 +40,7 @@ namespace module
 {
 class Module;
 class Library;
+class Graph;
 
 
 class Registry
@@ -51,29 +53,16 @@ public:
 private:
   LibraryMap library_registry_;
   ModuleMap module_registry_;
-  Graph depend_graph_; 
+  boost::scoped_ptr<Graph> depend_graph_; 
   
   plugin::Plugin::map plugin_registry;
 
   bool deps_built_;
 
-  Registry()
-   : module_registry_(),
-     depend_graph_(),
-     plugin_registry(),
-     deps_built_(false)
-  { }
-
+  Registry();
   Registry(const Registry&);
   Registry& operator=(const Registry&);
   ~Registry();
-
-  Vertex& properties(const VertexDesc& v)
-  {
-     boost::property_map<Graph, vertex_properties_t>::type param=
-       boost::get(vertex_properties, depend_graph_);
-     return param[v];
-  }
 
   void buildDeps();
 public:

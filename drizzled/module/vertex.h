@@ -95,11 +95,11 @@ typedef boost::adjacency_list<boost::vecS,
         boost::property<boost::vertex_color_t,
         boost::default_color_type,
         boost::property<vertex_properties_t, Vertex> >
-          > Graph;
-typedef boost::graph_traits<Graph>::vertex_descriptor VertexDesc;
+          > VertexGraph;
+typedef boost::graph_traits<VertexGraph>::vertex_descriptor VertexDesc;
 typedef std::vector<VertexDesc> VertexList;
 
-typedef boost::graph_traits<Graph>::vertex_iterator vertex_iter;
+typedef boost::graph_traits<VertexGraph>::vertex_iterator vertex_iter;
 
 } /* namespace module */
 } /* namespace vertex */

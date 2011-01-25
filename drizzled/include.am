@@ -292,12 +292,14 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/message/table.h \
 			      drizzled/module/context.h \
 			      drizzled/module/library.h \
+			      drizzled/module/graph.h \
 			      drizzled/module/manifest.h \
 			      drizzled/module/module.h \
 			      drizzled/module/option_context.h \
 			      drizzled/module/option_map.h \
 			      drizzled/module/registry.h \
 			      drizzled/module/vertex.h \
+			      drizzled/module/vertex_handle.h \
 			      drizzled/my_hash.h \
 			      drizzled/name_resolution_context.h \
 			      drizzled/name_resolution_context_state.h \
