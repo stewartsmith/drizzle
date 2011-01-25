@@ -35,7 +35,9 @@ class Select : public Statement
 public:
   Select(Session *in_session) :
     Statement(in_session)
-  {}
+  {
+    getSession()->getLex()->sql_command= SQLCOM_SELECT;
+  }
 
   bool execute();
 };

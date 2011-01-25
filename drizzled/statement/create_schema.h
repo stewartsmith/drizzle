@@ -41,6 +41,7 @@ public:
     Statement(in_session),
     is_if_not_exists(false)
   {
+    getSession()->getLex()->sql_command=SQLCOM_CREATE_DB;
   }
 
   bool execute();

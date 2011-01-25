@@ -33,10 +33,11 @@ namespace statement
 class Rollback : public Statement
 {
 public:
-  Rollback(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Rollback(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_ROLLBACK;
+  }
 
   bool execute();
 

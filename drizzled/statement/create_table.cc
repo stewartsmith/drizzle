@@ -44,6 +44,7 @@ CreateTable::CreateTable(Session *in_session, Table_ident *ident, bool is_tempor
   link_to_local(false),
   create_table_list(NULL)
 {
+  getSession()->getLex()->sql_command= SQLCOM_CREATE_TABLE;
   createTableMessage().set_name(ident->table.str, ident->table.length);
 #if 0
   createTableMessage().set_schema(ident->db.str, ident->db.length);
@@ -70,6 +71,7 @@ CreateTable::CreateTable(Session *in_session) :
   link_to_local(false),
   create_table_list(NULL)
 {
+  getSession()->getLex()->sql_command= SQLCOM_CREATE_TABLE;
 }
 
 } // namespace statement

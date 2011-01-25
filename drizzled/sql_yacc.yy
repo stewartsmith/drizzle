@@ -784,7 +784,6 @@ query:
             }
             else
             {
-              session->lex->sql_command= SQLCOM_EMPTY_QUERY;
               session->lex->statement= new statement::EmptyQuery(YYSession);
             }
           }
@@ -835,7 +834,6 @@ create:
           }
         | CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident
           {
-            Lex->sql_command= SQLCOM_CREATE_TABLE;
             Lex->statement= new statement::CreateTable(YYSession, $5, $2);
 
             if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL,
@@ -850,7 +848,6 @@ create:
           }
         | CREATE build_method
           {
-            Lex->sql_command= SQLCOM_CREATE_INDEX;
             statement::CreateIndex *statement= new statement::CreateIndex(YYSession);
             Lex->statement= statement;
 
@@ -874,7 +871,6 @@ create:
           }
         | CREATE DATABASE opt_if_not_exists schema_name
           {
-            Lex->sql_command=SQLCOM_CREATE_DB;
             Lex->statement= new statement::CreateSchema(YYSession);
           }
           opt_create_database_options
@@ -938,13 +934,11 @@ stored_select:
             Lex->lock_option= TL_READ;
             if (Lex->sql_command == SQLCOM_INSERT)
             {
-              Lex->sql_command= SQLCOM_INSERT_SELECT;
               delete Lex->statement;
               Lex->statement= new statement::InsertSelect(YYSession);
             }
             else if (Lex->sql_command == SQLCOM_REPLACE)
             {
-              Lex->sql_command= SQLCOM_REPLACE_SELECT;
               delete Lex->statement;
               Lex->statement= new statement::ReplaceSelect(YYSession);
             }
@@ -1896,7 +1890,6 @@ alter:
           {}
         | ALTER_SYM DATABASE schema_name
           {
-            Lex->sql_command=SQLCOM_ALTER_DB;
             Lex->statement= new statement::AlterSchema(YYSession);
           }
           default_collation_schema
@@ -2150,7 +2143,6 @@ opt_to:
 start:
           START_SYM TRANSACTION_SYM start_transaction_opts
           {
-            Lex->sql_command= SQLCOM_BEGIN;
             Lex->statement= new statement::StartTransaction(YYSession, (start_transaction_option_t)$3);
           }
         ;
@@ -2166,7 +2158,6 @@ start_transaction_opts:
 analyze:
           ANALYZE_SYM table_or_tables
           {
-            Lex->sql_command = SQLCOM_ANALYZE;
             Lex->statement= new statement::Analyze(YYSession);
           }
           table_list
@@ -2176,7 +2167,6 @@ analyze:
 check:
           CHECK_SYM table_or_tables
           {
-            Lex->sql_command = SQLCOM_CHECK;
             Lex->statement= new statement::Check(YYSession);
           }
           table_list
@@ -2186,7 +2176,6 @@ check:
 rename:
           RENAME table_or_tables
           {
-            Lex->sql_command= SQLCOM_RENAME_TABLE;
             Lex->statement= new statement::RenameTable(YYSession);
           }
           table_to_table_list
@@ -2218,7 +2207,6 @@ table_to_table:
 select:
           select_init
           {
-            Lex->sql_command= SQLCOM_SELECT;
             Lex->statement= new statement::Select(YYSession);
           }
         ;
@@ -4218,7 +4206,6 @@ drop:
           }
         | DROP opt_temporary table_or_tables if_exists table_list
           {
-            Lex->sql_command = SQLCOM_DROP_TABLE;
             statement::DropTable *statement= new statement::DropTable(YYSession);
             Lex->statement= statement;
             statement->drop_temporary= $2;
@@ -4226,7 +4213,6 @@ drop:
           }
         | DROP build_method INDEX_SYM ident ON table_ident {}
           {
-            Lex->sql_command= SQLCOM_DROP_INDEX;
             statement::DropIndex *statement= new statement::DropIndex(YYSession);
             Lex->statement= statement;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
@@ -4238,7 +4224,6 @@ drop:
           }
         | DROP DATABASE if_exists schema_name
           {
-            Lex->sql_command= SQLCOM_DROP_DB;
             statement::DropSchema *statement= new statement::DropSchema(YYSession);
             Lex->statement= statement;
             statement->drop_if_exists=$3;
@@ -5469,7 +5454,6 @@ keyword_sp:
 set:
           SET_SYM opt_option
           {
-            Lex->sql_command= SQLCOM_SET_OPTION;
             Lex->statement= new statement::SetOption(YYSession);
             init_select(Lex);
             Lex->option_type=OPT_SESSION;
@@ -5615,7 +5599,6 @@ table_or_tables:
 unlock:
           UNLOCK_SYM
           {
-            Lex->sql_command= SQLCOM_UNLOCK_TABLES;
             Lex->statement= new statement::UnlockTables(YYSession);
           }
           table_or_tables
@@ -5625,7 +5608,6 @@ unlock:
 begin:
           BEGIN_SYM
           {
-            Lex->sql_command = SQLCOM_BEGIN;
             Lex->statement= new statement::StartTransaction(YYSession);
           }
           opt_work {}
@@ -5658,7 +5640,6 @@ opt_savepoint:
 commit:
           COMMIT_SYM opt_work opt_chain opt_release
           {
-            Lex->sql_command= SQLCOM_COMMIT;
             statement::Commit *statement= new statement::Commit(YYSession);
             Lex->statement= statement;
             statement->tx_chain= $3;
@@ -5669,7 +5650,6 @@ commit:
 rollback:
           ROLLBACK_SYM opt_work opt_chain opt_release
           {
-            Lex->sql_command= SQLCOM_ROLLBACK;
             statement::Rollback *statement= new statement::Rollback(YYSession);
             Lex->statement= statement;
             statement->tx_chain= $3;
@@ -5677,7 +5657,6 @@ rollback:
           }
         | ROLLBACK_SYM opt_work TO_SYM opt_savepoint savepoint_ident
           {
-            Lex->sql_command= SQLCOM_ROLLBACK_TO_SAVEPOINT;
             Lex->statement= new statement::RollbackToSavepoint(YYSession);
             Lex->ident= $5;
           }

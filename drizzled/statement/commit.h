@@ -33,10 +33,11 @@ namespace statement
 class Commit : public Statement
 {
 public:
-  Commit(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Commit(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_COMMIT;
+  }
 
   bool execute();
 

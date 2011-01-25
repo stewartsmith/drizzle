@@ -37,7 +37,9 @@ public:
 
   CreateIndex(Session *in_session) :
     CreateTable(in_session)
-  {}
+  {
+    getSession()->getLex()->sql_command= SQLCOM_CREATE_INDEX;
+  }
 
   bool execute();
 };

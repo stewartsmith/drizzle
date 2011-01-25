@@ -34,6 +34,7 @@ namespace statement
 CreateIndex::CreateIndex(Session *in_session, Table_ident *ident) :
     CreateTable(in_session)
 {
+  getSession()->getLex()->sql_command= SQLCOM_CREATE_INDEX;
   (void)ident;
 }
 
