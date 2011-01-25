@@ -14,7 +14,6 @@ Every build of Drizzle is currently tested on:
  * Debian Squeeze (6.0)
  * Ubuntu 10.04 and 10.10
  * FreeBSD 8.0 and 8.1
- * Solaris 10 (Sparc)
  * Apple OSX 10.6.4
 
 We recommend using these platforms with Drizzle, older version may have various
