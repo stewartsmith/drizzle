@@ -45,7 +45,7 @@ void Item_func_now::fix_length_and_dec()
 
   ltime.time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 
-  store_now_in_TIME(&ltime);
+  store_now_in_TIME(ltime);
 
   ltime.convert(value);
 
@@ -59,7 +59,7 @@ void Item_func_now::fix_length_and_dec()
     Converts current time in time_t to type::Time represenatation for local
     time zone. Defines time zone (local) used for whole NOW function.
 */
-void Item_func_now_local::store_now_in_TIME(type::Time *now_time)
+void Item_func_now_local::store_now_in_TIME(type::Time &now_time)
 {
   Session *session= current_session;
   uint32_t fractional_seconds= 0;
@@ -68,7 +68,7 @@ void Item_func_now_local::store_now_in_TIME(type::Time *now_time)
 #if 0
   now_time->store(tmp, fractional_seconds, true);
 #endif
-  now_time->store(tmp, fractional_seconds);
+  now_time.store(tmp, fractional_seconds);
 }
 
 
@@ -76,13 +76,13 @@ void Item_func_now_local::store_now_in_TIME(type::Time *now_time)
     Converts current time in time_t to type::Time represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_TIMESTAMP function.
 */
-void Item_func_now_utc::store_now_in_TIME(type::Time *now_time)
+void Item_func_now_utc::store_now_in_TIME(type::Time &now_time)
 {
   Session *session= current_session;
   uint32_t fractional_seconds= 0;
   time_t tmp= session->getCurrentTimestampEpoch(fractional_seconds);
 
-  now_time->store(tmp, fractional_seconds);
+  now_time.store(tmp, fractional_seconds);
 }
 
 bool Item_func_now::get_temporal(DateTime &to)
@@ -91,9 +91,9 @@ bool Item_func_now::get_temporal(DateTime &to)
   return true;
 }
 
-bool Item_func_now::get_date(type::Time *res, uint32_t )
+bool Item_func_now::get_date(type::Time &res, uint32_t )
 {
-  *res= ltime;
+  res= ltime;
   return 0;
 }
 
@@ -101,7 +101,7 @@ bool Item_func_now::get_date(type::Time *res, uint32_t )
 int Item_func_now::save_in_field(Field *to, bool )
 {
   to->set_notnull();
-  return to->store_time(&ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
+  return to->store_time(ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 } /* namespace drizzled */

@@ -61,7 +61,7 @@ int Field_datetime::store(const char *from,
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
   {
     int8store(ptr, int_value);
   }
@@ -111,7 +111,7 @@ int Field_datetime::store(int64_t from, bool)
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
   {
     int8store(ptr, int_value);
   }
@@ -121,16 +121,16 @@ int Field_datetime::store(int64_t from, bool)
   return 0;
 }
 
-int Field_datetime::store_time(type::Time *ltime, type::timestamp_t)
+int Field_datetime::store_time(type::Time &ltime, type::timestamp_t)
 {
   DateTime temporal;
 
-  temporal.set_years(ltime->year);
-  temporal.set_months(ltime->month);
-  temporal.set_days(ltime->day);
-  temporal.set_hours(ltime->hour);
-  temporal.set_minutes(ltime->minute);
-  temporal.set_seconds(ltime->second);
+  temporal.set_years(ltime.year);
+  temporal.set_months(ltime.month);
+  temporal.set_days(ltime.day);
+  temporal.set_hours(ltime.hour);
+  temporal.set_minutes(ltime.minute);
+  temporal.set_seconds(ltime.second);
 
   if (! temporal.is_valid())
   {
@@ -147,13 +147,14 @@ int Field_datetime::store_time(type::Time *ltime, type::timestamp_t)
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
   {
     int8store(ptr, int_value);
   }
   else
 #endif
     int64_tstore(ptr, int_value);
+
   return 0;
 }
 
@@ -169,7 +170,7 @@ int64_t Field_datetime::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
     j=sint8korr(ptr);
   else
 #endif
@@ -188,7 +189,7 @@ String *Field_datetime::val_str(String *val_buffer,
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
     tmp=sint8korr(ptr);
   else
 #endif
@@ -216,26 +217,27 @@ String *Field_datetime::val_str(String *val_buffer,
   return val_buffer;
 }
 
-bool Field_datetime::get_date(type::Time *ltime, uint32_t fuzzydate)
+bool Field_datetime::get_date(type::Time &ltime, uint32_t fuzzydate)
 {
   int64_t tmp=Field_datetime::val_int();
   uint32_t part1,part2;
   part1=(uint32_t) (tmp/INT64_C(1000000));
   part2=(uint32_t) (tmp - (uint64_t) part1*INT64_C(1000000));
 
-  ltime->time_type=	type::DRIZZLE_TIMESTAMP_DATETIME;
-  ltime->neg=		0;
-  ltime->second_part=	0;
-  ltime->second=	(int) (part2%100);
-  ltime->minute=	(int) (part2/100%100);
-  ltime->hour=		(int) (part2/10000);
-  ltime->day=		(int) (part1%100);
-  ltime->month= 	(int) (part1/100%100);
-  ltime->year= 		(int) (part1/10000);
-  return (!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ? 1 : 0;
+  ltime.time_type=	type::DRIZZLE_TIMESTAMP_DATETIME;
+  ltime.neg=		0;
+  ltime.second_part=	0;
+  ltime.second=	(int) (part2%100);
+  ltime.minute=	(int) (part2/100%100);
+  ltime.hour=		(int) (part2/10000);
+  ltime.day=		(int) (part1%100);
+  ltime.month= 	(int) (part1/100%100);
+  ltime.year= 		(int) (part1/10000);
+
+  return (!(fuzzydate & TIME_FUZZY_DATE) && (!ltime.month || !ltime.day)) ? 1 : 0;
 }
 
-bool Field_datetime::get_time(type::Time *ltime)
+bool Field_datetime::get_time(type::Time &ltime)
 {
   return Field_datetime::get_date(ltime,0);
 }
@@ -244,7 +246,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  if (getTable() && getTable()->isDatabaseLowByteFirst())
   {
     a=sint8korr(a_ptr);
     b=sint8korr(b_ptr);
@@ -262,7 +264,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_datetime::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!getTable() || !getTable()->getShare()->db_low_byte_first)
+  if (not getTable() || not getTable()->isDatabaseLowByteFirst())
   {
     to[0] = ptr[0];
     to[1] = ptr[1];

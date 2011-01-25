@@ -435,13 +435,13 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
 }
 
 
-bool Item_func::get_arg0_date(type::Time *ltime, uint32_t fuzzy_date)
+bool Item_func::get_arg0_date(type::Time &ltime, uint32_t fuzzy_date)
 {
   return (null_value=args[0]->get_date(ltime, fuzzy_date));
 }
 
 
-bool Item_func::get_arg0_time(type::Time *ltime)
+bool Item_func::get_arg0_time(type::Time &ltime)
 {
   return (null_value= args[0]->get_time(ltime));
 }

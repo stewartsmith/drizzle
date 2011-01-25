@@ -90,14 +90,15 @@ int Microtime::store(const char *from,
   return 0;
 }
 
-int Microtime::store_time(type::Time *ltime, type::timestamp_t )
+int Microtime::store_time(type::Time &ltime, type::timestamp_t )
 {
   long my_timezone;
   bool in_dst_time_gap;
 
-  type::Time::epoch_t time_tmp= my_system_gmt_sec(ltime, &my_timezone, &in_dst_time_gap, true);
+  type::Time::epoch_t time_tmp;
+  ltime.convert(time_tmp, &my_timezone, &in_dst_time_gap, true);
   uint64_t tmp_seconds= time_tmp;
-  uint32_t tmp_micro= ltime->second_part;
+  uint32_t tmp_micro= ltime.second_part;
 
   pack_num(tmp_seconds);
   pack_num(tmp_micro, ptr +8);
@@ -182,7 +183,7 @@ type::Decimal *Microtime::val_decimal(type::Decimal *decimal_value)
 {
   type::Time ltime;
 
-  get_date(&ltime, 0);
+  get_date(ltime, 0);
 
   return date2_class_decimal(&ltime, decimal_value);
 }
@@ -222,7 +223,7 @@ String *Microtime::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Microtime::get_date(type::Time *ltime, uint32_t)
+bool Microtime::get_date(type::Time &ltime, uint32_t)
 {
   uint64_t temp;
   uint32_t micro_temp= 0;
@@ -230,14 +231,14 @@ bool Microtime::get_date(type::Time *ltime, uint32_t)
   unpack_num(temp);
   unpack_num(micro_temp, ptr +8);
   
-  ltime->reset();
+  ltime.reset();
 
-  ltime->store(temp, micro_temp);
+  ltime.store(temp, micro_temp);
 
   return false;
 }
 
-bool Microtime::get_time(type::Time *ltime)
+bool Microtime::get_time(type::Time &ltime)
 {
   return Microtime::get_date(ltime, 0);
 }

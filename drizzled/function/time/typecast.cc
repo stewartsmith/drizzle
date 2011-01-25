@@ -198,20 +198,11 @@ String *Item_datetime_typecast::val_str(String *str)
   assert(fixed == 1);
   type::Time ltime;
 
-  if (! get_arg0_date(&ltime, TIME_FUZZY_DATE))
+  if (not get_arg0_date(ltime, TIME_FUZZY_DATE))
   {
     if (ltime.second_part)
     {
-      uint32_t length= sprintf(str->c_ptr(), "%04u-%02u-%02u %02u:%02u:%02u.%06u",
-                            ltime.year,
-                            ltime.month,
-                            ltime.day,
-                            ltime.hour,
-                            ltime.minute,
-                            ltime.second,
-                            (uint32_t) ltime.second_part);
-      str->length(length);
-      str->set_charset(&my_charset_bin);
+      ltime.convert(*str);
     }
     else
     {
@@ -230,7 +221,7 @@ int64_t Item_datetime_typecast::val_int()
 {
   assert(fixed == 1);
   type::Time ltime;
-  if (get_arg0_date(&ltime,1))
+  if (get_arg0_date(ltime, 1))
   {
     null_value= 1;
     return 0;
@@ -243,20 +234,20 @@ int64_t Item_datetime_typecast::val_int()
 }
 
 
-bool Item_date_typecast::get_date(type::Time *ltime, uint32_t )
+bool Item_date_typecast::get_date(type::Time &ltime, uint32_t )
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
 
-  ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
-  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATE;
+  ltime.hour= ltime.minute= ltime.second= ltime.second_part= 0;
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATE;
 
   return res;
 }
 
 
-bool Item_date_typecast::get_time(type::Time *ltime)
+bool Item_date_typecast::get_time(type::Time &ltime)
 {
-  ltime->reset();
+  ltime.reset();
 
   return args[0]->null_value;
 }
@@ -267,7 +258,7 @@ String *Item_date_typecast::val_str(String *str)
   assert(fixed == 1);
   type::Time ltime;
 
-  if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
+  if (!get_arg0_date(ltime, TIME_FUZZY_DATE) &&
       !str->alloc(type::Time::MAX_STRING_LENGTH))
   {
     ltime.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
@@ -283,8 +274,10 @@ int64_t Item_date_typecast::val_int()
 {
   assert(fixed == 1);
   type::Time ltime;
-  if ((null_value= args[0]->get_date(&ltime, TIME_FUZZY_DATE)))
+
+  if ((null_value= args[0]->get_date(ltime, TIME_FUZZY_DATE)))
     return 0;
+
   return (int64_t) (ltime.year * 10000L + ltime.month * 100 + ltime.day);
 }
 

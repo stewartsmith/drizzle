@@ -333,6 +333,7 @@ type::Decimal *date2_class_decimal(type::Time *ltime, type::Decimal *dec)
     dec->buf[(dec->intg-1) / 9 + 1]= ltime->second_part * 1000;
     dec->frac= 6;
   }
+
   return dec;
 }
 

@@ -517,7 +517,7 @@ bool Item_ref::is_null()
 }
 
 
-bool Item_ref::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Item_ref::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   return (null_value=(*ref)->get_date_result(ltime,fuzzydate));
 }

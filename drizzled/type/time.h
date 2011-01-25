@@ -51,8 +51,10 @@ extern unsigned char days_in_month[];
 /* Flags to str_to_datetime */
 #define TIME_FUZZY_DATE		1
 #define TIME_DATETIME_ONLY	2
+
 /* Must be same as MODE_NO_ZERO_IN_DATE */
 #define TIME_NO_ZERO_IN_DATE    (65536L*2*2*2*2*2*2*2)
+
 /* Must be same as MODE_NO_ZERO_DATE */
 #define TIME_NO_ZERO_DATE	(TIME_NO_ZERO_IN_DATE*2)
 #define TIME_INVALID_DATES	(TIME_NO_ZERO_DATE*2)
@@ -87,6 +89,13 @@ enum timestamp_t
 {
   DRIZZLE_TIMESTAMP_NONE= -2, DRIZZLE_TIMESTAMP_ERROR= -1,
   DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
+};
+
+enum cut_t
+{
+  VALID= 0,
+  CUT= 1,
+  INVALID= 2
 };
 
 /*
@@ -174,59 +183,45 @@ public:
   void convert(drizzled::String &str, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(char *str, size_t &to_length, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(datetime_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
-  void convert(datetime_t &ret, int64_t nr, uint32_t flags, int *was_cut);
+  void convert(datetime_t &ret, int64_t nr, uint32_t flags);
+  void convert(datetime_t &ret, int64_t nr, uint32_t flags, type::cut_t &was_cut);
+  void convert(type::Time::epoch_t &epoch, long *my_timezone,
+               bool *in_dst_time_gap, bool skip_timezone= false) const;
 
+  void truncate(const timestamp_t arg);
+
+  bool store(const char *str,uint32_t length, int &warning, type::timestamp_t arg= DRIZZLE_TIMESTAMP_TIME);
+  type::timestamp_t store(const char *str, uint32_t length, uint32_t flags, type::cut_t &was_cut);
+  type::timestamp_t store(const char *str, uint32_t length, uint32_t flags);
   void store(const type::Time::epoch_t &from, bool use_localtime= false);
   void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
   void store(const struct tm &from);
   void store(const struct timeval &from);
 
+
   static const uint32_t FRACTIONAL_DIGITS= 1000000;
   static const size_t MAX_STRING_LENGTH= 32;   // +32 to make my_snprintf_{8bit|ucs2} happy
 
-  bool check(bool not_zero_date, uint32_t flags, int *was_cut) const;
+  bool check(bool not_zero_date, uint32_t flags, type::cut_t &was_cut) const;
+
+  inline bool isValidEpoch() const
+  {
+    if ((year < TIMESTAMP_MIN_YEAR) or (year == TIMESTAMP_MIN_YEAR && (month < 12 || day < 31)))
+    {
+      return false;
+    }
+
+    return true;
+  }
 };
 
 }
-
-
-type::timestamp_t str_to_datetime(const char *str, uint32_t length, type::Time *l_time, uint32_t flags, int *was_cut);
-
-bool str_to_time(const char *str,uint32_t length, type::Time *l_time, int *warning);
 
 long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
 uint32_t calc_days_in_year(uint32_t year);
 uint32_t year_2000_handling(uint32_t year);
 
 void init_time(void);
-
-
-/*
-  Function to check sanity of a TIMESTAMP value
-
-  DESCRIPTION
-    Check if a given type::Time value fits in TIMESTAMP range.
-    This function doesn't make precise check, but rather a rough
-    estimate.
-
-  RETURN VALUES
-    false   The value seems sane
-    true    The type::Time value is definitely out of range
-*/
-
-static inline bool validate_timestamp_range(const type::Time *t)
-{
-  if ((t->year < TIMESTAMP_MIN_YEAR) or (t->year == TIMESTAMP_MIN_YEAR && (t->month < 12 || t->day < 31)))
-  {
-    return false;
-  }
-
-  return true;
-}
-
-type::Time::epoch_t
-my_system_gmt_sec(const type::Time *t, long *my_timezone,
-                  bool *in_dst_time_gap, bool skip_timezone= false);
 
 /*
   Available interval types used in any statement.

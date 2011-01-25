@@ -49,9 +49,9 @@ class Time_zone_system : public Time_zone
 {
 public:
   Time_zone_system() {}                       /* Remove gcc warning */
-  virtual type::Time::epoch_t TIME_to_gmt_sec(const type::Time *t,
+  virtual type::Time::epoch_t TIME_to_gmt_sec(const type::Time &t,
                                               bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(type::Time *tmp, type::Time::epoch_t t) const;
+  virtual void gmt_sec_to_TIME(type::Time &tmp, type::Time::epoch_t t) const;
   virtual const String * get_name() const;
 };
 
@@ -81,10 +81,12 @@ public:
  * Corresponding type::Time::epoch_t value or 0 in case of error
  */
 type::Time::epoch_t
-Time_zone_system::TIME_to_gmt_sec(const type::Time *t, bool *in_dst_time_gap) const
+Time_zone_system::TIME_to_gmt_sec(const type::Time &t, bool *in_dst_time_gap) const
 {
   long not_used;
-  return my_system_gmt_sec(t, &not_used, in_dst_time_gap);
+  type::Time::epoch_t tmp;
+  t.convert(tmp, &not_used, in_dst_time_gap);
+  return tmp;
 }
 
 
@@ -103,9 +105,9 @@ Time_zone_system::TIME_to_gmt_sec(const type::Time *t, bool *in_dst_time_gap) co
  * the 1902 easily.
  */
 void
-Time_zone_system::gmt_sec_to_TIME(type::Time *tmp, type::Time::epoch_t t) const
+Time_zone_system::gmt_sec_to_TIME(type::Time &tmp, type::Time::epoch_t t) const
 {
-  tmp->store(t);
+  tmp.store(t);
 }
 
 

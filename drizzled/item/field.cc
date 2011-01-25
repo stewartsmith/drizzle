@@ -262,32 +262,32 @@ String *Item_field::str_result(String *str)
   return result_field->val_str(str,&str_value);
 }
 
-bool Item_field::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Item_field::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   if ((null_value=field->is_null()) || field->get_date(ltime,fuzzydate))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
 }
 
-bool Item_field::get_date_result(type::Time *ltime,uint32_t fuzzydate)
+bool Item_field::get_date_result(type::Time &ltime,uint32_t fuzzydate)
 {
   if ((null_value=result_field->is_null()) ||
       result_field->get_date(ltime,fuzzydate))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
 }
 
-bool Item_field::get_time(type::Time *ltime)
+bool Item_field::get_time(type::Time &ltime)
 {
   if ((null_value=field->is_null()) || field->get_time(ltime))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;

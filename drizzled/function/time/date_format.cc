@@ -392,7 +392,7 @@ String *Item_func_date_format::val_str(String *str)
 
   if (!is_time_format)
   {
-    if (get_arg0_date(&l_time, TIME_FUZZY_DATE))
+    if (get_arg0_date(l_time, TIME_FUZZY_DATE))
       return 0;
   }
   else
