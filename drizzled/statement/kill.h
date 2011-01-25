@@ -33,10 +33,11 @@ namespace statement
 class Kill : public Statement
 {
 public:
-  Kill(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Kill(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_KILL;
+  }
 
   bool execute();
 

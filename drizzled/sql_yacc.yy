@@ -4297,7 +4297,6 @@ opt_wait:
 insert:
           INSERT
           {
-            Lex->sql_command= SQLCOM_INSERT;
             Lex->statement= new statement::Insert(YYSession);
             Lex->duplicates= DUP_ERROR;
             init_select(Lex);
@@ -4316,7 +4315,6 @@ insert:
 replace:
           REPLACE
           {
-            Lex->sql_command= SQLCOM_REPLACE;
             Lex->statement= new statement::Replace(YYSession);
             Lex->duplicates= DUP_REPLACE;
             init_select(Lex);
@@ -4453,7 +4451,6 @@ update:
           UPDATE_SYM opt_ignore table_ident
           {
             init_select(Lex);
-            Lex->sql_command= SQLCOM_UPDATE;
             Lex->statement= new statement::Update(YYSession);
             Lex->lock_option= TL_UNLOCK; /* Will be set later */
             Lex->duplicates= DUP_ERROR;
@@ -4511,7 +4508,6 @@ insert_update_elem:
 delete:
           DELETE_SYM
           {
-            Lex->sql_command= SQLCOM_DELETE;
             Lex->statement= new statement::Delete(YYSession);
             init_select(Lex);
             Lex->lock_option= TL_WRITE_DEFAULT;
@@ -4544,7 +4540,6 @@ opt_delete_option:
 truncate:
           TRUNCATE_SYM opt_table_sym table_name
           {
-            Lex->sql_command= SQLCOM_TRUNCATE;
             Lex->statement= new statement::Truncate(YYSession);
             Lex->select_lex.options= 0;
             Lex->select_lex.init_order();
@@ -4725,9 +4720,7 @@ opt_describe_column:
 flush:
           FLUSH_SYM
           {
-            Lex->sql_command= SQLCOM_FLUSH;
             Lex->statement= new statement::Flush(YYSession);
-            Lex->type= 0;
           }
           flush_options
           {}
@@ -4784,7 +4777,6 @@ kill:
 
             Lex->value_list.empty();
             Lex->value_list.push_front($3);
-            Lex->sql_command= SQLCOM_KILL;
             Lex->statement= new statement::Kill(YYSession);
           }
         ;
@@ -4800,7 +4792,6 @@ kill_option:
 use:
           USE_SYM schema_name
           {
-            Lex->sql_command=SQLCOM_CHANGE_DB;
             Lex->statement= new statement::ChangeSchema(YYSession);
             Lex->select_lex.db= $2.str;
           }
@@ -4811,7 +4802,6 @@ use:
 load:
           LOAD data_file
           {
-            Lex->sql_command= SQLCOM_LOAD;
             statement::Load *statement= new statement::Load(YYSession);
             Lex->statement= statement;
 
@@ -5665,7 +5655,6 @@ rollback:
 savepoint:
           SAVEPOINT_SYM savepoint_ident
           {
-            Lex->sql_command= SQLCOM_SAVEPOINT;
             Lex->statement= new statement::Savepoint(YYSession);
             Lex->ident= $2;
           }
@@ -5674,7 +5663,6 @@ savepoint:
 release:
           RELEASE_SYM SAVEPOINT_SYM savepoint_ident
           {
-            Lex->sql_command= SQLCOM_RELEASE_SAVEPOINT;
             Lex->statement= new statement::ReleaseSavepoint(YYSession);
             Lex->ident= $3;
           }

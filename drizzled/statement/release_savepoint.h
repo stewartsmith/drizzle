@@ -31,10 +31,11 @@ namespace statement
 class ReleaseSavepoint : public Statement
 {
 public:
-  ReleaseSavepoint(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  ReleaseSavepoint(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_RELEASE_SAVEPOINT;
+  }
 
   bool execute();
 };

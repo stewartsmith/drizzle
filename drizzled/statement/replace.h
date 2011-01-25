@@ -33,10 +33,11 @@ namespace statement
 class Replace : public Statement
 {
 public:
-  Replace(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Replace(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_REPLACE;
+  }
 
   bool execute();
 };
