@@ -4553,7 +4553,6 @@ show:
             Lex->lock_option= TL_READ;
             init_select(Lex);
             Lex->current_select->parsing_place= SELECT_LIST;
-            "
           }
           show_param
           {}
