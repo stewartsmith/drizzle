@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,33 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_ANALYZE_H
-#define DRIZZLED_STATEMENT_ANALYZE_H
+#include "config.h"
 
-#include <drizzled/statement.h>
+#include <bitset>
 
-namespace drizzled
+#include <drizzled/debug.h>
+
+namespace drizzled {
+
+debug::Flags::Options &getDebug()
 {
-class Session;
+  return debug::Flags::singleton().options();
+}
 
-namespace statement
-{
+} // namespace drizzled
 
-class Analyze : public Statement
-{
-public:
-  Analyze(Session *in_session) :
-    Statement(in_session)
-  {
-    getSession()->getLex()->sql_command= SQLCOM_ANALYZE;
-  }
-
-  bool execute();
-  HA_CHECK_OPT check_opt;			// check/repair options
-};
-
-} /* namespace statement */
-
-} /* namespace drizzled */
-
-#endif /* DRIZZLED_STATEMENT_ANALYZE_H */

@@ -267,6 +267,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_DUP_ENTRY, N_("Duplicate entry '%-.192s' for key %d"));
   ADD_ERROR_MESSAGE(ER_WRONG_FIELD_SPEC, N_("Incorrect column specifier for column '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_PARSE_ERROR, N_("%s near '%-.80s' at line %d"));
+  ADD_ERROR_MESSAGE(ER_PARSE_ERROR_UNKNOWN, N_("Parsing error near '%s'"));
   ADD_ERROR_MESSAGE(ER_EMPTY_QUERY, N_("Query was empty"));
   ADD_ERROR_MESSAGE(ER_NONUNIQ_TABLE, N_("Not unique table/alias: '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_INVALID_DEFAULT, N_("Invalid default value for '%-.192s'"));

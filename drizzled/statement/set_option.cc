@@ -26,6 +26,19 @@
 namespace drizzled
 {
 
+namespace statement
+{
+SetOption::SetOption(Session *in_session) :
+  Statement(in_session),
+  one_shot_set(false)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_SET_OPTION;
+    init_select(getSession()->getLex());
+    getSession()->getLex()->option_type= OPT_SESSION;
+    getSession()->getLex()->var_list.empty();
+  }
+} // namespace statement
+
 bool statement::SetOption::execute()
 {
   TableList *all_tables= getSession()->lex->query_tables;

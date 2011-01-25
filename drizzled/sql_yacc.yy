@@ -45,7 +45,7 @@ int yylex(void *yylval, void *yysession);
 
 #define yyoverflow(A,B,C,D,E,F)               \
   {                                           \
-    ulong val= *(F);                          \
+    unsigned long val= *(F);                          \
     if (drizzled::my_yyoverflow((B), (D), &val)) \
     {                                         \
       yyerror((char*) (A));                   \
@@ -60,15 +60,13 @@ int yylex(void *yylval, void *yysession);
 #define DRIZZLE_YYABORT                         \
   do                                          \
   {                                           \
-    LEX::cleanup_lex_after_parse_error(YYSession);\
     YYABORT;                                  \
   } while (0)
 
 #define DRIZZLE_YYABORT_UNLESS(A)         \
   if (!(A))                             \
   {                                     \
-    parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };\
-    parser::my_parse_error(pass);\
+    parser::my_parse_error(YYSession->m_lip);\
     DRIZZLE_YYABORT;                      \
   }
 
@@ -112,21 +110,7 @@ class False;
 
 static void DRIZZLEerror(const char *s)
 {
-  Session *session= current_session;
-
-  /*
-    Restore the original LEX if it was replaced when parsing
-    a stored procedure. We must ensure that a parsing error
-    does not leave any side effects in the Session.
-  */
-  LEX::cleanup_lex_after_parse_error(session);
-
-  /* "parse error" changed into "syntax error" between bison 1.75 and 1.875 */
-  if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
-    s= ER(ER_SYNTAX_ERROR);
-
-  parser::error_t pass= { s, session };
-  parser::my_parse_error(pass);
+  parser::errorOn(s);
 }
 
 } /* namespace drizzled; */
@@ -136,7 +120,7 @@ using namespace drizzled;
 %union {
   bool boolean;
   int  num;
-  ulong ulong_num;
+  unsigned long ulong_num;
   uint64_t ulonglong_number;
   int64_t longlong_number;
   drizzled::LEX_STRING lex_str;
@@ -177,7 +161,7 @@ using namespace drizzled;
 %{
 namespace drizzled
 {
-bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+bool my_yyoverflow(short **a, YYSTYPE **b, unsigned long *yystacksize);
 }
 %}
 
@@ -800,7 +784,6 @@ query:
             }
             else
             {
-              session->lex->sql_command= SQLCOM_EMPTY_QUERY;
               session->lex->statement= new statement::EmptyQuery(YYSession);
             }
           }
@@ -851,7 +834,6 @@ create:
           }
         | CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident
           {
-            Lex->sql_command= SQLCOM_CREATE_TABLE;
             Lex->statement= new statement::CreateTable(YYSession, $5, $2);
 
             if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL,
@@ -866,14 +848,7 @@ create:
           }
         | CREATE build_method
           {
-            Lex->sql_command= SQLCOM_CREATE_INDEX;
-            statement::CreateIndex *statement= new statement::CreateIndex(YYSession);
-            Lex->statement= statement;
-
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-            statement->alter_info.build_method= $2;
-            Lex->col_list.empty();
-            statement->change=NULL;
+            Lex->statement= new statement::CreateIndex(YYSession, $2);
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
@@ -890,7 +865,6 @@ create:
           }
         | CREATE DATABASE opt_if_not_exists schema_name
           {
-            Lex->sql_command=SQLCOM_CREATE_DB;
             Lex->statement= new statement::CreateSchema(YYSession);
           }
           opt_create_database_options
@@ -954,13 +928,11 @@ stored_select:
             Lex->lock_option= TL_READ;
             if (Lex->sql_command == SQLCOM_INSERT)
             {
-              Lex->sql_command= SQLCOM_INSERT_SELECT;
               delete Lex->statement;
               Lex->statement= new statement::InsertSelect(YYSession);
             }
             else if (Lex->sql_command == SQLCOM_REPLACE)
             {
-              Lex->sql_command= SQLCOM_REPLACE_SELECT;
               delete Lex->statement;
               Lex->statement= new statement::ReplaceSelect(YYSession);
             }
@@ -1912,7 +1884,6 @@ alter:
           {}
         | ALTER_SYM DATABASE schema_name
           {
-            Lex->sql_command=SQLCOM_ALTER_DB;
             Lex->statement= new statement::AlterSchema(YYSession);
           }
           default_collation_schema
@@ -2166,7 +2137,6 @@ opt_to:
 start:
           START_SYM TRANSACTION_SYM start_transaction_opts
           {
-            Lex->sql_command= SQLCOM_BEGIN;
             Lex->statement= new statement::StartTransaction(YYSession, (start_transaction_option_t)$3);
           }
         ;
@@ -2182,7 +2152,6 @@ start_transaction_opts:
 analyze:
           ANALYZE_SYM table_or_tables
           {
-            Lex->sql_command = SQLCOM_ANALYZE;
             Lex->statement= new statement::Analyze(YYSession);
           }
           table_list
@@ -2192,7 +2161,6 @@ analyze:
 check:
           CHECK_SYM table_or_tables
           {
-            Lex->sql_command = SQLCOM_CHECK;
             Lex->statement= new statement::Check(YYSession);
           }
           table_list
@@ -2202,7 +2170,6 @@ check:
 rename:
           RENAME table_or_tables
           {
-            Lex->sql_command= SQLCOM_RENAME_TABLE;
             Lex->statement= new statement::RenameTable(YYSession);
           }
           table_to_table_list
@@ -2234,7 +2201,6 @@ table_to_table:
 select:
           select_init
           {
-            Lex->sql_command= SQLCOM_SELECT;
             Lex->statement= new statement::Select(YYSession);
           }
         ;
@@ -2270,15 +2236,13 @@ select_init2:
             Select_Lex * sel= Lex->current_select;
             if (Lex->current_select->set_braces(0))
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
           }
@@ -3278,8 +3242,7 @@ variable_aux:
             /* disallow "SELECT @@global.global.variable" */
             if ($3.str && $4.str && parser::check_reserved_words(&$3))
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
             if (!($$= get_system_var(YYSession, $2, $3, $4)))
@@ -3320,8 +3283,7 @@ in_sum_expr:
           {
             if (Lex->current_select->inc_in_sum_expr())
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
           }
@@ -3608,8 +3570,7 @@ table_factor:
             {
               if (sel->set_braces(1))
               {
-                parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-                parser::my_parse_error(pass);
+                parser::my_parse_error(YYSession->m_lip);
                 DRIZZLE_YYABORT;
               }
               /* select in braces, can't contain global parameters */
@@ -3673,8 +3634,7 @@ table_factor:
             else if (($3->select_lex && $3->select_lex->master_unit()->is_union()) || $5)
             {
               /* simple nested joins cannot have aliases or unions */
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
             else
@@ -3709,15 +3669,13 @@ select_init2_derived:
             Select_Lex * sel= Lex->current_select;
             if (Lex->current_select->set_braces(0))
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
           }
@@ -3754,8 +3712,7 @@ select_derived:
               DRIZZLE_YYABORT;
             if (!$3 && $$)
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
           }
@@ -3766,8 +3723,7 @@ select_derived2:
             Lex->derived_tables|= DERIVED_SUBQUERY;
             if (not Lex->expr_allows_subselect)
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
             if (Lex->current_select->linkage == GLOBAL_OPTIONS_TYPE || new_select(Lex, 1))
@@ -3795,8 +3751,7 @@ select_derived_init:
             if (!sel->embedding || sel->end_nested_join(Lex->session))
             {
               /* we are not in parentheses */
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
             embedding= Lex->current_select->embedding;
@@ -4068,42 +4023,23 @@ opt_order_clause:
 order_clause:
           ORDER_SYM BY
           {
-            Select_Lex *sel= Lex->current_select;
-            Select_Lex_Unit *unit= sel-> master_unit();
-            if (sel->linkage != GLOBAL_OPTIONS_TYPE &&
-                sel->olap != UNSPECIFIED_OLAP_TYPE &&
-                (sel->linkage != UNION_TYPE || sel->braces))
-            {
-              my_error(ER_WRONG_USAGE, MYF(0),
-                       "CUBE/ROLLUP", "ORDER BY");
+            if (not parser::buildOrderBy(YYSession))
               DRIZZLE_YYABORT;
-            }
-            if (Lex->sql_command != SQLCOM_ALTER_TABLE && !unit->fake_select_lex)
-            {
-              /*
-                A query of the of the form (SELECT ...) ORDER BY order_list is
-                executed in the same way as the query
-                SELECT ... ORDER BY order_list
-                unless the SELECT construct contains ORDER BY or LIMIT clauses.
-                Otherwise we create a fake Select_Lex if it has not been created
-                yet.
-              */
-              Select_Lex *first_sl= unit->first_select();
-              if (!unit->is_union() &&
-                  (first_sl->order_list.elements ||
-                   first_sl->select_limit) &&           
-                  unit->add_fake_select_lex(Lex->session))
-                DRIZZLE_YYABORT;
-            }
           }
           order_list
         ;
 
 order_list:
           order_list ',' order_ident order_dir
-          { if (YYSession->add_order_to_list($3,(bool) $4)) DRIZZLE_YYABORT; }
+          {
+            if (YYSession->add_order_to_list($3,(bool) $4))
+              DRIZZLE_YYABORT;
+          }
         | order_ident order_dir
-          { if (YYSession->add_order_to_list($1,(bool) $2)) DRIZZLE_YYABORT; }
+          {
+            if (YYSession->add_order_to_list($1,(bool) $2))
+              DRIZZLE_YYABORT;
+          }
         ;
 
 order_dir:
@@ -4175,12 +4111,12 @@ delete_limit_clause:
         ;
 
 ulong_num:
-          NUM           { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | HEX_NUM       { $$= (unsigned long) strtol($1.str, (char**) 0, 16); }
+        | LONG_NUM      { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
 ulonglong_num:
@@ -4264,7 +4200,6 @@ drop:
           }
         | DROP opt_temporary table_or_tables if_exists table_list
           {
-            Lex->sql_command = SQLCOM_DROP_TABLE;
             statement::DropTable *statement= new statement::DropTable(YYSession);
             Lex->statement= statement;
             statement->drop_temporary= $2;
@@ -4272,7 +4207,6 @@ drop:
           }
         | DROP build_method INDEX_SYM ident ON table_ident {}
           {
-            Lex->sql_command= SQLCOM_DROP_INDEX;
             statement::DropIndex *statement= new statement::DropIndex(YYSession);
             Lex->statement= statement;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
@@ -4284,7 +4218,6 @@ drop:
           }
         | DROP DATABASE if_exists schema_name
           {
-            Lex->sql_command= SQLCOM_DROP_DB;
             statement::DropSchema *statement= new statement::DropSchema(YYSession);
             Lex->statement= statement;
             statement->drop_if_exists=$3;
@@ -4358,7 +4291,6 @@ opt_wait:
 insert:
           INSERT
           {
-            Lex->sql_command= SQLCOM_INSERT;
             Lex->statement= new statement::Insert(YYSession);
             Lex->duplicates= DUP_ERROR;
             init_select(Lex);
@@ -4377,7 +4309,6 @@ insert:
 replace:
           REPLACE
           {
-            Lex->sql_command= SQLCOM_REPLACE;
             Lex->statement= new statement::Replace(YYSession);
             Lex->duplicates= DUP_REPLACE;
             init_select(Lex);
@@ -4514,7 +4445,6 @@ update:
           UPDATE_SYM opt_ignore table_ident
           {
             init_select(Lex);
-            Lex->sql_command= SQLCOM_UPDATE;
             Lex->statement= new statement::Update(YYSession);
             Lex->lock_option= TL_UNLOCK; /* Will be set later */
             Lex->duplicates= DUP_ERROR;
@@ -4572,7 +4502,6 @@ insert_update_elem:
 delete:
           DELETE_SYM
           {
-            Lex->sql_command= SQLCOM_DELETE;
             Lex->statement= new statement::Delete(YYSession);
             init_select(Lex);
             Lex->lock_option= TL_WRITE_DEFAULT;
@@ -4605,7 +4534,6 @@ opt_delete_option:
 truncate:
           TRUNCATE_SYM opt_table_sym table_name
           {
-            Lex->sql_command= SQLCOM_TRUNCATE;
             Lex->statement= new statement::Truncate(YYSession);
             Lex->select_lex.options= 0;
             Lex->select_lex.init_order();
@@ -4622,10 +4550,10 @@ opt_table_sym:
 show:
           SHOW
           {
-            Lex->wild=0;
             Lex->lock_option= TL_READ;
             init_select(Lex);
             Lex->current_select->parsing_place= SELECT_LIST;
+            "
           }
           show_param
           {}
@@ -4786,9 +4714,7 @@ opt_describe_column:
 flush:
           FLUSH_SYM
           {
-            Lex->sql_command= SQLCOM_FLUSH;
             Lex->statement= new statement::Flush(YYSession);
-            Lex->type= 0;
           }
           flush_options
           {}
@@ -4838,15 +4764,7 @@ opt_table_list:
 kill:
           KILL_SYM kill_option expr
           {
-            if ($2)
-            {
-              Lex->type= ONLY_KILL_QUERY;
-            }
-
-            Lex->value_list.empty();
-            Lex->value_list.push_front($3);
-            Lex->sql_command= SQLCOM_KILL;
-            Lex->statement= new statement::Kill(YYSession);
+            Lex->statement= new statement::Kill(YYSession, $3, $2);
           }
         ;
 
@@ -4861,7 +4779,6 @@ kill_option:
 use:
           USE_SYM schema_name
           {
-            Lex->sql_command=SQLCOM_CHANGE_DB;
             Lex->statement= new statement::ChangeSchema(YYSession);
             Lex->select_lex.db= $2.str;
           }
@@ -4872,7 +4789,6 @@ use:
 load:
           LOAD data_file
           {
-            Lex->sql_command= SQLCOM_LOAD;
             statement::Load *statement= new statement::Load(YYSession);
             Lex->statement= statement;
 
@@ -5228,10 +5144,8 @@ simple_ident_q:
             }
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), $1.str, $3.str,
-                                       $5.str) :
-                (Item*) new Item_ref(Lex->current_context(), $1.str, $3.str,
-                                     $5.str);
+                (Item*) new Item_field(Lex->current_context(), $1.str, $3.str, $5.str) :
+                (Item*) new Item_ref(Lex->current_context(), $1.str, $3.str, $5.str);
           }
         ;
 
@@ -5515,11 +5429,7 @@ keyword_sp:
 set:
           SET_SYM opt_option
           {
-            Lex->sql_command= SQLCOM_SET_OPTION;
             Lex->statement= new statement::SetOption(YYSession);
-            init_select(Lex);
-            Lex->option_type=OPT_SESSION;
-            Lex->var_list.empty();
           }
           option_value_list
           {}
@@ -5536,11 +5446,9 @@ option_value_list:
         ;
 
 option_type_value:
-          {
-          }
+          { }
           ext_option_value
-          {
-          }
+          { }
         ;
 
 option_type:
@@ -5661,7 +5569,6 @@ table_or_tables:
 unlock:
           UNLOCK_SYM
           {
-            Lex->sql_command= SQLCOM_UNLOCK_TABLES;
             Lex->statement= new statement::UnlockTables(YYSession);
           }
           table_or_tables
@@ -5671,7 +5578,6 @@ unlock:
 begin:
           BEGIN_SYM
           {
-            Lex->sql_command = SQLCOM_BEGIN;
             Lex->statement= new statement::StartTransaction(YYSession);
           }
           opt_work {}
@@ -5704,46 +5610,32 @@ opt_savepoint:
 commit:
           COMMIT_SYM opt_work opt_chain opt_release
           {
-            Lex->sql_command= SQLCOM_COMMIT;
-            statement::Commit *statement= new statement::Commit(YYSession);
-            Lex->statement= statement;
-            statement->tx_chain= $3;
-            statement->tx_release= $4;
+            Lex->statement= new statement::Commit(YYSession, $3, $4);
           }
         ;
 
 rollback:
           ROLLBACK_SYM opt_work opt_chain opt_release
           {
-            Lex->sql_command= SQLCOM_ROLLBACK;
-            statement::Rollback *statement= new statement::Rollback(YYSession);
-            Lex->statement= statement;
-            statement->tx_chain= $3;
-            statement->tx_release= $4;
+            Lex->statement= new statement::Rollback(YYSession, $3, $4);
           }
         | ROLLBACK_SYM opt_work TO_SYM opt_savepoint savepoint_ident
           {
-            Lex->sql_command= SQLCOM_ROLLBACK_TO_SAVEPOINT;
-            Lex->statement= new statement::RollbackToSavepoint(YYSession);
-            Lex->ident= $5;
+            Lex->statement= new statement::RollbackToSavepoint(YYSession, $5);
           }
         ;
 
 savepoint:
           SAVEPOINT_SYM savepoint_ident
           {
-            Lex->sql_command= SQLCOM_SAVEPOINT;
-            Lex->statement= new statement::Savepoint(YYSession);
-            Lex->ident= $2;
+            Lex->statement= new statement::Savepoint(YYSession, $2);
           }
         ;
 
 release:
           RELEASE_SYM SAVEPOINT_SYM savepoint_ident
           {
-            Lex->sql_command= SQLCOM_RELEASE_SAVEPOINT;
-            Lex->statement= new statement::ReleaseSavepoint(YYSession);
-            Lex->ident= $3;
+            Lex->statement= new statement::ReleaseSavepoint(YYSession, $3);
           }
         ;
 
@@ -5853,8 +5745,7 @@ subselect_start:
           {
             if (not Lex->expr_allows_subselect)
             {
-              parser::error_t pass= { ER(ER_SYNTAX_ERROR), YYSession };
-              parser::my_parse_error(pass);
+              parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
             /*

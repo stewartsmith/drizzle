@@ -31,13 +31,14 @@ namespace drizzled
 namespace statement
 {
 
-CreateIndex::CreateIndex(Session *in_session, Table_ident *ident) :
-    CreateTable(in_session)
-{
-  (void)ident;
-}
-
-}
+CreateIndex::CreateIndex(Session *in_session, const drizzled::ha_build_method method_arg) :
+  CreateTable(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_CREATE_INDEX;
+    alter_info.flags.set(ALTER_ADD_INDEX);
+    alter_info.build_method= method_arg;
+    getSession()->getLex()->col_list.empty();
+  }
 
 bool statement::CreateIndex::execute()
 {
@@ -111,4 +112,5 @@ bool statement::CreateIndex::execute()
   return res;
 }
 
+} /* namespace statement */
 } /* namespace drizzled */

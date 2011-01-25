@@ -33,10 +33,11 @@ namespace statement
 class DropIndex : public Statement
 {
 public:
-  DropIndex(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  DropIndex(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_DROP_INDEX;
+  }
 
   bool execute();
   message::Table create_table_proto;

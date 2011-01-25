@@ -354,7 +354,6 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
 
 bool buildWarnings(Session *session)
 {
-  session->getLex()->sql_command = SQLCOM_SHOW_WARNS;
   session->getLex()->statement= new statement::ShowWarnings(session);
 
   return true;
@@ -362,7 +361,6 @@ bool buildWarnings(Session *session)
 
 bool buildErrors(Session *session)
 {
-  session->getLex()->sql_command = SQLCOM_SHOW_ERRORS;
   session->getLex()->statement= new statement::ShowErrors(session);
 
   return true;

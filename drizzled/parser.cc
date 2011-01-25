@@ -125,8 +125,7 @@ bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct
   }
   if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
   {
-    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(pass);
+    my_parse_error(session->m_lip);
     return true;
   }
   /* This counter shouldn't be incremented for UNION parts */
@@ -153,8 +152,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
   Select_Lex * sel= lex->current_select;
   if (sel->set_braces(1))
   {
-    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(pass);
+    my_parse_error(session->m_lip);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -162,8 +160,7 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
       sel->master_unit()->first_select()->linkage ==
       UNION_TYPE)
   {
-    parser::error_t pass= { ER(ER_SYNTAX_ERROR), session };
-    my_parse_error(pass);
+    my_parse_error(session->m_lip);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -205,15 +202,20 @@ Item* reserved_keyword_function(Session *session, const std::string &name, List<
   a parse error is discovered internally by the Bison generated
   parser.
 */
-void my_parse_error(parser::error_t &arg)
+void my_parse_error(Lex_input_stream *lip)
 {
-  Lex_input_stream *lip= arg.session->m_lip;
+  assert(lip);
 
   const char *yytext= lip->get_tok_start();
   /* Push an error into the error stack */
-  my_printf_error(ER_PARSE_ERROR,  ER(ER_PARSE_ERROR), MYF(0), arg.s,
+  my_printf_error(ER_PARSE_ERROR,  ER(ER_PARSE_ERROR), MYF(0), ER(ER_SYNTAX_ERROR),
                   (yytext ? yytext : ""),
                   lip->yylineno);
+}
+
+void my_parse_error(const char *message)
+{
+  my_printf_error(ER_PARSE_ERROR_UNKNOWN, ER(ER_PARSE_ERROR_UNKNOWN), MYF(0), message);
 }
 
 bool check_reserved_words(LEX_STRING *name)
@@ -227,6 +229,76 @@ bool check_reserved_words(LEX_STRING *name)
 }
 
 
+/**
+  @brief Bison callback to report a syntax/OOM error
+
+  This function is invoked by the bison-generated parser
+  when a syntax error, a parse error or an out-of-memory
+  condition occurs. This function is not invoked when the
+  parser is requested to abort by semantic action code
+  by means of YYABORT or YYACCEPT macros. This is why these
+  macros should not be used (use DRIZZLE_YYABORT/DRIZZLE_YYACCEPT
+  instead).
+
+  The parser will abort immediately after invoking this callback.
+
+  This function is not for use in semantic actions and is internal to
+  the parser, as it performs some pre-return cleanup.
+  In semantic actions, please use parser::my_parse_error or my_error to
+  push an error into the error stack and DRIZZLE_YYABORT
+  to abort from the parser.
+*/
+void errorOn(const char *s)
+{
+  Session *session= current_session;
+
+  /* "parse error" changed into "syntax error" between bison 1.75 and 1.875 */
+  if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
+  {
+    parser::my_parse_error(session->m_lip);
+  }
+  else
+  {
+    parser::my_parse_error(s);
+  }
+}
+
+bool buildOrderBy(Session *session)
+{
+  Select_Lex *sel= session->getLex()->current_select;
+  Select_Lex_Unit *unit= sel-> master_unit();
+
+  if (sel->linkage != GLOBAL_OPTIONS_TYPE &&
+      sel->olap != UNSPECIFIED_OLAP_TYPE &&
+      (sel->linkage != UNION_TYPE || sel->braces))
+  {
+    my_error(ER_WRONG_USAGE, MYF(0),
+             "CUBE/ROLLUP", "ORDER BY");
+    return false;
+  }
+
+  if (session->getLex()->sql_command != SQLCOM_ALTER_TABLE && !unit->fake_select_lex)
+  {
+    /*
+      A query of the of the form (SELECT ...) ORDER BY order_list is
+      executed in the same way as the query
+      SELECT ... ORDER BY order_list
+      unless the SELECT construct contains ORDER BY or LIMIT clauses.
+      Otherwise we create a fake Select_Lex if it has not been created
+      yet.
+    */
+    Select_Lex *first_sl= unit->first_select();
+    if (!unit->is_union() &&
+        (first_sl->order_list.elements ||
+         first_sl->select_limit) &&           
+        unit->add_fake_select_lex(session->getLex()->session))
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 } // namespace parser
 } // namespace drizzled

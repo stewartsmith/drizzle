@@ -39,7 +39,6 @@ namespace module
 class Registry;
 }
 
-extern std::bitset<12> test_flags;
 extern boost::detail::atomic_count connection_count;
 extern const char *load_default_groups[];
 extern bool volatile select_thread_in_use;

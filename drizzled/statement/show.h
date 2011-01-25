@@ -38,11 +38,7 @@ class Show : public Select
   bool if_exists;
 
 public:
-  Show(Session *in_session)
-    :
-      Select(in_session),
-      if_exists(false)
-  {}
+  Show(Session *in_session);
 
   void setShowPredicate(const std::string &schema_arg, const std::string &table_arg)
   {

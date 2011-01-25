@@ -63,6 +63,8 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/catalog/local.h"
 
+#include <drizzled/debug.h>
+
 #include "drizzled/util/backtrace.h"
 
 using namespace drizzled;
@@ -127,8 +129,11 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       session->no_warnings_for_error= false;
       }
     }
-    if (!session || MyFlags & ME_NOREFRESH)
-        errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
+
+    if (not session || MyFlags & ME_NOREFRESH)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
+    }
 }
 
 static void init_signals(void)
@@ -136,8 +141,8 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  if (!(test_flags.test(TEST_NO_STACKTRACE) || 
-        test_flags.test(TEST_CORE_ON_SIGNAL)))
+  if (not (getDebug().test(debug::NO_STACKTRACE) || 
+        getDebug().test(debug::CORE_ON_SIGNAL)))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
     sigemptyset(&sa.sa_mask);
@@ -153,7 +158,7 @@ static void init_signals(void)
     sigaction(SIGFPE, &sa, NULL);
   }
 
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
+  if (getDebug().test(debug::CORE_ON_SIGNAL))
   {
     /* Change limits so that we will get a core file */
     struct rlimit rl;
@@ -184,7 +189,7 @@ static void init_signals(void)
 #ifdef SIGTSTP
   sigaddset(&set,SIGTSTP);
 #endif
-  if (test_flags.test(TEST_SIGINT))
+  if (getDebug().test(debug::ALLOW_SIGINT))
   {
     sa.sa_flags= 0;
     sa.sa_handler= drizzled_end_thread_signal;

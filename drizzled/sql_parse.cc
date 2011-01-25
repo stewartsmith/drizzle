@@ -609,17 +609,20 @@ new_select(LEX *lex, bool move_down)
   Session *session= lex->session;
 
   if (!(select_lex= new (session->mem_root) Select_Lex()))
-    return(1);
+    return true;
+
   select_lex->select_number= ++session->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
   select_lex->init_query();
   select_lex->init_select();
   lex->nest_level++;
+
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
     return(1);
   }
+
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
@@ -647,12 +650,15 @@ new_select(LEX *lex, bool move_down)
     if (lex->current_select->order_list.first && !lex->current_select->braces)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UNION", "order_st BY");
-      return(1);
+      return true;
     }
+
     select_lex->include_neighbour(lex->current_select);
     Select_Lex_Unit *unit= select_lex->master_unit();
-    if (!unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
-      return(1);
+
+    if (not unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
+      return true;
+
     select_lex->context.outer_context=
                 unit->first_select()->context.outer_context;
   }
@@ -665,7 +671,8 @@ new_select(LEX *lex, bool move_down)
     list
   */
   select_lex->context.resolve_in_select_list= true;
-  return(0);
+
+  return false;
 }
 
 /**

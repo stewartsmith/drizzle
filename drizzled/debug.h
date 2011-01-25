@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,33 +18,53 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_ANALYZE_H
-#define DRIZZLED_STATEMENT_ANALYZE_H
+#ifndef DRIZZLED_DEBUG_H
+#define DRIZZLED_DEBUG_H
 
-#include <drizzled/statement.h>
+namespace drizzled {
 
-namespace drizzled
+/* Bits from testflag */
+
+namespace debug {
+enum flag_t
 {
-class Session;
-
-namespace statement
-{
-
-class Analyze : public Statement
-{
-public:
-  Analyze(Session *in_session) :
-    Statement(in_session)
-  {
-    getSession()->getLex()->sql_command= SQLCOM_ANALYZE;
-  }
-
-  bool execute();
-  HA_CHECK_OPT check_opt;			// check/repair options
+  PRINT_CACHED_TABLES= 1,
+  NO_KEY_GROUP,
+  MIT_THREAD,
+  KEEP_TMP_TABLES,
+  READCHECK, /**< Force use of readcheck */
+  NO_EXTRA,
+  CORE_ON_SIGNAL, /**< Give core if signal */
+  NO_STACKTRACE,
+  ALLOW_SIGINT, /**< Allow sigint on threads */
+  SYNCHRONIZATION /**< get server to do sleep in some places */
 };
 
-} /* namespace statement */
+class Flags
+{
+public:
+  typedef std::bitset<12> Options;
+
+  static inline Flags &singleton()
+  {
+    static Flags _singleton;
+
+    return _singleton;
+  }
+
+  inline Options &options()
+  {
+    return _options;
+  }
+
+private:
+  Options _options;
+};
+
+} // namespace debug
+
+debug::Flags::Options &getDebug();
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_ANALYZE_H */
+#endif /* DRIZZLED_DEBUG_H */
