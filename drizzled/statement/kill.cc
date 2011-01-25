@@ -27,6 +27,24 @@
 namespace drizzled
 {
 
+namespace statement
+{
+
+Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
+  Statement(in_session)
+  {
+    if (is_query_kill)
+    {
+      getSession()->getLex()->type= ONLY_KILL_QUERY;
+    }
+
+    getSession()->getLex()->value_list.empty();
+    getSession()->getLex()->value_list.push_front(item);
+    getSession()->getLex()->sql_command= SQLCOM_KILL;
+  }
+
+} // namespace statement
+
 bool statement::Kill::kill(session_id_t id, bool only_kill_query)
 {
   drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id);

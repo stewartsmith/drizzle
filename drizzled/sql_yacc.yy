@@ -4764,14 +4764,7 @@ opt_table_list:
 kill:
           KILL_SYM kill_option expr
           {
-            if ($2)
-            {
-              Lex->type= ONLY_KILL_QUERY;
-            }
-
-            Lex->value_list.empty();
-            Lex->value_list.push_front($3);
-            Lex->statement= new statement::Kill(YYSession);
+            Lex->statement= new statement::Kill(YYSession, $3, $2);
           }
         ;
 
@@ -5151,10 +5144,8 @@ simple_ident_q:
             }
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), $1.str, $3.str,
-                                       $5.str) :
-                (Item*) new Item_ref(Lex->current_context(), $1.str, $3.str,
-                                     $5.str);
+                (Item*) new Item_field(Lex->current_context(), $1.str, $3.str, $5.str) :
+                (Item*) new Item_ref(Lex->current_context(), $1.str, $3.str, $5.str);
           }
         ;
 
