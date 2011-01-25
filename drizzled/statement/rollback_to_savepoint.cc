@@ -88,7 +88,7 @@ bool statement::RollbackToSavepoint::execute()
                      first_savepoint_name.size()) == 0)
     {
       /* Found the named savepoint we want to rollback to */
-      (void) transaction_services.rollbackToSavepoint(getSession(), first_savepoint);
+      (void) transaction_services.rollbackToSavepoint(*getSession(), first_savepoint);
 
       if (getSession()->transaction.all.hasModifiedNonTransData())
       {
@@ -126,7 +126,7 @@ bool statement::RollbackToSavepoint::execute()
       /* Found the named savepoint we want to rollback to */
       found= true;
 
-      (void) transaction_services.rollbackToSavepoint(getSession(), sv);
+      (void) transaction_services.rollbackToSavepoint(*getSession(), sv);
     }
     if (found)
     {

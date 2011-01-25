@@ -17,6 +17,7 @@
 
 #define DRIZZLE_LEX 1
 
+#include "drizzled/item/num.h"
 #include "drizzled/abort_exception.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
@@ -258,7 +259,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.autocommitOrRollback(session, session->is_error());
+  transaction_services.autocommitOrRollback(*session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();

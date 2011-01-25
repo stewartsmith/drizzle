@@ -59,7 +59,7 @@ bool statement::ReleaseSavepoint::execute()
   if (iter != savepoints.end())
   {
     NamedSavepoint &sv= *iter;
-    (void) transaction_services.releaseSavepoint(getSession(), sv);
+    (void) transaction_services.releaseSavepoint(*getSession(), sv);
     savepoints.erase(iter);
     getSession()->my_ok();
   }

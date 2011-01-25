@@ -131,7 +131,7 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
     }
     else // Created !
     {
-      transaction_services.createSchema(session, schema_message);
+      transaction_services.createSchema(*session, schema_message);
       session->my_ok(1);
     }
   }
@@ -180,7 +180,7 @@ bool alter_db(Session *session,
 
     if (success)
     {
-      transaction_services.alterSchema(session, original_schema, schema_message);
+      transaction_services.alterSchema(*session, original_schema, schema_message);
       session->my_ok(1);
     }
     else

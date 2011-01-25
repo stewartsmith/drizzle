@@ -674,7 +674,6 @@ sub command_line_setup () {
           next if $elem eq "..";
           next if $elem eq "big"; # Eats up too much disk
           next if $elem eq "large_tests"; # Eats up too much disk
-          next if $elem eq "execute"; # Eats up a lot of CPU
           next if $elem eq "stress"; # Currently fails
           next if $elem eq "broken"; # Old broken test, mainly unsupported featurs
 
