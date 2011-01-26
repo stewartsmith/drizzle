@@ -340,13 +340,13 @@ INSERT INTO t1 (b) VALUES('9999-12-31');
 --echo
 
 --echo Testing MIN-1 DATE
---ERROR 1686 
+--ERROR ER_INVALID_DATE_VALUE 
 INSERT INTO t1 (b) VALUES('0000-12-31');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing MAX+1 DATE
---ERROR 1686 
+--ERROR ER_INVALID_DATE_VALUE 
 INSERT INTO t1 (b) VALUES('10000-01-01');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -367,13 +367,13 @@ INSERT INTO t1 (b) VALUES(NULL);
 --echo
 
 --echo Testing BAD INPUT DATE1
---ERROR 1686
+--ERROR ER_INVALID_DATE_VALUE
 INSERT INTO t1 (b) VALUES('abbazabba');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT DATE2
---ERROR 1686 
+--ERROR ER_INVALID_DATE_VALUE 
 INSERT INTO t1 (b) VALUES('a');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -402,13 +402,13 @@ INSERT INTO t1 (b) VALUES('9999-12-31 23:59:59');
 --echo
 
 --echo Testing MIN-1 DATETIME
---ERROR 1686 
+--ERROR ER_INVALID_DATETIME_VALUE 
 INSERT INTO t1 (b) VALUES('0000-01-01');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing MAX+1 DATETIME
---ERROR 1686 
+--ERROR ER_INVALID_DATETIME_VALUE 
 INSERT INTO t1 (b) VALUES('10000-01-01');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -429,19 +429,19 @@ INSERT INTO t1 (b) VALUES(NULL);
 --echo
 
 --echo Testing BAD INPUT DATETIME1
---ERROR 1686
+--ERROR ER_INVALID_DATETIME_VALUE
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT DATETIME2
---ERROR 1686 
+--ERROR ER_INVALID_DATETIME_VALUE 
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT DATETIME3
---ERROR 1686 
+--ERROR ER_INVALID_DATETIME_VALUE 
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:70');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo

@@ -2356,7 +2356,7 @@ end_segment: true
 
 Testing MIN-1 DATE
 INSERT INTO t1 (b) VALUES('0000-12-31');
-ERROR HY000: Received an invalid datetime value '0000-12-31'.
+ERROR HY000: Received an invalid DATE value '0000-12-31'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2411,7 +2411,7 @@ end_segment: true
 
 Testing MAX+1 DATE
 INSERT INTO t1 (b) VALUES('10000-01-01');
-ERROR HY000: Received an invalid datetime value '10000-01-01'.
+ERROR HY000: Received an invalid DATE value '10000-01-01'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2628,7 +2628,7 @@ end_segment: true
 
 Testing BAD INPUT DATE1
 INSERT INTO t1 (b) VALUES('abbazabba');
-ERROR HY000: Received an invalid datetime value 'abbazabba'.
+ERROR HY000: Received an invalid DATE value 'abbazabba'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2683,7 +2683,7 @@ end_segment: true
 
 Testing BAD INPUT DATE2
 INSERT INTO t1 (b) VALUES('a');
-ERROR HY000: Received an invalid datetime value 'a'.
+ERROR HY000: Received an invalid DATE value 'a'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)

@@ -112,10 +112,10 @@ select @d:=1311;
 @d:=1311
 1311
 select year(@d), month(@d), day(@d), cast(@d as date);
-ERROR HY000: Received an invalid datetime value '1311'.
+Got one of the listed errors
 create table t1 (d  date , dt datetime , ts timestamp);
 insert into t1 values (9912101,9912101,9912101);
-ERROR HY000: Received an invalid datetime value '9912101'.
+ERROR HY000: Received an invalid DATE value '9912101'.
 insert into t1 values (11111,11111,11111);
 select * from t1;
 d	dt	ts
