@@ -35,6 +35,7 @@ class testExecutor():
         self.status = 0 # not running
         self.execution_manager = execution_manager
         self.system_manager = self.execution_manager.system_manager
+        self.cmd_prefix = self.system_manager.cmd_prefix
         self.logging = self.system_manager.logging
         self.test_manager = self.execution_manager.test_manager
         self.server_manager = self.execution_manager.server_manager

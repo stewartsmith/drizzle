@@ -42,6 +42,12 @@ class drizzleServer():
         self.server_manager.log_server(self, requester)
 
         self.system_manager = self.server_manager.system_manager
+        self.valgrind = self.system_manager.valgrind
+        if self.valgrind:
+            self.valgrind_time_buffer = 10
+        else:
+            self.valgrind_time_buffer = 0
+        self.cmd_prefix = self.system_manager.cmd_prefix
         self.logging = self.system_manager.logging
         self.no_secure_file_priv = self.server_manager.no_secure_file_priv
         self.code_tree = self.system_manager.code_tree
@@ -50,7 +56,7 @@ class drizzleServer():
         self.status = 0 # stopped, 1 = running
         self.tried_start = 0
         self.failed_test = 0 # was the last test a failure?  our state is suspect
-        self.server_start_timeout = 60
+        self.server_start_timeout = 60 * self.valgrind_time_buffer
 
         # Get our ports
         self.port_block = self.system_manager.port_manager.get_port_block( self.name
@@ -138,7 +144,8 @@ class drizzleServer():
         """
         if self.verbose:
             self.logging.verbose("Starting server: %s.%s" %(self.owner, self.name))
-        start_cmd = "%s %s --mysql-protocol.port=%d --mysql-protocol.connect-timeout=60 --mysql-unix-socket-protocol.path=%s --pid-file=%s --drizzle-protocol.port=%d --datadir=%s --tmpdir=%s --innodb.data-file-path=ibdata1:20M:autoextend --sort-buffer-size=256K --max-heap-table-size=1M %s %s > %s 2>&1 & " % ( self.server_path
+        start_cmd = "%s %s %s --mysql-protocol.port=%d --mysql-protocol.connect-timeout=60 --mysql-unix-socket-protocol.path=%s --pid-file=%s --drizzle-protocol.port=%d --datadir=%s --tmpdir=%s --innodb.data-file-path=ibdata1:20M:autoextend --sort-buffer-size=256K --max-heap-table-size=1M %s %s > %s 2>&1 & " % ( self.cmd_prefix
+                                               , self.server_path
                                                , self.process_server_options()
                                                , self.master_port
                                                , self.socket_file

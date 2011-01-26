@@ -77,7 +77,9 @@ class dtrTestExecutor(test_execution.testExecutor):
         if self.record_flag:
             # We want to record a new result
             drizzletest_arguments.append('--record')
-        drizzletest_cmd = "%s %s" %(self.system_manager.code_tree.drizzletest, " ".join(drizzletest_arguments))
+        drizzletest_cmd = "%s %s %s" %( self.cmd_prefix
+                                      , self.system_manager.code_tree.drizzletest
+                                      , " ".join(drizzletest_arguments))
         return drizzletest_cmd
 
     def execute_drizzletest(self, drizzletest_cmd):

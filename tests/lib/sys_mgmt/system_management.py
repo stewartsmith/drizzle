@@ -52,9 +52,14 @@ class systemManager:
         self.symlink_name = 'dtr_work_sym'
         self.workdir = variables['workdir']
         self.start_dirty = variables['startdirty']
+        self.valgrind = variables['valgrind']
+
+        # we use this to preface commands in order to run valgrind and such
+        self.cmd_prefix = '' 
         
         self.port_manager = portManager(self,variables['debug'])
         self.time_manager = timeManager(self)
+       
             
         # Make sure the tree we are testing looks good
         self.code_tree = self.get_code_tree(variables, tree_type)
@@ -82,6 +87,14 @@ class systemManager:
 
         # initialize our workdir
         self.process_workdir()
+
+        # check for libtool
+        self.libtool = self.libtool_check()
+
+        # do we need to setup for valgrind?
+        if self.valgrind:
+            self.handle_valgrind_reqs(variables['valgrindarglist'])
+            
 
         if self.debug:
             self.logging.debug_class(self)
@@ -321,7 +334,7 @@ class systemManager:
                 new_var_values = [ cur_var_value, append_string ]
             else:
                 new_var_values = [ append_string, cur_var_value ]
-            new_var_value = delimiter.join(new_var_values)
+            new_var_value = self.env_var_delimiter.join(new_var_values)
         else:
             # No existing variable value
             new_var_value = append_string
@@ -366,6 +379,58 @@ class systemManager:
             self.logging.error("%s" %(output))
             sys.exit(1)
         return retcode, output
+
+    def libtool_check(self):
+        """ We search for libtool """
+        libtool_path = '../libtool'
+        if os.path.exists(libtool_path) and os.access( libtool_path
+                                                     , os.X_OK):
+            self.logging.info("Using libtool when running valgrind or debugger")
+            return libtool_path
+        else:
+            return None
+
+    def handle_valgrind_reqs(self, optional_args, mode='valgrind'):
+        """ We do what voodoo we need to do to run valgrind """
+        valgrind_args = [ "--show-reachable=yes"
+                        , "--malloc-fill=0xDEADBEEF"
+                        , "--free-fill=0xDEADBEEF"
+                        # , "--trace-children=yes" this is for callgrind only
+                        ]
+        if optional_args:
+        # we override the defaults with user-specified options
+            valgrind_args = optional_args
+        self.logging.info("Running valgrind with options: %s" %(" ".join(valgrind_args)))
+
+        # set our environment variable
+        self.set_env_var('VALGRIND_RUN', '1', quiet=0)
+
+        # generate command prefix to call valgrind
+        cmd_prefix = ''
+        if self.libtool:
+            cmd_prefix = "%s --mode=execute valgrind " %(self.libtool)
+        if mode == 'valgrind':
+            # default mode
+
+            args = [ "--tool=memcheck"
+                   , "--leak-check=yes"
+                   , "--num-callers=16" 
+                   ]
+            # look for our suppressions file and add it to the mix if found
+            suppress_file = os.path.join(self.code_tree.testdir,'valgrind.supp')
+            if os.path.exists(suppress_file):
+                args = args + [ "--suppressions=%s" %(suppress_file) ]
+
+            cmd_prefix = cmd_prefix + " ".join(args + valgrind_args)
+        self.cmd_prefix = cmd_prefix  
+        
+        # add debug libraries to ld_library_path
+        debug_path = '/usr/lib/debug'
+        if os.path.exists(debug_path):
+            self.append_env_var("LD_LIBRARY_PATH", debug_path, suffix=1)
+            self.append_env_var("DYLD_LIBRARY_PATH", debug_path, suffix=1)
+    
+
 
  
         
