@@ -474,7 +474,8 @@ bool sys_var_uint32_t_ptr::check(Session *, set_var *var)
 bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
 {
   uint64_t tmp= var->getInteger();
-  LOCK_global_system_variables.lock();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+
   if (option_limits)
   {
     uint32_t newvalue= (uint32_t) fix_unsigned(session, tmp, option_limits);
@@ -482,26 +483,28 @@ bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
       *value= newvalue;
   }
   else
+  {
     *value= static_cast<uint32_t>(tmp);
-  LOCK_global_system_variables.unlock();
+  }
+
   return 0;
 }
 
 
-void sys_var_uint32_t_ptr::set_default(Session *, sql_var_t)
+void sys_var_uint32_t_ptr::set_default(Session *session, sql_var_t)
 {
   bool not_used;
-  LOCK_global_system_variables.lock();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
   *value= (uint32_t)getopt_ull_limit_value((uint32_t) option_limits->def_value,
                                            option_limits, &not_used);
-  LOCK_global_system_variables.unlock();
 }
 
 
 bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
 {
   uint64_t tmp= var->getInteger();
-  LOCK_global_system_variables.lock();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+
   if (option_limits)
   {
     uint64_t newvalue= fix_unsigned(session, tmp, option_limits);
@@ -509,13 +512,15 @@ bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
       *value= newvalue;
   }
   else
+  {
     *value= tmp;
-  LOCK_global_system_variables.unlock();
+  }
+
   return 0;
 }
 
 
-void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
+void sys_var_uint64_t_ptr::set_default(Session *session, sql_var_t)
 {
   if (have_default_value)
   {
@@ -524,10 +529,9 @@ void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
   else
   {
     bool not_used;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
                                    option_limits, &not_used);
-    LOCK_global_system_variables.unlock();
   }
 }
 
@@ -535,23 +539,24 @@ void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
 bool sys_var_size_t_ptr::update(Session *session, set_var *var)
 {
   size_t tmp= size_t(var->getInteger());
-  LOCK_global_system_variables.lock();
+
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+
   if (option_limits)
     *value= fix_size_t(session, tmp, option_limits);
   else
     *value= tmp;
-  LOCK_global_system_variables.unlock();
+
   return 0;
 }
 
 
-void sys_var_size_t_ptr::set_default(Session *, sql_var_t)
+void sys_var_size_t_ptr::set_default(Session *session, sql_var_t)
 {
   bool not_used;
-  LOCK_global_system_variables.lock();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
   *value= (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
                                          option_limits, &not_used);
-  LOCK_global_system_variables.unlock();
 }
 
 bool sys_var_bool_ptr::update(Session *, set_var *var)
@@ -642,12 +647,14 @@ bool sys_var_session_ha_rows::update(Session *session, set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset= (ha_rows) tmp;
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= (ha_rows) tmp;
+  }
+
   return 0;
 }
 
@@ -658,14 +665,15 @@ void sys_var_session_ha_rows::set_default(Session *session, sql_var_t type)
   {
     bool not_used;
     /* We will not come here if option_limits is not set */
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
       (ha_rows) getopt_ull_limit_value((ha_rows) option_limits->def_value,
                                        option_limits, &not_used);
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= global_system_variables.*offset;
+  }
 }
 
 
@@ -699,12 +707,14 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset= (uint64_t) tmp;
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= (uint64_t) tmp;
+  }
+
   return 0;
 }
 
@@ -714,14 +724,15 @@ void sys_var_session_uint64_t::set_default(Session *session, sql_var_t type)
   if (type == OPT_GLOBAL)
   {
     bool not_used;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
       getopt_ull_limit_value((uint64_t) option_limits->def_value,
                              option_limits, &not_used);
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= global_system_variables.*offset;
+  }
 }
 
 
@@ -752,12 +763,14 @@ bool sys_var_session_size_t::update(Session *session,  set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset= tmp;
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= tmp;
+  }
+
   return 0;
 }
 
@@ -767,14 +780,15 @@ void sys_var_session_size_t::set_default(Session *session, sql_var_t type)
   if (type == OPT_GLOBAL)
   {
     bool not_used;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
       (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
                                      option_limits, &not_used);
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= global_system_variables.*offset;
+  }
 }
 
 
@@ -794,6 +808,7 @@ bool sys_var_session_bool::update(Session *session,  set_var *var)
     global_system_variables.*offset= bool(var->getInteger());
   else
     session->variables.*offset= bool(var->getInteger());
+
   return 0;
 }
 
@@ -886,56 +901,57 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
   case SHOW_INT:
   {
     uint32_t value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(uint*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+
     return new Item_uint((uint64_t) value);
   }
   case SHOW_LONGLONG:
   {
     int64_t value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(int64_t*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+
     return new Item_int(value);
   }
   case SHOW_DOUBLE:
   {
     double value;
-    LOCK_global_system_variables.lock();
-    value= *(double*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+    {
+      boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+      value= *(double*) value_ptr(session, var_type, base);
+    }
+
     /* 6, as this is for now only used with microseconds */
     return new Item_float(value, 6);
   }
   case SHOW_HA_ROWS:
   {
     ha_rows value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(ha_rows*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+
     return new Item_int((uint64_t) value);
   }
   case SHOW_SIZE:
   {
     size_t value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(size_t*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+
     return new Item_int((uint64_t) value);
   }
   case SHOW_MY_BOOL:
   {
     int32_t value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(bool*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
     return new Item_int(value,1);
   }
   case SHOW_CHAR_PTR:
   {
     Item *tmp;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     char *str= *(char**) value_ptr(session, var_type, base);
     if (str)
     {
@@ -948,13 +964,13 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
       tmp= new Item_null();
       tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     }
-    LOCK_global_system_variables.unlock();
+
     return tmp;
   }
   case SHOW_CHAR:
   {
     Item *tmp;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     char *str= (char*) value_ptr(session, var_type, base);
     if (str)
       tmp= new Item_string(str, strlen(str),
@@ -964,7 +980,7 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
       tmp= new Item_null();
       tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     }
-    LOCK_global_system_variables.unlock();
+
     return tmp;
   }
   default:
@@ -1150,12 +1166,14 @@ bool sys_var_session_time_zone::update(Session *session, set_var *var)
   /* We are using Time_zone object found during check() phase. */
   if (var->type == OPT_GLOBAL)
   {
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.time_zone= tmp;
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.time_zone= tmp;
+  }
+
   return 0;
 }
 
@@ -1187,24 +1205,23 @@ unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
 
 void sys_var_session_time_zone::set_default(Session *session, sql_var_t type)
 {
- LOCK_global_system_variables.lock();
- if (type == OPT_GLOBAL)
- {
-   if (default_tz_name)
-   {
-     String str(default_tz_name, &my_charset_utf8_general_ci);
-     /*
-       We are guaranteed to find this time zone since its existence
-       is checked during start-up.
-     */
-     global_system_variables.time_zone= my_tz_find(session, &str);
-   }
-   else
-     global_system_variables.time_zone= my_tz_SYSTEM;
- }
- else
-   session->variables.time_zone= global_system_variables.time_zone;
- LOCK_global_system_variables.unlock();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+  if (type == OPT_GLOBAL)
+  {
+    if (default_tz_name)
+    {
+      String str(default_tz_name, &my_charset_utf8_general_ci);
+      /*
+        We are guaranteed to find this time zone since its existence
+        is checked during start-up.
+      */
+      global_system_variables.time_zone= my_tz_find(session, &str);
+    }
+    else
+      global_system_variables.time_zone= my_tz_SYSTEM;
+  }
+  else
+    session->variables.time_zone= global_system_variables.time_zone;
 }
 
 
@@ -1287,9 +1304,8 @@ bool sys_var_microseconds::update(Session *session, set_var *var)
   microseconds= (int64_t) (num * 1000000.0 + 0.5);
   if (var->type == OPT_GLOBAL)
   {
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     (global_system_variables.*offset)= microseconds;
-    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= microseconds;
@@ -1302,9 +1318,8 @@ void sys_var_microseconds::set_default(Session *session, sql_var_t type)
   int64_t microseconds= (int64_t) (option_limits->def_value * 1000000.0);
   if (type == OPT_GLOBAL)
   {
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset= microseconds;
-    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= microseconds;

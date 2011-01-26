@@ -41,6 +41,7 @@ class Instance
   drizzled::session_id_t _lock_id;
   message::catalog::shared_ptr _message;
   mutable boost::mutex _schema_lock;
+  mutable boost::mutex _system_variable_lock;
 
 
 public:
@@ -129,6 +130,11 @@ public:
   boost::mutex &schemaLock()
   {
     return _schema_lock;
+  }
+
+  boost::mutex &systemVariableLock()
+  {
+    return _system_variable_lock;
   }
 };
 
