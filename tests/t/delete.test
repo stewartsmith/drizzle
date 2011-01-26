@@ -109,7 +109,7 @@ select * from t12;
 select * from t11;
 --sorted_result
 select * from t12;
--- error 1242
+--error ER_SUBQUERY_NO_1_ROW
 delete from t11 where t11.b <> (select b from t2 where t11.a < t2.a);
 select * from t11;
 
