@@ -1442,11 +1442,6 @@ public:
   }
   void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
-  inline bool really_abort_on_warning()
-  {
-    return abort_on_warning;
-  }
-
   inline bool abortOnWarning()
   {
     return abort_on_warning;

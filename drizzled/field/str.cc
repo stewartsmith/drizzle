@@ -137,7 +137,7 @@ int Field_str::store(double nr)
   length= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
   {
-    if (getTable()->getSession()->really_abort_on_warning())
+    if (getTable()->getSession()->abortOnWarning())
     {
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
     }
@@ -199,7 +199,7 @@ bool check_string_copy_error(Field_str *field,
   }
   *t= '\0';
   push_warning_printf(field->getTable()->in_use,
-                      field->getTable()->in_use->really_abort_on_warning() ?
+                      field->getTable()->in_use->abortOnWarning() ?
                       DRIZZLE_ERROR::WARN_LEVEL_ERROR :
                       DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,

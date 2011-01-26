@@ -1207,7 +1207,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 {
   Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
 
-  if ((session->really_abort_on_warning() &&
+  if ((session->abortOnWarning() and
        level >= DRIZZLE_ERROR::WARN_LEVEL_WARN) ||
       set_warning(level, code, cuted_increment))
     make_truncated_value_warning(session, level, str, str_length, ts_type,
@@ -1222,7 +1222,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 {
   Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
 
-  if (session->really_abort_on_warning() ||
+  if (session->abortOnWarning() or
       set_warning(level, code, cuted_increment))
   {
     char str_nr[22];
@@ -1239,7 +1239,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 {
   Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
 
-  if (session->really_abort_on_warning() ||
+  if (session->abortOnWarning() or
       set_warning(level, code, 1))
   {
     /* DBL_DIG is enough to print '-[digits].E+###' */
