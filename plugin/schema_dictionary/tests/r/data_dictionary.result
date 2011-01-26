@@ -10,8 +10,8 @@ count(*)
 0
 SELECT SCHEMA_NAME  FROM schemas ORDER BY SCHEMA_NAME;
 SCHEMA_NAME
-data_dictionary
-information_schema
+DATA_DICTIONARY
+INFORMATION_SCHEMA
 mysql
 test
 SELECT COLUMN_NAME  FROM columns;

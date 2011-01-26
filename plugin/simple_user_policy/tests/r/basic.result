@@ -2,8 +2,8 @@ create schema user1;
 create schema user2;
 SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
 SCHEMA_NAME
-data_dictionary
-information_schema
+DATA_DICTIONARY
+INFORMATION_SCHEMA
 mysql
 test
 user1
@@ -15,8 +15,8 @@ SELECT * from user1.dont_exist;
 ERROR 42S02: Table 'user1.dont_exist' doesn't exist
 SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
 SCHEMA_NAME
-data_dictionary
-information_schema
+DATA_DICTIONARY
+INFORMATION_SCHEMA
 user1
 SELECT * from user2.dont_exist;
 ERROR 42000: Access denied for user 'user1'@'LOCALHOST' to schema 'user2'

@@ -41,10 +41,10 @@ Function::Function(const std::string &name_arg) :
   data_dictionary_message(new(message::Schema))
 
 {
-  information_message->set_name("information_schema");
+  information_message->set_name(INFORMATION_SCHEMA_IDENTIFIER.getSchemaName());
   data_dictionary_message->set_collation("utf8_general_ci");
 
-  data_dictionary_message->set_name("data_dictionary");
+  data_dictionary_message->set_name(DATA_DICTIONARY_IDENTIFIER.getSchemaName());
   data_dictionary_message->set_collation("utf8_general_ci");
 }
 
