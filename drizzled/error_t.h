@@ -860,6 +860,7 @@ enum error_t {
 
   ER_PARSE_ERROR_UNKNOWN,
   ER_INVALID_CAST_TO_BOOLEAN,
+  ER_INVALID_TIME_VALUE,
   ER_TRANSACTIONAL_DDL_NOT_SUPPORTED,
   // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags
   // instead of numbers in error messages in test.
