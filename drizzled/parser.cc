@@ -363,7 +363,7 @@ Item *buildIdent(LEX *lex,
   if (table_name.length and sel->no_table_names_allowed)
   {
     my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-             MYF(0), table_name.str, lex->session->where);
+             MYF(0), table_name.str, lex->session->where());
   }
 
   Item *item= (sel->parsing_place != IN_HAVING or

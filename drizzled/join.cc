@@ -213,7 +213,7 @@ int Join::prepare(Item ***rref_pointer_array,
   if (having)
   {
     nesting_map save_allow_sum_func= session->lex->allow_sum_func;
-    session->where="having clause";
+    session->setWhere("having clause");
     session->lex->allow_sum_func|= 1 << select_lex_arg->nest_level;
     select_lex->having_fix_field= 1;
     bool having_fix_rc= (!having->fixed &&

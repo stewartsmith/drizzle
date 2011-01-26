@@ -5596,12 +5596,12 @@ union_order_or_limit:
               fake->no_table_names_allowed= 1;
               Lex->current_select= fake;
             }
-            YYSession->where= "global ORDER clause";
+            YYSession->setWhere("global ORDER clause");
           }
           order_or_limit
           {
             YYSession->lex->current_select->no_table_names_allowed= 0;
-            YYSession->where= "";
+            YYSession->setWhere("");
           }
         ;
 

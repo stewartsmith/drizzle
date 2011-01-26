@@ -623,12 +623,24 @@ public:
    */
   bool isViewable(identifier::User::const_reference) const;
 
+private:
   /**
     Used in error messages to tell user in what part of MySQL we found an
     error. E. g. when where= "having clause", if fix_fields() fails, user
     will know that the error was in having clause.
   */
-  const char *where;
+  const char *_where;
+
+public:
+  const char *where()
+  {
+    return _where;
+  }
+
+  void setWhere(const char *arg)
+  {
+    _where= arg;
+  }
 
   /*
     One thread can hold up to one named user-level lock. This variable
@@ -636,6 +648,7 @@ public:
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
+
 private:
   boost::thread::id boost_thread_id;
   boost_thread_shared_ptr _thread;

@@ -957,7 +957,7 @@ static Item** find_field_in_group_list(Item *find_item, Order *group_list)
           best match, they must reference the same column, otherwise the field
           is ambiguous.
         */
-        my_error(ER_NON_UNIQ_ERROR, MYF(0), find_item->full_name(), current_session->where);
+        my_error(ER_NON_UNIQ_ERROR, MYF(0), find_item->full_name(), current_session->where());
         return NULL;
       }
     }
@@ -1002,7 +1002,7 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
       ambiguous_fields= true;
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR), ref->full_name(),
-                          current_session->where);
+                          session->where());
 
     }
   }
