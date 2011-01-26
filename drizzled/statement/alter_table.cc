@@ -1480,7 +1480,7 @@ copy_data_between_tables(Session *session,
   alter_table_manage_keys(session, to, from->cursor->indexes_are_disabled(), keys_onoff);
 
   /* We can abort alter table for any table type */
-  session->abort_on_warning= !ignore;
+  session->setAbortOnWarning(not ignore);
 
   from->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
   to->cursor->ha_start_bulk_insert(from->cursor->stats.records);
@@ -1644,7 +1644,7 @@ copy_data_between_tables(Session *session,
 
   } while (0);
 
-  session->abort_on_warning= 0;
+  session->setAbortOnWarning(false);
   from->free_io_cache();
   *copied= found_count;
   *deleted=delete_count;

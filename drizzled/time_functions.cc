@@ -124,14 +124,14 @@ void get_date_from_daynr(long daynr,
 }
 
 
-type::timestamp_t str_to_datetime_with_warn(const char *str, 
+type::timestamp_t str_to_datetime_with_warn(Session *session,
+                                            const char *str, 
                                             uint32_t length, 
                                             type::Time *l_time,
                                             uint32_t flags)
 {
   type::cut_t was_cut= type::VALID;
   type::timestamp_t ts_type;
-  Session *session= current_session;
 
   ts_type= l_time->store(str, length,
                          (flags | (session->variables.sql_mode &

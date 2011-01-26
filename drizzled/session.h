@@ -1014,7 +1014,10 @@ public:
   bool substitute_null_with_insert_id;
   bool cleanup_done;
 
+private:
   bool abort_on_warning;
+
+public:
   bool got_warning; /**< Set on call to push_warning() */
   bool no_warnings_for_error; /**< no warnings on call to my_error() */
   /** set during loop of derived table processing */
@@ -1439,9 +1442,14 @@ public:
   }
   void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
-  inline bool really_abort_on_warning()
+  inline bool abortOnWarning()
   {
-    return (abort_on_warning);
+    return abort_on_warning;
+  }
+
+  inline void setAbortOnWarning(bool arg)
+  {
+    abort_on_warning= arg;
   }
 
   void setAbort(bool arg);
