@@ -143,6 +143,7 @@ bool checkFieldIdent(Session *session, const LEX_STRING &schema_name, const LEX_
 
 Item *buildIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name, const LEX_STRING &field_name);
 Item *buildIdent(Session *session, const LEX_STRING &field_name);
+Item *buildTableWild(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name);
 
 } // namespace parser
 } // namespace drizzled

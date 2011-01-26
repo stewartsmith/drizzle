@@ -647,7 +647,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, unsigned long *yystacksize);
         table_wild simple_expr udf_expr
         expr_or_default set_expr_or_default
         signed_literal now_or_signed_literal opt_escape
-        simple_ident_nospvar simple_ident_q
+        simple_ident_q
         field_or_var limit_option
         function_call_keyword
         function_call_nonkeyword
@@ -2727,7 +2727,7 @@ simple_expr:
             $$= new (YYSession->mem_root) Item_default_value(Lex->current_context(),
                                                          $3);
           }
-        | VALUES '(' simple_ident_nospvar ')'
+        | VALUES '(' simple_ident ')'
           {
             $$= new (YYSession->mem_root) Item_insert_value(Lex->current_context(),
                                                         $3);
@@ -3978,7 +3978,7 @@ alter_order_list:
         ;
 
 alter_order_item:
-          simple_ident_nospvar order_dir
+          simple_ident order_dir
           {
             bool ascending= ($2 == 1) ? true : false;
             if (YYSession->add_order_to_list($1, ascending))
@@ -4354,7 +4354,7 @@ ident_eq_list:
         ;
 
 ident_eq_value:
-          simple_ident_nospvar equal expr_or_default
+          simple_ident equal expr_or_default
           {
             if (Lex->field_list.push_back($1) ||
                 Lex->insert_list->push_back($3))
@@ -4451,7 +4451,7 @@ update_list:
         ;
 
 update_elem:
-          simple_ident_nospvar equal expr_or_default
+          simple_ident equal expr_or_default
           {
             if (YYSession->add_item_to_list($1) || YYSession->add_value_to_list($3))
               DRIZZLE_YYABORT;
@@ -4464,7 +4464,7 @@ insert_update_list:
         ;
 
 insert_update_elem:
-          simple_ident_nospvar equal expr_or_default
+          simple_ident equal expr_or_default
           {
           if (Lex->update_list.push_back($1) ||
               Lex->value_list.push_back($3))
@@ -4908,7 +4908,7 @@ fields_or_vars:
         ;
 
 field_or_var:
-          simple_ident_nospvar {$$= $1;}
+          simple_ident {$$= $1;}
         | '@' user_variable_ident
           { $$= new Item_user_var_as_out_param($2); }
         ;
@@ -5023,22 +5023,18 @@ NUM_literal:
 **********************************************************************/
 
 insert_ident:
-          simple_ident_nospvar { $$=$1; }
+          simple_ident { $$=$1; }
         | table_wild { $$=$1; }
         ;
 
 table_wild:
           ident '.' '*'
           {
-            Select_Lex *sel= Lex->current_select;
-            $$ = new Item_field(Lex->current_context(), NULL, $1.str, "*");
-            sel->with_wild++;
+            $$= parser::buildTableWild(YYSession, NULL_LEX_STRING, $1);
           }
         | ident '.' ident '.' '*'
           {
-            Select_Lex *sel= Lex->current_select;
-            $$ = new Item_field(Lex->current_context(), $1.str, $3.str,"*");
-            sel->with_wild++;
+            $$= parser::buildTableWild(YYSession, $1, $3);
           }
         ;
 
@@ -5047,14 +5043,6 @@ order_ident:
         ;
 
 simple_ident:
-          ident
-          {
-            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, NULL_LEX_STRING, $1);
-          }
-        | simple_ident_q { $$= $1; }
-        ;
-
-simple_ident_nospvar:
           ident
           {
             $$= parser::buildIdent(YYSession, NULL_LEX_STRING, NULL_LEX_STRING, $1);

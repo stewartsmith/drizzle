@@ -374,5 +374,14 @@ Item *buildIdent(Session *session,
   return item;
 }
 
+Item *buildTableWild(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name)
+{
+  Select_Lex *sel= session->getLex()->current_select;
+  Item *item= new Item_field(session->getLex()->current_context(), schema_name.str, table_name.str, "*");
+  sel->with_wild++;
+
+  return item;
+}
+
 } // namespace parser
 } // namespace drizzled
