@@ -5105,7 +5105,7 @@ field_ident:
           }
         | ident '.' ident
           {
-            if (not parser::checkFieldIdent(YYSession, $1))
+            if (not parser::checkFieldIdent(YYSession, NULL_LEX_STRING, $1))
               DRIZZLE_YYABORT;
 
             $$=$3;
