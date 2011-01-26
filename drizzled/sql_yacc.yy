@@ -1498,8 +1498,12 @@ opt_zerofill:
         ;
 
 opt_precision:
-          /* empty */ {}
-        | precision {}
+          /* empty */
+          { Lex->dec=Lex->length= (char*)0; }
+        | '(' NUM ')'
+          { Lex->length=Lex->dec= (char*)0; }
+        | precision
+          {}
         ;
 
 opt_attribute:
