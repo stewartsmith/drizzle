@@ -142,6 +142,7 @@ void buildSchemaOption(Session *session, const char *key, uint64_t value);
 bool checkFieldIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name);
 
 Item *buildIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name, const LEX_STRING &field_name);
+Item *buildIdent(Session *session, const LEX_STRING &field_name);
 
 } // namespace parser
 } // namespace drizzled

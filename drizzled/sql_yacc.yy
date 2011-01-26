@@ -5049,15 +5049,7 @@ order_ident:
 simple_ident:
           ident
           {
-            {
-              Select_Lex *sel=Lex->current_select;
-              $$= (sel->parsing_place != IN_HAVING ||
-                  sel->get_in_sum_expr() > 0) ?
-                  (Item*) new Item_field(Lex->current_context(),
-                                         (const char *)NULL, NULL, $1.str) :
-                  (Item*) new Item_ref(Lex->current_context(),
-                                       (const char *)NULL, NULL, $1.str);
-            }
+            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, NULL_LEX_STRING, $1);
           }
         | simple_ident_q { $$= $1; }
         ;
@@ -5065,13 +5057,7 @@ simple_ident:
 simple_ident_nospvar:
           ident
           {
-            Select_Lex *sel=Lex->current_select;
-            $$= (sel->parsing_place != IN_HAVING ||
-                sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(),
-                                       (const char *)NULL, NULL, $1.str) :
-                (Item*) new Item_ref(Lex->current_context(),
-                                     (const char *)NULL, NULL, $1.str);
+            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, NULL_LEX_STRING, $1);
           }
         | simple_ident_q { $$= $1; }
         ;
@@ -5117,9 +5103,18 @@ field_ident:
         ;
 
 table_ident:
-          ident { $$=new Table_ident($1); }
-        | schema_name '.' ident { $$=new Table_ident($1,$3);}
-        | '.' ident { $$=new Table_ident($2);} /* For Delphi */
+          ident
+          {
+            $$= new Table_ident($1);
+          }
+        | schema_name '.' ident
+          {
+            $$=new Table_ident($1,$3);
+          }
+        | '.' ident
+        { /* For Delphi */
+          $$= new Table_ident($2);
+        }
         ;
 
 schema_name:

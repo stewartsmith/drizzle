@@ -360,7 +360,7 @@ Item *buildIdent(Session *session,
 {
   Select_Lex *sel= session->getLex()->current_select;
 
-  if (sel->no_table_names_allowed)
+  if (table_name.length and sel->no_table_names_allowed)
   {
     my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
              MYF(0), table_name.str, session->where);
