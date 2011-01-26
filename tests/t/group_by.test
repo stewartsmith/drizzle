@@ -7,7 +7,7 @@ drop table if exists t1,t2,t3;
 #
 # Simple test without tables
 
--- error 1111
+--error ER_INVALID_GROUP_FUNC_USE
 SELECT 1 FROM (SELECT 1) as a  GROUP BY SUM(1);
 
 #

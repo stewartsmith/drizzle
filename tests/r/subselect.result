@@ -899,9 +899,9 @@ Note	1003	select `test`.`t1`.`a` AS `a`,<in_optimizer>(`test`.`t1`.`a`,<exists>(
 drop table t1,t2,t3;
 #LIMIT is not supported now
 #create table t1 (a float) ENGINE=MyISAM;
-#-- error 1235
+#--error ER_NOT_SUPPORTED_YET
 #select 10.5 IN (SELECT * from t1 LIMIT 1);
-#-- error 1235
+#--error ER_NOT_SUPPORTED_YET
 #select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
 #drop table t1;
 #
@@ -925,7 +925,7 @@ drop table t1,t2,t3;
 #select ROW(1, 1, 'a') IN (select a,b,c from t1 where c='b' or c='a');
 #select ROW(1, 2, 'a') IN (select a,b,c from t1 where c='b' or c='a');
 #select ROW(1, 1, 'a') IN (select b,a,c from t1 where c='b' or c='a');
-#-- error 1235
+#--error ER_NOT_SUPPORTED_YET
 #select ROW(1, 1, 'a') IN (select b,a,c from t1 limit 2);
 #drop table t1;
 #test of uncacheable subqueries
@@ -1330,9 +1330,9 @@ DROP TABLE t1, t2;
 #CREATE TABLE t1 (s1 CHAR(5) COLLATE latin1_german1_ci,
 #                 s2 CHAR(5) COLLATE latin1_swedish_ci) ENGINE=MyISAM;
 #INSERT INTO t1 VALUES ('z','?');
-#-- error 1267
+#--error ER_CANT_AGGREGATE_2COLLATIONS
 #select * from t1 where s1 > (select max(s2) from t1);
-#-- error 1267
+#--error ER_CANT_AGGREGATE_2COLLATIONS
 #select * from t1 where s1 > any (select max(s2) from t1);
 #drop table t1;
 #
