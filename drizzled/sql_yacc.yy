@@ -977,11 +977,11 @@ custom_database_option:
           }
         | ident_or_text equal ident_or_text
           {
-            parser::buildSchemaOption(YYSession, $1.str, $3);
+            parser::buildSchemaOption(Lex, $1.str, $3);
           }
         | ident_or_text equal ulonglong_num
           {
-            parser::buildSchemaOption(YYSession, $1.str, $3);
+            parser::buildSchemaOption(Lex, $1.str, $3);
           }
         ;
 
@@ -1028,19 +1028,19 @@ custom_engine_option:
           }
         |  ROW_FORMAT_SYM equal row_format_or_text
           {
-            parser::buildEngineOption(YYSession, "ROW_FORMAT", $3);
+            parser::buildEngineOption(Lex, "ROW_FORMAT", $3);
           }
         |  FILE_SYM equal TEXT_STRING_sys
           {
-            parser::buildEngineOption(YYSession, "FILE", $3);
+            parser::buildEngineOption(Lex, "FILE", $3);
           }
         |  ident_or_text equal engine_option_value
           {
-            parser::buildEngineOption(YYSession, $1.str, $3);
+            parser::buildEngineOption(Lex, $1.str, $3);
           }
         | ident_or_text equal ulonglong_num
           {
-            parser::buildEngineOption(YYSession, $1.str, $3);
+            parser::buildEngineOption(Lex, $1.str, $3);
           }
         | default_collation
         ;
@@ -1182,16 +1182,7 @@ constraint:
 field_spec:
           field_ident
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            Lex->length= Lex->dec=0;
-            Lex->type=0;
-            statement->default_value= statement->on_update_value= 0;
-            statement->comment= null_lex_str;
-            Lex->charset= NULL;
-            statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-
-            message::AlterTable &alter_proto= ((statement::CreateTable *)Lex->statement)->alter_info.alter_proto;
-            Lex->setField(alter_proto.add_added_field());
+            parser::buildCreateFieldIdent(Lex);
           }
           field_def
           {
@@ -1213,6 +1204,7 @@ field_spec:
             Lex->setField(NULL);
           }
         ;
+
 field_def:
           field_definition opt_attribute {}
         ;
@@ -3998,7 +3990,7 @@ opt_order_clause:
 order_clause:
           ORDER_SYM BY
           {
-            if (not parser::buildOrderBy(YYSession))
+            if (not parser::buildOrderBy(Lex))
               DRIZZLE_YYABORT;
           }
           order_list
@@ -5030,11 +5022,11 @@ insert_ident:
 table_wild:
           ident '.' '*'
           {
-            $$= parser::buildTableWild(YYSession, NULL_LEX_STRING, $1);
+            $$= parser::buildTableWild(Lex, NULL_LEX_STRING, $1);
           }
         | ident '.' ident '.' '*'
           {
-            $$= parser::buildTableWild(YYSession, $1, $3);
+            $$= parser::buildTableWild(Lex, $1, $3);
           }
         ;
 
@@ -5045,7 +5037,7 @@ order_ident:
 simple_ident:
           ident
           {
-            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, NULL_LEX_STRING, $1);
+            $$= parser::buildIdent(Lex, NULL_LEX_STRING, NULL_LEX_STRING, $1);
           }
         | simple_ident_q { $$= $1; }
         ;
@@ -5053,15 +5045,15 @@ simple_ident:
 simple_ident_q:
           ident '.' ident
           {
-            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, $1, $3);
+            $$= parser::buildIdent(Lex, NULL_LEX_STRING, $1, $3);
           }
         | '.' ident '.' ident
           {
-            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, $2, $4);
+            $$= parser::buildIdent(Lex, NULL_LEX_STRING, $2, $4);
           }
         | ident '.' ident '.' ident
           {
-            $$= parser::buildIdent(YYSession, $1, $3, $5);
+            $$= parser::buildIdent(Lex, $1, $3, $5);
           }
         ;
 
@@ -5072,14 +5064,14 @@ field_ident:
           }
         | ident '.' ident '.' ident
           {
-            if (not parser::checkFieldIdent(YYSession, $1, $3))
+            if (not parser::checkFieldIdent(Lex, $1, $3))
               DRIZZLE_YYABORT;
 
             $$=$5;
           }
         | ident '.' ident
           {
-            if (not parser::checkFieldIdent(YYSession, NULL_LEX_STRING, $1))
+            if (not parser::checkFieldIdent(Lex, NULL_LEX_STRING, $1))
               DRIZZLE_YYABORT;
 
             $$=$3;

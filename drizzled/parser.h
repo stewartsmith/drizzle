@@ -134,16 +134,19 @@ void my_parse_error(Lex_input_stream *lip);
 void my_parse_error(const char *message);
 bool check_reserved_words(LEX_STRING *name);
 void errorOn(const char *s);
-bool buildOrderBy(Session *session);
-void buildEngineOption(Session *session, const char *key, const LEX_STRING &value);
-void buildEngineOption(Session *session, const char *key, uint64_t value);
-void buildSchemaOption(Session *session, const char *key, const LEX_STRING &value);
-void buildSchemaOption(Session *session, const char *key, uint64_t value);
-bool checkFieldIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name);
 
-Item *buildIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name, const LEX_STRING &field_name);
-Item *buildIdent(Session *session, const LEX_STRING &field_name);
-Item *buildTableWild(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name);
+
+bool buildOrderBy(LEX *lex);
+void buildEngineOption(LEX *lex, const char *key, const LEX_STRING &value);
+void buildEngineOption(LEX *lex, const char *key, uint64_t value);
+void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value);
+void buildSchemaOption(LEX *lex, const char *key, uint64_t value);
+bool checkFieldIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
+
+Item *buildIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name, const LEX_STRING &field_name);
+Item *buildTableWild(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
+
+void buildCreateFieldIdent(LEX *lex);
 
 } // namespace parser
 } // namespace drizzled
