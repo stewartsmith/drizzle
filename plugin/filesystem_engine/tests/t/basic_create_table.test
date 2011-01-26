@@ -3,23 +3,29 @@ DROP TABLE IF EXISTS t1;
 --enable_warnings
 
 # test file not existed
+--replace_result $DRIZZLETEST_VARDIR VARDIR
 --error ER_CANT_CREATE_TABLE
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/_FILE_NOT_EXISTED_";
+eval CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="$DRIZZLETEST_VARDIR/filesystem_ln/_FILE_NOT_EXISTED_";
 
 # test col separator not empty
+--replace_result $DRIZZLETEST_VARDIR VARDIR
 --error ER_UNKNOWN_ENGINE_OPTION
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_create_table.data",COL_SEPARATOR="";
+eval CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="$DRIZZLETEST_VARDIR/filesystem_ln/basic_create_table.data",COL_SEPARATOR="";
 
 # test row separator not empty
+--replace_result $DRIZZLETEST_VARDIR VARDIR
 --error ER_UNKNOWN_ENGINE_OPTION
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_create_table.data",ROW_SEPARATOR="";
+eval CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="$DRIZZLETEST_VARDIR/filesystem_ln/basic_create_table.data",ROW_SEPARATOR="";
 
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_create_table.data";
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+eval CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="$DRIZZLETEST_VARDIR/filesystem_ln/basic_create_table.data";
 
 # test table existed
+--replace_result $DRIZZLETEST_VARDIR VARDIR
 --error ER_TABLE_EXISTS_ERROR
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_create_table.data";
+eval CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="$DRIZZLETEST_VARDIR/filesystem_ln/basic_create_table.data";
 
+--replace_result $DRIZZLETEST_VARDIR VARDIR
 SHOW CREATE TABLE t1;
 
 DROP TABLE t1;
