@@ -363,5 +363,26 @@ bool checkFieldIdent(Session *session, const LEX_STRING &table_name)
   return true;
 }
 
+Item *buildIdent(Session *session,
+                 const LEX_STRING &schema_name,
+                 const LEX_STRING &table_name,
+                 const LEX_STRING &field_name)
+{
+  Select_Lex *sel= session->getLex()->current_select;
+
+  if (sel->no_table_names_allowed)
+  {
+    my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
+             MYF(0), table_name.str, session->where);
+  }
+
+  Item *item= (sel->parsing_place != IN_HAVING or
+               sel->get_in_sum_expr() > 0) ?
+    (Item*) new Item_field(session->getLex()->current_context(), schema_name.str, table_name.str, field_name.str) :
+    (Item*) new Item_ref(session->getLex()->current_context(), schema_name.str, table_name.str, field_name.str);
+
+  return item;
+}
+
 } // namespace parser
 } // namespace drizzled

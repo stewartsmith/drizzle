@@ -5079,47 +5079,15 @@ simple_ident_nospvar:
 simple_ident_q:
           ident '.' ident
           {
-            {
-              Select_Lex *sel= Lex->current_select;
-              if (sel->no_table_names_allowed)
-              {
-                my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-                         MYF(0), $1.str, YYSession->where);
-              }
-              $$= (sel->parsing_place != IN_HAVING ||
-                  sel->get_in_sum_expr() > 0) ?
-                  (Item*) new Item_field(Lex->current_context(),
-                                         (const char *)NULL, $1.str, $3.str) :
-                  (Item*) new Item_ref(Lex->current_context(),
-                                       (const char *)NULL, $1.str, $3.str);
-            }
+            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, $1, $3);
           }
         | '.' ident '.' ident
           {
-            Select_Lex *sel= Lex->current_select;
-            if (sel->no_table_names_allowed)
-            {
-              my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-                       MYF(0), $2.str, YYSession->where);
-            }
-            $$= (sel->parsing_place != IN_HAVING ||
-                sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), NULL, $2.str, $4.str) :
-                (Item*) new Item_ref(Lex->current_context(),
-                                     (const char *)NULL, $2.str, $4.str);
+            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, $2, $4);
           }
         | ident '.' ident '.' ident
           {
-            Select_Lex *sel= Lex->current_select;
-            if (sel->no_table_names_allowed)
-            {
-              my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-                       MYF(0), $3.str, YYSession->where);
-            }
-            $$= (sel->parsing_place != IN_HAVING ||
-                sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), $1.str, $3.str, $5.str) :
-                (Item*) new Item_ref(Lex->current_context(), $1.str, $3.str, $5.str);
+            $$= parser::buildIdent(YYSession, $1, $3, $5);
           }
         ;
 
