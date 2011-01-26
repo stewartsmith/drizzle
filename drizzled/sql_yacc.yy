@@ -5124,36 +5124,28 @@ simple_ident_q:
         ;
 
 field_ident:
-          ident { $$=$1;}
+          ident 
+          {
+            $$=$1;
+          }
         | ident '.' ident '.' ident
           {
-            TableList *table=
-              reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
-            if (my_strcasecmp(table_alias_charset, $1.str, table->getSchemaName()))
-            {
-              my_error(ER_WRONG_DB_NAME, MYF(0), $1.str);
+            if (not parser::checkFieldIdent(YYSession, $1, $3))
               DRIZZLE_YYABORT;
-            }
-            if (my_strcasecmp(table_alias_charset, $3.str,
-                              table->getTableName()))
-            {
-              my_error(ER_WRONG_TABLE_NAME, MYF(0), $3.str);
-              DRIZZLE_YYABORT;
-            }
+
             $$=$5;
           }
         | ident '.' ident
           {
-            TableList *table=
-              reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
-            if (my_strcasecmp(table_alias_charset, $1.str, table->alias))
-            {
-              my_error(ER_WRONG_TABLE_NAME, MYF(0), $1.str);
+            if (not parser::checkFieldIdent(YYSession, $1))
               DRIZZLE_YYABORT;
-            }
+
             $$=$3;
           }
-        | '.' ident { $$=$2;} /* For Delphi */
+        | '.' ident 
+          { /* For Delphi */
+            $$=$2;
+          }
         ;
 
 table_ident:

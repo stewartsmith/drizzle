@@ -139,6 +139,8 @@ void buildEngineOption(Session *session, const char *key, const LEX_STRING &valu
 void buildEngineOption(Session *session, const char *key, uint64_t value);
 void buildSchemaOption(Session *session, const char *key, const LEX_STRING &value);
 void buildSchemaOption(Session *session, const char *key, uint64_t value);
+bool checkFieldIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name);
+bool checkFieldIdent(Session *session, const LEX_STRING &table_name);
 
 } // namespace parser
 } // namespace drizzled

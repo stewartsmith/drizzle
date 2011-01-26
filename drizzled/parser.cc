@@ -330,5 +330,38 @@ void buildSchemaOption(Session *session, const char *key, uint64_t value)
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
+bool checkFieldIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name)
+{
+  TableList *table= reinterpret_cast<TableList*>(session->getLex()->current_select->table_list.first);
+
+  if (my_strcasecmp(table_alias_charset, schema_name.str, table->getSchemaName()))
+  {
+    my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.str);
+    return false;
+  }
+
+  if (my_strcasecmp(table_alias_charset, table_name.str,
+                    table->getTableName()))
+  {
+    my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.str);
+    return false;
+  }
+
+  return true;
+}
+
+bool checkFieldIdent(Session *session, const LEX_STRING &table_name)
+{
+  TableList *table= reinterpret_cast<TableList*>(session->getLex()->current_select->table_list.first);
+
+  if (my_strcasecmp(table_alias_charset, table_name.str, table->alias))
+  {
+    my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.str);
+    return false;
+  }
+
+  return true;
+}
+
 } // namespace parser
 } // namespace drizzled
