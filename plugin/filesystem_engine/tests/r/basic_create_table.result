@@ -1,16 +1,16 @@
 DROP TABLE IF EXISTS t1;
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/_FILE_NOT_EXISTED_";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="VARDIR/filesystem_ln/_FILE_NOT_EXISTED_";
 ERROR HY000: Can't create table 'test.t1' (errno: 2)
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_create_table.data",COL_SEPARATOR="";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="VARDIR/filesystem_ln/basic_create_table.data",COL_SEPARATOR="";
 ERROR HY000: Unknown table engine option key/pair COL_SEPARATOR = .
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_create_table.data",ROW_SEPARATOR="";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="VARDIR/filesystem_ln/basic_create_table.data",ROW_SEPARATOR="";
 ERROR HY000: Unknown table engine option key/pair ROW_SEPARATOR = .
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_create_table.data";
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_create_table.data";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="VARDIR/filesystem_ln/basic_create_table.data";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="VARDIR/filesystem_ln/basic_create_table.data";
 ERROR 42S01: Table 'test.t1' already exists
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT DEFAULT NULL
-) ENGINE=FILESYSTEM FILE='../../filesystem_ln/basic_create_table.data' COLLATE = utf8_general_ci
+) ENGINE=FILESYSTEM FILE='VARDIR/filesystem_ln/basic_create_table.data' COLLATE = utf8_general_ci
 DROP TABLE t1;
