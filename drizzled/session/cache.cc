@@ -49,6 +49,26 @@ Session::shared_ptr Cache::find(const session_id_t &id)
   return Session::shared_ptr();
 }
 
+void Cache::shutdownFirst()
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+  _ready_to_exit= true;
+
+  /* do the broadcast inside the lock to ensure that my_end() is not called */
+  _end.notify_all();
+}
+
+  /* Wait until cleanup is done */
+void Cache::shutdownSecond()
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+
+  while (not _ready_to_exit)
+  {
+    _end.wait(scopedLock);
+  }
+}
+
 size_t Cache::count()
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
