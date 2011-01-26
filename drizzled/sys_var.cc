@@ -149,8 +149,6 @@ static sys_var_session_uint64_t	sys_join_buffer_size("join_buffer_size",
                                                      &drizzle_system_variables::join_buff_size);
 static sys_var_session_uint32_t	sys_max_allowed_packet("max_allowed_packet",
                                                        &drizzle_system_variables::max_allowed_packet);
-static sys_var_uint64_t_ptr	sys_max_connect_errors("max_connect_errors",
-                                               &max_connect_errors);
 static sys_var_session_uint64_t	sys_max_error_count("max_error_count",
                                                   &drizzle_system_variables::max_error_count);
 static sys_var_session_uint64_t	sys_max_heap_table_size("max_heap_table_size",
@@ -1329,31 +1327,40 @@ static bool set_option_bit(Session *session, set_var *var)
 
 static bool set_option_autocommit(Session *session, set_var *var)
 {
+  bool success= true;
   /* The test is negative as the flag we use is NOT autocommit */
 
   uint64_t org_options= session->options;
+  uint64_t new_options= session->options;
 
   if (var->getInteger() != 0)
-    session->options&= ~((sys_var_session_bit*) var->var)->bit_flag;
+    new_options&= ~((sys_var_session_bit*) var->var)->bit_flag;
   else
-    session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
+    new_options|= ((sys_var_session_bit*) var->var)->bit_flag;
 
-  if ((org_options ^ session->options) & OPTION_NOT_AUTOCOMMIT)
+  if ((org_options ^ new_options) & OPTION_NOT_AUTOCOMMIT)
   {
     if ((org_options & OPTION_NOT_AUTOCOMMIT))
     {
+      success= session->endActiveTransaction();
       /* We changed to auto_commit mode */
       session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      if (transaction_services.commitTransaction(session, true))
-        return 1;
     }
     else
     {
       session->server_status&= ~SERVER_STATUS_AUTOCOMMIT;
     }
   }
+
+  if (var->getInteger() != 0)
+    session->options&= ~((sys_var_session_bit*) var->var)->bit_flag;
+  else
+    session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
+
+  if (not success)
+    return true;
+
   return 0;
 }
 
@@ -1548,7 +1555,6 @@ int sys_var_init()
     add_sys_var_to_list(&sys_last_insert_id, my_long_options);
     add_sys_var_to_list(&sys_lc_time_names, my_long_options);
     add_sys_var_to_list(&sys_max_allowed_packet, my_long_options);
-    add_sys_var_to_list(&sys_max_connect_errors, my_long_options);
     add_sys_var_to_list(&sys_max_error_count, my_long_options);
     add_sys_var_to_list(&sys_max_heap_table_size, my_long_options);
     add_sys_var_to_list(&sys_max_join_size, my_long_options);

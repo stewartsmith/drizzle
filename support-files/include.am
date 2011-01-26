@@ -18,29 +18,7 @@
 # Software Foundation, Inc., 51 Franklin Place - Suite 330, Boston,
 # MA 02110-1301, USA
 
-pkgconfigdir= $(libdir)/pkgconfig
-pkgconfig_DATA= support-files/libdrizzle.pc
-
-# Default same as 'pkgdatadir', but we can override it
-pkgsuppdir =		$(datadir)/@PACKAGE@
-
-pkgsupp_DATA =		support-files/drizzle-log-rotate
-
-pkgsupp_SCRIPTS =	support-files/drizzle.server 
-
-
 EXTRA_DIST+= \
 	     support-files/smf/drizzle \
 	     support-files/smf/drizzle.xml \
-	     support-files/smf/install.sh \
-	     support-files/drizzle.spec
-generic_rpm:
-	rm -f ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm
-	rm -f ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm
-	cp drizzle-$(VERSION).tar.gz ~/rpmbuild/SOURCES/
-	rpmbuild -ba support-files/drizzle.spec
-	cp ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm .
-	cp ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm .
-
-rpm: dist generic_rpm
-
+	     support-files/smf/install.sh 

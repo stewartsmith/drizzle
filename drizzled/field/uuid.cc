@@ -31,7 +31,6 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/session.h"
 #include "drizzled/table.h"
-#include "drizzled/temporal.h"
 
 namespace drizzled
 {
@@ -159,7 +158,7 @@ void Uuid::sort_string(unsigned char *to, uint32_t length_arg)
   memcpy(to, ptr, length_arg);
 }
 
-bool Uuid::get_date(type::Time *ltime, uint32_t )
+bool Uuid::get_date(type::Time &ltime, uint32_t )
 {
   type::Uuid uu;
 
@@ -167,32 +166,22 @@ bool Uuid::get_date(type::Time *ltime, uint32_t )
 
   if (uu.isTimeType())
   {
-    Timestamp temporal;
     struct timeval ret_tv;
 
-    ret_tv.tv_sec= ret_tv.tv_usec= 0;
+    memset(&ret_tv, 0, sizeof(struct timeval));
 
     uu.time(ret_tv);
 
-    temporal.from_time_t(ret_tv.tv_sec);
-
-    ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
-    ltime->year= temporal.years();
-    ltime->month= temporal.months();
-    ltime->day= temporal.days();
-    ltime->hour= temporal.hours();
-    ltime->minute= temporal.minutes();
-    ltime->second= temporal.seconds();
-    ltime->second_part= temporal.nseconds();
+    ltime.store(ret_tv);
 
     return false;
   }
-  memset(ltime, 0, sizeof(type::Time));
+  ltime.reset();
 
   return true;
 }
 
-bool Uuid::get_time(type::Time *ltime)
+bool Uuid::get_time(type::Time &ltime)
 {
   return get_date(ltime, 0);
 }

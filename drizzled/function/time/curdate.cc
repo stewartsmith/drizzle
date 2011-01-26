@@ -37,7 +37,7 @@ void Item_func_curdate::fix_length_and_dec()
 
   /* We don't need to set second_part and neg because they already 0 */
   ltime.hour= ltime.minute= ltime.second= 0;
-  ltime.time_type= DRIZZLE_TIMESTAMP_DATE;
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATE;
 
   /** 
    * @TODO Remove ltime completely when timezones are reworked.  Using this

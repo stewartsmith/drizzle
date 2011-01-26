@@ -1,0 +1,6 @@
+CREATE TABLE t1 (a int);
+BEGIN;
+CREATE INDEX foo on t1 (a);
+ERROR HY000: Transactional DDL not supported
+COMMIT;
+DROP TABLE t1;

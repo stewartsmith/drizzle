@@ -161,7 +161,7 @@ rollback to savepoint savept3;
 rollback to savepoint savept2;
 release savepoint `my_savepoint`;
 select n from t1;
---error 1305
+--error ER_SP_DOES_NOT_EXIST
 rollback to savepoint `my_savepoint`;
 rollback to savepoint savept2;
 insert into t1 values (8);
@@ -228,6 +228,7 @@ select * from t1;
 delete from t1;
 commit;
 select * from t1;
+commit;
 drop table t1;
 
 #
@@ -235,9 +236,9 @@ drop table t1;
 #
 
 create table t1 (a integer) engine=innodb;
-start transaction;
 rename table t1 to t2;
 create table t1 (b integer) engine=innodb;
+start transaction;
 insert into t1 values (1);
 rollback;
 drop table t1;
@@ -260,6 +261,7 @@ INSERT INTO t1  SET _userid='marc@anyware.co.uk';
 COMMIT;
 SELECT * FROM t1;
 SELECT _userid FROM t1 WHERE _userid='marc@anyware.co.uk';
+COMMIT;
 drop table t1;
 set autocommit=1;
 
@@ -549,6 +551,7 @@ show tables from mysqltest;
 set autocommit=0;
 create table t1 (a int not null) engine= innodb;
 insert into t1 values(1),(2);
+commit;
 truncate table t1;
 commit;
 truncate table t1;
@@ -1620,6 +1623,7 @@ set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 insert into t1 select * from t2;
 update t1 set b = (select e from t2 where a = d);
+commit;
 create table t3(d int not null, e int, primary key(d)) engine=innodb
 select * from t2;
 commit;
@@ -1814,6 +1818,7 @@ drop table t2, t1;
 CREATE TABLE t1 ( a int ) ENGINE=innodb;
 BEGIN;
 INSERT INTO t1 VALUES (1);
+COMMIT;
 ALTER TABLE t1 ENGINE=innodb;
 DROP TABLE t1;
 

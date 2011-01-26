@@ -4,3 +4,4 @@
 CREATE TABLE A (A SERIAL);
 execute "insert into a VALUES ()" CONCURRENT WAIT;
 SELECT a from a;
+DROP TABLE A;

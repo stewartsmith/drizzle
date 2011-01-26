@@ -696,36 +696,35 @@ WHERE col= 'j'
     converted value. 0 on error and on zero-dates -- check 'failure'
 */
 
-static uint64_t
-get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_type warn_type,
+static int64_t
+get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
                   char *warn_name, bool *error_arg)
 {
-  uint64_t value= 0;
-  int error;
+  int64_t value= 0;
+  type::cut_t error= type::VALID;
   type::Time l_time;
-  enum enum_drizzle_timestamp_type ret;
+  type::timestamp_t ret;
 
-  ret= str_to_datetime(str->ptr(), str->length(), &l_time,
-                       (TIME_FUZZY_DATE | MODE_INVALID_DATES |
-                        (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
-                       &error);
+  ret= l_time.store(str->ptr(), str->length(),
+                    (TIME_FUZZY_DATE | MODE_INVALID_DATES | (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
+                    error);
 
-  if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
+  if (ret == type::DRIZZLE_TIMESTAMP_DATETIME || ret == type::DRIZZLE_TIMESTAMP_DATE)
   {
     /*
       Do not return yet, we may still want to throw a "trailing garbage"
       warning.
     */
     *error_arg= false;
-    value= TIME_to_uint64_t_datetime(&l_time);
+    l_time.convert(value);
   }
   else
   {
     *error_arg= true;
-    error= 1;                                   /* force warning */
+    error= type::CUT;                                   /* force warning */
   }
 
-  if (error > 0)
+  if (error != type::VALID)
   {
     make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
@@ -770,7 +769,7 @@ get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_typ
 
 enum Arg_comparator::enum_date_cmp_type
 Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
-                                     uint64_t *const_value)
+                                     int64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
   Item *str_arg= 0, *date_arg= 0;
@@ -781,7 +780,9 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
   if (in_a->is_datetime())
   {
     if (in_b->is_datetime())
+    {
       cmp_type= CMP_DATE_WITH_DATE;
+    }
     else if (in_b->result_type() == STRING_RESULT)
     {
       cmp_type= CMP_DATE_WITH_STR;
@@ -823,7 +824,7 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
        * Does a uint64_t conversion really have to happen here?  Fields return int64_t
        * from val_int(), not uint64_t...
        */
-      uint64_t value;
+      int64_t value;
       String *str_val;
       String tmp;
       /* DateTime used to pick up as many string conversion possibilities as possible. */
@@ -849,9 +850,7 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
       }
 
       /* String conversion was good.  Convert to an integer for comparison purposes. */
-      int64_t int_value;
-      temporal.to_int64_t(&int_value);
-      value= (uint64_t) int_value;
+      temporal.to_int64_t(&value);
 
       if (const_value)
         *const_value= value;
@@ -865,8 +864,8 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
                                         Item **a1, Item **a2,
                                         Item_result type)
 {
-  enum enum_date_cmp_type cmp_type;
-  uint64_t const_value= (uint64_t)-1;
+  enum_date_cmp_type cmp_type;
+  int64_t const_value= -1;
   a= a1;
   b= a2;
 
@@ -879,7 +878,7 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
     a_cache= 0;
     b_cache= 0;
 
-    if (const_value != (uint64_t)-1)
+    if (const_value != -1)
     {
       Item_cache_int *cache= new Item_cache_int();
       /* Mark the cache as non-const to prevent re-caching. */
@@ -900,6 +899,7 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
     is_nulls_eq= test(owner && owner->functype() == Item_func::EQUAL_FUNC);
     func= &Arg_comparator::compare_datetime;
     get_value_func= &get_datetime_value;
+
     return 0;
   }
 
@@ -953,11 +953,11 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
     obtained value
 */
 
-uint64_t
+int64_t
 get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
                    Item *warn_item, bool *is_null)
 {
-  uint64_t value= 0;
+  int64_t value= 0;
   String buf, *str= 0;
   Item *item= **item_arg;
 
@@ -981,8 +981,10 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
     str= item->val_str(&buf);
     *is_null= item->null_value;
   }
+
   if (*is_null)
     return ~(uint64_t) 0;
+
   /*
     Convert strings to the integer DATE/DATETIME representation.
     Even if both dates provided in strings we can't compare them directly as
@@ -993,8 +995,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
   {
     bool error;
     enum_field_types f_type= warn_item->field_type();
-    enum enum_drizzle_timestamp_type t_type= f_type ==
-      DRIZZLE_TYPE_DATE ? DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME;
+    type::timestamp_t t_type= f_type == DRIZZLE_TYPE_DATE ? type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME;
     value= get_date_from_str(session, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current
@@ -1017,6 +1018,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
     *cache_arg= cache;
     *item_arg= cache_arg;
   }
+
   return value;
 }
 
@@ -3181,8 +3183,8 @@ void in_row::set(uint32_t pos, Item *item)
   return;
 }
 
-in_int64_t::in_int64_t(uint32_t elements)
-  :in_vector(elements,sizeof(packed_int64_t),(qsort2_cmp) cmp_int64_t, 0)
+in_int64_t::in_int64_t(uint32_t elements) :
+  in_vector(elements, sizeof(packed_int64_t),(qsort2_cmp) cmp_int64_t, 0)
 {}
 
 void in_int64_t::set(uint32_t pos,Item *item)
@@ -3202,7 +3204,7 @@ unsigned char *in_int64_t::get_value(Item *item)
   return (unsigned char*) &tmp;
 }
 
-void in_datetime::set(uint32_t pos,Item *item)
+void in_datetime::set(uint32_t pos, Item *item)
 {
   Item **tmp_item= &item;
   bool is_null;

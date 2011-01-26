@@ -48,7 +48,7 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
   if (not select->getShowSchema().empty())
   {
     schema_name.append(select->getShowTable());
-    SchemaIdentifier identifier(select->getShowSchema());
+    identifier::Schema identifier(select->getShowSchema());
 
     is_primed= plugin::StorageEngine::getSchemaDefinition(identifier,
                                                           schema_message);

@@ -1,0 +1,4 @@
+BEGIN;
+CREATE TABLE t1 (a int);
+ERROR HY000: Transactional DDL not supported
+COMMIT;

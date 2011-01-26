@@ -58,14 +58,14 @@ const ErrorMap::ErrorMessageMap& ErrorMap::get_error_message_map()
   return get_error_map().mapping_;
 }
 
-void add_error_message(uint32_t error_code,
+void add_error_message(drizzled::error_t error_code,
                        const std::string &error_name,
                        const std::string &message)
 {
   get_error_map().add(error_code, error_name, message);
 }
 
-const char * error_message(unsigned int code)
+const char * error_message(drizzled::error_t code)
 {
   try
   {
@@ -97,6 +97,11 @@ error_handler_func error_handler_hook= NULL;
        MyFlags	Flags
        ...	variable list
 */
+
+void my_error(const std::string &ref, error_t nr, myf MyFlags)
+{
+  my_error(nr, MyFlags, ref.c_str());
+} 
 
 void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
 {
@@ -141,7 +146,7 @@ void my_error(error_t nr, myf MyFlags, ...)
       ...	variable list
 */
 
-void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
+void my_printf_error(drizzled::error_t error, const char *format, myf MyFlags, ...)
 {
   va_list args;
   char ebuff[ERRMSGSIZE+20];
@@ -150,7 +155,6 @@ void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
   (void) vsnprintf (ebuff, sizeof(ebuff), format, args);
   va_end(args);
   (*error_handler_hook)(error, ebuff, MyFlags);
-  return;
 }
 
 /*
@@ -163,7 +167,7 @@ void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
       MyFlags	Flags
 */
 
-void my_message(uint32_t error, const char *str, register myf MyFlags)
+void my_message(drizzled::error_t error, const char *str, register myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }
@@ -171,7 +175,7 @@ void my_message(uint32_t error, const char *str, register myf MyFlags)
 
 // Insert the message for the error.  If the error already has an existing
 // mapping, an error is logged, but the function continues.
-void ErrorMap::add(uint32_t error_num,
+void ErrorMap::add(drizzled::error_t error_num,
                    const std::string &error_name,
                    const std::string &message)
 {
@@ -186,7 +190,7 @@ void ErrorMap::add(uint32_t error_num,
   }
 }
 
-const std::string &ErrorMap::find(uint32_t error_num) const
+const std::string &ErrorMap::find(drizzled::error_t error_num) const
 {
   ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
   if (pos == mapping_.end())
@@ -200,6 +204,8 @@ const std::string &ErrorMap::find(uint32_t error_num) const
 // Constructor sets the default mappings.
 ErrorMap::ErrorMap()
 {
+  ADD_ERROR_MESSAGE(EE_OK, N_("SUCCESS"));
+  ADD_ERROR_MESSAGE(EE_ERROR_FIRST, N_("Error on first"));
   ADD_ERROR_MESSAGE(ER_NO, N_("NO"));
   ADD_ERROR_MESSAGE(ER_YES, N_("YES"));
   ADD_ERROR_MESSAGE(ER_CANT_CREATE_FILE, N_("Can't create file '%-.200s' (errno: %d)"));
@@ -261,6 +267,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_DUP_ENTRY, N_("Duplicate entry '%-.192s' for key %d"));
   ADD_ERROR_MESSAGE(ER_WRONG_FIELD_SPEC, N_("Incorrect column specifier for column '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_PARSE_ERROR, N_("%s near '%-.80s' at line %d"));
+  ADD_ERROR_MESSAGE(ER_PARSE_ERROR_UNKNOWN, N_("Parsing error near '%s'"));
   ADD_ERROR_MESSAGE(ER_EMPTY_QUERY, N_("Query was empty"));
   ADD_ERROR_MESSAGE(ER_NONUNIQ_TABLE, N_("Not unique table/alias: '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_INVALID_DEFAULT, N_("Invalid default value for '%-.192s'"));
@@ -468,6 +475,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_LOAD_DATA_INVALID_COLUMN, N_("Invalid column reference (%-.64s) in LOAD DATA"));
   ADD_ERROR_MESSAGE(ER_INVALID_UNIX_TIMESTAMP_VALUE, N_("Received an invalid value '%s' for a UNIX timestamp."));
   ADD_ERROR_MESSAGE(ER_INVALID_DATETIME_VALUE, N_("Received an invalid datetime value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_TIMESTAMP_VALUE, N_("Received an invalid timestamp value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_NULL_ARGUMENT, N_("Received a NULL argument for function '%s'."));
   ADD_ERROR_MESSAGE(ER_ARGUMENT_OUT_OF_RANGE, N_("Received an out-of-range argument '%s' for function '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
@@ -482,6 +490,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_TABLE_DROP, N_("Cannot drop table '%s'"));
   ADD_ERROR_MESSAGE(ER_TABLE_DROP_ERROR_OCCURRED, N_("Error occurred while dropping table '%s'"));
   ADD_ERROR_MESSAGE(ER_TABLE_PERMISSION_DENIED, N_("Permission denied to create '%s'"));
+  ADD_ERROR_MESSAGE(ER_TABLE_UNKNOWN, N_("Unknown table '%s'"));
 
   ADD_ERROR_MESSAGE(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   ADD_ERROR_MESSAGE(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
@@ -534,6 +543,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_BOOLEAN_VALUE, N_("Received an invalid BOOLEAN value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_BOOLEAN, N_("Invalid cast to BOOLEAN: '%s'."));
 
+  // Transactional DDL
+  ADD_ERROR_MESSAGE(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, N_("Transactional DDL not supported"));
   // ASSERT Message
   ADD_ERROR_MESSAGE(ER_ASSERT, N_("Assertion '%s' failed."));
   ADD_ERROR_MESSAGE(ER_ASSERT_NULL, N_("Assertion '%s' failed, the result was NULL."));

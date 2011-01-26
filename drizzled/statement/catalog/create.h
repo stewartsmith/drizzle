@@ -35,7 +35,8 @@ class Create :public Catalog
 {
 public:
   Create(Session *in_session, drizzled::lex_string_t &arg);
-  bool authorized();
+  bool authorized() const;
+  bool perform() const;
 };
 
 } /* namespace catalog */

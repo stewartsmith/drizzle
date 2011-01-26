@@ -16,6 +16,7 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES (1, "I love testing.");
 INSERT INTO t1 VALUES (2, "I hate testing.");
 
+COMMIT;
 DROP TABLE t1;
 
 # Try the same thing with auto_commit turned on

@@ -246,36 +246,43 @@ MySQL to Drizzle using :program:`drizzledump`.
 :program:`drizzledump` will automatically detect whether it is talking to a
 MySQL or Drizzle database server.  If it is connected to a MySQL server it will
 automatically convert all the structures and data into a Drizzle compatible 
-format.
+format.  It will, however, by default try to connect via. port 4427 so to
+connect to a MySQL server a port must be specified.
 
 So, simply connecting to a MySQL server with :program:`drizzledump` as follows
 will give you a Drizzle compatible output::
 
-$ drizzledump --all-databases --host=mysql-host --user=mysql-user --password > dumpfile.sql
+$ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password > dumpfile.sql
 
 Additionally :program:`drizzledump` can now dump from MySQL and import directly
 into a Drizzle server as follows::
 
-$ drizzledump --all-databases --host=mysql-host --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
+$ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
+
+Please take special note of :ref:`old-passwords-label` if you have connection
+issues from :program:`drizzledump` to your MySQL server.
 
 When you migrate from MySQL to Drizzle, the following conversions are required:
 
-MyISAM -> InnoDB
-FullText -> drop it (with stderr warning)
-int unsigned -> bigint
-tinyint -> int
-smallint -> int
-mediumint -> int
-tinytext -> text
-mediumtext -> text
-longtext -> text
-tinyblob -> blob
-mediumblob -> blob
-longblob -> blob
-time -> int (of seconds)
-year -> int
-set -> text
-date/datetime default 0000-00-00 -> default NULL (Currently, ALL date columns have their DEFAULT set to NULL on migration)
-date/datetime NOT NULL columns -> NULL
-any date data containing 0000-00-00 -> NULL
-enum-> DEFAULT NULL
+ * MyISAM -> InnoDB
+ * FullText -> drop it (with stderr warning)
+ * int unsigned -> bigint
+ * tinyint -> int
+ * smallint -> int
+ * mediumint -> int
+ * tinytext -> text
+ * mediumtext -> text
+ * longtext -> text
+ * tinyblob -> blob
+ * mediumblob -> blob
+ * longblob -> blob
+ * time -> int (of seconds)
+ * year -> int
+ * set -> text
+ * date/datetime default 0000-00-00 -> default NULL (Currently, ALL date columns have their DEFAULT set to NULL on migration)
+ * date/datetime NOT NULL columns -> NULL
+ * any date data containing 0000-00-00 -> NULL
+ * TIME -> INT of the number of seconds*
+ * enum-> DEFAULT NULL
+
+* This prevents data loss since MySQL's TIME data type has a range of -838:59:59 - 838:59:59, and Drizzle's TIME type has a range of 00:00:00 - 23:59:61.999999.

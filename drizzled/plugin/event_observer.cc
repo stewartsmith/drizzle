@@ -455,7 +455,7 @@ namespace plugin
   /* Static meathods called by drizzle to notify interested plugins 
    * of a schema event.
  */
-  bool EventObserver::beforeDropTable(Session &session, const drizzled::TableIdentifier &table)
+  bool EventObserver::beforeDropTable(Session &session, const drizzled::identifier::Table &table)
   {
     if (all_event_plugins.empty())
       return false;
@@ -464,7 +464,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::afterDropTable(Session &session, const drizzled::TableIdentifier &table, int err)
+  bool EventObserver::afterDropTable(Session &session, const drizzled::identifier::Table &table, int err)
   {
     if (all_event_plugins.empty())
       return false;
@@ -473,7 +473,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::beforeRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
+  bool EventObserver::beforeRenameTable(Session &session, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to)
   {
     if (all_event_plugins.empty())
       return false;
@@ -482,7 +482,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::afterRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to, int err)
+  bool EventObserver::afterRenameTable(Session &session, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to, int err)
   {
     if (all_event_plugins.empty())
       return false;

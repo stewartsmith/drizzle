@@ -104,6 +104,16 @@ public:
    */
   virtual bool authenticate(void)= 0;
 
+  virtual bool isConsole()
+  {
+    return false;
+  }
+
+  virtual  catalog::Instance::shared_ptr catalog()
+  {
+    return catalog::local();
+  }
+
   /**
    * Read command from client.
    */

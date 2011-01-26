@@ -44,6 +44,8 @@
 #include "drizzled/time_functions.h"
 #include "time.h"
 
+#include <drizzled/util/gmtime.h>
+
 #include <time.h>
 
 #include <cstdio>
@@ -59,19 +61,18 @@ extern std::vector<TemporalFormat *> known_datetime_formats;
 extern std::vector<TemporalFormat *> known_date_formats;
 extern std::vector<TemporalFormat *> known_time_formats;
 
-Temporal::Temporal()
-:
-  _calendar(GREGORIAN)
-, _years(0)
-, _months(0)
-, _days(0)
-, _hours(0)
-, _minutes(0)
-, _seconds(0)
-, _epoch_seconds(0)
-, _useconds(0)
-, _nseconds(0)
-, _overflow(false)
+Temporal::Temporal() :
+  _calendar(GREGORIAN),
+  _years(0),
+  _months(0),
+  _days(0),
+  _hours(0),
+  _minutes(0),
+  _seconds(0),
+  _epoch_seconds(0),
+  _useconds(0),
+  _nseconds(0),
+  _overflow(false)
 {}
 
 uint64_t Temporal::_cumulative_seconds_in_time() const
@@ -100,7 +101,7 @@ static time_t timegm(struct tm *my_time)
 	}
 	
 	// Get the gmtime based on the local seconds since the Epoch
-	gm_time = gmtime_r(&local_secs, &gm__rec);
+	gm_time = util::gmtime(local_secs, &gm__rec);
 	gm_time->tm_isdst = 0;
 	
 	// Interpret gmtime as the local time and convert it to seconds since the Epoch
@@ -1290,7 +1291,7 @@ bool Time::from_time_t(const time_t from)
   struct tm broken_time;
   struct tm *result;
 
-  result= gmtime_r(&from, &broken_time);
+  result= util::gmtime(from, &broken_time);
   if (result != NULL)
   {
     _years= 0;
@@ -1314,7 +1315,7 @@ bool Date::from_time_t(const time_t from)
   struct tm broken_time;
   struct tm *result;
 
-  result= gmtime_r(&from, &broken_time);
+  result= util::gmtime(from, &broken_time);
   if (result != NULL)
   {
     _years= 1900 + broken_time.tm_year;
@@ -1338,7 +1339,7 @@ bool DateTime::from_timeval(struct timeval &timeval_arg)
   struct tm broken_time;
   struct tm *result;
 
-  result= gmtime_r(&timeval_arg.tv_sec, &broken_time);
+  result= util::gmtime(timeval_arg.tv_sec, &broken_time);
   if (result != NULL)
   {
     _years= 1900 + broken_time.tm_year;
@@ -1364,7 +1365,7 @@ bool DateTime::from_time_t(const time_t from)
   struct tm broken_time;
   struct tm *result;
 
-  result= gmtime_r(&from, &broken_time);
+  result= util::gmtime(from, &broken_time);
   if (result != NULL)
   {
     _years= 1900 + broken_time.tm_year;

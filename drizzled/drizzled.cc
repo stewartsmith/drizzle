@@ -69,6 +69,8 @@
 #include "drizzled/module/load_list.h"
 #include "drizzled/global_buffer.h"
 
+#include "drizzled/debug.h"
+
 #include "drizzled/definition/cache.h"
 
 #include "drizzled/plugin/event_observer.h"
@@ -246,7 +248,6 @@ plugin::StorageEngine *myisam_engine;
 bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 
 uint32_t drizzled_bind_timeout;
-std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
@@ -254,7 +255,6 @@ back_log_constraints back_log(50);
 uint32_t server_id;
 uint64_t table_cache_size;
 size_t table_def_size;
-uint64_t max_connect_errors;
 uint32_t global_thread_id= 1UL;
 pid_t current_pid;
 
@@ -582,7 +582,7 @@ err:
   unireg_abort(1);
 
 #ifdef PR_SET_DUMPABLE
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
+  if (getDebug().test(debug::CORE_ON_SIGNAL))
   {
     /* inform kernel that process is dumpable */
     (void) prctl(PR_SET_DUMPABLE, 1);
@@ -812,17 +812,6 @@ static void check_limits_map(uint32_t in_max_allowed_packet)
   }
   in_max_allowed_packet-= in_max_allowed_packet % 1024;
   global_system_variables.max_allowed_packet= in_max_allowed_packet;
-}
-
-static void check_limits_mce(uint64_t in_max_connect_errors)
-{
-  max_connect_errors= MAX_CONNECT_ERRORS;
-  if (in_max_connect_errors < 1 || in_max_connect_errors > ULONG_MAX)
-  {
-    cout << _("Error: Invalid Value for max_connect_errors");
-    exit(-1);
-  }
-  max_connect_errors= in_max_connect_errors;
 }
 
 static void check_limits_max_err_cnt(uint64_t in_max_error_count)
@@ -1267,9 +1256,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   _("A global cap on the amount of memory that can be allocated by session join buffers (0 means unlimited)"))
   ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(64*1024*1024L)->notifier(&check_limits_map),
   _("Max packetlength to send/receive from to server."))
-  ("max-connect-errors", po::value<uint64_t>(&max_connect_errors)->default_value(MAX_CONNECT_ERRORS)->notifier(&check_limits_mce),
-  _("If there is more than this number of interrupted connections from a "
-     "host this host will be blocked from further connections."))
   ("max-error-count", po::value<uint64_t>(&global_system_variables.max_error_count)->default_value(DEFAULT_ERROR_COUNT)->notifier(&check_limits_max_err_cnt),
   _("Max number of errors/warnings to store for a statement."))
   ("max-heap-table-size", po::value<uint64_t>(&global_system_variables.max_heap_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_mhts),
@@ -1703,7 +1689,6 @@ enum options_drizzled
   OPT_BACK_LOG,
   OPT_JOIN_BUFF_SIZE,
   OPT_MAX_ALLOWED_PACKET,
-  OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
   OPT_MAX_JOIN_SIZE,
   OPT_MAX_SORT_LENGTH,
@@ -1882,11 +1867,6 @@ struct option my_long_options[] =
    (char**) &global_system_variables.max_allowed_packet,
    (char**) &max_system_variables.max_allowed_packet, 0, GET_UINT32,
    REQUIRED_ARG, 64*1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
-  {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
-   N_("If there is more than this number of interrupted connections from a "
-      "host this host will be blocked from further connections."),
-   (char**) &max_connect_errors, (char**) &max_connect_errors, 0, GET_UINT64,
-   REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
   {"max_heap_table_size", OPT_MAX_HEP_TABLE_SIZE,
    N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
@@ -2099,7 +2079,7 @@ static void drizzle_init_variables(void)
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   cleanup_done= 0;
   dropping_tables= ha_open_options=0;
-  test_flags.reset();
+  getDebug().reset();
   wake_thread=0;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
@@ -2254,18 +2234,18 @@ static void get_options()
   {
     if (vm["exit-info"].as<long>())
     {
-      test_flags.set((uint32_t) vm["exit-info"].as<long>());
+      getDebug().set((uint32_t) vm["exit-info"].as<long>());
     }
   }
 
   if (vm.count("want-core"))
   {
-    test_flags.set(TEST_CORE_ON_SIGNAL);
+    getDebug().set(debug::CORE_ON_SIGNAL);
   }
 
   if (vm.count("skip-stack-trace"))
   {
-    test_flags.set(TEST_NO_STACKTRACE);
+    getDebug().set(debug::NO_STACKTRACE);
   }
 
   if (vm.count("skip-symlinks"))
@@ -2304,9 +2284,9 @@ static void get_options()
   if (opt_debugging)
   {
     /* Allow break with SIGINT, no core or stack trace */
-    test_flags.set(TEST_SIGINT);
-    test_flags.set(TEST_NO_STACKTRACE);
-    test_flags.reset(TEST_CORE_ON_SIGNAL);
+    getDebug().set(debug::ALLOW_SIGINT);
+    getDebug().set(debug::NO_STACKTRACE);
+    getDebug().reset(debug::CORE_ON_SIGNAL);
   }
 
   if (drizzled_chroot)

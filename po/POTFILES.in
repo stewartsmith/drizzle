@@ -20,7 +20,9 @@ drizzled/main.cc
 drizzled/message/transaction_writer.cc
 drizzled/module/library.cc
 drizzled/module/loader.cc
+drizzled/module/registry.cc
 drizzled/module/registry.h
+drizzled/module/vertex.h
 drizzled/option.cc
 drizzled/plugin/authentication.cc
 drizzled/plugin/authorization.cc

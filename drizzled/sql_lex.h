@@ -955,10 +955,6 @@ public:
   {
     return context_stack.head();
   }
-  /*
-    Restore the LEX and Session in case of a parse error.
-  */
-  static void cleanup_lex_after_parse_error(Session *session);
 
   /**
     @brief check if the statement is a single-level join

@@ -1,0 +1,6 @@
+CREATE SCHEMA foo;
+begin;
+--error ER_TRANSACTIONAL_DDL_NOT_SUPPORTED
+alter schema foo collate = utf8_bin;
+commit;
+DROP SCHEMA foo;

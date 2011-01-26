@@ -616,8 +616,8 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
 
 int Session::lock_table_name(TableList *table_list)
 {
-  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
-  const TableIdentifier::Key &key(identifier.getKey());
+  identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
+  const identifier::Table::Key &key(identifier.getKey());
 
   {
     /* Only insert the table if we haven't insert it already */
@@ -1037,6 +1037,7 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
     if (getKilled())
       result=1;
   }
+
   if (not abort_on_refresh && not result)
     protect_against_global_read_lock++;
 

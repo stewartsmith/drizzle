@@ -73,14 +73,26 @@ static bool prepare_alter_table(Session *session,
                                       message::Table &table_message,
                                       AlterInfo *alter_info);
 
-static Table *open_alter_table(Session *session, Table *table, TableIdentifier &identifier);
+static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier);
+
+namespace statement {
+
+AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_build_method build_arg) :
+  CreateTable(in_session)
+{ 
+  in_session->lex->sql_command= SQLCOM_ALTER_TABLE;
+  (void)ident;
+  alter_info.build_method= build_arg;
+}
+
+} // namespace statement
 
 bool statement::AlterTable::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *all_tables= getSession()->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &getSession()->lex->select_lex;
   bool need_start_waiting= false;
 
   is_engine_set= not createTableMessage().engine().name().empty();
@@ -88,12 +100,11 @@ bool statement::AlterTable::execute()
   if (is_engine_set)
   {
     create_info().db_type= 
-      plugin::StorageEngine::findByName(*session, createTableMessage().engine().name());
+      plugin::StorageEngine::findByName(*getSession(), createTableMessage().engine().name());
 
     if (create_info().db_type == NULL)
     {
-      my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               createTableMessage().engine().name().c_str());
+      my_error(createTableMessage().engine().name(), ER_UNKNOWN_STORAGE_ENGINE, MYF(0));
 
       return true;
     }
@@ -105,25 +116,21 @@ bool statement::AlterTable::execute()
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::table::shared_ptr original_table_message;
   {
-    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
+    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
+    if (plugin::StorageEngine::getTableDefinition(*getSession(), identifier, original_table_message) != EEXIST)
     {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
+      my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
     }
 
     if (not  create_info().db_type)
     {
       create_info().db_type= 
-        plugin::StorageEngine::findByName(*session, original_table_message->engine().name());
+        plugin::StorageEngine::findByName(*getSession(), original_table_message->engine().name());
 
       if (not create_info().db_type)
       {
-        std::string path;
-        identifier.getSQLPath(path);
-        my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
+        my_error(ER_BAD_TABLE_ERROR, identifier);
         return true;
       }
     }
@@ -132,21 +139,23 @@ bool statement::AlterTable::execute()
   if (not validateCreateTableOption())
     return true;
 
-  /* ALTER TABLE ends previous transaction */
-  if (not session->endActiveTransaction())
+  if (getSession()->inTransaction())
+  {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
+  }
 
-  if (not (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
+  if (not (need_start_waiting= not getSession()->wait_if_global_read_lock(0, 1)))
     return true;
 
   bool res;
   if (original_table_message->type() == message::Table::STANDARD )
   {
-    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
-    TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                   session->lex->name.str ? session->lex->name.str : first_table->getTableName());
+    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
+                                   getSession()->lex->name.str ? getSession()->lex->name.str : first_table->getTableName());
 
-    res= alter_table(session, 
+    res= alter_table(getSession(), 
                      identifier,
                      new_identifier,
                      &create_info(),
@@ -156,20 +165,20 @@ bool statement::AlterTable::execute()
                      &alter_info,
                      select_lex->order_list.elements,
                      (Order *) select_lex->order_list.first,
-                     session->lex->ignore);
+                     getSession()->lex->ignore);
   }
   else
   {
-    TableIdentifier catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= session->find_temporary_table(catch22);
+    identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
+    Table *table= getSession()->find_temporary_table(catch22);
     assert(table);
     {
-      TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
-      TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                     session->lex->name.str ? session->lex->name.str : first_table->getTableName(),
-                                     table->getMutableShare()->getPath());
+      identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
+      identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
+                                       getSession()->lex->name.str ? getSession()->lex->name.str : first_table->getTableName(),
+                                       table->getMutableShare()->getPath());
 
-      res= alter_table(session, 
+      res= alter_table(getSession(), 
                        identifier,
                        new_identifier,
                        &create_info(),
@@ -179,7 +188,7 @@ bool statement::AlterTable::execute()
                        &alter_info,
                        select_lex->order_list.elements,
                        (Order *) select_lex->order_list.first,
-                       session->lex->ignore);
+                       getSession()->lex->ignore);
     }
   }
 
@@ -187,7 +196,7 @@ bool statement::AlterTable::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  session->startWaitingGlobalReadLock();
+  getSession()->startWaitingGlobalReadLock();
 
   return res;
 }
@@ -234,11 +243,11 @@ bool statement::AlterTable::execute()
   @retval false  success
 */
 static bool prepare_alter_table(Session *session,
-                                      Table *table,
-                                      HA_CREATE_INFO *create_info,
-                                      const message::Table &original_proto,
-                                      message::Table &table_message,
-                                      AlterInfo *alter_info)
+                                Table *table,
+                                HA_CREATE_INFO *create_info,
+                                const message::Table &original_proto,
+                                message::Table &table_message,
+                                AlterInfo *alter_info)
 {
   /* New column definitions are added here */
   List<CreateField> new_create_list;
@@ -418,7 +427,7 @@ static bool prepare_alter_table(Session *session,
       */
       if (alter_info->build_method == HA_BUILD_ONLINE)
       {
-        my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->getQueryString()->c_str());
+        my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
         return true;
       }
 
@@ -519,14 +528,15 @@ static bool prepare_alter_table(Session *session,
     }
     if (key_parts.elements)
     {
-      key_create_information_st key_create_info;
+      key_create_information_st key_create_info= default_key_create_info;
       Key *key;
-      enum Key::Keytype key_type;
-      memset(&key_create_info, 0, sizeof(key_create_info));
+      Key::Keytype key_type;
 
       key_create_info.algorithm= key_info->algorithm;
+
       if (key_info->flags & HA_USES_BLOCK_SIZE)
         key_create_info.block_size= key_info->block_size;
+
       if (key_info->flags & HA_USES_COMMENT)
         key_create_info.comment= key_info->comment;
 
@@ -538,7 +548,9 @@ static bool prepare_alter_table(Session *session,
           key_type= Key::UNIQUE;
       }
       else
+      {
         key_type= Key::MULTIPLE;
+      }
 
       key= new Key(key_type,
                    key_name,
@@ -726,7 +738,7 @@ static int discard_or_import_tablespace(Session *session,
       break;
 
     /* The ALTER Table is always in its own transaction */
-    error= transaction_services.autocommitOrRollback(session, false);
+    error= transaction_services.autocommitOrRollback(*session, false);
     if (not session->endActiveTransaction())
       error= 1;
 
@@ -737,7 +749,7 @@ static int discard_or_import_tablespace(Session *session,
 
   } while(0);
 
-  (void) transaction_services.autocommitOrRollback(session, error);
+  (void) transaction_services.autocommitOrRollback(*session, error);
   session->tablespace_op=false;
 
   if (error == 0)
@@ -798,8 +810,8 @@ static bool alter_table_manage_keys(Session *session,
 }
 
 static bool lockTableIfDifferent(Session &session,
-                                 TableIdentifier &original_table_identifier,
-                                 TableIdentifier &new_table_identifier,
+                                 identifier::Table &original_table_identifier,
+                                 identifier::Table &new_table_identifier,
                                  Table *name_lock)
 {
   /* Check that we are not trying to rename to an existing table */
@@ -810,9 +822,7 @@ static bool lockTableIfDifferent(Session &session,
 
       if (session.find_temporary_table(new_table_identifier))
       {
-        std::string path;
-        new_table_identifier.getSQLPath(path);
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
         return false;
       }
     }
@@ -891,8 +901,8 @@ static bool lockTableIfDifferent(Session &session,
 
 static bool internal_alter_table(Session *session,
                                  Table *table,
-                                 TableIdentifier &original_table_identifier,
-                                 TableIdentifier &new_table_identifier,
+                                 identifier::Table &original_table_identifier,
+                                 identifier::Table &new_table_identifier,
                                  HA_CREATE_INFO *create_info,
                                  const message::Table &original_proto,
                                  message::Table &create_proto,
@@ -949,9 +959,7 @@ static bool internal_alter_table(Session *session,
   if (original_engine->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
       new_engine->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED))
   {
-    std::string path;
-    new_table_identifier.getSQLPath(path);
-    my_error(ER_ILLEGAL_HA, MYF(0), path.c_str());
+    my_error(ER_ILLEGAL_HA, new_table_identifier);
 
     return true;
   }
@@ -1100,7 +1108,7 @@ static bool internal_alter_table(Session *session,
     case we just use it as is. Neither of these tables require locks in order to  be
     filled.
   */
-  TableIdentifier new_table_as_temporary(original_table_identifier.getSchemaName(),
+  identifier::Table new_table_as_temporary(original_table_identifier.getSchemaName(),
                                          tmp_name,
                                          create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
                                          message::Table::TEMPORARY);
@@ -1289,7 +1297,7 @@ static bool internal_alter_table(Session *session,
         table. This is when the old and new tables are compatible, according to
         compare_table(). Then, we need one additional call to
       */
-      TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
+      identifier::Table original_table_to_drop(original_table_identifier.getSchemaName(),
                                              old_name, create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
                                              message::Table::TEMPORARY);
 
@@ -1358,8 +1366,8 @@ static bool internal_alter_table(Session *session,
 }
 
 bool alter_table(Session *session,
-                 TableIdentifier &original_table_identifier,
-                 TableIdentifier &new_table_identifier,
+                 identifier::Table &original_table_identifier,
+                 identifier::Table &new_table_identifier,
                  HA_CREATE_INFO *create_info,
                  const message::Table &original_proto,
                  message::Table &create_proto,
@@ -1628,7 +1636,7 @@ copy_data_between_tables(Session *session,
       Ensure that the new table is saved properly to disk so that we
       can do a rename
     */
-    if (transaction_services.autocommitOrRollback(session, false))
+    if (transaction_services.autocommitOrRollback(*session, false))
       error= 1;
 
     if (not session->endActiveTransaction())
@@ -1650,7 +1658,7 @@ copy_data_between_tables(Session *session,
   return(error > 0 ? -1 : 0);
 }
 
-static Table *open_alter_table(Session *session, Table *table, TableIdentifier &identifier)
+static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier)
 {
   Table *new_table;
 

@@ -49,11 +49,11 @@ typedef int (Arg_comparator::*arg_cmp_func)();
 
 typedef int (*Item_field_cmpfunc)(Item_field *f1, Item_field *f2, void *arg);
 
-uint64_t get_datetime_value(Session *session, 
-                            Item ***item_arg, 
-                            Item **cache_arg,
-                            Item *warn_item, 
-                            bool *is_null);
+int64_t get_datetime_value(Session *session, 
+                           Item ***item_arg, 
+                           Item **cache_arg,
+                           Item *warn_item, 
+                           bool *is_null);
 
 class Arg_comparator: public memory::SqlAlloc
 {
@@ -69,8 +69,8 @@ class Arg_comparator: public memory::SqlAlloc
   bool is_nulls_eq;                // TRUE <=> compare for the EQUAL_FUNC
   enum enum_date_cmp_type { CMP_DATE_DFLT= 0, CMP_DATE_WITH_DATE,
                             CMP_DATE_WITH_STR, CMP_STR_WITH_DATE };
-  uint64_t (*get_value_func)(Session *session, Item ***item_arg, Item **cache_arg,
-                              Item *warn_item, bool *is_null);
+  int64_t (*get_value_func)(Session *session, Item ***item_arg, Item **cache_arg,
+                            Item *warn_item, bool *is_null);
 public:
   DTCollation cmp_collation;
 
@@ -118,7 +118,7 @@ public:
   int compare_datetime();        // compare args[0] & args[1] as DATETIMEs
 
   static enum enum_date_cmp_type can_compare_as_dates(Item *a, Item *b,
-                                                      uint64_t *const_val_arg);
+                                                      int64_t *const_val_arg);
 
   void set_datetime_cmp_func(Item **a1, Item **b1);
   static arg_cmp_func comparator_matrix [5][2];
@@ -1028,7 +1028,8 @@ public:
 */
 class cmp_item_datetime :public cmp_item
 {
-  uint64_t value;
+  int64_t value;
+
 public:
   Session *session;
   /* Item used for issuing warnings. */

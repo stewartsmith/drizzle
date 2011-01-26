@@ -39,7 +39,7 @@ select found_rows();
 --replace_column 9 #
 explain select a,b from t1 union all select a,b from t2;
 
---error  1054
+--error ER_BAD_FIELD_ERROR
 explain select xx from t1 union select 1;
 --error ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT
 explain select a,b from t1 union select 1;

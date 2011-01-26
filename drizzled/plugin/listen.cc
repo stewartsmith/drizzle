@@ -108,7 +108,6 @@ bool plugin::Listen::setup(void)
 plugin::Client *plugin::Listen::getClient(void)
 {
   int ready;
-  uint32_t x;
   plugin::Client *client;
 
   while (1)
@@ -127,7 +126,7 @@ plugin::Client *plugin::Listen::getClient(void)
     else if (ready == 0)
       continue;
 
-    for (x= 0; x < fd_count; x++)
+    for (uint32_t x= 0; x < fd_count; x++)
     {
       if (fd_list[x].revents != POLLIN)
         continue;

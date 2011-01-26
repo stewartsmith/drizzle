@@ -33,10 +33,11 @@ namespace statement
 class Load : public Statement
 {
 public:
-  Load(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Load(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_LOAD;
+  }
 
   bool execute();
 

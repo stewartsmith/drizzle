@@ -79,7 +79,7 @@ MI_INFO *test_if_reopen(char *filename)
   have an open count of 0.
 ******************************************************************************/
 
-MI_INFO *mi_open(const drizzled::TableIdentifier &identifier, int mode, uint32_t open_flags)
+MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32_t open_flags)
 {
   int lock_error,kfile,open_mode,save_errno,have_rtree=0;
   uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,

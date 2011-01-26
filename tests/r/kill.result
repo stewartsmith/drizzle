@@ -37,4 +37,3 @@ KILL CONNECTION_ID();
 # CR_SERVER_LOST, CR_SERVER_GONE_ERROR, depending on the timing 
 # of close of the connection socket
 SELECT 1;
-Got one of the listed errors

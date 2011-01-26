@@ -257,11 +257,11 @@ int Field_decimal::store_decimal(const type::Decimal *decimal_value)
 }
 
 
-int Field_decimal::store_time(type::Time *ltime,
-                              enum enum_drizzle_timestamp_type )
+int Field_decimal::store_time(type::Time &ltime,
+                              type::timestamp_t )
 {
   type::Decimal decimal_value;
-  return store_value(date2_class_decimal(ltime, &decimal_value));
+  return store_value(date2_class_decimal(&ltime, &decimal_value));
 }
 
 

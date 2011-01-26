@@ -29,7 +29,7 @@ namespace drizzled
 namespace generator
 {
 
-Table::Table(Session &arg, const SchemaIdentifier &schema_identifier) :
+Table::Table(Session &arg, const identifier::Schema &schema_identifier) :
   session(arg)
 {
   plugin::StorageEngine::getIdentifiers(session, schema_identifier, table_names);

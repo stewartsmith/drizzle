@@ -929,11 +929,12 @@ eval create $temp table t1 (col1 int)ENGINE=$engine_type;
 eval create $temp table t2 (col1 int,stamp TIMESTAMP,INDEX stamp_idx
 (stamp))ENGINE=$engine_type;
 insert into t1 values (1),(2),(3);
-# Note that timestamp 3 is wrong
---error 1685 # Bad timestamp
-insert into t2 values (1, 20020204130000),(2, 20020204130000),(4,20020204310000 ),(5,20020204230000);
-SELECT col1 FROM t1 UNION SELECT col1 FROM t2 WHERE stamp <
-'20020204120000' GROUP BY col1;
+insert into t2 values (1, 20020204130000);
+insert into t2 values (2, 20020204130000);
+--error ER_INVALID_TIMESTAMP_VALUE # Bad timestamp
+insert into t2 values (4, 20020204310000);
+insert into t2 values (5, 20020204230000);
+SELECT col1 FROM t1 UNION SELECT col1 FROM t2 WHERE stamp < '20020204120000' GROUP BY col1;
 drop table t1,t2;
 
 #
@@ -2162,6 +2163,7 @@ eval create $temp table t1 (g geometry not null, spatial gk(g)) engine=$engine_t
 eval create $temp table t1 ( a int ) ENGINE=$engine_type;
 BEGIN;
 INSERT INTO t1 VALUES (1);
+COMMIT;
 eval ALTER TABLE t1 ENGINE=$engine_type;
 DROP TABLE t1;
 

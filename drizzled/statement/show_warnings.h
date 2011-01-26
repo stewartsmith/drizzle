@@ -34,10 +34,11 @@ namespace statement
 class ShowWarnings : public Statement
 {
 public:
-  ShowWarnings(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  ShowWarnings(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_SHOW_WARNS;
+  }
 
   bool execute();
 };

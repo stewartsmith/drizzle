@@ -122,14 +122,14 @@ public:
 
   int doCreateTable(Session &,
                     Table &table_arg,
-                    const drizzled::TableIdentifier &identifier,
+                    const drizzled::identifier::Table &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
-                           const drizzled::TableIdentifier &identifier,
+                           const drizzled::identifier::Table &identifier,
                            drizzled::message::Table &table_message);
 
-  int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
+  int doDropTable(Session&, const drizzled::identifier::Table &identifier);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -138,22 +138,22 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
-  bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
-  int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
+  bool doDoesTableExist(Session& session, const drizzled::identifier::Table &identifier);
+  int doRenameTable(Session&, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
 };
 
 void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                 const drizzled::SchemaIdentifier&,
-                                 drizzled::TableIdentifier::vector&)
+                                 const drizzled::identifier::Schema&,
+                                 drizzled::identifier::Table::vector&)
 {
 }
 
 int Tina::doRenameTable(Session &session,
-                        const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
+                        const drizzled::identifier::Table &from, const drizzled::identifier::Table &to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
@@ -171,14 +171,14 @@ int Tina::doRenameTable(Session &session,
   return error;
 }
 
-bool Tina::doDoesTableExist(Session &session, const drizzled::TableIdentifier &identifier)
+bool Tina::doDoesTableExist(Session &session, const drizzled::identifier::Table &identifier)
 {
   return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 
 int Tina::doDropTable(Session &session,
-                      const drizzled::TableIdentifier &identifier)
+                      const drizzled::identifier::Table &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -228,7 +228,7 @@ void Tina::deleteOpenTable(const string &table_name)
 
 
 int Tina::doGetTableDefinition(Session &session,
-                               const drizzled::TableIdentifier &identifier,
+                               const drizzled::identifier::Table &identifier,
                                drizzled::message::Table &table_message)
 {
   if (session.getMessageCache().getTableMessage(identifier, table_message))
@@ -781,7 +781,7 @@ err:
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
+int ha_tina::doOpen(const identifier::Table &identifier, int , uint32_t )
 {
   if (not (share= get_share(identifier.getPath().c_str())))
     return(ENOENT);
@@ -1268,7 +1268,7 @@ int ha_tina::delete_all_rows()
 
 int Tina::doCreateTable(Session &session,
                         Table& table_arg,
-                        const drizzled::TableIdentifier &identifier,
+                        const drizzled::identifier::Table &identifier,
                         drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];
@@ -1323,7 +1323,7 @@ DRIZZLE_DECLARE_PLUGIN
   "CSV storage engine",
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
-  NULL,                       /* system variables                */
+  NULL,                       /* depends */
   NULL                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -90,7 +90,7 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
 
-  TableIdentifier identifier(getTable()->getShare()->getSchemaName(),
+  identifier::Table identifier(getTable()->getShare()->getSchemaName(),
                              getTable()->getShare()->getTableName(),
                              getTable()->getShare()->getType());
 
@@ -210,7 +210,7 @@ ha_rows Cursor::records() { return stats.records; }
 uint64_t Cursor::tableSize() { return stats.index_file_length + stats.data_file_length; }
 uint64_t Cursor::rowSize() { return getTable()->getRecordLength() + getTable()->sizeFields(); }
 
-int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+int Cursor::doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked)
 {
   return open(identifier.getPath().c_str(), mode, test_if_locked);
 }
@@ -221,7 +221,7 @@ int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if
   Try O_RDONLY if cannot open as O_RDWR
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
-int Cursor::ha_open(const TableIdentifier &identifier,
+int Cursor::ha_open(const identifier::Table &identifier,
                     int mode,
                     int test_if_locked)
 {
@@ -710,7 +710,7 @@ Cursor::ha_delete_all_rows()
      */
     Session *const session= getTable()->in_use;
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.truncateTable(session, getTable());
+    transaction_services.truncateTable(*session, *getTable());
   }
 
   return result;
@@ -1311,7 +1311,7 @@ static bool log_row_for_replication(Table* table,
      * CREATE TABLE will commit the transaction containing
      * it).
      */
-    result= transaction_services.insertRecord(session, table);
+    result= transaction_services.insertRecord(*session, *table);
     break;
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
@@ -1340,20 +1340,20 @@ static bool log_row_for_replication(Table* table,
        * as the row to delete (this is the conflicting row), so
        * we need to notify TransactionService to use that row.
        */
-      transaction_services.deleteRecord(session, table, true);
+      transaction_services.deleteRecord(*session, *table, true);
       /* 
        * We set the "current" statement message to NULL.  This triggers
        * the replication services component to generate a new statement
        * message for the inserted record which will come next.
        */
-      transaction_services.finalizeStatementMessage(*session->getStatementMessage(), session);
+      transaction_services.finalizeStatementMessage(*session->getStatementMessage(), *session);
     }
     else
     {
       if (before_record == NULL)
-        result= transaction_services.insertRecord(session, table);
+        result= transaction_services.insertRecord(*session, *table);
       else
-        transaction_services.updateRecord(session, table, before_record, after_record);
+        transaction_services.updateRecord(*session, *table, before_record, after_record);
     }
     break;
   case SQLCOM_INSERT:
@@ -1366,17 +1366,17 @@ static bool log_row_for_replication(Table* table,
      * an update.
      */
     if (before_record == NULL)
-      result= transaction_services.insertRecord(session, table);
+      result= transaction_services.insertRecord(*session, *table);
     else
-      transaction_services.updateRecord(session, table, before_record, after_record);
+      transaction_services.updateRecord(*session, *table, before_record, after_record);
     break;
 
   case SQLCOM_UPDATE:
-    transaction_services.updateRecord(session, table, before_record, after_record);
+    transaction_services.updateRecord(*session, *table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
-    transaction_services.deleteRecord(session, table);
+    transaction_services.deleteRecord(*session, *table);
     break;
   default:
     break;

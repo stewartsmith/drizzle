@@ -1817,21 +1817,6 @@ LEX::~LEX()
   delete _create_table;
 }
 
-/**
-  @brief Restore the LEX and Session in case of a parse error.
-
-  This is a clean up call that is invoked by the Bison generated
-  parser before returning an error from DRIZZLEparse. If your
-  semantic actions manipulate with the global thread state (which
-  is a very bad practice and should not normally be employed) and
-  need a clean-up in case of error, and you can not use %destructor
-  rule in the grammar file itself, this function should be used
-  to implement the clean up.
-*/
-void LEX::cleanup_lex_after_parse_error(Session *)
-{
-}
-
 /*
   Initialize (or reset) Query_tables_list object.
 

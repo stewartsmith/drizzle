@@ -25,10 +25,13 @@
 #include <map>
 #include <algorithm>
 
+#include <boost/scoped_ptr.hpp>
+
 #include "drizzled/gettext.h"
 #include "drizzled/unireg.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/plugin.h"
+
 
 namespace drizzled
 {
@@ -37,26 +40,31 @@ namespace module
 {
 class Module;
 class Library;
+class Graph;
+
 
 class Registry
 {
 public:
+
   typedef std::map<std::string, Library *> LibraryMap;
   typedef std::map<std::string, Module *> ModuleMap;
+  typedef std::vector<Module *> ModuleList;
 private:
   LibraryMap library_registry_;
   ModuleMap module_registry_;
+  boost::scoped_ptr<Graph> depend_graph_; 
   
   plugin::Plugin::map plugin_registry;
 
-  Registry()
-   : module_registry_(),
-     plugin_registry()
-  { }
+  bool deps_built_;
 
+  Registry();
   Registry(const Registry&);
   Registry& operator=(const Registry&);
   ~Registry();
+
+  void buildDeps();
 public:
 
   static Registry& singleton()
@@ -75,7 +83,7 @@ public:
 
   void remove(Module *module);
 
-  std::vector<Module *> getList(bool active);
+  std::vector<Module *> getList();
 
   const plugin::Plugin::map &getPluginsMap() const
   {

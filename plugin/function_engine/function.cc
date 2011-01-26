@@ -28,8 +28,8 @@
 using namespace std;
 using namespace drizzled;
 
-static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("INFORMATION_SCHEMA");
-static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("DATA_DICTIONARY");
+static identifier::Schema INFORMATION_SCHEMA_IDENTIFIER("INFORMATION_SCHEMA");
+static identifier::Schema DATA_DICTIONARY_IDENTIFIER("DATA_DICTIONARY");
 
 Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
@@ -55,7 +55,7 @@ Cursor *Function::create(Table &table)
 }
 
 int Function::doGetTableDefinition(Session &,
-                                   const TableIdentifier &identifier,
+                                   const identifier::Table &identifier,
                                    message::Table &table_proto)
 {
   drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
@@ -70,13 +70,13 @@ int Function::doGetTableDefinition(Session &,
   return EEXIST;
 }
 
-void Function::doGetSchemaIdentifiers(SchemaIdentifier::vector& schemas)
+void Function::doGetSchemaIdentifiers(identifier::Schema::vector& schemas)
 {
   schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
 }
 
-bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::schema::shared_ptr &schema_message)
+bool Function::doGetSchemaDefinition(const identifier::Schema &schema_identifier, message::schema::shared_ptr &schema_message)
 {
   schema_message.reset(new message::Schema); // This should be fixed, we could just be using ones we built on startup.
 
@@ -96,14 +96,14 @@ bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, 
   return true;
 }
 
-bool Function::doCanCreateTable(const drizzled::TableIdentifier &table_identifier)
+bool Function::doCanCreateTable(const drizzled::identifier::Table &table_identifier)
 {
-  if (static_cast<const SchemaIdentifier&>(table_identifier) == INFORMATION_SCHEMA_IDENTIFIER)
+  if (static_cast<const identifier::Schema&>(table_identifier) == INFORMATION_SCHEMA_IDENTIFIER)
   {
     return false;
   }
 
-  else if (static_cast<const SchemaIdentifier&>(table_identifier) == DATA_DICTIONARY_IDENTIFIER)
+  else if (static_cast<const identifier::Schema&>(table_identifier) == DATA_DICTIONARY_IDENTIFIER)
   {
     return false;
   }
@@ -111,7 +111,7 @@ bool Function::doCanCreateTable(const drizzled::TableIdentifier &table_identifie
   return true;
 }
 
-bool Function::doDoesTableExist(Session&, const TableIdentifier &identifier)
+bool Function::doDoesTableExist(Session&, const identifier::Table &identifier)
 {
   drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
 
@@ -123,15 +123,15 @@ bool Function::doDoesTableExist(Session&, const TableIdentifier &identifier)
 
 
 void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                     const drizzled::SchemaIdentifier &schema_identifier,
-                                     drizzled::TableIdentifier::vector &set_of_identifiers)
+                                     const drizzled::identifier::Schema &schema_identifier,
+                                     drizzled::identifier::Table::vector &set_of_identifiers)
 {
   set<std::string> set_of_names;
   drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
 
   for (set<std::string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
-    set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter, drizzled::message::Table::FUNCTION));
+    set_of_identifiers.push_back(identifier::Table(schema_identifier, *iter, drizzled::message::Table::FUNCTION));
   }
 }
 
@@ -151,7 +151,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Function Engine provides the infrastructure for Table Functions,etc.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  NULL,               /* system variables */
+  NULL,               /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

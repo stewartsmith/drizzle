@@ -1398,7 +1398,7 @@ drop table t1;
 #--remove_file $MYSQLTEST_VARDIR/master-data/test/bug15205.CSV
 ## system error (can't open the datafile)
 #--replace_result $MYSQLTEST_VARDIR . master-data/ ''
-#--error 13
+#--error EE_STAT
 #select * from bug15205;
 #select * from bug15205_2;
 ## Create empty file

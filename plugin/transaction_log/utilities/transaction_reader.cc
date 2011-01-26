@@ -50,14 +50,57 @@ namespace po= boost::program_options;
 
 static const char *replace_with_spaces= "\n\r";
 
-static void printStatement(const message::Statement &statement, string &output)
+static void printErrorMessage(enum message::TransformSqlError err)
+{
+  switch (err)
+  {
+    case message::MISSING_HEADER:
+    {
+      cerr << "Data segment without a header\n";
+      break;
+    }
+    case message::MISSING_DATA:
+    {
+      cerr << "Header segment without a data segment\n";
+      break;
+    }
+    case message::UUID_MISMATCH:
+    {
+      cerr << "UUID on objects did not match\n";
+      break;
+    }
+    default:
+    {
+      cerr << "Unhandled error\n";
+      break;
+    }
+  }
+}
+
+/**
+ * Transform the given Statement message into a printable SQL string.
+ *
+ * @param[in] statement The Statement protobuf message to transform.
+ * @param[out] output Storage for the printable string.
+ *
+ * @retval true Success
+ * @retval false Error
+ */
+static bool printStatement(const message::Statement &statement, string &output)
 {
   vector<string> sql_strings;
+  enum message::TransformSqlError err;
 
-  message::transformStatementToSql(statement,
-                                   sql_strings,
-                                   message::DRIZZLE,
-                                   true /* already in transaction */);
+  err= message::transformStatementToSql(statement,
+                                        sql_strings,
+                                        message::DRIZZLE,
+                                        true /* already in transaction */);
+
+  if (err != message::NONE)
+  {
+    printErrorMessage(err);
+    return false;
+  }
 
   for (vector<string>::iterator sql_string_iter= sql_strings.begin();
        sql_string_iter != sql_strings.end();
@@ -93,6 +136,36 @@ static void printStatement(const message::Statement &statement, string &output)
 
     output.append(sql + ";\n");
   }
+  
+  return true;
+}
+
+static bool isDDLStatement(const message::Statement &statement)
+{
+  bool isDDL;
+
+  switch (statement.type())
+  {
+    case (message::Statement::TRUNCATE_TABLE):
+    case (message::Statement::CREATE_SCHEMA):
+    case (message::Statement::ALTER_SCHEMA):
+    case (message::Statement::DROP_SCHEMA):
+    case (message::Statement::CREATE_TABLE):
+    case (message::Statement::ALTER_TABLE):
+    case (message::Statement::DROP_TABLE):
+    case (message::Statement::RAW_SQL):
+    {
+      isDDL= true;
+      break;
+    }
+    default:
+    {
+      isDDL= false;
+      break;
+    }
+  }
+  
+  return isDDL;
 }
 
 static bool isEndStatement(const message::Statement &statement)
@@ -284,7 +357,17 @@ static void printTransactionSummary(const message::Transaction &transaction,
   }
 }
 
-static void printTransaction(const message::Transaction &transaction,
+/**
+ * Transform the given Transaction message into printable SQL strings.
+ *
+ * @param[in] transaction The Transaction protobuf message to transform.
+ * @param[in] ignore_events If true, Event messages are not output.
+ * @param[in] print_as_raw If true, print as raw protobuf instead of SQL.
+ *
+ * @retval true Success
+ * @retval false Error
+ */
+static bool printTransaction(const message::Transaction &transaction,
                              bool ignore_events,
                              bool print_as_raw)
 {
@@ -305,33 +388,40 @@ static void printTransaction(const message::Transaction &transaction,
       else
         printEvent(transaction.event());
     }
-    return;
+    return true;
   }
 
   if (print_as_raw)
   {
     transaction.PrintDebugString();
-    return;
+    return true;
   }
 
   size_t num_statements= transaction.statement_size();
-  size_t x;
-
-  /*
-   * One way to determine when a new transaction begins is when the
-   * transaction id changes (if all transactions have their GPB messages
-   * grouped together, which this program will). We check that here.
-   */
-  if (trx.transaction_id() != last_trx_id)
-    cout << "START TRANSACTION;" << endl;
-
-  last_trx_id= trx.transaction_id();
-
   vector<string> cached_statement_sql;
 
-  for (x= 0; x < num_statements; ++x)
+  for (size_t x= 0; x < num_statements; ++x)
   {
     const message::Statement &statement= transaction.statement(x);
+
+    /* Transactional DDL not supported yet. Use AUTOCOMMIT for DDL. */
+    if (x == 0)
+    {
+      /* Transaction ID change means new transaction to start */
+      if (trx.transaction_id() != last_trx_id)
+      {
+        if (isDDLStatement(statement))
+        {
+          cout << "SET AUTOCOMMIT=0;" << endl;
+        }
+        else
+        {
+          cout << "START TRANSACTION;" << endl;
+        }
+      }
+  
+      last_trx_id= trx.transaction_id();
+    }
 
     if (should_commit)
       should_commit= isEndStatement(statement);
@@ -346,8 +436,12 @@ static void printTransaction(const message::Transaction &transaction,
       should_commit= false;
 
     string output;
-    printStatement(statement, output);
-    
+
+    if (not printStatement(statement, output))
+    {
+      return false;
+    }
+
     if (isEndStatement(statement))
     {
       /* A complete, non-segmented statement */
@@ -394,9 +488,11 @@ static void printTransaction(const message::Transaction &transaction,
    */
   if (should_commit)
     cout << "COMMIT;" << endl;
+  
+  return true;
 }
 
-static void processTransactionMessage(TransactionManager &trx_mgr, 
+static bool processTransactionMessage(TransactionManager &trx_mgr, 
                                       const message::Transaction &transaction, 
                                       bool summarize,
                                       bool ignore_events,
@@ -432,7 +528,10 @@ static void processTransactionMessage(TransactionManager &trx_mgr,
         }
         else
         {
-          printTransaction(new_trx, ignore_events, print_as_raw);
+          if (not printTransaction(new_trx, ignore_events, print_as_raw))
+          {
+            return false;
+          }
         }
         idx++;
       }
@@ -448,12 +547,21 @@ static void processTransactionMessage(TransactionManager &trx_mgr,
       }
       else
       {
-        printTransaction(transaction, ignore_events, print_as_raw);
+        if (not printTransaction(transaction, ignore_events, print_as_raw))
+        {
+          return false;
+        }
       }
     }
   }
+  
+  return true;
 }
 
+/**
+ * @retval  0 Process completed successfully.
+ * @retval -1 Process encountered an error.
+ */
 int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -577,8 +685,12 @@ int main(int argc, char* argv[])
 
       transaction.ParseFromArray(data, length);
 
-      processTransactionMessage(trx_mgr, transaction, 
-                                summarize, ignore_events, print_as_raw);
+      if (not processTransactionMessage(trx_mgr, transaction, 
+                                        summarize, ignore_events,
+                                        print_as_raw))
+      {
+        return -1;
+      }
     }    
   }
   else // file based transaction log 
@@ -610,8 +722,11 @@ int main(int argc, char* argv[])
       {
         if (opt_transaction_id == transaction_id)
         {
-          processTransactionMessage(trx_mgr, transaction, summarize, 
-                                    ignore_events, print_as_raw);
+          if (not processTransactionMessage(trx_mgr, transaction, summarize, 
+                                            ignore_events, print_as_raw))
+          {
+            return -1;
+          }
         }
         else
         {
@@ -623,8 +738,11 @@ int main(int argc, char* argv[])
         /*
          * No transaction ID given, so process all messages.
          */
-        processTransactionMessage(trx_mgr, transaction, summarize,
-                                  ignore_events, print_as_raw);
+        if (not processTransactionMessage(trx_mgr, transaction, summarize,
+                                          ignore_events, print_as_raw))
+        {
+          return -1;
+        }
       }  
 
       if (do_checksum)
@@ -646,7 +764,7 @@ int main(int argc, char* argv[])
     if (error != "EOF")
     {
       cerr << error << endl;
-      return 1;
+      return -1;
     }
   }
 

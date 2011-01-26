@@ -72,7 +72,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Error Messages to stderr"),
   PLUGIN_LICENSE_GPL,
   errmsg_stderr_plugin_init,
-  NULL, /* system variables */
+  NULL, /* depends */
   NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -33,10 +33,12 @@ namespace statement
 class RollbackToSavepoint : public Statement
 {
 public:
-  RollbackToSavepoint(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  RollbackToSavepoint(Session *in_session, const lex_string_t &ident) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_ROLLBACK_TO_SAVEPOINT;
+    getSession()->getLex()->ident= ident;
+  }
 
   bool execute();
 };

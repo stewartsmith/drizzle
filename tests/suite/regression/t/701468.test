@@ -1,0 +1,14 @@
+create table t1 (a int not null);
+--error ER_BAD_NULL_ERROR
+insert into t1 values (1), (NULL), (2);
+
+begin;
+insert into t1 values (42);
+--error ER_BAD_NULL_ERROR
+insert into t1 values (1), (NULL), (2);
+select * from t1;
+rollback;
+select * from t1;
+
+drop table t1;
+

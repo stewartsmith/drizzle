@@ -211,7 +211,7 @@ bool TemporalInterval::addDate(type::Time *ltime, interval_type int_type)
   case INTERVAL_DAY_MINUTE:
   case INTERVAL_DAY_HOUR:
     int64_t sec, days, daynr, microseconds, extra_sec;
-    ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME; // Return full date
+    ltime->time_type= type::DRIZZLE_TIMESTAMP_DATETIME; // Return full date
     microseconds= ltime->second_part + sign*second_part;
     extra_sec= microseconds/1000000L;
     microseconds= microseconds%1000000L;
@@ -241,8 +241,7 @@ bool TemporalInterval::addDate(type::Time *ltime, interval_type int_type)
     /* Day number from year 0 to 9999-12-31 */
     if ((uint64_t) daynr > MAX_DAY_NUMBER)
       goto invalid_date;
-    get_date_from_daynr((long) daynr, &ltime->year, &ltime->month,
-        &ltime->day);
+    get_date_from_daynr((long) daynr, &ltime->year, &ltime->month, &ltime->day);
     break;
   case INTERVAL_DAY:
   case INTERVAL_WEEK:
