@@ -971,32 +971,18 @@ opt_database_custom_options:
 
 custom_database_option:
           ident_or_text
-        {
-          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
-
-          opt->set_name($1.str);
-        }
+          {
+            statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+            statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
+          }
         | ident_or_text equal ident_or_text
-        {
-          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
-
-          opt->set_name($1.str);
-          opt->set_state($3.str);
-        }
+          {
+            parser::buildSchemaOption(YYSession, $1.str, $3);
+          }
         | ident_or_text equal ulonglong_num
-        {
-          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          char number_as_string[22];
-
-          snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
-
-          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
-
-          opt->set_name($1.str);
-          opt->set_state(number_as_string);
-        }
+          {
+            parser::buildSchemaOption(YYSession, $1.str, $3);
+          }
         ;
 
 opt_table_options:
@@ -1042,33 +1028,19 @@ custom_engine_option:
           }
         |  ROW_FORMAT_SYM equal row_format_or_text
           {
-	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
-
-            opt->set_name("ROW_FORMAT");
-            opt->set_state($3.str);
+            parser::buildEngineOption(YYSession, "ROW_FORMAT", $3);
           }
         |  FILE_SYM equal TEXT_STRING_sys
           {
-	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
-
-            opt->set_name("FILE");
-            opt->set_state($3.str);
+            parser::buildEngineOption(YYSession, "FILE", $3);
           }
         |  ident_or_text equal engine_option_value
           {
-	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
-
-            opt->set_name($1.str);
-            opt->set_state($3.str);
+            parser::buildEngineOption(YYSession, $1.str, $3);
           }
         | ident_or_text equal ulonglong_num
           {
-            char number_as_string[22];
-            snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
-
-	    drizzled::message::Engine::Option *opt= Lex->table()->mutable_engine()->add_options();
-            opt->set_name($1.str);
-            opt->set_state(number_as_string);
+            parser::buildEngineOption(YYSession, $1.str, $3);
           }
         | default_collation
         ;
@@ -3710,6 +3682,7 @@ select_derived:
 
             if (!($$= $1->end_nested_join(Lex->session)) && $3)
               DRIZZLE_YYABORT;
+
             if (!$3 && $$)
             {
               parser::my_parse_error(YYSession->m_lip);
@@ -3899,7 +3872,9 @@ table_alias:
 opt_table_alias:
           /* empty */ { $$=0; }
         | table_alias ident
-          { $$= (drizzled::LEX_STRING*) memory::sql_memdup(&$2,sizeof(drizzled::LEX_STRING)); }
+          {
+            $$= (drizzled::LEX_STRING*) memory::sql_memdup(&$2,sizeof(drizzled::LEX_STRING));
+          }
         ;
 
 opt_all:
@@ -5104,81 +5079,41 @@ simple_ident_nospvar:
 simple_ident_q:
           ident '.' ident
           {
-            {
-              Select_Lex *sel= Lex->current_select;
-              if (sel->no_table_names_allowed)
-              {
-                my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-                         MYF(0), $1.str, YYSession->where);
-              }
-              $$= (sel->parsing_place != IN_HAVING ||
-                  sel->get_in_sum_expr() > 0) ?
-                  (Item*) new Item_field(Lex->current_context(),
-                                         (const char *)NULL, $1.str, $3.str) :
-                  (Item*) new Item_ref(Lex->current_context(),
-                                       (const char *)NULL, $1.str, $3.str);
-            }
+            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, $1, $3);
           }
         | '.' ident '.' ident
           {
-            Select_Lex *sel= Lex->current_select;
-            if (sel->no_table_names_allowed)
-            {
-              my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-                       MYF(0), $2.str, YYSession->where);
-            }
-            $$= (sel->parsing_place != IN_HAVING ||
-                sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), NULL, $2.str, $4.str) :
-                (Item*) new Item_ref(Lex->current_context(),
-                                     (const char *)NULL, $2.str, $4.str);
+            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, $2, $4);
           }
         | ident '.' ident '.' ident
           {
-            Select_Lex *sel= Lex->current_select;
-            if (sel->no_table_names_allowed)
-            {
-              my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-                       MYF(0), $3.str, YYSession->where);
-            }
-            $$= (sel->parsing_place != IN_HAVING ||
-                sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), $1.str, $3.str, $5.str) :
-                (Item*) new Item_ref(Lex->current_context(), $1.str, $3.str, $5.str);
+            $$= parser::buildIdent(YYSession, $1, $3, $5);
           }
         ;
 
 field_ident:
-          ident { $$=$1;}
+          ident 
+          {
+            $$=$1;
+          }
         | ident '.' ident '.' ident
           {
-            TableList *table=
-              reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
-            if (my_strcasecmp(table_alias_charset, $1.str, table->getSchemaName()))
-            {
-              my_error(ER_WRONG_DB_NAME, MYF(0), $1.str);
+            if (not parser::checkFieldIdent(YYSession, $1, $3))
               DRIZZLE_YYABORT;
-            }
-            if (my_strcasecmp(table_alias_charset, $3.str,
-                              table->getTableName()))
-            {
-              my_error(ER_WRONG_TABLE_NAME, MYF(0), $3.str);
-              DRIZZLE_YYABORT;
-            }
+
             $$=$5;
           }
         | ident '.' ident
           {
-            TableList *table=
-              reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
-            if (my_strcasecmp(table_alias_charset, $1.str, table->alias))
-            {
-              my_error(ER_WRONG_TABLE_NAME, MYF(0), $1.str);
+            if (not parser::checkFieldIdent(YYSession, NULL_LEX_STRING, $1))
               DRIZZLE_YYABORT;
-            }
+
             $$=$3;
           }
-        | '.' ident { $$=$2;} /* For Delphi */
+        | '.' ident 
+          { /* For Delphi */
+            $$=$2;
+          }
         ;
 
 table_ident:

@@ -300,5 +300,79 @@ bool buildOrderBy(Session *session)
   return true;
 }
 
+void buildEngineOption(Session *session, const char *key, const LEX_STRING &value)
+{
+  message::Engine::Option *opt= session->getLex()->table()->mutable_engine()->add_options();
+  opt->set_name(key);
+  opt->set_state(value.str, value.length);
+}
+
+void buildEngineOption(Session *session, const char *key, uint64_t value)
+{
+  drizzled::message::Engine::Option *opt= session->getLex()->table()->mutable_engine()->add_options();
+  opt->set_name(key);
+  opt->set_state(boost::lexical_cast<std::string>(value));
+}
+
+void buildSchemaOption(Session *session, const char *key, const LEX_STRING &value)
+{
+  statement::CreateSchema *statement= (statement::CreateSchema *)session->getLex()->statement;
+  message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+  opt->set_name(key);
+  opt->set_state(value.str, value.length);
+}
+
+void buildSchemaOption(Session *session, const char *key, uint64_t value)
+{
+  statement::CreateSchema *statement= (statement::CreateSchema *)session->getLex()->statement;
+  message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+  opt->set_name(key);
+  opt->set_state(boost::lexical_cast<std::string>(value));
+}
+
+bool checkFieldIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name)
+{
+  TableList *table= reinterpret_cast<TableList*>(session->getLex()->current_select->table_list.first);
+
+  if (schema_name.length)
+  {
+    if (my_strcasecmp(table_alias_charset, schema_name.str, table->getSchemaName()))
+    {
+      my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.str);
+      return false;
+    }
+  }
+
+  if (my_strcasecmp(table_alias_charset, table_name.str,
+                    table->getTableName()))
+  {
+    my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.str);
+    return false;
+  }
+
+  return true;
+}
+
+Item *buildIdent(Session *session,
+                 const LEX_STRING &schema_name,
+                 const LEX_STRING &table_name,
+                 const LEX_STRING &field_name)
+{
+  Select_Lex *sel= session->getLex()->current_select;
+
+  if (sel->no_table_names_allowed)
+  {
+    my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
+             MYF(0), table_name.str, session->where);
+  }
+
+  Item *item= (sel->parsing_place != IN_HAVING or
+               sel->get_in_sum_expr() > 0) ?
+    (Item*) new Item_field(session->getLex()->current_context(), schema_name.str, table_name.str, field_name.str) :
+    (Item*) new Item_ref(session->getLex()->current_context(), schema_name.str, table_name.str, field_name.str);
+
+  return item;
+}
+
 } // namespace parser
 } // namespace drizzled
