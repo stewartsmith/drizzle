@@ -323,8 +323,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_NULL_COLUMN_IN_INDEX, N_("Table handler doesn't support NULL in given index. Please change column '%-.192s' to be NOT NULL or use another handler"));
   ADD_ERROR_MESSAGE(ER_PLUGIN_NO_PATHS, N_("No paths allowed for plugin library"));
   ADD_ERROR_MESSAGE(ER_PLUGIN_EXISTS, N_("Plugin '%-.192s' already exists"));
-  ADD_ERROR_MESSAGE(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %-.128s)"));
-  ADD_ERROR_MESSAGE(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%-.128s'"));
+  ADD_ERROR_MESSAGE(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %s)"));
+  ADD_ERROR_MESSAGE(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%s'"));
   ADD_ERROR_MESSAGE(ER_UPDATE_INFO, N_("Rows matched: %ld  Changed: %ld  Warnings: %ld"));
   ADD_ERROR_MESSAGE(ER_CANT_CREATE_THREAD, N_("Can't create a new thread (errno %d); if you are not out of available memory, you can consult the manual for a possible OS-dependent bug"));
   ADD_ERROR_MESSAGE(ER_WRONG_VALUE_COUNT_ON_ROW, N_("Column count doesn't match value count at row %ld"));

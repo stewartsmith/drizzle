@@ -31,6 +31,8 @@
 #include "drizzled/message/schema.h"
 #include "drizzled/session.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -50,7 +52,7 @@ class Field;
  * This is a class which manages the XA transaction processing
  * in the server
  */
-class TransactionServices
+class DRIZZLED_API TransactionServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;

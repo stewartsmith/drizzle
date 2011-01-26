@@ -31,6 +31,8 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 namespace module

@@ -28,6 +28,8 @@
 #include <cstring>
 #include <string>
 
+#include "drizzled/visibility.h"
+
 #ifndef NOT_FIXED_DEC
 #define NOT_FIXED_DEC			(uint8_t)31
 #endif
@@ -42,8 +44,8 @@ extern const String my_null_string;
 namespace memory { class Root; }
 typedef struct charset_info_st CHARSET_INFO;
 
-std::string String_to_std_string(String const& s);
-String* set_String_from_std_string(String* s, std::string const& cs);
+DRIZZLED_API std::string String_to_std_string(String const& s);
+DRIZZLED_API String* set_String_from_std_string(String* s, std::string const& cs);
 
 int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
 int stringcmp(const String *a,const String *b);
@@ -58,7 +60,7 @@ size_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
                                  const char **from_end_pos);
 
 
-class String
+class DRIZZLED_API String
 {
   char *Ptr;
   size_t str_length,Alloced_length;

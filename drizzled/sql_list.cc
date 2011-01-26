@@ -18,9 +18,11 @@
 
 #include "drizzled/sql_list.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
-list_node end_of_list;
+DRIZZLED_API list_node end_of_list;
 
 } /* namespace drizzled */

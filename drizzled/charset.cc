@@ -22,6 +22,8 @@
 #include <drizzled/configmake.h>
 #include <vector>
 
+#include "drizzled/visibility.h"
+
 using namespace std;
 
 namespace drizzled
@@ -129,8 +131,8 @@ static bool init_state_maps(CHARSET_INFO *cs)
 
 static bool charset_initialized= false;
 
-CHARSET_INFO *all_charsets[256];
-const CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
+DRIZZLED_API CHARSET_INFO *all_charsets[256];
+const DRIZZLED_API CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
 
 void add_compiled_collation(CHARSET_INFO * cs)
 {

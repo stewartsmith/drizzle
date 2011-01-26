@@ -44,8 +44,6 @@
 
 #include "config.h"
 
-#define HAVE_VISIBILITY 1
-
 #include "drizzle_client.h"
 #include "drizzle_server.h"
 

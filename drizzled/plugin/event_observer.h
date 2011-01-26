@@ -48,6 +48,8 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -64,7 +66,7 @@ class EventObserver;
 typedef std::vector<EventObserver *> EventObserverVector;
 typedef EventObserver* EventObserverPtr;
 
-class EventObserver : public Plugin
+class DRIZZLED_API EventObserver : public Plugin
 {
   EventObserver();
   EventObserver(const EventObserver &);

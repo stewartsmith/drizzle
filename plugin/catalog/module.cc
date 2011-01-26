@@ -34,6 +34,7 @@ static int init(drizzled::module::Context &context)
   return 0;
 }
 
+
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,

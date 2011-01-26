@@ -29,6 +29,8 @@
   This will replace Table_ident.
   */
 
+
+
 #ifndef DRIZZLED_IDENTIFIER_SCHEMA_H
 #define DRIZZLED_IDENTIFIER_SCHEMA_H
 
@@ -48,10 +50,12 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled {
 namespace identifier {
 
-class Schema : public Identifier
+class DRIZZLED_API Schema : public Identifier
 {
   std::string db;
   std::string db_path;
