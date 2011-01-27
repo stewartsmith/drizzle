@@ -345,6 +345,14 @@
    ...
 }
 
+{
+   azopen issue in libz
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   fun:azopen
+   ...
+}
 
 {
    MyISAM pwrite issue. Teh Suck.
