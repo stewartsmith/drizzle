@@ -125,10 +125,12 @@ class portManager:
                 # like we see with freebsd
                 if entry.startswith('Active'):
                     good_data = 0
-                if self.system_manager.cur_os == 'FreeBSD':
-                    used_port = int(entry.split()[3].split('.')[-1].strip())
+                    pass
                 else:
-                    used_port = int(entry.split()[3].split(':')[-1].strip())
+                    if self.system_manager.cur_os == 'FreeBSD':
+                        used_port = int(entry.split()[3].split('.')[-1].strip())
+                    else:
+                        used_port = int(entry.split()[3].split(':')[-1].strip())
                 if port == used_port:
                     if entry.split()[-1] != "TIME_WAIT":
                         return 1
