@@ -2328,14 +2328,14 @@ static void fix_paths()
     {
       if (errno != EEXIST)
       {
-        perror(drizzle_tmpdir.c_str());
+        errmsg_printf(ERRMSG_LVL_ERROR, _("There was an error creating the '%s' part of the path '%s'.  Please check the path exists and is writable.\n"), fs::path(drizzle_tmpdir).leaf().c_str(), drizzle_tmpdir.c_str());
         exit(1);
       }
     }
 
     if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
     {
-      perror(drizzle_tmpdir.c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR, _("There was an error opening the path '%s', please check the path exists and is writable.\n"), drizzle_tmpdir.c_str());
       exit(1);
     }
   }
