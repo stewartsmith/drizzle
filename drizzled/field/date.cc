@@ -74,7 +74,7 @@ int Field_date::store(const char *from,
   DateTime temporal;
   if (! temporal.from_string(from, (size_t) len))
   {
-    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
+    my_error(ER_INVALID_DATE_VALUE, MYF(ME_FATALERROR), from);
     return 2;
   }
   /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
@@ -94,7 +94,7 @@ int Field_date::store(double from)
     ss.precision(18); /* 18 places should be fine for error display of double input. */
     ss << from; ss >> tmp;
 
-    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_DATE_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
   return Field_date::store((int64_t) rint(from), false);
@@ -113,13 +113,14 @@ int Field_date::store(int64_t from, bool)
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from)); 
 
-    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_DATE_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
 
   /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
   uint32_t int_value= (temporal.years() * 10000) + (temporal.months() * 100) + temporal.days();
   int4store(ptr, int_value);
+
   return 0;
 }
 
