@@ -63,6 +63,7 @@ class systemManager:
         self.env_var_delimiter = ':'
         self.no_shm = variables['noshm']
         self.shm_path = self.find_path(["/dev/shm", "/tmp"], required=0)
+        self.cur_os = os.uname()[0]
         self.symlink_name = 'dtr_work_sym'
         self.workdir = variables['workdir']
         self.start_dirty = variables['startdirty']
