@@ -474,12 +474,16 @@ bool Item::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   do
   {
-    if (result_type() == STRING_RESULT)
+    if (is_null())
+    {
+      break;
+    }
+    else if (result_type() == STRING_RESULT)
     {
       char buff[40];
       String tmp(buff,sizeof(buff), &my_charset_bin),*res;
       if (!(res=val_str(&tmp)) ||
-          str_to_datetime_with_warn(res->ptr(), res->length(),
+          str_to_datetime_with_warn(current_session, res->ptr(), res->length(),
                                     &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
       {
         break;

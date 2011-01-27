@@ -1,0 +1,8 @@
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+create table t1 (a int, b float(5));
+show create table t1;
+insert into t1 values (1, 99.99);
+select * from t1;
+drop table t1;

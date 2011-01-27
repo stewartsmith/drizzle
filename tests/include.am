@@ -61,7 +61,11 @@ EXTRA_DIST += \
 	${srcdir}/tests/r/pbxt/*result \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
+        ${srcdir}/tests/lib/*.py \
 	${srcdir}/tests/lib/My/*.pm \
+        ${srcdir}/tests/lib/server_mgmt/*py \
+	${srcdir}/tests/lib/sys_mgmt/*py \
+	${srcdir}/tests/lib/test_mgmt/*py \
 	tests/strip-valgrind
 
 check-local: test-drizzle

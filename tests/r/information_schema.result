@@ -365,7 +365,7 @@ End of 5.0 tests.
 SELECT SCHEMA_NAME FROM data_dictionary.schemas
 WHERE SCHEMA_NAME ='data_dictionary';
 SCHEMA_NAME
-data_dictionary
+DATA_DICTIONARY
 SELECT TABLE_COLLATION FROM data_dictionary.tables
 WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
 TABLE_COLLATION

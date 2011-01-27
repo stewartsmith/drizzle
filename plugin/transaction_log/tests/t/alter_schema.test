@@ -9,7 +9,8 @@ CREATE SCHEMA alter_schema_test;
 ALTER SCHEMA alter_schema_test COLLATE = utf8_bin;
 
 --echo
---exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec ../plugin/transaction_log/utilities/transaction_reader $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 --disable_query_log
 DROP SCHEMA alter_schema_test;

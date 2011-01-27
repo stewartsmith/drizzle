@@ -152,7 +152,7 @@ int Field_decimal::store(const char *from, uint32_t length,
   if ((err= decimal_value.store(E_DEC_FATAL_ERROR &
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
                            from, length, charset_arg)) &&
-      getTable()->in_use->abort_on_warning)
+      getTable()->in_use->abortOnWarning())
   {
     /* Because "from" is not NUL-terminated and we use %s in the ER() */
     String from_as_str;
