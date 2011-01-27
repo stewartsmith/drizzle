@@ -30,7 +30,12 @@ import optparse
 # functions
 def comma_list_split(option, opt, value, parser):
     """Callback for splitting input expected in list form"""
-    setattr(parser.values, option.dest, value.split(','))
+    cur_list = getattr(parser.values, option.dest,[])
+    if cur_list:
+        value_list = cur_list + value.split(',')
+    else:
+        value_list = value.split(',')
+    setattr(parser.values, option.dest, value_list)
 
 def organize_options(args, test_cases):
     """Put our arguments in a nice dictionary
@@ -127,7 +132,8 @@ test_control_group.add_option(
     "--suite"
   , dest="suitelist"
   , type='string'
-  , action="append"
+  , action="callback"
+  , callback=comma_list_split
   , help="The name of the suite containing tests we want. Use one --suite arg for each suite you want to use. [default=autosearch]"
   )
 
