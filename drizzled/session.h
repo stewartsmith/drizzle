@@ -252,7 +252,7 @@ struct drizzle_system_variables
   Time_zone *time_zone;
 };
 
-extern struct drizzle_system_variables global_system_variables;
+extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
 } /* namespace drizzled */
 

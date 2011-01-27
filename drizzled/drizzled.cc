@@ -311,7 +311,7 @@ DRIZZLED_API char glob_hostname[FN_REFLEN];
 
 char *opt_tc_log_file;
 const key_map key_map_empty(0);
-DRIZZLED_API key_map key_map_full(0);                        // Will be initialized later
+key_map key_map_full(0);                        // Will be initialized later
 
 std::string drizzle_tmpdir;
 char *opt_drizzle_tmpdir= NULL;
@@ -327,7 +327,7 @@ type::Decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-DRIZZLED_API drizzle_system_variables global_system_variables;
+drizzle_system_variables global_system_variables;
 drizzle_system_variables max_system_variables;
 global_counters current_global_counters;
 
@@ -341,7 +341,7 @@ MY_LOCALE *my_default_lc_time_names;
 SHOW_COMP_OPTION have_symlink;
 
 boost::condition_variable_any COND_refresh;
-DRIZZLED_API boost::condition_variable COND_thread_count;
+boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
 
 /* Static variables */
