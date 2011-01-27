@@ -348,7 +348,7 @@ drop table t1;
 create table t1 (d date, dt datetime, t timestamp, c char(10));
 insert into t1 values (null, null, null, null);
 insert into t1 values ("0000-00-00", "0000-00-00", "0000-00-00", "0000-00-00");
-ERROR HY000: Received an invalid datetime value '0000-00-00'.
+ERROR HY000: Received an invalid DATE value '0000-00-00'.
 select dayofyear("0000-00-00"),dayofyear(d),dayofyear(dt),dayofyear(t),dayofyear(c) from t1;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select dayofmonth("0000-00-00"),dayofmonth(d),dayofmonth(dt),dayofmonth(t),dayofmonth(c) from t1;

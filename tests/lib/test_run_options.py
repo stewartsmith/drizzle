@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 
 
 """Processes command line options for Drizzle test-runner"""
@@ -16,7 +30,12 @@ import optparse
 # functions
 def comma_list_split(option, opt, value, parser):
     """Callback for splitting input expected in list form"""
-    setattr(parser.values, option.dest, value.split(','))
+    cur_list = getattr(parser.values, option.dest,[])
+    if cur_list:
+        value_list = cur_list + value.split(',')
+    else:
+        value_list = value.split(',')
+    setattr(parser.values, option.dest, value_list)
 
 def organize_options(args, test_cases):
     """Put our arguments in a nice dictionary
@@ -105,7 +124,8 @@ test_control_group.add_option(
     "--suite"
   , dest="suitelist"
   , type='string'
-  , action="append"
+  , action="callback"
+  , callback=comma_list_split
   , help="The name of the suite containing tests we want. Use one --suite arg for each suite you want to use. [default=autosearch]"
   )
 

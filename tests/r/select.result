@@ -2818,7 +2818,7 @@ create table t1(f1 int, f2 date);
 insert into t1 values(1,'2005-01-01'),(2,'2005-09-01'),(3,'2005-09-30'),
 (4,'2005-10-01'),(5,'2005-12-30');
 select * from t1 where f2 >= 0            order by f2;
-ERROR HY000: Received an invalid datetime value '0'.
+ERROR HY000: Received an invalid DATE value '0'.
 select * from t1 where f2 >= '0000-00-00' order by f2;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select * from t1 where f2 >= '2005-09-31' order by f2;
