@@ -49,10 +49,10 @@ TEST_RUN_MEM= $(PERL) -I../$(top_srcdir)/tests/lib \
 	      --dtr-build-thread=$$$$
 
 TEST_RUN_DBQP= $(PYTHON) ../$(top_srcdir)/tests/dbqp.py \
-              --top-srcdir=../${top_srcdir} \
-              --top-builddir=../${top_builddir} \
-              --reorder \
-              --testdir=../${top_srcdir}/tests 
+		--top-srcdir=../${top_srcdir} \
+		--top-builddir=../${top_builddir} \
+		--reorder \
+		--testdir=../${top_srcdir}/tests 
 
 
 EXTRA_DIST += \
@@ -146,7 +146,7 @@ test-plugins:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
 test-dbqp:
-        ( cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
+	( cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
 
 distclean-local: nukevar
