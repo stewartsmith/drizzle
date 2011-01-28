@@ -99,6 +99,7 @@ tests/test-run: tests/var
 	test-all \
 	test-big \
 	test-drizzle \
+        test-dbqp \
 	test-plugins
 
 # Target 'test' will run the regression test suite using the built server.
@@ -145,11 +146,14 @@ test-plugins:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
 test-dbqp:
-        ( cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --force --suite=$(PLUGIN_TESTS) )
+        ( cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
+
 
 distclean-local: nukevar
 
 nukevar:
-	rm -rf tests/var
+	rm -rf tests/var \
+        rm -rf tests/dbqp_work 
+ 
 
 .PHONY: nukevar
