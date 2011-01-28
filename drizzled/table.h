@@ -20,6 +20,8 @@
 
 /* Structs that defines the Table */
 
+
+
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
@@ -36,6 +38,8 @@
 #include "drizzled/table/instance.h"
 #include "drizzled/atomics.h"
 #include "drizzled/query_id.h"
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -61,7 +65,7 @@ typedef struct st_columndef MI_COLUMNDEF;
  * Class representing a set of records, either in a temporary, 
  * normal, or derived table.
  */
-class Table 
+class DRIZZLED_API Table 
 {
   Field **field; /**< Pointer to fields collection */
 public:
@@ -843,7 +847,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 
-int rename_file_ext(const char * from,const char * to,const char * ext);
+DRIZZLED_API int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
 bool check_db_name(Session *session, identifier::Schema &schema);
 bool check_table_name(const char *name, uint32_t length);

@@ -24,6 +24,7 @@
  * @brief Visibility Control Macros
  */
 
+
 #ifndef DRIZZLED_VISIBILITY_H
 #define DRIZZLED_VISIBILITY_H
 

@@ -96,7 +96,7 @@ int find_ref_key(KeyInfo *key, uint32_t key_count, unsigned char *record, Field 
   @param key_length  specifies length of all keyparts that will be copied
 */
 
-void key_copy(unsigned char *to_key, unsigned char *from_record, KeyInfo *key_info, uint32_t key_length);
+DRIZZLED_API void key_copy(unsigned char *to_key, unsigned char *from_record, KeyInfo *key_info, uint32_t key_length);
 void key_copy(std::basic_string<unsigned char> &to_key,
               unsigned char *from_record, KeyInfo *key_info, uint32_t key_length);
 void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key_info,

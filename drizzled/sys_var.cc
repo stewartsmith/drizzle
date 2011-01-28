@@ -60,6 +60,7 @@
 #include "drizzled/charset.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/constrained_value.h"
+#include "drizzled/visibility.h"
 
 #include <cstdio>
 #include <map>
@@ -559,6 +560,11 @@ void sys_var_size_t_ptr::set_default(Session *session, sql_var_t)
                                          option_limits, &not_used);
 }
 
+bool sys_var_bool_ptr::check(Session *session, set_var *var)
+{
+  return check_enum(session, var, &bool_typelib);
+}
+
 bool sys_var_bool_ptr::update(Session *, set_var *var)
 {
   *value= bool(var->getInteger());
@@ -801,6 +807,10 @@ unsigned char *sys_var_session_size_t::value_ptr(Session *session,
   return (unsigned char*) &(session->variables.*offset);
 }
 
+bool sys_var_session_bool::check(Session *session, set_var *var)
+{
+  return check_enum(session, var, &bool_typelib);
+}
 
 bool sys_var_session_bool::update(Session *session,  set_var *var)
 {

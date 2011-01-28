@@ -25,6 +25,8 @@
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/transaction_services.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -56,7 +58,7 @@ namespace plugin
  * kill two_phase_commit member. Use an HTON flag if
  * absolutely needed to keep.
  */
-class TransactionalStorageEngine :public StorageEngine
+class DRIZZLED_API TransactionalStorageEngine :public StorageEngine
 {
   friend class SEAPITester;
 public:

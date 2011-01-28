@@ -20,8 +20,10 @@
 #ifndef DRIZZLED_SESSION_CACHE_H
 #define DRIZZLED_SESSION_CACHE_H
 
-#include "drizzled/session.h"
 #include <list>
+
+#include "drizzled/session.h"
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -31,7 +33,7 @@ class Session;
 namespace session
 {
 
-class Cache 
+class DRIZZLED_API Cache 
 {
 public:
   typedef std::list<Session::shared_ptr> list;

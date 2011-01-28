@@ -17,6 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_FUNCTION_FUNC_H
 #define DRIZZLED_FUNCTION_FUNC_H
 
@@ -27,10 +29,13 @@
 #include <drizzled/item/bin_string.h>
 #include "drizzled/current_session.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
-class Item_func :public Item_result_field
+class DRIZZLED_API Item_func :
+  public Item_result_field
 {
   Session &_session;
 

@@ -23,12 +23,14 @@
 #include <cstddef>
 #include "drizzled/definitions.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
 typedef struct charset_info_st CHARSET_INFO;
 
-extern CHARSET_INFO *all_charsets[256];
+extern DRIZZLED_API CHARSET_INFO *all_charsets[256];
 extern CHARSET_INFO compiled_charsets[];
 
 /* character sets */
@@ -38,9 +40,9 @@ extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
 extern uint32_t get_collation_number(const char *name);
 extern const char *get_charset_name(uint32_t cs_number);
 
-extern const CHARSET_INFO *get_charset(uint32_t cs_number);
-extern const CHARSET_INFO *get_charset_by_name(const char *cs_name);
-extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
+DRIZZLED_API const CHARSET_INFO *get_charset(uint32_t cs_number);
+DRIZZLED_API const CHARSET_INFO *get_charset_by_name(const char *cs_name);
+DRIZZLED_API const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
 
 extern bool resolve_charset(const char *cs_name,
 			    const CHARSET_INFO *default_cs,
