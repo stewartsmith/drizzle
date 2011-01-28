@@ -23,6 +23,8 @@
 #include <sys/types.h>
 #include <cstddef>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -322,10 +324,10 @@ typedef struct charset_info_st
 #define ILLEGAL_CHARSET_INFO_NUMBER (UINT32_MAX)
 
 
-extern CHARSET_INFO my_charset_bin;
-extern CHARSET_INFO my_charset_utf8mb4_bin;
-extern CHARSET_INFO my_charset_utf8mb4_general_ci;
-extern CHARSET_INFO my_charset_utf8mb4_unicode_ci;
+extern DRIZZLED_API CHARSET_INFO my_charset_bin;
+extern DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_bin;
+extern DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_general_ci;
+extern DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_unicode_ci;
 
 #define MY_UTF8MB4                 "utf8"
 #define my_charset_utf8_general_ci ::drizzled::my_charset_utf8mb4_general_ci

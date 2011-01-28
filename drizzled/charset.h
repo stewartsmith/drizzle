@@ -30,7 +30,7 @@ namespace drizzled
 
 typedef struct charset_info_st CHARSET_INFO;
 
-extern CHARSET_INFO *all_charsets[256];
+extern DRIZZLED_API CHARSET_INFO *all_charsets[256];
 extern CHARSET_INFO compiled_charsets[];
 
 /* character sets */

@@ -155,7 +155,7 @@ extern uint	mysys_usage_id;
 extern bool	my_init_done;
 
 					/* Executed when comming from shell */
-extern int my_umask,		/* Default creation mask  */
+extern DRIZZLED_API int my_umask,		/* Default creation mask  */
 	   my_umask_dir,
 	   my_recived_signals,	/* Signals we have got */
 	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */

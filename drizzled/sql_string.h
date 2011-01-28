@@ -39,7 +39,7 @@ namespace drizzled
 
 class String;
 
-extern String my_empty_string;
+extern DRIZZLED_API String my_empty_string;
 extern const String my_null_string;
 namespace memory { class Root; }
 typedef struct charset_info_st CHARSET_INFO;
