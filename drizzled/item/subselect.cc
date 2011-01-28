@@ -180,7 +180,7 @@ Item_subselect::select_transformer(Join *)
 
 bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 {
-  char const *save_where= session_param->where;
+  char const *save_where= session_param->where();
   bool res;
 
   assert(fixed == 0);
@@ -223,12 +223,13 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
         engine->exclude();
       }
       substitution= 0;
-      session->where= "checking transformed subquery";
+      session->setWhere("checking transformed subquery");
       if (! (*ref)->fixed)
       {
         ret= (*ref)->fix_fields(session, ref);
       }
-      session->where= save_where;
+      session->setWhere(save_where);
+
       return ret;
     }
     // Is it one field subselect?
@@ -253,7 +254,7 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
   fixed= 1;
 
 err:
-  session->where= save_where;
+  session->setWhere(save_where);
   return res;
 }
 
@@ -1650,7 +1651,7 @@ Item_subselect::trans_res
 Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *func)
 {
   Select_Lex *current= session->lex->current_select, *up;
-  const char *save_where= session->where;
+  const char *save_where= session->where();
   Item_subselect::trans_res res= RES_ERROR;
   bool result;
 
@@ -1670,7 +1671,7 @@ Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *fu
   if (changed)
     return(RES_OK);
 
-  session->where= "IN/ALL/ANY subquery";
+  session->setWhere("IN/ALL/ANY subquery");
 
   /*
     In some optimisation cases we will not need this Item_in_optimizer
@@ -1721,7 +1722,7 @@ Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *fu
     res= row_value_transformer(join);
   }
 err:
-  session->where= save_where;
+  session->setWhere(save_where);
   return(res);
 }
 
@@ -2142,7 +2143,7 @@ void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **)
 
 int subselect_single_select_engine::exec()
 {
-  char const *save_where= session->where;
+  char const *save_where= session->where();
   Select_Lex *save_select= session->lex->current_select;
   session->lex->current_select= select_lex;
   if (!join->optimized)
@@ -2152,7 +2153,7 @@ int subselect_single_select_engine::exec()
     unit->set_limit(unit->global_parameters);
     if (join->optimize())
     {
-      session->where= save_where;
+      session->setWhere(save_where);
       executed= 1;
       session->lex->current_select= save_select;
       return(join->error ? join->error : 1);
@@ -2171,7 +2172,7 @@ int subselect_single_select_engine::exec()
   {
     if (join->reinit())
     {
-      session->where= save_where;
+      session->setWhere(save_where);
       session->lex->current_select= save_select;
       return 1;
     }
@@ -2230,11 +2231,11 @@ int subselect_single_select_engine::exec()
       tab->read_record.read_record= tab->save_read_record;
     }
     executed= 1;
-    session->where= save_where;
+    session->setWhere(save_where);
     session->lex->current_select= save_select;
     return(join->error||session->is_fatal_error);
   }
-  session->where= save_where;
+  session->setWhere(save_where);
   session->lex->current_select= save_select;
   return(0);
 }
@@ -2279,9 +2280,10 @@ subselect_single_select_engine::save_join_if_explain()
 
 int subselect_union_engine::exec()
 {
-  char const *save_where= session->where;
+  char const *save_where= session->where();
   int res= unit->exec();
-  session->where= save_where;
+  session->setWhere(save_where);
+
   return res;
 }
 

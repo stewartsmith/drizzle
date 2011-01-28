@@ -405,3 +405,31 @@ class testManager(test_management.testManager):
                     self.system_manager.logging.debug("%s says - I'm disabled" %(test_name))
                 return (1, disabled_tests[test_name])
         return (0,None)
+
+    def sort_testcases(self):
+        """ We sort our testcases according to the server_options they have
+            For each testcase, we sort the list of options, so if a test has
+            --plugin-add=csv --abracadabra, we would get 
+            --abracadabra --plugin-add=csv
+            
+            This results in tests that have similar options being run in order
+            this minimizes server restarts which can be costly
+
+        """
+        test_management.testManager.sort_testcases(self)
+        organizer = {}
+        ordered_list = []
+        for testcase in self.test_list:
+            key = " ".join(sorted(testcase.server_options))
+            if key in organizer:
+                organizer[key].append(testcase)
+            else:
+                organizer[key] = [testcase]
+        for key in organizer.keys():
+            print key, len(organizer[key])
+        for value_list in organizer.values():
+            ordered_list = ordered_list + value_list
+        self.test_list = ordered_list
+        
+
+        

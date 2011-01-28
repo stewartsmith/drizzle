@@ -263,9 +263,9 @@ void errorOn(const char *s)
   }
 }
 
-bool buildOrderBy(Session *session)
+bool buildOrderBy(LEX *lex)
 {
-  Select_Lex *sel= session->getLex()->current_select;
+  Select_Lex *sel= lex->current_select;
   Select_Lex_Unit *unit= sel-> master_unit();
 
   if (sel->linkage != GLOBAL_OPTIONS_TYPE &&
@@ -277,7 +277,7 @@ bool buildOrderBy(Session *session)
     return false;
   }
 
-  if (session->getLex()->sql_command != SQLCOM_ALTER_TABLE && !unit->fake_select_lex)
+  if (lex->sql_command != SQLCOM_ALTER_TABLE && !unit->fake_select_lex)
   {
     /*
       A query of the of the form (SELECT ...) ORDER BY order_list is
@@ -291,7 +291,7 @@ bool buildOrderBy(Session *session)
     if (!unit->is_union() &&
         (first_sl->order_list.elements ||
          first_sl->select_limit) &&           
-        unit->add_fake_select_lex(session->getLex()->session))
+        unit->add_fake_select_lex(lex->session))
     {
       return false;
     }
@@ -300,39 +300,39 @@ bool buildOrderBy(Session *session)
   return true;
 }
 
-void buildEngineOption(Session *session, const char *key, const LEX_STRING &value)
+void buildEngineOption(LEX *lex, const char *key, const LEX_STRING &value)
 {
-  message::Engine::Option *opt= session->getLex()->table()->mutable_engine()->add_options();
+  message::Engine::Option *opt= lex->table()->mutable_engine()->add_options();
   opt->set_name(key);
   opt->set_state(value.str, value.length);
 }
 
-void buildEngineOption(Session *session, const char *key, uint64_t value)
+void buildEngineOption(LEX *lex, const char *key, uint64_t value)
 {
-  drizzled::message::Engine::Option *opt= session->getLex()->table()->mutable_engine()->add_options();
+  drizzled::message::Engine::Option *opt= lex->table()->mutable_engine()->add_options();
   opt->set_name(key);
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
-void buildSchemaOption(Session *session, const char *key, const LEX_STRING &value)
+void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)session->getLex()->statement;
+  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
   opt->set_name(key);
   opt->set_state(value.str, value.length);
 }
 
-void buildSchemaOption(Session *session, const char *key, uint64_t value)
+void buildSchemaOption(LEX *lex, const char *key, uint64_t value)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)session->getLex()->statement;
+  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
   opt->set_name(key);
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
-bool checkFieldIdent(Session *session, const LEX_STRING &schema_name, const LEX_STRING &table_name)
+bool checkFieldIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name)
 {
-  TableList *table= reinterpret_cast<TableList*>(session->getLex()->current_select->table_list.first);
+  TableList *table= reinterpret_cast<TableList*>(lex->current_select->table_list.first);
 
   if (schema_name.length)
   {
@@ -353,25 +353,48 @@ bool checkFieldIdent(Session *session, const LEX_STRING &schema_name, const LEX_
   return true;
 }
 
-Item *buildIdent(Session *session,
+Item *buildIdent(LEX *lex,
                  const LEX_STRING &schema_name,
                  const LEX_STRING &table_name,
                  const LEX_STRING &field_name)
 {
-  Select_Lex *sel= session->getLex()->current_select;
+  Select_Lex *sel= lex->current_select;
 
-  if (sel->no_table_names_allowed)
+  if (table_name.length and sel->no_table_names_allowed)
   {
     my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-             MYF(0), table_name.str, session->where);
+             MYF(0), table_name.str, lex->session->where());
   }
 
   Item *item= (sel->parsing_place != IN_HAVING or
                sel->get_in_sum_expr() > 0) ?
-    (Item*) new Item_field(session->getLex()->current_context(), schema_name.str, table_name.str, field_name.str) :
-    (Item*) new Item_ref(session->getLex()->current_context(), schema_name.str, table_name.str, field_name.str);
+    (Item*) new Item_field(lex->current_context(), schema_name.str, table_name.str, field_name.str) :
+    (Item*) new Item_ref(lex->current_context(), schema_name.str, table_name.str, field_name.str);
 
   return item;
+}
+
+Item *buildTableWild(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name)
+{
+  Select_Lex *sel= lex->current_select;
+  Item *item= new Item_field(lex->current_context(), schema_name.str, table_name.str, "*");
+  sel->with_wild++;
+
+  return item;
+}
+
+void buildCreateFieldIdent(LEX *lex)
+{
+  statement::CreateTable *statement= (statement::CreateTable *)lex->statement;
+  lex->length= lex->dec=0;
+  lex->type=0;
+  statement->default_value= statement->on_update_value= 0;
+  statement->comment= null_lex_str;
+  lex->charset= NULL;
+  statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+
+  message::AlterTable &alter_proto= ((statement::CreateTable *)lex->statement)->alter_info.alter_proto;
+  lex->setField(alter_proto.add_added_field());
 }
 
 } // namespace parser

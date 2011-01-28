@@ -41,7 +41,8 @@ class testManager:
     """
 
     def __init__( self, verbose, debug, engine, dotest, skiptest
-                , suitelist, suitepaths, system_manager, test_cases):
+                , reorder, suitelist, suitepaths, system_manager
+                , test_cases):
 
         self.system_manager = system_manager
         self.time_manager = system_manager.time_manager
@@ -65,6 +66,7 @@ class testManager:
         self.engine = engine
         self.dotest = dotest
         self.skiptest = skiptest
+        self.reorder = reorder
         self.suitelist = suitelist
         
         self.code_tree = self.system_manager.code_tree
@@ -103,6 +105,10 @@ class testManager:
             were found.  Otherwise just report what we found
     
         """
+
+        # See if we need to reorder our test cases
+        if self.reorder:
+            self.sort_testcases()
 
         if self.desired_tests and not self.test_list:
             # We wanted tests, but found none
@@ -275,4 +281,12 @@ class testManager:
             return len(self.executed_tests[test_status])
         else:
             return 0
+
+    def sort_testcases(self):
+        """ Sort testcases to optimize test execution.
+            This can be very mode-specific
+
+        """
+  
+        self.logging.verbose("Reordering testcases to optimize test execution...")
 

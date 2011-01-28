@@ -647,7 +647,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, unsigned long *yystacksize);
         table_wild simple_expr udf_expr
         expr_or_default set_expr_or_default
         signed_literal now_or_signed_literal opt_escape
-        simple_ident_nospvar simple_ident_q
+        simple_ident_q
         field_or_var limit_option
         function_call_keyword
         function_call_nonkeyword
@@ -977,11 +977,11 @@ custom_database_option:
           }
         | ident_or_text equal ident_or_text
           {
-            parser::buildSchemaOption(YYSession, $1.str, $3);
+            parser::buildSchemaOption(Lex, $1.str, $3);
           }
         | ident_or_text equal ulonglong_num
           {
-            parser::buildSchemaOption(YYSession, $1.str, $3);
+            parser::buildSchemaOption(Lex, $1.str, $3);
           }
         ;
 
@@ -1028,19 +1028,19 @@ custom_engine_option:
           }
         |  ROW_FORMAT_SYM equal row_format_or_text
           {
-            parser::buildEngineOption(YYSession, "ROW_FORMAT", $3);
+            parser::buildEngineOption(Lex, "ROW_FORMAT", $3);
           }
         |  FILE_SYM equal TEXT_STRING_sys
           {
-            parser::buildEngineOption(YYSession, "FILE", $3);
+            parser::buildEngineOption(Lex, "FILE", $3);
           }
         |  ident_or_text equal engine_option_value
           {
-            parser::buildEngineOption(YYSession, $1.str, $3);
+            parser::buildEngineOption(Lex, $1.str, $3);
           }
         | ident_or_text equal ulonglong_num
           {
-            parser::buildEngineOption(YYSession, $1.str, $3);
+            parser::buildEngineOption(Lex, $1.str, $3);
           }
         | default_collation
         ;
@@ -1182,16 +1182,7 @@ constraint:
 field_spec:
           field_ident
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            Lex->length= Lex->dec=0;
-            Lex->type=0;
-            statement->default_value= statement->on_update_value= 0;
-            statement->comment= null_lex_str;
-            Lex->charset= NULL;
-            statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-
-            message::AlterTable &alter_proto= ((statement::CreateTable *)Lex->statement)->alter_info.alter_proto;
-            Lex->setField(alter_proto.add_added_field());
+            parser::buildCreateFieldIdent(Lex);
           }
           field_def
           {
@@ -1213,6 +1204,7 @@ field_spec:
             Lex->setField(NULL);
           }
         ;
+
 field_def:
           field_definition opt_attribute {}
         ;
@@ -2731,7 +2723,7 @@ simple_expr:
             $$= new (YYSession->mem_root) Item_default_value(Lex->current_context(),
                                                          $3);
           }
-        | VALUES '(' simple_ident_nospvar ')'
+        | VALUES '(' simple_ident ')'
           {
             $$= new (YYSession->mem_root) Item_insert_value(Lex->current_context(),
                                                         $3);
@@ -3982,7 +3974,7 @@ alter_order_list:
         ;
 
 alter_order_item:
-          simple_ident_nospvar order_dir
+          simple_ident order_dir
           {
             bool ascending= ($2 == 1) ? true : false;
             if (YYSession->add_order_to_list($1, ascending))
@@ -4002,7 +3994,7 @@ opt_order_clause:
 order_clause:
           ORDER_SYM BY
           {
-            if (not parser::buildOrderBy(YYSession))
+            if (not parser::buildOrderBy(Lex))
               DRIZZLE_YYABORT;
           }
           order_list
@@ -4358,7 +4350,7 @@ ident_eq_list:
         ;
 
 ident_eq_value:
-          simple_ident_nospvar equal expr_or_default
+          simple_ident equal expr_or_default
           {
             if (Lex->field_list.push_back($1) ||
                 Lex->insert_list->push_back($3))
@@ -4455,7 +4447,7 @@ update_list:
         ;
 
 update_elem:
-          simple_ident_nospvar equal expr_or_default
+          simple_ident equal expr_or_default
           {
             if (YYSession->add_item_to_list($1) || YYSession->add_value_to_list($3))
               DRIZZLE_YYABORT;
@@ -4468,7 +4460,7 @@ insert_update_list:
         ;
 
 insert_update_elem:
-          simple_ident_nospvar equal expr_or_default
+          simple_ident equal expr_or_default
           {
           if (Lex->update_list.push_back($1) ||
               Lex->value_list.push_back($3))
@@ -4912,7 +4904,7 @@ fields_or_vars:
         ;
 
 field_or_var:
-          simple_ident_nospvar {$$= $1;}
+          simple_ident {$$= $1;}
         | '@' user_variable_ident
           { $$= new Item_user_var_as_out_param($2); }
         ;
@@ -5027,22 +5019,18 @@ NUM_literal:
 **********************************************************************/
 
 insert_ident:
-          simple_ident_nospvar { $$=$1; }
+          simple_ident { $$=$1; }
         | table_wild { $$=$1; }
         ;
 
 table_wild:
           ident '.' '*'
           {
-            Select_Lex *sel= Lex->current_select;
-            $$ = new Item_field(Lex->current_context(), NULL, $1.str, "*");
-            sel->with_wild++;
+            $$= parser::buildTableWild(Lex, NULL_LEX_STRING, $1);
           }
         | ident '.' ident '.' '*'
           {
-            Select_Lex *sel= Lex->current_select;
-            $$ = new Item_field(Lex->current_context(), $1.str, $3.str,"*");
-            sel->with_wild++;
+            $$= parser::buildTableWild(Lex, $1, $3);
           }
         ;
 
@@ -5053,29 +5041,7 @@ order_ident:
 simple_ident:
           ident
           {
-            {
-              Select_Lex *sel=Lex->current_select;
-              $$= (sel->parsing_place != IN_HAVING ||
-                  sel->get_in_sum_expr() > 0) ?
-                  (Item*) new Item_field(Lex->current_context(),
-                                         (const char *)NULL, NULL, $1.str) :
-                  (Item*) new Item_ref(Lex->current_context(),
-                                       (const char *)NULL, NULL, $1.str);
-            }
-          }
-        | simple_ident_q { $$= $1; }
-        ;
-
-simple_ident_nospvar:
-          ident
-          {
-            Select_Lex *sel=Lex->current_select;
-            $$= (sel->parsing_place != IN_HAVING ||
-                sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(),
-                                       (const char *)NULL, NULL, $1.str) :
-                (Item*) new Item_ref(Lex->current_context(),
-                                     (const char *)NULL, NULL, $1.str);
+            $$= parser::buildIdent(Lex, NULL_LEX_STRING, NULL_LEX_STRING, $1);
           }
         | simple_ident_q { $$= $1; }
         ;
@@ -5083,15 +5049,15 @@ simple_ident_nospvar:
 simple_ident_q:
           ident '.' ident
           {
-            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, $1, $3);
+            $$= parser::buildIdent(Lex, NULL_LEX_STRING, $1, $3);
           }
         | '.' ident '.' ident
           {
-            $$= parser::buildIdent(YYSession, NULL_LEX_STRING, $2, $4);
+            $$= parser::buildIdent(Lex, NULL_LEX_STRING, $2, $4);
           }
         | ident '.' ident '.' ident
           {
-            $$= parser::buildIdent(YYSession, $1, $3, $5);
+            $$= parser::buildIdent(Lex, $1, $3, $5);
           }
         ;
 
@@ -5102,14 +5068,14 @@ field_ident:
           }
         | ident '.' ident '.' ident
           {
-            if (not parser::checkFieldIdent(YYSession, $1, $3))
+            if (not parser::checkFieldIdent(Lex, $1, $3))
               DRIZZLE_YYABORT;
 
             $$=$5;
           }
         | ident '.' ident
           {
-            if (not parser::checkFieldIdent(YYSession, NULL_LEX_STRING, $1))
+            if (not parser::checkFieldIdent(Lex, NULL_LEX_STRING, $1))
               DRIZZLE_YYABORT;
 
             $$=$3;
@@ -5121,9 +5087,18 @@ field_ident:
         ;
 
 table_ident:
-          ident { $$=new Table_ident($1); }
-        | schema_name '.' ident { $$=new Table_ident($1,$3);}
-        | '.' ident { $$=new Table_ident($2);} /* For Delphi */
+          ident
+          {
+            $$= new Table_ident($1);
+          }
+        | schema_name '.' ident
+          {
+            $$=new Table_ident($1,$3);
+          }
+        | '.' ident
+        { /* For Delphi */
+          $$= new Table_ident($2);
+        }
         ;
 
 schema_name:
@@ -5625,12 +5600,12 @@ union_order_or_limit:
               fake->no_table_names_allowed= 1;
               Lex->current_select= fake;
             }
-            YYSession->where= "global ORDER clause";
+            YYSession->setWhere("global ORDER clause");
           }
           order_or_limit
           {
             YYSession->lex->current_select->no_table_names_allowed= 0;
-            YYSession->where= "";
+            YYSession->setWhere("");
           }
         ;
 
