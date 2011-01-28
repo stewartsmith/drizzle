@@ -154,6 +154,14 @@ bool QueueManager::executeMessage(Session &session,
     vector<string> temp_sql;
     vector<string>::iterator iter;
 
+    /* We won't bother with executing a rolled back transaction */
+    if (statement.type() == message::Statement::ROLLBACK)
+    {
+      assert(idx == (num_statements - 1));  /* should be the final Statement */
+      statement_sql.clear();
+      break;
+    }
+
     err= message::transformStatementToSql(statement,
                                           temp_sql,
                                           message::DRIZZLE,
@@ -172,32 +180,27 @@ bool QueueManager::executeMessage(Session &session,
       }      
     }
 
-    statement_sql.insert(statement_sql.end(),
-                         temp_sql.begin(),
-                         temp_sql.end());
-
     /*
-     * We won't execute what is in our SQL cache until we have a complete
+     * We won't store into our SQL cache until we have a complete
      * statement. This is so we can easily dump the changes if we get a
-     * statement rollaback request.
+     * statement rollback request.
      */
     if (isEndStatement(statement))
     {
       if (statement.type() != message::Statement::ROLLBACK_STATEMENT)
       {
-        executeSQL(session, statement_sql);
+        statement_sql.insert(statement_sql.end(),
+                             temp_sql.begin(),
+                             temp_sql.end());
       }
-      statement_sql.clear();
-    }    
+    }
   }
 
-  /*
-   * A ROLLBACK is added for us if needed, but we need to manually do the
-   * COMMIT.
-   */
-  assert(statement_sql.empty());
-  statement_sql.push_back("COMMIT");
-  executeSQL(session, statement_sql);
+  if (not statement_sql.empty())  /* emptied on ROLLBACK */
+  {
+    statement_sql.push_back("COMMIT");
+    executeSQL(session, statement_sql);
+  }
 
   return true;
 }
@@ -205,17 +208,22 @@ bool QueueManager::executeMessage(Session &session,
 
 bool QueueManager::executeSQL(Session &session, vector<string> &sql)
 {
+  string combined_sql;
+
   Execute execute(session, true);
-  
+
   vector<string>::iterator iter= sql.begin();
-  
+
   while (iter != sql.end())
   {
-    printf("execute: %s\n", iter->c_str()); fflush(stdout);
-    execute.run(*iter);
+    combined_sql.append(*iter);
+    combined_sql.append("; ");
     ++iter;
   }
-  
+
+  printf("execute: %s\n", combined_sql.c_str()); fflush(stdout);
+  execute.run(combined_sql);
+
   return true;
 }
 
@@ -228,9 +236,12 @@ bool QueueManager::deleteFromQueue(Session &session, uint64_t trx_id)
   sql.append(getTable());
   sql.append(" WHERE id = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
-  
+
   vector<string> sql_vect;
+
+  sql_vect.push_back("START TRANSACTION");
   sql_vect.push_back(sql);
+  sql_vect.push_back("COMMIT");
 
   return executeSQL(session, sql_vect);
 }
