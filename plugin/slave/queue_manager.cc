@@ -21,12 +21,14 @@
 #include "config.h"
 #include "plugin/slave/queue_manager.h"
 #include "drizzled/message/transaction.pb.h"
+#include "drizzled/message/statement_transform.h"
 #include "drizzled/plugin/listen.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/catalog/local.h"
 #include "drizzled/execute.h"
 #include "drizzled/internal/my_pthread.h"
 #include <string>
+#include <vector>
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -44,7 +46,7 @@ void QueueManager::processQueue(void)
   internal::my_thread_init();
   boost::this_thread::at_thread_exit(&internal::my_thread_end);
 
-  drizzled::Session::shared_ptr session;
+  Session::shared_ptr session;
 
   if (session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local()))
   {
@@ -57,27 +59,25 @@ void QueueManager::processQueue(void)
     return;
   }
 
-  int i= 0;
+  uint64_t trx_id= 0;
   while (1)
   {
     /* This uninterruptable block processes the message queue */
     {
       boost::this_thread::disable_interruption di;
-      drizzled::Execute execute(*(session.get()), true);
 
-      string sql("DELETE FROM ");
-      sql.append(getSchema());
-      sql.append(".");
-      sql.append(getTable());
-      sql.append(" WHERE id = ");
-      sql.append(boost::lexical_cast<std::string>(i));
+      while (findCompleteTransaction(&trx_id))
+      {
+        message::Transaction transaction;
+        //while (getMessage(transaction, trx_id))
+        {
+          executeMessage(*(session.get()), transaction);
+        }
+      }
 
-      printf("executing: %s\n", sql.c_str()); fflush(stdout);
-      execute.run(sql);
+      deleteFromQueue(*(session.get()), trx_id);      
 
-      i++;
-      if (i > 100)
-        return;
+      trx_id++;
     }
     
     /* Interruptable only when not doing work (aka, sleeping) */
@@ -92,10 +92,147 @@ void QueueManager::processQueue(void)
   }
 }
 
-bool QueueManager::executeMessage(const message::Transaction &transaction)
+
+bool QueueManager::findCompleteTransaction(uint64_t *trx_id)
 {
-  (void)transaction;
+  (void)trx_id;
+  /* search the queue, in insert order, for the first completed transaction */
+  /* set trx_id to the transaction id found */
+  return false;
+}
+
+
+bool QueueManager::isEndStatement(const message::Statement &statement)
+{
+  switch (statement.type())
+  {
+    case (message::Statement::INSERT):
+    {
+      const message::InsertData &data= statement.insert_data();
+      if (not data.end_segment())
+        return false;
+      break;
+    }
+    case (message::Statement::UPDATE):
+    {
+      const message::UpdateData &data= statement.update_data();
+      if (not data.end_segment())
+        return false;
+      break;
+    }
+    case (message::Statement::DELETE):
+    {
+      const message::DeleteData &data= statement.delete_data();
+      if (not data.end_segment())
+        return false;
+      break;
+    }
+    default:
+      return true;
+  }
   return true;
+}
+
+  
+bool QueueManager::executeMessage(Session &session,
+                                  const message::Transaction &transaction)
+{
+  if (transaction.has_event())
+    return true;
+
+  /* SQL strings corresponding to this Statement */
+  vector<string> statement_sql;
+
+  statement_sql.push_back("START TRANSACTION");
+
+  size_t num_statements= transaction.statement_size();
+
+  for (size_t idx= 0; idx < num_statements; idx++)
+  {
+    enum message::TransformSqlError err;
+    const message::Statement &statement= transaction.statement(idx);
+    vector<string> temp_sql;
+    vector<string>::iterator iter;
+
+    err= message::transformStatementToSql(statement,
+                                          temp_sql,
+                                          message::DRIZZLE,
+                                          true);
+
+    /* Replace any embedded NULLs in the SQL */
+    for (iter= temp_sql.begin(); iter != temp_sql.end(); ++iter)
+    {
+      string &sql= *iter;
+      string::size_type found= sql.find_first_of('\0');
+      while (found != string::npos)
+      {
+        sql[found]= '\\';
+        sql.insert(found + 1, 1, '0');
+        found= sql.find_first_of('\0', found);
+      }      
+    }
+
+    statement_sql.insert(statement_sql.end(),
+                         temp_sql.begin(),
+                         temp_sql.end());
+
+    /*
+     * We won't execute what is in our SQL cache until we have a complete
+     * statement. This is so we can easily dump the changes if we get a
+     * statement rollaback request.
+     */
+    if (isEndStatement(statement))
+    {
+      if (statement.type() != message::Statement::ROLLBACK_STATEMENT)
+      {
+        executeSQL(session, statement_sql);
+      }
+      statement_sql.clear();
+    }    
+  }
+
+  /*
+   * A ROLLBACK is added for us if needed, but we need to manually do the
+   * COMMIT.
+   */
+  assert(statement_sql.empty());
+  statement_sql.push_back("COMMIT");
+  executeSQL(session, statement_sql);
+
+  return true;
+}
+
+
+bool QueueManager::executeSQL(Session &session, vector<string> &sql)
+{
+  Execute execute(session, true);
+  
+  vector<string>::iterator iter= sql.begin();
+  
+  while (iter != sql.end())
+  {
+    printf("execute: %s\n", iter->c_str()); fflush(stdout);
+    execute.run(*iter);
+    ++iter;
+  }
+  
+  return true;
+}
+
+
+bool QueueManager::deleteFromQueue(Session &session, uint64_t trx_id)
+{
+  string sql("DELETE FROM ");
+  sql.append(getSchema());
+  sql.append(".");
+  sql.append(getTable());
+  sql.append(" WHERE id = ");
+  sql.append(boost::lexical_cast<std::string>(trx_id));
+  
+  vector<string> sql_vect;
+  sql_vect.push_back(sql);
+
+  return executeSQL(session, sql_vect);
 }
 
 } /* namespace slave */

@@ -38,9 +38,7 @@ class QueueManager
 {
 public:
   QueueManager() :
-    _check_interval(5),
-    _schema("test"),
-    _table("t1")
+    _check_interval(5)
   { }
 
   /**
@@ -82,11 +80,18 @@ private:
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
 
-  /** Name of the table containing the message queue */
+  /** Schema and table containing the message queue */
   std::string _schema;
   std::string _table;
 
-  bool executeMessage(const drizzled::message::Transaction &transaction);
+  bool findCompleteTransaction(uint64_t *trx_id);
+  bool executeMessage(drizzled::Session &session,
+                      const drizzled::message::Transaction &transaction);
+  bool executeSQL(drizzled::Session &session,
+                  std::vector<std::string> &sql);
+  bool deleteFromQueue(drizzled::Session &session,
+                       uint64_t trx_id);
+  bool isEndStatement(const drizzled::message::Statement &statement);
 };
 
 } /* namespace slave */
