@@ -110,6 +110,14 @@ system_control_group.add_option(
   , help="Record a testcase result (if the testing mode supports it) [%default]"
   )
 
+system_control_group.add_option(
+    "--fast"
+  , dest="fast"
+  , action="store_true"
+  , default=False
+  , help="Don't try to cleanup from earlier runs (currently just a placeholder) [%default]"
+  )
+
 parser.add_option_group(system_control_group)
 
 # end system_control_group
@@ -152,6 +160,16 @@ test_control_group.add_option(
   , default = None
   , help = "input can either be a prefix or a regex.  Will exclude tests that match the provided pattern"
   )
+
+test_control_group.add_option(
+    "--reorder"
+  , dest="reorder"
+  , action="store_true"
+  , default=False
+  , help = "sort the testcases so that they are executed optimally for the given mode [%default]"
+  )
+
+
 
 parser.add_option_group(test_control_group)
 # end test_control_group

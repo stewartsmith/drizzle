@@ -68,6 +68,7 @@ class systemManager:
         self.workdir = variables['workdir']
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
+        self.gdb = variables['gdb']
 
         # we use this to preface commands in order to run valgrind and such
         self.cmd_prefix = '' 
@@ -400,7 +401,8 @@ class systemManager:
         libtool_path = '../libtool'
         if os.path.exists(libtool_path) and os.access( libtool_path
                                                      , os.X_OK):
-            self.logging.info("Using libtool when running valgrind or debugger")
+            if self.valgrind or self.gdb:
+                self.logging.info("Using libtool when running valgrind or debugger")
             return libtool_path
         else:
             return None

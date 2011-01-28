@@ -43,9 +43,9 @@ def handle_mode(variables, system_manager):
         from drizzle_test_run.dtr_test_management import testManager
         test_manager = testManager( variables['verbose'], variables['debug'] 
                                   , variables['engine'], variables['dotest']
-                                  , variables['skiptest'], variables['suitelist']
-                                  , variables['suitepaths'], system_manager
-                                  , variables['test_cases'])
+                                  , variables['skiptest'], variables['reorder']
+                                  , variables['suitelist'], variables['suitepaths']
+                                  , system_manager, variables['test_cases'])
 
         # get our mode-specific testExecutor
         from drizzle_test_run.dtr_test_execution import dtrTestExecutor
