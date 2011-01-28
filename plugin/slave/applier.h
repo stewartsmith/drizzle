@@ -21,9 +21,9 @@
 #ifndef PLUGIN_SLAVE_APPLIER_H
 #define PLUGIN_SLAVE_APPLIER_H
 
+#include "plugin/slave/queue_manager.h"
 #include "drizzled/plugin/daemon.h"
 #include <boost/thread.hpp>
-#include "plugin/slave/queue_manager.h"
 
 namespace slave
 {
@@ -42,7 +42,6 @@ public:
   {
     printf("Slave services shutting down\n");
     thread.interrupt();
-    thread.join();
   }
 
 private:

@@ -21,6 +21,8 @@
 #ifndef PLUGIN_SLAVE_QUEUE_MANAGER_H
 #define PLUGIN_SLAVE_QUEUE_MANAGER_H
 
+#include "drizzled/session.h"
+
 namespace drizzled
 {
   namespace message
@@ -35,6 +37,12 @@ namespace slave
 class QueueManager
 {
 public:
+  QueueManager() :
+    _check_interval(5),
+    _schema("test"),
+    _table("t1")
+  { }
+
   /**
    * Method to be supplied to an applier thread.
    */
@@ -42,12 +50,41 @@ public:
 
   void setCheckInterval(uint32_t seconds)
   {
-    checkInterval= seconds;
+    _check_interval= seconds;
+  }
+
+  uint32_t getCheckInterval()
+  {
+    return _check_interval;
+  }
+
+  void setTable(const std::string &table)
+  {
+    _table= table;
+  }
+
+  const std::string &getTable()
+  {
+    return _table;
+  }
+
+  void setSchema(const std::string &schema)
+  {
+    _schema= schema;
+  }
+
+  const std::string &getSchema()
+  {
+    return _schema;
   }
 
 private:
   /** Number of seconds to sleep between checking queue for messages */
-  uint32_t checkInterval;
+  uint32_t _check_interval;
+
+  /** Name of the table containing the message queue */
+  std::string _schema;
+  std::string _table;
 
   bool executeMessage(const drizzled::message::Transaction &transaction);
 };
