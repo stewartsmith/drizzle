@@ -199,6 +199,20 @@ single database.  Requires
 
 .. versionadded:: 2010-09-27
 
+.. option:: --my-data-is-mangled
+
+If your data is UTF8 but has been stored in a latin1 table using a latin1
+connection then corruption is likely and drizzledump by default will retrieve
+mangled data.  This is because MySQL will convert the data to UTF8 on the way
+out to drizzledump and you effectively get a double-conversion to UTF8.
+
+This typically happens with PHP apps that do not use 'SET NAMES'.
+
+In these cases setting this option will retrieve the data as you see it in your
+application.
+
+.. versionadded:: 2011-01-31
+
 .. option:: -h, --host hostname (=localhost)
 
 The hostname of the database server.
@@ -261,6 +275,10 @@ $ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --
 
 Please take special note of :ref:`old-passwords-label` if you have connection
 issues from :program:`drizzledump` to your MySQL server.
+
+If you find your VARCHAR and TEXT data does not look correct in a drizzledump
+output, it is likely that you have UTF8 data stored in a non-UTF8 table.  In
+which case please check the :option:`--my-data-is-mangled` option.
 
 When you migrate from MySQL to Drizzle, the following conversions are required:
 
