@@ -40,7 +40,6 @@ def comma_list_split(option, opt, value, parser):
         value_list = cur_list + input_list 
     else:
         value_list = input_list 
-    print value_list, '^'*80
     setattr(parser.values, option.dest, value_list)
 
 def organize_options(args, test_cases):
