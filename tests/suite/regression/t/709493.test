@@ -8,3 +8,4 @@ select * from t1 left join t2
   where t1.pk=1;
 
 drop table t1;
+drop table t2;
