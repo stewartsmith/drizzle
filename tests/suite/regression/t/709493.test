@@ -6,3 +6,5 @@ insert into t2 values (1,0,1), (2,0,2);
 select * from t1 left join t2
   on t1.col_int_unique = t2.col_int_unique and t1.col_int = t2.col_int 
   where t1.pk=1;
+
+drop table t1;

@@ -7,3 +7,4 @@ on t1.col_int_unique = t2.col_int_unique and t1.col_int = t2.col_int
 where t1.pk=1;
 pk	col_int	col_int_unique	pk	col_int	col_int_unique
 1	NULL	2	NULL	NULL	NULL
+drop table t1;
