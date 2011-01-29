@@ -37,8 +37,6 @@
 #include "drizzled/definitions.h"
 #include "drizzled/message/table.pb.h"
 
-#include "drizzled/identifier.h"
-
 #include <string.h>
 
 #include <assert.h>
@@ -57,7 +55,7 @@ class Table;
 
 namespace identifier {
 
-class DRIZZLED_API Table : public identifier::Schema
+class DRIZZLED_API Table : public Schema
 {
 public:
   typedef message::Table::TableType Type;

@@ -82,6 +82,11 @@ public:
 
   virtual bool isValid() const;
 
+  inline virtual bool isSystem() const
+  {
+    return false;
+  }
+
   bool compare(const std::string &arg) const;
   bool compare(Schema::const_reference) const;
 

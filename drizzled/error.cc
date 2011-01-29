@@ -496,9 +496,11 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_TABLE_PERMISSION_DENIED, N_("Permission denied to create '%s'"));
   ADD_ERROR_MESSAGE(ER_TABLE_UNKNOWN, N_("Unknown table '%s'"));
 
+  ADD_ERROR_MESSAGE(ER_SCHEMA_CANNOT_CREATE, N_("Cannot create schema '%s'"));
   ADD_ERROR_MESSAGE(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   ADD_ERROR_MESSAGE(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
   ADD_ERROR_MESSAGE(ER_DROP_SCHEMA, +N_("Error droppping Schema : %s"));
+
   ADD_ERROR_MESSAGE(ER_USE_SQL_BIG_RESULT, N_("Temporary table too large, rerun with SQL_BIG_RESULT."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_ENGINE_OPTION, N_("Unknown table engine option key/pair %s = %s."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_SCHEMA_OPTION, N_("Unknown schema engine option key/pair %s = %s."));
