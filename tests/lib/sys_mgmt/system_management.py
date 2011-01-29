@@ -67,9 +67,9 @@ class systemManager:
         self.cur_os = os.uname()[0]
         self.cur_user = getpass.getuser()
         self.symlink_name = 'dbqp_workdir_%s' %(self.cur_user)
-        self.workdir = variables['workdir']
-        self.top_srcdir = variables['topsrcdir']
-        self.top_builddir = variables['topbuilddir']
+        self.workdir = os.path.abspath(variables['workdir'])
+        self.top_srcdir = os.path.abspath(variables['topsrcdir'])
+        self.top_builddir = os.path.abspath(variables['topbuilddir'])
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
         self.gdb = variables['gdb']

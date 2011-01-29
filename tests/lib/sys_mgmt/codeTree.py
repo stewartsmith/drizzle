@@ -58,10 +58,10 @@ class drizzleTree(codeTree):
         self.skip_keys = ['ld_lib_paths']
         self.debug = variables['debug']
         self.verbose = variables['verbose']
-        self.basedir = self.system_manager.find_path([variables['basedir']])
+        self.basedir = self.system_manager.find_path([os.path.abspath(variables['basedir'])])
         self.source_dist = os.path.isdir(os.path.join(self.basedir, 'drizzled'))
-        self.builddir = self.system_manager.find_path([self.basedir])
-        self.testdir = self.system_manager.find_path([variables['testdir']])
+        self.builddir = self.system_manager.find_path([os.path.abspath(self.basedir)])
+        self.testdir = self.system_manager.find_path([os.path.abspath(variables['testdir'])])
         self.clientbindir = self.system_manager.find_path([os.path.join(self.builddir, 'client')
                                      , os.path.join(self.basedir, 'client')
                                      , os.path.join(self.basedir, 'bin')])

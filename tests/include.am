@@ -52,7 +52,11 @@ TEST_RUN_DBQP= $(PYTHON) ../$(top_srcdir)/tests/dbqp.py \
 		--top-srcdir=../${top_srcdir} \
 		--top-builddir=../${top_builddir} \
 		--reorder \
-		--testdir=../${top_srcdir}/tests 
+		--debug \
+		--verbose \
+		--basedir=../${top_srcdir} \
+		--testdir=../${top_srcdir}/tests \
+                --workdir=../${top_srcdir}/tests/dbqp_work
 
 
 EXTRA_DIST += \
