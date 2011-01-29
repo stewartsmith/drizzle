@@ -31,10 +31,15 @@ import optparse
 def comma_list_split(option, opt, value, parser):
     """Callback for splitting input expected in list form"""
     cur_list = getattr(parser.values, option.dest,[])
+    input_list = value.split(',')
+    # this is a hack to work with make target - we
+    # don't deal with a dangling ',' in our list
+    if '' in input_list:
+        input_list.remove('')
     if cur_list:
-        value_list = cur_list + value.split(',')
+        value_list = cur_list + input_list 
     else:
-        value_list = value.split(',')
+        value_list = input_list 
     setattr(parser.values, option.dest, value_list)
 
 def organize_options(args, test_cases):
@@ -134,7 +139,7 @@ test_control_group.add_option(
   , type='string'
   , action="callback"
   , callback=comma_list_split
-  , help="The name of the suite containing tests we want. Use one --suite arg for each suite you want to use. [default=autosearch]"
+  , help="The name of the suite containing tests we want. Can accept comma-separated list (with no spaces).  Additional --suite args are appended to existing list [autosearch]"
   )
 
 test_control_group.add_option(
@@ -204,6 +209,7 @@ test_subject_control_group.add_option(
   , help = "Path to the directory containing client program binaries for use in testing [%default]"
   )
 
+
 test_subject_control_group.add_option(
     "--engine"
    , dest="engine"
@@ -217,7 +223,7 @@ parser.add_option_group(test_subject_control_group)
 
 
 # environment options
-# define where to find our drizzled, client dirs, working dirs, etc
+# define where to find our testsets, working dirs, etc
 environment_control_group = optparse.OptionGroup(parser, 
                             "Options for defining the testing environment")
 
@@ -235,6 +241,22 @@ environment_control_group.add_option(
   , type='string'
   , default = workdir_default
   , help = "Path to the directory test-run will use to store generated files and directories. [%default]"
+  )
+
+environment_control_group.add_option(
+    "--top-srcdir"
+  , dest="topsrcdir"
+  , type='string'
+  , default = basedir_default
+  , help = "build option [%default]"
+  )
+
+environment_control_group.add_option(
+    "--top-builddir"
+  , dest="topbuilddir"
+  , type='string'
+  , default = basedir_default
+  , help = "build option [%default]"
   )
 
 environment_control_group.add_option(

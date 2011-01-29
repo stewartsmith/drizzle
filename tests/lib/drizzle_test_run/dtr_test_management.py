@@ -171,7 +171,7 @@ class testManager(test_management.testManager):
                                  resultdir, disabled_tests)  
         test_case = testCase(self.system_manager, test_case, test_name, suite_name, 
                              suite_dir, test_server_options,test_path, result_path,
-                             debug=self.debug)      
+                             master_sh=master_sh, debug=self.debug)      
         return test_case
 
 
@@ -198,7 +198,11 @@ class testManager(test_management.testManager):
         result_file_name = test_name+'.result'       
         result_path = self.find_result_path(resultdir, result_file_name)
         comment = None
-        master_sh = None
+        master_sh_path = test_path.replace('.test','-master.sh')
+        if os.path.exists(master_sh_path):
+            master_sh = master_sh_path 
+        else:
+            master_sh = None
         master_opt_path = test_path.replace('.test','-master.opt')
         test_server_options = test_server_options + self.process_opt_file(
                                                            master_opt_path)
@@ -425,8 +429,6 @@ class testManager(test_management.testManager):
                 organizer[key].append(testcase)
             else:
                 organizer[key] = [testcase]
-        for key in organizer.keys():
-            print key, len(organizer[key])
         for value_list in organizer.values():
             ordered_list = ordered_list + value_list
         self.test_list = ordered_list

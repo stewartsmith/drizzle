@@ -34,6 +34,7 @@
 import os
 import sys
 import shutil
+import getpass
 import commands
 
 from lib.sys_mgmt.port_management import portManager
@@ -64,8 +65,11 @@ class systemManager:
         self.no_shm = variables['noshm']
         self.shm_path = self.find_path(["/dev/shm", "/tmp"], required=0)
         self.cur_os = os.uname()[0]
-        self.symlink_name = 'dtr_work_sym'
-        self.workdir = variables['workdir']
+        self.cur_user = getpass.getuser()
+        self.symlink_name = 'dbqp_workdir_%s' %(self.cur_user)
+        self.workdir = os.path.abspath(variables['workdir'])
+        self.top_srcdir = os.path.abspath(variables['topsrcdir'])
+        self.top_builddir = os.path.abspath(variables['topbuilddir'])
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
         self.gdb = variables['gdb']
@@ -91,8 +95,8 @@ class systemManager:
                                 , 'LC_CTYPE' : ('C',0,0)
                                 , 'LC_COLLATE' : ('C',0,0)
                                 , 'USE_RUNNING_SERVER' : ("0",0,0)
-                                , 'TOP_SRCDIR' : (self.code_tree.srcdir,0,0)
-                                , 'TOP_BUILDDIR' : (self.code_tree.builddir,0,0)
+                                , 'TOP_SRCDIR' : (self.top_srcdir,0,0)
+                                , 'TOP_BUILDDIR' : (self.top_builddir,0,0)
                                 , 'DRIZZLE_TEST_DIR' : (self.code_tree.testdir,0,0)
                                 , 'DTR_BUILD_THREAD' : ("-69.5",0,0)
                                 , 'LD_LIBRARY_PATH' : (self.ld_lib_paths,1,1)
