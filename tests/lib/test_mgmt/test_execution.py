@@ -121,6 +121,7 @@ class testExecutor():
             self.logging.verbose("Executor: %s beginning test execution..." %(self.name))
         while self.test_manager.has_tests() and keep_running == 1:
             self.get_testCase()
+            self.handle_system_reqs()
             bad_start = self.handle_server_reqs()
             if bad_start:
                 # Our servers didn't start, we mark it a failure
@@ -153,7 +154,11 @@ class testExecutor():
                 server.failed_test = 1
 
    
+    def handle_system_reqs(self):
+        """ We check our test case and see what we need to do
+            system-wise to get ready
 
-    
-  
+        """
 
+        if self.current_testcase.master_sh:
+                self.system_manager.execute_cmd("/bin/sh %s" %(self.current_testcase.master_sh))
