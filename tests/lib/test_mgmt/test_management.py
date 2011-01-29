@@ -40,7 +40,7 @@ class testManager:
 
     """
 
-    def __init__( self, verbose, debug, engine, dotest, skiptest
+    def __init__( self, verbose, debug, default_engine, dotest, skiptest
                 , reorder, suitelist, suitepaths, system_manager
                 , test_cases):
 
@@ -63,7 +63,7 @@ class testManager:
         self.executing_tests = {}
         self.verbose = verbose
         self.debug = debug
-        self.engine = engine
+        self.default_engine = default_engine
         self.dotest = dotest
         self.skiptest = skiptest
         self.reorder = reorder

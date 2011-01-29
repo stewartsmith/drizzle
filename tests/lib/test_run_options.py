@@ -211,8 +211,8 @@ test_subject_control_group.add_option(
 
 
 test_subject_control_group.add_option(
-    "--engine"
-   , dest="engine"
+    "--default-storage-engine"
+   , dest="defaultengine"
    , default = 'innodb'
    , help="Start drizzled using the specified engine [%default]"
    )    
