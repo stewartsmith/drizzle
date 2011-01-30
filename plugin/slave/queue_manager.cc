@@ -46,20 +46,16 @@ void QueueManager::processQueue(void)
   internal::my_thread_init();
   boost::this_thread::at_thread_exit(&internal::my_thread_end);
 
-  Session::shared_ptr session;
-
-  if (session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local()))
-  {
-    currentSession().release();
-    currentSession().reset(session.get());
-  }
-  else
-  {
-    printf("Slave thread could not create a Session\n"); fflush(stdout);
-    return;
-  }
+  /* setup a Session object */
+  Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(),
+                                                    catalog::local());
+  identifier::User::shared_ptr user= identifier::User::make_shared();
+  user->setUser("slave");
+  session->setUser(user);
+  session->set_db(getSchema());
 
   uint64_t trx_id= 0;
+
   while (1)
   {
     /* This uninterruptable block processes the message queue */
@@ -143,8 +139,6 @@ bool QueueManager::executeMessage(Session &session,
   /* SQL strings corresponding to this Statement */
   vector<string> statement_sql;
 
-  statement_sql.push_back("START TRANSACTION");
-
   size_t num_statements= transaction.statement_size();
 
   for (size_t idx= 0; idx < num_statements; idx++)
@@ -198,7 +192,6 @@ bool QueueManager::executeMessage(Session &session,
 
   if (not statement_sql.empty())  /* emptied on ROLLBACK */
   {
-    statement_sql.push_back("COMMIT");
     executeSQL(session, statement_sql);
   }
 
@@ -222,6 +215,8 @@ bool QueueManager::executeSQL(Session &session, vector<string> &sql)
   }
 
   printf("execute: %s\n", combined_sql.c_str()); fflush(stdout);
+
+  /* Execute wraps the SQL to run within a transaction */
   execute.run(combined_sql);
 
   return true;
