@@ -30,6 +30,7 @@
 
 # imports
 import os
+import sys
 
 class testExecutor():
     """ class for handling the execution of testCase
@@ -113,7 +114,7 @@ class testExecutor():
 
         return(master_count, slave_count, server_options)
 
-    def execute(self):
+    def execute(self, start_and_exit):
         """ Execute a test case.  The details are *very* mode specific """
         self.status = 1 # we are running
         keep_running = 1
@@ -129,6 +130,10 @@ class testExecutor():
                 self.current_test_status = 'fail'
                 self.set_server_status(self.current_test_status)
                 output = ''
+            if start_and_exit:
+                # TODO:  Report out all started servers via server_manager/server objects?
+                self.logging.info("User specified --start-and-exit.  dbqp.py exiting and leaving servers running...")
+                sys.exit(0)
             else:
                 self.execute_testCase()
             self.test_manager.record_test_result( self.current_testcase
