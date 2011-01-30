@@ -23,6 +23,7 @@ dnl Defines and sets the variable HAVE_VISIBILITY.
 AC_DEFUN([PANDORA_CHECK_VISIBILITY],
 [
   AC_REQUIRE([AC_PROG_CC])
+  AC_REQUIRE([PANDORA_PLATFORM])
   CFLAG_VISIBILITY=
   HAVE_VISIBILITY=0
   AS_IF([test -n "$GCC"],[
@@ -35,9 +36,16 @@ AC_DEFUN([PANDORA_CHECK_VISIBILITY],
          extern __attribute__((__visibility__("default"))) int exportedvar;
          extern __attribute__((__visibility__("hidden"))) int hiddenfunc (void);
          extern __attribute__((__visibility__("default"))) int exportedfunc (void);],
-        [],
-        [gl_cv_cc_visibility=yes],
-        [gl_cv_cc_visibility=no])
+        [],[
+        case "$host_os" in
+          *darwin*)
+            gl_cv_cc_visibility=no
+            ;;
+          *)
+            gl_cv_cc_visibility=yes
+            ;;
+        esac
+        ],[gl_cv_cc_visibility=no])
       CFLAGS="$gl_save_CFLAGS"])
     AC_MSG_RESULT([$gl_cv_cc_visibility])
     if test $gl_cv_cc_visibility = yes; then
