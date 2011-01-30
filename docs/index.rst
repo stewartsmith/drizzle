@@ -121,6 +121,7 @@ Testing:
    :maxdepth: 2
  
    testing/test-run.rst
+   testing/dbqp.rst
 
 Indices and tables
 ==================
