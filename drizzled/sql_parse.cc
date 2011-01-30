@@ -51,6 +51,7 @@
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/plugin/event_observer.h"
+#include "drizzled/visibility.h"
 
 #include <limits.h>
 
@@ -79,16 +80,21 @@ void parse(Session *session, const char *inBuf, uint32_t length);
 extern size_t my_thread_stack_size;
 extern const CHARSET_INFO *character_set_filesystem;
 
-const LEX_STRING command_name[COM_END+1]={
-  { C_STRING_WITH_LEN("Sleep") },
-  { C_STRING_WITH_LEN("Quit") },
-  { C_STRING_WITH_LEN("Init DB") },
-  { C_STRING_WITH_LEN("Query") },
-  { C_STRING_WITH_LEN("Shutdown") },
-  { C_STRING_WITH_LEN("Connect") },
-  { C_STRING_WITH_LEN("Ping") },
-  { C_STRING_WITH_LEN("Error") }  // Last command number
+namespace
+{
+
+static const std::string command_name[COM_END+1]={
+  "Sleep",
+  "Quit",
+  "Init DB",
+  "Query",
+  "Shutdown",
+  "Connect",
+  "Ping",
+  "Error"  // Last command number
 };
+
+}
 
 const char *xa_state_names[]={
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
@@ -107,6 +113,11 @@ const char *xa_state_names[]={
           a number of modified rows
 */
 bitset<CF_BIT_SIZE> sql_command_flags[SQLCOM_END+1];
+
+const std::string &getCommandName(const enum_server_command& command)
+{
+  return command_name[command];
+}
 
 void init_update_queries(void)
 {

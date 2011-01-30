@@ -34,6 +34,8 @@
 #include "drizzled/sql_parse.h"
 #include "drizzled/plugin.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -51,7 +53,7 @@ typedef class Item COND;
 int wild_case_compare(const CHARSET_INFO * const cs, 
                       const char *str,const char *wildstr);
 
-int get_quote_char_for_identifier();
+DRIZZLED_API int get_quote_char_for_identifier();
 
 namespace show {
 

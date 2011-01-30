@@ -103,6 +103,7 @@ bool opt_disable_keys= true;
 bool extended_insert= true;
 bool opt_replace_into= false;
 bool opt_drop= true; 
+bool opt_data_is_mangled= false;
 uint32_t show_progress_size= 0;
 static string insert_pat;
 static uint32_t opt_drizzle_port= 0;
@@ -138,8 +139,6 @@ string password,
   opt_password,
   opt_protocol,
   where;
-
-//static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 boost::unordered_set<string> ignore_table;
 
@@ -547,6 +546,8 @@ try
   _("Password for destination db server (requires --destination-type=database)"))
   ("destination-database", po::value<string>(&opt_destination_database),
   _("The database in the destination db server (requires --destination-type=database, not for use with --all-databases)"))
+  ("my-data-is-mangled", po::value<bool>(&opt_data_is_mangled)->default_value(false)->zero_tokens(),
+  _("Do not make a UTF8 connection to MySQL, use if you have UTF8 data in a non-UTF8 table"))
   ;
 
   po::options_description client_options(_("Options specific to the client"));
@@ -767,7 +768,7 @@ try
     maybe_exit(EX_DRIZZLEERR);
   }
 
-  if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+  if ((db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND) and (not opt_data_is_mangled))
     db_connection->queryNoResult("SET NAMES 'utf8'");
 
   if (vm.count("destination-type"))

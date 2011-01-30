@@ -77,6 +77,8 @@
 
 #include "drizzled/message/cache.h"
 
+#include "drizzled/visibility.h"
+
 #include <google/protobuf/stubs/common.h>
 
 #if TIME_WITH_SYS_TIME
@@ -232,11 +234,11 @@ static const char *compiled_default_collation_name= "utf8_general_ci";
 char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
-bool volatile shutdown_in_progress;
+DRIZZLED_API bool volatile shutdown_in_progress;
 char *opt_scheduler_default;
 const char *opt_scheduler= NULL;
 
-size_t my_thread_stack_size= 0;
+DRIZZLED_API size_t my_thread_stack_size= 0;
 
 /*
   Legacy global plugin::StorageEngine. These will be removed (please do not add more).
@@ -251,7 +253,7 @@ uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 back_log_constraints back_log(50);
-uint32_t server_id;
+DRIZZLED_API uint32_t server_id;
 uint64_t table_cache_size;
 size_t table_def_size;
 uint32_t global_thread_id= 1UL;
@@ -305,7 +307,7 @@ fs::path system_config_dir(SYSCONFDIR);
 
 char system_time_zone[30];
 char *default_tz_name;
-char glob_hostname[FN_REFLEN];
+DRIZZLED_API char glob_hostname[FN_REFLEN];
 
 char *opt_tc_log_file;
 const key_map key_map_empty(0);
@@ -325,11 +327,12 @@ type::Decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-struct drizzle_system_variables global_system_variables;
-struct drizzle_system_variables max_system_variables;
-struct global_counters current_global_counters;
+drizzle_system_variables global_system_variables;
+drizzle_system_variables max_system_variables;
+global_counters current_global_counters;
 
-const CHARSET_INFO *system_charset_info, *files_charset_info ;
+DRIZZLED_API const CHARSET_INFO *system_charset_info;
+const CHARSET_INFO *files_charset_info;
 const CHARSET_INFO *table_alias_charset;
 const CHARSET_INFO *character_set_filesystem;
 
@@ -484,9 +487,13 @@ void unireg_abort(int exit_code)
 {
 
   if (exit_code)
+  {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
+  }
   else if (opt_help)
+  {
     usage();
+  }
   clean_up(!opt_help && (exit_code));
   internal::my_end();
   exit(exit_code);
@@ -547,8 +554,8 @@ passwd *check_user(const char *user)
   }
   if (not user)
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
-                      "the manual to find out how to run drizzled as root!\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
+                                      "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
   }
   if (!strcmp(user,"root"))

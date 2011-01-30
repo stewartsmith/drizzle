@@ -39,6 +39,8 @@
 #include <vector>
 #include <set>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -123,7 +125,7 @@ typedef std::vector<StorageEngine *> EngineVector;
 typedef std::set<std::string> TableNameList;
 
 extern const std::string UNKNOWN_STRING;
-extern const std::string DEFAULT_DEFINITION_FILE_EXT;
+extern DRIZZLED_API const std::string DEFAULT_DEFINITION_FILE_EXT;
 
 
 /*
@@ -135,8 +137,9 @@ extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
   static StorageEngine { ... } xxx_engine;
 */
-class StorageEngine : public Plugin,
-                      public MonitoredInTransaction
+class DRIZZLED_API StorageEngine :
+  public Plugin,
+  public MonitoredInTransaction
 {
   friend class SEAPITester;
 public:

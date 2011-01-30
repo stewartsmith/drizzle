@@ -43,7 +43,6 @@ drizzled_internal_libinternal_la_SOURCES= \
 					  drizzled/internal/bmove_upp.cc \
 					  drizzled/internal/checksum.cc \
 					  drizzled/internal/default.cc \
-					  drizzled/internal/dtoa.cc \
 					  drizzled/internal/int2str.cc \
 					  drizzled/internal/iocache.cc \
 					  drizzled/internal/llstr.cc \
@@ -74,7 +73,6 @@ drizzled_internal_libinternal_la_SOURCES= \
 					  drizzled/internal/my_redel.cc \
 					  drizzled/internal/my_rename.cc \
 					  drizzled/internal/my_static.cc \
-					  drizzled/internal/my_strtoll10.cc \
 					  drizzled/internal/my_symlink.cc \
 					  drizzled/internal/my_symlink2.cc \
 					  drizzled/internal/my_sync.cc \

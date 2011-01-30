@@ -25,7 +25,7 @@
 #include <fcntl.h>
 
 
-#include "drizzled/identifier/table.h"
+#include "drizzled/identifier.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
 #include "drizzled/table/concurrent.h"

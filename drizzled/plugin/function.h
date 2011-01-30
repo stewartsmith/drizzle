@@ -28,6 +28,8 @@
 #include <vector>
 #include <functional>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -44,7 +46,7 @@ namespace plugin
 /**
  * Functions in the server: AKA UDF
  */
-class Function
+class DRIZZLED_API Function
   : public Plugin,
     public std::unary_function<memory::Root*, Item_func *>
 {

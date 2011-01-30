@@ -251,10 +251,10 @@ public:
                (int)dbs->size(), dbs->c_str(),
                // do need to quote the query
                quotify((const unsigned char *)session->getQueryString()->c_str(), session->getQueryString()->length(), qs, sizeof(qs)),
-               // command_name is defined in drizzled/sql_parse.cc
-               // dont need to quote the command name, always CSV safe
-               (int)drizzled::command_name[session->command].length,
-               drizzled::command_name[session->command].str,
+               // getCommandName is defined in drizzled/sql_parse.h dont
+               // need to quote the command name, always CSV safe
+               (int)drizzled::getCommandName(session->command).size(),
+               drizzled::getCommandName(session->command).c_str(),
                // counters are at end, to make it easier to add more
                (t_mark - session->getConnectMicroseconds()),
                (session->getElapsedTime()),

@@ -323,8 +323,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_NULL_COLUMN_IN_INDEX, N_("Table handler doesn't support NULL in given index. Please change column '%-.192s' to be NOT NULL or use another handler"));
   ADD_ERROR_MESSAGE(ER_PLUGIN_NO_PATHS, N_("No paths allowed for plugin library"));
   ADD_ERROR_MESSAGE(ER_PLUGIN_EXISTS, N_("Plugin '%-.192s' already exists"));
-  ADD_ERROR_MESSAGE(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %-.128s)"));
-  ADD_ERROR_MESSAGE(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%-.128s'"));
+  ADD_ERROR_MESSAGE(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %s)"));
+  ADD_ERROR_MESSAGE(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%s'"));
   ADD_ERROR_MESSAGE(ER_UPDATE_INFO, N_("Rows matched: %ld  Changed: %ld  Warnings: %ld"));
   ADD_ERROR_MESSAGE(ER_CANT_CREATE_THREAD, N_("Can't create a new thread (errno %d); if you are not out of available memory, you can consult the manual for a possible OS-dependent bug"));
   ADD_ERROR_MESSAGE(ER_WRONG_VALUE_COUNT_ON_ROW, N_("Column count doesn't match value count at row %ld"));
@@ -496,9 +496,11 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_TABLE_PERMISSION_DENIED, N_("Permission denied to create '%s'"));
   ADD_ERROR_MESSAGE(ER_TABLE_UNKNOWN, N_("Unknown table '%s'"));
 
+  ADD_ERROR_MESSAGE(ER_SCHEMA_CANNOT_CREATE, N_("Cannot create schema '%s'"));
   ADD_ERROR_MESSAGE(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   ADD_ERROR_MESSAGE(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
   ADD_ERROR_MESSAGE(ER_DROP_SCHEMA, +N_("Error droppping Schema : %s"));
+
   ADD_ERROR_MESSAGE(ER_USE_SQL_BIG_RESULT, N_("Temporary table too large, rerun with SQL_BIG_RESULT."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_ENGINE_OPTION, N_("Unknown table engine option key/pair %s = %s."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_SCHEMA_OPTION, N_("Unknown schema engine option key/pair %s = %s."));

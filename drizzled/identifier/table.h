@@ -37,8 +37,6 @@
 #include "drizzled/definitions.h"
 #include "drizzled/message/table.pb.h"
 
-#include "drizzled/identifier.h"
-
 #include <string.h>
 
 #include <assert.h>
@@ -50,12 +48,14 @@
 
 #include <boost/functional/hash.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled {
 class Table;
 
 namespace identifier {
 
-class Table : public identifier::Schema
+class DRIZZLED_API Table : public Schema
 {
 public:
   typedef message::Table::TableType Type;

@@ -29,13 +29,15 @@
 #include <string>
 #include <set>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
 namespace plugin
 {
 
-class Authorization : public Plugin
+class DRIZZLED_API Authorization : public Plugin
 {
   Authorization();
   Authorization(const Authorization &);

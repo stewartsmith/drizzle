@@ -26,6 +26,8 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 class Session;
@@ -33,7 +35,7 @@ class Session;
 namespace plugin
 {
 
-class Logging : public Plugin
+class DRIZZLED_API Logging : public Plugin
 {
   Logging();
   Logging(const Logging &);

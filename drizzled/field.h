@@ -22,6 +22,8 @@
   variables must declare the size_of() member function.
 */
 
+
+
 #ifndef DRIZZLED_FIELD_H
 #define DRIZZLED_FIELD_H
 
@@ -32,9 +34,12 @@
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/item_result.h"
+#include "drizzled/visibility.h"
 
 #include <string>
 #include <vector>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -75,7 +80,7 @@ int field_conv(Field *to,Field *from);
  * The store_xxx() methods take various input and convert
  * the input into the raw bytes stored in the ptr member variable.
  */
-class Field
+class DRIZZLED_API Field
 {
   /* Prevent use of these */
   Field(const Field&);

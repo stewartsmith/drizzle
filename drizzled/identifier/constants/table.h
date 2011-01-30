@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,36 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_IDENTIFIER_H
-#define DRIZZLED_IDENTIFIER_H
-
-#include <string>
-
-#include "drizzled/visibility.h"
+#ifndef DRIZZLED_IDENTIFIER_CONSTANTS_TABLE_H
+#define DRIZZLED_IDENTIFIER_CONSTANTS_TABLE_H
 
 namespace drizzled {
-
-class DRIZZLED_API Identifier {
-public:
-  typedef const Identifier& const_reference;
-
-  virtual void getSQLPath(std::string &arg) const;
-
-  virtual ~Identifier()
-  { }
-};
-
-} // namespace drizzled
-
-#include <drizzled/identifier/catalog.h>
-#include <drizzled/identifier/schema.h>
-#include <drizzled/identifier/session.h>
-#include <drizzled/identifier/table.h>
-#include <drizzled/identifier/user.h>
-
-// Constant identifiers user internally
-#include <drizzled/identifier/constants/schema.h>
-#include <drizzled/identifier/constants/table.h>
+namespace identifier {
 
 
-#endif /* DRIZZLED_IDENTIFIER_H */
+} /* namespace identifier */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_IDENTIFIER_CONSTANTS_TABLE_H */

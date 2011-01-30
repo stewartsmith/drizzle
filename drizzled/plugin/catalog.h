@@ -27,6 +27,8 @@
 #include <drizzled/catalog/instance.h>
 #include <drizzled/catalog/engine.h>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 namespace plugin
@@ -35,7 +37,7 @@ namespace plugin
 /* 
   This object handles the aggregate of all operations for any/all of the Catalog engines.
 */
-class Catalog : public Plugin {
+class DRIZZLED_API Catalog : public Plugin {
   /* Disable default constructors */
   Catalog();
   Catalog(const Catalog &);
