@@ -20,7 +20,7 @@
 #include "config.h"
 
 #include <drizzled/gettext.h>
-#include <drizzled/session.h>
+#include <drizzled/errmsg_print.h>
 
 #include <stdarg.h>
 
@@ -53,8 +53,7 @@ error_message::Syslog::Syslog(const std::string& facility,
   }
 }
 
-bool error_message::Syslog::errmsg(drizzled::Session *,
-                                  int, const char *format, va_list ap)
+bool error_message::Syslog::errmsg(int, const char *format, va_list ap)
 {
   WrapSyslog::singleton().vlog(_facility, _priority, format, ap);
   return false;

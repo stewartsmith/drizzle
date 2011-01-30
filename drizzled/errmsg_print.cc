@@ -47,7 +47,7 @@ bool errmsg_printf (int priority, char const *format, ...)
   bool rv;
   va_list args;
   va_start(args, format);
-  rv= plugin::ErrorMessage::vprintf(NULL, priority, format, args);
+  rv= plugin::ErrorMessage::vprintf(priority, format, args);
   va_end(args);
   return rv;
 }

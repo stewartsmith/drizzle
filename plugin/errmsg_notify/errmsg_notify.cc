@@ -54,7 +54,7 @@ public:
     errmsg_tags.push_back("Error");
   }
 
-  virtual bool errmsg(Session *, int priority, const char *format, va_list ap)
+  virtual bool errmsg(int priority, const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
     int prv;
