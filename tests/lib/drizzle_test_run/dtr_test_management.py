@@ -390,8 +390,8 @@ class testManager(test_management.testManager):
 
         """
         result_path = os.path.join(result_dir,result_file_name)
-        if self.engine:
-            candidate_path = os.path.join(result_dir, self.engine, 
+        if self.default_engine:
+            candidate_path = os.path.join(result_dir, self.default_engine, 
                                           result_file_name)
             if os.path.exists(candidate_path):
                 result_path = candidate_path

@@ -81,6 +81,6 @@ except KeyboardInterrupt:
 finally:
 # TODO - make a more robust cleanup
 # At the moment, runaway servers are our biggest concern
-    if server_manager:
+    if server_manager and not variables['startandexit']:
         server_manager.cleanup()
 
