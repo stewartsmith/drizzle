@@ -21,8 +21,9 @@
 #ifndef DRIZZLED_GENERATOR_SCHEMA_H
 #define DRIZZLED_GENERATOR_SCHEMA_H
 
-#include "drizzled/session.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/session.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled {
 namespace generator {
@@ -44,6 +45,13 @@ public:
     while (schema_iterator != schema_names.end())
     {
       identifier::Schema schema_identifier(*schema_iterator);
+
+      if (not plugin::Authorization::isAuthorized(session.user(), schema_identifier, false))
+      {
+        schema_iterator++;
+        continue;
+      }
+
       bool is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
       schema_iterator++;
 
@@ -60,6 +68,9 @@ public:
     {
       const drizzled::identifier::Schema *_ptr= &(*schema_iterator);
       schema_iterator++;
+
+      if (not plugin::Authorization::isAuthorized(session.user(), *_ptr, false))
+        continue;
 
       return _ptr;
     }

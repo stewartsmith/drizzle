@@ -686,9 +686,6 @@ public:
 
 void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &schema_identifier, identifier::Table::vector &set_of_identifiers)
 {
-  static identifier::Schema INFORMATION_SCHEMA_IDENTIFIER("INFORMATION_SCHEMA");
-  static identifier::Schema DATA_DICTIONARY_IDENTIFIER("DATA_DICTIONARY");
-
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
