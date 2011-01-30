@@ -1,5 +1,5 @@
 **********************************
-dbqp.py - Drizzle testing tool
+dbqp.py - Drizzle testing tool 
 **********************************
 
 Synopsis
@@ -329,7 +329,7 @@ Options for defining the tools we use for code analysis (valgrind, gprof, gcov, 
 
 Options for controlling the use of debuggers with test execution
 ------------------------------------------------------------------
- .. option:: --gdb
+.. option:: --gdb
 
     Start the drizzled server(s) in gdb
     (CURRENTLY INOP)
