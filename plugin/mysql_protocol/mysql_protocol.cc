@@ -1147,7 +1147,7 @@ DRIZZLE_DECLARE_PLUGIN
   "MySQL Protocol Module",
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,             /* Plugin Init */
-  NULL, /* system variables */
+  NULL, /* depends */
   drizzle_plugin::init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -41,6 +41,8 @@
 #include <bitset>
 #include <algorithm>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -143,7 +145,7 @@ inline key_part_map make_prev_keypart_map(T a)
   If a blob column has NULL value, then its length and blob data pointer
   must be set to 0.
 */
-class Cursor
+class DRIZZLED_API Cursor
 {
   friend class SEAPITesterCursor;
   Table &table;               /* The current open table */

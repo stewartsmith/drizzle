@@ -24,6 +24,8 @@
 
 #include <vector>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 namespace plugin
@@ -35,7 +37,7 @@ class Client;
  * This class is used by client plugins to provide and manage the listening
  * interface for new client instances.
  */
-class Listen : public Plugin
+class DRIZZLED_API Listen : public Plugin
 {
   Listen();
   Listen(const Listen&);

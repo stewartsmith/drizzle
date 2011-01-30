@@ -22,6 +22,8 @@
   variables must declare the size_of() member function.
 */
 
+
+
 #ifndef DRIZZLED_FIELD_H
 #define DRIZZLED_FIELD_H
 
@@ -32,9 +34,12 @@
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/item_result.h"
+#include "drizzled/visibility.h"
 
 #include <string>
 #include <vector>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -75,7 +80,7 @@ int field_conv(Field *to,Field *from);
  * The store_xxx() methods take various input and convert
  * the input into the raw bytes stored in the ptr member variable.
  */
-class Field
+class DRIZZLED_API Field
 {
   /* Prevent use of these */
   Field(const Field&);
@@ -211,7 +216,7 @@ public:
     @note
       Needs to be changed if/when we want to support different time formats.
   */
-  virtual int store_time(type::Time *ltime, type::timestamp_t t_type);
+  virtual int store_time(type::Time &ltime, type::timestamp_t t_type);
   virtual double val_real()=0;
   virtual int64_t val_int()=0;
   virtual type::Decimal *val_decimal(type::Decimal *);
@@ -590,8 +595,8 @@ public:
   }
   void copy_from_tmp(int offset);
   uint32_t fill_cache_field(CacheField *copy);
-  virtual bool get_date(type::Time *ltime,uint32_t fuzzydate);
-  virtual bool get_time(type::Time *ltime);
+  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate);
+  virtual bool get_time(type::Time &ltime);
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }

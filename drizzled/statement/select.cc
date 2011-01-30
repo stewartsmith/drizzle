@@ -25,7 +25,16 @@
 namespace drizzled
 {
 
-bool statement::Select::execute()
+namespace statement
+{
+
+Select::Select(Session *in_session) :
+  Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_SELECT;
+  }
+
+bool Select::execute()
 {
   TableList *all_tables= getSession()->lex->query_tables;
   getSession()->status_var.last_query_cost= 0.0;
@@ -34,5 +43,5 @@ bool statement::Select::execute()
   return res;
 }
 
+} /* namespace statement */
 } /* namespace drizzled */
-

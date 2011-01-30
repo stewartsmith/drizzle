@@ -41,6 +41,9 @@ bool Catalog::execute()
   if (not authorized())
     return false;
 
+  if (not perform())
+    return false;
+
   return true;
 }
 

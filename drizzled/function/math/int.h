@@ -26,7 +26,8 @@
 namespace drizzled
 {
 
-class Item_int_func :public Item_func
+class DRIZZLED_API Item_int_func :
+  public Item_func
 {
 public:
   Item_int_func() :Item_func() { max_length= 21; }

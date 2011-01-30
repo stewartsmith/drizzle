@@ -36,11 +36,12 @@ class StartTransaction : public Statement
   start_transaction_option_t start_transaction_opt;
 
 public:
-  StartTransaction(Session *in_session, start_transaction_option_t opt= START_TRANS_NO_OPTIONS)
-    :
-      Statement(in_session),
-      start_transaction_opt(opt)
-  {}
+  StartTransaction(Session *in_session, start_transaction_option_t opt= START_TRANS_NO_OPTIONS) :
+    Statement(in_session),
+    start_transaction_opt(opt)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_BEGIN;
+  }
 
   bool execute();
 };

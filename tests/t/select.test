@@ -2487,13 +2487,13 @@ CREATE TABLE t3 (`id` int);
 INSERT INTO t1 VALUES (1),(2),(3);
 INSERT INTO t2 VALUES (2);
 INSERT INTO t3 VALUES (3);
--- error 1052
+--error ER_NON_UNIQ_ERROR
 SELECT t1.id,t3.id FROM t1 JOIN t2 ON (t2.id=t1.id) LEFT JOIN t3 USING (id);
--- error 1052
+--error ER_NON_UNIQ_ERROR
 SELECT t1.id,t3.id FROM t1 JOIN t2 ON (t2.notacolumn=t1.id) LEFT JOIN t3 USING (id);
--- error 1052
+--error ER_NON_UNIQ_ERROR
 SELECT id,t3.id FROM t1 JOIN t2 ON (t2.id=t1.id) LEFT JOIN t3 USING (id);
--- error 1052
+--error ER_NON_UNIQ_ERROR
 SELECT id,t3.id FROM (t1 JOIN t2 ON (t2.id=t1.id)) LEFT JOIN t3 USING (id);
 
 drop table t1, t2, t3;
@@ -2589,7 +2589,7 @@ create table t1(f1 int, f2 date);
 insert into t1 values(1,'2005-01-01'),(2,'2005-09-01'),(3,'2005-09-30'),
   (4,'2005-10-01'),(5,'2005-12-30');
 # should return all records
---error ER_INVALID_DATETIME_VALUE # Bad date
+--error ER_INVALID_DATE_VALUE # Bad date
 select * from t1 where f2 >= 0            order by f2;
 --error ER_INVALID_DATETIME_VALUE # Bad date
 select * from t1 where f2 >= '0000-00-00' order by f2;

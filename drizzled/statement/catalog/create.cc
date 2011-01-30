@@ -21,6 +21,9 @@
 #include "config.h"
 
 #include <drizzled/statement/catalog.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/session.h>
+#include <drizzled/plugin/catalog.h>
 
 namespace drizzled
 {
@@ -36,10 +39,21 @@ Create::Create(Session *in_session, drizzled::lex_string_t &arg) :
 {
 }
 
-bool Create::authorized()
+bool Create::authorized() const
 {
+  if (getSession()->getClient()->isConsole())
+  {
+    return true;
+  }
+
   my_error(ER_CATALOG_CANNOT_CREATE_PERMISSION, identifier());
+
   return false;
+}
+
+bool Create::perform() const
+{
+  return plugin::Catalog::create(identifier());
 }
 
 } /* namespace catalog */

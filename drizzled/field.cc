@@ -1010,37 +1010,42 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(type::Time *ltime,uint32_t fuzzydate)
-{
-  char buff[40];
-  String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str_internal(&tmp)) || str_to_datetime_with_warn(res->ptr(), res->length(),
-                                                                 ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
-  {
-    return 1;
-  }
-
-  return 0;
-}
-
-bool Field::get_time(type::Time *ltime)
+bool Field::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
-  if (!(res=val_str_internal(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), ltime))
+  assert(getTable() and getTable()->getSession());
+
+  if (not (res=val_str_internal(&tmp)) or
+      str_to_datetime_with_warn(getTable()->getSession(),
+                                res->ptr(), res->length(),
+                                &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
   {
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
-int Field::store_time(type::Time *ltime, type::timestamp_t)
+bool Field::get_time(type::Time &ltime)
+{
+  char buff[40];
+  String tmp(buff,sizeof(buff),&my_charset_bin),*res;
+
+  if (!(res=val_str_internal(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), &ltime))
+  {
+    return true;
+  }
+
+  return false;
+}
+
+int Field::store_time(type::Time &ltime, type::timestamp_t)
 {
   String tmp;
 
-  ltime->convert(tmp);
+  ltime.convert(tmp);
 
   return store(tmp.ptr(), tmp.length(), &my_charset_bin);
 }
@@ -1200,8 +1205,9 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
                                  type::timestamp_t ts_type, 
                                  int cuted_increment)
 {
-  Session *session= table ? table->in_use : current_session;
-  if ((session->really_abort_on_warning() &&
+  Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
+
+  if ((session->abortOnWarning() and
        level >= DRIZZLE_ERROR::WARN_LEVEL_WARN) ||
       set_warning(level, code, cuted_increment))
     make_truncated_value_warning(session, level, str, str_length, ts_type,
@@ -1214,8 +1220,9 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
                                  type::timestamp_t ts_type,
                                  int cuted_increment)
 {
-  Session *session= table ? table->in_use : current_session;
-  if (session->really_abort_on_warning() ||
+  Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
+
+  if (session->abortOnWarning() or
       set_warning(level, code, cuted_increment))
   {
     char str_nr[22];
@@ -1230,8 +1237,9 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
                                  double nr, 
                                  type::timestamp_t ts_type)
 {
-  Session *session= table ? table->in_use : current_session;
-  if (session->really_abort_on_warning() ||
+  Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
+
+  if (session->abortOnWarning() or
       set_warning(level, code, 1))
   {
     /* DBL_DIG is enough to print '-[digits].E+###' */

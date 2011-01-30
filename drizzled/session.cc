@@ -176,7 +176,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   lock_id(&main_lock_id),
   thread_stack(NULL),
   security_ctx(identifier::User::make_shared()),
-  where(Session::DEFAULT_WHERE),
+  _where(Session::DEFAULT_WHERE),
   dbug_sentry(Session_SENTRY_MAGIC),
   mysys_var(0),
   command(COM_CONNECT),
@@ -355,7 +355,7 @@ void Session::cleanup(void)
 #endif
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rollbackTransaction(this, true);
+    transaction_services.rollbackTransaction(*this, true);
     xid_cache_delete(&transaction.xid_state);
   }
 
@@ -773,7 +773,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
        * (Which of course should never happen...)
        */
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.commitTransaction(this, true))
+      if (transaction_services.commitTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       break;
@@ -790,7 +790,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
     case ROLLBACK_AND_CHAIN:
     {
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.rollbackTransaction(this, true))
+      if (transaction_services.rollbackTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
@@ -827,7 +827,7 @@ bool Session::endActiveTransaction()
   if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (transaction_services.commitTransaction(this, true))
+    if (transaction_services.commitTransaction(*this, true))
       result= false;
   }
   options&= ~(OPTION_BEGIN);
@@ -873,11 +873,14 @@ void Session::cleanup_after_query()
     first_successful_insert_id_in_cur_stmt= 0;
     substitute_null_with_insert_id= true;
   }
+
   arg_of_last_insert_id_function= false;
+
   /* Free Items that were created during this execution */
   free_items();
-  /* Reset where. */
-  where= Session::DEFAULT_WHERE;
+
+  /* Reset _where. */
+  _where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
   for_each(temporary_shares.begin(),
@@ -1901,7 +1904,7 @@ void Session::close_thread_tables()
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     main_da.can_overwrite_status= true;
-    transaction_services.autocommitOrRollback(this, is_error());
+    transaction_services.autocommitOrRollback(*this, is_error());
     main_da.can_overwrite_status= false;
     transaction.stmt.reset();
   }

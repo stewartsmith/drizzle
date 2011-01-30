@@ -62,6 +62,9 @@
 #include "drizzled/replication_services.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/catalog/local.h"
+#include "drizzled/abort_exception.h"
+
+#include <drizzled/debug.h>
 
 #include "drizzled/util/backtrace.h"
 
@@ -127,8 +130,11 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       session->no_warnings_for_error= false;
       }
     }
-    if (!session || MyFlags & ME_NOREFRESH)
-        errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
+
+    if (not session || MyFlags & ME_NOREFRESH)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
+    }
 }
 
 static void init_signals(void)
@@ -136,8 +142,8 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  if (!(test_flags.test(TEST_NO_STACKTRACE) || 
-        test_flags.test(TEST_CORE_ON_SIGNAL)))
+  if (not (getDebug().test(debug::NO_STACKTRACE) || 
+        getDebug().test(debug::CORE_ON_SIGNAL)))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
     sigemptyset(&sa.sa_mask);
@@ -153,7 +159,7 @@ static void init_signals(void)
     sigaction(SIGFPE, &sa, NULL);
   }
 
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
+  if (getDebug().test(debug::CORE_ON_SIGNAL))
   {
     /* Change limits so that we will get a core file */
     struct rlimit rl;
@@ -184,7 +190,7 @@ static void init_signals(void)
 #ifdef SIGTSTP
   sigaddset(&set,SIGTSTP);
 #endif
-  if (test_flags.test(TEST_SIGINT))
+  if (getDebug().test(debug::ALLOW_SIGINT))
   {
     sa.sa_flags= 0;
     sa.sa_handler= drizzled_end_thread_signal;
@@ -286,8 +292,22 @@ int main(int argc, char **argv)
     server_id= 1;
   }
 
-  if (init_server_components(modules))
+  try
+  {
+    if (init_server_components(modules))
+      DRIZZLE_ABORT;
+  }
+  catch (abort_exception& ex)
+  {
+#if defined(DEBUG)
+    cout << _("Drizzle has receieved an abort event.") << endl;
+    cout << _("In Function: ") << *::boost::get_error_info<boost::throw_function>(ex) << endl;
+    cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
+    cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
+#endif
     unireg_abort(1);
+  }
+
 
   /**
    * This check must be done after init_server_components for now
@@ -332,7 +352,7 @@ int main(int argc, char **argv)
     {
       currentSession().release();
       currentSession().reset(session.get());
-      transaction_services.sendStartupEvent(session.get());
+      transaction_services.sendStartupEvent(*session.get());
 
       plugin_startup_window(modules, *(session.get()));
     }
@@ -348,7 +368,7 @@ int main(int argc, char **argv)
   while ((client= plugin::Listen::getClient()) != NULL)
   {
     Session::shared_ptr session;
-    session= Session::make_shared(client, catalog::local());
+    session= Session::make_shared(client, client->catalog());
 
     if (not session)
     {
@@ -369,7 +389,7 @@ int main(int argc, char **argv)
     {
       currentSession().release();
       currentSession().reset(session.get());
-      transaction_services.sendShutdownEvent(session.get());
+      transaction_services.sendShutdownEvent(*session.get());
     }
   }
 
@@ -380,14 +400,7 @@ int main(int argc, char **argv)
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-
-    while (not ready_to_exit)
-    {
-      COND_server_end.wait(scopedLock);
-    }
-  }
+  session::Cache::singleton().shutdownSecond();
 
   clean_up(1);
   module::Registry::shutdown();

@@ -22,6 +22,8 @@
 
 #include <drizzled/item/hex_string.h>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -31,7 +33,8 @@ public:
   Item_bin_string(const char *str,uint32_t str_length);
 };
 
-class Item_result_field :public Item    /* Item with result field */
+class DRIZZLED_API Item_result_field :
+  public Item    /* Item with result field */
 {
 public:
   Field *result_field;                          /* Save result here */

@@ -33,6 +33,8 @@
 #include "drizzled/sys_var.h"
 #include "drizzled/xid.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -62,7 +64,7 @@ namespace plugin { class StorageEngine; }
 #define PANDORA_CPP_NAME(x) _drizzled_ ## x ## _plugin_
 #define PANDORA_PLUGIN_NAME(x) PANDORA_CPP_NAME(x)
 #define DRIZZLE_DECLARE_PLUGIN \
-  ::drizzled::module::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
+  DRIZZLED_API ::drizzled::module::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
 
 
 #define DRIZZLE_DECLARE_PLUGIN_END
@@ -75,7 +77,9 @@ namespace plugin { class StorageEngine; }
     STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
     STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
     PANDORA_MODULE_LICENSE, \
-    init, system, options \
+    init, \
+    STRINGIFY_ARG(PANDORA_MODULE_DEPENDENCIES), \
+    options \
   } 
 
 
@@ -177,12 +181,12 @@ extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 
 int session_in_lock_tables(const Session *session);
-int session_tablespace_op(const Session *session);
-void set_session_proc_info(Session *session, const char *info);
-const char *get_session_proc_info(Session *session);
-int64_t session_test_options(const Session *session, int64_t test_options);
-int session_sql_command(const Session *session);
-enum_tx_isolation session_tx_isolation(const Session *session);
+DRIZZLED_API int session_tablespace_op(const Session *session);
+DRIZZLED_API void set_session_proc_info(Session *session, const char *info);
+DRIZZLED_API const char *get_session_proc_info(Session *session);
+DRIZZLED_API int64_t session_test_options(const Session *session, int64_t test_options);
+DRIZZLED_API int session_sql_command(const Session *session);
+DRIZZLED_API enum_tx_isolation session_tx_isolation(const Session *session);
 
 void compose_plugin_add(std::vector<std::string> options);
 void compose_plugin_remove(std::vector<std::string> options);
@@ -201,7 +205,7 @@ void notify_plugin_load(std::string in_plugin_load);
   @retval -1    error
   @retval >= 0  a file handle that can be passed to dup or internal::my_close
 */
-int tmpfile(const char *prefix);
+DRIZZLED_API int tmpfile(const char *prefix);
 
 } /* namespace drizzled */
 

@@ -5464,7 +5464,7 @@ static bool find_order_in_list(Session *session,
     if (!count || count > fields.elements)
     {
       my_error(ER_BAD_FIELD_ERROR, MYF(0),
-               order_item->full_name(), session->where);
+               order_item->full_name(), session->where());
       return true;
     }
     order->item= ref_pointer_array + count - 1;
@@ -5541,7 +5541,7 @@ static bool find_order_in_list(Session *session,
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR),
                           ((Item_ident*) order_item)->field_name,
-                          session->where);
+                          session->where());
     }
   }
 
@@ -5583,7 +5583,7 @@ int setup_order(Session *session,
                 List<Item> &all_fields,
                 Order *order)
 {
-  session->where="order clause";
+  session->setWhere("order clause");
   for (; order; order=order->next)
   {
     if (find_order_in_list(session, ref_pointer_array, tables, order, fields,
@@ -5634,7 +5634,7 @@ int setup_group(Session *session,
 
   uint32_t org_fields=all_fields.elements;
 
-  session->where="group statement";
+  session->setWhere("group statement");
   for (ord= order; ord; ord= ord->next)
   {
     if (find_order_in_list(session, ref_pointer_array, tables, ord, fields,

@@ -74,7 +74,7 @@ int Field_date::store(const char *from,
   DateTime temporal;
   if (! temporal.from_string(from, (size_t) len))
   {
-    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
+    my_error(ER_INVALID_DATE_VALUE, MYF(ME_FATALERROR), from);
     return 2;
   }
   /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
@@ -94,7 +94,7 @@ int Field_date::store(double from)
     ss.precision(18); /* 18 places should be fine for error display of double input. */
     ss << from; ss >> tmp;
 
-    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_DATE_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
   return Field_date::store((int64_t) rint(from), false);
@@ -113,43 +113,47 @@ int Field_date::store(int64_t from, bool)
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from)); 
 
-    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_DATE_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
 
   /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
   uint32_t int_value= (temporal.years() * 10000) + (temporal.months() * 100) + temporal.days();
   int4store(ptr, int_value);
+
   return 0;
 }
 
-int Field_date::store_time(type::Time *ltime,
+int Field_date::store_time(type::Time &ltime,
                            type::timestamp_t time_type)
 {
   long tmp;
   int error= 0;
   if (time_type == type::DRIZZLE_TIMESTAMP_DATE || time_type == type::DRIZZLE_TIMESTAMP_DATETIME)
   {
-    tmp= ltime->year*10000 + ltime->month*100 + ltime->day;
+    tmp= ltime.year*10000 + ltime.month*100 + ltime.day;
 
-    if (ltime->check(tmp != 0,
+    type::cut_t cut_error= type::VALID;
+    if (ltime.check(tmp != 0,
                      (TIME_FUZZY_DATE |
                       (current_session->variables.sql_mode &
-                       (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
+                       (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), cut_error))
     {
       char buff[type::Time::MAX_STRING_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-      ltime->convert(str, type::DRIZZLE_TIMESTAMP_DATE);
+      ltime.convert(str, type::DRIZZLE_TIMESTAMP_DATE);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), type::DRIZZLE_TIMESTAMP_DATE, 1);
     }
 
-    if (not error && ltime->time_type != type::DRIZZLE_TIMESTAMP_DATE &&
-        (ltime->hour || ltime->minute || ltime->second || ltime->second_part))
+    error= static_cast<int>(cut_error);
+
+    if (not error && ltime.time_type != type::DRIZZLE_TIMESTAMP_DATE &&
+        (ltime.hour || ltime.minute || ltime.second || ltime.second_part))
     {
       char buff[type::Time::MAX_STRING_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-      ltime->convert(str);
+      ltime.convert(str);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                            ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), type::DRIZZLE_TIMESTAMP_DATE, 1);
@@ -212,21 +216,22 @@ String *Field_date::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Field_date::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Field_date::get_date(type::Time &ltime, uint32_t fuzzydate)
 {
   uint32_t tmp=(uint32_t) uint4korr(ptr);
-  ltime->day=		(int) (tmp%100);
-  ltime->month= 	(int) (tmp/100%100);
-  ltime->year= 		(int) (tmp/10000);
-  ltime->time_type= type::DRIZZLE_TIMESTAMP_DATE;
-  ltime->hour= ltime->minute= ltime->second= ltime->second_part= ltime->neg= 0;
-  return ((!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ?
+  ltime.day=		(int) (tmp%100);
+  ltime.month= 	(int) (tmp/100%100);
+  ltime.year= 		(int) (tmp/10000);
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATE;
+  ltime.hour= ltime.minute= ltime.second= ltime.second_part= ltime.neg= 0;
+
+  return ((!(fuzzydate & TIME_FUZZY_DATE) && (!ltime.month || !ltime.day)) ?
           1 : 0);
 }
 
-bool Field_date::get_time(type::Time *ltime)
+bool Field_date::get_time(type::Time &ltime)
 {
-  return Field_date::get_date(ltime,0);
+  return Field_date::get_date(ltime ,0);
 }
 
 int Field_date::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)

@@ -190,7 +190,7 @@ insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 # Test error handling
---error ER_INVALID_DATETIME_VALUE # Bad date
+--error ER_INVALID_DATE_VALUE # Bad date
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
 select * from t1;
 drop table t1;
@@ -369,7 +369,7 @@ insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 # Test error handling
---error ER_INVALID_DATETIME_VALUE # Bad date
+--error ER_INVALID_DATE_VALUE # Bad date
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
 select * from t1;
 drop table t1;

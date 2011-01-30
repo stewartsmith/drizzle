@@ -17,11 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_MEMORY_SQL_ALLOC_H
 #define DRIZZLED_MEMORY_SQL_ALLOC_H
 
 #include <unistd.h>
 #include "drizzled/memory/root.h"
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -37,7 +41,7 @@ char *sql_strdup(const char *str);
 char *sql_strmake(const char *str, size_t len);
 void *sql_memdup(const void * ptr, size_t size);
 
-class SqlAlloc
+class DRIZZLED_API SqlAlloc
 {
 public:
   static void *operator new(size_t size);

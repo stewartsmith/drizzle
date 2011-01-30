@@ -23,6 +23,8 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 class Session;
@@ -38,7 +40,7 @@ namespace plugin
  * file-descriptor based, so for non-fd client sources (like from another
  * thread), derived classes will need to use a pipe() for event notifications.
  */
-class Client
+class DRIZZLED_API Client
 {
 protected:
   Session *session;
@@ -107,6 +109,11 @@ public:
   virtual bool isConsole()
   {
     return false;
+  }
+
+  virtual  catalog::Instance::shared_ptr catalog()
+  {
+    return catalog::local();
   }
 
   /**

@@ -23,9 +23,11 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled {
 
-class Identifier {
+class DRIZZLED_API Identifier {
 public:
   typedef const Identifier& const_reference;
 

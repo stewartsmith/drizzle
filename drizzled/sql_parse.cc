@@ -17,6 +17,7 @@
 
 #define DRIZZLE_LEX 1
 
+#include "drizzled/item/num.h"
 #include "drizzled/abort_exception.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
@@ -50,6 +51,7 @@
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/plugin/event_observer.h"
+#include "drizzled/visibility.h"
 
 #include <limits.h>
 
@@ -78,16 +80,21 @@ void parse(Session *session, const char *inBuf, uint32_t length);
 extern size_t my_thread_stack_size;
 extern const CHARSET_INFO *character_set_filesystem;
 
-const LEX_STRING command_name[COM_END+1]={
-  { C_STRING_WITH_LEN("Sleep") },
-  { C_STRING_WITH_LEN("Quit") },
-  { C_STRING_WITH_LEN("Init DB") },
-  { C_STRING_WITH_LEN("Query") },
-  { C_STRING_WITH_LEN("Shutdown") },
-  { C_STRING_WITH_LEN("Connect") },
-  { C_STRING_WITH_LEN("Ping") },
-  { C_STRING_WITH_LEN("Error") }  // Last command number
+namespace
+{
+
+static const std::string command_name[COM_END+1]={
+  "Sleep",
+  "Quit",
+  "Init DB",
+  "Query",
+  "Shutdown",
+  "Connect",
+  "Ping",
+  "Error"  // Last command number
 };
+
+}
 
 const char *xa_state_names[]={
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
@@ -106,6 +113,11 @@ const char *xa_state_names[]={
           a number of modified rows
 */
 bitset<CF_BIT_SIZE> sql_command_flags[SQLCOM_END+1];
+
+const std::string &getCommandName(const enum_server_command& command)
+{
+  return command_name[command];
+}
 
 void init_update_queries(void)
 {
@@ -258,7 +270,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.autocommitOrRollback(session, session->is_error());
+  transaction_services.autocommitOrRollback(*session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -608,17 +620,20 @@ new_select(LEX *lex, bool move_down)
   Session *session= lex->session;
 
   if (!(select_lex= new (session->mem_root) Select_Lex()))
-    return(1);
+    return true;
+
   select_lex->select_number= ++session->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
   select_lex->init_query();
   select_lex->init_select();
   lex->nest_level++;
+
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
     return(1);
   }
+
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
@@ -646,12 +661,15 @@ new_select(LEX *lex, bool move_down)
     if (lex->current_select->order_list.first && !lex->current_select->braces)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UNION", "order_st BY");
-      return(1);
+      return true;
     }
+
     select_lex->include_neighbour(lex->current_select);
     Select_Lex_Unit *unit= select_lex->master_unit();
-    if (!unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
-      return(1);
+
+    if (not unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
+      return true;
+
     select_lex->context.outer_context=
                 unit->first_select()->context.outer_context;
   }
@@ -664,7 +682,8 @@ new_select(LEX *lex, bool move_down)
     list
   */
   select_lex->context.resolve_in_select_list= true;
-  return(0);
+
+  return false;
 }
 
 /**

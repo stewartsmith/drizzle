@@ -33,10 +33,10 @@ namespace statement
 class AlterSchema : public CreateSchema
 {
 public:
-  AlterSchema(Session *in_session)
-    :
-      CreateSchema(in_session)
-  { 
+  AlterSchema(Session *in_session) :
+    CreateSchema(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_ALTER_DB;
   }
 
   bool execute();

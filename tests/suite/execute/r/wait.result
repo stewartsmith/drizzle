@@ -3,3 +3,4 @@ execute "insert into a VALUES ()" CONCURRENT WAIT;
 SELECT a from a;
 a
 1
+DROP TABLE A;

@@ -69,9 +69,9 @@ bool Item_direct_ref::is_null()
 }
 
 
-bool Item_direct_ref::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Item_direct_ref::get_date(type::Time &ltime, uint32_t fuzzydate)
 {
-  return (null_value=(*ref)->get_date(ltime,fuzzydate));
+  return (null_value=(*ref)->get_date(ltime, fuzzydate));
 }
 
 } /* namespace drizzled */

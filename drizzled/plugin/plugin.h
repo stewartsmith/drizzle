@@ -17,12 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_PLUGIN_PLUGIN_H
 #define DRIZZLED_PLUGIN_PLUGIN_H
 
 #include <string>
 #include <vector>
 #include <map>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -37,7 +41,7 @@ class Module;
 namespace plugin
 {
 
-class Plugin
+class DRIZZLED_API Plugin
 {
 private:
   const std::string _name;

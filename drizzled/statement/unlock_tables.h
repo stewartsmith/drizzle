@@ -35,10 +35,11 @@ namespace statement
 class UnlockTables : public Statement
 {
 public:
-  UnlockTables(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  UnlockTables(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_UNLOCK_TABLES;
+  }
 
   bool execute();
 };

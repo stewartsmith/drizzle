@@ -267,6 +267,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_DUP_ENTRY, N_("Duplicate entry '%-.192s' for key %d"));
   ADD_ERROR_MESSAGE(ER_WRONG_FIELD_SPEC, N_("Incorrect column specifier for column '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_PARSE_ERROR, N_("%s near '%-.80s' at line %d"));
+  ADD_ERROR_MESSAGE(ER_PARSE_ERROR_UNKNOWN, N_("Parsing error near '%s'"));
   ADD_ERROR_MESSAGE(ER_EMPTY_QUERY, N_("Query was empty"));
   ADD_ERROR_MESSAGE(ER_NONUNIQ_TABLE, N_("Not unique table/alias: '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_INVALID_DEFAULT, N_("Invalid default value for '%-.192s'"));
@@ -322,8 +323,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_NULL_COLUMN_IN_INDEX, N_("Table handler doesn't support NULL in given index. Please change column '%-.192s' to be NOT NULL or use another handler"));
   ADD_ERROR_MESSAGE(ER_PLUGIN_NO_PATHS, N_("No paths allowed for plugin library"));
   ADD_ERROR_MESSAGE(ER_PLUGIN_EXISTS, N_("Plugin '%-.192s' already exists"));
-  ADD_ERROR_MESSAGE(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %-.128s)"));
-  ADD_ERROR_MESSAGE(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%-.128s'"));
+  ADD_ERROR_MESSAGE(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %s)"));
+  ADD_ERROR_MESSAGE(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%s'"));
   ADD_ERROR_MESSAGE(ER_UPDATE_INFO, N_("Rows matched: %ld  Changed: %ld  Warnings: %ld"));
   ADD_ERROR_MESSAGE(ER_CANT_CREATE_THREAD, N_("Can't create a new thread (errno %d); if you are not out of available memory, you can consult the manual for a possible OS-dependent bug"));
   ADD_ERROR_MESSAGE(ER_WRONG_VALUE_COUNT_ON_ROW, N_("Column count doesn't match value count at row %ld"));
@@ -472,10 +473,14 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_WRONG_PARAMETERS_TO_NATIVE_FCT, N_("Incorrect parameters in the call to native function '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_DUP_ENTRY_WITH_KEY_NAME, N_("Duplicate entry '%-.64s' for key '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_LOAD_DATA_INVALID_COLUMN, N_("Invalid column reference (%-.64s) in LOAD DATA"));
-  ADD_ERROR_MESSAGE(ER_INVALID_UNIX_TIMESTAMP_VALUE, N_("Received an invalid value '%s' for a UNIX timestamp."));
+
   ADD_ERROR_MESSAGE(ER_INVALID_DATETIME_VALUE, N_("Received an invalid datetime value '%s'."));
-  ADD_ERROR_MESSAGE(ER_INVALID_TIMESTAMP_VALUE, N_("Received an invalid timestamp value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_DATE_VALUE, N_("Received an invalid DATE value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_NULL_ARGUMENT, N_("Received a NULL argument for function '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_TIMESTAMP_VALUE, N_("Received an invalid timestamp value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_TIME_VALUE, N_("Received an invalid TIME value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_UNIX_TIMESTAMP_VALUE, N_("Received an invalid value '%s' for a UNIX timestamp."));
+
   ADD_ERROR_MESSAGE(ER_ARGUMENT_OUT_OF_RANGE, N_("Received an out-of-range argument '%s' for function '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   ADD_ERROR_MESSAGE(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));

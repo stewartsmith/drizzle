@@ -16,7 +16,6 @@
 /* There may be prolems include all of theese. Try to test in
    configure with ones are needed? */
 
-/*  This is needed for the definitions of strchr... on solaris */
 
 
 #ifndef DRIZZLED_INTERNAL_M_STRING_H
@@ -39,6 +38,9 @@
 #if defined(HAVE_MEMORY_H) && !defined(__cplusplus)
 #include <memory.h>
 #endif
+
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -68,11 +70,11 @@ typedef enum {
   MY_GCVT_ARG_DOUBLE
 } my_gcvt_arg_type;
 
-double my_strtod(const char *str, char **end, int *error);
-double my_atof(const char *nptr);
-size_t my_fcvt(double x, int precision, char *to, bool *error);
-size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
-               bool *error);
+DRIZZLED_API double my_strtod(const char *str, char **end, int *error);
+DRIZZLED_API double my_atof(const char *nptr);
+DRIZZLED_API size_t my_fcvt(double x, int precision, char *to, bool *error);
+DRIZZLED_API size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
+                            bool *error);
 
 #define NOT_FIXED_DEC (uint8_t)31
 
@@ -106,9 +108,9 @@ extern char *ullstr(int64_t value,char *buff);
 
 extern char *int2str(int32_t val, char *dst, int radix, int upcase);
 extern char *int10_to_str(int32_t val,char *dst,int radix);
-int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
-extern char *int64_t2str(int64_t val,char *dst,int radix);
-extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
+DRIZZLED_API int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
+DRIZZLED_API char *int64_t2str(int64_t val,char *dst,int radix);
+DRIZZLED_API char *int64_t10_to_str(int64_t val,char *dst,int radix);
 
 
 /**

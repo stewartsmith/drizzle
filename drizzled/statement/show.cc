@@ -24,6 +24,16 @@
 
 namespace drizzled
 {
+namespace statement
+{
+
+Show::Show(Session *in_session) :
+  Select(in_session),
+  if_exists(false)
+  {
+  }
+
+} /* namespace statement */
 
 bool statement::Show::execute()
 {

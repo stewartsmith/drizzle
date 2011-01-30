@@ -489,29 +489,29 @@ select * from (select * from t3 natural join t4) as t34
 # Negative tests (tests for errors)
 #--------------------------------------------------------------------
 # works in Oracle - bug
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from t1 natural join (t3 cross join t4);
 # works in Oracle - bug
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from (t3 cross join t4) natural join t1;
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from t1 join (t2, t3) using (b);
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from ((t1 natural join t2), (t3 natural join t4)) natural join t6;
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from ((t1 natural join t2), (t3 natural join t4)) natural join t6;
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from t6 natural join ((t1 natural join t2),  (t3 natural join t4));
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from (t1 join t2 on t1.b=t2.b) natural join (t3 natural join t4);
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from  (t3 natural join t4) natural join (t1 join t2 on t1.b=t2.b);
 # this one is OK, the next equivalent one is incorrect (bug in Oracle)
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from (t3 join (t4 natural join t5) on (b < z))
               natural join
               (t1 natural join t2);
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from (t1 natural join t2) natural join (t3 join (t4 natural join t5) on (b < z));
 
 drop table t1;

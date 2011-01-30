@@ -1943,7 +1943,7 @@ find_field_in_natural_join(Session *session, TableList *table_ref,
     {
       if (nj_col)
       {
-        my_error(ER_NON_UNIQ_ERROR, MYF(0), name, session->where);
+        my_error(ER_NON_UNIQ_ERROR, MYF(0), name, session->where());
         return NULL;
       }
       nj_col= curr_nj_col;
@@ -2340,7 +2340,7 @@ find_field_in_tables(Session *session, Item_ident *item,
       */
       item->cached_table= found ?  0 : actual_table;
 
-      assert(session->where);
+      assert(session->where());
       /*
         If we found a fully qualified field we return it directly as it can't
         have duplicates.
@@ -2353,7 +2353,7 @@ find_field_in_tables(Session *session, Item_ident *item,
         if (report_error == REPORT_ALL_ERRORS ||
             report_error == IGNORE_EXCEPT_NON_UNIQUE)
           my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                   table_name ? item->full_name() : name, session->where);
+                   table_name ? item->full_name() : name, session->where());
         return (Field*) 0;
       }
       found= cur_field;
@@ -2386,13 +2386,13 @@ find_field_in_tables(Session *session, Item_ident *item,
       strcat(buff, table_name);
       table_name=buff;
     }
-    my_error(ER_UNKNOWN_TABLE, MYF(0), table_name, session->where);
+    my_error(ER_UNKNOWN_TABLE, MYF(0), table_name, session->where());
   }
   else
   {
     if (report_error == REPORT_ALL_ERRORS ||
         report_error == REPORT_EXCEPT_NON_UNIQUE)
-      my_error(ER_BAD_FIELD_ERROR, MYF(0), item->full_name(), session->where);
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), item->full_name(), session->where());
     else
       found= not_found_field;
   }
@@ -2519,7 +2519,7 @@ find_item_in_list(Session *session,
             */
             if (report_error != IGNORE_ERRORS)
               my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                       find->full_name(), session->where);
+                       find->full_name(), session->where());
             return (Item**) 0;
           }
           found_unaliased= li.ref();
@@ -2550,7 +2550,7 @@ find_item_in_list(Session *session,
               continue;                           // Same field twice
             if (report_error != IGNORE_ERRORS)
               my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                       find->full_name(), session->where);
+                       find->full_name(), session->where());
             return (Item**) 0;
           }
           found= li.ref();
@@ -2602,7 +2602,7 @@ find_item_in_list(Session *session,
     {
       if (report_error != IGNORE_ERRORS)
         my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                 find->full_name(), session->where);
+                 find->full_name(), session->where());
       return (Item **) 0;
     }
     if (found_unaliased)
@@ -2618,7 +2618,7 @@ find_item_in_list(Session *session,
   {
     if (report_error == REPORT_ALL_ERRORS)
       my_error(ER_BAD_FIELD_ERROR, MYF(0),
-               find->full_name(), session->where);
+               find->full_name(), session->where());
     return (Item **) 0;
   }
   else
@@ -2789,7 +2789,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
         if (cur_nj_col_2->is_common ||
             (found && (!using_fields || is_using_column_1)))
         {
-          my_error(ER_NON_UNIQ_ERROR, MYF(0), field_name_1, session->where);
+          my_error(ER_NON_UNIQ_ERROR, MYF(0), field_name_1, session->where());
           return(result);
         }
         nj_col_2= cur_nj_col_2;
@@ -2994,7 +2994,7 @@ store_natural_using_join_columns(Session *session,
         if (!(common_field= it++))
         {
           my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr,
-                   session->where);
+                   session->where());
           return(result);
         }
         if (!my_strcasecmp(system_charset_info,
@@ -3217,7 +3217,7 @@ static bool setup_natural_join_row_types(Session *session,
                                          List<TableList> *from_clause,
                                          Name_resolution_context *context)
 {
-  session->where= "from clause";
+  session->setWhere("from clause");
   if (from_clause->elements == 0)
     return false; /* We come here in the case of UNIONs. */
 
@@ -3338,7 +3338,7 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
   session->mark_used_columns= mark_used_columns;
   if (allow_sum_func)
     session->lex->allow_sum_func|= 1 << session->lex->current_select->nest_level;
-  session->where= Session::DEFAULT_WHERE;
+  session->setWhere(Session::DEFAULT_WHERE);
   save_is_item_list_lookup= session->lex->current_select->is_item_list_lookup;
   session->lex->current_select->is_item_list_lookup= 0;
 
@@ -3350,11 +3350,12 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
     There is other way to solve problem: fill array with pointers to list,
     but it will be slower.
 
-TODO: remove it when (if) we made one list for allfields and
-ref_pointer_array
+    TODO-> remove it when (if) we made one list for allfields and ref_pointer_array
   */
   if (ref_pointer_array)
+  {
     memset(ref_pointer_array, 0, sizeof(Item *) * fields.elements);
+  }
 
   Item **ref= ref_pointer_array;
   session->lex->current_select->cur_pos_in_select_list= 0;
@@ -3729,7 +3730,7 @@ int Session::setup_conds(TableList *leaves, COND **conds)
   session->session_marker= (void*)1;
   if (*conds)
   {
-    session->where="where clause";
+    session->setWhere("where clause");
     if ((!(*conds)->fixed && (*conds)->fix_fields(session, conds)) ||
         (*conds)->check_cols(1))
       goto err_no_arena;
@@ -3751,7 +3752,7 @@ int Session::setup_conds(TableList *leaves, COND **conds)
       {
         /* Make a join an a expression */
         session->session_marker= (void*)embedded;
-        session->where="on clause";
+        session->setWhere("on clause");
         if ((!embedded->on_expr->fixed && embedded->on_expr->fix_fields(session, &embedded->on_expr)) ||
             embedded->on_expr->check_cols(1))
           goto err_no_arena;

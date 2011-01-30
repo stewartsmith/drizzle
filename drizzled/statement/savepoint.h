@@ -33,10 +33,12 @@ namespace statement
 class Savepoint : public Statement
 {
 public:
-  Savepoint(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Savepoint(Session *in_session, const lex_string_t &ident) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_SAVEPOINT;
+    getSession()->getLex()->ident= ident;
+  }
 
   bool execute();
 };

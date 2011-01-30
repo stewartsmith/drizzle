@@ -59,6 +59,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 
+#include <drizzled/debug.h>
+
 #include <algorithm>
 
 using namespace std;
@@ -67,7 +69,6 @@ namespace drizzled
 {
 
 extern plugin::StorageEngine *heap_engine;
-extern std::bitset<12> test_flags;
 
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(Join *main_join, Join *curr_join);
@@ -212,7 +213,7 @@ int Join::prepare(Item ***rref_pointer_array,
   if (having)
   {
     nesting_map save_allow_sum_func= session->lex->allow_sum_func;
-    session->where="having clause";
+    session->setWhere("having clause");
     session->lex->allow_sum_func|= 1 << select_lex_arg->nest_level;
     select_lex->having_fix_field= 1;
     bool having_fix_rc= (!having->fixed &&
@@ -984,9 +985,8 @@ int Join::optimize()
 
     tmp_table_param.hidden_field_count= (all_fields.elements -
            fields_list.elements);
-    Order *tmp_group= ((!simple_group &&
-                           ! (test_flags.test(TEST_NO_KEY_GROUP))) ? group_list :
-                                                                     (Order*) 0);
+    Order *tmp_group= (((not simple_group) or not (getDebug().test(debug::NO_KEY_GROUP))) ? group_list : (Order*) 0);
+
     /*
       Pushing LIMIT to the temporary table creation is not applicable
       when there is ORDER BY or GROUP BY or there is no GROUP BY, but

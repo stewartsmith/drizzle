@@ -4,9 +4,9 @@ drop table if exists t1,t2,t3;
 --enable_warnings
 
 select * from (select 2) b;
--- error 1054
+--error ER_BAD_FIELD_ERROR
 SELECT 1 as a FROM (SELECT 1 UNION SELECT a) b;
--- error 1054
+--error ER_BAD_FIELD_ERROR
 SELECT 1 as a FROM (SELECT a UNION SELECT 1) b;
 CREATE TABLE t1 (a int not null, b char (10) not null);
 insert into t1 values(1,'a'),(2,'b'),(3,'c'),(3,'c');
@@ -105,9 +105,9 @@ SELECT a.x FROM (SELECT 1 AS x) AS a HAVING a.x = 1;
 #
 create table t1 (a int);
 insert into t1 values (1),(2),(3);
--- error 1064
+--error ER_PARSE_ERROR
 delete from (select * from t1);
--- error 1064
+--error ER_PARSE_ERROR
 insert into  (select * from t1) values (5);
 drop table t1;
 

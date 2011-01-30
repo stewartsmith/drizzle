@@ -86,7 +86,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
 /* Here arg[1] is a Item_interval object */
 
-bool Item_date_add_interval::get_date(type::Time *ltime, uint32_t )
+bool Item_date_add_interval::get_date(type::Time &ltime, uint32_t )
 {
   TemporalInterval interval;
 
@@ -99,7 +99,7 @@ bool Item_date_add_interval::get_date(type::Time *ltime, uint32_t )
   if (date_sub_interval)
     interval.toggleNegative();
 
-  if ((null_value= interval.addDate(ltime, int_type)))
+  if ((null_value= interval.addDate(&ltime, int_type)))
     return true;
 
   return false;
@@ -110,7 +110,7 @@ String *Item_date_add_interval::val_str(String *str)
   assert(fixed == 1);
   type::Time ltime;
 
-  if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
+  if (Item_date_add_interval::get_date(ltime, TIME_NO_ZERO_DATE))
     return 0;
 
   if (ltime.time_type == type::DRIZZLE_TIMESTAMP_DATE)
@@ -119,19 +119,7 @@ String *Item_date_add_interval::val_str(String *str)
   }
   else if (ltime.second_part)
   {
-    /* Ensure we've got enough room for our timestamp string. */
-    str->alloc(MicroTimestamp::MAX_STRING_LENGTH);
-    size_t length= snprintf(str->ptr(), MicroTimestamp::MAX_STRING_LENGTH,
-                            "%04u-%02u-%02u %02u:%02u:%02u.%06u",
-                            ltime.year,
-                            ltime.month,
-                            ltime.day,
-                            ltime.hour,
-                            ltime.minute,
-                            ltime.second,
-                            ltime.second_part);
-    str->length(length);
-    str->set_charset(&my_charset_bin);
+    ltime.convert(*str);
   }
   else
   {
@@ -146,9 +134,11 @@ int64_t Item_date_add_interval::val_int()
   assert(fixed == 1);
   type::Time ltime;
   int64_t date;
-  if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
+  if (Item_date_add_interval::get_date(ltime, TIME_NO_ZERO_DATE))
     return (int64_t) 0;
+
   date = (ltime.year*100L + ltime.month)*100L + ltime.day;
+
   return ltime.time_type == type::DRIZZLE_TIMESTAMP_DATE ? date :
     ((date*100L + ltime.hour)*100L+ ltime.minute)*100L + ltime.second;
 }

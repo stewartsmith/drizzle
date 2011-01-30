@@ -69,11 +69,15 @@
 #include "drizzled/module/load_list.h"
 #include "drizzled/global_buffer.h"
 
+#include "drizzled/debug.h"
+
 #include "drizzled/definition/cache.h"
 
 #include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/message/cache.h"
+
+#include "drizzled/visibility.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -227,15 +231,14 @@ static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-bool volatile ready_to_exit;
 char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
-bool volatile shutdown_in_progress;
+DRIZZLED_API bool volatile shutdown_in_progress;
 char *opt_scheduler_default;
 const char *opt_scheduler= NULL;
 
-size_t my_thread_stack_size= 0;
+DRIZZLED_API size_t my_thread_stack_size= 0;
 
 /*
   Legacy global plugin::StorageEngine. These will be removed (please do not add more).
@@ -246,12 +249,11 @@ plugin::StorageEngine *myisam_engine;
 bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 
 uint32_t drizzled_bind_timeout;
-std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 back_log_constraints back_log(50);
-uint32_t server_id;
+DRIZZLED_API uint32_t server_id;
 uint64_t table_cache_size;
 size_t table_def_size;
 uint32_t global_thread_id= 1UL;
@@ -305,7 +307,7 @@ fs::path system_config_dir(SYSCONFDIR);
 
 char system_time_zone[30];
 char *default_tz_name;
-char glob_hostname[FN_REFLEN];
+DRIZZLED_API char glob_hostname[FN_REFLEN];
 
 char *opt_tc_log_file;
 const key_map key_map_empty(0);
@@ -325,11 +327,12 @@ type::Decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-struct drizzle_system_variables global_system_variables;
-struct drizzle_system_variables max_system_variables;
-struct global_counters current_global_counters;
+drizzle_system_variables global_system_variables;
+drizzle_system_variables max_system_variables;
+global_counters current_global_counters;
 
-const CHARSET_INFO *system_charset_info, *files_charset_info ;
+DRIZZLED_API const CHARSET_INFO *system_charset_info;
+const CHARSET_INFO *files_charset_info;
 const CHARSET_INFO *table_alias_charset;
 const CHARSET_INFO *character_set_filesystem;
 
@@ -337,13 +340,9 @@ MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
 
-/* Thread specific variables */
-boost::mutex LOCK_global_system_variables;
-
 boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
-boost::condition_variable COND_server_end;
 
 /* Static variables */
 
@@ -518,13 +517,8 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
-  {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    ready_to_exit= true;
 
-    /* do the broadcast inside the lock to ensure that my_end() is not called */
-    COND_server_end.notify_all();
-  }
+  session::Cache::singleton().shutdownFirst();
 
   /*
     The following lines may never be executed as the main thread may have
@@ -581,7 +575,7 @@ err:
   unireg_abort(1);
 
 #ifdef PR_SET_DUMPABLE
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
+  if (getDebug().test(debug::CORE_ON_SIGNAL))
   {
     /* inform kernel that process is dumpable */
     (void) prctl(PR_SET_DUMPABLE, 1);
@@ -2078,10 +2072,10 @@ static void drizzle_init_variables(void)
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   cleanup_done= 0;
   dropping_tables= ha_open_options=0;
-  test_flags.reset();
+  getDebug().reset();
   wake_thread=0;
   abort_loop= select_thread_in_use= false;
-  ready_to_exit= shutdown_in_progress= 0;
+  shutdown_in_progress= 0;
   drizzled_user= drizzled_chroot= 0;
   memset(&current_global_counters, 0, sizeof(current_global_counters));
   key_map_full.set();
@@ -2233,18 +2227,18 @@ static void get_options()
   {
     if (vm["exit-info"].as<long>())
     {
-      test_flags.set((uint32_t) vm["exit-info"].as<long>());
+      getDebug().set((uint32_t) vm["exit-info"].as<long>());
     }
   }
 
   if (vm.count("want-core"))
   {
-    test_flags.set(TEST_CORE_ON_SIGNAL);
+    getDebug().set(debug::CORE_ON_SIGNAL);
   }
 
   if (vm.count("skip-stack-trace"))
   {
-    test_flags.set(TEST_NO_STACKTRACE);
+    getDebug().set(debug::NO_STACKTRACE);
   }
 
   if (vm.count("skip-symlinks"))
@@ -2283,9 +2277,9 @@ static void get_options()
   if (opt_debugging)
   {
     /* Allow break with SIGINT, no core or stack trace */
-    test_flags.set(TEST_SIGINT);
-    test_flags.set(TEST_NO_STACKTRACE);
-    test_flags.reset(TEST_CORE_ON_SIGNAL);
+    getDebug().set(debug::ALLOW_SIGINT);
+    getDebug().set(debug::NO_STACKTRACE);
+    getDebug().reset(debug::CORE_ON_SIGNAL);
   }
 
   if (drizzled_chroot)
@@ -2337,14 +2331,14 @@ static void fix_paths()
     {
       if (errno != EEXIST)
       {
-        perror(drizzle_tmpdir.c_str());
+        errmsg_printf(ERRMSG_LVL_ERROR, _("There was an error creating the '%s' part of the path '%s'.  Please check the path exists and is writable.\n"), fs::path(drizzle_tmpdir).leaf().c_str(), drizzle_tmpdir.c_str());
         exit(1);
       }
     }
 
     if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
     {
-      perror(drizzle_tmpdir.c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR, _("There was an error opening the path '%s', please check the path exists and is writable.\n"), drizzle_tmpdir.c_str());
       exit(1);
     }
   }

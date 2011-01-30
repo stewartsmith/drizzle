@@ -50,12 +50,14 @@
 
 #include <boost/functional/hash.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled {
 class Table;
 
 namespace identifier {
 
-class Table : public identifier::Schema
+class DRIZZLED_API Table : public identifier::Schema
 {
 public:
   typedef message::Table::TableType Type;

@@ -69,6 +69,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/cursor.h \
 			      drizzled/data_home.h \
 			      drizzled/db.h \
+			      drizzled/debug.h \
 			      drizzled/definition/cache.h \
 			      drizzled/definitions.h \
 			      drizzled/diagnostics_area.h \
@@ -292,11 +293,14 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/message/table.h \
 			      drizzled/module/context.h \
 			      drizzled/module/library.h \
+			      drizzled/module/graph.h \
 			      drizzled/module/manifest.h \
 			      drizzled/module/module.h \
 			      drizzled/module/option_context.h \
 			      drizzled/module/option_map.h \
 			      drizzled/module/registry.h \
+			      drizzled/module/vertex.h \
+			      drizzled/module/vertex_handle.h \
 			      drizzled/my_hash.h \
 			      drizzled/name_resolution_context.h \
 			      drizzled/name_resolution_context_state.h \
@@ -532,6 +536,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/create_field.cc \
 			   drizzled/current_session.cc \
 			   drizzled/cursor.cc \
+			   drizzled/debug.cc \
 			   drizzled/definition/cache.cc \
 			   drizzled/diagnostics_area.cc \
 			   drizzled/display.cc \
@@ -884,7 +889,9 @@ drizzled_libcharset_la_SOURCES= \
 				drizzled/ctype-uca.cc \
 				drizzled/ctype-uni.cc \
 				drizzled/ctype-utf8.cc \
-				drizzled/ctype.cc
+				drizzled/ctype.cc \
+				drizzled/dtoa.cc \
+				drizzled/my_strtoll10.cc
 
 drizzled_libdynamic_array_la_SOURCES = drizzled/dynamic_array.cc
 drizzled_liberror_la_SOURCES = drizzled/error.cc

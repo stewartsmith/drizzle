@@ -84,7 +84,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Return the ASCII value of a character",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

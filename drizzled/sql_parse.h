@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_SQL_PARSE_H
 #define DRIZZLED_SQL_PARSE_H
 
+#include <string>
+
 #include "drizzled/definitions.h"
 #include "drizzled/common.h"
 #include "drizzled/lex_string.h"
@@ -27,6 +29,7 @@
 #include "drizzled/identifier.h"
 
 #include "drizzled/error_t.h"
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -41,7 +44,7 @@ class Select_Lex;
 
 typedef struct charset_info_st CHARSET_INFO;
 
-extern const LEX_STRING command_name[];
+DRIZZLED_API const std::string &getCommandName(const enum_server_command& command);
 
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool insert_select_prepare(Session *session);

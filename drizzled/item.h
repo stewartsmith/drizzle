@@ -17,6 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_ITEM_H
 #define DRIZZLED_ITEM_H
 
@@ -27,6 +29,8 @@
 #include "drizzled/memory/sql_alloc.h"
 #include <drizzled/table.h>
 #include "drizzled/item_result.h"
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -76,7 +80,8 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
  * statement "tree" or Lex.  Each item represents something in the
  * execution plan.
  */
-class Item: public memory::SqlAlloc
+class DRIZZLED_API Item :
+  public memory::SqlAlloc
 {
   /* Prevent use of these */
   Item(const Item &);
@@ -580,14 +585,14 @@ public:
     Get the value of the function as a type::Time structure.
     As a extra convenience the time structure is reset on error!
   */
-  virtual bool get_date(type::Time *ltime,uint32_t fuzzydate);
+  virtual bool get_date(type::Time &ltime, uint32_t fuzzydate);
   /**
     Get time of first argument.
 
     As a extra convenience the time structure is reset on error!
   */
-  virtual bool get_time(type::Time *ltime);
-  virtual bool get_date_result(type::Time *ltime,uint32_t fuzzydate);
+  virtual bool get_time(type::Time &ltime);
+  virtual bool get_date_result(type::Time &ltime,uint32_t fuzzydate);
 
   /**
     The method allows to determine nullness of a complex expression

@@ -271,7 +271,7 @@ public:
               % session->getQueryId()
               % dbs
               % qs
-              % command_name[session->command].str
+              % getCommandName(session->command)
               % (t_mark - session->getConnectMicroseconds())
               % session->getElapsedTime()
               % (t_mark - session->utime_after_lock)
