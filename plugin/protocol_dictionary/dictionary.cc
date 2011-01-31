@@ -37,7 +37,7 @@ ProtocolTool::Generator::Generator(Field **arg) :
 {
   protocol_it= plugin::Listen::getListenProtocols().begin();
   protocol= *protocol_it;
-  counter_it= protocol->getCounters().begin();
+  counter_it= protocol->getListenCounters().begin();
 }
 
 bool ProtocolTool::Generator::populate()
@@ -47,13 +47,13 @@ bool ProtocolTool::Generator::populate()
 
   protocol= *protocol_it;
 
-  while (counter_it == protocol->getCounters().end())
+  while (counter_it == protocol->getListenCounters().end())
   {
     protocol_it++;
     if (protocol_it == plugin::Listen::getListenProtocols().end())
       return false;
     protocol= *protocol_it;
-    counter_it= protocol->getCounters().begin();
+    counter_it= protocol->getListenCounters().begin();
   }
 
   fill();

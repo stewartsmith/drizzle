@@ -54,7 +54,7 @@ public:
 
   static ListenVector &getListenProtocols();
 
-  std::vector<ListenCounter*>& getCounters()
+  std::vector<ListenCounter*>& getListenCounters()
   {
     return counters;
   }
