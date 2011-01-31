@@ -24,6 +24,7 @@
 #include "plugin/slave/queue_manager.h"
 #include "drizzled/plugin/daemon.h"
 #include <boost/thread.hpp>
+#include <cstdio>
 
 namespace slave
 {

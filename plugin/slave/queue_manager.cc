@@ -64,16 +64,23 @@ void QueueManager::processQueue(void)
 
       while (findCompleteTransaction(&trx_id))
       {
+        vector<string> aggregate_sql;  /* final SQL to execute */
+        vector<string> segmented_sql;  /* carryover from segmented statements */
+
         message::Transaction transaction;
         //while (getMessage(transaction, trx_id))
-        {
-          executeMessage(*(session.get()), transaction);
-        }
+          convertToSQL(transaction, aggregate_sql, segmented_sql);
+
+        assert(segmented_sql.empty());
+
+        if (not aggregate_sql.empty())
+          executeSQL(*(session.get()), aggregate_sql);
+
+        deleteFromQueue(*(session.get()), trx_id);      
       }
 
-      deleteFromQueue(*(session.get()), trx_id);      
-
-      trx_id++;
+      // TODO: remove me
+      deleteFromQueue(*(session.get()), trx_id++);      
     }
     
     /* Interruptable only when not doing work (aka, sleeping) */
@@ -86,6 +93,74 @@ void QueueManager::processQueue(void)
       return;
     }
   }
+}
+
+
+bool QueueManager::convertToSQL(const message::Transaction &transaction,
+                                vector<string> &aggregate_sql,
+                                vector<string> &segmented_sql)
+{
+  if (transaction.has_event())
+    return true;
+
+  size_t num_statements= transaction.statement_size();
+
+  /*
+   * Loop through all Statement messages within this Transaction and
+   * convert each to equivalent SQL statements. Complete Statements will
+   * be appended to aggregate_sql, while segmented Statements will remain
+   * in segmented_sql to be appended to until completed, or rolled back.
+   */
+
+  for (size_t idx= 0; idx < num_statements; idx++)
+  {
+    const message::Statement &statement= transaction.statement(idx);
+    
+    /* We won't bother with executing a rolled back transaction */
+    if (statement.type() == message::Statement::ROLLBACK)
+    {
+      assert(idx == (num_statements - 1));  /* should be the final Statement */
+      aggregate_sql.clear();
+      segmented_sql.clear();
+      break;
+    }
+
+    if (statement.type() == message::Statement::ROLLBACK_STATEMENT)
+    {
+      segmented_sql.clear();
+      continue;
+    }
+
+    if (message::transformStatementToSql(statement, segmented_sql,
+                                         message::DRIZZLE, true))
+    {
+      return false;
+    }
+
+    /* Replace any embedded NULLs in the SQL */
+    vector<string>::iterator iter;
+    for (iter= segmented_sql.begin(); iter != segmented_sql.end(); ++iter)
+    {
+      string &sql= *iter;
+      string::size_type found= sql.find_first_of('\0');
+      while (found != string::npos)
+      {
+        sql[found]= '\\';
+        sql.insert(found + 1, 1, '0');
+        found= sql.find_first_of('\0', found);
+      }      
+    }
+    
+    if (isEndStatement(statement))
+    {
+      aggregate_sql.insert(aggregate_sql.end(),
+                           segmented_sql.begin(),
+                           segmented_sql.end());
+      segmented_sql.clear();
+    }
+  }
+
+  return true;
 }
 
 
@@ -129,75 +204,6 @@ bool QueueManager::isEndStatement(const message::Statement &statement)
   return true;
 }
 
-  
-bool QueueManager::executeMessage(Session &session,
-                                  const message::Transaction &transaction)
-{
-  if (transaction.has_event())
-    return true;
-
-  /* SQL strings corresponding to this Statement */
-  vector<string> statement_sql;
-
-  size_t num_statements= transaction.statement_size();
-
-  for (size_t idx= 0; idx < num_statements; idx++)
-  {
-    enum message::TransformSqlError err;
-    const message::Statement &statement= transaction.statement(idx);
-    vector<string> temp_sql;
-    vector<string>::iterator iter;
-
-    /* We won't bother with executing a rolled back transaction */
-    if (statement.type() == message::Statement::ROLLBACK)
-    {
-      assert(idx == (num_statements - 1));  /* should be the final Statement */
-      statement_sql.clear();
-      break;
-    }
-
-    err= message::transformStatementToSql(statement,
-                                          temp_sql,
-                                          message::DRIZZLE,
-                                          true);
-
-    /* Replace any embedded NULLs in the SQL */
-    for (iter= temp_sql.begin(); iter != temp_sql.end(); ++iter)
-    {
-      string &sql= *iter;
-      string::size_type found= sql.find_first_of('\0');
-      while (found != string::npos)
-      {
-        sql[found]= '\\';
-        sql.insert(found + 1, 1, '0');
-        found= sql.find_first_of('\0', found);
-      }      
-    }
-
-    /*
-     * We won't store into our SQL cache until we have a complete
-     * statement. This is so we can easily dump the changes if we get a
-     * statement rollback request.
-     */
-    if (isEndStatement(statement))
-    {
-      if (statement.type() != message::Statement::ROLLBACK_STATEMENT)
-      {
-        statement_sql.insert(statement_sql.end(),
-                             temp_sql.begin(),
-                             temp_sql.end());
-      }
-    }
-  }
-
-  if (not statement_sql.empty())  /* emptied on ROLLBACK */
-  {
-    executeSQL(session, statement_sql);
-  }
-
-  return true;
-}
-
 
 bool QueueManager::executeSQL(Session &session, vector<string> &sql)
 {
@@ -233,10 +239,7 @@ bool QueueManager::deleteFromQueue(Session &session, uint64_t trx_id)
   sql.append(boost::lexical_cast<std::string>(trx_id));
 
   vector<string> sql_vect;
-
-  sql_vect.push_back("START TRANSACTION");
   sql_vect.push_back(sql);
-  sql_vect.push_back("COMMIT");
 
   return executeSQL(session, sql_vect);
 }

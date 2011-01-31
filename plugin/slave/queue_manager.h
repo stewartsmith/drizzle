@@ -38,7 +38,9 @@ class QueueManager
 {
 public:
   QueueManager() :
-    _check_interval(5)
+    _check_interval(5),
+    _schema(""),
+    _table("")
   { }
 
   /**
@@ -85,12 +87,49 @@ private:
   std::string _table;
 
   bool findCompleteTransaction(uint64_t *trx_id);
-  bool executeMessage(drizzled::Session &session,
-                      const drizzled::message::Transaction &transaction);
-  bool executeSQL(drizzled::Session &session,
-                  std::vector<std::string> &sql);
-  bool deleteFromQueue(drizzled::Session &session,
-                       uint64_t trx_id);
+
+  /**
+   * Convert the given Transaction message into equivalent SQL.
+   *
+   * @param[in] transaction Transaction protobuf message to convert.
+   * @param[in,out] aggregate_sql Buffer for total SQL for this transaction.
+   * @param[in,out] segmented_sql Buffer for carried over segmented statements.
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool convertToSQL(const drizzled::message::Transaction &transaction,
+                    std::vector<std::string> &aggregate_sql,
+                    std::vector<std::string> &segmented_sql);
+
+  /**
+   * Execute a batch of SQL statements.
+   *
+   * @param session Session object reference.
+   * @param sql Batch of SQL statements to execute.
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool executeSQL(drizzled::Session &session, std::vector<std::string> &sql);
+
+  /**
+   * Remove messages for a given transaction from the queue.
+   *
+   * @param session Session object reference.
+   * @param trx_id Transaction ID for the messages to remove.
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool deleteFromQueue(drizzled::Session &session, uint64_t trx_id);
+
+  /**
+   * Determine if a Statement message is an end message.
+   *
+   * @retval true Is an end Statement message
+   * @retval false Is NOT an end Statement message
+   */
   bool isEndStatement(const drizzled::message::Statement &statement);
 };
 
