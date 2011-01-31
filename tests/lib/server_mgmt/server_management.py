@@ -131,8 +131,11 @@ class serverManager:
             while not server.ping(quiet= True) and attempts_remain:
                 time.sleep(1)
                 attempts_remain = attempts_remain - 1
-        if server.status == 1 or server.ping(quiet=True):
+        if server.ping(quiet=True):
             server.stop()
+        else:
+            # make sure the server is indicated as stopped
+            server.status = 0
 
     def stop_servers(self, requester):
         """ Stop all servers running for the requester """
