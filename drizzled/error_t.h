@@ -864,10 +864,10 @@ enum error_t {
   ER_INVALID_TIME_VALUE,
   ER_INVALID_DATE_VALUE,
   ER_TRANSACTIONAL_DDL_NOT_SUPPORTED,
-
+  ER_USE_DATA_DICTIONARY,
   // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags
   // instead of numbers in error messages in test.
-  ER_ERROR_LAST=   ER_TRANSACTIONAL_DDL_NOT_SUPPORTED
+  ER_ERROR_LAST=   ER_USE_DATA_DICTIONARY
 };
 
 
