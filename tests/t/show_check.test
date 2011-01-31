@@ -351,4 +351,10 @@ drop table `été`;
 --error ER_NO_SUCH_TABLE,ER_FILE_NOT_FOUND
 show columns from `#mysql50#????????`;
 
+#
+# Test error output for SHOW engine_name STATUS
+#
+--error ER_USE_DATA_DICTIONARY
+show innodb status;
+
 --echo End of 5.1 tests
