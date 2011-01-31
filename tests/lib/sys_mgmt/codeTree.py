@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 """codeTree
 
    definition of what a code tree should look like
@@ -44,10 +58,10 @@ class drizzleTree(codeTree):
         self.skip_keys = ['ld_lib_paths']
         self.debug = variables['debug']
         self.verbose = variables['verbose']
-        self.basedir = self.system_manager.find_path([variables['basedir']])
+        self.basedir = self.system_manager.find_path([os.path.abspath(variables['basedir'])])
         self.source_dist = os.path.isdir(os.path.join(self.basedir, 'drizzled'))
-        self.builddir = self.system_manager.find_path([self.basedir])
-        self.testdir = self.system_manager.find_path([variables['testdir']])
+        self.builddir = self.system_manager.find_path([os.path.abspath(self.basedir)])
+        self.testdir = self.system_manager.find_path([os.path.abspath(variables['testdir'])])
         self.clientbindir = self.system_manager.find_path([os.path.join(self.builddir, 'client')
                                      , os.path.join(self.basedir, 'client')
                                      , os.path.join(self.basedir, 'bin')])

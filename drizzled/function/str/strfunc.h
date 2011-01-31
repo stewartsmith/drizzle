@@ -27,7 +27,8 @@ namespace drizzled
 
 /* This file defines all string functions */
 
-class Item_str_func :public Item_func
+class DRIZZLED_API Item_str_func :
+  public Item_func
 {
 public:
   Item_str_func() :Item_func() { decimals=NOT_FIXED_DEC; }

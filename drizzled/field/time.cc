@@ -82,7 +82,8 @@ int Time::store(const char *from,
 
   if (not temporal.from_string(from, (size_t) len))
   {
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
+    std::string tmp(boost::lexical_cast<std::string>(from));
+    my_error(ER_INVALID_TIME_VALUE, MYF(0), tmp.c_str());
     return 1;
   }
 
@@ -94,44 +95,42 @@ int Time::store(const char *from,
 int Time::store(double from)
 { 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  int64_t tmp;
-  int error= 0;
 
-  if (from > (double)TIME_MAX_VALUE)
-  { 
-    tmp= TIME_MAX_VALUE;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_OUT_OF_RANGE, from, type::DRIZZLE_TIMESTAMP_TIME);
-    error= 1;
-  }
-  else if (from < (double) - TIME_MAX_VALUE)
-  { 
-    tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_OUT_OF_RANGE, from, type::DRIZZLE_TIMESTAMP_TIME);
-    error= 1;
-  }
-  else
-  { 
-    tmp=(long) floor(fabs(from));                 // Remove fractions
+  do
+  {
+    int64_t tmp;
 
-    if (from < 0)
-      tmp= -tmp;
-
-    if (tmp % 100 > 59 || tmp/100 % 100 > 59)
+    if (from > (double)TIME_MAX_VALUE)
     { 
-      tmp=0;
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                           ER_WARN_DATA_OUT_OF_RANGE, from,
-                           type::DRIZZLE_TIMESTAMP_TIME);
-      error= 1;
+      tmp= TIME_MAX_VALUE;
+      break;
     }
-  }
+    else if (from < (double) - TIME_MAX_VALUE)
+    { 
+      tmp= -TIME_MAX_VALUE;
+      break;
+    }
+    else
+    { 
+      tmp=(long) floor(fabs(from));                 // Remove fractions
 
-  if (not error)
+      if (from < 0)
+        tmp= -tmp;
+
+      if (tmp % 100 > 59 || tmp/100 % 100 > 59)
+      { 
+        break;
+      }
+    }
+
     return store(tmp, false);
 
-  return error;
+  } while (0);
+
+  std::string tmp(boost::lexical_cast<std::string>(from));
+  my_error(ER_INVALID_TIME_VALUE, MYF(0), tmp.c_str());
+
+  return 1;
 }
 
 int Time::store(int64_t from, bool)
@@ -143,12 +142,11 @@ int Time::store(int64_t from, bool)
    * if unable to create a valid DateTime.  
    */
   drizzled::Time temporal;
-  if (! temporal.from_time_t(from))
+  if (not temporal.from_time_t(from))
   {
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
-
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    my_error(ER_INVALID_TIME_VALUE, MYF(0), tmp.c_str());
     return 2;
   }
 

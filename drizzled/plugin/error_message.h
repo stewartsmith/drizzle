@@ -28,6 +28,8 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 class Session;
@@ -35,7 +37,7 @@ class Session;
 namespace plugin
 {
 
-class ErrorMessage : public Plugin
+class DRIZZLED_API ErrorMessage : public Plugin
 {
   ErrorMessage();
   ErrorMessage(const ErrorMessage &);

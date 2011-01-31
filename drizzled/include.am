@@ -220,6 +220,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/hybrid_type_traits_integer.h \
 			      drizzled/identifier.h \
 			      drizzled/identifier/catalog.h \
+			      drizzled/identifier/constants/schema.h \
+			      drizzled/identifier/constants/table.h \
 			      drizzled/identifier/schema.h \
 			      drizzled/identifier/session.h \
 			      drizzled/identifier/table.h \
@@ -669,6 +671,8 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/hybrid_type_traits_integer.cc \
 			   drizzled/identifier.cc \
 			   drizzled/identifier/catalog.cc \
+			   drizzled/identifier/constants/schema.cc \
+			   drizzled/identifier/constants/table.cc \
 			   drizzled/identifier/schema.cc \
 			   drizzled/identifier/table.cc \
 			   drizzled/identifier/user.cc \
@@ -889,7 +893,9 @@ drizzled_libcharset_la_SOURCES= \
 				drizzled/ctype-uca.cc \
 				drizzled/ctype-uni.cc \
 				drizzled/ctype-utf8.cc \
-				drizzled/ctype.cc
+				drizzled/ctype.cc \
+				drizzled/dtoa.cc \
+				drizzled/my_strtoll10.cc
 
 drizzled_libdynamic_array_la_SOURCES = drizzled/dynamic_array.cc
 drizzled_liberror_la_SOURCES = drizzled/error.cc

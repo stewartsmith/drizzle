@@ -16,7 +16,7 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST_TEST],[
   ],[
     boost::unit_test::unit_test_log.set_threshold_level(boost::unit_test::log_messages);
   ])
-  AS_IF([test "x${ac_cv_libboost_test_framework_mt}" = "xno"],[
+  AS_IF([test "x${ac_cv_libboost_unit_test_framework_mt}" = "xno"],[
     AC_LIB_HAVE_LINKFLAGS(boost_unit_test_framework,,[
       #include <boost/test/unit_test.hpp>
     ],[
@@ -26,7 +26,7 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST_TEST],[
   AC_LANG_POP()
   
   AM_CONDITIONAL(HAVE_BOOST_TEST,
-    [test "x${ac_cv_libboost_test_framework}" = "xyes" -o "x${ac_cv_libboost_test_framework_mt}" = "xyes"])
+    [test "x${ac_cv_libboost_unit_test_framework}" = "xyes" -o "x${ac_cv_libboost_unit_test_framework_mt}" = "xyes"])
   BOOST_LIBS="${BOOST_LIBS} ${LTLIBBOOST_TEST_MT} ${LTLIBBOOST_TEST}"
   AC_SUBST(BOOST_LIBS) 
 ])
@@ -39,7 +39,7 @@ AC_DEFUN([PANDORA_HAVE_BOOST_TEST],[
 AC_DEFUN([PANDORA_REQUIRE_BOOST_TEST],[
   PANDORA_REQUIRE_BOOST($1)
   _PANDORA_SEARCH_BOOST_TEST($1)
-  AS_IF([test "x${ac_cv_libboost_test_framework}" = "xno" -a "x${ac_cv_libboost_test_framework_mt}" = "xno"],
+  AS_IF([test "x${ac_cv_libboost_unit_test_framework}" = "xno" -a "x${ac_cv_libboost_unit_test_framework_mt}" = "xno"],
       AC_MSG_ERROR([boost::test is required for ${PACKAGE}]))
 ])
 

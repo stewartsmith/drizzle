@@ -640,7 +640,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     if (upward_lookup)
     {
       // We can't say exactly what absent table or field
-      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where);
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where());
     }
     else
     {
@@ -824,7 +824,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
             {
               /* The column to which we link isn't valid. */
               my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name,
-                       current_session->where);
+                       session->where());
               return(1);
             }
 

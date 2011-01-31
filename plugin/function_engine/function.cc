@@ -28,9 +28,6 @@
 using namespace std;
 using namespace drizzled;
 
-static identifier::Schema INFORMATION_SCHEMA_IDENTIFIER("INFORMATION_SCHEMA");
-static identifier::Schema DATA_DICTIONARY_IDENTIFIER("DATA_DICTIONARY");
-
 Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
                                   HTON_ALTER_NOT_SUPPORTED |

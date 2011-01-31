@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 
 
 """Processes command line options for Drizzle test-runner"""
@@ -16,7 +30,17 @@ import optparse
 # functions
 def comma_list_split(option, opt, value, parser):
     """Callback for splitting input expected in list form"""
-    setattr(parser.values, option.dest, value.split(','))
+    cur_list = getattr(parser.values, option.dest,[])
+    input_list = value.split(',')
+    # this is a hack to work with make target - we
+    # don't deal with a dangling ',' in our list
+    if '' in input_list:
+        input_list.remove('')
+    if cur_list:
+        value_list = cur_list + input_list 
+    else:
+        value_list = input_list 
+    setattr(parser.values, option.dest, value_list)
 
 def organize_options(args, test_cases):
     """Put our arguments in a nice dictionary
@@ -61,6 +85,14 @@ system_control_group.add_option(
  )
 
 system_control_group.add_option(
+    "--start-and-exit"
+  , dest="startandexit"
+  , action="store_true"
+  , default=False
+  , help="Spin up the server(s) for the first specified test then exit (will leave servers running)"
+  )
+
+system_control_group.add_option(
     "--verbose"
    , dest="verbose"
    , action="store_true"
@@ -91,6 +123,14 @@ system_control_group.add_option(
   , help="Record a testcase result (if the testing mode supports it) [%default]"
   )
 
+system_control_group.add_option(
+    "--fast"
+  , dest="fast"
+  , action="store_true"
+  , default=False
+  , help="Don't try to cleanup from earlier runs (currently just a placeholder) [%default]"
+  )
+
 parser.add_option_group(system_control_group)
 
 # end system_control_group
@@ -105,8 +145,9 @@ test_control_group.add_option(
     "--suite"
   , dest="suitelist"
   , type='string'
-  , action="append"
-  , help="The name of the suite containing tests we want. Use one --suite arg for each suite you want to use. [default=autosearch]"
+  , action="callback"
+  , callback=comma_list_split
+  , help="The name of the suite containing tests we want. Can accept comma-separated list (with no spaces).  Additional --suite args are appended to existing list [autosearch]"
   )
 
 test_control_group.add_option(
@@ -132,6 +173,16 @@ test_control_group.add_option(
   , default = None
   , help = "input can either be a prefix or a regex.  Will exclude tests that match the provided pattern"
   )
+
+test_control_group.add_option(
+    "--reorder"
+  , dest="reorder"
+  , action="store_true"
+  , default=False
+  , help = "sort the testcases so that they are executed optimally for the given mode [%default]"
+  )
+
+
 
 parser.add_option_group(test_control_group)
 # end test_control_group
@@ -166,9 +217,10 @@ test_subject_control_group.add_option(
   , help = "Path to the directory containing client program binaries for use in testing [%default]"
   )
 
+
 test_subject_control_group.add_option(
-    "--engine"
-   , dest="engine"
+    "--default-storage-engine"
+   , dest="defaultengine"
    , default = 'innodb'
    , help="Start drizzled using the specified engine [%default]"
    )    
@@ -179,7 +231,7 @@ parser.add_option_group(test_subject_control_group)
 
 
 # environment options
-# define where to find our drizzled, client dirs, working dirs, etc
+# define where to find our testsets, working dirs, etc
 environment_control_group = optparse.OptionGroup(parser, 
                             "Options for defining the testing environment")
 
@@ -197,6 +249,22 @@ environment_control_group.add_option(
   , type='string'
   , default = workdir_default
   , help = "Path to the directory test-run will use to store generated files and directories. [%default]"
+  )
+
+environment_control_group.add_option(
+    "--top-srcdir"
+  , dest="topsrcdir"
+  , type='string'
+  , default = basedir_default
+  , help = "build option [%default]"
+  )
+
+environment_control_group.add_option(
+    "--top-builddir"
+  , dest="topbuilddir"
+  , type='string'
+  , default = basedir_default
+  , help = "build option [%default]"
   )
 
 environment_control_group.add_option(

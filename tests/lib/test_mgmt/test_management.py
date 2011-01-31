@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 """ dtr_test_management:
     code related to the gathering / analysis / management of 
     the test cases
@@ -26,8 +40,9 @@ class testManager:
 
     """
 
-    def __init__( self, verbose, debug, engine, dotest, skiptest
-                , suitelist, suitepaths, system_manager, test_cases):
+    def __init__( self, verbose, debug, default_engine, dotest, skiptest
+                , reorder, suitelist, suitepaths, system_manager
+                , test_cases):
 
         self.system_manager = system_manager
         self.time_manager = system_manager.time_manager
@@ -48,9 +63,10 @@ class testManager:
         self.executing_tests = {}
         self.verbose = verbose
         self.debug = debug
-        self.engine = engine
+        self.default_engine = default_engine
         self.dotest = dotest
         self.skiptest = skiptest
+        self.reorder = reorder
         self.suitelist = suitelist
         
         self.code_tree = self.system_manager.code_tree
@@ -89,6 +105,10 @@ class testManager:
             were found.  Otherwise just report what we found
     
         """
+
+        # See if we need to reorder our test cases
+        if self.reorder:
+            self.sort_testcases()
 
         if self.desired_tests and not self.test_list:
             # We wanted tests, but found none
@@ -261,4 +281,12 @@ class testManager:
             return len(self.executed_tests[test_status])
         else:
             return 0
+
+    def sort_testcases(self):
+        """ Sort testcases to optimize test execution.
+            This can be very mode-specific
+
+        """
+  
+        self.logging.verbose("Reordering testcases to optimize test execution...")
 

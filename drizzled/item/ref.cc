@@ -132,7 +132,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       {
         /* The current reference cannot be resolved in this query. */
         my_error(ER_BAD_FIELD_ERROR,MYF(0),
-                 this->full_name(), current_session->where);
+                 full_name(), session->where());
         goto error;
       }
 
@@ -285,7 +285,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       {
         /* The item was not a table field and not a reference */
         my_error(ER_BAD_FIELD_ERROR, MYF(0),
-                 this->full_name(), current_session->where);
+                 full_name(), session->where());
         goto error;
       }
       /* Should be checked in resolve_ref_in_select_and_group(). */

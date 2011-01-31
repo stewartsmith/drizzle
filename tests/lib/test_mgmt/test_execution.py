@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 """ test_execution:
     code related to the execution of est cases 
     
@@ -16,6 +30,7 @@
 
 # imports
 import os
+import sys
 
 class testExecutor():
     """ class for handling the execution of testCase
@@ -99,7 +114,7 @@ class testExecutor():
 
         return(master_count, slave_count, server_options)
 
-    def execute(self):
+    def execute(self, start_and_exit):
         """ Execute a test case.  The details are *very* mode specific """
         self.status = 1 # we are running
         keep_running = 1
@@ -107,6 +122,7 @@ class testExecutor():
             self.logging.verbose("Executor: %s beginning test execution..." %(self.name))
         while self.test_manager.has_tests() and keep_running == 1:
             self.get_testCase()
+            self.handle_system_reqs()
             bad_start = self.handle_server_reqs()
             if bad_start:
                 # Our servers didn't start, we mark it a failure
@@ -114,6 +130,10 @@ class testExecutor():
                 self.current_test_status = 'fail'
                 self.set_server_status(self.current_test_status)
                 output = ''
+            if start_and_exit:
+                # TODO:  Report out all started servers via server_manager/server objects?
+                self.logging.info("User specified --start-and-exit.  dbqp.py exiting and leaving servers running...")
+                sys.exit(0)
             else:
                 self.execute_testCase()
             self.test_manager.record_test_result( self.current_testcase
@@ -139,7 +159,11 @@ class testExecutor():
                 server.failed_test = 1
 
    
+    def handle_system_reqs(self):
+        """ We check our test case and see what we need to do
+            system-wise to get ready
 
-    
-  
+        """
 
+        if self.current_testcase.master_sh:
+                self.system_manager.execute_cmd("/bin/sh %s" %(self.current_testcase.master_sh))

@@ -102,6 +102,7 @@ enum cut_t
   datatime_t while being stored in an integer is actually a formatted value.
 */
 typedef int64_t datetime_t;
+typedef int64_t date_t;
 
 inline bool is_valid(const datetime_t &value)
 {

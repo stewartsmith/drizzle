@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 """execution_management.py
    code for dealing with test execution.
    The actual nuts and bolts of executing a test lies with the 
@@ -39,12 +53,20 @@ class executionManager:
                          , 'executors'
                          , 'executor_start_count'
                          , 'executor_current_count'
+                         , 'record_flag'
+                         , 'start_and_exit'
                          ]
         
         self.debug = variables['debug']
         self.verbose = variables['verbose']
         self.force = variables['force']
         self.record_flag = variables['record']
+        # We are currently single-threaded execution-wise
+        # but in the future, we will likely need to revamp
+        # how we deal with start-and-exit if we have multiple
+        # executors - even if we force-set the executor-count
+        # to 1.
+        self.start_and_exit = variables['startandexit']
         self.executors = {}
         self.executor_name_base = 'testbot'
         self.executor_start_count = 0
@@ -77,7 +99,7 @@ class executionManager:
             if self.verbose:
                 self.logging.verbose("Starting executor: %s" %(executor_name))
                 # thread.start_new(executor.execute,()) # sigh...one day...damned drizzletest!
-            executor.execute()
+            executor.execute(self.start_and_exit)
         time.sleep(3)
         while self.has_running_executors():
             pass

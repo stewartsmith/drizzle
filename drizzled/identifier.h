@@ -23,9 +23,11 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled {
 
-class Identifier {
+class DRIZZLED_API Identifier {
 public:
   typedef const Identifier& const_reference;
 
@@ -37,11 +39,15 @@ public:
 
 } // namespace drizzled
 
-#include "drizzled/identifier/catalog.h"
-#include "drizzled/identifier/schema.h"
-#include "drizzled/identifier/session.h"
-#include "drizzled/identifier/table.h"
-#include "drizzled/identifier/user.h"
+#include <drizzled/identifier/catalog.h>
+#include <drizzled/identifier/schema.h>
+#include <drizzled/identifier/session.h>
+#include <drizzled/identifier/table.h>
+#include <drizzled/identifier/user.h>
+
+// Constant identifiers user internally
+#include <drizzled/identifier/constants/schema.h>
+#include <drizzled/identifier/constants/table.h>
 
 
 #endif /* DRIZZLED_IDENTIFIER_H */

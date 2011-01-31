@@ -24,6 +24,8 @@
 #include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/plugin/xa_resource_manager.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -45,8 +47,9 @@ namespace plugin
  * virtual abstract base class with the X/Open XA distributed
  * transaction protocol interface for resource managers.
  */
-class XaStorageEngine :public TransactionalStorageEngine,
-                       public XaResourceManager
+class DRIZZLED_API XaStorageEngine :
+  public TransactionalStorageEngine,
+  public XaResourceManager
 {
 public:
   XaStorageEngine(const std::string name_arg,

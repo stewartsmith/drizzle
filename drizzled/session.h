@@ -18,6 +18,7 @@
  */
 
 
+
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
@@ -64,6 +65,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/make_shared.hpp>
 
+#include "drizzled/visibility.h"
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -250,7 +252,7 @@ struct drizzle_system_variables
   Time_zone *time_zone;
 };
 
-extern struct drizzle_system_variables global_system_variables;
+extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
 } /* namespace drizzled */
 
@@ -259,7 +261,7 @@ extern struct drizzle_system_variables global_system_variables;
 namespace drizzled
 {
 
-void mark_transaction_to_rollback(Session *session, bool all);
+DRIZZLED_API void mark_transaction_to_rollback(Session *session, bool all);
 
 /**
   Storage engine specific thread local data.
@@ -314,7 +316,8 @@ struct Ha_data
  * session object.
  */
 
-class Session : public Open_tables_state
+class DRIZZLED_API Session :
+  public Open_tables_state
 {
 public:
   // Plugin storage in Session.
@@ -623,12 +626,24 @@ public:
    */
   bool isViewable(identifier::User::const_reference) const;
 
+private:
   /**
     Used in error messages to tell user in what part of MySQL we found an
     error. E. g. when where= "having clause", if fix_fields() fails, user
     will know that the error was in having clause.
   */
-  const char *where;
+  const char *_where;
+
+public:
+  const char *where()
+  {
+    return _where;
+  }
+
+  void setWhere(const char *arg)
+  {
+    _where= arg;
+  }
 
   /*
     One thread can hold up to one named user-level lock. This variable
@@ -636,6 +651,7 @@ public:
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
+
 private:
   boost::thread::id boost_thread_id;
   boost_thread_shared_ptr _thread;

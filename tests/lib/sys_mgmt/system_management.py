@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 """system_management.py
    code for dealing with system-level 'stuff'.
    This includes setting environment variables, looking for clients,
@@ -20,6 +34,7 @@
 import os
 import sys
 import shutil
+import getpass
 import commands
 
 from lib.sys_mgmt.port_management import portManager
@@ -49,10 +64,15 @@ class systemManager:
         self.env_var_delimiter = ':'
         self.no_shm = variables['noshm']
         self.shm_path = self.find_path(["/dev/shm", "/tmp"], required=0)
-        self.symlink_name = 'dtr_work_sym'
-        self.workdir = variables['workdir']
+        self.cur_os = os.uname()[0]
+        self.cur_user = getpass.getuser()
+        self.symlink_name = 'dbqp_workdir_%s' %(self.cur_user)
+        self.workdir = os.path.abspath(variables['workdir'])
+        self.top_srcdir = os.path.abspath(variables['topsrcdir'])
+        self.top_builddir = os.path.abspath(variables['topbuilddir'])
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
+        self.gdb = variables['gdb']
 
         # we use this to preface commands in order to run valgrind and such
         self.cmd_prefix = '' 
@@ -75,8 +95,8 @@ class systemManager:
                                 , 'LC_CTYPE' : ('C',0,0)
                                 , 'LC_COLLATE' : ('C',0,0)
                                 , 'USE_RUNNING_SERVER' : ("0",0,0)
-                                , 'TOP_SRCDIR' : (self.code_tree.srcdir,0,0)
-                                , 'TOP_BUILDDIR' : (self.code_tree.builddir,0,0)
+                                , 'TOP_SRCDIR' : (self.top_srcdir,0,0)
+                                , 'TOP_BUILDDIR' : (self.top_builddir,0,0)
                                 , 'DRIZZLE_TEST_DIR' : (self.code_tree.testdir,0,0)
                                 , 'DTR_BUILD_THREAD' : ("-69.5",0,0)
                                 , 'LD_LIBRARY_PATH' : (self.ld_lib_paths,1,1)
@@ -385,7 +405,8 @@ class systemManager:
         libtool_path = '../libtool'
         if os.path.exists(libtool_path) and os.access( libtool_path
                                                      , os.X_OK):
-            self.logging.info("Using libtool when running valgrind or debugger")
+            if self.valgrind or self.gdb:
+                self.logging.info("Using libtool when running valgrind or debugger")
             return libtool_path
         else:
             return None

@@ -25,6 +25,8 @@
 #include "my_static.h"
 #include <stdlib.h>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 namespace internal
@@ -37,7 +39,8 @@ char *	home_dir=0;
 const char      *my_progname=0;
 char curr_dir[FN_REFLEN]= {0},
      home_dir_buff[FN_REFLEN]= {0};
-int my_umask=0664, my_umask_dir=0777;
+DRIZZLED_API int my_umask=0664;
+int my_umask_dir=0777;
 uint32_t   my_file_limit= MY_NFILE;
 
 	/* From mf_brkhant */

@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+## This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 """ dtr_test_management:
     code related to the gathering / analysis / management of 
     the test cases
@@ -157,7 +171,7 @@ class testManager(test_management.testManager):
                                  resultdir, disabled_tests)  
         test_case = testCase(self.system_manager, test_case, test_name, suite_name, 
                              suite_dir, test_server_options,test_path, result_path,
-                             debug=self.debug)      
+                             master_sh=master_sh, debug=self.debug)      
         return test_case
 
 
@@ -184,7 +198,11 @@ class testManager(test_management.testManager):
         result_file_name = test_name+'.result'       
         result_path = self.find_result_path(resultdir, result_file_name)
         comment = None
-        master_sh = None
+        master_sh_path = test_path.replace('.test','-master.sh')
+        if os.path.exists(master_sh_path):
+            master_sh = master_sh_path 
+        else:
+            master_sh = None
         master_opt_path = test_path.replace('.test','-master.opt')
         test_server_options = test_server_options + self.process_opt_file(
                                                            master_opt_path)
@@ -372,8 +390,8 @@ class testManager(test_management.testManager):
 
         """
         result_path = os.path.join(result_dir,result_file_name)
-        if self.engine:
-            candidate_path = os.path.join(result_dir, self.engine, 
+        if self.default_engine:
+            candidate_path = os.path.join(result_dir, self.default_engine, 
                                           result_file_name)
             if os.path.exists(candidate_path):
                 result_path = candidate_path
@@ -391,3 +409,29 @@ class testManager(test_management.testManager):
                     self.system_manager.logging.debug("%s says - I'm disabled" %(test_name))
                 return (1, disabled_tests[test_name])
         return (0,None)
+
+    def sort_testcases(self):
+        """ We sort our testcases according to the server_options they have
+            For each testcase, we sort the list of options, so if a test has
+            --plugin-add=csv --abracadabra, we would get 
+            --abracadabra --plugin-add=csv
+            
+            This results in tests that have similar options being run in order
+            this minimizes server restarts which can be costly
+
+        """
+        test_management.testManager.sort_testcases(self)
+        organizer = {}
+        ordered_list = []
+        for testcase in self.test_list:
+            key = " ".join(sorted(testcase.server_options))
+            if key in organizer:
+                organizer[key].append(testcase)
+            else:
+                organizer[key] = [testcase]
+        for value_list in organizer.values():
+            ordered_list = ordered_list + value_list
+        self.test_list = ordered_list
+        
+
+        

@@ -106,6 +106,6 @@ void Item_str_func::left_right_max_length()
   }
 }
 
-String my_empty_string("",default_charset_info);
+DRIZZLED_API String my_empty_string("",default_charset_info);
 
 } /* namespace drizzled */

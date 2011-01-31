@@ -125,6 +125,12 @@ std::size_t hash_value(Catalog const& b)
   return b.getHashValue();
 }
 
+void Catalog::getSQLPath(std::string &sql_path) const
+{
+  sql_path= _name;
+}
+
+
 
 } /* namespace identifier */
 } /* namespace drizzled */

@@ -4,6 +4,20 @@
 #
 # Copyright (C) 2010 Patrick Crews
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
 """test_mode.py
    code for dealing with testing modes
    A given mode should have a systemInitializer, testManager, and testExecutor
@@ -30,10 +44,10 @@ def handle_mode(variables, system_manager):
         # Set up our testManager
         from drizzle_test_run.dtr_test_management import testManager
         test_manager = testManager( variables['verbose'], variables['debug'] 
-                                  , variables['engine'], variables['dotest']
-                                  , variables['skiptest'], variables['suitelist']
-                                  , variables['suitepaths'], system_manager
-                                  , variables['test_cases'])
+                                  , variables['defaultengine'], variables['dotest']
+                                  , variables['skiptest'], variables['reorder']
+                                  , variables['suitelist'], variables['suitepaths']
+                                  , system_manager, variables['test_cases'])
 
         # get our mode-specific testExecutor
         from drizzle_test_run.dtr_test_execution import dtrTestExecutor
