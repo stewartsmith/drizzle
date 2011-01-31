@@ -32,7 +32,6 @@
 #include "mysql_protocol.h"
 #include "mysql_password.h"
 #include "options.h"
-#include "table_function.h"
 
 #include "drizzled/identifier.h"
 
@@ -986,8 +985,6 @@ plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
 static int init(drizzled::module::Context &context)
 {  
-  context.add(new MysqlProtocolStatus);
-
   /* Initialize random seeds for the MySQL algorithm with minimal changes. */
   time_t seed_time= time(NULL);
   random_seed1= seed_time % random_max;
@@ -1045,103 +1042,6 @@ static void init_options(drizzled::module::option_context &context)
   context("admin-ip-addresses",
           po::value<vector<string> >()->composing()->notifier(&ClientMySQLProtocol::mysql_compose_ip_addresses),
           _("A restrictive IP address list for incoming admin connections."));
-}
-
-static int mysql_protocol_connection_count_func(drizzle_show_var *var, char *buff)
-{
-  var->type= SHOW_LONGLONG;
-  var->value= buff;
-  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->connectionCount;
-  return 0;
-}
-
-static int mysql_protocol_connected_count_func(drizzle_show_var *var, char *buff)
-{
-  var->type= SHOW_LONGLONG;
-  var->value= buff;
-  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->connected;
-  return 0;
-}
-
-static int mysql_protocol_failed_count_func(drizzle_show_var *var, char *buff)
-{
-  var->type= SHOW_LONGLONG;
-  var->value= buff;
-  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->failedConnections;
-  return 0;
-}
-
-static st_show_var_func_container mysql_protocol_connection_count=
-  { &mysql_protocol_connection_count_func };
-
-static st_show_var_func_container mysql_protocol_connected_count=
-  { &mysql_protocol_connected_count_func };
-
-static st_show_var_func_container mysql_protocol_failed_count=
-  { &mysql_protocol_failed_count_func };
-
-static drizzle_show_var mysql_protocol_status_variables[]= {
-  {"Connections",
-  (char*) &mysql_protocol_connection_count, SHOW_FUNC},
-  {"Connected",
-  (char*) &mysql_protocol_connected_count, SHOW_FUNC},
-  {"Failed_connections",
-  (char*) &mysql_protocol_failed_count, SHOW_FUNC},
-  {NULL, NULL, SHOW_LONGLONG}
-};
-
-MysqlProtocolStatus::Generator::Generator(drizzled::Field **fields) :
-  plugin::TableFunction::Generator(fields)
-{
-  status_var_ptr= mysql_protocol_status_variables;
-}
-
-bool MysqlProtocolStatus::Generator::populate()
-{
-  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
-  char * const buff= (char *) &buff_data;
-  drizzle_show_var tmp;
-
-  if (status_var_ptr->name)
-  {
-    std::ostringstream oss;
-    string return_value;
-    const char *value;
-    int type;
-
-    push(status_var_ptr->name);
-
-    if (status_var_ptr->type == SHOW_FUNC)
-    {
-      ((drizzle_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
-      value= buff;
-      type= tmp.type;
-    }
-    else
-    {
-      value= status_var_ptr->value;
-      type= status_var_ptr->type;
-    }
-
-    switch(type)
-    {
-    case SHOW_LONGLONG:
-      oss << *(uint64_t*) value;
-      return_value= oss.str();
-      break;
-    default:
-      assert(0);
-    }
-    if (return_value.length())
-      push(return_value);
-    else
-      push(" ");
-
-    status_var_ptr++;
-
-    return true;
-  }
-  return false;
 }
 
 } /* namespace drizzle_plugin */
