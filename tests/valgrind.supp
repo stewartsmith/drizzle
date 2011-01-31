@@ -434,6 +434,16 @@
    ...
 }
 
+# https://bugs.launchpad.net/drizzle/+bug/710947
+{
+   Bug 710947 - bytes in 6 blocks are definitely lost in loss record
+   Memcheck:Leak
+   fun:_ZnwmRKSt9nothrow_t
+   ...
+   fun:_ZN8drizzled6plugin11HelloEvents14observeEventDoERNS0_9EventDataE
+   ...
+}
+
 # Issues with boost::thread
 {
   Boost::thread issues. Not a problem - static init issues.
