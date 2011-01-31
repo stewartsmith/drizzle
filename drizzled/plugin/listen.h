@@ -21,7 +21,7 @@
 #define DRIZZLED_PLUGIN_LISTEN_H
 
 #include "drizzled/plugin/plugin.h"
-
+#include "drizzled/atomics.h"
 #include <vector>
 
 #include "drizzled/visibility.h"
@@ -32,7 +32,9 @@ namespace plugin
 {
 
 class Client;
-
+class Listen;
+typedef std::vector<Listen *> ListenVector;
+typedef std::pair<std::string*, drizzled::atomic<uint64_t>*> ListenCounter;
 /**
  * This class is used by client plugins to provide and manage the listening
  * interface for new client instances.
@@ -42,12 +44,20 @@ class DRIZZLED_API Listen : public Plugin
   Listen();
   Listen(const Listen&);
   Listen& operator=(const Listen&);
+protected:
+  std::vector<ListenCounter*> counters;
 public:
   explicit Listen(std::string name_arg)
     : Plugin(name_arg, "Listen")
   {}
   virtual ~Listen() {}
 
+  static ListenVector &getListenProtocols();
+
+  std::vector<ListenCounter*>& getCounters()
+  {
+    return counters;
+  }
   /**
    * This provides a list of file descriptors to watch that will trigger new
    * Client instances. When activity is detected on one of the returned file
@@ -98,6 +108,7 @@ public:
 };
 
 } /* namespace plugin */
+
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_LISTEN_H */

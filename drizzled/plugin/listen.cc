@@ -32,20 +32,27 @@
 
 namespace drizzled
 {
+namespace plugin
+{
 
-std::vector<plugin::Listen *> listen_list;
+static std::vector<plugin::Listen *> listen_list;
 std::vector<plugin::Listen *> listen_fd_list;
 std::vector<pollfd> fd_list;
 uint32_t fd_count= 0;
 int wakeup_pipe[2];
 
-bool plugin::Listen::addPlugin(plugin::Listen *listen_obj)
+ListenVector &Listen::getListenProtocols()
+{
+  return listen_list;
+}
+
+bool Listen::addPlugin(plugin::Listen *listen_obj)
 {
   listen_list.push_back(listen_obj);
   return false;
 }
 
-void plugin::Listen::removePlugin(plugin::Listen *listen_obj)
+void Listen::removePlugin(plugin::Listen *listen_obj)
 {
   listen_list.erase(std::remove(listen_list.begin(),
                                 listen_list.end(),
@@ -53,7 +60,7 @@ void plugin::Listen::removePlugin(plugin::Listen *listen_obj)
                     listen_list.end());
 }
 
-bool plugin::Listen::setup(void)
+bool Listen::setup(void)
 {
   std::vector<plugin::Listen *>::iterator it;
 
@@ -105,7 +112,7 @@ bool plugin::Listen::setup(void)
   return false;
 }
 
-plugin::Client *plugin::Listen::getClient(void)
+Client *plugin::Listen::getClient(void)
 {
   int ready;
   plugin::Client *client;
@@ -156,15 +163,17 @@ plugin::Client *plugin::Listen::getClient(void)
   }
 }
 
-plugin::Client *plugin::Listen::getNullClient(void)
+Client *plugin::Listen::getNullClient(void)
 {
   return new plugin::NullClient();
 }
 
-void plugin::Listen::shutdown(void)
+void Listen::shutdown(void)
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
 }
 
+
+} /* namespace plugin */
 } /* namespace drizzled */

@@ -66,6 +66,13 @@ ProtocolCounters *ListenMySQLProtocol::mysql_counters= new ProtocolCounters();
 ListenMySQLProtocol::~ListenMySQLProtocol()
 { }
 
+void ListenMySQLProtocol::addCountersToTable()
+{
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connection_count"), &getCounters()->connectionCount));
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connected"), &getCounters()->connected));
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("failed_connections"), &getCounters()->failedConnections));
+}
+
 const std::string ListenMySQLProtocol::getHost(void) const
 {
   return _hostname;
@@ -992,6 +999,7 @@ static int init(drizzled::module::Context &context)
   context.add(mysql_password);
 
   listen_obj= new ListenMySQLProtocol("mysql_protocol", vm["bind-address"].as<std::string>(), true);
+  listen_obj->addCountersToTable();
   context.add(listen_obj); 
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("connect_timeout", connect_timeout));
