@@ -15,22 +15,6 @@ Returns 48 ::
 
 Returns 100
 
-CHAR
-----
- SQL CHAR function is the opposite of the ASCII function. It converts an integer in range 0-255 into a ASCII character. It returns a string (the character), given the integer value. This function skips NULL values.    
-For example: ::
-
-	SELECT CHAR(65) AS ch_65;
-
-Returns "A"
-
-CHAR_LENGTH
------------
- The CHAR_LENGTH(str) function returns string length measured in characters. 
-
-A multi-byte character counts as single character such as a string contains 5 two-byte characters, then LENGTH() function returns 10, but the CHAR_LENGTH() returns 5. ::        
-	CHARACTER_LENGTH(str) 
-This function is same as CHAR_LENGTH().  
 
 BIN
 ---
@@ -45,3 +29,84 @@ For exempt: ::
 	SELECT BIN(12);
 
 Returns: '1100'
+
+
+CHAR
+----
+ SQL CHAR function is the opposite of the ASCII function. It converts an integer in range 0-255 into a ASCII character. It returns a string (the character), given the integer value. This function skips NULL values.    
+For example: ::
+
+	SELECT CHAR(65) AS ch_65;
+
+Returns "A"
+
+
+CHAR_LENGTH
+-----------
+ The CHAR_LENGTH(str) function returns string length measured in characters. 
+
+A multi-byte character counts as single character such as a string contains 5 two-byte characters, then LENGTH() function returns 10, but the CHAR_LENGTH() returns 5. ::        
+	CHARACTER_LENGTH(str) 
+This function is same as CHAR_LENGTH().  
+
+HEX()
+-----
+
+This string function returns the hexadecimal (base-16) representation of a string or decicmal argument. Each character in the string argument is converted to two hexadecimal digits. If the argument is numeric, HEX() returns a hexadecimal string representation of the value as a BIGINT number.
+
+Using HEX for numeric values: ::
+
+	SELECT HEX(255);
+
+Returns: FF
+
+Using HEX for string values: ::
+ 
+	SELECT HEX('Drizzle');
+
+Returns: 4452495A5AHc45
+
+(To better understand this output, you can use an :doc:`../../resources/ascii_chart` that includes both Hexadecimal and character values.)
+
+
+UNHEX()
+-------
+
+UNHEX converts each pair of hexadecimal digits to a character. For a string argument, UNHEX() is the inverse operation of HEX(str).
+
+Instead of converting each character in the string argument to hex digits, it interprets each pair of characters in the argument as a hexadecimal number and converts it to the character represented by the number. The return value is a binary string. ::
+
+	SELECT UNHEX('4452495A5AHc45');
+
+Returns 'drizzle' ::
+
+	SELECT UNHEX(HEX('string'));
+
+Returns 'string' ::
+
+	SELECT HEX(UNHEX('1267'));
+
+Returns '1267'
+
+The characters in the argument string must be legal hexadecimal digits: '0' .. '9', 'A' .. 'F', 'a' .. 'f'. If the argument contains any non-hexadecimal digits, the result is NULL: ::
+
+	SELECT UNHEX('GG');
+
+Returns NULL
+
+
+
+LOWER() 	          
+Return the argument in lowercase
+
+
+LCASE() 	          
+Synonym for LOWER()
+
+
+UCASE() 	          
+Synonym for UPPER()
+
+
+UPPER() 	          
+Convert to uppercase
