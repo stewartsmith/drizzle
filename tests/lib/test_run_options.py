@@ -85,6 +85,14 @@ system_control_group.add_option(
  )
 
 system_control_group.add_option(
+    "--start-and-exit"
+  , dest="startandexit"
+  , action="store_true"
+  , default=False
+  , help="Spin up the server(s) for the first specified test then exit (will leave servers running)"
+  )
+
+system_control_group.add_option(
     "--verbose"
    , dest="verbose"
    , action="store_true"
@@ -211,8 +219,8 @@ test_subject_control_group.add_option(
 
 
 test_subject_control_group.add_option(
-    "--engine"
-   , dest="engine"
+    "--default-storage-engine"
+   , dest="defaultengine"
    , default = 'innodb'
    , help="Start drizzled using the specified engine [%default]"
    )    

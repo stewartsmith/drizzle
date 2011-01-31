@@ -487,9 +487,13 @@ void unireg_abort(int exit_code)
 {
 
   if (exit_code)
+  {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
+  }
   else if (opt_help)
+  {
     usage();
+  }
   clean_up(!opt_help && (exit_code));
   internal::my_end();
   exit(exit_code);
@@ -550,8 +554,8 @@ passwd *check_user(const char *user)
   }
   if (not user)
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
-                      "the manual to find out how to run drizzled as root!\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
+                                      "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
   }
   if (!strcmp(user,"root"))

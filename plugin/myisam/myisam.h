@@ -18,7 +18,7 @@
 #ifndef PLUGIN_MYISAM_MYISAM_H
 #define PLUGIN_MYISAM_MYISAM_H
 
-#include "drizzled/identifier/table.h"
+#include "drizzled/identifier.h"
 
 #include <drizzled/key_map.h>
 

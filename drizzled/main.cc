@@ -352,7 +352,9 @@ int main(int argc, char **argv)
     {
       currentSession().release();
       currentSession().reset(session.get());
-      transaction_services.sendStartupEvent(*session.get());
+
+
+      transaction_services.sendStartupEvent(*session);
 
       plugin_startup_window(modules, *(session.get()));
     }

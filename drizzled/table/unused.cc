@@ -25,7 +25,7 @@
 #include <fcntl.h>
 
 
-#include "drizzled/identifier/table.h"
+#include "drizzled/identifier.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/set_var.h"
 

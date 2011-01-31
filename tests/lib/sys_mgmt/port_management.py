@@ -127,7 +127,9 @@ class portManager:
                     good_data = 0
                     pass
                 else:
-                    if self.system_manager.cur_os == 'FreeBSD':
+                    if self.system_manager.cur_os in [ 'FreeBSD' 
+                                                     , 'Darwin' 
+                                                     ]:
                         used_port = int(entry.split()[3].split('.')[-1].strip())
                     else:
                         used_port = int(entry.split()[3].split(':')[-1].strip())
