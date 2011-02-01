@@ -531,15 +531,14 @@ public:
   void unlock_table_names(TableList *last_table= NULL);
 
 private:
-
   table_map dep_tables; ///< tables the table depends on
   table_map on_expr_dep_tables; ///< tables on expression depends on
   nested_join_st *nested_join; ///< if the element is a nested join
   TableList *embedding; ///< nested join containing the table
   List<TableList> *join_list; ///< join list the table belongs to
   plugin::StorageEngine *db_type; ///< table_type for handler
-  char timestamp_buffer[20]; ///< buffer for timestamp (19+1)
   bool internal_tmp_table;
+
   /** true if an alias for this table was specified in the SQL. */
   bool is_alias;
 
@@ -548,6 +547,7 @@ private:
    * qualified name (<db_name>.<table_name>).
    */
   bool is_fqtn;
+
   /**
    * This TableList object corresponds to the table to be created
    * so it is possible that it does not exist (used in CREATE TABLE
