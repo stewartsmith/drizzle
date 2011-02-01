@@ -305,6 +305,16 @@ bool buildTableStatus(Session *session, const char *ident)
   return true;
 }
 
+bool buildEngineStatus(Session *session, LEX_STRING)
+{
+  session->getLex()->sql_command= SQLCOM_SELECT;
+  drizzled::statement::Show *select= new statement::Show(session);
+  session->getLex()->statement= select;
+
+  my_error(ER_USE_DATA_DICTIONARY);
+  return false;
+}
+
 bool buildColumns(Session *session, const char *schema_ident, Table_ident *table_ident)
 {
   session->getLex()->sql_command= SQLCOM_SELECT;

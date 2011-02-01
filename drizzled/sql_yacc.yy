@@ -4591,6 +4591,11 @@ show_param:
             if (not show::buildStatus(YYSession, $1))
               DRIZZLE_YYABORT;
           }
+        | engine_option_value STATUS_SYM
+          {
+            if (not show::buildEngineStatus(YYSession, $1))
+              DRIZZLE_YYABORT;
+          }
         | CREATE TABLE_SYM table_ident
           {
             if (not show::buildCreateTable(YYSession, $3))
