@@ -3513,6 +3513,13 @@ static void do_get_errcodes(struct st_command *command)
     {
       die("The error name definition must start with an uppercase E");
     }
+    else if (*p == 'H')
+    {
+      /* Error name string */
+
+      to->code.errnum= get_errcode_from_name(p, end);
+      to->type= ERR_ERRNO;
+    }
     else
     {
       long val;

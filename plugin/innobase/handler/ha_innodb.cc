@@ -2015,7 +2015,7 @@ innodb_file_format_max_validate(
 
       if (trx_sys_file_format_max_set(format_id, &name_buff))
       {
-        errmsg_printf(ERRMSG_LVL_WARN,
+        errmsg_printf(error::WARN,
                       " [Info] InnoDB: the file format in the system "
                       "tablespace is now set to %s.\n", name_buff);
         innobase_file_format_max= name_buff;
@@ -2115,7 +2115,7 @@ innobase_init(
       || strcmp(test_tablename.get()
                 + srv_mysql50_table_name_prefix.size(),
                 test_filename)) {
-    errmsg_printf(ERRMSG_LVL_ERROR, "tablename encoding has been changed");
+    errmsg_printf(error::ERROR, "tablename encoding has been changed");
     goto error;
   }
 #endif /* UNIV_DEBUG */
@@ -2149,7 +2149,7 @@ innobase_init(
   ret = (bool) srv_parse_data_file_paths_and_sizes(
                                                    internal_innobase_data_file_path);
   if (ret == FALSE) {
-    errmsg_printf(ERRMSG_LVL_ERROR, 
+    errmsg_printf(error::ERROR, 
                   "InnoDB: syntax error in innodb_data_file_path");
 mem_free_and_error:
     srv_free_paths_and_sizes();
@@ -2175,7 +2175,7 @@ mem_free_and_error:
     srv_parse_log_group_home_dirs((char *)innobase_log_group_home_dir.c_str());
 
   if (ret == FALSE || innobase_mirrored_log_groups.get() != 1) {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("syntax error in innodb_log_group_home_dir, or a "
                   "wrong number of mirrored log groups"));
 
@@ -2191,7 +2191,7 @@ mem_free_and_error:
 
     if (format_id > DICT_TF_FORMAT_MAX) {
 
-      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: wrong innodb_file_format.");
+      errmsg_printf(error::ERROR, "InnoDB: wrong innodb_file_format.");
 
       goto mem_free_and_error;
     }
@@ -2220,7 +2220,7 @@ mem_free_and_error:
      srv_max_file_format_at_startup */
   if (innobase_file_format_validate_and_set(innobase_file_format_max.c_str()) < 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("InnoDB: invalid "
+    errmsg_printf(error::ERROR, _("InnoDB: invalid "
                     "innodb_file_format_max value: "
                     "should be any value up to %s or its "
                     "equivalent numeric id"),
@@ -2243,7 +2243,7 @@ mem_free_and_error:
       }
     }
 
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   "InnoDB: invalid value "
                   "innodb_change_buffering=%s",
                   vm["change-buffering"].as<string>().c_str());
@@ -2856,7 +2856,7 @@ InnobaseEngine::close_connection(
       trx->undo_no > 0 &&
       global_system_variables.log_warnings)
   {
-      errmsg_printf(ERRMSG_LVL_WARN,
+      errmsg_printf(error::WARN,
       "Drizzle is closing a connection during a KILL operation\n"
       "that has an active InnoDB transaction.  %llu row modifications will "
       "roll back.\n",
@@ -3148,7 +3148,7 @@ innobase_build_index_translation(
 		if (!index_mapping) {
 			/* Report an error if index_mapping continues to be
 			NULL and mysql_num_index is a non-zero value */
-			errmsg_printf(ERRMSG_LVL_ERROR,
+			errmsg_printf(error::ERROR,
                                       "InnoDB: fail to allocate memory for "
 					"index translation table. Number of "
 					"Index:%lu, array size:%lu",
@@ -3172,7 +3172,7 @@ innobase_build_index_translation(
 			ib_table, table->key_info[count].name);
 
 		if (!index_mapping[count]) {
-			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot find index %s in InnoDB "
+			errmsg_printf(error::ERROR, "Cannot find index %s in InnoDB "
 					"index dictionary.",
 					table->key_info[count].name);
 			ret = FALSE;
@@ -3183,7 +3183,7 @@ innobase_build_index_translation(
 		column info as those in mysql key_info. */
 		if (!innobase_match_index_columns(&table->key_info[count],
 					          index_mapping[count])) {
-			errmsg_printf(ERRMSG_LVL_ERROR, "Found index %s whose column info "
+			errmsg_printf(error::ERROR, "Found index %s whose column info "
 					"does not match that of MySQL.",
 					table->key_info[count].name);
 			ret = FALSE;
@@ -3402,7 +3402,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   ib_table = dict_table_get(norm_name, TRUE);
   
   if (NULL == ib_table) {
-    errmsg_printf(ERRMSG_LVL_ERROR, "Cannot find or open table %s from\n"
+    errmsg_printf(error::ERROR, "Cannot find or open table %s from\n"
         "the internal data dictionary of InnoDB "
         "though the .frm file for the\n"
         "table exists. Maybe you have deleted and "
@@ -3426,7 +3426,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   }
 
   if (ib_table->ibd_file_missing && !session_tablespace_op(session)) {
-    errmsg_printf(ERRMSG_LVL_ERROR, "MySQL is trying to open a table handle but "
+    errmsg_printf(error::ERROR, "MySQL is trying to open a table handle but "
         "the .ibd file for\ntable %s does not exist.\n"
         "Have you deleted the .ibd file from the "
         "database directory under\nthe MySQL datadir, "
@@ -3455,7 +3455,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   key_used_on_scan = primary_key;
 
   if (!innobase_build_index_translation(getTable(), ib_table, share)) {
-    errmsg_printf(ERRMSG_LVL_ERROR, "Build InnoDB index translation table for"
+    errmsg_printf(error::ERROR, "Build InnoDB index translation table for"
                     " Table %s failed", identifier.getPath().c_str());
   }
 
@@ -3470,7 +3470,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
     prebuilt->clust_index_was_generated = FALSE;
 
     if (UNIV_UNLIKELY(primary_key >= MAX_KEY)) {
-      errmsg_printf(ERRMSG_LVL_ERROR, "Table %s has a primary key in "
+      errmsg_printf(error::ERROR, "Table %s has a primary key in "
                     "InnoDB data dictionary, but not "
                     "in MySQL!", identifier.getTableName().c_str());
 
@@ -3525,7 +3525,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
     }
   } else {
     if (primary_key != MAX_KEY) {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     "Table %s has no primary key in InnoDB data "
                     "dictionary, but has one in MySQL! If you "
                     "created the table with a MySQL version < "
@@ -3561,7 +3561,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
     and it will never be updated anyway. */
 
     if (key_used_on_scan != MAX_KEY) {
-      errmsg_printf(ERRMSG_LVL_WARN, 
+      errmsg_printf(error::WARN, 
         "Table %s key_used_on_scan is %lu even "
         "though there is no primary key inside "
         "InnoDB.", identifier.getTableName().c_str(), (ulong) key_used_on_scan);
@@ -3760,7 +3760,7 @@ innobase_mysql_cmp(
       charset = get_charset(charset_number);
 
       if (charset == NULL) {
-        errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB needs charset %lu for doing "
+        errmsg_printf(error::ERROR, "InnoDB needs charset %lu for doing "
                       "a comparison, but MySQL cannot "
                       "find that charset.",
                       (ulong) charset_number);
@@ -4420,7 +4420,7 @@ ha_innobase::doInsertRecord(
   trx_t*    trx = session_to_trx(user_session);
 
   if (prebuilt->trx != trx) {
-    errmsg_printf(ERRMSG_LVL_ERROR, "The transaction object for the table handle is at "
+    errmsg_printf(error::ERROR, "The transaction object for the table handle is at "
         "%p, but for the current thread it is at %p",
         (const void*) prebuilt->trx, (const void*) trx);
 
@@ -5348,7 +5348,7 @@ ha_innobase::innobase_get_index(
          table. Only print message if the index translation
          table exists */
       if (share->idx_trans_tbl.index_mapping) {
-        errmsg_printf(ERRMSG_LVL_ERROR,
+        errmsg_printf(error::ERROR,
                       "InnoDB could not find "
                       "index %s key no %u for "
                       "table %s through its "
@@ -5366,7 +5366,7 @@ ha_innobase::innobase_get_index(
   }
 
   if (!index) {
-    errmsg_printf(ERRMSG_LVL_ERROR, 
+    errmsg_printf(error::ERROR, 
       "Innodb could not find key n:o %u with name %s "
       "from dict cache for table %s",
       keynr, getTable()->getShare()->getTableProto()->indexes(keynr).name().c_str(),
@@ -5395,7 +5395,7 @@ ha_innobase::change_active_index(
   prebuilt->index = innobase_get_index(keynr);
 
   if (UNIV_UNLIKELY(!prebuilt->index)) {
-    errmsg_printf(ERRMSG_LVL_WARN, "InnoDB: change_active_index(%u) failed",
+    errmsg_printf(error::WARN, "InnoDB: change_active_index(%u) failed",
           keynr);
     prebuilt->index_usable = FALSE;
     return(1);
@@ -5761,7 +5761,7 @@ ha_innobase::position(
   table. */
 
   if (len != ref_length) {
-    errmsg_printf(ERRMSG_LVL_ERROR, "Stored ref len is %lu, but table ref len is %lu",
+    errmsg_printf(error::ERROR, "Stored ref len is %lu, but table ref len is %lu",
         (ulong) len, (ulong) ref_length);
   }
 }
@@ -6020,7 +6020,7 @@ create_index(
         || col_type == DATA_FLOAT
         || col_type == DATA_DOUBLE
         || col_type == DATA_DECIMAL) {
-        errmsg_printf(ERRMSG_LVL_ERROR, 
+        errmsg_printf(error::ERROR, 
           "MySQL is trying to create a column "
           "prefix index field, on an "
           "inappropriate data type. Table "
@@ -7118,7 +7118,7 @@ innobase_get_mysql_key_number_for_index(
 
 		/* Print an error message if we cannot find the index
 		** in the "index translation table". */
-		errmsg_printf(ERRMSG_LVL_ERROR,
+		errmsg_printf(error::ERROR,
                               "Cannot find index %s in InnoDB index "
 				"translation table.", index->name);
 	}
@@ -7135,7 +7135,7 @@ innobase_get_mysql_key_number_for_index(
 		}
         }
 
-		errmsg_printf(ERRMSG_LVL_ERROR,
+		errmsg_printf(error::ERROR,
                               "Cannot find matching index number for index %s "
                               "in InnoDB index list.", index->name);
 
@@ -7315,7 +7315,7 @@ ha_innobase::info(
     ulint	num_innodb_index = UT_LIST_GET_LEN(ib_table->indexes) - prebuilt->clust_index_was_generated;
 
     if (getTable()->getShare()->keys != num_innodb_index) {
-      errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains %lu "
+      errmsg_printf(error::ERROR, "Table %s contains %lu "
                       "indexes inside InnoDB, which "
                       "is different from the number of "
                       "indexes %u defined in the MySQL ",
@@ -7335,7 +7335,7 @@ ha_innobase::info(
       index = innobase_get_index(i);
 
       if (index == NULL) {
-        errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains fewer "
+        errmsg_printf(error::ERROR, "Table %s contains fewer "
             "indexes inside InnoDB than "
             "are defined in the MySQL "
             ".frm file. Have you mixed up "
@@ -7350,7 +7350,7 @@ ha_innobase::info(
       for (j = 0; j < getTable()->key_info[i].key_parts; j++) {
 
         if (j + 1 > index->n_uniq) {
-          errmsg_printf(ERRMSG_LVL_ERROR, 
+          errmsg_printf(error::ERROR, 
 "Index %s of %s has %lu columns unique inside InnoDB, but MySQL is asking "
 "statistics for %lu columns. Have you mixed up .frm files from different "
 "installations? "
@@ -7467,7 +7467,7 @@ ha_innobase::check(
   }
 
   if (prebuilt->table->ibd_file_missing) {
-        errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: Error:\n"
+        errmsg_printf(error::ERROR, "InnoDB: Error:\n"
                     "InnoDB: MySQL is trying to use a table handle"
                     " but the .ibd file for\n"
                     "InnoDB: table %s does not exist.\n"

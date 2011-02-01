@@ -1,11 +1,12 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,14 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_STATE_H
-#define DRIZZLED_SQL_STATE_H
+#ifndef DRIZZLED_ERROR_LEVEL_T_H
+#define DRIZZLED_ERROR_LEVEL_T_H
 
 namespace drizzled
 {
 
-const char *drizzle_errno_to_sqlstate(drizzled::error_t drizzle_errno);
+namespace error
+{
 
+enum level_t {
+  INSPECT= 1, // note, this is what normally we would call "debug"
+  INFO= 2,
+  WARN= 3,
+  ERROR= 4
+};
+
+} /* namespace error */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_STATE_H */
+#endif /* DRIZZLED_ERROR_LEVEL_T_H */

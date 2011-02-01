@@ -424,8 +424,9 @@ public:
   int64_t val_int_from_decimal();
   double val_real_from_decimal();
 
-  int save_time_in_field(Field *field);
-  int save_date_in_field(Field *field);
+  bool save_time_in_field(Field *field);
+  bool save_date_in_field(Field *field);
+
   /**
    * Stores a string value in field directly
    *

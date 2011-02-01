@@ -64,7 +64,7 @@ bool plugin::Listen::setup(void)
 
     if ((*it)->getFileDescriptors(fds))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting file descriptors"));
+      errmsg_printf(error::ERROR, _("Error getting file descriptors"));
       return true;
     }
 
@@ -81,7 +81,7 @@ bool plugin::Listen::setup(void)
 
   if (fd_count == 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("No sockets could be bound for listening"));
     return true;
   }
@@ -92,7 +92,7 @@ bool plugin::Listen::setup(void)
   */
   if (pipe(wakeup_pipe) == -1)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("pipe() failed with errno %d"), errno);
+    sql_perror("pipe()");
     return true;
   }
 
@@ -117,8 +117,7 @@ plugin::Client *plugin::Listen::getClient(void)
     {
       if (errno != EINTR)
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("poll() failed with errno %d"),
-                      errno);
+        sql_perror("poll()");
       }
 
       continue;
