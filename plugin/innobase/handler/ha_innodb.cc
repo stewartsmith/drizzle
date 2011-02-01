@@ -965,7 +965,8 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
   trx_t *trx= session_to_trx(&session);
 
   uint64_t trx_id= message.transaction_context().transaction_id();
-  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id);
+  uint32_t seg_id= message.segment_id();
+  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id, seg_id);
   (void)error;
 
   delete[] data;

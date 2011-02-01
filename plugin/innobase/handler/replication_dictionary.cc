@@ -75,6 +75,7 @@ InnodbReplicationTable::InnodbReplicationTable() :
   plugin::TableFunction("DATA_DICTIONARY", "INNODB_REPLICATION_LOG")
 {
   add_field("TRANSACTION_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TRANSACTION_SEGMENT_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, 2048, false);
   add_field("TRANSACTION_MESSAGE_BINARY", plugin::TableFunction::VARBINARY, 2048, false);
   add_field("TRANSACTION_LENGTH", plugin::TableFunction::NUMBER, 0, false);
@@ -99,7 +100,10 @@ bool InnodbReplicationTable::Generator::populate()
     return false;
 
   /* TABLE_NAME */
-  push(static_cast<int64_t>(ret.id));
+  push(static_cast<uint64_t>(ret.id));
+  
+  /* Segment ID */
+  push(static_cast<uint64_t>(ret.seg_id));
 
   /* Message in viewable format */
   bool result= message.ParseFromArray(ret.message, ret.message_length);
