@@ -23,6 +23,7 @@
 #define DRIZZLED_PLUGIN_ERROR_MESSAGE_H
 
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/error/level_t.h"
 
 #include <stdarg.h>
 
@@ -32,6 +33,7 @@
 
 namespace drizzled
 {
+
 namespace plugin
 {
 
@@ -47,12 +49,12 @@ public:
   {}
   virtual ~ErrorMessage() {}
 
-  virtual bool errmsg(int priority, const char *format, va_list ap)=0;
+  virtual bool errmsg(error::level_t priority, const char *format, va_list ap)=0;
 
   static bool addPlugin(plugin::ErrorMessage *handler);
   static void removePlugin(plugin::ErrorMessage *handler);
 
-  static bool vprintf(int priority, char const *format, va_list ap);
+  static bool vprintf(error::level_t priority, char const *format, va_list ap);
 };
 
 } /* namespace plugin */

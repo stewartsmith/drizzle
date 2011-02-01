@@ -49,12 +49,12 @@ void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *handler)
 
 class Print : public std::unary_function<plugin::ErrorMessage *, bool>
 {
-  int priority;
+  error::level_t priority;
   const char *format;
   va_list ap;
 
 public:
-  Print(int priority_arg,
+  Print(error::level_t priority_arg,
         const char *format_arg, va_list ap_arg) : 
     std::unary_function<plugin::ErrorMessage *, bool>(),
     priority(priority_arg), format(format_arg)
@@ -87,12 +87,12 @@ public:
 }; 
 
 
-bool plugin::ErrorMessage::vprintf(int priority, char const *format, va_list ap)
+bool plugin::ErrorMessage::vprintf(error::level_t priority, char const *format, va_list ap)
 {
 
   /* check to see if any errmsg plugin has been loaded
      if not, just fall back to emitting the message to stderr */
-  if (!errmsg_has)
+  if (not errmsg_has)
   {
     /* if it turns out that the vfprintf doesnt do one single write
        (single writes are atomic), then this needs to be rewritten to

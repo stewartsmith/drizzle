@@ -340,7 +340,7 @@ public:
 
     if (pipe(pipe_fds) == -1)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("pipe() failed with errno %d"), errno);
+      errmsg_printf(error::ERROR, _("pipe() failed with errno %d"), errno);
       return true;
     }
 

@@ -78,7 +78,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   size_t found= plugin_name.find(FN_LIBCHAR);
   if (found != string::npos)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_PLUGIN_NO_PATHS));
+    errmsg_printf(error::ERROR, "%s",ER(ER_PLUGIN_NO_PATHS));
     return NULL;
   }
 
@@ -92,7 +92,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
     if (dl_handle == NULL)
     {
       const char *errmsg= dlerror();
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY),
+      errmsg_printf(error::ERROR, ER(ER_CANT_OPEN_LIBRARY),
                     dlpath.c_str(), errno, errmsg);
       (void)dlerror();
 
@@ -114,7 +114,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
         if (*errmsg == ':') errmsg++;
         if (*errmsg == ' ') errmsg++;
       }
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY),
+      errmsg_printf(error::ERROR, ER(ER_CANT_OPEN_LIBRARY),
                     dlpath.c_str(), errno, errmsg);
 
       // This, in theory, should cause dlerror() to deallocate the error
@@ -134,8 +134,8 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   if (sym == NULL)
   {
     const char* errmsg= dlerror();
-    errmsg_printf(ERRMSG_LVL_ERROR, errmsg);
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY),
+    errmsg_printf(error::ERROR, errmsg);
+    errmsg_printf(error::ERROR, ER(ER_CANT_FIND_DL_ENTRY),
                   plugin_decl_sym.c_str(), dlpath.c_str());
     (void)dlerror();
     dlclose(dl_handle);
@@ -145,7 +145,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   const Manifest *module_manifest= static_cast<module::Manifest *>(sym); 
   if (module_manifest->drizzle_version != DRIZZLE_VERSION_ID)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Plugin module %s was compiled for version %" PRIu64 ", "
                     "which does not match the current running version of "
                     "Drizzle: %" PRIu64"."),

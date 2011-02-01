@@ -52,7 +52,7 @@ static void build_schema_filename(string &path, const string &name_arg)
   conversion_error= util::tablename_to_filename(name_arg, path);
   if (conversion_error)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Catalog name cannot be encoded and fit within filesystem "
                     "name length restrictions."));
   }
