@@ -133,7 +133,7 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
 
     if (not session || MyFlags & ME_NOREFRESH)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
+      errmsg_printf(error::ERROR, "%s: %s",internal::my_progname,str);
     }
 }
 
@@ -165,7 +165,7 @@ static void init_signals(void)
     struct rlimit rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN,
+        errmsg_printf(error::WARN,
                       _("setrlimit could not change the size of core files "
                         "to 'infinity';  We may not be able to generate a "
                         "core file on signals"));
@@ -265,7 +265,7 @@ int main(int argc, char **argv)
   {
     if (chdir(getDataHome().file_string().c_str()))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Data directory %s does not exist\n"),
                     getDataHome().file_string().c_str());
       unireg_abort(1);
@@ -276,7 +276,7 @@ int main(int argc, char **argv)
     }
     if (chdir("local"))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Local catalog %s/local does not exist\n"),
                     getDataHome().file_string().c_str());
       unireg_abort(1);
@@ -338,7 +338,7 @@ int main(int argc, char **argv)
     unireg_abort(1);
   }
 
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
+  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname,
                 PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
 

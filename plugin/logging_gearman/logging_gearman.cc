@@ -181,10 +181,7 @@ public:
 
     if (gearman_client_create(&_gearman_client) == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
-                              errmsg);
+      sql_perror(_("fail gearman_client_create()"));
       return;
     }
 
@@ -194,7 +191,7 @@ public:
                                    host.c_str(), 0);
     if (ret != GEARMAN_SUCCESS)
     {
-      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_add_server(): %s"),
+      drizzled::errmsg_printf(error::ERROR, _("fail gearman_client_add_server(): %s"),
                               gearman_client_error(&_gearman_client));
       return;
     }

@@ -54,7 +54,7 @@ public:
     errmsg_tags.push_back("Error");
   }
 
-  virtual bool errmsg(Session *, int priority, const char *format, va_list ap)
+  virtual bool errmsg(error::level_t priority, const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
     int prv;
@@ -62,7 +62,24 @@ public:
     prv= vsnprintf(msgbuf, MAX_MSG_LEN, format, ap);
     if (prv < 0) return true;
 
-    Notify::Notification n(errmsg_tags[priority].c_str(), msgbuf);
+    switch (priority)
+    {
+    case error::INFO:
+      Notify::Notification n("Info", msgbuf);
+      break;
+
+    case error::DEBUG:
+      Notify::Notification n("Debug", msgbuf);
+      break;
+
+    case error::WARN:
+      Notify::Notification n("Warn", msgbuf);
+      break;
+
+    case error::ERROR:
+      Notify::Notification n("Error", msgbuf);
+      break;
+    }
     /**
      * @TODO: Make this timeout a system variable
      */

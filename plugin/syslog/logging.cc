@@ -51,7 +51,7 @@ logging::Syslog::Syslog(const std::string &facility,
 {
   if (_facility < 0)
   {
-    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+    drizzled::errmsg_printf(drizzled::error::WARN,
                             _("syslog facility \"%s\" not known, using \"local0\""),
                             facility.c_str());
     _facility= WrapSyslog::getFacilityByName("local0");
@@ -59,7 +59,7 @@ logging::Syslog::Syslog(const std::string &facility,
 
   if (_priority < 0)
   {
-    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+    drizzled::errmsg_printf(drizzled::error::WARN,
                             _("syslog priority \"%s\" not known, using \"info\""),
                             priority.c_str());
     _priority= WrapSyslog::getPriorityByName("info");
