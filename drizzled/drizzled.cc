@@ -156,6 +156,7 @@ namespace fs=boost::filesystem;
 namespace po=boost::program_options;
 namespace dpo=drizzled::program_options;
 
+bool opt_daemon= false;
 
 namespace drizzled
 {
@@ -1150,6 +1151,8 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   config_options.add_options()
   ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
   _("Display this help and exit."))
+  ("daemon,d", po::value<bool>(&opt_daemon)->default_value(false)->zero_tokens(),
+  _("Run as a daemon."))
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
   _("Configuration file defaults are not used if no-defaults is set"))
   ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
@@ -1738,6 +1741,9 @@ struct option my_long_options[] =
 
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
+   0, 0},
+  {"daemon", 'd', N_("Run as daemon."),
+   (char**) &opt_daemon, (char**) &opt_daemon, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),

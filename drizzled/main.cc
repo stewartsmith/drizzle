@@ -68,12 +68,16 @@
 
 #include "drizzled/util/backtrace.h"
 
+extern "C" int daemonize(int nochdir, int noclose);
+
 using namespace drizzled;
 using namespace std;
 namespace fs=boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
+
+extern bool opt_daemon;
 
 
 /**
@@ -250,6 +254,17 @@ int main(int argc, char **argv)
      and plugin_load_list. */
   if (init_common_variables(argc, argv, modules))
     unireg_abort(1);				// Will do exit
+
+  if (opt_daemon)
+  {
+    if (sigignore(SIGHUP) == -1) {
+      perror("Failed to ignore SIGHUP");
+    }
+    if (daemonize(1, 0) == -1) {
+      fprintf(stderr, "failed to daemon() in order to daemonize\n");
+      exit(EXIT_FAILURE);
+    }
+  }
 
   /*
     init signals & alarm
