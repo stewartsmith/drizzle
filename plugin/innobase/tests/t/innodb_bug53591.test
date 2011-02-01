@@ -11,7 +11,8 @@ SET GLOBAL innodb_file_per_table=on;
 
 CREATE TABLE bug53591(a text not null)
 ENGINE=InnoDB;
--- error 139 , 1071
+--error HA_ERR_TO_BIG_ROW, ER_TOO_LONG_KEY
+#--error 139, ER_TOO_LONG_KEY
 ALTER TABLE bug53591 ADD PRIMARY KEY(a(500));
 SHOW WARNINGS;
 
