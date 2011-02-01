@@ -1036,7 +1036,7 @@ if ($test_foreign_keys)
 #             auto_increment keys
 #
 create table t1 (a int auto_increment primary key) engine=innodb;
---error 1105
+--error ER_UNKNOWN_ERROR
 alter table t1 order by a;
 drop table t1;
 
