@@ -396,7 +396,7 @@ void ClientMySQLProtocol::sendEOF()
 }
 
 
-void ClientMySQLProtocol::sendError(uint32_t sql_errno, const char *err)
+void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err)
 {
   uint32_t length;
   /*
@@ -404,7 +404,7 @@ void ClientMySQLProtocol::sendError(uint32_t sql_errno, const char *err)
   */
   unsigned char buff[2+1+SQLSTATE_LENGTH+DRIZZLE_ERRMSG_SIZE], *pos;
 
-  assert(sql_errno);
+  assert(sql_errno != EE_OK);
   assert(err && err[0]);
 
   /*
@@ -429,7 +429,7 @@ void ClientMySQLProtocol::sendError(uint32_t sql_errno, const char *err)
     return;
   }
 
-  int2store(buff,sql_errno);
+  int2store(buff, static_cast<uint16_t>(sql_errno));
   pos= buff+2;
 
   /* The first # is to make the client backward compatible */
