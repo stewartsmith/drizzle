@@ -68,7 +68,7 @@ public:
       Notify::Notification n("Info", msgbuf);
       break;
 
-    case error::DEBUG:
+    case error::INSPECT:
       Notify::Notification n("Debug", msgbuf);
       break;
 
