@@ -21,7 +21,7 @@ Comparative and regular functions
 ===================     ====================================================================================================
 Operator                  Description
 ===================     ==================================================================================================== 
-LIKE 	                  Returns values that match a simple pattern
+LIKE 	                  Matches a simple pattern
 NOT LIKE 	          Negation of simple pattern matching
 STRCMP() 	          Compare two strings
 NOT REGEXP 	          Negation of REGEXP
