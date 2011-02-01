@@ -28,7 +28,7 @@ namespace error
 {
 
 enum level_t {
-  DEBUG= 1,
+  INSPECT= 1, // note, this is what normally we would call "debug"
   INFO= 2,
   WARN= 3,
   ERROR= 4

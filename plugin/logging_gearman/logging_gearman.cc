@@ -24,6 +24,7 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/errmsg_print.h>
 #include <boost/date_time.hpp>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
@@ -181,7 +182,7 @@ public:
 
     if (gearman_client_create(&_gearman_client) == NULL)
     {
-      sql_perror(_("fail gearman_client_create()"));
+      drizzled::sql_perror(_("fail gearman_client_create()"));
       return;
     }
 
