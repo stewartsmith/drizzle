@@ -192,7 +192,7 @@ public:
                                    host.c_str(), 0);
     if (ret != GEARMAN_SUCCESS)
     {
-      drizzled::errmsg_printf(error::ERROR, _("fail gearman_client_add_server(): %s"),
+      drizzled::errmsg_printf(drizzled::error::ERROR, _("fail gearman_client_add_server(): %s"),
                               gearman_client_error(&_gearman_client));
       return;
     }
