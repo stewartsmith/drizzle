@@ -38,16 +38,7 @@ For example: ::
 
 	SELECT CHAR(65) AS ch_65;
 
-Returns "A"
-
-
-CHAR_LENGTH
------------
- The CHAR_LENGTH(str) function returns string length measured in characters. 
-
-A multi-byte character counts as single character such as a string contains 5 two-byte characters, then LENGTH() function returns 10, but the CHAR_LENGTH() returns 5. ::        
-	CHARACTER_LENGTH(str) 
-This function is same as CHAR_LENGTH().  
+Returns "A" 
 
 HEX()
 -----
