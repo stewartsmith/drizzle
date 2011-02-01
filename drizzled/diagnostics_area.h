@@ -54,7 +54,7 @@ public:
                      ha_rows found_rows_arg, uint64_t last_insert_id_arg,
                      const char *message);
   void set_eof_status(Session *session);
-  void set_error_status(uint32_t sql_errno_arg, const char *message_arg);
+  void set_error_status(drizzled::error_t sql_errno_arg, const char *message_arg);
 
   void disable_status();
 
@@ -68,7 +68,7 @@ public:
   enum_diagnostics_status status() const { return m_status; }
 
   const char *message() const;
-  uint32_t sql_errno() const;
+  drizzled::error_t sql_errno() const;
   uint32_t server_status() const;
   ha_rows affected_rows() const;
   ha_rows found_rows() const;
@@ -84,7 +84,7 @@ private:
     SQL error number. One of ER_ codes from share/errmsg.txt.
     Set by set_error_status.
   */
-  uint32_t m_sql_errno;
+  drizzled::error_t m_sql_errno;
 
   /**
     Copied from session->server_status when the diagnostics area is assigned.
@@ -95,6 +95,7 @@ private:
     Assigned by OK, EOF or ERROR.
   */
   uint32_t m_server_status;
+
   /**
     The number of rows affected by the last statement. This is
     semantically close to session->row_count_func, but has a different

@@ -172,7 +172,7 @@ void module::Registry::buildDeps()
       }
       if (not found_dep)
       {
-        errmsg_printf(ERRMSG_LVL_ERROR,
+        errmsg_printf(error::ERROR,
                       _("Couldn't process plugin module dependencies. "
                         "%s depends on %s but %s is not to be loaded.\n"),
                       handle->getName().c_str(),

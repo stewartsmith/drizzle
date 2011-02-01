@@ -180,9 +180,9 @@ public:
     printDebug("sendEOF");
   }
 
-  virtual void sendError(uint32_t sql_errno, const char *err)
+  virtual void sendError(const drizzled::error_t sql_errno, const char *err)
   {
-    cout << "Error: " << sql_errno << " " << err << endl;
+    cout << "Error: " << static_cast<long>(sql_errno) << " " << err << endl;
   }
 
   virtual bool sendFields(List<Item> *list)
@@ -340,7 +340,7 @@ public:
 
     if (pipe(pipe_fds) == -1)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("pipe() failed with errno %d"), errno);
+      errmsg_printf(error::ERROR, _("pipe() failed with errno %d"), errno);
       return true;
     }
 

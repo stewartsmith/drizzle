@@ -1297,9 +1297,9 @@ select t2.fld3 from t2 where fld3 LIKE 'don_t_find_me_please%';
 # The next should give an error
 #
 
-#-- error 1176
+#-- error ER_KEY_DOES_NOT_EXITS
 #explain select fld3 from t2 ignore index (fld3,not_used);
-#-- error 1176
+#-- error ER_KEY_DOES_NOT_EXITS
 #explain select fld3 from t2 use index (not_used);
 
 #
@@ -2528,7 +2528,7 @@ insert into t4 values (1);
 select * from t1 join t2 join t3 on (t2.b = t3.b and t1.a = t3.a);
 # Notice that ',' has lower priority than 'join', thus we have that:
 # t1, t2 join t3 <==> t1, (t2 join t3).
--- error 1054
+--error ER_BAD_FIELD_ERROR
 select * from t1, t2 join t3 on (t2.b = t3.b and t1.a = t3.a);
 select * from t1 join t2 join t3 join t4 on (t1.a = t4.c and t2.b = t4.c);
 select * from t1 join t2 join t4 using (c);

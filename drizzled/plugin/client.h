@@ -124,7 +124,7 @@ public:
   /* Send responses. */
   virtual void sendOK(void)= 0;
   virtual void sendEOF(void)= 0;
-  virtual void sendError(uint32_t sql_errno, const char *err)= 0;
+  virtual void sendError(const drizzled::error_t sql_errno, const char *err)= 0;
 
   /**
    * Send field list for result set.
