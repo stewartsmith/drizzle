@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ERROR_LEVEL_H
-#define DRIZZLED_ERROR_LEVEL_H
+#ifndef DRIZZLED_ERROR_LEVEL_T_H
+#define DRIZZLED_ERROR_LEVEL_T_H
 
 namespace drizzled
 {
@@ -37,4 +37,4 @@ enum level_t {
 } /* namespace error */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ERROR_LEVEL_H */
+#endif /* DRIZZLED_ERROR_LEVEL_T_H */
