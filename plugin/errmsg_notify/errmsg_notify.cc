@@ -39,9 +39,40 @@
 
 using namespace drizzled;
 
+static bool local_notify(Notify::Notification &_notify)
+{
+  /**
+   * @TODO: Make this timeout a system variable
+ */
+  _notify.set_timeout(3000);
+
+#ifdef GLIBMM_EXCEPTIONS_ENABLED
+  try
+  {
+    if (not _notify.show())
+#else
+      boost::scoped_ptr<Glib::Error> error;
+    if (not _notify.show(error))
+#endif
+    {
+      std::cerr << _("Failed to send error message to libnotify") << std::endl;
+      return true;
+    }
+#ifdef GLIBMM_EXCEPTIONS_ENABLED
+  }
+  catch (Glib::Error& err)
+  {
+    std::cerr << err.what() << std::endl;
+  }
+#endif
+
+  return false;
+}
+
 class Error_message_notify : public plugin::ErrorMessage
 {
   std::vector<std::string> errmsg_tags;
+
 public:
   Error_message_notify()
    : plugin::ErrorMessage("Error_message_notify"),
@@ -60,62 +91,37 @@ public:
     int prv;
 
     prv= vsnprintf(msgbuf, MAX_MSG_LEN, format, ap);
-    if (prv < 0) return true;
+    if (prv < 0)
+      return true;
 
     switch (priority)
     {
     case error::INFO:
       Notify::Notification n("Info", msgbuf);
-      break;
+      return local_notify(n);
 
     case error::INSPECT:
       Notify::Notification n("Debug", msgbuf);
-      break;
+      return local_notify(n);
 
     case error::WARN:
       Notify::Notification n("Warn", msgbuf);
-      break;
+      return local_notify(n);
 
     case error::ERROR:
       Notify::Notification n("Error", msgbuf);
-      break;
+      return local_notify(n);
     }
-    /**
-     * @TODO: Make this timeout a system variable
-     */
-    n.set_timeout(3000);
-
-#ifdef GLIBMM_EXCEPTIONS_ENABLED
-    try
-    {
-      if (!n.show())
-#else
-      boost::scoped_ptr<Glib::Error> error;
-      if (!n.show(error))
-#endif
-      {
-        std::cerr << _("Failed to send error message to libnotify\n");
-        return true;
-      }
-#ifdef GLIBMM_EXCEPTIONS_ENABLED
-     }
-     catch (Glib::Error& err)
-     {
-       std::cerr << err.what() << std::endl;
-     }
-#endif
 
   return false;
   
   }
 };
 
-static Error_message_notify *handler= NULL;
 static int plugin_init(module::Context &context)
 {
   Notify::init("Drizzled");
-  handler= new Error_message_notify();
-  context.add(handler);
+  context.add(new Error_message_notify());
 
   return 0;
 }
