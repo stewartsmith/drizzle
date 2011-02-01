@@ -50,7 +50,16 @@ public:
   explicit Listen(std::string name_arg)
     : Plugin(name_arg, "Listen")
   {}
-  virtual ~Listen() {}
+  virtual ~Listen()
+  {
+    std::vector<ListenCounter*>::iterator it;
+    for (it= counters.begin(); it < counters.end(); ++it)
+    {
+      ListenCounter* counter= *it;
+      delete counter->first;
+      delete counter;
+    }
+  }
 
   static ListenVector &getListenProtocols();
 
