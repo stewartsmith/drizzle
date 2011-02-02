@@ -69,6 +69,7 @@ public:
   virtual drizzled::plugin::Client *getClient(int fd);
   static ProtocolCounters *mysql_counters;
   virtual ProtocolCounters *getCounters(void) const { return mysql_counters; }
+  void addCountersToTable(void);
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
