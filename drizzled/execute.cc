@@ -22,6 +22,7 @@
 
 #include "drizzled/session.h"
 #include "drizzled/user_var_entry.h"
+#include "drizzled/plugin/client/cached.h"
 #include "drizzled/plugin/client/concurrent.h"
 #include "drizzled/catalog/local.h"
 #include "drizzled/execute.h"
@@ -51,7 +52,7 @@ void Execute::run(std::string &execution_string)
 
   if (_session.isConcurrentExecuteAllowed())
   {
-    plugin::client::Concurrent *client= new plugin::client::Concurrent;
+    plugin::client::Cached *client= new plugin::client::Cached;
     client->pushSQL(execution_string);
     Session::shared_ptr new_session= Session::make_shared(client, catalog::local());
 
