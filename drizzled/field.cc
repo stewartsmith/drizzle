@@ -827,26 +827,24 @@ Field::Field(unsigned char *ptr_arg,
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
              utype unireg_check_arg, 
-             const char *field_name_arg)
-  :
+             const char *field_name_arg) :
     ptr(ptr_arg),
     null_ptr(null_ptr_arg),
     table(NULL),
     orig_table(NULL),
     field_name(field_name_arg),
+    comment(NULL_LEX_STRING),
     key_start(0),
     part_of_key(0),
     part_of_key_not_clustered(0),
     part_of_sortkey(0),
     unireg_check(unireg_check_arg),
     field_length(length_arg),
+    flags(null_ptr ? 0: NOT_NULL_FLAG),
+    field_index(0),
     null_bit(null_bit_arg),
     is_created_from_null_item(false)
 {
-  flags= null_ptr ? 0: NOT_NULL_FLAG;
-  comment.str= (char*) "";
-  comment.length= 0;
-  field_index= 0;
 }
 
 void Field::hash(uint32_t *nr, uint32_t *nr2)
