@@ -245,6 +245,10 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -285,13 +289,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   keys_for_keyread(0),
   event_observers(NULL)
 {
-
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   if (type_arg == message::Table::INTERNAL)
   {
     identifier::Table::build_tmptable_filename(private_key_for_cache.vectorPtr());
@@ -309,7 +306,12 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -352,10 +354,6 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
 {
   assert(identifier.getKey() == key);
 
-  table_charset= 0;
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   private_key_for_cache= key;
 
   table_category=         TABLE_CATEGORY_TEMPORARY;
@@ -384,7 +382,12 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -425,12 +428,6 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   keys_for_keyread(0),
   event_observers(NULL)
 {
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   private_key_for_cache= identifier.getKey();
   assert(identifier.getPath().size()); // Since we are doing a create table, this should be a positive value
   private_normalized_path.resize(identifier.getPath().size() + 1);
@@ -462,7 +459,12 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -503,12 +505,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   keys_for_keyread(0),
   event_observers(NULL)
 {
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   char *path_buff;
   std::string _path;
 
@@ -629,7 +625,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   table_charset= get_charset(table_options.collation_id());
 
-  if (! table_charset)
+  if (not table_charset)
   {
     my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, MYF(0),
              table_options.collation().c_str(),

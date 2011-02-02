@@ -284,6 +284,7 @@ private:
   LEX_STRING table_name;                /* Table name (for open) */
   LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
+
 public:
 
   const char *getNormalizedPath() const
