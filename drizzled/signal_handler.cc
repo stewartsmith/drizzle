@@ -49,7 +49,7 @@ extern "C"
 void drizzled_print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu32),
+    errmsg_printf(error::WARN, _("Got signal %d from thread %"PRIu32),
                   sig, global_thread_id);
 #ifndef HAVE_BSD_SIGNALS
   sigset_t set;

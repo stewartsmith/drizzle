@@ -757,7 +757,7 @@ InnodbTrxTool::Generator::Generator(Field **arg, const char* in_table_name) :
 
   if (trx_i_s_cache_is_truncated(trx_i_s_cache))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Warning: data in %s truncated due to memory limit of %d bytes\n"), 
+    errmsg_printf(error::ERROR, _("Warning: data in %s truncated due to memory limit of %d bytes\n"), 
                   table_name, TRX_I_S_MEM_LIMIT);
   } 
 

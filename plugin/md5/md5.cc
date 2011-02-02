@@ -96,7 +96,7 @@ static int initialize(module::Context &context)
   /* Initialize libgcrypt */
   if (not gcry_check_version(GCRYPT_VERSION))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("libgcrypt library version mismatch\n"));
+    errmsg_printf(error::ERROR, _("libgcrypt library version mismatch"));
     return 1;
   }
   /* Disable secure memory.  */

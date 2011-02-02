@@ -222,9 +222,9 @@ static int init(module::Context &context)
   const module::option_map &vm= context.getOptions();
 
   AuthFile *auth_file = new AuthFile("auth_file", fs::path(vm["users"].as<string>()));
-  if (!auth_file->loadFile())
+  if (not auth_file->loadFile())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not load auth file: %s\n"),
+    errmsg_printf(error::ERROR, _("Could not load auth file: %s\n"),
                   auth_file->getError().c_str());
     delete auth_file;
     return 1;
@@ -232,6 +232,7 @@ static int init(module::Context &context)
 
   context.add(auth_file);
   context.registerVariable(new sys_var_const_string_val("users", vm["users"].as<string>()));
+
   return 0;
 }
 

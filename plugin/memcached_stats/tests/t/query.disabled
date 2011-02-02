@@ -10,7 +10,7 @@
 create schema if not exists data_dictionary;
 --enable_warnings
 
---error 1105
+--error ER_UNKNOWN_ERROR
 select * from data_dictionary.memcached_stats;
 
 #

@@ -171,13 +171,10 @@ public:
     fd= open(_filename.c_str(),
              O_WRONLY | O_APPEND | O_CREAT,
              S_IRUSR|S_IWUSR);
+
     if (fd < 0)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
-                    _filename.c_str(),
-                    errmsg);
+      sql_perror( _("fail open()"), _filename);
       return;
     }
 

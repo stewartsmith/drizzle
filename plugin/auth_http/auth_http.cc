@@ -131,7 +131,7 @@ static int initialize(drizzled::module::Context &context)
   const string auth_url(vm["url"].as<string>());
   if (auth_url.size() == 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("auth_http plugin loaded but required option url not "
                     "specified. Against which URL are you intending on "
                     "authenticating?\n"));
