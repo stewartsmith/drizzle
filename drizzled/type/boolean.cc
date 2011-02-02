@@ -31,7 +31,44 @@ namespace drizzled
 namespace type
 {
 
-bool convert(bool &destination, const char *source, size_t source_length)
+bool convert(String &destination, const bool source, bool ansi_display)
+{
+  uint32_t mlength= (5) * system_charset_info->mbmaxlen;
+
+  destination.alloc(mlength);
+  char *buffer=(char*) destination.c_ptr();
+
+  if (source)
+  {
+    if (ansi_display)
+    {
+      memcpy(buffer, "YES", 3);
+      destination.length(3);
+    }
+    else
+    {
+      memcpy(buffer, "TRUE", 4);
+      destination.length(4);
+    }
+  }
+  else
+  {
+    if (ansi_display)
+    {
+      memcpy(buffer, "NO", 2);
+      destination.length(2);
+    }
+    else
+    {
+      memcpy(buffer, "FALSE", 5);
+      destination.length(5);
+    }
+  }
+
+  return true;
+}
+
+bool convert(bool &destination, const char *source, const size_t source_length)
 {
   switch (source_length)
   {

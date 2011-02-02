@@ -28,7 +28,8 @@ namespace type
 {
 
 bool convert(bool &destination, String &source);
-bool convert(bool &destination, const char *source, size_t source_length);
+bool convert(bool &destination, const char *source, const size_t source_length);
+bool convert(String &destination, const bool source, bool ansi_display);
 
 } /* namespace type */
 } /* namespace drizzled */

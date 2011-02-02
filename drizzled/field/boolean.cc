@@ -138,38 +138,8 @@ int64_t Boolean::val_int()
 String *Boolean::val_str(String *val_buffer, String *)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
-  const CHARSET_INFO * const cs= &my_charset_bin;
-  uint32_t mlength= (5) * cs->mbmaxlen;
 
-  val_buffer->alloc(mlength);
-  char *buffer=(char*) val_buffer->c_ptr();
-
-  if (isTrue())
-  {
-    if (ansi_display)
-    {
-      memcpy(buffer, "YES", 3);
-      val_buffer->length(3);
-    }
-    else
-    {
-      memcpy(buffer, "TRUE", 4);
-      val_buffer->length(4);
-    }
-  }
-  else
-  {
-    if (ansi_display)
-    {
-      memcpy(buffer, "NO", 2);
-      val_buffer->length(2);
-    }
-    else
-    {
-      memcpy(buffer, "FALSE", 5);
-      val_buffer->length(5);
-    }
-  }
+  (void)type::convert(*val_buffer, isTrue(), ansi_display);
 
   return val_buffer;
 }
