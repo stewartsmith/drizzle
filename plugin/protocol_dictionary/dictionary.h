@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Andrew Hutchings
+ *  Copyright (C) 2011 Andrew Hutchings
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,31 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H
-#define PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H
+#ifndef PLUGIN_PROTOCOL_DICTIONARY_DICTIONARY_H
+#define PLUGIN_PROTOCOL_DICTIONARY_DICTIONARY_H
 
 #include "drizzled/plugin/table_function.h"
+#include "drizzled/plugin/listen.h"
 
-namespace drizzle_plugin
-{
-
-class MysqlProtocolStatus : public drizzled::plugin::TableFunction
+class ProtocolTool : public drizzled::plugin::TableFunction
 {
 public:
-  MysqlProtocolStatus() :
-    drizzled::plugin::TableFunction("DATA_DICTIONARY","MYSQL_PROTOCOL_STATUS")
-  {
-    add_field("VARIABLE_NAME");
-    add_field("VARIABLE_VALUE");
-  }
+
+  ProtocolTool();
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
-    drizzled::drizzle_show_var *status_var_ptr;
-
+    std::vector<drizzled::plugin::Listen *>::iterator protocol_it;
+    std::vector<drizzled::plugin::ListenCounter *>::iterator counter_it;
+    drizzled::plugin::Listen *protocol;
+    drizzled::plugin::ListenCounter *counter;
   public:
-    Generator(drizzled::Field **fields);
-
+    Generator(drizzled::Field **arg);
+    void fill();
     bool populate();
   };
 
@@ -51,7 +47,4 @@ public:
     return new Generator(arg);
   }
 };
-
-} /* namespace drizzle_plugin */
-
-#endif /* PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H */
+#endif /* PLUGIN_PROTOCOL_DICTIONARY_DICTIONARY_H */

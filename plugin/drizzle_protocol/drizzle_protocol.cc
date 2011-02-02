@@ -33,7 +33,6 @@
 #include <drizzled/module/option_map.h>
 #include "drizzled/util/tokenize.h"
 #include "drizzle_protocol.h"
-#include "plugin/drizzle_protocol/status_table.h"
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -97,8 +96,9 @@ static int init(drizzled::module::Context &context)
 {  
   const module::option_map &vm= context.getOptions();
 
-  context.add(new StatusTable);
-  context.add(new ListenDrizzleProtocol("drizzle_protocol", vm["bind-address"].as<std::string>(), true));
+  ListenDrizzleProtocol *protocol=new ListenDrizzleProtocol("drizzle_protocol", vm["bind-address"].as<std::string>(), true);
+  protocol->addCountersToTable();
+  context.add(protocol);
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("connect_timeout", connect_timeout));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("read_timeout", read_timeout));
