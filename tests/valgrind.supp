@@ -355,6 +355,15 @@
 }
 
 {
+   uncompress issue in libz
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   fun:uncompress
+   ...
+}
+
+{
    MyISAM pwrite issue. Teh Suck.
    Memcheck:Param
    pwrite64(buf)
@@ -392,7 +401,6 @@
    fun:main
 }
 
-
 # https://bugs.launchpad.net/drizzle/+bug/582495
 {
    Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
@@ -401,7 +409,7 @@
    ...
    fun:_ZN8drizzled8internal8my_writeEiPKhmi
    ...
-   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
+   fun:_ZN8drizzled9SortParam10write_keysEPPhjPNS_8internal11st_io_cacheES5_
    ...
 }
 {
@@ -411,41 +419,7 @@
    ...
    fun:_ZN8drizzled8internal8my_writeEiPKhmi
    ...
-   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEybPy
-   ...
-}
-{
-   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
-   Memcheck:Param
-   ...
-   fun:_ZN8drizzled8internal8my_writeEiPKhmi
-   ...
-   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
-   ...
-}
-{
-   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
-   Memcheck:Param
-   ...
-   fun:_ZN8drizzled8internal8my_writeEiPKhmi
-   ...
-   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEybPy
-   ...
-}
-
-# https://bugs.launchpad.net/drizzle/+bug/582498
-{
-   Bug 582498 - Invalid read of size 8
-   Memcheck:Addr8
-   fun:_Z8hp_panicN8drizzled17ha_panic_functionE
-   fun:_ZN10HeapEngineD0Ev
-   ...
-}
-{
-   Bug 582498 - Invalid read of size 4
-   Memcheck:Addr4
-   fun:_Z8hp_panicN8drizzled17ha_panic_functionE
-   fun:_ZN10HeapEngineD0Ev
+   fun:_ZN8drizzled8FileSort3runEPNS_5TableEPNS_9SortFieldEjPNS_9optimizer9SqlSelectEmbRm
    ...
 }
 
@@ -457,6 +431,16 @@
    ...
    fun:pthread_create*
    fun:_Z34initTransactionLogBackgroundWorkerv
+   ...
+}
+
+# https://bugs.launchpad.net/drizzle/+bug/710947
+{
+   Bug 710947 - bytes in 6 blocks are definitely lost in loss record
+   Memcheck:Leak
+   fun:_ZnwmRKSt9nothrow_t
+   ...
+   fun:_ZN8drizzled6plugin11HelloEvents14observeEventDoERNS0_9EventDataE
    ...
 }
 
