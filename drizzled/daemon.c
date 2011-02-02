@@ -37,23 +37,70 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <unistd.h>
+#include <sys/select.h>
 
-int daemonize(int nochdir, int noclose);
+int daemonize(int nochdir, int noclose, int wait_sigusr1);
+int daemon_is_ready(void);
+void sigusr1_handler(int sig);
 
-int daemonize(int nochdir, int noclose)
+pid_t parent_pid;
+
+void sigusr1_handler(int sig)
+{
+  if (sig == SIGUSR1)
+    _exit(EXIT_SUCCESS);
+}
+
+int daemon_is_ready()
+{
+  kill(parent_pid, SIGUSR1);
+  return 0;
+}
+
+int daemonize(int nochdir, int noclose, int wait_sigusr1)
 {
     int fd;
+    pid_t child= -1;
 
-    switch (fork()) {
+    parent_pid= getpid();
+    signal(SIGUSR1, sigusr1_handler);
+
+    child= fork();
+
+    switch (child)
+    {
     case -1:
         return (-1);
     case 0:
         break;
     default:
+      if (wait_sigusr1)
+      {
+        /* parent */
+        int exit_code= -1;
+        int status;
+        while (waitpid(child, &status, 0) != child);
+        if (WIFEXITED(status))
+        {
+          exit_code= WEXITSTATUS(status);
+        }
+        if (WIFSIGNALED(status))
+        {
+          exit_code= -1;
+        }
+        _exit(exit_code);
+      }
+      else
+      {
         _exit(EXIT_SUCCESS);
+      }
     }
 
+    /* child */
     if (setsid() == -1)
         return (-1);
 
