@@ -104,7 +104,7 @@ public:
 
   virtual void sendOK(void);
   virtual void sendEOF(void);
-  virtual void sendError(uint32_t sql_errno, const char *err);
+  virtual void sendError(const drizzled::error_t sql_errno, const char *err);
 
   virtual bool sendFields(drizzled::List<drizzled::Item> *list);
 

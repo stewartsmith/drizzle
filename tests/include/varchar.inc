@@ -14,10 +14,10 @@ enable_query_log;
 eval create $temp table t1 (v varchar(10), c char(10), t text);
 insert into t1 values('+ ', '+ ', '+ ');
 set @a=repeat(' ',20);
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
 set @a=repeat(' ',10);
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
 set @a=repeat(' ',9);
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
@@ -195,7 +195,7 @@ alter table t1 modify a varchar(10);
 insert into t1 values ('a '),('a  '),('a   '),('a         ');
 --error ER_DUP_ENTRY
 insert into t1 values ('a     ');
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 values ('a          ');
 --error ER_DUP_ENTRY
 insert into t1 values ('a ');

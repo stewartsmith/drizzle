@@ -388,7 +388,7 @@ Session::~Session()
     assert(security_ctx);
     if (global_system_variables.log_warnings)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),
+      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE),
                     internal::my_progname,
                     thread_id,
                     security_ctx->username().c_str());
@@ -1676,7 +1676,7 @@ void Session::disconnect(enum error_t errcode)
   {
     if (not getKilled() && variables.log_warnings > 1)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
+      errmsg_printf(error::WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
                   , (_schema->empty() ? "unconnected" : _schema->c_str())
                   , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
@@ -1988,7 +1988,7 @@ bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, 
     {
       std::string path;
       identifier.getSQLPath(path);
-      errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+      errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
                     path.c_str(), errno);
     }
 
@@ -2007,7 +2007,7 @@ bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const id
   {
     std::string path;
     identifier.getSQLPath(path);
-    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+    errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path.c_str(), error);
 
     return true;

@@ -24,6 +24,7 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/errmsg_print.h>
 #include <boost/date_time.hpp>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
@@ -181,10 +182,7 @@ public:
 
     if (gearman_client_create(&_gearman_client) == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
-                              errmsg);
+      drizzled::sql_perror(_("fail gearman_client_create()"));
       return;
     }
 
@@ -194,7 +192,7 @@ public:
                                    host.c_str(), 0);
     if (ret != GEARMAN_SUCCESS)
     {
-      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_add_server(): %s"),
+      drizzled::errmsg_printf(drizzled::error::ERROR, _("fail gearman_client_add_server(): %s"),
                               gearman_client_error(&_gearman_client));
       return;
     }

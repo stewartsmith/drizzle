@@ -1687,7 +1687,7 @@ int Table::report_error(int error)
     print them to the .err log
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
+    errmsg_printf(error::ERROR, _("Got error %d when reading table '%s'"),
                   error, getShare()->getPath());
   print_error(error, MYF(0));
 

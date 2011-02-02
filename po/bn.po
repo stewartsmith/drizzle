@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-01-18 12:14-0500\n"
+"POT-Creation-Date: 2011-02-01 09:29-0500\n"
 "PO-Revision-Date: 2010-12-14 00:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Bengali <bn@li.org>\n"
@@ -152,7 +152,7 @@ msgstr ""
 msgid "Error: Invalid Value for max_input_line"
 msgstr ""
 
-#: ../client/drizzle.cc:1287 ../client/drizzledump.cc:483
+#: ../client/drizzle.cc:1287 ../client/drizzledump.cc:482
 msgid "Options used only in command line"
 msgstr ""
 
@@ -230,8 +230,8 @@ msgstr ""
 msgid "-v vvv implies that verbose= 3, Used to specify verbose"
 msgstr ""
 
-#: ../client/drizzle.cc:1317 ../client/drizzledump.cc:507
-#: ../drizzled/drizzled.cc:1249
+#: ../client/drizzle.cc:1317 ../client/drizzledump.cc:506
+#: ../drizzled/drizzled.cc:1235
 msgid "Output version information and exit."
 msgstr ""
 
@@ -247,11 +247,11 @@ msgstr ""
 msgid "Ping the server to check if it's alive."
 msgstr ""
 
-#: ../client/drizzle.cc:1327 ../drizzled/drizzled.cc:1168
+#: ../client/drizzle.cc:1327 ../drizzled/drizzled.cc:1154
 msgid "Configuration file defaults are not used if no-defaults is set"
 msgstr ""
 
-#: ../client/drizzle.cc:1330 ../client/drizzledump.cc:515
+#: ../client/drizzle.cc:1330 ../client/drizzledump.cc:514
 msgid "Options specific to the drizzle client"
 msgstr ""
 
@@ -368,7 +368,7 @@ msgstr ""
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
-#: ../client/drizzle.cc:1380 ../client/drizzledump.cc:552
+#: ../client/drizzle.cc:1380 ../client/drizzledump.cc:553
 msgid "Options specific to the client"
 msgstr ""
 
@@ -388,17 +388,17 @@ msgid ""
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
 msgstr ""
 
-#: ../client/drizzle.cc:1393 ../client/drizzledump.cc:561
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:475
+#: ../client/drizzle.cc:1393 ../client/drizzledump.cc:562
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:583
 msgid "User for login if not current user."
 msgstr ""
 
-#: ../client/drizzle.cc:1395 ../client/drizzledump.cc:563
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:481
+#: ../client/drizzle.cc:1395 ../client/drizzledump.cc:564
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:589
 msgid "The protocol of connection (mysql or drizzle)."
 msgstr ""
 
-#: ../client/drizzle.cc:1398 ../client/drizzledump.cc:575
+#: ../client/drizzle.cc:1398 ../client/drizzledump.cc:576
 msgid "Allowed Options"
 msgstr ""
 
@@ -411,9 +411,9 @@ msgstr ""
 msgid "DELIMITER cannot contain a backslash character"
 msgstr ""
 
-#: ../client/drizzle.cc:1613 ../client/drizzledump.cc:674
+#: ../client/drizzle.cc:1613 ../client/drizzledump.cc:675
 #: ../client/drizzleimport.cc:471 ../client/drizzleslap.cc:623
-#: ../client/drizzletest.cc:5671
+#: ../client/drizzletest.cc:5659
 msgid "Error: Unknown protocol"
 msgstr ""
 
@@ -817,46 +817,46 @@ msgstr ""
 msgid "PROMPT set to '%s'\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:230
+#: ../client/drizzledump.cc:229
 msgid "Error inserting into destination database"
 msgstr ""
 
-#: ../client/drizzledump.cc:254
+#: ../client/drizzledump.cc:253
 #, c-format
 msgid "Got errno %d on write"
 msgstr ""
 
-#: ../client/drizzledump.cc:299
+#: ../client/drizzledump.cc:298
 #, c-format
 msgid ""
 "%s: You can't use --single-transaction and --lock-all-tables at the same "
 "time.\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:306
+#: ../client/drizzledump.cc:305
 #, c-format
 msgid "%s: --databases or --all-databases can't be used with --tab.\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:374
+#: ../client/drizzledump.cc:373
 msgid "-- Retrieving database structures..."
 msgstr ""
 
-#: ../client/drizzledump.cc:486
+#: ../client/drizzledump.cc:485
 msgid ""
 "Dump all the databases. This will be same as --databases with all databases "
 "selected."
 msgstr ""
 
-#: ../client/drizzledump.cc:488
+#: ../client/drizzledump.cc:487
 msgid "Dump all the tablespaces."
 msgstr ""
 
-#: ../client/drizzledump.cc:490
+#: ../client/drizzledump.cc:489
 msgid "Use complete insert statements."
 msgstr ""
 
-#: ../client/drizzledump.cc:492
+#: ../client/drizzledump.cc:491
 msgid ""
 "Flush logs file in server before starting dump. Note that if you dump many "
 "databases at once (using the option --databases= or --all-databases), the "
@@ -867,22 +867,22 @@ msgid ""
 "all-tables or --flush-logs"
 msgstr ""
 
-#: ../client/drizzledump.cc:494
+#: ../client/drizzledump.cc:493
 msgid "Continue even if we get an sql-error."
 msgstr ""
 
-#: ../client/drizzledump.cc:495
+#: ../client/drizzledump.cc:494
 msgid "Display this help message and exit."
 msgstr ""
 
-#: ../client/drizzledump.cc:497
+#: ../client/drizzledump.cc:496
 msgid ""
 "Locks all tables across all databases. This is achieved by taking a global "
 "read lock for the duration of the whole dump. Automatically turns --single-"
 "transaction off."
 msgstr ""
 
-#: ../client/drizzledump.cc:499
+#: ../client/drizzledump.cc:498
 msgid ""
 "Creates a consistent snapshot by dumping all tables in a single transaction. "
 "Works ONLY for tables stored in storage engines which support "
@@ -894,73 +894,73 @@ msgid ""
 "from them."
 msgstr ""
 
-#: ../client/drizzledump.cc:501
+#: ../client/drizzledump.cc:500
 msgid ""
 "Disable --opt. Disables --add-drop-table, --add-locks, --create-options, ---"
 "extended-insert and --disable-keys."
 msgstr ""
 
-#: ../client/drizzledump.cc:502
+#: ../client/drizzledump.cc:501
 msgid "Overrides option --databases (-B)."
 msgstr ""
 
-#: ../client/drizzledump.cc:504
+#: ../client/drizzledump.cc:503
 msgid "Number of rows before each output progress report (requires --verbose)."
 msgstr ""
 
-#: ../client/drizzledump.cc:506
+#: ../client/drizzledump.cc:505
 msgid "Print info about the various stages."
 msgstr ""
 
-#: ../client/drizzledump.cc:508
+#: ../client/drizzledump.cc:507
 msgid "Turn off Comments"
 msgstr ""
 
-#: ../client/drizzledump.cc:509
+#: ../client/drizzledump.cc:508
 msgid "Turn off create-options"
 msgstr ""
 
-#: ../client/drizzledump.cc:510
+#: ../client/drizzledump.cc:509
 msgid "Turn off extended-insert"
 msgstr ""
 
-#: ../client/drizzledump.cc:511
+#: ../client/drizzledump.cc:510
 msgid "Turn off dump date at the end of the output"
 msgstr ""
 
-#: ../client/drizzledump.cc:512
+#: ../client/drizzledump.cc:511
 msgid "Do not read from the configuration files"
 msgstr ""
 
-#: ../client/drizzledump.cc:518
+#: ../client/drizzledump.cc:517
 msgid "Add a 'DROP DATABASE' before each create."
 msgstr ""
 
-#: ../client/drizzledump.cc:519
+#: ../client/drizzledump.cc:518
 msgid "Do not add a 'drop table' before each create."
 msgstr ""
 
-#: ../client/drizzledump.cc:521
+#: ../client/drizzledump.cc:520
 msgid ""
 "Give less verbose output (useful for debugging). Disables structure comments "
 "and header/footer constructs.  Enables options --skip-add-drop-table --no-"
 "set-names --skip-disable-keys"
 msgstr ""
 
-#: ../client/drizzledump.cc:523
+#: ../client/drizzledump.cc:522
 msgid ""
 "To dump several databases. Note the difference in usage; In this case no "
 "tables are given. All name arguments are regarded as databasenames. 'USE "
 "db_name;' will be included in the output."
 msgstr ""
 
-#: ../client/drizzledump.cc:525
+#: ../client/drizzledump.cc:524
 msgid ""
 "'ALTER TABLE tb_name DISABLE KEYS;' and 'ALTER TABLE tb_name ENABLE KEYS;' "
 "will not be put in the output."
 msgstr ""
 
-#: ../client/drizzledump.cc:527
+#: ../client/drizzledump.cc:526
 msgid ""
 "Do not dump the specified table. To specify more than one table to ignore, "
 "use the directive multiple times, once for each table.  Each table must be "
@@ -968,127 +968,133 @@ msgid ""
 "table"
 msgstr ""
 
-#: ../client/drizzledump.cc:529
+#: ../client/drizzledump.cc:528
 msgid "Insert rows with INSERT IGNORE."
 msgstr ""
 
-#: ../client/drizzledump.cc:531
+#: ../client/drizzledump.cc:530
 msgid "Wrap a table's data in START TRANSACTION/COMMIT statements."
 msgstr ""
 
-#: ../client/drizzledump.cc:533
+#: ../client/drizzledump.cc:532
 msgid ""
 "'CREATE DATABASE IF NOT EXISTS db_name;' will not be put in the output. The "
 "above line will be added otherwise, if --databases or --all-databases option "
 "was given."
 msgstr ""
 
-#: ../client/drizzledump.cc:535
+#: ../client/drizzledump.cc:534
 msgid "No row information."
 msgstr ""
 
-#: ../client/drizzledump.cc:537
+#: ../client/drizzledump.cc:536
 msgid "Use REPLACE INTO instead of INSERT INTO."
 msgstr ""
 
-#: ../client/drizzledump.cc:539
+#: ../client/drizzledump.cc:538
 msgid "Where to send output to (stdout|database"
 msgstr ""
 
-#: ../client/drizzledump.cc:541
+#: ../client/drizzledump.cc:540
 msgid ""
 "Hostname for destination db server (requires --destination-type=database)"
 msgstr ""
 
-#: ../client/drizzledump.cc:543
+#: ../client/drizzledump.cc:542
 msgid ""
 "Port number for destination db server (requires --destination-type=database)"
 msgstr ""
 
-#: ../client/drizzledump.cc:545
+#: ../client/drizzledump.cc:544
 msgid ""
 "User name for destination db server (resquires --destination-type=database)"
 msgstr ""
 
-#: ../client/drizzledump.cc:547
+#: ../client/drizzledump.cc:546
 msgid ""
 "Password for destination db server (requires --destination-type=database)"
 msgstr ""
 
-#: ../client/drizzledump.cc:549
+#: ../client/drizzledump.cc:548
 msgid ""
 "The database in the destination db server (requires --destination-"
 "type=database, not for use with --all-databases)"
 msgstr ""
 
-#: ../client/drizzledump.cc:555
+#: ../client/drizzledump.cc:550
+msgid ""
+"Do not make a UTF8 connection to MySQL, use if you have UTF8 data in a non-"
+"UTF8 table"
+msgstr ""
+
+#: ../client/drizzledump.cc:556
 msgid "Connect to host."
 msgstr ""
 
-#: ../client/drizzledump.cc:557
+#: ../client/drizzledump.cc:558
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "solicited on the tty."
 msgstr ""
 
-#: ../client/drizzledump.cc:559
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:477
+#: ../client/drizzledump.cc:560
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:585
 msgid "Port number to use for connection."
 msgstr ""
 
-#: ../client/drizzledump.cc:566
+#: ../client/drizzledump.cc:567
 msgid "Hidden Options"
 msgstr ""
 
-#: ../client/drizzledump.cc:568
+#: ../client/drizzledump.cc:569
 msgid "Used to select the database"
 msgstr ""
 
-#: ../client/drizzledump.cc:569
+#: ../client/drizzledump.cc:570
 msgid "Used to select the tables"
 msgstr ""
 
-#: ../client/drizzledump.cc:572
+#: ../client/drizzledump.cc:573
 msgid "Allowed Options + Hidden Options"
 msgstr ""
 
-#: ../client/drizzledump.cc:636
+#: ../client/drizzledump.cc:637
 #, c-format
 msgid "Drizzledump %s build %s, for %s-%s (%s)\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:641
+#: ../client/drizzledump.cc:642
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:642
-msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
-
 #: ../client/drizzledump.cc:643
-#, c-format
-msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgid "Dumps definitions and data from a Drizzle database server"
 msgstr ""
 
 #: ../client/drizzledump.cc:644
 #, c-format
+msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgstr ""
+
+#: ../client/drizzledump.cc:645
+#, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:646
+#: ../client/drizzledump.cc:647
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:687 ../client/drizzleimport.cc:484
-#: ../client/drizzleslap.cc:633 ../client/drizzletest.cc:5683
+#: ../client/drizzledump.cc:688 ../client/drizzleimport.cc:484
+#: ../client/drizzleslap.cc:633 ../client/drizzletest.cc:5671
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:742
+#: ../client/drizzledump.cc:743
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
 msgstr ""
@@ -1153,418 +1159,408 @@ msgstr ""
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
 
-#: ../client/drizzletest.cc:5424
+#: ../client/drizzletest.cc:5412
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr ""
 
-#: ../client/drizzletest.cc:5434
+#: ../client/drizzletest.cc:5422
 msgid "Error: Invalid Value for opt_tail_lines"
 msgstr ""
 
-#: ../client/drizzletest.cc:5444
+#: ../client/drizzletest.cc:5432
 msgid "Error: Invalid Value for opt_sleep"
 msgstr ""
 
-#: ../client/drizzletest.cc:5635
+#: ../client/drizzletest.cc:5623
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
 
-#: ../client/drizzletest.cc:5640
+#: ../client/drizzletest.cc:5628
 #, c-format
 msgid "Out of memory"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:492
+#: ../drizzled/drizzled.cc:491
 msgid "Aborting\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:553
+#: ../drizzled/drizzled.cc:550
 msgid "One can only use the --user switch if running as root\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:560
+#: ../drizzled/drizzled.cc:557
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run drizzled as root!\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:580
+#: ../drizzled/drizzled.cc:577
 #, c-format
 msgid ""
 "Fatal error: Can't change to run as user '%s' ;  Please check that the user "
 "exists!\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:605
+#: ../drizzled/drizzled.cc:602
 msgid "Set process group ID failed"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:610
+#: ../drizzled/drizzled.cc:607
 msgid "Set process user ID failed"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:622
+#: ../drizzled/drizzled.cc:619
 msgid "Process chroot failed"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:742
+#: ../drizzled/drizzled.cc:739
 msgid "Error: Invalid Value for auto_increment_increment"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:753
+#: ../drizzled/drizzled.cc:750
 msgid "Error: Invalid Value for auto_increment_offset"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:764
+#: ../drizzled/drizzled.cc:761
 msgid "Error: Invalid Value for completion_type"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:776
+#: ../drizzled/drizzled.cc:773
 msgid "Error: Invalid Value for div-precision-increment"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:787
+#: ../drizzled/drizzled.cc:784
 msgid "Error: Invalid Value for group_concat_max_len"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:798
+#: ../drizzled/drizzled.cc:795
 msgid "Error: Invalid Value for join_buffer_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:810
+#: ../drizzled/drizzled.cc:807
 msgid "Error: Invalid Value for max_allowed_packet"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:822
-msgid "Error: Invalid Value for max_connect_errors"
-msgstr ""
-
-#: ../drizzled/drizzled.cc:833
+#: ../drizzled/drizzled.cc:819
 msgid "Error: Invalid Value for max_error_count"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:844
+#: ../drizzled/drizzled.cc:830
 msgid "Error: Invalid Value for max_heap_table_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:856
+#: ../drizzled/drizzled.cc:842
 msgid "Error: Invalid Value for min_examined_row_limit"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:867
+#: ../drizzled/drizzled.cc:853
 msgid "Error: Invalid Value for max_join_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:878
+#: ../drizzled/drizzled.cc:864
 msgid "Error: Invalid Value for max_length_for_sort_data"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:889
+#: ../drizzled/drizzled.cc:875
 msgid "Error: Invalid Value for max_seeks_for_key"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:900
+#: ../drizzled/drizzled.cc:886
 msgid "Error: Invalid Value for max_sort_length"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:911
+#: ../drizzled/drizzled.cc:897
 msgid "Error: Invalid Value for optimizer_search_depth"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:922
+#: ../drizzled/drizzled.cc:908
 msgid "Error: Invalid Value for preload_buff_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:933
+#: ../drizzled/drizzled.cc:919
 msgid "Error: Invalid Value for query_alloc_block_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:945
+#: ../drizzled/drizzled.cc:931
 msgid "Error: Invalid Value for query_prealloc_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:957
+#: ../drizzled/drizzled.cc:943
 msgid "Error: Invalid Value for range_alloc_block_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:969
+#: ../drizzled/drizzled.cc:955
 msgid "Error: Invalid Value for read_buff_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:981
+#: ../drizzled/drizzled.cc:967
 msgid "Error: Invalid Value for read_rnd_buff_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:992
+#: ../drizzled/drizzled.cc:978
 msgid "Error: Invalid Value for sort_buff_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1003
+#: ../drizzled/drizzled.cc:989
 msgid "Error: Invalid Value for table_def_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1014
+#: ../drizzled/drizzled.cc:1000
 msgid "Error: Invalid Value for table_cache_size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1025 ../drizzled/drizzled.cc:1041
+#: ../drizzled/drizzled.cc:1011 ../drizzled/drizzled.cc:1027
 msgid "Error: Invalid Value for table_lock_wait_timeout"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1052
+#: ../drizzled/drizzled.cc:1038
 msgid ""
 "Error: Invalid Value for transaction_message_threshold valid values are "
 "between 131072 - 1048576 bytes"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1110
+#: ../drizzled/drizzled.cc:1096
 #, c-format
 msgid "Defaults file '%s' not found\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1152
+#: ../drizzled/drizzled.cc:1138
 #, c-format
 msgid "gethostname failed, using '%s' as hostname"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1166 ../drizzled/drizzled.cc:1757
+#: ../drizzled/drizzled.cc:1152 ../drizzled/drizzled.cc:1739
 msgid "Display this help and exit."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1170
+#: ../drizzled/drizzled.cc:1156
 msgid "Configuration file to use"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1172
+#: ../drizzled/drizzled.cc:1158
 msgid "Base location for config files"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1174 ../drizzled/drizzled.cc:1950
+#: ../drizzled/drizzled.cc:1160 ../drizzled/drizzled.cc:1927
 msgid "Directory for plugins."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1179 ../drizzled/drizzled.cc:1954
+#: ../drizzled/drizzled.cc:1165 ../drizzled/drizzled.cc:1931
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1183 ../drizzled/drizzled.cc:1960
+#: ../drizzled/drizzled.cc:1169 ../drizzled/drizzled.cc:1937
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
 "removes a plugin from the list of plugins to be loaded. [for example: --"
 "plugin_remove=crc32,logger_gearman]"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1187 ../drizzled/drizzled.cc:1966
+#: ../drizzled/drizzled.cc:1173 ../drizzled/drizzled.cc:1943
 msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1194 ../drizzled/drizzled.cc:1761
+#: ../drizzled/drizzled.cc:1180 ../drizzled/drizzled.cc:1743
 msgid "Auto-increment columns are incremented by this"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1196 ../drizzled/drizzled.cc:1766
+#: ../drizzled/drizzled.cc:1182 ../drizzled/drizzled.cc:1748
 msgid ""
 "Offset added to Auto-increment columns. Used when auto-increment-increment !"
 "= 1"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1198 ../drizzled/drizzled.cc:1772
+#: ../drizzled/drizzled.cc:1184 ../drizzled/drizzled.cc:1754
 msgid ""
 "Path to installation directory. All paths are usually resolved relative to "
 "this."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1201 ../drizzled/drizzled.cc:1777
+#: ../drizzled/drizzled.cc:1187 ../drizzled/drizzled.cc:1759
 msgid "Chroot drizzled daemon during startup."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1203 ../drizzled/drizzled.cc:1781
+#: ../drizzled/drizzled.cc:1189 ../drizzled/drizzled.cc:1763
 msgid "Set the default collation."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1205 ../drizzled/drizzled.cc:1785
+#: ../drizzled/drizzled.cc:1191 ../drizzled/drizzled.cc:1767
 msgid "Default completion type."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1206 ../drizzled/drizzled.cc:1790
+#: ../drizzled/drizzled.cc:1192 ../drizzled/drizzled.cc:1772
 msgid "Write core on errors."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1208 ../drizzled/drizzled.cc:1794
+#: ../drizzled/drizzled.cc:1194 ../drizzled/drizzled.cc:1776
 msgid "Path to the database root."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1210
+#: ../drizzled/drizzled.cc:1196
 msgid "Set the default storage engine for tables."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1212
+#: ../drizzled/drizzled.cc:1198
 msgid "Set the default time zone."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1214 ../drizzled/drizzled.cc:1798
+#: ../drizzled/drizzled.cc:1200 ../drizzled/drizzled.cc:1780
 msgid "Used for debugging;  Use at your own risk!"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1216 ../drizzled/drizzled.cc:1803
+#: ../drizzled/drizzled.cc:1202 ../drizzled/drizzled.cc:1785
 msgid "Set up signals usable for debugging"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1218
+#: ../drizzled/drizzled.cc:1204
 msgid "Set the language used for the month names and the days of the week."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1220 ../drizzled/drizzled.cc:1807
+#: ../drizzled/drizzled.cc:1206 ../drizzled/drizzled.cc:1789
 msgid "Log some not critical warnings to the log file."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1222 ../drizzled/drizzled.cc:1812
+#: ../drizzled/drizzled.cc:1208 ../drizzled/drizzled.cc:1794
 msgid "Pid file used by drizzled."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1224
+#: ../drizzled/drizzled.cc:1210
 msgid "Maximum time in seconds to wait for the port to become free. "
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1226
+#: ../drizzled/drizzled.cc:1212
 msgid "Include the SQL query in replicated protobuf messages."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1228 ../drizzled/drizzled.cc:1821
+#: ../drizzled/drizzled.cc:1214 ../drizzled/drizzled.cc:1803
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
 "specified directory"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1231 ../drizzled/drizzled.cc:1826
+#: ../drizzled/drizzled.cc:1217 ../drizzled/drizzled.cc:1808
 msgid ""
 "Uniquely identifies the server instance in the community of replication "
 "partners."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1234 ../drizzled/drizzled.cc:1831
+#: ../drizzled/drizzled.cc:1220 ../drizzled/drizzled.cc:1813
 msgid "Don't print a stack trace on failure."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1236 ../drizzled/drizzled.cc:1835
+#: ../drizzled/drizzled.cc:1222 ../drizzled/drizzled.cc:1817
 msgid "Enable symbolic link support."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1238 ../drizzled/drizzled.cc:1844
+#: ../drizzled/drizzled.cc:1224 ../drizzled/drizzled.cc:1826
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1241
+#: ../drizzled/drizzled.cc:1227
 msgid "Path for temporary files."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1243 ../drizzled/drizzled.cc:1849
+#: ../drizzled/drizzled.cc:1229 ../drizzled/drizzled.cc:1831
 msgid "Default transaction isolation level."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1245
+#: ../drizzled/drizzled.cc:1231
 msgid ""
 "Max message size written to transaction log, valid values 131072 - 1048576 "
 "bytes."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1247 ../drizzled/drizzled.cc:1853
+#: ../drizzled/drizzled.cc:1233 ../drizzled/drizzled.cc:1835
 msgid "Run drizzled daemon as user."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1251 ../drizzled/drizzled.cc:1857
+#: ../drizzled/drizzled.cc:1237 ../drizzled/drizzled.cc:1839
 msgid ""
 "The number of outstanding connection requests Drizzle can have. This comes "
 "into play when the main Drizzle thread gets very many connection requests in "
 "a very short time."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1256 ../drizzled/drizzled.cc:1863
+#: ../drizzled/drizzled.cc:1242 ../drizzled/drizzled.cc:1845
 msgid ""
 "Size of tree cache used in bulk insert optimization. Note that this is a "
 "limit per thread!"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1259 ../drizzled/drizzled.cc:1869
+#: ../drizzled/drizzled.cc:1245 ../drizzled/drizzled.cc:1851
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1262
+#: ../drizzled/drizzled.cc:1248
 msgid "The maximum length of the result of function  group_concat."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1264 ../drizzled/drizzled.cc:1875
+#: ../drizzled/drizzled.cc:1250 ../drizzled/drizzled.cc:1857
 msgid "The size of the buffer that is used for full joins."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1267
+#: ../drizzled/drizzled.cc:1253
 msgid ""
 "A global cap on the amount of memory that can be allocated by session join "
 "buffers (0 means unlimited)"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1269 ../drizzled/drizzled.cc:1881
+#: ../drizzled/drizzled.cc:1255 ../drizzled/drizzled.cc:1863
 msgid "Max packetlength to send/receive from to server."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1271 ../drizzled/drizzled.cc:1886
-msgid ""
-"If there is more than this number of interrupted connections from a host "
-"this host will be blocked from further connections."
-msgstr ""
-
-#: ../drizzled/drizzled.cc:1274
+#: ../drizzled/drizzled.cc:1257
 msgid "Max number of errors/warnings to store for a statement."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1276 ../drizzled/drizzled.cc:1891
+#: ../drizzled/drizzled.cc:1259 ../drizzled/drizzled.cc:1868
 msgid "Don't allow creation of heap tables bigger than this."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1278 ../drizzled/drizzled.cc:1897
+#: ../drizzled/drizzled.cc:1261 ../drizzled/drizzled.cc:1874
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1281 ../drizzled/drizzled.cc:1903
+#: ../drizzled/drizzled.cc:1264 ../drizzled/drizzled.cc:1880
 msgid "Max number of bytes in sorted records."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1283 ../drizzled/drizzled.cc:1908
+#: ../drizzled/drizzled.cc:1266 ../drizzled/drizzled.cc:1885
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1285 ../drizzled/drizzled.cc:1913
+#: ../drizzled/drizzled.cc:1268 ../drizzled/drizzled.cc:1890
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1289 ../drizzled/drizzled.cc:1920
+#: ../drizzled/drizzled.cc:1272 ../drizzled/drizzled.cc:1897
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1291 ../drizzled/drizzled.cc:1924
+#: ../drizzled/drizzled.cc:1274 ../drizzled/drizzled.cc:1901
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1294
+#: ../drizzled/drizzled.cc:1277
 msgid ""
 "Do not apply any heuristic(s) during query optimization to prune, thus "
 "perform an exhaustive search from the optimizer search space."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1297 ../drizzled/drizzled.cc:1938
+#: ../drizzled/drizzled.cc:1280 ../drizzled/drizzled.cc:1915
 msgid ""
 "Maximum depth of search performed by the query optimizer. Values larger than "
 "the number of relations in a query result in better query plans, but take "
@@ -1575,143 +1571,143 @@ msgid ""
 "(used for testing/comparison)."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1306 ../drizzled/drizzled.cc:1972
+#: ../drizzled/drizzled.cc:1289 ../drizzled/drizzled.cc:1949
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1309 ../drizzled/drizzled.cc:1977
+#: ../drizzled/drizzled.cc:1292 ../drizzled/drizzled.cc:1954
 msgid "Allocation block size for query parsing and execution"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1312 ../drizzled/drizzled.cc:1982
+#: ../drizzled/drizzled.cc:1295 ../drizzled/drizzled.cc:1959
 msgid "Persistent buffer for query parsing and execution"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1315 ../drizzled/drizzled.cc:1988
+#: ../drizzled/drizzled.cc:1298 ../drizzled/drizzled.cc:1965
 msgid "Allocation block size for storing ranges during optimization"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1318 ../drizzled/drizzled.cc:1994
+#: ../drizzled/drizzled.cc:1301 ../drizzled/drizzled.cc:1971
 msgid ""
 "Each thread that does a sequential scan allocates a buffer of this size for "
 "each table it scans. If you do many sequential scans, you may want to "
 "increase this value."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1323
+#: ../drizzled/drizzled.cc:1306
 msgid "A global cap on the size of read-buffer-size (0 means unlimited)"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1326 ../drizzled/drizzled.cc:2002
+#: ../drizzled/drizzled.cc:1309 ../drizzled/drizzled.cc:1979
 msgid ""
 "When reading rows in sorted order after a sort, the rows are read through "
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
 "record_buffer."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1331
+#: ../drizzled/drizzled.cc:1314
 msgid "A global cap on the size of read-rnd-buffer-size (0 means unlimited)"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1333
+#: ../drizzled/drizzled.cc:1316
 msgid "Select scheduler to be used (by default multi-thread)."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1336 ../drizzled/drizzled.cc:2011
+#: ../drizzled/drizzled.cc:1319 ../drizzled/drizzled.cc:1988
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1339
+#: ../drizzled/drizzled.cc:1322
 msgid ""
 "A global cap on the amount of memory that can be allocated by session sort "
 "buffers (0 means unlimited)"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1341 ../drizzled/drizzled.cc:2017
+#: ../drizzled/drizzled.cc:1324 ../drizzled/drizzled.cc:1994
 msgid "The number of cached table definitions."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1343 ../drizzled/drizzled.cc:2021
+#: ../drizzled/drizzled.cc:1326 ../drizzled/drizzled.cc:1998
 msgid "The number of cached open tables."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1345 ../drizzled/drizzled.cc:2025
+#: ../drizzled/drizzled.cc:1328 ../drizzled/drizzled.cc:2002
 msgid ""
 "Timeout in seconds to wait for a table level lock before returning an error. "
 "Used only if the connection has active cursors."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1348 ../drizzled/drizzled.cc:2030
+#: ../drizzled/drizzled.cc:1331 ../drizzled/drizzled.cc:2007
 msgid "The stack size for each thread."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1351 ../drizzled/drizzled.cc:2036
+#: ../drizzled/drizzled.cc:1334 ../drizzled/drizzled.cc:2013
 msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1374
+#: ../drizzled/drizzled.cc:1357
 msgid "Duplicate entry for command line option\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1421 ../drizzled/drizzled.cc:1439
-#: ../drizzled/drizzled.cc:1473 ../drizzled/drizzled.cc:1481
-#: ../drizzled/drizzled.cc:1501
+#: ../drizzled/drizzled.cc:1404 ../drizzled/drizzled.cc:1422
+#: ../drizzled/drizzled.cc:1456 ../drizzled/drizzled.cc:1464
+#: ../drizzled/drizzled.cc:1484
 #, c-format
 msgid ""
 "%s: %s.\n"
 "Use --help to get a list of available options\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1451
+#: ../drizzled/drizzled.cc:1434
 msgid "Failed to initialize plugins\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1489
+#: ../drizzled/drizzled.cc:1472
 #, c-format
 msgid ""
 "%s\n"
 "Use --help to get a list of available options\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1538
+#: ../drizzled/drizzled.cc:1521
 msgid "Error getting default charset"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1568
+#: ../drizzled/drizzled.cc:1551
 msgid "Error setting collation"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1576
+#: ../drizzled/drizzled.cc:1559
 #, c-format
 msgid "Unknown locale: '%s'"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1596
+#: ../drizzled/drizzled.cc:1579
 msgid "Could not initialize table cache\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1611
+#: ../drizzled/drizzled.cc:1594
 msgid "XA cache initialization failed: Out of memory\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1641
+#: ../drizzled/drizzled.cc:1624
 msgid "No scheduler found, cannot continue!\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1665
+#: ../drizzled/drizzled.cc:1648
 #, c-format
 msgid "Unknown/unsupported storage engine: %s\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1816
+#: ../drizzled/drizzled.cc:1798
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1930
+#: ../drizzled/drizzled.cc:1907
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
 "promising partial plans from the optimizer search space. Meaning: false - do "
@@ -1719,7 +1715,7 @@ msgid ""
 "based on number of retrieved rows."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:2062
+#: ../drizzled/drizzled.cc:2039
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -1727,718 +1723,745 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:2069
+#: ../drizzled/drizzled.cc:2046
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:2190
+#: ../drizzled/drizzled.cc:2167
 #, c-format
 msgid ""
 "Ignoring user change to '%s' because the user was set to '%s' earlier on the "
 "command line\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:2207
+#: ../drizzled/drizzled.cc:2184
 msgid "Error: sort-heap-threshold cannot be less than sort-buffer-size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:2220
+#: ../drizzled/drizzled.cc:2197
 msgid "Error: join-heap-threshold cannot be less than join-buffer-size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:2233
+#: ../drizzled/drizzled.cc:2210
 msgid "Error: read-rnd-threshold cannot be less than read-rnd-buffer-size"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:2246
+#: ../drizzled/drizzled.cc:2223
 msgid "Error: read-buffer-threshold cannot be less than read-buffer-size"
 msgstr ""
 
-#: ../drizzled/error.cc:128
+#: ../drizzled/drizzled.cc:2338
+#, c-format
+msgid ""
+"There was an error creating the '%s' part of the path '%s'.  Please check "
+"the path exists and is writable.\n"
+msgstr ""
+
+#: ../drizzled/drizzled.cc:2345
+#, c-format
+msgid ""
+"There was an error opening the path '%s', please check the path exists and "
+"is writable.\n"
+msgstr ""
+
+#: ../drizzled/error.cc:133
 #, c-format
 msgid "Unknown error %d"
 msgstr ""
 
-#: ../drizzled/error.cc:202
-msgid "NO"
-msgstr ""
-
-#: ../drizzled/error.cc:203
-msgid "YES"
-msgstr ""
-
-#: ../drizzled/error.cc:204
-#, c-format
-msgid "Can't create file '%-.200s' (errno: %d)"
-msgstr ""
-
-#: ../drizzled/error.cc:205
-#, c-format
-msgid "Can't create table '%-.200s' (errno: %d)"
-msgstr ""
-
-#: ../drizzled/error.cc:206
-#, c-format
-msgid "Can't create schema '%-.192s' (errno: %d)"
-msgstr ""
-
 #: ../drizzled/error.cc:207
-#, c-format
-msgid "Can't create schema '%-.192s'; schema exists"
+msgid "SUCCESS"
 msgstr ""
 
 #: ../drizzled/error.cc:208
-#, c-format
-msgid "Can't drop schema '%-.192s'; schema doesn't exist"
+msgid "Error on first"
 msgstr ""
 
 #: ../drizzled/error.cc:209
-#, c-format
-msgid "Error on delete of '%-.192s' (errno: %d)"
+msgid "NO"
 msgstr ""
 
 #: ../drizzled/error.cc:210
-#, c-format
-msgid "Can't get status of '%-.200s' (errno: %d)"
+msgid "YES"
 msgstr ""
 
 #: ../drizzled/error.cc:211
 #, c-format
-msgid "Can't lock file (errno: %d)"
+msgid "Can't create file '%-.200s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:212
 #, c-format
-msgid "Can't open file: '%-.200s' (errno: %d)"
+msgid "Can't create table '%-.200s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:213
 #, c-format
-msgid "Can't find file: '%-.200s' (errno: %d)"
+msgid "Can't create schema '%-.192s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:214
 #, c-format
-msgid "Can't read dir of '%-.192s' (errno: %d)"
+msgid "Can't create schema '%-.192s'; schema exists"
 msgstr ""
 
 #: ../drizzled/error.cc:215
 #, c-format
-msgid "Record has changed since last read in table '%-.192s'"
+msgid "Can't drop schema '%-.192s'; schema doesn't exist"
 msgstr ""
 
 #: ../drizzled/error.cc:216
 #, c-format
-msgid "Disk full (%s); waiting for someone to free some space..."
+msgid "Error on delete of '%-.192s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:217
 #, c-format
-msgid "Can't write; duplicate key in table '%-.192s'"
+msgid "Can't get status of '%-.200s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:218
 #, c-format
-msgid "Error on close of '%-.192s' (errno: %d)"
+msgid "Can't lock file (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:219
 #, c-format
-msgid "Error reading file '%-.200s' (errno: %d)"
+msgid "Can't open file: '%-.200s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:220
 #, c-format
-msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
+msgid "Can't find file: '%-.200s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:221
 #, c-format
-msgid "Error writing file '%-.200s' (errno: %d)"
+msgid "Can't read dir of '%-.192s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:222
 #, c-format
-msgid "'%-.192s' is locked against change"
+msgid "Record has changed since last read in table '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:223
-msgid "Sort aborted"
+#, c-format
+msgid "Disk full (%s); waiting for someone to free some space..."
 msgstr ""
 
 #: ../drizzled/error.cc:224
 #, c-format
-msgid "Got error %d from storage engine"
+msgid "Can't write; duplicate key in table '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:225
 #, c-format
-msgid "Table storage engine for '%-.192s' doesn't have this option"
+msgid "Error on close of '%-.192s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:226
 #, c-format
-msgid "Can't find record in '%-.192s'"
+msgid "Error reading file '%-.200s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:227
 #, c-format
-msgid "Incorrect information in file: '%-.200s'"
+msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:228
 #, c-format
-msgid "Incorrect key file for table '%-.200s'; try to repair it"
+msgid "Error writing file '%-.200s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:229
 #, c-format
-msgid "Old key file for table '%-.192s'; repair it!"
+msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: ../drizzled/error.cc:230
-#, c-format
-msgid "Table '%-.192s' is read only"
+msgid "Sort aborted"
 msgstr ""
 
 #: ../drizzled/error.cc:231
 #, c-format
-msgid "Out of memory; restart server and try again (needed %lu bytes)"
+msgid "Got error %d from storage engine"
 msgstr ""
 
 #: ../drizzled/error.cc:232
-msgid "Out of sort memory; increase server sort buffer size"
+#, c-format
+msgid "Table storage engine for '%-.192s' doesn't have this option"
 msgstr ""
 
 #: ../drizzled/error.cc:233
-msgid "Global sort memory constraint hit; increase sort-heap-threshold"
+#, c-format
+msgid "Can't find record in '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:234
-msgid "Global join memory constraint hit; increase join-heap-threshold"
+#, c-format
+msgid "Incorrect information in file: '%-.200s'"
 msgstr ""
 
 #: ../drizzled/error.cc:235
-msgid "Global read_rnd memory constraint hit; increase read-rnd-heap-threshold"
+#, c-format
+msgid "Incorrect key file for table '%-.200s'; try to repair it"
 msgstr ""
 
 #: ../drizzled/error.cc:236
-msgid "Global read memory constraint hit; increase read-buffer-threshold"
+#, c-format
+msgid "Old key file for table '%-.192s'; repair it!"
 msgstr ""
 
 #: ../drizzled/error.cc:237
 #, c-format
-msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
+msgid "Table '%-.192s' is read only"
 msgstr ""
 
 #: ../drizzled/error.cc:238
-msgid "Too many connections"
+#, c-format
+msgid "Out of memory; restart server and try again (needed %lu bytes)"
 msgstr ""
 
 #: ../drizzled/error.cc:239
+msgid "Out of sort memory; increase server sort buffer size"
+msgstr ""
+
+#: ../drizzled/error.cc:240
+msgid "Global sort memory constraint hit; increase sort-heap-threshold"
+msgstr ""
+
+#: ../drizzled/error.cc:241
+msgid "Global join memory constraint hit; increase join-heap-threshold"
+msgstr ""
+
+#: ../drizzled/error.cc:242
+msgid "Global read_rnd memory constraint hit; increase read-rnd-heap-threshold"
+msgstr ""
+
+#: ../drizzled/error.cc:243
+msgid "Global read memory constraint hit; increase read-buffer-threshold"
+msgstr ""
+
+#: ../drizzled/error.cc:244
+#, c-format
+msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
+msgstr ""
+
+#: ../drizzled/error.cc:245
+msgid "Too many connections"
+msgstr ""
+
+#: ../drizzled/error.cc:246
 msgid ""
 "Out of memory; check if drizzled or some other process uses all available "
 "memory; if not, you may have to use 'ulimit' to allow drizzled to use more "
 "memory or you can add more swap space"
 msgstr ""
 
-#: ../drizzled/error.cc:240
+#: ../drizzled/error.cc:247
 msgid "Can't get hostname for your address"
 msgstr ""
 
-#: ../drizzled/error.cc:241
-msgid "Bad handshake"
-msgstr ""
-
-#: ../drizzled/error.cc:242
-#, c-format
-msgid "Access denied for user '%-.48s'@'%-.64s' to schema '%-.192s'"
-msgstr ""
-
-#: ../drizzled/error.cc:243
-#, c-format
-msgid "Access denied for user '%-.48s'@'%-.64s' (using password: %s)"
-msgstr ""
-
-#: ../drizzled/error.cc:244
-msgid "No schema selected"
-msgstr ""
-
-#: ../drizzled/error.cc:245
-msgid "Unknown command"
-msgstr ""
-
-#: ../drizzled/error.cc:246
-#, c-format
-msgid "Column '%-.192s' cannot be null"
-msgstr ""
-
-#: ../drizzled/error.cc:247
-#, c-format
-msgid "Unknown schema '%-.192s'"
-msgstr ""
-
 #: ../drizzled/error.cc:248
-#, c-format
-msgid "Table '%-.192s' already exists"
+msgid "Bad handshake"
 msgstr ""
 
 #: ../drizzled/error.cc:249
 #, c-format
-msgid "Unknown table '%-.100s'"
+msgid "Access denied for user '%-.48s'@'%-.64s' to schema '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:250
 #, c-format
-msgid "Column '%-.192s' in %-.192s is ambiguous"
+msgid "Access denied for user '%-.48s'@'%-.64s' (using password: %s)"
 msgstr ""
 
 #: ../drizzled/error.cc:251
-msgid "Server shutdown in progress"
+msgid "No schema selected"
 msgstr ""
 
 #: ../drizzled/error.cc:252
-#, c-format
-msgid "Unknown column '%-.192s' in '%-.192s'"
+msgid "Unknown command"
 msgstr ""
 
 #: ../drizzled/error.cc:253
 #, c-format
-msgid "'%-.192s' isn't in GROUP BY"
+msgid "Column '%-.192s' cannot be null"
 msgstr ""
 
 #: ../drizzled/error.cc:254
 #, c-format
-msgid "Can't group on '%-.192s'"
+msgid "Unknown schema '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:255
-msgid "Statement has sum functions and columns in same statement"
+#, c-format
+msgid "Table '%-.192s' already exists"
 msgstr ""
 
 #: ../drizzled/error.cc:256
-msgid "Column count doesn't match value count"
+#, c-format
+msgid "Unknown table '%-.100s'"
 msgstr ""
 
 #: ../drizzled/error.cc:257
 #, c-format
-msgid "Identifier name '%-.100s' is too long"
+msgid "Column '%-.192s' in %-.192s is ambiguous"
 msgstr ""
 
 #: ../drizzled/error.cc:258
-#, c-format
-msgid "Duplicate column name '%-.192s'"
+msgid "Server shutdown in progress"
 msgstr ""
 
 #: ../drizzled/error.cc:259
 #, c-format
-msgid "Duplicate key name '%-.192s'"
+msgid "Unknown column '%-.192s' in '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:260
 #, c-format
-msgid "Duplicate entry '%-.192s' for key %d"
+msgid "'%-.192s' isn't in GROUP BY"
 msgstr ""
 
 #: ../drizzled/error.cc:261
 #, c-format
-msgid "Incorrect column specifier for column '%-.192s'"
+msgid "Can't group on '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:262
-#, c-format
-msgid "%s near '%-.80s' at line %d"
+msgid "Statement has sum functions and columns in same statement"
 msgstr ""
 
 #: ../drizzled/error.cc:263
-msgid "Query was empty"
+msgid "Column count doesn't match value count"
 msgstr ""
 
 #: ../drizzled/error.cc:264
 #, c-format
-msgid "Not unique table/alias: '%-.192s'"
+msgid "Identifier name '%-.100s' is too long"
 msgstr ""
 
 #: ../drizzled/error.cc:265
 #, c-format
-msgid "Invalid default value for '%-.192s'"
+msgid "Duplicate column name '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:266
-msgid "Multiple primary key defined"
+#, c-format
+msgid "Duplicate key name '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:267
 #, c-format
-msgid "Too many keys specified; max %d keys allowed"
+msgid "Duplicate entry '%-.192s' for key %d"
 msgstr ""
 
 #: ../drizzled/error.cc:268
 #, c-format
-msgid "Too many key parts specified; max %d parts allowed"
+msgid "Incorrect column specifier for column '%-.192s'"
 msgstr ""
 
 #: ../drizzled/error.cc:269
 #, c-format
-msgid "Specified key was too long; max key length is %d bytes"
+msgid "%s near '%-.80s' at line %d"
 msgstr ""
 
 #: ../drizzled/error.cc:270
 #, c-format
-msgid "Key column '%-.192s' doesn't exist in table"
+msgid "Parsing error near '%s'"
 msgstr ""
 
 #: ../drizzled/error.cc:271
+msgid "Query was empty"
+msgstr ""
+
+#: ../drizzled/error.cc:272
+#, c-format
+msgid "Not unique table/alias: '%-.192s'"
+msgstr ""
+
+#: ../drizzled/error.cc:273
+#, c-format
+msgid "Invalid default value for '%-.192s'"
+msgstr ""
+
+#: ../drizzled/error.cc:274
+msgid "Multiple primary key defined"
+msgstr ""
+
+#: ../drizzled/error.cc:275
+#, c-format
+msgid "Too many keys specified; max %d keys allowed"
+msgstr ""
+
+#: ../drizzled/error.cc:276
+#, c-format
+msgid "Too many key parts specified; max %d parts allowed"
+msgstr ""
+
+#: ../drizzled/error.cc:277
+#, c-format
+msgid "Specified key was too long; max key length is %d bytes"
+msgstr ""
+
+#: ../drizzled/error.cc:278
+#, c-format
+msgid "Key column '%-.192s' doesn't exist in table"
+msgstr ""
+
+#: ../drizzled/error.cc:279
 #, c-format
 msgid ""
 "BLOB column '%-.192s' can't be used in key specification with the used table "
 "type"
 msgstr ""
 
-#: ../drizzled/error.cc:272
+#: ../drizzled/error.cc:280
 #, c-format
 msgid ""
 "Column length too big for column '%-.192s' (max = %d); use BLOB or TEXT "
 "instead"
 msgstr ""
 
-#: ../drizzled/error.cc:273
+#: ../drizzled/error.cc:281
 msgid ""
 "Incorrect table definition; there can be only one auto column and it must be "
 "defined as a key"
 msgstr ""
 
-#: ../drizzled/error.cc:274
+#: ../drizzled/error.cc:282
 #, c-format
 msgid "%s: Normal shutdown\n"
 msgstr ""
 
-#: ../drizzled/error.cc:275
+#: ../drizzled/error.cc:283
 #, c-format
 msgid "%s: Got signal %d. Aborting!\n"
 msgstr ""
 
-#: ../drizzled/error.cc:276
+#: ../drizzled/error.cc:284
 #, c-format
 msgid "%s: Shutdown complete\n"
 msgstr ""
 
-#: ../drizzled/error.cc:277
+#: ../drizzled/error.cc:285
 #, c-format
 msgid "%s: Forcing close of thread %<PRIu64> user: '%-.48s'\n"
 msgstr ""
 
-#: ../drizzled/error.cc:278
+#: ../drizzled/error.cc:286
 msgid "Can't create IP socket"
 msgstr ""
 
-#: ../drizzled/error.cc:279
+#: ../drizzled/error.cc:287
 #, c-format
 msgid ""
 "Table '%-.192s' has no index like the one used in CREATE INDEX; recreate the "
 "table"
 msgstr ""
 
-#: ../drizzled/error.cc:280
+#: ../drizzled/error.cc:288
 #, c-format
 msgid ""
 "Field separator argument '%-.32s' with length '%d' is not what is expected; "
 "check the manual"
 msgstr ""
 
-#: ../drizzled/error.cc:281
+#: ../drizzled/error.cc:289
 msgid ""
 "You can't use fixed rowlength with BLOBs; please use 'fields terminated by'"
 msgstr ""
 
-#: ../drizzled/error.cc:282
+#: ../drizzled/error.cc:290
 #, c-format
 msgid ""
 "The file '%-.128s' must be in the schema directory or be readable by all"
 msgstr ""
 
-#: ../drizzled/error.cc:283
+#: ../drizzled/error.cc:291
 #, c-format
 msgid "File '%-.200s' already exists"
 msgstr ""
 
-#: ../drizzled/error.cc:284
+#: ../drizzled/error.cc:292
 #, c-format
 msgid "Records: %ld  Deleted: %ld  Skipped: %ld  Warnings: %ld"
 msgstr ""
 
-#: ../drizzled/error.cc:285
+#: ../drizzled/error.cc:293
 msgid ""
 "Incorrect prefix key; the used key part isn't a string, the used length is "
 "longer than the key part, or the storage engine doesn't support unique "
 "prefix keys"
 msgstr ""
 
-#: ../drizzled/error.cc:286
+#: ../drizzled/error.cc:294
 msgid "You can't delete all columns with ALTER TABLE; use DROP TABLE instead"
 msgstr ""
 
-#: ../drizzled/error.cc:287
+#: ../drizzled/error.cc:295
 #, c-format
 msgid "Can't DROP '%-.192s'; check that column/key exists"
 msgstr ""
 
-#: ../drizzled/error.cc:288
+#: ../drizzled/error.cc:296
 #, c-format
 msgid "Records: %ld  Duplicates: %ld  Warnings: %ld"
 msgstr ""
 
-#: ../drizzled/error.cc:289
+#: ../drizzled/error.cc:297
 #, c-format
 msgid "You can't specify target table '%-.192s' for update in FROM clause"
 msgstr ""
 
 #. KILL session errors
-#: ../drizzled/error.cc:292
+#: ../drizzled/error.cc:300
 #, c-format
 msgid "Unknown session id: %lu"
 msgstr ""
 
-#: ../drizzled/error.cc:293
+#: ../drizzled/error.cc:301
 #, c-format
 msgid "You are not the owner of session %lu"
 msgstr ""
 
-#: ../drizzled/error.cc:294
+#: ../drizzled/error.cc:302
 msgid "You cannot kill the session you are connected from."
 msgstr ""
 
-#: ../drizzled/error.cc:297
+#: ../drizzled/error.cc:305
 msgid "No tables used"
 msgstr ""
 
-#: ../drizzled/error.cc:298
+#: ../drizzled/error.cc:306
 #, c-format
 msgid "BLOB/TEXT column '%-.192s' can't have a default value"
 msgstr ""
 
-#: ../drizzled/error.cc:299
+#: ../drizzled/error.cc:307
 #, c-format
 msgid "Incorrect schema name '%-.100s'"
 msgstr ""
 
-#: ../drizzled/error.cc:300
+#: ../drizzled/error.cc:308
 #, c-format
 msgid "Incorrect table name '%-.100s'"
 msgstr ""
 
-#: ../drizzled/error.cc:301
+#: ../drizzled/error.cc:309
 msgid ""
 "The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and "
 "use SET SQL_BIG_SELECTS=1 or SET MAX_JOIN_SIZE=# if the SELECT is okay"
 msgstr ""
 
-#: ../drizzled/error.cc:302
+#: ../drizzled/error.cc:310
 msgid "Unknown error"
 msgstr ""
 
-#: ../drizzled/error.cc:303
+#: ../drizzled/error.cc:311
 #, c-format
 msgid "Unknown procedure '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:304
+#: ../drizzled/error.cc:312
 #, c-format
 msgid "Incorrect parameter count to procedure '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:305
+#: ../drizzled/error.cc:313
 #, c-format
 msgid "Unknown table '%-.192s' in %-.32s"
 msgstr ""
 
-#: ../drizzled/error.cc:306
+#: ../drizzled/error.cc:314
 #, c-format
 msgid "Column '%-.192s' specified twice"
 msgstr ""
 
-#: ../drizzled/error.cc:307
+#: ../drizzled/error.cc:315
 msgid "Invalid use of group function"
 msgstr ""
 
-#: ../drizzled/error.cc:308
+#: ../drizzled/error.cc:316
 #, c-format
 msgid ""
 "Table '%-.192s' uses an extension that doesn't exist in this Drizzle version"
 msgstr ""
 
-#: ../drizzled/error.cc:309
+#: ../drizzled/error.cc:317
 msgid "A table must have at least 1 column"
 msgstr ""
 
-#: ../drizzled/error.cc:310
+#: ../drizzled/error.cc:318
 #, c-format
 msgid "The table '%-.192s' is full"
 msgstr ""
 
-#: ../drizzled/error.cc:311
+#: ../drizzled/error.cc:319
 #, c-format
 msgid "Too many tables; Drizzle can only use %d tables in a join"
 msgstr ""
 
-#: ../drizzled/error.cc:312
+#: ../drizzled/error.cc:320
 msgid "Too many columns"
 msgstr ""
 
-#: ../drizzled/error.cc:313
+#: ../drizzled/error.cc:321
 #, c-format
 msgid ""
 "Row size too large. The maximum row size for the used table type, not "
 "counting BLOBs, is %ld. You have to change some columns to TEXT or BLOBs"
 msgstr ""
 
-#: ../drizzled/error.cc:314
+#: ../drizzled/error.cc:322
 msgid "Cross dependency found in OUTER JOIN; examine your ON conditions"
 msgstr ""
 
-#: ../drizzled/error.cc:315
+#: ../drizzled/error.cc:323
 #, c-format
 msgid ""
 "Table handler doesn't support NULL in given index. Please change column "
 "'%-.192s' to be NOT NULL or use another handler"
 msgstr ""
 
-#: ../drizzled/error.cc:316
+#: ../drizzled/error.cc:324
 msgid "No paths allowed for plugin library"
 msgstr ""
 
-#: ../drizzled/error.cc:317
+#: ../drizzled/error.cc:325
 #, c-format
 msgid "Plugin '%-.192s' already exists"
 msgstr ""
 
-#: ../drizzled/error.cc:318
+#: ../drizzled/error.cc:326
 #, c-format
-msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
+msgid "Can't open shared library '%-.192s' (errno: %d %s)"
 msgstr ""
 
-#: ../drizzled/error.cc:319
+#: ../drizzled/error.cc:327
 #, c-format
-msgid "Can't find symbol '%-.128s' in library '%-.128s'"
+msgid "Can't find symbol '%-.128s' in library '%s'"
 msgstr ""
 
-#: ../drizzled/error.cc:320
+#: ../drizzled/error.cc:328
 #, c-format
 msgid "Rows matched: %ld  Changed: %ld  Warnings: %ld"
 msgstr ""
 
-#: ../drizzled/error.cc:321
+#: ../drizzled/error.cc:329
 #, c-format
 msgid ""
 "Can't create a new thread (errno %d); if you are not out of available "
 "memory, you can consult the manual for a possible OS-dependent bug"
 msgstr ""
 
-#: ../drizzled/error.cc:322
+#: ../drizzled/error.cc:330
 #, c-format
 msgid "Column count doesn't match value count at row %ld"
 msgstr ""
 
-#: ../drizzled/error.cc:323
+#: ../drizzled/error.cc:331
 #, c-format
 msgid "Can't reopen table: '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:324
+#: ../drizzled/error.cc:332
 msgid ""
 "Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is "
 "illegal if there is no GROUP BY clause"
 msgstr ""
 
-#: ../drizzled/error.cc:325
+#: ../drizzled/error.cc:333
 #, c-format
 msgid "Table '%-.192s.%-.192s' doesn't exist"
 msgstr ""
 
-#: ../drizzled/error.cc:326
+#: ../drizzled/error.cc:334
 msgid ""
 "You have an error in your SQL syntax; check the manual that corresponds to "
 "your Drizzle server version for the right syntax to use"
 msgstr ""
 
-#: ../drizzled/error.cc:327
+#: ../drizzled/error.cc:335
 msgid "Got a packet bigger than 'max_allowed_packet' bytes"
 msgstr ""
 
-#: ../drizzled/error.cc:328
+#: ../drizzled/error.cc:336
 msgid "Got packets out of order"
 msgstr ""
 
-#: ../drizzled/error.cc:329
+#: ../drizzled/error.cc:337
 msgid "The used table type doesn't support BLOB/TEXT columns"
 msgstr ""
 
-#: ../drizzled/error.cc:330
+#: ../drizzled/error.cc:338
 msgid "The used table type doesn't support AUTO_INCREMENT columns"
 msgstr ""
 
-#: ../drizzled/error.cc:331
+#: ../drizzled/error.cc:339
 #, c-format
 msgid "Incorrect column name '%-.100s'"
 msgstr ""
 
-#: ../drizzled/error.cc:332
+#: ../drizzled/error.cc:340
 #, c-format
 msgid "The used storage engine can't index column '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:333
+#: ../drizzled/error.cc:341
 msgid ""
 "Unable to open underlying table which is differently defined or of non-"
 "MyISAM type or doesn't exist"
 msgstr ""
 
-#: ../drizzled/error.cc:334
+#: ../drizzled/error.cc:342
 #, c-format
 msgid "Can't write, because of unique constraint, to table '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:335
+#: ../drizzled/error.cc:343
 #, c-format
 msgid ""
 "BLOB/TEXT column '%-.192s' used in key specification without a key length"
 msgstr ""
 
-#: ../drizzled/error.cc:336
+#: ../drizzled/error.cc:344
 msgid ""
 "All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use "
 "UNIQUE instead"
 msgstr ""
 
-#: ../drizzled/error.cc:337
+#: ../drizzled/error.cc:345
 msgid "Result consisted of more than one row"
 msgstr ""
 
-#: ../drizzled/error.cc:338
+#: ../drizzled/error.cc:346
 msgid "This table type requires a primary key"
 msgstr ""
 
-#: ../drizzled/error.cc:339
+#: ../drizzled/error.cc:347
 #, c-format
 msgid "Key '%-.192s' doesn't exist in table '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:340
+#: ../drizzled/error.cc:348
 msgid "Can't open table"
 msgstr ""
 
-#: ../drizzled/error.cc:341
+#: ../drizzled/error.cc:349
 #, c-format
 msgid "The storage engine for the table doesn't support %s"
 msgstr ""
 
-#: ../drizzled/error.cc:342
+#: ../drizzled/error.cc:350
 #, c-format
 msgid "Got error %d during COMMIT"
 msgstr ""
 
-#: ../drizzled/error.cc:343
+#: ../drizzled/error.cc:351
 #, c-format
 msgid "Got error %d during ROLLBACK"
 msgstr ""
@@ -2447,919 +2470,950 @@ msgstr ""
 #. program that looks over the source for the N_() macros does not
 #. (obviously) do macro expansion, so the string is entirely wrong for
 #. what it is trying to output for every language except english.
-#: ../drizzled/error.cc:348
+#: ../drizzled/error.cc:356
 #, c-format
 msgid ""
 "Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
 "'%-.64s' (%-.64s)"
 msgstr ""
 
-#: ../drizzled/error.cc:349
+#: ../drizzled/error.cc:357
 msgid ""
 "Can't execute the given command because you have active locked tables or an "
 "active transaction"
 msgstr ""
 
-#: ../drizzled/error.cc:350
+#: ../drizzled/error.cc:358
 #, c-format
 msgid "Unknown system variable '%-.64s'"
 msgstr ""
 
-#: ../drizzled/error.cc:351
+#: ../drizzled/error.cc:359
 #, c-format
 msgid "Table '%-.192s' is marked as crashed and should be repaired"
 msgstr ""
 
-#: ../drizzled/error.cc:352
+#: ../drizzled/error.cc:360
 #, c-format
 msgid ""
 "Table '%-.192s' is marked as crashed and last (automatic?) repair failed"
 msgstr ""
 
-#: ../drizzled/error.cc:353
+#: ../drizzled/error.cc:361
 msgid "Some non-transactional changed tables couldn't be rolled back"
 msgstr ""
 
-#: ../drizzled/error.cc:354
+#: ../drizzled/error.cc:362
 msgid "You may only use constant expressions with SET"
 msgstr ""
 
-#: ../drizzled/error.cc:355
+#: ../drizzled/error.cc:363
 msgid "Lock wait timeout exceeded; try restarting transaction"
 msgstr ""
 
-#: ../drizzled/error.cc:356
+#: ../drizzled/error.cc:364
 msgid "The total number of locks exceeds the lock table size"
 msgstr ""
 
-#: ../drizzled/error.cc:357
+#: ../drizzled/error.cc:365
 msgid "Update locks cannot be acquired during a READ UNCOMMITTED transaction"
 msgstr ""
 
-#: ../drizzled/error.cc:358
+#: ../drizzled/error.cc:366
 msgid "DROP DATABASE not allowed while thread is holding global read lock"
 msgstr ""
 
-#: ../drizzled/error.cc:359
+#: ../drizzled/error.cc:367
 #, c-format
 msgid "Incorrect arguments to %s"
 msgstr ""
 
-#: ../drizzled/error.cc:360
+#: ../drizzled/error.cc:368
 msgid "Deadlock found when trying to get lock; try restarting transaction"
 msgstr ""
 
-#: ../drizzled/error.cc:361
+#: ../drizzled/error.cc:369
 msgid "The used table type doesn't support FULLTEXT indexes"
 msgstr ""
 
-#: ../drizzled/error.cc:362
+#: ../drizzled/error.cc:370
 msgid "Cannot add foreign key constraint"
 msgstr ""
 
-#: ../drizzled/error.cc:363
+#: ../drizzled/error.cc:371
 msgid "Cannot add or update a child row: a foreign key constraint fails"
 msgstr ""
 
-#: ../drizzled/error.cc:364
+#: ../drizzled/error.cc:372
 msgid "Cannot delete or update a parent row: a foreign key constraint fails"
 msgstr ""
 
-#: ../drizzled/error.cc:365
+#: ../drizzled/error.cc:373
 #, c-format
 msgid "Incorrect usage of %s and %s"
 msgstr ""
 
-#: ../drizzled/error.cc:366
+#: ../drizzled/error.cc:374
 msgid "The used SELECT statements have a different number of columns"
 msgstr ""
 
-#: ../drizzled/error.cc:367
+#: ../drizzled/error.cc:375
 msgid "Can't execute the query because you have a conflicting read lock"
 msgstr ""
 
-#: ../drizzled/error.cc:368
+#: ../drizzled/error.cc:376
 #, c-format
 msgid ""
 "Variable '%-.64s' is a SESSION variable and can't be used with SET GLOBAL"
 msgstr ""
 
-#: ../drizzled/error.cc:369
+#: ../drizzled/error.cc:377
 #, c-format
 msgid ""
 "Variable '%-.64s' is a GLOBAL variable and should be set with SET GLOBAL"
 msgstr ""
 
-#: ../drizzled/error.cc:370
+#: ../drizzled/error.cc:378
 #, c-format
 msgid "Variable '%-.64s' doesn't have a default value"
 msgstr ""
 
-#: ../drizzled/error.cc:371
+#: ../drizzled/error.cc:379
 #, c-format
 msgid "Variable '%-.64s' can't be set to the value of '%-.200s'"
 msgstr ""
 
-#: ../drizzled/error.cc:372
+#: ../drizzled/error.cc:380
 #, c-format
 msgid "Incorrect argument type to variable '%-.64s'"
 msgstr ""
 
-#: ../drizzled/error.cc:373
+#: ../drizzled/error.cc:381
 #, c-format
 msgid "Variable '%-.64s' can only be set, not read"
 msgstr ""
 
-#: ../drizzled/error.cc:374
+#: ../drizzled/error.cc:382
 #, c-format
 msgid "Incorrect usage/placement of '%s'"
 msgstr ""
 
-#: ../drizzled/error.cc:375
+#: ../drizzled/error.cc:383
 #, c-format
 msgid "This version of Drizzle doesn't yet support '%s'"
 msgstr ""
 
-#: ../drizzled/error.cc:376
+#: ../drizzled/error.cc:384
 #, c-format
 msgid "Variable '%-.192s' is a %s variable"
 msgstr ""
 
-#: ../drizzled/error.cc:377
+#: ../drizzled/error.cc:385
 #, c-format
 msgid "Incorrect foreign key definition for '%-.192s': %s"
 msgstr ""
 
-#: ../drizzled/error.cc:378
-msgid "Key reference and table reference don't match"
-msgstr ""
-
-#: ../drizzled/error.cc:379
-#, c-format
-msgid "Operand should contain %d column(s)"
-msgstr ""
-
-#: ../drizzled/error.cc:380
-msgid "Subquery returns more than 1 row"
-msgstr ""
-
-#: ../drizzled/error.cc:381
-#, c-format
-msgid "Converting column '%s' from %s to %s"
-msgstr ""
-
-#: ../drizzled/error.cc:382
-#, c-format
-msgid "Reference '%-.64s' not supported (%s)"
-msgstr ""
-
-#: ../drizzled/error.cc:383
-msgid "Every derived table must have its own alias"
-msgstr ""
-
-#: ../drizzled/error.cc:384
-#, c-format
-msgid "Select %u was reduced during optimization"
-msgstr ""
-
-#: ../drizzled/error.cc:385
-#, c-format
-msgid "Table '%-.192s' from one of the SELECTs cannot be used in %-.32s"
-msgstr ""
-
 #: ../drizzled/error.cc:386
-msgid "All parts of a SPATIAL index must be NOT NULL"
+msgid "Key reference and table reference don't match"
 msgstr ""
 
 #: ../drizzled/error.cc:387
 #, c-format
-msgid "COLLATION '%s' is not valid for CHARACTER SET '%s'"
+msgid "Operand should contain %d column(s)"
 msgstr ""
 
 #: ../drizzled/error.cc:388
+msgid "Subquery returns more than 1 row"
+msgstr ""
+
+#: ../drizzled/error.cc:389
+#, c-format
+msgid "Converting column '%s' from %s to %s"
+msgstr ""
+
+#: ../drizzled/error.cc:390
+#, c-format
+msgid "Reference '%-.64s' not supported (%s)"
+msgstr ""
+
+#: ../drizzled/error.cc:391
+msgid "Every derived table must have its own alias"
+msgstr ""
+
+#: ../drizzled/error.cc:392
+#, c-format
+msgid "Select %u was reduced during optimization"
+msgstr ""
+
+#: ../drizzled/error.cc:393
+#, c-format
+msgid "Table '%-.192s' from one of the SELECTs cannot be used in %-.32s"
+msgstr ""
+
+#: ../drizzled/error.cc:394
+msgid "All parts of a SPATIAL index must be NOT NULL"
+msgstr ""
+
+#: ../drizzled/error.cc:395
+#, c-format
+msgid "COLLATION '%s' is not valid for CHARACTER SET '%s'"
+msgstr ""
+
+#: ../drizzled/error.cc:396
 #, c-format
 msgid ""
 "Uncompressed data size too large; the maximum size is %d (based on "
 "max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
 
-#: ../drizzled/error.cc:389
+#: ../drizzled/error.cc:397
 msgid "ZLIB: Not enough memory"
 msgstr ""
 
-#: ../drizzled/error.cc:390
+#: ../drizzled/error.cc:398
 msgid ""
 "ZLIB: Not enough room in the output buffer (probably, length of uncompressed "
 "data was corrupted)"
 msgstr ""
 
-#: ../drizzled/error.cc:391
+#: ../drizzled/error.cc:399
 msgid "ZLIB: Input data corrupted"
 msgstr ""
 
-#: ../drizzled/error.cc:392
+#: ../drizzled/error.cc:400
 #, c-format
 msgid "%d line(s) were cut by GROUP_CONCAT()"
 msgstr ""
 
-#: ../drizzled/error.cc:393
+#: ../drizzled/error.cc:401
 #, c-format
 msgid "Row %ld doesn't contain data for all columns"
 msgstr ""
 
-#: ../drizzled/error.cc:394
+#: ../drizzled/error.cc:402
 #, c-format
 msgid ""
 "Row %ld was truncated; it contained more data than there were input columns"
 msgstr ""
 
-#: ../drizzled/error.cc:395
+#: ../drizzled/error.cc:403
 #, c-format
 msgid ""
 "Column set to default value; NULL supplied to NOT NULL column '%s' at row %ld"
 msgstr ""
 
-#: ../drizzled/error.cc:396
+#: ../drizzled/error.cc:404
 #, c-format
 msgid "Out of range value for column '%s' at row %ld"
 msgstr ""
 
-#: ../drizzled/error.cc:397
+#: ../drizzled/error.cc:405
 #, c-format
 msgid "Data truncated for column '%s' at row %ld"
 msgstr ""
 
-#: ../drizzled/error.cc:398
+#: ../drizzled/error.cc:406
 #, c-format
 msgid "Illegal mix of collations (%s,%s) and (%s,%s) for operation '%s'"
 msgstr ""
 
-#: ../drizzled/error.cc:399
+#: ../drizzled/error.cc:407
 #, c-format
 msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
-#: ../drizzled/error.cc:400
+#: ../drizzled/error.cc:408
 #, c-format
 msgid "Illegal mix of collations for operation '%s'"
 msgstr ""
 
-#: ../drizzled/error.cc:401
+#: ../drizzled/error.cc:409
 #, c-format
 msgid ""
 "Variable '%-.64s' is not a variable component (can't be used as XXXX."
 "variable_name)"
 msgstr ""
 
-#: ../drizzled/error.cc:402
+#: ../drizzled/error.cc:410
 #, c-format
 msgid "Unknown collation: '%-.64s'"
 msgstr ""
 
-#: ../drizzled/error.cc:403
+#: ../drizzled/error.cc:411
 #, c-format
 msgid ""
 "Field or reference '%-.192s%s%-.192s%s%-.192s' of SELECT #%d was resolved in "
 "SELECT #%d"
 msgstr ""
 
-#: ../drizzled/error.cc:404
+#: ../drizzled/error.cc:412
 #, c-format
 msgid "Incorrect index name '%-.100s'"
 msgstr ""
 
-#: ../drizzled/error.cc:405
+#: ../drizzled/error.cc:413
 #, c-format
 msgid "Incorrect catalog name '%-.100s'"
 msgstr ""
 
-#: ../drizzled/error.cc:406
+#: ../drizzled/error.cc:414
 #, c-format
 msgid "Column '%-.192s' cannot be part of FULLTEXT index"
 msgstr ""
 
-#: ../drizzled/error.cc:407
+#: ../drizzled/error.cc:415
 #, c-format
 msgid "Unknown table engine '%s'"
 msgstr ""
 
-#: ../drizzled/error.cc:408
+#: ../drizzled/error.cc:416
 #, c-format
 msgid "The target table %-.100s of the %s is not updatable"
 msgstr ""
 
-#: ../drizzled/error.cc:409
+#: ../drizzled/error.cc:417
 #, c-format
 msgid ""
 "The '%s' feature is disabled; you need Drizzle built with '%s' to have it "
 "working"
 msgstr ""
 
-#: ../drizzled/error.cc:410
+#: ../drizzled/error.cc:418
 #, c-format
 msgid ""
 "The Drizzle server is running with the %s option so it cannot execute this "
 "statement"
 msgstr ""
 
-#: ../drizzled/error.cc:411
+#: ../drizzled/error.cc:419
 #, c-format
 msgid "Column '%-.100s' has duplicated value '%-.64s' in %s"
 msgstr ""
 
-#: ../drizzled/error.cc:412
+#: ../drizzled/error.cc:420
 #, c-format
 msgid "Truncated incorrect %-.32s value: '%-.128s'"
 msgstr ""
 
-#: ../drizzled/error.cc:413
+#: ../drizzled/error.cc:421
 msgid ""
 "Incorrect table definition; there can be only one TIMESTAMP column with "
 "CURRENT_TIMESTAMP in DEFAULT or ON UPDATE clause"
 msgstr ""
 
-#: ../drizzled/error.cc:414
+#: ../drizzled/error.cc:422
 #, c-format
 msgid "Invalid ON UPDATE clause for '%-.192s' column"
 msgstr ""
 
-#: ../drizzled/error.cc:415
+#: ../drizzled/error.cc:423
 #, c-format
 msgid "Got error %d '%-.100s' from %s"
 msgstr ""
 
-#: ../drizzled/error.cc:416
+#: ../drizzled/error.cc:424
 #, c-format
 msgid "Got temporary error %d '%-.100s' from %s"
 msgstr ""
 
-#: ../drizzled/error.cc:417
+#: ../drizzled/error.cc:425
 #, c-format
 msgid "Unknown or incorrect time zone: '%-.64s'"
 msgstr ""
 
-#: ../drizzled/error.cc:418
+#: ../drizzled/error.cc:426
 #, c-format
 msgid "Invalid %s character string: '%.64s'"
 msgstr ""
 
-#: ../drizzled/error.cc:419
+#: ../drizzled/error.cc:427
 #, c-format
 msgid "Result of %s() was larger than max_allowed_packet (%ld) - truncated"
 msgstr ""
 
-#: ../drizzled/error.cc:420
+#: ../drizzled/error.cc:428
 #, c-format
 msgid "%s %s does not exist"
 msgstr ""
 
-#: ../drizzled/error.cc:421
+#: ../drizzled/error.cc:429
 msgid "Query execution was interrupted"
 msgstr ""
 
-#: ../drizzled/error.cc:422
+#: ../drizzled/error.cc:430
 #, c-format
 msgid ""
 "View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
 "(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
-#: ../drizzled/error.cc:423
+#: ../drizzled/error.cc:431
 #, c-format
 msgid "Field '%-.192s' doesn't have a default value"
 msgstr ""
 
-#: ../drizzled/error.cc:424
+#: ../drizzled/error.cc:432
 msgid "Division by 0"
 msgstr ""
 
-#: ../drizzled/error.cc:425
+#: ../drizzled/error.cc:433
 #, c-format
 msgid "Incorrect %-.32s value: '%-.128s' for column '%.192s' at row %u"
 msgstr ""
 
-#: ../drizzled/error.cc:426
+#: ../drizzled/error.cc:434
 #, c-format
 msgid "Illegal %s '%-.192s' value found during parsing"
 msgstr ""
 
-#: ../drizzled/error.cc:427
+#: ../drizzled/error.cc:435
 #, c-format
 msgid "Key part '%-.192s' length cannot be 0"
 msgstr ""
 
-#: ../drizzled/error.cc:428
+#: ../drizzled/error.cc:436
 #, c-format
 msgid ""
 "XAER_RMFAIL: The command cannot be executed when global transaction is in "
 "the  %.64s state"
 msgstr ""
 
-#: ../drizzled/error.cc:429
+#: ../drizzled/error.cc:437
 #, c-format
 msgid "Data too long for column '%s' at row %ld"
 msgstr ""
 
-#: ../drizzled/error.cc:430
+#: ../drizzled/error.cc:438
 #, c-format
 msgid ""
 "%s: ready for connections.\n"
 "Version: '%s' %s\n"
 msgstr ""
 
-#: ../drizzled/error.cc:431
+#: ../drizzled/error.cc:439
 msgid "Can't load value from file with fixed size rows to variable"
 msgstr ""
 
-#: ../drizzled/error.cc:432
+#: ../drizzled/error.cc:440
 #, c-format
 msgid "Incorrect %-.32s value: '%-.128s' for function %-.32s"
 msgstr ""
 
-#: ../drizzled/error.cc:433
+#: ../drizzled/error.cc:441
 msgid "Table definition has changed, please retry transaction"
 msgstr ""
 
-#: ../drizzled/error.cc:434
+#: ../drizzled/error.cc:442
 #, c-format
 msgid "Not allowed to return a result set from a %s"
 msgstr ""
 
-#: ../drizzled/error.cc:435
+#: ../drizzled/error.cc:443
 msgid "Cannot get geometry object from data you send to the GEOMETRY field"
 msgstr ""
 
-#: ../drizzled/error.cc:436
+#: ../drizzled/error.cc:444
 msgid ""
 "Explicit or implicit commit is not allowed in stored function or trigger."
 msgstr ""
 
-#: ../drizzled/error.cc:437
+#: ../drizzled/error.cc:445
 #, c-format
 msgid "Too big scale %d specified for column '%-.192s'. Maximum is %d."
 msgstr ""
 
-#: ../drizzled/error.cc:438
+#: ../drizzled/error.cc:446
 #, c-format
 msgid "Too big precision %d specified for column '%-.192s'. Maximum is %d."
 msgstr ""
 
-#: ../drizzled/error.cc:439
+#: ../drizzled/error.cc:447
 #, c-format
 msgid ""
 "For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
 "'%-.192s')."
 msgstr ""
 
-#: ../drizzled/error.cc:440
+#: ../drizzled/error.cc:448
 msgid "Trigger in wrong schema"
 msgstr ""
 
-#: ../drizzled/error.cc:441
+#: ../drizzled/error.cc:449
 #, c-format
 msgid ""
 "Thread stack overrun:  %ld bytes used of a %ld byte stack, and %ld bytes "
 "needed.  Use 'drizzled -O thread_stack=#' to specify a bigger stack."
 msgstr ""
 
-#: ../drizzled/error.cc:442
+#: ../drizzled/error.cc:450
 #, c-format
 msgid "Display width out of range for column '%-.192s' (max = %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:443
+#: ../drizzled/error.cc:451
 #, c-format
 msgid "Datetime function: %-.32s field overflow"
 msgstr ""
 
-#: ../drizzled/error.cc:444
+#: ../drizzled/error.cc:452
 #, c-format
 msgid ""
 "Cannot delete or update a parent row: a foreign key constraint fails (%.192s)"
 msgstr ""
 
-#: ../drizzled/error.cc:445
+#: ../drizzled/error.cc:453
 #, c-format
 msgid ""
 "Cannot add or update a child row: a foreign key constraint fails (%.192s)"
 msgstr ""
 
-#: ../drizzled/error.cc:446
+#: ../drizzled/error.cc:454
 msgid "No data - zero rows fetched, selected, or processed"
 msgstr ""
 
-#: ../drizzled/error.cc:447
+#: ../drizzled/error.cc:455
 #, c-format
 msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
-#: ../drizzled/error.cc:448
+#: ../drizzled/error.cc:456
 #, c-format
 msgid "non-grouping field '%-.192s' is used in %-.64s clause"
 msgstr ""
 
-#: ../drizzled/error.cc:449
+#: ../drizzled/error.cc:457
 msgid "The used table type doesn't support SPATIAL indexes"
 msgstr ""
 
-#: ../drizzled/error.cc:450
+#: ../drizzled/error.cc:458
 #, c-format
 msgid "Leading spaces are removed from name '%s'"
 msgstr ""
 
-#: ../drizzled/error.cc:451
+#: ../drizzled/error.cc:459
 msgid "Failed to read auto-increment value from storage engine"
 msgstr ""
 
-#: ../drizzled/error.cc:452
+#: ../drizzled/error.cc:460
 #, c-format
 msgid "String '%-.70s' is too long for %s (should be no longer than %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:453
+#: ../drizzled/error.cc:461
 msgid "Too high level of nesting for select"
 msgstr ""
 
-#: ../drizzled/error.cc:454
+#: ../drizzled/error.cc:462
 #, c-format
 msgid "Name '%-.64s' has become ''"
 msgstr ""
 
-#: ../drizzled/error.cc:455
+#: ../drizzled/error.cc:463
 msgid ""
 "First character of the FIELDS TERMINATED string is ambiguous; please use non-"
 "optional and non-empty FIELDS ENCLOSED BY"
 msgstr ""
 
-#: ../drizzled/error.cc:456
+#: ../drizzled/error.cc:464
 #, c-format
 msgid ""
 "Table storage engine '%-.64s' does not support the create option '%.64s'"
 msgstr ""
 
-#: ../drizzled/error.cc:457
+#: ../drizzled/error.cc:465
 #, c-format
 msgid "Error setting %-.32s. Given value %-.128s %-.128s"
 msgstr ""
 
-#: ../drizzled/error.cc:458
+#: ../drizzled/error.cc:466
 #, c-format
 msgid "Incorrect %-.32s value: '%-.128s'"
 msgstr ""
 
-#: ../drizzled/error.cc:459
+#: ../drizzled/error.cc:467
 #, c-format
 msgid "Table has no partition for value %-.64s"
 msgstr ""
 
-#: ../drizzled/error.cc:460
+#: ../drizzled/error.cc:468
 msgid "Writing one row to the row-based binary log failed"
 msgstr ""
 
-#: ../drizzled/error.cc:461
+#: ../drizzled/error.cc:469
 #, c-format
 msgid "Cannot drop index '%-.192s': needed in a foreign key constraint"
 msgstr ""
 
-#: ../drizzled/error.cc:462
+#: ../drizzled/error.cc:470
 #, c-format
 msgid ""
 "Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
 "d would lead to a duplicate entry"
 msgstr ""
 
-#: ../drizzled/error.cc:463
+#: ../drizzled/error.cc:471
 msgid ""
 "Transaction isolation level can't be changed while a transaction is in "
 "progress"
 msgstr ""
 
-#: ../drizzled/error.cc:464
+#: ../drizzled/error.cc:472
 #, c-format
 msgid "Incorrect parameter count in the call to native function '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:465
+#: ../drizzled/error.cc:473
 #, c-format
 msgid "Incorrect parameters in the call to native function '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:466
+#: ../drizzled/error.cc:474
 #, c-format
 msgid "Duplicate entry '%-.64s' for key '%-.192s'"
 msgstr ""
 
-#: ../drizzled/error.cc:467
+#: ../drizzled/error.cc:475
 #, c-format
 msgid "Invalid column reference (%-.64s) in LOAD DATA"
 msgstr ""
 
-#: ../drizzled/error.cc:468
-#, c-format
-msgid "Received an invalid value '%s' for a UNIX timestamp."
-msgstr ""
-
-#: ../drizzled/error.cc:469
+#: ../drizzled/error.cc:477
 #, c-format
 msgid "Received an invalid datetime value '%s'."
 msgstr ""
 
-#: ../drizzled/error.cc:470
-#, c-format
-msgid "Received a NULL argument for function '%s'."
-msgstr ""
-
-#: ../drizzled/error.cc:471
-#, c-format
-msgid "Received an out-of-range argument '%s' for function '%s'."
-msgstr ""
-
-#: ../drizzled/error.cc:472
-#, c-format
-msgid "Received an invalid enum value '%s'."
-msgstr ""
-
-#: ../drizzled/error.cc:473
-msgid "Tables which are replicated require a primary key."
-msgstr ""
-
-#: ../drizzled/error.cc:475
-#, c-format
-msgid "Corrupt or invalid schema definition for '%s' : %s"
-msgstr ""
-
-#: ../drizzled/error.cc:476
-#, c-format
-msgid "Corrupt or invalid table definition for '%s': %s"
-msgstr ""
-
-#: ../drizzled/error.cc:477
-#, c-format
-msgid "The number of enum that were required was too high for table '%s'"
-msgstr ""
-
 #: ../drizzled/error.cc:478
 #, c-format
-msgid "Corrupt or invalid table definition for '%s'"
+msgid "Received an invalid DATE value '%s'."
 msgstr ""
 
 #: ../drizzled/error.cc:479
 #, c-format
-msgid "Collation '%s' for table %s is invalid/unknown"
+msgid "Received a NULL argument for function '%s'."
+msgstr ""
+
+#: ../drizzled/error.cc:480
+#, c-format
+msgid "Received an invalid timestamp value '%s'."
 msgstr ""
 
 #: ../drizzled/error.cc:481
 #, c-format
-msgid "Cannot drop table '%s'"
+msgid "Received an invalid TIME value '%s'."
 msgstr ""
 
 #: ../drizzled/error.cc:482
 #, c-format
-msgid "Error occurred while dropping table '%s'"
-msgstr ""
-
-#: ../drizzled/error.cc:483
-#, c-format
-msgid "Permission denied to create '%s'"
+msgid "Received an invalid value '%s' for a UNIX timestamp."
 msgstr ""
 
 #: ../drizzled/error.cc:484
 #, c-format
-msgid "Unknown table '%s'"
+msgid "Received an out-of-range argument '%s' for function '%s'."
+msgstr ""
+
+#: ../drizzled/error.cc:485
+#, c-format
+msgid "Received an invalid enum value '%s'."
 msgstr ""
 
 #: ../drizzled/error.cc:486
-#, c-format
-msgid "Schema does not exist: %s"
-msgstr ""
-
-#: ../drizzled/error.cc:487
-#, c-format
-msgid "Error altering schema: %s"
+msgid "Tables which are replicated require a primary key."
 msgstr ""
 
 #: ../drizzled/error.cc:488
 #, c-format
-msgid "Error droppping Schema : %s"
+msgid "Corrupt or invalid schema definition for '%s' : %s"
 msgstr ""
 
 #: ../drizzled/error.cc:489
-msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
+#, c-format
+msgid "Corrupt or invalid table definition for '%s': %s"
 msgstr ""
 
 #: ../drizzled/error.cc:490
 #, c-format
-msgid "Unknown table engine option key/pair %s = %s."
+msgid "The number of enum that were required was too high for table '%s'"
 msgstr ""
 
 #: ../drizzled/error.cc:491
 #, c-format
+msgid "Corrupt or invalid table definition for '%s'"
+msgstr ""
+
+#: ../drizzled/error.cc:492
+#, c-format
+msgid "Collation '%s' for table %s is invalid/unknown"
+msgstr ""
+
+#: ../drizzled/error.cc:494
+#, c-format
+msgid "Cannot drop table '%s'"
+msgstr ""
+
+#: ../drizzled/error.cc:495
+#, c-format
+msgid "Error occurred while dropping table '%s'"
+msgstr ""
+
+#: ../drizzled/error.cc:496
+#, c-format
+msgid "Permission denied to create '%s'"
+msgstr ""
+
+#: ../drizzled/error.cc:497
+#, c-format
+msgid "Unknown table '%s'"
+msgstr ""
+
+#: ../drizzled/error.cc:499
+#, c-format
+msgid "Cannot create schema '%s'"
+msgstr ""
+
+#: ../drizzled/error.cc:500
+#, c-format
+msgid "Schema does not exist: %s"
+msgstr ""
+
+#: ../drizzled/error.cc:501
+#, c-format
+msgid "Error altering schema: %s"
+msgstr ""
+
+#: ../drizzled/error.cc:502
+#, c-format
+msgid "Error droppping Schema : %s"
+msgstr ""
+
+#: ../drizzled/error.cc:504
+msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
+msgstr ""
+
+#: ../drizzled/error.cc:505
+#, c-format
+msgid "Unknown table engine option key/pair %s = %s."
+msgstr ""
+
+#: ../drizzled/error.cc:506
+#, c-format
 msgid "Unknown schema engine option key/pair %s = %s."
 msgstr ""
 
-#: ../drizzled/error.cc:493
+#: ../drizzled/error.cc:508
 msgid "Admin access not allowed from this username/IP address."
 msgstr ""
 
 #. User lock/barrier error messages
-#: ../drizzled/error.cc:496
+#: ../drizzled/error.cc:511
 msgid "wait() can not be called on session owning user defined barrier."
 msgstr ""
 
-#: ../drizzled/error.cc:497
+#: ../drizzled/error.cc:512
 msgid "Unknown user defined barrier requested."
 msgstr ""
 
-#: ../drizzled/error.cc:498
+#: ../drizzled/error.cc:513
 msgid "Session does not own user defined barrier."
 msgstr ""
 
-#: ../drizzled/error.cc:499
+#: ../drizzled/error.cc:514
 msgid "Session can not wait on a user defined lock owned by the session."
 msgstr ""
 
-#: ../drizzled/error.cc:500
+#: ../drizzled/error.cc:515
 msgid "Session does not own user defined lock."
 msgstr ""
 
-#: ../drizzled/error.cc:502
+#: ../drizzled/error.cc:517
 msgid "Invalid name for user defined barrier."
 msgstr ""
 
-#: ../drizzled/error.cc:503
+#: ../drizzled/error.cc:518
 msgid "Invalid name for user defined lock."
 msgstr ""
 
-#: ../drizzled/error.cc:505
+#: ../drizzled/error.cc:520
 msgid ""
 "Either a DEFAULt value or NULL NULL description is required for a new column "
 "if table is not empty"
 msgstr ""
 
 #. Cast errors
-#: ../drizzled/error.cc:508
+#: ../drizzled/error.cc:523
 #, c-format
 msgid ""
 "Cast to unsigned converted negative integer to it's positive complement: %s"
 msgstr ""
 
-#: ../drizzled/error.cc:509
+#: ../drizzled/error.cc:524
 #, c-format
 msgid "Invalid cast to signed integer: %s"
 msgstr ""
 
-#: ../drizzled/error.cc:511
+#: ../drizzled/error.cc:526
 #, c-format
 msgid "Identifier '%.*s' is a SQL keyword."
 msgstr ""
 
-#: ../drizzled/error.cc:514
+#: ../drizzled/error.cc:529
 #, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:515
+#: ../drizzled/error.cc:530
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:516
+#: ../drizzled/error.cc:531
 #, c-format
 msgid "Can't open stream from handle (Errcode: %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:517
+#: ../drizzled/error.cc:532
 #, c-format
 msgid "Warning: '%s' had %d links"
 msgstr ""
 
-#: ../drizzled/error.cc:518
+#: ../drizzled/error.cc:533
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
 msgstr ""
 
-#: ../drizzled/error.cc:519
+#: ../drizzled/error.cc:534
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:520
+#: ../drizzled/error.cc:535
 #, c-format
 msgid ""
 "Character set '%s' is not a compiled character set and is not specified in "
 "the %s file"
 msgstr ""
 
-#: ../drizzled/error.cc:521
+#: ../drizzled/error.cc:536
 #, c-format
 msgid "Out of resources when opening file '%s' (Errcode: %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:522
+#: ../drizzled/error.cc:537
 #, c-format
 msgid "Can't read value for symlink '%s' (Error %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:523
+#: ../drizzled/error.cc:538
 #, c-format
 msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:524
+#: ../drizzled/error.cc:539
 #, c-format
 msgid "Error on realpath() on '%s' (Error %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:525
+#: ../drizzled/error.cc:540
 #, c-format
 msgid "Can't sync file '%s' to disk (Errcode: %d)"
 msgstr ""
 
-#: ../drizzled/error.cc:526
+#: ../drizzled/error.cc:541
 #, c-format
 msgid ""
 "Collation '%s' is not a compiled collation and is not specified in the %s "
 "file"
 msgstr ""
 
-#: ../drizzled/error.cc:527
+#: ../drizzled/error.cc:542
 #, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
 
 #. For UUID type
-#: ../drizzled/error.cc:530
+#: ../drizzled/error.cc:545
 msgid "Received an invalid UUID value"
 msgstr ""
 
-#: ../drizzled/error.cc:531
+#: ../drizzled/error.cc:546
 msgid "The UUID was not created with a valid time"
 msgstr ""
 
 #. For BOOL type
-#: ../drizzled/error.cc:534
+#: ../drizzled/error.cc:549
 #, c-format
 msgid "Received an invalid BOOLEAN value '%s'."
 msgstr ""
 
-#: ../drizzled/error.cc:535
+#: ../drizzled/error.cc:550
 #, c-format
 msgid "Invalid cast to BOOLEAN: '%s'."
 msgstr ""
 
+#. Transactional DDL
+#: ../drizzled/error.cc:553
+msgid "Transactional DDL not supported"
+msgstr ""
+
 #. ASSERT Message
-#: ../drizzled/error.cc:538
+#: ../drizzled/error.cc:555
 #, c-format
 msgid "Assertion '%s' failed."
 msgstr ""
 
-#: ../drizzled/error.cc:539
+#: ../drizzled/error.cc:556
 #, c-format
 msgid "Assertion '%s' failed, the result was NULL."
 msgstr ""
 
 #. Catalog related errors
-#: ../drizzled/error.cc:557
+#: ../drizzled/error.cc:574
 #, c-format
 msgid "Cannot create catalog '%s'."
 msgstr ""
 
-#: ../drizzled/error.cc:558
+#: ../drizzled/error.cc:575
 #, c-format
 msgid "Permission is denied to create '%s' catalog."
 msgstr ""
 
-#: ../drizzled/error.cc:559
+#: ../drizzled/error.cc:576
 #, c-format
 msgid "Cannot drop catalog '%s'."
 msgstr ""
 
-#: ../drizzled/error.cc:560
+#: ../drizzled/error.cc:577
 #, c-format
 msgid "Permission is denied to drop '%s' catalog."
 msgstr ""
 
-#: ../drizzled/error.cc:561
+#: ../drizzled/error.cc:578
 #, c-format
 msgid "Catalog '%s' does not exist."
 msgstr ""
 
-#: ../drizzled/error.cc:562
+#: ../drizzled/error.cc:579
 msgid "You cannot drop the 'local' catalog."
 msgstr ""
 
-#: ../drizzled/error.cc:563
+#: ../drizzled/error.cc:580
 #, c-format
 msgid "Could not gain lock on '%s'."
 msgstr ""
 
-#: ../drizzled/error.cc:564
+#: ../drizzled/error.cc:581
 #, c-format
 msgid "Corrupt or invalid catalog definition for '%s' : '%s'."
 msgstr ""
 
-#: ../drizzled/error.cc:565
+#: ../drizzled/error.cc:582
 msgid "Invalid catalog name."
+msgstr ""
+
+#: ../drizzled/error.cc:583
+msgid ""
+"Engine status is now stored in the data_dictionary tables, please use these "
+"instead."
 msgstr ""
 
 #: ../drizzled/identifier/catalog.cc:56
@@ -3392,20 +3446,36 @@ msgstr ""
 msgid "error: could not open directory: %s\n"
 msgstr ""
 
-#: ../drizzled/main.cc:163
+#: ../drizzled/main.cc:169
 msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
 msgstr ""
 
-#: ../drizzled/main.cc:263
+#: ../drizzled/main.cc:269
 #, c-format
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-#: ../drizzled/main.cc:274
+#: ../drizzled/main.cc:280
 #, c-format
 msgid "Local catalog %s/local does not exist\n"
+msgstr ""
+
+#: ../drizzled/main.cc:303 ../plugin/multi_thread/multi_thread.cc:84
+msgid "Drizzle has receieved an abort event."
+msgstr ""
+
+#: ../drizzled/main.cc:304 ../plugin/multi_thread/multi_thread.cc:85
+msgid "In Function: "
+msgstr ""
+
+#: ../drizzled/main.cc:305 ../plugin/multi_thread/multi_thread.cc:86
+msgid "In File: "
+msgstr ""
+
+#: ../drizzled/main.cc:306 ../plugin/multi_thread/multi_thread.cc:87
+msgid "On Line: "
 msgstr ""
 
 #: ../drizzled/message/transaction_writer.cc:365
@@ -3437,22 +3507,29 @@ msgstr ""
 msgid "Plugin '%s' init function returned error.\n"
 msgstr ""
 
-#: ../drizzled/module/loader.cc:452
+#: ../drizzled/module/loader.cc:463
 #, c-format
 msgid "Couldn't load plugin library named '%s'.\n"
 msgstr ""
 
-#: ../drizzled/module/loader.cc:462
+#: ../drizzled/module/loader.cc:473
 #, c-format
 msgid "Couldn't load plugin named '%s'.\n"
 msgstr ""
 
-#: ../drizzled/module/registry.h:109
+#: ../drizzled/module/registry.cc:176
+#, c-format
+msgid ""
+"Couldn't process plugin module dependencies. %s depends on %s but %s is not "
+"to be loaded.\n"
+msgstr ""
+
+#: ../drizzled/module/registry.h:117
 #, c-format
 msgid "Loading plugin %s failed: a %s plugin by that name already exists.\n"
 msgstr ""
 
-#: ../drizzled/module/registry.h:123
+#: ../drizzled/module/registry.h:131
 #, c-format
 msgid "Fatal error: Failed initializing %s::%s plugin.\n"
 msgstr ""
@@ -3566,12 +3643,12 @@ msgstr ""
 msgid "No sockets could be bound for listening"
 msgstr ""
 
-#: ../drizzled/plugin/listen.cc:95 ../plugin/console/console.cc:315
+#: ../drizzled/plugin/listen.cc:95 ../plugin/console/console.cc:343
 #, c-format
 msgid "pipe() failed with errno %d"
 msgstr ""
 
-#: ../drizzled/plugin/listen.cc:121
+#: ../drizzled/plugin/listen.cc:120
 #, c-format
 msgid "poll() failed with errno %d"
 msgstr ""
@@ -3718,7 +3795,7 @@ msgid ""
 "We have deactivated the TransactionApplier '%s'.\n"
 msgstr ""
 
-#: ../drizzled/session.cc:1987 ../drizzled/session.cc:2006
+#: ../drizzled/session.cc:1990 ../drizzled/session.cc:2009
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr ""
@@ -3770,29 +3847,29 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../drizzled/sql_table.cc:1939
+#: ../drizzled/sql_table.cc:1933
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr ""
 
-#: ../drizzled/statement/alter_table.cc:1506
+#: ../drizzled/statement/alter_table.cc:1514
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
 "table '%-.192s'"
 msgstr ""
 
-#: ../drizzled/sys_var.cc:1494
+#: ../drizzled/sys_var.cc:1526
 #, c-format
 msgid "Variable named %s already exists!\n"
 msgstr ""
 
-#: ../drizzled/sys_var.cc:1503
+#: ../drizzled/sys_var.cc:1535
 #, c-format
 msgid "Could not add Variable: %s\n"
 msgstr ""
 
-#: ../drizzled/sys_var.cc:1602
+#: ../drizzled/sys_var.cc:1633
 msgid "Failed to initialize system variables"
 msgstr ""
 
@@ -3801,19 +3878,19 @@ msgstr ""
 msgid "Got error %d when reading table '%s'"
 msgstr ""
 
-#: ../drizzled/table/instance/base.cc:1886
+#: ../drizzled/table/instance/base.cc:1883
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr ""
 
-#: ../drizzled/table/instance/base.cc:1893
+#: ../drizzled/table/instance/base.cc:1890
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
 "read"
 msgstr ""
 
-#: ../drizzled/tztime.cc:173
+#: ../drizzled/tztime.cc:170
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr ""
@@ -3884,24 +3961,28 @@ msgstr ""
 msgid "Estimated number of rows that a BlitzDB table will store."
 msgstr ""
 
-#: ../plugin/console/console.cc:351
+#: ../plugin/console/console.cc:379
 msgid "Enable the console."
 msgstr ""
 
-#: ../plugin/console/console.cc:354
+#: ../plugin/console/console.cc:382
 msgid "Turn on extra debugging."
 msgstr ""
 
-#: ../plugin/console/console.cc:357
+#: ../plugin/console/console.cc:385
 msgid "User to use for auth."
 msgstr ""
 
-#: ../plugin/console/console.cc:360
+#: ../plugin/console/console.cc:388
 msgid "Password to use for auth."
 msgstr ""
 
-#: ../plugin/console/console.cc:363
-msgid "Default database to use."
+#: ../plugin/console/console.cc:391
+msgid "Default catalog to use."
+msgstr ""
+
+#: ../plugin/console/console.cc:394
+msgid "Default schema to use."
 msgstr ""
 
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:121
@@ -3975,190 +4056,190 @@ msgstr ""
 msgid "Regular expression to apply to tables to exclude"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:1071
-#: ../plugin/haildb/haildb_engine.cc:1209
-#: ../plugin/haildb/haildb_engine.cc:1239
+#: ../plugin/haildb/haildb_engine.cc:1080
+#: ../plugin/haildb/haildb_engine.cc:1218
+#: ../plugin/haildb/haildb_engine.cc:1248
 #, c-format
 msgid "Cannot create table %s. HailDB Error %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:1090
+#: ../plugin/haildb/haildb_engine.cc:1099
 #, c-format
 msgid "Cannot create field %s on table %s. HailDB Error %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:1188
-#: ../plugin/haildb/haildb_engine.cc:1301
-#: ../plugin/haildb/haildb_engine.cc:1482
-#: ../plugin/haildb/haildb_engine.cc:2148
+#: ../plugin/haildb/haildb_engine.cc:1197
+#: ../plugin/haildb/haildb_engine.cc:1310
+#: ../plugin/haildb/haildb_engine.cc:1491
+#: ../plugin/haildb/haildb_engine.cc:2157
 #, c-format
 msgid "Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:1340
-#: ../plugin/haildb/haildb_engine.cc:1356
+#: ../plugin/haildb/haildb_engine.cc:1349
+#: ../plugin/haildb/haildb_engine.cc:1365
 #, c-format
 msgid "Cannot DROP table %s. HailDB Error %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3338
+#: ../plugin/haildb/haildb_engine.cc:3403
 #, c-format
 msgid "Error starting HailDB %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3367
+#: ../plugin/haildb/haildb_engine.cc:3432
 msgid "Disable HailDB adaptive hash index (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3369
+#: ../plugin/haildb/haildb_engine.cc:3434
 msgid "Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3372
+#: ../plugin/haildb/haildb_engine.cc:3437
 msgid ""
 "Size of a memory pool HailDB uses to store data dictionary information and "
 "other internal data structures."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3375
+#: ../plugin/haildb/haildb_engine.cc:3440
 msgid "Data file autoextend increment in megabytes"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3378
+#: ../plugin/haildb/haildb_engine.cc:3443
 msgid ""
 "The size of the memory buffer HailDB uses to cache data and indexes of its "
 "tables."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3381
+#: ../plugin/haildb/haildb_engine.cc:3446
 msgid "The common part for HailDB table spaces."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3383
+#: ../plugin/haildb/haildb_engine.cc:3448
 msgid "Disable HailDB checksums validation (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3385
+#: ../plugin/haildb/haildb_engine.cc:3450
 msgid "Disable HailDB doublewrite buffer (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3388
+#: ../plugin/haildb/haildb_engine.cc:3453
 msgid "Number of IOPs the server can do. Tunes the background IO rate"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3391
+#: ../plugin/haildb/haildb_engine.cc:3456
 msgid ""
 "Speeds up the shutdown process of the HailDB storage engine. Possible values "
 "are 0, 1 (faster) or 2 (fastest - crash-like)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3394
+#: ../plugin/haildb/haildb_engine.cc:3459
 msgid "Stores each HailDB table to an .ibd file in the database dir."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3397
+#: ../plugin/haildb/haildb_engine.cc:3462
 msgid "File format to use for new tables in .ibd files."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3400
+#: ../plugin/haildb/haildb_engine.cc:3465
 msgid ""
 "Set to 0 (write and flush once per second),1 (write and flush at each "
 "commit) or 2 (write at commit, flush once per second)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3403
+#: ../plugin/haildb/haildb_engine.cc:3468
 msgid "With which method to flush data."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3406
+#: ../plugin/haildb/haildb_engine.cc:3471
 msgid ""
 "Helps to save your data in case the disk image of the database becomes "
 "corrupt."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3409
+#: ../plugin/haildb/haildb_engine.cc:3474
 msgid "Path to individual files and their sizes."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3412
+#: ../plugin/haildb/haildb_engine.cc:3477
 msgid "Path to HailDB log files."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3415
+#: ../plugin/haildb/haildb_engine.cc:3480
 msgid "Size of each log file in a log group."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3418
+#: ../plugin/haildb/haildb_engine.cc:3483
 msgid ""
 "Number of log files in the log group. HailDB writes to the files in a "
 "circular fashion. Value 3 is recommended here."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3421
+#: ../plugin/haildb/haildb_engine.cc:3486
 msgid ""
 "Timeout in seconds an HailDB transaction may wait for a lock before being "
 "rolled back. Values above 100000000 disable the timeout."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3424
+#: ../plugin/haildb/haildb_engine.cc:3489
 msgid ""
 "The size of the buffer which HailDB uses to write log to the log files on "
 "disk."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3427
+#: ../plugin/haildb/haildb_engine.cc:3492
 msgid ""
 "Sets the point in the LRU list from where all pages are classified as old "
 "(Advanced users)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3430
+#: ../plugin/haildb/haildb_engine.cc:3495
 msgid ""
 "Milliseconds between accesses to a block at which it is made young. "
 "0=disabled (Advanced users)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3433
+#: ../plugin/haildb/haildb_engine.cc:3498
 msgid "Percentage of dirty pages allowed in bufferpool."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3436
+#: ../plugin/haildb/haildb_engine.cc:3501
 msgid "Desired maximum length of the purge queue (0 = no limit)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3439
+#: ../plugin/haildb/haildb_engine.cc:3504
 msgid ""
 "Roll back the complete transaction on lock wait timeout, for 4.x "
 "compatibility (disabled by default)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3442
+#: ../plugin/haildb/haildb_engine.cc:3507
 msgid "How many files at the maximum HailDB keeps open at the same time."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3445
+#: ../plugin/haildb/haildb_engine.cc:3510
 msgid "Number of background read I/O threads in HailDB."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3448
+#: ../plugin/haildb/haildb_engine.cc:3513
 msgid "Number of background write I/O threads in HailDB."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3450
+#: ../plugin/haildb/haildb_engine.cc:3515
 msgid ""
 "Disable if you want to reduce the number of messages written to the log "
 "(default: enabled)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3453
+#: ../plugin/haildb/haildb_engine.cc:3518
 msgid "Enable SHOW HAILDB STATUS output in the log"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3456
+#: ../plugin/haildb/haildb_engine.cc:3521
 msgid "Count of spin-loop rounds in HailDB mutexes (30 by default)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3458
+#: ../plugin/haildb/haildb_engine.cc:3523
 msgid ""
 "Use HailDB's internal memory allocator instead of the OS memory allocator"
 msgstr ""
@@ -4194,44 +4275,44 @@ msgstr ""
 msgid "Warning: data in %s truncated due to memory limit of %d bytes\n"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:1915
+#: ../plugin/innobase/handler/ha_innodb.cc:1914
 msgid ""
 "Once InnoDB is running, innodb_commit_concurrency must not change between "
 "zero and nonzero."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:2180
+#: ../plugin/innobase/handler/ha_innodb.cc:2179
 msgid ""
 "syntax error in innodb_log_group_home_dir, or a wrong number of mirrored log "
 "groups"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:2224
+#: ../plugin/innobase/handler/ha_innodb.cc:2223
 #, c-format
 msgid ""
 "InnoDB: invalid innodb_file_format_max value: should be any value up to %s "
 "or its equivalent numeric id"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9362
+#: ../plugin/innobase/handler/ha_innodb.cc:9359
 msgid "Do not use Native AIO library for IO, even if available"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9378
+#: ../plugin/innobase/handler/ha_innodb.cc:9375
 msgid "Enable internal replication log."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9381
+#: ../plugin/innobase/handler/ha_innodb.cc:9378
 msgid ""
 "Timeout in seconds an InnoDB transaction may wait for a lock before being "
 "rolled back. Values above 100000000 disable the timeout."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9384
+#: ../plugin/innobase/handler/ha_innodb.cc:9381
 msgid "Percentage of the buffer pool to reserve for 'old' blocks."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9387
+#: ../plugin/innobase/handler/ha_innodb.cc:9384
 msgid ""
 "ove blocks to the 'new' end of the buffer pool if the first access was at "
 "least this many milliseconds ago. The timeout is disabled if 0 (the default)."
@@ -4427,22 +4508,6 @@ msgstr ""
 
 #: ../plugin/multi_thread/multi_thread.cc:62
 msgid "Session killed before thread could execute"
-msgstr ""
-
-#: ../plugin/multi_thread/multi_thread.cc:84
-msgid "Drizzle has receieved an abort event."
-msgstr ""
-
-#: ../plugin/multi_thread/multi_thread.cc:85
-msgid "In Function: "
-msgstr ""
-
-#: ../plugin/multi_thread/multi_thread.cc:86
-msgid "In File: "
-msgstr ""
-
-#: ../plugin/multi_thread/multi_thread.cc:87
-msgid "On Line: "
 msgstr ""
 
 #: ../plugin/multi_thread/multi_thread.cc:109
@@ -5058,62 +5123,62 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:472
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:580
 msgid "Display help and exit"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:473
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:581
 msgid "Read from the innodb transaction log"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:479
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:587
 msgid "Password to use when connecting to server"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:482
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:590
 msgid "Perform checksum"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:483
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:591
 msgid "Ignore event messages"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:484
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:592
 msgid "Transaction log file"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:485
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:593
 msgid "Print raw Protobuf messages instead of SQL"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:488
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:596
 msgid "Start reading from the given file position"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:491
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:599
 msgid "Only output for the given transaction ID and later"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:494
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:602
 msgid "Only output for the given transaction ID"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:495
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:603
 msgid "Summarize message contents"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:529
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:637
 msgid "Cannot use --start-pos and --transaction-id together\n"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:535
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:643
 msgid "Cannot use --summarize with either --raw or --transaction-id\n"
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:635
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:753
 msgid "Checksum failed. Wanted "
 msgstr ""
 
-#: ../plugin/transaction_log/utilities/transaction_reader.cc:637
+#: ../plugin/transaction_log/utilities/transaction_reader.cc:755
 msgid " got "
 msgstr ""

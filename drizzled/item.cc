@@ -241,7 +241,7 @@ int64_t Item::val_int_from_decimal()
   return result;
 }
 
-int Item::save_time_in_field(Field *field)
+bool Item::save_time_in_field(Field *field)
 {
   type::Time ltime;
 
@@ -253,7 +253,7 @@ int Item::save_time_in_field(Field *field)
   return field->store_time(ltime, type::DRIZZLE_TIMESTAMP_TIME);
 }
 
-int Item::save_date_in_field(Field *field)
+bool Item::save_date_in_field(Field *field)
 {
   type::Time ltime;
 

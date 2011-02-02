@@ -288,7 +288,7 @@ void AuthLDAP::lookupUser(const string& user)
     {
       if (! connect())
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Reconnect failed: %s\n"),
+        errmsg_printf(error::ERROR, _("Reconnect failed: %s\n"),
                       getError().c_str());
         return;
       }
@@ -307,7 +307,7 @@ void AuthLDAP::lookupUser(const string& user)
                                        &result);
     if (return_code != LDAP_SUCCESS)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("ldap_search_ext_s failed: %s\n"),
+      errmsg_printf(error::ERROR, _("ldap_search_ext_s failed: %s\n"),
                     ldap_err2string(return_code));
 
       /* Only try one reconnect per request. */
@@ -413,7 +413,7 @@ static int init(module::Context &context)
   AuthLDAP *auth_ldap= new AuthLDAP("auth_ldap");
   if (! auth_ldap->initialize())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not load auth ldap: %s\n"),
+    errmsg_printf(error::ERROR, _("Could not load auth ldap: %s\n"),
                   auth_ldap->getError().c_str());
     delete auth_ldap;
     return 1;
