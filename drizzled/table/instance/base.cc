@@ -218,13 +218,13 @@ static Item *default_value_item(enum_field_types field_type,
  */
 bool TableShare::fieldInPrimaryKey(Field *in_field) const
 {
-  assert(table_proto != NULL);
+  assert(_table_message != NULL);
 
-  size_t num_indexes= table_proto->indexes_size();
+  size_t num_indexes= _table_message->indexes_size();
 
   for (size_t x= 0; x < num_indexes; ++x)
   {
-    const message::Table::Index &index= table_proto->indexes(x);
+    const message::Table::Index &index= _table_message->indexes(x);
     if (index.is_primary())
     {
       size_t num_parts= index.index_part_size();
@@ -255,7 +255,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(type_arg),
   _ref_count(0),
@@ -318,7 +318,7 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(message::Table::INTERNAL),
   _ref_count(0),
@@ -394,7 +394,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(identifier.getType()),
   _ref_count(0),
@@ -471,7 +471,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(type_arg),
   _ref_count(0),
@@ -561,8 +561,8 @@ TableShare::~TableShare()
 {
   storage_engine= NULL;
 
-  delete table_proto;
-  table_proto= NULL;
+  delete _table_message;
+  _table_message= NULL;
 
   plugin::EventObserver::deregisterTableEvents(*this);
 
@@ -582,8 +582,8 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
 
-  table_proto->set_name(identifier_arg.getTableName());
-  table_proto->set_schema(identifier_arg.getSchemaName());
+  _table_message->set_name(identifier_arg.getTableName());
+  _table_message->set_schema(identifier_arg.getSchemaName());
 }
 
 int TableShare::inner_parse_table_proto(Session& session, message::Table &table)

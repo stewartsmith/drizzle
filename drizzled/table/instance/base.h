@@ -320,6 +320,7 @@ private:
     normalized_path.str= str_arg;
     normalized_path.length= size_arg;
   }
+
 public:
 
   const char *getTableName() const
@@ -406,24 +407,24 @@ private:
   /* Max rows is a hint to HEAP during a create tmp table */
   uint64_t max_rows;
 
-  message::Table *table_proto;
+  message::Table *_table_message;
 
 public:
 
   /*
-    @note Without a table_proto, we assume we are building a STANDARD table.
+    @note Without a _table_message, we assume we are building a STANDARD table.
     This will be modified once we use Identifiers in the Share itself.
   */
   message::Table::TableType getTableType() const
   {
-    return table_proto ? table_proto->type() : message::Table::STANDARD;
+    return _table_message ? _table_message->type() : message::Table::STANDARD;
   }
 
   const std::string &getTableTypeAsString() const
   {
-    if (table_proto)
+    if (_table_message)
     {
-      switch (table_proto->type())
+      switch (_table_message->type())
       {
       default:
       case message::Table::STANDARD:
@@ -445,34 +446,34 @@ public:
   /* This is only used in one location currently */
   inline message::Table *getTableProto() const
   {
-    return table_proto;
+    return _table_message;
   }
 
   const message::Table::Field &field(int32_t field_position) const
   {
-    assert(table_proto);
-    return table_proto->field(field_position);
+    assert(_table_message);
+    return _table_message->field(field_position);
   }
 
   inline void setTableProto(message::Table *arg)
   {
-    assert(table_proto == NULL);
-    table_proto= arg;
+    assert(_table_message == NULL);
+    _table_message= arg;
   }
 
   inline bool hasComment() const
   {
-    return (table_proto) ?  table_proto->options().has_comment() : false; 
+    return (_table_message) ?  _table_message->options().has_comment() : false; 
   }
 
   inline const char *getComment()
   {
-    return (table_proto && table_proto->has_options()) ?  table_proto->options().comment().c_str() : NULL; 
+    return (_table_message && _table_message->has_options()) ?  _table_message->options().comment().c_str() : NULL; 
   }
 
   inline uint32_t getCommentLength() const
   {
-    return (table_proto) ? table_proto->options().comment().length() : 0; 
+    return (_table_message) ? _table_message->options().comment().length() : 0; 
   }
 
   inline uint64_t getMaxRows() const
@@ -561,6 +562,7 @@ public:
   uint32_t blob_fields;			/* number of blob fields */
 private:
   bool has_variable_width;                  /* number of varchar fields */
+
 public:
   bool hasVariableWidth() const
   {
