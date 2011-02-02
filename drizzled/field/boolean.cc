@@ -24,6 +24,7 @@
 #include <algorithm>
 
 #include "drizzled/field/boolean.h"
+#include "drizzled/type/boolean.h"
 
 #include "drizzled/error.h"
 #include "drizzled/internal/my_sys.h"
@@ -70,49 +71,20 @@ int Boolean::store(const char *from, uint32_t length, const CHARSET_INFO * const
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if (length == 1)
+  bool result;
+  if (not type::convert(result, from, length))
   {
-    switch (from[0])
-    {
-    case 'y': case 'Y':
-    case 't': case 'T': // PG compatibility
-      setTrue();
-      return 0;
-
-    case 'n': case 'N':
-    case 'f': case 'F': // PG compatibility
-      setFalse();
-      return 0;
-
-    default:
-      my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
-      return 1; // invalid
-    }
+    my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
+    return 1;
   }
-  else if ((length == 5) and (my_strcasecmp(system_charset_info, from, "FALSE") == 0))
-  {
-    setFalse();
-  }
-  if ((length == 4) and (my_strcasecmp(system_charset_info, from, "TRUE") == 0))
+
+  if (result)
   {
     setTrue();
-  }
-  else if ((length == 5) and (my_strcasecmp(system_charset_info, from, "FALSE") == 0))
-  {
-    setFalse();
-  }
-  else if ((length == 3) and (my_strcasecmp(system_charset_info, from, "YES") == 0))
-  {
-    setTrue();
-  }
-  else if ((length == 2) and (my_strcasecmp(system_charset_info, from, "NO") == 0))
-  {
-    setFalse();
   }
   else
   {
-    my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
-    return 1; // invalid
+    setFalse();
   }
 
   return 0;
