@@ -57,6 +57,8 @@
 #include "read_replication.h"
 #include "handler0vars.h"
 
+#include "drizzled/drizzled.h"
+
 #include "drizzled/replication_services.h"
 
 #include <google/protobuf/io/zero_copy_stream.h>
@@ -75,8 +77,8 @@ InnodbReplicationTable::InnodbReplicationTable() :
   plugin::TableFunction("DATA_DICTIONARY", "INNODB_REPLICATION_LOG")
 {
   add_field("TRANSACTION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, 2048, false);
-  add_field("TRANSACTION_MESSAGE_BINARY", plugin::TableFunction::VARBINARY, 2048, false);
+  add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, transaction_message_threshold, false);
+  add_field("TRANSACTION_MESSAGE_BINARY", plugin::TableFunction::VARBINARY, transaction_message_threshold, false);
   add_field("TRANSACTION_LENGTH", plugin::TableFunction::NUMBER, 0, false);
 }
 

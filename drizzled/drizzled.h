@@ -54,6 +54,8 @@ extern global_buffer_constraint<uint64_t> global_join_buffer;
 extern global_buffer_constraint<uint64_t> global_read_rnd_buffer;
 extern global_buffer_constraint<uint64_t> global_read_buffer;
 
+extern size_t transaction_message_threshold;
+
 extern const char * const DRIZZLE_CONFIG_NAME;
 
 boost::program_options::variables_map &getVariablesMap();

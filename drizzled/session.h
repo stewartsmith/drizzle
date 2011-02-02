@@ -222,7 +222,6 @@ struct drizzle_system_variables
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
-  size_t transaction_message_threshold;
   uint32_t completion_type;
   /* Determines which non-standard SQL behaviour should be enabled */
   uint32_t sql_mode;

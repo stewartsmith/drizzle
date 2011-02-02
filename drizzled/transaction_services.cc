@@ -1264,7 +1264,7 @@ message::Statement &TransactionServices::getInsertStatement(Session::reference s
     transaction= getActiveTransactionMessage(session);
 
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       transaction= segmentTransactionMessage(session, transaction);
     }
@@ -1283,7 +1283,7 @@ message::Statement &TransactionServices::getInsertStatement(Session::reference s
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1450,7 +1450,7 @@ message::Statement &TransactionServices::getUpdateStatement(Session::reference s
     transaction= getActiveTransactionMessage(session);
     
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       transaction= segmentTransactionMessage(session, transaction);
     }
@@ -1469,7 +1469,7 @@ message::Statement &TransactionServices::getUpdateStatement(Session::reference s
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1722,7 +1722,7 @@ message::Statement &TransactionServices::getDeleteStatement(Session::reference s
     transaction= getActiveTransactionMessage(session);
     
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       transaction= segmentTransactionMessage(session, transaction);
     }
@@ -1741,7 +1741,7 @@ message::Statement &TransactionServices::getDeleteStatement(Session::reference s
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();

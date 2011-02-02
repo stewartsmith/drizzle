@@ -357,6 +357,8 @@ global_buffer_constraint<uint64_t> global_join_buffer(0);
 global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
 global_buffer_constraint<uint64_t> global_read_buffer(0);
 
+size_t transaction_message_threshold;
+
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
 */
@@ -1032,13 +1034,13 @@ static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
 
 static void check_limits_transaction_message_threshold(size_t in_transaction_message_threshold)
 {
-  global_system_variables.transaction_message_threshold= 1024*1024;
+  transaction_message_threshold= 1024*1024;
   if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
   {
     cout << _("Error: Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
     exit(-1);
   }
-  global_system_variables.transaction_message_threshold= in_transaction_message_threshold;
+  transaction_message_threshold= in_transaction_message_threshold;
 }
 
 static void process_defaults_files()
@@ -1227,7 +1229,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   _("Path for temporary files."))
   ("transaction-isolation", po::value<string>(),
   _("Default transaction isolation level."))
-  ("transaction-message-threshold", po::value<size_t>(&global_system_variables.transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
+  ("transaction-message-threshold", po::value<size_t>(&transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
   _("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
   ("user,u", po::value<string>(),
   _("Run drizzled daemon as user."))  
