@@ -99,7 +99,7 @@ bool InnodbReplicationTable::Generator::populate()
   if (ret.message == NULL)
     return false;
 
-  /* TABLE_NAME */
+  /* Transaction ID */
   push(static_cast<uint64_t>(ret.id));
   
   /* Segment ID */
