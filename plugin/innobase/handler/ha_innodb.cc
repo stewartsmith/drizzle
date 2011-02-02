@@ -3381,7 +3381,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   stored the string length as the first byte. */
 
   upd_and_key_val_buff_len =
-        getTable()->getShare()->stored_rec_length
+        getTable()->getShare()->sizeStoredRecord()
         + getTable()->getShare()->max_key_length
         + MAX_REF_PARTS * 3;
 
@@ -3445,7 +3445,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
 
   prebuilt = row_create_prebuilt(ib_table);
 
-  prebuilt->mysql_row_len = getTable()->getShare()->stored_rec_length;
+  prebuilt->mysql_row_len = getTable()->getShare()->sizeStoredRecord();
   prebuilt->default_rec = getTable()->getDefaultValues();
   ut_ad(prebuilt->default_rec);
 
@@ -6833,9 +6833,9 @@ ha_innobase::records_in_range(
   KeyInfo*    key;
   dict_index_t* index;
   unsigned char*    key_val_buff2 = (unsigned char*) malloc(
-              getTable()->getShare()->stored_rec_length
+              getTable()->getShare()->sizeStoredRecord()
           + getTable()->getShare()->max_key_length + 100);
-  ulint   buff2_len = getTable()->getShare()->stored_rec_length
+  ulint   buff2_len = getTable()->getShare()->sizeStoredRecord()
           + getTable()->getShare()->max_key_length + 100;
   dtuple_t* range_start;
   dtuple_t* range_end;

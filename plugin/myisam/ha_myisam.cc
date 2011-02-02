@@ -284,7 +284,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
         keydef[i].seg[j].flag|= HA_BLOB_PART;
         /* save number of bytes used to pack length */
         keydef[i].seg[j].bit_start= (uint) (field->pack_length() -
-                                            share->blob_ptr_size);
+                                            share->sizeBlobPtr());
       }
     }
     keyseg+= pos->key_parts;
@@ -294,7 +294,8 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   record= table_arg->getInsertRecord();
   recpos= 0;
   recinfo_pos= recinfo;
-  while (recpos < (uint) share->stored_rec_length)
+
+  while (recpos < (uint) share->sizeStoredRecord())
   {
     Field **field, *found= 0;
     minpos= share->getRecordLength();
@@ -308,6 +309,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
         /* skip null fields */
         if (!(temp_length= (*field)->pack_length_in_rec()))
           continue; /* Skip null-fields */
+
         if (! found || fieldpos < minpos ||
             (fieldpos == minpos && temp_length < length))
         {

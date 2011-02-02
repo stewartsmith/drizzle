@@ -672,8 +672,8 @@ CopyField::get_copy_func(Field *to,Field *from)
     if (from_length != to_length || !compatible_db_low_byte_first)
     {
       // Correct pointer to point at char pointer
-      to_ptr+= to_length - to->getTable()->getShare()->blob_ptr_size;
-      from_ptr+= from_length- from->getTable()->getShare()->blob_ptr_size;
+      to_ptr+= to_length - to->getTable()->getShare()->sizeBlobPtr();
+      from_ptr+= from_length- from->getTable()->getShare()->sizeBlobPtr();
       return do_copy_blob;
     }
   }

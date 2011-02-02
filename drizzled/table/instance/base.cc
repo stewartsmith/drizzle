@@ -283,7 +283,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
   keys_for_keyread(0),
@@ -346,7 +346,7 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
   keys_for_keyread(0),
@@ -422,7 +422,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
   keys_for_keyread(0),
@@ -499,7 +499,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
   keys_for_keyread(0),
@@ -635,8 +635,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   }
 
   db_record_offset= 1;
-
-  blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
 
   keys= table.indexes_size();
 
@@ -1090,8 +1088,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                         &pfield.options().default_bin_value());
     }
 
-
-    blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 

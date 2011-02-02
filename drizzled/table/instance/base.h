@@ -375,9 +375,14 @@ public:
 
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
 private:
-  uint32_t   reclength;			/* Recordlength */
+  uint32_t reclength;			/* Recordlength */
+  uint32_t stored_rec_length;         /* Stored record length*/
+
 public:
-  uint32_t   stored_rec_length;         /* Stored record length*/
+  uint32_t sizeStoredRecord() const
+  {
+    return stored_rec_length;
+  }
 
   uint32_t getRecordLength() const
   {
@@ -402,6 +407,7 @@ private:
   uint64_t max_rows;
 
   message::Table *table_proto;
+
 public:
 
   /*
@@ -597,7 +603,15 @@ public:
   uint32_t next_number_keypart;             /* autoinc keypart number in a key */
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
 
+private:
   uint8_t blob_ptr_size;			/* 4 or 8 */
+
+public:
+  uint8_t sizeBlobPtr() const
+  {
+    return blob_ptr_size;
+  }
+
   bool db_low_byte_first;		/* Portable row format */
 
   /*

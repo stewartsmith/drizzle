@@ -997,7 +997,7 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   {
     copy->blob_field=(Field_blob*) this;
     copy->strip=0;
-    copy->length-= table->getShare()->blob_ptr_size;
+    copy->length-= table->getShare()->sizeBlobPtr();
     return copy->length;
   }
   else

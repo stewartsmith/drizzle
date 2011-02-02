@@ -884,7 +884,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table->getMutableShare()->blob_field.resize(field_count+1);
   uint32_t *blob_field= &table->getMutableShare()->blob_field[0];
-  table->getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
   table->getMutableShare()->db_low_byte_first=1;                // True for HEAP and MyISAM
   table->getMutableShare()->table_charset= param->table_charset;
   table->getMutableShare()->keys_for_keyread.reset();
