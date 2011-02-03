@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "plugin/error_dictionary/errors.h"
+#include <drizzled/error/sql_state.h>
 
 namespace drizzle_plugin
 {
@@ -31,6 +32,7 @@ error_dictionary::Errors::Errors() :
   add_field("ERROR_CODE", drizzled::plugin::TableFunction::NUMBER);
   add_field("ERROR_NAME");
   add_field("ERROR_MESSAGE");
+  add_field("ERROR_SQL_STATE");
 }
 
 error_dictionary::Errors::Generator::Generator(drizzled::Field **arg) :
@@ -47,8 +49,10 @@ bool error_dictionary::Errors::Generator::populate()
   push(uint64_t((*_iter).first));
   push((*_iter).second.first);
   push((*_iter).second.second);
+  push(drizzled::error::convert_to_sqlstate((*_iter).first));
 
   ++_iter;
+
   return true;
 }
 

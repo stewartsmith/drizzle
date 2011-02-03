@@ -23,7 +23,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
-#include <drizzled/sql_state.h>
 #include <drizzled/session.h>
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
