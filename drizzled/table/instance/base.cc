@@ -560,8 +560,6 @@ void TableShare::init(const char *new_table_name,
 TableShare::~TableShare() 
 {
   storage_engine= NULL;
-  delete _table_message;
-  _table_message= NULL;
 
   plugin::EventObserver::deregisterTableEvents(*this);
 

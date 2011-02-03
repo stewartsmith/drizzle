@@ -32,6 +32,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
@@ -102,6 +103,7 @@ public:
 
   /* The following is copied to each Table on OPEN */
   typedef std::vector<Field *> Fields;
+
 private:
   Fields _fields;
 
@@ -137,10 +139,11 @@ public:
     _fields.push_back(arg);
   }
 
-
   Field **found_next_number_field;
+
 private:
   Field *timestamp_field;               /* Used only during open */
+
 public:
 
   Field *getTimestampField() const               /* Used only during open */
@@ -156,6 +159,7 @@ public:
 
 private:
   KeyInfo  *key_info;			/* data of keys in database */
+
 public:
   KeyInfo &getKeyInfo(uint32_t arg) const
   {
@@ -163,11 +167,12 @@ public:
   }
   std::vector<uint>	blob_field;			/* Index to blobs in Field arrray*/
 
-  /* hash of field names (contains pointers to elements of field array) */
 private:
+  /* hash of field names (contains pointers to elements of field array) */
   typedef boost::unordered_map < std::string, Field **, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
   typedef std::pair< std::string, Field ** > FieldMapPair;
   FieldMap name_hash; /* hash of field names */
+
 public:
   size_t getNamedFieldSize() const
   {
@@ -354,6 +359,7 @@ public:
 
 private:
   uint64_t   version;
+
 public:
   uint64_t getVersion() const
   {
@@ -370,8 +376,9 @@ public:
     version= 0;
   }
 
-  uint32_t   timestamp_offset;		/* Set to offset+1 of record */
 private:
+  uint32_t   timestamp_offset;		/* Set to offset+1 of record */
+
   uint32_t reclength;			/* Recordlength */
   uint32_t stored_rec_length;         /* Stored record length*/
 
@@ -403,10 +410,9 @@ private:
   /* Max rows is a hint to HEAP during a create tmp table */
   uint64_t max_rows;
 
-  message::Table * _table_message;
+  boost::scoped_ptr<message::Table> _table_message;
 
 public:
-
   /*
     @note Without a _table_message, we assume we are building a STANDARD table.
     This will be modified once we use Identifiers in the Share itself.
@@ -427,7 +433,7 @@ public:
   /* This is only used in one location currently */
   inline message::Table *getTableMessage() const
   {
-    return _table_message;
+    return _table_message.get();
   }
 
   const message::Table::Field &field(int32_t field_position) const
@@ -438,8 +444,8 @@ public:
 
   void setTableMessage(const message::Table &arg)
   {
-    assert(getTableMessage() == NULL);
-    _table_message= new(std::nothrow) message::Table(arg);
+    assert(not getTableMessage());
+    _table_message.reset(new(std::nothrow) message::Table(arg));
   }
 
   inline bool hasComment() const
