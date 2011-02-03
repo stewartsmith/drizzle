@@ -24,11 +24,14 @@
 #include <algorithm>
 
 #include <drizzled/error.h>
-#include <drizzled/sql_state.h>
+#include <drizzled/error/sql_state.h>
 
 using namespace std;
 
 namespace drizzled
+{
+
+namespace error
 {
 
 struct sql_state_t
@@ -174,7 +177,7 @@ static bool compare_errno_map(sql_state_t a,
   return (a.drizzle_errno < b.drizzle_errno);
 }
 
-const char *drizzle_errno_to_sqlstate(drizzled::error_t drizzle_errno)
+const char *convert_to_sqlstate(drizzled::error_t drizzle_errno)
 {
 
   sql_state_t drizzle_err_state= {drizzle_errno, NULL, NULL};
@@ -190,4 +193,5 @@ const char *drizzle_errno_to_sqlstate(drizzled::error_t drizzle_errno)
   return "HY000";
 }
 
+} /* namespace error */
 } /* namespace drizzled */

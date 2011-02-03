@@ -21,7 +21,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
-#include <drizzled/sql_state.h>
+#include <drizzled/error/sql_state.h>
 #include <drizzled/session.h>
 #include "drizzled/internal/m_string.h"
 #include <algorithm>
@@ -440,8 +440,8 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
 
   /* The first # is to make the client backward compatible */
   buff[2]= '#';
-  pos= (unsigned char*) strcpy((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
-  pos+= strlen(drizzle_errno_to_sqlstate(sql_errno));
+  pos= (unsigned char*) strcpy((char*) buff+3, error::convert_to_sqlstate(sql_errno));
+  pos+= strlen(error::convert_to_sqlstate(sql_errno));
 
   char *tmp= strncpy((char*)pos, err, DRIZZLE_ERRMSG_SIZE-1);
   tmp+= strlen((char*)pos);
