@@ -96,7 +96,7 @@ INSERT INTO t1 VALUES (1,0,0),(3,1,1),(4,1,1),(8,2,2),(9,2,2),(17,3,2),(22,4,2),
 update t1 set parent_id=parent_id+100;
 select * from t1 where parent_id=102;
 update t1 set id=id+1000;
---error ER_DUP_ENTRY,1022
+--error ER_DUP_ENTRY,  ER_DUP_KEY
 update t1 set id=1024 where id=1009;
 select * from t1;
 update ignore t1 set id=id+1; # This will change all rows
