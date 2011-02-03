@@ -34,7 +34,7 @@ void Diagnostics_area::reset_diagnostics_area()
   can_overwrite_status= false;
   /** Don't take chances in production */
   m_message[0]= '\0';
-  m_sql_errno= 0;
+  m_sql_errno= EE_OK;
   m_server_status= 0;
   m_affected_rows= 0;
   m_found_rows= 0;
@@ -52,7 +52,7 @@ const char *Diagnostics_area::message() const
 }
 
 
-uint32_t Diagnostics_area::sql_errno() const
+drizzled::error_t Diagnostics_area::sql_errno() const
 {
   assert(m_status == DA_ERROR);
   return m_sql_errno;
@@ -139,8 +139,8 @@ void Diagnostics_area::set_eof_status(Session *session)
 /**
   Set ERROR status.
 */
-void Diagnostics_area::set_error_status(uint32_t sql_errno_arg,
-                                   const char *message_arg)
+void Diagnostics_area::set_error_status(drizzled::error_t sql_errno_arg,
+                                        const char *message_arg)
 {
   /*
     Only allowed to report error if has not yet reported a success

@@ -65,7 +65,7 @@ seapitester_clear_engine_state_history()
 0
 START TRANSACTION;
 Warnings:
-Warning	1746	There is already a transaction in progress
+Warning	1747	There is already a transaction in progress
 INSERT INTO t1_trx VALUES ('key1','value1');
 INSERT INTO t1_trx VALUES ('key2','value2');
 SELECT t1_trx.k, t1_trx.v

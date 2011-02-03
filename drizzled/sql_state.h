@@ -23,7 +23,7 @@
 namespace drizzled
 {
 
-const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno);
+const char *drizzle_errno_to_sqlstate(drizzled::error_t drizzle_errno);
 
 } /* namespace drizzled */
 

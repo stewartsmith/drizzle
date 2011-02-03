@@ -77,9 +77,10 @@ static void kill_server(int sig)
   if (sig != 0) // 0 is not a valid signal number
     ignore_signal(sig);                    /* purify inspected */
   if (sig == SIGTERM || sig == 0)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
+    errmsg_printf(error::INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
   else
-    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
+    errmsg_printf(error::ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
+
   close_connections();
   clean_up(1);
 }
