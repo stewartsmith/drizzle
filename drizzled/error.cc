@@ -580,7 +580,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_CATALOG_NO_LOCK, N_("Could not gain lock on '%s'."));
   ADD_ERROR_MESSAGE(ER_CORRUPT_CATALOG_DEFINITION, N_("Corrupt or invalid catalog definition for '%s' : '%s'."));
   ADD_ERROR_MESSAGE(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name."));
-
+  ADD_ERROR_MESSAGE(ER_TRANSACTION_ALREADY_STARTED, N_("There is already a transaction in progress"));
 
 }
 
