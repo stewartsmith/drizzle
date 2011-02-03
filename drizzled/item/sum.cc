@@ -37,6 +37,8 @@
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 
+#include <drizzled/type/decimal.h>
+
 #include "drizzled/internal/m_string.h"
 
 #include <algorithm>
@@ -46,7 +48,6 @@ using namespace std;
 namespace drizzled
 {
 
-extern type::Decimal decimal_zero;
 extern plugin::StorageEngine *heap_engine;
 
 /**

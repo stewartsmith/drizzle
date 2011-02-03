@@ -32,11 +32,11 @@ typedef enum
 } decimal_round_mode;
 typedef int32_t decimal_digit_t;
 
-typedef struct st_decimal_t {
+struct decimal_t {
   int    intg, frac, len;
   bool sign;
   decimal_digit_t *buf;
-} decimal_t;
+};
 
 int internal_str2dec(char *from, decimal_t *to, char **end,
                      bool fixed);
@@ -77,10 +77,10 @@ inline int string2decimal(char *from, decimal_t *to, char **end)
 
 inline void decimal_make_zero(decimal_t *dec)
 {							    
-  dec->buf[0]=0;
-  dec->intg=1;
-  dec->frac=0;
-  dec->sign=0; 
+  dec->buf[0]= 0;
+  dec->intg= 1;
+  dec->frac= 0;
+  dec->sign= 0; 
 }
 
 /*
@@ -212,6 +212,7 @@ public:
   {
     init();
   }
+
   void fix_buffer_pointer() { buf= buffer; }
   bool sign() const { return decimal_t::sign; }
   void sign(bool s) { decimal_t::sign= s; }
@@ -461,6 +462,14 @@ int class_decimal_intg(const type::Decimal *a)
 
 
 void class_decimal_trim(uint32_t *precision, uint32_t *scale);
+
+inline type::Decimal &decimal_zero_const()
+{
+  static type::Decimal _decimal_zero;
+  return _decimal_zero;
+}
+
+#define decimal_zero decimal_zero_const()
 
 } /* namespace drizzled */
 

@@ -1994,9 +1994,7 @@ Field *TableShare::make_field(const message::Table::Field &,
                                     null_bit,
                                     unireg_check,
                                     field_name,
-                                    decimals,
-                                    false,
-                                    false /* is_unsigned */);
+                                    decimals);
   case DRIZZLE_TYPE_DOUBLE:
     return new (&mem_root) Field_double(ptr,
                                    field_length,
