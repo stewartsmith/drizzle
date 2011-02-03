@@ -485,6 +485,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/transaction_context.h \
 			      drizzled/transaction_services.h \
 			      drizzled/tree.h \
+			      drizzled/type/boolean.h \
 			      drizzled/type/decimal.h \
 			      drizzled/type/time.h \
 			      drizzled/type/uuid.h \
@@ -866,6 +867,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/time_functions.cc \
 			   drizzled/transaction_services.cc \
 			   drizzled/tree.cc \
+			   drizzled/type/boolean.cc \
 			   drizzled/type/decimal.cc \
 			   drizzled/type/time.cc \
 			   drizzled/tztime.cc \
