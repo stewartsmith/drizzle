@@ -47,12 +47,19 @@ Returns: 'Occupation, First name, Last Name'
 Returns: 'First name, Last Name'
 
 
-TRIM() 	                  
+TRIM()
+------         
 
 Remove leading and trailing spaces
 
-LTRIM() 	          Remove leading spaces
+LTRIM()
+-------
+
+Remove leading spaces
 
 
-RTRIM() 	          Remove trailing spaces
+RTRIM()
+-------
+
+Remove trailing spaces
 

@@ -47,19 +47,21 @@ Returns values that match a regular expression pattern; they are commonly used f
 
 Other REGEXP examples: :;
 
-	SELECT 'abcabc' REGEXP 'abc',    'abcabc' REGEXP 'cb';
+	SELECT 'abcabc' REGEXP 'abc',    
+	'abcabc' REGEXP 'cb';
 
 The search pattern may describe only a part of string. To match entire string, use ^ and $ in the search: ::
 
 	SELECT 'abc' REGEXP '^abc$', 'abcabc' REGEXP '^abc$';
 
 
-SELECT 'cde' REGEXP '[a-c]+', 'efg' REGEXP '[a-c]+';
+	SELECT 'cde' REGEXP '[a-c]+', 'efg' REGEXP '[a-c]+';
 
 
-SELECT 'abcabc' REGEXP 'ABC', 'abcabc' REGEXP BINARY 'ABC';
+	SELECT 'abcabc' REGEXP 'ABC', 'abcabc' REGEXP BINARY 'ABC';
 
 
 STRCMP()
 --------
+
 The purpose of STRCMP is also to compare two strings. This function returns 0 if two strings are the same, -1 if the first argument is smaller than the second according to the current sort order, and 1 otherwise.

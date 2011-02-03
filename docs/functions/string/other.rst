@@ -2,47 +2,118 @@ Other String Functions
 ======================
 
 LOAD_FILE()
+-----------
 
 Load the named file
 
-ELT() 	                  Return string at index number
+ELT()
+-----
 
-EXPORT_SET() 	          Return a string
+Return string at index number
 
-FORMAT() 	          Return a number formatted to specified number of decimal places
+EXPORT_SET()
+------------
 
-LOAD_FILE() 	          Load the named file
+Return a string
 
-LPAD() 	                  Return the string argument, left-padded with the specified string
+FORMAT()
+--------
 
-MAKE_SET() 	          Return a set of comma-separated strings that have the corresponding bit in bits set
+Return a number formatted to specified number of decimal places
 
-MATCH 	                  Perform full-text search
+LOAD_FILE()
+-----------
 
-MID() 	                  Return a substring starting from the specified position
+Load the named file
 
-ORD() 	                  Return character code for leftmost character of the argument
+LPAD()
+-------
 
-QUOTE() 	          Escape the argument for use in an SQL statement
+Return the string argument, left-padded with the specified string
 
-REPEAT() 	          Repeat a string the specified number of times
+MAKE_SET()
+----------
 
-REPLACE() 	          Replace occurrences of a specified string
+Return a set of comma-separated strings that have the corresponding bit in bits set
 
-REVERSE() 	          Reverse the characters in a string
+MATCH()
+-------
 
-RIGHT() 	          Return the specified rightmost number of characters
+Perform full-text search
 
-RPAD() 	                  Append string the specified number of times
+MID()
+-----
 
-SOUNDEX() 	          Return a soundex string
+Return a substring starting from the specified position
 
-SOUNDS LIKE 	          Compare sounds
+ORD()
+-----
 
-SPACE() 	          Return a string of the specified number of spaces
+Return character code for leftmost character of the argument
 
-SUBSTR() 	          Return the substring as specified
+QUOTE()
+-------
 
-SUBSTRING_INDEX() 	  Return a substring from a string before the specified number of occurrences of the delimiter
+Escape the argument for use in an SQL statement
 
-SUBSTRING() 	          Return the substring as specified
+REPEAT()
+--------
+
+Repeat a string the specified number of times
+
+REPLACE()
+---------
+
+Replace occurrences of a specified string
+
+REVERSE()
+---------
+
+Reverse the characters in a string
+
+RIGHT()
+-------
+
+Return the specified rightmost number of characters
+
+RPAD()
+------
+
+Append string the specified number of times
+
+SOUNDEX()
+---------
+
+Return a soundex string
+
+
+SPACE() 	          
+-------
+
+Return a string of the specified number of spaces
+
+
+SUBSTRING()
+-----------
+
+Returns the substring as specified
+
+Examples that use SUBSTRING() in the SELECT clause:
+
+The SUBSTRING() function is used to extract a character string (using a given starting position and a given length). ::
+
+	SELECT  
+        SUBSTRING(course_designater,6,3) as 'Course number'                   
+	FROM Courses
+	WHERE course_designater LIKE 'Excel%' 
+	LIMIT 10;    
+
+You can also format a column using SUBSTRING() in combination with functions like LOWER() and UPPER(). ::
+
+	SELECT 
+	CONCAT(UPPER(SUBSTRING(lastname,1,1)),
+  	LOWER(SUBSTRING(lastname,2,29)))
+	FROM Students
+	LIMIT 10;
+
+
