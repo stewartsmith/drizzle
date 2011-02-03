@@ -51,14 +51,14 @@ public:
                 unsigned char null_bit_arg,
                 enum utype unireg_check_arg,
                 const char *field_name_arg,
-                uint8_t dec_arg,
-                bool zero_arg,
-                bool unsigned_arg);
+                uint8_t dec_arg);
+
   Field_decimal(uint32_t len_arg,
                 bool maybe_null_arg,
                 const char *field_name_arg,
                 uint8_t dec_arg,
                 bool unsigned_arg);
+
   enum_field_types type() const { return DRIZZLE_TYPE_DECIMAL;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
   Item_result result_type () const { return DECIMAL_RESULT; }
