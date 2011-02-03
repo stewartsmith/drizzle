@@ -36,6 +36,15 @@ struct decimal_t {
   int    intg, frac, len;
   bool sign;
   decimal_digit_t *buf;
+
+  /* set a decimal_t to zero */
+  inline void set_zero()
+  {							    
+    buf[0]= 0;
+    intg= 1;
+    frac= 0;
+    sign= 0; 
+  }
 };
 
 int internal_str2dec(char *from, decimal_t *to, char **end,
@@ -71,16 +80,6 @@ void max_decimal(int precision, int frac, decimal_t *to);
 inline int string2decimal(char *from, decimal_t *to, char **end)
 {
   return internal_str2dec(from, to, end, false);
-}
-
-/* set a decimal_t to zero */
-
-inline void decimal_make_zero(decimal_t *dec)
-{							    
-  dec->buf[0]= 0;
-  dec->intg= 1;
-  dec->frac= 0;
-  dec->sign= 0; 
 }
 
 /*
@@ -234,14 +233,6 @@ public:
   }
 
   int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
-
-
-  int set_zero()
-  {
-    decimal_make_zero(static_cast<decimal_t*> (this));
-    return 0;
-  }
-
 
   bool is_zero() const
   {

@@ -836,7 +836,7 @@ static int decimal_shift(decimal_t *dec, int shift)
 
   if (beg == end)
   {
-    decimal_make_zero(dec);
+    dec->set_zero();
     return E_DEC_OK;
   }
 
@@ -869,7 +869,8 @@ static int decimal_shift(decimal_t *dec, int shift)
         we lost all digits (they will be shifted out of buffer), so we can
         just return 0
       */
-      decimal_make_zero(dec);
+      dec->set_zero();
+
       return E_DEC_TRUNCATED;
     }
   }
@@ -1161,7 +1162,7 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
   return error;
 
 fatal_error:
-  decimal_make_zero(to);
+  to->set_zero();
   return error;
 }
 
@@ -1630,7 +1631,7 @@ int bin2decimal(const unsigned char *from, decimal_t *to, int precision, int sca
   return error;
 
 err:
-  decimal_make_zero(((decimal_t*) to));
+  to->set_zero();
   return(E_DEC_BAD_NUM);
 }
 
@@ -1697,7 +1698,7 @@ decimal_round(const decimal_t *from, decimal_t *to, int scale,
 
   if (scale+from->intg < 0)
   {
-    decimal_make_zero(to);
+    to->set_zero();
     return E_DEC_OK;
   }
 
@@ -1768,7 +1769,7 @@ decimal_round(const decimal_t *from, decimal_t *to, int scale,
     }
     else if (frac0+intg0==0)
     {
-      decimal_make_zero(to);
+      to->set_zero();
       return E_DEC_OK;
     }
   }
@@ -1993,7 +1994,9 @@ static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
       {
         if (to == 0) /* decimal_cmp() */
           return 0;
-        decimal_make_zero(to);
+
+        to->set_zero();
+
         return E_DEC_OK;
       }
     }
@@ -2218,7 +2221,7 @@ int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
       if (++buf == end)
       {
         /* We got decimal zero */
-        decimal_make_zero(to);
+        to->set_zero();
         break;
       }
     }
@@ -2288,7 +2291,7 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
   }
   if (prec1 <= 0)
   { /* short-circuit everything: from1 == 0 */
-    decimal_make_zero(to);
+    to->set_zero();
     return E_DEC_OK;
   }
   for (i=(prec1-1) % DIG_PER_DEC1; *buf1 < powers10[i--]; prec1--) ;
@@ -2448,14 +2451,14 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
     error=E_DEC_OK;
     if (unlikely(frac0==0 && intg0==0))
     {
-      decimal_make_zero(to);
+      to->set_zero();
       goto done;
     }
     if (intg0<=0)
     {
       if (unlikely(-intg0 >= to->len))
       {
-        decimal_make_zero(to);
+        to->set_zero();
         error=E_DEC_TRUNCATED;
         goto done;
       }
