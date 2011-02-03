@@ -32,10 +32,11 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
-#include "drizzled/message/table.pb.h"
+#include "drizzled/message.h"
 #include "drizzled/util/string.h"
 
 #include "drizzled/lex_string.h"
@@ -51,10 +52,6 @@ namespace drizzled
 
 extern uint64_t refresh_version;
 
-const static std::string STANDARD_STRING("STANDARD");
-const static std::string TEMPORARY_STRING("TEMPORARY");
-const static std::string INTERNAL_STRING("INTERNAL");
-const static std::string FUNCTION_STRING("FUNCTION");
 const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
 
 namespace plugin
@@ -106,6 +103,7 @@ public:
 
   /* The following is copied to each Table on OPEN */
   typedef std::vector<Field *> Fields;
+
 private:
   Fields _fields;
 
@@ -141,10 +139,11 @@ public:
     _fields.push_back(arg);
   }
 
-
   Field **found_next_number_field;
+
 private:
   Field *timestamp_field;               /* Used only during open */
+
 public:
 
   Field *getTimestampField() const               /* Used only during open */
@@ -160,6 +159,7 @@ public:
 
 private:
   KeyInfo  *key_info;			/* data of keys in database */
+
 public:
   KeyInfo &getKeyInfo(uint32_t arg) const
   {
@@ -167,11 +167,12 @@ public:
   }
   std::vector<uint>	blob_field;			/* Index to blobs in Field arrray*/
 
-  /* hash of field names (contains pointers to elements of field array) */
 private:
+  /* hash of field names (contains pointers to elements of field array) */
   typedef boost::unordered_map < std::string, Field **, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
   typedef std::pair< std::string, Field ** > FieldMapPair;
   FieldMap name_hash; /* hash of field names */
+
 public:
   size_t getNamedFieldSize() const
   {
@@ -284,6 +285,7 @@ private:
   LEX_STRING table_name;                /* Table name (for open) */
   LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
+
 public:
 
   const char *getNormalizedPath() const
@@ -319,6 +321,7 @@ private:
     normalized_path.str= str_arg;
     normalized_path.length= size_arg;
   }
+
 public:
 
   const char *getTableName() const
@@ -356,6 +359,7 @@ public:
 
 private:
   uint64_t   version;
+
 public:
   uint64_t getVersion() const
   {
@@ -372,11 +376,17 @@ public:
     version= 0;
   }
 
-  uint32_t   timestamp_offset;		/* Set to offset+1 of record */
 private:
-  uint32_t   reclength;			/* Recordlength */
+  uint32_t   timestamp_offset;		/* Set to offset+1 of record */
+
+  uint32_t reclength;			/* Recordlength */
+  uint32_t stored_rec_length;         /* Stored record length*/
+
 public:
-  uint32_t   stored_rec_length;         /* Stored record length*/
+  uint32_t sizeStoredRecord() const
+  {
+    return stored_rec_length;
+  }
 
   uint32_t getRecordLength() const
   {
@@ -400,72 +410,57 @@ private:
   /* Max rows is a hint to HEAP during a create tmp table */
   uint64_t max_rows;
 
-  message::Table *table_proto;
-public:
+  boost::scoped_ptr<message::Table> _table_message;
 
+public:
   /*
-    @note Without a table_proto, we assume we are building a STANDARD table.
+    @note Without a _table_message, we assume we are building a STANDARD table.
     This will be modified once we use Identifiers in the Share itself.
   */
   message::Table::TableType getTableType() const
   {
-    return table_proto ? table_proto->type() : message::Table::STANDARD;
+    return getTableMessage() ? getTableMessage()->type() : message::Table::STANDARD;
   }
 
   const std::string &getTableTypeAsString() const
   {
-    if (table_proto)
-    {
-      switch (table_proto->type())
-      {
-      default:
-      case message::Table::STANDARD:
-        return STANDARD_STRING;
-      case message::Table::TEMPORARY:
-        return TEMPORARY_STRING;
-      case message::Table::INTERNAL:
-        return INTERNAL_STRING;
-      case message::Table::FUNCTION:
-        return FUNCTION_STRING;
-      }
-    }
-    else
-    {
-      return NO_PROTOBUFFER_AVAILABLE;
-    }
+    if (getTableMessage())
+      return message::type(getTableMessage()->type());
+
+    return NO_PROTOBUFFER_AVAILABLE;
   }
 
   /* This is only used in one location currently */
-  inline message::Table *getTableProto() const
+  inline message::Table *getTableMessage() const
   {
-    return table_proto;
+    return _table_message.get();
+  }
+
+  void setTableMessage(const message::Table &arg)
+  {
+    assert(not getTableMessage());
+    _table_message.reset(new(std::nothrow) message::Table(arg));
   }
 
   const message::Table::Field &field(int32_t field_position) const
   {
-    assert(table_proto);
-    return table_proto->field(field_position);
-  }
-
-  inline void setTableProto(message::Table *arg)
-  {
-    assert(table_proto == NULL);
-    table_proto= arg;
+    assert(getTableMessage());
+    return getTableMessage()->field(field_position);
   }
 
   inline bool hasComment() const
   {
-    return (table_proto) ?  table_proto->options().has_comment() : false; 
+    return (getTableMessage()) ?  getTableMessage()->options().has_comment() : false; 
   }
 
   inline const char *getComment()
   {
-    return (table_proto && table_proto->has_options()) ?  table_proto->options().comment().c_str() : NULL; 
+    return (getTableMessage() && getTableMessage()->has_options()) ?  getTableMessage()->options().comment().c_str() : NULL; 
   }
 
   inline uint32_t getCommentLength() const
   {
-    return (table_proto) ? table_proto->options().comment().length() : 0; 
+    return (getTableMessage()) ? getTableMessage()->options().comment().length() : 0; 
   }
 
   inline uint64_t getMaxRows() const
@@ -554,6 +549,7 @@ public:
   uint32_t blob_fields;			/* number of blob fields */
 private:
   bool has_variable_width;                  /* number of varchar fields */
+
 public:
   bool hasVariableWidth() const
   {
@@ -596,7 +592,15 @@ public:
   uint32_t next_number_keypart;             /* autoinc keypart number in a key */
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
 
+private:
   uint8_t blob_ptr_size;			/* 4 or 8 */
+
+public:
+  uint8_t sizeBlobPtr() const
+  {
+    return blob_ptr_size;
+  }
+
   bool db_low_byte_first;		/* Portable row format */
 
   /*

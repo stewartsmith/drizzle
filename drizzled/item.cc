@@ -102,7 +102,7 @@ bool Item::val_bool()
       type::Decimal decimal_value;
       type::Decimal *val= val_decimal(&decimal_value);
       if (val)
-        return not val->is_zero();
+        return not val->isZero();
       return false;
     }
 
@@ -1202,9 +1202,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
                                  0,
                                  Field::NONE,
                                  name,
-                                 decimals,
-                                 0,
-                                 unsigned_flag);
+                                 decimals);
     break;
   case DRIZZLE_TYPE_LONG:
     field= new field::Int32((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE, name);

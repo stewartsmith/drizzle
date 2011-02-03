@@ -28,8 +28,6 @@
 namespace drizzled
 {
 
-extern type::Decimal decimal_zero;
-
 /****************************************************************************
  ** File_decimal
  ****************************************************************************/
@@ -40,39 +38,37 @@ Field_decimal::Field_decimal(unsigned char *ptr_arg,
                              unsigned char null_bit_arg,
                              enum utype unireg_check_arg,
                              const char *field_name_arg,
-                             uint8_t dec_arg,
-                             bool zero_arg,
-                             bool unsigned_arg)
-:Field_num(ptr_arg,
-           len_arg,
-           null_ptr_arg,
-           null_bit_arg,
-           unireg_check_arg,
-           field_name_arg,
-           dec_arg, zero_arg,
-           unsigned_arg)
-{
-  precision= class_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
-  set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
-  assert((precision <= DECIMAL_MAX_PRECISION) &&
-         (dec <= DECIMAL_MAX_SCALE));
-  bin_size= class_decimal_get_binary_size(precision, dec);
-}
+                             uint8_t dec_arg) :
+  Field_num(ptr_arg,
+            len_arg,
+            null_ptr_arg,
+            null_bit_arg,
+            unireg_check_arg,
+            field_name_arg,
+            dec_arg, false,
+            false)
+  {
+    precision= class_decimal_length_to_precision(len_arg, dec_arg, false);
+    set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
+    assert((precision <= DECIMAL_MAX_PRECISION) &&
+           (dec <= DECIMAL_MAX_SCALE));
+    bin_size= class_decimal_get_binary_size(precision, dec);
+  }
 
 Field_decimal::Field_decimal(uint32_t len_arg,
                              bool maybe_null_arg,
                              const char *name,
                              uint8_t dec_arg,
-                             bool unsigned_arg)
-:Field_num((unsigned char*) 0,
-           len_arg,
-           maybe_null_arg ? (unsigned char*) "": 0,
-           0,
-           NONE,
-           name,
-           dec_arg,
-           0,
-           unsigned_arg)
+                             bool unsigned_arg) :
+  Field_num((unsigned char*) 0,
+            len_arg,
+            maybe_null_arg ? (unsigned char*) "": 0,
+            0,
+            NONE,
+            name,
+            dec_arg,
+            0,
+            unsigned_arg)
 {
   precision= class_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);

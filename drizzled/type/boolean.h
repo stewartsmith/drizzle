@@ -18,25 +18,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-#ifndef DRIZZLED_TABLE_INSTANCE_H
-#define DRIZZLED_TABLE_INSTANCE_H
-
-#include <drizzled/table/instance/base.h>
-#include <drizzled/table/instance/shared.h>
-#include <drizzled/table/instance/singular.h>
+#ifndef DRIZZLED_TYPE_BOOLEAN_H
+#define DRIZZLED_TYPE_BOOLEAN_H
 
 namespace drizzled
 {
 
-namespace table
+namespace type
 {
 
-namespace instance
-{
+bool convert(bool &destination, String &source);
+bool convert(bool &destination, const char *source, const size_t source_length);
+bool convert(String &destination, const bool source, bool ansi_display);
 
-} /* namespace instance */
-} /* namespace table */
+} /* namespace type */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_H */
+#endif /* DRIZZLED_TYPE_BOOLEAN_H */

@@ -19,15 +19,15 @@
  */
 
 
-#ifndef DRIZZLED_TABLE_INSTANCE_H
-#define DRIZZLED_TABLE_INSTANCE_H
+#ifndef DRIZZLED_TABLE_INSTANCE_SINGULAR_H
+#define DRIZZLED_TABLE_INSTANCE_SINGULAR_H
 
 #include <drizzled/table/instance/base.h>
-#include <drizzled/table/instance/shared.h>
-#include <drizzled/table/instance/singular.h>
 
 namespace drizzled
 {
+
+namespace identifier { class Table; }
 
 namespace table
 {
@@ -35,8 +35,19 @@ namespace table
 namespace instance
 {
 
+class Singular : public drizzled::TableShare
+{
+public:
+
+  Singular(const identifier::Table::Type type_arg,
+           const identifier::Table &identifier,
+           char *path_arg= NULL, uint32_t path_length_arg= 0);
+
+  ~Singular();
+};
+
 } /* namespace instance */
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_H */
+#endif /* DRIZZLED_TABLE_INSTANCE_SINGULAR_H */
