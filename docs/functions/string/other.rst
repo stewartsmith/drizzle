@@ -64,12 +64,26 @@ Repeat a string the specified number of times
 REPLACE()
 ---------
 
-Replace occurrences of a specified string
+The REPLACE() function returns a string with all occurrences of the 'from_str' replaced by 'to_str'. REPLACE is case-sensitive when searching for 'from_str'.
+
+Syntax:
+
+REPLACE(str,from_str,to_str)
+
+For example: ::
+	
+	SELECT REPLACE('wwww.google.com', 'w', 'v');
+
+Returns: vvv.google.com
 
 REVERSE()
 ---------
 
-Reverse the characters in a string
+This function returns a string argument with the characters in reverse order. ::
+
+	SELECT REVERSE('abcd');
+
+Returns: dcba
 
 RIGHT()
 -------
@@ -85,12 +99,6 @@ SOUNDEX()
 ---------
 
 Return a soundex string
-
-
-SPACE() 	          
--------
-
-Return a string of the specified number of spaces
 
 
 SUBSTRING()

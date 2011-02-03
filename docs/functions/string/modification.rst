@@ -50,16 +50,22 @@ Returns: 'First name, Last Name'
 TRIM()
 ------         
 
-Remove leading and trailing spaces
+The TRIM function remove specified prefixes or suffixes from a string (typically leading and trailing spaces), and returns the resulting string. If none of the specifiers BOTH, LEADING, or TRAILING is given, BOTH is assumed.
+
+Syntax:
+
+TRIM([{BOTH | LEADING | TRAILING} [remstr] FROM] str), TRIM([remstr FROM] str)
+
+[remstr] is optional (if it's not specified, spaces are removed).
 
 LTRIM()
 -------
 
-Remove leading spaces
+This version of the TRIM function removes leading spaces from the beginning of a string.
 
 
 RTRIM()
 -------
 
-Remove trailing spaces
+This version of the TRIM function removes trailing spaces from the end of a function. 
 

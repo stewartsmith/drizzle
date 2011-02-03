@@ -59,8 +59,8 @@ OCTET_LENGTH() 	          A synonym for LENGTH()
 ===================     ====================================================================================================
 
 
-String modificaion functions
-----------------------------
+Formatting and modification functions
+-------------------------------------
 ===================     ====================================================================================================
 Operator                  Description
 ===================     ====================================================================================================
@@ -109,8 +109,6 @@ REVERSE() 	          Reverse the characters in a string
 RIGHT() 	          Return the specified rightmost number of characters
 RPAD() 	                  Append string the specified number of times
 SOUNDEX() 	          Return a soundex string
-SOUNDS LIKE 	          Compare sounds
-SPACE() 	          Return a string of the specified number of spaces
 SUBSTR() 	          Return the substring as specified
 SUBSTRING_INDEX() 	  Return a substring from a string before the specified number of occurrences of the delimiter
 SUBSTRING() 	          Return the substring as specified
