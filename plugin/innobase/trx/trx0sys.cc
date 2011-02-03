@@ -674,6 +674,32 @@ trx_sys_flush_max_trx_id(void)
 	mtr_commit(&mtr);
 }
 
+UNIV_INTERN
+void
+trx_sys_flush_commit_id(uint64_t commit_id, ulint field, mtr_t* mtr)
+{
+  trx_sysf_t*     sys_header;
+  
+  sys_header = trx_sysf_get(mtr);
+
+  if (mach_read_from_4(sys_header + field
+                       + TRX_SYS_MYSQL_LOG_OFFSET_HIGH) > 0
+      || (commit_id >> 32) > 0) 
+  {
+
+    mlog_write_ulint(sys_header + field
+                     + TRX_SYS_MYSQL_LOG_OFFSET_HIGH,
+                     (ulint)(commit_id >> 32),
+                     MLOG_4BYTES, mtr);
+  }
+
+  mlog_write_ulint(sys_header + field
+                   + TRX_SYS_MYSQL_LOG_OFFSET_LOW,
+                   (ulint)(commit_id & 0xFFFFFFFFUL),
+                   MLOG_4BYTES, mtr);
+}
+
+
 /*****************************************************************//**
 Updates the offset information about the end of the MySQL binlog entry
 which corresponds to the transaction just being committed. In a MySQL

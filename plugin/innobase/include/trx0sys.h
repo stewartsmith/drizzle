@@ -62,6 +62,8 @@ extern char		trx_sys_mysql_bin_log_name[];
 extern ib_int64_t	trx_sys_mysql_bin_log_pos;
 /* @} */
 
+extern ib_int64_t       trx_sys_commit_id;
+
 /** The transaction system */
 extern trx_sys_t*	trx_sys;
 
@@ -284,6 +286,12 @@ ibool
 trx_in_trx_list(
 /*============*/
 	trx_t*	in_trx);/*!< in: trx */
+
+ 
+UNIV_INTERN
+void
+trx_sys_flush_commit_id(uint64_t commit_id, ulint field, mtr_t* mtr);
+
 /*****************************************************************//**
 Updates the offset information about the end of the MySQL binlog entry
 which corresponds to the transaction just being committed. In a MySQL
@@ -606,6 +614,7 @@ struct trx_sys_struct{
 	trx_id_t	max_trx_id;	/*!< The smallest number not yet
 					assigned as a transaction id or
 					transaction number */
+
 	UT_LIST_BASE_NODE_T(trx_t) trx_list;
 					/*!< List of active and committed in
 					memory transactions, sorted on trx id,
