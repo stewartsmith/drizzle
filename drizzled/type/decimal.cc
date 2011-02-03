@@ -195,10 +195,8 @@ int decimal_operation_results(int result)
 */
 
 int class_decimal2string(uint32_t mask, const type::Decimal *d,
-                         uint32_t fixed_prec, uint32_t fixed_dec,
-                         char filler, String *str)
+                         uint32_t fixed_dec, String *str)
 {
-  assert(fixed_prec == 0);
   /*
     Calculate the size of the string: For DECIMAL(a,b), fixed_prec==a
     holds true iff the type is also ZEROFILL, which in turn implies
@@ -210,15 +208,16 @@ int class_decimal2string(uint32_t mask, const type::Decimal *d,
     fixed_prec will be 0, and class_decimal_string_length() will be called
     instead to calculate the required size of the buffer.
   */
-  int length= (int)(fixed_prec
-                    ? (uint32_t)(fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
+  int length= (int)(0
+                    ? (uint32_t)(((0 == fixed_dec) ? 1 : 0) + 1)
                     : (uint32_t)d->string_length());
   int result;
   if (str->alloc(length))
     return check_result(mask, E_DEC_OOM);
+
   result= decimal2string((decimal_t*) d, (char*) str->ptr(),
-                         &length, (int)fixed_prec, fixed_dec,
-                         filler);
+                         &length, (int)0, fixed_dec,
+                         '0');
   str->length(length);
   return check_result(mask, result);
 }
@@ -2555,7 +2554,7 @@ std::ostream& operator<<(std::ostream& output, const type::Decimal &dec)
 {
   drizzled::String str;
 
-  class_decimal2string(E_DEC_OK, &dec, 0, 20, ' ', &str);
+  class_decimal2string(E_DEC_OK, &dec, 20, &str);
 
   output << "type::Decimal:(";
   output <<  str.c_ptr();

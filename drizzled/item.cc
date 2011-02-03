@@ -146,7 +146,7 @@ String *Item::val_string_from_decimal(String *str)
     return NULL;
 
   class_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
-  class_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, 0, str);
+  class_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, str);
   return str;
 }
 

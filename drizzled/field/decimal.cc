@@ -304,9 +304,8 @@ String *Field_decimal::val_str(String *val_buffer,
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  uint32_t fixed_precision= decimal_precision ? precision : 0;
   class_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
-                    fixed_precision, dec, '0', val_buffer);
+                       dec, val_buffer);
   return val_buffer;
 }
 
