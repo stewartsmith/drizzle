@@ -614,18 +614,13 @@ public:
     event_observers is a class containing all the event plugins that have 
     registered an interest in this table.
   */
-  private:
-  plugin::EventObserverList *event_observers;
-  public:
-  plugin::EventObserverList *getTableObservers() 
+  virtual plugin::EventObserverList *getTableObservers() 
   { 
-    return event_observers;
+    return NULL;
   }
   
-  void setTableObservers(plugin::EventObserverList *observers) 
-  { 
-    event_observers= observers;
-  }
+  virtual void setTableObservers(plugin::EventObserverList *) 
+  { }
   
   /*
     Set share's identifier information.

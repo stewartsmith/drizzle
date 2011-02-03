@@ -42,7 +42,6 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
-#include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/table.h"
 #include "drizzled/table/shell.h"
@@ -286,8 +285,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   if (type_arg == message::Table::INTERNAL)
   {
@@ -349,8 +347,7 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   assert(identifier.getKey() == key);
 
@@ -425,8 +422,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   private_key_for_cache= identifier.getKey();
   assert(identifier.getPath().size()); // Since we are doing a create table, this should be a positive value
@@ -502,8 +498,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   char *path_buff;
   std::string _path;
@@ -560,8 +555,6 @@ void TableShare::init(const char *new_table_name,
 TableShare::~TableShare() 
 {
   storage_engine= NULL;
-
-  plugin::EventObserver::deregisterTableEvents(*this);
 
   mem_root.free_root(MYF(0));                 // Free's share
 }
