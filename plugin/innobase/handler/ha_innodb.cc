@@ -5369,7 +5369,7 @@ ha_innobase::innobase_get_index(
     errmsg_printf(error::ERROR, 
       "Innodb could not find key n:o %u with name %s "
       "from dict cache for table %s",
-      keynr, getTable()->getShare()->getTableProto()->indexes(keynr).name().c_str(),
+      keynr, getTable()->getShare()->getTableMessage()->indexes(keynr).name().c_str(),
       prebuilt->table->name);
   }
 

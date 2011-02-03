@@ -218,13 +218,13 @@ static Item *default_value_item(enum_field_types field_type,
  */
 bool TableShare::fieldInPrimaryKey(Field *in_field) const
 {
-  assert(_table_message != NULL);
+  assert(getTableMessage());
 
-  size_t num_indexes= _table_message->indexes_size();
+  size_t num_indexes= getTableMessage()->indexes_size();
 
   for (size_t x= 0; x < num_indexes; ++x)
   {
-    const message::Table::Index &index= _table_message->indexes(x);
+    const message::Table::Index &index= getTableMessage()->indexes(x);
     if (index.is_primary())
     {
       size_t num_parts= index.index_part_size();
@@ -560,7 +560,6 @@ void TableShare::init(const char *new_table_name,
 TableShare::~TableShare() 
 {
   storage_engine= NULL;
-
   delete _table_message;
   _table_message= NULL;
 
@@ -582,8 +581,8 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
 
-  _table_message->set_name(identifier_arg.getTableName());
-  _table_message->set_schema(identifier_arg.getSchemaName());
+  getTableMessage()->set_name(identifier_arg.getTableName());
+  getTableMessage()->set_schema(identifier_arg.getSchemaName());
 }
 
 int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
@@ -599,7 +598,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
-  setTableProto(new(nothrow) message::Table(table));
+  setTableMessage(table);
 
   storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
   assert(storage_engine); // We use an assert() here because we should never get this far and still have no suitable engine.
@@ -1215,7 +1214,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                          charset,
                          MTYP_TYPENR(unireg_type),
                          ((field_type == DRIZZLE_TYPE_ENUM) ?  &intervals[interval_nr++] : (TYPELIB*) 0),
-                         getTableProto()->field(fieldnr).name().c_str());
+                         getTableMessage()->field(fieldnr).name().c_str());
 
     _fields[fieldnr]= f;
 

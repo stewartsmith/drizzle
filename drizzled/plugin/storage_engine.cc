@@ -378,7 +378,7 @@ int StorageEngine::getTableDefinition(Session& session,
     Table *table= session.find_temporary_table(identifier);
     if (table)
     {
-      table_message.reset(new message::Table(*table->getShare()->getTableProto()));
+      table_message.reset(new message::Table(*table->getShare()->getTableMessage()));
       return EEXIST;
     }
   }
@@ -418,7 +418,7 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
     if (table)
     {
       error= EE_OK;
-      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableProto()));
+      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableMessage()));
     }
   }
 

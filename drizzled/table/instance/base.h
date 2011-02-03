@@ -407,7 +407,7 @@ private:
   /* Max rows is a hint to HEAP during a create tmp table */
   uint64_t max_rows;
 
-  message::Table *_table_message;
+  message::Table * _table_message;
 
 public:
 
@@ -417,14 +417,14 @@ public:
   */
   message::Table::TableType getTableType() const
   {
-    return _table_message ? _table_message->type() : message::Table::STANDARD;
+    return getTableMessage() ? getTableMessage()->type() : message::Table::STANDARD;
   }
 
   const std::string &getTableTypeAsString() const
   {
-    if (_table_message)
+    if (getTableMessage())
     {
-      switch (_table_message->type())
+      switch (getTableMessage()->type())
       {
       default:
       case message::Table::STANDARD:
@@ -444,36 +444,36 @@ public:
   }
 
   /* This is only used in one location currently */
-  inline message::Table *getTableProto() const
+  inline message::Table *getTableMessage() const
   {
     return _table_message;
   }
 
   const message::Table::Field &field(int32_t field_position) const
   {
-    assert(_table_message);
-    return _table_message->field(field_position);
+    assert(getTableMessage());
+    return getTableMessage()->field(field_position);
   }
 
-  inline void setTableProto(message::Table *arg)
+  void setTableMessage(const message::Table &arg)
   {
-    assert(_table_message == NULL);
-    _table_message= arg;
+    assert(getTableMessage() == NULL);
+    _table_message= new(std::nothrow) message::Table(arg);
   }
 
   inline bool hasComment() const
   {
-    return (_table_message) ?  _table_message->options().has_comment() : false; 
+    return (getTableMessage()) ?  getTableMessage()->options().has_comment() : false; 
   }
 
   inline const char *getComment()
   {
-    return (_table_message && _table_message->has_options()) ?  _table_message->options().comment().c_str() : NULL; 
+    return (getTableMessage() && getTableMessage()->has_options()) ?  getTableMessage()->options().comment().c_str() : NULL; 
   }
 
   inline uint32_t getCommentLength() const
   {
-    return (_table_message) ? _table_message->options().comment().length() : 0; 
+    return (getTableMessage()) ? getTableMessage()->options().comment().length() : 0; 
   }
 
   inline uint64_t getMaxRows() const
