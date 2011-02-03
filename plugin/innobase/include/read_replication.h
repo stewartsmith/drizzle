@@ -23,6 +23,7 @@
 
 struct read_replication_return_st {
   unsigned long long id;
+  unsigned long seg_id;
   unsigned long long message_length;
   const char *message;
 };
