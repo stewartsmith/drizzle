@@ -436,16 +436,16 @@ public:
     return _table_message.get();
   }
 
-  const message::Table::Field &field(int32_t field_position) const
-  {
-    assert(getTableMessage());
-    return getTableMessage()->field(field_position);
-  }
-
   void setTableMessage(const message::Table &arg)
   {
     assert(not getTableMessage());
     _table_message.reset(new(std::nothrow) message::Table(arg));
+  }
+
+  const message::Table::Field &field(int32_t field_position) const
+  {
+    assert(getTableMessage());
+    return getTableMessage()->field(field_position);
   }
 
   inline bool hasComment() const
