@@ -705,6 +705,8 @@ struct trx_struct{
 	/*------------------------------*/
 	char detailed_error[256];	/*!< detailed error message for last
 					error, or empty. */
+
+	uint64_t        commit_id;      /* commit id assigned to a trx */
 };
 
 #define TRX_MAX_N_THREADS	32	/* maximum number of
