@@ -2554,7 +2554,7 @@ std::ostream& operator<<(std::ostream& output, const type::Decimal &dec)
 {
   drizzled::String str;
 
-  class_decimal2string(E_DEC_OK, &dec, 20, &str);
+  class_decimal2string(E_DEC_FATAL_ERROR, &dec, 0, &str);
 
   output << "type::Decimal:(";
   output <<  str.c_ptr();

@@ -1982,19 +1982,19 @@ Field *TableShare::make_field(const message::Table::Field &,
                                       field_charset);
   case DRIZZLE_TYPE_BLOB:
     return new (&mem_root) Field_blob(ptr,
-                                 null_pos,
-                                 null_bit,
-                                 field_name,
-                                 this,
-                                 field_charset);
+                                      null_pos,
+                                      null_bit,
+                                      field_name,
+                                      this,
+                                      field_charset);
   case DRIZZLE_TYPE_DECIMAL:
     return new (&mem_root) Field_decimal(ptr,
-                                    field_length,
-                                    null_pos,
-                                    null_bit,
-                                    unireg_check,
-                                    field_name,
-                                    decimals);
+                                         field_length,
+                                         null_pos,
+                                         null_bit,
+                                         unireg_check,
+                                         field_name,
+                                         decimals);
   case DRIZZLE_TYPE_DOUBLE:
     return new (&mem_root) Field_double(ptr,
                                    field_length,
