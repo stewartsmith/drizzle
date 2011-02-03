@@ -35,7 +35,7 @@
 
 #include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
-#include "drizzled/message/table.pb.h"
+#include "drizzled/message.h"
 #include "drizzled/util/string.h"
 
 #include "drizzled/lex_string.h"
@@ -51,10 +51,6 @@ namespace drizzled
 
 extern uint64_t refresh_version;
 
-const static std::string STANDARD_STRING("STANDARD");
-const static std::string TEMPORARY_STRING("TEMPORARY");
-const static std::string INTERNAL_STRING("INTERNAL");
-const static std::string FUNCTION_STRING("FUNCTION");
 const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
 
 namespace plugin
@@ -423,24 +419,9 @@ public:
   const std::string &getTableTypeAsString() const
   {
     if (getTableMessage())
-    {
-      switch (getTableMessage()->type())
-      {
-      default:
-      case message::Table::STANDARD:
-        return STANDARD_STRING;
-      case message::Table::TEMPORARY:
-        return TEMPORARY_STRING;
-      case message::Table::INTERNAL:
-        return INTERNAL_STRING;
-      case message::Table::FUNCTION:
-        return FUNCTION_STRING;
-      }
-    }
-    else
-    {
-      return NO_PROTOBUFFER_AVAILABLE;
-    }
+      return message::type(getTableMessage()->type());
+
+    return NO_PROTOBUFFER_AVAILABLE;
   }
 
   /* This is only used in one location currently */
