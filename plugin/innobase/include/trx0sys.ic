@@ -369,21 +369,6 @@ trx_sys_get_new_trx_id(void)
 	return(id);
 }
 
-/* 
-UNIV_INLINE
-uint64_t
-trx_sys_get_new_commit_id(void)
-{
-  uint64_t commit_id;
-
-  ut_ad(mutex_own(&kernel_mutex));
-
-  commit_id= trx_sys->commit_id++;
-
-  return commit_id;
-}
-*/
-
 /*****************************************************************//**
 Allocates a new transaction number.
 @return	new, allocated trx number */

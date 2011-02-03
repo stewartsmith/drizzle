@@ -92,12 +92,7 @@ Creates a transaction object for MySQL.
 UNIV_INTERN
 trx_t*
 trx_allocate_for_mysql(void);
-/********************************************************************//**
-Creates a commit identifier for a transaction.
-@return next commit identifier */
-UNIV_INTERN
-void
-trx_allocate_commit_id();
+/*========================*/
 /********************************************************************//**
 Creates a transaction object for background operations by the master thread.
 @return	own: transaction object */
@@ -710,8 +705,6 @@ struct trx_struct{
 	/*------------------------------*/
 	char detailed_error[256];	/*!< detailed error message for last
 					error, or empty. */
-        
-        uint64_t        commit_id;      /* commit id assigned to a trx */
 };
 
 #define TRX_MAX_N_THREADS	32	/* maximum number of
