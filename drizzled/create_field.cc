@@ -74,7 +74,9 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
 
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)
-    pack_length= (pack_length - old_field->getTable()->getShare()->blob_ptr_size + portable_sizeof_char_ptr);
+  {
+    pack_length= (pack_length - old_field->getTable()->getShare()->sizeBlobPtr() + portable_sizeof_char_ptr);
+  }
 
   switch (sql_type) 
   {

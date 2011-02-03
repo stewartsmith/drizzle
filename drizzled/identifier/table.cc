@@ -398,5 +398,23 @@ std::size_t hash_value(Table::Key const& b)
   return b.getHashValue();
 }
 
+
+std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
+{
+  output << "Table:(";
+  output <<  identifier.getSchemaName();
+  output << ", ";
+  output << identifier.getTableName();
+  output << ", ";
+  output << message::type(identifier.getType());
+  output << ", ";
+  output << identifier.getPath();
+  output << ", ";
+  output << identifier.getHashValue();
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
 } /* namespace identifier */
 } /* namespace drizzled */

@@ -74,7 +74,6 @@ public:
     mutex.unlock();
   }
 
-
   static shared_ptr make_shared(Session *session, 
                                 const identifier::Table &identifier,
                                 int &in_error);

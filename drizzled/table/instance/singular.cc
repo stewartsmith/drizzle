@@ -18,13 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
 
-#ifndef DRIZZLED_TABLE_INSTANCE_H
-#define DRIZZLED_TABLE_INSTANCE_H
-
-#include <drizzled/table/instance/base.h>
-#include <drizzled/table/instance/shared.h>
-#include <drizzled/table/instance/singular.h>
+#include <drizzled/table/instance.h>
 
 namespace drizzled
 {
@@ -35,8 +31,18 @@ namespace table
 namespace instance
 {
 
+Singular::Singular(const identifier::Table::Type type_arg,
+                   const identifier::Table &identifier,
+                   char *path_arg, uint32_t path_length_arg) :
+  TableShare(type_arg, identifier, path_arg, path_length_arg)
+{
+}
+
+Singular::~Singular()
+{
+  assert(getTableCount() == 0);
+}
+
 } /* namespace instance */
 } /* namespace table */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_TABLE_INSTANCE_H */

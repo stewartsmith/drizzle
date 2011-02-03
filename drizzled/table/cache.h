@@ -24,7 +24,6 @@
 
 #include <boost/unordered_map.hpp>
 #include <drizzled/identifier.h>
-#include <drizzled/table/instance.h>
 
 namespace drizzled {
 

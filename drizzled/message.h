@@ -45,6 +45,7 @@ const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignK
 const std::string &type(bool type);
 const std::string &type(drizzled::message::Table::Index::IndexType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyMatchOption type);
+const std::string &type(drizzled::message::Table::TableType type);
 
 #if 0
 std::ostream& operator<<(std::ostream& output, const message::Transaction &message);
