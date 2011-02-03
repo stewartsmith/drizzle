@@ -45,6 +45,15 @@ struct decimal_t {
     frac= 0;
     sign= 0; 
   }
+
+  /* negate a decimal */
+  inline void negate()
+  {
+    sign^=1;
+  }
+
+  int isZero() const;
+
 };
 
 int internal_str2dec(char *from, decimal_t *to, char **end,
@@ -74,7 +83,6 @@ int decimal_div(const decimal_t *from1, const decimal_t *from2, decimal_t *to,
 int decimal_mod(const decimal_t *from1, const decimal_t *from2, decimal_t *to);
 int decimal_round(const decimal_t *from, decimal_t *to, int new_scale,
                   decimal_round_mode mode);
-int decimal_is_zero(const decimal_t *from);
 void max_decimal(int precision, int frac, decimal_t *to);
 
 inline int string2decimal(char *from, decimal_t *to, char **end)
@@ -90,12 +98,6 @@ inline int string2decimal(char *from, decimal_t *to, char **end)
 inline int decimal_string_size(const decimal_t *dec)
 {
   return (dec->intg ? dec->intg : 1) + dec->frac + (dec->frac > 0) + 2;
-}
-
-/* negate a decimal */
-inline void decimal_neg(decimal_t *dec)
-{
-  dec->sign^=1;
 }
 
 /*
@@ -234,12 +236,6 @@ public:
 
   int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
 
-  bool is_zero() const
-  {
-    return decimal_is_zero(static_cast<const decimal_t*>(this));
-  }
-
-
   int store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset);
 
   int store(uint32_t mask, char *str, char **end)
@@ -373,12 +369,12 @@ int int2_class_decimal(uint32_t mask, int64_t i, bool unsigned_flag, type::Decim
 inline
 void class_decimal_neg(decimal_t *arg)
 {
-  if (decimal_is_zero(arg))
+  if (arg->isZero())
   {
     arg->sign= 0;
     return;
   }
-  decimal_neg(arg);
+  arg->negate();
 }
 
 

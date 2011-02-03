@@ -102,7 +102,7 @@ bool Item::val_bool()
       type::Decimal decimal_value;
       type::Decimal *val= val_decimal(&decimal_value);
       if (val)
-        return not val->is_zero();
+        return not val->isZero();
       return false;
     }
 

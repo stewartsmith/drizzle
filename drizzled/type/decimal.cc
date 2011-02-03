@@ -2107,13 +2107,19 @@ int decimal_cmp(const decimal_t *from1, const decimal_t *from2)
   return from1->sign > from2->sign ? -1 : 1;
 }
 
-int decimal_is_zero(const decimal_t *from)
+int decimal_t::isZero() const
 {
-  dec1 *buf1=from->buf,
-       *end=buf1+round_up(from->intg)+round_up(from->frac);
+  dec1 *buf1= buf,
+       *end= buf1 +round_up(intg) +round_up(frac);
+
   while (buf1 < end)
+  {
     if (*buf1++)
+    {
       return 0;
+    }
+  }
+
   return 1;
 }
 
