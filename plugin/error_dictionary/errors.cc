@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include "plugin/error_dictionary/errors.h"
-#include <drizzled/sql_state.h>
+#include <drizzled/error/sql_state.h>
 
 namespace drizzle_plugin
 {
@@ -49,7 +49,7 @@ bool error_dictionary::Errors::Generator::populate()
   push(uint64_t((*_iter).first));
   push((*_iter).second.first);
   push((*_iter).second.second);
-  push(drizzled::drizzle_errno_to_sqlstate((*_iter).first));
+  push(drizzled::error::convert_to_sqlstate((*_iter).first));
 
   ++_iter;
 
