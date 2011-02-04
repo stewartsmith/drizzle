@@ -21,6 +21,8 @@ id
 2
 3
 START TRANSACTION;
+Warnings:
+Warning	1747	There is already a transaction in progress
 INSERT INTO t1 VALUES (4);
 SAVEPOINT A;
 INSERT INTO t1 VALUES (5);
@@ -33,6 +35,8 @@ id
 2
 3
 START TRANSACTION;
+Warnings:
+Warning	1747	There is already a transaction in progress
 INSERT INTO t1 VALUES (4);
 SAVEPOINT A;
 INSERT INTO t1 VALUES (5);
