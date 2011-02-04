@@ -282,7 +282,9 @@ int main(int argc, char **argv)
       unireg_abort(1);
     }
 
+    fs::path &full_data_home= getFullDataHome();
     full_data_home= fs::system_complete(getDataHome());
+    std::cerr << "home " << full_data_home << std::endl;
   }
 
 

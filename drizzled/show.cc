@@ -345,9 +345,7 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
     drizzled::identifier::Table identifier(select->getShowSchema().c_str(), table_ident->table.str);
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0),
-               select->getShowSchema().c_str(), 
-               table_ident->table.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
   }
 
@@ -405,9 +403,7 @@ bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_i
     drizzled::identifier::Table identifier(select->getShowSchema().c_str(), table_ident->table.str);
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0),
-               select->getShowSchema().c_str(), 
-               table_ident->table.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
   }
 
@@ -630,9 +626,7 @@ bool buildDescribe(Session *session, Table_ident *ident)
     drizzled::identifier::Table identifier(select->getShowSchema().c_str(), ident->table.str);
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0),
-               select->getShowSchema().c_str(), 
-               ident->table.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
   }
 

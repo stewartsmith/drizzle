@@ -950,7 +950,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   {
     if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->getSchemaName(), table_list->getTableName());
+      my_error(ER_TABLE_UNKNOWN, identifier);
       return NULL;
     }
 
