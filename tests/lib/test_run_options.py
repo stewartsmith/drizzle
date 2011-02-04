@@ -328,10 +328,6 @@ debugger_control_group.add_option(
 
 parser.add_option_group(debugger_control_group)
 
-#prints entire help menu when usage message is displayed
-parser.usage= parser.print_help()
-
-
 # supplied will be those arguments matching an option, 
 # and test_cases will be everything else
 (args, test_cases)= parser.parse_args()
