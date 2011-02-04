@@ -388,7 +388,7 @@ Session::~Session()
     assert(security_ctx);
     if (global_system_variables.log_warnings)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),
+      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE),
                     internal::my_progname,
                     thread_id,
                     security_ctx->username().c_str());
@@ -1676,7 +1676,7 @@ void Session::disconnect(enum error_t errcode)
   {
     if (not getKilled() && variables.log_warnings > 1)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
+      errmsg_printf(error::WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
                   , (_schema->empty() ? "unconnected" : _schema->c_str())
                   , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
@@ -1814,13 +1814,12 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
 
 user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
 {
-  UserVarsRange ppp= user_vars.equal_range(name);
+  if (cleanup_done)
+    return NULL;
 
-  for (UserVars::iterator iter= ppp.first;
-       iter != ppp.second; ++iter)
-  {
+  UserVars::iterator iter= user_vars.find(name);
+  if (iter != user_vars.end())
     return (*iter).second;
-  }
 
   if (not create_if_not_exists)
     return NULL;
@@ -1844,12 +1843,14 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
 void Session::setVariable(const std::string &name, const std::string &value)
 {
   user_var_entry *updateable_var= getVariable(name.c_str(), true);
-
-  updateable_var->update_hash(false,
-                              (void*)value.c_str(),
-                              static_cast<uint32_t>(value.length()), STRING_RESULT,
-                              &my_charset_bin,
-                              DERIVATION_IMPLICIT, false);
+  if (updateable_var)
+  {
+    updateable_var->update_hash(false,
+                                (void*)value.c_str(),
+                                static_cast<uint32_t>(value.length()), STRING_RESULT,
+                                &my_charset_bin,
+                                DERIVATION_IMPLICIT, false);
+  }
 }
 
 void Open_tables_state::mark_temp_tables_as_free_for_reuse()
@@ -1987,7 +1988,7 @@ bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, 
     {
       std::string path;
       identifier.getSQLPath(path);
-      errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+      errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
                     path.c_str(), errno);
     }
 
@@ -2006,7 +2007,7 @@ bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const id
   {
     std::string path;
     identifier.getSQLPath(path);
-    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+    errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path.c_str(), error);
 
     return true;
@@ -2031,8 +2032,8 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
   {
     bool have_proto= false;
 
-    message::Table *proto= table->getShare()->getTableProto();
-    if (table->getShare()->getTableProto())
+    message::Table *proto= table->getShare()->getTableMessage();
+    if (table->getShare()->getTableMessage())
       have_proto= true;
 
     const char *answer= have_proto ? "true" : "false";

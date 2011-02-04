@@ -102,7 +102,7 @@ bool Item::val_bool()
       type::Decimal decimal_value;
       type::Decimal *val= val_decimal(&decimal_value);
       if (val)
-        return not val->is_zero();
+        return not val->isZero();
       return false;
     }
 
@@ -241,7 +241,7 @@ int64_t Item::val_int_from_decimal()
   return result;
 }
 
-int Item::save_time_in_field(Field *field)
+bool Item::save_time_in_field(Field *field)
 {
   type::Time ltime;
 
@@ -253,7 +253,7 @@ int Item::save_time_in_field(Field *field)
   return field->store_time(ltime, type::DRIZZLE_TIMESTAMP_TIME);
 }
 
-int Item::save_date_in_field(Field *field)
+bool Item::save_date_in_field(Field *field)
 {
   type::Time ltime;
 
@@ -1202,9 +1202,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
                                  0,
                                  Field::NONE,
                                  name,
-                                 decimals,
-                                 0,
-                                 unsigned_flag);
+                                 decimals);
     break;
   case DRIZZLE_TYPE_LONG:
     field= new field::Int32((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE, name);

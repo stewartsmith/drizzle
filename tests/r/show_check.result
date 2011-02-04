@@ -502,4 +502,6 @@ Tables_in_test
 drop table `été`;
 show columns from `#mysql50#????????`;
 Got one of the listed errors
+show innodb status;
+ERROR HY000: Engine status is now stored in the data_dictionary tables, please use these instead.
 End of 5.1 tests

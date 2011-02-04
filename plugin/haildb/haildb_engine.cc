@@ -535,8 +535,8 @@ uint64_t HailDBCursor::getInitialAutoIncrementValue()
   doEndIndexScan();
   (void) extra(HA_EXTRA_NO_KEYREAD);
 
-  if (getTable()->getShare()->getTableProto()->options().auto_increment_value() > nr)
-    nr= getTable()->getShare()->getTableProto()->options().auto_increment_value();
+  if (getTable()->getShare()->getTableMessage()->options().auto_increment_value() > nr)
+    nr= getTable()->getShare()->getTableMessage()->options().auto_increment_value();
 
   return nr;
 }
@@ -3144,10 +3144,14 @@ extern "C" int haildb_errmsg_callback(ib_msg_stream_t, const char *fmt, ...)
   bool r= false;
   va_list args;
   va_start(args, fmt);
-  if (! shutdown_in_progress)
-    r= plugin::ErrorMessage::vprintf(NULL, ERRMSG_LVL_WARN, fmt, args);
+  if (not shutdown_in_progress)
+  {
+    r= plugin::ErrorMessage::vprintf(error::WARN, fmt, args);
+  }
   else
+  {
     vfprintf(stderr, fmt, args);
+  }
   va_end(args);
 
   return (! r==true);

@@ -166,10 +166,7 @@ static int init(drizzled::module::Context &context)
 
     if (transaction_log == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLog instance.  Got error: %s\n"), 
-                    errmsg);
+      sql_perror(_("Failed to allocate the TransactionLog instance"), sysvar_transaction_log_file);
       return 1;
     }
     else
@@ -177,7 +174,7 @@ static int init(drizzled::module::Context &context)
       /* Check to see if the log was not created properly */
       if (transaction_log->hasError())
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the Transaction Log.  Got error: %s\n"), 
+        errmsg_printf(error::ERROR, _("Failed to initialize the Transaction Log.  Got error: %s\n"), 
                       transaction_log->getErrorMessage().c_str());
         return 1;
       }
@@ -187,10 +184,7 @@ static int init(drizzled::module::Context &context)
     transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
     if (transaction_log_index == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"), 
-                    errmsg);
+      sql_perror(_("Failed to allocate the TransactionLogIndex instance"), sysvar_transaction_log_file);
       return 1;
     }
     else
@@ -198,7 +192,7 @@ static int init(drizzled::module::Context &context)
       /* Check to see if the index was not created properly */
       if (transaction_log_index->hasError())
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the Transaction Log Index.  Got error: %s\n"), 
+        errmsg_printf(error::ERROR, _("Failed to initialize the Transaction Log Index.  Got error: %s\n"), 
                       transaction_log_index->getErrorMessage().c_str());
         return 1;
       }
@@ -211,10 +205,7 @@ static int init(drizzled::module::Context &context)
                                                                  static_cast<uint32_t>(sysvar_transaction_log_num_write_buffers));
     if (transaction_log_applier == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"), 
-                    errmsg);
+      sql_perror(_("Failed to allocate the TransactionLogApplier instance"), sysvar_transaction_log_file);
       return 1;
     }
     context.add(transaction_log_applier);

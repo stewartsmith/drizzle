@@ -575,7 +575,7 @@ bool Open_tables_state::doDoesTableExist(const identifier::Table &identifier)
 }
 
 int Open_tables_state::doGetTableDefinition(const identifier::Table &identifier,
-                                  message::Table &table_proto)
+                                            message::Table &table_proto)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
@@ -583,7 +583,7 @@ int Open_tables_state::doGetTableDefinition(const identifier::Table &identifier,
     {
       if (identifier.getKey() == table->getShare()->getCacheKey())
       {
-        table_proto.CopyFrom(*(table->getShare()->getTableProto()));
+        table_proto.CopyFrom(*(table->getShare()->getTableMessage()));
 
         return EEXIST;
       }

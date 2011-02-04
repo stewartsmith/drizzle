@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Andrew Hutchings
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,40 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H
-#define PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H
+#ifndef DRIZZLED_ERROR_LEVEL_T_H
+#define DRIZZLED_ERROR_LEVEL_T_H
 
-#include "drizzled/plugin/table_function.h"
-
-namespace drizzle_plugin
+namespace drizzled
 {
 
-class MysqlProtocolStatus : public drizzled::plugin::TableFunction
+namespace error
 {
-public:
-  MysqlProtocolStatus() :
-    drizzled::plugin::TableFunction("DATA_DICTIONARY","MYSQL_PROTOCOL_STATUS")
-  {
-    add_field("VARIABLE_NAME");
-    add_field("VARIABLE_VALUE");
-  }
 
-  class Generator : public drizzled::plugin::TableFunction::Generator
-  {
-    drizzled::drizzle_show_var *status_var_ptr;
-
-  public:
-    Generator(drizzled::Field **fields);
-
-    bool populate();
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
+enum level_t {
+  INSPECT= 1, // note, this is what normally we would call "debug"
+  INFO= 2,
+  WARN= 3,
+  ERROR= 4
 };
 
-} /* namespace drizzle_plugin */
+} /* namespace error */
+} /* namespace drizzled */
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H */
+#endif /* DRIZZLED_ERROR_LEVEL_T_H */

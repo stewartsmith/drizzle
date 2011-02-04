@@ -96,7 +96,7 @@ INSERT INTO t1 VALUES (1,0,0),(3,1,1),(4,1,1),(8,2,2),(9,2,2),(17,3,2),(22,4,2),
 update t1 set parent_id=parent_id+100;
 select * from t1 where parent_id=102;
 update t1 set id=id+1000;
--- error ER_DUP_ENTRY,1022
+--error ER_DUP_ENTRY,  ER_DUP_KEY
 update t1 set id=1024 where id=1009;
 select * from t1;
 update ignore t1 set id=id+1; # This will change all rows
@@ -179,13 +179,13 @@ commit;
 select n, "after commit" from t1;
 commit;
 insert into t1 values (5);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t1 values (4);
 commit;
 select n, "after commit" from t1;
 set autocommit=1;
 insert into t1 values (6);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t1 values (4);
 select n from t1;
 set autocommit=0;
@@ -200,14 +200,14 @@ insert into t1 values (3);
 select n from t1;
 savepoint savept3;
 rollback to savepoint savept2;
---error 1305
+--error ER_SP_DOES_NOT_EXIST
 rollback to savepoint savept3;
 rollback to savepoint savept2;
 release savepoint `my_savepoint`;
 select n from t1;
--- error 1305
+--error ER_SP_DOES_NOT_EXIST
 rollback to savepoint `my_savepoint`;
---error 1305
+--error ER_SP_DOES_NOT_EXIST
 rollback to savepoint savept2;
 insert into t1 values (8);
 savepoint sv;
@@ -259,7 +259,7 @@ drop table t1;
 
 eval create $temp table t1 (id char(8) not null primary key, val int not null) engine=$engine_type;
 insert into t1 values ('pippo', 12);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t1 values ('pippo', 12); # Gives error
 delete from t1;
 delete from t1 where id = 'pippo';
@@ -390,9 +390,9 @@ eval create $temp table t1 (
 
 insert into t1 (ggid,passwd) values ('test1','xxx');
 insert into t1 (ggid,passwd) values ('test2','yyy');
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t1 (ggid,passwd) values ('test2','this will fail');
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t1 (ggid,id) values ('this will fail',1);
 
 select * from t1 where ggid='test1';
@@ -401,7 +401,7 @@ select * from t1 where id=2;
 
 replace into t1 (ggid,id) values ('this will work',1);
 replace into t1 (ggid,passwd) values ('test2','this will work');
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 update t1 set id=100,ggid='test2' where id=1;
 select * from t1;
 select * from t1 where id=1;
@@ -625,7 +625,7 @@ insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;
 # Don't check error message
---error 1049
+--error ER_BAD_DB_ERROR
 show tables from mysqltest;
 
 #
@@ -894,11 +894,11 @@ eval create $temp table `t2` (`id` int not null default '0',unique key `id` ( `i
 insert into `t2`values ( 1 ) ;
 eval create $temp table `t3` (`id` int not null default '0',key `id` ( `id` ) ,constraint `t2_id_fk` foreign key ( `id` ) references `t2` (`id` )) engine = $engine_type;
 insert into `t3`values ( 1 ) ;
---error 1451
+--error ER_ROW_IS_REFERENCED_2
 delete t3,t2,t1 from t1,t2,t3 where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
---error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t1,t2,t3 set t3.id=5, t2.id=6, t1.id=7  where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
---error 1054
+--error ER_BAD_FIELD_ERROR
 update t3 set  t3.id=7  where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
 drop table t3,t2,t1;
 
@@ -912,7 +912,7 @@ eval create $temp table t1(
 	foreign key(pid) references t1(id) on delete cascade) engine=$engine_type;
 insert into t1 values(0,0),(1,0),(2,1),(3,2),(4,3),(5,4),(6,5),(7,6),
 	(8,7),(9,8),(10,9),(11,10),(12,11),(13,12),(14,13),(15,14);
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 delete from t1 where id=0;
 delete from t1 where id=15;
 delete from t1 where id=0;
@@ -1010,7 +1010,7 @@ drop table t1;
 # Bug#2160: Extra error message for create $temp table LIKE with InnoDB
 #
 eval create $temp table t1 (a int) engine=$engine_type;
---error 1005
+--error ER_CANT_CREATE_TABLE
 create table t2 like t1;
 create table t2 like t1 engine=innodb;
 show create table t2;
@@ -1031,7 +1031,7 @@ show create table t2;
 create index id2 on t2 (id);
 show create table t2;
 drop index id2 on t2;
---error 1025,1025
+--error ER_ERROR_ON_RENAME, ER_ERROR_ON_RENAME
 drop index id on t2;
 show create table t2;
 drop table t2;
@@ -1070,7 +1070,7 @@ drop table t2;
 # Clean up filename -- embedded server reports whole path without .frm,
 # regular server reports relative path with .frm (argh!)
 --replace_result \\ / $DRIZZLE_TEST_DIR . /var/master-data/ / t2.frm t2
---error 1005
+--error ER_CANT_CREATE_TABLE
 eval create $temp table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign key (id2,id) references t1 (id)) engine = $engine_type;
 
 # bug#3749
@@ -1123,22 +1123,22 @@ drop table t1;
 #
 # Bug #6126: Duplicate columns in keys gives misleading error message
 #
---error 1060
+--error ER_DUP_FIELDNAME
 eval create $temp table t1 (c char(10), index (c,c)) engine=$engine_type;
---error 1060
+--error ER_DUP_FIELDNAME
 eval create $temp table t1 (c1 char(10), c2 char(10), index (c1,c2,c1)) engine=$engine_type;
---error 1060
+--error ER_DUP_FIELDNAME
 eval create $temp table t1 (c1 char(10), c2 char(10), index (c1,c1,c2)) engine=$engine_type;
---error 1060
+--error ER_DUP_FIELDNAME
 eval create $temp table t1 (c1 char(10), c2 char(10), index (c2,c1,c1)) engine=$engine_type;
 eval create $temp table t1 (c1 char(10), c2 char(10)) engine=$engine_type;
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c2,c1,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c2,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c1,c2);
 drop table t1;
 
@@ -1159,7 +1159,7 @@ if ($fulltext_query_unsupported)
 #
 
 eval create $temp table t1 ( a char(10) ) ENGINE=$engine_type;
---error 1214
+--error ER_TABLE_CANT_HANDLE_FT
 SELECT a FROM t1 WHERE MATCH (a) AGAINST ('test' IN BOOLEAN MODE);
 DROP TABLE t1;
 }
@@ -1228,7 +1228,7 @@ drop table t1;
 
 eval create $temp table t1 (x bigint not null primary key) engine=$engine_type;
 # The below is out of range for a BIGINT (signed)
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1(x) values (0xfffffffffffffff0),(0xfffffffffffffff1);
 select * from t1;
 select count(*) from t1 where x>0;
@@ -1434,7 +1434,7 @@ eval create $temp table t1
  id INT PRIMARY KEY
 ) ENGINE=$engine_type;
 
---error 1005,1005
+--error ER_CANT_CREATE_TABLE, ER_CANT_CREATE_TABLE
 eval CREATE TEMPORARY TABLE t2
 (
  id INT NOT NULL PRIMARY KEY,
@@ -1508,16 +1508,16 @@ if (0)
 {
 
 # these should be refused
---error 1071
+--error ER_TOO_LONG_KEY
 eval create $temp table t1 (col1 varchar(768) primary key)
  character set = latin1 engine = $engine_type;
---error 1071
+--error ER_TOO_LONG_KEY
 eval create $temp table t2 (col1 varbinary(768) primary key)
  character set = latin1 engine = $engine_type;
---error 1071
+--error ER_TOO_LONG_KEY
 eval create $temp table t3 (col1 text, primary key(col1(768)))
  character set = latin1 engine = $engine_type;
---error 1071
+--error ER_TOO_LONG_KEY
 eval create $temp table t4 (col1 blob, primary key(col1(768)))
  character set = latin1 engine = $engine_type;
 
@@ -1540,23 +1540,23 @@ eval create $temp table t2
  CONSTRAINT c1 FOREIGN KEY (v) REFERENCES t1(id)
 ) ENGINE=$engine_type;
 
---error 1452
+--error ER_NO_REFERENCED_ROW_2
 INSERT INTO t2 VALUES(2);
 
 INSERT INTO t1 VALUES(1);
 INSERT INTO t2 VALUES(1);
 
---error 1451
+--error ER_ROW_IS_REFERENCED_2
 DELETE FROM t1 WHERE id = 1;
 
---error 1217
+--error ER_ROW_IS_REFERENCED
 DROP TABLE t1;
 
 SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE t1;
 SET FOREIGN_KEY_CHECKS=1;
 
---error 1452
+--error ER_NO_REFERENCED_ROW_2
 INSERT INTO t2 VALUES(3);
 
 DROP TABLE t2;
@@ -1572,7 +1572,7 @@ if ($test_foreign_keys)
 set foreign_key_checks=0;
 eval create $temp table t2 (a int primary key, b int, foreign key (b) references t1(a)) engine = $engine_type;
 --replace_result $MYSQLTEST_VARDIR . master-data/ ''
--- error 1005
+--error ER_CANT_CREATE_TABLE
 eval create $temp table t1(a char(10) primary key, b varchar(20)) engine = $engine_type;
 set foreign_key_checks=1;
 drop table t2;
@@ -1583,7 +1583,7 @@ drop table t2;
 set foreign_key_checks=0;
 eval create $temp table t1(a varchar(10) primary key) engine = $engine_type DEFAULT CHARSET=latin1;
 --replace_result $MYSQLTEST_VARDIR . master-data/ ''
--- error 1005
+--error ER_CANT_CREATE_TABLE
 eval create $temp table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type DEFAULT CHARSET=utf8;
 set foreign_key_checks=1;
 drop table t1;
@@ -1593,7 +1593,7 @@ drop table t1;
 set foreign_key_checks=0;
 eval create $temp table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type;
 eval create $temp table t1(a varchar(10) primary key) engine = $engine_type;
--- error 1025,1025
+--error ER_ERROR_ON_RENAME, ER_ERROR_ON_RENAME
 alter table t1 modify column a int;
 set foreign_key_checks=1;
 drop table t2,t1;
@@ -1613,7 +1613,7 @@ set foreign_key_checks=0;
 eval create $temp table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type DEFAULT CHARSET=latin1;
 eval create $temp table t3(a varchar(10) primary key) engine = $engine_type DEFAULT CHARSET=utf8;
 --replace_result $MYSQLTEST_VARDIR . master-data/ ''
--- error 1025
+--error ER_ERROR_ON_RENAME
 rename table t3 to t1;
 set foreign_key_checks=1;
 drop table t2,t3;
@@ -1627,23 +1627,23 @@ eval create $temp table t4(a int primary key,constraint foreign key(a)references
 
 insert into t1 values(1);
 insert into t3 values(1);
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 insert into t2 values(2);
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 insert into t4 values(2);
 insert into t2 values(1);
 insert into t4 values(1);
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t1 set a=2;
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 update t2 set a=2;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t3 set a=2;
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 update t4 set a=2;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 truncate t1;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 truncate t3;
 truncate t2;
 truncate t4;
@@ -1687,13 +1687,13 @@ eval create $temp table t3 (s1 varchar(2),primary key (s1)) engine=$engine_type;
 eval create $temp table t4 (s1 char(2),primary key (s1)) engine=$engine_type;
 
 insert into t1 values (0x41),(0x4120),(0x4100);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t2 values (0x41),(0x4120),(0x4100);
 insert into t2 values (0x41),(0x4120);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t3 values (0x41),(0x4120),(0x4100);
 insert into t3 values (0x41),(0x4100);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t4 values (0x41),(0x4120),(0x4100);
 insert into t4 values (0x41),(0x4100);
 select hex(s1) from t1;
@@ -1709,17 +1709,17 @@ eval create $temp table t1 (a int primary key,s1 varbinary(3) not null unique) e
 eval create $temp table t2 (s1 binary(2) not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
 
 insert into t1 values(1,0x4100),(2,0x41),(3,0x4120),(4,0x42);
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 insert into t2 values(0x42);
 insert into t2 values(0x41);
 select hex(s1) from t2;
 update t1 set s1=0x123456 where a=2;
 select hex(s1) from t2;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t1 set s1=0x12 where a=1;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t1 set s1=0x12345678 where a=1;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t1 set s1=0x123457 where a=1;
 update t1 set s1=0x1220 where a=1;
 select hex(s1) from t2;
@@ -1727,11 +1727,11 @@ update t1 set s1=0x1200 where a=1;
 select hex(s1) from t2;
 update t1 set s1=0x4200 where a=1;
 select hex(s1) from t2;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 delete from t1 where a=1;
 delete from t1 where a=2;
 update t2 set s1=0x4120;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 delete from t1;
 delete from t1 where a!=3;
 select a,hex(s1) from t1;
@@ -1750,7 +1750,7 @@ select hex(s1) from t2;
 update t1 set s1=0x12 where a=2;
 select hex(s1) from t2;
 delete from t1 where a=1;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 delete from t1 where a=2;
 select a,hex(s1) from t1;
 select hex(s1) from t2;
@@ -1908,12 +1908,12 @@ set autocommit = 0;
 #
 # S-lock to records (2,2),(4,2), and (6,2) should not be released in a update
 #
---error 1205
+--error ER_XXXLOCK_WAIT_TIMEOUTTTT
 select * from t1 where a = 2 and b = 2 for update;
 #
 # X-lock to record (1,1),(3,1),(5,1) should not be released in a update
 #
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 connection a;
 commit;
 connection b;
@@ -2053,39 +2053,39 @@ SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 create $temp table t10(a int not null, b int, primary key(a)) select * from t2 for update;
 
 connection b;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection c;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection d;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection e;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection f;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection g;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection h;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection i;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection j;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection a;
@@ -2109,7 +2109,7 @@ drop table t1, t2, t3, t5, t6, t8, t9;
 if (test_foreign_keys)
 {
 # bug 18934, "InnoDB crashes when table uses column names like DB_ROW_ID"
---error 1005
+--error ER_CANT_CREATE_TABLE
 eval create $temp table t1 (DB_ROW_ID int) engine=$engine_type;
 
 #

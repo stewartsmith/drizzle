@@ -56,7 +56,7 @@ int plugin::ListenTcp::acceptTcp(int fd)
   {
     if ((accept_error_count++ & 255) == 0)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("accept() failed with errno %d"),
+      errmsg_printf(error::ERROR, _("accept() failed with errno %d"),
                     errno);
     }
 
@@ -92,7 +92,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   ret= getaddrinfo(getHost().empty() ? NULL : getHost().c_str(), port_buf, &hints, &ai_list);
   if (ret != 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("getaddrinfo() failed with error %s"),
+    errmsg_printf(error::ERROR, _("getaddrinfo() failed with error %s"),
                   gai_strerror(ret));
     return true;
   }
@@ -123,7 +123,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
       ret= setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &flags, sizeof(flags));
       if (ret != 0)
       {
-        errmsg_printf(ERRMSG_LVL_ERROR,
+        errmsg_printf(error::ERROR,
                       _("setsockopt(IPV6_V6ONLY) failed with errno %d"),
                       errno);
         return true;
@@ -134,7 +134,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
     ret= fcntl(fd, F_SETFD, FD_CLOEXEC);
     if (ret != 0 || !(fcntl(fd, F_GETFD, 0) & FD_CLOEXEC))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("fcntl(FD_CLOEXEC) failed with errno %d"),
                     errno);
       return true;
@@ -143,7 +143,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
     ret= setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flags, sizeof(flags));
     if (ret != 0)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("setsockopt(SO_REUSEADDR) failed with errno %d"),
                     errno);
       return true;
@@ -152,7 +152,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
     ret= setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &flags, sizeof(flags));
     if (ret != 0)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("setsockopt(SO_KEEPALIVE) failed with errno %d"),
                     errno);
       return true;
@@ -161,7 +161,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
     ret= setsockopt(fd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
     if (ret != 0)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("setsockopt(SO_LINGER) failed with errno %d"),
                     errno);
       return true;
@@ -170,7 +170,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
     ret= setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flags, sizeof(flags));
     if (ret != 0)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("setsockopt(TCP_NODELAY) failed with errno %d"),
                     errno);
       return true;
@@ -192,30 +192,29 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
         break;
       }
 
-      errmsg_printf(ERRMSG_LVL_INFO, _("Retrying bind() on %u\n"), getPort());
+      errmsg_printf(error::INFO, _("Retrying bind() on %u\n"), getPort());
       this_wait= retry * retry / 3 + 1;
       sleep(this_wait);
     }
 
     if (ret < 0)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("bind() failed with errno: %d\n"),
+      errmsg_printf(error::ERROR, _("bind() failed with errno: %d\n"),
                     errno);
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Do you already have another drizzled running?\n"));
       return true;
     }
 
     if (listen(fd, (int) back_log) < 0)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("listen() failed with errno %d\n"), errno);
+      sql_perror("listen()");
       return true;
     }
 
     fds.push_back(fd);
 
-    errmsg_printf(ERRMSG_LVL_INFO, _("Listening on %s:%s\n"), host_buf,
+    errmsg_printf(error::INFO, _("Listening on %s:%s\n"), host_buf,
                   port_buf);
   }
 
