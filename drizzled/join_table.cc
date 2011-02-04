@@ -26,7 +26,7 @@
 namespace drizzled
 {
 
-int JoinTable::join_read_const_table(optimizer::Position *pos)
+int JoinTable::joinReadConstTable(optimizer::Position *pos)
 {
   int error;
   Table *Table= this->table;

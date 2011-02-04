@@ -29,7 +29,7 @@ namespace drizzled
 {
 class TableList;
 
-class nested_join_st
+class NestedJoin
 {
 public:
   /* list of elements in the nested join */

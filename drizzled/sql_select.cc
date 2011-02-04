@@ -2606,7 +2606,7 @@ static void propagate_cond_constants(Session *session,
          position:
           1. join->cur_embedding_map - bitmap of pairs of brackets (aka nested
              joins) we've opened but didn't close.
-          2. {each nested_join_st structure not simplified away}->counter - number
+          2. {each NestedJoin class not simplified away}->counter - number
              of this nested join's children that have already been added to to
              the partial join order.
   @endverbatim

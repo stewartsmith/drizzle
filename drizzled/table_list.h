@@ -461,7 +461,7 @@ public:
     embedding= in_embedding;
   }
 
-  void setNestedJoin(nested_join_st *in_nested_join)
+  void setNestedJoin(NestedJoin *in_nested_join)
   {
     nested_join= in_nested_join;
   }
@@ -511,7 +511,7 @@ public:
     return join_list;
   }
 
-  nested_join_st *getNestedJoin() const
+  NestedJoin *getNestedJoin() const
   {
     return nested_join;
   }
@@ -532,7 +532,7 @@ public:
 private:
   table_map dep_tables; ///< tables the table depends on
   table_map on_expr_dep_tables; ///< tables on expression depends on
-  nested_join_st *nested_join; ///< if the element is a nested join
+  NestedJoin *nested_join; ///< if the element is a nested join
   TableList *embedding; ///< nested join containing the table
   List<TableList> *join_list; ///< join list the table belongs to
   plugin::StorageEngine *db_type; ///< table_type for handler
