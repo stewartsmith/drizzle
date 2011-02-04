@@ -23,7 +23,6 @@
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/current_session.h>
 #include <drizzled/item/default_value.h>
 
 namespace drizzled
