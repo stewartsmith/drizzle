@@ -31,7 +31,7 @@ String *Item_decimal_typecast::val_str(String *str)
   type::Decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   if (null_value)
     return NULL;
-  class_decimal2string(E_DEC_FATAL_ERROR, tmp, 0, str);
+  class_decimal2string(tmp, 0, str);
   return str;
 }
 

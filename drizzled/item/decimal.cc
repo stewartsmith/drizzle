@@ -102,13 +102,13 @@ double Item_decimal::val_real()
 String *Item_decimal::val_str(String *result)
 {
   result->set_charset(&my_charset_bin);
-  class_decimal2string(E_DEC_FATAL_ERROR, &decimal_value, 0, result);
+  class_decimal2string(&decimal_value, 0, result);
   return result;
 }
 
 void Item_decimal::print(String *str, enum_query_type)
 {
-  class_decimal2string(E_DEC_FATAL_ERROR, &decimal_value, 0, &str_value);
+  class_decimal2string(&decimal_value, 0, &str_value);
   str->append(str_value);
 }
 

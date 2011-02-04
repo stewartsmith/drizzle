@@ -106,7 +106,7 @@ int Field_str::store_decimal(const type::Decimal *d)
 {
   char buff[DECIMAL_MAX_STR_LENGTH+1];
   String str(buff, sizeof(buff), &my_charset_bin);
-  class_decimal2string(E_DEC_FATAL_ERROR, d, 0, &str);
+  class_decimal2string(d, 0, &str);
   return store(str.ptr(), str.length(), str.charset());
 }
 

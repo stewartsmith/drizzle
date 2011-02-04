@@ -335,7 +335,7 @@ int class_decimal_ceiling(uint32_t mask, const type::Decimal *from, type::Decima
 }
 
 
-int class_decimal2string(uint32_t mask, const type::Decimal *d,
+int class_decimal2string(const type::Decimal *d,
                          uint32_t fixed_dec, String *str);
 
 

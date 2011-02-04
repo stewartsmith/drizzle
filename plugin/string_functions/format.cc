@@ -80,7 +80,7 @@ String *Item_func_format::val_str(String *str)
     if ((null_value=args[0]->null_value))
       return 0;
     class_decimal_round(E_DEC_FATAL_ERROR, res, dec, false, &rnd_dec);
-    class_decimal2string(E_DEC_FATAL_ERROR, &rnd_dec, 0, str);
+    class_decimal2string(&rnd_dec, 0, str);
     str_length= str->length();
     if (rnd_dec.sign())
       str_length--;

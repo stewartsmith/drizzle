@@ -303,7 +303,7 @@ String *Field_decimal::val_str(String *val_buffer,
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  class_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
+  class_decimal2string(val_decimal(&decimal_value),
                        dec, val_buffer);
   return val_buffer;
 }

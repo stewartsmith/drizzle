@@ -154,7 +154,7 @@ String *Item_func_min_max::val_str(String *str)
       type::Decimal dec_buf, *dec_val= val_decimal(&dec_buf);
       if (null_value)
         return 0;
-      class_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, str);
+      class_decimal2string(dec_val, 0, str);
       return str;
     }
 

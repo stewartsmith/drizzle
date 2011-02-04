@@ -194,9 +194,11 @@ int decimal_operation_results(int result)
     @retval E_DEC_OOM
 */
 
-int class_decimal2string(uint32_t mask, const type::Decimal *d,
+int class_decimal2string(const type::Decimal *d,
                          uint32_t fixed_dec, String *str)
 {
+  uint32_t mask= E_DEC_FATAL_ERROR;
+
   /*
     Calculate the size of the string: For DECIMAL(a,b), fixed_prec==a
     holds true iff the type is also ZEROFILL, which in turn implies
@@ -2554,7 +2556,7 @@ std::ostream& operator<<(std::ostream& output, const type::Decimal &dec)
 {
   drizzled::String str;
 
-  class_decimal2string(E_DEC_FATAL_ERROR, &dec, 0, &str);
+  class_decimal2string(&dec, 0, &str);
 
   output << "type::Decimal:(";
   output <<  str.c_ptr();

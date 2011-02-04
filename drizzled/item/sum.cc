@@ -1708,7 +1708,7 @@ Item_sum_hybrid::val_str(String *str)
     str->set_real(sum,decimals, &my_charset_bin);
     break;
   case DECIMAL_RESULT:
-    class_decimal2string(E_DEC_FATAL_ERROR, &sum_dec, 0, str);
+    class_decimal2string(&sum_dec, 0, str);
     return str;
   case INT_RESULT:
     str->set_int(sum_int, unsigned_flag, &my_charset_bin);
