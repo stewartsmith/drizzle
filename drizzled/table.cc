@@ -110,6 +110,8 @@ void Table::resetTable(Session *session,
                        uint32_t db_stat_arg)
 {
   setShare(share);
+  in_use= session;
+
   field= NULL;
 
   cursor= NULL;
@@ -122,7 +124,6 @@ void Table::resetTable(Session *session,
   tablenr= 0;
   db_stat= db_stat_arg;
 
-  in_use= session;
   record[0]= (unsigned char *) NULL;
   record[1]= (unsigned char *) NULL;
 
@@ -1652,15 +1653,6 @@ Table::Table() :
 {
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
-
-  reginfo.reset();
-  covering_keys.reset();
-  quick_keys.reset();
-  merge_keys.reset();
-
-  keys_in_use_for_query.reset();
-  keys_in_use_for_group_by.reset();
-  keys_in_use_for_order_by.reset();
 }
 
 /*****************************************************************************

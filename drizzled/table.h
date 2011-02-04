@@ -91,6 +91,7 @@ public:
   }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
+
 private:
   Table *next;
 
