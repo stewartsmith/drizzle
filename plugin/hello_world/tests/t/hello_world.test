@@ -1,6 +1,6 @@
 # testing hello_world plugin
  
---ERROR 1054 
+--ERROR ER_BAD_FIELD_ERROR
 # incorrect select statement 
 SELECT hello_word;
 
@@ -11,7 +11,7 @@ SELECT hello_world(12345);
 SELECT hello_world("");
 
 # use invalid string as an argument
---ERROR 1054
+--ERROR ER_BAD_FIELD_ERROR
 SELECT hello_world(string);
 
 # use string as an argument
