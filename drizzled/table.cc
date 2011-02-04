@@ -79,6 +79,7 @@ int Table::delete_table(bool free_share)
   if (db_stat)
     error= cursor->close();
   _alias.clear();
+
   if (field)
   {
     for (Field **ptr=field ; *ptr ; ptr++)
@@ -1643,7 +1644,11 @@ Table::Table() :
   query_id(0),
   quick_condition_rows(0),
   timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-  map(0)
+  map(0),
+  quick_rows(),
+  const_key_parts(),
+  quick_key_parts(),
+  quick_n_ranges()
 {
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
@@ -1656,12 +1661,6 @@ Table::Table() :
   keys_in_use_for_query.reset();
   keys_in_use_for_group_by.reset();
   keys_in_use_for_order_by.reset();
-
-  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
-  memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-  memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-  memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 }
 
 /*****************************************************************************
