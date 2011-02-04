@@ -723,7 +723,7 @@ private:
                               Table &outparam,
                               bool &error_reported);
 public:
-  int parse_table_proto(Session& session, message::Table &table);
+  bool parse_table_proto(Session& session, message::Table &table);
 
 private:
   int inner_parse_table_proto(Session& session, message::Table &table);

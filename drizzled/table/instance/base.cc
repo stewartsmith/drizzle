@@ -1498,19 +1498,14 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   return local_error;
 }
 
-int TableShare::parse_table_proto(Session& session, message::Table &table)
+bool TableShare::parse_table_proto(Session& session, message::Table &table)
 {
   int local_error= inner_parse_table_proto(session, table);
 
   if (not local_error)
-    return 0;
+    return false;
 
-  error= local_error;
-  open_errno= errno;
-  errarg= 0;
-  open_table_error(local_error, open_errno, 0);
-
-  return local_error;
+  return true;
 }
 
 

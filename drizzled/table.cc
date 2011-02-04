@@ -69,9 +69,6 @@ extern plugin::StorageEngine *myisam_engine;
 
 /* Functions defined in this cursor */
 
-void open_table_error(TableShare *share, int error, int db_errno,
-                      myf errortype, int errarg);
-
 /*************************************************************************/
 
 // @note this should all be the destructor
