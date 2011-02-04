@@ -183,5 +183,8 @@ void ShowTableStatus::Generator::fill()
   push(table->getCursor().tableSize());
 
   /* Auto_increment 10 */
-  push(table->getCursor().getNextInsertId());
+  table->in_use= &getSession();
+  table->getCursor().info(HA_STATUS_AUTO);
+  push(table->getCursor().getAutoIncrement());
+  table->in_use= NULL;
 }
