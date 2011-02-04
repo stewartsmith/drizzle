@@ -518,7 +518,8 @@ bool Item::get_time(type::Time &ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), &ltime))
+  if (!(res=val_str(&tmp)) or
+      str_to_time_with_warn(current_session, res->ptr(), res->length(), &ltime))
   {
     ltime.reset();
 
