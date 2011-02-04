@@ -47,9 +47,8 @@ Created November 07, 2007 Vasil Dimov
   @param pointer to Session object
   @return session's id
 */
-unsigned long session_get_thread_id(const void *ptr)
+unsigned long session_get_thread_id(const drizzled::Session *session)
 {
-  const drizzled::Session *session= (const drizzled::Session *)ptr;
   return (unsigned long) session->getSessionId();
 }
 

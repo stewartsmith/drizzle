@@ -806,7 +806,7 @@ UNIV_INTERN
 ibool
 thd_is_replication_slave_thread(
 /*============================*/
-  void* ) /*!< in: thread handle (Session*) */
+  drizzled::Session* ) /*!< in: thread handle (Session*) */
 {
   return false;
 }
@@ -880,9 +880,9 @@ UNIV_INTERN
 ibool
 thd_has_edited_nontrans_tables(
 /*===========================*/
-  void*   session)  /*!< in: thread handle (Session*) */
+  drizzled::Session *session)  /*!< in: thread handle (Session*) */
 {
-  return((ibool)((Session *)session)->transaction.all.hasModifiedNonTransData());
+  return((ibool)session->transaction.all.hasModifiedNonTransData());
 }
 
 /******************************************************************//**
@@ -892,9 +892,9 @@ UNIV_INTERN
 ibool
 thd_is_select(
 /*==========*/
-  const void* session)  /*!< in: thread handle (Session*) */
+  const drizzled::Session *session)  /*!< in: thread handle (Session*) */
 {
-  return(session_sql_command((const Session*) session) == SQLCOM_SELECT);
+  return(session_sql_command(session) == SQLCOM_SELECT);
 }
 
 /******************************************************************//**
@@ -905,7 +905,7 @@ UNIV_INTERN
 ibool
 thd_supports_xa(
 /*============*/
-  void* )  /*!< in: thread handle (Session*), or NULL to query
+  drizzled::Session* )  /*!< in: thread handle (Session*), or NULL to query
         the global innodb_supports_xa */
 {
   /* TODO: Add support here for per-session value */
@@ -919,7 +919,7 @@ UNIV_INTERN
 ulong
 thd_lock_wait_timeout(
 /*==================*/
-  void*)  /*!< in: thread handle (Session*), or NULL to query
+  drizzled::Session*)  /*!< in: thread handle (Session*), or NULL to query
       the global innodb_lock_wait_timeout */
 {
   /* TODO: Add support here for per-session value */
@@ -934,12 +934,11 @@ UNIV_INTERN
 void
 thd_set_lock_wait_time(
 /*===================*/
-	void*	thd,	/*!< in: thread handle (THD*) */
+	drizzled::Session*	in_session,	/*!< in: thread handle (THD*) */
 	ulint	value)	/*!< in: time waited for the lock */
 {
-	if (thd) {
-          static_cast<Session*>(thd)->utime_after_lock+= value;
-	}
+  if (in_session)
+    in_session->utime_after_lock+= value;
 }
 
 /********************************************************************//**
@@ -1171,22 +1170,21 @@ void
 innobase_mysql_print_thd(
 /*=====================*/
   FILE* f,    /*!< in: output stream */
-  void * in_session,  /*!< in: pointer to a Drizzle Session object */
+  drizzled::Session *in_session,  /*!< in: pointer to a Drizzle Session object */
   uint  )   /*!< in: max query length to print, or 0 to
            use the default max length */
 {
-  Session *session= reinterpret_cast<Session *>(in_session);
-  drizzled::identifier::User::const_shared_ptr user_identifier(session->user());
+  drizzled::identifier::User::const_shared_ptr user_identifier(in_session->user());
 
   fprintf(f,
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
-          static_cast<uint64_t>(session->getSessionId()),
-          static_cast<uint64_t>(session->getQueryId()),
+          static_cast<uint64_t>(in_session->getSessionId()),
+          static_cast<uint64_t>(in_session->getQueryId()),
           glob_hostname,
           user_identifier->address().c_str(),
           user_identifier->username().c_str()
   );
-  fprintf(f, "\n%s", session->getQueryString()->c_str());
+  fprintf(f, "\n%s", in_session->getQueryString()->c_str());
   putc('\n', f);
 }
 
@@ -1665,7 +1663,7 @@ innobase_convert_identifier(
   ulint   buflen, /*!< in: length of buf, in bytes */
   const char* id, /*!< in: identifier to convert */
   ulint   idlen,  /*!< in: length of id, in bytes */
-  void*   session,/*!< in: MySQL connection thread, or NULL */
+  drizzled::Session *session,/*!< in: MySQL connection thread, or NULL */
   ibool   file_id)/*!< in: TRUE=id is a table or database name;
         FALSE=id is an UTF-8 string */
 {
@@ -9407,7 +9405,7 @@ typedef struct innobase_convert_name_test_struct {
   ulint   buflen;
   const char* id;
   ulint   idlen;
-  void*   session;
+  drizzled::Session *session;
   ibool   file_id;
 
   const char* expected;

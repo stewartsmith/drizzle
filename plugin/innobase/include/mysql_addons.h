@@ -36,6 +36,9 @@ Created November 07, 2007 Vasil Dimov
 #if !defined(__cplusplus)
 #include <stdbool.h>
 #endif
+
+namespace drizzled { class Session; }
+
 /**
  *
   Return the thread id of a user thread
@@ -43,7 +46,7 @@ Created November 07, 2007 Vasil Dimov
   @param session  user thread connection handle
   @return  thread id
 */
-unsigned long session_get_thread_id(const void *session);
+unsigned long session_get_thread_id(const drizzled::Session *session);
 
 /**
   Check if a user thread is running a non-transactional update
@@ -51,13 +54,13 @@ unsigned long session_get_thread_id(const void *session);
   @retval 0 the user thread is not running a non-transactional update
   @retval 1 the user thread is running a non-transactional update
 */
-int session_non_transactional_update(const void *session);
+int session_non_transactional_update(const drizzled::Session *session);
 
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
   @param  session   Thread handle
   @param  all   TRUE <=> rollback main transaction.
 */
-void session_mark_transaction_to_rollback(void *session, bool all);
+void session_mark_transaction_to_rollback(drizzled::Session *session, bool all);
 
 #endif
