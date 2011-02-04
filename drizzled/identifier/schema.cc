@@ -55,7 +55,7 @@ static size_t build_schema_filename(string &path, const string &db)
   conversion_error= util::tablename_to_filename(db, path);
   if (conversion_error)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Schema name cannot be encoded and fit within filesystem "
                     "name length restrictions."));
     return 0;

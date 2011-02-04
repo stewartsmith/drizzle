@@ -284,7 +284,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
         keydef[i].seg[j].flag|= HA_BLOB_PART;
         /* save number of bytes used to pack length */
         keydef[i].seg[j].bit_start= (uint) (field->pack_length() -
-                                            share->blob_ptr_size);
+                                            share->sizeBlobPtr());
       }
     }
     keyseg+= pos->key_parts;
@@ -294,7 +294,8 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   record= table_arg->getInsertRecord();
   recpos= 0;
   recinfo_pos= recinfo;
-  while (recpos < (uint) share->stored_rec_length)
+
+  while (recpos < (uint) share->sizeStoredRecord())
   {
     Field **field, *found= 0;
     minpos= share->getRecordLength();
@@ -308,6 +309,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
         /* skip null fields */
         if (!(temp_length= (*field)->pack_length_in_rec()))
           continue; /* Skip null-fields */
+
         if (! found || fieldpos < minpos ||
             (fieldpos == minpos && temp_length < length))
         {
@@ -529,17 +531,23 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 {
   Session *cur_session;
   if ((cur_session= file->in_use))
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
+  {
+    errmsg_printf(error::ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
                     cur_session->thread_id,
                     sfile, sline);
+  }
   else
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from unknown thread, %s:%d"), sfile, sline);
+  {
+    errmsg_printf(error::ERROR, _("Got an error from unknown thread, %s:%d"), sfile, sline);
+  }
+
   if (message)
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s", message);
+    errmsg_printf(error::ERROR, "%s", message);
+
   list<Session *>::iterator it= file->s->in_use->begin();
   while (it != file->s->in_use->end())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s", _("Unknown thread accessing table"));
+    errmsg_printf(error::ERROR, "%s", _("Unknown thread accessing table"));
     ++it;
   }
 }
@@ -690,9 +698,9 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   */
   if (file->dfile == -1)
   {
-    errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' failed. "
-                          "Please try REPAIR EXTENDED or myisamchk",
-                          getTable()->getShare()->getPath());
+    errmsg_printf(error::INFO, "Retrying repair of: '%s' failed. "
+		  "Please try REPAIR EXTENDED or myisamchk",
+		  getTable()->getShare()->getPath());
     return(HA_ADMIN_FAILED);
   }
 
@@ -917,7 +925,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
+      errmsg_printf(error::WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
                         errno, param.db_name, param.table_name);
       /* Repairing by sort failed. Now try standard repair method. */
       param.testflag&= ~(T_REP_BY_SORT | T_QUICK);
@@ -927,7 +935,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
         might have been set by the first repair. They can still be seen
         with SHOW WARNINGS then.
       */
-      if (! error)
+      if (not error)
         session->clear_error();
     }
     info(HA_STATUS_CONST);

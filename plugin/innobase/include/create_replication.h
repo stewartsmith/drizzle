@@ -41,7 +41,8 @@ struct read_replication_state_st {
 UNIV_INTERN ulint dict_create_sys_replication_log(void);
 
 UNIV_INTERN ulint insert_replication_message(const char *message, size_t size, 
-                                             trx_t *trx, uint64_t trx_id);
+                                             trx_t *trx, uint64_t trx_id,
+                                             uint32_t seg_id);
 
 UNIV_INTERN struct read_replication_state_st *replication_read_init(void);
 UNIV_INTERN void replication_read_deinit(struct read_replication_state_st *);

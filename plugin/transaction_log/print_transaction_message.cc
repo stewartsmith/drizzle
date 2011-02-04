@@ -101,12 +101,9 @@ String *PrintTransactionMessageFunction::val_str(String *str)
   int log_file= open(filename.c_str(), O_RDONLY);
   if (log_file == -1)
   {
-    char errmsg[STRERROR_MAX];
-    strerror_r(errno, errmsg, sizeof(errmsg));
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open transaction log file %s.  Got error: %s\n"), 
-                  filename.c_str(), 
-                  errmsg);
+    sql_perror(_("Failed to open transaction log file"), filename);
     null_value= true;
+
     return NULL;
   }
 
@@ -164,11 +161,8 @@ String *PrintTransactionMessageFunction::val_str(String *str)
   bool result= coded_input->ReadRaw(buffer, message_size);
   if (result == false)
   {
-    char errmsg[STRERROR_MAX];
-    strerror_r(errno, errmsg, sizeof(errmsg));
-    fprintf(stderr, _("Could not read transaction message.\n"));
-    fprintf(stderr, _("GPB ERROR: %s.\n"), errmsg);
-    fprintf(stderr, _("Raw buffer read: %s.\n"), buffer);
+    // 120 was arbitrary
+    sql_perror(_("Could not read transaction message. Raw buffer read "), std::string((const char *)buffer, std::min(message_size, 120U)));
   }
 
   result= transaction_message.ParseFromArray(buffer, static_cast<int32_t>(message_size));

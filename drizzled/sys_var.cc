@@ -1523,7 +1523,7 @@ void add_sys_var_to_list(sys_var *var)
   /* this fails if there is a conflicting variable name. */
   if (system_variable_map.find(lower_name) != system_variable_map.end())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Variable named %s already exists!\n"),
+    errmsg_printf(error::ERROR, _("Variable named %s already exists!\n"),
                   var->getName().c_str());
     throw exception();
   } 
@@ -1532,7 +1532,7 @@ void add_sys_var_to_list(sys_var *var)
     system_variable_map.insert(make_pair(lower_name, var));
   if (ret.second == false)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not add Variable: %s\n"),
+    errmsg_printf(error::ERROR, _("Could not add Variable: %s\n"),
                   var->getName().c_str());
     throw exception();
   }
@@ -1630,7 +1630,7 @@ int sys_var_init()
   }
   catch (std::exception&)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
+    errmsg_printf(error::ERROR, _("Failed to initialize system variables"));
     return(1);
   }
   return(0);

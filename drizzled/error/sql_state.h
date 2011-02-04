@@ -17,14 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_STATE_H
-#define DRIZZLED_SQL_STATE_H
+#ifndef DRIZZLED_ERROR_SQL_STATE_H
+#define DRIZZLED_ERROR_SQL_STATE_H
 
 namespace drizzled
 {
+namespace error
+{
 
-const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno);
+const char *convert_to_sqlstate(drizzled::error_t drizzle_errno);
 
+} /* namespace error */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_STATE_H */
+#endif /* DRIZZLED_ERROR_SQL_STATE_H */

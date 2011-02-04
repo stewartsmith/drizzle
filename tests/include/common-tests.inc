@@ -1303,9 +1303,9 @@ explain select fld3 from t2 use index (fld1,fld3) where fld3 = 'honeysuckle';
 # The next should give an error
 #
 
--- error 1176
+--error ER_KEY_DOES_NOT_EXITS
 explain select fld3 from t2 ignore index (fld3,not_used);
--- error 1176
+--error ER_KEY_DOES_NOT_EXITS
 explain select fld3 from t2 use index (not_used);
 
 #

@@ -218,13 +218,13 @@ static Item *default_value_item(enum_field_types field_type,
  */
 bool TableShare::fieldInPrimaryKey(Field *in_field) const
 {
-  assert(table_proto != NULL);
+  assert(getTableMessage());
 
-  size_t num_indexes= table_proto->indexes_size();
+  size_t num_indexes= getTableMessage()->indexes_size();
 
   for (size_t x= 0; x < num_indexes; ++x)
   {
-    const message::Table::Index &index= table_proto->indexes(x);
+    const message::Table::Index &index= getTableMessage()->indexes(x);
     if (index.is_primary())
     {
       size_t num_parts= index.index_part_size();
@@ -245,13 +245,17 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(type_arg),
   _ref_count(0),
@@ -279,19 +283,12 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
 {
-
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   if (type_arg == message::Table::INTERNAL)
   {
     identifier::Table::build_tmptable_filename(private_key_for_cache.vectorPtr());
@@ -309,14 +306,19 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(message::Table::INTERNAL),
   _ref_count(0),
@@ -344,17 +346,13 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
 {
   assert(identifier.getKey() == key);
-
-  table_charset= 0;
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
 
   private_key_for_cache= key;
 
@@ -384,14 +382,19 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(identifier.getType()),
   _ref_count(0),
@@ -419,18 +422,12 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
 {
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   private_key_for_cache= identifier.getKey();
   assert(identifier.getPath().size()); // Since we are doing a create table, this should be a positive value
   private_normalized_path.resize(identifier.getPath().size() + 1);
@@ -462,14 +459,19 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(type_arg),
   _ref_count(0),
@@ -497,18 +499,12 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
 {
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   char *path_buff;
   std::string _path;
 
@@ -565,9 +561,6 @@ TableShare::~TableShare()
 {
   storage_engine= NULL;
 
-  delete table_proto;
-  table_proto= NULL;
-
   plugin::EventObserver::deregisterTableEvents(*this);
 
   mem_root.free_root(MYF(0));                 // Free's share
@@ -586,8 +579,8 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
 
-  table_proto->set_name(identifier_arg.getTableName());
-  table_proto->set_schema(identifier_arg.getSchemaName());
+  getTableMessage()->set_name(identifier_arg.getTableName());
+  getTableMessage()->set_schema(identifier_arg.getSchemaName());
 }
 
 int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
@@ -603,7 +596,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
-  setTableProto(new(nothrow) message::Table(table));
+  setTableMessage(table);
 
   storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
   assert(storage_engine); // We use an assert() here because we should never get this far and still have no suitable engine.
@@ -629,7 +622,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   table_charset= get_charset(table_options.collation_id());
 
-  if (! table_charset)
+  if (not table_charset)
   {
     my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, MYF(0),
              table_options.collation().c_str(),
@@ -639,8 +632,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   }
 
   db_record_offset= 1;
-
-  blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
 
   keys= table.indexes_size();
 
@@ -1095,8 +1086,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
 
-    blob_ptr_size= portable_sizeof_char_ptr;
-
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
     // We set field_length in this loop.
@@ -1223,7 +1212,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                          charset,
                          MTYP_TYPENR(unireg_type),
                          ((field_type == DRIZZLE_TYPE_ENUM) ?  &intervals[interval_nr++] : (TYPELIB*) 0),
-                         getTableProto()->field(fieldnr).name().c_str());
+                         getTableMessage()->field(fieldnr).name().c_str());
 
     _fields[fieldnr]= f;
 
@@ -1994,9 +1983,7 @@ Field *TableShare::make_field(const message::Table::Field &,
                                     null_bit,
                                     unireg_check,
                                     field_name,
-                                    decimals,
-                                    false,
-                                    false /* is_unsigned */);
+                                    decimals);
   case DRIZZLE_TYPE_DOUBLE:
     return new (&mem_root) Field_double(ptr,
                                    field_length,

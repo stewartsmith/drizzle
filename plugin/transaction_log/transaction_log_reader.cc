@@ -91,12 +91,7 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
 
     if (log_file == -1)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, 
-                    _("Failed to open transaction log file %s.  Got error: %s\n"),
-                    log_filename_to_read.c_str(),
-                    errmsg);
+      sql_perror(_("Failed to open transaction log file"), log_filename_to_read);
       return false;
     }
 

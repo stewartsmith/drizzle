@@ -224,6 +224,7 @@ public:
   {
     return val_str(str, str);
   }
+
   /*
      val_str(buf1, buf2) gets two buffers and should use them as follows:
      if it needs a temp buffer to convert result to string - use buf1
@@ -237,6 +238,7 @@ public:
      This trickery is used to decrease a number of malloc calls.
   */
   virtual String *val_str(String*, String *)=0;
+
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.

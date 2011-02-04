@@ -23,22 +23,25 @@
 
 #include <algorithm>
 
-#include <drizzled/sql_state.h>
 #include <drizzled/error.h>
+#include <drizzled/error/sql_state.h>
 
 using namespace std;
 
 namespace drizzled
 {
 
-typedef struct st_map_errno_to_sqlstate
+namespace error
 {
-  uint32_t drizzle_errno;
+
+struct sql_state_t
+{
+  drizzled::error_t drizzle_errno;
   const char *odbc_state;
   const char *jdbc_state;
-} errno_sqlstate_map;
+};
 
-errno_sqlstate_map sqlstate_map[]=
+sql_state_t sqlstate_map[]=
 {
   { ER_DUP_KEY                              ,"23000", "" },
   { ER_OUTOFMEMORY                          ,"HY001", "S1001" },
@@ -168,26 +171,27 @@ errno_sqlstate_map sqlstate_map[]=
   { ER_DUP_ENTRY_WITH_KEY_NAME              ,"23000", "S1009" },
 };
 
-static bool compare_errno_map(errno_sqlstate_map a,
-                              errno_sqlstate_map b)
+static bool compare_errno_map(sql_state_t a,
+                              sql_state_t b)
 {
   return (a.drizzle_errno < b.drizzle_errno);
 }
 
-const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno)
+const char *convert_to_sqlstate(drizzled::error_t drizzle_errno)
 {
 
-  errno_sqlstate_map drizzle_err_state= {drizzle_errno, NULL, NULL};
-  errno_sqlstate_map* result=
+  sql_state_t drizzle_err_state= {drizzle_errno, NULL, NULL};
+  sql_state_t* result=
     lower_bound(&sqlstate_map[0],
                 &sqlstate_map[sizeof(sqlstate_map)/sizeof(*sqlstate_map)],
                 drizzle_err_state, compare_errno_map);
 
   if ((*result).drizzle_errno == drizzle_errno)
     return (*result).odbc_state;
+
   /* General error */
   return "HY000";
-
 }
 
+} /* namespace error */
 } /* namespace drizzled */

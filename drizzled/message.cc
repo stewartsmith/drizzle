@@ -75,6 +75,11 @@ static const std::string MATCH_FULL("FULL");
 static const std::string MATCH_PARTIAL("PARTIAL");
 static const std::string MATCH_SIMPLE("SIMPLE");
 
+const static std::string STANDARD_STRING("STANDARD");
+const static std::string TEMPORARY_STRING("TEMPORARY");
+const static std::string INTERNAL_STRING("INTERNAL");
+const static std::string FUNCTION_STRING("FUNCTION");
+
 void update(drizzled::message::Schema &arg)
 {
   arg.set_version(arg.version() + 1);
@@ -245,6 +250,24 @@ const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignK
   }
 
   return MATCH_SIMPLE;
+}
+
+const std::string &type(drizzled::message::Table::TableType type)
+{
+  switch (type)
+  {
+  case message::Table::STANDARD:
+    return STANDARD_STRING;
+  case message::Table::TEMPORARY:
+    return TEMPORARY_STRING;
+  case message::Table::INTERNAL:
+    return INTERNAL_STRING;
+  case message::Table::FUNCTION:
+    return FUNCTION_STRING;
+  }
+
+  assert(0);
+  return PROGRAM_ERROR;
 }
 
 #if 0
