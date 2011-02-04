@@ -160,24 +160,7 @@ undefined.  Map it to NULL. */
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
 static plugin::XaStorageEngine* innodb_engine_ptr= NULL;
-static plugin::TableFunction* status_table_function_ptr= NULL;
-static plugin::TableFunction* cmp_tool= NULL;
-static plugin::TableFunction* cmp_reset_tool= NULL;
-static plugin::TableFunction* cmp_mem_tool= NULL;
-static plugin::TableFunction* cmp_mem_reset_tool= NULL;
-static plugin::TableFunction* innodb_trx_tool= NULL;
-static plugin::TableFunction* innodb_locks_tool= NULL;
-static plugin::TableFunction* innodb_lock_waits_tool= NULL;
-static plugin::TableFunction* innodb_sys_tables_tool= NULL;
-static plugin::TableFunction* innodb_sys_tablestats_tool= NULL;
 
-static plugin::TableFunction* innodb_sys_indexes_tool= NULL;
-static plugin::TableFunction* innodb_sys_columns_tool= NULL;
-static plugin::TableFunction* innodb_sys_fields_tool= NULL;
-static plugin::TableFunction* innodb_sys_foreign_tool= NULL;
-static plugin::TableFunction* innodb_sys_foreign_cols_tool= NULL;
-
-static ReplicationLog *replication_logger= NULL;
 typedef constrained_check<uint32_t, UINT32_MAX, 10> open_files_constraint;
 static open_files_constraint innobase_open_files;
 typedef constrained_check<uint32_t, 10, 1> mirrored_log_groups_constraint;
@@ -2287,60 +2270,44 @@ innobase_change_buffering_inited_ok:
 
   actuall_engine_ptr->dropTemporarySchema();
 
-  status_table_function_ptr= new InnodbStatusTool;
+  context.add(new InnodbStatusTool);
 
   context.add(innodb_engine_ptr);
 
-  context.add(status_table_function_ptr);
+  context.add(new(std::nothrow)CmpTool(false));
 
-  cmp_tool= new(std::nothrow)CmpTool(false);
-  context.add(cmp_tool);
+  context.add(new(std::nothrow)CmpTool(true));
 
-  cmp_reset_tool= new(std::nothrow)CmpTool(true);
-  context.add(cmp_reset_tool);
+  context.add(new(std::nothrow)CmpmemTool(false));
 
-  cmp_mem_tool= new(std::nothrow)CmpmemTool(false);
-  context.add(cmp_mem_tool);
+  context.add(new(std::nothrow)CmpmemTool(true));
 
-  cmp_mem_reset_tool= new(std::nothrow)CmpmemTool(true);
-  context.add(cmp_mem_reset_tool);
+  context.add(new(std::nothrow)InnodbTrxTool("INNODB_TRX"));
 
-  innodb_trx_tool= new(std::nothrow)InnodbTrxTool("INNODB_TRX");
-  context.add(innodb_trx_tool);
+  context.add(new(std::nothrow)InnodbTrxTool("INNODB_LOCKS"));
 
-  innodb_locks_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCKS");
-  context.add(innodb_locks_tool);
+  context.add(new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS"));
 
-  innodb_lock_waits_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS");
-  context.add(innodb_lock_waits_tool);
+  context.add(new(std::nothrow)InnodbSysTablesTool());
 
-  innodb_sys_tables_tool= new(std::nothrow)InnodbSysTablesTool();
-  context.add(innodb_sys_tables_tool);
+  context.add(new(std::nothrow)InnodbSysTableStatsTool());
 
-  innodb_sys_tablestats_tool= new(std::nothrow)InnodbSysTableStatsTool();
-  context.add(innodb_sys_tablestats_tool);
+  context.add(new(std::nothrow)InnodbSysIndexesTool());
 
-  innodb_sys_indexes_tool= new(std::nothrow)InnodbSysIndexesTool();
-  context.add(innodb_sys_indexes_tool);
+  context.add(new(std::nothrow)InnodbSysColumnsTool());
 
-  innodb_sys_columns_tool= new(std::nothrow)InnodbSysColumnsTool();
-  context.add(innodb_sys_columns_tool);
+  context.add(new(std::nothrow)InnodbSysFieldsTool());
 
-  innodb_sys_fields_tool= new(std::nothrow)InnodbSysFieldsTool();
-  context.add(innodb_sys_fields_tool);
+  context.add(new(std::nothrow)InnodbSysForeignTool());
 
-  innodb_sys_foreign_tool= new(std::nothrow)InnodbSysForeignTool();
-  context.add(innodb_sys_foreign_tool);
-
-  innodb_sys_foreign_cols_tool= new(std::nothrow)InnodbSysForeignColsTool();
-  context.add(innodb_sys_foreign_cols_tool);
+  context.add(new(std::nothrow)InnodbSysForeignColsTool());
 
   context.add(new(std::nothrow)InnodbInternalTables());
   context.add(new(std::nothrow)InnodbReplicationTable());
 
   if (innobase_use_replication_log)
   {
-    replication_logger= new(std::nothrow)ReplicationLog();
+    ReplicationLog *replication_logger= new(std::nothrow)ReplicationLog();
     context.add(replication_logger);
     ReplicationLog::setup(replication_logger);
   }
@@ -2431,6 +2398,7 @@ innobase_change_buffering_inited_ok:
   btr_search_fully_disabled = (!btr_search_enabled);
 
   return(FALSE);
+
 error:
   return(TRUE);
 }
