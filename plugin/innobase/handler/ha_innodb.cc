@@ -2936,52 +2936,6 @@ ha_innobase::primary_key_is_clustered()
   return(true);
 }
 
-/*****************************************************************//**
-Normalizes a table name string. A normalized name consists of the
-database name catenated to '/' and table name. An example:
-test/mytable. On Windows normalization puts both the database name and the
-table name always to lower case. */
-static
-void
-normalize_table_name(
-/*=================*/
-  char*   norm_name,  /*!< out: normalized name as a
-          null-terminated string */
-  const char* name)   /*!< in: table name string */
-{
-  const char* name_ptr;
-  const char* db_ptr;
-  const char* ptr;
-
-  /* Scan name from the end */
-
-  ptr = strchr(name, '\0')-1;
-
-  while (ptr >= name && *ptr != '\\' && *ptr != '/') {
-    ptr--;
-  }
-
-  name_ptr = ptr + 1;
-
-  assert(ptr > name);
-
-  ptr--;
-
-  while (ptr >= name && *ptr != '\\' && *ptr != '/') {
-    ptr--;
-  }
-
-  db_ptr = ptr + 1;
-
-  memcpy(norm_name, db_ptr, strlen(name) + 1 - (db_ptr - name));
-
-  norm_name[name_ptr - db_ptr - 1] = '/';
-
-#ifdef __WIN__
-  innobase_casedn_str(norm_name);
-#endif
-}
-
 /********************************************************************//**
 Get the upper limit of the MySQL integral and floating-point type.
 @return maximum allowed value for the field */
@@ -6686,19 +6640,14 @@ int
 innobase_rename_table(
 /*==================*/
   trx_t*    trx,  /*!< in: transaction */
-  const char* from, /*!< in: old name of the table */
-  const char* to, /*!< in: new name of the table */
+  const identifier::Table &from,
+  const identifier::Table &to,
   ibool   lock_and_commit)
         /*!< in: TRUE=lock data dictionary and commit */
 {
   int error;
-  char norm_to[FN_REFLEN];
-  char norm_from[FN_REFLEN];
 
   srv_lower_case_table_names = TRUE;
-
-  normalize_table_name(norm_to, to);
-  normalize_table_name(norm_from, from);
 
   /* Serialize data dictionary operations with dictionary mutex:
   no deadlocks can occur then in these operations */
@@ -6707,16 +6656,15 @@ innobase_rename_table(
     row_mysql_lock_data_dictionary(trx);
   }
 
-  error = row_rename_table_for_mysql(
-    norm_from, norm_to, trx, lock_and_commit);
+  error = row_rename_table_for_mysql(from.getKeyPath().c_str(), to.getKeyPath().c_str(), trx, lock_and_commit);
 
   if (error != DB_SUCCESS) {
     FILE* ef = dict_foreign_err_file;
 
     fputs("InnoDB: Renaming table ", ef);
-    ut_print_name(ef, trx, TRUE, norm_from);
+    ut_print_name(ef, trx, TRUE, from.getKeyPath().c_str());
     fputs(" to ", ef);
-    ut_print_name(ef, trx, TRUE, norm_to);
+    ut_print_name(ef, trx, TRUE, to.getKeyPath().c_str());
     fputs(" failed!\n", ef);
   }
 
@@ -6761,7 +6709,7 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const identifier
 
   trx = innobase_trx_allocate(&session);
 
-  error = innobase_rename_table(trx, from.getPath().c_str(), to.getPath().c_str(), TRUE);
+  error = innobase_rename_table(trx, from, to, TRUE);
 
   session.setXaId(trx->id);
 
@@ -6786,7 +6734,7 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const identifier
      is the one we are trying to rename to) and return the generic
      error code. */
   if (error == (int) DB_DUPLICATE_KEY) {
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), to.getPath().c_str());
+    my_error(ER_TABLE_EXISTS_ERROR, to);
     error = DB_ERROR;
   }
 
