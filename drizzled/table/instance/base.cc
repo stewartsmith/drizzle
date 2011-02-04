@@ -1546,7 +1546,7 @@ int TableShare::open_table_def(Session& session, const identifier::Table &identi
 
   if (table and table->IsInitialized())
   {
-    if (parse_table_proto(session, *table))
+    if (inner_parse_table_proto(session, *table))
     {
       local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
       my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
