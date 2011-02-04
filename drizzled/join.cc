@@ -67,7 +67,6 @@ using namespace std;
 
 namespace drizzled
 {
-
 extern plugin::StorageEngine *heap_engine;
 
 /** Declarations of static functions used in this source file. */
@@ -5668,7 +5667,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     s= p_pos->getJoinTable();
     s->type= AM_SYSTEM;
     join->const_table_map|=s->table->map;
-    if ((tmp= join_read_const_table(s, p_pos)))
+    if ((tmp= s->join_read_const_table(p_pos)))
     {
       if (tmp > 0)
         return 1;			// Fatal error
@@ -5742,7 +5741,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           join->const_table_map|=table->map;
           set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
           partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
-          if ((tmp= join_read_const_table(s, partial_pos)))
+          if ((tmp= s->join_read_const_table(partial_pos)))
           {
             if (tmp > 0)
               return 1;			// Fatal error
@@ -5794,7 +5793,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
                 if (create_ref_for_key(join, s, start_keyuse, found_const_table_map))
                   return 1;
                 partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
-                if ((tmp=join_read_const_table(s, partial_pos)))
+                if ((tmp=s->join_read_const_table(partial_pos)))
                 {
                   if (tmp > 0)
                     return 1;			// Fatal error

@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_TABLE_LIST_H
 #define DRIZZLED_TABLE_LIST_H
 
+#include <drizzled/nested_join.h>
 #include <drizzled/table.h>
 
 namespace drizzled
@@ -40,8 +41,6 @@ namespace plugin
 {
   class StorageEngine;
 }
-
-struct nested_join_st;
 
 /**
  * A Table referenced in the FROM clause.
