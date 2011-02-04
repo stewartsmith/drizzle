@@ -1276,9 +1276,9 @@ UNIV_INTERN
 const void*
 innobase_get_charset(
 /*=================*/
-  void* mysql_session)  /*!< in: MySQL thread handle */
+  drizzled::Session *mysql_session)  /*!< in: MySQL thread handle */
 {
-  return static_cast<Session*>(mysql_session)->charset();
+  return mysql_session->charset();
 }
 
 UNIV_INTERN
@@ -1305,10 +1305,10 @@ UNIV_INTERN
 const char*
 innobase_get_stmt(
 /*==============*/
-       void*   session,        /*!< in: MySQL thread handle */
+       drizzled::Session *session,        /*!< in: MySQL thread handle */
        size_t* length)         /*!< out: length of the SQL statement */
 {
-  return static_cast<Session*>(session)->getQueryStringCopy(*length);
+  return session->getQueryStringCopy(*length);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -1805,7 +1805,7 @@ trx_is_interrupted(
 /*===============*/
   trx_t*  trx)  /*!< in: transaction */
 {
-  return(trx && trx->mysql_thd && static_cast<Session*>(trx->mysql_thd)->getKilled());
+  return(trx && trx->mysql_thd && trx->mysql_thd->getKilled());
 }
 
 /**********************************************************************//**
@@ -5771,7 +5771,7 @@ create_table_def(
 
     if (!col_type) {
       push_warning_printf(
-                          (Session*) trx->mysql_thd,
+                          trx->mysql_thd,
                           DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_CANT_CREATE_TABLE,
                           "Error creating table '%s' with "
@@ -5805,7 +5805,7 @@ create_table_def(
         /* in data0type.h we assume that the
         number fits in one byte in prtype */
         push_warning_printf(
-          (Session*) trx->mysql_thd,
+          trx->mysql_thd,
           DRIZZLE_ERROR::WARN_LEVEL_ERROR,
           ER_CANT_CREATE_TABLE,
           "In InnoDB, charset-collation codes"
@@ -9381,7 +9381,7 @@ innobase_index_name_is_reserved(
     if (innobase_strcasecmp(key->name,
                             innobase_index_reserve_name) == 0) {
       /* Push warning to drizzle */
-      push_warning_printf((Session*)trx->mysql_thd,
+      push_warning_printf(trx->mysql_thd,
                           DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_WRONG_NAME_FOR_INDEX,
                           "Cannot Create Index with name "

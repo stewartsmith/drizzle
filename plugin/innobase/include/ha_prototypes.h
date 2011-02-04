@@ -226,7 +226,7 @@ Determines the connection character set.
 const void *
 innobase_get_charset(
 /*=================*/
-	void*	mysql_thd);	/*!< in: MySQL thread handle */
+	drizzled::Session *mysql_thd);	/*!< in: MySQL thread handle */
 
 /**********************************************************************//**
 Determines the current SQL statement.
@@ -235,7 +235,7 @@ UNIV_INTERN
 const char*
 innobase_get_stmt(
 /*==============*/
-       void*   mysql_thd,      /*!< in: MySQL thread handle */
+       drizzled::Session *mysql_thd,      /*!< in: MySQL thread handle */
        size_t* length)         /*!< out: length of the SQL statement */
        __attribute__((nonnull));
 
