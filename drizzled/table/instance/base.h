@@ -652,9 +652,11 @@ public:
 private:
   void init(const char *new_table_name,
             const char *new_path);
-public:
 
+protected:
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
+
+public:
 
   static TableShare::shared_ptr getShareCreate(Session *session, 
                                                const identifier::Table &identifier,
