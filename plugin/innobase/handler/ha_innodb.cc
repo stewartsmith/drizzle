@@ -134,17 +134,18 @@ using namespace std;
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/text_format.h>
 
+#include <boost/thread/mutex.hpp>
+
 using namespace std;
 using namespace drizzled;
 
 /** to protect innobase_open_files */
-static pthread_mutex_t innobase_share_mutex;
+static boost::mutex innobase_share_mutex;
+
 /** to force correct commit order in binlog */
-static pthread_mutex_t prepare_commit_mutex;
 static ulong commit_threads = 0;
-static pthread_mutex_t commit_threads_m;
-static pthread_cond_t commit_cond;
-static pthread_mutex_t commit_cond_m;
+static boost::condition_variable commit_cond;
+static boost::mutex commit_cond_m;
 static bool innodb_inited = 0;
 
 #define INSIDE_HA_INNOBASE_CC
@@ -350,11 +351,6 @@ public:
       srv_free_paths_and_sizes();
       if (internal_innobase_data_file_path)
         free(internal_innobase_data_file_path);
-      pthread_mutex_destroy(&innobase_share_mutex);
-      pthread_mutex_destroy(&prepare_commit_mutex);
-      pthread_mutex_destroy(&commit_threads_m);
-      pthread_mutex_destroy(&commit_cond_m);
-      pthread_cond_destroy(&commit_cond);
     }
     
     /* These get strdup'd from vm variables */
@@ -2321,11 +2317,6 @@ innobase_change_buffering_inited_ok:
                                                      TRUE);
 
   innobase_open_tables = hash_create(200);
-  pthread_mutex_init(&innobase_share_mutex, MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&prepare_commit_mutex, MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&commit_threads_m, MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&commit_cond_m, MY_MUTEX_INIT_FAST);
-  pthread_cond_init(&commit_cond, NULL);
   innodb_inited= 1;
 
   actuall_engine_ptr->dropTemporarySchema();
@@ -2578,21 +2569,20 @@ InnobaseEngine::doCommit(
     /* We need current binlog position for ibbackup to work.
     Note, the position is current because of
     prepare_commit_mutex */
-retry:
-    if (innobase_commit_concurrency.get() > 0) {
-      pthread_mutex_lock(&commit_cond_m);
-      commit_threads++;
+    const uint32_t commit_concurrency= innobase_commit_concurrency.get();
+    if (commit_concurrency)
+    {
+      do 
+      {
+        boost::mutex::scoped_lock scopedLock(commit_cond_m);
+        commit_threads++;
 
-      if (commit_threads > innobase_commit_concurrency.get()) {
+        if (commit_threads <= commit_concurrency) 
+          break;
+
         commit_threads--;
-        pthread_cond_wait(&commit_cond,
-          &commit_cond_m);
-        pthread_mutex_unlock(&commit_cond_m);
-        goto retry;
-      }
-      else {
-        pthread_mutex_unlock(&commit_cond_m);
-      }
+        commit_cond.wait(scopedLock);
+      } while (1);
     }
 
     trx->mysql_log_file_name = NULL;
@@ -2605,11 +2595,11 @@ retry:
     innobase_commit_low(trx);
     trx->flush_log_later = FALSE;
 
-    if (innobase_commit_concurrency.get() > 0) {
-      pthread_mutex_lock(&commit_cond_m);
+    if (commit_concurrency)
+    {
+      boost::mutex::scoped_lock scopedLock(commit_cond_m);
       commit_threads--;
-      pthread_cond_signal(&commit_cond);
-      pthread_mutex_unlock(&commit_cond_m);
+      commit_cond.notify_one();
     }
 
     /* Now do a write + flush of logs. */
@@ -8319,7 +8309,7 @@ bool InnobaseEngine::show_status(Session* session,
 static INNOBASE_SHARE* get_share(const char* table_name)
 {
   INNOBASE_SHARE *share;
-  pthread_mutex_lock(&innobase_share_mutex);
+  boost::mutex::scoped_lock scopedLock(innobase_share_mutex);
 
   ulint fold = ut_fold_string(table_name);
 
@@ -8346,14 +8336,13 @@ static INNOBASE_SHARE* get_share(const char* table_name)
   }
 
   share->use_count++;
-  pthread_mutex_unlock(&innobase_share_mutex);
 
   return(share);
 }
 
 static void free_share(INNOBASE_SHARE* share)
 {
-  pthread_mutex_lock(&innobase_share_mutex);
+  boost::mutex::scoped_lock scopedLock(innobase_share_mutex);
 
 #ifdef UNIV_DEBUG
   INNOBASE_SHARE* share2;
@@ -8382,8 +8371,6 @@ static void free_share(INNOBASE_SHARE* share)
     /* TODO: invoke HASH_MIGRATE if innobase_open_tables
     shrinks too much */
   }
-
-  pthread_mutex_unlock(&innobase_share_mutex);
 }
 
 /*****************************************************************//**
