@@ -1751,7 +1751,7 @@ innobase_convert_name(
   ulint   buflen, /*!< in: length of buf, in bytes */
   const char* id, /*!< in: identifier to convert */
   ulint   idlen,  /*!< in: length of id, in bytes */
-  void*   session,/*!< in: MySQL connection thread, or NULL */
+  drizzled::Session *session,/*!< in: MySQL connection thread, or NULL */
   ibool   table_id)/*!< in: TRUE=id is a table or database name;
         FALSE=id is an index name */
 {
