@@ -5,4 +5,4 @@ a
 42
 FLUSH TABLES;
 SELECT * FROM t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR HY000: Unknown table 'test.t1'

@@ -14,7 +14,7 @@ select * from t1;
 a	b	c1
 drop table t1;
 select count(*) from t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR HY000: Unknown table 'test.t1'
 create temporary table t1 (n int);
 insert into t1 values (1),(2),(3);
 truncate table t1;
@@ -22,7 +22,7 @@ select * from t1;
 n
 drop table t1;
 truncate non_existing_table;
-ERROR 42S02: Table 'test.non_existing_table' doesn't exist
+ERROR HY000: Unknown table 'test.non_existing_table'
 create table t1 (a integer auto_increment primary key);
 insert into t1 (a) values (NULL),(NULL);
 truncate table t1;

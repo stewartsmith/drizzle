@@ -1540,46 +1540,36 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
 
 int TableShare::open_table_def(Session& session, const identifier::Table &identifier)
 {
-  int local_error;
-  bool error_given;
+  drizzled::error_t local_error= EE_OK;
 
-  local_error= 1;
-  error_given= 0;
+  message::table::shared_ptr table= plugin::StorageEngine::getTableMessage(session, identifier, local_error);
 
-  message::table::shared_ptr table;
-
-  local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
-
-  do {
-    if (local_error != EEXIST)
-    {
-      if (local_error > 0)
-      {
-        errno= local_error;
-        local_error= 1;
-      }
-      else
-      {
-        if (not table->IsInitialized())
-        {
-          local_error= 4;
-        }
-      }
-      break;
-    }
-
-    local_error= parse_table_proto(session, *table);
-
-    setTableCategory(TABLE_CATEGORY_USER);
-  } while (0);
-
-  if (local_error && !error_given)
+  if (table and table->IsInitialized())
   {
-    error= local_error;
-    open_table_error(error, (open_errno= errno), 0);
+    int foo;
+    if ((foo= parse_table_proto(session, *table)))
+    {
+      local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
+      my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
+    }
+    else
+    {
+      setTableCategory(TABLE_CATEGORY_USER);
+      local_error= EE_OK;
+    }
+  }
+  else if (table and not table->IsInitialized())
+  {
+    local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
+    my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
+  }
+  else
+  {
+    local_error= ER_TABLE_UNKNOWN;
+    my_error(ER_TABLE_UNKNOWN, identifier);
   }
 
-  return(error);
+  return static_cast<int>(local_error);
 }
 
 
