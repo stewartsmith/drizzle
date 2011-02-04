@@ -114,7 +114,6 @@ using namespace std;
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
-#include "mysql_addons.h"
 
 #include "ha_innodb.h"
 #include "data_dictionary.h"
@@ -1263,18 +1262,6 @@ innobase_casedn_str(
   my_casedn_str(system_charset_info, a);
 }
 
-/**********************************************************************//**
-Determines the connection character set.
-@return connection character set */
-UNIV_INTERN
-const void*
-innobase_get_charset(
-/*=================*/
-  drizzled::Session *mysql_session)  /*!< in: MySQL thread handle */
-{
-  return mysql_session->charset();
-}
-
 UNIV_INTERN
 bool
 innobase_isspace(
@@ -1282,27 +1269,6 @@ innobase_isspace(
   char char_to_test)
 {
   return my_isspace(static_cast<const CHARSET_INFO *>(cs), char_to_test);
-}
-
-UNIV_INTERN
-int
-innobase_fast_mutex_init(
-        os_fast_mutex_t*        fast_mutex)
-{
-  return pthread_mutex_init(fast_mutex, MY_MUTEX_INIT_FAST);
-}
-
-/**********************************************************************//**
-Determines the current SQL statement.
-@return        SQL statement string */
-UNIV_INTERN
-const char*
-innobase_get_stmt(
-/*==============*/
-       drizzled::Session *session,        /*!< in: MySQL thread handle */
-       size_t* length)         /*!< out: length of the SQL statement */
-{
-  return session->getQueryStringCopy(*length);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -6246,7 +6212,7 @@ InnobaseEngine::doCreateTable(
     }
   }
 
-  stmt = innobase_get_stmt(&session, &stmt_len);
+  stmt= session.getQueryStringCopy(stmt_len);
 
   if (stmt) {
     string generated_create_table;
