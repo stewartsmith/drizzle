@@ -139,7 +139,8 @@ Item *Item_default_value::transform(Item_transformer transformer, unsigned char 
     change records at each execution.
   */
   if (arg != new_item)
-    current_session->change_item_tree(&arg, new_item);
+    getSession().change_item_tree(&arg, new_item);
+
   return (this->*transformer)(args);
 }
 
