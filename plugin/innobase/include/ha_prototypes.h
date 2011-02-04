@@ -27,6 +27,8 @@ Created 5/11/2006 Osku Salerma
 #ifndef HA_INNODB_PROTOTYPES_H
 #define HA_INNODB_PROTOTYPES_H
 
+namespace drizzled { class Session; }
+
 #include "trx0types.h"
 #if !defined(BUILD_DRIZZLE)
 # include "m_ctype.h" /* CHARSET_INFO */
@@ -102,7 +104,7 @@ innobase_convert_name(
 	ulint		buflen,	/*!< in: length of buf, in bytes */
 	const char*	id,	/*!< in: identifier to convert */
 	ulint		idlen,	/*!< in: length of id, in bytes */
-	void*		thd,	/*!< in: MySQL connection thread, or NULL */
+	drizzled::Session*		thd,	/*!< in: MySQL connection thread, or NULL */
 	ibool		table_id);/*!< in: TRUE=id is a table or database name;
 				FALSE=id is an index name */
 
@@ -224,7 +226,7 @@ Determines the connection character set.
 const void *
 innobase_get_charset(
 /*=================*/
-	void*	mysql_thd);	/*!< in: MySQL thread handle */
+	drizzled::Session *mysql_thd);	/*!< in: MySQL thread handle */
 
 /**********************************************************************//**
 Determines the current SQL statement.
@@ -233,7 +235,7 @@ UNIV_INTERN
 const char*
 innobase_get_stmt(
 /*==============*/
-       void*   mysql_thd,      /*!< in: MySQL thread handle */
+       drizzled::Session *mysql_thd,      /*!< in: MySQL thread handle */
        size_t* length)         /*!< out: length of the SQL statement */
        __attribute__((nonnull));
 
