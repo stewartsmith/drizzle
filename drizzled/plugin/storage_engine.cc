@@ -979,9 +979,11 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
     textno=ER_TABLE_DEF_CHANGED;
     break;
   case HA_ERR_NO_SUCH_TABLE:
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table.getShare()->getSchemaName(),
-             table.getShare()->getTableName());
-    return;
+    {
+      identifier::Table identifier(table.getShare()->getSchemaName(), table.getShare()->getTableName());
+      my_error(ER_TABLE_UNKNOWN, identifier);
+      return;
+    }
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
     break;

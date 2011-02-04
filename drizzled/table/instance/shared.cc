@@ -36,12 +36,14 @@ namespace instance
 Shared::Shared(const identifier::Table::Type type_arg,
                const identifier::Table &identifier,
                char *path_arg, uint32_t path_length_arg) :
-  TableShare(type_arg, identifier, path_arg, path_length_arg)
+  TableShare(type_arg, identifier, path_arg, path_length_arg),
+  event_observers(NULL)
 {
 }
 
 Shared::Shared(const identifier::Table &identifier) :
-  TableShare(identifier, identifier.getKey())
+  TableShare(identifier, identifier.getKey()),
+  event_observers(NULL)
 {
 }
 
@@ -124,6 +126,7 @@ Shared::shared_ptr Shared::make_shared(Session *session,
 Shared::~Shared()
 {
   assert(getTableCount() == 0);
+  plugin::EventObserver::deregisterTableEvents(*this);
 }
 
 
