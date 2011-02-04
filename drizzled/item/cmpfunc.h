@@ -947,7 +947,12 @@ class cmp_item :public memory::SqlAlloc
 {
 public:
   const CHARSET_INFO *cmp_charset;
-  cmp_item() { cmp_charset= &my_charset_bin; }
+
+  cmp_item()
+  {
+    cmp_charset= &my_charset_bin;
+  }
+
   virtual ~cmp_item() {}
   virtual void store_value(Item *item)= 0;
   virtual int cmp(Item *item)= 0;

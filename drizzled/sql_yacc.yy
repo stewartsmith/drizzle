@@ -4568,23 +4568,19 @@ show_param:
            }
         | COUNT_SYM '(' '*' ')' WARNINGS
           {
-            (void) create_select_for_variable("warning_count");
-             Lex->statement= new statement::Show(YYSession);
+            show::buildSelectWarning(YYSession);
           }
         | COUNT_SYM '(' '*' ')' ERRORS
           {
-            (void) create_select_for_variable("error_count");
-             Lex->statement= new statement::Show(YYSession);
+            show::buildSelectError(YYSession);
           }
         | WARNINGS opt_limit_clause_init
           {
-            if (not show::buildWarnings(YYSession))
-              DRIZZLE_YYABORT;
+            show::buildWarnings(YYSession);
           }
         | ERRORS opt_limit_clause_init
           {
-            if (not show::buildErrors(YYSession))
-              DRIZZLE_YYABORT;
+            show::buildErrors(YYSession);
           }
         | opt_var_type STATUS_SYM show_wild
           {
