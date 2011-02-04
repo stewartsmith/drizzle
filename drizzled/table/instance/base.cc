@@ -1546,8 +1546,7 @@ int TableShare::open_table_def(Session& session, const identifier::Table &identi
 
   if (table and table->IsInitialized())
   {
-    int foo;
-    if ((foo= parse_table_proto(session, *table)))
+    if (parse_table_proto(session, *table))
     {
       local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
       my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
@@ -1823,7 +1822,8 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 1:
     if (db_errno == ENOENT)
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0), db.str, table_name.str);
+      identifier::Table identifier(db.str, table_name.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
     else
     {

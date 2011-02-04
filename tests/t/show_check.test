@@ -312,7 +312,7 @@ SHOW TABLES FROM non_existing_database;
 #
 --error ER_BAD_DB_ERROR
 SHOW TABLES FROM no_such_database;
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 SHOW COLUMNS FROM no_such_table;
 
 #
@@ -348,7 +348,7 @@ drop table `été`;
 #
 # Bug#26402 Server crashes with old-style named table
 #
---error ER_NO_SUCH_TABLE,ER_FILE_NOT_FOUND
+--error ER_TABLE_UNKNOWN,ER_FILE_NOT_FOUND
 show columns from `#mysql50#????????`;
 
 #
