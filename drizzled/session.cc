@@ -838,19 +838,14 @@ bool Session::startTransaction(start_transaction_option_t opt)
 {
   bool result= true;
 
-  if (! endActiveTransaction())
+  assert(! inTransaction());
+
+  options|= OPTION_BEGIN;
+  server_status|= SERVER_STATUS_IN_TRANS;
+
+  if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
   {
     result= false;
-  }
-  else
-  {
-    options|= OPTION_BEGIN;
-    server_status|= SERVER_STATUS_IN_TRANS;
-
-    if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
-    {
-      result= false;
-    }
   }
 
   return result;
