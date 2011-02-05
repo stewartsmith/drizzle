@@ -12,7 +12,7 @@ INNODB_REPLICATION_LOG	CREATE TABLE `INNODB_REPLICATION_LOG` (
   `TRANSACTION_MESSAGE_BINARY` VARBINARY(131072) NOT NULL,
   `TRANSACTION_LENGTH` BIGINT NOT NULL
 ) ENGINE=FunctionEngine COLLATE = utf8_general_ci
-select count(*) from data_dictionary.INNODB_REPLICATION_LOG;
-count(*)
-3
+select count(*) >= 3 from data_dictionary.INNODB_REPLICATION_LOG;
+count(*) >= 3
+1
 drop table t1;
