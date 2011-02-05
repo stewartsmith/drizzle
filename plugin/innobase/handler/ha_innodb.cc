@@ -2092,8 +2092,8 @@ innobase_init(
   ret = (bool) srv_parse_data_file_paths_and_sizes(
                                                    internal_innobase_data_file_path);
   if (ret == FALSE) {
-    errmsg_printf(error::ERROR, 
-                  "InnoDB: syntax error in innodb_data_file_path");
+    errmsg_printf(error::ERROR, "InnoDB: syntax error in innodb_data_file_path");
+
 mem_free_and_error:
     srv_free_paths_and_sizes();
     if (internal_innobase_data_file_path)
@@ -2118,9 +2118,8 @@ mem_free_and_error:
     srv_parse_log_group_home_dirs((char *)innobase_log_group_home_dir.c_str());
 
   if (ret == FALSE || innobase_mirrored_log_groups.get() != 1) {
-    errmsg_printf(error::ERROR,
-                  _("syntax error in innodb_log_group_home_dir, or a "
-                  "wrong number of mirrored log groups"));
+    errmsg_printf(error::ERROR, _("syntax error in innodb_log_group_home_dir, or a "
+                                  "wrong number of mirrored log groups"));
 
     goto mem_free_and_error;
   }
@@ -2163,11 +2162,9 @@ mem_free_and_error:
      srv_max_file_format_at_startup */
   if (innobase_file_format_validate_and_set(innobase_file_format_max.c_str()) < 0)
   {
-    errmsg_printf(error::ERROR, _("InnoDB: invalid "
-                    "innodb_file_format_max value: "
-                    "should be any value up to %s or its "
-                    "equivalent numeric id"),
-                    trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
+    errmsg_printf(error::ERROR, _("InnoDB: invalid innodb_file_format_max value: "
+                                  "should be any value up to %s or its equivalent numeric id"),
+                  trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
     goto mem_free_and_error;
   }
 
@@ -2186,9 +2183,7 @@ mem_free_and_error:
       }
     }
 
-    errmsg_printf(error::ERROR,
-                  "InnoDB: invalid value "
-                  "innodb_change_buffering=%s",
+    errmsg_printf(error::ERROR, "InnoDB: invalid value innodb_change_buffering=%s",
                   vm["change-buffering"].as<string>().c_str());
     goto mem_free_and_error;
   }
@@ -3024,10 +3019,8 @@ innobase_build_index_translation(
 		if (!index_mapping) {
 			/* Report an error if index_mapping continues to be
 			NULL and mysql_num_index is a non-zero value */
-			errmsg_printf(error::ERROR,
-                                      "InnoDB: fail to allocate memory for "
-					"index translation table. Number of "
-					"Index:%lu, array size:%lu",
+			errmsg_printf(error::ERROR, "InnoDB: fail to allocate memory for "
+                                      "index translation table. Number of Index:%lu, array size:%lu",
 					mysql_num_index,
 					share->idx_trans_tbl.array_size);
 			ret = FALSE;
@@ -3048,22 +3041,19 @@ innobase_build_index_translation(
 			ib_table, table->key_info[count].name);
 
 		if (!index_mapping[count]) {
-			errmsg_printf(error::ERROR, "Cannot find index %s in InnoDB "
-					"index dictionary.",
-					table->key_info[count].name);
+			errmsg_printf(error::ERROR, "Cannot find index %s in InnoDB index dictionary.",
+                                      table->key_info[count].name);
 			ret = FALSE;
 			goto func_exit;
 		}
 
 		/* Double check fetched index has the same
 		column info as those in mysql key_info. */
-		if (!innobase_match_index_columns(&table->key_info[count],
-					          index_mapping[count])) {
-			errmsg_printf(error::ERROR, "Found index %s whose column info "
-					"does not match that of MySQL.",
-					table->key_info[count].name);
-			ret = FALSE;
-			goto func_exit;
+		if (!innobase_match_index_columns(&table->key_info[count], index_mapping[count])) {
+                  errmsg_printf(error::ERROR, "Found index %s whose column info does not match that of MySQL.",
+                                table->key_info[count].name);
+                  ret = FALSE;
+                  goto func_exit;
 		}
 	}
 
@@ -3133,8 +3123,7 @@ ha_innobase::innobase_initialize_autoinc()
     auto_inc = 0;
 
     ut_print_timestamp(stderr);
-    fprintf(stderr, "  InnoDB: Unable to determine the AUTOINC "
-            "column name\n");
+    errmsg_printf(error::ERROR, "InnoDB: Unable to determine the AUTOINC column name");
   }
 
   if (srv_force_recovery >= SRV_FORCE_NO_IBUF_MERGE) {
@@ -3184,19 +3173,13 @@ ha_innobase::innobase_initialize_autoinc()
     }
     case DB_RECORD_NOT_FOUND:
       ut_print_timestamp(stderr);
-      fprintf(stderr, "  InnoDB: MySQL and InnoDB data "
-              "dictionaries are out of sync.\n"
-              "InnoDB: Unable to find the AUTOINC column "
-              "%s in the InnoDB table %s.\n"
-              "InnoDB: We set the next AUTOINC column "
-              "value to 0,\n"
-              "InnoDB: in effect disabling the AUTOINC "
-              "next value generation.\n"
-              "InnoDB: You can either set the next "
-              "AUTOINC value explicitly using ALTER TABLE\n"
-              "InnoDB: or fix the data dictionary by "
-              "recreating the table.\n",
-              col_name, index->table->name);
+      errmsg_printf(error::ERROR, "InnoDB: MySQL and InnoDB data dictionaries are out of sync.\n"
+                    "InnoDB: Unable to find the AUTOINC column %s in the InnoDB table %s.\n"
+                    "InnoDB: We set the next AUTOINC column value to 0,\n"
+                    "InnoDB: in effect disabling the AUTOINC next value generation.\n"
+                    "InnoDB: You can either set the next AUTOINC value explicitly using ALTER TABLE\n"
+                    "InnoDB: or fix the data dictionary by recreating the table.\n",
+                    col_name, index->table->name);
 
       /* This will disable the AUTOINC generation. */
       auto_inc = 0;
@@ -8502,8 +8485,7 @@ ha_innobase::innobase_peek_autoinc(void)
 
   if (auto_inc == 0) {
     ut_print_timestamp(stderr);
-    fprintf(stderr, "  InnoDB: AUTOINC next value generation "
-            "is disabled for '%s'\n", innodb_table->name);
+    errmsg_printf(error::ERROR, "  InnoDB: AUTOINC next value generation is disabled for '%s'\n", innodb_table->name);
   }
 
   dict_table_autoinc_unlock(innodb_table);
