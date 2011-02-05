@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-12-05 17:23+0000\n"
-"Last-Translator: Mario Nachbaur <Unknown>\n"
+"PO-Revision-Date: 2011-02-05 01:54+0000\n"
+"Last-Translator: Fitoschido <fitoschido@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-12-06 04:48+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-02-05 04:56+0000\n"
+"X-Generator: Launchpad (build 12177)\n"
 
 msgid "Synonym for `help'."
 msgstr "Sinónimo para «ayuda»."
@@ -48,10 +48,10 @@ msgid "Display this help."
 msgstr "Mostrar esta ayuda."
 
 msgid "Disable pager, print to stdout."
-msgstr "Deshabilitar paginado, imprime a stdout."
+msgstr "Desactivar paginado, imprimir a stdout."
 
 msgid "Don't write into outfile."
-msgstr "No escribir en el fichero de salida."
+msgstr "No escribir en el archivo de salida."
 
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
@@ -61,7 +61,7 @@ msgid "Print current command."
 msgstr "Imprime comando actual."
 
 msgid "Change your drizzle prompt."
-msgstr "Cambiar tu interprete de comandos de Drizzle."
+msgstr "Cambiar su intérprete de órdenes de Drizzle."
 
 msgid "Quit drizzle."
 msgstr "Salir de drizzle."
@@ -90,19 +90,19 @@ msgid "Don't show warnings after every statement."
 msgstr "No mostrar advertencias despues de cada sentencia"
 
 msgid "Error: Invalid Value for connect_timeout"
-msgstr ""
+msgstr "Error: Valor no válido para connect_timeout"
 
 msgid "Error: Invalid Value for max_input_line"
-msgstr ""
+msgstr "Error: Valor no válido para max_input_line"
 
 msgid "Displays this help and exit."
-msgstr "Muestra esta ayuda y sale"
+msgstr "Muestra esta ayuda y sale."
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
-"No usar fichero histórico. Deshabilitar comportamiento interactivo. "
-"(Habilita --silent)"
+"No usar archivo histórico. Desactivar comportamiento interactivo. (Lo activa "
+"--silent)"
 
 msgid "Display column type information."
 msgstr "Mostrar información del tipo de columna."
@@ -129,11 +129,11 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
-"Comandos \"nombrados\" habilitados. Los comandos nombrados son los comandos "
-"internos del programa; ve drizzle > ayuda.  Cuando está habilitado, los "
+"Comandos  «nombrados» activados. Los comandos nombrados son los comandos "
+"internos del programa; vea drizzle > ayuda.  Cuando está activado, los "
 "comandos nombrados se pueden usar desde cualquier línea en la consulta, de "
-"lo contrario sólo desde la primera línea, antes del salto de línea. "
-"Deshabilitar con --disable-named-commands. Esta opción esta deshabilitada en "
+"lo contrario solo desde la primera línea, antes del salto de línea. "
+"Desactivar con --disable-named-commands. Esta opción está desactivada en "
 "forma predeterminada."
 
 msgid ""
@@ -5880,3 +5880,498 @@ msgstr "MEM:% s\n"
 
 #~ msgid "Enable logging"
 #~ msgstr "Activar acceso"
+
+#~ msgid ""
+#~ "Non-integer value supplied for port.  If you are trying to enter a password "
+#~ "please use --password instead."
+#~ msgstr ""
+#~ "Valor de puerto no entero. Si está intentando introducir una contraseña, por "
+#~ "favor, use el campo contraseña."
+
+#~ msgid "Value supplied for port is not valid."
+#~ msgstr "El valor dado para el puerto no es válido."
+
+#, c-format
+#~ msgid ""
+#~ "Non-integer value supplied for port.  If you are trying to enter a password "
+#~ "please use --password instead.\n"
+#~ msgstr ""
+#~ "Valor de puerto no entero. Si está intentando introducir una contraseña, por "
+#~ "favor, use el campo contraseña.\n"
+
+#, c-format
+#~ msgid "Memory allocation error while copying password. Aborting.\n"
+#~ msgstr "Error de asignación de memoria al copiar la contraseña. Abortando.\n"
+
+#, c-format
+#~ msgid "%s  Ver %s Distrib %s, for %s (%s)\n"
+#~ msgstr "%s  Versión %s Dist. %s, para %s (%s)\n"
+
+#~ msgid "By Igor Romanenko, Monty, Jani & Sinisa"
+#~ msgstr "Por Igor Romanenko, Monty, Jani y Sinisa"
+
+#, c-format
+#~ msgid "For more options, use %s --help\n"
+#~ msgstr "Para más opciones, use %s --help\n"
+
+#~ msgid "Shutdown the server."
+#~ msgstr "Apagar el servidor."
+
+#, c-format
+#~ msgid "Got error: %s %s"
+#~ msgstr "Se obtuvo el error: %s %s"
+
+#~ msgid "when using LOCK TABLES"
+#~ msgstr "al utilizar LOCK TABLES"
+
+#~ msgid "when doing LOCK TABLES"
+#~ msgstr "al hacer LOCK TABLES"
+
+#~ msgid "Error: Slave not set up"
+#~ msgstr "Error: Esclavo no configurado"
+
+#~ msgid "Error: Unable to start slave"
+#~ msgstr "Error: Imposible de iniciar el esclavo"
+
+#~ msgid "Maximum number of temporary tables a client can keep open at a time."
+#~ msgstr ""
+#~ "Número máximo de tablas temporales que un cliente puede mantener abiertas de "
+#~ "forma simultánea."
+
+#~ msgid ""
+#~ "Number of seconds to wait for a block to be written to a connection before "
+#~ "aborting the write."
+#~ msgstr ""
+#~ "Númer de segundos a esperar para que un bloque sea escrito en una conexión "
+#~ "antes de abortar la escritura."
+
+#~ msgid ""
+#~ "Number of seconds to wait for more data from a connection before aborting "
+#~ "the read."
+#~ msgstr ""
+#~ "Número de segundos a esperar por más datos de una conexión antes de abortar "
+#~ "la lectura."
+
+#~ msgid ""
+#~ "If a read on a communication port is interrupted, retry this many times "
+#~ "before giving up."
+#~ msgstr ""
+#~ "Si la lectura de un puerto de comunicación es interrumpida, reintentar esta "
+#~ "cantidad de veces antes de rendinse."
+
+#~ msgid "Select protocol to be used (by default oldlibdrizzle)."
+#~ msgstr "Seleccione el protocolo a ser utilizado (por omisión oldlibdrizzle)."
+
+#~ msgid "Select scheduler to be used (by default pool-of-threads)."
+#~ msgstr ""
+#~ "Seleccione el calendarizador a ser utilizado (por omisión pool-of-threads)."
+
+#~ msgid ""
+#~ "The number of seconds the server waits for activity on a connection before "
+#~ "closing it."
+#~ msgstr ""
+#~ "El número de segundos que el servidor debe esperar por actividad en una "
+#~ "conexión antes de cerrarla."
+
+#, c-format
+#~ msgid "Wrong option to %s. Option(s) given: %s\n"
+#~ msgstr "Opción equivocada para %s. Opción(nes) dada(s): %s\n"
+
+#, c-format
+#~ msgid "Alternatives are: '%s'"
+#~ msgstr "Las alternativas son: '%s'"
+
+#, c-format
+#~ msgid "No option given to %s\n"
+#~ msgstr "No se dió una opción a %s\n"
+
+#, c-format
+#~ msgid ""
+#~ "%s: ready for connections.\n"
+#~ "Version: '%s'  socket: '%s'  port: %d"
+#~ msgstr ""
+#~ "%s: listo para conexiones.\n"
+#~ "Versión: '%s' socket: '%s' puerto: %d"
+
+#, c-format
+#~ msgid "Function '%-.192s' already exists"
+#~ msgstr "La función '%-.192s' ya existe"
+
+#, c-format
+#~ msgid "Can't find symbol '%-.128s' in library"
+#~ msgstr "No se puede encontrar el símbolo '%-.128s' en la biblioteca"
+
+#~ msgid "Buffer length for TCP/IP and socket communication."
+#~ msgstr "Longitud del buffer para comunicaciones vía TCP/IP y socket."
+
+#~ msgid "Error: Binlogging on server not active"
+#~ msgstr "Error: Binlogging no esta activo en el servidor"
+
+#~ msgid "Can't open abort pipet"
+#~ msgstr "No se puede abrir el abport pipet"
+
+#~ msgid ""
+#~ "Using this option will cause most temporary files created to use a small set "
+#~ "of names, rather than a unique name for each new file."
+#~ msgstr ""
+#~ "Esta opción hará que la mayoría de los archivos temporales creados usen una "
+#~ "pequeña serie de nombres, en lugar de un nombre exclusivo para cada nuevo "
+#~ "archivo."
+
+#~ msgid ""
+#~ "Don't overwrite stale .MYD and .MYI even if no directory is specified."
+#~ msgstr ""
+#~ "No reemplaze archivos caducos .MYD y .MYI por mas que un directorio no ha "
+#~ "sido especificado."
+
+#, c-format
+#~ msgid "pipe() on abort_pipe failed with error %d"
+#~ msgstr "pipe() o abort_pipe fallaron con error %d"
+
+#~ msgid "The default size of key cache blocks"
+#~ msgstr "Tamaño predeterminado para los bloques de caché de clave"
+
+#~ msgid "Dumping definition and data DRIZZLE database or table"
+#~ msgstr ""
+#~ "Transferencia de la definición y datos de la tabla o base de datos de DRIZZLE"
+
+#, c-format
+#~ msgid ""
+#~ "\n"
+#~ "This crash occurred while the server was calling initgroups(). This is\n"
+#~ "often due to the use of a drizzled that is statically linked against glibc\n"
+#~ "and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n"
+#~ "upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
+#~ "later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
+#~ "drizzled that is not statically linked.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Este fallo ocurrió mientras el servidor llamaba a initgroups(). Esto\n"
+#~ "a menudo se debe al uso de un drizzled enlazado estáticamente a la librería "
+#~ "glibc\n"
+#~ "y configurado para usar LDAP en /etc/nsswitch.conf. Será necesario bien\n"
+#~ "actualizar a una versión de glibc que no tenga ese problema (2.3.4 o \n"
+#~ "posterior si se usa con nscd), desactivar LDAP en el fichero nsswitch.conf, "
+#~ "o bien usar un\n"
+#~ "drizzled que no está enlazado estáticamente\n"
+
+#, c-format
+#~ msgid "Asked for %<PRIu64> thread stack, but got %<PRIu64>"
+#~ msgstr "Pidió %<PRIu64> pila de hilos, pero obtuvo %<PRIu64>"
+
+#~ msgid ""
+#~ "The number of seconds the drizzled server is waiting for a connect packet "
+#~ "before responding with 'Bad handshake'."
+#~ msgstr ""
+#~ "Número de segundos que el servidor drizzled espera para conectar un paquete "
+#~ "antes de responder con 'mala sincronización'."
+
+#~ msgid ""
+#~ "Optional comma separated list of plugins to load at starup.[for example: --"
+#~ "plugin_load=crc32,logger_gearman]"
+#~ msgstr ""
+#~ "La coma para separar la lista de plugins que se cargan al inicio es opcional "
+#~ "[Ejemplo: --plugin_load=crc32,logger_gearman]"
+
+#, c-format
+#~ msgid "Fatal signal %d while backtracing\n"
+#~ msgstr "Señal fatal %d al hacer el retroceso\n"
+
+#, c-format
+#~ msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
+#~ msgstr "%s Ver %s Distrib %s, para %s-%s (%s) usando %s %s\n"
+
+#~ msgid "UNUSED"
+#~ msgstr "NO USADO"
+
+#, c-format
+#~ msgid ""
+#~ "It is possible that drizzled could use up to \n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+#~ "bytes of memory\n"
+#~ "Hope that's ok; if not, decrease some variables in the equation.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Es posible que drizzled pudiera usar hasta \n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+#~ "bytes de memoria\n"
+#~ "Espero que eso este bien; si no, decrementa algunas variables en la "
+#~ "equación.\n"
+#~ "\n"
+
+#~ msgid "No paths allowed for shared library"
+#~ msgstr "Rutas no permitidos para la libreria compartida"
+
+#~ msgid "Allocation block size for transactions to be stored in binary log"
+#~ msgstr ""
+#~ "Tamaño de bloque a reservar para transacciones a almacenar en registro "
+#~ "binario"
+
+#~ msgid "Persistent buffer for transactions to be stored in binary log"
+#~ msgstr "Búfer persistente de transacciones a almacenar en registro binario"
+
+#, c-format
+#~ msgid "%s: Forcing close of thread %ld  user: '%-.48s'\n"
+#~ msgstr "%s: Forzando el cierre del hilo %ld usuario: '%-.48s'\n"
+
+#, c-format
+#~ msgid ""
+#~ "Uncompressed data size too large; the maximum size is %d (probably, length "
+#~ "of uncompressed data was corrupted)"
+#~ msgstr ""
+#~ "el tamaño de los datos no descomprimidos es demasiado grande; el tamaño "
+#~ "máximo es %d (probablemente, la longitud de los datos no descomprimidos "
+#~ "fueron corrompidos)"
+
+#, c-format
+#~ msgid "File '%-.192s' has unknown type '%-.64s' in its header"
+#~ msgstr "El archivo '%-.192s' tiene tipo desconocido '%- 64s 'en su cabecera"
+
+#, c-format
+#~ msgid "Usage: %s COMMAND_LOG\n"
+#~ msgstr "Uso: %s COMMAND_LOG\n"
+
+#, c-format
+#~ msgid "Failed to read initial length header\n"
+#~ msgstr "fallo al leer encabezado de longitud inicial\n"
+
+#, c-format
+#~ msgid "Attempted to read record bigger than SIZE_MAX\n"
+#~ msgstr "Intento de leer el registro más grande que SIZE_MAX\n"
+
+#, c-format
+#~ msgid "Retrying bind() on %u"
+#~ msgstr "olviendo a probar bind() en %u"
+
+#, c-format
+#~ msgid "bind() failed with errno: %d"
+#~ msgstr "bind() fallo con error %d"
+
+#~ msgid "Do you already have another drizzled running?"
+#~ msgstr "Usted tiene otro drizzled ejecutandose ?"
+
+#, c-format
+#~ msgid "listen() failed with errno %d"
+#~ msgstr "listen() fallo con error %d"
+
+#, c-format
+#~ msgid "Found %d prepared transaction(s) in %s"
+#~ msgstr "Encontrado %d transacción preparada(s) en %s"
+
+#, c-format
+#~ msgid "qcache plugin '%s' invalidate_table() failed"
+#~ msgstr "qcache plugin '%s' invalidate_table() fallo"
+
+#, c-format
+#~ msgid "qcache plugin '%s' invalidate_db() failed"
+#~ msgstr "qcache plugin '%s' invalidate_db() fallo"
+
+#~ msgid "Scheduler initialization failed.\n"
+#~ msgstr "Inicialización Programador fallo.\n"
+
+#, c-format
+#~ msgid "realloc() failed with errno %d"
+#~ msgstr "realloc() fallo con error %d"
+
+#, c-format
+#~ msgid ""
+#~ "When opening HEAP table, could not allocate memory to write 'DELETE FROM "
+#~ "`%s`.`%s`' to replication"
+#~ msgstr ""
+#~ "Al abrir la tabla HEAP, no puede asignar memoria para escribir 'DELETE FROM "
+#~ "`%s`.`%s`' para la replicación"
+
+#~ msgid "plugin-load parameter too long"
+#~ msgstr "plugin-load parametro demasiado largo"
+
+#, c-format
+#~ msgid "Couldn't repair table: %s.%s"
+#~ msgstr "no se pudo reparar tabla: %s%s"
+
+#, c-format
+#~ msgid "Table %s had a open data handler in reopen_table"
+#~ msgstr "tabla %s tiene un manejador de data abierto en reopen_table"
+
+#, c-format
+#~ msgid "Couldn't load plugin named '%s' with soname '%s'."
+#~ msgstr "No se puede cargar plugin llamado '%s'  soname con '%s'."
+
+#~ msgid ""
+#~ "Schema name cannot be encoded and fit within filesystem name length "
+#~ "restrictions."
+#~ msgstr ""
+#~ "Nombre del esquema no puede ser codificado y encajar dentro de las "
+#~ "restricciones de longitud de nombre del sistema de archivos."
+
+#, c-format
+#~ msgid "Could not open table %s.%s after rename\n"
+#~ msgstr "no se pudo abrir la tabla %s%s despues del renombrado\n"
+
+#~ msgid ""
+#~ "Table name cannot be encoded and fit within filesystem name length "
+#~ "restrictions."
+#~ msgstr ""
+#~ "Nombre de la tabla no se puede codificar y encajar dentro de las "
+#~ "restricciones de longitud de nombre del sistema de archivos."
+
+#, c-format
+#~ msgid ""
+#~ "'%s' had no or invalid character set, and default character set is multi-"
+#~ "byte, so character column sizes may have changed"
+#~ msgstr ""
+#~ "'%s' no tenía un conjunto de caracteres no válidos, y el conjunto de "
+#~ "caracteres por defecto es multi-byte, pero los tamaños de las columnas de "
+#~ "caracteres pueden haber cambiado"
+
+#, c-format
+#~ msgid "Failed to open command log file %s.  Got error: %s\n"
+#~ msgstr "No se pudo abrir el archivo de registro %s. error: %s\n"
+
+#~ msgid "Enable command log"
+#~ msgstr "Habilitar el registro de comando"
+
+#~ msgid "Path to the file to use for command log."
+#~ msgstr "Ruta del archivo a utilizar para registro de comandos."
+
+#~ msgid "DEBUGGING - Truncate command log"
+#~ msgstr "Depuración - truncar registro de comandos"
+
+#~ msgid "Checksum FAILED!\n"
+#~ msgstr "checksum FALLO|\n"
+
+#~ msgid "Command Message Log"
+#~ msgstr "Comando de registro de mensajes"
+
+#~ msgid "Enable CRC32 Checksumming"
+#~ msgstr "Habilitar chequeo CRC32"
+
+#~ msgid "Enable default replicator"
+#~ msgstr "habilitar replicador por defecto"
+
+#~ msgid "Default Replicator"
+#~ msgstr "Default Replicador"
+
+#~ msgid "Filtered Replicator"
+#~ msgstr "filtro replicador"
+
+#~ msgid "Enable filtered replicator"
+#~ msgstr "habilitar filtro replicador"
+
+#~ msgid "Maximum number of user threads available."
+#~ msgstr "El número máximo de subprocesos disponibles para el usuario."
+
+#~ msgid "Syslog Priority"
+#~ msgstr "Prioridad SYslog"
+
+#~ msgid "Log to syslog"
+#~ msgstr "Entrar a syslog"
+
+#~ msgid "Syslog Ident"
+#~ msgstr "Identidad Syslog"
+
+#~ msgid "Syslog Facility"
+#~ msgstr "Facilidad Syslog"
+
+#~ msgid "Enable logging to syslog"
+#~ msgstr "Habilitar el registro a syslog"
+
+#~ msgid "libevent_thread_proc: my_thread_init() failed\n"
+#~ msgstr "libevent_thread_proc: my_thread_init() fallo\n"
+
+#, c-format
+#~ msgid "Can't create completion port thread (error %d)"
+#~ msgstr "No se puede crear hilo de puerto de finalización (error %d)"
+
+#~ msgid "event_add error in libevent_add_session_callback\n"
+#~ msgstr "error event_add en libevent_add_session_callback\n"
+
+#~ msgid "session_add_event event_add error in libevent_init\n"
+#~ msgstr "session_add_event event_add error en libevent_init\n"
+
+#~ msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
+#~ msgstr "init_pipe(session_kill_pipe) error en libevent_init\n"
+
+#~ msgid "init_pipe(session_add_pipe) error in libevent_init\n"
+#~ msgstr "init_pipe(session_add_pipe) error en libevent_init\n"
+
+#~ msgid "Size of Pool."
+#~ msgstr "Tamaño del Pool."
+
+#, c-format
+#~ msgid ""
+#~ "Could not read entire checksum. Read %<PRIu64> bytes instead of 4 bytes.\n"
+#~ msgstr ""
+#~ "No se pudo leer el checksum completo. Leer %<PRIu64> bytes en lugar de 4 "
+#~ "bytes.\n"
+
+#, c-format
+#~ msgid ""
+#~ "Could not read entire transaction. Read %<PRIu64> bytes instead of %<PRIu64> "
+#~ "bytes.\n"
+#~ msgstr ""
+#~ "No se pudo leer la transacción completa. Leer %<PRIu64> bytes en lugar de "
+#~ "%<PRIu64> bytes.\n"
+
+#, c-format
+#~ msgid "Failed to read length header at offset %<PRId64>.  Got error: %s\n"
+#~ msgstr ""
+#~ "Falló al leer la longitud del la cabecera en el desplazamiento %<PRId64>. "
+#~ "Error obtenido: %s\n"
+
+#, c-format
+#~ msgid "Failed to read checksum trailer at offset %<PRId64>.  Got error: %s\n"
+#~ msgstr ""
+#~ "Falló al leer el checksum previo en la dirección %<PRId64>. Se obtuvo el "
+#~ "error: %s\n"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to write full size of command.  Tried to write %<PRId64> bytes at "
+#~ "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
+#~ msgstr ""
+#~ "Falló al escribir el  tamaño completo de la orden. Se intentaron escribir "
+#~ "%<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron "
+#~ "%<PRId64> bytes. Error: %s\n"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to write full serialized command.  Tried to write %<PRId64> bytes at "
+#~ "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
+#~ msgstr ""
+#~ "Falló al escribir la orden completa serializada. Se intentaron escribir "
+#~ "%<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron "
+#~ "%<PRId64> bytes. Error: %s\n"
+
+#, c-format
+#~ msgid "Failed to parse command message at offset %<PRId64>.  Got error: %s\n"
+#~ msgstr ""
+#~ "Falló al analizar el mensaje de la orden en la dirección %<PRId64>. Se "
+#~ "obtuvo el error: %s\n"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to write full checksum of command.  Tried to write %<PRId64> bytes at "
+#~ "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
+#~ msgstr ""
+#~ "Falló al escribir la suma de comprobación de la orden. Se intentaron "
+#~ "escribir %<PRId64> bytes en la dirección  %<PRId64>, pero sólo se "
+#~ "escribieron %<PRId64> bytes. Error: %s\n"
+
+#~ msgid "Your Drizzle connection id is "
+#~ msgstr "Tu identificador de conección Drizzle es "
+
+#~ msgid "Server version: "
+#~ msgstr "Versión del servidor: "
+
+#~ msgid ""
+#~ "                              Reading table information for completion of "
+#~ "table and column names\n"
+#~ "                                  You can turn off this feature to get a "
+#~ "quicker startup with -A\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                              Leer la informacion de la tabla para completar "
+#~ "los nombres de tabla y columna\n"
+#~ "                                  Puedes desactivar esta característica para "
+#~ "iniciar más rapido con -A\n"
+#~ "\n"

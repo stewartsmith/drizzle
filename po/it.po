@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-10-11 13:04+0000\n"
-"Last-Translator: Alessandro Pischedda <uub@virgilio.it>\n"
+"PO-Revision-Date: 2011-02-04 18:31+0000\n"
+"Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-10-12 04:50+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-02-05 04:56+0000\n"
+"X-Generator: Launchpad (build 12177)\n"
 
 msgid "Synonym for `help'."
 msgstr "Sinonimo per \"aiuto\"."
@@ -2360,6 +2360,9 @@ msgid ""
 "compiled without SSL support; they can be used later if Drizzle slave with "
 "SSL is started"
 msgstr ""
+"I parametri SSL in CHANGE MASTER sono stati ignorati perchè Dizzle è stato "
+"compilato senza il supporto a SSL; possono essere usati successivamente se "
+"viene eseguito una istanza di Dizzle con SSL"
 
 #, c-format
 msgid ""
@@ -4436,7 +4439,7 @@ msgstr ""
 
 #, c-format
 msgid "Unable to parse command. Got error: %s.\n"
-msgstr ""
+msgstr "Non è possibile fare il parse del comando. Errore: %s.\n"
 
 #, c-format
 msgid "Checksum failed. Wanted %<PRIu32> got %<PRIu32>\n"
@@ -4586,7 +4589,7 @@ msgid "Could not add Function!\n"
 msgstr "Non è stato possibile aggiungere la funzione!\n"
 
 msgid "No sockets could be bound for listening"
-msgstr ""
+msgstr "Non è stato trovato nessun socket su cui fare l'ascolto"
 
 #, c-format
 msgid "pipe() failed with errno %d"
@@ -4669,7 +4672,7 @@ msgstr "l'estensione qcache '%s' set() ha fallito"
 
 #, c-format
 msgid "qcache plugin '%s' invalidateTable() failed"
-msgstr ""
+msgstr "qcache plugin '%s' invalidateTable() è fallito"
 
 #, c-format
 msgid "qcache plugin '%s' invalidateDb() failed"
@@ -4737,11 +4740,11 @@ msgstr "Impossibile rimuovere la tabella temporanea: '%s', errore: %d"
 
 #, c-format
 msgid "Variable named %s already exists!\n"
-msgstr ""
+msgstr "La variabile di nome %s è già esistente!\n"
 
 #, c-format
 msgid "Could not add Variable: %s\n"
-msgstr ""
+msgstr "Non è possibile aggiungere la variabile: %s\n"
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
@@ -4840,10 +4843,10 @@ msgid "URL for HTTP Auth check"
 msgstr "URL per il controllo dell'Autorizzazione HTTP"
 
 msgid "Enable the console."
-msgstr ""
+msgstr "Abilita la console."
 
 msgid "Turn on extra debugging."
-msgstr ""
+msgstr "Abilita informazioni di debugging extra."
 
 msgid "User to use for auth."
 msgstr ""
@@ -4852,25 +4855,25 @@ msgid "Password to use for auth."
 msgstr ""
 
 msgid "Default database to use."
-msgstr ""
+msgstr "Database predefinito da utilizzare"
 
 msgid "Invalid value of port\n"
-msgstr ""
+msgstr "Valore della porta non valido\n"
 
 msgid "Invalid value for connect_timeout\n"
-msgstr ""
+msgstr "Valore per connect_timeout non valido\n"
 
 msgid "Invalid value for read_timeout\n"
-msgstr ""
+msgstr "Valore per read_timeout non valido\n"
 
 msgid "Invalid value for write_timeout\n"
 msgstr ""
 
 msgid "Invalid value for retry_count\n"
-msgstr ""
+msgstr "Valore per retry_count non valido\n"
 
 msgid "Invalid value for buffer_length\n"
-msgstr ""
+msgstr "Valore per buffer_length non valido\n"
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -4878,19 +4881,19 @@ msgid ""
 msgstr ""
 
 msgid "Connect Timeout."
-msgstr ""
+msgstr "Connessione scaduta."
 
 msgid "Read Timeout."
-msgstr ""
+msgstr "Lettura scaduta."
 
 msgid "Write Timeout."
-msgstr ""
+msgstr "Scrittura scaduta."
 
 msgid "Retry Count."
-msgstr ""
+msgstr "Numero di tentativi."
 
 msgid "Buffer length."
-msgstr ""
+msgstr "Lunghezza del buffer."
 
 msgid "Address to bind to."
 msgstr ""
@@ -5112,6 +5115,7 @@ msgstr ""
 #, c-format
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
+"Istruzione chiusa indirettamente a causa della chiamata %s() precedente"
 
 #, c-format
 msgid "Failed to send error message to libnotify\n"
@@ -5121,10 +5125,10 @@ msgid "Error Messages to stderr"
 msgstr "Messaggi di errori su stderr"
 
 msgid "List of schemas to filter"
-msgstr ""
+msgstr "Elenco di schemi da filtrare"
 
 msgid "List of tables to filter"
-msgstr ""
+msgstr "Elenco di tabelle da filtrare"
 
 msgid "Regular expression to apply to schemas to filter"
 msgstr ""
@@ -6147,3 +6151,151 @@ msgstr "BUFFER: %s\n"
 
 #~ msgid "init_pipe(session_add_pipe) error in libevent_init\n"
 #~ msgstr "init_pipe(session_add_pipe) errore in libevent_init\n"
+
+#~ msgid "Value supplied for port is not valid."
+#~ msgstr "Valore fornito per la porta non valido."
+
+#, c-format
+#~ msgid ""
+#~ "Non-integer value supplied for port.  If you are trying to enter a password "
+#~ "please use --password instead.\n"
+#~ msgstr ""
+#~ "Valore fornito per la porta non intero. Se si sta tentando di inserire una "
+#~ "password usare --password.\n"
+
+#, c-format
+#~ msgid "Memory allocation error while copying password. Aborting.\n"
+#~ msgstr ""
+#~ "Errore nell'allocazione di memoria nella copia della password. Interrotto.\n"
+
+#~ msgid ""
+#~ "Non-integer value supplied for port.  If you are trying to enter a password "
+#~ "please use --password instead."
+#~ msgstr ""
+#~ "Valore fornito per la porta non intero. Se si sta tentando di inserire una "
+#~ "password usare --password."
+
+#, c-format
+#~ msgid "%s  Ver %s Distrib %s, for %s (%s)\n"
+#~ msgstr "%s  Ver %s Distrib %s, per %s (%s)\n"
+
+#~ msgid "By Igor Romanenko, Monty, Jani & Sinisa"
+#~ msgstr "By Igor Romanenko, Monty, Jani & Sinisa"
+
+#, c-format
+#~ msgid "For more options, use %s --help\n"
+#~ msgstr "Per più opzioni, usare %s --help\n"
+
+#~ msgid "when using LOCK TABLES"
+#~ msgstr "utilizzando le LOCK TABLES"
+
+#~ msgid "Error: Binlogging on server not active"
+#~ msgstr "Errore: Binlogging sul server non attivo"
+
+#, c-format
+#~ msgid ""
+#~ "\n"
+#~ "This crash occurred while the server was calling initgroups(). This is\n"
+#~ "often due to the use of a drizzled that is statically linked against glibc\n"
+#~ "and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n"
+#~ "upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
+#~ "later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
+#~ "drizzled that is not statically linked.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Questo crash è avvenuto mentre il server chiamava initgroups(). questo è\n"
+#~ "spesso provocato dall'utilizzo di un drizzled collegato staticamente a "
+#~ "glibc\n"
+#~ "e configurato per usare LDAP in /etc/nsswitch.conf. E' necessario "
+#~ "aggiornare\n"
+#~ "glibc ad una versione che non ha questo problema(2.3.4 o superiori quando\n"
+#~ "usate con nscd), disabilitare LDAP nel file nsswitch.conf, oppure utilizzare "
+#~ "un\n"
+#~ "drizzled non collegato staticamente.\n"
+
+#~ msgid "when doing LOCK TABLES"
+#~ msgstr "utilizzando le LOCK TABLES"
+
+#~ msgid "Error: Slave not set up"
+#~ msgstr "Errore: Slave non impostato"
+
+#~ msgid "Error: Unable to start slave"
+#~ msgstr "Errore: Impossibile avviare lo slave"
+
+#~ msgid "Select scheduler to be used (by default pool-of-threads)."
+#~ msgstr ""
+#~ "Selezionare la pianificazione da usare (predefinito pool-of-threads)."
+
+#, c-format
+#~ msgid "Asked for %<PRIu64> thread stack, but got %<PRIu64>"
+#~ msgstr "Richiesto per %<PRIu64> un thread stack, ma ottenuto un %<PRIu64>"
+
+#~ msgid "Shutdown the server."
+#~ msgstr "Arresta il server."
+
+#, c-format
+#~ msgid "Got error: %s %s"
+#~ msgstr "Ottenuto errore: %s %s"
+
+#~ msgid "Syslog Priority"
+#~ msgstr "Priorità Syslog"
+
+#~ msgid "Log to syslog"
+#~ msgstr "Accedi a syslog"
+
+#~ msgid "Select protocol to be used (by default oldlibdrizzle)."
+#~ msgstr ""
+#~ "Seleziona il protocollo da utilizzare (il predefinito è oldlibdrizzle)."
+
+#~ msgid "Scheduler initialization failed.\n"
+#~ msgstr "Inizializzazione dello schedulatore fallita.\n"
+
+#~ msgid "Syslog Facility"
+#~ msgstr "Infrastruttura di Syslog"
+
+#~ msgid "Size of Pool."
+#~ msgstr "Dimensione del Pool."
+
+#~ msgid "Can't open abort pipet"
+#~ msgstr "Non è possibile aprire abort pipet"
+
+#, c-format
+#~ msgid "pipe() on abort_pipe failed with error %d"
+#~ msgstr "pipe() in abort_pipe ha fallito con l'errore %d"
+
+#~ msgid "Maximum number of user threads available."
+#~ msgstr "Massimo numero disponibile di thread utente."
+
+#~ msgid "Syslog Ident"
+#~ msgstr "Identificatore Syslog"
+
+#, c-format
+#~ msgid "qcache plugin '%s' invalidate_db() failed"
+#~ msgstr "l'estensione qcache '%s' invalidate_db() ha fallito"
+
+#, c-format
+#~ msgid "qcache plugin '%s' invalidate_table() failed"
+#~ msgstr "l'estensione qcache '%s' invalidate_table() ha fallito"
+
+#~ msgid ""
+#~ "Should the Optmizer use MRR or not. Valid values are auto, force and disable"
+#~ msgstr ""
+#~ "Dovrebbe l'Ottimizzatore usare MRR o no. Valori validi sono automatico, "
+#~ "forza e disabilita"
+
+#~ msgid "Check memory and open file usage at exit ."
+#~ msgstr "Controlla l'utilizzo della memoria e dei file all'uscita."
+
+#, c-format
+#~ msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
+#~ msgstr "%s  Ver %s Distrib %s, per %s-%s (%s) u %s %s\n"
+
+#, c-format
+#~ msgid "Fatal signal %d while backtracing\n"
+#~ msgstr "Segnale %d di tipo Fatale ricevuto durante il backtrace\n"
+
+#~ msgid "Server version: "
+#~ msgstr "Versione server: "
+
+#~ msgid "Your Drizzle connection id is "
+#~ msgstr "L'ID di connessione drizzle è "
