@@ -1058,12 +1058,12 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 bool Select_Lex::init_nested_join(Session *session)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
+                                       sizeof(NestedJoin))))
     return true;
-  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
   ptr->setEmbedding(embedding);
@@ -1093,7 +1093,7 @@ bool Select_Lex::init_nested_join(Session *session)
 TableList *Select_Lex::end_nested_join(Session *)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
 
   assert(embedding);
   ptr= embedding;
@@ -1134,13 +1134,13 @@ TableList *Select_Lex::end_nested_join(Session *)
 TableList *Select_Lex::nest_last_join(Session *session)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
   List<TableList> *embedded_list;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                          sizeof(nested_join_st))))
+                                          sizeof(NestedJoin))))
     return NULL;
-  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);

@@ -22,15 +22,16 @@
 
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
-#include <drizzled/table_list.h>
 
 #include <bitset>
 
 namespace drizzled
 {
+class TableList;
 
-struct nested_join_st
+class NestedJoin
 {
+public:
   /* list of elements in the nested join */
   List<TableList> join_list;
 
