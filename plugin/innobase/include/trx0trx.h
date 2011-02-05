@@ -70,6 +70,14 @@ trx_set_detailed_error_from_file(
 	trx_t*	trx,	/*!< in: transaction struct */
 	FILE*	file);	/*!< in: file to read message from */
 /****************************************************************//**
+Checks if the commit id shouuld be logged to the sys header file
+@return TRUE if the commit id should be logged */ 
+UNIV_INLINE
+ibool
+trx_log_commit_id(
+/*==============*/
+	const trx_t*    trx); 	/*!< in: trx object */
+/****************************************************************//**
 Retrieves the error_info field from a trx.
 @return	the error info */
 UNIV_INLINE
@@ -706,7 +714,8 @@ struct trx_struct{
 	char detailed_error[256];	/*!< detailed error message for last
 					error, or empty. */
 
-	uint64_t        commit_id;      /* commit id assigned to a trx */
+    	ibool 		log_commit_id;  /*!< log the commit id to the sys
+					file */
 };
 
 #define TRX_MAX_N_THREADS	32	/* maximum number of

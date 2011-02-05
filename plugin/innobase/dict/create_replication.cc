@@ -144,10 +144,12 @@ ulint insert_replication_message(const char *message, size_t size,
   dfield = dtuple_get_nth_field(dtuple, 0);
   dfield_set_data(dfield, &trx_id, 8);
 
-  trx->commit_id= ++trx_sys_mysql_bin_log_pos;
+  trx_sys_read_commit_id();
+
+  ++trx_sys_commit_id;
 
   dfield = dtuple_get_nth_field(dtuple, 1);
-  dfield_set_data(dfield, &trx->commit_id, 8);
+  dfield_set_data(dfield, &trx_sys_commit_id, 8);
 
   dfield = dtuple_get_nth_field(dtuple, 2);
   dfield_set_data(dfield, &end_timestamp, 8);

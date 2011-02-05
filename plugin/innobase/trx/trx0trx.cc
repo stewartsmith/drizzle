@@ -772,21 +772,14 @@ trx_commit_off_kernel(
 
 		mutex_exit(&(rseg->mutex));
 
-                trx_sys_flush_commit_id(trx->commit_id, TRX_SYS_MYSQL_LOG_INFO, &mtr);
-
-		/* Update the latest MySQL binlog name and offset info
-		in trx sys header if MySQL binlogging is on or the database
-		server is a MySQL replication slave */
-/* 
-		if (trx->mysql_log_file_name
-		    && trx->mysql_log_file_name[0] != '\0') {
-			trx_sys_update_mysql_binlog_offset(
-				trx->mysql_log_file_name,
-				trx->mysql_log_offset,
-				TRX_SYS_MYSQL_LOG_INFO, &mtr);
-			trx->mysql_log_file_name = NULL;
+		/* Update the highest commit id currently in the system */
+		if (trx_log_commit_id(trx))
+ 		{
+			trx_sys_flush_commit_id(trx_sys_commit_id,
+						TRX_SYS_DRIZZLE_LOG_INFO,
+						&mtr);
 		}
-*/
+
 		/* The following call commits the mini-transaction, making the
 		whole transaction committed in the file-based world, at this
 		log sequence number. The transaction becomes 'durable' when

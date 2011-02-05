@@ -2600,6 +2600,11 @@ retry:
       }
     }
 
+    if (innobase_use_replication_log)
+    {
+      trx->log_commit_id= TRUE;
+    }
+
     trx->mysql_log_file_name = NULL;
     trx->mysql_log_offset = 0;
 
