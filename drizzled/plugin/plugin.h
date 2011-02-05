@@ -108,6 +108,11 @@ public:
     return _type_name;
   }
 
+  virtual bool removeLast() const
+  {
+    return false;
+  }
+
   const std::string& getModuleName() const;
 };
 } /* end namespace plugin */

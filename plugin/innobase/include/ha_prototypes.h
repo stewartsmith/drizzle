@@ -104,7 +104,7 @@ innobase_convert_name(
 	ulint		buflen,	/*!< in: length of buf, in bytes */
 	const char*	id,	/*!< in: identifier to convert */
 	ulint		idlen,	/*!< in: length of id, in bytes */
-	drizzled::Session*		thd,	/*!< in: MySQL connection thread, or NULL */
+	drizzled::Session *thd,	/*!< in: MySQL connection thread, or NULL */
 	ibool		table_id);/*!< in: TRUE=id is a table or database name;
 				FALSE=id is an index name */
 
@@ -119,7 +119,7 @@ UNIV_INTERN
 ibool
 thd_is_replication_slave_thread(
 /*============================*/
-	void*	thd);	/*!< in: thread handle (THD*) */
+	drizzled::Session *thd);	/*!< in: thread handle (THD*) */
 
 /******************************************************************//**
 Returns true if the transaction this thread is processing has edited
@@ -131,7 +131,7 @@ UNIV_INTERN
 ibool
 thd_has_edited_nontrans_tables(
 /*===========================*/
-	void*	thd);	/*!< in: thread handle (THD*) */
+	drizzled::Session *thd);	/*!< in: thread handle (THD*) */
 
 /*************************************************************//**
 Prints info of a THD object (== user session thread) to the given file. */
@@ -140,7 +140,7 @@ void
 innobase_mysql_print_thd(
 /*=====================*/
 	FILE*	f,		/*!< in: output stream */
-	void*	thd,		/*!< in: pointer to a MySQL THD object */
+	drizzled::Session *thd,		/*!< in: pointer to a MySQL THD object */
 	uint	max_query_len);	/*!< in: max query length to print, or 0 to
 				   use the default max length */
 
@@ -188,7 +188,7 @@ UNIV_INTERN
 ibool
 thd_is_select(
 /*==========*/
-	const void*	thd);	/*!< in: thread handle (THD*) */
+	const drizzled::Session *thd);	/*!< in: thread handle (THD*) */
 
 /******************************************************************//**
 Converts an identifier to a table name. */
@@ -266,7 +266,7 @@ UNIV_INTERN
 ibool
 thd_supports_xa(
 /*============*/
-	void*	thd);	/*!< in: thread handle (THD*), or NULL to query
+	drizzled::Session *thd);	/*!< in: thread handle (THD*), or NULL to query
 			the global innodb_supports_xa */
 
 /******************************************************************//**
@@ -277,7 +277,7 @@ UNIV_INTERN
 ulong
 thd_lock_wait_timeout(
 /*==================*/
-	void*	thd);	/*!< in: thread handle (THD*), or NULL to query
+	drizzled::Session *thd);	/*!< in: thread handle (THD*), or NULL to query
 			the global innodb_lock_wait_timeout */
 /******************************************************************//**
 Add up the time waited for the lock for the current query. */
@@ -285,7 +285,7 @@ UNIV_INTERN
 void
 thd_set_lock_wait_time(
 /*===================*/
-        void*   thd,	/*!< in: thread handle (THD*) */
+        drizzled::Session *thd,	/*!< in: thread handle (THD*) */
         ulint   value);	/*!< in: time waited for the lock */
 
 UNIV_INTERN
