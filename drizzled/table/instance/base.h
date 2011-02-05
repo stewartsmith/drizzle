@@ -726,9 +726,6 @@ private:
                               bool &error_reported);
 public:
   bool parse_table_proto(Session& session, message::Table &table);
-
-private:
-  int inner_parse_table_proto(Session& session, message::Table &table);
 };
 
 } /* namespace drizzled */

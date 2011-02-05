@@ -576,9 +576,9 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
   getTableMessage()->set_schema(identifier_arg.getSchemaName());
 }
 
-int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
+bool TableShare::parse_table_proto(Session& session, message::Table &table)
 {
-  int local_error= 0;
+  drizzled::error_t local_error= EE_OK;
 
   if (! table.IsInitialized())
   {
@@ -1057,9 +1057,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         if (fo.scale() > DECIMAL_MAX_SCALE)
         {
-          local_error= 4;
+          local_error= ER_NOT_FORM_FILE;
 
-          return local_error;
+          return true;
         }
         decimals= static_cast<uint8_t>(fo.scale());
       }
@@ -1113,9 +1113,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
             decimals != NOT_FIXED_DEC)
         {
           my_error(ER_M_BIGGER_THAN_D, MYF(0), pfield.name().c_str());
-          local_error= 1;
-
-          return local_error;
+          local_error= ER_M_BIGGER_THAN_D;
+          return true;
         }
         break;
       }
@@ -1254,9 +1253,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       if (res != 0 && res != 3) /* @TODO Huh? */
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
-        local_error= 1;
+        local_error= ER_INVALID_DEFAULT;
 
-        return local_error;
+        return true;
       }
     }
     else if (f->real_type() == DRIZZLE_TYPE_ENUM && (f->flags & NOT_NULL_FLAG))
@@ -1468,9 +1467,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                             &next_number_keypart)) < 0)
     {
       /* Wrong field definition */
-      local_error= 4;
+      local_error= ER_NOT_FORM_FILE;
 
-      return local_error;
+      return true;
     }
     else
     {
@@ -1495,19 +1494,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   all_set.resize(_field_size);
   all_set.set();
 
-  return local_error;
+  return local_error != EE_OK;
 }
-
-bool TableShare::parse_table_proto(Session& session, message::Table &table)
-{
-  int local_error= inner_parse_table_proto(session, table);
-
-  if (not local_error)
-    return false;
-
-  return true;
-}
-
 
 /*
   Read table definition from a binary / text based .frm cursor
@@ -1541,7 +1529,7 @@ int TableShare::open_table_def(Session& session, const identifier::Table &identi
 
   if (table and table->IsInitialized())
   {
-    if (inner_parse_table_proto(session, *table))
+    if (parse_table_proto(session, *table))
     {
       local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
       my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
