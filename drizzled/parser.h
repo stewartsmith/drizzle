@@ -148,6 +148,8 @@ Item *buildTableWild(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &
 
 void buildCreateFieldIdent(LEX *lex);
 
+void storeAlterColumnPosition(LEX *lex, const char *position);
+
 } // namespace parser
 } // namespace drizzled
 
