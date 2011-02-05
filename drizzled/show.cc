@@ -364,7 +364,7 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
 
 void buildSelectWarning(Session *session)
 {
-  (void) create_select_for_variable(session, "error_count");
+  (void) create_select_for_variable(session, "warning_count");
   session->getLex()->statement= new statement::Show(session);
 }
 

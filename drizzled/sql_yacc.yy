@@ -2081,17 +2081,11 @@ opt_place:
           /* empty */ {}
         | AFTER_SYM ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            store_position_for_column($2.str);
-            statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
+            parser::storeAlterColumnPosition(Lex, $2.str);
           }
         | FIRST_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            store_position_for_column(first_keyword);
-            statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
+            parser::storeAlterColumnPosition(Lex, first_keyword);
           }
         ;
 

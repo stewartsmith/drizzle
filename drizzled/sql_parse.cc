@@ -884,13 +884,6 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 }
 
 
-/** Store position for column in ALTER TABLE .. ADD column. */
-
-void store_position_for_column(const char *name)
-{
-  current_session->lex->last_field->after=const_cast<char*> (name);
-}
-
 /**
   Add a table to list of used tables.
 
