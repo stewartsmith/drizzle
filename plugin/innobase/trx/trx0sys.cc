@@ -91,7 +91,7 @@ UNIV_INTERN char	trx_sys_mysql_bin_log_name[TRX_SYS_MYSQL_LOG_NAME_LEN];
 /** Binlog file position, or -1 if unknown */
 UNIV_INTERN ib_int64_t	trx_sys_mysql_bin_log_pos	= -1;
 
-UNIV_INTERN ib_int64_t trx_sys_commit_id		= -1;
+UNIV_INTERN drizzled::atomic<uint64_t> trx_sys_commit_id;
 
 /* @} */
 #endif /* !UNIV_HOTBACKUP */

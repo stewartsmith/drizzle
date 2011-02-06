@@ -41,8 +41,10 @@ Created 3/26/1996 Heikki Tuuri
 #include "read0types.h"
 #include "page0types.h"
 
+#include <drizzled/atomics.h>
+
 /** the highest commit identifier assigned in the system */
-extern ib_int64_t       trx_sys_commit_id;
+extern drizzled::atomic<uint64_t> trx_sys_commit_id; 
 
 /** The transaction system */
 extern trx_sys_t*	trx_sys;

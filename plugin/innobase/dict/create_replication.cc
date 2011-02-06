@@ -52,6 +52,8 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
 
   table1 = dict_table_get_low("SYS_REPLICATION_LOG");
 
+  trx_sys_read_commit_id();
+
   if (table1) 
   {
     mutex_exit(&(dict_sys->mutex));
@@ -144,12 +146,10 @@ ulint insert_replication_message(const char *message, size_t size,
   dfield = dtuple_get_nth_field(dtuple, 0);
   dfield_set_data(dfield, &trx_id, 8);
 
-  trx_sys_read_commit_id();
-
-  ++trx_sys_commit_id;
+  uint64_t commit_id= trx_sys_commit_id.increment();
 
   dfield = dtuple_get_nth_field(dtuple, 1);
-  dfield_set_data(dfield, &trx_sys_commit_id, 8);
+  dfield_set_data(dfield, &commit_id, 8);
 
   dfield = dtuple_get_nth_field(dtuple, 2);
   dfield_set_data(dfield, &end_timestamp, 8);
