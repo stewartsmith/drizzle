@@ -535,8 +535,8 @@ uint64_t HailDBCursor::getInitialAutoIncrementValue()
   doEndIndexScan();
   (void) extra(HA_EXTRA_NO_KEYREAD);
 
-  if (getTable()->getShare()->getTableProto()->options().auto_increment_value() > nr)
-    nr= getTable()->getShare()->getTableProto()->options().auto_increment_value();
+  if (getTable()->getShare()->getTableMessage()->options().auto_increment_value() > nr)
+    nr= getTable()->getShare()->getTableMessage()->options().auto_increment_value();
 
   return nr;
 }

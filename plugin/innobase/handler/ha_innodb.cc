@@ -1279,9 +1279,9 @@ UNIV_INTERN
 const void*
 innobase_get_charset(
 /*=================*/
-  void* mysql_session)  /*!< in: MySQL thread handle */
+  drizzled::Session *mysql_session)  /*!< in: MySQL thread handle */
 {
-  return static_cast<Session*>(mysql_session)->charset();
+  return mysql_session->charset();
 }
 
 UNIV_INTERN
@@ -1308,10 +1308,10 @@ UNIV_INTERN
 const char*
 innobase_get_stmt(
 /*==============*/
-       void*   session,        /*!< in: MySQL thread handle */
+       drizzled::Session *session,        /*!< in: MySQL thread handle */
        size_t* length)         /*!< out: length of the SQL statement */
 {
-  return static_cast<Session*>(session)->getQueryStringCopy(*length);
+  return session->getQueryStringCopy(*length);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -1754,7 +1754,7 @@ innobase_convert_name(
   ulint   buflen, /*!< in: length of buf, in bytes */
   const char* id, /*!< in: identifier to convert */
   ulint   idlen,  /*!< in: length of id, in bytes */
-  void*   session,/*!< in: MySQL connection thread, or NULL */
+  drizzled::Session *session,/*!< in: MySQL connection thread, or NULL */
   ibool   table_id)/*!< in: TRUE=id is a table or database name;
         FALSE=id is an index name */
 {
@@ -1808,7 +1808,7 @@ trx_is_interrupted(
 /*===============*/
   trx_t*  trx)  /*!< in: transaction */
 {
-  return(trx && trx->mysql_thd && static_cast<Session*>(trx->mysql_thd)->getKilled());
+  return(trx && trx->mysql_thd && trx->mysql_thd->getKilled());
 }
 
 /**********************************************************************//**
@@ -2944,52 +2944,6 @@ ha_innobase::primary_key_is_clustered()
   return(true);
 }
 
-/*****************************************************************//**
-Normalizes a table name string. A normalized name consists of the
-database name catenated to '/' and table name. An example:
-test/mytable. On Windows normalization puts both the database name and the
-table name always to lower case. */
-static
-void
-normalize_table_name(
-/*=================*/
-  char*   norm_name,  /*!< out: normalized name as a
-          null-terminated string */
-  const char* name)   /*!< in: table name string */
-{
-  const char* name_ptr;
-  const char* db_ptr;
-  const char* ptr;
-
-  /* Scan name from the end */
-
-  ptr = strchr(name, '\0')-1;
-
-  while (ptr >= name && *ptr != '\\' && *ptr != '/') {
-    ptr--;
-  }
-
-  name_ptr = ptr + 1;
-
-  assert(ptr > name);
-
-  ptr--;
-
-  while (ptr >= name && *ptr != '\\' && *ptr != '/') {
-    ptr--;
-  }
-
-  db_ptr = ptr + 1;
-
-  memcpy(norm_name, db_ptr, strlen(name) + 1 - (db_ptr - name));
-
-  norm_name[name_ptr - db_ptr - 1] = '/';
-
-#ifdef __WIN__
-  innobase_casedn_str(norm_name);
-#endif
-}
-
 /********************************************************************//**
 Get the upper limit of the MySQL integral and floating-point type.
 @return maximum allowed value for the field */
@@ -3359,7 +3313,6 @@ ha_innobase::doOpen(const identifier::Table &identifier,
                     uint    test_if_locked) /*!< in: not used */
 {
   dict_table_t* ib_table;
-  char    norm_name[FN_REFLEN];
   Session*    session;
 
   UT_NOT_USED(mode);
@@ -3374,11 +3327,9 @@ ha_innobase::doOpen(const identifier::Table &identifier,
     getTransactionalEngine()->releaseTemporaryLatches(session);
   }
 
-  normalize_table_name(norm_name, identifier.getPath().c_str());
-
   user_session = NULL;
 
-  if (!(share=get_share(identifier.getPath().c_str()))) {
+  if (!(share=get_share(identifier.getKeyPath().c_str()))) {
 
     return(1);
   }
@@ -3389,7 +3340,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   stored the string length as the first byte. */
 
   upd_and_key_val_buff_len =
-        getTable()->getShare()->stored_rec_length
+        getTable()->getShare()->sizeStoredRecord()
         + getTable()->getShare()->max_key_length
         + MAX_REF_PARTS * 3;
 
@@ -3407,7 +3358,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   }
 
   /* Get pointer to a table object in InnoDB dictionary cache */
-  ib_table = dict_table_get(norm_name, TRUE);
+  ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
   
   if (NULL == ib_table) {
     errmsg_printf(error::ERROR, "Cannot find or open table %s from\n"
@@ -3424,7 +3375,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
         "doesn't support.\n"
         "See " REFMAN "innodb-troubleshooting.html\n"
         "how you can resolve the problem.\n",
-        norm_name);
+        identifier.getKeyPath().c_str());
     free_share(share);
     upd_buff.resize(0);
     key_val_buff.resize(0);
@@ -3441,7 +3392,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
         "or have you used DISCARD TABLESPACE?\n"
         "See " REFMAN "innodb-troubleshooting.html\n"
         "how you can resolve the problem.\n",
-        norm_name);
+        identifier.getKeyPath().c_str());
     free_share(share);
     upd_buff.resize(0);
     key_val_buff.resize(0);
@@ -3453,7 +3404,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
 
   prebuilt = row_create_prebuilt(ib_table);
 
-  prebuilt->mysql_row_len = getTable()->getShare()->stored_rec_length;
+  prebuilt->mysql_row_len = getTable()->getShare()->sizeStoredRecord();
   prebuilt->default_rec = getTable()->getDefaultValues();
   ut_ad(prebuilt->default_rec);
 
@@ -3464,7 +3415,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
 
   if (!innobase_build_index_translation(getTable(), ib_table, share)) {
     errmsg_printf(error::ERROR, "Build InnoDB index translation table for"
-                    " Table %s failed", identifier.getPath().c_str());
+                    " Table %s failed", identifier.getKeyPath().c_str());
   }
 
   /* Allocate a buffer for a 'row reference'. A row reference is
@@ -5377,7 +5328,7 @@ ha_innobase::innobase_get_index(
     errmsg_printf(error::ERROR, 
       "Innodb could not find key n:o %u with name %s "
       "from dict cache for table %s",
-      keynr, getTable()->getShare()->getTableProto()->indexes(keynr).name().c_str(),
+      keynr, getTable()->getShare()->getTableMessage()->indexes(keynr).name().c_str(),
       prebuilt->table->name);
   }
 
@@ -5828,7 +5779,7 @@ create_table_def(
 
     if (!col_type) {
       push_warning_printf(
-                          (Session*) trx->mysql_thd,
+                          trx->mysql_thd,
                           DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_CANT_CREATE_TABLE,
                           "Error creating table '%s' with "
@@ -5862,7 +5813,7 @@ create_table_def(
         /* in data0type.h we assume that the
         number fits in one byte in prtype */
         push_warning_printf(
-          (Session*) trx->mysql_thd,
+          trx->mysql_thd,
           DRIZZLE_ERROR::WARN_LEVEL_ERROR,
           ER_CANT_CREATE_TABLE,
           "In InnoDB, charset-collation codes"
@@ -6137,8 +6088,6 @@ InnobaseEngine::doCreateTable(
   trx_t*    trx;
   int   primary_key_no;
   uint    i;
-  char    name2[FN_REFLEN];
-  char    norm_name[FN_REFLEN];
   ib_int64_t  auto_inc_value;
   ulint   iflags;
   /* Cache the value of innodb_file_format, in case it is
@@ -6147,8 +6096,6 @@ InnobaseEngine::doCreateTable(
   bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
   const char* stmt;
   size_t stmt_len;
-
-  const char *table_name= identifier.getPath().c_str();
 
   if (form.getShare()->sizeFields() > 1000) {
     /* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
@@ -6170,10 +6117,6 @@ InnobaseEngine::doCreateTable(
   trx = innobase_trx_allocate(&session);
 
   srv_lower_case_table_names = TRUE;
-
-  strcpy(name2, table_name);
-
-  normalize_table_name(norm_name, name2);
 
   /* Latch the InnoDB data dictionary exclusively so that no deadlocks
     or lock waits can happen in it during a table create operation.
@@ -6282,8 +6225,8 @@ InnobaseEngine::doCreateTable(
   if (lex_identified_temp_table)
     iflags |= DICT_TF2_TEMPORARY << DICT_TF2_SHIFT;
 
-  error= create_table_def(trx, &form, norm_name,
-                          lex_identified_temp_table ? name2 : NULL,
+  error= create_table_def(trx, &form, identifier.getKeyPath().c_str(),
+                          lex_identified_temp_table ? identifier.getKeyPath().c_str() : NULL,
                           iflags);
 
   session.setXaId(trx->id);
@@ -6299,7 +6242,7 @@ InnobaseEngine::doCreateTable(
       order the rows by their row id which is internally generated
       by InnoDB */
 
-    error = create_clustered_index_when_no_primary(trx, iflags, norm_name);
+    error = create_clustered_index_when_no_primary(trx, iflags, identifier.getKeyPath().c_str());
     if (error) {
       goto cleanup;
     }
@@ -6307,7 +6250,7 @@ InnobaseEngine::doCreateTable(
 
   if (primary_key_no != -1) {
     /* In InnoDB the clustered index must always be created first */
-    if ((error = create_index(trx, &form, iflags, norm_name,
+    if ((error = create_index(trx, &form, iflags, identifier.getKeyPath().c_str(),
                               (uint) primary_key_no))) {
       goto cleanup;
     }
@@ -6316,7 +6259,7 @@ InnobaseEngine::doCreateTable(
   for (i = 0; i < form.getShare()->sizeKeys(); i++) {
     if (i != (uint) primary_key_no) {
 
-      if ((error = create_index(trx, &form, iflags, norm_name,
+      if ((error = create_index(trx, &form, iflags, identifier.getKeyPath().c_str(),
                                 i))) {
         goto cleanup;
       }
@@ -6339,7 +6282,7 @@ InnobaseEngine::doCreateTable(
 
     error = row_table_add_foreign_constraints(trx,
                                               query, strlen(query),
-                                              norm_name,
+                                              identifier.getKeyPath().c_str(),
                                               lex_identified_temp_table);
     switch (error) {
 
@@ -6350,7 +6293,7 @@ InnobaseEngine::doCreateTable(
                           "Create table '%s' with foreign key constraint"
                           " failed. There is no index in the referenced"
                           " table where the referenced columns appear"
-                          " as the first columns.\n", norm_name);
+                          " as the first columns.\n", identifier.getKeyPath().c_str());
       break;
 
     case DB_CHILD_NO_INDEX:
@@ -6360,7 +6303,7 @@ InnobaseEngine::doCreateTable(
                           "Create table '%s' with foreign key constraint"
                           " failed. There is no index in the referencing"
                           " table where referencing columns appear"
-                          " as the first columns.\n", norm_name);
+                          " as the first columns.\n", identifier.getKeyPath().c_str());
       break;
     }
 
@@ -6381,7 +6324,7 @@ InnobaseEngine::doCreateTable(
 
   log_buffer_flush_to_disk();
 
-  innobase_table = dict_table_get(norm_name, FALSE);
+  innobase_table = dict_table_get(identifier.getKeyPath().c_str(), FALSE);
 
   assert(innobase_table != 0);
 
@@ -6537,13 +6480,8 @@ InnobaseEngine::doDropTable(
   int error;
   trx_t*  parent_trx;
   trx_t*  trx;
-  char  norm_name[1000];
 
   ut_a(identifier.getPath().length() < 1000);
-
-  /* Strangely, MySQL passes the table name without the '.frm'
-    extension, in contrast to ::create */
-  normalize_table_name(norm_name, identifier.getPath().c_str());
 
   /* Get the transaction associated with the current session, or create one
     if not yet created */
@@ -6561,7 +6499,7 @@ InnobaseEngine::doDropTable(
 
   /* Drop the table in InnoDB */
 
-  error = row_drop_table_for_mysql(norm_name, trx,
+  error = row_drop_table_for_mysql(identifier.getKeyPath().c_str(), trx,
                                    session_sql_command(&session)
                                    == SQLCOM_DROP_DB);
 
@@ -6710,19 +6648,14 @@ int
 innobase_rename_table(
 /*==================*/
   trx_t*    trx,  /*!< in: transaction */
-  const char* from, /*!< in: old name of the table */
-  const char* to, /*!< in: new name of the table */
+  const identifier::Table &from,
+  const identifier::Table &to,
   ibool   lock_and_commit)
         /*!< in: TRUE=lock data dictionary and commit */
 {
   int error;
-  char norm_to[FN_REFLEN];
-  char norm_from[FN_REFLEN];
 
   srv_lower_case_table_names = TRUE;
-
-  normalize_table_name(norm_to, to);
-  normalize_table_name(norm_from, from);
 
   /* Serialize data dictionary operations with dictionary mutex:
   no deadlocks can occur then in these operations */
@@ -6731,16 +6664,15 @@ innobase_rename_table(
     row_mysql_lock_data_dictionary(trx);
   }
 
-  error = row_rename_table_for_mysql(
-    norm_from, norm_to, trx, lock_and_commit);
+  error = row_rename_table_for_mysql(from.getKeyPath().c_str(), to.getKeyPath().c_str(), trx, lock_and_commit);
 
   if (error != DB_SUCCESS) {
     FILE* ef = dict_foreign_err_file;
 
     fputs("InnoDB: Renaming table ", ef);
-    ut_print_name(ef, trx, TRUE, norm_from);
+    ut_print_name(ef, trx, TRUE, from.getKeyPath().c_str());
     fputs(" to ", ef);
-    ut_print_name(ef, trx, TRUE, norm_to);
+    ut_print_name(ef, trx, TRUE, to.getKeyPath().c_str());
     fputs(" failed!\n", ef);
   }
 
@@ -6785,7 +6717,7 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const identifier
 
   trx = innobase_trx_allocate(&session);
 
-  error = innobase_rename_table(trx, from.getPath().c_str(), to.getPath().c_str(), TRUE);
+  error = innobase_rename_table(trx, from, to, TRUE);
 
   session.setXaId(trx->id);
 
@@ -6810,7 +6742,7 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const identifier
      is the one we are trying to rename to) and return the generic
      error code. */
   if (error == (int) DB_DUPLICATE_KEY) {
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), to.getPath().c_str());
+    my_error(ER_TABLE_EXISTS_ERROR, to);
     error = DB_ERROR;
   }
 
@@ -6841,9 +6773,9 @@ ha_innobase::records_in_range(
   KeyInfo*    key;
   dict_index_t* index;
   unsigned char*    key_val_buff2 = (unsigned char*) malloc(
-              getTable()->getShare()->stored_rec_length
+              getTable()->getShare()->sizeStoredRecord()
           + getTable()->getShare()->max_key_length + 100);
-  ulint   buff2_len = getTable()->getShare()->stored_rec_length
+  ulint   buff2_len = getTable()->getShare()->sizeStoredRecord()
           + getTable()->getShare()->max_key_length + 100;
   dtuple_t* range_start;
   dtuple_t* range_end;
@@ -9457,7 +9389,7 @@ innobase_index_name_is_reserved(
     if (innobase_strcasecmp(key->name,
                             innobase_index_reserve_name) == 0) {
       /* Push warning to drizzle */
-      push_warning_printf((Session*)trx->mysql_thd,
+      push_warning_printf(trx->mysql_thd,
                           DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_WRONG_NAME_FOR_INDEX,
                           "Cannot Create Index with name "

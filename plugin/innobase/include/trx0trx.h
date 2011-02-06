@@ -38,6 +38,8 @@ Created 3/26/1996 Heikki Tuuri
 #include "trx0xa.h"
 #include "ut0vec.h"
 
+namespace drizzled { class Session; }
+
 /** Dummy session used currently in MySQL interface */
 extern sess_t*	trx_dummy_sess;
 
@@ -553,7 +555,7 @@ struct trx_struct{
 	table_id_t	table_id;	/*!< Table to drop iff dict_operation
 					is TRUE, or 0. */
 	/*------------------------------*/
-	void*		mysql_thd;	/*!< MySQL thread handle corresponding
+        drizzled::Session *mysql_thd;	/*!< MySQL thread handle corresponding
 					to this trx, or NULL */
 	const char*	mysql_log_file_name;
 					/* if MySQL binlog is used, this field

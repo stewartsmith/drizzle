@@ -328,10 +328,6 @@ debugger_control_group.add_option(
 
 parser.add_option_group(debugger_control_group)
 
-
-
-
-
 # supplied will be those arguments matching an option, 
 # and test_cases will be everything else
 (args, test_cases)= parser.parse_args()

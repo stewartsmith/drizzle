@@ -1514,18 +1514,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   {
     table::Shell tmp_table(share);		// Used during 'CreateField()'
-    tmp_table.timestamp_field= 0;
-
-    tmp_table.getMutableShare()->db_create_options= 0;
-    tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
 
     if (not table_proto.engine().name().compare("MyISAM"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
     else if (not table_proto.engine().name().compare("MEMORY"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
-
-    tmp_table.null_row= false;
-    tmp_table.maybe_null= false;
 
     tmp_table.in_use= session;
 

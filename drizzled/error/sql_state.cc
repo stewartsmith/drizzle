@@ -24,11 +24,14 @@
 #include <algorithm>
 
 #include <drizzled/error.h>
-#include <drizzled/sql_state.h>
+#include <drizzled/error/sql_state.h>
 
 using namespace std;
 
 namespace drizzled
+{
+
+namespace error
 {
 
 struct sql_state_t
@@ -100,7 +103,7 @@ sql_state_t sqlstate_map[]=
   { ER_NULL_COLUMN_IN_INDEX                 ,"42000", "" },
   { ER_WRONG_VALUE_COUNT_ON_ROW             ,"21S01", "" },
   { ER_MIX_OF_GROUP_FUNC_AND_FIELDS         ,"42000", "" },
-  { ER_NO_SUCH_TABLE                        ,"42S02", "" },
+  { ER_TABLE_UNKNOWN                        ,"42S02", "" },
   { ER_SYNTAX_ERROR                         ,"42000", "" },
   { ER_NET_PACKET_TOO_LARGE                 ,"08S01", "" },
   { ER_NET_PACKETS_OUT_OF_ORDER             ,"08S01", "" },
@@ -174,7 +177,7 @@ static bool compare_errno_map(sql_state_t a,
   return (a.drizzle_errno < b.drizzle_errno);
 }
 
-const char *drizzle_errno_to_sqlstate(drizzled::error_t drizzle_errno)
+const char *convert_to_sqlstate(drizzled::error_t drizzle_errno)
 {
 
   sql_state_t drizzle_err_state= {drizzle_errno, NULL, NULL};
@@ -190,4 +193,5 @@ const char *drizzle_errno_to_sqlstate(drizzled::error_t drizzle_errno)
   return "HY000";
 }
 
+} /* namespace error */
 } /* namespace drizzled */

@@ -332,7 +332,7 @@ bool Item_field::val_bool_result()
       type::Decimal decimal_value;
       type::Decimal *val= result_field->val_decimal(&decimal_value);
       if (val)
-        return not val->is_zero();
+        return not val->isZero();
       return 0;
     }
 

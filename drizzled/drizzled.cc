@@ -75,6 +75,8 @@
 
 #include "drizzled/plugin/event_observer.h"
 
+#include "drizzled/data_home.h"
+
 #include "drizzled/message/cache.h"
 
 #include "drizzled/visibility.h"
@@ -322,7 +324,6 @@ const char *in_left_expr_name= "<left expr>";
 const char *in_additional_cond= "<IN COND>";
 const char *in_having_cond= "<IN HAVING>";
 
-type::Decimal decimal_zero;
 /* classes for comparation parsing/processing */
 
 FILE *stderror_file=0;
@@ -384,31 +385,12 @@ vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
 
-fs::path data_home(LOCALSTATEDIR);
-fs::path full_data_home(LOCALSTATEDIR);
-
 po::variables_map &getVariablesMap()
 {
   return vm;
 }
 
-fs::path& getFullDataHome()
-{
-  return full_data_home;
-}
 
-fs::path& getDataHome()
-{
-  return data_home;
-}
-
-fs::path& getDataHomeCatalog()
-{
-  static fs::path data_home_catalog(getDataHome());
-  return data_home_catalog;
-}
-
- 
 /****************************************************************************
 ** Code to end drizzled
 ****************************************************************************/
@@ -1192,7 +1174,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   _("Default completion type."))
   ("core-file",  _("Write core on errors."))
-  ("datadir", po::value<fs::path>(&data_home),
+  ("datadir", po::value<fs::path>(&getDataHome()),
   _("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
   _("Set the default storage engine for tables."))

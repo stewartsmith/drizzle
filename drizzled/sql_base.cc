@@ -575,7 +575,7 @@ bool Open_tables_state::doDoesTableExist(const identifier::Table &identifier)
 }
 
 int Open_tables_state::doGetTableDefinition(const identifier::Table &identifier,
-                                  message::Table &table_proto)
+                                            message::Table &table_proto)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
@@ -583,7 +583,7 @@ int Open_tables_state::doGetTableDefinition(const identifier::Table &identifier,
     {
       if (identifier.getKey() == table->getShare()->getCacheKey())
       {
-        table_proto.CopyFrom(*(table->getShare()->getTableProto()));
+        table_proto.CopyFrom(*(table->getShare()->getTableMessage()));
 
         return EEXIST;
       }
@@ -950,7 +950,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   {
     if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->getSchemaName(), table_list->getTableName());
+      my_error(ER_TABLE_UNKNOWN, identifier);
       return NULL;
     }
 

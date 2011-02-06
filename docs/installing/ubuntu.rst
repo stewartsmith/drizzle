@@ -13,4 +13,4 @@ To add this PPA at command line simply run::
 
 To then install Drizzle::
 
-  sudo apt-get install drizzle-server drizzle-client
+  sudo apt-get install drizzle drizzle-client

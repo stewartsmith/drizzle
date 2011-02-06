@@ -275,6 +275,24 @@ void Table::init()
     break;
   }
 
+  switch (type) {
+  case message::Table::FUNCTION:
+  case message::Table::STANDARD:
+  case message::Table::INTERNAL:
+    break;
+  case message::Table::TEMPORARY:
+    {
+      size_t pos;
+
+      pos= path.find("tmp/#sql");
+      if (pos != std::string::npos) 
+      {
+        key_path= path.substr(pos);
+      }
+    }
+    break;
+  }
+
   util::insensitive_hash hasher;
   hash_value= hasher(path);
 
@@ -288,6 +306,14 @@ void Table::init()
 const std::string &Table::getPath() const
 {
   return path;
+}
+
+const std::string &Table::getKeyPath() const
+{
+  if (key_path.empty())
+    return path;
+
+  return key_path;
 }
 
 void Table::getSQLPath(std::string &sql_path) const  // @todo this is just used for errors, we should find a way to optimize it
@@ -396,6 +422,24 @@ std::size_t hash_value(Table const& b)
 std::size_t hash_value(Table::Key const& b)
 {
   return b.getHashValue();
+}
+
+
+std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
+{
+  output << "Table:(";
+  output <<  identifier.getSchemaName();
+  output << ", ";
+  output << identifier.getTableName();
+  output << ", ";
+  output << message::type(identifier.getType());
+  output << ", ";
+  output << identifier.getPath();
+  output << ", ";
+  output << identifier.getHashValue();
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace identifier */
