@@ -36,7 +36,7 @@ int JoinTable::joinReadConstTable(optimizer::Position *pos)
 
   if (this->type == AM_SYSTEM)
   {
-    if ((error=this->join_read_system()))
+    if ((error=this->joinReadSystem()))
     {						// Info for DESCRIBE
       this->info="const row not found";
       /* Mark for EXPLAIN that the row was not found */
@@ -150,7 +150,7 @@ void JoinTable::readCachedRecord()
   this->cache.pos=pos;
 }
 
-int JoinTable::join_read_system()
+int JoinTable::joinReadSystem()
 {
   Table *Table= this->table;
   int error;
