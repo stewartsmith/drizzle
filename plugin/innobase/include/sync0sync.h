@@ -88,6 +88,7 @@ extern mysql_pfs_key_t	ibuf_pessimistic_insert_mutex_key;
 extern mysql_pfs_key_t	log_sys_mutex_key;
 extern mysql_pfs_key_t	log_flush_order_mutex_key;
 extern mysql_pfs_key_t	kernel_mutex_key;
+extern mysql_pfs_key_t  commit_id_mutex_key;
 # ifdef UNIV_MEM_DEBUG
 extern mysql_pfs_key_t	mem_hash_mutex_key;
 # endif /* UNIV_MEM_DEBUG */
@@ -670,6 +671,7 @@ or row lock! */
 					SYNC_SEARCH_SYS, as memory allocation
 					can call routines there! Otherwise
 					the level is SYNC_MEM_HASH. */
+#define SYNC_COMMIT_ID_LOCK	159     
 #define	SYNC_BUF_POOL		150	/* Buffer pool mutex */
 #define	SYNC_BUF_BLOCK		146	/* Block mutex */
 #define	SYNC_BUF_FLUSH_LIST	145	/* Buffer flush list mutex */

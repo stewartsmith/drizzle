@@ -775,9 +775,11 @@ trx_commit_off_kernel(
 		/* Update the highest commit id currently in the system */
 		if (trx_log_commit_id(trx))
  		{
+			mutex_enter(&commit_id_mutex);
 			trx_sys_flush_commit_id(trx_sys_commit_id,
 						TRX_SYS_DRIZZLE_LOG_INFO,
 						&mtr);
+			mutex_exit(&commit_id_mutex);
 		}
 
 		/* The following call commits the mini-transaction, making the
