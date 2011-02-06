@@ -89,9 +89,8 @@ Item **Item_cache_row::addr(uint32_t i)
 bool Item_cache_row::allocate(uint32_t num)
 {
   item_count= num;
-  Session *session= current_session;
   return (!(values=
-            (Item_cache **) session->calloc(sizeof(Item_cache *)*item_count)));
+            (Item_cache **) getSession().calloc(sizeof(Item_cache *)*item_count)));
 }
 
 

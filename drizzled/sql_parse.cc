@@ -696,16 +696,14 @@ new_select(LEX *lex, bool move_down)
   @param var_name		Variable name
 */
 
-void create_select_for_variable(const char *var_name)
+void create_select_for_variable(Session *session, const char *var_name)
 {
-  Session *session;
   LEX *lex;
   LEX_STRING tmp, null_lex_string;
   Item *var;
   char buff[MAX_SYS_VAR_LENGTH*2+4+8];
   char *end= buff;
 
-  session= current_session;
   lex= session->lex;
   init_select(lex);
   lex->sql_command= SQLCOM_SELECT;
@@ -722,7 +720,6 @@ void create_select_for_variable(const char *var_name)
     var->set_name(buff, end-buff, system_charset_info);
     session->add_item_to_list(var);
   }
-  return;
 }
 
 
@@ -886,13 +883,6 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
   return false;
 }
 
-
-/** Store position for column in ALTER TABLE .. ADD column. */
-
-void store_position_for_column(const char *name)
-{
-  current_session->lex->last_field->after=const_cast<char*> (name);
-}
 
 /**
   Add a table to list of used tables.

@@ -55,6 +55,11 @@ public:
   static void removePlugin(plugin::ErrorMessage *handler);
 
   static bool vprintf(error::level_t priority, char const *format, va_list ap);
+
+  bool removeLast() const
+  {
+    return true;
+  }
 };
 
 } /* namespace plugin */
