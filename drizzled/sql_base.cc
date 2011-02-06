@@ -1001,7 +1001,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     */
 
     {
-      table::Cache::singleton().mutex().lock(); /* Lock for FLUSH TABLES for open table */
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
 
       /*
         Actually try to find the table in the open_cache.
@@ -1053,7 +1053,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           /* Avoid self-deadlocks by detecting self-dependencies. */
           if (table->open_placeholder && table->in_use == this)
           {
-            table::Cache::singleton().mutex().unlock();
             my_error(ER_UPDATE_TABLE_USED, MYF(0), table->getShare()->getTableName());
             return NULL;
           }
@@ -1088,20 +1087,24 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           {
             /* wait_for_conditionwill unlock table::Cache::singleton().mutex() for us */
             wait_for_condition(table::Cache::singleton().mutex(), COND_refresh);
+            scopedLock.release();
           }
           else
           {
-            table::Cache::singleton().mutex().unlock();
+            scopedLock.unlock();
           }
+
           /*
             There is a refresh in progress for this table.
             Signal the caller that it has to try again.
           */
           if (refresh)
             *refresh= true;
+
           return NULL;
         }
       }
+
       if (table)
       {
         table::getUnused().unlink(static_cast<table::Concurrent *>(table));
@@ -1125,7 +1128,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             */
             if (!(table= table_cache_insert_placeholder(lock_table_identifier)))
             {
-              table::Cache::singleton().mutex().unlock();
               return NULL;
             }
             /*
@@ -1136,7 +1138,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             table->open_placeholder= true;
             table->setNext(open_tables);
             open_tables= table;
-            table::Cache::singleton().mutex().unlock();
 
             return table ;
           }
@@ -1149,7 +1150,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           table= new_table;
           if (new_table == NULL)
           {
-            table::Cache::singleton().mutex().unlock();
             return NULL;
           }
 
@@ -1157,15 +1157,13 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           if (error != 0)
           {
             delete new_table;
-            table::Cache::singleton().mutex().unlock();
             return NULL;
           }
           (void)table::Cache::singleton().insert(new_table);
         }
       }
-
-      table::Cache::singleton().mutex().unlock();
     }
+
     if (refresh)
     {
       table->setNext(open_tables); /* Link into simple list */
