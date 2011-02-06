@@ -51,7 +51,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
-#include "mysql_addons.h"
 #include "handler0vars.h"
 
 using namespace drizzled;
