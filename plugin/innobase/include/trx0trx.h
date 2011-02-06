@@ -707,6 +707,15 @@ struct trx_struct{
 	/*------------------------------*/
 	char detailed_error[256];	/*!< detailed error message for last
 					error, or empty. */
+
+        inline drizzled::Session *session()
+        {
+          return mysql_thd;
+        }
+        inline drizzled::Session *session() const
+        {
+          return mysql_thd;
+        }
 };
 
 #define TRX_MAX_N_THREADS	32	/* maximum number of
