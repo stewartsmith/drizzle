@@ -360,18 +360,26 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
   return true;
 }
 
-bool buildWarnings(Session *session)
+void buildSelectWarning(Session *session)
 {
-  session->getLex()->statement= new statement::ShowWarnings(session);
-
-  return true;
+  (void) create_select_for_variable(session, "warning_count");
+  session->getLex()->statement= new statement::Show(session);
 }
 
-bool buildErrors(Session *session)
+void buildSelectError(Session *session)
+{
+  (void) create_select_for_variable(session, "error_count");
+  session->getLex()->statement= new statement::Show(session);
+}
+
+void buildWarnings(Session *session)
+{
+  session->getLex()->statement= new statement::ShowWarnings(session);
+}
+
+void buildErrors(Session *session)
 {
   session->getLex()->statement= new statement::ShowErrors(session);
-
-  return true;
 }
 
 bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_ident)
