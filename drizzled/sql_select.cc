@@ -3367,30 +3367,6 @@ int safe_index_read(JoinTable *tab)
   return 0;
 }
 
-
-int join_read_system(JoinTable *tab)
-{
-  Table *table= tab->table;
-  int error;
-  if (table->status & STATUS_GARBAGE)		// If first read
-  {
-    if ((error=table->cursor->read_first_row(table->getInsertRecord(),
-					   table->getShare()->getPrimaryKey())))
-    {
-      if (error != HA_ERR_END_OF_FILE)
-        return table->report_error(error);
-      tab->table->mark_as_null_row();
-      table->emptyRecord();			// Make empty record
-      return -1;
-    }
-    table->storeRecord();
-  }
-  else if (!table->status)			// Only happens with left join
-    table->restoreRecord();			// restore old record
-  table->null_row=0;
-  return table->status ? -1 : 0;
-}
-
 /**
   Read a (constant) table when there is at most one matching row.
 

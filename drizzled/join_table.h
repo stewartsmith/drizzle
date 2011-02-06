@@ -247,6 +247,7 @@ public:
 
   void readCachedRecord();
   int joinReadConstTable(optimizer::Position *pos);
+  int join_read_system();
 };
 
 } /* namespace drizzled */
