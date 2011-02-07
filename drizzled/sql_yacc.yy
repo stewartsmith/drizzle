@@ -1058,10 +1058,7 @@ default_collation:
 default_collation_schema:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
-            statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-
-            message::Schema &schema_message= statement->schema_message;
-            schema_message.set_collation($4->name);
+            ((statement::CreateSchema *)Lex->statement)->schema_message.set_collation($4->name);
           }
         ;
 
@@ -1108,20 +1105,12 @@ column_def:
 key_def:
           key_type opt_ident key_alg '(' key_list ')' key_options
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Key($1, $2, &statement->key_create_info, 0,
-                              Lex->col_list);
-            statement->alter_info.key_list.push_back(key);
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+            parser::buildKey(Lex, $1, $2);
           }
         | opt_constraint constraint_key_type opt_ident key_alg
           '(' key_list ')' key_options
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Key($2, $3.str ? $3 : $1, &statement->key_create_info, 0,
-                              Lex->col_list);
-            statement->alter_info.key_list.push_back(key);
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+            parser::buildKey(Lex, $2, $3.str ? $3 : $1);
           }
         | opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
           {

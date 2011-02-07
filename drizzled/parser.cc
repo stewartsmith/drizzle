@@ -424,5 +424,14 @@ bool buildCollation(LEX *lex, const CHARSET_INFO *arg)
   return true;
 }
 
+void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+  Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0,
+                    lex->col_list);
+  statement->alter_info.key_list.push_back(key);
+  lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+}
+
 } // namespace parser
 } // namespace drizzled
