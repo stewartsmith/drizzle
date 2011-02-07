@@ -72,7 +72,7 @@ trx_set_detailed_error_from_file(
 	trx_t*	trx,	/*!< in: transaction struct */
 	FILE*	file);	/*!< in: file to read message from */
 /****************************************************************//**
-Checks if the commit id shouuld be logged to the sys header file
+Checks if the commit id should be logged to the sys header file
 @return TRUE if the commit id should be logged */ 
 UNIV_INLINE
 ibool

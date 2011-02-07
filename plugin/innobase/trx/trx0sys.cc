@@ -702,7 +702,7 @@ trx_sys_read_commit_id(void)
 
 	sys_header = trx_sysf_get(&mtr);
 
-        trx_sys_commit_id = mach_read_from_8(sys_header + TRX_SYS_DRIZZLE_LOG_INFO 
+	trx_sys_commit_id = mach_read_from_8(sys_header + TRX_SYS_DRIZZLE_LOG_INFO 
 					     + TRX_SYS_DRIZZLE_MAX_COMMIT_ID);
 
 	mtr_commit(&mtr);

@@ -268,16 +268,16 @@ ibool
 trx_in_trx_list(
 /*============*/
 	trx_t*	in_trx);/*!< in: trx */
-
- 
+/*****************************************************************//**
+Writes to the sys header file the latest commit_id in the system */ 
 UNIV_INTERN
 void
 trx_sys_flush_commit_id(uint64_t commit_id, ulint field, mtr_t* mtr);
-
+/*****************************************************************//**
+Reads the latest commit_id into trx_sys_commit_id */
 UNIV_INTERN
 void
 trx_sys_read_commit_id(void);
-
 /*****************************************************************//**
 Prints to stderr the MySQL master log offset info in the trx system header if
 the magic number shows it valid. */
