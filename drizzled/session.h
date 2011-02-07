@@ -41,7 +41,6 @@
 
 #include <algorithm>
 #include <bitset>
-#include <deque>
 #include <map>
 #include <string>
 
@@ -57,6 +56,7 @@
 #include <drizzled/session/property_map.h>
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
+#include <drizzled/session/transactions.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -699,51 +699,7 @@ public:
   ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
                                       size_t index= 0);
 
-  /**
-   * Structure used to manage "statement transactions" and
-   * "normal transactions". In autocommit mode, the normal transaction is
-   * equivalent to the statement transaction.
-   *
-   * Storage engines will be registered here when they participate in
-   * a transaction. No engine is registered more than once.
-   */
-  struct st_transactions {
-    std::deque<NamedSavepoint> savepoints;
-
-    /**
-     * The normal transaction (since BEGIN WORK).
-     *
-     * Contains a list of all engines that have participated in any of the
-     * statement transactions started within the context of the normal
-     * transaction.
-     *
-     * @note In autocommit mode, this is empty.
-     */
-    TransactionContext all;
-
-    /**
-     * The statment transaction.
-     *
-     * Contains a list of all engines participating in the given statement.
-     *
-     * @note In autocommit mode, this will be used to commit/rollback the
-     * normal transaction.
-     */
-    TransactionContext stmt;
-
-    XID_STATE xid_state;
-
-    void cleanup()
-    {
-      savepoints.clear();
-    }
-    st_transactions() :
-      savepoints(),
-      all(),
-      stmt(),
-      xid_state()
-    { }
-  } transaction;
+  session::Transactions transaction;
 
   Field *dup_field;
   sigset_t signals;
@@ -751,6 +707,7 @@ public:
   // As of right now we do not allow a concurrent execute to launch itself
 private:
   bool concurrent_execute_allowed;
+
 public:
 
   void setConcurrentExecute(bool arg)

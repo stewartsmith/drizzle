@@ -397,6 +397,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/session/property_map.h \
 			      drizzled/session/state.h \
 			      drizzled/session/table_messages.h \
+			      drizzled/session/transactions.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
 			      drizzled/show_type.h \
