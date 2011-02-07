@@ -37,6 +37,8 @@ class portManager:
         self.skip_keys = [ 'port_file_delimiter'
                          , 'system_manager'
                          ]
+        self.working_dir = "/tmp"
+        self.file_prefix = "dbqp_port"
         self.port_catalog = "/tmp/drizzle_test_port_catalog.dat"
         self.port_file_delimiter = ':' # what we use to separate port:owner 
         self.debug = debug
@@ -105,8 +107,8 @@ class portManager:
 
         """
         # read the catalog file
-        port_catalog = self.process_port_catalog()
-        if port not in port_catalog and not self.is_port_used(port):
+        dbqp_ports = self.check_dbqp_ports()
+        if port not in dbqp_ports and not self.is_port_used(port):
             return 1
         else:
             return 0
@@ -143,39 +145,30 @@ class portManager:
                         return 1
         return 0
 
-    def process_port_catalog(self):
-        """ Read in the catalog file so that we can see
-            if the port is in use or not
+    
+
+    def check_dbqp_ports(self):
+        """ Scan the files in /tmp for those files named
+            dbqp_port_NNNN.  Existence indicates said port is 'locked'
 
         """
-        port_catalog = {}
-        delimiter = ':'
-        if os.path.exists(self.port_catalog):
-            try:
-                port_file = open(self.port_catalog,'r')
-                for line in port_file:
-                    line = line.strip()
-                    port, owner = line.split(self.port_file_delimiter)
-                    port_catalog[port] = owner
-                port_file.close()
-            except IOError, e:
-                self.logging.error("Problem opening port catalog file: %s" %(self.port_catalog))
-                self.logging.error("%s" %e)
-                sys.exit(1)
-        return port_catalog
+        used_ports = []
+        tmp_files = os.listdir('/tmp')
+        for tmp_file in tmp_files:
+            if tmp_file.startswith('dbqp_port'):
+                used_ports.append(int(tmp_file.split('_')[-1]))
+        return used_ports
 
     def assign_port(self, owner, port):
-        """Assigns a port - logs it in the port_catalog file"""
+        """Assigns a port - create a tmpfile
+           with a name that 'logs' the port
+           as being used
 
-        data_string = "%d:%s\n" %(port, owner)
-        try:
-            port_file = open(self.port_catalog,'a')
-            port_file.write(data_string)
-            port_file.close()
-        except IOError, e:
-            self.logging.error("Problem opening port catalog file: %s" %(self.port_catalog))
-            self.logging.error("%s" %e)
-            sys.exit(1)
+        """
+
+        out_file = open(self.get_file_name(port),'w')
+        out_file.write("%s:%d\n" %(owner, port))
+        out_file.close()
 
     def free_ports(self, portlist):
        """ Clean up our port catalog """
@@ -183,19 +176,20 @@ class portManager:
           self.free_port(port)
 
     def free_port(self, port):
-       """ Free a single port from the catalog """
+       """ Free a single port - we delete the file
+           that 'locks' it
+
+       """
+      
        if self.debug:
            self.logging.debug("Freeing port %d" %(port))
-       port_catalog = self.process_port_catalog()
-       port_catalog.pop(str(port),None)
-       self.write_port_catalog(port_catalog)
+       os.remove(self.get_file_name(port))
 
-    def write_port_catalog(self, port_catalog):
-        port_file = open(self.port_catalog, 'w')
-        for key, value in port_catalog.items():
-            port_file.write(("%s:%s\n" %(key, value)))
-        port_file.close()
-
+    def get_file_name(self, port):
+        """ We generate a file name for the port """
+      
+        port_file_name = "%s_%d" %(self.file_prefix, port)
+        return os.path.join(self.working_dir, port_file_name)
         
        
        
