@@ -111,7 +111,16 @@ class testExecutor():
         else:
             if start_and_exit:
                 # TODO:  Report out all started servers via server_manager/server objects?
-                self.logging.info("User specified --start-and-exit.  dbqp.py exiting and leaving servers running...")
+                self.current_servers[0].report()
+                self.logging.info("User specified --start-and-exit.  dbqp.py exiting and leaving servers running...") 
+                # We blow away any port_management files for our ports
+                # Technically this won't let us 'lock' any ports that 
+                # we aren't explicitly using (visible to netstat scan)
+                # However one could argue that if we aren't using it, 
+                # We shouldn't hog it ; )
+                # We might need to do this better later
+                for server in current_servers:
+                    server.cleanup() # this only removes any port files
                 sys.exit(0)
         if self.initial_run:
             self.initial_run = 0

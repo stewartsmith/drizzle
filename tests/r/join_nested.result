@@ -37,11 +37,7 @@ a	b
 4	2
 SELECT t3.a,t3.b,t4.a,t4.b
 FROM t3,t4;
-a	b	a	b
-1	2	3	2
-1	2	4	2
-2	2	3	2
-2	2	4	2
+ERROR HY000: Implicit cartesian join attempted.
 SELECT t2.a,t2.b,t3.a,t3.b,t4.a,t4.b
 FROM t2
 LEFT JOIN              
@@ -107,19 +103,7 @@ a	b
 3	3
 SELECT t3.a,t3.b,t4.a,t4.b,t5.a,t5.b
 FROM t3,t4,t5;
-a	b	a	b	a	b
-1	2	3	2	2	2
-1	2	3	2	3	1
-1	2	3	2	3	3
-1	2	4	2	2	2
-1	2	4	2	3	1
-1	2	4	2	3	3
-2	2	3	2	2	2
-2	2	3	2	3	1
-2	2	3	2	3	3
-2	2	4	2	2	2
-2	2	4	2	3	1
-2	2	4	2	3	3
+ERROR HY000: Implicit cartesian join attempted.
 SELECT t2.a,t2.b,t3.a,t3.b,t4.a,t4.b,t5.a,t5.b
 FROM t2
 LEFT JOIN              
@@ -208,7 +192,7 @@ a	b
 1	1
 2	2
 SELECT t6.a,t6.b,t7.a,t7.b
-FROM t6,t7;
+FROM t6 CROSS JOIN t7;
 a	b	a	b
 3	2	1	1
 3	2	2	2
@@ -766,7 +750,7 @@ a	b	a	b	a	b
 2	2	4	2	2	2
 2	2	5	3	NULL	NULL
 SELECT t3.a,t3.b,t4.a,t4.b
-FROM t3,t4;
+FROM t3 CROSS JOIN t4;
 a	b	a	b
 1	2	3	2
 2	2	3	2
@@ -1323,7 +1307,7 @@ DROP TABLE t1,t2,t3;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
 create table t2 (a int, filler char(100), key(a));
-insert into t2 select A.a + 10*B.a, '' from t1 A, t1 B;
+insert into t2 select A.a + 10*B.a, '' from t1 A CROSS JOIN t1 B;
 create table t3 like t2;
 insert into t3 select * from t2;
 explain select * from t1 left join 

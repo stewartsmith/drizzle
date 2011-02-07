@@ -130,7 +130,7 @@ a
 3
 4
 5
-insert into t1 select t2.a from t1,t2;
+insert into t1 select t2.a from t1,t2 where t1.a > 0;
 select * from t1;
 a
 1

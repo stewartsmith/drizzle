@@ -895,7 +895,7 @@ select * from t1 group by f2;
 f1	f2
 select * from t1 group by f1, f2;
 f1	f2
-select t1.f1,t.* from t1, t1 t group by 1;
+select t1.f1,t.* from t1, t1 t where t1.f1 >= 0 group by 1;
 f1	f1	f2
 drop table t1;
 CREATE TABLE t1(
