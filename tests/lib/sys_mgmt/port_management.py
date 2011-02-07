@@ -188,7 +188,7 @@ class portManager:
     def get_file_name(self, port):
         """ We generate a file name for the port """
       
-        port_file_name = "%s_%d" %(self.file_prefix, port)
+        port_file_name = "%s_%s_%d" %(self.file_prefix, self.system_manager.cur_user, port )
         return os.path.join(self.working_dir, port_file_name)
         
        

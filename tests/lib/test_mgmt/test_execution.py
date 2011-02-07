@@ -112,6 +112,7 @@ class testExecutor():
             if start_and_exit:
                 # TODO:  Report out all started servers via server_manager/server objects?
                 self.logging.info("User specified --start-and-exit.  dbqp.py exiting and leaving servers running...")
+                self.current_servers[0].report()
                 sys.exit(0)
         if self.initial_run:
             self.initial_run = 0
