@@ -420,8 +420,8 @@ class systemManager:
     def handle_valgrind_reqs(self, optional_args, mode='valgrind'):
         """ We do what voodoo we need to do to run valgrind """
         valgrind_args = [ "--show-reachable=yes"
-                        , "--malloc-fill=0xDEADBEEF"
-                        , "--free-fill=0xDEADBEEF"
+                        , "--malloc-fill=55"
+                        , "--free-fill=55"
                         # , "--trace-children=yes" this is for callgrind only
                         ]
         if optional_args:
