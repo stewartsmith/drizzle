@@ -54,6 +54,7 @@
 #include "drizzled/catalog/instance.h"
 #include "drizzled/catalog/local.h"
 
+#include <drizzled/session/property_map.h>
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
 
@@ -319,7 +320,6 @@ class DRIZZLED_API Session :
 {
 public:
   // Plugin storage in Session.
-  typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
   typedef Session* Ptr;
   typedef boost::shared_ptr<Session> shared_ptr;
   typedef Session& reference;
@@ -417,6 +417,7 @@ public:
   }
   /** query associated with this statement */
   typedef boost::shared_ptr<const std::string> QueryString;
+
 private:
   boost::shared_ptr<std::string> query;
 
@@ -479,6 +480,7 @@ public:
   */
 private:
   util::string::shared_ptr _schema;
+
 public:
 
   util::string::const_shared_ptr schema() const
@@ -521,12 +523,12 @@ public:
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
 
   typedef boost::unordered_map< std::string, user_var_entry *, util::insensitive_hash, util::insensitive_equal_to> UserVars;
+
 private:
   typedef std::pair< UserVars::iterator, UserVars::iterator > UserVarsRange;
   UserVars user_vars; /**< Hash of user variables defined during the session's lifetime */
 
 public:
-
   const UserVars &getUserVariables() const
   {
     return user_vars;
@@ -553,6 +555,7 @@ private:
   {
     assert(this->dbug_sentry == Session_SENTRY_MAGIC);
   }
+
 public:
   identifier::User::const_shared_ptr user() const
   {
@@ -614,8 +617,8 @@ private:
   boost::this_thread::disable_interruption *interrupt;
 
   internal::st_my_thread_var *mysys_var;
-public:
 
+public:
   boost_thread_shared_ptr &getThread()
   {
     return _thread;
@@ -1802,13 +1805,13 @@ public:
 
   drizzled::util::Storable *getProperty(const std::string &arg)
   {
-    return life_properties[arg];
+    return life_properties.getProperty(arg);
   }
 
   template<class T>
   bool setProperty(const std::string &arg, T *value)
   {
-    life_properties[arg]= value;
+    life_properties.setProperty(arg, value);
 
     return true;
   }
@@ -1870,7 +1873,7 @@ private:
 
   // This lives throughout the life of Session
   bool use_usage;
-  PropertyMap life_properties;
+  session::PropertyMap life_properties;
   std::vector<table::Singular *> temporary_shares;
   struct rusage usage;
 };

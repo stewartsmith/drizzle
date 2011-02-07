@@ -421,12 +421,6 @@ Session::~Session()
 
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(*this); 
-
-  for (PropertyMap::iterator iter= life_properties.begin(); iter != life_properties.end(); iter++)
-  {
-    boost::checked_delete((*iter).second);
-  }
-  life_properties.clear();
 }
 
 void Session::setClient(plugin::Client *client_arg)
