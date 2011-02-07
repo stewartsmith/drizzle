@@ -36,7 +36,7 @@ int JoinTable::joinReadConstTable(optimizer::Position *pos)
 
   if (this->type == AM_SYSTEM)
   {
-    if ((error=join_read_system(this)))
+    if ((error=this->joinReadSystem()))
     {						// Info for DESCRIBE
       this->info="const row not found";
       /* Mark for EXPLAIN that the row was not found */
@@ -148,6 +148,29 @@ void JoinTable::readCachedRecord()
     }
   }
   this->cache.pos=pos;
+}
+
+int JoinTable::joinReadSystem()
+{
+  Table *Table= this->table;
+  int error;
+  if (Table->status & STATUS_GARBAGE)		// If first read
+  {
+    if ((error=Table->cursor->read_first_row(table->getInsertRecord(),
+					   Table->getShare()->getPrimaryKey())))
+    {
+      if (error != HA_ERR_END_OF_FILE)
+        return Table->report_error(error);
+      this->table->mark_as_null_row();
+      Table->emptyRecord();			// Make empty record
+      return -1;
+    }
+    Table->storeRecord();
+  }
+  else if (!Table->status)			// Only happens with left join
+    Table->restoreRecord();			// restore old record
+  Table->null_row=0;
+  return Table->status ? -1 : 0;
 }
 
 } /* namespace drizzled */
