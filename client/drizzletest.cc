@@ -3522,25 +3522,7 @@ static void do_get_errcodes(struct st_command *command)
     }
     else
     {
-      long val;
-      char *start= p;
-      /* Check that the string passed to str2int only contain digits */
-      while (*p && p != end)
-      {
-        if (!my_isdigit(charset_info, *p))
-          die("Invalid argument to error: '%s' - "              \
-              "the errno may only consist of digits[0-9]",
-              command->first_argument);
-        p++;
-      }
-
-      /* Convert the sting to int */
-      istringstream buff(start);
-      if ((buff >> val).fail())
-        die("Invalid argument to error: '%s'", command->first_argument);
-
-      to->code.errnum= (uint32_t) val;
-      to->type= ERR_ERRNO;
+      die ("You must either use the SQLSTATE or built in drizzle error label, numbers are not accepted");
     }
     to++;
     count++;

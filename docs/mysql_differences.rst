@@ -167,7 +167,13 @@ or DATA_DICTIONARY views. All SHOW commands are aliases to INFORMATION_SCHEMA
 queries. Our INFORMATION_SCHEMA implementation does not have the drawbacks
 of the MySQL implementation.
 
+Here are some specific SHOW differences:
+
  * SHOW ENGINES: use DATA_DICTIONARY
+ * SHOW CREATE TABLE: specifies the AUTO_INCREMENT at CREATE/ALTER TABLE time,
+   not the current AUTO_INCREMENT
+ * SHOW TABLE STATUS: only shows tables in the current table cache
+ * SHOW [ENGINE] STATUS: use the DATA_DICTIONARY tables for that engine
 
 Removed commands
 ----------------

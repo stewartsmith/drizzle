@@ -29,8 +29,6 @@
 namespace drizzled
 {
 
-extern boost::filesystem::path full_data_home;
-
 DRIZZLED_API boost::filesystem::path& getFullDataHome();
 DRIZZLED_API boost::filesystem::path& getDataHome();
 DRIZZLED_API boost::filesystem::path& getDataHomeCatalog();

@@ -845,7 +845,7 @@ void InnodbTrxTool::Generator::populate_innodb_locks()
    bufend = innobase_convert_name(buf, sizeof(buf),
                                   row->lock_table,
                                   strlen(row->lock_table),
-                                  current_session, TRUE);
+                                  &getSession(), TRUE);
    push(bufend);
 
    if (row->lock_index != NULL)
@@ -853,7 +853,7 @@ void InnodbTrxTool::Generator::populate_innodb_locks()
      bufend = innobase_convert_name(buf, sizeof(buf),
                                     row->lock_index,
                                     strlen(row->lock_index),
-                                    current_session, FALSE);
+                                    &getSession(), FALSE);
      push(bufend);     
    }
    else 

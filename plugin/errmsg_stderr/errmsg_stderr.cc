@@ -47,8 +47,10 @@ public:
     /* a single write has a OS level thread lock
        so there is no need to have mutexes guarding this write,
     */
-    wrv= write(2, msgbuf, prv);
-    if ((wrv < 0) || (wrv != prv)) return true;
+    wrv= write(fileno(stderr), msgbuf, prv);
+    fputc('\n', stderr);
+    if ((wrv < 0) || (wrv != prv))
+      return true;
 
     return false;
   }

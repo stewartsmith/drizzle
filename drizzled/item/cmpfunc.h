@@ -74,9 +74,19 @@ class Arg_comparator: public memory::SqlAlloc
 public:
   DTCollation cmp_collation;
 
-  Arg_comparator(): session(0), a_cache(0), b_cache(0) {};
-  Arg_comparator(Item **a1, Item **a2): a(a1), b(a2), session(0),
-    a_cache(0), b_cache(0) {};
+  Arg_comparator():
+    session(current_session),
+    a_cache(0),
+    b_cache(0)
+  {};
+
+  Arg_comparator(Item **a1, Item **a2):
+    a(a1),
+    b(a2),
+    session(current_session),
+    a_cache(0),
+    b_cache(0)
+  {};
 
   int set_compare_func(Item_bool_func2 *owner, Item_result type);
   inline int set_compare_func(Item_bool_func2 *owner_arg)
@@ -937,7 +947,12 @@ class cmp_item :public memory::SqlAlloc
 {
 public:
   const CHARSET_INFO *cmp_charset;
-  cmp_item() { cmp_charset= &my_charset_bin; }
+
+  cmp_item()
+  {
+    cmp_charset= &my_charset_bin;
+  }
+
   virtual ~cmp_item() {}
   virtual void store_value(Item *item)= 0;
   virtual int cmp(Item *item)= 0;

@@ -157,7 +157,7 @@ drop table if exists A;
 
 create table A (c int);
 insert into A (c) values (0);
---error 0,ER_LOCK_DEADLOCK,ER_UPDATE_TABLE_USED
+--error EE_OK,ER_LOCK_DEADLOCK,ER_UPDATE_TABLE_USED
 create table a as select * from A;
 drop table A;
 

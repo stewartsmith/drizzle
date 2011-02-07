@@ -52,7 +52,6 @@
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
-#include "mysql_addons.h"
 #include "create_replication.h"
 #include "read_replication.h"
 #include "handler0vars.h"

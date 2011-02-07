@@ -32,14 +32,25 @@ namespace drizzled
 /**
   Numeric fields base class constructor.
 */
-Field_num::Field_num(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
-                     unsigned char null_bit_arg, utype unireg_check_arg,
+Field_num::Field_num(unsigned char *ptr_arg,
+                     uint32_t len_arg,
+                     unsigned char *null_ptr_arg,
+                     unsigned char null_bit_arg,
+                     utype unireg_check_arg,
                      const char *field_name_arg,
-                     uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
-  :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-         unireg_check_arg, field_name_arg),
-  dec(dec_arg),decimal_precision(zero_arg), unsigned_flag(unsigned_arg)
-{
+                     uint8_t dec_arg,
+                     bool zero_arg,
+                     bool unsigned_arg) :
+  Field(ptr_arg,
+        len_arg,
+        null_ptr_arg,
+        null_bit_arg,
+        unireg_check_arg,
+        field_name_arg),
+  dec(dec_arg),
+  decimal_precision(zero_arg),
+  unsigned_flag(unsigned_arg)
+  {
 }
 
 
