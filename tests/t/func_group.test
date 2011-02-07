@@ -120,7 +120,7 @@ select * from t1;
 # The following returned NULL in 4.0.10
 select min(a2) from t1;
 select max(t1.a1), max(t2.a2) from t1, t2;
-select max(t1.a1) from t1, t2;
+select max(t1.a1) from t1, t2 where t1.a1 > 0;
 select max(t2.a2), max(t1.a1) from t1, t2;
 
 explain select min(a2) from t1;
@@ -129,7 +129,7 @@ explain select max(t1.a1), max(t2.a2) from t1, t2;
 insert into t2 values('AAA', 10, 0.5);
 insert into t2 values('BBB', 20, 1.0);
 --sorted_result
-select t1.a1, t1.a2, t2.a1, t2.a2 from t1,t2;
+select t1.a1, t1.a2, t2.a1, t2.a2 from t1,t2 where t1.a1 > 0;
 
 select max(t1.a1), max(t2.a1) from t1, t2 where t2.a2=9;
 select max(t2.a1), max(t1.a1) from t1, t2 where t2.a2=9;

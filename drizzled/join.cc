@@ -4624,6 +4624,12 @@ static bool make_join_select(Join *join,
           join->full_join= 1;
       }
 
+      if (join->full_join and not session->lex->current_select->is_cross and not cond)
+      {
+        my_error(ER_CARTESIAN_JOIN_ATTEMPTED, MYF(0));
+        return 1;
+      }
+
       tmp= NULL;
       if (cond)
         tmp= make_cond_for_table(cond,used_tables,current_map, 0);
@@ -5878,6 +5884,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
       s->quick=select->quick;
       s->needed_reg=select->needed_reg;
       select->quick=0;
+
       if (records == 0 && s->table->reginfo.impossible_range)
       {
         /*

@@ -504,7 +504,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_USE_SQL_BIG_RESULT, N_("Temporary table too large, rerun with SQL_BIG_RESULT."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_ENGINE_OPTION, N_("Unknown table engine option key/pair %s = %s."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_SCHEMA_OPTION, N_("Unknown schema engine option key/pair %s = %s."));
-
+  ADD_ERROR_MESSAGE(ER_CARTESIAN_JOIN_ATTEMPTED, N_("Implicit cartesian join attempted."));
   ADD_ERROR_MESSAGE(ER_ADMIN_ACCESS, N_("Admin access not allowed from this username/IP address."));
 
   // User lock/barrier error messages

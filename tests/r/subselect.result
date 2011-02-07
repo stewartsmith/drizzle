@@ -4524,17 +4524,9 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 SELECT * FROM t1 JOIN ((t1 t1a)) t1a ON 1;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 't1a ON 1' at line 1
 SELECT * FROM t1 JOIN  (t1 t1a)  ON 1;
-a	a
-1	1
-1	2
-2	1
-2	2
+ERROR HY000: Implicit cartesian join attempted.
 SELECT * FROM t1 JOIN ((t1 t1a)) ON 1;
-a	a
-1	1
-2	1
-1	2
-2	2
+ERROR HY000: Implicit cartesian join attempted.
 SELECT * FROM (t1 t1a);
 a
 1

@@ -3524,7 +3524,11 @@ join_table:
 normal_join:
           JOIN_SYM {}
         | INNER_SYM JOIN_SYM {}
-        | CROSS JOIN_SYM { Lex->is_cross= true; }
+        | CROSS JOIN_SYM
+          {
+            Lex->is_cross= true;
+            Lex->current_select->is_cross= true;
+          }
         ;
 
 /*
