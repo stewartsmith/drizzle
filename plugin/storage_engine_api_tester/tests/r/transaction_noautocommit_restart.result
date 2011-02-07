@@ -6,6 +6,6 @@ select * from t1;
 a
 START TRANSACTION;
 Warnings:
-Warning	1747	There is already a transaction in progress
+Warning	1746	There is already a transaction in progress
 ROLLBACK;
 drop table t1;
