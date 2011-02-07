@@ -24,7 +24,6 @@
 #include "drizzled/sql_locale.h"
 #include "drizzled/resource_context.h"
 #include "drizzled/cursor.h"
-#include "drizzled/current_session.h"
 #include "drizzled/sql_error.h"
 #include "drizzled/file_exchange.h"
 #include "drizzled/select_result_interceptor.h"
