@@ -748,7 +748,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     plugin::QueryRewriter::rewriteQuery(*_schema, *new_query);
   }
   query.reset(new_query);
-  _state.reset(new State(in_packet, in_packet_length));
+  _state.reset(new session::State(in_packet, in_packet_length));
 
   return true;
 }

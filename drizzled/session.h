@@ -55,6 +55,7 @@
 #include "drizzled/catalog/instance.h"
 #include "drizzled/catalog/local.h"
 
+#include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
 
 #include <boost/thread/thread.hpp>
@@ -455,54 +456,12 @@ public:
     return to_return;
   }
 
-  class State {
-    std::vector <char> _query;
-
-  public:
-    typedef boost::shared_ptr<State> const_shared_ptr;
-
-    State(const char *in_packet, size_t in_packet_length)
-    {
-      if (in_packet_length)
-      {
-        size_t minimum= std::min(in_packet_length, static_cast<size_t>(PROCESS_LIST_WIDTH));
-        _query.resize(minimum + 1);
-        memcpy(&_query[0], in_packet, minimum);
-      }
-      else
-      {
-        _query.resize(0);
-      }
-    }
-
-    const char *query() const
-    {
-      if (_query.size())
-        return &_query[0];
-
-      return "";
-    }
-
-    const char *query(size_t &size) const
-    {
-      if (_query.size())
-      {
-        size= _query.size() -1;
-        return &_query[0];
-      }
-
-      size= 0;
-      return "";
-    }
-  protected:
-    friend class Session;
-    typedef boost::shared_ptr<State> shared_ptr;
-  };
 private:
-  State::shared_ptr  _state; 
+  session::State::shared_ptr  _state; 
+
 public:
 
-  State::const_shared_ptr state()
+  session::State::const_shared_ptr state()
   {
     return _state;
   }
