@@ -436,9 +436,9 @@ select * from t1;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
--- error 1054
+--error ER_BAD_FIELD_ERROR
 create table t1 select _latin1"test" union select _latin1"testt" ;
--- error 1054
+--error ER_BAD_FIELD_ERROR
 create table t1 select _utf8"test" union select _utf8"testt" ;
 create table t1 select "test" union select "testt" ;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -748,7 +748,7 @@ select concat('value is: ', @val) union select 'some text';
 select concat('a', 'b' collate utf8_bin);
 create table t1 (foo varchar(100)) collate=utf8_bin;
 insert into t1 (foo) values ("foo");
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 select foo from t1 union select 'bar' as foo from dual;
 select foo from t1 union select 'bar' as foo;
 drop table t1;

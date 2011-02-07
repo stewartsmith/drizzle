@@ -42,7 +42,6 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
-#include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/table.h"
 #include "drizzled/table/shell.h"
@@ -218,13 +217,13 @@ static Item *default_value_item(enum_field_types field_type,
  */
 bool TableShare::fieldInPrimaryKey(Field *in_field) const
 {
-  assert(table_proto != NULL);
+  assert(getTableMessage());
 
-  size_t num_indexes= table_proto->indexes_size();
+  size_t num_indexes= getTableMessage()->indexes_size();
 
   for (size_t x= 0; x < num_indexes; ++x)
   {
-    const message::Table::Index &index= table_proto->indexes(x);
+    const message::Table::Index &index= getTableMessage()->indexes(x);
     if (index.is_primary())
     {
       size_t num_parts= index.index_part_size();
@@ -245,13 +244,17 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(type_arg),
   _ref_count(0),
@@ -279,19 +282,11 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
-
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   if (type_arg == message::Table::INTERNAL)
   {
     identifier::Table::build_tmptable_filename(private_key_for_cache.vectorPtr());
@@ -309,14 +304,19 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(message::Table::INTERNAL),
   _ref_count(0),
@@ -344,17 +344,12 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   assert(identifier.getKey() == key);
-
-  table_charset= 0;
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
 
   private_key_for_cache= key;
 
@@ -384,14 +379,19 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(identifier.getType()),
   _ref_count(0),
@@ -419,18 +419,11 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   private_key_for_cache= identifier.getKey();
   assert(identifier.getPath().size()); // Since we are doing a create table, this should be a positive value
   private_normalized_path.resize(identifier.getPath().size() + 1);
@@ -462,14 +455,19 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  table_charset(0),
   all_set(),
+  db(NULL_LEX_STRING),
+  table_name(NULL_LEX_STRING),
+  path(NULL_LEX_STRING),
+  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
   max_rows(0),
-  table_proto(NULL),
+  _table_message(NULL),
   storage_engine(NULL),
   tmp_table(type_arg),
   _ref_count(0),
@@ -497,18 +495,11 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   error(0),
   open_errno(0),
   errarg(0),
-  blob_ptr_size(0),
+  blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
-  table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
-  memset(&path, 0, sizeof(LEX_STRING));
-  memset(&normalized_path, 0, sizeof(LEX_STRING));
-
   char *path_buff;
   std::string _path;
 
@@ -565,11 +556,6 @@ TableShare::~TableShare()
 {
   storage_engine= NULL;
 
-  delete table_proto;
-  table_proto= NULL;
-
-  plugin::EventObserver::deregisterTableEvents(*this);
-
   mem_root.free_root(MYF(0));                 // Free's share
 }
 
@@ -586,13 +572,13 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
 
-  table_proto->set_name(identifier_arg.getTableName());
-  table_proto->set_schema(identifier_arg.getSchemaName());
+  getTableMessage()->set_name(identifier_arg.getTableName());
+  getTableMessage()->set_schema(identifier_arg.getSchemaName());
 }
 
-int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
+bool TableShare::parse_table_proto(Session& session, message::Table &table)
 {
-  int local_error= 0;
+  drizzled::error_t local_error= EE_OK;
 
   if (! table.IsInitialized())
   {
@@ -603,7 +589,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
-  setTableProto(new(nothrow) message::Table(table));
+  setTableMessage(table);
 
   storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
   assert(storage_engine); // We use an assert() here because we should never get this far and still have no suitable engine.
@@ -629,7 +615,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   table_charset= get_charset(table_options.collation_id());
 
-  if (! table_charset)
+  if (not table_charset)
   {
     my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, MYF(0),
              table_options.collation().c_str(),
@@ -639,8 +625,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   }
 
   db_record_offset= 1;
-
-  blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
 
   keys= table.indexes_size();
 
@@ -1073,9 +1057,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         if (fo.scale() > DECIMAL_MAX_SCALE)
         {
-          local_error= 4;
+          local_error= ER_NOT_FORM_FILE;
 
-          return local_error;
+          return true;
         }
         decimals= static_cast<uint8_t>(fo.scale());
       }
@@ -1094,8 +1078,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                         &pfield.options().default_bin_value());
     }
 
-
-    blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
@@ -1131,9 +1113,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
             decimals != NOT_FIXED_DEC)
         {
           my_error(ER_M_BIGGER_THAN_D, MYF(0), pfield.name().c_str());
-          local_error= 1;
-
-          return local_error;
+          local_error= ER_M_BIGGER_THAN_D;
+          return true;
         }
         break;
       }
@@ -1223,7 +1204,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                          charset,
                          MTYP_TYPENR(unireg_type),
                          ((field_type == DRIZZLE_TYPE_ENUM) ?  &intervals[interval_nr++] : (TYPELIB*) 0),
-                         getTableProto()->field(fieldnr).name().c_str());
+                         getTableMessage()->field(fieldnr).name().c_str());
 
     _fields[fieldnr]= f;
 
@@ -1272,9 +1253,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       if (res != 0 && res != 3) /* @TODO Huh? */
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
-        local_error= 1;
+        local_error= ER_INVALID_DEFAULT;
 
-        return local_error;
+        return true;
       }
     }
     else if (f->real_type() == DRIZZLE_TYPE_ENUM && (f->flags & NOT_NULL_FLAG))
@@ -1486,9 +1467,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                             &next_number_keypart)) < 0)
     {
       /* Wrong field definition */
-      local_error= 4;
+      local_error= ER_NOT_FORM_FILE;
 
-      return local_error;
+      return true;
     }
     else
     {
@@ -1513,24 +1494,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   all_set.resize(_field_size);
   all_set.set();
 
-  return local_error;
+  return local_error != EE_OK;
 }
-
-int TableShare::parse_table_proto(Session& session, message::Table &table)
-{
-  int local_error= inner_parse_table_proto(session, table);
-
-  if (not local_error)
-    return 0;
-
-  error= local_error;
-  open_errno= errno;
-  errarg= 0;
-  open_table_error(local_error, open_errno, 0);
-
-  return local_error;
-}
-
 
 /*
   Read table definition from a binary / text based .frm cursor
@@ -1558,46 +1523,35 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
 
 int TableShare::open_table_def(Session& session, const identifier::Table &identifier)
 {
-  int local_error;
-  bool error_given;
+  drizzled::error_t local_error= EE_OK;
 
-  local_error= 1;
-  error_given= 0;
+  message::table::shared_ptr table= plugin::StorageEngine::getTableMessage(session, identifier, local_error);
 
-  message::table::shared_ptr table;
-
-  local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
-
-  do {
-    if (local_error != EEXIST)
-    {
-      if (local_error > 0)
-      {
-        errno= local_error;
-        local_error= 1;
-      }
-      else
-      {
-        if (not table->IsInitialized())
-        {
-          local_error= 4;
-        }
-      }
-      break;
-    }
-
-    local_error= parse_table_proto(session, *table);
-
-    setTableCategory(TABLE_CATEGORY_USER);
-  } while (0);
-
-  if (local_error && !error_given)
+  if (table and table->IsInitialized())
   {
-    error= local_error;
-    open_table_error(error, (open_errno= errno), 0);
+    if (parse_table_proto(session, *table))
+    {
+      local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
+      my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
+    }
+    else
+    {
+      setTableCategory(TABLE_CATEGORY_USER);
+      local_error= EE_OK;
+    }
+  }
+  else if (table and not table->IsInitialized())
+  {
+    local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
+    my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
+  }
+  else
+  {
+    local_error= ER_TABLE_UNKNOWN;
+    my_error(ER_TABLE_UNKNOWN, identifier);
   }
 
-  return(error);
+  return static_cast<int>(local_error);
 }
 
 
@@ -1851,7 +1805,8 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 1:
     if (db_errno == ENOENT)
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0), db.str, table_name.str);
+      identifier::Table identifier(db.str, table_name.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
     else
     {
@@ -1982,21 +1937,19 @@ Field *TableShare::make_field(const message::Table::Field &,
                                       field_charset);
   case DRIZZLE_TYPE_BLOB:
     return new (&mem_root) Field_blob(ptr,
-                                 null_pos,
-                                 null_bit,
-                                 field_name,
-                                 this,
-                                 field_charset);
+                                      null_pos,
+                                      null_bit,
+                                      field_name,
+                                      this,
+                                      field_charset);
   case DRIZZLE_TYPE_DECIMAL:
     return new (&mem_root) Field_decimal(ptr,
-                                    field_length,
-                                    null_pos,
-                                    null_bit,
-                                    unireg_check,
-                                    field_name,
-                                    decimals,
-                                    false,
-                                    false /* is_unsigned */);
+                                         field_length,
+                                         null_pos,
+                                         null_bit,
+                                         unireg_check,
+                                         field_name,
+                                         decimals);
   case DRIZZLE_TYPE_DOUBLE:
     return new (&mem_root) Field_double(ptr,
                                    field_length,

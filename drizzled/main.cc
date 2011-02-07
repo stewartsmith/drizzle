@@ -93,19 +93,18 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       session->is_fatal_error= 1;
 
     /*
-      TODO: There are two exceptions mechanism (Session and sp_rcontext),
+      @TODO There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
     */
-    if (session->handle_error(error, str,
-                          DRIZZLE_ERROR::WARN_LEVEL_ERROR))
-      return;;
+    if (session->handle_error(error, str, DRIZZLE_ERROR::WARN_LEVEL_ERROR))
+      return;
 
     /*
       session->lex->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
     if (! (session->lex->current_select &&
-        session->lex->current_select->no_error && !session->is_fatal_error))
+           session->lex->current_select->no_error && !session->is_fatal_error))
     {
       if (! session->main_da.is_error())            // Return only first message
       {
@@ -128,13 +127,13 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       session->no_warnings_for_error= true;
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
       session->no_warnings_for_error= false;
-      }
     }
+  }
 
-    if (not session || MyFlags & ME_NOREFRESH)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
-    }
+  if (not session || MyFlags & ME_NOREFRESH)
+  {
+    errmsg_printf(error::ERROR, "%s: %s",internal::my_progname,str);
+  }
 }
 
 static void init_signals(void)
@@ -165,7 +164,7 @@ static void init_signals(void)
     struct rlimit rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN,
+        errmsg_printf(error::WARN,
                       _("setrlimit could not change the size of core files "
                         "to 'infinity';  We may not be able to generate a "
                         "core file on signals"));
@@ -265,7 +264,7 @@ int main(int argc, char **argv)
   {
     if (chdir(getDataHome().file_string().c_str()))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Data directory %s does not exist\n"),
                     getDataHome().file_string().c_str());
       unireg_abort(1);
@@ -276,13 +275,15 @@ int main(int argc, char **argv)
     }
     if (chdir("local"))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Local catalog %s/local does not exist\n"),
                     getDataHome().file_string().c_str());
       unireg_abort(1);
     }
 
+    fs::path &full_data_home= getFullDataHome();
     full_data_home= fs::system_complete(getDataHome());
+    std::cerr << "home " << full_data_home << std::endl;
   }
 
 
@@ -338,7 +339,7 @@ int main(int argc, char **argv)
     unireg_abort(1);
   }
 
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
+  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname,
                 PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
 

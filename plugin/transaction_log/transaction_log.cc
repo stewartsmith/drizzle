@@ -211,7 +211,7 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
   {
     char errmsg[STRERROR_MAX];
     strerror_r(errno, errmsg, sizeof(errmsg));
-    errmsg_printf(ERRMSG_LVL_ERROR, 
+    errmsg_printf(error::ERROR, 
                   _("Failed to write full size of log entry.  Tried to write %" PRId64
                     " bytes at offset %" PRId64 ", but only wrote %" PRId32 " bytes.  Error: %s\n"), 
                   static_cast<int64_t>(data_length),
@@ -230,12 +230,9 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
 
   if (unlikely(error_code != 0))
   {
-    char errmsg[STRERROR_MAX];
-    strerror_r(errno, errmsg, sizeof(errmsg));
-    errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to sync log file. Got error: %s\n"), 
-                  errmsg);
+    sql_perror(_("Failed to sync log file."));
   }
+
   return cur_offset;
 }
 

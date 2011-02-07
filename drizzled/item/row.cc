@@ -188,7 +188,7 @@ Item *Item_row::transform(Item_transformer transformer, unsigned char *arg)
       change records at each execution.
     */
     if (items[i] != new_item)
-      current_session->change_item_tree(&items[i], new_item);
+      getSession().change_item_tree(&items[i], new_item);
   }
   return (this->*transformer)(arg);
 }
