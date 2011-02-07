@@ -44,6 +44,8 @@ COMMIT STATEMENT
 In Transaction
 ROLLBACK
 ::SEAPITester()
+BEGIN
+In Transaction
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
@@ -91,6 +93,8 @@ COMMIT STATEMENT
 In Transaction
 ROLLBACK
 ::SEAPITester()
+BEGIN
+In Transaction
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
@@ -109,6 +113,8 @@ COMMIT STATEMENT
 In Transaction
 COMMIT
 ::SEAPITester()
+BEGIN
+In Transaction
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0

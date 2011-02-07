@@ -57,6 +57,13 @@ public:
    */
   virtual bool execute()= 0;
 
+  /* True if can be in transaction. Currently only DDL is not.
+     This should go away when DDL commands are within transactions. */
+  virtual bool isTransactional()
+  {
+    return true;
+  }
+
   Session *getSession()
   {
     return _session;

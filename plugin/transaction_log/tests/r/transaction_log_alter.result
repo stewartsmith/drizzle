@@ -30,6 +30,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1_new_name;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -127,6 +128,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -224,6 +226,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -262,6 +265,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t2;
 Table	Create Table
@@ -307,6 +311,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -390,6 +395,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -426,6 +432,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -462,6 +469,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -498,6 +506,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -534,6 +543,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -570,6 +580,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -653,6 +664,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -691,6 +703,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 ENABLE KEYS ;
 Warnings:
@@ -723,6 +736,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -759,6 +773,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 DROP INDEX b_key;
 Check transaction_log_entries
@@ -789,6 +804,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -825,6 +841,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 DROP INDEX b_key;
 Check transaction_log_entries
@@ -855,6 +872,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -951,6 +969,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1034,6 +1053,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1070,6 +1090,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1107,6 +1128,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1150,6 +1172,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1193,6 +1216,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1291,6 +1315,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1335,6 +1360,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1437,6 +1463,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 CREATE TABLE t2(a INT NOT NULL, b INT , PRIMARY KEY(a), KEY b_key (b));
 ALTER TABLE t2 ADD CONSTRAINT fk_constraint_t2 FOREIGN KEY(b) REFERENCES t1(b) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1468,6 +1495,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t2 DROP FOREIGN KEY fk_constraint_t2 ;
 Check transaction_log_entries
@@ -1498,6 +1526,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;

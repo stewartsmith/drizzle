@@ -36,6 +36,10 @@ public:
   SetOption(Session *in_session);
 
   bool execute();
+  virtual bool isTransactional()
+  {
+    return false;
+  }
   bool one_shot_set;
 };
 

@@ -45,6 +45,11 @@ public:
   }
 
   bool execute();
+  bool isTransactional()
+  {
+    return false;
+  }
+
   virtual bool executeInner(identifier::Table::const_reference);
 
 public:

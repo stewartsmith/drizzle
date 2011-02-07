@@ -40,6 +40,10 @@ public:
   }
 
   bool execute();
+  bool isTransactional()
+  {
+    return false;
+  }
   message::Table create_table_proto;
   AlterInfo alter_info;
 };
