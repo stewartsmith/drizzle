@@ -1397,6 +1397,7 @@ void Select_Lex::init_select()
   select_limit= 0;      /* denotes the default limit = HA_POS_ERROR */
   offset_limit= 0;      /* denotes the default offset = 0 */
   with_sum_func= 0;
+  is_cross= false;
   is_correlated= 0;
   cur_pos_in_select_list= UNDEF_POS;
   non_agg_fields.empty();

@@ -10,7 +10,7 @@ select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME;
 
 create table a ( a int);
 create table b ( b int);
-select * FROM a,b;
+select * FROM a CROSS JOIN b;
 --replace_column 1 # 4 # 5 #  6 # 8 # 9 #
 select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME;
 

@@ -6,7 +6,7 @@ KEY (a),
 KEY (b)
 );
 INSERT INTO t1 VALUES ('A','B'),('b','A'),('C','c'),('D','E'),('a','a');
-select * from t1,t1 as t2;
+select * from t1 CROSS JOIN t1 as t2;
 a	b	a	b
 A	B	A	B
 A	B	C	c

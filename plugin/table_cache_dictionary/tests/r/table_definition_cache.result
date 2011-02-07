@@ -16,7 +16,7 @@ TABLE_SCHEMA	TABLE_NAME	VERSION	TABLE_COUNT	IS_NAME_LOCKED
 #	table_definition_cache	#	#	#
 create table a ( a int);
 create table b ( b int);
-select * FROM a,b;
+select * FROM a CROSS JOIN b;
 a	b
 select * FROM data_dictionary.TABLE_DEFINITION_CACHE  ORDER BY TABLE_SCHEMA, TABLE_NAME;
 TABLE_SCHEMA	TABLE_NAME	VERSION	TABLE_COUNT	IS_NAME_LOCKED

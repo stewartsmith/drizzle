@@ -623,11 +623,11 @@ DROP TABLE bug25126;
 
 CREATE TABLE t1 (a int);
 
-SELECT p.a AS val, q.a AS val1 FROM t1 p, t1 q ORDER BY val > 1;
+SELECT p.a AS val, q.a AS val1 FROM t1 p CROSS JOIN t1 q ORDER BY val > 1;
 --error ER_NON_UNIQ_ERROR
-SELECT p.a AS val, q.a AS val FROM t1 p, t1 q ORDER BY val;
+SELECT p.a AS val, q.a AS val FROM t1 p CROSS JOIN t1 q ORDER BY val;
 --error ER_NON_UNIQ_ERROR
-SELECT p.a AS val, q.a AS val FROM t1 p, t1 q ORDER BY val > 1;
+SELECT p.a AS val, q.a AS val FROM t1 p CROSS JOIN t1 q ORDER BY val > 1;
 
 DROP TABLE t1;
 

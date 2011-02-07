@@ -81,7 +81,7 @@ select * from
 where t1.a < 5;
 
 # Try I2O orders
-insert into t1 select (A.a + 10 * B.a),1 from t0 A, t0 B;
+insert into t1 select (A.a + 10 * B.a),1 from t0 A CROSS JOIN t0 B;
 explain extended select * from t1 where a in (select pk from t10 where pk<3);
 
 drop table t0, t1;
