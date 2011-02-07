@@ -41,8 +41,6 @@ Created July 17, 2007 Vasil Dimov
 # include <mysql/plugin.h>
 #endif
 
-#include "mysql_addons.h"
-
 #include "buf0buf.h"
 #include "dict0dict.h"
 #include "ha0storage.h"
@@ -63,6 +61,8 @@ Created July 17, 2007 Vasil Dimov
 #include "trx0trx.h"
 #include "ut0mem.h"
 #include "ut0ut.h"
+
+#include <drizzled/session.h>
 
 /** Initial number of rows in the table cache */
 #define TABLE_CACHE_INITIAL_ROWSNUM	1024
@@ -509,8 +509,8 @@ fill_trx_row(
 		goto thd_done;
 	}
 
-	row->trx_mysql_thread_id = session_get_thread_id(trx->mysql_thd);
-	stmt = innobase_get_stmt(trx->mysql_thd, &stmt_len);
+	row->trx_mysql_thread_id = trx->session()->getSessionId();
+        stmt= trx->mysql_thd->getQueryStringCopy(stmt_len);
 
 	if (stmt != NULL) {
 

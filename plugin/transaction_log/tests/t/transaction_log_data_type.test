@@ -188,7 +188,7 @@ INSERT INTO t1 (b) VALUES(100);
 --echo
 
 --echo Testing misc DECIMAL simple2
---ERROR 1265 
+--ERROR ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 (b) VALUES(.0898);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -238,7 +238,7 @@ INSERT INTO t1 (b) VALUES(NULL);
 --echo
 
 --echo Testing BAD INPUT FLOAT simple
---ERROR 1265
+--ERROR ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 (b) VALUES('abbazabba');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -306,7 +306,7 @@ INSERT INTO t1 (b) VALUES(5);
 --echo
 
 --echo Testing BAD INPUT ENUM simple
---ERROR 1691 
+--ERROR ER_INVALID_ENUM_VALUE
 INSERT INTO t1 (b) VALUES(6);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -618,7 +618,7 @@ INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999999999999999999999
 --echo
 
 --echo Testing MAX DECIMAL + 1
---ERROR 1264
+--ERROR ER_WARN_DATA_OUT_OF_RANGE
 INSERT INTO t1 (b) VALUES (999999999999999999999999999999999999999999999999999999999999999990);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -645,7 +645,7 @@ INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999.99999999999999999
 --echo
 
 --echo Too long value
---ERROR 1265
+--ERROR ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999.9999999999999999999999999999991);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
