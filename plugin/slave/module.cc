@@ -27,8 +27,19 @@ using namespace drizzled;
 static int init(module::Context &context)
 {
   context.add(new slave::Applier);
-
   return 0;
 }
 
-DRIZZLE_PLUGIN(init, NULL, NULL);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "Replication Slave",
+  "1.0",
+  "David Shrewsbury",
+  "Implements Drizzle replication slave.",
+  PLUGIN_LICENSE_GPL,
+  init,
+  "multi_thread",      /* depends */
+  NULL                 /* config options */
+}
+DRIZZLE_DECLARE_PLUGIN_END;
