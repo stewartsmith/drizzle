@@ -60,12 +60,16 @@
 #include <drizzled/system_variables.h>
 #include <drizzled/copy_info.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/ha_data.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/make_shared.hpp>
+
+#include <drizzled/lex_column.h>
+#include "drizzled/sql_lex.h"
 
 #include "drizzled/visibility.h"
 
@@ -88,15 +92,9 @@ class Statement;
 class Resultset;
 }
 
-namespace internal
-{
-struct st_my_thread_var;
-}
+namespace internal { struct st_my_thread_var; }
 
-namespace table
-{
-class Placeholder;
-}
+namespace table { class Placeholder; }
 
 class Lex_input_stream;
 class user_var_entry;
@@ -113,14 +111,6 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
 
-} /* namespace drizzled */
-
-/** @TODO why is this in the middle of the file */
-#include <drizzled/lex_column.h>
-
-namespace drizzled
-{
-
 class select_result;
 class Time_zone;
 
@@ -129,47 +119,7 @@ class Time_zone;
 
 extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
-} /* namespace drizzled */
-
-#include "drizzled/sql_lex.h"
-
-namespace drizzled
-{
-
 DRIZZLED_API void mark_transaction_to_rollback(Session *session, bool all);
-
-/**
-  Storage engine specific thread local data.
-*/
-struct Ha_data
-{
-  /**
-    Storage engine specific thread local data.
-    Lifetime: one user connection.
-  */
-  void *ha_ptr;
-  /**
-   * Resource contexts for both the "statement" and "normal"
-   * transactions.
-   *
-   * Resource context at index 0:
-   *
-   * Life time: one statement within a transaction. If @@autocommit is
-   * on, also represents the entire transaction.
-   *
-   * Resource context at index 1:
-   *
-   * Life time: one transaction within a connection. 
-   *
-   * @note
-   *
-   * If the storage engine does not participate in a transaction, 
-   * there will not be a resource context.
-   */
-  drizzled::ResourceContext resource_context[2];
-
-  Ha_data() :ha_ptr(NULL) {}
-};
 
 /**
  * Represents a client connection to the database server.
@@ -1678,6 +1628,7 @@ private:
 
     return true;
   }
+
 public:
 
   void setUsage(bool arg)
