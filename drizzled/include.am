@@ -394,6 +394,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/select_union.h \
 			      drizzled/session.h \
 			      drizzled/session/cache.h \
+			      drizzled/session/table_messages.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
 			      drizzled/show_type.h \
@@ -790,6 +791,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/resource_context.cc \
 			   drizzled/session.cc \
 			   drizzled/session/cache.cc \
+			   drizzled/session/table_messages.cc \
 			   drizzled/set_var.cc \
 			   drizzled/show.cc \
 			   drizzled/signal_handler.cc \

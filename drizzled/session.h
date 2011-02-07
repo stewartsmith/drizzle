@@ -17,8 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
@@ -57,7 +55,7 @@
 #include "drizzled/catalog/instance.h"
 #include "drizzled/catalog/local.h"
 
-#include <boost/unordered_map.hpp>
+#include <drizzled/session/table_messages.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -1827,25 +1825,11 @@ public:
   table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
   bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
-  typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
-
-  class TableMessages
-  {
-    TableMessageCache table_message_cache;
-
-  public:
-    bool storeTableMessage(const identifier::Table &identifier, message::Table &table_message);
-    bool removeTableMessage(const identifier::Table &identifier);
-    bool getTableMessage(const identifier::Table &identifier, message::Table &table_message);
-    bool doesTableMessageExist(const identifier::Table &identifier);
-    bool renameTableMessage(const identifier::Table &from, const identifier::Table &to);
-  };
-
 private:
-  TableMessages _table_message_cache;
+  session::TableMessages _table_message_cache;
 
 public:
-  TableMessages &getMessageCache()
+  session::TableMessages &getMessageCache()
   {
     return _table_message_cache;
   }
