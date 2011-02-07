@@ -5,11 +5,11 @@
 --disable_warnings
 drop table if exists t1;
 --enable_warnings
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 insert into t1 values(1);
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 delete from t1;
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 update t1 set a=1;
 create table t1 (a int);
 --error ER_BAD_FIELD_ERROR
@@ -18,7 +18,7 @@ select count(test.t1.b) from t1;
 select count(not_existing_database.t1) from t1;
 --error ER_BAD_FIELD_ERROR
 select count(not_existing_database.t1.a) from t1;
---error ER_DBACCESS_DENIED_ERROR, ER_NO_SUCH_TABLE
+--error ER_DBACCESS_DENIED_ERROR, ER_TABLE_UNKNOWN
 select count(not_existing_database.t1.a) from not_existing_database.t1;
 --error ER_BAD_FIELD_ERROR
 select 1 from t1 order by 2;

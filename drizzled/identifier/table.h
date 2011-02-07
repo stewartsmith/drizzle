@@ -118,6 +118,7 @@ private:
 
   Type type;
   std::string path;
+  std::string key_path;
   std::string table_name;
   Key key;
   size_t hash_value;
@@ -203,6 +204,7 @@ public:
   virtual void getSQLPath(std::string &sql_path) const;
 
   virtual const std::string &getPath() const;
+  const std::string &getKeyPath() const;
 
   void setPath(const std::string &new_path)
   {

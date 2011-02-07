@@ -330,7 +330,6 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_WRONG_VALUE_COUNT_ON_ROW, N_("Column count doesn't match value count at row %ld"));
   ADD_ERROR_MESSAGE(ER_CANT_REOPEN_TABLE, N_("Can't reopen table: '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_MIX_OF_GROUP_FUNC_AND_FIELDS, N_("Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is illegal if there is no GROUP BY clause"));
-  ADD_ERROR_MESSAGE(ER_NO_SUCH_TABLE, N_("Table '%-.192s.%-.192s' doesn't exist"));
   ADD_ERROR_MESSAGE(ER_SYNTAX_ERROR, N_("You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use"));
   ADD_ERROR_MESSAGE(ER_NET_PACKET_TOO_LARGE, N_("Got a packet bigger than 'max_allowed_packet' bytes"));
   ADD_ERROR_MESSAGE(ER_NET_PACKETS_OUT_OF_ORDER, N_("Got packets out of order"));
@@ -581,6 +580,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_CORRUPT_CATALOG_DEFINITION, N_("Corrupt or invalid catalog definition for '%s' : '%s'."));
   ADD_ERROR_MESSAGE(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name."));
   ADD_ERROR_MESSAGE(ER_USE_DATA_DICTIONARY, N_("Engine status is now stored in the data_dictionary tables, please use these instead."));
+  ADD_ERROR_MESSAGE(ER_TRANSACTION_ALREADY_STARTED, N_("There is already a transaction in progress"));
 
 }
 

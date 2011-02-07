@@ -1158,7 +1158,7 @@ ab
 create table t1 (foo varchar(100)) collate=utf8_bin;
 insert into t1 (foo) values ("foo");
 select foo from t1 union select 'bar' as foo from dual;
-ERROR 42S02: Table 'test.dual' doesn't exist
+ERROR 42S02: Unknown table 'test.dual'
 select foo from t1 union select 'bar' as foo;
 foo
 foo

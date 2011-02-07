@@ -541,6 +541,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/create_field.cc \
 			   drizzled/current_session.cc \
 			   drizzled/cursor.cc \
+			   drizzled/data_home.cc \
 			   drizzled/debug.cc \
 			   drizzled/definition/cache.cc \
 			   drizzled/diagnostics_area.cc \

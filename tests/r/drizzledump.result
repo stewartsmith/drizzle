@@ -898,7 +898,7 @@ CREATE TABLE `t\1` (
   PRIMARY KEY (`a`)
 ) ENGINE='InnoDB' COLLATE='utf8_general_ci';
 
-Error executing query: Table 'mysqldump_test_db.t\1' doesn't exist
+Error executing query: Unknown table 'mysqldump_test_db.t\1'
 Error: Could not get data for table t\1
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
@@ -909,7 +909,7 @@ CREATE TABLE `t\1` (
   PRIMARY KEY (`a`)
 ) ENGINE='InnoDB' COLLATE='utf8_general_ci';
 
-Error executing query: Table 'mysqldump_test_db.t\1' doesn't exist
+Error executing query: Unknown table 'mysqldump_test_db.t\1'
 Error: Could not get data for table t\1
 Error: Table t/1 not found.
 Error: Table T_1 not found.

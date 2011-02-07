@@ -293,10 +293,6 @@ BOOST_AUTO_TEST_CASE(to_tm)
   BOOST_REQUIRE_EQUAL(45, filled.tm_min);
   BOOST_REQUIRE_EQUAL(13, filled.tm_sec);
 
-  /* TODO:these fail, shouldn't they also be set properly? */
-  BOOST_WARN_EQUAL(228, filled.tm_yday);
-  BOOST_WARN_EQUAL(6, filled.tm_wday);
-  BOOST_WARN_EQUAL(-1, filled.tm_isdst);
 }
 
 BOOST_AUTO_TEST_CASE(to_decimal)

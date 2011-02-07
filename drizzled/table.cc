@@ -69,9 +69,6 @@ extern plugin::StorageEngine *myisam_engine;
 
 /* Functions defined in this cursor */
 
-void open_table_error(TableShare *share, int error, int db_errno,
-                      myf errortype, int errarg);
-
 /*************************************************************************/
 
 // @note this should all be the destructor
@@ -82,6 +79,7 @@ int Table::delete_table(bool free_share)
   if (db_stat)
     error= cursor->close();
   _alias.clear();
+
   if (field)
   {
     for (Field **ptr=field ; *ptr ; ptr++)
@@ -112,6 +110,8 @@ void Table::resetTable(Session *session,
                        uint32_t db_stat_arg)
 {
   setShare(share);
+  in_use= session;
+
   field= NULL;
 
   cursor= NULL;
@@ -124,7 +124,6 @@ void Table::resetTable(Session *session,
   tablenr= 0;
   db_stat= db_stat_arg;
 
-  in_use= session;
   record[0]= (unsigned char *) NULL;
   record[1]= (unsigned char *) NULL;
 
@@ -1646,25 +1645,14 @@ Table::Table() :
   query_id(0),
   quick_condition_rows(0),
   timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-  map(0)
+  map(0),
+  quick_rows(),
+  const_key_parts(),
+  quick_key_parts(),
+  quick_n_ranges()
 {
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
-
-  reginfo.reset();
-  covering_keys.reset();
-  quick_keys.reset();
-  merge_keys.reset();
-
-  keys_in_use_for_query.reset();
-  keys_in_use_for_group_by.reset();
-  keys_in_use_for_order_by.reset();
-
-  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
-  memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-  memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-  memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 }
 
 /*****************************************************************************

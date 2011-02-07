@@ -2320,8 +2320,9 @@ int subselect_uniquesubquery_engine::scan_table()
     return 1;
   }
 
+  assert(table->getSession());
   table->cursor->extra_opt(HA_EXTRA_CACHE,
-                           current_session->variables.read_buff_size);
+                           table->getSession()->variables.read_buff_size);
   table->null_row= 0;
   for (;;)
   {
