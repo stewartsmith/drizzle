@@ -150,6 +150,8 @@ void buildCreateFieldIdent(LEX *lex);
 
 void storeAlterColumnPosition(LEX *lex, const char *position);
 
+bool buildCollation(LEX *lex, const CHARSET_INFO *arg);
+
 } // namespace parser
 } // namespace drizzled
 

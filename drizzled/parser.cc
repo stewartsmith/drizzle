@@ -405,5 +405,24 @@ void storeAlterColumnPosition(LEX *lex, const char *position)
   statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
 }
 
+bool buildCollation(LEX *lex, const CHARSET_INFO *arg)
+{
+  statement::CreateTable *statement= (statement::CreateTable *)lex->statement;
+
+  HA_CREATE_INFO *cinfo= &statement->create_info();
+  if ((cinfo->used_fields & HA_CREATE_USED_DEFAULT_CHARSET) &&
+      cinfo->default_table_charset && arg &&
+      !my_charset_same(cinfo->default_table_charset, arg))
+  {
+    my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
+             arg->name, cinfo->default_table_charset->csname);
+    return false;
+  }
+  statement->create_info().default_table_charset= arg;
+  statement->create_info().used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+
+  return true;
+}
+
 } // namespace parser
 } // namespace drizzled

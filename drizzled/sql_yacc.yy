@@ -1048,19 +1048,10 @@ custom_engine_option:
 default_collation:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            HA_CREATE_INFO *cinfo= &statement->create_info();
-            if ((cinfo->used_fields & HA_CREATE_USED_DEFAULT_CHARSET) &&
-                 cinfo->default_table_charset && $4 &&
-                 !my_charset_same(cinfo->default_table_charset,$4))
-              {
-                my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                         $4->name, cinfo->default_table_charset->csname);
-                DRIZZLE_YYABORT;
-              }
-              statement->create_info().default_table_charset= $4;
-              statement->create_info().used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+            if (not parser::buildCollation(Lex, $4))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         ;
 
