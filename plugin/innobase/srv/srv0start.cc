@@ -93,6 +93,7 @@ Created 2/16/1996 Heikki Tuuri
 #include <unistd.h>
 
 #include <drizzled/gettext.h> 
+#include <drizzled/errmsg_print.h>
 
 /** Log sequence number immediately after startup */
 UNIV_INTERN ib_uint64_t	srv_start_lsn;
@@ -603,19 +604,18 @@ open_or_create_log_file(
 		    && os_file_get_last_error(FALSE) != 100
 #endif
 		    ) {
-			fprintf(stderr,
-				"InnoDB: Error in creating"
-				" or opening %s\n", name);
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Error in creating or opening %s", name);
 
-			return(DB_ERROR);
+                  return(DB_ERROR);
 		}
 
 		files[i] = os_file_create(innodb_file_log_key, name,
 					  OS_FILE_OPEN, OS_FILE_AIO,
 					  OS_LOG_FILE, &ret);
 		if (!ret) {
-			fprintf(stderr,
-				"InnoDB: Error in opening %s\n", name);
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Error in opening %s.", name);
 
 			return(DB_ERROR);
 		}
@@ -626,47 +626,41 @@ open_or_create_log_file(
 		if (size != srv_calc_low32(srv_log_file_size)
 		    || size_high != srv_calc_high32(srv_log_file_size)) {
 
-			fprintf(stderr,
-				"InnoDB: Error: log file %s is"
-				" of different size %lu %lu bytes\n"
-				"InnoDB: than specified in the .cnf"
-				" file %lu %lu bytes!\n",
-				name, (ulong) size_high, (ulong) size,
-				(ulong) srv_calc_high32(srv_log_file_size),
-				(ulong) srv_calc_low32(srv_log_file_size));
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Error: log file %s is of different size %lu %lu bytes than specified in the .cnf"
+                                          " file %lu %lu bytes!",
+                                          name, (ulong) size_high, (ulong) size,
+                                          (ulong) srv_calc_high32(srv_log_file_size),
+                                          (ulong) srv_calc_low32(srv_log_file_size));
 
 			return(DB_ERROR);
 		}
 	} else {
 		*log_file_created = TRUE;
 
-		ut_print_timestamp(stderr);
-
-		fprintf(stderr,
-			"  InnoDB: Log file %s did not exist:"
-			" new to be created\n",
-			name);
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        "InnoDB: Log file %s did not exist: new to be created",
+                                        name);
 		if (log_file_has_been_opened) {
 
 			return(DB_ERROR);
 		}
 
-		fprintf(stderr, "InnoDB: Setting log file %s size to %lu MB\n",
-			name, (ulong) srv_log_file_size
-			>> (20 - UNIV_PAGE_SIZE_SHIFT));
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        "InnoDB: Setting log file %s size to %lu MB",
+                                        name, (ulong) srv_log_file_size
+                                        >> (20 - UNIV_PAGE_SIZE_SHIFT));
 
-		fprintf(stderr,
-			"InnoDB: Database physically writes the file"
-			" full: wait...\n");
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        "InnoDB: Database physically writes the file full: wait...\n");
 
 		ret = os_file_set_size(name, files[i],
 				       srv_calc_low32(srv_log_file_size),
 				       srv_calc_high32(srv_log_file_size));
 		if (!ret) {
-			fprintf(stderr,
-				"InnoDB: Error in creating %s:"
-				" probably out of disk space\n",
-				name);
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Error in creating %s: probably out of disk space",
+                                          name);
 
 			return(DB_ERROR);
 		}
@@ -743,9 +737,9 @@ open_or_create_data_files(
 	char	name[10000];
 
 	if (srv_n_data_files >= 1000) {
-		fprintf(stderr, "InnoDB: can only have < 1000 data files\n"
-			"InnoDB: you have defined %lu\n",
-			(ulong) srv_n_data_files);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: can only have < 1000 data files you have defined %lu",
+                                  (ulong) srv_n_data_files);
 		return(DB_ERROR);
 	}
 
@@ -790,10 +784,9 @@ open_or_create_data_files(
 			    && os_file_get_last_error(FALSE) != 100
 #endif
 			    ) {
-				fprintf(stderr,
-					"InnoDB: Error in creating"
-					" or opening %s\n",
-					name);
+                          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                                  "InnoDB: Error in creating or opening %s",
+                                                  name);
 
 				return(DB_ERROR);
 			}
@@ -809,8 +802,8 @@ open_or_create_data_files(
 						  OS_FILE_NORMAL,
 						  OS_DATA_FILE, &ret);
 			if (!ret) {
-				fprintf(stderr,
-					"InnoDB: Error in opening %s\n", name);
+                          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                                  "InnoDB: Error in opening %s", name);
 
 				return(DB_ERROR);
 			}
@@ -826,13 +819,10 @@ open_or_create_data_files(
 			/* We open the data file */
 
 			if (one_created) {
-				fprintf(stderr,
-					"InnoDB: Error: data files can only"
-					" be added at the end\n");
-				fprintf(stderr,
-					"InnoDB: of a tablespace, but"
-					" data file %s existed beforehand.\n",
-					name);
+                          drizzled::errmsg_printf(drizzled::error::ERROR,
+					"InnoDB: Error: data files can only be added at the end of a tablespace, but"
+                                        " data file %s existed beforehand.",
+                                        name);
 				return(DB_ERROR);
 			}
 
@@ -854,8 +844,8 @@ open_or_create_data_files(
 			}
 
 			if (!ret) {
-				fprintf(stderr,
-					"InnoDB: Error in opening %s\n", name);
+                          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                                  "InnoDB: Error in opening %s", name);
 				os_file_get_last_error(TRUE);
 
 				return(DB_ERROR);
@@ -882,21 +872,15 @@ open_or_create_data_files(
 					&& srv_last_file_size_max
 					< rounded_size_pages)) {
 
-					fprintf(stderr,
-						"InnoDB: Error: auto-extending"
-						" data file %s is"
-						" of a different size\n"
-						"InnoDB: %lu pages (rounded"
-						" down to MB) than specified"
-						" in the .cnf file:\n"
-						"InnoDB: initial %lu pages,"
-						" max %lu (relevant if"
-						" non-zero) pages!\n",
-						name,
-						(ulong) rounded_size_pages,
-						(ulong) srv_data_file_sizes[i],
-						(ulong)
-						srv_last_file_size_max);
+                                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                                          "InnoDB: Error: auto-extending data file %s is of a different size. "
+                                                          "%lu pages (rounded down to MB) than specified in the .cnf file: "
+                                                          "initial %lu pages, max %lu (relevant if non-zero) pages!",
+                                                          name,
+                                                          (ulong) rounded_size_pages,
+                                                          (ulong) srv_data_file_sizes[i],
+                                                          (ulong)
+                                                          srv_last_file_size_max);
 
 					return(DB_ERROR);
 				}
@@ -906,13 +890,10 @@ open_or_create_data_files(
 
 			if (rounded_size_pages != srv_data_file_sizes[i]) {
 
-				fprintf(stderr,
-					"InnoDB: Error: data file %s"
-					" is of a different size\n"
-					"InnoDB: %lu pages"
-					" (rounded down to MB)\n"
-					"InnoDB: than specified"
-					" in the .cnf file %lu pages!\n",
+                          drizzled::errmsg_printf(drizzled::error::ERROR,
+					"InnoDB: Error: data file %s is of a different size. "
+					"%lu pages (rounded down to MB). "
+					"Than specified in the .cnf file %lu pages!",
 					name,
 					(ulong) rounded_size_pages,
 					(ulong) srv_data_file_sizes[i]);
@@ -934,30 +915,22 @@ skip_size_check:
 			one_created = TRUE;
 
 			if (i > 0) {
-				ut_print_timestamp(stderr);
-				fprintf(stderr,
-					"  InnoDB: Data file %s did not"
-					" exist: new to be created\n",
+                                drizzled::errmsg_printf(drizzled::error::INFO,
+					"  InnoDB: Data file %s did not exist: new to be created",
 					name);
 			} else {
-				fprintf(stderr,
-					"InnoDB: The first specified"
-					" data file %s did not exist:\n"
-					"InnoDB: a new database"
-					" to be created!\n", name);
+                          drizzled::errmsg_printf(drizzled::error::INFO,
+					"InnoDB: The first specified data file %s did not exist. A new database to be created!", name);
 				*create_new_db = TRUE;
 			}
 
-			ut_print_timestamp(stderr);
-			fprintf(stderr,
-				"  InnoDB: Setting file %s size to %lu MB\n",
-				name,
-				(ulong) (srv_data_file_sizes[i]
-					 >> (20 - UNIV_PAGE_SIZE_SHIFT)));
+                        drizzled::errmsg_printf(drizzled::error::INFO,
+                                                "  InnoDB: Setting file %s size to %lu MB",
+                                                name, (ulong) (srv_data_file_sizes[i]
+                                                         >> (20 - UNIV_PAGE_SIZE_SHIFT)));
 
-			fprintf(stderr,
-				"InnoDB: Database physically writes the"
-				" file full: wait...\n");
+                        drizzled::errmsg_printf(drizzled::error::INFO,
+				"InnoDB: Database physically writes the file full: wait...");
 
 			ret = os_file_set_size(
 				name, files[i],
@@ -965,9 +938,8 @@ skip_size_check:
 				srv_calc_high32(srv_data_file_sizes[i]));
 
 			if (!ret) {
-				fprintf(stderr,
-					"InnoDB: Error in creating %s:"
-					" probably out of disk space\n", name);
+                          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                                  "InnoDB: Error in creating %s: probably out of disk space", name);
 
 				return(DB_ERROR);
 			}
@@ -1044,12 +1016,9 @@ innobase_start_or_create_for_mysql(void)
 #endif /* HAVE_DARWIN_THREADS */
 
 	if (sizeof(ulint) != sizeof(void*)) {
-		fprintf(stderr,
-			_("InnoDB: Error: size of InnoDB's ulint is %lu,"
-                          " but size of void* is %lu.\n"
-                          "InnoDB: The sizes should be the same"
-                          " so that on a 64-bit platform you can\n"
-                          "InnoDB: allocate more than 4 GB of memory."),
+          drizzled::errmsg_printf(drizzled::error::WARN,
+			_("InnoDB: Error: size of InnoDB's ulint is %lu, but size of void* is %lu. "
+                          "The sizes should be the same so that on a 64-bit platform you can. Allocate more than 4 GB of memory."),
 			(ulong)sizeof(ulint), (ulong)sizeof(void*));
 	}
 
@@ -1059,12 +1028,12 @@ innobase_start_or_create_for_mysql(void)
 	innodb_file_per_table) until this function has returned. */
 	srv_file_per_table = FALSE;
 #ifdef UNIV_DEBUG
-	fprintf(stderr,
-		_("InnoDB: !!!!!!!! UNIV_DEBUG switched on !!!!!!!!!\n"));
+        drizzled::errmsg_printf(drizzled::error::INFO,
+                                _("InnoDB: !!!!!!!! UNIV_DEBUG switched on !!!!!!!!!\n"));
 #endif
 
 #ifdef UNIV_IBUF_DEBUG
-	fprintf(stderr,
+        drizzled::errmsg_printf(drizzled::error::INFO,
 		_("InnoDB: !!!!!!!! UNIV_IBUF_DEBUG switched on !!!!!!!!!\n"
 # ifdef UNIV_IBUF_COUNT_DEBUG
                   "InnoDB: !!!!!!!! UNIV_IBUF_COUNT_DEBUG switched on !!!!!!!!!\n"
@@ -1074,27 +1043,27 @@ innobase_start_or_create_for_mysql(void)
 #endif
 
 #ifdef UNIV_SYNC_DEBUG
-	fprintf(stderr,
-		_("InnoDB: !!!!!!!! UNIV_SYNC_DEBUG switched on !!!!!!!!!\n"));
+        drizzled::errmsg_printf(drizzled::error::INFO,
+                                _("InnoDB: !!!!!!!! UNIV_SYNC_DEBUG switched on !!!!!!!!!\n"));
 #endif
 
 #ifdef UNIV_SEARCH_DEBUG
-	fprintf(stderr,
-		_("InnoDB: !!!!!!!! UNIV_SEARCH_DEBUG switched on !!!!!!!!!\n"));
+        drizzled::errmsg_printf(drizzled::error::INFO,
+                                _("InnoDB: !!!!!!!! UNIV_SEARCH_DEBUG switched on !!!!!!!!!\n"));
 #endif
 
 #ifdef UNIV_LOG_LSN_DEBUG
-	fprintf(stderr,
-		_("InnoDB: !!!!!!!! UNIV_LOG_LSN_DEBUG switched on !!!!!!!!!\n"));
+        drizzled::errmsg_printf(drizzled::error::INFO,
+                                _("InnoDB: !!!!!!!! UNIV_LOG_LSN_DEBUG switched on !!!!!!!!!\n"));
 #endif /* UNIV_LOG_LSN_DEBUG */
 #ifdef UNIV_MEM_DEBUG
-	fprintf(stderr,
-		_("InnoDB: !!!!!!!! UNIV_MEM_DEBUG switched on !!!!!!!!!\n"));
+        drizzled::errmsg_printf(drizzled::error::INFO,
+                                _("InnoDB: !!!!!!!! UNIV_MEM_DEBUG switched on !!!!!!!!!\n"));
 #endif
 
-	if (UNIV_LIKELY(srv_use_sys_malloc)) {
-		fprintf(stderr,
-			_("InnoDB: The InnoDB memory heap is disabled\n"));
+	if (UNIV_LIKELY(srv_use_sys_malloc))
+        {
+          drizzled::errmsg_printf(drizzled::error::ERROR, _("InnoDB: The InnoDB memory heap is disabled\n"));
 	}
 
 	fputs("InnoDB: " IB_ATOMICS_STARTUP_MSG
@@ -1114,13 +1083,8 @@ innobase_start_or_create_for_mysql(void)
 	second time during the process lifetime. */
 
 	if (srv_start_has_been_called) {
-		fprintf(stderr,
-			"InnoDB: Error: startup called second time"
-			" during the process lifetime.\n"
-			"InnoDB: In the MySQL Embedded Server Library"
-			" you cannot call server_init()\n"
-			"InnoDB: more than once during"
-			" the process lifetime.\n");
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+			"InnoDB: Error: startup called second time during the process lifetime.\n");
 	}
 
 	srv_start_has_been_called = TRUE;
@@ -1162,9 +1126,8 @@ innobase_start_or_create_for_mysql(void)
 #elif defined(LINUX_NATIVE_AIO)
 
 	if (srv_use_native_aio) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			_("  InnoDB: Using Linux native AIO\n"));
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        _("InnoDB: Using Linux native AIO"));
 	}
 #else
 	/* Currently native AIO is supported only on windows and linux
@@ -1209,10 +1172,9 @@ innobase_start_or_create_for_mysql(void)
 		srv_win_file_flush_method = SRV_WIN_IO_UNBUFFERED;
 #endif
 	} else {
-		fprintf(stderr,
-			"InnoDB: Unrecognized value %s for"
-			" innodb_flush_method\n",
-			srv_file_flush_method_str);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Unrecognized value %s for innodb_flush_method",
+                                  srv_file_flush_method_str);
 		return(DB_ERROR);
 	}
 
@@ -1259,8 +1221,8 @@ innobase_start_or_create_for_mysql(void)
 			fil_path_to_mysql_datadir, os_proc_get_number());
 		srv_monitor_file = fopen(srv_monitor_file_name, "w+");
 		if (!srv_monitor_file) {
-			fprintf(stderr, "InnoDB: unable to create %s: %s\n",
-				srv_monitor_file_name, strerror(errno));
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: unable to create %s: %s\n", srv_monitor_file_name, strerror(errno));
 			return(DB_ERROR);
 		}
 	} else {
@@ -1314,32 +1276,23 @@ innobase_start_or_create_for_mysql(void)
 		 srv_max_n_open_files);
 
 	/* Print time to initialize the buffer pool */
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		"  InnoDB: Initializing buffer pool, size =");
 
 	if (srv_buf_pool_size >= 1024 * 1024 * 1024) {
-		fprintf(stderr,
-			" %.1fG\n",
-			((double) srv_buf_pool_size) / (1024 * 1024 * 1024));
+          drizzled::errmsg_printf(drizzled::error::INFO, "InnoDB: Initializing buffer pool, size = %.1fG",
+                                  ((double) srv_buf_pool_size) / (1024 * 1024 * 1024));
 	} else {
-		fprintf(stderr,
-			" %.1fM\n",
-			((double) srv_buf_pool_size) / (1024 * 1024));
+          drizzled::errmsg_printf(drizzled::error::INFO, "InnoDB: Initializing buffer pool, size = %.1fM",
+                                  ((double) srv_buf_pool_size) / (1024 * 1024));
 	}
 
 	err = buf_pool_init(srv_buf_pool_size, srv_buf_pool_instances);
 
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		"  InnoDB: Completed initialization of buffer pool\n");
+        drizzled::errmsg_printf(drizzled::error::INFO, "InnoDB: Completed initialization of buffer pool");
 
 	if (err != DB_SUCCESS) {
-		fprintf(stderr,
-			"InnoDB: Fatal error: cannot allocate the memory"
-			" for the buffer pool\n");
+          drizzled::errmsg_printf(drizzled::error::ERROR, "InnoDB: Fatal error: cannot allocate the memory for the buffer pool");
 
-		return(DB_ERROR);
+          return(DB_ERROR);
 	}
 
 #ifdef UNIV_DEBUG
@@ -1348,10 +1301,10 @@ innobase_start_or_create_for_mysql(void)
 
 	if (srv_buf_pool_size <= 5 * 1024 * 1024) {
 
-		fprintf(stderr, "InnoDB: Warning: Small buffer pool size "
-			"(%luM), the flst_validate() debug function "
-			"can cause a deadlock if the buffer pool fills up.\n",
-			srv_buf_pool_size / 1024 / 1024);
+          drizzled::errmsg_printf(drizzled::error::WARN, "InnoDB: Warning: Small buffer pool size "
+                                  "(%luM), the flst_validate() debug function "
+                                  "can cause a deadlock if the buffer pool fills up.\n",
+                                  srv_buf_pool_size / 1024 / 1024);
 	}
 #endif
 
@@ -1370,19 +1323,16 @@ innobase_start_or_create_for_mysql(void)
 
 #ifdef UNIV_LOG_ARCHIVE
 	if (0 != ut_strcmp(srv_log_group_home_dirs[0], srv_arch_dir)) {
-		fprintf(stderr,
-			"InnoDB: Error: you must set the log group"
-			" home dir in my.cnf the\n"
-			"InnoDB: same as log arch dir.\n");
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Error: you must set the log group home dir in my.cnf the same as log arch dir.");
 
 		return(DB_ERROR);
 	}
 #endif /* UNIV_LOG_ARCHIVE */
 
 	if (srv_n_log_files * srv_log_file_size >= 262144) {
-		fprintf(stderr,
-			"InnoDB: Error: combined size of log files"
-			" must be < 4 GB\n");
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Error: combined size of log files must be < 4 GB");
 
 		return(DB_ERROR);
 	}
@@ -1392,11 +1342,9 @@ innobase_start_or_create_for_mysql(void)
 	for (i = 0; i < srv_n_data_files; i++) {
 #ifndef __WIN__
 		if (sizeof(off_t) < 5 && srv_data_file_sizes[i] >= 262144) {
-			fprintf(stderr,
-				"InnoDB: Error: file size must be < 4 GB"
-				" with this MySQL binary\n"
-				"InnoDB: and operating system combination,"
-				" in some OS's < 2 GB\n");
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Error: file size must be < 4 GB with this MySQL binary and operating system combination,"
+                                          " in some OS's < 2 GB\n");
 
 			return(DB_ERROR);
 		}
@@ -1405,9 +1353,7 @@ innobase_start_or_create_for_mysql(void)
 	}
 
 	if (sum_of_new_sizes < 10485760 / UNIV_PAGE_SIZE) {
-		fprintf(stderr,
-			"InnoDB: Error: tablespace size must be"
-			" at least 10 MB\n");
+          drizzled::errmsg_printf(drizzled::error::ERROR, "InnoDB: Error: tablespace size must be at least 10 MB");
 
 		return(DB_ERROR);
 	}
@@ -1419,20 +1365,14 @@ innobase_start_or_create_for_mysql(void)
 					&min_flushed_lsn, &max_flushed_lsn,
 					&sum_of_new_sizes);
 	if (err != DB_SUCCESS) {
-		fprintf(stderr,
-			"InnoDB: Could not open or create data files.\n"
-			"InnoDB: If you tried to add new data files,"
-			" and it failed here,\n"
-			"InnoDB: you should now edit innodb_data_file_path"
-			" in my.cnf back\n"
-			"InnoDB: to what it was, and remove the"
-			" new ibdata files InnoDB created\n"
-			"InnoDB: in this failed attempt. InnoDB only wrote"
-			" those files full of\n"
-			"InnoDB: zeros, but did not yet use them in any way."
-			" But be careful: do not\n"
-			"InnoDB: remove old data files"
-			" which contain your precious data!\n");
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Could not open or create data files.\n"
+                                  "InnoDB: If you tried to add new data files, and it failed here,\n"
+                                  "InnoDB: you should now edit innodb_data_file_path in my.cnf back\n"
+                                  "InnoDB: to what it was, and remove the new ibdata files InnoDB created\n"
+                                  "InnoDB: in this failed attempt. InnoDB only wrote those files full of\n"
+                                  "InnoDB: zeros, but did not yet use them in any way. But be careful: do not\n"
+                                  "InnoDB: remove old data files which contain your precious data!\n");
 
 		return((int) err);
 	}
@@ -1457,17 +1397,12 @@ innobase_start_or_create_for_mysql(void)
 		}
 		if ((log_opened && create_new_db)
 		    || (log_opened && log_created)) {
-			fprintf(stderr,
-				"InnoDB: Error: all log files must be"
-				" created at the same time.\n"
-				"InnoDB: All log files must be"
-				" created also in database creation.\n"
-				"InnoDB: If you want bigger or smaller"
-				" log files, shut down the\n"
-				"InnoDB: database and make sure there"
-				" were no errors in shutdown.\n"
-				"InnoDB: Then delete the existing log files."
-				" Edit the .cnf file\n"
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+				"InnoDB: Error: all log files must be created at the same time.\n"
+				"InnoDB: All log files must be created also in database creation.\n"
+				"InnoDB: If you want bigger or smaller log files, shut down the\n"
+				"InnoDB: database and make sure there were no errors in shutdown.\n"
+				"InnoDB: Then delete the existing log files. Edit the .cnf file\n"
 				"InnoDB: and start the database again.\n");
 
 			return(DB_ERROR);
@@ -1489,27 +1424,21 @@ innobase_start_or_create_for_mysql(void)
 		    || max_arch_log_no != min_arch_log_no
 #endif /* UNIV_LOG_ARCHIVE */
 		    ) {
-			fprintf(stderr,
-				"InnoDB: Cannot initialize created"
-				" log files because\n"
-				"InnoDB: data files were not in sync"
-				" with each other\n"
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+				"InnoDB: Cannot initialize created log files because\n"
+				"InnoDB: data files were not in sync with each other\n"
 				"InnoDB: or the data files are corrupt.\n");
 
 			return(DB_ERROR);
 		}
 
 		if (max_flushed_lsn < (ib_uint64_t) 1000) {
-			fprintf(stderr,
-				"InnoDB: Cannot initialize created"
-				" log files because\n"
-				"InnoDB: data files are corrupt,"
-				" or new data files were\n"
-				"InnoDB: created when the database"
-				" was started previous\n"
-				"InnoDB: time but the database"
-				" was not shut down\n"
-				"InnoDB: normally after that.\n");
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+				"InnoDB: Cannot initialize created log files because\n"
+				"InnoDB: data files are corrupt, or new data files were\n"
+				"InnoDB: created when the database was started previous\n"
+				"InnoDB: time but the database was not shut down\n"
+                                "InnoDB: normally after that.\n");
 
 			return(DB_ERROR);
 		}
@@ -1548,9 +1477,8 @@ innobase_start_or_create_for_mysql(void)
 
 #ifdef UNIV_LOG_ARCHIVE
 	} else if (srv_archive_recovery) {
-		fprintf(stderr,
-			"InnoDB: Starting archive"
-			" recovery from a backup...\n");
+          drizzled::errmsg_printf(drizzled::error::INFO,
+                                  "InnoDB: Starting archive recovery from a backup...");
 		err = recv_recovery_from_archive_start(
 			min_flushed_lsn, srv_archive_recovery_limit_lsn,
 			min_arch_log_no);
@@ -1771,29 +1699,22 @@ innobase_start_or_create_for_mysql(void)
 	if (!srv_auto_extend_last_data_file
 	    && sum_of_data_file_sizes != tablespace_size_in_header) {
 
-		fprintf(stderr,
-			"InnoDB: Error: tablespace size"
-			" stored in header is %lu pages, but\n"
-			"InnoDB: the sum of data file sizes is %lu pages\n",
-			(ulong) tablespace_size_in_header,
-			(ulong) sum_of_data_file_sizes);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Error: tablespace size stored in header is %lu pages, but the sum of data file sizes is %lu pages.",
+                                  (ulong) tablespace_size_in_header,
+                                  (ulong) sum_of_data_file_sizes);
 
 		if (srv_force_recovery == 0
 		    && sum_of_data_file_sizes < tablespace_size_in_header) {
 			/* This is a fatal error, the tail of a tablespace is
 			missing */
 
-			fprintf(stderr,
-				"InnoDB: Cannot start InnoDB."
-				" The tail of the system tablespace is\n"
-				"InnoDB: missing. Have you edited"
-				" innodb_data_file_path in my.cnf in an\n"
-				"InnoDB: inappropriate way, removing"
-				" ibdata files from there?\n"
-				"InnoDB: You can set innodb_force_recovery=1"
-				" in my.cnf to force\n"
-				"InnoDB: a startup if you are trying"
-				" to recover a badly corrupt database.\n");
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Cannot start InnoDB. The tail of the system tablespace is "
+                                          "missing. Have you edited innodb_data_file_path in my.cnf in an "
+                                          "inappropriate way, removing ibdata files from there? "
+                                          "You can set innodb_force_recovery=1 in my.cnf to force "
+                                          "a startup if you are trying to recover a badly corrupt database.");
 
 			return(DB_ERROR);
 		}
@@ -1802,27 +1723,20 @@ innobase_start_or_create_for_mysql(void)
 	if (srv_auto_extend_last_data_file
 	    && sum_of_data_file_sizes < tablespace_size_in_header) {
 
-		fprintf(stderr,
-			"InnoDB: Error: tablespace size stored in header"
-			" is %lu pages, but\n"
-			"InnoDB: the sum of data file sizes"
-			" is only %lu pages\n",
-			(ulong) tablespace_size_in_header,
-			(ulong) sum_of_data_file_sizes);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Error: tablespace size stored in header is %lu pages, but the sum of data file sizes"
+                                  " is only %lu pages\n",
+                                  (ulong) tablespace_size_in_header,
+                                  (ulong) sum_of_data_file_sizes);
 
 		if (srv_force_recovery == 0) {
 
-			fprintf(stderr,
-				"InnoDB: Cannot start InnoDB. The tail of"
-				" the system tablespace is\n"
-				"InnoDB: missing. Have you edited"
-				" innodb_data_file_path in my.cnf in an\n"
-				"InnoDB: inappropriate way, removing"
-				" ibdata files from there?\n"
-				"InnoDB: You can set innodb_force_recovery=1"
-				" in my.cnf to force\n"
-				"InnoDB: a startup if you are trying to"
-				" recover a badly corrupt database.\n");
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+				"InnoDB: Cannot start InnoDB. The tail of the system tablespace is "
+				"missing. Have you edited innodb_data_file_path in my.cnf in an "
+				"inappropriate way, removing ibdata files from there? "
+				"You can set innodb_force_recovery=1 in my.cnf to force "
+				"a startup if you are trying to recover a badly corrupt database.\n");
 
 			return(DB_ERROR);
 		}
@@ -1832,10 +1746,8 @@ innobase_start_or_create_for_mysql(void)
 	os_fast_mutex_init(&srv_os_test_mutex);
 
 	if (0 != os_fast_mutex_trylock(&srv_os_test_mutex)) {
-		fprintf(stderr,
-			"InnoDB: Error: pthread_mutex_trylock returns"
-			" an unexpected value on\n"
-			"InnoDB: success! Cannot continue.\n");
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+			"InnoDB: Error: pthread_mutex_trylock returns an unexpected value on success! Cannot continue.\n");
 		exit(1);
 	}
 
@@ -1848,21 +1760,16 @@ innobase_start_or_create_for_mysql(void)
 	os_fast_mutex_free(&srv_os_test_mutex);
 
 	if (srv_print_verbose_log) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB %s started; "
-			"log sequence number %"PRIu64"\n",
-			INNODB_VERSION_STR, srv_start_lsn);
+                drizzled::errmsg_printf(drizzled::error::ERROR,
+                                        "InnoDB %s started; log sequence number %"PRIu64"\n",
+                                        INNODB_VERSION_STR, srv_start_lsn);
 	}
 
 	if (srv_force_recovery > 0) {
-		fprintf(stderr,
-			"InnoDB: !!! innodb_force_recovery"
-			" is set to %lu !!!\n",
-			(ulong) srv_force_recovery);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: !!! innodb_force_recovery is set to %lu !!!\n",
+                                  (ulong) srv_force_recovery);
 	}
-
-	fflush(stderr);
 
 	if (trx_doublewrite_must_reset_space_ids) {
 		/* Actually, we did not change the undo log format between
@@ -1878,12 +1785,9 @@ innobase_start_or_create_for_mysql(void)
 		4.1.1. It is essential that the insert buffer is emptied
 		here! */
 
-		fprintf(stderr,
-			"InnoDB: You are upgrading to an"
-			" InnoDB version which allows multiple\n"
-			"InnoDB: tablespaces. Wait that purge"
-			" and insert buffer merge run to\n"
-			"InnoDB: completion...\n");
+          drizzled::errmsg_printf(drizzled::error::INFO,
+                                  "InnoDB: You are upgrading to an InnoDB version which allows multiple. "
+                                  "tablespaces. Wait that purge and insert buffer merge run to completion...");
 		for (;;) {
 			os_thread_sleep(1000000);
 
@@ -1895,21 +1799,20 @@ innobase_start_or_create_for_mysql(void)
 				break;
 			}
 		}
-		fprintf(stderr,
-			"InnoDB: Full purge and insert buffer merge"
-			" completed.\n");
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        "InnoDB: Full purge and insert buffer merge completed.");
 
 		trx_sys_mark_upgraded_to_multiple_tablespaces();
 
-		fprintf(stderr,
-			"InnoDB: You have now successfully upgraded"
-			" to the multiple tablespaces\n"
-			"InnoDB: format. You should NOT DOWNGRADE"
-			" to an earlier version of\n"
-			"InnoDB: InnoDB! But if you absolutely need to"
-			" downgrade, see\n"
-			"InnoDB: " REFMAN "multiple-tablespaces.html\n"
-			"InnoDB: for instructions.\n");
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        "InnoDB: You have now successfully upgraded"
+                                        " to the multiple tablespaces\n"
+                                        "InnoDB: format. You should NOT DOWNGRADE"
+                                        " to an earlier version of\n"
+                                        "InnoDB: InnoDB! But if you absolutely need to"
+                                        " downgrade, see\n"
+                                        "InnoDB: " REFMAN "multiple-tablespaces.html\n"
+                                        "InnoDB: for instructions.\n");
 	}
 
 	if (srv_force_recovery == 0) {
@@ -1939,11 +1842,8 @@ innobase_shutdown_for_mysql(void)
 	ulint	i;
 	if (!srv_was_started) {
 		if (srv_is_being_started) {
-			ut_print_timestamp(stderr);
-			fprintf(stderr,
-				"  InnoDB: Warning: shutting down"
-				" a not properly started\n"
-				"InnoDB: or created database!\n");
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+				"InnoDB: Warning: shutting down a not properly started or created database!");
 		}
 
 		return(DB_SUCCESS);
@@ -1956,23 +1856,18 @@ innobase_shutdown_for_mysql(void)
 
 
 	if (srv_fast_shutdown == 2) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: MySQL has requested a very fast shutdown"
-			" without flushing "
-			"the InnoDB buffer pool to data files."
-			" At the next mysqld startup "
-			"InnoDB will do a crash recovery!\n");
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        "InnoDB: MySQL has requested a very fast shutdown without flushing "
+                                        "the InnoDB buffer pool to data files. At the next mysqld startup "
+                                        "InnoDB will do a crash recovery!");
 	}
 
 	logs_empty_and_mark_files_at_shutdown();
 
 	if (srv_conc_n_threads != 0) {
-		fprintf(stderr,
-			"InnoDB: Warning: query counter shows %ld queries"
-			" still\n"
-			"InnoDB: inside InnoDB at shutdown\n",
-			srv_conc_n_threads);
+          drizzled::errmsg_printf(drizzled::error::WARN,
+                                  "InnoDB: Warning: query counter shows %ld queries still InnoDB: inside InnoDB at shutdown.",
+                                  srv_conc_n_threads);
 	}
 
 	/* 2. Make all threads created by InnoDB to exit */
@@ -2035,9 +1930,8 @@ innobase_shutdown_for_mysql(void)
 	}
 
 	if (i == 1000) {
-		fprintf(stderr,
-			"InnoDB: Warning: %lu threads created by InnoDB"
-			" had not exited at shutdown!\n",
+          drizzled::errmsg_printf(drizzled::error::WARN,
+			"InnoDB: Warning: %lu threads created by InnoDB had not exited at shutdown!",
 			(ulong) os_thread_count);
 	}
 
@@ -2103,13 +1997,11 @@ innobase_shutdown_for_mysql(void)
 	    || os_event_count != 0
 	    || os_mutex_count != 0
 	    || os_fast_mutex_count != 0) {
-		fprintf(stderr,
-			"InnoDB: Warning: some resources were not"
-			" cleaned up in shutdown:\n"
-			"InnoDB: threads %lu, events %lu,"
-			" os_mutexes %lu, os_fast_mutexes %lu\n",
-			(ulong) os_thread_count, (ulong) os_event_count,
-			(ulong) os_mutex_count, (ulong) os_fast_mutex_count);
+          drizzled::errmsg_printf(drizzled::error::WARN,
+                                  "InnoDB: Warning: some resources were not cleaned up in shutdown:\n"
+                                  "InnoDB: threads %lu, events %lu, os_mutexes %lu, os_fast_mutexes %lu\n",
+                                  (ulong) os_thread_count, (ulong) os_event_count,
+                                  (ulong) os_mutex_count, (ulong) os_fast_mutex_count);
 	}
 
 	if (dict_foreign_err_file) {
@@ -2120,11 +2012,9 @@ innobase_shutdown_for_mysql(void)
 	}
 
 	if (srv_print_verbose_log) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: Shutdown completed;"
-			" log sequence number %"PRIu64"\n",
-			srv_shutdown_lsn);
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        "InnoDB: Shutdown completed log sequence number %"PRIu64,
+                                        srv_shutdown_lsn);
 	}
 
 	srv_was_started = FALSE;

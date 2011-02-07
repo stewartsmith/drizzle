@@ -91,8 +91,10 @@ public:
   }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
+
 private:
   Table *next;
+
 public:
   Table *getNext() const
   {
@@ -314,8 +316,10 @@ public:
     The set is implemented as a bitmap.
   */
   key_map keys_in_use_for_query;
+
   /* Map of keys that can be used to calculate GROUP BY without sorting */
   key_map keys_in_use_for_group_by;
+
   /* Map of keys that can be used to calculate ORDER BY without sorting */
   key_map keys_in_use_for_order_by;
 
@@ -414,14 +418,14 @@ public:
 
     return NULL;
   }
-  inline uint8_t getBlobPtrSize() { return getShare()->blob_ptr_size; }
-  inline uint32_t getNullBytes() { return getShare()->null_bytes; }
-  inline uint32_t getNullFields() { return getShare()->null_fields; }
+  inline uint8_t getBlobPtrSize() const { return getShare()->sizeBlobPtr(); }
+  inline uint32_t getNullBytes() const { return getShare()->null_bytes; }
+  inline uint32_t getNullFields() const { return getShare()->null_fields; }
   inline unsigned char *getDefaultValues() { return  getMutableShare()->getDefaultValues(); }
   inline const char *getSchemaName()  const { return getShare()->getSchemaName(); }
   inline const char *getTableName()  const { return getShare()->getTableName(); }
 
-  inline bool isDatabaseLowByteFirst() { return getShare()->db_low_byte_first; } /* Portable row format */
+  inline bool isDatabaseLowByteFirst() const { return getShare()->db_low_byte_first; } /* Portable row format */
   inline bool isNameLock() const { return open_placeholder; }
 
   uint32_t index_flags(uint32_t idx) const

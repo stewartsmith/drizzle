@@ -103,7 +103,7 @@ START TRANSACTION;
 INSERT INTO t1 (b) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(100),(101);
 
 UPDATE t1 SET b = b*10 WHERE b%2=0;
---ERROR 1366
+--ERROR ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 INSERT INTO t1 (b) VALUES ('this_will_fail');
 COMMIT;
 
@@ -168,7 +168,7 @@ connection con1;
 --echo connection1
 --echo start insert on t2 then commit after default connection does some work
 START TRANSACTION;
---ERROR 1366
+--ERROR ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 INSERT INTO t2 (b) VALUES (100),(1000),(10),(50),('fail_panda');
 
 connection default;

@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -130,9 +130,14 @@ class portManager:
                     if self.system_manager.cur_os in [ 'FreeBSD' 
                                                      , 'Darwin' 
                                                      ]:
-                        used_port = int(entry.split()[3].split('.')[-1].strip())
+                        split_token = '.'
                     else:
-                        used_port = int(entry.split()[3].split(':')[-1].strip())
+                        split_token = ':'
+                    port_candidate = entry.split()[3].split(split_token)[-1].strip()
+                    if port_candidate.isdigit():
+                        used_port = int(port_candidate)
+                    else:
+                        used_port = None # not a value we can use
                 if port == used_port:
                     if entry.split()[-1] != "TIME_WAIT":
                         return 1

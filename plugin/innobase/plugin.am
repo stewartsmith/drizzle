@@ -100,7 +100,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/mtr0mtr.h \
                  plugin/innobase/include/mtr0mtr.ic \
                  plugin/innobase/include/mtr0types.h \
-                 plugin/innobase/include/mysql_addons.h \
                  plugin/innobase/include/os0file.h \
 		 plugin/innobase/include/os0file.ic \
                  plugin/innobase/include/os0proc.h \

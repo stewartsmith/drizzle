@@ -305,6 +305,16 @@ bool buildTableStatus(Session *session, const char *ident)
   return true;
 }
 
+bool buildEngineStatus(Session *session, LEX_STRING)
+{
+  session->getLex()->sql_command= SQLCOM_SELECT;
+  drizzled::statement::Show *select= new statement::Show(session);
+  session->getLex()->statement= select;
+
+  my_error(ER_USE_DATA_DICTIONARY);
+  return false;
+}
+
 bool buildColumns(Session *session, const char *schema_ident, Table_ident *table_ident)
 {
   session->getLex()->sql_command= SQLCOM_SELECT;
@@ -335,9 +345,7 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
     drizzled::identifier::Table identifier(select->getShowSchema().c_str(), table_ident->table.str);
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0),
-               select->getShowSchema().c_str(), 
-               table_ident->table.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
   }
 
@@ -352,18 +360,26 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
   return true;
 }
 
-bool buildWarnings(Session *session)
+void buildSelectWarning(Session *session)
 {
-  session->getLex()->statement= new statement::ShowWarnings(session);
-
-  return true;
+  (void) create_select_for_variable(session, "warning_count");
+  session->getLex()->statement= new statement::Show(session);
 }
 
-bool buildErrors(Session *session)
+void buildSelectError(Session *session)
+{
+  (void) create_select_for_variable(session, "error_count");
+  session->getLex()->statement= new statement::Show(session);
+}
+
+void buildWarnings(Session *session)
+{
+  session->getLex()->statement= new statement::ShowWarnings(session);
+}
+
+void buildErrors(Session *session)
 {
   session->getLex()->statement= new statement::ShowErrors(session);
-
-  return true;
 }
 
 bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_ident)
@@ -395,9 +411,7 @@ bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_i
     drizzled::identifier::Table identifier(select->getShowSchema().c_str(), table_ident->table.str);
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0),
-               select->getShowSchema().c_str(), 
-               table_ident->table.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
   }
 
@@ -620,9 +634,7 @@ bool buildDescribe(Session *session, Table_ident *ident)
     drizzled::identifier::Table identifier(select->getShowSchema().c_str(), ident->table.str);
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0),
-               select->getShowSchema().c_str(), 
-               ident->table.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
   }
 

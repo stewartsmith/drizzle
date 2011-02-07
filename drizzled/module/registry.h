@@ -24,6 +24,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <iostream>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -113,7 +114,7 @@ public:
                    plugin_name.begin(), ::tolower);
     if (plugin_registry.find(std::make_pair(plugin_type, plugin_name)) != plugin_registry.end())
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Loading plugin %s failed: a %s plugin by that name "
                       "already exists.\n"),
                     plugin->getTypeName().c_str(),
@@ -127,7 +128,7 @@ public:
 
     if (failed)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Fatal error: Failed initializing %s::%s plugin.\n"),
                     plugin->getTypeName().c_str(),
                     plugin->getName().c_str());

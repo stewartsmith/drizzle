@@ -75,6 +75,8 @@
 
 #include "drizzled/plugin/event_observer.h"
 
+#include "drizzled/data_home.h"
+
 #include "drizzled/message/cache.h"
 
 #include "drizzled/visibility.h"
@@ -323,7 +325,6 @@ const char *in_left_expr_name= "<left expr>";
 const char *in_additional_cond= "<IN COND>";
 const char *in_having_cond= "<IN HAVING>";
 
-type::Decimal decimal_zero;
 /* classes for comparation parsing/processing */
 
 FILE *stderror_file=0;
@@ -385,31 +386,12 @@ vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
 
-fs::path data_home(LOCALSTATEDIR);
-fs::path full_data_home(LOCALSTATEDIR);
-
 po::variables_map &getVariablesMap()
 {
   return vm;
 }
 
-fs::path& getFullDataHome()
-{
-  return full_data_home;
-}
 
-fs::path& getDataHome()
-{
-  return data_home;
-}
-
-fs::path& getDataHomeCatalog()
-{
-  static fs::path data_home_catalog(getDataHome());
-  return data_home_catalog;
-}
-
- 
 /****************************************************************************
 ** Code to end drizzled
 ****************************************************************************/
@@ -489,12 +471,13 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
+    errmsg_printf(error::ERROR, _("Aborting"));
   }
   else if (opt_help)
   {
     usage();
   }
+
   clean_up(!opt_help && (exit_code));
   internal::my_end();
   exit(exit_code);
@@ -521,7 +504,7 @@ void clean_up(bool print_message)
   (void) unlink(pid_file.file_string().c_str());	// This may not always exist
 
   if (print_message && server_start_time)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
+    errmsg_printf(drizzled::error::INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
 
   session::Cache::singleton().shutdownFirst();
 
@@ -548,18 +531,19 @@ passwd *check_user(const char *user)
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
           global_system_variables.log_warnings)
-            errmsg_printf(ERRMSG_LVL_WARN, _("One can only use the --user switch "
+            errmsg_printf(error::WARN, _("One can only use the --user switch "
                             "if running as root\n"));
     }
     return NULL;
   }
   if (not user)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
-                                      "the manual to find out how to run drizzled as root!\n"));
+      errmsg_printf(error::ERROR, _("Fatal error: Please read \"Security\" section of "
+                                    "the manual to find out how to run drizzled as root"));
     unireg_abort(1);
   }
-  if (!strcmp(user,"root"))
+
+  if (not strcmp(user, "root"))
     return NULL;                        // Avoid problem with dynamic libraries
 
   if (!(tmp_user_info= getpwnam(user)))
@@ -575,7 +559,7 @@ passwd *check_user(const char *user)
   return tmp_user_info;
 
 err:
-  errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Can't change to run as user '%s' ;  "
+  errmsg_printf(error::ERROR, _("Fatal error: Can't change to run as user '%s' ;  "
                     "Please check that the user exists!\n"),user);
   unireg_abort(1);
 
@@ -1093,7 +1077,7 @@ static void compose_defaults_file_list(vector<string> in_options)
       defaults_file_list.push_back(*it);
     else
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                   _("Defaults file '%s' not found\n"), (*it).c_str());
       unireg_abort(1);
     }
@@ -1136,7 +1120,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-    errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
+    errmsg_printf(error::WARN, _("gethostname failed, using '%s' as hostname"),
                   glob_hostname);
     pid_file= "drizzle";
   }
@@ -1193,7 +1177,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   _("Default completion type."))
   ("core-file",  _("Write core on errors."))
-  ("datadir", po::value<fs::path>(&data_home),
+  ("datadir", po::value<fs::path>(&getDataHome()),
   _("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
   _("Set the default storage engine for tables."))
@@ -1357,7 +1341,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   }
   catch (std::exception&)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    errmsg_printf(error::ERROR, _("Duplicate entry for command line option\n"));
     unireg_abort(1);
   }
 
@@ -1403,7 +1387,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,  
+    errmsg_printf(error::ERROR,  
                   _("%s: %s.\n"
                     "Use --help to get a list of available options\n"),
                   internal::my_progname, err.what());
@@ -1421,7 +1405,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("%s: %s.\n"
                     "Use --help to get a list of available options\n"),
                   internal::my_progname, err.what());
@@ -1434,7 +1418,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (plugin_init(plugins, plugin_options))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
+    errmsg_printf(error::ERROR, _("Failed to initialize plugins\n"));
     unireg_abort(1);
   }
 
@@ -1455,7 +1439,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("%s: %s.\n"
                     "Use --help to get a list of available options\n"),
                   internal::my_progname, err.what());
@@ -1463,7 +1447,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   }
   catch (po::invalid_command_line_syntax &err)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("%s: %s.\n"
                     "Use --help to get a list of available options\n"),
                   internal::my_progname, err.what());
@@ -1471,7 +1455,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   }
   catch (po::unknown_option &err)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("%s\nUse --help to get a list of available options\n"),
                   err.what());
     unireg_abort(1);
@@ -1483,7 +1467,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,  
+    errmsg_printf(error::ERROR,  
                   _("%s: %s.\n"
                     "Use --help to get a list of available options\n"),
                   internal::my_progname, err.what());
@@ -1521,7 +1505,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   if (!(default_charset_info=
         get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting default charset"));
+    errmsg_printf(error::ERROR, _("Error getting default charset"));
     return 1;                           // Eof of the list
   }
 
@@ -1533,12 +1517,12 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     const CHARSET_INFO * const default_collation= get_charset_by_name(default_collation_name);
     if (not default_collation)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
+      errmsg_printf(error::ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
       return 1;
     }
     if (not my_charset_same(default_charset_info, default_collation))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
+      errmsg_printf(error::ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
                     default_collation_name,
                     default_charset_info->csname);
       return 1;
@@ -1551,7 +1535,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   if (not (character_set_filesystem=
            get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Error setting collation"));
+    errmsg_printf(error::ERROR, _("Error setting collation"));
     return 1;
   }
   global_system_variables.character_set_filesystem= character_set_filesystem;
@@ -1559,7 +1543,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   if (!(my_default_lc_time_names=
         my_locale_by_name(lc_time_names_name)))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
+    errmsg_printf(error::ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
@@ -1579,7 +1563,7 @@ int init_server_components(module::Registry &plugins)
   */
   if (table_cache_init())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not initialize table cache\n"));
+    errmsg_printf(error::ERROR, _("Could not initialize table cache\n"));
     unireg_abort(1);
   }
 
@@ -1594,7 +1578,7 @@ int init_server_components(module::Registry &plugins)
 
   if (xid_cache_init())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("XA cache initialization failed: Out of memory\n"));
+    errmsg_printf(error::ERROR, _("XA cache initialization failed: Out of memory\n"));
     unireg_abort(1);
   }
 
@@ -1623,7 +1607,7 @@ int init_server_components(module::Registry &plugins)
 
   if (plugin::Scheduler::setPlugin(scheduler_name))
   {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                    _("No scheduler found, cannot continue!\n"));
       unireg_abort(1);
   }
@@ -1648,7 +1632,7 @@ int init_server_components(module::Registry &plugins)
     engine= plugin::StorageEngine::findByName(name);
     if (engine == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s\n"),
+      errmsg_printf(error::ERROR, _("Unknown/unsupported storage engine: %s\n"),
                     default_storage_engine_str);
       unireg_abort(1);
     }
@@ -2170,7 +2154,7 @@ static void get_options()
       drizzled_user= (char *)vm["user"].as<string>().c_str();
 
     else
-      errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
+      errmsg_printf(error::WARN, _("Ignoring user change to '%s' because the user was "
                                        "set to '%s' earlier on the command line\n"),
                     vm["user"].as<string>().c_str(), drizzled_user);
   }
@@ -2341,14 +2325,14 @@ static void fix_paths()
     {
       if (errno != EEXIST)
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("There was an error creating the '%s' part of the path '%s'.  Please check the path exists and is writable.\n"), fs::path(drizzle_tmpdir).leaf().c_str(), drizzle_tmpdir.c_str());
+        errmsg_printf(error::ERROR, _("There was an error creating the '%s' part of the path '%s'.  Please check the path exists and is writable.\n"), fs::path(drizzle_tmpdir).leaf().c_str(), drizzle_tmpdir.c_str());
         exit(1);
       }
     }
 
     if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("There was an error opening the path '%s', please check the path exists and is writable.\n"), drizzle_tmpdir.c_str());
+      errmsg_printf(error::ERROR, _("There was an error opening the path '%s', please check the path exists and is writable.\n"), drizzle_tmpdir.c_str());
       exit(1);
     }
   }

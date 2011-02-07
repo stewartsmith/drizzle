@@ -23,6 +23,7 @@
 #define DRIZZLED_PLUGIN_ERROR_MESSAGE_H
 
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/error/level_t.h"
 
 #include <stdarg.h>
 
@@ -32,7 +33,6 @@
 
 namespace drizzled
 {
-class Session;
 
 namespace plugin
 {
@@ -42,20 +42,24 @@ class DRIZZLED_API ErrorMessage : public Plugin
   ErrorMessage();
   ErrorMessage(const ErrorMessage &);
   ErrorMessage& operator=(const ErrorMessage &);
+
 public:
   explicit ErrorMessage(std::string name_arg)
    : Plugin(name_arg, "ErrorMessage")
   {}
   virtual ~ErrorMessage() {}
 
-  virtual bool errmsg(Session *session, int priority,
-                      const char *format, va_list ap)=0;
+  virtual bool errmsg(error::level_t priority, const char *format, va_list ap)=0;
 
   static bool addPlugin(plugin::ErrorMessage *handler);
   static void removePlugin(plugin::ErrorMessage *handler);
 
-  static bool vprintf(Session *session, int priority, char const *format,
-                      va_list ap);
+  static bool vprintf(error::level_t priority, char const *format, va_list ap);
+
+  bool removeLast() const
+  {
+    return true;
+  }
 };
 
 } /* namespace plugin */

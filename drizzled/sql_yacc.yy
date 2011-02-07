@@ -1249,10 +1249,10 @@ field_definition:
               Lex->field()->set_type(message::Table::Field::DOUBLE);
             }
           }
-          | char '(' NUM ')'
-            {
-              Lex->length=$3.str;
-              $$=DRIZZLE_TYPE_VARCHAR;
+        | char '(' NUM ')'
+          {
+            Lex->length=$3.str;
+            $$=DRIZZLE_TYPE_VARCHAR;
 
             if (Lex->field())
             {
@@ -1263,22 +1263,22 @@ field_definition:
 
               string_field_options->set_length(atoi($3.str));
             }
-            }
-          | char
-            {
-              Lex->length=(char*) "1";
-              $$=DRIZZLE_TYPE_VARCHAR;
+          }
+        | char
+          {
+            Lex->length=(char*) "1";
+            $$=DRIZZLE_TYPE_VARCHAR;
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::VARCHAR);
-            }
-          | varchar '(' NUM ')'
-            {
-              Lex->length=$3.str;
-              $$= DRIZZLE_TYPE_VARCHAR;
+          }
+        | varchar '(' NUM ')'
+          {
+            Lex->length=$3.str;
+            $$= DRIZZLE_TYPE_VARCHAR;
 
             if (Lex->field())
-	    {
+            {
               Lex->field()->set_type(message::Table::Field::VARCHAR);
 
               message::Table::Field::StringFieldOptions *string_field_options;
@@ -1287,15 +1287,15 @@ field_definition:
 
               string_field_options->set_length(atoi($3.str));
             }
-            }
-          | VARBINARY '(' NUM ')'
-            {
-              Lex->length=$3.str;
-              Lex->charset=&my_charset_bin;
-              $$= DRIZZLE_TYPE_VARCHAR;
+          }
+        | VARBINARY '(' NUM ')'
+          {
+            Lex->length=$3.str;
+            Lex->charset=&my_charset_bin;
+            $$= DRIZZLE_TYPE_VARCHAR;
 
             if (Lex->field())
-	    {
+            {
               Lex->field()->set_type(message::Table::Field::VARCHAR);
               message::Table::Field::StringFieldOptions *string_field_options;
 
@@ -1305,92 +1305,94 @@ field_definition:
               string_field_options->set_collation_id(my_charset_bin.number);
               string_field_options->set_collation(my_charset_bin.name);
             }
-            }
-          | DATE_SYM
-            {
-              $$=DRIZZLE_TYPE_DATE;
-
-              if (Lex->field())
-                Lex->field()->set_type(message::Table::Field::DATE);
-            }
-          | TIME_SYM
-            {
-              $$=DRIZZLE_TYPE_TIME;
-
-              if (Lex->field())
-                Lex->field()->set_type(message::Table::Field::TIME);
-            }
-          | TIMESTAMP_SYM
-            {
-              $$=DRIZZLE_TYPE_TIMESTAMP;
-              Lex->length= 0;
-
-              if (Lex->field())
-                Lex->field()->set_type(message::Table::Field::EPOCH);
-            }
-          | TIMESTAMP_SYM '(' NUM ')'
-            {
-              $$=DRIZZLE_TYPE_MICROTIME;
-              Lex->length= $3.str;
-
-              if (Lex->field())
-                Lex->field()->set_type(message::Table::Field::EPOCH);
-            }
-          | DATETIME_SYM
-            {
-              $$=DRIZZLE_TYPE_DATETIME;
-
-              if (Lex->field())
-                Lex->field()->set_type(message::Table::Field::DATETIME);
-            }
-          | BLOB_SYM
-            {
-              Lex->charset=&my_charset_bin;
-              $$=DRIZZLE_TYPE_BLOB;
-              Lex->length=(char*) 0; /* use default length */
-
-              if (Lex->field())
-              {
-                Lex->field()->set_type(message::Table::Field::BLOB);
-                message::Table::Field::StringFieldOptions *string_field_options;
-
-                string_field_options= Lex->field()->mutable_string_options();
-                string_field_options->set_collation_id(my_charset_bin.number);
-                string_field_options->set_collation(my_charset_bin.name);
-              }
-            }
-          | TEXT_SYM
-            {
-              $$=DRIZZLE_TYPE_BLOB;
-              Lex->length=(char*) 0; /* use default length */
+          }
+        | DATE_SYM
+          {
+            $$=DRIZZLE_TYPE_DATE;
 
             if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DATE);
+          }
+        | TIME_SYM
+          {
+            $$=DRIZZLE_TYPE_TIME;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::TIME);
+          }
+        | TIMESTAMP_SYM
+          {
+            $$=DRIZZLE_TYPE_TIMESTAMP;
+            Lex->length= 0;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::EPOCH);
+          }
+        | TIMESTAMP_SYM '(' NUM ')'
+          {
+            $$=DRIZZLE_TYPE_MICROTIME;
+            Lex->length= $3.str;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::EPOCH);
+          }
+        | DATETIME_SYM
+          {
+            $$=DRIZZLE_TYPE_DATETIME;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DATETIME);
+          }
+        | BLOB_SYM
+          {
+            Lex->charset=&my_charset_bin;
+            $$=DRIZZLE_TYPE_BLOB;
+            Lex->length=(char*) 0; /* use default length */
+
+            if (Lex->field())
+            {
               Lex->field()->set_type(message::Table::Field::BLOB);
+              message::Table::Field::StringFieldOptions *string_field_options;
+
+              string_field_options= Lex->field()->mutable_string_options();
+              string_field_options->set_collation_id(my_charset_bin.number);
+              string_field_options->set_collation(my_charset_bin.name);
             }
-          | DECIMAL_SYM float_options
+          }
+        | TEXT_SYM
+          {
+            $$=DRIZZLE_TYPE_BLOB;
+            Lex->length=(char*) 0; /* use default length */
+
+          if (Lex->field())
+            Lex->field()->set_type(message::Table::Field::BLOB);
+          }
+        | DECIMAL_SYM float_options
           {
             $$=DRIZZLE_TYPE_DECIMAL;
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::DECIMAL);
           }
-          | NUMERIC_SYM float_options
+        | NUMERIC_SYM float_options
           {
             $$=DRIZZLE_TYPE_DECIMAL;
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::DECIMAL);
           }
-          | FIXED_SYM float_options
+        | FIXED_SYM float_options
           {
             $$=DRIZZLE_TYPE_DECIMAL;
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::DECIMAL);
           }
-          | ENUM_SYM
-            {Lex->interval_list.empty();}
-            '(' string_list ')'
+        | ENUM_SYM
+          {
+            Lex->interval_list.empty();
+          }
+          '(' string_list ')'
           {
             $$=DRIZZLE_TYPE_ENUM;
 
@@ -1436,8 +1438,18 @@ varchar:
         ;
 
 int_type:
-          INT_SYM    { $$=DRIZZLE_TYPE_LONG; }
-        | BIGINT_SYM { $$=DRIZZLE_TYPE_LONGLONG; }
+          INT_SYM 
+          {
+            $$= DRIZZLE_TYPE_LONG;
+          }
+        | BOOL_SYM
+          {
+            $$= DRIZZLE_TYPE_LONG;
+          }
+        | BIGINT_SYM
+          {
+            $$= DRIZZLE_TYPE_LONGLONG;
+          }
         ;
 
 real_type:
@@ -1446,9 +1458,13 @@ real_type:
             $$= DRIZZLE_TYPE_DOUBLE;
           }
         | DOUBLE_SYM
-          { $$=DRIZZLE_TYPE_DOUBLE; }
+          {
+            $$= DRIZZLE_TYPE_DOUBLE;
+          }
         | DOUBLE_SYM PRECISION
-          { $$=DRIZZLE_TYPE_DOUBLE; }
+          {
+            $$= DRIZZLE_TYPE_DOUBLE;
+          }
         ;
 
 float_options:
@@ -2081,17 +2097,11 @@ opt_place:
           /* empty */ {}
         | AFTER_SYM ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            store_position_for_column($2.str);
-            statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
+            parser::storeAlterColumnPosition(Lex, $2.str);
           }
         | FIRST_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            store_position_for_column(first_keyword);
-            statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
+            parser::storeAlterColumnPosition(Lex, first_keyword);
           }
         ;
 
@@ -4568,27 +4578,28 @@ show_param:
            }
         | COUNT_SYM '(' '*' ')' WARNINGS
           {
-            (void) create_select_for_variable("warning_count");
-             Lex->statement= new statement::Show(YYSession);
+            show::buildSelectWarning(YYSession);
           }
         | COUNT_SYM '(' '*' ')' ERRORS
           {
-            (void) create_select_for_variable("error_count");
-             Lex->statement= new statement::Show(YYSession);
+            show::buildSelectError(YYSession);
           }
         | WARNINGS opt_limit_clause_init
           {
-            if (not show::buildWarnings(YYSession))
-              DRIZZLE_YYABORT;
+            show::buildWarnings(YYSession);
           }
         | ERRORS opt_limit_clause_init
           {
-            if (not show::buildErrors(YYSession))
-              DRIZZLE_YYABORT;
+            show::buildErrors(YYSession);
           }
         | opt_var_type STATUS_SYM show_wild
           {
             if (not show::buildStatus(YYSession, $1))
+              DRIZZLE_YYABORT;
+          }
+        | engine_option_value STATUS_SYM
+          {
+            if (not show::buildEngineStatus(YYSession, $1))
               DRIZZLE_YYABORT;
           }
         | CREATE TABLE_SYM table_ident

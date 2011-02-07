@@ -23,7 +23,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
-#include <drizzled/sql_state.h>
 #include <drizzled/session.h>
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
@@ -73,6 +72,7 @@ static int init(drizzled::module::Context &context)
     Protocol *listen_obj= new Protocol("mysql_unix_socket_protocol",
                              true,
                              uds_path);
+    listen_obj->addCountersToTable();
     context.add(listen_obj);
     context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
     context.registerVariable(new sys_var_bool_ptr_readonly("clobber", &clobber));

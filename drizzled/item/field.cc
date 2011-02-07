@@ -165,7 +165,7 @@ Item_field::Item_field(Name_resolution_context *context_arg,
    have_privileges(0),
    any_privileges(0)
 {
-  Select_Lex *select= current_session->lex->current_select;
+  Select_Lex *select= getSession().getLex()->current_select;
   collation.set(DERIVATION_IMPLICIT);
 
   if (select && select->parsing_place != IN_HAVING)
@@ -332,7 +332,7 @@ bool Item_field::val_bool_result()
       type::Decimal decimal_value;
       type::Decimal *val= result_field->val_decimal(&decimal_value);
       if (val)
-        return not val->is_zero();
+        return not val->isZero();
       return 0;
     }
 
