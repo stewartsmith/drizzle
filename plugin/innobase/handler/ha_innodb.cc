@@ -944,6 +944,7 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
   uint64_t trx_id= message.transaction_context().transaction_id();
   uint32_t seg_id= message.segment_id();
   uint64_t end_timestamp= message.transaction_context().end_timestamp();
+  trx->log_commit_id= TRUE;
   ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id,
                end_timestamp, seg_id);
   (void)error;
@@ -2515,11 +2516,6 @@ InnobaseEngine::doCommit(
         commit_threads--;
         commit_cond.wait(scopedLock);
       } while (1);
-    }
-
-    if (innobase_use_replication_log)
-    {
-      trx->log_commit_id= TRUE;
     }
 
     trx->mysql_log_file_name = NULL;
