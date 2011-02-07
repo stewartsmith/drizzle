@@ -71,9 +71,9 @@ public:
     return false;
   }
 
-  virtual void sendError(uint32_t error_code, const char *error_message)
+  virtual void sendError(drizzled::error_t error_code, const char *error_message)
   {
-    sql::Exception tmp(error_message, static_cast<drizzled::error_t>(error_code));
+    sql::Exception tmp(error_message, error_code);
     std::cerr << tmp << std::endl;
     _result_set->pushException(tmp);
   }
