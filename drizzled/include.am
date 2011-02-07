@@ -64,6 +64,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/common.h \
 			      drizzled/comp_creator.h \
 			      drizzled/constrained_value.h \
+			      drizzled/copy_info.h \
 			      drizzled/create_field.h \
 			      drizzled/current_session.h \
 			      drizzled/cursor.h \
@@ -463,6 +464,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/structs.h \
 			      drizzled/symbol_hash.h \
 			      drizzled/sys_var.h \
+			      drizzled/system_variables.h \
 			      drizzled/table.h \
 			      drizzled/table/cache.h \
 			      drizzled/table/concurrent.h \

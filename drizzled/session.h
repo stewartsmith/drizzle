@@ -57,6 +57,9 @@
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/copy_info.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -110,59 +113,6 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
 
-/**
-  @brief
-  Local storage for proto that are tmp table. This should be enlarged
-  to hande the entire table-share for a local table. Once Hash is done,
-  we should consider exchanging the map for it.
-*/
-typedef std::map <std::string, message::Table> ProtoCache;
-
-/**
-  The COPY_INFO structure is used by INSERT/REPLACE code.
-  The schema of the row counting by the INSERT/INSERT ... ON DUPLICATE KEY
-  UPDATE code:
-    If a row is inserted then the copied variable is incremented.
-    If a row is updated by the INSERT ... ON DUPLICATE KEY UPDATE and the
-      new data differs from the old one then the copied and the updated
-      variables are incremented.
-    The touched variable is incremented if a row was touched by the update part
-      of the INSERT ... ON DUPLICATE KEY UPDATE no matter whether the row
-      was actually changed or not.
-*/
-class CopyInfo 
-{
-public:
-  ha_rows records; /**< Number of processed records */
-  ha_rows deleted; /**< Number of deleted records */
-  ha_rows updated; /**< Number of updated records */
-  ha_rows copied;  /**< Number of copied records */
-  ha_rows error_count;
-  ha_rows touched; /* Number of touched records */
-  enum enum_duplicates handle_duplicates;
-  int escape_char, last_errno;
-  bool ignore;
-  /* for INSERT ... UPDATE */
-  List<Item> *update_fields;
-  List<Item> *update_values;
-  /* for VIEW ... WITH CHECK OPTION */
-
-  CopyInfo() :
-    records(0),
-    deleted(0),
-    updated(0),
-    copied(0),
-    error_count(0),
-    touched(0),
-    escape_char(0),
-    last_errno(0),
-    ignore(0),
-    update_fields(0),
-    update_values(0)
-  { }
-
-};
-
 } /* namespace drizzled */
 
 /** @TODO why is this in the middle of the file */
@@ -176,80 +126,6 @@ class Time_zone;
 
 #define Session_SENTRY_MAGIC 0xfeedd1ff
 #define Session_SENTRY_GONE  0xdeadbeef
-
-struct drizzle_system_variables
-{
-  drizzle_system_variables()
-  {}
-  /*
-    How dynamically allocated system variables are handled:
-
-    The global_system_variables and max_system_variables are "authoritative"
-    They both should have the same 'version' and 'size'.
-    When attempting to access a dynamic variable, if the session version
-    is out of date, then the session version is updated and realloced if
-    neccessary and bytes copied from global to make up for missing data.
-  */
-  ulong dynamic_variables_version;
-  char * dynamic_variables_ptr;
-  uint32_t dynamic_variables_head;  /* largest valid variable offset */
-  uint32_t dynamic_variables_size;  /* how many bytes are in use */
-
-  uint64_t myisam_max_extra_sort_file_size;
-  uint64_t max_heap_table_size;
-  uint64_t tmp_table_size;
-  ha_rows select_limit;
-  ha_rows max_join_size;
-  uint64_t auto_increment_increment;
-  uint64_t auto_increment_offset;
-  uint64_t bulk_insert_buff_size;
-  uint64_t join_buff_size;
-  uint32_t max_allowed_packet;
-  uint64_t max_error_count;
-  uint64_t max_length_for_sort_data;
-  size_t max_sort_length;
-  uint64_t min_examined_row_limit;
-  bool optimizer_prune_level;
-  bool log_warnings;
-
-  uint32_t optimizer_search_depth;
-  uint32_t div_precincrement;
-  uint64_t preload_buff_size;
-  uint32_t read_buff_size;
-  uint32_t read_rnd_buff_size;
-  bool replicate_query;
-  size_t sortbuff_size;
-  uint32_t thread_handling;
-  uint32_t tx_isolation;
-  size_t transaction_message_threshold;
-  uint32_t completion_type;
-  /* Determines which non-standard SQL behaviour should be enabled */
-  uint32_t sql_mode;
-  uint64_t max_seeks_for_key;
-  size_t range_alloc_block_size;
-  uint32_t query_alloc_block_size;
-  uint32_t query_prealloc_size;
-  uint64_t group_concat_max_len;
-  uint64_t pseudo_thread_id;
-
-  plugin::StorageEngine *storage_engine;
-
-  /* Only charset part of these variables is sensible */
-  const CHARSET_INFO  *character_set_filesystem;
-
-  /* Both charset and collation parts of these variables are important */
-  const CHARSET_INFO	*collation_server;
-
-  inline const CHARSET_INFO  *getCollation(void) 
-  {
-    return collation_server;
-  }
-
-  /* Locale Support */
-  MY_LOCALE *lc_time_names;
-
-  Time_zone *time_zone;
-};
 
 extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
@@ -320,7 +196,6 @@ class DRIZZLED_API Session :
 {
 public:
   // Plugin storage in Session.
-  typedef Session* Ptr;
   typedef boost::shared_ptr<Session> shared_ptr;
   typedef Session& reference;
   typedef const Session& const_reference;
@@ -1918,6 +1793,7 @@ static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LO
 namespace display  {
 const std::string &type(drizzled::Session::global_read_lock_t type);
 size_t max_string_length(drizzled::Session::global_read_lock_t type);
+
 } /* namespace display */
 
 } /* namespace drizzled */
