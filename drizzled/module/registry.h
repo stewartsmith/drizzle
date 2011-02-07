@@ -24,6 +24,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <iostream>
 
 #include <boost/scoped_ptr.hpp>
 

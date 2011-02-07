@@ -2307,7 +2307,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
   @param cond       condition whose multiple equalities are to be checked
   @param table      constant table that has been read
 */
-static void update_const_equal_items(COND *cond, JoinTable *tab)
+void update_const_equal_items(COND *cond, JoinTable *tab)
 {
   if (!(cond->used_tables() & tab->table->map))
     return;
@@ -2606,7 +2606,7 @@ static void propagate_cond_constants(Session *session,
          position:
           1. join->cur_embedding_map - bitmap of pairs of brackets (aka nested
              joins) we've opened but didn't close.
-          2. {each nested_join_st structure not simplified away}->counter - number
+          2. {each NestedJoin class not simplified away}->counter - number
              of this nested join's children that have already been added to to
              the partial join order.
   @endverbatim
@@ -3367,83 +3367,6 @@ int safe_index_read(JoinTable *tab)
   return 0;
 }
 
-int join_read_const_table(JoinTable *tab, optimizer::Position *pos)
-{
-  int error;
-  Table *table=tab->table;
-  table->const_table=1;
-  table->null_row=0;
-  table->status=STATUS_NO_RECORD;
-
-  if (tab->type == AM_SYSTEM)
-  {
-    if ((error=join_read_system(tab)))
-    {						// Info for DESCRIBE
-      tab->info="const row not found";
-      /* Mark for EXPLAIN that the row was not found */
-      pos->setFanout(0.0);
-      pos->clearRefDependMap();
-      if (! table->maybe_null || error > 0)
-        return(error);
-    }
-  }
-  else
-  {
-    if (! table->key_read && 
-        table->covering_keys.test(tab->ref.key) && 
-        ! table->no_keyread &&
-        (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS)
-    {
-      table->key_read=1;
-      table->cursor->extra(HA_EXTRA_KEYREAD);
-      tab->index= tab->ref.key;
-    }
-    error=join_read_const(tab);
-    if (table->key_read)
-    {
-      table->key_read=0;
-      table->cursor->extra(HA_EXTRA_NO_KEYREAD);
-    }
-    if (error)
-    {
-      tab->info="unique row not found";
-      /* Mark for EXPLAIN that the row was not found */
-      pos->setFanout(0.0);
-      pos->clearRefDependMap();
-      if (!table->maybe_null || error > 0)
-        return(error);
-    }
-  }
-  if (*tab->on_expr_ref && !table->null_row)
-  {
-    if ((table->null_row= test((*tab->on_expr_ref)->val_int() == 0)))
-      table->mark_as_null_row();
-  }
-  if (!table->null_row)
-    table->maybe_null=0;
-
-  /* Check appearance of new constant items in Item_equal objects */
-  Join *join= tab->join;
-  if (join->conds)
-    update_const_equal_items(join->conds, tab);
-  TableList *tbl;
-  for (tbl= join->select_lex->leaf_tables; tbl; tbl= tbl->next_leaf)
-  {
-    TableList *embedded;
-    TableList *embedding= tbl;
-    do
-    {
-      embedded= embedding;
-      if (embedded->on_expr)
-         update_const_equal_items(embedded->on_expr, tab);
-      embedding= embedded->getEmbedding();
-    }
-    while (embedding &&
-           embedding->getNestedJoin()->join_list.head() == embedded);
-  }
-
-  return(0);
-}
 
 int join_read_system(JoinTable *tab)
 {

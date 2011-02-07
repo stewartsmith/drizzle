@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -27,12 +27,16 @@
 
 # imports
 import os
-import time
 
 class drizzleServer():
     """ represents a drizzle server, its possessions
         (datadir, ports, etc), and methods for controlling
         and querying it
+
+        TODO: create a base server class that contains
+              standard methods from which we can inherit
+              Currently there are definitely methods / attr
+              which are general
 
     """
 
@@ -60,7 +64,7 @@ class drizzleServer():
         if self.valgrind:
             self.valgrind_time_buffer = 10
         else:
-            self.valgrind_time_buffer = 0
+            self.valgrind_time_buffer = 1
         self.cmd_prefix = self.system_manager.cmd_prefix
         self.logging = self.system_manager.logging
         self.no_secure_file_priv = self.server_manager.no_secure_file_priv
@@ -80,7 +84,7 @@ class drizzleServer():
         self.drizzle_tcp_port = self.port_block[1]
         self.mc_port = self.port_block[2]
         self.pbms_port = self.port_block[3]
-        self.rabbit_mq_node_port = self.port_block[4]
+        self.rabbitmq_node_port = self.port_block[4]
         
 
         # Generate our working directories
@@ -139,7 +143,7 @@ class drizzleServer():
                         , 'drizzle_tcp_port'
                         , 'mc_port'
                         , 'pbms_port'
-                        , 'rabbit_mq_node_port'
+                        , 'rabbitmq_node_port'
                         , 'vardir'
                         , 'status'
                         ]
@@ -148,17 +152,13 @@ class drizzleServer():
           value = vars(self)[key] 
           self.logging.info("%s: %s" %(key.upper(), value))
 
-    def start(self, expect_fail):
-        """ Start the server, using the options in option_list
-            as well as self.standard_options
-            
-            if expect_fail = 1, we know the server shouldn't 
-            start up
-
+    def get_start_cmd(self):
+        """ Return the command string that will start up the server 
+            as desired / intended
+ 
         """
-        if self.verbose:
-            self.logging.verbose("Starting server: %s.%s" %(self.owner, self.name))
-        start_cmd = "%s %s %s --mysql-protocol.port=%d --mysql-protocol.connect-timeout=60 --mysql-unix-socket-protocol.path=%s --pid-file=%s --drizzle-protocol.port=%d --datadir=%s --tmpdir=%s --innodb.data-file-path=ibdata1:20M:autoextend --sort-buffer-size=256K --max-heap-table-size=1M %s %s > %s 2>&1 & " % ( self.cmd_prefix
+      
+        return "%s %s %s --mysql-protocol.port=%d --mysql-protocol.connect-timeout=60 --mysql-unix-socket-protocol.path=%s --pid-file=%s --drizzle-protocol.port=%d --datadir=%s --tmpdir=%s --innodb.data-file-path=ibdata1:20M:autoextend --sort-buffer-size=256K --max-heap-table-size=1M %s %s > %s 2>&1 & " % ( self.cmd_prefix
                                                , self.server_path
                                                , self.process_server_options()
                                                , self.master_port
@@ -171,61 +171,20 @@ class drizzleServer():
                                                , self.user_string 
                                                , self.error_log
                                                )
-        if self.debug:
-            self.logging.debug("Starting server with:")
-            self.logging.debug("%s" %(start_cmd))
-        # we signal we tried to start as an attempt
-        # to catch the case where a server is just 
-        # starting up and the user ctrl-c's
-        # we don't know the server is running (still starting up)
-        # so we give it a few minutes
-        self.tried_start = 1
-        server_retcode = os.system(start_cmd)
+
+    def get_stop_cmd(self):
+        """ Return the command that will shut us down """
         
-        timer = 0
-        timeout = self.server_start_timeout
-        while not self.ping(quiet= True) and timer != timeout:
-            time.sleep(1)
-            timer= timer + 1
-            # We make sure the server is running and return False if not 
-            if timer == timeout and not self.ping(quiet= True):
-                self.logging.error(( "Server failed to start within %d seconds.  This could be a problem with the test machine or the server itself" %(timeout)))
-                server_retcode = 1
-     
-        if server_retcode == 0:
-            self.status = 1 # we are running
-
-        if server_retcode != 0 and not expect_fail and self.debug:
-            self.logging.debug("Server startup command: %s failed with error code %d" %( start_cmd
-                                                                                  , server_retcode))
-        elif server_retcode == 0 and expect_fail:
-        # catch a startup that should have failed and report
-            self.logging.error("Server startup command :%s expected to fail, but succeeded" %(start_cmd))
-        self.tried_start = 0 
-        return server_retcode ^ expect_fail
-
-    def stop(self):
-        """ Stop the server """
-        if self.verbose:
-            self.logging.verbose("Stopping server %s.%s" %(self.owner, self.name))
-        stop_cmd = "%s --user=root --port=%d --shutdown " %(self.drizzle_client_path, self.master_port)
-        if self.debug:
-            self.logging.debug("%s" %(stop_cmd))
-        retcode, output = self.system_manager.execute_cmd(stop_cmd)
-        if retcode:
-            self.logging.error("Problem shutting down server:")
-            self.logging.error("%s : %s" %(retcode, output))
-        else:
-            self.status = 0 # indicate we are shutdown
+        return "%s --user=root --port=%d --shutdown " %(self.drizzle_client_path, self.master_port)
            
 
-    def ping(self, quiet= False):
-        """Pings the server. Returns True if server is up and running, False otherwise."""
-        ping_cmd= "%s --ping --port=%d --user=root" % (self.drizzle_client_path, self.master_port)
-        if not quiet:
-            self.logging.info("Pinging Drizzled server on port %d" % self.master_port)
-        (retcode, output)= self.system_manager.execute_cmd(ping_cmd, must_pass = 0)
-        return retcode == 0
+    def get_ping_cmd(self):
+        """Return the command string that will 
+           ping / check if the server is alive 
+
+        """
+
+        return "%s --ping --port=%d --user=root" % (self.drizzle_client_path, self.master_port)
 
     def process_server_options(self):
         """Consume the list of options we have been passed.

@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,14 +18,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef read_replication_h
-#define read_replication_h
+#include "config.h"
+#include "drizzled/configmake.h"
 
-struct read_replication_return_st {
-  unsigned long long id;
-  unsigned long seg_id;
-  unsigned long long message_length;
-  const char *message;
-};
+#include <boost/filesystem.hpp>
 
-#endif
+#include "drizzled/data_home.h"
+
+namespace drizzled {
+
+static boost::filesystem::path data_home(LOCALSTATEDIR);
+static boost::filesystem::path full_data_home(LOCALSTATEDIR);
+
+boost::filesystem::path& getFullDataHome()
+{
+  return full_data_home;
+}
+
+boost::filesystem::path& getDataHome()
+{
+  return data_home;
+}
+
+boost::filesystem::path& getDataHomeCatalog()
+{
+  static boost::filesystem::path data_home_catalog(getDataHome());
+  return data_home_catalog;
+}
+
+} // namespace drizzled

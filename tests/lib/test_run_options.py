@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -327,9 +327,6 @@ debugger_control_group.add_option(
   )
 
 parser.add_option_group(debugger_control_group)
-
-#prints entire help menu when usage message is displayed
-parser.usage= parser.print_help()
 
 
 # supplied will be those arguments matching an option, 

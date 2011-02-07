@@ -91,8 +91,10 @@ public:
   }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
+
 private:
   Table *next;
+
 public:
   Table *getNext() const
   {
@@ -314,8 +316,10 @@ public:
     The set is implemented as a bitmap.
   */
   key_map keys_in_use_for_query;
+
   /* Map of keys that can be used to calculate GROUP BY without sorting */
   key_map keys_in_use_for_group_by;
+
   /* Map of keys that can be used to calculate ORDER BY without sorting */
   key_map keys_in_use_for_order_by;
 

@@ -70,7 +70,7 @@ bool test_parse_for_slave(Session *session, char *inBuf,
 
 void reset_session_for_next_command(Session *session);
 
-void create_select_for_variable(const char *var_name);
+void create_select_for_variable(Session *session, const char *var_name);
 
 void init_update_queries(void);
 
