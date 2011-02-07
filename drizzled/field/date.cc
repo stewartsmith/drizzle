@@ -136,8 +136,7 @@ int Field_date::store_time(type::Time &ltime,
     type::cut_t cut_error= type::VALID;
     if (ltime.check(tmp != 0,
                      (TIME_FUZZY_DATE |
-                      (current_session->variables.sql_mode &
-                       (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), cut_error))
+                      (current_session->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), cut_error))
     {
       char buff[type::Time::MAX_STRING_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
