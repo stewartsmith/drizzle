@@ -119,7 +119,7 @@ class testExecutor():
                 # However one could argue that if we aren't using it, 
                 # We shouldn't hog it ; )
                 # We might need to do this better later
-                for server in current_servers:
+                for server in self.current_servers:
                     server.cleanup() # this only removes any port files
                 sys.exit(0)
         if self.initial_run:
