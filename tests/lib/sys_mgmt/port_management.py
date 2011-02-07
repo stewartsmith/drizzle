@@ -39,7 +39,6 @@ class portManager:
                          ]
         self.working_dir = "/tmp"
         self.file_prefix = "dbqp_port"
-        self.port_catalog = "/tmp/drizzle_test_port_catalog.dat"
         self.port_file_delimiter = ':' # what we use to separate port:owner 
         self.debug = debug
         self.logging = system_manager.logging
@@ -98,7 +97,7 @@ class portManager:
         sys.exit(1)
 
     def check_port_status(self, port):
-        """ Check if a port is in use, via the catalog file 
+        """ Check if a port is in use, via the port files
             which all copies of dbqp.py should use
 
             Not *really* sure how well this works with multiple
@@ -106,7 +105,7 @@ class portManager:
             to work 
 
         """
-        # read the catalog file
+        # check existing ports dbqp has created
         dbqp_ports = self.check_dbqp_ports()
         if port not in dbqp_ports and not self.is_port_used(port):
             return 1
@@ -171,7 +170,7 @@ class portManager:
         out_file.close()
 
     def free_ports(self, portlist):
-       """ Clean up our port catalog """
+       """ Clean up our ports """
        for port in portlist:
           self.free_port(port)
 
