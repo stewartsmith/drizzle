@@ -520,6 +520,7 @@ drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length)
 drizzled::enum_field_types buildVarbinaryColumn(LEX *lex, const char *length)
 {
   lex->length= const_cast<char *>(length);
+  lex->charset= &my_charset_bin;
 
   if (lex->field())
   {

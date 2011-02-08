@@ -1177,13 +1177,8 @@ field_definition:
           }
         | real_type opt_precision
           {
-            $$=$1;
-
-            if (Lex->field())
-            {
-              assert ($1 == DRIZZLE_TYPE_DOUBLE);
-              Lex->field()->set_type(message::Table::Field::DOUBLE);
-            }
+            assert ($1 == DRIZZLE_TYPE_DOUBLE);
+            $$= parser::buildDoubleColumn(Lex);
           }
         | char '(' NUM ')'
           {
@@ -1203,21 +1198,7 @@ field_definition:
           }
         | VARBINARY '(' NUM ')'
           {
-            Lex->length=$3.str;
-            Lex->charset=&my_charset_bin;
-            $$= DRIZZLE_TYPE_VARCHAR;
-
-            if (Lex->field())
-            {
-              Lex->field()->set_type(message::Table::Field::VARCHAR);
-              message::Table::Field::StringFieldOptions *string_field_options;
-
-              string_field_options= Lex->field()->mutable_string_options();
-
-              string_field_options->set_length(atoi($3.str));
-              string_field_options->set_collation_id(my_charset_bin.number);
-              string_field_options->set_collation(my_charset_bin.name);
-            }
+            $$= parser::buildVarbinaryColumn(Lex, $3.str);
           }
         | DATE_SYM
           {
