@@ -36,10 +36,6 @@ public:
   CreateIndex(Session *in_session, const drizzled::ha_build_method);
 
   bool execute();
-  bool isTransactional()
-  {
-    return false;
-  }
 };
 
 } /* namespace statement */

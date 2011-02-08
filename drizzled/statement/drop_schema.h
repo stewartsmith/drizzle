@@ -40,10 +40,7 @@ public:
   }
 
   bool execute();
-  bool isTransactional()
-  {
-    return false;
-  }
+
   /* True if "IF EXISTS" */
   bool drop_if_exists;
 };

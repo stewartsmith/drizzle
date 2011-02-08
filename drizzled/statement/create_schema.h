@@ -45,10 +45,6 @@ public:
   }
 
   bool execute();
-  bool isTransactional()
-  {
-    return false;
-  }
   bool is_if_not_exists;
   message::Schema schema_message;
 

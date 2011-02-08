@@ -61,7 +61,7 @@ public:
      This should go away when DDL commands are within transactions. */
   virtual bool isTransactional()
   {
-    return true;
+    return false;
   }
 
   Session *getSession()

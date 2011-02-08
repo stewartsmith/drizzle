@@ -40,10 +40,6 @@ public:
   }
 
   bool execute();
-  bool isTransactional()
-  {
-    return false;
-  }
 };
 
 } /* end namespace statement */

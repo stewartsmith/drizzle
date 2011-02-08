@@ -72,10 +72,6 @@ public:
   }
 
   bool execute();
-  bool isTransactional()
-  {
-    return false;
-  }
 
   bool isShow() { return true; }
 };

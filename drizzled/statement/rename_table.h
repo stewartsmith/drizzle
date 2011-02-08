@@ -41,10 +41,6 @@ public:
   }
 
   bool execute();
-  bool isTransactional()
-  {
-    return false;
-  }
 
 private:
 

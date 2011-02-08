@@ -36,11 +36,6 @@ public:
   Select(Session *in_session);
 
   bool execute();
-  bool isTransactional()
-  {
-    return false; /* It only MAY be transactonal, we start an autocommit=off
-                     transaction later, once we determine if it has tables */
-  }
 };
 
 } /* namespace statement */

@@ -42,10 +42,6 @@ public:
   }
 
   bool execute();
-  bool isTransactional()
-  {
-    return false;
-  }
 
   /* Was the CHAIN option using in COMMIT/ROLLBACK? */
   bool tx_chain;

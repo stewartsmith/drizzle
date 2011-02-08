@@ -36,10 +36,6 @@ public:
   Rollback(Session *in_session, bool tx_chain_arg, bool tx_release_arg);
 
   bool execute();
-  bool isTransactional()
-  {
-    return false;
-  }
 
   /* Was the CHAIN option using in COMMIT/ROLLBACK? */
   bool tx_chain;
