@@ -31,6 +31,7 @@
 # imports
 import os
 import sys
+import subprocess
 
 class testExecutor():
     """ class for handling the execution of testCase
@@ -66,7 +67,6 @@ class testExecutor():
                                                                 , self.workdir
                                                                 )
         self.record_flag=self.execution_manager.record_flag
-        self.environment_vars = {}
         self.current_servers = [self.master_server]
         self.current_testcase = None    
         self.current_test_status = None
@@ -119,7 +119,7 @@ class testExecutor():
                 # However one could argue that if we aren't using it, 
                 # We shouldn't hog it ; )
                 # We might need to do this better later
-                for server in current_servers:
+                for server in self.current_servers:
                     server.cleanup() # this only removes any port files
                 sys.exit(0)
         if self.initial_run:
