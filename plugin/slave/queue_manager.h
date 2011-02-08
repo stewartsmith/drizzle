@@ -79,6 +79,8 @@ public:
   }
 
 private:
+  typedef std::vector<uint64_t> TrxIdList;
+
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
 
@@ -86,7 +88,8 @@ private:
   std::string _schema;
   std::string _table;
 
-  bool findCompleteTransaction(uint64_t *trx_id);
+  bool getListOfCompletedTransactions(drizzled::Session &session,
+                                      TrxIdList &list);
 
   /**
    * Convert the given Transaction message into equivalent SQL.

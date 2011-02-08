@@ -27,6 +27,7 @@
 #include "drizzled/catalog/local.h"
 #include "drizzled/execute.h"
 #include "drizzled/internal/my_pthread.h"
+#include "drizzled/sql/result_set.h"
 #include <string>
 #include <vector>
 #include <boost/thread.hpp>
@@ -41,7 +42,16 @@ namespace slave
 void QueueManager::processQueue(void)
 {
   boost::posix_time::seconds duration(getCheckInterval());
-  
+
+  try
+  {
+    boost::this_thread::sleep(duration);
+  }
+  catch (boost::thread_interrupted &)
+  {
+    return;
+  }
+
   /* thread setup needed to do things like create a Session */
   internal::my_thread_init();
   boost::this_thread::at_thread_exit(&internal::my_thread_end);
@@ -62,8 +72,18 @@ void QueueManager::processQueue(void)
     {
       boost::this_thread::disable_interruption di;
 
-      while (findCompleteTransaction(&trx_id))
+      TrxIdList completedTransactionIds;
+      getListOfCompletedTransactions(*(session.get()), completedTransactionIds);
+
+      printf("Completed Transactions\n");
+      for (size_t x= 0; x < completedTransactionIds.size(); x++)
+        printf("  %llu\n", completedTransactionIds[x]);
+      fflush(stdout);
+
+      for (size_t x= 0; x < completedTransactionIds.size(); x++)
       {
+        trx_id= completedTransactionIds[x];
+
         vector<string> aggregate_sql;  /* final SQL to execute */
         vector<string> segmented_sql;  /* carryover from segmented statements */
 
@@ -76,11 +96,11 @@ void QueueManager::processQueue(void)
         if (not aggregate_sql.empty())
           executeSQL(*(session.get()), aggregate_sql);
 
-        deleteFromQueue(*(session.get()), trx_id);      
+        //deleteFromQueue(*(session.get()), trx_id);      
       }
 
       // TODO: remove me
-      deleteFromQueue(*(session.get()), trx_id++);      
+      //deleteFromQueue(*(session.get()), trx_id++);      
     }
     
     /* Interruptable only when not doing work (aka, sleeping) */
@@ -93,6 +113,40 @@ void QueueManager::processQueue(void)
       return;
     }
   }
+}
+
+
+bool QueueManager::getListOfCompletedTransactions(Session &session,
+                                                  TrxIdList &list)
+{
+  Execute execute(session, true);
+  
+  string sql("SELECT trx_id FROM ");
+  sql.append(getSchema());
+  sql.append(".");
+  sql.append(getTable());
+  sql.append(" WHERE commit_order IS NOT NULL ORDER BY commit_order DESC");
+  
+  /* ResultSet size must match column count */
+  sql::ResultSet result_set(1);
+
+  execute.run(sql, &result_set);
+
+  assert(result_set.getMetaData().getColumnCount() == 1);
+
+  while (result_set.next())
+  {
+    assert(result_set.isNull(0) == false);
+    string value= result_set.getString(0);
+    
+    /* empty string returned when no more results */
+    if (value == "")
+    {
+      list.push_back(boost::lexical_cast<uint64_t>(result_set.getString(0)));
+    }
+  }
+  
+  return true;
 }
 
 
@@ -164,15 +218,6 @@ bool QueueManager::convertToSQL(const message::Transaction &transaction,
 }
 
 
-bool QueueManager::findCompleteTransaction(uint64_t *trx_id)
-{
-  (void)trx_id;
-  /* search the queue, in insert order, for the first completed transaction */
-  /* set trx_id to the transaction id found */
-  return false;
-}
-
-
 bool QueueManager::isEndStatement(const message::Statement &statement)
 {
   switch (statement.type())
@@ -235,7 +280,7 @@ bool QueueManager::deleteFromQueue(Session &session, uint64_t trx_id)
   sql.append(getSchema());
   sql.append(".");
   sql.append(getTable());
-  sql.append(" WHERE id = ");
+  sql.append(" WHERE trx_id = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
 
   vector<string> sql_vect;

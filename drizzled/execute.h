@@ -24,6 +24,11 @@
 namespace drizzled
 {
 
+namespace sql
+{
+  class ResultSet;
+}
+
 class Execute
 {
   bool wait;
@@ -35,6 +40,7 @@ public:
 
   void run(std::string &to_execute);
   void run(const char *arg, size_t length);
+  void run(std::string &execution_string, sql::ResultSet *result_set);
 
   Session &session()
   {

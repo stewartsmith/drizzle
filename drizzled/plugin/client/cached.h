@@ -41,13 +41,14 @@ class Cached : public Concurrent
 {
   uint32_t column;
   uint32_t max_column;
-  boost::scoped_ptr<sql::ResultSet> _result_set;
+  sql::ResultSet *_result_set;
 
 public:
-  Cached() :
+  Cached(sql::ResultSet *rs) :
     Concurrent(),
     column(0),
-    max_column(0)
+    max_column(0),
+    _result_set(rs)
   {
   }
 
@@ -65,7 +66,6 @@ public:
       item->make_field(&field);
       max_column++;
     }
-    _result_set.reset(new sql::ResultSet(max_column +1));
     _result_set->createRow();
 
     return false;
