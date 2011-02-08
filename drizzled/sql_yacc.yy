@@ -1173,32 +1173,7 @@ field_def:
 field_definition:
           int_type ignored_field_number_length opt_field_number_signed opt_zerofill
           { 
-            $$= $1;
-            Lex->length=(char*) 0; /* use default length */
-
-            if ($3 or $4)
-            {
-              $1= DRIZZLE_TYPE_LONGLONG;
-            }
-
-            if (Lex->field())
-            {
-              assert ($1 == DRIZZLE_TYPE_LONG or $1 == DRIZZLE_TYPE_LONGLONG);
-              // We update the type for unsigned types
-              if ($3 or $4)
-              {
-                Lex->field()->set_type(message::Table::Field::BIGINT);
-                Lex->field()->mutable_constraints()->set_is_unsigned(true);
-              }
-              if ($1 == DRIZZLE_TYPE_LONG)
-              {
-                Lex->field()->set_type(message::Table::Field::INTEGER);
-              }
-              else if ($1 == DRIZZLE_TYPE_LONGLONG)
-              {
-                Lex->field()->set_type(message::Table::Field::BIGINT);
-              }
-            }
+            $$= parser::buildIntegerColumn(Lex, $1, ($3 or $4));
           }
         | real_type opt_precision
           {

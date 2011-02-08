@@ -453,5 +453,36 @@ void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ide
   statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
 }
 
+drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_types final_type, const bool is_unsigned)
+{ 
+  lex->length=(char*) 0; /* use default length */
+
+  if (is_unsigned)
+  {
+    final_type= DRIZZLE_TYPE_LONGLONG;
+  }
+
+  if (lex->field())
+  {
+    assert (final_type == DRIZZLE_TYPE_LONG or final_type == DRIZZLE_TYPE_LONGLONG);
+    // We update the type for unsigned types
+    if (is_unsigned)
+    {
+      lex->field()->set_type(message::Table::Field::BIGINT);
+      lex->field()->mutable_constraints()->set_is_unsigned(true);
+    }
+    else if (final_type == DRIZZLE_TYPE_LONG)
+    {
+      lex->field()->set_type(message::Table::Field::INTEGER);
+    }
+    else if (final_type == DRIZZLE_TYPE_LONGLONG)
+    {
+      lex->field()->set_type(message::Table::Field::BIGINT);
+    }
+  }
+
+  return final_type;
+}
+
 } // namespace parser
 } // namespace drizzled
