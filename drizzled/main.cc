@@ -250,9 +250,10 @@ int main(int argc, char **argv)
 
   /* Function generates error messages before abort */
   error_handler_hook= my_message_sql;
+
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
-  if (init_common_variables(argc, argv, modules))
+  if (init_basic_variables(argc, argv))
     unireg_abort(1);				// Will do exit
 
   if (opt_daemon)
@@ -267,6 +268,9 @@ int main(int argc, char **argv)
       exit(EXIT_FAILURE);
     }
   }
+
+  if (init_remaining_variables(modules))
+    unireg_abort(1);				// Will do exit
 
   /*
     init signals & alarm

@@ -1085,7 +1085,7 @@ static void compose_defaults_file_list(vector<string> in_options)
   }
 }
 
-int init_common_variables(int argc, char **argv, module::Registry &plugins)
+int init_basic_variables(int argc, char **argv)
 {
   time_t curr_time;
   umask(((~internal::my_umask) & 0666));
@@ -1412,6 +1412,15 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     unireg_abort(1);
   }
 
+  return 0;
+}
+
+int init_remaining_variables(module::Registry &plugins)
+{
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
+  current_pid= getpid();		/* Save for later ref */
+
   /* At this point, we've read all the options we need to read from files and
      collected most of them into unknown options - now let's load everything
   */
@@ -1491,7 +1500,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   fix_paths();
 
-  current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
 
   if (item_create_init())
