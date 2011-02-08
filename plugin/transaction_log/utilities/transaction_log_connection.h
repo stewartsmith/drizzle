@@ -34,7 +34,7 @@ public:
   ~TransactionLogConnection();
 
 
-  drizzle_result_st* query(std::string &str_query);
+  drizzle_result_st* query(const std::string &str_query);
 
   void errorHandler(drizzle_result_st *res,  drizzle_return_t ret, const char *when);
 

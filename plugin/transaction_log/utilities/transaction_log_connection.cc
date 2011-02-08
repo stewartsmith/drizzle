@@ -51,7 +51,7 @@ TransactionLogConnection::TransactionLogConnection(string &host, uint16_t port,
   }
 }
 
-drizzle_result_st* TransactionLogConnection::query(std::string &str_query)
+drizzle_result_st* TransactionLogConnection::query(const std::string &str_query)
 {
   drizzle_return_t ret;
   drizzle_result_st* result= new drizzle_result_st;
