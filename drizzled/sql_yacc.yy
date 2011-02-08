@@ -1235,19 +1235,11 @@ field_definition:
           }
         | TIMESTAMP_SYM
           {
-            $$=DRIZZLE_TYPE_TIMESTAMP;
-            Lex->length= 0;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::EPOCH);
+            $$=parser::buildTimestampColumn(Lex, NULL);
           }
         | TIMESTAMP_SYM '(' NUM ')'
           {
-            $$=DRIZZLE_TYPE_MICROTIME;
-            Lex->length= $3.str;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::EPOCH);
+            $$=parser::buildTimestampColumn(Lex, $3.str);
           }
         | DATETIME_SYM
           {

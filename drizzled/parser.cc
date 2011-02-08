@@ -517,5 +517,87 @@ drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length)
   return DRIZZLE_TYPE_VARCHAR;
 }
 
+drizzled::enum_field_types buildVarbinaryColumn(LEX *lex, const char *length)
+{
+  lex->length= const_cast<char *>(length);
+
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::VARCHAR);
+
+    message::Table::Field::StringFieldOptions *string_field_options;
+
+    string_field_options= lex->field()->mutable_string_options();
+
+    string_field_options->set_length(atoi(length));
+    string_field_options->set_collation_id(my_charset_bin.number);
+    string_field_options->set_collation(my_charset_bin.name);
+  }
+
+  return DRIZZLE_TYPE_VARCHAR;
+}
+
+drizzled::enum_field_types buildBlobColumn(LEX *lex)
+{
+  lex->charset=&my_charset_bin;
+  lex->length=(char*) 0; /* use default length */
+
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::BLOB);
+    message::Table::Field::StringFieldOptions *string_field_options;
+
+    string_field_options= lex->field()->mutable_string_options();
+    string_field_options->set_collation_id(my_charset_bin.number);
+    string_field_options->set_collation(my_charset_bin.name);
+  }
+
+  return DRIZZLE_TYPE_BLOB;
+}
+
+drizzled::enum_field_types buildBooleanColumn(LEX *lex)
+{
+  if (lex->field())
+    lex->field()->set_type(message::Table::Field::BOOLEAN);
+
+  return DRIZZLE_TYPE_BOOLEAN;
+}
+
+drizzled::enum_field_types buildUuidColumn(LEX *lex)
+{
+  if (lex->field())
+    lex->field()->set_type(message::Table::Field::UUID);
+
+  return DRIZZLE_TYPE_UUID;
+}
+
+drizzled::enum_field_types buildDoubleColumn(LEX *lex)
+{
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::DOUBLE);
+  }
+
+  return DRIZZLE_TYPE_DOUBLE;
+}
+
+drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length)
+{
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::EPOCH);
+  }
+
+  if (length)
+  {
+    lex->length= const_cast<char *>(length);
+    return DRIZZLE_TYPE_MICROTIME;
+  }
+
+  lex->length= NULL;
+
+  return DRIZZLE_TYPE_TIMESTAMP;
+}
+
 } // namespace parser
 } // namespace drizzled
