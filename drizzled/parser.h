@@ -152,6 +152,7 @@ void storeAlterColumnPosition(LEX *lex, const char *position);
 
 bool buildCollation(LEX *lex, const CHARSET_INFO *arg);
 void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg);
+void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table);
 
 } // namespace parser
 } // namespace drizzled

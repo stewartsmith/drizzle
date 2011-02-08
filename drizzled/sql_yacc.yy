@@ -1114,22 +1114,7 @@ key_def:
           }
         | opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Foreign_key($1.str ? $1 : $4, Lex->col_list,
-                                      $8,
-                                      Lex->ref_list,
-                                      statement->fk_delete_opt,
-                                      statement->fk_update_opt,
-                                      statement->fk_match_option);
-
-            statement->alter_info.key_list.push_back(key);
-            key= new Key(Key::MULTIPLE, $1.str ? $1 : $4,
-                         &default_key_create_info, 1,
-                         Lex->col_list);
-            statement->alter_info.key_list.push_back(key);
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
-            /* Only used for ALTER TABLE. Ignored otherwise. */
-            statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
+            parser::buildForeignKey(Lex, $1.str ? $1 : $4, $8);
           }
         | constraint opt_check_constraint
           {
