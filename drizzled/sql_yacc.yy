@@ -1186,11 +1186,7 @@ field_definition:
           }
         | char
           {
-            Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_VARCHAR;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::VARCHAR);
+            $$= parser::buildVarcharColumn(Lex, "1");
           }
         | varchar '(' NUM ')'
           {
@@ -1275,17 +1271,11 @@ field_definition:
           }
         | UUID_SYM
           {
-            $$=DRIZZLE_TYPE_UUID;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::UUID);
+            $$= parser::buildUuidColumn(Lex);
           }
         | BOOLEAN_SYM
           {
-            $$=DRIZZLE_TYPE_BOOLEAN;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::BOOLEAN);
+            $$= parser::buildBooleanColumn(Lex);
           }
         | SERIAL_SYM
           {
