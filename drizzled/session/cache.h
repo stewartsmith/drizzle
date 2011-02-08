@@ -22,13 +22,11 @@
 
 #include <list>
 
-#include "drizzled/session.h"
-#include "drizzled/visibility.h"
+#include <drizzled/session.h>
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
-
-class Session;
 
 namespace session
 {

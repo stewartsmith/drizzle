@@ -22,6 +22,8 @@
 #define DRIZZLED_SESSION_TABLE_MESSAGES_H
 
 #include <drizzled/util/string.h>
+#include <drizzled/message/table.h>
+
 #include <boost/unordered_map.hpp>
 
 namespace drizzled

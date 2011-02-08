@@ -141,8 +141,7 @@ DRIZZLED_API void mark_transaction_to_rollback(Session *session, bool all);
  * session object.
  */
 
-class DRIZZLED_API Session :
-  public Open_tables_state
+class DRIZZLED_API Session : public Open_tables_state
 {
 public:
   // Plugin storage in Session.

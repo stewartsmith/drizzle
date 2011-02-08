@@ -36,6 +36,7 @@
 #ifndef DRIZZLED_UTIL_STRING_H
 #define DRIZZLED_UTIL_STRING_H
 
+#include <utility>
 #include <string>
 #include <vector>
 
