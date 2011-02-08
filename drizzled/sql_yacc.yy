@@ -1239,24 +1239,15 @@ field_definition:
           }
         | DECIMAL_SYM float_options
           {
-            $$=DRIZZLE_TYPE_DECIMAL;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DECIMAL);
+            $$= parser::buildDecimalColumn(Lex);
           }
         | NUMERIC_SYM float_options
           {
-            $$=DRIZZLE_TYPE_DECIMAL;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DECIMAL);
+            $$= parser::buildDecimalColumn(Lex);
           }
         | FIXED_SYM float_options
           {
-            $$=DRIZZLE_TYPE_DECIMAL;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DECIMAL);
+            $$= parser::buildDecimalColumn(Lex);
           }
         | ENUM_SYM
           {

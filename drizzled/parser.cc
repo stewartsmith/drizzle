@@ -517,6 +517,14 @@ drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length)
   return DRIZZLE_TYPE_VARCHAR;
 }
 
+drizzled::enum_field_types buildDecimalColumn(LEX *lex)
+{
+  if (lex->field())
+    lex->field()->set_type(message::Table::Field::DECIMAL);
+
+  return DRIZZLE_TYPE_DECIMAL;
+}
+
 drizzled::enum_field_types buildVarbinaryColumn(LEX *lex, const char *length)
 {
   lex->length= const_cast<char *>(length);

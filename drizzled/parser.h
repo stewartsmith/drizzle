@@ -163,6 +163,7 @@ drizzled::enum_field_types buildBooleanColumn(LEX *lex);
 drizzled::enum_field_types buildUuidColumn(LEX *lex);
 drizzled::enum_field_types buildDoubleColumn(LEX *lex);
 drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length);
+drizzled::enum_field_types buildDecimalColumn(LEX *lex);
 
 } // namespace parser
 } // namespace drizzled
