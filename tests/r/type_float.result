@@ -219,7 +219,7 @@ create table t2 select 105213674794682365.00 y;
 desc t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 y	DECIMAL	NO		NO	
-create table t3 select x+y a from t1,t2;
+create table t3 select x+y a from t1 CROSS JOIN t2;
 show warnings;
 Level	Code	Message
 desc t3;

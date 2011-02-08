@@ -100,9 +100,24 @@ class dtrTestExecutor(test_execution.testExecutor):
         """
         testcase_name = self.current_testcase.fullname
         self.time_manager.start(testcase_name,'test')
-        retcode, output = self.system_manager.execute_cmd( drizzletest_cmd
-                                                         , must_pass = 0 )
+        #retcode, output = self.system_manager.execute_cmd( drizzletest_cmd
+                                                 #         , must_pass = 0 )
+        drizzletest_outfile = os.path.join(self.logdir,'drizzletest.out')
+        drizzletest_output = open(drizzletest_outfile,'w')
+        drizzletest_subproc = subprocess.Popen( drizzletest_cmd
+                                         , shell=True
+                                         , env=self.working_environment
+                                         , stdout = drizzletest_output
+                                         , stderr = subprocess.STDOUT
+                                         )
+        drizzletest_subproc.wait()
+        retcode = drizzletest_subproc.returncode     
         execution_time = int(self.time_manager.stop(testcase_name)*1000) # millisec
+
+        drizzletest_output.close()
+        drizzletest_file = open(drizzletest_outfile,'r')
+        output = str(drizzletest_file.readlines())
+        drizzletest_file.close()
 
         if self.debug:
             self.logging.debug("drizzletest_retcode: %d" %(retcode))

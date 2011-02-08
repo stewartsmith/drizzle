@@ -205,7 +205,6 @@ bool change_refs_to_tmp_fields(Session *session,
 bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *next);
 void update_const_equal_items(COND *cond, JoinTable *tab);
-int join_read_system(JoinTable *tab);
 int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);
 int join_read_always_key(JoinTable *tab);

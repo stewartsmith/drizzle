@@ -316,7 +316,7 @@ insert into t1 (user_name) values ('Tester');
 insert into t2 (group_name) values ('Group A');
 insert into t2 (group_name) values ('Group B');
 insert into t3 (user_id, group_id) values (1,1);
-select 1 'is_in_group', a.user_name, c.group_name, b.id from t1 a, t3 b, t2 c where a.id = b.user_id and b.group_id = c.id UNION  select 0 'is_in_group', a.user_name, c.group_name, null from t1 a, t2 c;
+select 1 'is_in_group', a.user_name, c.group_name, b.id from t1 a, t3 b, t2 c where a.id = b.user_id and b.group_id = c.id UNION  select 0 'is_in_group', a.user_name, c.group_name, null from t1 a CROSS JOIN t2 c;
 drop table t3, t1, t2;
 
 #

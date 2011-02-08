@@ -80,7 +80,7 @@ x
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 Variable_name	Value
 Last_query_cost	0
-SELECT * FROM t1 a, t1 b LIMIT 1;
+SELECT * FROM t1 a CROSS JOIN t1 b LIMIT 1;
 a	a
 1	1
 SHOW SESSION STATUS LIKE 'Last_query_cost';

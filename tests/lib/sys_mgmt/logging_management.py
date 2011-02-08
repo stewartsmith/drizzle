@@ -100,7 +100,7 @@ class loggingManager():
         msg = self.report_fmt.format( test_name, test_status
                                     , execution_time)
         self._write_message("", msg)
-        if additional_output:
+        if additional_output and test_status != '[ pass ]':
             additional_output=additional_output.split('\n')
             for line in additional_output:
                 line = line.strip()
