@@ -1121,10 +1121,10 @@ static void print_table_data(drizzle_result_st *result);
 static void print_tab_data(drizzle_result_st *result);
 static void print_table_data_vertically(drizzle_result_st *result);
 static void print_warnings(uint32_t error_code);
-static uint32_t start_timer(void);
-static void end_timer(uint32_t start_time,char *buff);
-static void drizzle_end_timer(uint32_t start_time,char *buff);
-static void nice_time(double sec,char *buff,bool part_second);
+static struct timeval start_timer(void);
+static void end_timer(struct timeval start_time, string &buff);
+static void drizzle_end_timer(struct timeval start_time, string &buff);
+static void nice_time(double sec, string &buff,bool part_second);
 extern "C" void drizzle_end(int sig);
 extern "C" void handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
@@ -2762,10 +2762,10 @@ static int
 com_go(string *buffer, const char *)
 {
   char          buff[200]; /* about 110 chars used so far */
-  char          time_buff[52+3+1]; /* time max + space&parens + NUL */
   drizzle_result_st result;
   drizzle_return_t ret;
-  uint32_t      timer, warnings= 0;
+  uint32_t      warnings= 0;
+  struct timeval timer;
   uint32_t      error= 0;
   uint32_t      error_code= 0;
   int           err= 0;
@@ -2834,10 +2834,9 @@ com_go(string *buffer, const char *)
         goto end;
     }
 
+    string time_buff("");
     if (verbose >= 3 || !opt_silent)
       drizzle_end_timer(timer,time_buff);
-    else
-      time_buff[0]= '\0';
 
     /* Every branch must truncate  buff . */
     if (drizzle_result_column_count(&result) > 0)
@@ -2888,7 +2887,7 @@ com_go(string *buffer, const char *)
       if (warnings != 1)
         *pos++= 's';
     }
-    strcpy(pos, time_buff);
+    strcpy(pos, time_buff.c_str());
     put_info(buff,INFO_RESULT,0,0);
     if (strcmp(drizzle_result_info(&result), ""))
       put_info(drizzle_result_info(&result),INFO_RESULT,0,0);
@@ -4342,25 +4341,15 @@ void tee_putc(int c, FILE *file)
 }
 
 #include <sys/times.h>
-#ifdef _SC_CLK_TCK        // For mit-pthreads
-#undef CLOCKS_PER_SEC
-#define CLOCKS_PER_SEC (sysconf(_SC_CLK_TCK))
-#endif
 
-static uint32_t start_timer(void)
+static struct timeval start_timer(void)
 {
-  struct tms tms_tmp;
-  return times(&tms_tmp);
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv;
 }
 
-
-/**
-   Write as many as 52+1 bytes to buff, in the form of a legible
-   duration of time.
-
-   len("4294967296 days, 23 hours, 59 minutes, 60.00 seconds")  ->  52
-*/
-static void nice_time(double sec,char *buff,bool part_second)
+static void nice_time(double sec, string &buff,bool part_second)
 {
   uint32_t tmp;
   ostringstream tmp_buff_str;
@@ -4395,27 +4384,57 @@ static void nice_time(double sec,char *buff,bool part_second)
     tmp_buff_str << tmp << _(" min ");
   }
   if (part_second)
-    tmp_buff_str.precision(2);
+    tmp_buff_str.precision(6);
   else
     tmp_buff_str.precision(0);
   tmp_buff_str << sec << _(" sec");
-  strcpy(buff, tmp_buff_str.str().c_str());
+  buff.append(tmp_buff_str.str());
+}
+
+/* adapted from the example in the GNU libc manual */
+/* Subtract the `struct timeval' values X and Y,
+   storing the result in RESULT.
+   Return 1 if the difference is negative, otherwise 0.  */
+
+static int
+timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
+{
+  /* Perform the carry for the later subtraction by updating y. */
+  if (x->tv_usec < y->tv_usec) {
+    int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+    y->tv_usec -= 1000000 * nsec;
+    y->tv_sec += nsec;
+  }
+  if (x->tv_usec - y->tv_usec > 1000000) {
+    int nsec = (x->tv_usec - y->tv_usec) / 1000000;
+    y->tv_usec += 1000000 * nsec;
+    y->tv_sec -= nsec;
+  }
+
+  /* Compute the time remaining to wait.
+     tv_usec is certainly positive. */
+  result->tv_sec = x->tv_sec - y->tv_sec;
+  result->tv_usec = x->tv_usec - y->tv_usec;
+
+  /* Return 1 if result is negative. */
+  return x->tv_sec < y->tv_sec;
+}
+
+static void end_timer(struct timeval start_time, string &buff)
+{
+  struct timeval endtv= start_timer();
+  struct timeval duration;
+  timeval_subtract(&duration, &endtv, &start_time);
+
+  nice_time((double) (duration.tv_sec + ((double)duration.tv_usec)/1000000), buff, 1);
 }
 
 
-static void end_timer(uint32_t start_time,char *buff)
+static void drizzle_end_timer(struct timeval start_time, string &buff)
 {
-  nice_time((double) (start_timer() - start_time) /
-            CLOCKS_PER_SEC,buff,1);
-}
-
-
-static void drizzle_end_timer(uint32_t start_time,char *buff)
-{
-  buff[0]=' ';
-  buff[1]='(';
-  end_timer(start_time,buff+2);
-  strcpy(strchr(buff, '\0'),")");
+  buff.append(" (");
+  end_timer(start_time,buff);
+  buff.append(")");
 }
 
 static const char * construct_prompt()
