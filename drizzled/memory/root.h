@@ -130,6 +130,7 @@ public:
   void mark_blocks_free();
   void *memdup_root(const void *str, size_t len);
   char *strdup_root(const char *str);
+
   char *strmake_root(const char *str,size_t len);
   void init_alloc_root(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 

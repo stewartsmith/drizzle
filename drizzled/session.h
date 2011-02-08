@@ -177,10 +177,6 @@ public:
       memset(ptr, 0, size);
     return ptr;
   }
-  inline char *strdup(const char *str)
-  {
-    return mem_root->strdup_root(str);
-  }
   inline char *strmake(const char *str, size_t size)
   {
     return mem_root->strmake_root(str,size);
