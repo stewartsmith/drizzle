@@ -852,16 +852,12 @@ create:
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
-            statement::CreateIndex *statement= (statement::CreateIndex *)Lex->statement;
-
             if (not Lex->current_select->add_table_to_list(Lex->session, $9,
                                                             NULL,
                                                             TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
-            Key *key;
-            key= new Key($4, $6, &statement->key_create_info, 0, Lex->col_list);
-            statement->alter_info.key_list.push_back(key);
-            Lex->col_list.empty();
+
+            parser::buildKey(Lex, $4, $6);
           }
         | CREATE DATABASE opt_if_not_exists schema_name
           {
