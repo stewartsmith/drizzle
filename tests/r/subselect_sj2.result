@@ -353,7 +353,7 @@ select * from t3;
 c1
 2009-10-22
 2142-10-22
-explain select 1 from t2 where  c2 in (select 1 from t3, t2) and  c1 in (select convert(c6,char(1)) from t2);
+explain select 1 from t2 where  c2 in (select 1 from t3 CROSS JOIN t2) and  c1 in (select convert(c6,char(1)) from t2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	1	Using where
 3	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	

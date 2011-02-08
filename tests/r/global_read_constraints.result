@@ -28,5 +28,5 @@ INSERT INTO t1 VALUES (UUID(), UUID()),(UUID(), UUID()),(UUID(), UUID()),(UUID()
 CREATE TABLE t2 SELECT * FROM t1;
 create temporary table t3 (a varchar(255), b varchar(255)) engine=myisam;
 insert into t3 select * from t1;
-select SQL_BIG_RESULT * from t3, (select * from t1) as t4;
+select SQL_BIG_RESULT * from t3, (select * from t1) as t4 where t3.a != '';
 ERROR HY000: Global read memory constraint hit; increase read-buffer-threshold
