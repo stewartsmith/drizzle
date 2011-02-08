@@ -91,6 +91,11 @@ private:
   bool getListOfCompletedTransactions(drizzled::Session &session,
                                       TrxIdList &list);
 
+  bool getMessage(drizzled::Session &session,
+                  drizzled::message::Transaction &transaction,
+                  uint64_t trx_id,
+                  uint32_t segment_id);
+
   /**
    * Convert the given Transaction message into equivalent SQL.
    *

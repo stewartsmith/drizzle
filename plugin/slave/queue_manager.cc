@@ -43,6 +43,7 @@ void QueueManager::processQueue(void)
 {
   boost::posix_time::seconds duration(getCheckInterval());
 
+  /* TODO: This is only needed b/c of plugin timing issues */
   try
   {
     boost::this_thread::sleep(duration);
@@ -73,12 +74,8 @@ void QueueManager::processQueue(void)
       boost::this_thread::disable_interruption di;
 
       TrxIdList completedTransactionIds;
-      getListOfCompletedTransactions(*(session.get()), completedTransactionIds);
 
-      printf("Completed Transactions\n");
-      for (size_t x= 0; x < completedTransactionIds.size(); x++)
-        printf("  %llu\n", completedTransactionIds[x]);
-      fflush(stdout);
+      getListOfCompletedTransactions(*(session.get()), completedTransactionIds);
 
       for (size_t x= 0; x < completedTransactionIds.size(); x++)
       {
@@ -88,7 +85,9 @@ void QueueManager::processQueue(void)
         vector<string> segmented_sql;  /* carryover from segmented statements */
 
         message::Transaction transaction;
-        //while (getMessage(transaction, trx_id))
+        uint32_t segment_id= 1;
+
+        while (getMessage(*(session.get()), transaction, trx_id, segment_id++))
           convertToSQL(transaction, aggregate_sql, segmented_sql);
 
         assert(segmented_sql.empty());
@@ -96,11 +95,8 @@ void QueueManager::processQueue(void)
         if (not aggregate_sql.empty())
           executeSQL(*(session.get()), aggregate_sql);
 
-        //deleteFromQueue(*(session.get()), trx_id);      
+        deleteFromQueue(*(session.get()), trx_id);      
       }
-
-      // TODO: remove me
-      //deleteFromQueue(*(session.get()), trx_id++);      
     }
     
     /* Interruptable only when not doing work (aka, sleeping) */
@@ -116,6 +112,51 @@ void QueueManager::processQueue(void)
 }
 
 
+bool QueueManager::getMessage(Session &session,
+                              message::Transaction &transaction,
+                              uint64_t trx_id,
+                              uint32_t segment_id)
+{
+  string sql("SELECT msg FROM ");
+  sql.append(getSchema());
+  sql.append(".");
+  sql.append(getTable());
+  sql.append(" WHERE trx_id = ");
+  sql.append(boost::lexical_cast<std::string>(trx_id));
+  sql.append(" AND seg_id = ");
+  sql.append(boost::lexical_cast<std::string>(segment_id));
+
+  printf("%s\n", sql.c_str()); fflush(stdout);
+  sql::ResultSet result_set(1);
+  Execute execute(session, true);
+  
+  execute.run(sql, &result_set);
+  
+  assert(result_set.getMetaData().getColumnCount() == 1);
+
+  /* Really should only be 1 returned row */
+  
+  uint32_t found_rows= 0;
+
+  while (result_set.next())
+  {
+    string value= result_set.getString(0);
+    
+    if ((value == "") || (found_rows == 1))
+      break;
+
+    assert(result_set.isNull(0) == false);
+    transaction.ParseFromArray(value.c_str(), value.length());
+
+    found_rows++;
+  }
+
+  if (found_rows == 0)
+    return false;
+  
+  return true;
+}
+
 bool QueueManager::getListOfCompletedTransactions(Session &session,
                                                   TrxIdList &list)
 {
@@ -125,7 +166,7 @@ bool QueueManager::getListOfCompletedTransactions(Session &session,
   sql.append(getSchema());
   sql.append(".");
   sql.append(getTable());
-  sql.append(" WHERE commit_order IS NOT NULL ORDER BY commit_order DESC");
+  sql.append(" WHERE commit_order IS NOT NULL ORDER BY commit_order ASC");
   
   /* ResultSet size must match column count */
   sql::ResultSet result_set(1);
@@ -140,7 +181,7 @@ bool QueueManager::getListOfCompletedTransactions(Session &session,
     string value= result_set.getString(0);
     
     /* empty string returned when no more results */
-    if (value == "")
+    if (value != "")
     {
       list.push_back(boost::lexical_cast<uint64_t>(result_set.getString(0)));
     }
