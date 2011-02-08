@@ -84,7 +84,7 @@ Item_func::Item_func(Session *session, Item_func *item) :
       args= tmp_arg;
     else
     {
-      if (!(args=(Item**) session->alloc(sizeof(Item*)*arg_count)))
+      if (!(args=(Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
         return;
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);

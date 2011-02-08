@@ -905,7 +905,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    if (!(lex_str= (LEX_STRING *)alloc(sizeof(LEX_STRING))))
+    if (!(lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING))))
       return 0;
   if (!(lex_str->str= mem_root->strmake_root(str, length)))
     return 0;

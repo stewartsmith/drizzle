@@ -412,7 +412,7 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
   if (arg_count <= 2)
     args=tmp_args;
   else
-    if (!(args= (Item**) session->alloc(sizeof(Item*)*arg_count)))
+    if (!(args= (Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
       return;
   memcpy(args, item->args, sizeof(Item*)*arg_count);
 }
@@ -2667,7 +2667,7 @@ bool Item_sum_count_distinct::setup(Session *session)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
+        field_lengths= (uint32_t*) session->getMemRoot()->allocate(table->getShare()->sizeFields() * sizeof(uint32_t));
         for (tree_key_length= 0, length= field_lengths, field= table->getFields();
              field < field_end; ++field, ++length)
         {

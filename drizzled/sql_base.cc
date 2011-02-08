@@ -1758,7 +1758,7 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
   Table **start,**ptr;
   uint32_t lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
 
-  if (!(ptr=start=(Table**) session->alloc(sizeof(Table*)*count)))
+  if (!(ptr=start=(Table**) session->getMemRoot()->allocate(sizeof(Table*)*count)))
     return -1;
 
   for (table= tables; table; table= table->next_global)

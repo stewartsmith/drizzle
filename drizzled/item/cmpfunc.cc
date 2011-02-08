@@ -4463,9 +4463,9 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       {
         pattern     = first + 1;
         pattern_len = (int) len - 2;
-        int *suff = (int*) session->alloc((int) (sizeof(int)*
-                                      ((pattern_len + 1)*2+
-                                      alphabet_size)));
+        int *suff = (int*) session->getMemRoot()->allocate((int) (sizeof(int)*
+                                                                  ((pattern_len + 1)*2+
+                                                                   alphabet_size)));
         bmGs      = suff + pattern_len + 1;
         bmBc      = bmGs + pattern_len + 1;
         turboBM_compute_good_suffix_shifts(suff);

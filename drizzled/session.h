@@ -170,10 +170,6 @@ public:
                         and update_row.
   */
   enum enum_mark_columns mark_used_columns;
-  inline void* alloc(size_t size)
-  {
-    return mem_root->alloc_root(size);
-  }
   inline void* calloc(size_t size)
   {
     void *ptr;
@@ -189,10 +185,7 @@ public:
   {
     return mem_root->strmake_root(str,size);
   }
-  inline void *memdup(const void *str, size_t size)
-  {
-    return mem_root->memdup_root(str, size);
-  }
+
   inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
   {
     void *ptr;
@@ -202,6 +195,7 @@ public:
   }
   /** Frees all items attached to this Statement */
   void free_items();
+
   /**
    * List of items created in the parser for this query. Every item puts
    * itself to the list on creation (see Item::Item() for details))

@@ -572,7 +572,7 @@ bool update_ref_and_keys(Session *session,
   sz= sizeof(optimizer::KeyField) *
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
-  if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
+  if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
     return true;
   and_level= 0;
   field= end= key_fields;
@@ -1004,10 +1004,10 @@ bool create_ref_for_key(Join *join,
   j->ref.key_length=length;
   j->ref.key=(int) key;
   if (!(j->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(length)*2)) ||
-      !(j->ref.key_copy= (StoredKey**) session->alloc((sizeof(StoredKey*) *
+      !(j->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
                (keyparts+1)))) ||
-      !(j->ref.items=    (Item**) session->alloc(sizeof(Item*)*keyparts)) ||
-      !(j->ref.cond_guards= (bool**) session->alloc(sizeof(uint*)*keyparts)))
+      !(j->ref.items=    (Item**) session->getMemRoot()->allocate(sizeof(Item*)*keyparts)) ||
+      !(j->ref.cond_guards= (bool**) session->getMemRoot()->allocate(sizeof(uint*)*keyparts)))
   {
     return(true);
   }
@@ -5660,7 +5660,7 @@ Order *create_distinct_group(Session *session,
   {
     if (order->in_field_list)
     {
-      Order *ord=(Order*) session->memdup((char*) order,sizeof(Order));
+      Order *ord=(Order*) session->getMemRoot()->duplicate((char*) order,sizeof(Order));
       if (!ord)
         return 0;
       *prev=ord;
@@ -6315,7 +6315,7 @@ void print_join(Session *session, String *str,
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TableList> ti(*tables);
-  TableList **table= (TableList **)session->alloc(sizeof(TableList*) *
+  TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
     return;  // out of memory

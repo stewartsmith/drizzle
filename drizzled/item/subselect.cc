@@ -1115,7 +1115,7 @@ Item_in_subselect::single_value_transformer(Join *join,
 
   if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
   {
-    if (!(pushed_cond_guards= (bool*)join->session->alloc(sizeof(bool))))
+    if (!(pushed_cond_guards= (bool*)join->session->getMemRoot()->allocate(sizeof(bool))))
       return(RES_ERROR);
     pushed_cond_guards[0]= true;
   }
@@ -1383,7 +1383,7 @@ Item_in_subselect::row_value_transformer(Join *join)
 
     if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
     {
-      if (!(pushed_cond_guards= (bool*)join->session->alloc(sizeof(bool) *
+      if (!(pushed_cond_guards= (bool*)join->session->getMemRoot()->allocate(sizeof(bool) *
                                                         left_expr->cols())))
         return(RES_ERROR);
       for (uint32_t i= 0; i < cols_num; i++)
@@ -3067,7 +3067,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     - here we initialize only those members that are used by
       subselect_uniquesubquery_engine, so these objects are incomplete.
   */
-  if (!(tab= (JoinTable*) session->alloc(sizeof(JoinTable))))
+  if (!(tab= (JoinTable*) session->getMemRoot()->allocate(sizeof(JoinTable))))
     return(true);
   new (tab) JoinTable();
   tab->table= tmp_table;
@@ -3076,10 +3076,10 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   if (!(tab->ref.key_buff=
         (unsigned char*) session->calloc(ALIGN_SIZE(tmp_key->key_length) * 2)) ||
       !(tab->ref.key_copy=
-        (StoredKey**) session->alloc((sizeof(StoredKey*) *
+        (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
                                   (tmp_key_parts + 1)))) ||
       !(tab->ref.items=
-        (Item**) session->alloc(sizeof(Item*) * tmp_key_parts)))
+        (Item**) session->getMemRoot()->allocate(sizeof(Item*) * tmp_key_parts)))
     return(true);
 
   KeyPartInfo *cur_key_part= tmp_key->key_part;
