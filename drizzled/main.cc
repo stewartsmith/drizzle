@@ -257,10 +257,12 @@ int main(int argc, char **argv)
 
   if (opt_daemon)
   {
-    if (sigignore(SIGHUP) == -1) {
+    if (sigignore(SIGHUP) == -1)
+    {
       perror("Failed to ignore SIGHUP");
     }
-    if (daemonize(1, 1, 1) == -1) {
+    if (daemonize(1, 1, 1) == -1)
+    {
       fprintf(stderr, "failed to daemon() in order to daemonize\n");
       exit(EXIT_FAILURE);
     }
