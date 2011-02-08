@@ -1231,19 +1231,7 @@ field_definition:
           }
         | BLOB_SYM
           {
-            Lex->charset=&my_charset_bin;
-            $$=DRIZZLE_TYPE_BLOB;
-            Lex->length=(char*) 0; /* use default length */
-
-            if (Lex->field())
-            {
-              Lex->field()->set_type(message::Table::Field::BLOB);
-              message::Table::Field::StringFieldOptions *string_field_options;
-
-              string_field_options= Lex->field()->mutable_string_options();
-              string_field_options->set_collation_id(my_charset_bin.number);
-              string_field_options->set_collation(my_charset_bin.name);
-            }
+            $$= parser::buildBlobColumn(Lex);
           }
         | TEXT_SYM
           {
