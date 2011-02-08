@@ -1187,18 +1187,7 @@ field_definition:
           }
         | char '(' NUM ')'
           {
-            Lex->length=$3.str;
-            $$=DRIZZLE_TYPE_VARCHAR;
-
-            if (Lex->field())
-            {
-              Lex->field()->set_type(message::Table::Field::VARCHAR);
-              message::Table::Field::StringFieldOptions *string_field_options;
-
-              string_field_options= Lex->field()->mutable_string_options();
-
-              string_field_options->set_length(atoi($3.str));
-            }
+            $$= parser::buildVarcharColumn(Lex, $3.str);
           }
         | char
           {
@@ -1210,19 +1199,7 @@ field_definition:
           }
         | varchar '(' NUM ')'
           {
-            Lex->length=$3.str;
-            $$= DRIZZLE_TYPE_VARCHAR;
-
-            if (Lex->field())
-            {
-              Lex->field()->set_type(message::Table::Field::VARCHAR);
-
-              message::Table::Field::StringFieldOptions *string_field_options;
-
-              string_field_options= Lex->field()->mutable_string_options();
-
-              string_field_options->set_length(atoi($3.str));
-            }
+            $$= parser::buildVarcharColumn(Lex, $3.str);
           }
         | VARBINARY '(' NUM ')'
           {
@@ -1351,16 +1328,7 @@ field_definition:
           }
         | SERIAL_SYM
           {
-            $$=DRIZZLE_TYPE_LONGLONG;
-            Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-              Lex->field()->mutable_constraints()->set_is_unsigned(true);
-
-              Lex->field()->set_type(message::Table::Field::BIGINT);
-            }
+            $$= parser::buildSerialColumn(Lex);
           }
         ;
 

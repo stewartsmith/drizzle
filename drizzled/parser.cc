@@ -484,5 +484,38 @@ drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_typ
   return final_type;
 }
 
+drizzled::enum_field_types buildSerialColumn(LEX *lex)
+{
+  lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG);
+
+  if (lex->field())
+  {
+    lex->field()->mutable_constraints()->set_is_notnull(true);
+    lex->field()->mutable_constraints()->set_is_unsigned(true);
+
+    lex->field()->set_type(message::Table::Field::BIGINT);
+  }
+
+  return DRIZZLE_TYPE_LONGLONG;
+}
+
+drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length)
+{
+  lex->length= const_cast<char *>(length);
+
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::VARCHAR);
+
+    message::Table::Field::StringFieldOptions *string_field_options;
+
+    string_field_options= lex->field()->mutable_string_options();
+
+    string_field_options->set_length(atoi(length));
+  }
+
+  return DRIZZLE_TYPE_VARCHAR;
+}
+
 } // namespace parser
 } // namespace drizzled
