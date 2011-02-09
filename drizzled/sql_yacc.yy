@@ -1406,16 +1406,7 @@ attribute:
           }
         | SERIAL_SYM DEFAULT VALUE_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG;
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-              Lex->field()->mutable_constraints()->set_is_unsigned(true);
-            }
+            (void)parser::buildSerialColumn(Lex);
           }
         | opt_primary KEY_SYM
           {

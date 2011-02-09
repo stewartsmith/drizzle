@@ -486,6 +486,9 @@ drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_typ
 
 drizzled::enum_field_types buildSerialColumn(LEX *lex)
 {
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+  statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
   lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG);
 
   if (lex->field())
