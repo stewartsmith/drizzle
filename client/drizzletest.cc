@@ -6444,12 +6444,10 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   char last_c = 0;
   st_regex reg;
 
-  st_replace_regex* res= (st_replace_regex*)malloc(sizeof(*res)+expr_len);
-  if (!res)
-    return NULL;
+  st_replace_regex* res= new st_replace_regex;
   my_init_dynamic_array(&res->regex_arr,sizeof(struct st_regex),128,128);
 
-  char* buf= (char*)res + sizeof(*res);
+  char* buf= new char[expr_len];
   char* expr_end= expr + expr_len;
   char* p= expr;
   char* buf_p= buf;
@@ -6520,7 +6518,6 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   return res;
 
 err:
-  free(res);
   die("Error parsing replace_regex \"%s\"", expr);
   return 0;
 }
@@ -6614,7 +6611,7 @@ void free_replace_regex()
   delete_dynamic(&glob_replace_regex->regex_arr);
   delete[] glob_replace_regex->even_buf;
   delete[] glob_replace_regex->odd_buf;
-  free(glob_replace_regex);
+  delete glob_replace_regex;
   glob_replace_regex= NULL;
 }
 
