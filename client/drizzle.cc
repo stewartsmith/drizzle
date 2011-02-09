@@ -39,16 +39,7 @@
 
 #include "client/get_password.h"
 
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 #include <cerrno>
 #include <string>
@@ -1121,9 +1112,9 @@ static void print_table_data(drizzle_result_st *result);
 static void print_tab_data(drizzle_result_st *result);
 static void print_table_data_vertically(drizzle_result_st *result);
 static void print_warnings(uint32_t error_code);
-static struct timeval start_timer(void);
-static void end_timer(struct timeval start_time, string &buff);
-static void drizzle_end_timer(struct timeval start_time, string &buff);
+static boost::posix_time::ptime start_timer(void);
+static void end_timer(boost::posix_time::ptime, string &buff);
+static void drizzle_end_timer(boost::posix_time::ptime, string &buff);
 static void nice_time(double sec, string &buff,bool part_second);
 extern "C" void drizzle_end(int sig);
 extern "C" void handle_sigint(int sig);
@@ -2765,7 +2756,7 @@ com_go(string *buffer, const char *)
   drizzle_result_st result;
   drizzle_return_t ret;
   uint32_t      warnings= 0;
-  struct timeval timer;
+  boost::posix_time::ptime timer;
   uint32_t      error= 0;
   uint32_t      error_code= 0;
   int           err= 0;
@@ -4342,11 +4333,9 @@ void tee_putc(int c, FILE *file)
 
 #include <sys/times.h>
 
-static struct timeval start_timer(void)
+static boost::posix_time::ptime start_timer(void)
 {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return tv;
+  return boost::posix_time::microsec_clock::universal_time();
 }
 
 static void nice_time(double sec, string &buff,bool part_second)
@@ -4391,46 +4380,16 @@ static void nice_time(double sec, string &buff,bool part_second)
   buff.append(tmp_buff_str.str());
 }
 
-/* adapted from the example in the GNU libc manual */
-/* Subtract the `struct timeval' values X and Y,
-   storing the result in RESULT.
-   Return 1 if the difference is negative, otherwise 0.  */
-
-static int
-timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
+static void end_timer(boost::posix_time::ptime start_time, string &buff)
 {
-  /* Perform the carry for the later subtraction by updating y. */
-  if (x->tv_usec < y->tv_usec) {
-    int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
-    y->tv_usec -= 1000000 * nsec;
-    y->tv_sec += nsec;
-  }
-  if (x->tv_usec - y->tv_usec > 1000000) {
-    int nsec = (x->tv_usec - y->tv_usec) / 1000000;
-    y->tv_usec += 1000000 * nsec;
-    y->tv_sec -= nsec;
-  }
+  boost::posix_time::ptime end_time= start_timer();
+  boost::posix_time::time_period duration(start_time, end_time);
 
-  /* Compute the time remaining to wait.
-     tv_usec is certainly positive. */
-  result->tv_sec = x->tv_sec - y->tv_sec;
-  result->tv_usec = x->tv_usec - y->tv_usec;
-
-  /* Return 1 if result is negative. */
-  return x->tv_sec < y->tv_sec;
-}
-
-static void end_timer(struct timeval start_time, string &buff)
-{
-  struct timeval endtv= start_timer();
-  struct timeval duration;
-  timeval_subtract(&duration, &endtv, &start_time);
-
-  nice_time((double) (duration.tv_sec + ((double)duration.tv_usec)/1000000), buff, 1);
+  nice_time(  (double)duration.length().total_microseconds()/1000000, buff, 1);
 }
 
 
-static void drizzle_end_timer(struct timeval start_time, string &buff)
+static void drizzle_end_timer(boost::posix_time::ptime start_time, string &buff)
 {
   buff.append(" (");
   end_timer(start_time,buff);
