@@ -166,6 +166,8 @@ drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length);
 drizzled::enum_field_types buildDecimalColumn(LEX *lex);
 
 void buildKeyOnColumn(LEX *lex);
+void buildAutoOnColumn(LEX *lex);
+void buildPrimaryOnColumn(LEX *lex);
 
 } // namespace parser
 } // namespace drizzled

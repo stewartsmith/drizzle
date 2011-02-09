@@ -624,5 +624,28 @@ void buildKeyOnColumn(LEX *lex)
   }
 }
 
+void buildAutoOnColumn(LEX *lex)
+{
+  lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;
+
+  if (lex->field())
+  {
+    lex->field()->mutable_constraints()->set_is_notnull(true);
+  }
+}
+
+void buildPrimaryOnColumn(LEX *lex)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+
+  lex->type|= PRI_KEY_FLAG | NOT_NULL_FLAG;
+  statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+  if (lex->field())
+  {
+    lex->field()->mutable_constraints()->set_is_notnull(true);
+  }
+}
+
 } // namespace parser
 } // namespace drizzled

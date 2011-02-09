@@ -1397,12 +1397,7 @@ attribute:
           }
         | AUTO_INC
           {
-            Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-            }
+            parser::buildAutoOnColumn(Lex);
           }
         | SERIAL_SYM DEFAULT VALUE_SYM
           {
@@ -1410,15 +1405,7 @@ attribute:
           }
         | opt_primary KEY_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            Lex->type|= PRI_KEY_FLAG | NOT_NULL_FLAG;
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-            }
+            parser::buildPrimaryOnColumn(Lex);
           }
         | UNIQUE_SYM
           {
