@@ -6380,7 +6380,7 @@ struct st_regex
 
 struct st_replace_regex
 {
-  DYNAMIC_ARRAY regex_arr; /* stores a list of st_regex subsitutions */
+  vector<st_regex> regex_arr;
 
   /*
     Temporary storage areas for substitutions. To reduce unnessary copying
@@ -6444,7 +6444,7 @@ static void init_replace_regex(st_replace_regex *res, char* expr)
   char last_c = 0;
   st_regex reg;
 
-  my_init_dynamic_array(&res->regex_arr,sizeof(struct st_regex),128,128);
+  res->regex_arr.clear();
 
   char* buf= new char[expr_len];
   char* expr_end= expr + expr_len;
@@ -6465,7 +6465,7 @@ static void init_replace_regex(st_replace_regex *res, char* expr)
 
     if (p == expr_end || ++p == expr_end)
     {
-      if (res->regex_arr.elements)
+      if (!res->regex_arr.empty())
         break;
       else
         goto err;
@@ -6504,10 +6504,7 @@ static void init_replace_regex(st_replace_regex *res, char* expr)
       p++;
       reg.global= 1;
     }
-
-    /* done parsing the statement, now place it in regex_arr */
-    if (insert_dynamic(&res->regex_arr,(unsigned char*) &reg))
-      die("Out of memory");
+    res->regex_arr.push_back(reg);
   }
   res->odd_buf_len= res->even_buf_len= 8192;
   res->even_buf= new char[res->even_buf_len];
@@ -6541,7 +6538,6 @@ err:
 
 static int multi_reg_replace(struct st_replace_regex* r,char* val)
 {
-  uint32_t i;
   char* in_buf, *out_buf;
   int* buf_len_p;
 
@@ -6551,12 +6547,10 @@ static int multi_reg_replace(struct st_replace_regex* r,char* val)
   r->buf= 0;
 
   /* For each substitution, do the replace */
-  for (i= 0; i < r->regex_arr.elements; i++)
+  for (size_t i= 0; i != r->regex_arr.size(); i++)
   {
-    struct st_regex re;
     char* save_out_buf= out_buf;
-
-    get_dynamic(&r->regex_arr,(unsigned char*)&re,i);
+    st_regex re = r->regex_arr[i];
 
     if (!reg_replace(&out_buf, buf_len_p, re.pattern, re.replace,
                      in_buf, re.icase, re.global))
@@ -6606,7 +6600,6 @@ void free_replace_regex()
 {
   if (!glob_replace_regex)
     return;
-  delete_dynamic(&glob_replace_regex->regex_arr);
   delete[] glob_replace_regex->even_buf;
   delete[] glob_replace_regex->odd_buf;
   delete glob_replace_regex;
