@@ -22,6 +22,7 @@
 #include "drizzled/session.h"
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
+#include "drizzled/typelib.h"
 
 #include <cstdio>
 #include <algorithm>

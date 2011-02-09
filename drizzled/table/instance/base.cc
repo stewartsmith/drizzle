@@ -82,6 +82,7 @@
 #include "drizzled/field/uuid.h"
 
 #include "drizzled/definition/cache.h"
+#include "drizzled/typelib.h"
 
 using namespace std;
 

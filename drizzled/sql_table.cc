@@ -47,6 +47,7 @@
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/typelib.h"
 
 #include <algorithm>
 #include <sstream>
@@ -687,7 +688,7 @@ static int prepare_create_table(Session *session,
           else /* not NULL */
           {
             def->length(cs->cset->lengthsp(cs, def->ptr(), def->length()));
-            if (find_type2(interval, def->ptr(), def->length(), cs) == 0) /* not found */
+            if (interval->find_type2(def->ptr(), def->length(), cs) == 0) /* not found */
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
               return(true);

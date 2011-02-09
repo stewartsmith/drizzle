@@ -68,6 +68,7 @@
 #include "drizzled/module/registry.h"
 #include "drizzled/module/load_list.h"
 #include "drizzled/global_buffer.h"
+#include "drizzled/typelib.h"
 
 #include "drizzled/debug.h"
 

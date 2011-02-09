@@ -22,7 +22,7 @@
 #include "drizzled/message/statement_transform.h"
 
 #include "drizzled/internal/my_sys.h"
-
+#include "drizzled/typelib.h"
 
 /* For proto */
 #include <string>

@@ -57,6 +57,7 @@
 #include "drizzled/table/singular.h"
 
 #include "drizzled/table_proto.h"
+#include "drizzled/typelib.h"
 
 using namespace std;
 

@@ -17,6 +17,7 @@
 #ifndef DRIZZLED_TYPELIB_H
 #define DRIZZLED_TYPELIB_H
 
+#include "drizzled/global_charset_info.h"
 #include "drizzled/memory/root.h"
 
 namespace drizzled
@@ -32,6 +33,12 @@ public:
   uint64_t find_typeset(const char *x, int *error_position) const;
   const char *get_type(unsigned int nr) const;
   void make_type(char *to, unsigned int nr) const;
+
+  uint64_t find_set(const char *x, uint32_t length, const CHARSET_INFO *cs,
+                    char **err_pos, uint32_t *err_len, bool *set_warning) const;
+  uint32_t find_type(const char *find, uint32_t length, bool part_match) const;
+  uint32_t find_type2(const char *find, uint32_t length, const CHARSET_INFO *cs) const;
+
 
   unsigned int count;
   const char *name;

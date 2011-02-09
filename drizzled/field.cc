@@ -50,6 +50,7 @@
 #include "drizzled/field/uuid.h"
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
+#include "drizzled/typelib.h"
 
 #include "drizzled/display.h"
 

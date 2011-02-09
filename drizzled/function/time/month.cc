@@ -23,6 +23,7 @@
 #include "drizzled/error.h"
 #include "drizzled/session.h"
 #include "drizzled/function/time/month.h"
+#include "drizzled/typelib.h"
 
 namespace drizzled
 {
