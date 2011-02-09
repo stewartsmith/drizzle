@@ -927,7 +927,7 @@ extern xtBool				pbxt_crash_debug;
 #define thd_mark_transaction_to_rollback	::drizzled::mark_transaction_to_rollback
 #define thd_ha_data							session_ha_data
 #define current_thd							current_session
-#define thd_sql_command						session_sql_command
+#define thd_sql_command(x)						((x)->get_sql_command())
 #define thd_test_options					session_test_options
 #define thd_killed							session_killed
 #define thd_tx_isolation(x)					((x)->tx_isolation())

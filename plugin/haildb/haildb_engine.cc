@@ -649,7 +649,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
 
   /* the below is adapted from ha_innodb.cc */
 
-  const uint32_t sql_command = session_sql_command(session);
+  const uint32_t sql_command = session->get_sql_command();
 
   if (sql_command == SQLCOM_DROP_TABLE) {
 
@@ -2123,7 +2123,7 @@ int HailDBCursor::delete_all_rows(void)
      so only support TRUNCATE and not DELETE FROM t;
      (this is what ha_innodb does)
   */
-  if (session_sql_command(getTable()->in_use) != SQLCOM_TRUNCATE)
+  if (getTable()->in_use->get_sql_command() != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
 
   ib_id_t id;

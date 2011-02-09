@@ -417,6 +417,12 @@ public:
   {
     return lex;
   }
+
+  enum_sql_command get_sql_command() const
+  {
+    return lex->sql_command;
+  }
+
   /** query associated with this statement */
   typedef boost::shared_ptr<const std::string> QueryString;
 private:

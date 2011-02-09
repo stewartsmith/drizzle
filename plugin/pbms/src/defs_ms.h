@@ -191,7 +191,7 @@
 #define thd_binlog_format					session_binlog_format
 #define thd_mark_transaction_to_rollback	session_mark_transaction_to_rollback
 #define current_thd							current_session
-#define thd_sql_command						session_sql_command
+#define thd_sql_command(x)						((x)->get_sql_command())
 #define thd_test_options					session_test_options
 #define thd_killed							session_killed
 #define thd_tx_isolation(x)					((x)->tx_isolation())
