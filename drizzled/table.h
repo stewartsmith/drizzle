@@ -44,17 +44,16 @@
 namespace drizzled
 {
 
+class COND_EQUAL;
+class Field_blob;
 class Item;
 class Item_subselect;
-class Select_Lex_Unit;
-class Select_Lex;
-class COND_EQUAL;
 class SecurityContext;
+class Select_Lex;
+class Select_Lex_Unit;
 class TableList;
-namespace field {
-class Epoch;
-}
-class Field_blob;
+namespace field { class Epoch; }
+namespace plugin { class StorageEngine; }
 
 typedef enum enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
@@ -66,8 +65,8 @@ typedef struct st_columndef MI_COLUMNDEF;
 class DRIZZLED_API Table 
 {
   Field **field; /**< Pointer to fields collection */
-public:
 
+public:
   Field **getFields() const
   {
     return field;
@@ -149,7 +148,7 @@ public:
     return in_use;
   }
 
-  unsigned char *getInsertRecord()
+  unsigned char *getInsertRecord() const
   {
     return record[0];
   }
@@ -426,14 +425,11 @@ public:
   inline bool isDatabaseLowByteFirst() const { return getShare()->db_low_byte_first; } /* Portable row format */
   inline bool isNameLock() const { return open_placeholder; }
 
-  uint32_t index_flags(uint32_t idx) const
-  {
-    return getShare()->storage_engine->index_flags(getShare()->getKeyInfo(idx).algorithm);
-  }
+  uint32_t index_flags(uint32_t idx) const;
 
   inline plugin::StorageEngine *getEngine() const   /* table_type for handler */
   {
-    return getShare()->storage_engine;
+    return getShare()->getEngine();
   }
 
   Cursor &getCursor() const /* table_type for handler */
@@ -584,16 +580,13 @@ public:
   void filesort_free_buffers(bool full= false);
   void intern_close_table();
 
-  void print_error(int error, myf errflag)
-  {
-    getShare()->storage_engine->print_error(error, errflag, *this);
-  }
+  void print_error(int error, myf errflag) const;
 
   /**
     @return
     key if error because of duplicated keys
   */
-  uint32_t get_dup_key(int error)
+  uint32_t get_dup_key(int error) const
   {
     cursor->errkey  = (uint32_t) -1;
     if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||

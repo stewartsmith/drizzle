@@ -69,6 +69,9 @@
 #include "drizzled/module/load_list.h"
 #include "drizzled/global_buffer.h"
 
+#include <drizzled/cached_directory.h>
+#include <drizzled/plugin/storage_engine.h>
+
 #include "drizzled/debug.h"
 
 #include "drizzled/definition/cache.h"

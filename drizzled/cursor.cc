@@ -44,6 +44,7 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/plugin/event_observer.h"
+#include <drizzled/plugin/storage_engine.h>
 
 using namespace std;
 

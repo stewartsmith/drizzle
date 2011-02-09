@@ -52,6 +52,7 @@
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/drizzled.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include "drizzled/sql_union.h"
 #include "drizzled/optimizer/key_field.h"

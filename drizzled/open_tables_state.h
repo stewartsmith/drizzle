@@ -26,6 +26,8 @@
 namespace drizzled
 {
 
+class CachedDirectory;
+
 /**
   Class that holds information about tables which were opened and locked
   by the thread. It is also used to save/restore this information in

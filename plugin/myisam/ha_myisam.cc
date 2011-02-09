@@ -34,6 +34,8 @@
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/plugin/daemon.h"
 
+#include <drizzled/plugin/storage_engine.h>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
 

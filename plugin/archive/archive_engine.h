@@ -22,6 +22,7 @@
 #include <drizzled/thr_lock.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/cursor.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <fcntl.h>
 #include <inttypes.h>

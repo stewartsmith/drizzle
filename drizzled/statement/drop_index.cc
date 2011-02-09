@@ -19,11 +19,13 @@
  */
 
 #include "config.h"
+
 #include "drizzled/show.h"
 #include "drizzled/session.h"
 #include "drizzled/statement/drop_index.h"
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/db.h"
+#include "drizzled/plugin/storage_engine.h"
 
 namespace drizzled
 {

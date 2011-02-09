@@ -51,6 +51,7 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/message/statement_transform.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include "drizzled/statement/show.h"
 #include "drizzled/statement/show_errors.h"

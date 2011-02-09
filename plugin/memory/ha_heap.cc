@@ -18,7 +18,8 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/field/varstring.h>
-#include "drizzled/plugin/daemon.h"
+#include <drizzled/plugin/daemon.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <boost/thread/mutex.hpp>
 

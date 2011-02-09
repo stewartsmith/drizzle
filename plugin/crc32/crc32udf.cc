@@ -18,6 +18,8 @@
  */
 
 #include "config.h"
+
+#include <drizzled/plugin.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/algorithm/crc32.h>

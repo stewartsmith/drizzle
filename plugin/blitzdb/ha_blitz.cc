@@ -18,7 +18,9 @@
  */
 
 #include "config.h"
+
 #include "ha_blitz.h"
+#include <drizzled/plugin/storage_engine.h>
 
 using namespace std;
 using namespace drizzled;

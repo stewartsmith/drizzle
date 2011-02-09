@@ -21,8 +21,9 @@
 #define DRIZZLED_PLUGIN_FUNCTION_H
 
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/item/func.h"
+#include <drizzled/item/func.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
 
 #include <string>
 #include <vector>

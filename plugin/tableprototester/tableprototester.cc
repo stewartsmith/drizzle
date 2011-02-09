@@ -17,9 +17,6 @@
 */
 
 #include "config.h"
-#include <drizzled/table.h>
-#include <drizzled/error.h>
-#include "drizzled/internal/my_pthread.h"
 
 #include "tableprototester.h"
 
@@ -28,10 +25,14 @@
 #include <string>
 #include <map>
 #include <fstream>
-#include <drizzled/message/table.pb.h>
-#include "drizzled/internal/m_string.h"
 
-#include "drizzled/global_charset_info.h"
+#include <drizzled/error.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_pthread.h>
+#include <drizzled/message/table.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/table.h>
 
 
 using namespace std;

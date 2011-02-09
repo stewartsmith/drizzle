@@ -466,7 +466,7 @@ public:
   UNIV_INTERN int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
   UNIV_INTERN int doDropTable(Session &session, const identifier::Table &identifier);
 
-  UNIV_INTERN virtual bool get_error_message(int error, String *buf);
+  UNIV_INTERN virtual bool get_error_message(int error, String *buf) const;
 
   UNIV_INTERN uint32_t max_supported_keys() const;
   UNIV_INTERN uint32_t max_supported_key_length() const;
@@ -8641,7 +8641,7 @@ ha_innobase::reset_auto_increment(
 /* See comment in Cursor.cc */
 UNIV_INTERN
 bool
-InnobaseEngine::get_error_message(int, String *buf)
+InnobaseEngine::get_error_message(int, String *buf) const
 {
   trx_t*  trx = check_trx_exists(current_session);
 

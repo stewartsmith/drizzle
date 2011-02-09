@@ -56,6 +56,7 @@
 #include "drizzled/table/temporary.h"
 #include "drizzled/table/placeholder.h"
 #include "drizzled/table/unused.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <drizzled/refresh_version.h>
 

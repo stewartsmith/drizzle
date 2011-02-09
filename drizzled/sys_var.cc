@@ -61,6 +61,7 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/constrained_value.h"
 #include "drizzled/visibility.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <cstdio>
 #include <map>

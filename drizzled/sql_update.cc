@@ -16,9 +16,10 @@
 
 /*
   Single table and multi table updates of tables.
-  Multi-table updates were introduced by Sinisa & Monty
 */
+
 #include "config.h"
+
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
@@ -31,6 +32,7 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/filesort.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>

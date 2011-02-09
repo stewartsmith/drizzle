@@ -39,6 +39,7 @@
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
 #include <drizzled/join.h>
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled
 {

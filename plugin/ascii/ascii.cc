@@ -18,6 +18,8 @@
  */
 
 #include "config.h"
+
+#include <drizzled/plugin.h>
 #include <drizzled/function/math/int.h>
 #include <drizzled/plugin/function.h>
 

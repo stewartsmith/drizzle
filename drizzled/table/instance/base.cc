@@ -81,6 +81,8 @@
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/uuid.h"
 
+#include "drizzled/plugin/storage_engine.h"
+
 #include "drizzled/definition/cache.h"
 
 #include <drizzled/refresh_version.h>
