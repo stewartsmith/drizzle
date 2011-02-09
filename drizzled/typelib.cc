@@ -28,25 +28,21 @@ namespace drizzled
 
 static const char field_separator=',';
 
-int find_type_or_exit(char *x, TYPELIB *typelib, const char *option)
+int st_typelib::find_type_or_exit(const char *x, const char *option) const
 {
-  int res;
-  const char **ptr;
-
-  if ((res= find_type(x, typelib, 2)) <= 0)
-  {
-    ptr= typelib->type_names;
-    if (!*x)
-      fprintf(stderr, "No option given to %s\n", option);
-    else
-      fprintf(stderr, "Unknown option to %s: %s\n", option, x);
-    fprintf(stderr, "Alternatives are: '%s'", *ptr);
-    while (*++ptr)
-      fprintf(stderr, ",'%s'", *ptr);
-    fprintf(stderr, "\n");
-    exit(1);
-  }
-  return res;
+  int res= find_type(const_cast<char*>(x), 2);
+  if (res > 0)
+    return res;
+  if (!*x)
+    fprintf(stderr, "No option given to %s\n", option);
+  else
+    fprintf(stderr, "Unknown option to %s: %s\n", option, x);
+  const char **ptr= type_names;
+  fprintf(stderr, "Alternatives are: '%s'", *ptr);
+  while (*++ptr)
+    fprintf(stderr, ",'%s'", *ptr);
+  fprintf(stderr, "\n");
+  exit(1);
 }
 
 
@@ -74,20 +70,23 @@ int find_type_or_exit(char *x, TYPELIB *typelib, const char *option)
 */
 
 
-int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
+int st_typelib::find_type(const char *x, uint32_t full_name) const
 {
-  int find,pos,findpos=0;
-  register char * i;
-  register const char *j;
+  assert(full_name & 2);
+  return find_type(const_cast<char*>(x), full_name);
+}
 
-  if (!typelib->count)
+int st_typelib::find_type(char *x, uint32_t full_name) const
+{
+  if (!count)
+    return 0;
+  int find= 0;
+  int findpos= 0;
+  const char *j;
+  for (int pos= 0; (j= type_names[pos]); pos++)
   {
-    return(0);
-  }
-  find=0;
-  for (pos=0 ; (j=typelib->type_names[pos]) ; pos++)
-  {
-    for (i=x ;
+    const char *i;
+    for (i= x;
     	*i && (!(full_name & 8) || *i != field_separator) &&
         my_toupper(&my_charset_utf8_general_ci,*i) ==
     		my_toupper(&my_charset_utf8_general_ci,*j) ; i++, j++) ;
@@ -106,7 +105,7 @@ int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
     }
   }
   if (find == 0 && (full_name & 4) && x[0] == '#' && strchr(x, '\0')[-1] == '#' &&
-      (findpos=atoi(x+1)-1) >= 0 && (uint32_t) findpos < typelib->count)
+      (findpos=atoi(x+1)-1) >= 0 && (uint32_t) findpos < count)
     find=1;
   else if (find == 0 || ! x[0])
   {
@@ -117,32 +116,30 @@ int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
     return(-1);
   }
   if (!(full_name & 2))
-    (void) strcpy(x,typelib->type_names[findpos]);
-  return(findpos+1);
+    strcpy(x, type_names[findpos]);
+  return findpos + 1;
 } /* find_type */
 
 
 	/* Get name of type nr 'nr' */
 	/* Warning first type is 1, 0 = empty field */
 
-void make_type(register char * to, register uint32_t nr,
-	       register TYPELIB *typelib)
+void st_typelib::make_type(char *to, uint32_t nr) const
 {
   if (!nr)
-    to[0]=0;
+    to[0]= 0;
   else
-    (void) strcpy(to,get_type(typelib,nr-1));
-  return;
+    strcpy(to, get_type(nr - 1));
 } /* make_type */
 
 
 	/* Get type */
 	/* Warning first type is 0 */
 
-const char *get_type(TYPELIB *typelib, uint32_t nr)
+const char *st_typelib::get_type(uint32_t nr) const
 {
-  if (nr < (uint32_t) typelib->count && typelib->type_names)
-    return(typelib->type_names[nr]);
+  if (nr < count && type_names)
+    return type_names[nr];
   return "?";
 }
 
@@ -162,29 +159,24 @@ const char *get_type(TYPELIB *typelib, uint32_t nr)
     a integer representation of the supplied string
 */
 
-uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
+uint64_t st_typelib::find_typeset(const char *x, int *err) const
 {
-  uint64_t result;
-  int find;
-  char *i;
-
-  if (!lib->count)
-  {
-    return(0);
-  }
-  result= 0;
+  if (!count)
+    return 0;
+  uint64_t result= 0;
   *err= 0;
   while (*x)
   {
     (*err)++;
-    i= x;
+    const char *i= x;
     while (*x && *x != field_separator) x++;
-    if ((find= find_type(i, lib, 2 | 8) - 1) < 0)
-      return(0);
+    int find= find_type(i, 2 | 8) - 1;
+    if (find < 0)
+      return 0;
     result|= (1ULL << find);
   }
   *err= 0;
-  return(result);
+  return result;
 } /* find_set */
 
 
@@ -201,35 +193,35 @@ uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
     NULL otherwise
 */
 
-TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
+TYPELIB *st_typelib::copy_typelib(memory::Root *root) const
 {
   TYPELIB *to;
   uint32_t i;
 
-  if (!from)
+  if (!this)
     return NULL;
 
   if (!(to= (TYPELIB*) root->alloc_root(sizeof(TYPELIB))))
     return NULL;
 
   if (!(to->type_names= (const char **)
-        root->alloc_root((sizeof(char *) + sizeof(int)) * (from->count + 1))))
-    return NULL;
-  to->type_lengths= (unsigned int *)(to->type_names + from->count + 1);
-  to->count= from->count;
-  if (from->name)
+        root->alloc_root((sizeof(char *) + sizeof(int)) * (count + 1))))
+    return NULL; // leaking
+  to->type_lengths= (unsigned int *)(to->type_names + count + 1);
+  to->count= count;
+  if (name)
   {
-    if (!(to->name= root->strdup_root(from->name)))
-      return NULL;
+    if (!(to->name= root->strdup_root(name)))
+      return NULL; // leaking
   }
   else
     to->name= NULL;
 
-  for (i= 0; i < from->count; i++)
+  for (i= 0; i < count; i++)
   {
-    if (!(to->type_names[i]= root->strmake_root(from->type_names[i], from->type_lengths[i])))
-      return NULL;
-    to->type_lengths[i]= from->type_lengths[i];
+    if (!(to->type_names[i]= root->strmake_root(type_names[i], type_lengths[i])))
+      return NULL; // leaking
+    to->type_lengths[i]= type_lengths[i];
   }
   to->type_names[to->count]= NULL;
   to->type_lengths[to->count]= 0;

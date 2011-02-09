@@ -38,6 +38,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
+#include "drizzled/typelib.h"
 #include <drizzled/configmake.h>
 #include <drizzled/gettext.h>
 
@@ -287,7 +288,7 @@ int handle_default_option(void *in_ctx, const char *group_name,
   if (!option)
     return 0;
 
-  if (find_type((char *)group_name, ctx->group, 3))
+  if (ctx->group->find_type(const_cast<char*>(group_name), 3))
   {
     if (!(tmp= (char *)ctx->alloc->alloc_root(strlen(option) + 1)))
       return 1;

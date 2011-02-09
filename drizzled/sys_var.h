@@ -26,7 +26,6 @@
 #include "drizzled/constrained_value.h"
 #include "drizzled/set_var.h"
 #include "drizzled/show_type.h"
-#include "drizzled/typelib.h"
 #include "drizzled/item_result.h"
 #include "drizzled/base.h"
 #include "drizzled/global_charset_info.h"
@@ -40,6 +39,7 @@ namespace drizzled
 class sys_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
+typedef struct st_typelib TYPELIB;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
