@@ -119,24 +119,6 @@ int session_tablespace_op(const Session *session)
   return test(session->tablespace_op);
 }
 
-/**
-   Set the process info field of the Session structure.
-
-   This function is used by plug-ins. Internally, the
-   Session::set_proc_info() function should be used.
-
-   @see Session::set_proc_info
- */
-void set_session_proc_info(Session *session, const char *info)
-{
-  session->set_proc_info(info);
-}
-
-const char *get_session_proc_info(Session *session)
-{
-  return session->get_proc_info();
-}
-
 void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
 {
   return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
