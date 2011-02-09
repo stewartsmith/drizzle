@@ -28,14 +28,12 @@ namespace drizzled
 
 static const char field_separator=',';
 
-int find_type_or_exit(char *x, TYPELIB *typelib, const char *option)
+int st_typelib::find_type_or_exit(const char *x, const char *option) const
 {
-  int res;
-  const char **ptr;
-
-  if ((res= find_type(x, typelib, 2)) <= 0)
+  int res= find_type(const_cast<char*>(x), this, 2);
+  if (res <= 0)
   {
-    ptr= typelib->type_names;
+    const char **ptr= type_names;
     if (!*x)
       fprintf(stderr, "No option given to %s\n", option);
     else
