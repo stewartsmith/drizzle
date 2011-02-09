@@ -50,8 +50,7 @@ Field_decimal::Field_decimal(unsigned char *ptr_arg,
   {
     precision= class_decimal_length_to_precision(len_arg, dec_arg, false);
     set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
-    assert((precision <= DECIMAL_MAX_PRECISION) &&
-           (dec <= DECIMAL_MAX_SCALE));
+    assert((precision <= DECIMAL_MAX_PRECISION) && (dec <= DECIMAL_MAX_SCALE));
     bin_size= class_decimal_get_binary_size(precision, dec);
   }
 
@@ -304,9 +303,8 @@ String *Field_decimal::val_str(String *val_buffer,
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  uint32_t fixed_precision= decimal_precision ? precision : 0;
-  class_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
-                    fixed_precision, dec, '0', val_buffer);
+  class_decimal2string(val_decimal(&decimal_value),
+                       dec, val_buffer);
   return val_buffer;
 }
 

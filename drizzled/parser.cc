@@ -397,5 +397,13 @@ void buildCreateFieldIdent(LEX *lex)
   lex->setField(alter_proto.add_added_field());
 }
 
+void storeAlterColumnPosition(LEX *lex, const char *position)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+
+  lex->last_field->after=const_cast<char*> (position);
+  statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
+}
+
 } // namespace parser
 } // namespace drizzled

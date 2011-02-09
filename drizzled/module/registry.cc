@@ -64,12 +64,27 @@ module::Registry::~Registry()
     ++plugin_iter;
   }
 
+  plugin::Plugin::vector error_plugins;
   plugin_iter= plugin_registry.begin();
   while (plugin_iter != plugin_registry.end())
   {
-    delete (*plugin_iter).second;
+    if ((*plugin_iter).second->removeLast())
+    {
+      error_plugins.push_back((*plugin_iter).second);
+    }
+    else
+    {
+      delete (*plugin_iter).second;
+    }
     ++plugin_iter;
   }
+
+  for (plugin::Plugin::vector::iterator iter= error_plugins.begin();
+       iter != error_plugins.end(); iter++)
+  {
+    delete *iter;
+  }
+
   plugin_registry.clear();
 
 #if 0

@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -33,6 +33,7 @@
 # imports
 import os
 import sys
+import copy
 import shutil
 import getpass
 import commands
@@ -84,26 +85,35 @@ class systemManager:
         # Make sure the tree we are testing looks good
         self.code_tree = self.get_code_tree(variables, tree_type)
 
-        self.ld_lib_paths = self.code_tree.ld_lib_paths
+        self.ld_lib_paths = self.join_env_var_values(self.code_tree.ld_lib_paths)
 
         # Some ENV vars are system-standard
         # We describe and set them here and now
         # The format is name: (value, append, suffix)
-        self.environment_reqs = { 'UMASK':('0660',0,0)
-                                , 'UMASK_DIR' : ('0770',0,0)
-                                , 'LC_ALL' : ('C',0,0)
-                                , 'LC_CTYPE' : ('C',0,0)
-                                , 'LC_COLLATE' : ('C',0,0)
-                                , 'USE_RUNNING_SERVER' : ("0",0,0)
-                                , 'TOP_SRCDIR' : (self.top_srcdir,0,0)
-                                , 'TOP_BUILDDIR' : (self.top_builddir,0,0)
-                                , 'DRIZZLE_TEST_DIR' : (self.code_tree.testdir,0,0)
-                                , 'DTR_BUILD_THREAD' : ("-69.5",0,0)
-                                , 'LD_LIBRARY_PATH' : (self.ld_lib_paths,1,1)
-                                , 'DYLD_LIBRARY_PATH' : (self.ld_lib_paths,1,1)
+        self.environment_reqs = { 'UMASK':'0660'
+                                , 'UMASK_DIR' : '0770'
+                                , 'LC_ALL' : 'C'
+                                , 'LC_CTYPE' : 'C'
+                                , 'LC_COLLATE' : 'C'
+                                , 'USE_RUNNING_SERVER' : "0"
+                                , 'TOP_SRCDIR' : self.top_srcdir
+                                , 'TOP_BUILDDIR' : self.top_builddir
+                                , 'DRIZZLE_TEST_DIR' : self.code_tree.testdir
+                                , 'DTR_BUILD_THREAD' : "-69.5"
+                                , 'LD_LIBRARY_PATH' : self.append_env_var( 'LD_LIBRARY_PATH'
+                                                                         , self.ld_lib_paths
+                                                                         , suffix = 0
+                                                                         , quiet = 1
+                                                                         )
+                                , 'DYLD_LIBRARY_PATH' : self.append_env_var( 'DYLD_LIBRARY_PATH'
+                                                                         , self.ld_lib_paths
+                                                                         , suffix = 0
+                                                                         , quiet = 1
+                                                                         )
                                 }
         # set the env vars we need
-        self.process_environment_reqs(self.environment_reqs)
+        # self.process_environment_reqs(self.environment_reqs)
+        self.update_environment_vars(self.environment_reqs)
 
         # initialize our workdir
         self.process_workdir()
@@ -153,32 +163,7 @@ class systemManager:
             return test_tree
         else:
             self.logging.error("Tree_type: %s not supported yet" %(tree_type))
-            sys.exit(1)
-
-   
-    def process_environment_reqs(self, environment_reqs, quiet=0):
-        """ We process a dictionary in a specific format
-            that asks for various env vars to be set
-            These values can be used to overwrite,
-            append, or prepend a new value string to
-            a named variable.
-
-            Currently, we require multiple values to
-            already to joined into a single string
-            We can fix this later
-
-        """
- 
-        for var_name, data_tuple in environment_reqs.items():
-            value, append_flag, suffix_flag = data_tuple
-            if type(value) is list:
-                value = self.join_env_var_values(value)
-            if append_flag:
-                self.append_env_var(var_name, value, suffix_flag, quiet=quiet)
-            else:
-                self.set_env_var(var_name, value, quiet)
-            
-            
+            sys.exit(1)        
 
     def get_port_block(self, requester, base_port, block_size):
         """ Try to assign a block of ports for test execution
@@ -341,10 +326,31 @@ class systemManager:
             self.logging.error("%s" %(e))
             sys.exit(1)
 
+    def update_environment_vars(self, desired_vars, working_environment=None):
+        """ We update the environment vars with desired_vars
+            The expectation is that you know what you are asking for ; )
+            If working_environment is provided, we will update that with
+            desired_vars.  We operate directly on os.environ by default
+            We return our updated environ dictionary
+
+        """
+
+        if not working_environment:
+            working_environment = os.environ
+        working_environment.update(desired_vars)
+        return working_environment
+
+    def create_working_environment(self, desired_vars):
+        """ We return a copy of os.environ updated with desired_vars """
+
+        working_copy = copy.deepcopy(os.environ)
+        return self.update_environment_vars( desired_vars
+                                    , working_environment = working_copy )
+
     def append_env_var(self, var_name, append_string, suffix=1, quiet=0):
         """ We add the values in var_values to the environment variable 
             var_name.  Depending on suffix value, we either append or prepend
-            Use set_env_var to just overwrite an ENV var
+            we return a string suitable for os.putenv
 
         """
         new_var_value = ""
@@ -358,7 +364,7 @@ class systemManager:
         else:
             # No existing variable value
             new_var_value = append_string
-        self.set_env_var(var_name, new_var_value, quiet=quiet)
+        return new_var_value
 
     def find_path(self, paths, required=1):
         """We search for the files we need / want to be aware of
@@ -414,8 +420,8 @@ class systemManager:
     def handle_valgrind_reqs(self, optional_args, mode='valgrind'):
         """ We do what voodoo we need to do to run valgrind """
         valgrind_args = [ "--show-reachable=yes"
-                        , "--malloc-fill=0xDEADBEEF"
-                        , "--free-fill=0xDEADBEEF"
+                        , "--malloc-fill=55"
+                        , "--free-fill=55"
                         # , "--trace-children=yes" this is for callgrind only
                         ]
         if optional_args:
@@ -450,6 +456,8 @@ class systemManager:
         if os.path.exists(debug_path):
             self.append_env_var("LD_LIBRARY_PATH", debug_path, suffix=1)
             self.append_env_var("DYLD_LIBRARY_PATH", debug_path, suffix=1)
+
+   
     
 
 

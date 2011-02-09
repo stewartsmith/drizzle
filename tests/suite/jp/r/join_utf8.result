@@ -42,16 +42,6 @@ INSERT INTO `Ｔ７b` VALUES ('ｱ');
 INSERT INTO `Ｔ８a` VALUES ('あ'),('か'),('さ');
 INSERT INTO `Ｔ８b` VALUES ('あ');
 INSERT INTO `Ｔ９a` VALUES ('龔'),('龖'),('龗');
-SELECT * FROM `Ｔ１a` JOIN `Ｔ１b`;
-Ｃ１	Ｃ１
-ｱ	ｱ
-ｶ	ｱ
-ｻ	ｱ
-SELECT * FROM `Ｔ１a` INNER JOIN `Ｔ１b`;
-Ｃ１	Ｃ１
-ｱ	ｱ
-ｶ	ｱ
-ｻ	ｱ
 SELECT * FROM `Ｔ１a` JOIN `Ｔ１b` USING (`Ｃ１`);
 Ｃ１
 ｱ
@@ -83,16 +73,6 @@ SELECT * FROM `Ｔ１b` RIGHT JOIN `Ｔ１a` ON (`Ｔ１a`.`Ｃ１` = `Ｔ１b`.
 ｱ	ｱ
 NULL	ｶ
 NULL	ｻ
-SELECT * FROM `Ｔ２a` JOIN `Ｔ２b`;
-Ｃ１	Ｃ１
-あ	あ
-か	あ
-さ	あ
-SELECT * FROM `Ｔ２a` INNER JOIN `Ｔ２b`;
-Ｃ１	Ｃ１
-あ	あ
-か	あ
-さ	あ
 SELECT * FROM `Ｔ２a` JOIN `Ｔ２b` USING (`Ｃ１`);
 Ｃ１
 あ
@@ -124,16 +104,6 @@ SELECT * FROM `Ｔ２b` RIGHT JOIN `Ｔ２a` ON (`Ｔ２a`.`Ｃ１` = `Ｔ２b`.
 あ	あ
 NULL	か
 NULL	さ
-SELECT * FROM `Ｔ３a` JOIN `Ｔ３b`;
-Ｃ１	Ｃ１
-龔	龔
-龖	龔
-龗	龔
-SELECT * FROM `Ｔ３a` INNER JOIN `Ｔ３b`;
-Ｃ１	Ｃ１
-龔	龔
-龖	龔
-龗	龔
 SELECT * FROM `Ｔ３a` JOIN `Ｔ３b` USING (`Ｃ１`);
 Ｃ１
 龔

@@ -18,9 +18,9 @@ SELECT ASSERT(ID) FROM processlist;
 SELECT ID FROM processlist ORDER BY ID;
 
 --replace_column 1 #
-SELECT a.ID FROM processlist as a, processlist as b ORDER BY ID;
+SELECT a.ID FROM processlist as a CROSS JOIN processlist as b ORDER BY ID;
 
 --replace_column 1 #
-SELECT a.ID FROM processlist as a, data_dictionary.processlist as b;
+SELECT a.ID FROM processlist as a CROSS JOIN data_dictionary.processlist as b;
 
 --enable_result_log

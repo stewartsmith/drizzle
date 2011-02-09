@@ -1266,7 +1266,7 @@ companynr	companyname
 58	company 8
 65	company 9
 68	company 10
-select * from t1,t1 t12;
+select * from t1 CROSS JOIN t1 t12;
 Period	Varor_period	Period	Varor_period
 9410	9412	9410	9412
 select t2.fld1,t22.fld1 from t2,t2 t22 where t2.fld1 >= 250501 and t2.fld1 <= 250505 and t22.fld1 >= 250501 and t22.fld1 <= 250505;
@@ -2932,7 +2932,7 @@ DROP TABLE t1,t2;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
 create table t2 (a int, b int, c int, e int, primary key(a,b,c));
-insert into t2 select A.a, B.a, C.a, C.a from t1 A, t1 B, t1 C;
+insert into t2 select A.a, B.a, C.a, C.a from t1 A CROSS JOIN t1 B CROSS JOIN t1 C;
 analyze table t2;
 Table	Op	Msg_type	Msg_text
 test.t2	analyze	status	OK
@@ -3555,7 +3555,7 @@ c33 INT NOT NULL,
 c34 INT DEFAULT 0,
 KEY (c33, c34, c32));
 INSERT INTO t1 values (),(),(),(),();
-INSERT INTO t2 SELECT a.c11, b.c11 FROM t1 a, t1 b;
+INSERT INTO t2 SELECT a.c11, b.c11 FROM t1 a CROSS JOIN t1 b;
 INSERT INTO t3 VALUES (1, 1, 1, 0), 
 (2, 2, 0, 0), 
 (3, 3, 1, 0), 

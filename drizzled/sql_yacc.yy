@@ -2097,17 +2097,11 @@ opt_place:
           /* empty */ {}
         | AFTER_SYM ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            store_position_for_column($2.str);
-            statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
+            parser::storeAlterColumnPosition(Lex, $2.str);
           }
         | FIRST_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            store_position_for_column(first_keyword);
-            statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
+            parser::storeAlterColumnPosition(Lex, first_keyword);
           }
         ;
 
@@ -3524,7 +3518,11 @@ join_table:
 normal_join:
           JOIN_SYM {}
         | INNER_SYM JOIN_SYM {}
-        | CROSS JOIN_SYM { Lex->is_cross= true; }
+        | CROSS JOIN_SYM
+          {
+            Lex->is_cross= true;
+            Lex->current_select->is_cross= true;
+          }
         ;
 
 /*
@@ -4584,23 +4582,19 @@ show_param:
            }
         | COUNT_SYM '(' '*' ')' WARNINGS
           {
-            (void) create_select_for_variable("warning_count");
-             Lex->statement= new statement::Show(YYSession);
+            show::buildSelectWarning(YYSession);
           }
         | COUNT_SYM '(' '*' ')' ERRORS
           {
-            (void) create_select_for_variable("error_count");
-             Lex->statement= new statement::Show(YYSession);
+            show::buildSelectError(YYSession);
           }
         | WARNINGS opt_limit_clause_init
           {
-            if (not show::buildWarnings(YYSession))
-              DRIZZLE_YYABORT;
+            show::buildWarnings(YYSession);
           }
         | ERRORS opt_limit_clause_init
           {
-            if (not show::buildErrors(YYSession))
-              DRIZZLE_YYABORT;
+            show::buildErrors(YYSession);
           }
         | opt_var_type STATUS_SYM show_wild
           {

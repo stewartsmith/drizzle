@@ -42,7 +42,6 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
-#include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/table.h"
 #include "drizzled/table/shell.h"
@@ -286,8 +285,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   if (type_arg == message::Table::INTERNAL)
   {
@@ -349,8 +347,7 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   assert(identifier.getKey() == key);
 
@@ -425,8 +422,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   private_key_for_cache= identifier.getKey();
   assert(identifier.getPath().size()); // Since we are doing a create table, this should be a positive value
@@ -502,8 +498,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   blob_ptr_size(portable_sizeof_char_ptr),
   db_low_byte_first(false),
   keys_in_use(0),
-  keys_for_keyread(0),
-  event_observers(NULL)
+  keys_for_keyread(0)
 {
   char *path_buff;
   std::string _path;
@@ -561,8 +556,6 @@ TableShare::~TableShare()
 {
   storage_engine= NULL;
 
-  plugin::EventObserver::deregisterTableEvents(*this);
-
   mem_root.free_root(MYF(0));                 // Free's share
 }
 
@@ -583,9 +576,9 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
   getTableMessage()->set_schema(identifier_arg.getSchemaName());
 }
 
-int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
+bool TableShare::parse_table_proto(Session& session, message::Table &table)
 {
-  int local_error= 0;
+  drizzled::error_t local_error= EE_OK;
 
   if (! table.IsInitialized())
   {
@@ -1064,9 +1057,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         if (fo.scale() > DECIMAL_MAX_SCALE)
         {
-          local_error= 4;
+          local_error= ER_NOT_FORM_FILE;
 
-          return local_error;
+          return true;
         }
         decimals= static_cast<uint8_t>(fo.scale());
       }
@@ -1120,9 +1113,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
             decimals != NOT_FIXED_DEC)
         {
           my_error(ER_M_BIGGER_THAN_D, MYF(0), pfield.name().c_str());
-          local_error= 1;
-
-          return local_error;
+          local_error= ER_M_BIGGER_THAN_D;
+          return true;
         }
         break;
       }
@@ -1261,9 +1253,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       if (res != 0 && res != 3) /* @TODO Huh? */
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
-        local_error= 1;
+        local_error= ER_INVALID_DEFAULT;
 
-        return local_error;
+        return true;
       }
     }
     else if (f->real_type() == DRIZZLE_TYPE_ENUM && (f->flags & NOT_NULL_FLAG))
@@ -1475,9 +1467,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                             &next_number_keypart)) < 0)
     {
       /* Wrong field definition */
-      local_error= 4;
+      local_error= ER_NOT_FORM_FILE;
 
-      return local_error;
+      return true;
     }
     else
     {
@@ -1502,24 +1494,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   all_set.resize(_field_size);
   all_set.set();
 
-  return local_error;
+  return local_error != EE_OK;
 }
-
-int TableShare::parse_table_proto(Session& session, message::Table &table)
-{
-  int local_error= inner_parse_table_proto(session, table);
-
-  if (not local_error)
-    return 0;
-
-  error= local_error;
-  open_errno= errno;
-  errarg= 0;
-  open_table_error(local_error, open_errno, 0);
-
-  return local_error;
-}
-
 
 /*
   Read table definition from a binary / text based .frm cursor
@@ -1547,46 +1523,35 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
 
 int TableShare::open_table_def(Session& session, const identifier::Table &identifier)
 {
-  int local_error;
-  bool error_given;
+  drizzled::error_t local_error= EE_OK;
 
-  local_error= 1;
-  error_given= 0;
+  message::table::shared_ptr table= plugin::StorageEngine::getTableMessage(session, identifier, local_error);
 
-  message::table::shared_ptr table;
-
-  local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
-
-  do {
-    if (local_error != EEXIST)
-    {
-      if (local_error > 0)
-      {
-        errno= local_error;
-        local_error= 1;
-      }
-      else
-      {
-        if (not table->IsInitialized())
-        {
-          local_error= 4;
-        }
-      }
-      break;
-    }
-
-    local_error= parse_table_proto(session, *table);
-
-    setTableCategory(TABLE_CATEGORY_USER);
-  } while (0);
-
-  if (local_error && !error_given)
+  if (table and table->IsInitialized())
   {
-    error= local_error;
-    open_table_error(error, (open_errno= errno), 0);
+    if (parse_table_proto(session, *table))
+    {
+      local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
+      my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
+    }
+    else
+    {
+      setTableCategory(TABLE_CATEGORY_USER);
+      local_error= EE_OK;
+    }
+  }
+  else if (table and not table->IsInitialized())
+  {
+    local_error= ER_CORRUPT_TABLE_DEFINITION_UNKNOWN;
+    my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN, identifier);
+  }
+  else
+  {
+    local_error= ER_TABLE_UNKNOWN;
+    my_error(ER_TABLE_UNKNOWN, identifier);
   }
 
-  return(error);
+  return static_cast<int>(local_error);
 }
 
 
@@ -1840,7 +1805,8 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 1:
     if (db_errno == ENOENT)
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0), db.str, table_name.str);
+      identifier::Table identifier(db.str, table_name.str);
+      my_error(ER_TABLE_UNKNOWN, identifier);
     }
     else
     {
@@ -1971,19 +1937,19 @@ Field *TableShare::make_field(const message::Table::Field &,
                                       field_charset);
   case DRIZZLE_TYPE_BLOB:
     return new (&mem_root) Field_blob(ptr,
-                                 null_pos,
-                                 null_bit,
-                                 field_name,
-                                 this,
-                                 field_charset);
+                                      null_pos,
+                                      null_bit,
+                                      field_name,
+                                      this,
+                                      field_charset);
   case DRIZZLE_TYPE_DECIMAL:
     return new (&mem_root) Field_decimal(ptr,
-                                    field_length,
-                                    null_pos,
-                                    null_bit,
-                                    unireg_check,
-                                    field_name,
-                                    decimals);
+                                         field_length,
+                                         null_pos,
+                                         null_bit,
+                                         unireg_check,
+                                         field_name,
+                                         decimals);
   case DRIZZLE_TYPE_DOUBLE:
     return new (&mem_root) Field_double(ptr,
                                    field_length,

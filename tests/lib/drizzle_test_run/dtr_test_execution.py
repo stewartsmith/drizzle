@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -55,12 +55,8 @@ class dtrTestExecutor(test_execution.testExecutor):
 
         # generate command line
         drizzletest_cmd = self.generate_drizzletest_call()
-        if self.debug:
-            self.logging.debug(drizzletest_cmd)
 
         # call drizzletest
-        self.process_symlink_reqs()
-        self.process_environment_reqs()
         self.execute_drizzletest(drizzletest_cmd)
 
         # analyze results
@@ -104,13 +100,27 @@ class dtrTestExecutor(test_execution.testExecutor):
         """
         testcase_name = self.current_testcase.fullname
         self.time_manager.start(testcase_name,'test')
-        retcode, output = self.system_manager.execute_cmd( drizzletest_cmd
-                                                         , must_pass = 0 )
+        #retcode, output = self.system_manager.execute_cmd( drizzletest_cmd
+                                                 #         , must_pass = 0 )
+        drizzletest_outfile = os.path.join(self.logdir,'drizzletest.out')
+        drizzletest_output = open(drizzletest_outfile,'w')
+        drizzletest_subproc = subprocess.Popen( drizzletest_cmd
+                                         , shell=True
+                                         , env=self.working_environment
+                                         , stdout = drizzletest_output
+                                         , stderr = subprocess.STDOUT
+                                         )
+        drizzletest_subproc.wait()
+        retcode = drizzletest_subproc.returncode     
         execution_time = int(self.time_manager.stop(testcase_name)*1000) # millisec
+
+        drizzletest_output.close()
+        drizzletest_file = open(drizzletest_outfile,'r')
+        output = str(drizzletest_file.readlines())
+        drizzletest_file.close()
 
         if self.debug:
             self.logging.debug("drizzletest_retcode: %d" %(retcode))
-            self.logging.debug("drizzletest_output: %s" %(output))
         self.current_test_retcode = retcode
         self.current_test_output = output
         self.current_test_exec_time = execution_time
@@ -127,33 +137,54 @@ class dtrTestExecutor(test_execution.testExecutor):
         else:
             return 'fail'
 
+    def handle_system_reqs(self):
+        """ We check our test case and see what we need to do
+            system-wise to get ready.  This is likely to be 
+            mode-dependent and this is just a placeholder
+            method
+
+        """
+
+        self.process_environment_reqs()
+        self.process_symlink_reqs()
+        self.process_master_sh()  
+        return
+
+    def process_master_sh(self):
+        """ We do what we need to if we have a master.sh file """
+        if self.current_testcase.master_sh:
+            retcode, output = self.system_manager.execute_cmd("/bin/sh %s" %(self.current_testcase.master_sh))
+            if self.debug:
+                self.logging.info("retcode: %retcode")
+                self.logging.info("%output")
+
     def process_environment_reqs(self):
         """ We generate the ENV vars we need set
             and then ask systemManager to do so
 
         """
-        
-        env_reqs = { 'DRIZZLETEST_VARDIR': (self.master_server.vardir,0,0)
-                   ,  'DRIZZLE_TMP_DIR': (self.master_server.tmpdir,0,0)
-                   ,  'MASTER_MYSOCK': (self.master_server.socket_file,0,0)
-                   ,  'MASTER_MYPORT': (str(self.master_server.master_port),0,0)
-                   ,  'MC_PORT': (str(self.master_server.mc_port),0,0)
-                   ,  'PBMS_PORT': (str(self.master_server.pbms_port),0,0)
-                   ,  'DRIZZLE_TCP_PORT': (str(self.master_server.drizzle_tcp_port),0,0)
-                   ,  'EXE_DRIZZLE': (self.master_server.drizzle_client,0,0)
-                   ,  'DRIZZLE_DUMP': ("%s --no-defaults -uroot -p%d" %( self.master_server.drizzledump
-                                                        , self.master_server.master_port),0,0)
-                   ,  'DRIZZLE_SLAP': ("%s -uroot -p%d" %( self.master_server.drizzleslap
-                                                        , self.master_server.master_port),0,0)
-                   ,  'DRIZZLE_IMPORT': ("%s -uroot -p%d" %( self.master_server.drizzleimport
-                                                          , self.master_server.master_port),0,0)
-                   ,  'DRIZZLE': ("%s -uroot -p%d" %( self.master_server.drizzle_client
-                                                   , self.master_server.master_port),0,0)
-                   ,  'DRIZZLE_ADMIN' : ("%s -uroot -p%d" %( self.master_server.drizzleadmin
-                                                         , self.master_server.master_port),0,0)
+        env_reqs = { 'DRIZZLETEST_VARDIR': self.master_server.vardir
+                   ,  'DRIZZLE_TMP_DIR': self.master_server.tmpdir
+                   ,  'MASTER_MYSOCK': self.master_server.socket_file
+                   ,  'MASTER_MYPORT': str(self.master_server.master_port)
+                   ,  'MC_PORT': str(self.master_server.mc_port)
+                   ,  'PBMS_PORT': str(self.master_server.pbms_port)
+                   ,  'RABBITMQ_NODE_PORT': str(self.master_server.rabbitmq_node_port)
+                   ,  'DRIZZLE_TCP_PORT': str(self.master_server.drizzle_tcp_port)
+                   ,  'EXE_DRIZZLE': self.master_server.drizzle_client
+                   ,  'DRIZZLE_DUMP': "%s --no-defaults -uroot -p%d" %( self.master_server.drizzledump
+                                                        , self.master_server.master_port)
+                   ,  'DRIZZLE_SLAP': "%s -uroot -p%d" %( self.master_server.drizzleslap
+                                                        , self.master_server.master_port)
+                   ,  'DRIZZLE_IMPORT': "%s -uroot -p%d" %( self.master_server.drizzleimport
+                                                          , self.master_server.master_port)
+                   ,  'DRIZZLE': "%s -uroot -p%d" %( self.master_server.drizzle_client
+                                                   , self.master_server.master_port)
+                   ,  'DRIZZLE_ADMIN' : "%s -uroot -p%d" %( self.master_server.drizzleadmin
+                                                         , self.master_server.master_port)
                    }     
 
-        self.system_manager.process_environment_reqs(env_reqs, quiet=1)
+        self.working_environment = self.system_manager.create_working_environment(env_reqs)
 
     def process_symlink_reqs(self):
         """ Create any symlinks we may need """

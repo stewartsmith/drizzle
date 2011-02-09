@@ -30,20 +30,16 @@ namespace drizzled
 {
 
 std::vector<plugin::ErrorMessage *> all_errmsg_handler;
-bool errmsg_has= false;
-
 
 bool plugin::ErrorMessage::addPlugin(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.push_back(handler);
-  errmsg_has= true;
   return false;
 }
 
-void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *handler)
+void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *)
 {
-  all_errmsg_handler.erase(std::find(all_errmsg_handler.begin(),
-                                     all_errmsg_handler.end(), handler));
+  all_errmsg_handler.clear();
 }
 
 
@@ -90,15 +86,18 @@ public:
 bool plugin::ErrorMessage::vprintf(error::level_t priority, char const *format, va_list ap)
 {
 
-  /* check to see if any errmsg plugin has been loaded
-     if not, just fall back to emitting the message to stderr */
-  if (not errmsg_has)
+  /* 
+    Check to see if any errmsg plugin has been loaded
+    if not, just fall back to emitting the message to stderr.
+  */
+  if (not all_errmsg_handler.size())
   {
     /* if it turns out that the vfprintf doesnt do one single write
        (single writes are atomic), then this needs to be rewritten to
        vsprintf into a char buffer, and then write() that char buffer
        to stderr */
     vfprintf(stderr, format, ap);
+    fputc('\n', stderr);
     return false;
   }
 

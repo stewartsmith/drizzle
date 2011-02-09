@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Padraig O'Sullivan
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,18 +19,31 @@
  */
 
 #include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/join_table.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/optimizer/access_method/system.h"
+#include "drizzled/configmake.h"
 
-using namespace drizzled;
+#include <boost/filesystem.hpp>
 
-bool optimizer::System::getStats(Table *table,
-                                 JoinTable *join_tab)
+#include "drizzled/data_home.h"
+
+namespace drizzled {
+
+static boost::filesystem::path data_home(LOCALSTATEDIR);
+static boost::filesystem::path full_data_home(LOCALSTATEDIR);
+
+boost::filesystem::path& getFullDataHome()
 {
-  table->status= STATUS_NO_RECORD;
-  join_tab->read_first_record= reinterpret_cast<Read_record_func>(join_tab->joinReadSystem());
-  join_tab->read_record.read_record= join_no_more_records;
-  return false;
+  return full_data_home;
 }
+
+boost::filesystem::path& getDataHome()
+{
+  return data_home;
+}
+
+boost::filesystem::path& getDataHomeCatalog()
+{
+  static boost::filesystem::path data_home_catalog(getDataHome());
+  return data_home_catalog;
+}
+
+} // namespace drizzled

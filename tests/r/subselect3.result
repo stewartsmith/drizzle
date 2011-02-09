@@ -247,7 +247,7 @@ a	b	oref	Z
 NULL	1	100	0
 NULL	2	100	NULL
 create table t4 (x int);
-insert into t4 select A.a + 10*B.a from t1 A, t1 B;
+insert into t4 select A.a + 10*B.a from t1 A CROSS JOIN t1 B;
 explain extended 
 select a,b, oref, 
 (a,b) in (select a,b from t1,t4 where c=t2.oref) Z 

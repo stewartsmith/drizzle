@@ -662,7 +662,7 @@ os_file_lock(
 		if (errno == EAGAIN || errno == EACCES) {
 			fprintf(stderr,
 				"InnoDB: Check that you do not already have"
-				" another mysqld process\n"
+				" another drizzled process\n"
 				"InnoDB: using the same InnoDB data"
 				" or log files.\n");
 		}

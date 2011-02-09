@@ -70,7 +70,7 @@ a	b	a	b
 0	0	0	0
 1	1	1	1
 2	2	2	2
-insert into t1 select (A.a + 10 * B.a),1 from t0 A, t0 B;
+insert into t1 select (A.a + 10 * B.a),1 from t0 A CROSS JOIN t0 B;
 explain extended select * from t1 where a in (select pk from t10 where pk<3);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	103	100.00	Using where

@@ -20,7 +20,6 @@
 #include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/table.h>
-#include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
 #include <cstdio>

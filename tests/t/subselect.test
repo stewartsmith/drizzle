@@ -567,7 +567,7 @@ drop table t1;
 --echo #
 --echo # error in IN
 --echo #
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 select t1.Continent, t2.Name, t2.Population from t1 LEFT JOIN t2 ON t1.Code = t2.Country  where t2.Population IN (select max(t2.Population) AS Population from t2, t1 where t2.Country = t1.Code group by Continent);
 
 --echo #
@@ -3119,8 +3119,9 @@ SELECT * FROM t1 JOIN  (t1 t1a)  t1a ON 1;
 --error ER_PARSE_ERROR
 SELECT * FROM t1 JOIN ((t1 t1a)) t1a ON 1;
 
---sorted_result
+--error ER_CARTESIAN_JOIN_ATTEMPTED
 SELECT * FROM t1 JOIN  (t1 t1a)  ON 1;
+--error ER_CARTESIAN_JOIN_ATTEMPTED
 SELECT * FROM t1 JOIN ((t1 t1a)) ON 1;
 
 SELECT * FROM (t1 t1a);
