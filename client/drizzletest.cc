@@ -6303,13 +6303,8 @@ void do_get_replace(struct st_command *command)
 
 void free_replace()
 {
-
-  if (glob_replace)
-  {
-    free(glob_replace);
-    glob_replace=0;
-  }
-  return;
+  free(glob_replace);
+  glob_replace=0;
 }
 
 
