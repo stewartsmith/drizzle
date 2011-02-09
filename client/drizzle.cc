@@ -1115,7 +1115,7 @@ static void print_warnings(uint32_t error_code);
 static boost::posix_time::ptime start_timer(void);
 static void end_timer(boost::posix_time::ptime, string &buff);
 static void drizzle_end_timer(boost::posix_time::ptime, string &buff);
-static void nice_time(double sec, string &buff,bool part_second);
+static void nice_time(boost::posix_time::time_duration duration, string &buff);
 extern "C" void drizzle_end(int sig);
 extern "C" void handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
@@ -4338,45 +4338,32 @@ static boost::posix_time::ptime start_timer(void)
   return boost::posix_time::microsec_clock::universal_time();
 }
 
-static void nice_time(double sec, string &buff,bool part_second)
+static void nice_time(boost::posix_time::time_duration duration, string &buff)
 {
-  uint32_t tmp;
   ostringstream tmp_buff_str;
 
-  if (sec >= 3600.0*24)
+  if (duration.hours() > 0)
   {
-    tmp=(uint32_t) floor(sec/(3600.0*24));
-    sec-= 3600.0*24*tmp;
-    tmp_buff_str << tmp;
-
-    if (tmp > 1)
-      tmp_buff_str << " days ";
-    else
-      tmp_buff_str << " day ";
-
-  }
-  if (sec >= 3600.0)
-  {
-    tmp=(uint32_t) floor(sec/3600.0);
-    sec-=3600.0*tmp;
-    tmp_buff_str << tmp;
-
-    if (tmp > 1)
+    tmp_buff_str << duration.hours();
+    if (duration.hours() > 1)
       tmp_buff_str << _(" hours ");
     else
       tmp_buff_str << _(" hour ");
   }
-  if (sec >= 60.0)
+  if (duration.hours() > 0 || duration.minutes() > 0)
   {
-    tmp=(uint32_t) floor(sec/60.0);
-    sec-=60.0*tmp;
-    tmp_buff_str << tmp << _(" min ");
+    tmp_buff_str << duration.minutes() << _(" min ");
   }
-  if (part_second)
-    tmp_buff_str.precision(6);
-  else
-    tmp_buff_str.precision(0);
-  tmp_buff_str << sec << _(" sec");
+
+  tmp_buff_str.precision(duration.num_fractional_digits());
+
+  double seconds= duration.fractional_seconds();
+
+  seconds/= pow(10.0,duration.num_fractional_digits());
+
+  seconds+= duration.seconds();
+  tmp_buff_str << seconds << _(" sec");
+
   buff.append(tmp_buff_str.str());
 }
 
@@ -4385,7 +4372,7 @@ static void end_timer(boost::posix_time::ptime start_time, string &buff)
   boost::posix_time::ptime end_time= start_timer();
   boost::posix_time::time_period duration(start_time, end_time);
 
-  nice_time(  (double)duration.length().total_microseconds()/1000000, buff, 1);
+  nice_time(duration.length(), buff);
 }
 
 
