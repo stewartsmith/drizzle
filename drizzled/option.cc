@@ -21,6 +21,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/error.h"
 #include "drizzled/option.h"
+#include "drizzled/typelib.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -647,7 +648,7 @@ Will set the option value to given value
             return EXIT_ARGUMENT_INVALID;
           break;
         case GET_SET:
-          *((uint64_t*)result_pos)= find_typeset(argument, opts->typelib, &err);
+          *((uint64_t*)result_pos)= opts->typelib->find_typeset(argument, &err);
           if (err)
             return EXIT_ARGUMENT_INVALID;
           break;
@@ -1234,11 +1235,11 @@ Print variables.
                 if (!(bit & llvalue))
                   continue;
                 llvalue&= ~bit;
-                printf( llvalue ? "%s," : "%s\n", get_type(optp->typelib, nr));
+                printf( llvalue ? "%s," : "%s\n", optp->typelib->get_type(nr));
               }
             break;
           case GET_ENUM:
-            printf("%s\n", get_type(optp->typelib, *(uint*) value));
+            printf("%s\n", optp->typelib->get_type(*(uint*) value));
             break;
           case GET_STR:
           case GET_STR_ALLOC:                    /* fall through */

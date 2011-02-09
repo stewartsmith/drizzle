@@ -67,6 +67,7 @@
 #include "drizzled/gettext.h"
 #include "drizzled/type/time.h"
 #include "drizzled/charset.h"
+#include "drizzled/typelib.h"
 #include <drizzled/configmake.h>
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE

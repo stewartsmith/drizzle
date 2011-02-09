@@ -70,6 +70,12 @@ int st_typelib::find_type_or_exit(const char *x, const char *option) const
 */
 
 
+int st_typelib::find_type(const char *x, uint32_t full_name) const
+{
+  assert(full_name & 2);
+  return find_type(const_cast<char*>(x), full_name);
+}
+
 int st_typelib::find_type(char *x, uint32_t full_name) const
 {
   if (!count)
@@ -118,24 +124,22 @@ int st_typelib::find_type(char *x, uint32_t full_name) const
 	/* Get name of type nr 'nr' */
 	/* Warning first type is 1, 0 = empty field */
 
-void make_type(char * to, uint32_t nr,
-	       TYPELIB *typelib)
+void st_typelib::make_type(char *to, uint32_t nr) const
 {
   if (!nr)
-    to[0]=0;
+    to[0]= 0;
   else
-    (void) strcpy(to,get_type(typelib,nr-1));
-  return;
+    strcpy(to, get_type(nr - 1));
 } /* make_type */
 
 
 	/* Get type */
 	/* Warning first type is 0 */
 
-const char *get_type(TYPELIB *typelib, uint32_t nr)
+const char *st_typelib::get_type(uint32_t nr) const
 {
-  if (nr < (uint32_t) typelib->count && typelib->type_names)
-    return(typelib->type_names[nr]);
+  if (nr < count && type_names)
+    return type_names[nr];
   return "?";
 }
 
@@ -155,29 +159,24 @@ const char *get_type(TYPELIB *typelib, uint32_t nr)
     a integer representation of the supplied string
 */
 
-uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
+uint64_t st_typelib::find_typeset(const char *x, int *err) const
 {
-  uint64_t result;
-  int find;
-  char *i;
-
-  if (!lib->count)
-  {
-    return(0);
-  }
-  result= 0;
+  if (!count)
+    return 0;
+  uint64_t result= 0;
   *err= 0;
   while (*x)
   {
     (*err)++;
-    i= x;
+    const char *i= x;
     while (*x && *x != field_separator) x++;
-    if ((find= lib->find_type(i, 2 | 8) - 1) < 0)
-      return(0);
+    int find= find_type(i, 2 | 8) - 1;
+    if (find < 0)
+      return 0;
     result|= (1ULL << find);
   }
   *err= 0;
-  return(result);
+  return result;
 } /* find_set */
 
 
@@ -194,35 +193,35 @@ uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
     NULL otherwise
 */
 
-TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
+TYPELIB *st_typelib::copy_typelib(memory::Root *root) const
 {
   TYPELIB *to;
   uint32_t i;
 
-  if (!from)
+  if (!this)
     return NULL;
 
   if (!(to= (TYPELIB*) root->alloc_root(sizeof(TYPELIB))))
     return NULL;
 
   if (!(to->type_names= (const char **)
-        root->alloc_root((sizeof(char *) + sizeof(int)) * (from->count + 1))))
-    return NULL;
-  to->type_lengths= (unsigned int *)(to->type_names + from->count + 1);
-  to->count= from->count;
-  if (from->name)
+        root->alloc_root((sizeof(char *) + sizeof(int)) * (count + 1))))
+    return NULL; // leaking
+  to->type_lengths= (unsigned int *)(to->type_names + count + 1);
+  to->count= count;
+  if (name)
   {
-    if (!(to->name= root->strdup_root(from->name)))
-      return NULL;
+    if (!(to->name= root->strdup_root(name)))
+      return NULL; // leaking
   }
   else
     to->name= NULL;
 
-  for (i= 0; i < from->count; i++)
+  for (i= 0; i < count; i++)
   {
-    if (!(to->type_names[i]= root->strmake_root(from->type_names[i], from->type_lengths[i])))
-      return NULL;
-    to->type_lengths[i]= from->type_lengths[i];
+    if (!(to->type_names[i]= root->strmake_root(type_names[i], type_lengths[i])))
+      return NULL; // leaking
+    to->type_lengths[i]= type_lengths[i];
   }
   to->type_names[to->count]= NULL;
   to->type_lengths[to->count]= 0;
