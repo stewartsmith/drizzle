@@ -6241,8 +6241,8 @@ typedef struct st_pointer_array {    /* when using array-strings */
 } POINTER_ARRAY;
 
 struct st_replace;
-struct st_replace *init_replace(char * *from, char * *to, uint32_t count,
-                                char * word_end_chars);
+struct st_replace *init_replace(const char **from, char **to, uint32_t count,
+                                char *word_end_chars);
 int insert_pointer_name(POINTER_ARRAY *pa,char * name);
 void replace_strings_append(struct st_replace *rep, string* ds,
                             const char *from, int len);
@@ -6289,8 +6289,8 @@ void do_get_replace(struct st_command *command)
     if (my_isspace(charset_info,i))
       *pos++= i;
   *pos=0;          /* End pointer */
-  if (!(glob_replace= init_replace((char**) from_array.typelib.type_names,
-                                   (char**) to_array.typelib.type_names,
+  if (!(glob_replace= init_replace(from_array.typelib.type_names,
+                                   (char**)to_array.typelib.type_names,
                                    (uint32_t) from_array.typelib.count,
                                    word_end_chars)))
     die("Can't initialize replace from '%s'", command->query);
@@ -6781,13 +6781,13 @@ int get_next_bit(REP_SET *set,uint32_t lastpos);
 int find_set(REP_SETS *sets,REP_SET *find);
 int find_found(FOUND_SET *found_set,uint32_t table_offset,
                int found_offset);
-uint32_t start_at_word(char * pos);
-uint32_t end_of_word(char * pos);
+bool start_at_word(const char *pos);
+bool end_of_word(const char *pos);
 
 static uint32_t found_sets=0;
 
 
-static uint32_t replace_len(char * str)
+static uint32_t replace_len(const char *str)
 {
   uint32_t len=0;
   while (*str)
@@ -6802,8 +6802,8 @@ static uint32_t replace_len(char * str)
 
 /* Init a replace structure for further calls */
 
-REPLACE *init_replace(char * *from, char * *to,uint32_t count,
-                      char * word_end_chars)
+REPLACE *init_replace(const char **from, char **to,uint32_t count,
+                      char *word_end_chars)
 {
   static const int SPACE_CHAR= 256;
   static const int START_OF_LINE= 257;
@@ -6812,7 +6812,8 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
   uint32_t i,j,states,set_nr,len,result_len,max_length,found_end,bits_set,bit_nr;
   int used_sets,chr,default_state;
   char used_chars[LAST_CHAR_CODE],is_word_end[256];
-  char * pos, *to_pos, **to_array;
+  const char *pos;
+  char *to_pos, **to_array;
   REP_SETS sets;
   REP_SET *set,*start_states,*word_states,*new_set;
   FOLLOWS *follow,*follow_ptr;
@@ -7256,17 +7257,15 @@ int find_found(FOUND_SET *found_set,uint32_t table_offset, int found_offset)
 
 /* Return 1 if regexp starts with \b or ends with \b*/
 
-uint32_t start_at_word(char * pos)
+bool start_at_word(const char *pos)
 {
-  return (((!memcmp(pos, "\\b",2) && pos[2]) ||
-           !memcmp(pos, "\\^", 2)) ? 1 : 0);
+  return (!memcmp(pos, "\\b",2) && pos[2]) || !memcmp(pos, "\\^", 2);
 }
 
-uint32_t end_of_word(char * pos)
+bool end_of_word(const char *pos)
 {
-  char * end= strchr(pos, '\0');
-  return ((end > pos+2 && !memcmp(end-2, "\\b", 2)) ||
-          (end >= pos+2 && !memcmp(end-2, "\\$",2))) ? 1 : 0;
+  const char *end= strchr(pos, '\0');
+  return (end > pos+2 && !memcmp(end-2, "\\b", 2)) || (end >= pos+2 && !memcmp(end-2, "\\$",2));
 }
 
 /****************************************************************************

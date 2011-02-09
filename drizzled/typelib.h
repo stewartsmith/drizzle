@@ -39,7 +39,6 @@ public:
   uint32_t find_type(const char *find, uint32_t length, bool part_match) const;
   uint32_t find_type2(const char *find, uint32_t length, const CHARSET_INFO *cs) const;
 
-
   unsigned int count;
   const char *name;
   const char **type_names;
