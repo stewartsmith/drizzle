@@ -6518,8 +6518,8 @@ static struct st_replace_regex* init_replace_regex(char* expr)
       die("Out of memory");
   }
   res->odd_buf_len= res->even_buf_len= 8192;
-  res->even_buf= (char*)malloc(res->even_buf_len);
-  res->odd_buf= (char*)malloc(res->odd_buf_len);
+  res->even_buf= new char[res->even_buf_len];
+  res->odd_buf= new char[res->odd_buf_len];
   res->buf= res->even_buf;
 
   return res;
@@ -6614,14 +6614,13 @@ void do_get_replace_regex(struct st_command *command)
 
 void free_replace_regex()
 {
-  if (glob_replace_regex)
-  {
-    delete_dynamic(&glob_replace_regex->regex_arr);
-    free(glob_replace_regex->even_buf);
-    free(glob_replace_regex->odd_buf);
-    free(glob_replace_regex);
-    glob_replace_regex=0;
-  }
+  if (!glob_replace_regex)
+    return;
+  delete_dynamic(&glob_replace_regex->regex_arr);
+  delete[] glob_replace_regex->even_buf;
+  delete[] glob_replace_regex->odd_buf;
+  free(glob_replace_regex);
+  glob_replace_regex= NULL;
 }
 
 
