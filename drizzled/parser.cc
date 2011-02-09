@@ -611,5 +611,18 @@ drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length)
   return DRIZZLE_TYPE_TIMESTAMP;
 }
 
+void buildKeyOnColumn(LEX *lex)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+
+  lex->type|= UNIQUE_KEY_FLAG;
+  statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+  if (lex->field())
+  {
+    lex->field()->mutable_constraints()->set_is_unique(true);
+  }
+}
+
 } // namespace parser
 } // namespace drizzled

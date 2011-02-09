@@ -1422,27 +1422,11 @@ attribute:
           }
         | UNIQUE_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            Lex->type|= UNIQUE_FLAG;
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_unique(true);
-            }
+            parser::buildKeyOnColumn(Lex);
           }
         | UNIQUE_SYM KEY_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            Lex->type|= UNIQUE_KEY_FLAG;
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_unique(true);
-            }
+            parser::buildKeyOnColumn(Lex);
           }
         | COMMENT_SYM TEXT_STRING_sys
           {
