@@ -88,11 +88,23 @@ private:
   std::string _schema;
   std::string _table;
 
+  /**
+   * Create the schema and tables (if necessary) that will store
+   * information about replication state of the applier thread.
+   *
+   * @param session Session object reference.
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool createApplierSchemaAndTables(drizzled::Session &session);
+
   bool getListOfCompletedTransactions(drizzled::Session &session,
                                       TrxIdList &list);
 
   bool getMessage(drizzled::Session &session,
                   drizzled::message::Transaction &transaction,
+                  std::string &commit_id,
                   uint64_t trx_id,
                   uint32_t segment_id);
 
@@ -115,12 +127,18 @@ private:
    *
    * @param session Session object reference.
    * @param sql Batch of SQL statements to execute.
+   * @param commit_id Commit ID value to store in state table.
    *
    * @retval true Success
    * @retval false Failure
    */
-  bool executeSQL(drizzled::Session &session, std::vector<std::string> &sql);
+  bool executeSQL(drizzled::Session &session,
+                  std::vector<std::string> &sql,
+                  const std::string &commit_id);
 
+  bool executeSQL(drizzled::Session &session,
+                  std::vector<std::string> &sql);
+  
   /**
    * Remove messages for a given transaction from the queue.
    *

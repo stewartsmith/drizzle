@@ -32,6 +32,7 @@
 #include <vector>
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
+#include <google/protobuf/text_format.h>
 
 using namespace std;
 using namespace drizzled;
@@ -65,6 +66,8 @@ void QueueManager::processQueue(void)
   session->setUser(user);
   session->set_db(getSchema());
 
+  createApplierSchemaAndTables(*(session.get()));
+
   uint64_t trx_id= 0;
 
   while (1)
@@ -79,6 +82,7 @@ void QueueManager::processQueue(void)
 
       for (size_t x= 0; x < completedTransactionIds.size(); x++)
       {
+        string commit_id;
         trx_id= completedTransactionIds[x];
 
         vector<string> aggregate_sql;  /* final SQL to execute */
@@ -87,13 +91,25 @@ void QueueManager::processQueue(void)
         message::Transaction transaction;
         uint32_t segment_id= 1;
 
-        while (getMessage(*(session.get()), transaction, trx_id, segment_id++))
+        while (getMessage(*(session.get()), transaction, commit_id,
+                          trx_id, segment_id++))
+        {
           convertToSQL(transaction, aggregate_sql, segmented_sql);
+        }
+
+        /*
+         * The last message in a transaction should always have a commit_id
+         * value larger than 0, though other messages of the same transaction
+         * will have commit_id = 0.
+         */
+        assert((not commit_id.empty()) && (commit_id != "0"));
 
         assert(segmented_sql.empty());
 
         if (not aggregate_sql.empty())
-          executeSQL(*(session.get()), aggregate_sql);
+        {
+          executeSQL(*(session.get()), aggregate_sql, commit_id);
+        }
 
         deleteFromQueue(*(session.get()), trx_id);      
       }
@@ -112,12 +128,41 @@ void QueueManager::processQueue(void)
 }
 
 
+bool QueueManager::createApplierSchemaAndTables(Session &session)
+{
+  vector<string> sql;
+  
+  sql.push_back("COMMIT");
+  sql.push_back("CREATE SCHEMA IF NOT EXISTS replication");
+  
+  if (not executeSQL(session, sql))
+    return false;
+  
+  sql.clear();
+  sql.push_back("COMMIT");
+  sql.push_back("CREATE TABLE IF NOT EXISTS replication.applier_state"
+                " (last_applied_commit_id BIGINT NOT NULL PRIMARY KEY)");
+  
+  /* TODO: code here
+   SELECT COUNT(*) FROM replication.applier_state
+   if (count == 0)
+   INSERT INTO replication.applier_state VALUES (0)
+   */
+  
+  if (not executeSQL(session, sql))
+    return false;
+  
+  return true;
+}  
+  
+  
 bool QueueManager::getMessage(Session &session,
                               message::Transaction &transaction,
+                              string &commit_id,
                               uint64_t trx_id,
                               uint32_t segment_id)
 {
-  string sql("SELECT msg FROM ");
+  string sql("SELECT msg, commit_order FROM ");
   sql.append(getSchema());
   sql.append(".");
   sql.append(getTable());
@@ -126,27 +171,31 @@ bool QueueManager::getMessage(Session &session,
   sql.append(" AND seg_id = ");
   sql.append(boost::lexical_cast<std::string>(segment_id));
 
-  printf("%s\n", sql.c_str()); fflush(stdout);
-  sql::ResultSet result_set(1);
+  //printf("%s\n", sql.c_str()); fflush(stdout);
+  sql::ResultSet result_set(2);
   Execute execute(session, true);
   
   execute.run(sql, &result_set);
   
-  assert(result_set.getMetaData().getColumnCount() == 1);
+  assert(result_set.getMetaData().getColumnCount() == 2);
 
   /* Really should only be 1 returned row */
-  
   uint32_t found_rows= 0;
-
   while (result_set.next())
   {
-    string value= result_set.getString(0);
-    
-    if ((value == "") || (found_rows == 1))
+    string msg= result_set.getString(0);
+    string com_id= result_set.getString(1);
+
+    if ((msg == "") || (found_rows == 1))
       break;
 
+    /* Neither column should be NULL */
     assert(result_set.isNull(0) == false);
-    transaction.ParseFromArray(value.c_str(), value.length());
+    assert(result_set.isNull(1) == false);
+
+    //transaction.ParseFromString(value);
+    google::protobuf::TextFormat::ParseFromString(msg, &transaction);
+    commit_id= com_id;
 
     found_rows++;
   }
@@ -220,10 +269,32 @@ bool QueueManager::convertToSQL(const message::Transaction &transaction,
       break;
     }
 
-    if (statement.type() == message::Statement::ROLLBACK_STATEMENT)
+    switch (statement.type())
     {
-      segmented_sql.clear();
-      continue;
+      /* DDL cannot be in a transaction, so precede with a COMMIT */
+      case message::Statement::TRUNCATE_TABLE:
+      case message::Statement::CREATE_SCHEMA:
+      case message::Statement::ALTER_SCHEMA:
+      case message::Statement::DROP_SCHEMA:
+      case message::Statement::CREATE_TABLE:
+      case message::Statement::ALTER_TABLE:
+      case message::Statement::DROP_TABLE:
+      {
+        segmented_sql.push_back("COMMIT");
+        break;
+      }
+
+      /* Cancel any ongoing statement */
+      case message::Statement::ROLLBACK_STATEMENT:
+      {
+        segmented_sql.clear();
+        continue;
+      }
+      
+      default:
+      {
+        break;
+      }
     }
 
     if (message::transformStatementToSql(statement, segmented_sql,
@@ -290,8 +361,21 @@ bool QueueManager::isEndStatement(const message::Statement &statement)
   return true;
 }
 
+bool QueueManager::executeSQL(Session &session,
+                              vector<string> &sql,
+                              const string &commit_id)
+{
+  string tmp("UPDATE replication.applier_state"
+             " SET last_applied_commit_id = ");
+  tmp.append(commit_id);
+  sql.push_back(tmp);
 
-bool QueueManager::executeSQL(Session &session, vector<string> &sql)
+  return executeSQL(session, sql);
+}
+
+
+bool QueueManager::executeSQL(Session &session,
+                              vector<string> &sql)
 {
   string combined_sql;
 
