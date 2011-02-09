@@ -63,15 +63,15 @@ using namespace drizzled;
 /*
   unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
 */
-#define META_BUFFER_SIZE sizeof(unsigned char) + sizeof(unsigned char) + sizeof(uint64_t) \
-  + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(unsigned char)
-#define TINA_CHECK_HEADER 254 // The number we use to determine corruption
-#define BLOB_MEMROOT_ALLOC_SIZE 8192
+static const int META_BUFFER_SIZE = sizeof(unsigned char) + sizeof(unsigned char) + sizeof(uint64_t)
+  + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(unsigned char);
+static const int TINA_CHECK_HEADER = 254; // The number we use to determine corruption
+static const int BLOB_MEMROOT_ALLOC_SIZE = 8192;
 
 /* The file extension */
-#define CSV_EXT ".CSV"               // The data file
-#define CSN_EXT ".CSN"               // Files used during repair and update
-#define CSM_EXT ".CSM"               // Meta file
+static const char* CSV_EXT = ".CSV"               // The data file
+static const char* CSN_EXT = ".CSN"               // Files used during repair and update
+static const char* CSM_EXT = ".CSM"               // Meta file
 
 
 static int read_meta_file(int meta_file, ha_rows *rows);
