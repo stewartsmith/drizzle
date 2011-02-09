@@ -6445,23 +6445,19 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
 
 static struct st_replace_regex* init_replace_regex(char* expr)
 {
-  struct st_replace_regex* res;
-  char* buf,*expr_end;
-  char* p;
-  char* buf_p;
   uint32_t expr_len= strlen(expr);
   char last_c = 0;
-  struct st_regex reg;
+  st_regex reg;
 
-  res=(st_replace_regex*)malloc(sizeof(*res)+expr_len);
+  st_replace_regex* res= (st_replace_regex*)malloc(sizeof(*res)+expr_len);
   if (!res)
     return NULL;
   my_init_dynamic_array(&res->regex_arr,sizeof(struct st_regex),128,128);
 
-  buf= (char*)res + sizeof(*res);
-  expr_end= expr + expr_len;
-  p= expr;
-  buf_p= buf;
+  char* buf= (char*)res + sizeof(*res);
+  char* expr_end= expr + expr_len;
+  char* p= expr;
+  char* buf_p= buf;
 
   /* for each regexp substitution statement */
   while (p < expr_end)
@@ -7368,6 +7364,7 @@ void replace_append_mem(string *ds,
 
   if (glob_replace_regex)
   {
+    assert(glob_replace_regex->even_buf);
     /* Regex replace */
     if (!multi_reg_replace(glob_replace_regex, v))
     {
