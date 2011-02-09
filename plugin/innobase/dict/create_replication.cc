@@ -73,8 +73,8 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   error = que_eval_sql(info,
                        "PROCEDURE CREATE_SYS_REPLICATION_LOG_PROC () IS\n"
                        "BEGIN\n"
-                       "CREATE TABLE SYS_REPLICATION_LOG(ID BINARY(8), SEGID BINARY(4), MESSAGE BLOB);\n"
-                       "CREATE UNIQUE CLUSTERED INDEX ID_IND ON SYS_REPLICATION_LOG (ID);\n"
+                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT, SEGID INT, MESSAGE BLOB);\n"
+                       "CREATE UNIQUE CLUSTERED INDEX PRIMARY ON SYS_REPLICATION_LOG (ID);\n"
                        "END;\n"
                        , FALSE, trx);
 
@@ -105,6 +105,51 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   return(error);
 }
 
+UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizzled::message::Table *table_message)
+{
+  if (strcmp(table_name, "SYS_REPLICATION_LOG") != 0)
+    return -1;
+
+  drizzled::message::Engine *engine= table_message->mutable_engine();
+  engine->set_name("InnoDB");
+  table_message->set_name("SYS_REPLICATION_LOG");
+  table_message->set_schema("DATA_DICTIONARY");
+  table_message->set_type(drizzled::message::Table::STANDARD);
+  table_message->set_creation_timestamp(0);
+  table_message->set_update_timestamp(0);
+
+  drizzled::message::Table::TableOptions *options= table_message->mutable_options();
+  options->set_collation_id(drizzled::my_charset_bin.number);
+  options->set_collation(drizzled::my_charset_bin.name);
+
+  drizzled::message::Table::Field *field= table_message->add_field();
+  field->set_name("ID");
+  field->set_type(drizzled::message::Table::Field::BIGINT);
+
+  field= table_message->add_field();
+  field->set_name("SEGID");
+  field->set_type(drizzled::message::Table::Field::INTEGER);
+
+  field= table_message->add_field();
+  field->set_name("MESSAGE");
+  field->set_type(drizzled::message::Table::Field::BLOB);
+  drizzled::message::Table::Field::StringFieldOptions *stropt= field->mutable_string_options();
+  stropt->set_collation_id(drizzled::my_charset_bin.number);
+  stropt->set_collation(drizzled::my_charset_bin.name);
+
+  drizzled::message::Table::Index *index= table_message->add_indexes();
+  index->set_name("PRIMARY");
+  index->set_is_primary(true);
+  index->set_is_unique(true);
+  index->set_type(drizzled::message::Table::Index::BTREE);
+  index->set_key_length(8);
+  drizzled::message::Table::Index::IndexPart *part= index->add_index_part();
+  part->set_fieldnr(0);
+  part->set_compare_length(8);
+
+  return 0;
+}
+
 extern dtuple_t* row_get_prebuilt_insert_row(row_prebuilt_t*	prebuilt);
 
 ulint insert_replication_message(const char *message, size_t size, 
@@ -114,6 +159,7 @@ ulint insert_replication_message(const char *message, size_t size,
   row_prebuilt_t*	prebuilt;	/* For reading rows */
   dict_table_t *table;
   que_thr_t*	thr;
+  byte*  data;
 
   table = dict_table_get("SYS_REPLICATION_LOG",TRUE);
 
@@ -141,10 +187,15 @@ ulint insert_replication_message(const char *message, size_t size,
   dfield_t *dfield;
   dfield = dtuple_get_nth_field(dtuple, 0);
 
-  dfield_set_data(dfield, &trx_id, 8);
+  data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 8));
+  mach_write_to_8(data, trx_id);
+  dfield_set_data(dfield, data, 8);
 
   dfield = dtuple_get_nth_field(dtuple, 1);
-  dfield_set_data(dfield, &seg_id, 4);
+
+  data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 4));
+  mach_write_to_8(data, seg_id);
+  dfield_set_data(dfield, data, 4);
 
   dfield = dtuple_get_nth_field(dtuple, 2);
   dfield_set_data(dfield, message, size);

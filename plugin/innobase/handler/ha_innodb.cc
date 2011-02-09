@@ -523,6 +523,15 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
+  std::string search_string(schema_identifier.getSchemaName());
+
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    set_of_identifiers.push_back(identifier::Table(schema_identifier.getSchemaName(), "SYS_REPLICATION_LOG"));
+  }
+
   for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
        entry_iter != entries.end(); ++entry_iter)
   {
@@ -582,6 +591,9 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
 
   // First we check the temporary tables.
   if (session.getMessageCache().getTableMessage(identifier, table_proto))
+    return EEXIST;
+
+  if (read_replication_log_table_message(identifier.getTableName().c_str(), &table_proto) == 0)
     return EEXIST;
 
   if (access(proto_path.c_str(), F_OK))
@@ -3227,9 +3239,19 @@ ha_innobase::doOpen(const identifier::Table &identifier,
 
   user_session = NULL;
 
-  if (!(share=get_share(identifier.getKeyPath().c_str()))) {
-
-    return(1);
+  if (identifier.getSchemaName().compare("data_dictionary") == 0)
+  {
+    if (!(share=get_share(identifier.getTableName().c_str())))
+    {
+      return 1;
+    }
+  }
+  else
+  {
+    if (!(share=get_share(identifier.getKeyPath().c_str())))
+    {
+      return(1);
+    }
   }
 
   /* Create buffers for packing the fields of a record. Why
@@ -3256,7 +3278,10 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   }
 
   /* Get pointer to a table object in InnoDB dictionary cache */
-  ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
+  if (identifier.getSchemaName().compare("data_dictionary") == 0)
+    ib_table = dict_table_get(identifier.getTableName().c_str(), TRUE);
+  else
+    ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
   
   if (NULL == ib_table) {
     errmsg_printf(error::ERROR, "Cannot find or open table %s from\n"

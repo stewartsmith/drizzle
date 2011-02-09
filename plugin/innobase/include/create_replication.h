@@ -31,6 +31,10 @@
 
 #include "read_replication.h"
 
+#include "drizzled/message/table.pb.h"
+#include "drizzled/table.h"
+#include "drizzled/charset_info.h"
+
 struct read_replication_state_st {
   mtr_t mtr;
   btr_pcur_t pcur;
@@ -47,5 +51,7 @@ UNIV_INTERN ulint insert_replication_message(const char *message, size_t size,
 UNIV_INTERN struct read_replication_state_st *replication_read_init(void);
 UNIV_INTERN void replication_read_deinit(struct read_replication_state_st *);
 UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_replication_state_st *);
+
+UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizzled::message::Table *table_message);
 
 #endif

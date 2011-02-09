@@ -78,7 +78,6 @@ InnodbReplicationTable::InnodbReplicationTable() :
   add_field("TRANSACTION_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("TRANSACTION_SEGMENT_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, transaction_message_threshold, false);
-  add_field("TRANSACTION_MESSAGE_BINARY", plugin::TableFunction::VARBINARY, transaction_message_threshold, false);
   add_field("TRANSACTION_LENGTH", plugin::TableFunction::NUMBER, 0, false);
 }
 
@@ -113,13 +112,11 @@ bool InnodbReplicationTable::Generator::populate()
   {
     fprintf(stderr, _("Unable to parse transaction. Got error: %s.\n"), message.InitializationErrorString().c_str());
     push("error");
-    push("error");
   }
   else
   {
     google::protobuf::TextFormat::PrintToString(message, &transaction_text);
     push(transaction_text);
-    push(ret.message, ret.message_length);
   }
 
   push(static_cast<int64_t>(ret.message_length));
