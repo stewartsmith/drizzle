@@ -577,6 +577,12 @@ public:
   }
 
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
+
+  enum_tx_isolation tx_isolation()
+  {
+    return (enum_tx_isolation)variables.tx_isolation;
+  }
+
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */

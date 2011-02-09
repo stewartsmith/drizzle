@@ -183,7 +183,6 @@ extern void plugin_sessionvar_cleanup(Session *session);
 int session_in_lock_tables(const Session *session);
 DRIZZLED_API int64_t session_test_options(const Session *session, int64_t test_options);
 DRIZZLED_API int session_sql_command(const Session *session);
-DRIZZLED_API enum_tx_isolation session_tx_isolation(const Session *session);
 
 void compose_plugin_add(std::vector<std::string> options);
 void compose_plugin_remove(std::vector<std::string> options);
