@@ -1032,13 +1032,24 @@ public:
 
 private:
   bool abort_on_warning;
+  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
 
 public:
   bool got_warning; /**< Set on call to push_warning() */
   bool no_warnings_for_error; /**< no warnings on call to my_error() */
   /** set during loop of derived table processing */
   bool derived_tables_processing;
-  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
+
+  bool doing_tablespace_operation(void)
+  {
+    return tablespace_op;
+  }
+
+  void set_doing_tablespace_operation(bool doing)
+  {
+    tablespace_op= doing;
+  }
+
 
   /** Used by the sys_var class to store temporary values */
   union

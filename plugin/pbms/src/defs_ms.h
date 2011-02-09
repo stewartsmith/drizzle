@@ -196,7 +196,7 @@
 #define thd_killed							session_killed
 #define thd_tx_isolation					session_tx_isolation
 #define thd_in_lock_tables					session_in_lock_tables
-#define thd_tablespace_op					session_tablespace_op
+#define thd_tablespace_op(x)					((x)->doing_tablespace_operation())
 #define thd_alloc							session_alloc
 #define thd_make_lex_string					session_make_lex_string
 

@@ -723,7 +723,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
          && lock_type <= TL_WRITE)
-        && !session_tablespace_op(session)
+        && ! session->doing_tablespace_operation()
         && sql_command != SQLCOM_TRUNCATE
         && sql_command != SQLCOM_CREATE_TABLE) {
 

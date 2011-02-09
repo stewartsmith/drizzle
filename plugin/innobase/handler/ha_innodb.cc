@@ -3282,7 +3282,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
     return(HA_ERR_NO_SUCH_TABLE);
   }
 
-  if (ib_table->ibd_file_missing && !session_tablespace_op(session)) {
+  if (ib_table->ibd_file_missing && ! session->doing_tablespace_operation()) {
     errmsg_printf(error::ERROR, "MySQL is trying to open a table handle but "
         "the .ibd file for\ntable %s does not exist.\n"
         "Have you deleted the .ibd file from the "
@@ -8409,7 +8409,7 @@ ha_innobase::store_lock(
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
          && lock_type <= TL_WRITE)
-        && !session_tablespace_op(session)
+        && ! session->doing_tablespace_operation()
         && sql_command != SQLCOM_TRUNCATE
         && sql_command != SQLCOM_CREATE_TABLE) {
 

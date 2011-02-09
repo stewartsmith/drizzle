@@ -721,10 +721,10 @@ static int discard_or_import_tablespace(Session *session,
    We set this flag so that ha_innobase::open and ::external_lock() do
    not complain when we lock the table
  */
-  session->tablespace_op= true;
+  session->set_doing_tablespace_operation(true);
   if (not (table= session->openTableLock(table_list, TL_WRITE)))
   {
-    session->tablespace_op= false;
+    session->set_doing_tablespace_operation(false);
     return -1;
   }
 
@@ -750,7 +750,7 @@ static int discard_or_import_tablespace(Session *session,
   } while(0);
 
   (void) transaction_services.autocommitOrRollback(*session, error);
-  session->tablespace_op=false;
+  session->set_doing_tablespace_operation(false);
 
   if (error == 0)
   {

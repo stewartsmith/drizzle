@@ -1084,7 +1084,7 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
          lock_type <= TL_WRITE)
-        && !session_tablespace_op(session))
+        && ! session->doing_tablespace_operation())
       lock_type = TL_WRITE_ALLOW_WRITE;
 
     /*

@@ -114,11 +114,6 @@ int tmpfile(const char *prefix)
   return fd;
 }
 
-int session_tablespace_op(const Session *session)
-{
-  return test(session->tablespace_op);
-}
-
 void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
 {
   return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
@@ -194,8 +189,8 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   is_fatal_error(false),
   transaction_rollback_request(false),
   is_fatal_sub_stmt_error(0),
-  derived_tables_processing(false),
   tablespace_op(false),
+  derived_tables_processing(false),
   m_lip(NULL),
   cached_table(0),
   transaction_message(NULL),
