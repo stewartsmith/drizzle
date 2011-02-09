@@ -643,7 +643,7 @@ Will set the option value to given value
             return EXIT_OUT_OF_MEMORY;
           break;
         case GET_ENUM:
-          if (((*(int*)result_pos)= find_type(argument, opts->typelib, 2) - 1) < 0)
+          if (((*(int*)result_pos)= opts->typelib->find_type(argument, 2) - 1) < 0)
             return EXIT_ARGUMENT_INVALID;
           break;
         case GET_SET:

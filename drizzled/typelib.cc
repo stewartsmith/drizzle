@@ -30,21 +30,19 @@ static const char field_separator=',';
 
 int st_typelib::find_type_or_exit(const char *x, const char *option) const
 {
-  int res= find_type(const_cast<char*>(x), this, 2);
-  if (res <= 0)
-  {
-    const char **ptr= type_names;
-    if (!*x)
-      fprintf(stderr, "No option given to %s\n", option);
-    else
-      fprintf(stderr, "Unknown option to %s: %s\n", option, x);
-    fprintf(stderr, "Alternatives are: '%s'", *ptr);
-    while (*++ptr)
-      fprintf(stderr, ",'%s'", *ptr);
-    fprintf(stderr, "\n");
-    exit(1);
-  }
-  return res;
+  int res= find_type(const_cast<char*>(x), 2);
+  if (res > 0)
+    return res;
+  if (!*x)
+    fprintf(stderr, "No option given to %s\n", option);
+  else
+    fprintf(stderr, "Unknown option to %s: %s\n", option, x);
+  const char **ptr= type_names;
+  fprintf(stderr, "Alternatives are: '%s'", *ptr);
+  while (*++ptr)
+    fprintf(stderr, ",'%s'", *ptr);
+  fprintf(stderr, "\n");
+  exit(1);
 }
 
 
@@ -72,20 +70,17 @@ int st_typelib::find_type_or_exit(const char *x, const char *option) const
 */
 
 
-int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
+int st_typelib::find_type(char *x, uint32_t full_name) const
 {
-  int find,pos,findpos=0;
-  register char * i;
-  register const char *j;
-
-  if (!typelib->count)
+  if (!count)
+    return 0;
+  int find= 0;
+  int findpos= 0;
+  const char *j;
+  for (int pos= 0; (j= type_names[pos]); pos++)
   {
-    return(0);
-  }
-  find=0;
-  for (pos=0 ; (j=typelib->type_names[pos]) ; pos++)
-  {
-    for (i=x ;
+    const char *i;
+    for (i= x;
     	*i && (!(full_name & 8) || *i != field_separator) &&
         my_toupper(&my_charset_utf8_general_ci,*i) ==
     		my_toupper(&my_charset_utf8_general_ci,*j) ; i++, j++) ;
@@ -104,7 +99,7 @@ int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
     }
   }
   if (find == 0 && (full_name & 4) && x[0] == '#' && strchr(x, '\0')[-1] == '#' &&
-      (findpos=atoi(x+1)-1) >= 0 && (uint32_t) findpos < typelib->count)
+      (findpos=atoi(x+1)-1) >= 0 && (uint32_t) findpos < count)
     find=1;
   else if (find == 0 || ! x[0])
   {
@@ -115,16 +110,16 @@ int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
     return(-1);
   }
   if (!(full_name & 2))
-    (void) strcpy(x,typelib->type_names[findpos]);
-  return(findpos+1);
+    strcpy(x, type_names[findpos]);
+  return findpos + 1;
 } /* find_type */
 
 
 	/* Get name of type nr 'nr' */
 	/* Warning first type is 1, 0 = empty field */
 
-void make_type(register char * to, register uint32_t nr,
-	       register TYPELIB *typelib)
+void make_type(char * to, uint32_t nr,
+	       TYPELIB *typelib)
 {
   if (!nr)
     to[0]=0;
@@ -177,7 +172,7 @@ uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
     (*err)++;
     i= x;
     while (*x && *x != field_separator) x++;
-    if ((find= find_type(i, lib, 2 | 8) - 1) < 0)
+    if ((find= lib->find_type(i, 2 | 8) - 1) < 0)
       return(0);
     result|= (1ULL << find);
   }

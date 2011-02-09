@@ -26,6 +26,7 @@ typedef struct st_typelib
 {
 public:
   int find_type_or_exit(const char *x, const char *option) const;
+  int find_type(char *x, unsigned int full_name) const;
 
   unsigned int count;
   const char *name;
@@ -34,7 +35,6 @@ public:
 } TYPELIB;
 
 extern uint64_t find_typeset(char *x, TYPELIB *typelib,int *error_position);
-extern int find_type(char *x, const TYPELIB *typelib, unsigned int full_name);
 extern void make_type(char *to,unsigned int nr,TYPELIB *typelib);
 extern const char *get_type(TYPELIB *typelib,unsigned int nr);
 extern TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from);
