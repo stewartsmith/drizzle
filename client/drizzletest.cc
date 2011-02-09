@@ -6396,7 +6396,7 @@ struct st_replace_regex
   int odd_buf_len;
 };
 
-struct st_replace_regex *glob_replace_regex= 0;
+st_replace_regex *glob_replace_regex= NULL;
 
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
                 char *string, int icase, int global);
@@ -6438,13 +6438,12 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
   Returns: st_replace_regex struct with pairs of substitutions
 */
 
-static struct st_replace_regex* init_replace_regex(char* expr)
+static void init_replace_regex(st_replace_regex *res, char* expr)
 {
   uint32_t expr_len= strlen(expr);
   char last_c = 0;
   st_regex reg;
 
-  st_replace_regex* res= new st_replace_regex;
   my_init_dynamic_array(&res->regex_arr,sizeof(struct st_regex),128,128);
 
   char* buf= new char[expr_len];
@@ -6515,11 +6514,10 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   res->odd_buf= new char[res->odd_buf_len];
   res->buf= res->even_buf;
 
-  return res;
+  return;
 
 err:
   die("Error parsing replace_regex \"%s\"", expr);
-  return 0;
 }
 
 /*
@@ -6599,8 +6597,8 @@ void do_get_replace_regex(struct st_command *command)
 {
   char *expr= command->first_argument;
   free_replace_regex();
-  if (!(glob_replace_regex=init_replace_regex(expr)))
-    die("Could not init replace_regex");
+  glob_replace_regex = new st_replace_regex;
+  init_replace_regex(glob_replace_regex, expr);
   command->last_argument= command->end;
 }
 
