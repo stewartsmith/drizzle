@@ -50,8 +50,6 @@ namespace drizzled
 
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
-extern uint64_t refresh_version;  /* Increments on each reload */
-
 class Table;
 class TableList;
 class TableShare;

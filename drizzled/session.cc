@@ -51,6 +51,8 @@
 
 #include "drizzled/identifier.h"
 
+#include <drizzled/refresh_version.h>
+
 #include "drizzled/table/singular.h"
 
 #include "plugin/myisam/myisam.h"

@@ -40,7 +40,8 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
-#include "drizzled/session/cache.h"
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/cached_directory.h>

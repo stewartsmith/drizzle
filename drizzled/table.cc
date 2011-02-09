@@ -54,6 +54,8 @@
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
 
+#include <drizzled/refresh_version.h>
+
 #include "drizzled/table/singular.h"
 
 #include "drizzled/table_proto.h"
@@ -1750,6 +1752,14 @@ void Table::filesort_free_buffers(bool full)
     sort.addon_buf=0;
     sort.addon_field=0;
   }
+}
+
+/*
+  Is this instance of the table should be reopen or represents a name-lock?
+*/
+bool Table::needs_reopen_or_name_lock() const
+{ 
+  return getShare()->getVersion() != refresh_version;
 }
 
 } /* namespace drizzled */

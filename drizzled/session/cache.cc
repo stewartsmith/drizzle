@@ -21,10 +21,10 @@
 
 #include <vector>
 
-#include "drizzled/session/cache.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/plugin/authorization.h"
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/current_session.h>
+#include <drizzled/plugin/authorization.h>
 
 #include <boost/foreach.hpp>
 

@@ -56,8 +56,6 @@ class Epoch;
 }
 class Field_blob;
 
-extern uint64_t refresh_version;
-
 typedef enum enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
 
@@ -561,13 +559,11 @@ public:
   {
     return db_stat || open_placeholder;
   }
+
   /*
     Is this instance of the table should be reopen or represents a name-lock?
   */
-  inline bool needs_reopen_or_name_lock()
-  { 
-    return getShare()->getVersion() != refresh_version;
-  }
+  bool needs_reopen_or_name_lock() const;
 
   /**
     clean/setup table fields and map.

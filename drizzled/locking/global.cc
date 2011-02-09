@@ -87,6 +87,7 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/pthread_globals.h"
+#include <drizzled/refresh_version.h>
 
 #include <set>
 #include <vector>

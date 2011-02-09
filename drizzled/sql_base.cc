@@ -57,6 +57,8 @@
 #include "drizzled/table/placeholder.h"
 #include "drizzled/table/unused.h"
 
+#include <drizzled/refresh_version.h>
+
 using namespace std;
 
 namespace drizzled

@@ -34,6 +34,7 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/null.h>
 #include <drizzled/session.h>
+#include <drizzled/session/cache.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
@@ -41,7 +42,6 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
-#include "drizzled/session/cache.h"
 #include "drizzled/global_charset_info.h"
 
 #include "drizzled/plugin/logging.h"

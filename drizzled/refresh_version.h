@@ -1,12 +1,12 @@
+
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,17 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#ifndef DRIZZLED_REFRESH_VERSION_H
+#define DRIZZLED_REFRESH_VERSION_H
 
-#include <drizzled/generator/table_definition_cache.h>
-#include <drizzled/generator/event_observers.h>
-#include <drizzled/generator/functions.h>
-#include <drizzled/generator/schema.h>
-#include <drizzled/generator/table.h>
-#include <drizzled/generator/all_tables.h>
-#include <drizzled/generator/all_fields.h>
-#include <drizzled/generator/all_indexes.h>
-#include <drizzled/generator/all_foreign_keys.h>
+namespace drizzled
+{
 
-#endif /* DRIZZLED_GENERATOR_H */
+/** 
+  Refresh value. We use to test this to find out if a refresh even has happened recently.
+*/
+extern uint64_t refresh_version;  /* Increments on each reload */
+
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_REFRESH_VERSION_H */

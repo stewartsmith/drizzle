@@ -83,6 +83,8 @@
 
 #include "drizzled/definition/cache.h"
 
+#include <drizzled/refresh_version.h>
+
 using namespace std;
 
 namespace drizzled
@@ -2040,6 +2042,11 @@ Field *TableShare::make_field(const message::Table::Field &,
   }
   assert(0);
   abort();
+}
+
+void TableShare::refreshVersion()
+{
+  version= refresh_version;
 }
 
 

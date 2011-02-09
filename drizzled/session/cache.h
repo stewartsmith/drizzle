@@ -22,7 +22,6 @@
 
 #include <list>
 
-#include <drizzled/session.h>
 #include <drizzled/visibility.h>
 
 namespace drizzled
