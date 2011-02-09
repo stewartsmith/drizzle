@@ -19,14 +19,14 @@
  */
 
 #include "config.h"
-#include "plugin/slave/applier.h"
+#include "plugin/slave/replication_slave.h"
 #include "drizzled/plugin.h"
 
 using namespace drizzled;
 
 static int init(module::Context &context)
 {
-  context.add(new slave::Applier);
+  context.add(new slave::ReplicationSlave);
   return 0;
 }
 
