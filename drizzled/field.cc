@@ -1224,7 +1224,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   if (session->abortOnWarning() or
       set_warning(level, code, cuted_increment))
   {
-    char str_nr[22];
+    char str_nr[DECIMAL_LONGLONG_DIGITS];
     char *str_end= internal::int64_t10_to_str(nr, str_nr, -10);
     make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr),
                                  ts_type, field_name);
