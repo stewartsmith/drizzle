@@ -59,14 +59,15 @@ void QueueManager::processQueue(void)
   boost::this_thread::at_thread_exit(&internal::my_thread_end);
 
   /* setup a Session object */
-  Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(),
-                                                    catalog::local());
+  _session= Session::make_shared(plugin::Listen::getNullClient(),
+                                 catalog::local());
   identifier::User::shared_ptr user= identifier::User::make_shared();
   user->setUser("slave");
-  session->setUser(user);
-  session->set_db(getSchema());
+  _session->setUser(user);
+  _session->set_db(getSchema());
 
-  createApplierSchemaAndTables(*(session.get()));
+  if (not createApplierSchemaAndTables())
+    return;
 
   uint64_t trx_id= 0;
 
@@ -78,7 +79,7 @@ void QueueManager::processQueue(void)
 
       TrxIdList completedTransactionIds;
 
-      getListOfCompletedTransactions(*(session.get()), completedTransactionIds);
+      getListOfCompletedTransactions(completedTransactionIds);
 
       for (size_t x= 0; x < completedTransactionIds.size(); x++)
       {
@@ -91,8 +92,7 @@ void QueueManager::processQueue(void)
         message::Transaction transaction;
         uint32_t segment_id= 1;
 
-        while (getMessage(*(session.get()), transaction, commit_id,
-                          trx_id, segment_id++))
+        while (getMessage(transaction, commit_id, trx_id, segment_id++))
         {
           convertToSQL(transaction, aggregate_sql, segmented_sql);
         }
@@ -103,15 +103,18 @@ void QueueManager::processQueue(void)
          * will have commit_id = 0.
          */
         assert((not commit_id.empty()) && (commit_id != "0"));
-
         assert(segmented_sql.empty());
 
         if (not aggregate_sql.empty())
         {
-          executeSQL(*(session.get()), aggregate_sql, commit_id);
+          if (not executeSQL(aggregate_sql, commit_id))
+          {
+            /* TODO: Handle errors better. For now, just shutdown the slave. */
+            return;
+          }
         }
 
-        deleteFromQueue(*(session.get()), trx_id);      
+        deleteFromQueue(trx_id);      
       }
     }
     
@@ -128,36 +131,50 @@ void QueueManager::processQueue(void)
 }
 
 
-bool QueueManager::createApplierSchemaAndTables(Session &session)
+bool QueueManager::createApplierSchemaAndTables()
 {
   vector<string> sql;
-  
+ 
   sql.push_back("COMMIT");
   sql.push_back("CREATE SCHEMA IF NOT EXISTS replication");
   
-  if (not executeSQL(session, sql))
+  if (not executeSQL(sql))
     return false;
   
   sql.clear();
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS replication.applier_state"
-                " (last_applied_commit_id BIGINT NOT NULL PRIMARY KEY)");
+                " (last_applied_commit_id BIGINT NOT NULL PRIMARY KEY,"
+                "  status VARCHAR(20) NOT NULL,"
+                "  error_msg VARCHAR(250))");
   
-  /* TODO: code here
-   SELECT COUNT(*) FROM replication.applier_state
-   if (count == 0)
-   INSERT INTO replication.applier_state VALUES (0)
-   */
-  
-  if (not executeSQL(session, sql))
+  if (not executeSQL(sql))
     return false;
+
+  sql.clear();
+  sql.push_back("SELECT COUNT(*) FROM replication.applier_state");
   
+  sql::ResultSet result_set(1);
+  Execute execute(*(_session.get()), true);
+  execute.run(sql[0], result_set);
+  result_set.next();
+  string count= result_set.getString(0);
+
+  if (count == "0")
+  {
+    sql.clear();
+    sql.push_back("INSERT INTO replication.applier_state"
+                  " (last_applied_commit_id, status)"
+                  " VALUES (0, 'RUNNING')");
+    if (not executeSQL(sql))
+      return false;
+  }
+
   return true;
 }  
   
   
-bool QueueManager::getMessage(Session &session,
-                              message::Transaction &transaction,
+bool QueueManager::getMessage(message::Transaction &transaction,
                               string &commit_id,
                               uint64_t trx_id,
                               uint32_t segment_id)
@@ -173,9 +190,9 @@ bool QueueManager::getMessage(Session &session,
 
   //printf("%s\n", sql.c_str()); fflush(stdout);
   sql::ResultSet result_set(2);
-  Execute execute(session, true);
+  Execute execute(*(_session.get()), true);
   
-  execute.run(sql, &result_set);
+  execute.run(sql, result_set);
   
   assert(result_set.getMetaData().getColumnCount() == 2);
 
@@ -206,10 +223,9 @@ bool QueueManager::getMessage(Session &session,
   return true;
 }
 
-bool QueueManager::getListOfCompletedTransactions(Session &session,
-                                                  TrxIdList &list)
+bool QueueManager::getListOfCompletedTransactions(TrxIdList &list)
 {
-  Execute execute(session, true);
+  Execute execute(*(_session.get()), true);
   
   string sql("SELECT trx_id FROM ");
   sql.append(getSchema());
@@ -220,7 +236,7 @@ bool QueueManager::getListOfCompletedTransactions(Session &session,
   /* ResultSet size must match column count */
   sql::ResultSet result_set(1);
 
-  execute.run(sql, &result_set);
+  execute.run(sql, result_set);
 
   assert(result_set.getMetaData().getColumnCount() == 1);
 
@@ -361,25 +377,65 @@ bool QueueManager::isEndStatement(const message::Statement &statement)
   return true;
 }
 
-bool QueueManager::executeSQL(Session &session,
-                              vector<string> &sql,
+
+void QueueManager::setApplierState(const string &err_msg, bool status)
+{
+  vector<string> statements;
+  string sql;
+  string msg(err_msg);
+
+  if (not status)
+  {
+    sql= "UPDATE replication.applier_state SET status = 'STOPPED'";
+  }
+  else
+  {
+    sql= "UPDATE replication.applier_state SET status = 'RUNNING'";
+  }
+  
+  sql.append(", error_msg = '");
+
+  /* Escape embedded quotes and statement terminators */
+  string::iterator it;
+  for (it= msg.begin(); it != msg.end(); ++it)
+  {
+    if (*it == '\'')
+    {
+      it= msg.insert(it, '\'');
+      ++it;  /* advance back to the quote */
+    }
+    else if (*it == ';')
+    {
+      it= msg.insert(it, '\\');
+      ++it;  /* advance back to the semicolon */
+    }
+  }
+  
+  sql.append(msg);
+  sql.append("'");
+
+  statements.push_back(sql);
+  executeSQL(statements);
+}
+
+
+bool QueueManager::executeSQL(vector<string> &sql,
                               const string &commit_id)
 {
   string tmp("UPDATE replication.applier_state"
              " SET last_applied_commit_id = ");
   tmp.append(commit_id);
   sql.push_back(tmp);
-
-  return executeSQL(session, sql);
+  
+  return executeSQL(sql);
 }
 
 
-bool QueueManager::executeSQL(Session &session,
-                              vector<string> &sql)
+bool QueueManager::executeSQL(vector<string> &sql)
 {
   string combined_sql;
 
-  Execute execute(session, true);
+  Execute execute(*(_session.get()), true);
 
   vector<string>::iterator iter= sql.begin();
 
@@ -392,14 +448,41 @@ bool QueueManager::executeSQL(Session &session,
 
   printf("execute: %s\n", combined_sql.c_str()); fflush(stdout);
 
+  sql::ResultSet result_set(1);
+
   /* Execute wraps the SQL to run within a transaction */
-  execute.run(combined_sql);
+  execute.run(combined_sql, result_set);
+
+  sql::Exception exception= result_set.getException();
+  
+  drizzled::error_t err= exception.getErrorCode();
+
+  if ((err != drizzled::EE_OK) && (err != drizzled::ER_EMPTY_QUERY))
+  {
+    /* avoid recursive errors from setApplierState() */
+    if (_in_error_state)
+      return true;
+
+    _in_error_state= true;
+    string err_msg("(SQLSTATE ");
+    err_msg.append(exception.getSQLState());
+    err_msg.append(") ");
+    err_msg.append(exception.getErrorMessage());
+
+    std::cerr << err_msg << std::endl;
+    std::cerr << "Slave failed while executing:\n";
+    for (size_t y= 0; y < sql.size(); y++)
+      std::cerr << sql[y] << std::endl;
+
+    setApplierState(err_msg, false);
+    return false;
+  }
 
   return true;
 }
 
 
-bool QueueManager::deleteFromQueue(Session &session, uint64_t trx_id)
+bool QueueManager::deleteFromQueue(uint64_t trx_id)
 {
   string sql("DELETE FROM ");
   sql.append(getSchema());
@@ -411,7 +494,7 @@ bool QueueManager::deleteFromQueue(Session &session, uint64_t trx_id)
   vector<string> sql_vect;
   sql_vect.push_back(sql);
 
-  return executeSQL(session, sql_vect);
+  return executeSQL(sql_vect);
 }
 
 } /* namespace slave */

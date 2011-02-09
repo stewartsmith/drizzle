@@ -38,6 +38,7 @@ class QueueManager
 {
 public:
   QueueManager() :
+    _in_error_state(false),
     _check_interval(5),
     _schema(""),
     _table("")
@@ -77,9 +78,13 @@ public:
   {
     return _schema;
   }
-
+  
 private:
   typedef std::vector<uint64_t> TrxIdList;
+
+  drizzled::Session::shared_ptr _session;
+
+  bool _in_error_state;
 
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
@@ -92,18 +97,22 @@ private:
    * Create the schema and tables (if necessary) that will store
    * information about replication state of the applier thread.
    *
-   * @param session Session object reference.
-   *
    * @retval true Success
    * @retval false Failure
    */
-  bool createApplierSchemaAndTables(drizzled::Session &session);
+  bool createApplierSchemaAndTables();
 
-  bool getListOfCompletedTransactions(drizzled::Session &session,
-                                      TrxIdList &list);
+  /**
+   * Update applier status in state table.
+   *
+   * @param err_msg Error message string
+   * @param status false = STOPPED, true = RUNNING
+   */
+  void setApplierState(const std::string &err_msg, bool status);
 
-  bool getMessage(drizzled::Session &session,
-                  drizzled::message::Transaction &transaction,
+  bool getListOfCompletedTransactions(TrxIdList &list);
+
+  bool getMessage(drizzled::message::Transaction &transaction,
                   std::string &commit_id,
                   uint64_t trx_id,
                   uint32_t segment_id);
@@ -125,30 +134,26 @@ private:
   /**
    * Execute a batch of SQL statements.
    *
-   * @param session Session object reference.
    * @param sql Batch of SQL statements to execute.
    * @param commit_id Commit ID value to store in state table.
    *
    * @retval true Success
    * @retval false Failure
    */
-  bool executeSQL(drizzled::Session &session,
-                  std::vector<std::string> &sql,
+  bool executeSQL(std::vector<std::string> &sql,
                   const std::string &commit_id);
 
-  bool executeSQL(drizzled::Session &session,
-                  std::vector<std::string> &sql);
+  bool executeSQL(std::vector<std::string> &sql);
   
   /**
    * Remove messages for a given transaction from the queue.
    *
-   * @param session Session object reference.
    * @param trx_id Transaction ID for the messages to remove.
    *
    * @retval true Success
    * @retval false Failure
    */
-  bool deleteFromQueue(drizzled::Session &session, uint64_t trx_id);
+  bool deleteFromQueue(uint64_t trx_id);
 
   /**
    * Determine if a Statement message is an end message.

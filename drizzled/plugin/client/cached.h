@@ -44,11 +44,11 @@ class Cached : public Concurrent
   sql::ResultSet *_result_set;
 
 public:
-  Cached(sql::ResultSet *rs) :
+  Cached(sql::ResultSet &rs) :
     Concurrent(),
     column(0),
     max_column(0),
-    _result_set(rs)
+    _result_set(&rs)
   {
   }
 
@@ -74,7 +74,6 @@ public:
   virtual void sendError(drizzled::error_t error_code, const char *error_message)
   {
     sql::Exception tmp(error_message, error_code);
-    std::cerr << tmp << std::endl;
     _result_set->pushException(tmp);
   }
 

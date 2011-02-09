@@ -46,7 +46,7 @@ void Execute::run(const char *arg, size_t length)
   run(execution_string);
 }
 
-void Execute::run(std::string &execution_string, sql::ResultSet *result_set)
+void Execute::run(std::string &execution_string, sql::ResultSet &result_set)
 {
   boost_thread_shared_ptr thread;
   

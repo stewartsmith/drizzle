@@ -44,7 +44,6 @@ static Exception exception_no_more_results("No additional rows founds", "S0022",
 
 ResultSet::~ResultSet()
 {
-  //std::cerr << *this << std::endl;
 }
 
 const std::string ResultSet::getString(size_t column_number) const
