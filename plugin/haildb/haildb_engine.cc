@@ -353,7 +353,7 @@ int HailDBEngine::doStartTransaction(Session *session,
   (void)options;
 
   transaction= get_trx(session);
-  isolation_level= tx_isolation_to_ib_trx_level((enum_tx_isolation)session_tx_isolation(session));
+  isolation_level= tx_isolation_to_ib_trx_level(session->tx_isolation());
   *transaction= ib_trx_begin(isolation_level);
 
   return *transaction == NULL;
@@ -680,7 +680,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
     unexpected if an obsolete consistent read view would be
     used. */
 
-    enum_tx_isolation isolation_level= session_tx_isolation(session);
+    enum_tx_isolation isolation_level= session->tx_isolation();
 
     if (isolation_level != ISO_SERIALIZABLE
         && (lock_type == TL_READ || lock_type == TL_READ_NO_INSERT)
