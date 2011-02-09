@@ -64,7 +64,7 @@ void QueueManager::processQueue(void)
   identifier::User::shared_ptr user= identifier::User::make_shared();
   user->setUser("slave");
   _session->setUser(user);
-  _session->set_db(getSchema());
+  _session->set_db("replication");
 
   if (not createApplierSchemaAndTables())
     return;
@@ -141,12 +141,16 @@ bool QueueManager::createApplierSchemaAndTables()
   if (not executeSQL(sql))
     return false;
   
+  /*
+   * Create our applier thread state information table if we need to.
+   */
+
   sql.clear();
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS replication.applier_state"
                 " (last_applied_commit_id BIGINT NOT NULL PRIMARY KEY,"
-                "  status VARCHAR(20) NOT NULL,"
-                "  error_msg VARCHAR(250))");
+                " status VARCHAR(20) NOT NULL,"
+                " error_msg VARCHAR(250))");
   
   if (not executeSQL(sql))
     return false;
@@ -160,6 +164,7 @@ bool QueueManager::createApplierSchemaAndTables()
   result_set.next();
   string count= result_set.getString(0);
 
+  /* Must always be at least one row in the table */
   if (count == "0")
   {
     sql.clear();
@@ -169,7 +174,24 @@ bool QueueManager::createApplierSchemaAndTables()
     if (not executeSQL(sql))
       return false;
   }
+  else
+  {
+    setApplierState("", true);
+  }
 
+  /*
+   * Create our message queue table if we need to.
+   */
+
+  sql.clear();
+  sql.push_back("COMMIT");
+  sql.push_back("CREATE TABLE IF NOT EXISTS replication.applier_queue"
+                " (trx_id BIGINT NOT NULL, seg_id INT NOT NULL,"
+                " commit_order INT, msg BLOB, PRIMARY KEY(trx_id, seg_id))");
+
+  if (not executeSQL(sql))
+    return false;
+                
   return true;
 }  
   
@@ -179,16 +201,12 @@ bool QueueManager::getMessage(message::Transaction &transaction,
                               uint64_t trx_id,
                               uint32_t segment_id)
 {
-  string sql("SELECT msg, commit_order FROM ");
-  sql.append(getSchema());
-  sql.append(".");
-  sql.append(getTable());
-  sql.append(" WHERE trx_id = ");
+  string sql("SELECT msg, commit_order FROM replication.applier_queue"
+             " WHERE trx_id = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
   sql.append(" AND seg_id = ");
   sql.append(boost::lexical_cast<std::string>(segment_id));
 
-  //printf("%s\n", sql.c_str()); fflush(stdout);
   sql::ResultSet result_set(2);
   Execute execute(*(_session.get()), true);
   
@@ -227,11 +245,8 @@ bool QueueManager::getListOfCompletedTransactions(TrxIdList &list)
 {
   Execute execute(*(_session.get()), true);
   
-  string sql("SELECT trx_id FROM ");
-  sql.append(getSchema());
-  sql.append(".");
-  sql.append(getTable());
-  sql.append(" WHERE commit_order IS NOT NULL ORDER BY commit_order ASC");
+  string sql("SELECT trx_id FROM replication.applier_queue"
+             " WHERE commit_order IS NOT NULL ORDER BY commit_order ASC");
   
   /* ResultSet size must match column count */
   sql::ResultSet result_set(1);
@@ -446,7 +461,7 @@ bool QueueManager::executeSQL(vector<string> &sql)
     ++iter;
   }
 
-  printf("execute: %s\n", combined_sql.c_str()); fflush(stdout);
+  //printf("execute: %s\n", combined_sql.c_str()); fflush(stdout);
 
   sql::ResultSet result_set(1);
 
@@ -484,11 +499,7 @@ bool QueueManager::executeSQL(vector<string> &sql)
 
 bool QueueManager::deleteFromQueue(uint64_t trx_id)
 {
-  string sql("DELETE FROM ");
-  sql.append(getSchema());
-  sql.append(".");
-  sql.append(getTable());
-  sql.append(" WHERE trx_id = ");
+  string sql("DELETE FROM replication.applier_queue WHERE trx_id = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
 
   vector<string> sql_vect;

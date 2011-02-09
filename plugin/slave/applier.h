@@ -36,8 +36,6 @@ public:
   Applier() : drizzled::plugin::Daemon("Replication Slave")
   {
     q_mgr.setCheckInterval(5);
-    q_mgr.setSchema("test");
-    q_mgr.setTable("t1");
     thread= boost::thread(&QueueManager::processQueue, &q_mgr);
   }
   

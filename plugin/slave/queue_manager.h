@@ -39,9 +39,7 @@ class QueueManager
 public:
   QueueManager() :
     _in_error_state(false),
-    _check_interval(5),
-    _schema(""),
-    _table("")
+    _check_interval(5)
   { }
 
   /**
@@ -58,26 +56,6 @@ public:
   {
     return _check_interval;
   }
-
-  void setTable(const std::string &table)
-  {
-    _table= table;
-  }
-
-  const std::string &getTable()
-  {
-    return _table;
-  }
-
-  void setSchema(const std::string &schema)
-  {
-    _schema= schema;
-  }
-
-  const std::string &getSchema()
-  {
-    return _schema;
-  }
   
 private:
   typedef std::vector<uint64_t> TrxIdList;
@@ -88,10 +66,6 @@ private:
 
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
-
-  /** Schema and table containing the message queue */
-  std::string _schema;
-  std::string _table;
 
   /**
    * Create the schema and tables (if necessary) that will store
