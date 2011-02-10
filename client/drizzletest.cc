@@ -7083,20 +7083,18 @@ int cmp_bits(const REP_SET *set1, const REP_SET *set2)
 
 int get_next_bit(REP_SET *set,uint32_t lastpos)
 {
-  uint32_t pos,*start,*end,bits;
+  uint32_t *start= set->bits+ ((lastpos+1) / WORD_BIT);
+  uint32_t *end= set->bits + set->size_of_bits;
+  uint32_t bits0=start[0] & ~((1 << ((lastpos+1) % WORD_BIT)) -1);
 
-  start=set->bits+ ((lastpos+1) / WORD_BIT);
-  end=set->bits + set->size_of_bits;
-  bits=start[0] & ~((1 << ((lastpos+1) % WORD_BIT)) -1);
-
-  while (! bits && ++start < end)
-    bits=start[0];
-  if (!bits)
+  while (!bits0 && ++start < end)
+    bits0= start[0];
+  if (!bits0)
     return 0;
-  pos=(uint32_t) (start-set->bits)*WORD_BIT;
-  while (! (bits & 1))
+  uint32_t pos= (start - set->bits)*WORD_BIT;
+  while (!(bits0 & 1))
   {
-    bits>>=1;
+    bits0 >>=1;
     pos++;
   }
   return pos;
