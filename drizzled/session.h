@@ -584,7 +584,7 @@ public:
 
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
 
-  enum_tx_isolation tx_isolation()
+  enum_tx_isolation getTxIsolation()
   {
     return (enum_tx_isolation)variables.tx_isolation;
   }

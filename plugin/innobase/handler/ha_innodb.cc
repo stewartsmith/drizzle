@@ -8818,7 +8818,7 @@ InnobaseEngine::doStartStatement(
   trx->detailed_error[0]= '\0';
 
   /* Set the isolation level of the transaction. */
-  trx->isolation_level= innobase_map_isolation_level(session->tx_isolation());
+  trx->isolation_level= innobase_map_isolation_level(session->getTxIsolation());
 }
 
 void

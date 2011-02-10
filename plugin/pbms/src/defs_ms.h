@@ -194,7 +194,7 @@
 #define thd_sql_command(x)						((x)->getSqlCommand())
 #define thd_test_options					session_test_options
 #define thd_killed							session_killed
-#define thd_tx_isolation(x)					((x)->tx_isolation())
+#define thd_tx_isolation(x)					((x)->getTxIsolation())
 #define thd_in_lock_tables					session_in_lock_tables
 #define thd_tablespace_op(x)					((x)->doing_tablespace_operation())
 #define thd_alloc							session_alloc
