@@ -6636,8 +6636,12 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
 #define SET_MALLOC_HUNC 64
 #define LAST_CHAR_CODE 259
 
-struct REP_SET
+class REP_SET
 {
+public:
+  void internal_set_bit(uint32_t bit);
+  void internal_clear_bit(uint32_t bit);
+
   uint32_t  *bits;        /* Pointer to used sets */
   short next[LAST_CHAR_CODE];    /* Pointer to next sets */
   uint32_t  found_len;      /* Best match to date */
@@ -6677,8 +6681,6 @@ struct FOLLOWS
 int init_sets(REP_SETS *sets, uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
 void make_sets_invisible(REP_SETS *sets);
-void internal_set_bit(REP_SET *set, uint32_t bit);
-void internal_clear_bit(REP_SET *set, uint32_t bit);
 void or_bits(REP_SET *to,REP_SET *from);
 void copy_bits(REP_SET *to,REP_SET *from);
 int cmp_bits(const REP_SET *set1, const REP_SET *set2);
@@ -6765,7 +6767,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   {
     if (from[i][0] == '\\' && from[i][1] == '^')
     {
-      internal_set_bit(start_states,states+1);
+      start_states->internal_set_bit(states + 1);
       if (!from[i][2])
       {
         start_states->table_offset=i;
@@ -6774,8 +6776,8 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
     }
     else if (from[i][0] == '\\' && from[i][1] == '$')
     {
-      internal_set_bit(start_states,states);
-      internal_set_bit(word_states,states);
+      start_states->internal_set_bit(states);
+      word_states->internal_set_bit(states);
       if (!from[i][2] && start_states->table_offset == UINT32_MAX)
       {
         start_states->table_offset=i;
@@ -6784,11 +6786,11 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
     }
     else
     {
-      internal_set_bit(word_states,states);
+      word_states->internal_set_bit(states);
       if (from[i][0] == '\\' && (from[i][1] == 'b' && from[i][2]))
-        internal_set_bit(start_states,states+1);
+        start_states->internal_set_bit(states + 1);
       else
-        internal_set_bit(start_states,states);
+        start_states->internal_set_bit(states);
     }
     const char *pos;
     for (pos= from[i], len=0; *pos ; pos++)
@@ -6891,9 +6893,9 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
                 follow[i].len > found_end)
               found_end=follow[i].len;
             if (chr && follow[i].chr)
-              internal_set_bit(new_set,i+1);    /* To next set */
+              new_set->internal_set_bit(i + 1);    /* To next set */
             else
-              internal_set_bit(new_set,i);
+              new_set->internal_set_bit(i);
           }
         }
         if (found_end)
@@ -6910,7 +6912,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
             if (follow[bit_nr-1].len < found_end ||
                 (new_set->found_len &&
                  (chr == 0 || !follow[bit_nr].chr)))
-              internal_clear_bit(new_set,i);
+              new_set->internal_clear_bit(i);
             else
             {
               if (chr == 0 || !follow[bit_nr].chr)
@@ -7050,14 +7052,14 @@ void REP_SETS::free_sets()
   free(bit_buffer);
 }
 
-void internal_set_bit(REP_SET *set, uint32_t bit)
+void REP_SET::internal_set_bit(uint32_t bit)
 {
-  set->bits[bit / WORD_BIT] |= 1 << (bit % WORD_BIT);
+  bits[bit / WORD_BIT] |= 1 << (bit % WORD_BIT);
 }
 
-void internal_clear_bit(REP_SET *set, uint32_t bit)
+void REP_SET::internal_clear_bit(uint32_t bit)
 {
-  set->bits[bit / WORD_BIT] &= ~ (1 << (bit % WORD_BIT));
+  bits[bit / WORD_BIT] &= ~ (1 << (bit % WORD_BIT));
 }
 
 
