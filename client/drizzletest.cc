@@ -6714,9 +6714,9 @@ static bool end_of_word(const char *pos)
 
 REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *word_end_chars)
 {
-  static const int SPACE_CHAR= 256;
-  static const int START_OF_LINE= 257;
-  static const int END_OF_LINE= 258;
+  const int SPACE_CHAR= 256;
+  const int START_OF_LINE= 257;
+  const int END_OF_LINE= 258;
 
   uint32_t i,j,states,set_nr,len,result_len,max_length,found_end,bits_set,bit_nr;
   int used_sets,chr,default_state;
@@ -6726,8 +6726,6 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   REP_SETS sets;
   REP_SET *set,*start_states,*word_states,*new_set;
   FOLLOWS *follow,*follow_ptr;
-  REPLACE *replace;
-  FOUND_SET *found_set;
   REPLACE_STRING *rep_str;
 
 
@@ -6752,12 +6750,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   if (init_sets(&sets,states))
     return(0);
   found_sets=0;
-  if (!(found_set= (FOUND_SET*) malloc(sizeof(FOUND_SET)*max_length*count)))
-                                
-  {
-    free_sets(&sets);
-    return(0);
-  }
+  vector<FOUND_SET> found_set(max_length * count);
   make_new_set(&sets);      /* Set starting set */
   make_sets_invisible(&sets);      /* Hide previus sets */
   used_sets=-1;
@@ -6766,8 +6759,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   if (!(follow=(FOLLOWS*) malloc((states+2)*sizeof(FOLLOWS))))
   {
     free_sets(&sets);
-    free(found_set);
-    return(0);
+    return 0;
   }
 
   /* Init follow_ptr[] */
@@ -6852,12 +6844,8 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
     for (i= UINT32_MAX; (i=get_next_bit(set,i)) ;)
     {
-      if (!follow[i].chr)
-      {
-        if (! default_state)
-          default_state= find_found(found_set,set->table_offset,
-                                    set->found_offset+1);
-      }
+      if (!follow[i].chr && !default_state)
+        default_state= find_found(found_set.data(), set->table_offset, set->found_offset+1);
     }
     copy_bits(sets.set+used_sets,set);    /* Save set for changes */
     if (!default_state)
@@ -6939,9 +6927,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
           }
           if (bits_set == 1)
           {
-            set->next[chr] = find_found(found_set,
-                                        new_set->table_offset,
-                                        new_set->found_offset);
+            set->next[chr] = find_found(found_set.data(), new_set->table_offset, new_set->found_offset);
             free_last_set(&sets);
           }
           else
@@ -6955,9 +6941,9 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
   /* Alloc replace structure for the replace-state-machine */
 
-  if ((replace=(REPLACE*) malloc(sizeof(REPLACE)*(sets.count)+
-                                 sizeof(REPLACE_STRING)*(found_sets+1)+
-                                 sizeof(char *)*count+result_len)))
+  REPLACE *replace= (REPLACE*)malloc(sizeof(REPLACE)*(sets.count)
+    + sizeof(REPLACE_STRING) * (found_sets + 1) + sizeof(char*) * count + result_len);
+  if (replace)
   {
     memset(replace, 0, sizeof(REPLACE)*(sets.count)+
                        sizeof(REPLACE_STRING)*(found_sets+1)+
@@ -6992,8 +6978,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   }
   free(follow);
   free_sets(&sets);
-  free(found_set);
-  return(replace);
+  return replace;
 }
 
 
@@ -7145,17 +7130,19 @@ int find_set(REP_SETS *sets,REP_SET *find)
    set->next[] == -1 is reserved for end without replaces.
 */
 
-int find_found(FOUND_SET *found_set,uint32_t table_offset, int found_offset)
+int find_found(FOUND_SET *found_set, uint32_t table_offset, int found_offset)
 {
-  int i;
-  for (i=0 ; (uint32_t) i < found_sets ; i++)
+  uint32_t i= 0;
+  for (; i < found_sets; i++)
+  {
     if (found_set[i].table_offset == table_offset &&
         found_set[i].found_offset == found_offset)
-      return -i-2;
-  found_set[i].table_offset=table_offset;
-  found_set[i].found_offset=found_offset;
+      return - i - 2;
+  }
+  found_set[i].table_offset= table_offset;
+  found_set[i].found_offset= found_offset;
   found_sets++;
-  return -i-2;        /* return new postion */
+  return - i - 2; // return new postion
 }
 
 /****************************************************************************
