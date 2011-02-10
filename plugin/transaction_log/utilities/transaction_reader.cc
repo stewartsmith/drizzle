@@ -586,11 +586,11 @@ static int extractRowsForTrxIds(TransactionLogConnection *connection,
   {
     uint64_t trx_id= ordered_trx_id_list[idx];
 
-    string sql("SELECT transaction_message_binary, transaction_length"
-               " FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG"
-               " WHERE transaction_id = ");
+    string sql("SELECT MESSAGE, MESSAGE_LEN"
+               " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+               " WHERE ID = ");
     sql.append(boost::lexical_cast<string>(trx_id));
-    sql.append(" ORDER BY transaction_segment_id ASC");
+    sql.append(" ORDER BY SEGID ASC");
 
     drizzle_result_st *result= connection->query(sql);
     
@@ -732,21 +732,21 @@ int main(int argc, char* argv[])
     }
     else if (vm.count("start-transaction-id"))
     {
-      query_string.append("SELECT transaction_id"
-                          " FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG"
-                          " WHERE commit_id > 0"
-                          " AND transaction_id > ");
+      query_string.append("SELECT ID"
+                          " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+                          " WHERE COMMIT_ID > 0"
+                          " AND ID > ");
       query_string.append(boost::lexical_cast<string>(opt_start_transaction_id));
-      query_string.append(" ORDER BY commit_id ASC");
+      query_string.append(" ORDER BY COMMIT_ID ASC");
       
       getTrxIdList(connection, query_string, ordered_trx_id_list);
     }
     else
     {
-      query_string.append("SELECT transaction_id"
-                          " FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG"
-                          " WHERE commit_id > 0"
-                          " ORDER BY commit_id ASC");
+      query_string.append("SELECT ID"
+                          " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+                          " WHERE COMMIT_ID > 0"
+                          " ORDER BY COMMIT_ID ASC");
       
       getTrxIdList(connection, query_string, ordered_trx_id_list);
     }

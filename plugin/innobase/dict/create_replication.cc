@@ -76,7 +76,7 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   error = que_eval_sql(info,
                        "PROCEDURE CREATE_SYS_REPLICATION_LOG_PROC () IS\n"
                        "BEGIN\n"
-                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, COMMIT_ID INT(8), END_TIMESTAMP INT(8), MESSAGE BLOB);\n" 
+                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, COMMIT_ID INT(8), END_TIMESTAMP INT(8), MESSAGE_LEN INT, MESSAGE BLOB);\n" 
                        "CREATE UNIQUE CLUSTERED INDEX PRIMARY ON SYS_REPLICATION_LOG (ID, SEGID);\n"
                        "CREATE INDEX COMMIT_IDX ON SYS_REPLICATION_LOG (COMMIT_ID, ID);\n"
                        "END;\n"
@@ -144,6 +144,10 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
   field= table_message->add_field();
   field->set_name("END_TIMESTAMP");
   field->set_type(drizzled::message::Table::Field::BIGINT);
+
+  field= table_message->add_field();
+  field->set_name("MESSAGE_LEN");
+  field->set_type(drizzled::message::Table::Field::INTEGER);
 
   field= table_message->add_field();
   field->set_name("MESSAGE");
@@ -247,6 +251,11 @@ ulint insert_replication_message(const char *message, size_t size,
   dfield_set_data(dfield, data, 8);
 
   dfield = dtuple_get_nth_field(dtuple, 4);
+  data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 4));
+  row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&size, 4, dict_table_is_comp(prebuilt->table));
+  dfield_set_data(dfield, data, 4);
+
+  dfield = dtuple_get_nth_field(dtuple, 5);
   dfield_set_data(dfield, message, size);
 
   ins_node_t*	node		= prebuilt->ins_node;
@@ -346,7 +355,7 @@ UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_
     ret.end_timestamp= *(uint64_t *)timestampbyte;
 
     // Handler message
-    field = rec_get_nth_field_old(rec, 6, &len);
+    field = rec_get_nth_field_old(rec, 7, &len);
     ret.message= (char *)field;
     ret.message_length= len;
 
