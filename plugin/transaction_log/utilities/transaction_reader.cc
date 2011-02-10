@@ -573,7 +573,7 @@ static void getTrxIdList(TransactionLogConnection *connection,
     }
   }
 
-  delete result;
+  drizzle_result_free(result);
 }
 
 static int extractRowsForTrxIds(TransactionLogConnection *connection,
@@ -613,7 +613,7 @@ static int extractRowsForTrxIds(TransactionLogConnection *connection,
       }
     }
     
-    delete result;
+    drizzle_result_free(result);
   }
   
   return 0;
