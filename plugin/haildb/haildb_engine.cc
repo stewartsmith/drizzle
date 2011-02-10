@@ -353,7 +353,7 @@ int HailDBEngine::doStartTransaction(Session *session,
   (void)options;
 
   transaction= get_trx(session);
-  isolation_level= tx_isolation_to_ib_trx_level((enum_tx_isolation)session_tx_isolation(session));
+  isolation_level= tx_isolation_to_ib_trx_level(session->getTxIsolation());
   *transaction= ib_trx_begin(isolation_level);
 
   return *transaction == NULL;
@@ -649,7 +649,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
 
   /* the below is adapted from ha_innodb.cc */
 
-  const uint32_t sql_command = session_sql_command(session);
+  const uint32_t sql_command = session->getSqlCommand();
 
   if (sql_command == SQLCOM_DROP_TABLE) {
 
@@ -680,7 +680,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
     unexpected if an obsolete consistent read view would be
     used. */
 
-    enum_tx_isolation isolation_level= session_tx_isolation(session);
+    enum_tx_isolation isolation_level= session->getTxIsolation();
 
     if (isolation_level != ISO_SERIALIZABLE
         && (lock_type == TL_READ || lock_type == TL_READ_NO_INSERT)
@@ -723,7 +723,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
          && lock_type <= TL_WRITE)
-        && !session_tablespace_op(session)
+        && ! session->doing_tablespace_operation()
         && sql_command != SQLCOM_TRUNCATE
         && sql_command != SQLCOM_CREATE_TABLE) {
 
@@ -2123,7 +2123,7 @@ int HailDBCursor::delete_all_rows(void)
      so only support TRUNCATE and not DELETE FROM t;
      (this is what ha_innodb does)
   */
-  if (session_sql_command(getTable()->in_use) != SQLCOM_TRUNCATE)
+  if (getTable()->in_use->getSqlCommand() != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
 
   ib_id_t id;
