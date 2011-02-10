@@ -77,6 +77,8 @@ InnodbReplicationTable::InnodbReplicationTable() :
 {
   add_field("TRANSACTION_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("TRANSACTION_SEGMENT_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("COMMIT_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("END_TIMESTAMP", plugin::TableFunction::NUMBER, 0, false);
   add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, transaction_message_threshold, false);
   add_field("TRANSACTION_LENGTH", plugin::TableFunction::NUMBER, 0, false);
 }
@@ -101,10 +103,14 @@ bool InnodbReplicationTable::Generator::populate()
 
   /* Transaction ID */
   push(static_cast<uint64_t>(ret.id));
-  
+
   /* Segment ID */
   push(static_cast<uint64_t>(ret.seg_id));
 
+  push(static_cast<uint64_t>(ret.commit_id));
+
+  push(static_cast<uint64_t>(ret.end_timestamp));
+  
   /* Message in viewable format */
   bool result= message.ParseFromArray(ret.message, ret.message_length);
 

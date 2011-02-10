@@ -955,7 +955,11 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
 
   uint64_t trx_id= message.transaction_context().transaction_id();
   uint32_t seg_id= message.segment_id();
-  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id, seg_id);
+  uint64_t end_timestamp= message.transaction_context().end_timestamp();
+  bool is_end_segment= message.end_segment();
+  trx->log_commit_id= TRUE;
+  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id,
+               end_timestamp, is_end_segment, seg_id);
   (void)error;
 
   delete[] data;

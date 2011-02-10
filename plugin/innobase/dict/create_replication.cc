@@ -53,6 +53,8 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
 
   table1 = dict_table_get_low("SYS_REPLICATION_LOG");
 
+  trx_sys_read_commit_id();
+
   if (table1) 
   {
     mutex_exit(&(dict_sys->mutex));
@@ -74,8 +76,8 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   error = que_eval_sql(info,
                        "PROCEDURE CREATE_SYS_REPLICATION_LOG_PROC () IS\n"
                        "BEGIN\n"
-                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, MESSAGE BLOB);\n"
-                       "CREATE UNIQUE CLUSTERED INDEX PRIMARY ON SYS_REPLICATION_LOG (ID);\n"
+                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, COMMIT_ID INT(8), END_TIMESTAMP BINARY(8), MESSAGE BLOB);\n" 
+                       "CREATE UNIQUE CLUSTERED INDEX PRIMARY ON SYS_REPLICATION_LOG (ID, SEGID);\n"
                        "END;\n"
                        , FALSE, trx);
 
@@ -132,6 +134,14 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
   field->set_type(drizzled::message::Table::Field::INTEGER);
 
   field= table_message->add_field();
+  field->set_name("COMMIT_ID");
+  field->set_type(drizzled::message::Table::Field::BIGINT);
+
+  field= table_message->add_field();
+  field->set_name("END_TIMESTAMP");
+  field->set_type(drizzled::message::Table::Field::EPOCH);
+
+  field= table_message->add_field();
   field->set_name("MESSAGE");
   field->set_type(drizzled::message::Table::Field::BLOB);
   drizzled::message::Table::Field::StringFieldOptions *stropt= field->mutable_string_options();
@@ -147,6 +157,9 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
   drizzled::message::Table::Index::IndexPart *part= index->add_index_part();
   part->set_fieldnr(0);
   part->set_compare_length(8);
+  part= index->add_index_part();
+  part->set_fieldnr(1);
+  part->set_compare_length(4);
 
   return 0;
 }
@@ -154,7 +167,9 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
 extern dtuple_t* row_get_prebuilt_insert_row(row_prebuilt_t*	prebuilt);
 
 ulint insert_replication_message(const char *message, size_t size, 
-                                 trx_t *trx, uint64_t trx_id, uint32_t seg_id)
+                                 trx_t *trx, uint64_t trx_id, 
+                                 uint64_t end_timestamp, bool is_end_segment, 
+                                 uint32_t seg_id) 
 {
   ulint error;
   row_prebuilt_t*	prebuilt;	/* For reading rows */
@@ -186,8 +201,8 @@ ulint insert_replication_message(const char *message, size_t size,
 
   dtuple_t* dtuple= row_get_prebuilt_insert_row(prebuilt);
   dfield_t *dfield;
-  dfield = dtuple_get_nth_field(dtuple, 0);
 
+  dfield = dtuple_get_nth_field(dtuple, 0);
   data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 8));
   row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&trx_id, 8, dict_table_is_comp(prebuilt->table));
   dfield_set_data(dfield, data, 8);
@@ -198,7 +213,23 @@ ulint insert_replication_message(const char *message, size_t size,
   row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&seg_id, 4, dict_table_is_comp(prebuilt->table));
   dfield_set_data(dfield, data, 4);
   
+  uint64_t commit_id= 0;
+  if (is_end_segment)
+  {
+    commit_id= trx_sys_commit_id.increment();
+  } 
+
   dfield = dtuple_get_nth_field(dtuple, 2);
+  data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 8));
+  row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&commit_id, 8, dict_table_is_comp(prebuilt->table));
+  dfield_set_data(dfield, data, 8);
+
+  dfield = dtuple_get_nth_field(dtuple, 3);
+  data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 8));
+  row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&end_timestamp, 8, dict_table_is_comp(prebuilt->table));
+  dfield_set_data(dfield, data, 8);
+
+  dfield = dtuple_get_nth_field(dtuple, 4);
   dfield_set_data(dfield, message, size);
 
   ins_node_t*	node		= prebuilt->ins_node;
@@ -282,13 +313,23 @@ UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_
     ret.id= *(uint64_t *)idbyte;
 
     // Store segment id
-    field = rec_get_nth_field_old(rec, 3, &len);
+    field = rec_get_nth_field_old(rec, 1, &len);
     byte segbyte[4];
     convert_to_mysql_format(segbyte, field, 4);
     ret.seg_id= *(uint32_t *)segbyte;
 
-    // Handler message
     field = rec_get_nth_field_old(rec, 4, &len);
+    byte commitbyte[8];
+    convert_to_mysql_format(commitbyte, field, 8);
+    ret.commit_id= *(uint64_t *)commitbyte;
+
+    field = rec_get_nth_field_old(rec, 5, &len);
+    byte timestampbyte[8];
+    convert_to_mysql_format(timestampbyte, field, 8);
+    ret.end_timestamp= *(uint64_t *)timestampbyte;
+
+    // Handler message
+    field = rec_get_nth_field_old(rec, 6, &len);
     ret.message= (char *)field;
     ret.message_length= len;
 
