@@ -358,7 +358,7 @@ global_buffer_constraint<uint64_t> global_join_buffer(0);
 global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
 global_buffer_constraint<uint64_t> global_read_buffer(0);
 
-size_t transaction_message_threshold;
+DRIZZLED_API size_t transaction_message_threshold;
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
