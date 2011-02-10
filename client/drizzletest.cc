@@ -6649,6 +6649,7 @@ struct REP_SET
 class REP_SETS
 {
 public:
+  int find_set(const REP_SET *find);
   void free_last_set();
   void free_sets();
 
@@ -6680,9 +6681,8 @@ void internal_set_bit(REP_SET *set, uint32_t bit);
 void internal_clear_bit(REP_SET *set, uint32_t bit);
 void or_bits(REP_SET *to,REP_SET *from);
 void copy_bits(REP_SET *to,REP_SET *from);
-int cmp_bits(REP_SET *set1,REP_SET *set2);
+int cmp_bits(const REP_SET *set1, const REP_SET *set2);
 int get_next_bit(REP_SET *set,uint32_t lastpos);
-int find_set(REP_SETS *sets,REP_SET *find);
 int find_found(FOUND_SET *found_set,uint32_t table_offset,
                int found_offset);
 
@@ -6930,10 +6930,10 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
             sets.free_last_set();
           }
           else
-            set->next[chr] = find_set(&sets,new_set);
+            set->next[chr] = sets.find_set(new_set);
         }
         else
-          set->next[chr] = find_set(&sets,new_set);
+          set->next[chr] = sets.find_set(new_set);
       }
     }
   }
@@ -7073,11 +7073,10 @@ void copy_bits(REP_SET *to,REP_SET *from)
          (size_t) (sizeof(uint32_t) * to->size_of_bits));
 }
 
-int cmp_bits(REP_SET *set1,REP_SET *set2)
+int cmp_bits(const REP_SET *set1, const REP_SET *set2)
 {
-  return memcmp(set1->bits,set2->bits, sizeof(uint32_t) * set1->size_of_bits);
+  return memcmp(set1->bits, set2->bits, sizeof(uint32_t) * set1->size_of_bits);
 }
-
 
 /* Get next set bit from set. */
 
@@ -7106,14 +7105,14 @@ int get_next_bit(REP_SET *set,uint32_t lastpos)
    free given set, else put in given set in sets and return its
    position */
 
-int find_set(REP_SETS *sets, REP_SET *find)
+int REP_SETS::find_set(const REP_SET *find)
 {
   uint32_t i= 0;
-  for (; i < sets->count - 1; i++)
+  for (; i < count - 1; i++)
   {
-    if (!cmp_bits(sets->set+i,find))
+    if (!cmp_bits(set + i, find))
     {
-      sets->free_last_set();
+      free_last_set();
       return i;
     }
   }
