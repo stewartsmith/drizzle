@@ -58,6 +58,7 @@
 #include <fcntl.h>
 #include <boost/array.hpp>
 #include <boost/program_options.hpp>
+#include <boost/smart_ptr.hpp>
 
 #include PCRE_HEADER
 
@@ -116,6 +117,7 @@ static bool server_initialized= false;
 static bool is_windows= false;
 static bool use_drizzle_protocol= false;
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
+static void free_all_replace();
 
 std::string opt_basedir,
   opt_charsets_dir,
@@ -463,14 +465,6 @@ void free_replace();
 
 /* For replace_regex */
 void do_get_replace_regex(struct st_command *command);
-void free_replace_regex();
-
-static void free_all_replace()
-{
-  free_replace();
-  free_replace_regex();
-  free_replace_column();
-}
 
 void replace_append_mem(string *ds, const char *val,
                         int len);
@@ -6228,7 +6222,8 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name);
 void replace_strings_append(struct st_replace *rep, string* ds,
                             const char *from, int len);
 
-struct st_replace *glob_replace= NULL;
+st_replace *glob_replace= NULL;
+// boost::scoped_ptr<st_replace> glob_replace;
 
 /*
   Get arguments for replace. The syntax is:
@@ -6392,7 +6387,7 @@ public:
   vector<st_regex> regex_arr;
 };
 
-st_replace_regex *glob_replace_regex= NULL;
+boost::scoped_ptr<st_replace_regex> glob_replace_regex;
 
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
                 char *string, int icase, int global);
@@ -6586,17 +6581,9 @@ int st_replace_regex::multi_reg_replace(char* val)
 void do_get_replace_regex(struct st_command *command)
 {
   char *expr= command->first_argument;
-  free_replace_regex();
-  glob_replace_regex= new st_replace_regex(expr);
+  glob_replace_regex.reset(new st_replace_regex(expr));
   command->last_argument= command->end;
 }
-
-void free_replace_regex()
-{
-  delete glob_replace_regex;
-  glob_replace_regex= NULL;
-}
-
 
 /*
   Performs a regex substitution
@@ -7388,4 +7375,11 @@ void append_sorted(string* ds, string *ds_input)
   }
 
   return;
+}
+
+static void free_all_replace()
+{
+  free_replace();
+  glob_replace_regex.reset();
+  free_replace_column();
 }
