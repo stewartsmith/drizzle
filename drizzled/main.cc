@@ -258,7 +258,7 @@ int main(int argc, char **argv)
 
   if (opt_daemon)
   {
-    if (sigignore(SIGHUP) == -1)
+    if (signal(SIGHUP, SIG_IGN) == SIG_ERR)
     {
       perror("Failed to ignore SIGHUP");
     }
