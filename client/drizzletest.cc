@@ -410,10 +410,7 @@ struct st_command
 
   ~st_command()
   {
-    if (query_buf != NULL)
-    {
-      free(query_buf);
-    }
+    free(query_buf);
   }
 };
 
@@ -489,13 +486,11 @@ void handle_no_error(struct st_command*);
 void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars)
 {
-  const char *p;
   char c, next_c;
   int escaped = 0;
   VAR *v;
 
-
-  for (p= query; (c= *p) && p < query_end; ++p)
+  for (const char *p= query; (c= *p) && p < query_end; ++p)
   {
     switch(c) {
     case '$':
@@ -6365,8 +6360,17 @@ struct st_regex
                  i.e. repeat the matching until the end of the string */
 };
 
-struct st_replace_regex
+class st_replace_regex
 {
+public:
+  st_replace_regex(char* expr);
+  
+  ~st_replace_regex()
+  {
+    delete[] even_buf;
+    delete[] odd_buf;
+  }
+
   vector<st_regex> regex_arr;
 
   /*
@@ -6376,7 +6380,7 @@ struct st_replace_regex
     st_regex substition. At the end of substitutions  buf points to the
     one containing the final result.
   */
-  char* buf;
+  char* buf_;
   char* even_buf;
   char* odd_buf;
   int even_buf_len;
@@ -6425,13 +6429,13 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
   Returns: st_replace_regex struct with pairs of substitutions
 */
 
-static void init_replace_regex(st_replace_regex *res, char* expr)
+st_replace_regex::st_replace_regex(char* expr)
 {
   uint32_t expr_len= strlen(expr);
   char last_c = 0;
   st_regex reg;
 
-  res->regex_arr.clear();
+  regex_arr.clear();
 
   char* buf= new char[expr_len];
   char* expr_end= expr + expr_len;
@@ -6452,7 +6456,7 @@ static void init_replace_regex(st_replace_regex *res, char* expr)
 
     if (p == expr_end || ++p == expr_end)
     {
-      if (!res->regex_arr.empty())
+      if (!regex_arr.empty())
         break;
       else
         goto err;
@@ -6491,12 +6495,12 @@ static void init_replace_regex(st_replace_regex *res, char* expr)
       p++;
       reg.global= 1;
     }
-    res->regex_arr.push_back(reg);
+    regex_arr.push_back(reg);
   }
-  res->odd_buf_len= res->even_buf_len= 8192;
-  res->even_buf= new char[res->even_buf_len];
-  res->odd_buf= new char[res->odd_buf_len];
-  res->buf= res->even_buf;
+  odd_buf_len= even_buf_len= 8192;
+  even_buf= new char[even_buf_len];
+  odd_buf= new char[odd_buf_len];
+  buf_= even_buf;
 
   return;
 
@@ -6531,7 +6535,7 @@ static int multi_reg_replace(struct st_replace_regex* r,char* val)
   in_buf= val;
   out_buf= r->even_buf;
   buf_len_p= &r->even_buf_len;
-  r->buf= 0;
+  r->buf_= 0;
 
   /* For each substitution, do the replace */
   for (size_t i= 0; i != r->regex_arr.size(); i++)
@@ -6551,18 +6555,17 @@ static int multi_reg_replace(struct st_replace_regex* r,char* val)
           r->odd_buf= out_buf;
       }
 
-      r->buf= out_buf;
+      r->buf_= out_buf;
       if (in_buf == val)
         in_buf= r->odd_buf;
 
-      std::swap(in_buf,out_buf);
+      std::swap(in_buf, out_buf);
 
-      buf_len_p= (out_buf == r->even_buf) ? &r->even_buf_len :
-        &r->odd_buf_len;
+      buf_len_p= (out_buf == r->even_buf) ? &r->even_buf_len : &r->odd_buf_len;
     }
   }
 
-  return (r->buf == 0);
+  return r->buf_ == 0;
 }
 
 /*
@@ -6578,21 +6581,15 @@ void do_get_replace_regex(struct st_command *command)
 {
   char *expr= command->first_argument;
   free_replace_regex();
-  glob_replace_regex = new st_replace_regex;
-  init_replace_regex(glob_replace_regex, expr);
+  glob_replace_regex= new st_replace_regex(expr);
   command->last_argument= command->end;
 }
 
 void free_replace_regex()
 {
-  if (!glob_replace_regex)
-    return;
-  delete[] glob_replace_regex->even_buf;
-  delete[] glob_replace_regex->odd_buf;
   delete glob_replace_regex;
   glob_replace_regex= NULL;
 }
-
 
 
 /*
@@ -7331,7 +7328,7 @@ void replace_append_mem(string *ds,
     /* Regex replace */
     if (!multi_reg_replace(glob_replace_regex, v))
     {
-      v= glob_replace_regex->buf;
+      v= glob_replace_regex->buf_;
       len= strlen(v);
     }
   }
