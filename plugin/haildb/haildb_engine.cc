@@ -271,7 +271,7 @@ static int ib_err_t_to_drizzle_error(Session* session, ib_err_t err)
   case DB_DEADLOCK:
     /* HailDB will roll back a transaction itself due to DB_DEADLOCK.
        This means we have to tell Drizzle about it */
-    mark_transaction_to_rollback(session, true);
+    session->markTransactionForRollback(true);
     return HA_ERR_LOCK_DEADLOCK;
 
   case DB_LOCK_WAIT_TIMEOUT:
