@@ -114,29 +114,6 @@ int tmpfile(const char *prefix)
   return fd;
 }
 
-int session_tablespace_op(const Session *session)
-{
-  return test(session->tablespace_op);
-}
-
-/**
-   Set the process info field of the Session structure.
-
-   This function is used by plug-ins. Internally, the
-   Session::set_proc_info() function should be used.
-
-   @see Session::set_proc_info
- */
-void set_session_proc_info(Session *session, const char *info)
-{
-  session->set_proc_info(info);
-}
-
-const char *get_session_proc_info(Session *session)
-{
-  return session->get_proc_info();
-}
-
 void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
 {
   return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
@@ -151,16 +128,6 @@ ResourceContext *Session::getResourceContext(const plugin::MonitoredInTransactio
 int64_t session_test_options(const Session *session, int64_t test_options)
 {
   return session->options & test_options;
-}
-
-int session_sql_command(const Session *session)
-{
-  return (int) session->lex->sql_command;
-}
-
-enum_tx_isolation session_tx_isolation(const Session *session)
-{
-  return (enum_tx_isolation)session->variables.tx_isolation;
 }
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
@@ -212,8 +179,8 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   is_fatal_error(false),
   transaction_rollback_request(false),
   is_fatal_sub_stmt_error(0),
-  derived_tables_processing(false),
   tablespace_op(false),
+  derived_tables_processing(false),
   m_lip(NULL),
   cached_table(0),
   transaction_message(NULL),
@@ -838,19 +805,14 @@ bool Session::startTransaction(start_transaction_option_t opt)
 {
   bool result= true;
 
-  if (! endActiveTransaction())
+  assert(! inTransaction());
+
+  options|= OPTION_BEGIN;
+  server_status|= SERVER_STATUS_IN_TRANS;
+
+  if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
   {
     result= false;
-  }
-  else
-  {
-    options|= OPTION_BEGIN;
-    server_status|= SERVER_STATUS_IN_TRANS;
-
-    if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
-    {
-      result= false;
-    }
   }
 
   return result;

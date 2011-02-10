@@ -45,6 +45,7 @@ public:
   }
 
   bool execute();
+
   virtual bool executeInner(identifier::Table::const_reference);
 
 public:

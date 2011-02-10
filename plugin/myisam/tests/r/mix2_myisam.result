@@ -685,6 +685,7 @@ ERROR 42000: Unknown schema 'mysqltest'
 set autocommit=0;
 create TEMPORARY table t1 (a int not null) engine= MyISAM;
 insert into t1 values(1),(2);
+commit;
 truncate table t1;
 commit;
 truncate table t1;

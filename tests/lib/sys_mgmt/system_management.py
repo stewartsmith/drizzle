@@ -34,6 +34,7 @@
 import os
 import sys
 import copy
+from uuid import uuid4
 import shutil
 import getpass
 import commands
@@ -67,8 +68,8 @@ class systemManager:
         self.shm_path = self.find_path(["/dev/shm", "/tmp"], required=0)
         self.cur_os = os.uname()[0]
         self.cur_user = getpass.getuser()
-        self.symlink_name = 'dbqp_workdir_%s' %(self.cur_user)
         self.workdir = os.path.abspath(variables['workdir'])
+        self.datadir = os.path.abspath(os.path.join(variables['testdir'],'dbqp_data'))
         self.top_srcdir = os.path.abspath(variables['topsrcdir'])
         self.top_builddir = os.path.abspath(variables['topbuilddir'])
         self.start_dirty = variables['startdirty']
@@ -80,8 +81,7 @@ class systemManager:
         
         self.port_manager = portManager(self,variables['debug'])
         self.time_manager = timeManager(self)
-       
-            
+                   
         # Make sure the tree we are testing looks good
         self.code_tree = self.get_code_tree(variables, tree_type)
 
@@ -115,6 +115,15 @@ class systemManager:
         # self.process_environment_reqs(self.environment_reqs)
         self.update_environment_vars(self.environment_reqs)
 
+        # We find or generate our id file
+        # We use a uuid to identify the symlinked
+        # workdirs.  That way, each installation
+        # Will have a uuid/tmpfs workingdir
+        # We store in a file so we know what
+        # is ours
+        self.uuid = self.get_uuid()
+        self.symlink_name = 'dbqp_workdir_%s_%s' %(self.cur_user, self.uuid)
+
         # initialize our workdir
         self.process_workdir()
 
@@ -125,12 +134,9 @@ class systemManager:
         if self.valgrind:
             self.handle_valgrind_reqs(variables['valgrindarglist'])
             
-
         if self.debug:
             self.logging.debug_class(self)
         
-
-
     def get_code_tree(self, variables, tree_type):
         """Find out the important files, directories, and env. vars
            for a particular type of tree.  We import a definition module
@@ -145,8 +151,6 @@ class systemManager:
         test_tree = self.process_tree_type(tree_type, variables)
         return test_tree
 
-    
-
     def process_tree_type(self, tree_type, variables):
         """Import the appropriate module depending on the type of tree
            we are testing. 
@@ -154,6 +158,7 @@ class systemManager:
            Drizzle is the only supported type currently
 
         """
+
         if self.verbose:
             self.logging.verbose("Processing source tree under test...")
         if tree_type == 'drizzle':
@@ -165,15 +170,7 @@ class systemManager:
             self.logging.error("Tree_type: %s not supported yet" %(tree_type))
             sys.exit(1)        
 
-    def get_port_block(self, requester, base_port, block_size):
-        """ Try to assign a block of ports for test execution
-            purposes
-
-        """
-     
-        return self.port_manager.get_port_block( requester
-                                               , base_port, block_size)
-
+    
     def create_dirset(self, rootdir, dirset):
         """ We produce the set of directories defined in dirset
             dirset is a set of dictionaries like
@@ -200,6 +197,28 @@ class systemManager:
                     self.create_dirset(full_path,subdirset)
 
         return full_path    
+
+    def get_uuid(self):
+        """ We look to see if a uuid file exists
+            If so, we use that to know where to work
+            If not we produce one so future runs
+            have a definitive id to use
+
+        """
+
+        uuid_file_name = os.path.join(self.datadir, 'uuid')
+        if os.path.exists(uuid_file_name):
+            uuid_file = open(uuid_file_name,'r')
+            uuid = uuid_file.readline().strip()
+            uuid_file.close()
+        else:
+            uuid = uuid4()
+            print uuid
+            print uuid4()
+            uuid_file = open(uuid_file_name,'w')
+            uuid_file.write(str(uuid))
+            uuid_file.close()
+        return uuid
 
     def process_workdir(self):
         """ We create our workdir, analyze relevant variables

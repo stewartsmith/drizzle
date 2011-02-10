@@ -78,6 +78,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -178,6 +179,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -278,6 +280,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -357,6 +360,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -422,6 +426,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -487,6 +492,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -566,6 +572,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -653,6 +660,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;
@@ -741,6 +749,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t2;
 a	b
@@ -886,6 +895,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;
@@ -977,6 +987,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1061,6 +1072,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1124,6 +1136,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1188,6 +1201,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1252,6 +1266,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 UPDATE t1 SET col0_int= NULL WHERE col1_int != 2;
 Check transaction_log_entries
@@ -1304,6 +1319,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1403,6 +1419,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 START TRANSACTION;
 UPDATE t1 SET col0_int = 20000,  col1_int = 30,  col2_int = 40 where id = 1;
@@ -1504,6 +1521,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 START TRANSACTION;
 UPDATE t1 SET col0_int = 200000, col1_int = 300 where id = 1;
@@ -1605,6 +1623,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;

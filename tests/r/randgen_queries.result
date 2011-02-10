@@ -80,6 +80,7 @@ DATA_DICTIONARY	COLLATIONS	misc	SORTLEN	indexed
 DATA_DICTIONARY	COLUMNS	misc	TABLE_SCHEMA	indexed
 DATA_DICTIONARY	COLUMNS	misc	TABLE_NAME	indexed
 DATA_DICTIONARY	COLUMNS	misc	COLUMN_NAME	indexed
+COMMIT;
 CREATE SCHEMA randgen_query_test;
 USE randgen_query_test;
 CREATE TABLE t1 (a INT);
@@ -125,6 +126,7 @@ test	t1	misc	col_enum_not_null	indexed
 test	t1	misc	col_text_not_null_key	indexed
 test	t1	misc	pk	primary
 test	t1	misc	col_bigint_key	indexed
+COMMIT;
 DROP SCHEMA randgen_query_test;
 USE test;
 select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
