@@ -1057,7 +1057,7 @@ public:
     return tablespace_op;
   }
 
-  void set_doing_tablespace_operation(bool doing)
+  void setDoingTablespaceOperation(bool doing)
   {
     tablespace_op= doing;
   }
