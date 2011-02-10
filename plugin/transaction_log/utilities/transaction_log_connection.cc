@@ -51,10 +51,11 @@ TransactionLogConnection::TransactionLogConnection(string &host, uint16_t port,
   }
 }
 
-drizzle_result_st* TransactionLogConnection::query(const std::string &str_query)
+void TransactionLogConnection::query(const std::string &str_query,
+                                     drizzle_result_st *result)
 {
   drizzle_return_t ret;
-  drizzle_result_st* result= new drizzle_result_st;
+  drizzle_result_create(&connection, result);
   if (drizzle_query_str(&connection, result, str_query.c_str(), &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)
   {
@@ -69,16 +70,16 @@ drizzle_result_st* TransactionLogConnection::query(const std::string &str_query)
       cerr << "Error executing query: " <<
         drizzle_con_error(&connection) << endl;
     }
-    return NULL;
+    return;
   }
 
   if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
   {
     cerr << "Could not buffer result: " <<
         drizzle_con_error(&connection) << endl;
-    return NULL;
+    return;
   }
-  return result;
+  return;
 }
 
 void TransactionLogConnection::errorHandler(drizzle_result_st *res,

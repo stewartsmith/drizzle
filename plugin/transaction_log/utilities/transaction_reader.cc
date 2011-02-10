@@ -562,10 +562,12 @@ static void getTrxIdList(TransactionLogConnection *connection,
                          const string &query_string,
                          vector<uint64_t> &ordered_trx_id_list)
 {
-  drizzle_result_st *result= connection->query(query_string);
+  drizzle_result_st result;
+  
+  connection->query(query_string, &result);
   
   drizzle_row_t row;
-  while ((row= drizzle_row_next(result)))
+  while ((row= drizzle_row_next(&result)))
   {
     if (row[0])
     {
@@ -573,7 +575,7 @@ static void getTrxIdList(TransactionLogConnection *connection,
     }
   }
 
-  drizzle_result_free(result);
+  drizzle_result_free(&result);
 }
 
 static int extractRowsForTrxIds(TransactionLogConnection *connection,
@@ -592,10 +594,11 @@ static int extractRowsForTrxIds(TransactionLogConnection *connection,
     sql.append(boost::lexical_cast<string>(trx_id));
     sql.append(" ORDER BY transaction_segment_id ASC");
 
-    drizzle_result_st *result= connection->query(sql);
+    drizzle_result_st result;
+    connection->query(sql, &result);
     
     drizzle_row_t row;
-    while ((row= drizzle_row_next(result)))
+    while ((row= drizzle_row_next(&result)))
     {
       char* data= (char*)row[0];
       uint64_t length= (row[1]) ? boost::lexical_cast<uint64_t>(row[1]) : 0;
@@ -613,7 +616,7 @@ static int extractRowsForTrxIds(TransactionLogConnection *connection,
       }
     }
     
-    drizzle_result_free(result);
+    drizzle_result_free(&result);
   }
   
   return 0;
