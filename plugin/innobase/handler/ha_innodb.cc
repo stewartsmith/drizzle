@@ -574,6 +574,12 @@ bool InnobaseEngine::doDoesTableExist(Session &session, const identifier::Table 
   if (session.getMessageCache().doesTableMessageExist(identifier))
     return true;
 
+  std::string search_string(identifier.getPath());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary/sys_replication_log") == 0)
+    return true;
+
   if (access(proto_path.c_str(), F_OK))
   {
     return false;
@@ -3243,9 +3249,14 @@ ha_innobase::doOpen(const identifier::Table &identifier,
 
   user_session = NULL;
 
-  if (identifier.getSchemaName().compare("data_dictionary") == 0)
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
   {
-    if (!(share=get_share(identifier.getTableName().c_str())))
+    std::string table_name(identifier.getTableName());
+    boost::algorithm::to_upper(table_name);
+    if (!(share=get_share(table_name.c_str())))
     {
       return 1;
     }
@@ -3282,10 +3293,16 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   }
 
   /* Get pointer to a table object in InnoDB dictionary cache */
-  if (identifier.getSchemaName().compare("data_dictionary") == 0)
-    ib_table = dict_table_get(identifier.getTableName().c_str(), TRUE);
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    std::string table_name(identifier.getTableName());
+    boost::algorithm::to_upper(table_name);
+    ib_table = dict_table_get(table_name.c_str(), TRUE);
+  }
   else
+  {
     ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
+  }
   
   if (NULL == ib_table) {
     errmsg_printf(error::ERROR, "Cannot find or open table %s from\n"

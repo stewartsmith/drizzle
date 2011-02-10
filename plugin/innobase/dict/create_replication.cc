@@ -111,7 +111,10 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
 
 UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizzled::message::Table *table_message)
 {
-  if (strcmp(table_name, "SYS_REPLICATION_LOG") != 0)
+  std::string search_string(table_name);
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("sys_replication_log") != 0)
     return -1;
 
   drizzled::message::Engine *engine= table_message->mutable_engine();
