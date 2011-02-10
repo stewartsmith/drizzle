@@ -76,7 +76,7 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   error = que_eval_sql(info,
                        "PROCEDURE CREATE_SYS_REPLICATION_LOG_PROC () IS\n"
                        "BEGIN\n"
-                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, COMMIT_ID INT(8), END_TIMESTAMP BINARY(8), MESSAGE BLOB);\n" 
+                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, COMMIT_ID INT(8), END_TIMESTAMP INT(8), MESSAGE BLOB);\n" 
                        "CREATE UNIQUE CLUSTERED INDEX PRIMARY ON SYS_REPLICATION_LOG (ID, SEGID);\n"
                        "END;\n"
                        , FALSE, trx);
@@ -139,7 +139,7 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
 
   field= table_message->add_field();
   field->set_name("END_TIMESTAMP");
-  field->set_type(drizzled::message::Table::Field::EPOCH);
+  field->set_type(drizzled::message::Table::Field::BIGINT);
 
   field= table_message->add_field();
   field->set_name("MESSAGE");
