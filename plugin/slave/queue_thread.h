@@ -36,7 +36,8 @@ namespace slave
 class QueueThread
 {
 public:
-  virtual ~QueueThread();
+  virtual ~QueueThread()
+  {}
   
   void run(void);
 
@@ -54,10 +55,14 @@ public:
   /**
    * Work to do at thread shutdown time.
    */
-  virtual void shutdown();
+  virtual void shutdown()
+  {}
 
   /**
    * Method that actually does the work around the queue.
+   *
+   * Returning 'false' from this method currently causes the thread to
+   * shutdown.
    *
    * @retval true Success
    * @retval false Failure
@@ -67,6 +72,6 @@ public:
   virtual uint32_t getSleepInterval()= 0;
 };
 
-}
+} /* namespace slave */
 
 #endif /* PLUGIN_SLAVE_QUEUE_THREAD_H */
