@@ -556,6 +556,21 @@ private:
   uint64_t getCurrentTransactionId(Session::reference session);
 
   plugin::XaStorageEngine *xa_storage_engine;
+
+  /** List of schema names to permanently exclude from replication messages. */
+  std::vector<std::string> _excluded_schemas;
+
+  /**
+   * Check to see if a schema is on our permanent exclusion list.
+   *
+   * @param schema Name of schema (any case).
+   *
+   * @retval true Schema is excluded
+   * @retval false Schema is NOT excluded
+   *
+   * @see _excluded_schemas
+   */
+  bool isSchemaExcluded(const std::string &schema) const;
 };
 
 } /* namespace drizzled */

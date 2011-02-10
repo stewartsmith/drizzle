@@ -311,6 +311,8 @@ TransactionServices::TransactionServices()
   {
     xa_storage_engine= NULL;
   }
+
+  _excluded_schemas.push_back("data_dictionary");
 }
 
 void TransactionServices::registerResourceForStatement(Session::reference session,
@@ -1380,6 +1382,11 @@ bool TransactionServices::insertRecord(Session::reference session,
   if (! replication_services.isActive())
     return false;
 
+  string schema_name;
+  (void) table.getShare()->getSchemaName(schema_name);
+  if (isSchemaExcluded(schema_name))
+    return false;
+
   /**
    * We do this check here because we don't want to even create a 
    * statement if there isn't a primary key on the table...
@@ -1575,6 +1582,7 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
     }
   }
 }
+
 void TransactionServices::updateRecord(Session::reference session,
                                        Table &table, 
                                        const unsigned char *old_record, 
@@ -1582,6 +1590,11 @@ void TransactionServices::updateRecord(Session::reference session,
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
+    return;
+
+  string schema_name;
+  (void) table.getShare()->getSchemaName(schema_name);
+  if (isSchemaExcluded(schema_name))
     return;
 
   uint32_t next_segment_id= 1;
@@ -1843,6 +1856,11 @@ void TransactionServices::deleteRecord(Session::reference session,
   if (! replication_services.isActive())
     return;
 
+  string schema_name;
+  (void) table.getShare()->getSchemaName(schema_name);
+  if (isSchemaExcluded(schema_name))
+    return;
+
   uint32_t next_segment_id= 1;
   message::Statement &statement= getDeleteStatement(session, table, &next_segment_id);
 
@@ -1898,7 +1916,10 @@ void TransactionServices::createTable(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (isSchemaExcluded(table.schema()))
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -1928,7 +1949,10 @@ void TransactionServices::createSchema(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (isSchemaExcluded(schema.name()))
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -1958,7 +1982,10 @@ void TransactionServices::dropSchema(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (isSchemaExcluded(identifier.getSchemaName()))
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -1988,7 +2015,10 @@ void TransactionServices::alterSchema(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (isSchemaExcluded(old_schema->name()))
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -2022,7 +2052,10 @@ void TransactionServices::dropTable(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (isSchemaExcluded(table.getSchemaName()))
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -2056,7 +2089,12 @@ void TransactionServices::truncateTable(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  string schema_name;
+  (void) table.getShare()->getSchemaName(schema_name);
+  if (isSchemaExcluded(schema_name))
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -2069,8 +2107,6 @@ void TransactionServices::truncateTable(Session::reference session,
   message::TruncateTableStatement *truncate_statement= statement->mutable_truncate_table_statement();
   message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
   string table_name;
   (void) table.getShare()->getTableName(table_name);
 
@@ -2149,6 +2185,24 @@ bool TransactionServices::sendShutdownEvent(Session::reference session)
   if (sendEvent(session, event) != 0)
     return false;
   return true;
+}
+
+bool TransactionServices::isSchemaExcluded(const string &schema) const
+{
+  string mutable_schema(schema);
+
+  /* normalize schema name to lowercase */
+  transform(mutable_schema.begin(), mutable_schema.end(),
+            mutable_schema.begin(), ::tolower);
+
+  vector<string>::const_iterator it= find(_excluded_schemas.begin(),
+                                          _excluded_schemas.end(),
+                                          mutable_schema);
+
+  if (it != _excluded_schemas.end())
+    return true; 
+    
+  return false;
 }
 
 } /* namespace drizzled */
