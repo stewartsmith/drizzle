@@ -6041,6 +6041,14 @@ InnobaseEngine::doCreateTable(
   const char* stmt;
   size_t stmt_len;
 
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    return HA_WRONG_CREATE_OPTION;
+  }
+
   if (form.getShare()->sizeFields() > 1000) {
     /* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
       but we play safe here */
@@ -6426,6 +6434,14 @@ InnobaseEngine::doDropTable(
   trx_t*  trx;
 
   ut_a(identifier.getPath().length() < 1000);
+
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    return HA_ERR_TABLE_READONLY;
+  }
 
   /* Get the transaction associated with the current session, or create one
     if not yet created */
