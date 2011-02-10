@@ -6332,6 +6332,8 @@ public:
     st_regex substition. At the end of substitutions  buf points to the
     one containing the final result.
   */
+  typedef vector<st_regex> regex_arr_t;
+
   char* buf_;
   char* even_buf;
   char* odd_buf;
@@ -6339,7 +6341,7 @@ public:
   int odd_buf_len;
   boost::array<char, 8 << 10> buf0_;
   boost::array<char, 8 << 10> buf1_;
-  vector<st_regex> regex_arr;
+  regex_arr_t regex_arr;
 };
 
 boost::scoped_ptr<st_replace_regex> glob_replace_regex;
@@ -6389,8 +6391,6 @@ st_replace_regex::st_replace_regex(char* expr)
   uint32_t expr_len= strlen(expr);
   char last_c = 0;
   st_regex reg;
-
-  regex_arr.clear();
 
   char* buf= new char[expr_len];
   char* expr_end= expr + expr_len;
@@ -6484,44 +6484,34 @@ err:
 
 int st_replace_regex::multi_reg_replace(char* val)
 {
-  st_replace_regex* r = this;
-  char* in_buf, *out_buf;
-  int* buf_len_p;
-
-  in_buf= val;
-  out_buf= r->even_buf;
-  buf_len_p= &r->even_buf_len;
-  r->buf_= 0;
+  char* in_buf= val;
+  char* out_buf= even_buf;
+  int* buf_len_p= &even_buf_len;
+  buf_= 0;
 
   /* For each substitution, do the replace */
-  for (size_t i= 0; i != r->regex_arr.size(); i++)
+  BOOST_FOREACH(regex_arr_t::const_reference i, regex_arr)
   {
     char* save_out_buf= out_buf;
-    st_regex re = r->regex_arr[i];
-
-    if (!reg_replace(&out_buf, buf_len_p, re.pattern, re.replace,
-                     in_buf, re.icase, re.global))
+    if (!reg_replace(&out_buf, buf_len_p, i.pattern, i.replace,
+                     in_buf, i.icase, i.global))
     {
       /* if the buffer has been reallocated, make adjustements */
       if (save_out_buf != out_buf)
       {
-        if (save_out_buf == r->even_buf)
-          r->even_buf= out_buf;
+        if (save_out_buf == even_buf)
+          even_buf= out_buf;
         else
-          r->odd_buf= out_buf;
+          odd_buf= out_buf;
       }
-
-      r->buf_= out_buf;
+      buf_= out_buf;
       if (in_buf == val)
-        in_buf= r->odd_buf;
-
+        in_buf= odd_buf;
       std::swap(in_buf, out_buf);
-
-      buf_len_p= (out_buf == r->even_buf) ? &r->even_buf_len : &r->odd_buf_len;
+      buf_len_p= (out_buf == even_buf) ? &even_buf_len : &odd_buf_len;
     }
   }
-
-  return r->buf_ == 0;
+  return buf_ == 0;
 }
 
 /*
