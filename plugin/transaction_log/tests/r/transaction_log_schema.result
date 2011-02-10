@@ -42,6 +42,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing simple DROP SCHEMA
 DROP SCHEMA my_test_schema;
@@ -75,6 +76,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SET GLOBAL transaction_log_truncate_debug= true;
 
@@ -147,6 +149,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SET GLOBAL transaction_log_truncate_debug= true;
 
@@ -215,6 +218,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 CREATE TABLE t2 LIKE t1;
 Check transaction_log_entries
@@ -299,6 +303,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP SCHEMA my_test_schema;
 SET GLOBAL transaction_log_truncate_debug= true;

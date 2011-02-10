@@ -505,3 +505,4 @@ segment_id: 2
 end_segment: true
 
 
+COMMIT;
