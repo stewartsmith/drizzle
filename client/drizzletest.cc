@@ -443,7 +443,6 @@ void log_msg(const char *fmt, ...)
 VAR* var_from_env(const char *, const char *);
 VAR* var_init(VAR* v, const char *name, int name_len, const char *val,
               int val_len);
-void var_free(pair<string, VAR*> v);
 VAR* var_get(const char *var_name, const char** var_name_end,
              bool raw, bool ignore_not_existing);
 void eval_expr(VAR* v, const char *p, const char** p_end);
@@ -889,12 +888,17 @@ static void close_files()
   }
 }
 
-
 static void free_used_memory()
 {
   close_connections();
   close_files();
-  for_each(var_hash.begin(), var_hash.end(), var_free);
+  BOOST_FOREACH(var_hash_t::reference i, var_hash)
+  {
+    free(i.second->str_val);
+    free(i.second->env_s);
+    if (i.second->alloced)
+      free(i.second);
+  }
   var_hash.clear();
   BOOST_FOREACH(vector<st_command*>::reference i, q_lines)
     delete i;
@@ -1601,22 +1605,17 @@ static void strip_parentheses(struct st_command *command)
 VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
               int val_len)
 {
-  int val_alloc_len;
-  VAR *tmp_var;
   if (!name_len && name)
     name_len = strlen(name);
   if (!val_len && val)
     val_len = strlen(val) ;
-  val_alloc_len = val_len + 16; /* room to grow */
-  if (!(tmp_var=v) && !(tmp_var = (VAR*)malloc(sizeof(*tmp_var)
-                                               + name_len+1)))
-    die("Out of memory");
+  VAR *tmp_var = v ? v : (VAR*)malloc(sizeof(*tmp_var) + name_len+1);
 
-  tmp_var->name = (name) ? (char*) tmp_var + sizeof(*tmp_var) : 0;
+  tmp_var->name = name ? (char*)&tmp_var[1] : 0;
   tmp_var->alloced = (v == 0);
 
-  if (!(tmp_var->str_val = (char *)malloc(val_alloc_len+1)))
-    die("Out of memory");
+  int val_alloc_len = val_len + 16; /* room to grow */
+  tmp_var->str_val = (char*)malloc(val_alloc_len+1);
 
   memcpy(tmp_var->name, name, name_len);
   if (val)
@@ -1627,21 +1626,11 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
   tmp_var->name_len = name_len;
   tmp_var->str_val_len = val_len;
   tmp_var->alloced_len = val_alloc_len;
-  tmp_var->int_val = (val) ? atoi(val) : 0;
-  tmp_var->int_dirty = 0;
+  tmp_var->int_val = val ? atoi(val) : 0;
+  tmp_var->int_dirty = false;
   tmp_var->env_s = 0;
   return tmp_var;
 }
-
-
-void var_free(pair<string, VAR *> v)
-{
-  free(v.second->str_val);
-  free(v.second->env_s);
-  if (v.second->alloced)
-    free(v.second);
-}
-
 
 VAR* var_from_env(const char *name, const char *def_val)
 {
@@ -4031,7 +4020,6 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
 {
   char *p= command->first_argument;
   const char *expr_start, *expr_end;
-  VAR v;
   const char *cmd_name= (cmd == cmd_while ? "while" : "if");
   bool not_expr= false;
 
@@ -4074,6 +4062,7 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
   if (*p && *p != '{')
     die("Missing '{' after %s. Found \"%s\"", cmd_name, p);
 
+  VAR v;
   var_init(&v,0,0,0,0);
   eval_expr(&v, expr_start, &expr_end);
 
