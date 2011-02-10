@@ -22,6 +22,7 @@
 #define DRIZZLED_OPEN_TABLES_STATE_H
 
 #include "drizzled/lock.h"
+#include "drizzled/query_id.h"
 
 namespace drizzled
 {

@@ -20,21 +20,28 @@
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
-#include "drizzled/plugin.h"
-#include "drizzled/sql_locale.h"
-#include "drizzled/resource_context.h"
 #include "drizzled/cursor.h"
-#include "drizzled/sql_error.h"
+#include "drizzled/diagnostics_area.h"
 #include "drizzled/file_exchange.h"
-#include "drizzled/select_result_interceptor.h"
-#include "drizzled/statistics_variables.h"
-#include "drizzled/xid.h"
-#include "drizzled/query_id.h"
+#include "drizzled/identifier.h"
+#include "drizzled/internal_error_handler.h"
+#include "drizzled/my_hash.h"
 #include "drizzled/named_savepoint.h"
+#include "drizzled/open_tables_state.h"
+#include "drizzled/plugin.h"
+#include "drizzled/plugin/authorization.h"
+#include "drizzled/pthread_globals.h"
+#include "drizzled/query_id.h"
+#include "drizzled/resource_context.h"
+#include "drizzled/select_result_interceptor.h"
+#include "drizzled/sql_error.h"
+#include "drizzled/sql_locale.h"
+#include "drizzled/statistics_variables.h"
 #include "drizzled/transaction_context.h"
 #include "drizzled/util/storable.h"
-#include "drizzled/my_hash.h"
-#include "drizzled/pthread_globals.h"
+#include "drizzled/xid.h"
+
+
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -43,12 +50,6 @@
 #include <bitset>
 #include <map>
 #include <string>
-
-#include "drizzled/identifier.h"
-#include "drizzled/open_tables_state.h"
-#include "drizzled/internal_error_handler.h"
-#include "drizzled/diagnostics_area.h"
-#include "drizzled/plugin/authorization.h"
 
 #include "drizzled/catalog/instance.h"
 #include "drizzled/catalog/local.h"
