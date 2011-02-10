@@ -117,34 +117,34 @@ test: check
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification
 
-test-all: check
+test-all: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
 
-test-mem: check
+test-mem: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN_MEM) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
-test-drizzle: check
+test-drizzle: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
-test-valgrind: check
+test-valgrind: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
-test-valgrind-suppressions: check
+test-valgrind-suppressions: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
-test-junitxml: check
+test-junitxml: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
 
-test-big: check
+test-big: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )
 
-test-big-junitxml: check
+test-big-junitxml: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml )
 
-test-jp: check
+test-jp: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=jp )
 
-test-plugins: check
+test-plugins: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
 test-dbqp: check
