@@ -56,6 +56,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <boost/array.hpp>
 #include <boost/program_options.hpp>
 
 #include PCRE_HEADER
@@ -5503,8 +5504,7 @@ try
 
   if (user_config_dir.compare(0, 2, "~/") == 0)
   {
-    char *homedir;
-    homedir= getenv("HOME");
+    const char *homedir= getenv("HOME");
     if (homedir != NULL)
       user_config_dir.replace(0, 1, homedir);
   }
@@ -6364,14 +6364,7 @@ class st_replace_regex
 {
 public:
   st_replace_regex(char* expr);
-  
-  ~st_replace_regex()
-  {
-    delete[] even_buf;
-    delete[] odd_buf;
-  }
-
-  vector<st_regex> regex_arr;
+  int multi_reg_replace(char* val);
 
   /*
     Temporary storage areas for substitutions. To reduce unnessary copying
@@ -6385,6 +6378,9 @@ public:
   char* odd_buf;
   int even_buf_len;
   int odd_buf_len;
+  boost::array<char, 8 << 10> buf0_;
+  boost::array<char, 8 << 10> buf1_;
+  vector<st_regex> regex_arr;
 };
 
 st_replace_regex *glob_replace_regex= NULL;
@@ -6497,9 +6493,9 @@ st_replace_regex::st_replace_regex(char* expr)
     }
     regex_arr.push_back(reg);
   }
-  odd_buf_len= even_buf_len= 8192;
-  even_buf= new char[even_buf_len];
-  odd_buf= new char[odd_buf_len];
+  odd_buf_len= even_buf_len= buf0_.size();
+  even_buf= buf0_.data();
+  odd_buf= buf1_.data();
   buf_= even_buf;
 
   return;
@@ -6527,8 +6523,9 @@ err:
   in one pass
 */
 
-static int multi_reg_replace(struct st_replace_regex* r,char* val)
+int st_replace_regex::multi_reg_replace(char* val)
 {
+  st_replace_regex* r = this;
   char* in_buf, *out_buf;
   int* buf_len_p;
 
@@ -6763,8 +6760,8 @@ static uint32_t replace_len(char * str)
 
 /* Init a replace structure for further calls */
 
-REPLACE *init_replace(char * *from, char * *to,uint32_t count,
-                      char * word_end_chars)
+REPLACE *init_replace(char **from, char **to, uint32_t count,
+                      char *word_end_chars)
 {
   static const int SPACE_CHAR= 256;
   static const int START_OF_LINE= 257;
@@ -6773,7 +6770,7 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
   uint32_t i,j,states,set_nr,len,result_len,max_length,found_end,bits_set,bit_nr;
   int used_sets,chr,default_state;
   char used_chars[LAST_CHAR_CODE],is_word_end[256];
-  char * pos, *to_pos, **to_array;
+  char *pos, *to_pos, **to_array;
   REP_SETS sets;
   REP_SET *set,*start_states,*word_states,*new_set;
   FOLLOWS *follow,*follow_ptr;
@@ -7317,31 +7314,22 @@ void free_pointer_array(POINTER_ARRAY *pa)
 /* Functions that uses replace and replace_regex */
 
 /* Append the string to ds, with optional replace */
-void replace_append_mem(string *ds,
-                        const char *val, int len)
+void replace_append_mem(string *ds, const char *val, int len)
 {
   char *v= strdup(val);
 
-  if (glob_replace_regex)
+  if (glob_replace_regex && !glob_replace_regex->multi_reg_replace(v))
   {
-    assert(glob_replace_regex->even_buf);
-    /* Regex replace */
-    if (!multi_reg_replace(glob_replace_regex, v))
-    {
-      v= glob_replace_regex->buf_;
-      len= strlen(v);
-    }
+    v= glob_replace_regex->buf_;
+    len= strlen(v);
   }
-
   if (glob_replace)
   {
     /* Normal replace */
     replace_strings_append(glob_replace, ds, v, len);
   }
   else
-  {
     ds->append(v, len);
-  }
 }
 
 
