@@ -6646,11 +6646,15 @@ struct REP_SET
   uint32_t  size_of_bits;      /* For convinience */
 };
 
-struct REP_SETS
+class REP_SETS
 {
+public:
+  void free_last_set();
+  void free_sets();
+
   uint32_t    count;      /* Number of sets */
   uint32_t    extra;      /* Extra sets in buffer */
-  uint32_t    invisible;    /* Sets not chown */
+  uint32_t    invisible;    /* Sets not shown */
   uint32_t    size_of_bits;
   REP_SET  *set,*set_buffer;
   uint32_t    *bit_buffer;
@@ -6669,11 +6673,9 @@ struct FOLLOWS
   uint32_t len;
 };
 
-int init_sets(REP_SETS *sets,uint32_t states);
+int init_sets(REP_SETS *sets, uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
 void make_sets_invisible(REP_SETS *sets);
-void free_last_set(REP_SETS *sets);
-void free_sets(REP_SETS *sets);
 void internal_set_bit(REP_SET *set, uint32_t bit);
 void internal_clear_bit(REP_SET *set, uint32_t bit);
 void or_bits(REP_SET *to,REP_SET *from);
@@ -6725,10 +6727,6 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   int used_sets,chr,default_state;
   char used_chars[LAST_CHAR_CODE],is_word_end[256];
   char *to_pos, **to_array;
-  REP_SETS sets;
-  REP_SET *set,*start_states,*word_states,*new_set;
-  REPLACE_STRING *rep_str;
-
 
   /* Count number of states */
   for (i=result_len=max_length=0 , states=2 ; i < count ; i++)
@@ -6748,8 +6746,11 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   for (i=0 ; word_end_chars[i] ; i++)
     is_word_end[(unsigned char) word_end_chars[i]]=1;
 
-  if (init_sets(&sets,states))
-    return(0);
+  REP_SETS sets;
+  REP_SET *set,*start_states,*word_states,*new_set;
+  REPLACE_STRING *rep_str;
+  if (init_sets(&sets, states))
+    return 0;
   found_sets=0;
   vector<FOUND_SET> found_set(max_length * count);
   make_new_set(&sets);      /* Set starting set */
@@ -6757,10 +6758,10 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   used_sets=-1;
   word_states=make_new_set(&sets);    /* Start of new word */
   start_states=make_new_set(&sets);    /* This is first state */
-  FOLLOWS *follow= (FOLLOWS*)malloc((states + 2) * sizeof(FOLLOWS));
-  FOLLOWS *follow_ptr;
+  vector<FOLLOWS> follow(states + 2);
+  FOLLOWS *follow_ptr= follow.data() + 1;
   /* Init follow_ptr[] */
-  for (i=0, states=1, follow_ptr=follow+1 ; i < count ; i++)
+  for (i=0, states=1; i < count; i++)
   {
     if (from[i][0] == '\\' && from[i][1] == '^')
     {
@@ -6926,7 +6927,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
           if (bits_set == 1)
           {
             set->next[chr] = find_found(found_set.data(), new_set->table_offset, new_set->found_offset);
-            free_last_set(&sets);
+            sets.free_last_set();
           }
           else
             set->next[chr] = find_set(&sets,new_set);
@@ -6973,8 +6974,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
           replace[i].next[j]=(REPLACE*) (rep_str+(-sets.set[i].next[j]-1));
     }
   }
-  free(follow);
-  free_sets(&sets);
+  sets.free_sets();
   return replace;
 }
 
@@ -7038,16 +7038,16 @@ REP_SET *make_new_set(REP_SETS *sets)
   return make_new_set(sets);
 }
 
-void free_last_set(REP_SETS *sets)
+void REP_SETS::free_last_set()
 {
-  sets->count--;
-  sets->extra++;
+  count--;
+  extra++;
 }
 
-void free_sets(REP_SETS *sets)
+void REP_SETS::free_sets()
 {
-  free(sets->set_buffer);
-  free(sets->bit_buffer);
+  free(set_buffer);
+  free(bit_buffer);
 }
 
 void internal_set_bit(REP_SET *set, uint32_t bit)
@@ -7106,14 +7106,14 @@ int get_next_bit(REP_SET *set,uint32_t lastpos)
    free given set, else put in given set in sets and return its
    position */
 
-int find_set(REP_SETS *sets,REP_SET *find)
+int find_set(REP_SETS *sets, REP_SET *find)
 {
-  uint32_t i;
-  for (i=0 ; i < sets->count-1 ; i++)
+  uint32_t i= 0;
+  for (; i < sets->count - 1; i++)
   {
     if (!cmp_bits(sets->set+i,find))
     {
-      free_last_set(sets);
+      sets->free_last_set();
       return i;
     }
   }
