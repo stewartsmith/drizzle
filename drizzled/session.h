@@ -418,7 +418,7 @@ public:
     return lex;
   }
 
-  enum_sql_command get_sql_command() const
+  enum_sql_command getSqlCommand() const
   {
     return lex->sql_command;
   }

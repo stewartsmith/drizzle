@@ -872,7 +872,7 @@ thd_is_select(
 /*==========*/
   const drizzled::Session *session)  /*!< in: thread handle (Session*) */
 {
-  return(session->get_sql_command() == SQLCOM_SELECT);
+  return(session->getSqlCommand() == SQLCOM_SELECT);
 }
 
 /******************************************************************//**
@@ -4291,7 +4291,7 @@ ha_innobase::doInsertRecord(
     ut_error;
   }
 
-  sql_command = user_session->get_sql_command();
+  sql_command = user_session->getSqlCommand();
 
   if ((sql_command == SQLCOM_ALTER_TABLE
        || sql_command == SQLCOM_CREATE_INDEX
@@ -4738,7 +4738,7 @@ ha_innobase::doUpdateRecord(
   if (error == DB_SUCCESS
       && getTable()->next_number_field
       && new_row == getTable()->getInsertRecord()
-      && user_session->get_sql_command() == SQLCOM_INSERT
+      && user_session->getSqlCommand() == SQLCOM_INSERT
       && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
     == TRX_DUP_IGNORE)  {
 
@@ -6170,7 +6170,7 @@ InnobaseEngine::doCreateTable(
     string generated_create_table;
     const char *query= stmt;
 
-    if (session.get_sql_command() == SQLCOM_CREATE_TABLE)
+    if (session.getSqlCommand() == SQLCOM_CREATE_TABLE)
     {
       message::transformTableDefinitionToSql(create_proto,
                                              generated_create_table,
@@ -6245,8 +6245,8 @@ InnobaseEngine::doCreateTable(
     does a table copy too. */
 
   if ((create_proto.options().has_auto_increment_value()
-       || session.get_sql_command() == SQLCOM_ALTER_TABLE
-       || session.get_sql_command() == SQLCOM_CREATE_INDEX)
+       || session.getSqlCommand() == SQLCOM_ALTER_TABLE
+       || session.getSqlCommand() == SQLCOM_CREATE_INDEX)
       && create_proto.options().auto_increment_value() != 0) {
 
     /* Query was one of :
@@ -6339,7 +6339,7 @@ ha_innobase::delete_all_rows(void)
 
   update_session(getTable()->in_use);
 
-  if (user_session->get_sql_command() != SQLCOM_TRUNCATE) {
+  if (user_session->getSqlCommand() != SQLCOM_TRUNCATE) {
   fallback:
     /* We only handle TRUNCATE TABLE t as a special case.
     DELETE FROM t will have to use ha_innobase::doDeleteRecord(),
@@ -6398,7 +6398,7 @@ InnobaseEngine::doDropTable(
   /* Drop the table in InnoDB */
 
   error = row_drop_table_for_mysql(identifier.getKeyPath().c_str(), trx,
-                                   session.get_sql_command()
+                                   session.getSqlCommand()
                                    == SQLCOM_DROP_DB);
 
   session.setXaId(trx->id);
@@ -6426,7 +6426,7 @@ InnobaseEngine::doDropTable(
     if (identifier.getType() == message::Table::TEMPORARY)
     {
       session.getMessageCache().removeTableMessage(identifier);
-      ulint sql_command = session.get_sql_command();
+      ulint sql_command = session.getSqlCommand();
 
       // If this was the final removal to an alter table then we will need
       // to remove the .dfe that was left behind.
@@ -7069,7 +7069,7 @@ ha_innobase::info(
     n_rows can not be 0 unless the table is empty, set to 1
     instead. The original problem of bug#29507 is actually
     fixed in the server code. */
-    if (user_session->get_sql_command() == SQLCOM_TRUNCATE) {
+    if (user_session->getSqlCommand() == SQLCOM_TRUNCATE) {
 
       n_rows = 1;
 
@@ -8323,7 +8323,7 @@ ha_innobase::store_lock(
   trx = check_trx_exists(session);
 
   assert(EQ_CURRENT_SESSION(session));
-  const uint32_t sql_command = session->get_sql_command();
+  const uint32_t sql_command = session->getSqlCommand();
 
   if (sql_command == SQLCOM_DROP_TABLE) {
 
