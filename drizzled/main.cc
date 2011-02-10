@@ -68,12 +68,17 @@
 
 #include "drizzled/util/backtrace.h"
 
+extern "C" int daemonize(int nochdir, int noclose, int wait_sigusr1);
+extern "C" int daemon_is_ready(void);
+
 using namespace drizzled;
 using namespace std;
 namespace fs=boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
+
+extern bool opt_daemon;
 
 
 /**
@@ -245,9 +250,26 @@ int main(int argc, char **argv)
 
   /* Function generates error messages before abort */
   error_handler_hook= my_message_sql;
+
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
-  if (init_common_variables(argc, argv, modules))
+  if (init_basic_variables(argc, argv))
+    unireg_abort(1);				// Will do exit
+
+  if (opt_daemon)
+  {
+    if (signal(SIGHUP, SIG_IGN) == SIG_ERR)
+    {
+      perror("Failed to ignore SIGHUP");
+    }
+    if (daemonize(1, 1, 1) == -1)
+    {
+      fprintf(stderr, "failed to daemon() in order to daemonize\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if (init_remaining_variables(modules))
     unireg_abort(1);				// Will do exit
 
   /*
@@ -361,6 +383,8 @@ int main(int argc, char **argv)
     }
   }
 
+  if (opt_daemon)
+    daemon_is_ready();
 
   /* 
     Listen for new connections and start new session for each connection
