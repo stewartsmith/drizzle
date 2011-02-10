@@ -41,6 +41,7 @@
 #include "usr0sess.h"
 #include "ut0vec.h"
 #include "row0merge.h"
+#include "row0mysql.h"
 
 UNIV_INTERN ulint dict_create_sys_replication_log(void)
 {
@@ -73,7 +74,7 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   error = que_eval_sql(info,
                        "PROCEDURE CREATE_SYS_REPLICATION_LOG_PROC () IS\n"
                        "BEGIN\n"
-                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT, SEGID INT, MESSAGE BLOB);\n"
+                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, MESSAGE BLOB);\n"
                        "CREATE UNIQUE CLUSTERED INDEX PRIMARY ON SYS_REPLICATION_LOG (ID);\n"
                        "END;\n"
                        , FALSE, trx);
@@ -188,15 +189,15 @@ ulint insert_replication_message(const char *message, size_t size,
   dfield = dtuple_get_nth_field(dtuple, 0);
 
   data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 8));
-  mach_write_to_8(data, trx_id);
+  row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&trx_id, 8, dict_table_is_comp(prebuilt->table));
   dfield_set_data(dfield, data, 8);
 
   dfield = dtuple_get_nth_field(dtuple, 1);
 
   data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 4));
-  mach_write_to_8(data, seg_id);
+  row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&seg_id, 4, dict_table_is_comp(prebuilt->table));
   dfield_set_data(dfield, data, 4);
-
+  
   dfield = dtuple_get_nth_field(dtuple, 2);
   dfield_set_data(dfield, message, size);
 
@@ -276,11 +277,15 @@ UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_
 
     // Store transaction id
     field = rec_get_nth_field_old(rec, 0, &len);
-    ret.id= *(uint64_t *)field;
+    byte idbyte[8];
+    convert_to_mysql_format(idbyte, field, 8);
+    ret.id= *(uint64_t *)idbyte;
 
     // Store segment id
     field = rec_get_nth_field_old(rec, 3, &len);
-    ret.seg_id= *(uint32_t *)field;
+    byte segbyte[4];
+    convert_to_mysql_format(segbyte, field, 4);
+    ret.seg_id= *(uint32_t *)segbyte;
 
     // Handler message
     field = rec_get_nth_field_old(rec, 4, &len);
@@ -303,4 +308,22 @@ UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_
   memset(&ret, 0, sizeof(ret));
 
   return ret;
+}
+
+UNIV_INTERN void convert_to_mysql_format(byte* out, const byte* in, int len)
+{
+  byte *ptr;
+  ptr = out + len;
+
+  for (;;) {
+    ptr--;
+    *ptr = *in;
+    if (ptr == out) {
+      break;
+    }
+    in++;
+  }
+
+  out[len - 1] = (byte) (out[len - 1] ^ 128);
+
 }

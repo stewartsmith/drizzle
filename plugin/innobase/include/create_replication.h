@@ -54,4 +54,6 @@ UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_
 
 UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizzled::message::Table *table_message);
 
+UNIV_INTERN void convert_to_mysql_format(byte* out, const byte* in, int len);
+
 #endif
