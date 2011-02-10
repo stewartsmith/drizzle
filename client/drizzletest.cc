@@ -57,6 +57,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <boost/array.hpp>
+#include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <boost/smart_ptr.hpp>
 
@@ -216,7 +217,7 @@ typedef struct st_var
 } VAR;
 
 /*Perl/shell-like variable registers */
-VAR var_reg[10];
+boost::array<VAR, 10> var_reg;
 
 
 boost::unordered_map<string, VAR *> var_hash;
@@ -394,14 +395,15 @@ struct st_expected_errors
 };
 static struct st_expected_errors saved_expected_errors;
 
-struct st_command
+class st_command
 {
+public:
   char *query, *query_buf,*first_argument,*last_argument,*end;
   int first_word_len, query_len;
   bool abort_on_error;
   st_expected_errors expected_errors;
   string require_file;
-  enum enum_commands type;
+  enum_commands type;
 
   st_command()
     : query(NULL), query_buf(NULL), first_argument(NULL), last_argument(NULL),
@@ -870,23 +872,18 @@ static void close_connections()
     }
     free(next_con->name);
   }
-  return;
 }
 
 
 static void close_files()
 {
-
   for (; cur_file >= file_stack; cur_file--)
   {
     if (cur_file->file && cur_file->file != stdin)
-    {
       fclose(cur_file->file);
-    }
-    free((unsigned char*) cur_file->file_name);
+    free(const_cast<char*>(cur_file->file_name));
     cur_file->file_name= 0;
   }
-  return;
 }
 
 
@@ -896,20 +893,13 @@ static void free_used_memory()
   close_files();
   for_each(var_hash.begin(), var_hash.end(), var_free);
   var_hash.clear();
-
-  vector<st_command *>::iterator iter;
-  for (iter= q_lines.begin() ; iter < q_lines.end() ; iter++)
-  {
-    struct st_command * q_line= *iter;
-    delete q_line;
-  }
-
-  for (int i= 0; i < 10; i++)
+  BOOST_FOREACH(vector<st_command*>::reference i, q_lines)
+    delete i;
+  for (size_t i= 0; i < var_reg.size(); i++)
   {
     if (var_reg[i].alloced_len)
       free(var_reg[i].str_val);
   }
-
   free_all_replace();
   free(opt_pass);
 }
@@ -936,7 +926,6 @@ static void cleanup_and_exit(int exit_code)
       assert(0);
     }
   }
-
   exit(exit_code);
 }
 
@@ -1708,7 +1697,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     var_name--;  /* Point at last character */
   }
   else
-    v = var_reg + digit;
+    v = &var_reg[digit];
 
   if (!raw && v->int_dirty)
   {
@@ -1763,7 +1752,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     v= var_obtain(var_name, (uint32_t) (var_name_end - var_name));
   }
   else
-    v= var_reg + digit;
+    v= &var_reg[digit];
 
   eval_expr(v, var_val, (const char**) &var_val_end);
 
@@ -3310,7 +3299,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
     sleep_val= opt_sleep;
 
   if (sleep_val)
-    usleep((uint32_t) (sleep_val * 1000000L));
+    usleep(sleep_val * 1000000);
   command->last_argument= sleep_end;
   return 0;
 }
