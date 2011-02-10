@@ -147,8 +147,8 @@ test-jp: check
 test-plugins: check
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
-test-dbqp: 
-	( cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) )
+test-dbqp: check
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) )
 
 
 distclean-local: nukevar
