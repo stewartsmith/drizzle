@@ -204,8 +204,9 @@ master_pos_st master_pos;
 
 /* if set, all results are concated and compared against this file */
 
-typedef struct st_var
+class VAR
 {
+public:
   char *name;
   int name_len;
   char *str_val;
@@ -215,13 +216,13 @@ typedef struct st_var
   int int_dirty; /* do not update string if int is updated until first read */
   int alloced;
   char *env_s;
-} VAR;
+};
 
 /*Perl/shell-like variable registers */
 boost::array<VAR, 10> var_reg;
 
-
-boost::unordered_map<string, VAR *> var_hash;
+typedef boost::unordered_map<string, VAR *> var_hash_t;
+var_hash_t var_hash;
 
 struct st_connection
 {
@@ -394,7 +395,8 @@ struct st_expected_errors
   struct st_match_err err[10];
   uint32_t count;
 };
-static struct st_expected_errors saved_expected_errors;
+
+static st_expected_errors saved_expected_errors;
 
 class st_command
 {
@@ -1682,8 +1684,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    boost::unordered_map<string, VAR*>::iterator iter=
-      var_hash.find(save_var_name_str);
+    var_hash_t::iterator iter= var_hash.find(save_var_name_str);
     if (iter == var_hash.end())
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
@@ -1693,7 +1694,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     }
     else
     {
-      v= (*iter).second;
+      v= iter->second;
     }
     var_name--;  /* Point at last character */
   }
@@ -1720,13 +1721,10 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  boost::unordered_map<string, VAR*>::iterator iter=
-    var_hash.find(var_name);
+  var_hash_t::iterator iter= var_hash.find(var_name);
   if (iter != var_hash.end())
-    return (*iter).second;
-  VAR *v = var_init(0, name, len, "", 0);
-  var_hash.insert(make_pair(var_name, v));
-  return v;
+    return iter->second;
+  return var_hash[var_name] = var_init(0, name, len, "", 0);
 }
 
 
@@ -3412,9 +3410,7 @@ static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 
   ErrorCodes::iterator it= global_error_names.find(error_name_s);
   if (it != global_error_names.end())
-  {
-    return (*it).second;
-  }
+    return it->second;
 
   die("Unknown SQL error name '%s'", error_name_s.c_str());
   return 0;
