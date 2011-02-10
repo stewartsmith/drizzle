@@ -59,4 +59,5 @@ LOAD_FILE('DTR_VARDIR/tmp/enum_errlog.tmp')
 
 
 
+COMMIT;
 DROP TABLE t1;
