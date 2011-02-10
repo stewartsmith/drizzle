@@ -1634,24 +1634,17 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
 
 VAR* var_from_env(const char *name, const char *def_val)
 {
-  const char *tmp;
-  VAR *v;
-  if (!(tmp = getenv(name)))
+  const char *tmp= getenv(name);
+  if (!tmp)
     tmp = def_val;
-
-  v = var_init(0, name, strlen(name), tmp, strlen(tmp));
-  string var_name(name);
-  var_hash.insert(make_pair(var_name, v));
-  return v;
+  return var_hash[name] = var_init(0, name, strlen(name), tmp, strlen(tmp));
 }
-
 
 VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
              bool ignore_not_existing)
 {
   int digit;
   VAR *v;
-
   if (*var_name != '$')
     goto err;
   digit = *++var_name - '0';
@@ -2185,7 +2178,6 @@ static void do_source(struct st_command *command)
 static void init_builtin_echo()
 {
   builtin_echo[0]= 0;
-  return;
 }
 
 
@@ -3373,13 +3365,9 @@ static void fill_global_error_names()
       and assign that string to the $variable
     */
     size_t *lengths= drizzle_row_field_sizes(&res);
-    const std::string error_name(row[0], lengths[0]);
-    const std::string error_code(row[1], lengths[1]);
-
     try
     {
-      global_error_names.insert(ErrorCodes::value_type(error_name,
-                                                       boost::lexical_cast<uint32_t>(error_code)));
+      global_error_names[string(row[0], lengths[0])] = boost::lexical_cast<uint32_t>(string(row[1], lengths[1]));
     }
     catch (boost::bad_lexical_cast &ex)
     {
