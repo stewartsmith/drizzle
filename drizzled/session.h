@@ -860,6 +860,12 @@ public:
   uint64_t limit_found_rows;
   uint64_t options; /**< Bitmap of options */
   int64_t row_count_func; /**< For the ROW_COUNT() function */
+
+  int64_t rowCount() const
+  {
+    return row_count_func;
+  }
+
   ha_rows cuted_fields; /**< Count of "cut" or truncated fields. @todo Kill this friggin thing. */
 
   /** 

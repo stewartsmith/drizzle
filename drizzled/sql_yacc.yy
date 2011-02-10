@@ -852,16 +852,12 @@ create:
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
-            statement::CreateIndex *statement= (statement::CreateIndex *)Lex->statement;
-
             if (not Lex->current_select->add_table_to_list(Lex->session, $9,
                                                             NULL,
                                                             TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
-            Key *key;
-            key= new Key($4, $6, &statement->key_create_info, 0, Lex->col_list);
-            statement->alter_info.key_list.push_back(key);
-            Lex->col_list.empty();
+
+            parser::buildKey(Lex, $4, $6);
           }
         | CREATE DATABASE opt_if_not_exists schema_name
           {
@@ -1048,29 +1044,17 @@ custom_engine_option:
 default_collation:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            HA_CREATE_INFO *cinfo= &statement->create_info();
-            if ((cinfo->used_fields & HA_CREATE_USED_DEFAULT_CHARSET) &&
-                 cinfo->default_table_charset && $4 &&
-                 !my_charset_same(cinfo->default_table_charset,$4))
-              {
-                my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                         $4->name, cinfo->default_table_charset->csname);
-                DRIZZLE_YYABORT;
-              }
-              statement->create_info().default_table_charset= $4;
-              statement->create_info().used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+            if (not parser::buildCollation(Lex, $4))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         ;
 
 default_collation_schema:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
-            statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-
-            message::Schema &schema_message= statement->schema_message;
-            schema_message.set_collation($4->name);
+            ((statement::CreateSchema *)Lex->statement)->schema_message.set_collation($4->name);
           }
         ;
 
@@ -1117,39 +1101,16 @@ column_def:
 key_def:
           key_type opt_ident key_alg '(' key_list ')' key_options
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Key($1, $2, &statement->key_create_info, 0,
-                              Lex->col_list);
-            statement->alter_info.key_list.push_back(key);
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+            parser::buildKey(Lex, $1, $2);
           }
         | opt_constraint constraint_key_type opt_ident key_alg
           '(' key_list ')' key_options
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Key($2, $3.str ? $3 : $1, &statement->key_create_info, 0,
-                              Lex->col_list);
-            statement->alter_info.key_list.push_back(key);
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+            parser::buildKey(Lex, $2, $3.str ? $3 : $1);
           }
         | opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Foreign_key($1.str ? $1 : $4, Lex->col_list,
-                                      $8,
-                                      Lex->ref_list,
-                                      statement->fk_delete_opt,
-                                      statement->fk_update_opt,
-                                      statement->fk_match_option);
-
-            statement->alter_info.key_list.push_back(key);
-            key= new Key(Key::MULTIPLE, $1.str ? $1 : $4,
-                         &default_key_create_info, 1,
-                         Lex->col_list);
-            statement->alter_info.key_list.push_back(key);
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
-            /* Only used for ALTER TABLE. Ignored otherwise. */
-            statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
+            parser::buildForeignKey(Lex, $1.str ? $1 : $4, $8);
           }
         | constraint opt_check_constraint
           {
@@ -1212,99 +1173,28 @@ field_def:
 field_definition:
           int_type ignored_field_number_length opt_field_number_signed opt_zerofill
           { 
-            $$= $1;
-            Lex->length=(char*) 0; /* use default length */
-
-            if ($3 or $4)
-            {
-              $1= DRIZZLE_TYPE_LONGLONG;
-            }
-
-            if (Lex->field())
-            {
-              assert ($1 == DRIZZLE_TYPE_LONG or $1 == DRIZZLE_TYPE_LONGLONG);
-              // We update the type for unsigned types
-              if ($3 or $4)
-              {
-                Lex->field()->set_type(message::Table::Field::BIGINT);
-                Lex->field()->mutable_constraints()->set_is_unsigned(true);
-              }
-              if ($1 == DRIZZLE_TYPE_LONG)
-              {
-                Lex->field()->set_type(message::Table::Field::INTEGER);
-              }
-              else if ($1 == DRIZZLE_TYPE_LONGLONG)
-              {
-                Lex->field()->set_type(message::Table::Field::BIGINT);
-              }
-            }
+            $$= parser::buildIntegerColumn(Lex, $1, ($3 or $4));
           }
         | real_type opt_precision
           {
-            $$=$1;
-
-            if (Lex->field())
-            {
-              assert ($1 == DRIZZLE_TYPE_DOUBLE);
-              Lex->field()->set_type(message::Table::Field::DOUBLE);
-            }
+            assert ($1 == DRIZZLE_TYPE_DOUBLE);
+            $$= parser::buildDoubleColumn(Lex);
           }
         | char '(' NUM ')'
           {
-            Lex->length=$3.str;
-            $$=DRIZZLE_TYPE_VARCHAR;
-
-            if (Lex->field())
-            {
-              Lex->field()->set_type(message::Table::Field::VARCHAR);
-              message::Table::Field::StringFieldOptions *string_field_options;
-
-              string_field_options= Lex->field()->mutable_string_options();
-
-              string_field_options->set_length(atoi($3.str));
-            }
+            $$= parser::buildVarcharColumn(Lex, $3.str);
           }
         | char
           {
-            Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_VARCHAR;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::VARCHAR);
+            $$= parser::buildVarcharColumn(Lex, "1");
           }
         | varchar '(' NUM ')'
           {
-            Lex->length=$3.str;
-            $$= DRIZZLE_TYPE_VARCHAR;
-
-            if (Lex->field())
-            {
-              Lex->field()->set_type(message::Table::Field::VARCHAR);
-
-              message::Table::Field::StringFieldOptions *string_field_options;
-
-              string_field_options= Lex->field()->mutable_string_options();
-
-              string_field_options->set_length(atoi($3.str));
-            }
+            $$= parser::buildVarcharColumn(Lex, $3.str);
           }
         | VARBINARY '(' NUM ')'
           {
-            Lex->length=$3.str;
-            Lex->charset=&my_charset_bin;
-            $$= DRIZZLE_TYPE_VARCHAR;
-
-            if (Lex->field())
-            {
-              Lex->field()->set_type(message::Table::Field::VARCHAR);
-              message::Table::Field::StringFieldOptions *string_field_options;
-
-              string_field_options= Lex->field()->mutable_string_options();
-
-              string_field_options->set_length(atoi($3.str));
-              string_field_options->set_collation_id(my_charset_bin.number);
-              string_field_options->set_collation(my_charset_bin.name);
-            }
+            $$= parser::buildVarbinaryColumn(Lex, $3.str);
           }
         | DATE_SYM
           {
@@ -1322,19 +1212,11 @@ field_definition:
           }
         | TIMESTAMP_SYM
           {
-            $$=DRIZZLE_TYPE_TIMESTAMP;
-            Lex->length= 0;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::EPOCH);
+            $$=parser::buildTimestampColumn(Lex, NULL);
           }
         | TIMESTAMP_SYM '(' NUM ')'
           {
-            $$=DRIZZLE_TYPE_MICROTIME;
-            Lex->length= $3.str;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::EPOCH);
+            $$=parser::buildTimestampColumn(Lex, $3.str);
           }
         | DATETIME_SYM
           {
@@ -1345,19 +1227,7 @@ field_definition:
           }
         | BLOB_SYM
           {
-            Lex->charset=&my_charset_bin;
-            $$=DRIZZLE_TYPE_BLOB;
-            Lex->length=(char*) 0; /* use default length */
-
-            if (Lex->field())
-            {
-              Lex->field()->set_type(message::Table::Field::BLOB);
-              message::Table::Field::StringFieldOptions *string_field_options;
-
-              string_field_options= Lex->field()->mutable_string_options();
-              string_field_options->set_collation_id(my_charset_bin.number);
-              string_field_options->set_collation(my_charset_bin.name);
-            }
+            $$= parser::buildBlobColumn(Lex);
           }
         | TEXT_SYM
           {
@@ -1369,24 +1239,15 @@ field_definition:
           }
         | DECIMAL_SYM float_options
           {
-            $$=DRIZZLE_TYPE_DECIMAL;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DECIMAL);
+            $$= parser::buildDecimalColumn(Lex);
           }
         | NUMERIC_SYM float_options
           {
-            $$=DRIZZLE_TYPE_DECIMAL;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DECIMAL);
+            $$= parser::buildDecimalColumn(Lex);
           }
         | FIXED_SYM float_options
           {
-            $$=DRIZZLE_TYPE_DECIMAL;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DECIMAL);
+            $$= parser::buildDecimalColumn(Lex);
           }
         | ENUM_SYM
           {
@@ -1401,30 +1262,15 @@ field_definition:
           }
         | UUID_SYM
           {
-            $$=DRIZZLE_TYPE_UUID;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::UUID);
+            $$= parser::buildUuidColumn(Lex);
           }
         | BOOLEAN_SYM
           {
-            $$=DRIZZLE_TYPE_BOOLEAN;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::BOOLEAN);
+            $$= parser::buildBooleanColumn(Lex);
           }
         | SERIAL_SYM
           {
-            $$=DRIZZLE_TYPE_LONGLONG;
-            Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-              Lex->field()->mutable_constraints()->set_is_unsigned(true);
-
-              Lex->field()->set_type(message::Table::Field::BIGINT);
-            }
+            $$= parser::buildSerialColumn(Lex);
           }
         ;
 
@@ -1551,61 +1397,23 @@ attribute:
           }
         | AUTO_INC
           {
-            Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-            }
+            parser::buildAutoOnColumn(Lex);
           }
         | SERIAL_SYM DEFAULT VALUE_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG;
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-              Lex->field()->mutable_constraints()->set_is_unsigned(true);
-            }
+            (void)parser::buildSerialColumn(Lex);
           }
         | opt_primary KEY_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            Lex->type|= PRI_KEY_FLAG | NOT_NULL_FLAG;
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-            }
+            parser::buildPrimaryOnColumn(Lex);
           }
         | UNIQUE_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            Lex->type|= UNIQUE_FLAG;
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_unique(true);
-            }
+            parser::buildKeyOnColumn(Lex);
           }
         | UNIQUE_SYM KEY_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            Lex->type|= UNIQUE_KEY_FLAG;
-            statement->alter_info.flags.set(ALTER_ADD_INDEX);
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_unique(true);
-            }
+            parser::buildKeyOnColumn(Lex);
           }
         | COMMENT_SYM TEXT_STRING_sys
           {
