@@ -177,8 +177,8 @@ static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default
 */
 static char *timer_file = NULL;
 static uint64_t timer_start;
-static void timer_output(void);
-static uint64_t timer_now(void);
+static void timer_output();
+static uint64_t timer_now();
 
 static uint64_t progress_start= 0;
 
@@ -445,8 +445,8 @@ void eval_expr(VAR* v, const char *p, const char** p_end);
 bool match_delimiter(int c, const char *delim, uint32_t length);
 void dump_result_to_reject_file(char *buf, int size);
 void dump_result_to_log_file(const char *buf, int size);
-void dump_warning_messages(void);
-void dump_progress(void);
+void dump_warning_messages();
+void dump_progress();
 
 void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars);
@@ -457,21 +457,18 @@ void str_to_file2(const char *fname, const char *str, int size, bool append);
 static char *replace_column[MAX_COLUMNS];
 static uint32_t max_replace_column= 0;
 void do_get_replace_column(struct st_command*);
-void free_replace_column(void);
+void free_replace_column();
 
 /* For replace */
 void do_get_replace(struct st_command *command);
-void free_replace(void);
+void free_replace();
 
 /* For replace_regex */
 void do_get_replace_regex(struct st_command *command);
-void free_replace_regex(void);
+void free_replace_regex();
 
-
-void free_all_replace(void);
-
-
-void free_all_replace(void){
+static void free_all_replace()
+{
   free_replace();
   free_replace_regex();
   free_replace_column();
@@ -493,8 +490,8 @@ void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars)
 {
   const char *p;
-  register char c, next_c;
-  register int escaped = 0;
+  char c, next_c;
+  int escaped = 0;
   VAR *v;
 
 
@@ -872,7 +869,7 @@ static void handle_command_error(struct st_command *command, uint32_t error)
 }
 
 
-static void close_connections(void)
+static void close_connections()
 {
   for (--next_con; next_con >= connections; --next_con)
   {
@@ -887,7 +884,7 @@ static void close_connections(void)
 }
 
 
-static void close_files(void)
+static void close_files()
 {
 
   for (; cur_file >= file_stack; cur_file--)
@@ -903,11 +900,8 @@ static void close_files(void)
 }
 
 
-static void free_used_memory(void)
+static void free_used_memory()
 {
-  uint32_t i;
-
-
   close_connections();
   close_files();
   for_each(var_hash.begin(), var_hash.end(), var_free);
@@ -920,7 +914,7 @@ static void free_used_memory(void)
     delete q_line;
   }
 
-  for (i= 0; i < 10; i++)
+  for (int i= 0; i < 10; i++)
   {
     if (var_reg[i].alloced_len)
       free(var_reg[i].str_val);
@@ -928,8 +922,6 @@ static void free_used_memory(void)
 
   free_all_replace();
   free(opt_pass);
-
-  return;
 }
 
 
@@ -2223,7 +2215,7 @@ static void do_source(struct st_command *command)
 }
 
 
-static void init_builtin_echo(void)
+static void init_builtin_echo()
 {
   builtin_echo[0]= 0;
   return;
@@ -3189,7 +3181,7 @@ static void do_sync_with_master(struct st_command *command)
   when ndb binlog is on, this call will wait until last updated epoch
   (locally in the drizzled) has been received into the binlog
 */
-static int do_save_master_pos(void)
+static int do_save_master_pos()
 {
   drizzle_result_st res;
   drizzle_return_t ret;
@@ -4681,7 +4673,7 @@ void dump_result_to_log_file(const char *buf, int size)
           log_file);
 }
 
-void dump_progress(void)
+void dump_progress()
 {
   char progress_file[FN_REFLEN];
   str_to_file(internal::fn_format(progress_file, result_file_name.c_str(),
@@ -4691,7 +4683,7 @@ void dump_progress(void)
               ds_progress.c_str(), ds_progress.length());
 }
 
-void dump_warning_messages(void)
+void dump_warning_messages()
 {
   char warn_file[FN_REFLEN];
 
@@ -6136,7 +6128,7 @@ try
   the time between executing the two commands.
 */
 
-void timer_output(void)
+void timer_output()
 {
   if (timer_file)
   {
@@ -6150,7 +6142,7 @@ void timer_output(void)
 }
 
 
-uint64_t timer_now(void)
+uint64_t timer_now()
 {
 #if defined(HAVE_GETHRTIME)
   return gethrtime()/1000/1000;
@@ -6190,10 +6182,9 @@ void do_get_replace_column(struct st_command *command)
   start= buff= (char *)malloc(strlen(from)+1);
   while (*from)
   {
-    char *to;
     uint32_t column_number;
 
-    to= get_string(&buff, &from, command);
+    char *to= get_string(&buff, &from, command);
     if (!(column_number= atoi(to)) || column_number > MAX_COLUMNS)
       die("Wrong column number to replace_column in '%s'", command->query);
     if (!*from)
@@ -6212,14 +6203,10 @@ void do_get_replace_column(struct st_command *command)
 
 void free_replace_column()
 {
-  uint32_t i;
-  for (i=0 ; i < max_replace_column ; i++)
+  for (uint32_t i= 0 ; i < max_replace_column; i++)
   {
-    if (replace_column[i])
-    {
-      free(replace_column[i]);
-      replace_column[i]= 0;
-    }
+    free(replace_column[i]);
+    replace_column[i]= 0;
   }
   max_replace_column= 0;
 }
@@ -6324,8 +6311,8 @@ typedef struct st_replace_found {
 void replace_strings_append(REPLACE *rep, string* ds,
                             const char *str, int len)
 {
-  register REPLACE *rep_pos;
-  register REPLACE_STRING *rep_str;
+  REPLACE *rep_pos;
+  REPLACE_STRING *rep_str;
   const char *start, *from;
 
 
@@ -7127,35 +7114,29 @@ void free_last_set(REP_SETS *sets)
 {
   sets->count--;
   sets->extra++;
-  return;
 }
 
 void free_sets(REP_SETS *sets)
 {
   free(sets->set_buffer);
   free(sets->bit_buffer);
-  return;
 }
 
 void internal_set_bit(REP_SET *set, uint32_t bit)
 {
   set->bits[bit / WORD_BIT] |= 1 << (bit % WORD_BIT);
-  return;
 }
 
 void internal_clear_bit(REP_SET *set, uint32_t bit)
 {
   set->bits[bit / WORD_BIT] &= ~ (1 << (bit % WORD_BIT));
-  return;
 }
 
 
 void or_bits(REP_SET *to,REP_SET *from)
 {
-  register uint32_t i;
-  for (i=0 ; i < to->size_of_bits ; i++)
+  for (uint32_t i= 0 ; i < to->size_of_bits; i++)
     to->bits[i]|=from->bits[i];
-  return;
 }
 
 void copy_bits(REP_SET *to,REP_SET *from)
