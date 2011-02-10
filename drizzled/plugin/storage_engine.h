@@ -223,11 +223,11 @@ protected:
   }
 
   /* Old style cursor errors */
-  void print_keydup_error(uint32_t key_nr, const char *msg, Table &table);
-  virtual bool get_error_message(int error, String *buf);
+  void print_keydup_error(uint32_t key_nr, const char *msg, const Table &table) const;
+  virtual bool get_error_message(int error, String *buf) const;
 
 public:
-  virtual void print_error(int error, myf errflag, Table& table);
+  virtual void print_error(int error, myf errflag, const Table& table) const;
 
   bool is_user_selectable() const
   {

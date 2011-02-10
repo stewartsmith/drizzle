@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,23 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CHECK_STACK_OVERRUN_H
-#define DRIZZLED_CHECK_STACK_OVERRUN_H
+#ifndef DRIZZLED_REFRESH_VERSION_H
+#define DRIZZLED_REFRESH_VERSION_H
+
+#include "config.h"
 
 namespace drizzled
 {
 
-class Session;
-
-/**
-  @note
-  Note: The 'buf' parameter is necessary, even if it is unused here.
-  - fix_fields functions has a "dummy" buffer large enough for the
-    corresponding exec. (Thus we only have to check in fix_fields.)
-  - Passing to check_stack_overrun() prevents the compiler from removing it.
+/** 
+  Refresh value. We use to test this to find out if a refresh even has happened recently.
 */
-bool check_stack_overrun(Session *session, long margin, void *buff);
+uint64_t refresh_version;  /* Increments on each reload */
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CHECK_STACK_OVERRUN_H */
+#endif /* DRIZZLED_REFRESH_VERSION_H */

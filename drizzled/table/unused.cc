@@ -34,6 +34,8 @@
 namespace drizzled
 {
 
+extern uint64_t table_cache_size;
+
 namespace table
 {
 

@@ -21,7 +21,6 @@
 #define DRIZZLED_PTHREAD_GLOBALS_H
 
 #include <pthread.h>
-#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>

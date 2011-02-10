@@ -41,6 +41,7 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include "drizzled/transaction_services.h"
 

@@ -21,9 +21,13 @@
 #ifndef DRIZZLED_DB_H
 #define DRIZZLED_DB_H
 
+#include <drizzled/message/schema.h>
+
 namespace drizzled {
 
+class Session;
 namespace message { class Schema; }
+namespace identifier { class Schema; }
 
 bool create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
 bool alter_db(Session *session, const message::Schema &schema_message, const message::schema::shared_ptr &original_schema);

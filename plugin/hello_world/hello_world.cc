@@ -18,9 +18,11 @@
  */
 
 #include "config.h"
-#include <drizzled/plugin/function.h>
-#include <drizzled/item/func.h>
+
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/item/func.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/function.h>
 
 #include <string>
 

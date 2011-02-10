@@ -18,55 +18,52 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DEBUG_H
-#define DRIZZLED_DEBUG_H
+#include "config.h"
 
-#include <bitset>
+#include "drizzled/session/state.h"
+#include "drizzled/definitions.h"
 
-namespace drizzled {
+#include <string>
 
-/* Bits from testflag */
-
-namespace debug {
-enum flag_t
+namespace drizzled
 {
-  PRINT_CACHED_TABLES= 1,
-  NO_KEY_GROUP,
-  MIT_THREAD,
-  KEEP_TMP_TABLES,
-  READCHECK, /**< Force use of readcheck */
-  NO_EXTRA,
-  CORE_ON_SIGNAL, /**< Give core if signal */
-  NO_STACKTRACE,
-  ALLOW_SIGINT, /**< Allow sigint on threads */
-  SYNCHRONIZATION /**< get server to do sleep in some places */
-};
 
-class Flags
+namespace session
 {
-public:
-  typedef std::bitset<12> Options;
 
-  static inline Flags &singleton()
+State::State(const char *in_packet, size_t in_packet_length)
+{
+  if (in_packet_length)
   {
-    static Flags _singleton;
+    size_t minimum= std::min(in_packet_length, static_cast<size_t>(PROCESS_LIST_WIDTH));
+    _query.resize(minimum + 1);
+    memcpy(&_query[0], in_packet, minimum);
+  }
+  else
+  {
+    _query.resize(0);
+  }
+}
 
-    return _singleton;
+const char *State::query() const
+{
+  if (_query.size())
+    return &_query[0];
+
+  return "";
+}
+
+const char *State::query(size_t &size) const
+{
+  if (_query.size())
+  {
+    size= _query.size() -1;
+    return &_query[0];
   }
 
-  inline Options &options()
-  {
-    return _options;
-  }
+  size= 0;
+  return "";
+}
 
-private:
-  Options _options;
-};
-
-} // namespace debug
-
-debug::Flags::Options &getDebug();
-
+} /* namespace session */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_DEBUG_H */

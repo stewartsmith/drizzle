@@ -58,6 +58,7 @@
 #include "drizzled/internal/my_bit.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <drizzled/debug.h>
 
@@ -1171,7 +1172,7 @@ int Join::reinit()
 */
 bool Join::init_save_join_tab()
 {
-  if (!(tmp_join= (Join*)session->alloc(sizeof(Join))))
+  if (!(tmp_join= (Join*)session->getMemRoot()->allocate(sizeof(Join))))
     return 1;
 
   error= 0;              // Ensure that tmp_join.error= 0
@@ -1184,7 +1185,7 @@ bool Join::save_join_tab()
 {
   if (! join_tab_save && select_lex->master_unit()->uncacheable.any())
   {
-    if (!(join_tab_save= (JoinTable*)session->memdup((unsigned char*) join_tab,
+    if (!(join_tab_save= (JoinTable*)session->getMemRoot()->duplicate((unsigned char*) join_tab,
             sizeof(JoinTable) * tables)))
       return 1;
   }
@@ -2078,7 +2079,7 @@ bool Join::rollup_init()
   */
   tmp_table_param.group_parts= send_group_parts;
 
-  rollup.setNullItems((Item_null_result**) session->alloc((sizeof(Item*) +
+  rollup.setNullItems((Item_null_result**) session->getMemRoot()->allocate((sizeof(Item*) +
                                                                 sizeof(Item**) +
                                                                 sizeof(List<Item>) +
                                                                 ref_pointer_array_size)
@@ -3226,7 +3227,7 @@ static bool get_best_combination(Join *join)
 
   table_count=join->tables;
   if (!(join->join_tab=join_tab=
-  (JoinTable*) session->alloc(sizeof(JoinTable)*table_count)))
+  (JoinTable*) session->getMemRoot()->allocate(sizeof(JoinTable)*table_count)))
     return(true);
 
   for (i= 0; i < table_count; i++)
@@ -4384,7 +4385,7 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   */
   if (!join->table_reexec)
   {
-    if (!(join->table_reexec= (Table**) join->session->alloc(sizeof(Table*))))
+    if (!(join->table_reexec= (Table**) join->session->getMemRoot()->allocate(sizeof(Table*))))
       return(true);
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
@@ -4392,7 +4393,7 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   if (!join->join_tab_reexec)
   {
     if (!(join->join_tab_reexec=
-          (JoinTable*) join->session->alloc(sizeof(JoinTable))))
+          (JoinTable*) join->session->getMemRoot()->allocate(sizeof(JoinTable))))
       return(true);
     new (join->join_tab_reexec) JoinTable();
     if (join->tmp_join)
@@ -4659,7 +4660,7 @@ static bool make_join_select(Join *join,
           tab->type == AM_EQ_REF)
       {
         optimizer::SqlSelect *sel= tab->select= ((optimizer::SqlSelect*)
-            session->memdup((unsigned char*) select,
+            session->getMemRoot()->duplicate((unsigned char*) select,
               sizeof(*select)));
         if (! sel)
           return 1;			// End of memory
@@ -4797,7 +4798,7 @@ static bool make_join_select(Join *join,
                                          current_map, 0)))
             {
               tab->cache.select= (optimizer::SqlSelect*)
-                session->memdup((unsigned char*) sel, sizeof(optimizer::SqlSelect));
+                session->getMemRoot()->duplicate((unsigned char*) sel, sizeof(optimizer::SqlSelect));
               tab->cache.select->cond= tmp;
               tab->cache.select->read_tables= join->const_table_map;
             }
@@ -4933,7 +4934,7 @@ static bool make_join_readinfo(Join *join)
 
     if (tab->insideout_match_tab)
     {
-      if (! (tab->insideout_buf= (unsigned char*) join->session->alloc(tab->table->key_info
+      if (! (tab->insideout_buf= (unsigned char*) join->session->getMemRoot()->allocate(tab->table->key_info
                                                                        [tab->index].
                                                                        key_length)))
         return true;
@@ -5524,8 +5525,8 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 
   table_count= join->tables;
   stat= (JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
-  stat_ref= (JoinTable**) join->session->alloc(sizeof(JoinTable*)*MAX_TABLES);
-  table_vector= (Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
+  stat_ref= (JoinTable**) join->session->getMemRoot()->allocate(sizeof(JoinTable*)*MAX_TABLES);
+  table_vector= (Table**) join->session->getMemRoot()->allocate(sizeof(Table*)*(table_count*2));
   if (! stat || ! stat_ref || ! table_vector)
     return 1;
 

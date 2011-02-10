@@ -61,6 +61,7 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/constrained_value.h"
 #include "drizzled/visibility.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <cstdio>
 #include <map>
@@ -1489,7 +1490,7 @@ static struct option *find_option(struct option *opt, const char *name)
 drizzle_show_var* enumerate_sys_vars(Session *session)
 {
   int size= sizeof(drizzle_show_var) * (system_variable_map.size() + 1);
-  drizzle_show_var *result= (drizzle_show_var*) session->alloc(size);
+  drizzle_show_var *result= (drizzle_show_var*) session->getMemRoot()->allocate(size);
 
   if (result)
   {

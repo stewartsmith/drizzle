@@ -18,55 +18,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DEBUG_H
-#define DRIZZLED_DEBUG_H
+#ifndef DRIZZLED_SESSION_STATE_H
+#define DRIZZLED_SESSION_STATE_H
 
-#include <bitset>
+#include <drizzled/util/string.h>
+#include <boost/unordered_map.hpp>
 
-namespace drizzled {
-
-/* Bits from testflag */
-
-namespace debug {
-enum flag_t
+namespace drizzled
 {
-  PRINT_CACHED_TABLES= 1,
-  NO_KEY_GROUP,
-  MIT_THREAD,
-  KEEP_TMP_TABLES,
-  READCHECK, /**< Force use of readcheck */
-  NO_EXTRA,
-  CORE_ON_SIGNAL, /**< Give core if signal */
-  NO_STACKTRACE,
-  ALLOW_SIGINT, /**< Allow sigint on threads */
-  SYNCHRONIZATION /**< get server to do sleep in some places */
-};
 
-class Flags
+class Session;
+
+namespace session
 {
+
+class State {
+  std::vector <char> _query;
+
 public:
-  typedef std::bitset<12> Options;
+  typedef boost::shared_ptr<State> shared_ptr;
+  typedef boost::shared_ptr<State> const_shared_ptr;
 
-  static inline Flags &singleton()
-  {
-    static Flags _singleton;
+  State(const char *in_packet, size_t in_packet_length);
 
-    return _singleton;
-  }
+  const char *query() const;
 
-  inline Options &options()
-  {
-    return _options;
-  }
+  const char *query(size_t &size) const;
 
-private:
-  Options _options;
+protected:
+  friend class Session;
 };
 
-} // namespace debug
-
-debug::Flags::Options &getDebug();
-
+} /* namespace session */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DEBUG_H */
+#endif /* DRIZZLED_SESSION_STATE_H */

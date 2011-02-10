@@ -847,7 +847,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     - table->getShare()->path
     - table->alias
 */
-void StorageEngine::print_error(int error, myf errflag, Table &table)
+void StorageEngine::print_error(int error, myf errflag, const Table &table) const
 {
   drizzled::error_t textno= ER_GET_ERRNO;
   switch (error) {
@@ -1051,13 +1051,13 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
   @return
     Returns true if this is a temporary error
 */
-bool StorageEngine::get_error_message(int , String* )
+bool StorageEngine::get_error_message(int , String* ) const
 {
   return false;
 }
 
 
-void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, Table &table)
+void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, const Table &table) const
 {
   /* Write the duplicated key in the error message */
   char key[MAX_KEY_LENGTH];
