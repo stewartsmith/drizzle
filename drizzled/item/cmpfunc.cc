@@ -4482,12 +4482,14 @@ void Item_func_like::cleanup()
   Item_bool_func2::cleanup();
 }
 
+static unsigned char likeconv(const CHARSET_INFO *cs, unsigned char a)
+{
 #ifdef LIKE_CMP_TOUPPER
-#define likeconv(cs,A) (unsigned char) (cs)->toupper(A)
+  return cs->toupper(a);
 #else
-#define likeconv(cs,A) (unsigned char) (cs)->sort_order[(unsigned char) (A)]
+  return cs->sort_order[a];
 #endif
-
+}
 
 /**
   Precomputation dependent only on pattern_len.

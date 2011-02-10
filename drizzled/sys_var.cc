@@ -432,7 +432,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
 {
   if (fixed)
   {
-    char buf[22];
+    char buf[DECIMAL_LONGLONG_DIGITS];
 
     if (unsignd)
       internal::ullstr((uint64_t) val, buf);
@@ -1245,7 +1245,7 @@ bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
   {
     if (!(locale_match= my_locale_by_number((uint32_t) var->value->val_int())))
     {
-      char buf[20];
+      char buf[DECIMAL_LONGLONG_DIGITS];
       internal::int10_to_str((int) var->value->val_int(), buf, -10);
       my_printf_error(ER_UNKNOWN_ERROR, "Unknown locale: '%s'", MYF(0), buf);
       return 1;

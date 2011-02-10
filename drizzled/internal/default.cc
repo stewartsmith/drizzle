@@ -946,18 +946,19 @@ void print_defaults(const char *conf_file, const char **groups)
   This extra complexity is to avoid declaring 'rc' if it won't be
   used.
 */
-#define ADD_DIRECTORY(DIR)  (void) array_append_string_unique((DIR), default_directories, \
-                             array_elements(default_directories))
+static void add_directory(const char* dir)
+{
+  array_append_string_unique(dir, default_directories, array_elements(default_directories));
+}
 
-#define ADD_COMMON_DIRECTORIES() \
-  do { \
-    const char *env; \
-    if ((env= getenv("DRIZZLE_HOME"))) \
-      ADD_DIRECTORY(env); \
-    /* Placeholder for --defaults-extra-file=<path> */ \
-    ADD_DIRECTORY(""); \
-  } while (0)
-
+static void add_common_directories()
+{
+  const char *env= getenv("DRIZZLE_HOME"); 
+  if (env) 
+    add_directory(env); 
+  // Placeholder for --defaults-extra-file=<path>
+  add_directory(""); 
+}
 
 /**
   Initialize default directories for Unix
@@ -974,11 +975,11 @@ void print_defaults(const char *conf_file, const char **groups)
 static void init_default_directories(void)
 {
   memset(default_directories, 0, sizeof(default_directories));
-  ADD_DIRECTORY("/etc/");
-  ADD_DIRECTORY("/etc/drizzle/");
-  ADD_DIRECTORY(SYSCONFDIR);
-  ADD_COMMON_DIRECTORIES();
-  ADD_DIRECTORY("~/");
+  add_directory("/etc/");
+  add_directory("/etc/drizzle/");
+  add_directory(SYSCONFDIR);
+  add_common_directories();
+  add_directory("~/");
 }
 
 } /* namespace internal */

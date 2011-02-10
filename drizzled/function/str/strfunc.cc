@@ -84,7 +84,7 @@ int64_t Item_str_func::val_int()
 {
   assert(fixed == 1);
   int err;
-  char buff[22];
+  char buff[DECIMAL_LONGLONG_DIGITS];
   String *res, tmp(buff,sizeof(buff), &my_charset_bin);
   res= val_str(&tmp);
   return (res ?
