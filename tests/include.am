@@ -155,7 +155,8 @@ distclean-local: nukevar
 
 nukevar:
 	rm -rf tests/var \
-        rm -rf tests/dbqp_work 
+        rm -rf tests/dbqp_work \
+        rm tests/dbqp_data/*
  
 
 .PHONY: nukevar
