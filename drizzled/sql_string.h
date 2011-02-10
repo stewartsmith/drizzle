@@ -23,6 +23,7 @@
 /* This file is originally from the mysql distribution. Coded by monty */
 
 #include <drizzled/common.h>
+
 #include <cassert>
 #include <cstdlib>
 #include <cstring>

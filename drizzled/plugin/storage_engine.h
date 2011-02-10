@@ -21,25 +21,24 @@
 #define DRIZZLED_PLUGIN_STORAGE_ENGINE_H
 
 
+#include <drizzled/cached_directory.h>
 #include <drizzled/definitions.h>
-#include <drizzled/plugin.h>
+#include <drizzled/error_t.h>
 #include <drizzled/handler_structs.h>
+#include <drizzled/identifier.h>
 #include <drizzled/message.h>
 #include <drizzled/message/cache.h>
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/sql_string.h"
-#include "drizzled/identifier.h"
-#include "drizzled/cached_directory.h"
-#include "drizzled/plugin/monitored_in_transaction.h"
-
-#include <drizzled/error_t.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/monitored_in_transaction.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/sql_string.h>
 
 #include <bitset>
 #include <string>
 #include <vector>
 #include <set>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
