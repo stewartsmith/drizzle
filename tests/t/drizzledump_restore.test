@@ -114,9 +114,9 @@ DROP DATABASE test;
 DROP DATABASE drizzledump_test;
 
 --echo Ensure we don't have those tables (verify we restored something)
---ERROR 1146
+--ERROR ER_TABLE_UNKNOWN
 SELECT * FROM test.t1;
---ERROR 1146
+--ERROR ER_TABLE_UNKNOWN
 SELECT * FROM drizzledump_test.t1;
 
 --echo Restoring from dumpfile
@@ -133,5 +133,5 @@ DROP TABLE t1;
 
 --echo # Cleanup
 --echo # remove drizzledumpfile
---error 0,1
+--error EE_OK,EE_ERROR_FIRST
 --remove_file $drizzledumpfile

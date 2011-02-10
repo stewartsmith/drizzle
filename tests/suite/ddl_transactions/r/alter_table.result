@@ -1,0 +1,8 @@
+CREATE TABLE t1 (a int);
+BEGIN;
+ALTER TABLE t1 ADD COLUMN b int;
+ERROR HY000: Transactional DDL not supported
+ALTER TABLE t1 DISCARD TABLESPACE;
+ERROR HY000: Transactional DDL not supported
+COMMIT;
+DROP TABLE t1;

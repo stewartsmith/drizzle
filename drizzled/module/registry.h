@@ -24,11 +24,15 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <iostream>
+
+#include <boost/scoped_ptr.hpp>
 
 #include "drizzled/gettext.h"
 #include "drizzled/unireg.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/plugin.h"
+
 
 namespace drizzled
 {
@@ -37,26 +41,31 @@ namespace module
 {
 class Module;
 class Library;
+class Graph;
+
 
 class Registry
 {
 public:
+
   typedef std::map<std::string, Library *> LibraryMap;
   typedef std::map<std::string, Module *> ModuleMap;
+  typedef std::vector<Module *> ModuleList;
 private:
   LibraryMap library_registry_;
   ModuleMap module_registry_;
+  boost::scoped_ptr<Graph> depend_graph_; 
   
   plugin::Plugin::map plugin_registry;
 
-  Registry()
-   : module_registry_(),
-     plugin_registry()
-  { }
+  bool deps_built_;
 
+  Registry();
   Registry(const Registry&);
   Registry& operator=(const Registry&);
   ~Registry();
+
+  void buildDeps();
 public:
 
   static Registry& singleton()
@@ -75,7 +84,7 @@ public:
 
   void remove(Module *module);
 
-  std::vector<Module *> getList(bool active);
+  std::vector<Module *> getList();
 
   const plugin::Plugin::map &getPluginsMap() const
   {
@@ -105,7 +114,7 @@ public:
                    plugin_name.begin(), ::tolower);
     if (plugin_registry.find(std::make_pair(plugin_type, plugin_name)) != plugin_registry.end())
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Loading plugin %s failed: a %s plugin by that name "
                       "already exists.\n"),
                     plugin->getTypeName().c_str(),
@@ -119,7 +128,7 @@ public:
 
     if (failed)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Fatal error: Failed initializing %s::%s plugin.\n"),
                     plugin->getTypeName().c_str(),
                     plugin->getName().c_str());

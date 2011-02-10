@@ -62,6 +62,9 @@
 #include "drizzled/replication_services.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/catalog/local.h"
+#include "drizzled/abort_exception.h"
+
+#include <drizzled/debug.h>
 
 #include "drizzled/util/backtrace.h"
 
@@ -77,7 +80,7 @@ static uint32_t thr_kill_signal;
   All global error messages are sent here where the first one is stored
   for the client.
 */
-static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
@@ -90,26 +93,27 @@ static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
       session->is_fatal_error= 1;
 
     /*
-      TODO: There are two exceptions mechanism (Session and sp_rcontext),
+      @TODO There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
     */
-    if (session->handle_error(error, str,
-                          DRIZZLE_ERROR::WARN_LEVEL_ERROR))
-      return;;
+    if (session->handle_error(error, str, DRIZZLE_ERROR::WARN_LEVEL_ERROR))
+      return;
 
     /*
       session->lex->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
     if (! (session->lex->current_select &&
-        session->lex->current_select->no_error && !session->is_fatal_error))
+           session->lex->current_select->no_error && !session->is_fatal_error))
     {
       if (! session->main_da.is_error())            // Return only first message
       {
-        if (error == 0)
+        if (error == EE_OK)
           error= ER_UNKNOWN_ERROR;
+
         if (str == NULL)
           str= ER(error);
+
         session->main_da.set_error_status(error, str);
       }
     }
@@ -123,10 +127,13 @@ static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
       session->no_warnings_for_error= true;
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
       session->no_warnings_for_error= false;
-      }
     }
-    if (!session || MyFlags & ME_NOREFRESH)
-        errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
+  }
+
+  if (not session || MyFlags & ME_NOREFRESH)
+  {
+    errmsg_printf(error::ERROR, "%s: %s",internal::my_progname,str);
+  }
 }
 
 static void init_signals(void)
@@ -134,8 +141,8 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  if (!(test_flags.test(TEST_NO_STACKTRACE) || 
-        test_flags.test(TEST_CORE_ON_SIGNAL)))
+  if (not (getDebug().test(debug::NO_STACKTRACE) || 
+        getDebug().test(debug::CORE_ON_SIGNAL)))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
     sigemptyset(&sa.sa_mask);
@@ -151,13 +158,13 @@ static void init_signals(void)
     sigaction(SIGFPE, &sa, NULL);
   }
 
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
+  if (getDebug().test(debug::CORE_ON_SIGNAL))
   {
     /* Change limits so that we will get a core file */
     struct rlimit rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN,
+        errmsg_printf(error::WARN,
                       _("setrlimit could not change the size of core files "
                         "to 'infinity';  We may not be able to generate a "
                         "core file on signals"));
@@ -182,7 +189,7 @@ static void init_signals(void)
 #ifdef SIGTSTP
   sigaddset(&set,SIGTSTP);
 #endif
-  if (test_flags.test(TEST_SIGINT))
+  if (getDebug().test(debug::ALLOW_SIGINT))
   {
     sa.sa_flags= 0;
     sa.sa_handler= drizzled_end_thread_signal;
@@ -257,7 +264,7 @@ int main(int argc, char **argv)
   {
     if (chdir(getDataHome().file_string().c_str()))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Data directory %s does not exist\n"),
                     getDataHome().file_string().c_str());
       unireg_abort(1);
@@ -268,15 +275,15 @@ int main(int argc, char **argv)
     }
     if (chdir("local"))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Local catalog %s/local does not exist\n"),
                     getDataHome().file_string().c_str());
       unireg_abort(1);
     }
 
+    fs::path &full_data_home= getFullDataHome();
     full_data_home= fs::system_complete(getDataHome());
-    getDataHomeCatalog()= "./";
-    getDataHome()= "../";
+    std::cerr << "home " << full_data_home << std::endl;
   }
 
 
@@ -286,8 +293,22 @@ int main(int argc, char **argv)
     server_id= 1;
   }
 
-  if (init_server_components(modules))
+  try
+  {
+    if (init_server_components(modules))
+      DRIZZLE_ABORT;
+  }
+  catch (abort_exception& ex)
+  {
+#if defined(DEBUG)
+    cout << _("Drizzle has receieved an abort event.") << endl;
+    cout << _("In Function: ") << *::boost::get_error_info<boost::throw_function>(ex) << endl;
+    cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
+    cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
+#endif
     unireg_abort(1);
+  }
+
 
   /**
    * This check must be done after init_server_components for now
@@ -306,10 +327,8 @@ int main(int argc, char **argv)
   if (plugin::Listen::setup())
     unireg_abort(1);
 
-
   assert(plugin::num_trx_monitored_objects > 0);
-  if (drizzle_rm_tmp_tables() ||
-      my_tz_init((Session *)0, default_tz_name))
+  if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop= true;
     select_thread_in_use=0;
@@ -317,10 +336,10 @@ int main(int argc, char **argv)
 
     (void) unlink(pid_file.file_string().c_str());	// Not needed anymore
 
-    exit(1);
+    unireg_abort(1);
   }
 
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
+  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname,
                 PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
 
@@ -334,7 +353,11 @@ int main(int argc, char **argv)
     {
       currentSession().release();
       currentSession().reset(session.get());
-      transaction_services.sendStartupEvent(session.get());
+
+
+      transaction_services.sendStartupEvent(*session);
+
+      plugin_startup_window(modules, *(session.get()));
     }
   }
 
@@ -348,7 +371,7 @@ int main(int argc, char **argv)
   while ((client= plugin::Listen::getClient()) != NULL)
   {
     Session::shared_ptr session;
-    session= Session::make_shared(client, catalog::local());
+    session= Session::make_shared(client, client->catalog());
 
     if (not session)
     {
@@ -369,7 +392,7 @@ int main(int argc, char **argv)
     {
       currentSession().release();
       currentSession().reset(session.get());
-      transaction_services.sendShutdownEvent(session.get());
+      transaction_services.sendShutdownEvent(*session.get());
     }
   }
 
@@ -380,11 +403,7 @@ int main(int argc, char **argv)
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    while (not ready_to_exit)
-      COND_server_end.wait(scopedLock);
-  }
+  session::Cache::singleton().shutdownSecond();
 
   clean_up(1);
   module::Registry::shutdown();

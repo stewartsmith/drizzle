@@ -2356,7 +2356,7 @@ end_segment: true
 
 Testing MIN-1 DATE
 INSERT INTO t1 (b) VALUES('0000-12-31');
-ERROR HY000: Received an invalid datetime value '0000-12-31'.
+ERROR HY000: Received an invalid DATE value '0000-12-31'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2411,7 +2411,7 @@ end_segment: true
 
 Testing MAX+1 DATE
 INSERT INTO t1 (b) VALUES('10000-01-01');
-ERROR HY000: Received an invalid datetime value '10000-01-01'.
+ERROR HY000: Received an invalid DATE value '10000-01-01'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2628,7 +2628,7 @@ end_segment: true
 
 Testing BAD INPUT DATE1
 INSERT INTO t1 (b) VALUES('abbazabba');
-ERROR HY000: Received an invalid datetime value 'abbazabba'.
+ERROR HY000: Received an invalid DATE value 'abbazabba'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2683,7 +2683,7 @@ end_segment: true
 
 Testing BAD INPUT DATE2
 INSERT INTO t1 (b) VALUES('a');
-ERROR HY000: Received an invalid datetime value 'a'.
+ERROR HY000: Received an invalid DATE value 'a'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -3405,7 +3405,7 @@ end_segment: true
 
 Testing MIN-1 TIMESTAMP
 INSERT INTO t1 (b) VALUES('1969-12-31 23:59:59');
-ERROR HY000: Received an invalid value '1969-12-31 23:59:59' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '1969-12-31 23:59:59'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -3460,7 +3460,7 @@ end_segment: true
 
 Testing MAX+1 TIMESTAMP
 INSERT INTO t1 (b) VALUES('2038-01-19 03:14:08');
-ERROR HY000: Received an invalid value '2038-01-19 03:14:08' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '2038-01-19 03:14:08'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -3677,7 +3677,7 @@ end_segment: true
 
 Testing BAD INPUT TIMESTAMP1
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
-ERROR HY000: Received an invalid value '2000-01-01 25:00:00' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '2000-01-01 25:00:00'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -3732,7 +3732,7 @@ end_segment: true
 
 Testing BAD INPUT TIMESTAMP2
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
-ERROR HY000: Received an invalid value '2000-01-01 12:60:00' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '2000-01-01 12:60:00'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -3787,7 +3787,7 @@ end_segment: true
 
 Testing BAD INPUT TIMESTAMP3
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:65');
-ERROR HY000: Received an invalid value '2000-01-01 12:00:65' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '2000-01-01 12:00:65'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)

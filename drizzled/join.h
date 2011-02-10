@@ -180,7 +180,7 @@ public:
   DrizzleLock *lock;
 
   Join *tmp_join; /**< copy of this Join to be used with temporary tables */
-  ROLLUP rollup;				/**< Used with rollup */
+  Rollup rollup;				/**< Used with rollup */
   DYNAMIC_ARRAY keyuse;
   Item::cond_result cond_value;
   Item::cond_result having_value;
@@ -306,7 +306,7 @@ public:
     memset(&keyuse, 0, sizeof(keyuse));
     tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
-    rollup.state= ROLLUP::STATE_NONE;
+    rollup.setState(Rollup::STATE_NONE);
   }
 
   /** 
@@ -395,7 +395,7 @@ public:
     memset(&keyuse, 0, sizeof(keyuse));
     tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
-    rollup.state= ROLLUP::STATE_NONE;
+    rollup.setState(Rollup::STATE_NONE);
   }
 
   int prepare(Item ***rref_pointer_array, 

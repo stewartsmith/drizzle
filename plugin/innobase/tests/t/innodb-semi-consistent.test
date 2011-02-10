@@ -42,6 +42,7 @@ update t1 set a=14 where a=1;
 commit;
 connection a;
 select * from t1;
+commit;
 drop table t1;
 connection default;
 disconnect a;

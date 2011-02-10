@@ -29,6 +29,8 @@
   This will replace Table_ident.
   */
 
+
+
 #ifndef DRIZZLED_IDENTIFIER_SCHEMA_H
 #define DRIZZLED_IDENTIFIER_SCHEMA_H
 
@@ -48,20 +50,23 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace drizzled {
+#include "drizzled/visibility.h"
 
-class SchemaIdentifier : public Identifier
+namespace drizzled {
+namespace identifier {
+
+class DRIZZLED_API Schema : public Identifier
 {
   std::string db;
   std::string db_path;
 
 public:
-  typedef std::vector <SchemaIdentifier> vector;
-  typedef const SchemaIdentifier& const_reference;
+  typedef std::vector <Schema> vector;
+  typedef const Schema& const_reference;
 
-  SchemaIdentifier(const std::string &db_arg);
+  Schema(const std::string &db_arg);
 
-  virtual ~SchemaIdentifier()
+  virtual ~Schema()
   { }
 
   virtual void getSQLPath(std::string &arg) const;
@@ -77,24 +82,30 @@ public:
 
   virtual bool isValid() const;
 
-  bool compare(const std::string &arg) const;
-  bool compare(SchemaIdentifier::const_reference) const;
+  inline virtual bool isSystem() const
+  {
+    return false;
+  }
 
-  friend bool operator<(SchemaIdentifier::const_reference left, SchemaIdentifier::const_reference right)
+  bool compare(const std::string &arg) const;
+  bool compare(Schema::const_reference) const;
+
+  friend bool operator<(Schema::const_reference left, Schema::const_reference right)
   {
     return  boost::algorithm::to_upper_copy(left.getSchemaName()) < boost::algorithm::to_upper_copy(right.getSchemaName());
   }
 
-  friend bool operator==(SchemaIdentifier::const_reference left,
-                         SchemaIdentifier::const_reference right)
+  friend bool operator==(Schema::const_reference left,
+                         Schema::const_reference right)
   {
     return boost::iequals(left.getSchemaName(), right.getSchemaName());
   }
 };
 
-std::ostream& operator<<(std::ostream& output, const SchemaIdentifier &identifier);
+std::ostream& operator<<(std::ostream& output, const Schema&identifier);
 
 
+} /* namespace identifier */
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_IDENTIFIER_SCHEMA_H */

@@ -176,7 +176,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   lock_id(&main_lock_id),
   thread_stack(NULL),
   security_ctx(identifier::User::make_shared()),
-  where(Session::DEFAULT_WHERE),
+  _where(Session::DEFAULT_WHERE),
   dbug_sentry(Session_SENTRY_MAGIC),
   mysys_var(0),
   command(COM_CONNECT),
@@ -298,8 +298,8 @@ void Session::push_internal_handler(Internal_error_handler *handler)
   m_internal_handler= handler;
 }
 
-bool Session::handle_error(uint32_t sql_errno, const char *message,
-                       DRIZZLE_ERROR::enum_warning_level level)
+bool Session::handle_error(drizzled::error_t sql_errno, const char *message,
+                           DRIZZLE_ERROR::enum_warning_level level)
 {
   if (m_internal_handler)
   {
@@ -355,7 +355,7 @@ void Session::cleanup(void)
 #endif
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rollbackTransaction(this, true);
+    transaction_services.rollbackTransaction(*this, true);
     xid_cache_delete(&transaction.xid_state);
   }
 
@@ -388,7 +388,7 @@ Session::~Session()
     assert(security_ctx);
     if (global_system_variables.log_warnings)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),
+      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE),
                     internal::my_progname,
                     thread_id,
                     security_ctx->username().c_str());
@@ -677,7 +677,7 @@ bool Session::checkUser(const std::string &passwd_str,
   /* Change database if necessary */
   if (not in_db.empty())
   {
-    SchemaIdentifier identifier(in_db);
+    identifier::Schema identifier(in_db);
     if (change_db(this, identifier))
     {
       /* change_db() has pushed the error message. */
@@ -773,7 +773,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
        * (Which of course should never happen...)
        */
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.commitTransaction(this, true))
+      if (transaction_services.commitTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       break;
@@ -790,7 +790,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
     case ROLLBACK_AND_CHAIN:
     {
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.rollbackTransaction(this, true))
+      if (transaction_services.rollbackTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
@@ -827,7 +827,7 @@ bool Session::endActiveTransaction()
   if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (transaction_services.commitTransaction(this, true))
+    if (transaction_services.commitTransaction(*this, true))
       result= false;
   }
   options&= ~(OPTION_BEGIN);
@@ -873,11 +873,14 @@ void Session::cleanup_after_query()
     first_successful_insert_id_in_cur_stmt= 0;
     substitute_null_with_insert_id= true;
   }
+
   arg_of_last_insert_id_function= false;
+
   /* Free Items that were created during this execution */
   free_items();
-  /* Reset where. */
-  where= Session::DEFAULT_WHERE;
+
+  /* Reset _where. */
+  _where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
   for_each(temporary_shares.begin(),
@@ -954,7 +957,7 @@ int Session::send_explain_fields(select_result *result)
   return (result->send_fields(field_list));
 }
 
-void select_result::send_error(uint32_t errcode, const char *err)
+void select_result::send_error(drizzled::error_t errcode, const char *err)
 {
   my_message(errcode, err, MYF(0));
 }
@@ -963,7 +966,7 @@ void select_result::send_error(uint32_t errcode, const char *err)
   Handling writing to file
 ************************************************************************/
 
-void select_to_file::send_error(uint32_t errcode,const char *err)
+void select_to_file::send_error(drizzled::error_t errcode,const char *err)
 {
   my_message(errcode, err, MYF(0));
   if (file > 0)
@@ -1618,8 +1621,8 @@ void Tmp_Table_Param::cleanup(void)
 
 void Session::send_kill_message() const
 {
-  int err= killed_errno();
-  if (err)
+  drizzled::error_t err= static_cast<drizzled::error_t>(killed_errno());
+  if (err != EE_OK)
     my_message(err, ER(err), MYF(0));
 }
 
@@ -1673,7 +1676,7 @@ void Session::disconnect(enum error_t errcode)
   {
     if (not getKilled() && variables.log_warnings > 1)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
+      errmsg_printf(error::WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
                   , (_schema->empty() ? "unconnected" : _schema->c_str())
                   , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
@@ -1783,7 +1786,7 @@ void Open_tables_state::nukeTable(Table *table)
   table->free_io_cache();
   table->delete_table();
 
-  TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
+  identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
   rm_temporary_table(table_type, identifier);
 
   boost::checked_delete(table->getMutableShare());
@@ -1811,13 +1814,12 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
 
 user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
 {
-  UserVarsRange ppp= user_vars.equal_range(name);
+  if (cleanup_done)
+    return NULL;
 
-  for (UserVars::iterator iter= ppp.first;
-       iter != ppp.second; ++iter)
-  {
+  UserVars::iterator iter= user_vars.find(name);
+  if (iter != user_vars.end())
     return (*iter).second;
-  }
 
   if (not create_if_not_exists)
     return NULL;
@@ -1841,12 +1843,14 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
 void Session::setVariable(const std::string &name, const std::string &value)
 {
   user_var_entry *updateable_var= getVariable(name.c_str(), true);
-
-  updateable_var->update_hash(false,
-                              (void*)value.c_str(),
-                              static_cast<uint32_t>(value.length()), STRING_RESULT,
-                              &my_charset_bin,
-                              DERIVATION_IMPLICIT, false);
+  if (updateable_var)
+  {
+    updateable_var->update_hash(false,
+                                (void*)value.c_str(),
+                                static_cast<uint32_t>(value.length()), STRING_RESULT,
+                                &my_charset_bin,
+                                DERIVATION_IMPLICIT, false);
+  }
 }
 
 void Open_tables_state::mark_temp_tables_as_free_for_reuse()
@@ -1901,7 +1905,7 @@ void Session::close_thread_tables()
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     main_da.can_overwrite_status= true;
-    transaction_services.autocommitOrRollback(this, is_error());
+    transaction_services.autocommitOrRollback(*this, is_error());
     main_da.can_overwrite_status= false;
     transaction.stmt.reset();
   }
@@ -1976,7 +1980,7 @@ bool Session::openTablesLock(TableList *tables)
   might be an issue (lame engines).
 */
 
-bool Open_tables_state::rm_temporary_table(const TableIdentifier &identifier, bool best_effort)
+bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, bool best_effort)
 {
   if (not plugin::StorageEngine::dropTable(*static_cast<Session *>(this), identifier))
   {
@@ -1984,7 +1988,7 @@ bool Open_tables_state::rm_temporary_table(const TableIdentifier &identifier, bo
     {
       std::string path;
       identifier.getSQLPath(path);
-      errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+      errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
                     path.c_str(), errno);
     }
 
@@ -1994,7 +1998,7 @@ bool Open_tables_state::rm_temporary_table(const TableIdentifier &identifier, bo
   return false;
 }
 
-bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const TableIdentifier &identifier)
+bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const identifier::Table &identifier)
 {
   drizzled::error_t error;
   assert(base);
@@ -2003,7 +2007,7 @@ bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const Ta
   {
     std::string path;
     identifier.getSQLPath(path);
-    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+    errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path.c_str(), error);
 
     return true;
@@ -2028,8 +2032,8 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
   {
     bool have_proto= false;
 
-    message::Table *proto= table->getShare()->getTableProto();
-    if (table->getShare()->getTableProto())
+    message::Table *proto= table->getShare()->getTableMessage();
+    if (table->getShare()->getTableMessage())
       have_proto= true;
 
     const char *answer= have_proto ? "true" : "false";
@@ -2046,14 +2050,14 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
   }
 }
 
-bool Session::TableMessages::storeTableMessage(const TableIdentifier &identifier, message::Table &table_message)
+bool Session::TableMessages::storeTableMessage(const identifier::Table &identifier, message::Table &table_message)
 {
   table_message_cache.insert(make_pair(identifier.getPath(), table_message));
 
   return true;
 }
 
-bool Session::TableMessages::removeTableMessage(const TableIdentifier &identifier)
+bool Session::TableMessages::removeTableMessage(const identifier::Table &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2067,7 +2071,7 @@ bool Session::TableMessages::removeTableMessage(const TableIdentifier &identifie
   return true;
 }
 
-bool Session::TableMessages::getTableMessage(const TableIdentifier &identifier, message::Table &table_message)
+bool Session::TableMessages::getTableMessage(const identifier::Table &identifier, message::Table &table_message)
 {
   TableMessageCache::iterator iter;
 
@@ -2081,7 +2085,7 @@ bool Session::TableMessages::getTableMessage(const TableIdentifier &identifier, 
   return true;
 }
 
-bool Session::TableMessages::doesTableMessageExist(const TableIdentifier &identifier)
+bool Session::TableMessages::doesTableMessageExist(const identifier::Table &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2095,7 +2099,7 @@ bool Session::TableMessages::doesTableMessageExist(const TableIdentifier &identi
   return true;
 }
 
-bool Session::TableMessages::renameTableMessage(const TableIdentifier &from, const TableIdentifier &to)
+bool Session::TableMessages::renameTableMessage(const identifier::Table &from, const identifier::Table &to)
 {
   TableMessageCache::iterator iter;
 

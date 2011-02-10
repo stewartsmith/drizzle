@@ -22,6 +22,8 @@
 #include <drizzled/configmake.h>
 #include <vector>
 
+#include "drizzled/visibility.h"
+
 using namespace std;
 
 namespace drizzled
@@ -56,9 +58,10 @@ get_collation_number_internal(const char *name)
        cs < all_charsets+array_elements(all_charsets)-1 ;
        cs++)
   {
-    if ( cs[0] && cs[0]->name &&
-         !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->name, name))
+    if ( cs[0] && cs[0]->name && !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->name, name))
+    {
       return cs[0]->number;
+    }
   }
   return 0;
 }
@@ -128,8 +131,8 @@ static bool init_state_maps(CHARSET_INFO *cs)
 
 static bool charset_initialized= false;
 
-CHARSET_INFO *all_charsets[256];
-const CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
+DRIZZLED_API CHARSET_INFO *all_charsets[256];
+const DRIZZLED_API CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
 
 void add_compiled_collation(CHARSET_INFO * cs)
 {
@@ -213,8 +216,7 @@ uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
        cs < all_charsets+array_elements(all_charsets)-1 ;
        cs++)
   {
-    if ( cs[0] && cs[0]->csname && (cs[0]->state & cs_flags) &&
-         !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->csname, charset_name))
+    if ( cs[0] && cs[0]->csname && (cs[0]->state & cs_flags) && !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->csname, charset_name))
       return cs[0]->number;
   }
   return 0;

@@ -17,6 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_PLUGIN_PLUGIN_H
 #define DRIZZLED_PLUGIN_PLUGIN_H
 
@@ -24,8 +26,13 @@
 #include <vector>
 #include <map>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
+
+class Session;
+
 namespace module
 {
 class Module;
@@ -34,7 +41,7 @@ class Module;
 namespace plugin
 {
 
-class Plugin
+class DRIZZLED_API Plugin
 {
 private:
   const std::string _name;
@@ -66,6 +73,10 @@ public:
   virtual void prime()
   {
   }
+
+  virtual void startup(drizzled::Session &)
+  {
+  }
  
   void activate()
   {
@@ -95,6 +106,11 @@ public:
   const std::string& getTypeName() const
   {
     return _type_name;
+  }
+
+  virtual bool removeLast() const
+  {
+    return false;
   }
 
   const std::string& getModuleName() const;

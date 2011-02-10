@@ -33,7 +33,7 @@ namespace drizzled
 
 static void sql_alloc_error_handler(void)
 {
-  errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
+  errmsg_printf(error::ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
 }
 
 void memory::init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)

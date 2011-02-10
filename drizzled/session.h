@@ -18,6 +18,7 @@
  */
 
 
+
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
@@ -64,6 +65,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/make_shared.hpp>
 
+#include "drizzled/visibility.h"
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -250,7 +252,7 @@ struct drizzle_system_variables
   Time_zone *time_zone;
 };
 
-extern struct drizzle_system_variables global_system_variables;
+extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
 } /* namespace drizzled */
 
@@ -259,7 +261,7 @@ extern struct drizzle_system_variables global_system_variables;
 namespace drizzled
 {
 
-void mark_transaction_to_rollback(Session *session, bool all);
+DRIZZLED_API void mark_transaction_to_rollback(Session *session, bool all);
 
 /**
   Storage engine specific thread local data.
@@ -314,7 +316,8 @@ struct Ha_data
  * session object.
  */
 
-class Session : public Open_tables_state
+class DRIZZLED_API Session :
+  public Open_tables_state
 {
 public:
   // Plugin storage in Session.
@@ -553,6 +556,11 @@ public:
     return client;
   }
 
+  plugin::Client *getClient() const
+  {
+    return client;
+  }
+
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
 
@@ -618,12 +626,24 @@ public:
    */
   bool isViewable(identifier::User::const_reference) const;
 
+private:
   /**
     Used in error messages to tell user in what part of MySQL we found an
     error. E. g. when where= "having clause", if fix_fields() fails, user
     will know that the error was in having clause.
   */
-  const char *where;
+  const char *_where;
+
+public:
+  const char *where()
+  {
+    return _where;
+  }
+
+  void setWhere(const char *arg)
+  {
+    _where= arg;
+  }
 
   /*
     One thread can hold up to one named user-level lock. This variable
@@ -631,6 +651,7 @@ public:
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
+
 private:
   boost::thread::id boost_thread_id;
   boost_thread_shared_ptr _thread;
@@ -1009,7 +1030,10 @@ public:
   bool substitute_null_with_insert_id;
   bool cleanup_done;
 
+private:
   bool abort_on_warning;
+
+public:
   bool got_warning; /**< Set on call to push_warning() */
   bool no_warnings_for_error; /**< no warnings on call to my_error() */
   /** set during loop of derived table processing */
@@ -1270,7 +1294,7 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  time_t query_start()
+  type::Time::epoch_t query_start()
   {
     return getCurrentTimestampEpoch();
   }
@@ -1306,9 +1330,9 @@ public:
   /**
    * Returns the current micro-timestamp
    */
-  uint64_t getCurrentTimestamp(bool actual= true) const
+  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
   { 
-    uint64_t t_mark;
+    type::Time::epoch_t t_mark;
 
     if (actual)
     {
@@ -1324,7 +1348,7 @@ public:
   }
 
   // We may need to set user on this
-  time_t getCurrentTimestampEpoch() const
+  type::Time::epoch_t getCurrentTimestampEpoch() const
   { 
     if (not _user_time.is_not_a_date_time())
       return (_user_time - _epoch).total_seconds();
@@ -1332,7 +1356,7 @@ public:
     return (_start_timer - _epoch).total_seconds();
   }
 
-  time_t getCurrentTimestampEpoch(uint32_t &fraction_arg) const
+  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
   { 
     if (not _user_time.is_not_a_date_time())
     {
@@ -1434,9 +1458,14 @@ public:
   }
   void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
-  inline bool really_abort_on_warning()
+  inline bool abortOnWarning()
   {
-    return (abort_on_warning);
+    return abort_on_warning;
+  }
+
+  inline void setAbortOnWarning(bool arg)
+  {
+    abort_on_warning= arg;
   }
 
   void setAbort(bool arg);
@@ -1482,7 +1511,7 @@ public:
     @param level the error level
     @return true if the error is handled
   */
-  virtual bool handle_error(uint32_t sql_errno, const char *message,
+  virtual bool handle_error(drizzled::error_t sql_errno, const char *message,
                             DRIZZLE_ERROR::enum_warning_level level);
 
   /**
@@ -1753,10 +1782,11 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
-  void close_data_files_and_morph_locks(const TableIdentifier &identifier);
+  void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
 private:
-  bool free_cached_table();
+  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+
 public:
 
   /**
@@ -1790,12 +1820,12 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, const TableIdentifier &identifier);
+  void drop_open_table(Table *table, const identifier::Table &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  table::Placeholder *table_cache_insert_placeholder(const TableIdentifier &identifier);
-  bool lock_table_name_if_not_cached(const TableIdentifier &identifier, Table **table);
+  table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
+  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
 
@@ -1804,13 +1834,13 @@ public:
     TableMessageCache table_message_cache;
 
   public:
-    bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-    bool removeTableMessage(const TableIdentifier &identifier);
-    bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-    bool doesTableMessageExist(const TableIdentifier &identifier);
-    bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
-
+    bool storeTableMessage(const identifier::Table &identifier, message::Table &table_message);
+    bool removeTableMessage(const identifier::Table &identifier);
+    bool getTableMessage(const identifier::Table &identifier, message::Table &table_message);
+    bool doesTableMessageExist(const identifier::Table &identifier);
+    bool renameTableMessage(const identifier::Table &from, const identifier::Table &to);
   };
+
 private:
   TableMessages _table_message_cache;
 
@@ -1821,7 +1851,7 @@ public:
   }
 
   /* Reopen operations */
-  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  bool reopen_tables();
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);

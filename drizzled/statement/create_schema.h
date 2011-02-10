@@ -34,13 +34,14 @@ namespace statement
 
 class CreateSchema : public Statement
 {
-  bool check(const SchemaIdentifier &identifier);
+  bool check(const identifier::Schema &identifier);
 
 public:
   CreateSchema(Session *in_session) :
     Statement(in_session),
     is_if_not_exists(false)
   {
+    getSession()->getLex()->sql_command=SQLCOM_CREATE_DB;
   }
 
   bool execute();

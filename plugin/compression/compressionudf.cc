@@ -50,7 +50,7 @@ DRIZZLE_DECLARE_PLUGIN
   "UDFs for compression functions",
   PLUGIN_LICENSE_GPL,
   compressionudf_plugin_init, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

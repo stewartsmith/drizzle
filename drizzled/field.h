@@ -22,6 +22,8 @@
   variables must declare the size_of() member function.
 */
 
+
+
 #ifndef DRIZZLED_FIELD_H
 #define DRIZZLED_FIELD_H
 
@@ -32,9 +34,12 @@
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/item_result.h"
+#include "drizzled/visibility.h"
 
 #include <string>
 #include <vector>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -75,7 +80,7 @@ int field_conv(Field *to,Field *from);
  * The store_xxx() methods take various input and convert
  * the input into the raw bytes stored in the ptr member variable.
  */
-class Field
+class DRIZZLED_API Field
 {
   /* Prevent use of these */
   Field(const Field&);
@@ -211,7 +216,7 @@ public:
     @note
       Needs to be changed if/when we want to support different time formats.
   */
-  virtual int store_time(type::Time *ltime, enum enum_drizzle_timestamp_type t_type);
+  virtual int store_time(type::Time &ltime, type::timestamp_t t_type);
   virtual double val_real()=0;
   virtual int64_t val_int()=0;
   virtual type::Decimal *val_decimal(type::Decimal *);
@@ -219,6 +224,7 @@ public:
   {
     return val_str(str, str);
   }
+
   /*
      val_str(buf1, buf2) gets two buffers and should use them as follows:
      if it needs a temp buffer to convert result to string - use buf1
@@ -232,6 +238,7 @@ public:
      This trickery is used to decrease a number of malloc calls.
   */
   virtual String *val_str(String*, String *)=0;
+
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.
@@ -590,8 +597,8 @@ public:
   }
   void copy_from_tmp(int offset);
   uint32_t fill_cache_field(CacheField *copy);
-  virtual bool get_date(type::Time *ltime,uint32_t fuzzydate);
-  virtual bool get_time(type::Time *ltime);
+  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate);
+  virtual bool get_time(type::Time &ltime);
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
@@ -623,7 +630,7 @@ public:
       0 otherwise
   */
   bool set_warning(DRIZZLE_ERROR::enum_warning_level,
-                   unsigned int code,
+                   drizzled::error_t code,
                    int cuted_increment);
   /**
     Produce warning or note about datetime string data saved into field.
@@ -641,10 +648,10 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            uint32_t code,
+                            drizzled::error_t code,
                             const char *str,
                             uint32_t str_len,
-                            enum enum_drizzle_timestamp_type ts_type,
+                            type::timestamp_t ts_type,
                             int cuted_increment);
   /**
     Produce warning or note about integer datetime value saved into field.
@@ -661,9 +668,9 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            uint32_t code,
+                            drizzled::error_t code,
                             int64_t nr,
-                            enum enum_drizzle_timestamp_type ts_type,
+                            type::timestamp_t ts_type,
                             int cuted_increment);
   /**
     Produce warning or note about double datetime data saved into field.
@@ -679,9 +686,9 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            const uint32_t code,
+                            const drizzled::error_t code,
                             double nr,
-                            enum enum_drizzle_timestamp_type ts_type);
+                            type::timestamp_t ts_type);
   bool check_overflow(int op_result)
   {
     return (op_result == E_DEC_OVERFLOW);

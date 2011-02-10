@@ -23,6 +23,8 @@
 
 #include <boost/unordered_set.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -35,7 +37,7 @@ namespace plugin
  * An abstract interface class which exposes the participation
  * of implementing classes in distributed transactions in the XA protocol.
  */
-class XaResourceManager
+class DRIZZLED_API XaResourceManager
 {
 public:
   XaResourceManager() {}

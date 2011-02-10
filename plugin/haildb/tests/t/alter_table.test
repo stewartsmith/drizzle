@@ -685,7 +685,7 @@ INSERT INTO t1 VALUES (1, "edno"), (1, "edno"), (2, "dve"), (3, "tri"), (5, "pet
 --echo "Non-copy data change - new frm, but old data and index files"
 ALTER TABLE t1 CHANGE int_field unsigned_int_field INTEGER NOT NULL, RENAME t2;
 
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 SELECT * FROM t1 ORDER BY int_field;
 SELECT * FROM t2 ORDER BY unsigned_int_field;
 DESCRIBE t2;

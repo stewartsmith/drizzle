@@ -139,7 +139,7 @@ class ha_innobase: public Cursor
 	UNIV_INTERN const char* index_type(uint key_number);
 	UNIV_INTERN const key_map* keys_to_use_for_scanning();
 
-	UNIV_INTERN int doOpen(const drizzled::TableIdentifier &identifier, int mode, uint test_if_locked);
+	UNIV_INTERN int doOpen(const drizzled::identifier::Table &identifier, int mode, uint test_if_locked);
 	UNIV_INTERN int close(void);
 	UNIV_INTERN double scan_time();
 	UNIV_INTERN double read_time(uint index, uint ranges, ha_rows rows);

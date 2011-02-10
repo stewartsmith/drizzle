@@ -36,4 +36,5 @@ a
 show create database test;
 Database	Create Database
 test	CREATE DATABASE `test` COLLATE = utf8_general_ci
+COMMIT;
 drop table t1;

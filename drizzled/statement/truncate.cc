@@ -28,24 +28,15 @@ namespace drizzled
 
 bool statement::Truncate::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  if (! session->endActiveTransaction())
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+
+  if (getSession()->inTransaction())
   {
-    return true;
-  }
-  /*
-   * Don't allow this within a transaction because we want to use
-   * re-generate table
-   */
-  if (session->inTransaction())
-  {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
-               MYF(0));
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
-  return truncate(*session, first_table);
+  return truncate(*getSession(), first_table);
 }
 
 } /* namespace drizzled */

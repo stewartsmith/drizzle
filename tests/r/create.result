@@ -19,9 +19,9 @@ drop table t1;
 create temporary table t1 (a int not null auto_increment,primary key (a)) engine=MEMORY;
 drop table t1;
 create temporary table t2 engine=MEMORY select * from t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR 42S02: Unknown table 'test.t1'
 create table t2 select auto+1 from t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR 42S02: Unknown table 'test.t1'
 drop table if exists t1,t2;
 Warnings:
 Note	1051	Unknown table 't1'
@@ -167,7 +167,7 @@ INSERT INTO t1 values (1),(2),(1);
 CREATE TABLE t2 (primary key(a)) SELECT * FROM t1;
 ERROR 23000: Duplicate entry '1' for key 'PRIMARY'
 SELECT * from t2;
-ERROR 42S02: Table 'test.t2' doesn't exist
+ERROR 42S02: Unknown table 'test.t2'
 DROP TABLE t1;
 DROP TABLE IF EXISTS t2;
 Warnings:
@@ -362,15 +362,15 @@ t2	CREATE TABLE `t2` (
 select * from t2;
 id	name
 create table t3 like t1;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.t3' already exists
 create table t3 like mysqltest.t3;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.t3' already exists
 create table non_existing_database.t1 like t1;
 ERROR 42000: Unknown schema 'non_existing_database'
-create table t3 like non_existing_table;
-ERROR 42S02: Table 'test.non_existing_table' doesn't exist
+create table t4 like non_existing_table;
+ERROR 42S02: Unknown table 'test.non_existing_table'
 create temporary table t3 like t1;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.#t3' already exists
 drop table t1, t2, t3;
 drop database mysqltest;
 SET SESSION storage_engine="MEMORY";
@@ -682,7 +682,7 @@ t2	CREATE TABLE `t2` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
 create table t1 select * from t2;
-ERROR 42S02: Table 'test.t2' doesn't exist
+ERROR 42S02: Unknown table 'test.t2'
 create table t1 select * from t1;
 ERROR HY000: You can't specify target table 't1' for update in FROM clause
 create table t1 select coalesce('a' collate utf8_swedish_ci,'b' collate utf8_bin);
@@ -710,7 +710,7 @@ j
 1
 drop temporary table t1;
 select * from t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR 42S02: Unknown table 'test.t1'
 drop table t1;
 ERROR 42S02: Unknown table 't1'
 create table t1 (upgrade int);

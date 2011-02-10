@@ -16,7 +16,7 @@ col6 int not null, to_be_deleted int);
 insert into t1 values (2,4,3,5,"PENDING",1,7);
 SELECT * FROM t1;
 
---error 1714
+--error ER_INVALID_ALTER_TABLE_FOR_NOT_NULL
 alter table t1
 add column col4_5 varchar(20) not null after col4,
 add column col7 varchar(30) not null after col5,
@@ -697,7 +697,7 @@ INSERT INTO t1 VALUES (1, "edno"), (1, "edno"), (2, "dve"), (3, "tri"), (5, "pet
 --echo "Non-copy data change - new frm, but old data and index files"
 ALTER TABLE t1 CHANGE int_field unsigned_int_field INTEGER NOT NULL, RENAME t2;
 
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 SELECT * FROM t1 ORDER BY int_field;
 SELECT * FROM t2 ORDER BY unsigned_int_field;
 DESCRIBE t2;

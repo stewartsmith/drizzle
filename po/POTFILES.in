@@ -20,7 +20,9 @@ drizzled/main.cc
 drizzled/message/transaction_writer.cc
 drizzled/module/library.cc
 drizzled/module/loader.cc
+drizzled/module/registry.cc
 drizzled/module/registry.h
+drizzled/module/vertex.h
 drizzled/option.cc
 drizzled/plugin/authentication.cc
 drizzled/plugin/authorization.cc
@@ -61,7 +63,6 @@ plugin/blitzdb/ha_blitz.h
 plugin/console/console.cc
 plugin/default_replicator/default_replicator.cc
 plugin/drizzle_protocol/drizzle_protocol.cc
-plugin/errmsg_notify/errmsg_notify.cc
 plugin/errmsg_stderr/errmsg_stderr.cc
 plugin/filtered_replicator/filtered_replicator.cc
 plugin/haildb/haildb_engine.cc

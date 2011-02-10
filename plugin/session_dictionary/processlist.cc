@@ -99,7 +99,7 @@ bool ProcesslistTool::Generator::populate()
     }
     else
     {
-      push(command_name[tmp->command].str, command_name[tmp->command].length);
+      push(getCommandName(tmp->command));
     }
 
     /* type::Time */

@@ -30,6 +30,7 @@
 #include "drizzled/optimizer/key_use.h"
 #include "drizzled/join_cache.h"
 #include "drizzled/join_table.h"
+#include "drizzled/records.h"
 
 #include <vector>
 
@@ -56,14 +57,76 @@ enum_nested_loop_state sub_select(Join *join,JoinTable *join_tab, bool end_of_re
 enum_nested_loop_state end_send_group(Join *join, JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state end_write_group(Join *join, JoinTable *join_tab, bool end_of_records);
 
-typedef struct st_rollup
+class Rollup
 {
+public:
   enum State { STATE_NONE, STATE_INITED, STATE_READY };
+
+  Rollup()
+  :
+  state(),
+  null_items(NULL),
+  ref_pointer_arrays(NULL),
+  fields()
+  {}
+  
+  Rollup(State in_state,
+         Item_null_result **in_null_items,
+         Item ***in_ref_pointer_arrays,
+         List<Item> *in_fields)
+  :
+  state(in_state),
+  null_items(in_null_items),
+  ref_pointer_arrays(in_ref_pointer_arrays),
+  fields(in_fields)
+  {}
+  
+  State getState() const
+  {
+    return state;
+  }
+
+  void setState(State in_state)
+  {
+    state= in_state;
+  }
+ 
+  Item_null_result **getNullItems() const
+  {
+    return null_items;
+  }
+
+  void setNullItems(Item_null_result **in_null_items)
+  {
+    null_items= in_null_items;
+  }
+
+  Item ***getRefPointerArrays() const
+  {
+    return ref_pointer_arrays;
+  }
+
+  void setRefPointerArrays(Item ***in_ref_pointer_arrays)
+  {
+    ref_pointer_arrays= in_ref_pointer_arrays;
+  }
+
+  List<Item> *getFields() const
+  {
+    return fields;
+  }
+
+  void setFields(List<Item> *in_fields)
+  {
+    fields= in_fields;
+  }
+  
+private:
   State state;
   Item_null_result **null_items;
   Item ***ref_pointer_arrays;
   List<Item> *fields;
-} ROLLUP;
+};
 
 } /* namespace drizzled */
 
@@ -141,9 +204,7 @@ bool change_refs_to_tmp_fields(Session *session,
 			                         List<Item> &all_fields);
 bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *next);
-
-int join_read_const_table(JoinTable *tab, optimizer::Position *pos);
-int join_read_system(JoinTable *tab);
+void update_const_equal_items(COND *cond, JoinTable *tab);
 int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);
 int join_read_always_key(JoinTable *tab);

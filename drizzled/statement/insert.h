@@ -33,10 +33,11 @@ namespace statement
 class Insert : public Statement
 {
 public:
-  Insert(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Insert(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_INSERT;
+  }
 
   bool execute();
 };

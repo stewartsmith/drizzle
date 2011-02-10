@@ -129,7 +129,7 @@ namespace plugin
       {
         if (observers->find(event_pos) != observers->end())
         {
-          errmsg_printf(ERRMSG_LVL_WARN,
+          errmsg_printf(error::WARN,
                         _("EventObserverList::addEventObserver() Duplicate event position %d for event '%s' from EventObserver plugin '%s'"),
                         position,
                         EventObserver::eventName(event), 
@@ -196,7 +196,7 @@ namespace plugin
 
     if (observers != NULL) 
 		{
-			errmsg_printf(ERRMSG_LVL_WARN,
+			errmsg_printf(error::WARN,
 									_("EventObserver::registerTableEvents(): Table already has events registered on it: probable programming error."));
 			table_share.setTableObservers(NULL);
       delete observers;
@@ -331,7 +331,7 @@ namespace plugin
 
     observers= session.getSessionObservers();
 		if (observers) { // This should not happed
-			errmsg_printf(ERRMSG_LVL_WARN,
+			errmsg_printf(error::WARN,
 									_("EventObserver::registerSessionEvents(): Session already has events registered on it: probable programming error."));
 			session.setSessionObservers(NULL);
 			delete observers;
@@ -383,7 +383,7 @@ namespace plugin
       {
         /* TRANSLATORS: The leading word "EventObserver" is the name
           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR,
+        errmsg_printf(error::ERROR,
                       _("EventIterate event handler '%s' failed for event '%s'"),
                       handler.second->getName().c_str(), handler.second->eventName(data.event));
 
@@ -455,7 +455,7 @@ namespace plugin
   /* Static meathods called by drizzle to notify interested plugins 
    * of a schema event.
  */
-  bool EventObserver::beforeDropTable(Session &session, const drizzled::TableIdentifier &table)
+  bool EventObserver::beforeDropTable(Session &session, const drizzled::identifier::Table &table)
   {
     if (all_event_plugins.empty())
       return false;
@@ -464,7 +464,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::afterDropTable(Session &session, const drizzled::TableIdentifier &table, int err)
+  bool EventObserver::afterDropTable(Session &session, const drizzled::identifier::Table &table, int err)
   {
     if (all_event_plugins.empty())
       return false;
@@ -473,7 +473,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::beforeRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
+  bool EventObserver::beforeRenameTable(Session &session, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to)
   {
     if (all_event_plugins.empty())
       return false;
@@ -482,7 +482,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::afterRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to, int err)
+  bool EventObserver::afterRenameTable(Session &session, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to, int err)
   {
     if (all_event_plugins.empty())
       return false;

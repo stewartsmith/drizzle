@@ -8,4 +8,5 @@ a
 select * from bug53674 where a=(select a from bug53674 where a > 1);
 a
 2
+commit;
 drop table bug53674;

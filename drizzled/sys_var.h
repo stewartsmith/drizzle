@@ -26,11 +26,12 @@
 #include "drizzled/constrained_value.h"
 #include "drizzled/set_var.h"
 #include "drizzled/show_type.h"
-#include "drizzled/typelib.h"
 #include "drizzled/item_result.h"
 #include "drizzled/base.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/lex_string.h"
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -38,8 +39,7 @@ namespace drizzled
 class sys_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
-
-extern TYPELIB bool_typelib;
+typedef struct st_typelib TYPELIB;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -65,7 +65,6 @@ extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
-extern uint64_t max_connect_errors;
 extern back_log_constraints back_log;
 extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
@@ -85,7 +84,7 @@ int sys_var_init();
  * A class which represents a variable, either global or 
  * session-local.
  */
-class sys_var
+class DRIZZLED_API sys_var
 {
 protected:
   std::string name; /**< The name of the variable */
@@ -189,7 +188,7 @@ public:
  * A base class for all variables that require its access to
  * be guarded with a mutex.
  */
-class sys_var_global: public sys_var
+class DRIZZLED_API sys_var_global: public sys_var
 {
 protected:
   pthread_mutex_t *guard;
@@ -203,7 +202,7 @@ public:
   {}
 };
 
-class sys_var_uint32_t_ptr :public sys_var
+class DRIZZLED_API sys_var_uint32_t_ptr :public sys_var
 {
   uint32_t *value;
 public:
@@ -224,7 +223,7 @@ public:
   { return (unsigned char*) value; }
 };
 
-class sys_var_uint32_t_ptr_readonly :
+class DRIZZLED_API sys_var_uint32_t_ptr_readonly :
   public sys_var_uint32_t_ptr
 {
 public:
@@ -246,7 +245,7 @@ public:
 };
 
 
-class sys_var_uint64_t_ptr :public sys_var
+class DRIZZLED_API sys_var_uint64_t_ptr :public sys_var
 {
   uint64_t *value;
   const uint64_t default_value;
@@ -299,7 +298,7 @@ public:
   { return (unsigned char*) value; }
 };
 
-class sys_var_size_t_ptr :public sys_var
+class DRIZZLED_API sys_var_size_t_ptr :public sys_var
 {
   size_t *value;
 public:
@@ -317,7 +316,7 @@ public:
   { return (unsigned char*) value; }
 };
 
-class sys_var_bool_ptr :public sys_var
+class DRIZZLED_API sys_var_bool_ptr :public sys_var
 {
   bool default_value;
 public:
@@ -326,10 +325,7 @@ public:
                    sys_after_update_func func= NULL) :
     sys_var(name_arg, func), default_value(*value_arg), value(value_arg)
   { }
-  bool check(Session *session, set_var *var)
-  {
-    return check_enum(session, var, &bool_typelib);
-  }
+  bool check(Session *session, set_var *var);
   virtual bool check_default(sql_var_t)
   {
     return false;
@@ -343,7 +339,7 @@ public:
   { return 0; }
 };
 
-class sys_var_bool_ptr_readonly :public sys_var_bool_ptr
+class DRIZZLED_API sys_var_bool_ptr_readonly :public sys_var_bool_ptr
 {
 public:
   sys_var_bool_ptr_readonly(const char *name_arg,
@@ -354,7 +350,7 @@ public:
 };
 
 
-class sys_var_str :public sys_var
+class DRIZZLED_API sys_var_str :public sys_var
 {
 public:
   char *value;					// Pointer to allocated string
@@ -392,7 +388,7 @@ public:
 };
 
 
-class sys_var_fs_path :
+class DRIZZLED_API sys_var_fs_path :
   public sys_var
 {
   const boost::filesystem::path &value;
@@ -550,7 +546,7 @@ public:
   }
 };
 
-class sys_var_std_string :
+class DRIZZLED_API sys_var_std_string :
   public sys_var
 {
   std::string &value;
@@ -607,7 +603,7 @@ public:
   bool is_readonly() const { return false; }
 };
 
-class sys_var_const_string :
+class DRIZZLED_API sys_var_const_string :
   public sys_var
 {
   const std::string &value;
@@ -642,7 +638,7 @@ public:
   bool is_readonly() const { return true; }
 };
 
-class sys_var_const_string_val :
+class DRIZZLED_API sys_var_const_string_val :
   public sys_var
 {
   const std::string value;
@@ -677,7 +673,7 @@ public:
   bool is_readonly() const { return true; }
 };
 
-class sys_var_const_str :public sys_var
+class DRIZZLED_API sys_var_const_str :public sys_var
 {
   char *value;					// Pointer to const value
 public:
@@ -712,7 +708,7 @@ public:
 };
 
 
-class sys_var_const_str_ptr :public sys_var
+class DRIZZLED_API sys_var_const_str_ptr :public sys_var
 {
   char **value;					// Pointer to const value
 public:
@@ -742,7 +738,7 @@ public:
 };
 
 
-class sys_var_session :public sys_var
+class DRIZZLED_API sys_var_session :public sys_var
 {
 public:
   sys_var_session(const char *name_arg,
@@ -757,7 +753,7 @@ public:
   }
 };
 
-class sys_var_session_uint32_t :public sys_var_session
+class DRIZZLED_API sys_var_session_uint32_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
@@ -778,7 +774,7 @@ public:
 };
 
 
-class sys_var_session_ha_rows :public sys_var_session
+class DRIZZLED_API sys_var_session_ha_rows :public sys_var_session
 {
 public:
   ha_rows drizzle_system_variables::*offset;
@@ -799,7 +795,7 @@ public:
 };
 
 
-class sys_var_session_uint64_t :public sys_var_session
+class DRIZZLED_API sys_var_session_uint64_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
@@ -840,7 +836,7 @@ public:
   }
 };
 
-class sys_var_session_size_t :public sys_var_session
+class DRIZZLED_API sys_var_session_size_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
@@ -881,7 +877,7 @@ public:
 };
 
 
-class sys_var_session_bool :public sys_var_session
+class DRIZZLED_API sys_var_session_bool :public sys_var_session
 {
 public:
   bool drizzle_system_variables::*offset;
@@ -897,16 +893,13 @@ public:
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
                            const LEX_STRING *base);
-  bool check(Session *session, set_var *var)
-  {
-    return check_enum(session, var, &bool_typelib);
-  }
+  bool check(Session *session, set_var *var);
   bool check_update_type(Item_result)
   { return 0; }
 };
 
 
-class sys_var_session_enum :public sys_var_session
+class DRIZZLED_API sys_var_session_enum :public sys_var_session
 {
 protected:
   uint32_t drizzle_system_variables::*offset;
@@ -937,7 +930,7 @@ public:
 };
 
 
-class sys_var_session_storage_engine :public sys_var_session
+class DRIZZLED_API sys_var_session_storage_engine :public sys_var_session
 {
 protected:
   plugin::StorageEngine *drizzle_system_variables::*offset;
@@ -957,7 +950,7 @@ public:
                            const LEX_STRING *base);
 };
 
-class sys_var_session_bit :public sys_var_session
+class DRIZZLED_API sys_var_session_bit :public sys_var_session
 {
   sys_check_func check_func;
   sys_update_func update_func;
@@ -982,7 +975,7 @@ public:
 
 /* some variables that require special handling */
 
-class sys_var_timestamp :public sys_var
+class DRIZZLED_API sys_var_timestamp :public sys_var
 {
 public:
   sys_var_timestamp(const char *name_arg)
@@ -999,7 +992,7 @@ public:
 };
 
 
-class sys_var_last_insert_id :public sys_var
+class DRIZZLED_API sys_var_last_insert_id :public sys_var
 {
 public:
   sys_var_last_insert_id(const char *name_arg)
@@ -1013,7 +1006,7 @@ public:
 };
 
 
-class sys_var_collation :public sys_var_session
+class DRIZZLED_API sys_var_collation :public sys_var_session
 {
 public:
   sys_var_collation(const char *name_arg)
@@ -1028,7 +1021,7 @@ public:
   virtual void set_default(Session *session, sql_var_t type)= 0;
 };
 
-class sys_var_collation_sv :public sys_var_collation
+class DRIZZLED_API sys_var_collation_sv :public sys_var_collation
 {
   const CHARSET_INFO *drizzle_system_variables::*offset;
   const CHARSET_INFO **global_default;
@@ -1049,7 +1042,7 @@ public:
 
 /* Variable that you can only read from */
 
-class sys_var_readonly: public sys_var
+class DRIZZLED_API sys_var_readonly: public sys_var
 {
 public:
   sql_var_t var_type;
@@ -1078,7 +1071,7 @@ public:
 };
 
 
-class sys_var_session_time_zone :public sys_var_session
+class DRIZZLED_API sys_var_session_time_zone :public sys_var_session
 {
 public:
   sys_var_session_time_zone(const char *name_arg)
@@ -1100,7 +1093,7 @@ public:
 };
 
 
-class sys_var_microseconds :public sys_var_session
+class DRIZZLED_API sys_var_microseconds :public sys_var_session
 {
   uint64_t drizzle_system_variables::*offset;
 public:
@@ -1118,7 +1111,7 @@ public:
   }
 };
 
-class sys_var_session_lc_time_names :public sys_var_session
+class DRIZZLED_API sys_var_session_lc_time_names :public sys_var_session
 {
 public:
   sys_var_session_lc_time_names(const char *name_arg)

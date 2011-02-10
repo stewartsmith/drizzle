@@ -40,7 +40,7 @@ insert into source (d) values (repeat("B",16000));
 insert into source (d) values (repeat("B",16000));
 #enable error inject
 SELECT seapitester_error_inject(3);
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 INSERT into dest SELECT * from source;
 DROP TABLE source;
 drop table dest;
@@ -51,7 +51,8 @@ select seapitester_error_inject(0);
 select * from data_dictionary.seapitester_engine_state_history;
 select seapitester_clear_engine_state_history();
 
---exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec ../plugin/transaction_log/utilities/transaction_reader $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

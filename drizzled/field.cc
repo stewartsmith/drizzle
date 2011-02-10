@@ -827,26 +827,24 @@ Field::Field(unsigned char *ptr_arg,
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
              utype unireg_check_arg, 
-             const char *field_name_arg)
-  :
+             const char *field_name_arg) :
     ptr(ptr_arg),
     null_ptr(null_ptr_arg),
     table(NULL),
     orig_table(NULL),
     field_name(field_name_arg),
+    comment(NULL_LEX_STRING),
     key_start(0),
     part_of_key(0),
     part_of_key_not_clustered(0),
     part_of_sortkey(0),
     unireg_check(unireg_check_arg),
     field_length(length_arg),
+    flags(null_ptr ? 0: NOT_NULL_FLAG),
+    field_index(0),
     null_bit(null_bit_arg),
     is_created_from_null_item(false)
 {
-  flags= null_ptr ? 0: NOT_NULL_FLAG;
-  comment.str= (char*) "";
-  comment.length= 0;
-  field_index= 0;
 }
 
 void Field::hash(uint32_t *nr, uint32_t *nr2)
@@ -999,7 +997,7 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   {
     copy->blob_field=(Field_blob*) this;
     copy->strip=0;
-    copy->length-= table->getShare()->blob_ptr_size;
+    copy->length-= table->getShare()->sizeBlobPtr();
     return copy->length;
   }
   else
@@ -1010,37 +1008,45 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Field::get_date(type::Time &ltime, uint32_t fuzzydate)
 {
-  char buff[40];
-  String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str_internal(&tmp)) || str_to_datetime_with_warn(res->ptr(), res->length(),
-                                                                 ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
-  {
-    return 1;
-  }
-
-  return 0;
-}
-
-bool Field::get_time(type::Time *ltime)
-{
-  char buff[40];
+  char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
-  if (!(res=val_str_internal(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), ltime))
+  assert(getTable() and getTable()->getSession());
+
+  if (not (res=val_str_internal(&tmp)) or
+      str_to_datetime_with_warn(getTable()->getSession(),
+                                res->ptr(), res->length(),
+                                &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
   {
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
-int Field::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type)
+bool Field::get_time(type::Time &ltime)
 {
-  char buff[MAX_DATE_STRING_REP_LENGTH];
-  uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);
-  return store(buff, length, &my_charset_bin);
+  char buff[type::Time::MAX_STRING_LENGTH];
+  String tmp(buff,sizeof(buff),&my_charset_bin),*res;
+
+  if (not (res= val_str_internal(&tmp)) or
+      str_to_time_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime))
+  {
+    return true;
+  }
+
+  return false;
+}
+
+int Field::store_time(type::Time &ltime, type::timestamp_t)
+{
+  String tmp;
+
+  ltime.convert(tmp);
+
+  return store(tmp.ptr(), tmp.length(), &my_charset_bin);
 }
 
 bool Field::optimize_range(uint32_t idx, uint32_t)
@@ -1172,7 +1178,7 @@ uint32_t pack_length_to_packflag(uint32_t type)
 *****************************************************************************/
 
 bool Field::set_warning(DRIZZLE_ERROR::enum_warning_level level,
-                        uint32_t code,
+                        drizzled::error_t code,
                         int cuted_increment)
 {
   /*
@@ -1192,14 +1198,15 @@ bool Field::set_warning(DRIZZLE_ERROR::enum_warning_level level,
 
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
-                                 unsigned int code,
+                                 drizzled::error_t code,
                                  const char *str, 
                                  uint32_t str_length,
-                                 enum enum_drizzle_timestamp_type ts_type, 
+                                 type::timestamp_t ts_type, 
                                  int cuted_increment)
 {
-  Session *session= table ? table->in_use : current_session;
-  if ((session->really_abort_on_warning() &&
+  Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
+
+  if ((session->abortOnWarning() and
        level >= DRIZZLE_ERROR::WARN_LEVEL_WARN) ||
       set_warning(level, code, cuted_increment))
     make_truncated_value_warning(session, level, str, str_length, ts_type,
@@ -1207,13 +1214,14 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 }
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
-                                 uint32_t code,
+                                 drizzled::error_t code,
                                  int64_t nr, 
-                                 enum enum_drizzle_timestamp_type ts_type,
+                                 type::timestamp_t ts_type,
                                  int cuted_increment)
 {
-  Session *session= table ? table->in_use : current_session;
-  if (session->really_abort_on_warning() ||
+  Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
+
+  if (session->abortOnWarning() or
       set_warning(level, code, cuted_increment))
   {
     char str_nr[22];
@@ -1224,12 +1232,13 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 }
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
-                                 const uint32_t code,
+                                 const drizzled::error_t code,
                                  double nr, 
-                                 enum enum_drizzle_timestamp_type ts_type)
+                                 type::timestamp_t ts_type)
 {
-  Session *session= table ? table->in_use : current_session;
-  if (session->really_abort_on_warning() ||
+  Session *session= (getTable() and getTable()->getSession()) ? getTable()->getSession() : current_session;
+
+  if (session->abortOnWarning() or
       set_warning(level, code, 1))
   {
     /* DBL_DIG is enough to print '-[digits].E+###' */

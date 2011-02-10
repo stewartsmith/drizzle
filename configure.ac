@@ -24,7 +24,7 @@ AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
 
-PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42, version-from-vc, skip-visibility)
+PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
 LIBDRIZZLE_LIBRARY_VERSION=1:0:0
 #                          | | |
@@ -83,7 +83,7 @@ PANDORA_DRIZZLE_BUILD
 AC_DEFINE([BUILDING_DRIZZLED],[1],
           [Define indicating we are building and not consuming drizzle.])
 
-PANDORA_HAVE_LIBGTEST
+PANDORA_HAVE_BOOST_TEST
 PANDORA_HAVE_LIBSQLITE3
 
 AC_CHECK_FUNC(inet_ntoa, [], [AC_CHECK_LIB(nsl, inet_ntoa)])
@@ -147,10 +147,7 @@ AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x${pandora_cv_boost_profile}"
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
- support-files/libdrizzle.pc dnl
- support-files/drizzle.server support-files/drizzle-log-rotate
  support-files/smf/install.sh dnl
- support-files/drizzle.spec dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)
 

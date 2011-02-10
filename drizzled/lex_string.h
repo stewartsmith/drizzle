@@ -36,6 +36,14 @@ typedef struct lex_string_t
   size_t length;
 } LEX_STRING;
 
+inline const LEX_STRING &null_lex_string()
+{
+  static LEX_STRING tmp= { NULL, 0 };
+  return tmp;
+}
+
+#define NULL_LEX_STRING null_lex_string()
+
 struct execute_string_t : public lex_string_t
 {
 private:

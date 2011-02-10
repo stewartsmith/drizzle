@@ -4,14 +4,23 @@ use data_dictionary;
 
 show create table PROCESSLIST ;
 
+SELECT ASSERT(COUNT(ID)) FROM processlist;
+
+SELECT ASSERT(COUNT(ID)) FROM processlist ORDER BY ID;
+
+# None of these test will always reply with exactly a single response
+--disable_result_log
+
 --replace_column 1 #
-SELECT ID FROM processlist;
+SELECT ASSERT(ID) FROM processlist;
 
 --replace_column 1 #
 SELECT ID FROM processlist ORDER BY ID;
 
 --replace_column 1 #
-SELECT a.ID FROM processlist as a, processlist as b ORDER BY ID;
+SELECT a.ID FROM processlist as a CROSS JOIN processlist as b ORDER BY ID;
 
 --replace_column 1 #
-SELECT a.ID FROM processlist as a, data_dictionary.processlist as b;
+SELECT a.ID FROM processlist as a CROSS JOIN data_dictionary.processlist as b;
+
+--enable_result_log

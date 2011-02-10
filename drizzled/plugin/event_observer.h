@@ -48,6 +48,8 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -64,7 +66,7 @@ class EventObserver;
 typedef std::vector<EventObserver *> EventObserverVector;
 typedef EventObserver* EventObserverPtr;
 
-class EventObserver : public Plugin
+class DRIZZLED_API EventObserver : public Plugin
 {
   EventObserver();
   EventObserver(const EventObserver &);
@@ -221,10 +223,10 @@ public:
   /* Static meathods called by drizzle to notify interested plugins 
    * of a schema an event,
  */
-  static bool beforeDropTable(Session &session, const drizzled::TableIdentifier &table);
-  static bool afterDropTable(Session &session, const drizzled::TableIdentifier &table, int err);
-  static bool beforeRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
-  static bool afterRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to, int err);
+  static bool beforeDropTable(Session &session, const drizzled::identifier::Table &table);
+  static bool afterDropTable(Session &session, const drizzled::identifier::Table &table, int err);
+  static bool beforeRenameTable(Session &session, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to);
+  static bool afterRenameTable(Session &session, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to, int err);
   static bool connectSession(Session &session);
   static bool disconnectSession(Session &session);
   static bool beforeStatement(Session &session);
@@ -434,9 +436,9 @@ public:
 class BeforeDropTableEventData: public SchemaEventData
 {
 public:
-  const drizzled::TableIdentifier &table;
+  const drizzled::identifier::Table &table;
 
-  BeforeDropTableEventData(Session &session_arg, const drizzled::TableIdentifier &table_arg): 
+  BeforeDropTableEventData(Session &session_arg, const drizzled::identifier::Table &table_arg): 
     SchemaEventData(EventObserver::BEFORE_DROP_TABLE, session_arg, table_arg.getSchemaName()), 
     table(table_arg)
   {}  
@@ -446,10 +448,10 @@ public:
 class AfterDropTableEventData: public SchemaEventData
 {
 public:
-  const drizzled::TableIdentifier &table;
+  const drizzled::identifier::Table &table;
   int err;
 
-  AfterDropTableEventData(Session &session_arg, const drizzled::TableIdentifier &table_arg, int err_arg): 
+  AfterDropTableEventData(Session &session_arg, const drizzled::identifier::Table &table_arg, int err_arg): 
     SchemaEventData(EventObserver::AFTER_DROP_TABLE, session_arg, table_arg.getSchemaName()), 
     table(table_arg), 
     err(err_arg)
@@ -460,10 +462,10 @@ public:
 class BeforeRenameTableEventData: public SchemaEventData
 {
 public:
-  const drizzled::TableIdentifier &from;
-  const drizzled::TableIdentifier &to;
+  const drizzled::identifier::Table &from;
+  const drizzled::identifier::Table &to;
 
-  BeforeRenameTableEventData(Session &session_arg, const drizzled::TableIdentifier &from_arg, const drizzled::TableIdentifier &to_arg): 
+  BeforeRenameTableEventData(Session &session_arg, const drizzled::identifier::Table &from_arg, const drizzled::identifier::Table &to_arg): 
     SchemaEventData(EventObserver::BEFORE_RENAME_TABLE, session_arg, from_arg.getSchemaName()), 
     from(from_arg), 
     to(to_arg)
@@ -474,11 +476,11 @@ public:
 class AfterRenameTableEventData: public SchemaEventData
 {
 public:
-  const drizzled::TableIdentifier &from;
-  const drizzled::TableIdentifier &to;
+  const drizzled::identifier::Table &from;
+  const drizzled::identifier::Table &to;
   int err;
 
-  AfterRenameTableEventData(Session &session_arg, const drizzled::TableIdentifier &from_arg, const drizzled::TableIdentifier &to_arg, int err_arg): 
+  AfterRenameTableEventData(Session &session_arg, const drizzled::identifier::Table &from_arg, const drizzled::identifier::Table &to_arg, int err_arg): 
     SchemaEventData(EventObserver::AFTER_RENAME_TABLE, session_arg, from_arg.getSchemaName()), 
     from(from_arg), 
     to(to_arg), 

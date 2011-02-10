@@ -194,10 +194,11 @@ int decimal_operation_results(int result)
     @retval E_DEC_OOM
 */
 
-int class_decimal2string(uint32_t mask, const type::Decimal *d,
-                         uint32_t fixed_prec, uint32_t fixed_dec,
-                         char filler, String *str)
+int class_decimal2string(const type::Decimal *d,
+                         uint32_t fixed_dec, String *str)
 {
+  uint32_t mask= E_DEC_FATAL_ERROR;
+
   /*
     Calculate the size of the string: For DECIMAL(a,b), fixed_prec==a
     holds true iff the type is also ZEROFILL, which in turn implies
@@ -209,15 +210,16 @@ int class_decimal2string(uint32_t mask, const type::Decimal *d,
     fixed_prec will be 0, and class_decimal_string_length() will be called
     instead to calculate the required size of the buffer.
   */
-  int length= (int)(fixed_prec
-                    ? (uint32_t)(fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
+  int length= (int)(0
+                    ? (uint32_t)(((0 == fixed_dec) ? 1 : 0) + 1)
                     : (uint32_t)d->string_length());
   int result;
   if (str->alloc(length))
     return check_result(mask, E_DEC_OOM);
+
   result= decimal2string((decimal_t*) d, (char*) str->ptr(),
-                         &length, (int)fixed_prec, fixed_dec,
-                         filler);
+                         &length, (int)0, fixed_dec,
+                         '0');
   str->length(length);
   return check_result(mask, result);
 }
@@ -313,20 +315,27 @@ int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const
   return err;
 }
 
+void type::Decimal::convert(double &result) const
+{
+  decimal2double(static_cast<const decimal_t*>(this), &result);
+}
 
 type::Decimal *date2_class_decimal(type::Time *ltime, type::Decimal *dec)
 {
   int64_t date;
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;
-  if (ltime->time_type > DRIZZLE_TIMESTAMP_DATE)
+  if (ltime->time_type > type::DRIZZLE_TIMESTAMP_DATE)
     date= ((date*100L + ltime->hour)*100L+ ltime->minute)*100L + ltime->second;
+
   if (int2_class_decimal(E_DEC_FATAL_ERROR, date, false, dec))
     return dec;
+
   if (ltime->second_part)
   {
     dec->buf[(dec->intg-1) / 9 + 1]= ltime->second_part * 1000;
     dec->frac= 6;
   }
+
   return dec;
 }
 
@@ -828,7 +837,7 @@ static int decimal_shift(decimal_t *dec, int shift)
 
   if (beg == end)
   {
-    decimal_make_zero(dec);
+    dec->set_zero();
     return E_DEC_OK;
   }
 
@@ -861,7 +870,8 @@ static int decimal_shift(decimal_t *dec, int shift)
         we lost all digits (they will be shifted out of buffer), so we can
         just return 0
       */
-      decimal_make_zero(dec);
+      dec->set_zero();
+
       return E_DEC_TRUNCATED;
     }
   }
@@ -1153,7 +1163,7 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
   return error;
 
 fatal_error:
-  decimal_make_zero(to);
+  to->set_zero();
   return error;
 }
 
@@ -1622,7 +1632,7 @@ int bin2decimal(const unsigned char *from, decimal_t *to, int precision, int sca
   return error;
 
 err:
-  decimal_make_zero(((decimal_t*) to));
+  to->set_zero();
   return(E_DEC_BAD_NUM);
 }
 
@@ -1689,7 +1699,7 @@ decimal_round(const decimal_t *from, decimal_t *to, int scale,
 
   if (scale+from->intg < 0)
   {
-    decimal_make_zero(to);
+    to->set_zero();
     return E_DEC_OK;
   }
 
@@ -1760,7 +1770,7 @@ decimal_round(const decimal_t *from, decimal_t *to, int scale,
     }
     else if (frac0+intg0==0)
     {
-      decimal_make_zero(to);
+      to->set_zero();
       return E_DEC_OK;
     }
   }
@@ -1985,7 +1995,9 @@ static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
       {
         if (to == 0) /* decimal_cmp() */
           return 0;
-        decimal_make_zero(to);
+
+        to->set_zero();
+
         return E_DEC_OK;
       }
     }
@@ -2096,13 +2108,19 @@ int decimal_cmp(const decimal_t *from1, const decimal_t *from2)
   return from1->sign > from2->sign ? -1 : 1;
 }
 
-int decimal_is_zero(const decimal_t *from)
+int decimal_t::isZero() const
 {
-  dec1 *buf1=from->buf,
-       *end=buf1+round_up(from->intg)+round_up(from->frac);
+  dec1 *buf1= buf,
+       *end= buf1 +round_up(intg) +round_up(frac);
+
   while (buf1 < end)
+  {
     if (*buf1++)
+    {
       return 0;
+    }
+  }
+
   return 1;
 }
 
@@ -2210,7 +2228,7 @@ int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
       if (++buf == end)
       {
         /* We got decimal zero */
-        decimal_make_zero(to);
+        to->set_zero();
         break;
       }
     }
@@ -2280,7 +2298,7 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
   }
   if (prec1 <= 0)
   { /* short-circuit everything: from1 == 0 */
-    decimal_make_zero(to);
+    to->set_zero();
     return E_DEC_OK;
   }
   for (i=(prec1-1) % DIG_PER_DEC1; *buf1 < powers10[i--]; prec1--) ;
@@ -2440,14 +2458,14 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
     error=E_DEC_OK;
     if (unlikely(frac0==0 && intg0==0))
     {
-      decimal_make_zero(to);
+      to->set_zero();
       goto done;
     }
     if (intg0<=0)
     {
       if (unlikely(-intg0 >= to->len))
       {
-        decimal_make_zero(to);
+        to->set_zero();
         error=E_DEC_TRUNCATED;
         goto done;
       }
@@ -2538,7 +2556,7 @@ std::ostream& operator<<(std::ostream& output, const type::Decimal &dec)
 {
   drizzled::String str;
 
-  class_decimal2string(E_DEC_OK, &dec, 0, 20, ' ', &str);
+  class_decimal2string(&dec, 0, &str);
 
   output << "type::Decimal:(";
   output <<  str.c_ptr();

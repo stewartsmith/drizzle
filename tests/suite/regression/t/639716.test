@@ -31,7 +31,7 @@ CREATE TABLE `c` (
 
 INSERT INTO `c` VALUES (1,NULL,'h');
 
---error 1691
+--error ER_INVALID_ENUM_VALUE
 SELECT X . `col_int_key` FROM `c` AS X LEFT JOIN `a` AS Y USING ( `col_enum_key` ) WHERE X . `col_enum_key` = ( SELECT `col_int_not_null_key` FROM `aa` WHERE `pk` = 5 ) LIMIT 8 ;
 
 DROP TABLE `a`,`aa`,`c`;

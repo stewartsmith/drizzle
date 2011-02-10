@@ -59,15 +59,15 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 
+#include <drizzled/debug.h>
+
 #include <algorithm>
 
 using namespace std;
 
 namespace drizzled
 {
-
 extern plugin::StorageEngine *heap_engine;
-extern std::bitset<12> test_flags;
 
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(Join *main_join, Join *curr_join);
@@ -212,7 +212,7 @@ int Join::prepare(Item ***rref_pointer_array,
   if (having)
   {
     nesting_map save_allow_sum_func= session->lex->allow_sum_func;
-    session->where="having clause";
+    session->setWhere("having clause");
     session->lex->allow_sum_func|= 1 << select_lex_arg->nest_level;
     select_lex->having_fix_field= 1;
     bool having_fix_rc= (!having->fixed &&
@@ -728,7 +728,7 @@ int Join::optimize()
   }
   if (group_list || tmp_table_param.sum_func_count)
   {
-    if (! hidden_group_fields && rollup.state == ROLLUP::STATE_NONE)
+    if (! hidden_group_fields && rollup.getState() == Rollup::STATE_NONE)
       select_distinct=0;
   }
   else if (select_distinct && tables - const_tables == 1)
@@ -792,7 +792,7 @@ int Join::optimize()
   {
     Order *old_group_list;
     group_list= remove_constants(this, (old_group_list= group_list), conds,
-                                 rollup.state == ROLLUP::STATE_NONE,
+                                 rollup.getState() == Rollup::STATE_NONE,
                                  &simple_group);
     if (session->is_error())
     {
@@ -984,9 +984,8 @@ int Join::optimize()
 
     tmp_table_param.hidden_field_count= (all_fields.elements -
            fields_list.elements);
-    Order *tmp_group= ((!simple_group &&
-                           ! (test_flags.test(TEST_NO_KEY_GROUP))) ? group_list :
-                                                                     (Order*) 0);
+    Order *tmp_group= (((not simple_group) or not (getDebug().test(debug::NO_KEY_GROUP))) ? group_list : (Order*) 0);
+
     /*
       Pushing LIMIT to the temporary table creation is not applicable
       when there is ORDER BY or GROUP BY or there is no GROUP BY, but
@@ -1985,7 +1984,7 @@ bool Join::alloc_func_list()
     If we are using rollup, we need a copy of the summary functions for
     each level
   */
-  if (rollup.state != ROLLUP::STATE_NONE)
+  if (rollup.getState() != Rollup::STATE_NONE)
     func_count*= (send_group_parts+1);
 
   group_parts= send_group_parts;
@@ -2048,18 +2047,18 @@ bool Join::make_sum_func_list(List<Item> &field_list,
          ((Item_sum *)item)->depended_from() == select_lex))
       *func++= (Item_sum*) item;
   }
-  if (before_group_by && rollup.state == ROLLUP::STATE_INITED)
+  if (before_group_by && rollup.getState() == Rollup::STATE_INITED)
   {
-    rollup.state= ROLLUP::STATE_READY;
+    rollup.setState(Rollup::STATE_READY);
     if (rollup_make_fields(field_list, send_fields, &func))
       return true;     // Should never happen
   }
-  else if (rollup.state == ROLLUP::STATE_NONE)
+  else if (rollup.getState() == Rollup::STATE_NONE)
   {
     for (uint32_t i=0 ; i <= send_group_parts ;i++)
       sum_funcs_end[i]= func;
   }
-  else if (rollup.state == ROLLUP::STATE_READY)
+  else if (rollup.getState() == Rollup::STATE_READY)
     return(false);                         // Don't put end marker
   *func=0;          // End marker
   return(false);
@@ -2071,7 +2070,7 @@ bool Join::rollup_init()
   Item **ref_array;
 
   tmp_table_param.quick_group= 0; // Can't create groups in tmp table
-  rollup.state= ROLLUP::STATE_INITED;
+  rollup.setState(Rollup::STATE_INITED);
 
   /*
     Create pointers to the different sum function groups
@@ -2079,18 +2078,19 @@ bool Join::rollup_init()
   */
   tmp_table_param.group_parts= send_group_parts;
 
-  if (!(rollup.null_items= (Item_null_result**) session->alloc((sizeof(Item*) +
+  rollup.setNullItems((Item_null_result**) session->alloc((sizeof(Item*) +
                                                                 sizeof(Item**) +
                                                                 sizeof(List<Item>) +
                                                                 ref_pointer_array_size)
-                                                               * send_group_parts )))
+                                                               * send_group_parts ));
+  if (! rollup.getNullItems())
   {
     return 1;
   }
 
-  rollup.fields= (List<Item>*) (rollup.null_items + send_group_parts);
-  rollup.ref_pointer_arrays= (Item***) (rollup.fields + send_group_parts);
-  ref_array= (Item**) (rollup.ref_pointer_arrays+send_group_parts);
+  rollup.setFields((List<Item>*) (rollup.getNullItems() + send_group_parts));
+  rollup.setRefPointerArrays((Item***) (rollup.getFields() + send_group_parts));
+  ref_array= (Item**) (rollup.getRefPointerArrays()+send_group_parts);
 
   /*
     Prepare space for field list for the different levels
@@ -2098,10 +2098,10 @@ bool Join::rollup_init()
   */
   for (uint32_t i= 0 ; i < send_group_parts ; i++)
   {
-    rollup.null_items[i]= new (session->mem_root) Item_null_result();
-    List<Item> *rollup_fields= &rollup.fields[i];
+    rollup.getNullItems()[i]= new (session->mem_root) Item_null_result();
+    List<Item> *rollup_fields= &rollup.getFields()[i];
     rollup_fields->empty();
-    rollup.ref_pointer_arrays[i]= ref_array;
+    rollup.getRefPointerArrays()[i]= ref_array;
     ref_array+= all_fields.elements;
   }
 
@@ -2109,7 +2109,7 @@ bool Join::rollup_init()
   {
     for (uint32_t j= 0 ; j < fields_list.elements ; j++)
     {
-      rollup.fields[i].push_back(rollup.null_items[i]);
+      rollup.getFields()[i].push_back(rollup.getNullItems()[i]);
     }
   }
 
@@ -2219,8 +2219,8 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     uint32_t pos= send_group_parts - level -1;
     bool real_fields= 0;
     Item *item;
-    List_iterator<Item> new_it(rollup.fields[pos]);
-    Item **ref_array_start= rollup.ref_pointer_arrays[pos];
+    List_iterator<Item> new_it(rollup.getFields()[pos]);
+    Item **ref_array_start= rollup.getRefPointerArrays()[pos];
     Order *start_group;
 
     /* Point to first hidden field */
@@ -2321,11 +2321,11 @@ int Join::rollup_send_data(uint32_t idx)
   for (uint32_t i= send_group_parts ; i-- > idx ; )
   {
     /* Get reference pointers to sum functions in place */
-    memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i], ref_pointer_array_size);
+    memcpy(ref_pointer_array, rollup.getRefPointerArrays()[i], ref_pointer_array_size);
 
     if ((!having || having->val_int()))
     {
-      if (send_records < unit->select_limit_cnt && do_send_rows && result->send_data(rollup.fields[i]))
+      if (send_records < unit->select_limit_cnt && do_send_rows && result->send_data(rollup.getFields()[i]))
       {
         return 1;
       }
@@ -2362,13 +2362,13 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
   for (uint32_t i= send_group_parts ; i-- > idx ; )
   {
     /* Get reference pointers to sum functions in place */
-    memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
+    memcpy(ref_pointer_array, rollup.getRefPointerArrays()[i],
            ref_pointer_array_size);
     if ((!having || having->val_int()))
     {
       int write_error;
       Item *item;
-      List_iterator_fast<Item> it(rollup.fields[i]);
+      List_iterator_fast<Item> it(rollup.getFields()[i]);
       while ((item= it++))
       {
         if (item->type() == Item::NULL_ITEM && item->is_result_field())
@@ -4505,7 +4505,7 @@ static void make_outerjoin_info(Join *join)
       /* Ignore sj-nests: */
       if (!embedding->on_expr)
         continue;
-      nested_join_st *nested_join= embedding->getNestedJoin();
+      NestedJoin *nested_join= embedding->getNestedJoin();
       if (!nested_join->counter_)
       {
         /*
@@ -4621,6 +4621,12 @@ static bool make_join_select(Join *join,
          */
         if (i != join->const_tables && join->tables > join->const_tables + 1)
           join->full_join= 1;
+      }
+
+      if (join->full_join and not session->lex->current_select->is_cross and not cond)
+      {
+        my_error(ER_CARTESIAN_JOIN_ATTEMPTED, MYF(0));
+        return 1;
       }
 
       tmp= NULL;
@@ -5245,7 +5251,7 @@ static int return_zero_rows(Join *join,
 static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds, bool top)
 {
   TableList *table;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
   TableList *prev_table= 0;
   List_iterator<TableList> li(*join_list);
 
@@ -5583,7 +5589,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
       s->embedding_map.reset();
       do
       {
-        nested_join_st *nested_join= embedding->getNestedJoin();
+        NestedJoin *nested_join= embedding->getNestedJoin();
         s->embedding_map|= nested_join->nj_map;
         s->dependent|= embedding->getDepTables();
         embedding= embedding->getEmbedding();
@@ -5667,7 +5673,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     s= p_pos->getJoinTable();
     s->type= AM_SYSTEM;
     join->const_table_map|=s->table->map;
-    if ((tmp= join_read_const_table(s, p_pos)))
+    if ((tmp= s->joinReadConstTable(p_pos)))
     {
       if (tmp > 0)
         return 1;			// Fatal error
@@ -5741,7 +5747,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           join->const_table_map|=table->map;
           set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
           partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
-          if ((tmp= join_read_const_table(s, partial_pos)))
+          if ((tmp= s->joinReadConstTable(partial_pos)))
           {
             if (tmp > 0)
               return 1;			// Fatal error
@@ -5793,7 +5799,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
                 if (create_ref_for_key(join, s, start_keyuse, found_const_table_map))
                   return 1;
                 partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
-                if ((tmp=join_read_const_table(s, partial_pos)))
+                if ((tmp=s->joinReadConstTable(partial_pos)))
                 {
                   if (tmp > 0)
                     return 1;			// Fatal error
@@ -5877,6 +5883,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
       s->quick=select->quick;
       s->needed_reg=select->needed_reg;
       select->quick=0;
+
       if (records == 0 && s->table->reginfo.impossible_range)
       {
         /*
@@ -5958,7 +5965,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
   TableList *table;
   while ((table= li++))
   {
-    nested_join_st *nested_join;
+    NestedJoin *nested_join;
     if ((nested_join= table->getNestedJoin()))
     {
       /*
@@ -6015,9 +6022,9 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 }
 
 /**
-  Set nested_join_st::counter=0 in all nested joins in passed list.
+  Set NestedJoin::counter=0 in all nested joins in passed list.
 
-    Recursively set nested_join_st::counter=0 for all nested joins contained in
+    Recursively set NestedJoin::counter=0 for all nested joins contained in
     the passed join_list.
 
   @param join_list  List of nested joins to process. It may also contain base
@@ -6029,7 +6036,7 @@ static void reset_nj_counters(List<TableList> *join_list)
   TableList *table;
   while ((table= li++))
   {
-    nested_join_st *nested_join;
+    NestedJoin *nested_join;
     if ((nested_join= table->getNestedJoin()))
     {
       nested_join->counter_= 0;
@@ -6115,7 +6122,7 @@ static void restore_prev_nj_state(JoinTable *last)
   Join *join= last->join;
   for (;last_emb != NULL; last_emb= last_emb->getEmbedding())
   {
-    nested_join_st *nest= last_emb->getNestedJoin();
+    NestedJoin *nest= last_emb->getNestedJoin();
     
     bool was_fully_covered= nest->is_fully_covered();
     

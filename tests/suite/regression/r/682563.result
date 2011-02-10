@@ -1,0 +1,165 @@
+A
+CREATE TABLE t1 (a int);
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+BEGIN;
+INSERT INTO t1 values (1);
+B
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+BEGIN;
+SELECT * from t1;
+a
+A
+INSERT INTO t1 values (2);
+B
+SELECT * from t1;
+a
+COMMIT;
+BEGIN;
+SELECT * FROM t1;
+a
+A
+COMMIT;
+B
+SELECT * from t1 order by a;
+a
+1
+2
+COMMIT;
+BEGIN;
+SELECT * from t1 order by a;
+a
+1
+2
+COMMIT;
+DROP TABLE t1;
+SET AUTOCOMMIT= 0;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	0
+BEGIN;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	0
+COMMIT;
+DROP SCHEMA IF EXISTS boundaries;
+Warnings:
+Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	1
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	1
+SET AUTOCOMMIT= 1;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	1
+BEGIN;
+COMMIT;
+DROP SCHEMA IF EXISTS boundaries;
+Warnings:
+Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+CREATE TABLE commit_test (a int);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+INSERT into commit_test VALUES (10), (20);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	3
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	3
+ROLLBACK;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	3
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	3
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+SET AUTOCOMMIT= 0;
+INSERT into commit_test VALUES (10);
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+COMMIT;
+drop table commit_test;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	5
+DROP TABLE IF EXISTS t1_trx, t1_non_trx;
+SET AUTOCOMMIT= 0;
+CREATE TABLE t1_trx (
+k VARCHAR(10) NOT NULL
+, v VARCHAR(10) NOT NULL
+, PRIMARY KEY (k)
+) ENGINE=InnoDB;
+CREATE TEMPORARY TABLE t1_non_trx (
+k VARCHAR(10) NOT NULL
+, v VARCHAR(10) NOT NULL
+, PRIMARY KEY (k)
+) ENGINE=MyISAM;
+START TRANSACTION;
+INSERT INTO t1_trx VALUES ('key1','value1');
+INSERT INTO t1_trx VALUES ('key2','value2');
+INSERT INTO t1_non_trx VALUES ('key1','value1');
+INSERT INTO t1_non_trx VALUES ('key2','value2');
+ROLLBACK;
+Warnings:
+Warning	1196	Some non-transactional changed tables couldn't be rolled back
+Expected warning about non-trx data changes not being rolled back
+SELECT * FROM t1_trx;
+k	v
+SELECT * FROM t1_non_trx;
+k	v
+key1	value1
+key2	value2
+START TRANSACTION;
+Warnings:
+Warning	1746	There is already a transaction in progress
+INSERT INTO t1_trx VALUES ('key1','value1');
+INSERT INTO t1_trx VALUES ('key2','value2');
+SELECT t1_trx.k, t1_trx.v
+FROM t1_trx
+INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
+k	v
+key1	value1
+key2	value2
+ROLLBACK;
+SELECT t1_trx.k, t1_trx.v
+FROM t1_trx
+INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
+k	v
+COMMIT;
+DROP TABLE t1_trx;
+DROP TABLE t1_non_trx;

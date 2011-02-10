@@ -319,7 +319,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
-  SchemaIdentifier identifier(*schema);
+  identifier::Schema identifier(*schema);
   READ_INFO read_info(file, tot_length,
                       ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(identifier),
 		      *field_term, *ex->line_start, *ex->line_term, *enclosed,
@@ -365,7 +365,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
     table->copy_blobs=1;
 
-    session->abort_on_warning= true;
+    session->setAbortOnWarning(true);
 
     if (!field_term->length() && !enclosed->length())
       error= read_fixed_length(session, info, table_list, fields_vars,
@@ -414,7 +414,8 @@ err:
               session->transaction.stmt.hasModifiedNonTransData());
   table->cursor->ha_release_auto_increment();
   table->auto_increment_field_not_null= false;
-  session->abort_on_warning= 0;
+  session->setAbortOnWarning(false);
+
   return(error);
 }
 

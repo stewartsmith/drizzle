@@ -28,8 +28,6 @@
 namespace drizzled
 {
 
-extern type::Decimal decimal_zero;
-
 /****************************************************************************
  ** File_decimal
  ****************************************************************************/
@@ -40,39 +38,36 @@ Field_decimal::Field_decimal(unsigned char *ptr_arg,
                              unsigned char null_bit_arg,
                              enum utype unireg_check_arg,
                              const char *field_name_arg,
-                             uint8_t dec_arg,
-                             bool zero_arg,
-                             bool unsigned_arg)
-:Field_num(ptr_arg,
-           len_arg,
-           null_ptr_arg,
-           null_bit_arg,
-           unireg_check_arg,
-           field_name_arg,
-           dec_arg, zero_arg,
-           unsigned_arg)
-{
-  precision= class_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
-  set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
-  assert((precision <= DECIMAL_MAX_PRECISION) &&
-         (dec <= DECIMAL_MAX_SCALE));
-  bin_size= class_decimal_get_binary_size(precision, dec);
-}
+                             uint8_t dec_arg) :
+  Field_num(ptr_arg,
+            len_arg,
+            null_ptr_arg,
+            null_bit_arg,
+            unireg_check_arg,
+            field_name_arg,
+            dec_arg, false,
+            false)
+  {
+    precision= class_decimal_length_to_precision(len_arg, dec_arg, false);
+    set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
+    assert((precision <= DECIMAL_MAX_PRECISION) && (dec <= DECIMAL_MAX_SCALE));
+    bin_size= class_decimal_get_binary_size(precision, dec);
+  }
 
 Field_decimal::Field_decimal(uint32_t len_arg,
                              bool maybe_null_arg,
                              const char *name,
                              uint8_t dec_arg,
-                             bool unsigned_arg)
-:Field_num((unsigned char*) 0,
-           len_arg,
-           maybe_null_arg ? (unsigned char*) "": 0,
-           0,
-           NONE,
-           name,
-           dec_arg,
-           0,
-           unsigned_arg)
+                             bool unsigned_arg) :
+  Field_num((unsigned char*) 0,
+            len_arg,
+            maybe_null_arg ? (unsigned char*) "": 0,
+            0,
+            NONE,
+            name,
+            dec_arg,
+            0,
+            unsigned_arg)
 {
   precision= class_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
@@ -152,7 +147,7 @@ int Field_decimal::store(const char *from, uint32_t length,
   if ((err= decimal_value.store(E_DEC_FATAL_ERROR &
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
                            from, length, charset_arg)) &&
-      getTable()->in_use->abort_on_warning)
+      getTable()->in_use->abortOnWarning())
   {
     /* Because "from" is not NUL-terminated and we use %s in the ER() */
     String from_as_str;
@@ -257,11 +252,11 @@ int Field_decimal::store_decimal(const type::Decimal *decimal_value)
 }
 
 
-int Field_decimal::store_time(type::Time *ltime,
-                              enum enum_drizzle_timestamp_type )
+int Field_decimal::store_time(type::Time &ltime,
+                              type::timestamp_t )
 {
   type::Decimal decimal_value;
-  return store_value(date2_class_decimal(ltime, &decimal_value));
+  return store_value(date2_class_decimal(&ltime, &decimal_value));
 }
 
 
@@ -308,9 +303,8 @@ String *Field_decimal::val_str(String *val_buffer,
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  uint32_t fixed_precision= decimal_precision ? precision : 0;
-  class_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
-                    fixed_precision, dec, '0', val_buffer);
+  class_decimal2string(val_decimal(&decimal_value),
+                       dec, val_buffer);
   return val_buffer;
 }
 

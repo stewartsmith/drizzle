@@ -277,7 +277,7 @@ INSERT INTO t2 VALUES (1);
 DELETE IGNORE FROM t1 WHERE i = 1;
 Warnings:
 Error	1451	Cannot delete or update a parent row: a foreign key constraint fails (`test`.`t2`, CONSTRAINT `t2_ibfk_1` FOREIGN KEY (`i`) REFERENCES `t1` (`i`) ON DELETE NO ACTION)
-SELECT * FROM t1, t2;
+SELECT * FROM t1 CROSS JOIN t2;
 i	i
 1	1
 DROP TABLE t2, t1;
@@ -590,6 +590,7 @@ Note	1051	Unknown table 't2'
 CREATE TABLE t2 (a int, b int, primary key (a));
 BEGIN;
 INSERT INTO t2 values(100,100);
+COMMIT;
 CREATE TABLE IF NOT EXISTS t2 (primary key (a)) select * from t1;
 ERROR 23000: Duplicate entry '1' for key 'PRIMARY'
 SELECT * from t2;

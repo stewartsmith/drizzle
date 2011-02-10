@@ -188,7 +188,7 @@ INSERT INTO t1 (b) VALUES(100);
 --echo
 
 --echo Testing misc DECIMAL simple2
---ERROR 1265 
+--ERROR ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 (b) VALUES(.0898);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -238,7 +238,7 @@ INSERT INTO t1 (b) VALUES(NULL);
 --echo
 
 --echo Testing BAD INPUT FLOAT simple
---ERROR 1265
+--ERROR ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 (b) VALUES('abbazabba');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -306,7 +306,7 @@ INSERT INTO t1 (b) VALUES(5);
 --echo
 
 --echo Testing BAD INPUT ENUM simple
---ERROR 1691 
+--ERROR ER_INVALID_ENUM_VALUE
 INSERT INTO t1 (b) VALUES(6);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -340,13 +340,13 @@ INSERT INTO t1 (b) VALUES('9999-12-31');
 --echo
 
 --echo Testing MIN-1 DATE
---ERROR 1686 
+--ERROR ER_INVALID_DATE_VALUE 
 INSERT INTO t1 (b) VALUES('0000-12-31');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing MAX+1 DATE
---ERROR 1686 
+--ERROR ER_INVALID_DATE_VALUE 
 INSERT INTO t1 (b) VALUES('10000-01-01');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -367,13 +367,13 @@ INSERT INTO t1 (b) VALUES(NULL);
 --echo
 
 --echo Testing BAD INPUT DATE1
---ERROR 1686
+--ERROR ER_INVALID_DATE_VALUE
 INSERT INTO t1 (b) VALUES('abbazabba');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT DATE2
---ERROR 1686 
+--ERROR ER_INVALID_DATE_VALUE 
 INSERT INTO t1 (b) VALUES('a');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -402,13 +402,13 @@ INSERT INTO t1 (b) VALUES('9999-12-31 23:59:59');
 --echo
 
 --echo Testing MIN-1 DATETIME
---ERROR 1686 
+--ERROR ER_INVALID_DATETIME_VALUE 
 INSERT INTO t1 (b) VALUES('0000-01-01');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing MAX+1 DATETIME
---ERROR 1686 
+--ERROR ER_INVALID_DATETIME_VALUE 
 INSERT INTO t1 (b) VALUES('10000-01-01');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -429,19 +429,19 @@ INSERT INTO t1 (b) VALUES(NULL);
 --echo
 
 --echo Testing BAD INPUT DATETIME1
---ERROR 1686
+--ERROR ER_INVALID_DATETIME_VALUE
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT DATETIME2
---ERROR 1686 
+--ERROR ER_INVALID_DATETIME_VALUE 
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT DATETIME3
---ERROR 1686 
+--ERROR ER_INVALID_DATETIME_VALUE 
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:70');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -470,13 +470,13 @@ INSERT INTO t1 (b) VALUES('2038-01-19 03:14:07');
 --echo
 
 --echo Testing MIN-1 TIMESTAMP
---ERROR 1685 
+--ERROR ER_INVALID_TIMESTAMP_VALUE 
 INSERT INTO t1 (b) VALUES('1969-12-31 23:59:59');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing MAX+1 TIMESTAMP
---ERROR 1685 
+--ERROR ER_INVALID_TIMESTAMP_VALUE
 INSERT INTO t1 (b) VALUES('2038-01-19 03:14:08');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -497,19 +497,19 @@ INSERT INTO t1 (b) VALUES(NULL);
 --echo
 
 --echo Testing BAD INPUT TIMESTAMP1
---ERROR 1685 
+--ERROR ER_INVALID_TIMESTAMP_VALUE 
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT TIMESTAMP2
---ERROR 1685
+--ERROR ER_INVALID_TIMESTAMP_VALUE
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
 --echo Testing BAD INPUT TIMESTAMP3
---ERROR 1685 
+--ERROR ER_INVALID_TIMESTAMP_VALUE 
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:65');
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -618,7 +618,7 @@ INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999999999999999999999
 --echo
 
 --echo Testing MAX DECIMAL + 1
---ERROR 1264
+--ERROR ER_WARN_DATA_OUT_OF_RANGE
 INSERT INTO t1 (b) VALUES (999999999999999999999999999999999999999999999999999999999999999990);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
@@ -645,7 +645,7 @@ INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999.99999999999999999
 --echo
 
 --echo Too long value
---ERROR 1265
+--ERROR ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999.9999999999999999999999999999991);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo

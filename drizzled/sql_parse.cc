@@ -17,6 +17,7 @@
 
 #define DRIZZLE_LEX 1
 
+#include "drizzled/item/num.h"
 #include "drizzled/abort_exception.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
@@ -50,6 +51,7 @@
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/plugin/event_observer.h"
+#include "drizzled/visibility.h"
 
 #include <limits.h>
 
@@ -78,16 +80,21 @@ void parse(Session *session, const char *inBuf, uint32_t length);
 extern size_t my_thread_stack_size;
 extern const CHARSET_INFO *character_set_filesystem;
 
-const LEX_STRING command_name[COM_END+1]={
-  { C_STRING_WITH_LEN("Sleep") },
-  { C_STRING_WITH_LEN("Quit") },
-  { C_STRING_WITH_LEN("Init DB") },
-  { C_STRING_WITH_LEN("Query") },
-  { C_STRING_WITH_LEN("Shutdown") },
-  { C_STRING_WITH_LEN("Connect") },
-  { C_STRING_WITH_LEN("Ping") },
-  { C_STRING_WITH_LEN("Error") }  // Last command number
+namespace
+{
+
+static const std::string command_name[COM_END+1]={
+  "Sleep",
+  "Quit",
+  "Init DB",
+  "Query",
+  "Shutdown",
+  "Connect",
+  "Ping",
+  "Error"  // Last command number
 };
+
+}
 
 const char *xa_state_names[]={
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
@@ -106,6 +113,11 @@ const char *xa_state_names[]={
           a number of modified rows
 */
 bitset<CF_BIT_SIZE> sql_command_flags[SQLCOM_END+1];
+
+const std::string &getCommandName(const enum_server_command& command)
+{
+  return command_name[command];
+}
 
 void init_update_queries(void)
 {
@@ -209,7 +221,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     string tmp(packet, packet_length);
 
-    SchemaIdentifier identifier(tmp);
+    identifier::Schema identifier(tmp);
 
     if (not change_db(session, identifier))
     {
@@ -258,7 +270,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.autocommitOrRollback(session, session->is_error());
+  transaction_services.autocommitOrRollback(*session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -608,17 +620,20 @@ new_select(LEX *lex, bool move_down)
   Session *session= lex->session;
 
   if (!(select_lex= new (session->mem_root) Select_Lex()))
-    return(1);
+    return true;
+
   select_lex->select_number= ++session->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
   select_lex->init_query();
   select_lex->init_select();
   lex->nest_level++;
+
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
     return(1);
   }
+
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
@@ -646,12 +661,15 @@ new_select(LEX *lex, bool move_down)
     if (lex->current_select->order_list.first && !lex->current_select->braces)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UNION", "order_st BY");
-      return(1);
+      return true;
     }
+
     select_lex->include_neighbour(lex->current_select);
     Select_Lex_Unit *unit= select_lex->master_unit();
-    if (!unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
-      return(1);
+
+    if (not unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
+      return true;
+
     select_lex->context.outer_context=
                 unit->first_select()->context.outer_context;
   }
@@ -664,7 +682,8 @@ new_select(LEX *lex, bool move_down)
     list
   */
   select_lex->context.resolve_in_select_list= true;
-  return(0);
+
+  return false;
 }
 
 /**
@@ -677,16 +696,14 @@ new_select(LEX *lex, bool move_down)
   @param var_name		Variable name
 */
 
-void create_select_for_variable(const char *var_name)
+void create_select_for_variable(Session *session, const char *var_name)
 {
-  Session *session;
   LEX *lex;
   LEX_STRING tmp, null_lex_string;
   Item *var;
   char buff[MAX_SYS_VAR_LENGTH*2+4+8];
   char *end= buff;
 
-  session= current_session;
   lex= session->lex;
   init_select(lex);
   lex->sql_command= SQLCOM_SELECT;
@@ -703,7 +720,6 @@ void create_select_for_variable(const char *var_name)
     var->set_name(buff, end-buff, system_charset_info);
     session->add_item_to_list(var);
   }
-  return;
 }
 
 
@@ -868,13 +884,6 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 }
 
 
-/** Store position for column in ALTER TABLE .. ADD column. */
-
-void store_position_for_column(const char *name)
-{
-  current_session->lex->last_field->after=const_cast<char*> (name);
-}
-
 /**
   Add a table to list of used tables.
 
@@ -895,11 +904,11 @@ void store_position_for_column(const char *name)
 */
 
 TableList *Select_Lex::add_table_to_list(Session *session,
-					                     Table_ident *table,
-					                     LEX_STRING *alias,
-					                     const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
-					                     thr_lock_type lock_type,
-					                     List<Index_hint> *index_hints_arg,
+                                         Table_ident *table,
+                                         LEX_STRING *alias,
+                                         const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
+                                         thr_lock_type lock_type,
+                                         List<Index_hint> *index_hints_arg,
                                          LEX_STRING *option)
 {
   TableList *ptr;
@@ -921,7 +930,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     my_casedn_str(files_charset_info, table->db.str);
 
-    SchemaIdentifier schema_identifier(string(table->db.str));
+    identifier::Schema schema_identifier(string(table->db.str));
     if (not check_db_name(session, schema_identifier))
     {
 
@@ -974,8 +983,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables ;
 	 tables=tables->next_local)
     {
-      if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
+      if (not my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
+	  not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;
@@ -1039,12 +1048,12 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 bool Select_Lex::init_nested_join(Session *session)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
+                                       sizeof(NestedJoin))))
     return true;
-  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
   ptr->setEmbedding(embedding);
@@ -1074,7 +1083,7 @@ bool Select_Lex::init_nested_join(Session *session)
 TableList *Select_Lex::end_nested_join(Session *)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
 
   assert(embedding);
   ptr= embedding;
@@ -1115,13 +1124,13 @@ TableList *Select_Lex::end_nested_join(Session *)
 TableList *Select_Lex::nest_last_join(Session *session)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
   List<TableList> *embedded_list;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                          sizeof(nested_join_st))))
+                                          sizeof(NestedJoin))))
     return NULL;
-  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);

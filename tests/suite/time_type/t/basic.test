@@ -16,7 +16,7 @@ INSERT INTO t1 VALUES (1234);
 
 INSERT INTO t1 VALUES (123456.78);
 
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES (1234559.99);
 
 INSERT INTO t1 VALUES ("1");
@@ -27,10 +27,10 @@ INSERT INTO t1 VALUES ("1:23:45");
 
 INSERT INTO t1 VALUES ("10.22");
 
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES ("20 10:22:33");
 
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES ("-10  1:22:33.45");
 
 INSERT INTO t1 VALUES ("1999-02-03 20:33:34");
@@ -40,27 +40,29 @@ insert t1 values (1230);
 insert t1 values ("1230");
 insert t1 values ("12:30");
 insert t1 values ("12:30:35");
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 insert t1 values ("1 12:30:31.32");
 
-select * from t1;
+--sorted_result
+select t from t1;
 # Test wrong values
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES ("10.22.22");
 
 INSERT INTO t1 VALUES (1234567);
 
 INSERT INTO t1 VALUES (123456789);
 
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES (123456789.10);
 
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES ("10 22:22");
 
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES ("12.45a");
-select * from t1;
+--sorted_result
+select t from t1;
 DROP TABLE t1;
 
 CREATE TABLE t1 (t time);
@@ -119,7 +121,7 @@ SELECT CAST('100:55:50' as time) > cast('024:00:00' as time);
 SELECT CAST('300:55:50' as time) > cast('240:00:00' as time);
 
 CREATE TABLE t1 (f1 time);
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES ('24:00:00');
 
 SELECT CAST('24:00:00' as time) = (select f1 from t1);
@@ -130,7 +132,7 @@ DROP TABLE t1;
 # Bug#29739: Incorrect time comparison in BETWEEN.
 #
 CREATE TABLE t1(f1 time, f2 time);
---error ER_INVALID_UNIX_TIMESTAMP_VALUE
+--error ER_INVALID_TIME_VALUE
 INSERT INTO t1 VALUES('20:00:00','150:00:00');
 
 select 1 from t1 where cast('100:00:00' as time) between f1 and f2;

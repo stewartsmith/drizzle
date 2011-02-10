@@ -33,10 +33,7 @@ namespace statement
 class Rollback : public Statement
 {
 public:
-  Rollback(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Rollback(Session *in_session, bool tx_chain_arg, bool tx_release_arg);
 
   bool execute();
 

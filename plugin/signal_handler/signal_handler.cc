@@ -27,6 +27,8 @@
 
 #include "drizzled/session/cache.h"
 
+#include "drizzled/debug.h"
+
 #include "drizzled/drizzled.h"
 
 #include <boost/thread/thread.hpp>
@@ -47,7 +49,6 @@ extern bool volatile shutdown_in_progress;
 extern boost::filesystem::path pid_file;
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
-extern std::bitset<12> test_flags;
 }
 
 using namespace drizzled;
@@ -76,9 +77,10 @@ static void kill_server(int sig)
   if (sig != 0) // 0 is not a valid signal number
     ignore_signal(sig);                    /* purify inspected */
   if (sig == SIGTERM || sig == 0)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
+    errmsg_printf(error::INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
   else
-    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
+    errmsg_printf(error::ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
+
   close_connections();
   clean_up(1);
 }
@@ -120,11 +122,11 @@ void signal_hand()
   boost::this_thread::at_thread_exit(&internal::my_thread_end);
   signal_thread_in_use= true;
 
-  if ((test_flags.test(TEST_SIGINT)))
+  if ((drizzled::getDebug().test(drizzled::debug::ALLOW_SIGINT)))
   {
     (void) sigemptyset(&set);			// Setup up SIGINT for debug
     (void) sigaddset(&set,SIGINT);		// For debugging
-    (void) pthread_sigmask(SIG_UNBLOCK,&set,NULL);
+    (void) pthread_sigmask(SIG_UNBLOCK, &set, NULL);
   }
   (void) sigemptyset(&set);			// Setup up SIGINT for debug
 #ifndef IGNORE_SIGHUP_SIGQUIT
@@ -279,10 +281,6 @@ static int init(drizzled::module::Context& context)
 }
 
 
-static drizzle_sys_var* system_variables[]= {
-  NULL
-};
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -292,7 +290,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Default Signal Handler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  system_variables,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

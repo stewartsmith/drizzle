@@ -306,7 +306,7 @@ bool fill_table_proto(message::Table &table_proto,
         {
           type::Time ltime;
 
-          if (field_arg->def->get_date(&ltime, TIME_FUZZY_DATE))
+          if (field_arg->def->get_date(ltime, TIME_FUZZY_DATE))
           {
             my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR),
                      default_value->c_str());
@@ -578,7 +578,7 @@ bool fill_table_proto(message::Table &table_proto,
 */
 
 bool rea_create_table(Session *session,
-                      const TableIdentifier &identifier,
+                      const identifier::Table &identifier,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_fields,

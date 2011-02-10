@@ -30,7 +30,7 @@
 
 using namespace drizzled;
 
-static void error_handler_func_stub(uint32_t my_err, const char *str, myf MyFlags)
+static void error_handler_func_stub(drizzled::error_t my_err, const char *str, myf MyFlags)
 {
   (void)my_err;
   (void)str;

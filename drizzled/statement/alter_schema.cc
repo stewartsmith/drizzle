@@ -35,33 +35,31 @@ namespace drizzled
 
 bool statement::AlterSchema::execute()
 {
-  LEX_STRING *db= &session->lex->name;
+  LEX_STRING *db= &getSession()->lex->name;
   message::schema::shared_ptr old_definition;
 
   if (not validateSchemaOptions())
     return true;
 
-  SchemaIdentifier schema_identifier(string(db->str, db->length));
+  identifier::Schema schema_identifier(string(db->str, db->length));
 
-  if (not check_db_name(session, schema_identifier))
+  if (not check_db_name(getSession(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
     return false;
   }
 
-  SchemaIdentifier identifier(db->str);
+  identifier::Schema identifier(db->str);
   if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 
     return true;
   }
 
-  if (session->inTransaction())
+  if (getSession()->inTransaction())
   {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
-               MYF(0));
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
   /*
@@ -85,7 +83,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= alter_db(session, schema_message, old_definition);
+  bool res= alter_db(getSession(), schema_message, old_definition);
 
   return not res;
 }

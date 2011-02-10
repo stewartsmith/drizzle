@@ -1397,6 +1397,7 @@ void Select_Lex::init_select()
   select_limit= 0;      /* denotes the default limit = HA_POS_ERROR */
   offset_limit= 0;      /* denotes the default offset = 0 */
   with_sum_func= 0;
+  is_cross= false;
   is_correlated= 0;
   cur_pos_in_select_list= UNDEF_POS;
   non_agg_fields.empty();
@@ -1815,21 +1816,6 @@ void Select_Lex::print_limit(Session *, String *str,
 LEX::~LEX()
 {
   delete _create_table;
-}
-
-/**
-  @brief Restore the LEX and Session in case of a parse error.
-
-  This is a clean up call that is invoked by the Bison generated
-  parser before returning an error from DRIZZLEparse. If your
-  semantic actions manipulate with the global thread state (which
-  is a very bad practice and should not normally be employed) and
-  need a clean-up in case of error, and you can not use %destructor
-  rule in the grammar file itself, this function should be used
-  to implement the clean up.
-*/
-void LEX::cleanup_lex_after_parse_error(Session *)
-{
 }
 
 /*

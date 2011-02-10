@@ -64,6 +64,8 @@ select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
 START TRANSACTION;
+Warnings:
+Warning	1746	There is already a transaction in progress
 INSERT INTO t1_trx VALUES ('key1','value1');
 INSERT INTO t1_trx VALUES ('key2','value2');
 SELECT t1_trx.k, t1_trx.v
@@ -75,13 +77,6 @@ key2	value2
 ROLLBACK;
 select * from data_dictionary.seapitester_engine_state_history;
 STATE
-COMMIT
-::SEAPITester()
-BEGIN
-In Transaction
-END STATEMENT
-COMMIT STATEMENT
-In Transaction
 START STATEMENT
 END STATEMENT
 COMMIT STATEMENT
@@ -103,6 +98,7 @@ SELECT t1_trx.k, t1_trx.v
 FROM t1_trx
 INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
 k	v
+COMMIT;
 DROP TABLE t1_trx;
 DROP TABLE t1_non_trx;
 select * from data_dictionary.seapitester_engine_state_history;

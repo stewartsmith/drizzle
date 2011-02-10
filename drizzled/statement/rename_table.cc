@@ -31,10 +31,17 @@ namespace drizzled
 
 bool statement::RenameTable::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *all_tables= getSession()->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   TableList *table;
+
+  if (getSession()->inTransaction())
+  {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
+    return true;
+  }
+
   for (table= first_table; table; table= table->next_local->next_local)
   {
     TableList old_list, new_list;
@@ -46,10 +53,11 @@ bool statement::RenameTable::execute()
     new_list= table->next_local[0];
   }
 
-  if (! session->endActiveTransaction() || renameTables(first_table))
+  if (renameTables(first_table))
   {
     return true;
   }
+
   return false;
 }
 
@@ -62,19 +70,19 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     Avoid problems with a rename on a table that we have locked or
     if the user is trying to to do this in a transcation context
   */
-  if (session->inTransaction())
+  if (getSession()->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
     return true;
   }
 
-  if (session->wait_if_global_read_lock(false, true))
+  if (getSession()->wait_if_global_read_lock(false, true))
     return true;
 
   {
     boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Rename table lock for exclusive access */
 
-    if (not session->lock_table_names_exclusively(table_list))
+    if (not getSession()->lock_table_names_exclusively(table_list))
     {
       error= false;
       ren_table= renameTablesInList(table_list, false);
@@ -107,11 +115,11 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   /* Lets hope this doesn't fail as the result will be messy */
   if (not error)
   {
-    write_bin_log(session, *session->getQueryString());
-    session->my_ok();
+    write_bin_log(getSession(), *getSession()->getQueryString());
+    getSession()->my_ok();
   }
 
-  session->startWaitingGlobalReadLock();
+  getSession()->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -146,24 +154,24 @@ bool statement::RenameTable::rename(TableList *ren_table,
   plugin::StorageEngine *engine= NULL;
   message::table::shared_ptr table_proto;
 
-  TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
+  identifier::Table old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
-  if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, table_proto) != EEXIST)
+  if (plugin::StorageEngine::getTableDefinition(*getSession(), old_identifier, table_proto) != EEXIST)
   {
-    my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->getSchemaName(), old_alias);
+    my_error(ER_TABLE_UNKNOWN, old_identifier);
     return true;
   }
 
-  engine= plugin::StorageEngine::findByName(*session, table_proto->engine().name());
+  engine= plugin::StorageEngine::findByName(*getSession(), table_proto->engine().name());
 
-  TableIdentifier new_identifier(new_db, new_alias, message::Table::STANDARD);
-  if (plugin::StorageEngine::doesTableExist(*session, new_identifier))
+  identifier::Table new_identifier(new_db, new_alias, message::Table::STANDARD);
+  if (plugin::StorageEngine::doesTableExist(*getSession(), new_identifier))
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
     return 1; // This can't be skipped
   }
 
-  rc= rename_table(*session, engine, old_identifier, new_identifier);
+  rc= rename_table(*getSession(), engine, old_identifier, new_identifier);
   if (rc && ! skip_error)
     return true;
 

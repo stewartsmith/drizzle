@@ -20,8 +20,10 @@
 #ifndef DRIZZLED_SESSION_CACHE_H
 #define DRIZZLED_SESSION_CACHE_H
 
-#include "drizzled/session.h"
 #include <list>
+
+#include "drizzled/session.h"
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -31,10 +33,15 @@ class Session;
 namespace session
 {
 
-class Cache 
+class DRIZZLED_API Cache 
 {
 public:
   typedef std::list<Session::shared_ptr> list;
+
+  Cache() :
+    _ready_to_exit(false)
+  {
+  }
 
   static inline Cache &singleton()
   {
@@ -53,6 +60,14 @@ public:
     return _mutex;
   }
 
+  boost::condition_variable &cond()
+  {
+    return _end;
+  }
+
+  void shutdownFirst();
+  void shutdownSecond();
+
   void erase(Session::shared_ptr&);
   size_t count();
   void insert(Session::shared_ptr &arg);
@@ -60,8 +75,10 @@ public:
   Session::shared_ptr find(const session_id_t &id);
 
 private:
+  bool volatile _ready_to_exit;
   list cache;
   boost::mutex _mutex;
+  boost::condition_variable _end;
 };
 
 } /* namespace session */

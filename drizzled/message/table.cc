@@ -29,6 +29,15 @@ namespace drizzled {
 namespace message {
 namespace table {
 
+shared_ptr make_shared(identifier::Table::const_reference identifier, const std::string &engine_arg)
+{
+  shared_ptr shared(new message::Table);
+
+  init(*shared, identifier.getTableName(), identifier.getSchemaName(), engine_arg);
+
+  return shared;
+}
+
 shared_ptr make_shared(const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg)
 {
   shared_ptr shared(new message::Table);

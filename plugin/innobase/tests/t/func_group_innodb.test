@@ -53,14 +53,14 @@ select 1, max(1) from t1m where 1=99;
 select min(a) from t1i;
 select min(7) from t1i;
 select min(7);
-explain select min(7) from t2i join t1i;
-select min(7) from t2i join t1i;
+explain select min(7) from t2i cross join t1i;
+select min(7) from t2i cross join t1i;
 
 select max(a) from t1i;
 select max(7) from t1i;
 select max(7);
-explain select max(7) from t2i join t1i;
-select max(7) from t2i join t1i;
+explain select max(7) from t2i cross join t1i;
+select max(7) from t2i cross join t1i;
 
 select 1, min(a) from t1i where a=99;
 select 1, min(a) from t1i where 1=99;

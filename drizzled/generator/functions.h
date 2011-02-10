@@ -23,10 +23,12 @@
 
 #include "drizzled/plugin/function.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled {
 namespace generator {
 
-class Functions
+class DRIZZLED_API Functions
 {
   Session &session;
   typedef std::vector <std::string> vector;

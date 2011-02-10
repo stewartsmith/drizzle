@@ -493,7 +493,6 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
 void Item_bool_func2::fix_length_and_dec()
 {
   max_length= 1;				     // Function returns 0 or 1
-  Session *session;
 
   /*
     As some compare functions are generated after sql_yacc,
@@ -531,7 +530,6 @@ void Item_bool_func2::fix_length_and_dec()
     return;
   }
 
-  session= current_session;
   Item_field *field_item= NULL;
 
   if (args[0]->real_item()->type() == FIELD_ITEM)
@@ -540,7 +538,7 @@ void Item_bool_func2::fix_length_and_dec()
     if (field_item->field->can_be_compared_as_int64_t() &&
         !(field_item->is_datetime() && args[1]->result_type() == STRING_RESULT))
     {
-      if (convert_constant_item(session, field_item, &args[1]))
+      if (convert_constant_item(&getSession(), field_item, &args[1]))
       {
         cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
                          INT_RESULT);		// Works for all types.
@@ -556,7 +554,7 @@ void Item_bool_func2::fix_length_and_dec()
           !(field_item->is_datetime() &&
             args[0]->result_type() == STRING_RESULT))
       {
-        if (convert_constant_item(session, field_item, &args[0]))
+        if (convert_constant_item(&getSession(), field_item, &args[0]))
         {
           cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
                            INT_RESULT); // Works for all types.
@@ -696,36 +694,35 @@ WHERE col= 'j'
     converted value. 0 on error and on zero-dates -- check 'failure'
 */
 
-static uint64_t
-get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_type warn_type,
+static int64_t
+get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
                   char *warn_name, bool *error_arg)
 {
-  uint64_t value= 0;
-  int error;
+  int64_t value= 0;
+  type::cut_t error= type::VALID;
   type::Time l_time;
-  enum enum_drizzle_timestamp_type ret;
+  type::timestamp_t ret;
 
-  ret= str_to_datetime(str->ptr(), str->length(), &l_time,
-                       (TIME_FUZZY_DATE | MODE_INVALID_DATES |
-                        (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
-                       &error);
+  ret= l_time.store(str->ptr(), str->length(),
+                    (TIME_FUZZY_DATE | MODE_INVALID_DATES | (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
+                    error);
 
-  if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
+  if (ret == type::DRIZZLE_TIMESTAMP_DATETIME || ret == type::DRIZZLE_TIMESTAMP_DATE)
   {
     /*
       Do not return yet, we may still want to throw a "trailing garbage"
       warning.
     */
     *error_arg= false;
-    value= TIME_to_uint64_t_datetime(&l_time);
+    l_time.convert(value);
   }
   else
   {
     *error_arg= true;
-    error= 1;                                   /* force warning */
+    error= type::CUT;                                   /* force warning */
   }
 
-  if (error > 0)
+  if (error != type::VALID)
   {
     make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
@@ -770,7 +767,7 @@ get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_typ
 
 enum Arg_comparator::enum_date_cmp_type
 Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
-                                     uint64_t *const_value)
+                                     int64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
   Item *str_arg= 0, *date_arg= 0;
@@ -781,7 +778,9 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
   if (in_a->is_datetime())
   {
     if (in_b->is_datetime())
+    {
       cmp_type= CMP_DATE_WITH_DATE;
+    }
     else if (in_b->result_type() == STRING_RESULT)
     {
       cmp_type= CMP_DATE_WITH_STR;
@@ -823,7 +822,7 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
        * Does a uint64_t conversion really have to happen here?  Fields return int64_t
        * from val_int(), not uint64_t...
        */
-      uint64_t value;
+      int64_t value;
       String *str_val;
       String tmp;
       /* DateTime used to pick up as many string conversion possibilities as possible. */
@@ -849,9 +848,7 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
       }
 
       /* String conversion was good.  Convert to an integer for comparison purposes. */
-      int64_t int_value;
-      temporal.to_int64_t(&int_value);
-      value= (uint64_t) int_value;
+      temporal.to_int64_t(&value);
 
       if (const_value)
         *const_value= value;
@@ -865,21 +862,20 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
                                         Item **a1, Item **a2,
                                         Item_result type)
 {
-  enum enum_date_cmp_type cmp_type;
-  uint64_t const_value= (uint64_t)-1;
+  enum_date_cmp_type cmp_type;
+  int64_t const_value= -1;
   a= a1;
   b= a2;
 
   if ((cmp_type= can_compare_as_dates(*a, *b, &const_value)))
   {
-    session= current_session;
     owner= owner_arg;
     a_type= (*a)->field_type();
     b_type= (*b)->field_type();
     a_cache= 0;
     b_cache= 0;
 
-    if (const_value != (uint64_t)-1)
+    if (const_value != -1)
     {
       Item_cache_int *cache= new Item_cache_int();
       /* Mark the cache as non-const to prevent re-caching. */
@@ -900,6 +896,7 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
     is_nulls_eq= test(owner && owner->functype() == Item_func::EQUAL_FUNC);
     func= &Arg_comparator::compare_datetime;
     get_value_func= &get_datetime_value;
+
     return 0;
   }
 
@@ -909,7 +906,6 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
 
 void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
 {
-  session= current_session;
   /* A caller will handle null values by itself. */
   owner= NULL;
   a= a1;
@@ -953,11 +949,11 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
     obtained value
 */
 
-uint64_t
+int64_t
 get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
                    Item *warn_item, bool *is_null)
 {
-  uint64_t value= 0;
+  int64_t value= 0;
   String buf, *str= 0;
   Item *item= **item_arg;
 
@@ -981,8 +977,10 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
     str= item->val_str(&buf);
     *is_null= item->null_value;
   }
+
   if (*is_null)
     return ~(uint64_t) 0;
+
   /*
     Convert strings to the integer DATE/DATETIME representation.
     Even if both dates provided in strings we can't compare them directly as
@@ -993,8 +991,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
   {
     bool error;
     enum_field_types f_type= warn_item->field_type();
-    enum enum_drizzle_timestamp_type t_type= f_type ==
-      DRIZZLE_TYPE_DATE ? DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME;
+    type::timestamp_t t_type= f_type == DRIZZLE_TYPE_DATE ? type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME;
     value= get_date_from_str(session, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current
@@ -1017,6 +1014,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
     *cache_arg= cache;
     *item_arg= cache_arg;
   }
+
   return value;
 }
 
@@ -1668,7 +1666,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, unsigned char *
     change records at each execution.
   */
   if ((*args) != new_item)
-    current_session->change_item_tree(args, new_item);
+    getSession().change_item_tree(args, new_item);
 
   /*
     Transform the right IN operand which should be an Item_in_subselect or a
@@ -2002,7 +2000,6 @@ void Item_func_between::fix_length_and_dec()
   int i;
   bool datetime_found= false;
   compare_as_dates= true;
-  Session *session= current_session;
 
   /*
     As some compare functions are generated after sql_yacc,
@@ -2049,9 +2046,9 @@ void Item_func_between::fix_length_and_dec()
         The following can't be recoded with || as convert_constant_item
         changes the argument
       */
-      if (convert_constant_item(session, field_item, &args[1]))
+      if (convert_constant_item(&getSession(), field_item, &args[1]))
         cmp_type=INT_RESULT;			// Works for all types.
-      if (convert_constant_item(session, field_item, &args[2]))
+      if (convert_constant_item(&getSession(), field_item, &args[2]))
         cmp_type=INT_RESULT;			// Works for all types.
     }
   }
@@ -3181,8 +3178,8 @@ void in_row::set(uint32_t pos, Item *item)
   return;
 }
 
-in_int64_t::in_int64_t(uint32_t elements)
-  :in_vector(elements,sizeof(packed_int64_t),(qsort2_cmp) cmp_int64_t, 0)
+in_int64_t::in_int64_t(uint32_t elements) :
+  in_vector(elements, sizeof(packed_int64_t),(qsort2_cmp) cmp_int64_t, 0)
 {}
 
 void in_int64_t::set(uint32_t pos,Item *item)
@@ -3202,7 +3199,7 @@ unsigned char *in_int64_t::get_value(Item *item)
   return (unsigned char*) &tmp;
 }
 
-void in_datetime::set(uint32_t pos,Item *item)
+void in_datetime::set(uint32_t pos, Item *item)
 {
   Item **tmp_item= &item;
   bool is_null;
@@ -3552,7 +3549,6 @@ void Item_func_in::fix_length_and_dec()
 {
   Item **arg, **arg_end;
   bool const_itm= 1;
-  Session *session= current_session;
   bool datetime_found= false;
   /* true <=> arguments values will be compared as DATETIMEs. */
   bool compare_as_datetime= false;
@@ -3700,7 +3696,7 @@ void Item_func_in::fix_length_and_dec()
           bool all_converted= true;
           for (arg=args+1, arg_end=args+arg_count; arg != arg_end ; arg++)
           {
-            if (!convert_constant_item (session, field_item, &arg[0]))
+            if (!convert_constant_item (&getSession(), field_item, &arg[0]))
               all_converted= false;
           }
           if (all_converted)
@@ -3737,7 +3733,7 @@ void Item_func_in::fix_length_and_dec()
       }
     }
 
-    if (array && !(session->is_fatal_error))		// If not EOM
+    if (array && !(getSession().is_fatal_error))		// If not EOM
     {
       uint32_t j=0;
       for (uint32_t arg_num=1 ; arg_num < arg_count ; arg_num++)
@@ -4027,7 +4023,7 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
       change records at each execution.
     */
     if (new_item != item)
-      current_session->change_item_tree(li.ref(), new_item);
+      getSession().change_item_tree(li.ref(), new_item);
   }
   return Item_func::transform(transformer, arg);
 }
@@ -4486,12 +4482,14 @@ void Item_func_like::cleanup()
   Item_bool_func2::cleanup();
 }
 
+static unsigned char likeconv(const CHARSET_INFO *cs, unsigned char a)
+{
 #ifdef LIKE_CMP_TOUPPER
-#define likeconv(cs,A) (unsigned char) (cs)->toupper(A)
+  return cs->toupper(a);
 #else
-#define likeconv(cs,A) (unsigned char) (cs)->sort_order[(unsigned char) (A)]
+  return cs->sort_order[a];
 #endif
-
+}
 
 /**
   Precomputation dependent only on pattern_len.
@@ -5112,15 +5110,15 @@ int64_t Item_equal::val_int()
     return 0;
   List_iterator_fast<Item_field> it(fields);
   Item *item= const_item ? const_item : it++;
+  eval_item->store_value(item);
   if ((null_value= item->null_value))
     return 0;
-  eval_item->store_value(item);
   while ((item_field= it++))
   {
     /* Skip fields of non-const tables. They haven't been read yet */
     if (item_field->field->getTable()->const_table)
     {
-      if ((null_value= item_field->null_value) || eval_item->cmp(item_field))
+      if (eval_item->cmp(item_field) || (null_value= item_field->null_value))
         return 0;
     }
   }
@@ -5163,7 +5161,7 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
       change records at each execution.
     */
     if (new_item != item)
-      current_session->change_item_tree((Item **) it.ref(), new_item);
+      getSession().change_item_tree((Item **) it.ref(), new_item);
   }
   return Item_func::transform(transformer, arg);
 }

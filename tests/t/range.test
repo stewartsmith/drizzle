@@ -508,7 +508,7 @@ CREATE TABLE t2 (
   PRIMARY KEY (pk1,pk2,pk3,pk4)
 );
 
-insert into t2 select 1, A.a+10*B.a, 432, 44, 'fillerZ' from t1 A, t1 B;
+insert into t2 select 1, A.a+10*B.a, 432, 44, 'fillerZ' from t1 A CROSS JOIN t1 B;
 INSERT INTO t2 VALUES (2621, 2635, 0, 0,'filler'), (2621, 2635, 1, 0,'filler'),
   (2621, 2635, 10, 0,'filler'), (2621, 2635, 11, 0,'filler'),
   (2621, 2635, 14, 0,'filler'), (2621, 2635, 1000015, 0,'filler');
@@ -792,7 +792,7 @@ insert into t1 values ('a','');
 insert into t1 values ('a ','');
 insert into t1 values ('a  ', '');
 insert into t1 select concat('a', 1000 + A.a + 10 * (B.a + 10 * C.a)), ''
-  from t3 A, t3 B, t3 C;
+  from t3 A CROSS JOIN t3 B CROSS JOIN t3 C;
 
 create table t2 (a varchar(10), filler char(200), key(a));
 insert into t2 select * from t1;

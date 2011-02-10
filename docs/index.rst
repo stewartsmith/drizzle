@@ -6,6 +6,8 @@
 Welcome to Drizzle's documentation!
 ===================================
 
+.. image:: logo.png
+
 Drizzle is a transactional, relational, community-driven open source database that is forked from the popular MySQL database.
 
 The Drizzle team has removed non-essential code, re-factored the remaining code and modernized the code base moving to C++.
@@ -28,10 +30,21 @@ Introduction:
    :maxdepth: 2
    
    preface
+   license
    what_is_drizzle
    brief_history_of_drizzle
    how_to_report_a_bug
    mysql_differences
+
+Compiling and Installing:
+-------------------------
+.. toctree::
+   :maxdepth: 2
+
+   installing/requirements
+   installing/from_source
+   installing/ubuntu
+   installing/redhat
 
 SQL Language:
 -------------
@@ -39,7 +52,8 @@ SQL Language:
    :maxdepth: 2
 
    queries
-   functions
+   functions/overview
+   data_types
    ddl
    dml
    columntypes 
@@ -50,13 +64,6 @@ SQL Language:
    getting_information 
    transactional 
    administrative
-
-Data Types:
------------
-.. toctree::
-   :maxdepth: 2
-
-   data_types
 
 User Level Topics:
 ------------------
@@ -98,6 +105,7 @@ Clients:
    clients/drizzle.rst
    clients/drizzledump.rst
    clients/drizzleadmin.rst
+   clients/errors.rst
 
 libdrizzle:
 -----------
@@ -113,6 +121,7 @@ Testing:
    :maxdepth: 2
  
    testing/test-run.rst
+   testing/dbqp.rst
 
 Indices and tables
 ==================

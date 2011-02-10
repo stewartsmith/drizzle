@@ -12,15 +12,13 @@ PROCESSLIST	CREATE TABLE `PROCESSLIST` (
   `INFO` VARCHAR(100) DEFAULT NULL,
   `HAS_GLOBAL_LOCK` BOOLEAN NOT NULL
 ) ENGINE=FunctionEngine COLLATE = utf8_general_ci
-SELECT ID FROM processlist;
-ID
-#
+SELECT ASSERT(COUNT(ID)) FROM processlist;
+ASSERT(COUNT(ID))
+1
+SELECT ASSERT(COUNT(ID)) FROM processlist ORDER BY ID;
+ASSERT(COUNT(ID))
+1
+SELECT ASSERT(ID) FROM processlist;
 SELECT ID FROM processlist ORDER BY ID;
-ID
-#
-SELECT a.ID FROM processlist as a, processlist as b ORDER BY ID;
-ID
-#
-SELECT a.ID FROM processlist as a, data_dictionary.processlist as b;
-ID
-#
+SELECT a.ID FROM processlist as a CROSS JOIN processlist as b ORDER BY ID;
+SELECT a.ID FROM processlist as a CROSS JOIN data_dictionary.processlist as b;

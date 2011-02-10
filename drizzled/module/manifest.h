@@ -68,7 +68,7 @@ struct Manifest
   const char *descr;         /* general descriptive text (for SHOW PLUGINS ) */
   plugin_license_type license; /* plugin license (PLUGIN_LICENSE_XXX)          */
   initialize_func_t init;     /* function to invoke when plugin is loaded     */
-  drizzle_sys_var **system_vars;
+  const char *depends;
   options_func_t init_options; /* register command line options              */
 };
 

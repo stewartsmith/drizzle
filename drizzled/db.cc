@@ -55,7 +55,7 @@ namespace drizzled
 {
 
 static void change_db_impl(Session *session);
-static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
+static void change_db_impl(Session *session, identifier::Schema &schema_identifier);
 
 /*
   Create a database
@@ -108,7 +108,7 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
     boost::mutex::scoped_lock scopedLock(session->catalog().schemaLock());
 
     // Check to see if it exists already.  
-    SchemaIdentifier schema_identifier(schema_message.name());
+    identifier::Schema schema_identifier(schema_message.name());
     if (plugin::StorageEngine::doesSchemaExist(schema_identifier))
     {
       if (not is_if_not_exists)
@@ -131,7 +131,7 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
     }
     else // Created !
     {
-      transaction_services.createSchema(session, schema_message);
+      transaction_services.createSchema(*session, schema_message);
       session->my_ok(1);
     }
   }
@@ -168,7 +168,7 @@ bool alter_db(Session *session,
   {
     boost::mutex::scoped_lock scopedLock(session->catalog().schemaLock());
 
-    SchemaIdentifier schema_idenifier(schema_message.name());
+    identifier::Schema schema_idenifier(schema_message.name());
     if (not plugin::StorageEngine::doesSchemaExist(schema_idenifier))
     {
       my_error(ER_SCHEMA_DOES_NOT_EXIST, schema_idenifier);
@@ -180,7 +180,7 @@ bool alter_db(Session *session,
 
     if (success)
     {
-      transaction_services.alterSchema(session, original_schema, schema_message);
+      transaction_services.alterSchema(*session, original_schema, schema_message);
       session->my_ok(1);
     }
     else
@@ -211,7 +211,7 @@ bool alter_db(Session *session,
     ERROR Error
 */
 
-bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_exists)
+bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool if_exists)
 {
   bool error= false;
 
@@ -239,11 +239,11 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
     /* See if the schema exists */
     if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
     {
-      std::string path;
-      schema_identifier.getSQLPath(path);
-
       if (if_exists)
       {
+        std::string path;
+        schema_identifier.getSQLPath(path);
+
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
                             path.c_str());
@@ -338,7 +338,7 @@ bool rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_
     @retval true  Error
 */
 
-bool change_db(Session *session, SchemaIdentifier &schema_identifier)
+bool change_db(Session *session, identifier::Schema &schema_identifier)
 {
 
   if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
@@ -349,8 +349,6 @@ bool change_db(Session *session, SchemaIdentifier &schema_identifier)
 
   if (not check_db_name(session, schema_identifier))
   {
-    std::string path;
-    schema_identifier.getSQLPath(path);
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
     return true;
@@ -381,7 +379,7 @@ bool change_db(Session *session, SchemaIdentifier &schema_identifier)
   @param new_db_charset Character set of the new database.
 */
 
-static void change_db_impl(Session *session, SchemaIdentifier &schema_identifier)
+static void change_db_impl(Session *session, identifier::Schema &schema_identifier)
 {
   /* 1. Change current database in Session. */
 

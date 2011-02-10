@@ -51,7 +51,7 @@ ModulesTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   module::Registry &registry= module::Registry::singleton();
-  modules= registry.getList(true);
+  modules= registry.getList();
   it= modules.begin();
 }
 

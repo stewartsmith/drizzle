@@ -33,10 +33,11 @@ namespace statement
 class Delete : public Statement
 {
 public:
-  Delete(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Delete(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_DELETE;
+  }
 
   bool execute();
 };

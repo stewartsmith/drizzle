@@ -30,7 +30,8 @@ using namespace drizzled;
 
 String *Item_func_compress::val_str(String *str)
 {
-  int err= Z_OK, code;
+  int err= Z_OK;
+  drizzled::error_t code;
   ulong new_size;
   String *res;
   Byte *body;

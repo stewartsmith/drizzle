@@ -25,7 +25,7 @@
 #include <fcntl.h>
 
 
-#include "drizzled/identifier/table.h"
+#include "drizzled/identifier.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
 #include "drizzled/table/concurrent.h"
@@ -99,7 +99,7 @@ bool Cache::areTablesUsed(Table *table, bool wait_for_name_lock)
 {
   do
   {
-    const TableIdentifier::Key &key(table->getShare()->getCacheKey());
+    const identifier::Table::Key &key(table->getShare()->getCacheKey());
 
     table::CacheRange ppp= table::getCache().equal_range(key);
 
@@ -136,7 +136,7 @@ We can't use hash_delete when looping hash_elements. We mark them first
 and afterwards delete those marked unused.
 */
 
-void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
+void Cache::removeSchema(const identifier::Schema &schema_identifier)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 
@@ -172,9 +172,9 @@ void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
   1  Table is in use by another thread
 */
 
-bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t flags)
+bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_t flags)
 {
-  const TableIdentifier::Key &key(identifier.getKey());
+  const identifier::Table::Key &key(identifier.getKey());
   bool result= false; 
   bool signalled= false;
 

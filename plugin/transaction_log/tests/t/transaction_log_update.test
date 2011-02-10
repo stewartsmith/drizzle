@@ -211,7 +211,7 @@ INSERT INTO t1 (b) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(100),(101);
 
 INSERT INTO t2 (b) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(100),(101);
 
---ERROR 1451
+--ERROR ER_ROW_IS_REFERENCED_2
 UPDATE t1 SET b = b*10 WHERE b%2=0;
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo

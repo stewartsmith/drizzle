@@ -475,7 +475,7 @@ End of 4.1 tests
 SHOW TABLES FROM no_such_database;
 ERROR 42000: Unknown schema 'no_such_database'
 SHOW COLUMNS FROM no_such_table;
-ERROR 42S02: Table 'test.no_such_table' doesn't exist
+ERROR 42S02: Unknown table 'test.no_such_table'
 show variables like 'myisam_recover_options';
 Variable_name	Value
 End of 5.0 tests
@@ -502,4 +502,6 @@ Tables_in_test
 drop table `été`;
 show columns from `#mysql50#????????`;
 Got one of the listed errors
+show innodb status;
+ERROR HY000: Engine status is now stored in the data_dictionary tables, please use these instead.
 End of 5.1 tests

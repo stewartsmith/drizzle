@@ -103,7 +103,7 @@ void TablesTool::Generator::fill()
   push(getTableMessage().name());
 
   /* TABLE_TYPE */
-  if (drizzled::TableIdentifier::isView(getTableMessage().type()))
+  if (drizzled::identifier::Table::isView(getTableMessage().type()))
   {
     push("VIEW");
   }

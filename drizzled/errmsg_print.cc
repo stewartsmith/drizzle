@@ -37,16 +37,44 @@ namespace drizzled
 void sql_perror(const char *message)
 {
   char errmsg[STRERROR_MAX];
+  errmsg[0]= 0;
   strerror_r(errno, errmsg, sizeof(errmsg));
-  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s\n", message, errmsg);
+  errmsg_printf(error::ERROR, "%s: %s\n", message, errmsg);
 }
 
-bool errmsg_printf (int priority, char const *format, ...)
+// @todo Cap the size of message.
+void sql_perror(const std::string &message)
+{
+  static std::string empty;
+  sql_perror(message, empty);
+}
+
+// @todo Cap the size of message/extra.
+void sql_perror(std::string message, const std::string &extra)
+{
+  char errmsg[STRERROR_MAX];
+  errmsg[0]= 0;
+  strerror_r(errno, errmsg, sizeof(errmsg));
+
+  if (not extra.empty())
+  {
+    if (message.at(message.size()) != ' ')
+      message+= " ";
+
+    message+= "'";
+    message+= extra;
+    message+= "'";
+  }
+
+  errmsg_printf(error::ERROR, "%s: %s\n", message.c_str(), errmsg);
+}
+
+bool errmsg_printf (error::level_t priority, char const *format, ...)
 {
   bool rv;
   va_list args;
   va_start(args, format);
-  rv= plugin::ErrorMessage::vprintf(NULL, priority, format, args);
+  rv= plugin::ErrorMessage::vprintf(priority, format, args);
   va_end(args);
   return rv;
 }

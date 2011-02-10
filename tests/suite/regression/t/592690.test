@@ -1,0 +1,2 @@
+# Decimal should be recorded properly from_unixtime();
+select from_unixtime(1272945599.90000), from_unixtime(1272945599), from_unixtime("1272945599.90000");

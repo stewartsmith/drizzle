@@ -30,9 +30,9 @@ while ($should_work_nesting)
 while ($nesting)
 {
 --echo $nesting
---error 0,1436
+--error EE_OK,ER_STACK_OVERRUN_NEED_MORE
   eval $start $end;
---error 0,1436
+--error EE_OK,ER_STACK_OVERRUN_NEED_MORE
   eval explain $start $end;
   let $start= $start
   $start_app;

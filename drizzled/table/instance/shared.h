@@ -28,8 +28,9 @@ namespace drizzled
 {
 
 class TableShare;
-class TableIdentifier;
 class Session;
+
+namespace identifier { class Table; }
 
 namespace table
 {
@@ -39,7 +40,7 @@ namespace instance
 
 void release(TableShare *share);
 void release(TableShare::shared_ptr &share);
-void release(const TableIdentifier &identifier);
+void release(const identifier::Table &identifier);
 
 
 class Shared : public drizzled::TableShare
@@ -47,18 +48,15 @@ class Shared : public drizzled::TableShare
   friend void release(TableShare *share);
   friend void release(TableShare::shared_ptr &share);
 
-private:
-  boost::mutex mutex;                /* For locking the share  */
-
 public:
   typedef boost::shared_ptr<Shared> shared_ptr;
   typedef std::vector <shared_ptr> vector;
 
-  Shared(const TableIdentifier::Type type_arg,
-         const TableIdentifier &identifier,
+  Shared(const identifier::Table::Type type_arg,
+         const identifier::Table &identifier,
          char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
-  Shared(const TableIdentifier &identifier); // Used by placeholder
+  Shared(const identifier::Table &identifier); // Used by placeholder
 
   ~Shared();
 
@@ -73,12 +71,31 @@ public:
     mutex.unlock();
   }
 
-
   static shared_ptr make_shared(Session *session, 
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 int &in_error);
 
   static shared_ptr foundTableShare(shared_ptr share);
+
+  plugin::EventObserverList *getTableObservers() 
+  { 
+    return event_observers;
+  }
+
+  void setTableObservers(plugin::EventObserverList *observers) 
+  { 
+    event_observers= observers;
+  }
+
+private:
+  boost::mutex mutex;                /* For locking the share  */
+
+  /* 
+    event_observers is a class containing all the event plugins that have 
+    registered an interest in this table.
+  */
+  plugin::EventObserverList *event_observers;
+
 };
 
 } /* namespace instance */

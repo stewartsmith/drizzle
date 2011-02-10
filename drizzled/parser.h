@@ -110,4 +110,47 @@
 
 #include "drizzled/item/boolean.h"
 
+namespace drizzled {
+
+class Session;
+class Table_ident;
+class Item;
+class Item_num;
+
+namespace item
+{
+class Boolean;
+class True;
+class False;
+}
+
+namespace parser {
+
+Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal, Item *expr);
+bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct);
+bool setup_select_in_parentheses(Session *session, LEX *lex);
+Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list);
+void my_parse_error(Lex_input_stream *lip);
+void my_parse_error(const char *message);
+bool check_reserved_words(LEX_STRING *name);
+void errorOn(const char *s);
+
+
+bool buildOrderBy(LEX *lex);
+void buildEngineOption(LEX *lex, const char *key, const LEX_STRING &value);
+void buildEngineOption(LEX *lex, const char *key, uint64_t value);
+void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value);
+void buildSchemaOption(LEX *lex, const char *key, uint64_t value);
+bool checkFieldIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
+
+Item *buildIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name, const LEX_STRING &field_name);
+Item *buildTableWild(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
+
+void buildCreateFieldIdent(LEX *lex);
+
+void storeAlterColumnPosition(LEX *lex, const char *position);
+
+} // namespace parser
+} // namespace drizzled
+
 #endif /* DRIZZLED_PARSER_H */

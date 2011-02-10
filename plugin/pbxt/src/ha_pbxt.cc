@@ -5723,13 +5723,11 @@ int PBXTStorageEngine::doReleaseSavepoint(drizzled::Session* thd, drizzled::Name
 	return xt_ha_pbxt_thread_error_for_mysql(thd, xt_ha_thd_to_self(thd), false);
 }
 
-int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool)
+int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool real_commit)
 {
 	int err = 0;
 	XTThreadPtr self = (XTThreadPtr) *thd->getEngineData(pbxt_hton);
 
-	bool real_commit = !session_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
-	
 	XT_PRINT1(self, "PBXTStorageEngine::doCommit(real_commit = %s)\n", real_commit ? "true" : "false");
 
 	if (real_commit && self) {
@@ -5740,12 +5738,10 @@ int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool)
 	return err;
 }
 
-int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool)
+int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool real_commit)
 {
         int err = 0;
         XTThreadPtr self = (XTThreadPtr) *thd->getEngineData(pbxt_hton);
-
-        bool real_commit = !session_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
 
 	XT_PRINT1(self, "PBXTStorageEngine::doRollback(real_commit = %s)\n", real_commit ? "true" : "false");
 
@@ -6217,7 +6213,7 @@ DRIZZLE_DECLARE_PLUGIN
         "High performance, multi-versioning transactional engine",
         PLUGIN_LICENSE_GPL,
         pbxt_init, /* Plugin Init */
-        NULL,          /* system variables                */
+        NULL,          /* depends */
         NULL                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
@@ -6235,7 +6231,7 @@ mysql_declare_plugin(pbxt)
         0x0001 /* 0.1 */,
         NULL,                       /* status variables                */
 #if MYSQL_VERSION_ID >= 50118
-        pbxt_system_variables,          /* system variables                */
+        pbxt_system_variables,          /* depends */
 #else
 	NULL,
 #endif
@@ -6251,7 +6247,7 @@ mysql_declare_plugin(pbxt)
 	pbxt_exit_statistics,						/* plugin deinit */
 	0x0005,
 	NULL,										/* status variables */
-	NULL,										/* system variables */
+	NULL,										/* depends */
 	NULL										/* config options */
 }
 mysql_declare_plugin_end;

@@ -64,6 +64,11 @@ public:
   void sort_string(unsigned char*, uint32_t);
   uint32_t max_display_length() { return 5; } // longest string is "false"
 
+  bool can_be_compared_as_int64_t() const
+  {
+    return true;
+  }
+
   inline String *val_str(String *str) { return val_str(str, str); }
   uint32_t size_of() const { return sizeof(*this); }
 

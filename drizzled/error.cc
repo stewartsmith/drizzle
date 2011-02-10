@@ -58,14 +58,14 @@ const ErrorMap::ErrorMessageMap& ErrorMap::get_error_message_map()
   return get_error_map().mapping_;
 }
 
-void add_error_message(uint32_t error_code,
+void add_error_message(drizzled::error_t error_code,
                        const std::string &error_name,
                        const std::string &message)
 {
   get_error_map().add(error_code, error_name, message);
 }
 
-const char * error_message(unsigned int code)
+const char * error_message(drizzled::error_t code)
 {
   try
   {
@@ -97,6 +97,11 @@ error_handler_func error_handler_hook= NULL;
        MyFlags	Flags
        ...	variable list
 */
+
+void my_error(const std::string &ref, error_t nr, myf MyFlags)
+{
+  my_error(nr, MyFlags, ref.c_str());
+} 
 
 void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
 {
@@ -141,7 +146,7 @@ void my_error(error_t nr, myf MyFlags, ...)
       ...	variable list
 */
 
-void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
+void my_printf_error(drizzled::error_t error, const char *format, myf MyFlags, ...)
 {
   va_list args;
   char ebuff[ERRMSGSIZE+20];
@@ -150,7 +155,6 @@ void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
   (void) vsnprintf (ebuff, sizeof(ebuff), format, args);
   va_end(args);
   (*error_handler_hook)(error, ebuff, MyFlags);
-  return;
 }
 
 /*
@@ -163,7 +167,7 @@ void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
       MyFlags	Flags
 */
 
-void my_message(uint32_t error, const char *str, register myf MyFlags)
+void my_message(drizzled::error_t error, const char *str, register myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }
@@ -171,7 +175,7 @@ void my_message(uint32_t error, const char *str, register myf MyFlags)
 
 // Insert the message for the error.  If the error already has an existing
 // mapping, an error is logged, but the function continues.
-void ErrorMap::add(uint32_t error_num,
+void ErrorMap::add(drizzled::error_t error_num,
                    const std::string &error_name,
                    const std::string &message)
 {
@@ -186,7 +190,7 @@ void ErrorMap::add(uint32_t error_num,
   }
 }
 
-const std::string &ErrorMap::find(uint32_t error_num) const
+const std::string &ErrorMap::find(drizzled::error_t error_num) const
 {
   ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
   if (pos == mapping_.end())
@@ -200,6 +204,8 @@ const std::string &ErrorMap::find(uint32_t error_num) const
 // Constructor sets the default mappings.
 ErrorMap::ErrorMap()
 {
+  ADD_ERROR_MESSAGE(EE_OK, N_("SUCCESS"));
+  ADD_ERROR_MESSAGE(EE_ERROR_FIRST, N_("Error on first"));
   ADD_ERROR_MESSAGE(ER_NO, N_("NO"));
   ADD_ERROR_MESSAGE(ER_YES, N_("YES"));
   ADD_ERROR_MESSAGE(ER_CANT_CREATE_FILE, N_("Can't create file '%-.200s' (errno: %d)"));
@@ -261,6 +267,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_DUP_ENTRY, N_("Duplicate entry '%-.192s' for key %d"));
   ADD_ERROR_MESSAGE(ER_WRONG_FIELD_SPEC, N_("Incorrect column specifier for column '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_PARSE_ERROR, N_("%s near '%-.80s' at line %d"));
+  ADD_ERROR_MESSAGE(ER_PARSE_ERROR_UNKNOWN, N_("Parsing error near '%s'"));
   ADD_ERROR_MESSAGE(ER_EMPTY_QUERY, N_("Query was empty"));
   ADD_ERROR_MESSAGE(ER_NONUNIQ_TABLE, N_("Not unique table/alias: '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_INVALID_DEFAULT, N_("Invalid default value for '%-.192s'"));
@@ -316,14 +323,13 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_NULL_COLUMN_IN_INDEX, N_("Table handler doesn't support NULL in given index. Please change column '%-.192s' to be NOT NULL or use another handler"));
   ADD_ERROR_MESSAGE(ER_PLUGIN_NO_PATHS, N_("No paths allowed for plugin library"));
   ADD_ERROR_MESSAGE(ER_PLUGIN_EXISTS, N_("Plugin '%-.192s' already exists"));
-  ADD_ERROR_MESSAGE(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %-.128s)"));
-  ADD_ERROR_MESSAGE(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%-.128s'"));
+  ADD_ERROR_MESSAGE(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %s)"));
+  ADD_ERROR_MESSAGE(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%s'"));
   ADD_ERROR_MESSAGE(ER_UPDATE_INFO, N_("Rows matched: %ld  Changed: %ld  Warnings: %ld"));
   ADD_ERROR_MESSAGE(ER_CANT_CREATE_THREAD, N_("Can't create a new thread (errno %d); if you are not out of available memory, you can consult the manual for a possible OS-dependent bug"));
   ADD_ERROR_MESSAGE(ER_WRONG_VALUE_COUNT_ON_ROW, N_("Column count doesn't match value count at row %ld"));
   ADD_ERROR_MESSAGE(ER_CANT_REOPEN_TABLE, N_("Can't reopen table: '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_MIX_OF_GROUP_FUNC_AND_FIELDS, N_("Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is illegal if there is no GROUP BY clause"));
-  ADD_ERROR_MESSAGE(ER_NO_SUCH_TABLE, N_("Table '%-.192s.%-.192s' doesn't exist"));
   ADD_ERROR_MESSAGE(ER_SYNTAX_ERROR, N_("You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use"));
   ADD_ERROR_MESSAGE(ER_NET_PACKET_TOO_LARGE, N_("Got a packet bigger than 'max_allowed_packet' bytes"));
   ADD_ERROR_MESSAGE(ER_NET_PACKETS_OUT_OF_ORDER, N_("Got packets out of order"));
@@ -466,9 +472,14 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_WRONG_PARAMETERS_TO_NATIVE_FCT, N_("Incorrect parameters in the call to native function '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_DUP_ENTRY_WITH_KEY_NAME, N_("Duplicate entry '%-.64s' for key '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_LOAD_DATA_INVALID_COLUMN, N_("Invalid column reference (%-.64s) in LOAD DATA"));
-  ADD_ERROR_MESSAGE(ER_INVALID_UNIX_TIMESTAMP_VALUE, N_("Received an invalid value '%s' for a UNIX timestamp."));
+
   ADD_ERROR_MESSAGE(ER_INVALID_DATETIME_VALUE, N_("Received an invalid datetime value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_DATE_VALUE, N_("Received an invalid DATE value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_NULL_ARGUMENT, N_("Received a NULL argument for function '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_TIMESTAMP_VALUE, N_("Received an invalid timestamp value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_TIME_VALUE, N_("Received an invalid TIME value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_UNIX_TIMESTAMP_VALUE, N_("Received an invalid value '%s' for a UNIX timestamp."));
+
   ADD_ERROR_MESSAGE(ER_ARGUMENT_OUT_OF_RANGE, N_("Received an out-of-range argument '%s' for function '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   ADD_ERROR_MESSAGE(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));
@@ -482,14 +493,17 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_TABLE_DROP, N_("Cannot drop table '%s'"));
   ADD_ERROR_MESSAGE(ER_TABLE_DROP_ERROR_OCCURRED, N_("Error occurred while dropping table '%s'"));
   ADD_ERROR_MESSAGE(ER_TABLE_PERMISSION_DENIED, N_("Permission denied to create '%s'"));
+  ADD_ERROR_MESSAGE(ER_TABLE_UNKNOWN, N_("Unknown table '%s'"));
 
+  ADD_ERROR_MESSAGE(ER_SCHEMA_CANNOT_CREATE, N_("Cannot create schema '%s'"));
   ADD_ERROR_MESSAGE(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   ADD_ERROR_MESSAGE(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
   ADD_ERROR_MESSAGE(ER_DROP_SCHEMA, +N_("Error droppping Schema : %s"));
+
   ADD_ERROR_MESSAGE(ER_USE_SQL_BIG_RESULT, N_("Temporary table too large, rerun with SQL_BIG_RESULT."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_ENGINE_OPTION, N_("Unknown table engine option key/pair %s = %s."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_SCHEMA_OPTION, N_("Unknown schema engine option key/pair %s = %s."));
-
+  ADD_ERROR_MESSAGE(ER_CARTESIAN_JOIN_ATTEMPTED, N_("Implicit cartesian join attempted."));
   ADD_ERROR_MESSAGE(ER_ADMIN_ACCESS, N_("Admin access not allowed from this username/IP address."));
 
   // User lock/barrier error messages
@@ -534,6 +548,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_BOOLEAN_VALUE, N_("Received an invalid BOOLEAN value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_BOOLEAN, N_("Invalid cast to BOOLEAN: '%s'."));
 
+  // Transactional DDL
+  ADD_ERROR_MESSAGE(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, N_("Transactional DDL not supported"));
   // ASSERT Message
   ADD_ERROR_MESSAGE(ER_ASSERT, N_("Assertion '%s' failed."));
   ADD_ERROR_MESSAGE(ER_ASSERT_NULL, N_("Assertion '%s' failed, the result was NULL."));
@@ -563,7 +579,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_CATALOG_NO_LOCK, N_("Could not gain lock on '%s'."));
   ADD_ERROR_MESSAGE(ER_CORRUPT_CATALOG_DEFINITION, N_("Corrupt or invalid catalog definition for '%s' : '%s'."));
   ADD_ERROR_MESSAGE(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name."));
-
+  ADD_ERROR_MESSAGE(ER_USE_DATA_DICTIONARY, N_("Engine status is now stored in the data_dictionary tables, please use these instead."));
+  ADD_ERROR_MESSAGE(ER_TRANSACTION_ALREADY_STARTED, N_("There is already a transaction in progress"));
 
 }
 

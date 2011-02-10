@@ -33,7 +33,7 @@ statement {
       catalog: "LOCAL"
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      UUID
       version: 1
     }
   }
@@ -194,7 +194,7 @@ statement {
       catalog: "LOCAL"
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      UUID
       version: 1
     }
     after {
@@ -206,7 +206,7 @@ statement {
       catalog: "LOCAL"
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      UUID
       version: 2
     }
   }
@@ -290,7 +290,7 @@ statement {
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
       catalog: "LOCAL"
-      
+      UUID
       version: 1
     }
   }

@@ -22,21 +22,25 @@
    errmsg_printf()
 */
 
+
+
 #ifndef DRIZZLED_ERRMSG_PRINT_H
 #define DRIZZLED_ERRMSG_PRINT_H
+
+#include "drizzled/visibility.h"
+#include <drizzled/error/level_t.h>
+
+#include <string>
 
 namespace drizzled
 {
 
-#define ERRMSG_LVL_DBUG 1
-#define ERRMSG_LVL_INFO 2
-#define ERRMSG_LVL_WARN 3
-#define ERRMSG_LVL_ERROR 4
-
-bool errmsg_printf(int priority, char const *format, ...)
+DRIZZLED_API bool errmsg_printf(error::level_t priority, char const *format, ...)
   __attribute__((format(printf, 2, 3)));
 
 void sql_perror(const char *message);
+void sql_perror(const std::string &message);
+void sql_perror(std::string message, const std::string &extra);
 
 } /* namespace drizzled */
 

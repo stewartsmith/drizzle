@@ -101,7 +101,7 @@ void StorageEngine::setTransactionReadWrite(Session& session)
 }
 
 
-int StorageEngine::renameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
+int StorageEngine::renameTable(Session &session, const identifier::Table &from, const identifier::Table &to)
 {
   int error;
   setTransactionReadWrite(session);
@@ -137,7 +137,7 @@ int StorageEngine::renameTable(Session &session, const TableIdentifier &from, co
   @retval
     !0  Error
 */
-int StorageEngine::doDropTable(Session&, const TableIdentifier &identifier)
+int StorageEngine::doDropTable(Session&, const identifier::Table &identifier)
                                
 {
   int error= 0;
@@ -287,13 +287,13 @@ bool StorageEngine::flushLogs(StorageEngine *engine)
 class StorageEngineGetTableDefinition: public std::unary_function<StorageEngine *,bool>
 {
   Session& session;
-  const TableIdentifier &identifier;
+  const identifier::Table &identifier;
   message::Table &table_message;
   drizzled::error_t &err;
 
 public:
   StorageEngineGetTableDefinition(Session& session_arg,
-                                  const TableIdentifier &identifier_arg,
+                                  const identifier::Table &identifier_arg,
                                   message::Table &table_message_arg,
                                   drizzled::error_t &err_arg) :
     session(session_arg), 
@@ -315,10 +315,10 @@ public:
 class StorageEngineDoesTableExist: public std::unary_function<StorageEngine *, bool>
 {
   Session& session;
-  const TableIdentifier &identifier;
+  const identifier::Table &identifier;
 
 public:
-  StorageEngineDoesTableExist(Session& session_arg, const TableIdentifier &identifier_arg) :
+  StorageEngineDoesTableExist(Session& session_arg, const identifier::Table &identifier_arg) :
     session(session_arg), 
     identifier(identifier_arg) 
   { }
@@ -333,7 +333,7 @@ public:
   Utility method which hides some of the details of getTableDefinition()
 */
 bool plugin::StorageEngine::doesTableExist(Session &session,
-                                           const TableIdentifier &identifier,
+                                           const identifier::Table &identifier,
                                            bool include_temporary_tables)
 {
   if (include_temporary_tables)
@@ -354,7 +354,7 @@ bool plugin::StorageEngine::doesTableExist(Session &session,
   return true;
 }
 
-bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::TableIdentifier&)
+bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::identifier::Table&)
 {
   std::cerr << " Engine was called for doDoesTableExist() and does not implement it: " << this->getName() << "\n";
   assert(0);
@@ -367,7 +367,7 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::TableIden
   or any dropped tables that need to be removed from disk
 */
 int StorageEngine::getTableDefinition(Session& session,
-                                      const TableIdentifier &identifier,
+                                      const identifier::Table &identifier,
                                       message::table::shared_ptr &table_message,
                                       bool include_temporary_tables)
 {
@@ -378,7 +378,7 @@ int StorageEngine::getTableDefinition(Session& session,
     Table *table= session.find_temporary_table(identifier);
     if (table)
     {
-      table_message.reset(new message::Table(*table->getShare()->getTableProto()));
+      table_message.reset(new message::Table(*table->getShare()->getTableMessage()));
       return EEXIST;
     }
   }
@@ -406,7 +406,7 @@ int StorageEngine::getTableDefinition(Session& session,
 }
 
 message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
-                                                          TableIdentifier::const_reference identifier,
+                                                          identifier::Table::const_reference identifier,
                                                           drizzled::error_t &error,
                                                           bool include_temporary_tables)
 {
@@ -418,7 +418,7 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
     if (table)
     {
       error= EE_OK;
-      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableProto()));
+      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableMessage()));
     }
   }
 
@@ -455,7 +455,7 @@ class Ha_delete_table_error_handler: public Internal_error_handler
 {
 public:
   Ha_delete_table_error_handler() : Internal_error_handler() {}
-  virtual bool handle_error(uint32_t sql_errno,
+  virtual bool handle_error(drizzled::error_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
                             Session *session);
@@ -465,7 +465,7 @@ public:
 
 bool
 Ha_delete_table_error_handler::
-handle_error(uint32_t ,
+handle_error(drizzled::error_t ,
              const char *message,
              DRIZZLE_ERROR::enum_warning_level ,
              Session *)
@@ -478,13 +478,13 @@ handle_error(uint32_t ,
 class DropTableByIdentifier: public std::unary_function<EngineVector::value_type, bool>
 {
   Session::reference session;
-  TableIdentifier::const_reference identifier;
+  identifier::Table::const_reference identifier;
   drizzled::error_t &error;
 
 public:
 
   DropTableByIdentifier(Session::reference session_arg,
-                        TableIdentifier::const_reference identifier_arg,
+                        identifier::Table::const_reference identifier_arg,
                         drizzled::error_t &error_arg) :
     session(session_arg),
     identifier(identifier_arg),
@@ -518,7 +518,7 @@ public:
 
 
 bool StorageEngine::dropTable(Session::reference session,
-                              TableIdentifier::const_reference identifier,
+                              identifier::Table::const_reference identifier,
                               drizzled::error_t &error)
 {
   error= EE_OK;
@@ -542,7 +542,7 @@ bool StorageEngine::dropTable(Session::reference session,
 }
 
 bool StorageEngine::dropTable(Session& session,
-                              const TableIdentifier &identifier)
+                              const identifier::Table &identifier)
 {
   drizzled::error_t error;
 
@@ -556,7 +556,7 @@ bool StorageEngine::dropTable(Session& session,
 
 bool StorageEngine::dropTable(Session::reference session,
                               StorageEngine &engine,
-                              TableIdentifier::const_reference identifier,
+                              identifier::Table::const_reference identifier,
                               drizzled::error_t &error)
 {
   error= EE_OK;
@@ -598,7 +598,7 @@ bool StorageEngine::dropTable(Session::reference session,
    1  error
 */
 bool StorageEngine::createTable(Session &session,
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 message::Table& table_message)
 {
   drizzled::error_t error= EE_OK;
@@ -665,12 +665,12 @@ class AddTableIdentifier :
   public std::unary_function<StorageEngine *, void>
 {
   CachedDirectory &directory;
-  const SchemaIdentifier &identifier;
-  TableIdentifier::vector &set_of_identifiers;
+  const identifier::Schema &identifier;
+  identifier::Table::vector &set_of_identifiers;
 
 public:
 
-  AddTableIdentifier(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, TableIdentifier::vector &of_names) :
+  AddTableIdentifier(CachedDirectory &directory_arg, const identifier::Schema &identifier_arg, identifier::Table::vector &of_names) :
     directory(directory_arg),
     identifier(identifier_arg),
     set_of_identifiers(of_names)
@@ -684,11 +684,8 @@ public:
 };
 
 
-void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifier::vector &set_of_identifiers)
+void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &schema_identifier, identifier::Table::vector &set_of_identifiers)
 {
-  static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
-  static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
-
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
@@ -721,7 +718,7 @@ void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &sch
   session.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 }
 
-class DropTable: public std::unary_function<TableIdentifier&, bool>
+class DropTable: public std::unary_function<identifier::Table&, bool>
 {
   Session &session;
   StorageEngine *engine;
@@ -739,15 +736,15 @@ public:
   } 
 };
 
-/* This will later be converted to TableIdentifiers */
+/* This will later be converted to identifier::Tables */
 class DropTables: public std::unary_function<StorageEngine *, void>
 {
   Session &session;
-  TableIdentifier::vector &table_identifiers;
+  identifier::Table::vector &table_identifiers;
 
 public:
 
-  DropTables(Session &session_arg, TableIdentifier::vector &table_identifiers_arg) :
+  DropTables(Session &session_arg, identifier::Table::vector &table_identifiers_arg) :
     session(session_arg),
     table_identifiers(table_identifiers_arg)
   { }
@@ -771,7 +768,7 @@ public:
 void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
-  TableIdentifier::vector table_identifiers;
+  identifier::Table::vector table_identifiers;
 
   if (dir.fail())
   {
@@ -800,7 +797,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     message::Table definition;
     if (StorageEngine::readTableFile(path, definition))
     {
-      TableIdentifier identifier(definition.schema(), definition.name(), path);
+      identifier::Table identifier(definition.schema(), definition.name(), path);
       table_identifiers.push_back(identifier);
     }
   }
@@ -982,9 +979,11 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
     textno=ER_TABLE_DEF_CHANGED;
     break;
   case HA_ERR_NO_SUCH_TABLE:
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table.getShare()->getSchemaName(),
-             table.getShare()->getTableName());
-    return;
+    {
+      identifier::Table identifier(table.getShare()->getSchemaName(), table.getShare()->getTableName());
+      my_error(ER_TABLE_UNKNOWN, identifier);
+      return;
+    }
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
     break;
@@ -1086,7 +1085,7 @@ void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, Table &
 }
 
 
-int StorageEngine::deleteDefinitionFromPath(const TableIdentifier &identifier)
+int StorageEngine::deleteDefinitionFromPath(const identifier::Table &identifier)
 {
   std::string path(identifier.getPath());
 
@@ -1095,7 +1094,7 @@ int StorageEngine::deleteDefinitionFromPath(const TableIdentifier &identifier)
   return internal::my_delete(path.c_str(), MYF(0));
 }
 
-int StorageEngine::renameDefinitionFromPath(const TableIdentifier &dest, const TableIdentifier &src)
+int StorageEngine::renameDefinitionFromPath(const identifier::Table &dest, const identifier::Table &src)
 {
   message::Table table_message;
   std::string src_path(src.getPath());
@@ -1124,7 +1123,7 @@ int StorageEngine::renameDefinitionFromPath(const TableIdentifier &dest, const T
   return error;
 }
 
-int StorageEngine::writeDefinitionFromPath(const TableIdentifier &identifier, message::Table &table_message)
+int StorageEngine::writeDefinitionFromPath(const identifier::Table &identifier, message::Table &table_message)
 {
   char definition_file_tmp[FN_REFLEN];
   std::string file_name(identifier.getPath());
@@ -1203,10 +1202,10 @@ int StorageEngine::writeDefinitionFromPath(const TableIdentifier &identifier, me
 
 class CanCreateTable: public std::unary_function<StorageEngine *, bool>
 {
-  const TableIdentifier &identifier;
+  const identifier::Table &identifier;
 
 public:
-  CanCreateTable(const TableIdentifier &identifier_arg) :
+  CanCreateTable(const identifier::Table &identifier_arg) :
     identifier(identifier_arg)
   { }
 
@@ -1220,7 +1219,7 @@ public:
 /**
   @note on success table can be created.
 */
-bool StorageEngine::canCreateTable(const TableIdentifier &identifier)
+bool StorageEngine::canCreateTable(const identifier::Table &identifier)
 {
   EngineVector::iterator iter=
     std::find_if(vector_of_engines.begin(), vector_of_engines.end(),

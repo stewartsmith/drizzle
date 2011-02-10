@@ -3263,8 +3263,11 @@ sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
 
 #define CLONE_KEY1_MAYBE 1
 #define CLONE_KEY2_MAYBE 2
-#define swap_clone_flag(A) ((A & 1) << 1) | ((A & 2) >> 1)
 
+static uint32_t swap_clone_flag(uint32_t a)
+{
+  return ((a & 1) << 1) | ((a & 2) >> 1);
+}
 
 static optimizer::SEL_TREE *
 tree_and(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer::SEL_TREE *tree2)

@@ -33,15 +33,17 @@ namespace table
 namespace instance
 {
 
-Shared::Shared(const TableIdentifier::Type type_arg,
-               const TableIdentifier &identifier,
+Shared::Shared(const identifier::Table::Type type_arg,
+               const identifier::Table &identifier,
                char *path_arg, uint32_t path_length_arg) :
-  TableShare(type_arg, identifier, path_arg, path_length_arg)
+  TableShare(type_arg, identifier, path_arg, path_length_arg),
+  event_observers(NULL)
 {
 }
 
-Shared::Shared(const TableIdentifier &identifier) :
-  TableShare(identifier, identifier.getKey())
+Shared::Shared(const identifier::Table &identifier) :
+  TableShare(identifier, identifier.getKey()),
+  event_observers(NULL)
 {
 }
 
@@ -90,7 +92,7 @@ Shared::shared_ptr Shared::foundTableShare(Shared::shared_ptr share)
 */
 
 Shared::shared_ptr Shared::make_shared(Session *session, 
-                                       const TableIdentifier &identifier,
+                                       const identifier::Table &identifier,
                                        int &in_error)
 {
   Shared::shared_ptr share;
@@ -124,6 +126,7 @@ Shared::shared_ptr Shared::make_shared(Session *session,
 Shared::~Shared()
 {
   assert(getTableCount() == 0);
+  plugin::EventObserver::deregisterTableEvents(*this);
 }
 
 
@@ -181,7 +184,7 @@ void release(TableShare::shared_ptr &share)
   }
 }
 
-void release(const TableIdentifier &identifier)
+void release(const identifier::Table &identifier)
 {
   TableShare::shared_ptr share= definition::Cache::singleton().find(identifier.getKey());
   if (share)

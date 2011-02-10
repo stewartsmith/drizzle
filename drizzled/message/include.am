@@ -21,10 +21,9 @@ MESSAGE_LDADD= \
 	       ${LIBPROTOBUF} \
 	       ${LIBUUID} \
 	       ${LTLIBINTL} \
-	       $(GCOV_LIBS) \
-	       drizzled/internal/libinternal.la
+	       $(GCOV_LIBS)
 
-MESSAGE_AM_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
+MESSAGE_AM_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS} ${NO_VISIBILITY}
 
 noinst_PROGRAMS+= \
 		  drizzled/message/catalog_reader \

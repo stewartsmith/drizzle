@@ -118,7 +118,7 @@ create table t2 (a int);
 insert into t2 values (0),(1),(2),(3),(4),(NULL);
 
 insert into t1 (key1a, key1b, key2a, key2b, key3a, key3b)
-  select A.a, B.a, C.a, D.a, C.a, D.a from t2 A,t2 B,t2 C, t2 D;
+  select A.a, B.a, C.a, D.a, C.a, D.a from t2 A CROSS JOIN t2 B CROSS JOIN t2 C CROSS JOIN t2 D;
 insert into t1 (key1a, key1b, key2a, key2b, key3a, key3b)
   select key1a, key1b, key2a, key2b, key3a, key3b from t1;
 insert into t1 (key1a, key1b, key2a, key2b, key3a, key3b)
