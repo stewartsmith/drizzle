@@ -6641,6 +6641,8 @@ class REP_SET
 public:
   void internal_set_bit(uint32_t bit);
   void internal_clear_bit(uint32_t bit);
+  void or_bits(const REP_SET *from);
+  void copy_bits(const REP_SET *from);
 
   uint32_t  *bits;        /* Pointer to used sets */
   short next[LAST_CHAR_CODE];    /* Pointer to next sets */
@@ -6656,6 +6658,7 @@ public:
   int find_set(const REP_SET *find);
   void free_last_set();
   void free_sets();
+  void make_sets_invisible();
 
   uint32_t    count;      /* Number of sets */
   uint32_t    extra;      /* Extra sets in buffer */
@@ -6680,9 +6683,6 @@ struct FOLLOWS
 
 int init_sets(REP_SETS *sets, uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
-void make_sets_invisible(REP_SETS *sets);
-void or_bits(REP_SET *to,REP_SET *from);
-void copy_bits(REP_SET *to,REP_SET *from);
 int cmp_bits(const REP_SET *set1, const REP_SET *set2);
 int get_next_bit(REP_SET *set,uint32_t lastpos);
 int find_found(FOUND_SET *found_set,uint32_t table_offset,
@@ -6756,7 +6756,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   found_sets=0;
   vector<FOUND_SET> found_set(max_length * count);
   make_new_set(&sets);      /* Set starting set */
-  make_sets_invisible(&sets);      /* Hide previus sets */
+  sets.make_sets_invisible();      /* Hide previus sets */
   used_sets=-1;
   word_states=make_new_set(&sets);    /* Start of new word */
   start_states=make_new_set(&sets);    /* This is first state */
@@ -6848,9 +6848,9 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
       if (!follow[i].chr && !default_state)
         default_state= find_found(found_set.data(), set->table_offset, set->found_offset+1);
     }
-    copy_bits(sets.set+used_sets,set);    /* Save set for changes */
+    sets.set[used_sets].copy_bits(set);    /* Save set for changes */
     if (!default_state)
-      or_bits(sets.set+used_sets,sets.set);  /* Can restart from start */
+      sets.set[used_sets].or_bits(sets.set);  /* Can restart from start */
 
     /* Find all chars that follows current sets */
     memset(used_chars, 0, sizeof(used_chars));
@@ -6998,11 +6998,11 @@ int init_sets(REP_SETS *sets,uint32_t states)
 
 /* Make help sets invisible for nicer codeing */
 
-void make_sets_invisible(REP_SETS *sets)
+void REP_SETS::make_sets_invisible()
 {
-  sets->invisible=sets->count;
-  sets->set+=sets->count;
-  sets->count=0;
+  invisible= count;
+  set += count;
+  count= 0;
 }
 
 REP_SET *make_new_set(REP_SETS *sets)
@@ -7063,16 +7063,15 @@ void REP_SET::internal_clear_bit(uint32_t bit)
 }
 
 
-void or_bits(REP_SET *to,REP_SET *from)
+void REP_SET::or_bits(const REP_SET *from)
 {
-  for (uint32_t i= 0 ; i < to->size_of_bits; i++)
-    to->bits[i]|=from->bits[i];
+  for (uint32_t i= 0 ; i < size_of_bits; i++)
+    bits[i]|=from->bits[i];
 }
 
-void copy_bits(REP_SET *to,REP_SET *from)
+void REP_SET::copy_bits(const REP_SET *from)
 {
-  memcpy(to->bits,from->bits,
-         (size_t) (sizeof(uint32_t) * to->size_of_bits));
+  memcpy(bits, from->bits, sizeof(uint32_t) * size_of_bits);
 }
 
 int cmp_bits(const REP_SET *set1, const REP_SET *set2)
