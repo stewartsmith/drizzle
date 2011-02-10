@@ -6636,35 +6636,38 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
 #define SET_MALLOC_HUNC 64
 #define LAST_CHAR_CODE 259
 
-typedef struct st_rep_set {
+struct REP_SET
+{
   uint32_t  *bits;        /* Pointer to used sets */
   short next[LAST_CHAR_CODE];    /* Pointer to next sets */
   uint32_t  found_len;      /* Best match to date */
   int  found_offset;
   uint32_t  table_offset;
   uint32_t  size_of_bits;      /* For convinience */
-} REP_SET;
+};
 
-typedef struct st_rep_sets {
+struct REP_SETS
+{
   uint32_t    count;      /* Number of sets */
   uint32_t    extra;      /* Extra sets in buffer */
   uint32_t    invisible;    /* Sets not chown */
   uint32_t    size_of_bits;
   REP_SET  *set,*set_buffer;
   uint32_t    *bit_buffer;
-} REP_SETS;
+};
 
-typedef struct st_found_set {
+struct FOUND_SET 
+{
   uint32_t table_offset;
   int found_offset;
-} FOUND_SET;
+};
 
-typedef struct st_follow {
+struct FOLLOWS
+{
   int chr;
   uint32_t table_offset;
   uint32_t len;
-} FOLLOWS;
-
+};
 
 int init_sets(REP_SETS *sets,uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
@@ -6721,11 +6724,9 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   uint32_t i,j,states,set_nr,len,result_len,max_length,found_end,bits_set,bit_nr;
   int used_sets,chr,default_state;
   char used_chars[LAST_CHAR_CODE],is_word_end[256];
-  const char *pos;
   char *to_pos, **to_array;
   REP_SETS sets;
   REP_SET *set,*start_states,*word_states,*new_set;
-  FOLLOWS *follow,*follow_ptr;
   REPLACE_STRING *rep_str;
 
 
@@ -6756,12 +6757,8 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   used_sets=-1;
   word_states=make_new_set(&sets);    /* Start of new word */
   start_states=make_new_set(&sets);    /* This is first state */
-  if (!(follow=(FOLLOWS*) malloc((states+2)*sizeof(FOLLOWS))))
-  {
-    free_sets(&sets);
-    return 0;
-  }
-
+  FOLLOWS *follow= (FOLLOWS*)malloc((states + 2) * sizeof(FOLLOWS));
+  FOLLOWS *follow_ptr;
   /* Init follow_ptr[] */
   for (i=0, states=1, follow_ptr=follow+1 ; i < count ; i++)
   {
@@ -6792,7 +6789,8 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
       else
         internal_set_bit(start_states,states);
     }
-    for (pos=from[i], len=0; *pos ; pos++)
+    const char *pos;
+    for (pos= from[i], len=0; *pos ; pos++)
     {
       if (*pos == '\\' && *(pos+1))
       {
@@ -6835,7 +6833,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   }
 
 
-  for (set_nr=0,pos=0 ; set_nr < sets.count ; set_nr++)
+  for (set_nr=0; set_nr < sets.count ; set_nr++)
   {
     set=sets.set+set_nr;
     default_state= 0;        /* Start from beginning */
@@ -6863,7 +6861,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
     /* Mark word_chars used if \b is in state */
     if (used_chars[SPACE_CHAR])
-      for (pos= word_end_chars ; *pos ; pos++)
+      for (const char *pos= word_end_chars ; *pos ; pos++)
         used_chars[(int) (unsigned char) *pos] = 1;
 
     /* Handle other used characters */
@@ -6941,7 +6939,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
   /* Alloc replace structure for the replace-state-machine */
 
-  REPLACE *replace= (REPLACE*)malloc(sizeof(REPLACE)*(sets.count)
+  REPLACE *replace= (REPLACE*)malloc(sizeof(REPLACE) * (sets.count)
     + sizeof(REPLACE_STRING) * (found_sets + 1) + sizeof(char*) * count + result_len);
   if (replace)
   {
@@ -6960,12 +6958,11 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
     rep_str[0].replace_string=0;
     for (i=1 ; i <= found_sets ; i++)
     {
-      pos=from[found_set[i-1].table_offset];
+      const char *pos= from[found_set[i-1].table_offset];
       rep_str[i].found= !memcmp(pos, "\\^", 3) ? 2 : 1;
-      rep_str[i].replace_string=to_array[found_set[i-1].table_offset];
-      rep_str[i].to_offset=found_set[i-1].found_offset-start_at_word(pos);
-      rep_str[i].from_offset=found_set[i-1].found_offset-replace_len(pos)+
-        end_of_word(pos);
+      rep_str[i].replace_string= to_array[found_set[i-1].table_offset];
+      rep_str[i].to_offset= found_set[i-1].found_offset-start_at_word(pos);
+      rep_str[i].from_offset= found_set[i-1].found_offset-replace_len(pos) + end_of_word(pos);
     }
     for (i=0 ; i < sets.count ; i++)
     {
