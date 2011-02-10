@@ -78,6 +78,7 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
                        "BEGIN\n"
                        "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, COMMIT_ID INT(8), END_TIMESTAMP INT(8), MESSAGE BLOB);\n" 
                        "CREATE UNIQUE CLUSTERED INDEX PRIMARY ON SYS_REPLICATION_LOG (ID, SEGID);\n"
+                       "CREATE INDEX COMMIT_IDX ON SYS_REPLICATION_LOG (COMMIT_ID, ID);\n"
                        "END;\n"
                        , FALSE, trx);
 
@@ -160,6 +161,19 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
   part= index->add_index_part();
   part->set_fieldnr(1);
   part->set_compare_length(4);
+
+  index= table_message->add_indexes();
+  index->set_name("COMMIT_IDX");
+  index->set_is_primary(false);
+  index->set_is_unique(false);
+  index->set_type(drizzled::message::Table::Index::BTREE);
+  index->set_key_length(8);
+  part= index->add_index_part();
+  part->set_fieldnr(2);
+  part->set_compare_length(8);
+  part= index->add_index_part();
+  part->set_fieldnr(0);
+  part->set_compare_length(8);
 
   return 0;
 }
