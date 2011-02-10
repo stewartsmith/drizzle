@@ -6643,6 +6643,8 @@ public:
   void internal_clear_bit(uint32_t bit);
   void or_bits(const REP_SET *from);
   void copy_bits(const REP_SET *from);
+  int cmp_bits(const REP_SET *set2) const;
+  int get_next_bit(uint32_t lastpos) const;
 
   uint32_t  *bits;        /* Pointer to used sets */
   short next[LAST_CHAR_CODE];    /* Pointer to next sets */
@@ -6683,13 +6685,9 @@ struct FOLLOWS
 
 int init_sets(REP_SETS *sets, uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
-int cmp_bits(const REP_SET *set1, const REP_SET *set2);
-int get_next_bit(REP_SET *set,uint32_t lastpos);
-int find_found(FOUND_SET *found_set,uint32_t table_offset,
-               int found_offset);
+int find_found(FOUND_SET *found_set, uint32_t table_offset, int found_offset);
 
-static uint32_t found_sets=0;
-
+static uint32_t found_sets= 0;
 
 static uint32_t replace_len(const char *str)
 {
@@ -6843,7 +6841,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
     /* If end of found-string not found or start-set with current set */
 
-    for (i= UINT32_MAX; (i=get_next_bit(set,i)) ;)
+    for (i= UINT32_MAX; (i= set->get_next_bit(i)) ;)
     {
       if (!follow[i].chr && !default_state)
         default_state= find_found(found_set.data(), set->table_offset, set->found_offset+1);
@@ -6854,7 +6852,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
     /* Find all chars that follows current sets */
     memset(used_chars, 0, sizeof(used_chars));
-    for (i= UINT32_MAX; (i=get_next_bit(sets.set+used_sets,i)) ;)
+    for (i= UINT32_MAX; (i= sets.set[used_sets].get_next_bit(i)) ;)
     {
       used_chars[follow[i].chr]=1;
       if ((follow[i].chr == SPACE_CHAR && !follow[i+1].chr &&
@@ -6881,7 +6879,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
         new_set->found_offset=set->found_offset+1;
         found_end=0;
 
-        for (i= UINT32_MAX ; (i=get_next_bit(sets.set+used_sets,i)) ; )
+        for (i= UINT32_MAX ; (i= sets.set[used_sets].get_next_bit(i)) ; )
         {
           if (!follow[i].chr || follow[i].chr == chr ||
               (follow[i].chr == SPACE_CHAR &&
@@ -6902,7 +6900,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
         {
           new_set->found_len=0;      /* Set for testing if first */
           bits_set=0;
-          for (i= UINT32_MAX; (i=get_next_bit(new_set,i)) ;)
+          for (i= UINT32_MAX; (i= new_set->get_next_bit(i)) ;)
           {
             if ((follow[i].chr == SPACE_CHAR ||
                  follow[i].chr == END_OF_LINE) && ! chr)
@@ -7074,24 +7072,24 @@ void REP_SET::copy_bits(const REP_SET *from)
   memcpy(bits, from->bits, sizeof(uint32_t) * size_of_bits);
 }
 
-int cmp_bits(const REP_SET *set1, const REP_SET *set2)
+int REP_SET::cmp_bits(const REP_SET *set2) const
 {
-  return memcmp(set1->bits, set2->bits, sizeof(uint32_t) * set1->size_of_bits);
+  return memcmp(bits, set2->bits, sizeof(uint32_t) * size_of_bits);
 }
 
 /* Get next set bit from set. */
 
-int get_next_bit(REP_SET *set,uint32_t lastpos)
+int REP_SET::get_next_bit(uint32_t lastpos) const
 {
-  uint32_t *start= set->bits+ ((lastpos+1) / WORD_BIT);
-  uint32_t *end= set->bits + set->size_of_bits;
-  uint32_t bits0=start[0] & ~((1 << ((lastpos+1) % WORD_BIT)) -1);
+  uint32_t *start= bits + ((lastpos+1) / WORD_BIT);
+  uint32_t *end= bits + size_of_bits;
+  uint32_t bits0= start[0] & ~((1 << ((lastpos+1) % WORD_BIT)) -1);
 
   while (!bits0 && ++start < end)
     bits0= start[0];
   if (!bits0)
     return 0;
-  uint32_t pos= (start - set->bits)*WORD_BIT;
+  uint32_t pos= (start - bits) * WORD_BIT;
   while (!(bits0 & 1))
   {
     bits0 >>=1;
@@ -7109,7 +7107,7 @@ int REP_SETS::find_set(const REP_SET *find)
   uint32_t i= 0;
   for (; i < count - 1; i++)
   {
-    if (!cmp_bits(set + i, find))
+    if (!set[i].cmp_bits(find))
     {
       free_last_set();
       return i;
