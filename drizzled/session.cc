@@ -1654,11 +1654,10 @@ void Session::set_db(const std::string &new_db)
 */
 void mark_transaction_to_rollback(Session *session, bool all)
 {
-  if (session)
-  {
-    session->is_fatal_sub_stmt_error= true;
-    session->transaction_rollback_request= all;
-  }
+  assert(session);
+
+  session->is_fatal_sub_stmt_error= true;
+  session->transaction_rollback_request= all;
 }
 
 void Session::disconnect(enum error_t errcode)
