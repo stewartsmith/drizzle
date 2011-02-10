@@ -2236,9 +2236,8 @@ static void get_options()
 
   if (vm.count("transaction-isolation"))
   {
-    int type;
-    type= find_type_or_exit((char *)vm["transaction-isolation"].as<string>().c_str(), &tx_isolation_typelib, "transaction-isolation");
-    global_system_variables.tx_isolation= (type-1);
+    int type= tx_isolation_typelib.find_type_or_exit(vm["transaction-isolation"].as<string>().c_str(), "transaction-isolation");
+    global_system_variables.tx_isolation= type - 1;
   }
 
   /* @TODO Make this all strings */

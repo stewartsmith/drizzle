@@ -70,6 +70,7 @@
 #include "drizzled/gettext.h"
 #include "drizzled/type/time.h"
 #include "drizzled/charset.h"
+#include "drizzled/typelib.h"
 #include <drizzled/configmake.h>
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
@@ -4446,7 +4447,7 @@ static void scan_command_for_warnings(struct st_command *command)
         end++;
       save= *end;
       *end= 0;
-      type= find_type(start, &command_typelib, 1+2);
+      type= command_typelib.find_type(start, 1+2);
       if (type)
         warning_msg("Embedded drizzletest command '--%s' detected in "
                     "query '%s' was this intentional? ",
@@ -5269,7 +5270,7 @@ static void get_command_type(struct st_command* command)
 
   save= command->query[command->first_word_len];
   command->query[command->first_word_len]= 0;
-  type= find_type(command->query, &command_typelib, 1+2);
+  type= command_typelib.find_type(command->query, 1+2);
   command->query[command->first_word_len]= save;
   if (type > 0)
   {
@@ -5313,7 +5314,7 @@ static void get_command_type(struct st_command* command)
         */
         save= command->query[command->first_word_len-1];
         command->query[command->first_word_len-1]= 0;
-        if (find_type(command->query, &command_typelib, 1+2) > 0)
+        if (command_typelib.find_type(command->query, 1+2) > 0)
           die("Extra delimiter \";\" found");
         command->query[command->first_word_len-1]= save;
 

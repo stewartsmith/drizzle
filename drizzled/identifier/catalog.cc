@@ -24,7 +24,6 @@
 
 #include "drizzled/identifier.h"
 #include "drizzled/session.h"
-#include "drizzled/current_session.h"
 #include "drizzled/internal/my_sys.h"
 
 #include "drizzled/util/tablename_to_filename.h"

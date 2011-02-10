@@ -24,7 +24,7 @@ AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
 
-PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42, version-from-vc) 
+PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
 LIBDRIZZLE_LIBRARY_VERSION=1:0:0
 #                          | | |

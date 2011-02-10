@@ -35,7 +35,6 @@
 
 #include "drizzled/charset_info.h"                    /* for CHARSET_INFO */
 #include <stdarg.h>
-#include "drizzled/typelib.h"
 #include "drizzled/internal/aio_result.h"
 
 #include "drizzled/memory/root.h"
