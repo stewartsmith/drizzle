@@ -169,10 +169,8 @@ struct st_test_file
   uint32_t lineno; /* Current line in file */
 };
 
-static struct st_test_file file_stack[16];
-static struct st_test_file* cur_file;
-static struct st_test_file* file_stack_end;
-
+static boost::array<st_test_file, 16> file_stack;
+static st_test_file* cur_file;
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default charset */
 
@@ -879,7 +877,7 @@ static void close_connections()
 
 static void close_files()
 {
-  for (; cur_file >= file_stack; cur_file--)
+  for (; cur_file >= file_stack.data(); cur_file--)
   {
     if (cur_file->file && cur_file->file != stdin)
       fclose(cur_file->file);
@@ -952,7 +950,7 @@ void die(const char *fmt, ...)
 
   /* Print the error message */
   fprintf(stderr, "drizzletest: ");
-  if (cur_file && cur_file != file_stack)
+  if (cur_file && cur_file != file_stack.data())
     fprintf(stderr, "In included file \"%s\": ",
             cur_file->file_name);
   if (start_lineno > 0)
@@ -1013,10 +1011,10 @@ void abort_not_supported_test(const char *fmt, ...)
 
   /* Print include filestack */
   fprintf(stderr, "The test '%s' is not supported by this installation\n",
-          file_stack->file_name);
+          file_stack[0].file_name);
   fprintf(stderr, "Detected in file %s at line %d\n",
           err_file->file_name, err_file->lineno);
-  while (err_file != file_stack)
+  while (err_file != file_stack.data())
   {
     err_file--;
     fprintf(stderr, "included from %s at line %d\n",
@@ -1047,7 +1045,7 @@ void verbose_msg(const char *fmt, ...)
 
   va_start(args, fmt);
   fprintf(stderr, "drizzletest: ");
-  if (cur_file && cur_file != file_stack)
+  if (cur_file && cur_file != file_stack.data())
     fprintf(stderr, "In included file \"%s\": ",
             cur_file->file_name);
   if (start_lineno != 0)
@@ -1055,8 +1053,6 @@ void verbose_msg(const char *fmt, ...)
   vfprintf(stderr, fmt, args);
   fprintf(stderr, "\n");
   va_end(args);
-
-  return;
 }
 
 
@@ -1072,7 +1068,7 @@ void warning_msg(const char *fmt, ...)
   if (start_lineno != 0)
   {
     ds_warning_messages.append("Warning detected ");
-    if (cur_file && cur_file != file_stack)
+    if (cur_file && cur_file != file_stack.data())
     {
       len= snprintf(buff, sizeof(buff), "in included file %s ",
                     cur_file->file_name);
@@ -2017,8 +2013,6 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     eval_expr(var, value, 0);
   }
   drizzle_result_free(&res);
-
-  return;
 }
 
 
@@ -2049,8 +2043,8 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
 {
   if (*p == '$')
   {
-    VAR *vp;
-    if ((vp= var_get(p, p_end, 0, 0)))
+    VAR *vp= var_get(p, p_end, 0, 0);
+    if (vp)
       var_copy(v, vp);
     return;
   }
@@ -2111,9 +2105,9 @@ static int open_file(const char *name)
   }
   internal::fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
 
-  if (cur_file == file_stack_end)
-    die("Source directives are nesting too deep");
   cur_file++;
+  if (cur_file == &*file_stack.end())
+    die("Source directives are nesting too deep");
   if (!(cur_file->file= fopen(buff, "r")))
   {
     cur_file--;
@@ -3285,12 +3279,12 @@ static int do_sleep(struct st_command *command, bool real_sleep)
 }
 
 
-static void do_get_file_name(struct st_command *command, string &dest)
+static void do_get_file_name(st_command *command, string &dest)
 {
-  char *p= command->first_argument, *name;
+  char *p= command->first_argument;
   if (!*p)
     die("Missing file name argument");
-  name= p;
+  char *name= p;
   while (*p && !my_isspace(charset_info,*p))
     p++;
   if (*p)
@@ -4186,7 +4180,7 @@ static int read_line(char *buf, int size)
       }
       free((unsigned char*) cur_file->file_name);
       cur_file->file_name= 0;
-      if (cur_file == file_stack)
+      if (cur_file == file_stack.data())
       {
         /* We're back at the first file, check if
            all { have matching }
@@ -5508,10 +5502,8 @@ try
   next_con= connections + 1;
 
   /* Init file stack */
-  memset(file_stack, 0, sizeof(file_stack));
-  file_stack_end=
-    file_stack + (sizeof(file_stack)/sizeof(struct st_test_file)) - 1;
-  cur_file= file_stack;
+  memset(file_stack.data(), 0, sizeof(file_stack));
+  cur_file= file_stack.data();
 
   /* Init block stack */
   memset(block_stack, 0, sizeof(block_stack));
@@ -5550,7 +5542,7 @@ try
       tmp= buff;
     }
     internal::fn_format(buff, tmp.c_str(), "", "", MY_UNPACK_FILENAME);
-    assert(cur_file == file_stack && cur_file->file == 0);
+    assert(cur_file == file_stack.data() && cur_file->file == 0);
     if (!(cur_file->file= fopen(buff, "r")))
     {
       fprintf(stderr, _("Could not open '%s' for reading: errno = %d"), buff, errno);
@@ -5655,7 +5647,7 @@ try
   }
 
   server_initialized= 1;
-  if (cur_file == file_stack && cur_file->file == 0)
+  if (cur_file == file_stack.data() && cur_file->file == 0)
   {
     cur_file->file= stdin;
     cur_file->file_name= strdup("<stdin>");
