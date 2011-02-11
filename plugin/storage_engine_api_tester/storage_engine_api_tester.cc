@@ -394,19 +394,19 @@ public:
                              drizzled::NamedSavepoint &)
     {
       ENGINE_NEW_STATE("SET SAVEPOINT");
-      ENGINE_NEW_STATE("BEGIN");
+      ENGINE_NEW_STATE("In Transaction");
       return 0; }
   virtual int doRollbackToSavepoint(Session*,
                                      drizzled::NamedSavepoint &)
     {
       ENGINE_NEW_STATE("ROLLBACK TO SAVEPOINT");
-      ENGINE_NEW_STATE("BEGIN");
+      ENGINE_NEW_STATE("In Transaction");
       return 0; }
   virtual int doReleaseSavepoint(Session*,
                                  drizzled::NamedSavepoint &)
     {
       ENGINE_NEW_STATE("RELEASE SAVEPOINT");
-      ENGINE_NEW_STATE("BEGIN");
+      ENGINE_NEW_STATE("In Transaction");
       return 0; }
   virtual int doCommit(Session*, bool);
 

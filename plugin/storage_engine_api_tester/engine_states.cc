@@ -74,10 +74,10 @@ void load_engine_state_transitions(state_multimap &states)
   states.insert(state_pair("END STATEMENT", "ROLLBACK"));
   states.insert(state_pair("END STATEMENT", "ROLLBACK STATEMENT"));
 
-  states.insert(state_pair("BEGIN", "SET SAVEPOINT"));
-  states.insert(state_pair("BEGIN", "ROLLBACK TO SAVEPOINT"));
-  states.insert(state_pair("BEGIN", "RELEASE SAVEPOINT"));
-  states.insert(state_pair("SET SAVEPOINT", "BEGIN"));
+  states.insert(state_pair("In Transaction", "SET SAVEPOINT"));
+  states.insert(state_pair("In Transaction", "ROLLBACK TO SAVEPOINT"));
+  states.insert(state_pair("In Transaction", "RELEASE SAVEPOINT"));
+  states.insert(state_pair("SET SAVEPOINT", "In Transaction"));
   states.insert(state_pair("ROLLBACK TO SAVEPOINT", "BEGIN"));
   states.insert(state_pair("RELEASE SAVEPOINT", "BEGIN"));
 
