@@ -325,10 +325,63 @@ std::string current_db,
   current_password,
   opt_password,
   opt_protocol;
-// TODO: Need to i18n these
-static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
-                                  "Aug","Sep","Oct","Nov","Dec"};
+
+static const char* get_day_name(int day_of_week)
+{
+  switch(day_of_week)
+  {
+  case 0:
+    return _("Sun");
+  case 1:
+    return _("Mon");
+  case 2:
+    return _("Tue");
+  case 3:
+    return _("Wed");
+  case 4:
+    return _("Thu");
+  case 5:
+    return _("Fri");
+  case 6:
+    return _("Sat");
+  }
+
+  return NULL;
+}
+
+static const char* get_month_name(int month)
+{
+  switch(month)
+  {
+  case 0:
+    return _("Jan");
+  case 1:
+    return _("Feb");
+  case 2:
+    return _("Mar");
+  case 3:
+    return _("Apr");
+  case 4:
+    return _("May");
+  case 5:
+    return _("Jun");
+  case 6:
+    return _("Jul");
+  case 7:
+    return _("Aug");
+  case 8:
+    return _("Sep");
+  case 9:
+    return _("Oct");
+  case 10:
+    return _("Nov");
+  case 11:
+    return _("Dec");
+  }
+
+  return NULL;
+}
+
 /* @TODO: Remove this */
 #define FN_REFLEN 512
 
@@ -4554,7 +4607,7 @@ static const char * construct_prompt()
         add_int_to_prompt(t->tm_sec);
         break;
       case 'w':
-        processed_prompt->append(day_names[t->tm_wday]);
+        processed_prompt->append(get_day_name(t->tm_wday));
         break;
       case 'P':
         processed_prompt->append(t->tm_hour < 12 ? "am" : "pm");
@@ -4563,7 +4616,7 @@ static const char * construct_prompt()
         add_int_to_prompt(t->tm_mon+1);
         break;
       case 'O':
-        processed_prompt->append(month_names[t->tm_mon]);
+        processed_prompt->append(get_month_name(t->tm_mon));
         break;
       case '\'':
         processed_prompt->append("'");
