@@ -1508,7 +1508,10 @@ try
                       "prompt. Aborting.\n"));
     exit(ENOMEM);
   }
-  current_prompt= strdup(default_prompt);
+
+  if (current_prompt.empty())
+    current_prompt= strdup(default_prompt);
+
   if (current_prompt.empty())
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
