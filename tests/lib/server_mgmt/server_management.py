@@ -150,7 +150,6 @@ class serverManager:
                                              , env=working_environ
                                              , stdout=error_log
                                              , stderr=error_log
-                                             , close_fds=True
                                              )
             server_subproc.wait()
             server_retcode = server_subproc.returncode
