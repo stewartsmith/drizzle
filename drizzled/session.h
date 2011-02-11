@@ -261,8 +261,6 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 namespace drizzled
 {
 
-DRIZZLED_API void mark_transaction_to_rollback(Session *session, bool all);
-
 /**
   Storage engine specific thread local data.
 */
@@ -1292,6 +1290,7 @@ public:
   bool endTransaction(enum enum_mysql_completiontype completion);
   bool endActiveTransaction();
   bool startTransaction(start_transaction_option_t opt= START_TRANS_NO_OPTIONS);
+  void markTransactionForRollback(bool all);
 
   /**
    * Authenticates users, with error reporting.

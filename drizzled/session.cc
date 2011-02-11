@@ -1614,13 +1614,10 @@ void Session::set_db(const std::string &new_db)
   @param  session   Thread handle
   @param  all   true <=> rollback main transaction.
 */
-void mark_transaction_to_rollback(Session *session, bool all)
+void Session::markTransactionForRollback(bool all)
 {
-  if (session)
-  {
-    session->is_fatal_sub_stmt_error= true;
-    session->transaction_rollback_request= all;
-  }
+  is_fatal_sub_stmt_error= true;
+  transaction_rollback_request= all;
 }
 
 void Session::disconnect(enum error_t errcode)
