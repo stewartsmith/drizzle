@@ -212,8 +212,8 @@ static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
 static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
                                                 &drizzle_system_variables::sortbuff_size);
 
-static sys_var_session_size_t sys_transaction_message_threshold("transaction_message_threshold",
-                                                                &drizzle_system_variables::transaction_message_threshold);
+static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transaction_message_threshold",
+                                                                &transaction_message_threshold);
 
 static sys_var_session_storage_engine sys_storage_engine("storage_engine",
 				       &drizzle_system_variables::storage_engine);

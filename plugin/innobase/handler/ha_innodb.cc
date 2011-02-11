@@ -523,6 +523,15 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
+  std::string search_string(schema_identifier.getSchemaName());
+
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    set_of_identifiers.push_back(identifier::Table(schema_identifier.getSchemaName(), "SYS_REPLICATION_LOG"));
+  }
+
   for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
        entry_iter != entries.end(); ++entry_iter)
   {
@@ -565,6 +574,12 @@ bool InnobaseEngine::doDoesTableExist(Session &session, const identifier::Table 
   if (session.getMessageCache().doesTableMessageExist(identifier))
     return true;
 
+  std::string search_string(identifier.getPath());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary/sys_replication_log") == 0)
+    return true;
+
   if (access(proto_path.c_str(), F_OK))
   {
     return false;
@@ -582,6 +597,9 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
 
   // First we check the temporary tables.
   if (session.getMessageCache().getTableMessage(identifier, table_proto))
+    return EEXIST;
+
+  if (read_replication_log_table_message(identifier.getTableName().c_str(), &table_proto) == 0)
     return EEXIST;
 
   if (access(proto_path.c_str(), F_OK))
@@ -943,7 +961,11 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
 
   uint64_t trx_id= message.transaction_context().transaction_id();
   uint32_t seg_id= message.segment_id();
-  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id, seg_id);
+  uint64_t end_timestamp= message.transaction_context().end_timestamp();
+  bool is_end_segment= message.end_segment();
+  trx->log_commit_id= TRUE;
+  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id,
+               end_timestamp, is_end_segment, seg_id);
   (void)error;
 
   delete[] data;
@@ -3227,9 +3249,24 @@ ha_innobase::doOpen(const identifier::Table &identifier,
 
   user_session = NULL;
 
-  if (!(share=get_share(identifier.getKeyPath().c_str()))) {
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
 
-    return(1);
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    std::string table_name(identifier.getTableName());
+    boost::algorithm::to_upper(table_name);
+    if (!(share=get_share(table_name.c_str())))
+    {
+      return 1;
+    }
+  }
+  else
+  {
+    if (!(share=get_share(identifier.getKeyPath().c_str())))
+    {
+      return(1);
+    }
   }
 
   /* Create buffers for packing the fields of a record. Why
@@ -3256,7 +3293,16 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   }
 
   /* Get pointer to a table object in InnoDB dictionary cache */
-  ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    std::string table_name(identifier.getTableName());
+    boost::algorithm::to_upper(table_name);
+    ib_table = dict_table_get(table_name.c_str(), TRUE);
+  }
+  else
+  {
+    ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
+  }
   
   if (NULL == ib_table) {
     errmsg_printf(error::ERROR, "Cannot find or open table %s from\n"
@@ -5995,6 +6041,14 @@ InnobaseEngine::doCreateTable(
   const char* stmt;
   size_t stmt_len;
 
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    return HA_WRONG_CREATE_OPTION;
+  }
+
   if (form.getShare()->sizeFields() > 1000) {
     /* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
       but we play safe here */
@@ -6380,6 +6434,14 @@ InnobaseEngine::doDropTable(
   trx_t*  trx;
 
   ut_a(identifier.getPath().length() < 1000);
+
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    return HA_ERR_TABLE_READONLY;
+  }
 
   /* Get the transaction associated with the current session, or create one
     if not yet created */

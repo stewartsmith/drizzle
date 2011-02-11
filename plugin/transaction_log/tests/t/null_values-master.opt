@@ -1,1 +1,1 @@
---transaction-log.enable --scheduler=multi_thread --innodb.replication-log=true
+--transaction-log.enable --scheduler=multi_thread --innodb.replication-log=true  --transaction-message-threshold=131072
