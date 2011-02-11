@@ -41,6 +41,7 @@ class Instance
   drizzled::session_id_t _lock_id;
   message::catalog::shared_ptr _message;
   mutable boost::mutex _schema_lock;
+  mutable boost::mutex _system_variable_lock;
 
 
 public:
@@ -60,13 +61,13 @@ public:
     _message= message_arg;
   };
 
-  static shared_ptr create(message::catalog::shared_ptr &message_arg)
+  static shared_ptr make_shared(message::catalog::shared_ptr &message_arg)
   {
     assert(not message_arg->name().empty());
     return boost::make_shared<Instance>(message_arg);
   };
 
-  static shared_ptr create(const identifier::Catalog &identifier)
+  static shared_ptr make_shared(const identifier::Catalog &identifier)
   {
     drizzled::message::catalog::shared_ptr new_message= drizzled::message::catalog::make_shared(identifier);
     assert(not new_message->name().empty());
@@ -129,6 +130,11 @@ public:
   boost::mutex &schemaLock()
   {
     return _schema_lock;
+  }
+
+  boost::mutex &systemVariableLock()
+  {
+    return _system_variable_lock;
   }
 };
 

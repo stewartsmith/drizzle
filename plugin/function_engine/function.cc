@@ -28,9 +28,6 @@
 using namespace std;
 using namespace drizzled;
 
-static identifier::Schema INFORMATION_SCHEMA_IDENTIFIER("INFORMATION_SCHEMA");
-static identifier::Schema DATA_DICTIONARY_IDENTIFIER("DATA_DICTIONARY");
-
 Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
                                   HTON_ALTER_NOT_SUPPORTED |
@@ -41,10 +38,10 @@ Function::Function(const std::string &name_arg) :
   data_dictionary_message(new(message::Schema))
 
 {
-  information_message->set_name("information_schema");
+  information_message->set_name(INFORMATION_SCHEMA_IDENTIFIER.getSchemaName());
   data_dictionary_message->set_collation("utf8_general_ci");
 
-  data_dictionary_message->set_name("data_dictionary");
+  data_dictionary_message->set_name(DATA_DICTIONARY_IDENTIFIER.getSchemaName());
   data_dictionary_message->set_collation("utf8_general_ci");
 }
 
@@ -151,7 +148,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Function Engine provides the infrastructure for Table Functions,etc.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  NULL,               /* system variables */
+  NULL,               /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

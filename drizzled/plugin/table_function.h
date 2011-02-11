@@ -35,6 +35,8 @@
 #include <set>
 #include <algorithm>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -61,7 +63,7 @@ static const char *local_string_append(const char *arg1, const char *arg2)
   return buffer;
 }
 
-class TableFunction : public Plugin
+class DRIZZLED_API TableFunction : public Plugin
 {
   TableFunction();
   TableFunction(const TableFunction &);

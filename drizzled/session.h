@@ -18,6 +18,7 @@
  */
 
 
+
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
@@ -64,6 +65,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/make_shared.hpp>
 
+#include "drizzled/visibility.h"
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -250,7 +252,7 @@ struct drizzle_system_variables
   Time_zone *time_zone;
 };
 
-extern struct drizzle_system_variables global_system_variables;
+extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
 } /* namespace drizzled */
 
@@ -258,8 +260,6 @@ extern struct drizzle_system_variables global_system_variables;
 
 namespace drizzled
 {
-
-void mark_transaction_to_rollback(Session *session, bool all);
 
 /**
   Storage engine specific thread local data.
@@ -314,7 +314,8 @@ struct Ha_data
  * session object.
  */
 
-class Session : public Open_tables_state
+class DRIZZLED_API Session :
+  public Open_tables_state
 {
 public:
   // Plugin storage in Session.
@@ -414,6 +415,12 @@ public:
   {
     return lex;
   }
+
+  enum_sql_command getSqlCommand() const
+  {
+    return lex->sql_command;
+  }
+
   /** query associated with this statement */
   typedef boost::shared_ptr<const std::string> QueryString;
 private:
@@ -553,6 +560,11 @@ public:
     return client;
   }
 
+  plugin::Client *getClient() const
+  {
+    return client;
+  }
+
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
 
@@ -569,6 +581,12 @@ public:
   }
 
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
+
+  enum_tx_isolation getTxIsolation()
+  {
+    return (enum_tx_isolation)variables.tx_isolation;
+  }
+
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
@@ -618,12 +636,24 @@ public:
    */
   bool isViewable(identifier::User::const_reference) const;
 
+private:
   /**
     Used in error messages to tell user in what part of MySQL we found an
     error. E. g. when where= "having clause", if fix_fields() fails, user
     will know that the error was in having clause.
   */
-  const char *where;
+  const char *_where;
+
+public:
+  const char *where()
+  {
+    return _where;
+  }
+
+  void setWhere(const char *arg)
+  {
+    _where= arg;
+  }
 
   /*
     One thread can hold up to one named user-level lock. This variable
@@ -631,6 +661,7 @@ public:
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
+
 private:
   boost::thread::id boost_thread_id;
   boost_thread_shared_ptr _thread;
@@ -839,6 +870,12 @@ public:
   uint64_t limit_found_rows;
   uint64_t options; /**< Bitmap of options */
   int64_t row_count_func; /**< For the ROW_COUNT() function */
+
+  int64_t rowCount() const
+  {
+    return row_count_func;
+  }
+
   ha_rows cuted_fields; /**< Count of "cut" or truncated fields. @todo Kill this friggin thing. */
 
   /** 
@@ -1009,12 +1046,26 @@ public:
   bool substitute_null_with_insert_id;
   bool cleanup_done;
 
+private:
   bool abort_on_warning;
+  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
+
+public:
   bool got_warning; /**< Set on call to push_warning() */
   bool no_warnings_for_error; /**< no warnings on call to my_error() */
   /** set during loop of derived table processing */
   bool derived_tables_processing;
-  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
+
+  bool doing_tablespace_operation(void)
+  {
+    return tablespace_op;
+  }
+
+  void setDoingTablespaceOperation(bool doing)
+  {
+    tablespace_op= doing;
+  }
+
 
   /** Used by the sys_var class to store temporary values */
   union
@@ -1239,6 +1290,7 @@ public:
   bool endTransaction(enum enum_mysql_completiontype completion);
   bool endActiveTransaction();
   bool startTransaction(start_transaction_option_t opt= START_TRANS_NO_OPTIONS);
+  void markTransactionForRollback(bool all);
 
   /**
    * Authenticates users, with error reporting.
@@ -1434,9 +1486,14 @@ public:
   }
   void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
-  inline bool really_abort_on_warning()
+  inline bool abortOnWarning()
   {
-    return (abort_on_warning);
+    return abort_on_warning;
+  }
+
+  inline void setAbortOnWarning(bool arg)
+  {
+    abort_on_warning= arg;
   }
 
   void setAbort(bool arg);

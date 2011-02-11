@@ -51,34 +51,12 @@ public:
     identifiers.push_back(drizzled::catalog::local_identifier());
   }
 
-  bool getMessage(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message)
-  {
-    if (drizzled::catalog::local_identifier() == identifier)
-    {
-      message= drizzled::message::catalog::make_shared(identifier);
-
-      return true;
-    }
-
-    return false;
-  }
+  drizzled::message::catalog::shared_ptr getMessage(drizzled::identifier::Catalog::const_reference identifier);
 
   void getMessages(drizzled::message::catalog::vector &messages);
 
-  bool getInstance(const drizzled::identifier::Catalog &identifier, drizzled::catalog::Instance::shared_ptr &instance)
-  {
-    if (drizzled::catalog::local_identifier() == identifier)
-    {
-      instance=  drizzled::catalog::Instance::create(identifier);
-
-      return true;
-    }
-
-    return false;
-  }
-
 private:
-  bool readFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message);
+  drizzled::message::catalog::shared_ptr readFile(drizzled::identifier::Catalog::const_reference identifier);
   bool writeFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message);
   void prime(drizzled::message::catalog::vector &messages);
 

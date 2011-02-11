@@ -45,7 +45,7 @@ class Statement
 {
 public:
   Statement(Session *in_session) : 
-    session(in_session)
+    _session(in_session)
   {}
 
   virtual ~Statement() {}
@@ -57,19 +57,30 @@ public:
    */
   virtual bool execute()= 0;
 
+  /* True if can be in transaction. Currently only DDL is not.
+     This should go away when DDL commands are within transactions. */
+  virtual bool isTransactional()
+  {
+    return false;
+  }
+
   Session *getSession()
   {
-    return session;
+    return _session;
+  }
+
+  Session *getSession() const
+  {
+    return _session;
   }
 
   virtual bool isShow() { return false; }
 
-protected:
-
+private:
   /**
    * A session handler.
    */
-  Session *session;
+  Session *_session;
 };
 
 } /* namespace statement */

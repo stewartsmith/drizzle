@@ -37,6 +37,8 @@
 
 #include "drizzled/module/registry.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -48,7 +50,7 @@ namespace module
 class Module;
 class option_map;
 
-class Context
+class DRIZZLED_API Context
 {
 private:
   module::Registry &registry;

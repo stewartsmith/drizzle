@@ -164,7 +164,7 @@ sleep 1;
 connection thread1;
 begin;
 select release_lock("hello");
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 update t1 set tipo=1+get_lock("hello",10)*0 where tipo=2;
 select * from t1;
 connection thread2;
@@ -207,7 +207,7 @@ sleep 1;
 connection thread1;
 begin;
 select release_lock("hello");
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 update t1 set tipo=11+get_lock("hello",10)*0 where tipo=22;
 select * from t1;
 connection thread2;
@@ -250,7 +250,7 @@ sleep 1;
 connection thread1;
 begin;
 select release_lock("hello");
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 select * from t1 where tipo=1 FOR UPDATE;
 connection thread2;
 reap;
@@ -293,7 +293,7 @@ sleep 1;
 connection thread1;
 begin;
 select release_lock("hello");
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 update t1 set tipo=1+get_lock("hello",10)*0 where tipo=2;
 select * from t1;
 connection thread2;

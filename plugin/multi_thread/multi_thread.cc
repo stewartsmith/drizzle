@@ -86,7 +86,7 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
     cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
     cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
 
-    TransactionServices::singleton().sendShutdownEvent(session.get());
+    TransactionServices::singleton().sendShutdownEvent(*session.get());
   }
   // @todo remove hard spin by disconnection the session first from the
   // thread.
@@ -106,7 +106,7 @@ void MultiThreadScheduler::setStackSize()
 
   if (err != 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Unable to get thread stack size\n"));
+    errmsg_printf(error::ERROR, _("Unable to get thread stack size"));
     my_thread_stack_size= 524288; // At the time of the writing of this code, this was OSX's
   }
 
@@ -220,7 +220,7 @@ DRIZZLE_DECLARE_PLUGIN
   "One Thread Per Session Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

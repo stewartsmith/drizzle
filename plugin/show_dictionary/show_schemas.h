@@ -29,24 +29,13 @@ public:
 
   class Generator : public show_dictionary::Show::Generator 
   {
-    drizzled::identifier::Schema::vector schema_names;
-    drizzled::identifier::Schema::vector::const_iterator schema_iterator;
-
-    bool is_schema_primed;
-
-    virtual void fill();
-    virtual bool checkSchema();
-
   public:
     Generator(drizzled::Field **arg);
 
     bool populate();
-    bool nextSchemaCore();
-    bool nextSchema();
-    bool isSchemaPrimed()
-    {
-      return is_schema_primed;
-    }
+
+  private:
+    drizzled::generator::Schema schema_generator;
   };
 
   Generator *generator(drizzled::Field **arg)

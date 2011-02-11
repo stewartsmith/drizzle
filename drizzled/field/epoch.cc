@@ -280,7 +280,7 @@ String *Epoch::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Epoch::get_date(type::Time *ltime, uint32_t)
+bool Epoch::get_date(type::Time &ltime, uint32_t)
 {
   uint64_t temp;
   type::Time::epoch_t time_temp;
@@ -288,14 +288,14 @@ bool Epoch::get_date(type::Time *ltime, uint32_t)
   unpack_num(temp);
   time_temp= temp;
   
-  ltime->reset();
+  ltime.reset();
 
-  ltime->store(time_temp);
+  ltime.store(time_temp);
 
   return 0;
 }
 
-bool Epoch::get_time(type::Time *ltime)
+bool Epoch::get_time(type::Time &ltime)
 {
   return Epoch::get_date(ltime, 0);
 }

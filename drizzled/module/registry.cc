@@ -25,10 +25,13 @@
 
 #include "drizzled/module/registry.h"
 #include "drizzled/module/library.h"
+#include "drizzled/module/graph.h"
+#include "drizzled/module/vertex_handle.h"
 
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
 #include "drizzled/cursor.h"
+#include "drizzled/abort_exception.h"
 
 #include <boost/bind.hpp>
 
@@ -36,6 +39,13 @@ using namespace std;
 
 namespace drizzled
 {
+
+module::Registry::Registry() :
+  module_registry_(),
+  depend_graph_(new module::Graph()),
+  plugin_registry(),
+  deps_built_(false)
+{ }
 
 
 module::Registry::~Registry()
@@ -54,12 +64,27 @@ module::Registry::~Registry()
     ++plugin_iter;
   }
 
+  plugin::Plugin::vector error_plugins;
   plugin_iter= plugin_registry.begin();
   while (plugin_iter != plugin_registry.end())
   {
-    delete (*plugin_iter).second;
+    if ((*plugin_iter).second->removeLast())
+    {
+      error_plugins.push_back((*plugin_iter).second);
+    }
+    else
+    {
+      delete (*plugin_iter).second;
+    }
     ++plugin_iter;
   }
+
+  for (plugin::Plugin::vector::iterator iter= error_plugins.begin();
+       iter != error_plugins.end(); iter++)
+  {
+    delete *iter;
+  }
+
   plugin_registry.clear();
 
 #if 0
@@ -96,7 +121,7 @@ module::Module *module::Registry::find(std::string name)
   map_iter= module_registry_.find(name);
   if (map_iter != module_registry_.end())
     return (*map_iter).second;
-  return(0);
+  return NULL;
 }
 
 void module::Registry::add(module::Module *handle)
@@ -106,6 +131,13 @@ void module::Registry::add(module::Module *handle)
             add_str.begin(), ::tolower);
 
   module_registry_[add_str]= handle;
+
+  Vertex vertex_info(add_str, handle);
+  VertexDesc handle_vertex= boost::add_vertex(depend_graph_->getGraph());
+  depend_graph_->properties(handle_vertex)= vertex_info;
+
+  handle->setVertexHandle(new VertexHandle(handle_vertex));
+
 }
 
 void module::Registry::remove(module::Module *handle)
@@ -128,23 +160,69 @@ void module::Registry::copy(plugin::Plugin::vector &arg)
   assert(arg.size() == plugin_registry.size());
 }
 
-vector<module::Module *> module::Registry::getList(bool active)
+void module::Registry::buildDeps()
 {
-  module::Module *plugin= NULL;
+  ModuleMap::iterator map_iter= module_registry_.begin();
+  while (map_iter != module_registry_.end())
+  {
+    Module *handle= (*map_iter).second;
+    Module::Depends::const_iterator handle_deps= handle->getDepends().begin();
+    while (handle_deps != handle->getDepends().end())
+    {
+      std::string dep_str((*handle_deps));
+      transform(dep_str.begin(), dep_str.end(),
+                dep_str.begin(), ::tolower);
+
+      bool found_dep= false;
+      vertex_iter it= boost::vertices(depend_graph_->getGraph()).first;
+      while (it != vertices(depend_graph_->getGraph()).second)
+      {
+        if (depend_graph_->properties(*it).getName() == dep_str)
+        {
+          found_dep= true;
+          add_edge(handle->getVertexHandle()->getVertexDesc(), *it, depend_graph_->getGraph());
+          break;
+        }
+        ++it;
+      }
+      if (not found_dep)
+      {
+        errmsg_printf(error::ERROR,
+                      _("Couldn't process plugin module dependencies. "
+                        "%s depends on %s but %s is not to be loaded.\n"),
+                      handle->getName().c_str(),
+                      dep_str.c_str(), dep_str.c_str());
+        DRIZZLE_ABORT;
+      }
+
+      ++handle_deps;
+    }
+    ++map_iter;
+  }
+  deps_built_= true;
+}
+
+module::Registry::ModuleList module::Registry::getList()
+{
+  if (not deps_built_)
+  {
+    buildDeps();
+  }
 
   std::vector<module::Module *> plugins;
-  plugins.reserve(module_registry_.size());
 
-  ModuleMap::iterator map_iter;
-  for (map_iter= module_registry_.begin();
-       map_iter != module_registry_.end();
-       map_iter++)
+  VertexList vertex_list;
+
+  boost::topological_sort(depend_graph_->getGraph(), std::back_inserter(vertex_list));
+
+  for (VertexList::iterator i = vertex_list.begin();
+       i != vertex_list.end(); ++i)
   {
-    plugin= (*map_iter).second;
-    if (active)
-      plugins.push_back(plugin);
-    else if (plugin->isInited)
-      plugins.push_back(plugin);
+    Module *mod_ptr= depend_graph_->properties(*i).getModule();
+    if (mod_ptr != NULL)
+    {
+      plugins.push_back(mod_ptr);
+    }  
   }
 
   return plugins;

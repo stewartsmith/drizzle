@@ -84,7 +84,7 @@ int64_t Item_str_func::val_int()
 {
   assert(fixed == 1);
   int err;
-  char buff[22];
+  char buff[DECIMAL_LONGLONG_DIGITS];
   String *res, tmp(buff,sizeof(buff), &my_charset_bin);
   res= val_str(&tmp);
   return (res ?
@@ -106,6 +106,6 @@ void Item_str_func::left_right_max_length()
   }
 }
 
-String my_empty_string("",default_charset_info);
+DRIZZLED_API String my_empty_string("",default_charset_info);
 
 } /* namespace drizzled */

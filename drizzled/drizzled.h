@@ -39,7 +39,6 @@ namespace module
 class Registry;
 }
 
-extern std::bitset<12> test_flags;
 extern boost::detail::atomic_count connection_count;
 extern const char *load_default_groups[];
 extern bool volatile select_thread_in_use;
@@ -61,7 +60,8 @@ boost::program_options::variables_map &getVariablesMap();
 
 int init_thread_environment();
 int init_server_components(module::Registry &modules);
-int init_common_variables(int argc, char **argv, module::Registry &modules);
+int init_basic_variables(int argc, char **argv);
+int init_remaining_variables(module::Registry &modules);
 
 passwd *check_user(const char *user);
 void set_user(const char *user, passwd *user_info_arg);

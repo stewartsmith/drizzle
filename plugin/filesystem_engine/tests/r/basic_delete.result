@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS t1;
-CREATE TABLE t1 (a INT, b VARCHAR(20)) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_delete.data";
+CREATE TABLE t1 (a INT, b VARCHAR(20)) ENGINE=FILESYSTEM,FILE="VARDIR/filesystem_ln/basic_delete.data";
 INSERT INTO t1 VALUES (222, "bbb");
 INSERT INTO t1 VALUES (333, "ccc");
 INSERT INTO t1 VALUES (444, "ddd");

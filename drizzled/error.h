@@ -17,6 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
 #ifndef DRIZZLED_ERROR_H
 #define DRIZZLED_ERROR_H
 
@@ -26,6 +27,8 @@
 #include "drizzled/error_t.h"
 #include "drizzled/definitions.h"
 #include "drizzled/identifier.h"
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -72,16 +75,17 @@ extern error_handler_func error_handler_hook;
 
 // TODO: kill this method. Too much to do with this branch.
 // This is called through the ER(x) macro.
-const char * error_message(drizzled::error_t err_index);
+DRIZZLED_API const char * error_message(drizzled::error_t err_index);
 
 // Adds the message to the global error dictionary.
 void add_error_message(drizzled::error_t error_code, const std::string &error_name,
                        const std::string& message);
 #define DRIZZLE_ADD_ERROR_MESSAGE(code, msg) add_error_message(code, STRINGIFY_ARG(code), msg)
 
-void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags= MYF(0));
-void my_error(error_t nr);
-void my_error(error_t nr, myf MyFlags, ...);
+DRIZZLED_API void my_error(const std::string &ref, error_t nr, myf MyFlags= MYF(0));
+DRIZZLED_API void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags= MYF(0));
+DRIZZLED_API void my_error(error_t nr);
+DRIZZLED_API void my_error(error_t nr, myf MyFlags, ...);
 void my_message(drizzled::error_t my_err, const char *str, myf MyFlags);
 void my_printf_error(drizzled::error_t my_err, const char *format,
                      myf MyFlags, ...)

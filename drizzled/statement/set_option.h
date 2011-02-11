@@ -33,12 +33,7 @@ namespace statement
 class SetOption : public Statement
 {
 public:
-  SetOption(Session *in_session)
-    :
-      Statement(in_session)
-  {
-    one_shot_set= false;
-  }
+  SetOption(Session *in_session);
 
   bool execute();
   bool one_shot_set;

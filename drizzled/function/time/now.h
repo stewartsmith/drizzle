@@ -56,8 +56,8 @@ public:
    * @param Reference to a DateTime to populate
    */
   bool get_temporal(DateTime &temporal);
-  bool get_date(type::Time *res, uint32_t fuzzy_date);
-  virtual void store_now_in_TIME(type::Time *now_time)=0;
+  bool get_date(type::Time &res, uint32_t fuzzy_date);
+  virtual void store_now_in_TIME(type::Time &now_time)=0;
 };
 
 class Item_func_now_local :public Item_func_now
@@ -66,7 +66,7 @@ public:
   Item_func_now_local() :Item_func_now() {}
   Item_func_now_local(Item *a) :Item_func_now(a) {}
   const char *func_name() const { return "now"; }
-  virtual void store_now_in_TIME(type::Time *now_time);
+  virtual void store_now_in_TIME(type::Time &now_time);
   virtual enum Functype functype() const { return NOW_FUNC; }
 };
 
@@ -77,7 +77,7 @@ public:
   Item_func_now_utc() :Item_func_now() {}
   Item_func_now_utc(Item *a) :Item_func_now(a) {}
   const char *func_name() const { return "utc_timestamp"; }
-  virtual void store_now_in_TIME(type::Time *now_time);
+  virtual void store_now_in_TIME(type::Time &now_time);
 };
 
 } /* namespace drizzled */

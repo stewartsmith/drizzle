@@ -45,7 +45,7 @@ String *Item_func_from_unixtime::val_str(String *str)
 
   assert(fixed == 1);
 
-  if (get_date(&time_tmp, 0))
+  if (get_date(time_tmp, 0))
     return 0;
 
   if (str->alloc(type::Time::MAX_STRING_LENGTH))
@@ -65,16 +65,16 @@ int64_t Item_func_from_unixtime::val_int()
 
   assert(fixed == 1);
 
-  if (get_date(&time_tmp, 0))
+  if (get_date(time_tmp, 0))
     return 0;
 
-  uint64_t ret;
+  int64_t ret;
   time_tmp.convert(ret);
 
   return (int64_t) ret;
 }
 
-bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
+bool Item_func_from_unixtime::get_date(type::Time &ltime, uint32_t)
 {
   uint64_t tmp= 0;
   type::Time::usec_t fractional_tmp= 0;
@@ -105,8 +105,8 @@ bool Item_func_from_unixtime::get_date(type::Time *ltime, uint32_t)
   if ((null_value= (args[0]->null_value || tmp > TIMESTAMP_MAX_VALUE)))
     return 1;
 
-  ltime->reset();
-  ltime->store(tmp, fractional_tmp);
+  ltime.reset();
+  ltime.store(tmp, fractional_tmp);
 
   return 0;
 }

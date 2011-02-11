@@ -33,12 +33,17 @@ namespace statement
 class Update : public Statement
 {
 public:
-  Update(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Update(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_UPDATE;
+  }
 
   bool execute();
+  bool isTransactional()
+  {
+    return true;
+  }
 };
 
 } /* namespace statement */

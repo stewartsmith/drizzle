@@ -41,6 +41,8 @@
 #include <bitset>
 #include <algorithm>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -143,7 +145,7 @@ inline key_part_map make_prev_keypart_map(T a)
   If a blob column has NULL value, then its length and blob data pointer
   must be set to 0.
 */
-class Cursor
+class DRIZZLED_API Cursor
 {
   friend class SEAPITesterCursor;
   Table &table;               /* The current open table */
@@ -210,6 +212,14 @@ public:
   uint64_t getNextInsertId()
   {
     return next_insert_id;
+  }
+
+  /**
+    Used by SHOW TABLE STATUS to get the current auto_inc from the engine
+  */
+  uint64_t getAutoIncrement()
+  {
+    return stats.auto_increment_value;
   }
 
   /**
@@ -665,20 +675,20 @@ int prepare_create_field(CreateField *sql_field,
                          int *timestamps, int *timestamps_with_niladic);
 
 bool create_table(Session *session,
-                        const identifier::Table &identifier,
-                        HA_CREATE_INFO *create_info,
-                        message::Table &table_proto,
-                        AlterInfo *alter_info,
-                        bool tmp_table, uint32_t select_field_count,
-                        bool is_if_not_exists);
+                  const identifier::Table &identifier,
+                  HA_CREATE_INFO *create_info,
+                  message::Table &table_proto,
+                  AlterInfo *alter_info,
+                  bool tmp_table, uint32_t select_field_count,
+                  bool is_if_not_exists);
 
 bool create_table_no_lock(Session *session,
-                                const identifier::Table &identifier,
-                                HA_CREATE_INFO *create_info,
-                                message::Table &table_proto,
-                                AlterInfo *alter_info,
-                                bool tmp_table, uint32_t select_field_count,
-                                bool is_if_not_exists);
+                          const identifier::Table &identifier,
+                          HA_CREATE_INFO *create_info,
+                          message::Table &table_proto,
+                          AlterInfo *alter_info,
+                          bool tmp_table, uint32_t select_field_count,
+                          bool is_if_not_exists);
 
 bool create_like_table(Session* session,
                        identifier::Table::const_reference destination_identifier,

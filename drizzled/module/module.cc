@@ -24,6 +24,8 @@
 #include "drizzled/module/module.h"
 #include "drizzled/sys_var.h"
 #include "drizzled/util/functors.h"
+#include "drizzled/util/tokenize.h"
+#include "drizzled/module/vertex_handle.h"
 
 namespace drizzled
 {
@@ -31,9 +33,31 @@ namespace drizzled
 namespace module
 {
 
+Module::Module(const Manifest *manifest_arg,
+       Library *library_arg) :
+  name(manifest_arg->name),
+  manifest(manifest_arg),
+  vertex_(NULL),
+  plugin_dl(library_arg),
+  isInited(false),
+  system_vars(),
+  sys_vars(),
+  depends_()
+{
+  if (manifest->depends != NULL)
+  {
+    tokenize(manifest->depends, depends_, ",", true);
+  }
+  assert(manifest != NULL);
+}
+
 Module::~Module()
 {
   std::for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
+  if (vertex_ != NULL)
+  {
+    delete vertex_;
+  }
 }
 
 } /* namespace module */

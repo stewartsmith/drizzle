@@ -57,8 +57,6 @@ INSERT INTO `Ｔ８b` VALUES ('あ');
 INSERT INTO `Ｔ９a` VALUES ('龔'),('龖'),('龗');
 
 #Test for innodb
-SELECT * FROM `Ｔ１a` JOIN `Ｔ１b`;
-SELECT * FROM `Ｔ１a` INNER JOIN `Ｔ１b`;
 SELECT * FROM `Ｔ１a` JOIN `Ｔ１b` USING (`Ｃ１`);
 SELECT * FROM `Ｔ１a` INNER JOIN `Ｔ１b` USING (`Ｃ１`);
 SELECT * FROM `Ｔ１a` CROSS JOIN `Ｔ１b`;
@@ -66,8 +64,6 @@ SELECT * FROM `Ｔ１a` LEFT JOIN `Ｔ１b` USING (`Ｃ１`);
 SELECT * FROM `Ｔ１a` LEFT JOIN `Ｔ１b` ON (`Ｔ１a`.`Ｃ１` = `Ｔ１b`.`Ｃ１`);
 SELECT * FROM `Ｔ１b` RIGHT JOIN `Ｔ１a` USING (`Ｃ１`);
 SELECT * FROM `Ｔ１b` RIGHT JOIN `Ｔ１a` ON (`Ｔ１a`.`Ｃ１` = `Ｔ１b`.`Ｃ１`);
-SELECT * FROM `Ｔ２a` JOIN `Ｔ２b`;
-SELECT * FROM `Ｔ２a` INNER JOIN `Ｔ２b`;
 SELECT * FROM `Ｔ２a` JOIN `Ｔ２b` USING (`Ｃ１`);
 SELECT * FROM `Ｔ２a` INNER JOIN `Ｔ２b` USING (`Ｃ１`);
 SELECT * FROM `Ｔ２a` CROSS JOIN `Ｔ２b`;
@@ -75,8 +71,6 @@ SELECT * FROM `Ｔ２a` LEFT JOIN `Ｔ２b` USING (`Ｃ１`);
 SELECT * FROM `Ｔ２a` LEFT JOIN `Ｔ２b` ON (`Ｔ２a`.`Ｃ１` = `Ｔ２b`.`Ｃ１`);
 SELECT * FROM `Ｔ２b` RIGHT JOIN `Ｔ２a` USING (`Ｃ１`);
 SELECT * FROM `Ｔ２b` RIGHT JOIN `Ｔ２a` ON (`Ｔ２a`.`Ｃ１` = `Ｔ２b`.`Ｃ１`);
-SELECT * FROM `Ｔ３a` JOIN `Ｔ３b`;
-SELECT * FROM `Ｔ３a` INNER JOIN `Ｔ３b`;
 SELECT * FROM `Ｔ３a` JOIN `Ｔ３b` USING (`Ｃ１`);
 SELECT * FROM `Ｔ３a` INNER JOIN `Ｔ３b` USING (`Ｃ１`);
 SELECT * FROM `Ｔ３a` CROSS JOIN `Ｔ３b`;

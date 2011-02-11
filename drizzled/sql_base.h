@@ -17,11 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_SQL_BASE_H
 #define DRIZZLED_SQL_BASE_H
 
 #include <drizzled/table.h>
 #include <drizzled/table/concurrent.h>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -35,7 +39,7 @@ uint32_t cached_table_definitions(void);
 
 table::Cache &get_open_cache();
 
-void kill_drizzle(void);
+DRIZZLED_API void kill_drizzle(void);
 
 /* sql_base.cc */
 void set_item_name(Item *item,char *pos,uint32_t length);
@@ -53,7 +57,6 @@ CreateField * new_create_field(Session *session, char *field_name, enum_field_ty
                                Item *default_value, Item *on_update_value,
                                LEX_STRING *comment, char *change,
                                List<String> *interval_list, CHARSET_INFO *cs);
-void store_position_for_column(const char *name);
 bool push_new_name_resolution_context(Session *session,
                                       TableList *left_op,
                                       TableList *right_op);

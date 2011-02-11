@@ -13,10 +13,12 @@ EXTRA_DIST+= \
 	     docs/plugins/innobase/index.rst \
 	     docs/plugins/mysql_protocol/index.rst \
 	     docs/plugins/transaction_log/index.rst \
+	     ${top_srcdir}/docs/*.png \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst \
-	     ${top_srcdir}/docs/libdrizzle/*.rst \
+	     ${top_srcdir}/docs/functions/*.rst \
 	     ${top_srcdir}/docs/installing/*.rst \
+	     ${top_srcdir}/docs/libdrizzle/*.rst \
              ${top_srcdir}/docs/testing/*.rst
 
 # Makefile for Sphinx documentation

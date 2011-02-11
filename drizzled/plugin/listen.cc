@@ -32,20 +32,27 @@
 
 namespace drizzled
 {
+namespace plugin
+{
 
-std::vector<plugin::Listen *> listen_list;
+static std::vector<plugin::Listen *> listen_list;
 std::vector<plugin::Listen *> listen_fd_list;
 std::vector<pollfd> fd_list;
 uint32_t fd_count= 0;
 int wakeup_pipe[2];
 
-bool plugin::Listen::addPlugin(plugin::Listen *listen_obj)
+ListenVector &Listen::getListenProtocols()
+{
+  return listen_list;
+}
+
+bool Listen::addPlugin(plugin::Listen *listen_obj)
 {
   listen_list.push_back(listen_obj);
   return false;
 }
 
-void plugin::Listen::removePlugin(plugin::Listen *listen_obj)
+void Listen::removePlugin(plugin::Listen *listen_obj)
 {
   listen_list.erase(std::remove(listen_list.begin(),
                                 listen_list.end(),
@@ -53,7 +60,7 @@ void plugin::Listen::removePlugin(plugin::Listen *listen_obj)
                     listen_list.end());
 }
 
-bool plugin::Listen::setup(void)
+bool Listen::setup(void)
 {
   std::vector<plugin::Listen *>::iterator it;
 
@@ -64,7 +71,7 @@ bool plugin::Listen::setup(void)
 
     if ((*it)->getFileDescriptors(fds))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting file descriptors"));
+      errmsg_printf(error::ERROR, _("Error getting file descriptors"));
       return true;
     }
 
@@ -81,7 +88,7 @@ bool plugin::Listen::setup(void)
 
   if (fd_count == 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("No sockets could be bound for listening"));
     return true;
   }
@@ -92,7 +99,7 @@ bool plugin::Listen::setup(void)
   */
   if (pipe(wakeup_pipe) == -1)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("pipe() failed with errno %d"), errno);
+    sql_perror("pipe()");
     return true;
   }
 
@@ -105,10 +112,9 @@ bool plugin::Listen::setup(void)
   return false;
 }
 
-plugin::Client *plugin::Listen::getClient(void)
+Client *plugin::Listen::getClient(void)
 {
   int ready;
-  uint32_t x;
   plugin::Client *client;
 
   while (1)
@@ -118,8 +124,7 @@ plugin::Client *plugin::Listen::getClient(void)
     {
       if (errno != EINTR)
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("poll() failed with errno %d"),
-                      errno);
+        sql_perror("poll()");
       }
 
       continue;
@@ -127,7 +132,7 @@ plugin::Client *plugin::Listen::getClient(void)
     else if (ready == 0)
       continue;
 
-    for (x= 0; x < fd_count; x++)
+    for (uint32_t x= 0; x < fd_count; x++)
     {
       if (fd_list[x].revents != POLLIN)
         continue;
@@ -157,15 +162,17 @@ plugin::Client *plugin::Listen::getClient(void)
   }
 }
 
-plugin::Client *plugin::Listen::getNullClient(void)
+Client *plugin::Listen::getNullClient(void)
 {
   return new plugin::NullClient();
 }
 
-void plugin::Listen::shutdown(void)
+void Listen::shutdown(void)
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
 }
 
+
+} /* namespace plugin */
 } /* namespace drizzled */

@@ -29,6 +29,10 @@
 #include "drizzled/cursor.h"
 #include "drizzled/data_home.h"
 
+#include <drizzled/pthread_globals.h>
+
+#include <drizzled/execute.h>
+
 #include "drizzled/internal/my_sys.h"
 
 #include <fcntl.h>
@@ -68,8 +72,7 @@ void Schema::prime()
 {
   CachedDirectory directory(getDataHomeCatalog().file_string(), CachedDirectory::DIRECTORY);
   CachedDirectory::Entries files= directory.getEntries();
-
-  mutex.lock();
+  boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
 
   for (CachedDirectory::Entries::iterator fileIter= files.begin();
        fileIter != files.end(); fileIter++)
@@ -80,8 +83,7 @@ void Schema::prime()
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
       continue;
 
-    identifier::Schema filename(entry->filename);
-    if (readSchemaFile(filename, schema_message))
+    if (readSchemaFile(entry->filename, schema_message))
     {
       identifier::Schema schema_identifier(schema_message.name());
 
@@ -89,12 +91,15 @@ void Schema::prime()
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
       if (ret.second == false)
-     {
+      {
         abort(); // If this has happened, something really bad is going down.
       }
     }
   }
-  mutex.unlock();
+}
+
+void Schema::startup(drizzled::Session &)
+{
 }
 
 void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
@@ -120,6 +125,7 @@ bool Schema::doGetSchemaDefinition(const identifier::Schema &schema_identifier, 
   {
     schema_message= (*iter).second;
     mutex.unlock_shared();
+
     return true;
   }
   mutex.unlock_shared();
@@ -133,7 +139,10 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   identifier::Schema schema_identifier(schema_message.name());
 
   if (mkdir(schema_identifier.getPath().c_str(), 0777) == -1)
+  {
+    sql_perror(schema_identifier.getPath().c_str());
     return false;
+  }
 
   if (not writeSchemaFile(schema_identifier, schema_message))
   {
@@ -142,8 +151,8 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
     return false;
   }
 
-  mutex.lock();
   {
+    boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
     pair<SchemaCache::iterator, bool> ret=
       schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
@@ -153,7 +162,6 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
       abort(); // If this has happened, something really bad is going down.
     }
   }
-  mutex.unlock();
 
   return true;
 }
@@ -172,28 +180,27 @@ bool Schema::doDropSchema(const identifier::Schema &schema_identifier)
   // No db.opt file, no love from us.
   if (access(schema_file.c_str(), F_OK))
   {
-    perror(schema_file.c_str());
+    sql_perror(schema_file.c_str());
     return false;
   }
 
   if (unlink(schema_file.c_str()))
   {
-    perror(schema_file.c_str());
+    sql_perror(schema_file.c_str());
     return false;
   }
 
   if (rmdir(schema_identifier.getPath().c_str()))
   {
-    perror(schema_identifier.getPath().c_str());
+    sql_perror(schema_identifier.getPath().c_str());
     //@todo If this happens, we want a report of it. For the moment I dump
     //to stderr so I can catch it in Hudson.
     CachedDirectory dir(schema_identifier.getPath());
     cerr << dir;
   }
 
-  mutex.lock();
+  boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
   schema_cache.erase(schema_identifier.getPath());
-  mutex.unlock();
 
   return true;
 }
@@ -207,19 +214,16 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   if (writeSchemaFile(schema_identifier, schema_message))
   {
-    mutex.lock();
+    boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
+    schema_cache.erase(schema_identifier.getPath());
+
+    pair<SchemaCache::iterator, bool> ret=
+      schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
+
+    if (ret.second == false)
     {
-      schema_cache.erase(schema_identifier.getPath());
-
-      pair<SchemaCache::iterator, bool> ret=
-        schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
-
-      if (ret.second == false)
-      {
-        abort(); // If this has happened, something really bad is going down.
-      }
+      abort(); // If this has happened, something really bad is going down.
     }
-    mutex.unlock();
   }
 
   return true;
@@ -245,7 +249,7 @@ bool Schema::writeSchemaFile(const identifier::Schema &schema_identifier, const 
 
   if (fd == -1)
   {
-    perror(schema_file_tmp);
+    sql_perror(schema_file_tmp);
 
     return false;
   }
@@ -266,20 +270,20 @@ bool Schema::writeSchemaFile(const identifier::Schema &schema_identifier, const 
              db.InitializationErrorString().empty() ? "unknown" :  db.InitializationErrorString().c_str());
 
     if (close(fd) == -1)
-      perror(schema_file_tmp);
+      sql_perror(schema_file_tmp);
 
     if (unlink(schema_file_tmp))
-      perror(schema_file_tmp);
+      sql_perror(schema_file_tmp);
 
     return false;
   }
 
   if (close(fd) == -1)
   {
-    perror(schema_file_tmp);
+    sql_perror(schema_file_tmp);
 
     if (unlink(schema_file_tmp))
-      perror(schema_file_tmp);
+      sql_perror(schema_file_tmp);
 
     return false;
   }
@@ -287,7 +291,7 @@ bool Schema::writeSchemaFile(const identifier::Schema &schema_identifier, const 
   if (rename(schema_file_tmp, schema_file.c_str()) == -1)
   {
     if (unlink(schema_file_tmp))
-      perror(schema_file_tmp);
+      sql_perror(schema_file_tmp);
 
     return false;
   }
@@ -298,8 +302,11 @@ bool Schema::writeSchemaFile(const identifier::Schema &schema_identifier, const 
 
 bool Schema::readSchemaFile(const drizzled::identifier::Schema &schema_identifier, drizzled::message::Schema &schema)
 {
-  string db_opt_path(schema_identifier.getPath());
+  return readSchemaFile(schema_identifier.getPath(), schema); 
+}
 
+bool Schema::readSchemaFile(std::string db_opt_path, drizzled::message::Schema &schema)
+{
   /*
     Pass an empty file name, and the database options file name as extension
     to avoid table name to file name encoding.
@@ -326,7 +333,7 @@ bool Schema::readSchemaFile(const drizzled::identifier::Schema &schema_identifie
   }
   else
   {
-    perror(db_opt_path.c_str());
+    sql_perror(db_opt_path.c_str());
   }
 
   return false;

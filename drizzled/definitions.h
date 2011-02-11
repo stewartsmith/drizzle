@@ -59,6 +59,7 @@ namespace drizzled
 #define MAX_REF_PARTS 16			/* Max parts used as ref */
 #define MAX_KEY_LENGTH 4096			/* max possible key */
 #define MAX_KEY_LENGTH_DECIMAL_WIDTH 4          /* strlen("4096") */
+
 #if SIZEOF_OFF_T > 4
 #define MAX_REFLENGTH 8				/* Max length for record ref */
 #else
@@ -105,14 +106,6 @@ namespace drizzled
   wildcards in class Item_func_like.
 */
 #define MIN_TURBOBM_PATTERN_LEN 3
-
-/*
-   Defines for binary logging.
-   Do not decrease the value of BIN_LOG_HEADER_SIZE.
-   Do not even increase it before checking code.
-*/
-
-#define BIN_LOG_HEADER_SIZE    4
 
 /* Below are #defines that used to be in mysql_priv.h */
 /***************************************************************************
@@ -197,21 +190,6 @@ namespace drizzled
 /* The following can also be changed from the command line */
 #define DEFAULT_CONCURRENCY	10
 #define FLUSH_TIME		0		/**< Don't flush tables */
-
-/* Bits from testflag */
-enum test_flag_bit
-{
-  TEST_PRINT_CACHED_TABLES= 1,
-  TEST_NO_KEY_GROUP,
-  TEST_MIT_THREAD,
-  TEST_KEEP_TMP_TABLES,
-  TEST_READCHECK, /**< Force use of readcheck */
-  TEST_NO_EXTRA,
-  TEST_CORE_ON_SIGNAL, /**< Give core if signal */
-  TEST_NO_STACKTRACE,
-  TEST_SIGINT, /**< Allow sigint on threads */
-  TEST_SYNCHRONIZATION /**< get server to do sleep in some places */
-};
 
 /* Bits for different SQL modes modes (including ANSI mode) */
 #define MODE_NO_ZERO_DATE		(2)
@@ -508,6 +486,10 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 
 #ifndef uint64_t2double
 #define uint64_t2double(A) ((double) (uint64_t) (A))
+#endif
+
+#ifndef int64_t2double
+#define int64_t2double(A) ((double) (int64_t) (A))
 #endif
 
 #ifndef offsetof

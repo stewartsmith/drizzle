@@ -128,7 +128,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 
   /* Abort if we are using strict mode and we are not using IGNORE */
   if ((int) level >= (int) DRIZZLE_ERROR::WARN_LEVEL_WARN &&
-      session->really_abort_on_warning())
+      session->abortOnWarning())
   {
     /* Avoid my_message() calling push_warning */
     bool no_warnings_for_error= session->no_warnings_for_error;

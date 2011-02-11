@@ -17,6 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_SQL_ERROR_H
 #define DRIZZLED_SQL_ERROR_H
 
@@ -26,6 +28,8 @@
 #include <drizzled/error_t.h>
 
 #include <bitset>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -59,10 +63,10 @@ public:
   void set_msg(Session *session, const char *msg_arg);
 };
 
-DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
+DRIZZLED_API DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                             drizzled::error_t code, const char *msg);
 
-void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
+DRIZZLED_API void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                          drizzled::error_t code, const char *format, ...);
 
 void drizzle_reset_errors(Session *session, bool force);

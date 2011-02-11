@@ -150,7 +150,7 @@ DRIZZLE_DECLARE_PLUGIN
   "PAM based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

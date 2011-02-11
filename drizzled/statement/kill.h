@@ -33,10 +33,7 @@ namespace statement
 class Kill : public Statement
 {
 public:
-  Kill(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Kill(Session *in_session, Item *item, bool is_query_kill);
 
   bool execute();
 

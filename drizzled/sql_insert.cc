@@ -281,7 +281,7 @@ bool insert_query(Session *session,TableList *table_list,
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
       free_underlaid_joins(session, &session->lex->select_lex);
-    session->abort_on_warning= 0;
+    session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
   }
@@ -320,7 +320,7 @@ bool insert_query(Session *session,TableList *table_list,
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
         free_underlaid_joins(session, &session->lex->select_lex);
-      session->abort_on_warning= 0;
+      session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
 
       return true;
@@ -331,7 +331,7 @@ bool insert_query(Session *session,TableList *table_list,
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
         free_underlaid_joins(session, &session->lex->select_lex);
-      session->abort_on_warning= 0;
+      session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
       return true;
     }
@@ -372,7 +372,7 @@ bool insert_query(Session *session,TableList *table_list,
   }
 
 
-  session->abort_on_warning= !ignore;
+  session->setAbortOnWarning(not ignore);
 
   table->mark_columns_needed_for_insert();
 
@@ -483,7 +483,7 @@ bool insert_query(Session *session,TableList *table_list,
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
       free_underlaid_joins(session, &session->lex->select_lex);
-    session->abort_on_warning= 0;
+    session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
   }
@@ -492,7 +492,7 @@ bool insert_query(Session *session,TableList *table_list,
 				    !session->cuted_fields))
   {
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id);
   }
   else
@@ -505,12 +505,12 @@ bool insert_query(Session *session,TableList *table_list,
       snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id, buff);
   }
-  session->status_var.inserted_row_count+= session->row_count_func;
-  session->abort_on_warning= 0;
-  DRIZZLE_INSERT_DONE(0, session->row_count_func);
+  session->status_var.inserted_row_count+= session->rowCount();
+  session->setAbortOnWarning(false);
+  DRIZZLE_INSERT_DONE(0, session->rowCount());
 
   return false;
 }
@@ -610,7 +610,7 @@ bool prepare_insert(Session *session, TableList *table_list,
     inserting (for INSERT ... SELECT this is done by changing table_list,
     because INSERT ... SELECT share Select_Lex it with SELECT.
   */
-  if (!select_insert)
+  if (not select_insert)
   {
     for (Select_Lex_Unit *un= select_lex->first_inner_unit();
          un;
@@ -658,13 +658,14 @@ bool prepare_insert(Session *session, TableList *table_list,
 
     if (!res && check_fields)
     {
-      bool saved_abort_on_warning= session->abort_on_warning;
-      session->abort_on_warning= abort_on_warning;
+      bool saved_abort_on_warning= session->abortOnWarning();
+
+      session->setAbortOnWarning(abort_on_warning);
       res= check_that_all_fields_are_given_values(session,
                                                   table ? table :
                                                   context->table_list->table,
                                                   context->table_list);
-      session->abort_on_warning= saved_abort_on_warning;
+      session->setAbortOnWarning(saved_abort_on_warning);
     }
 
     if (!res && duplic == DUP_UPDATE)
@@ -675,17 +676,17 @@ bool prepare_insert(Session *session, TableList *table_list,
     /* Restore the current context. */
     ctx_state.restore_state(context, table_list);
 
-    if (!res)
+    if (not res)
       res= setup_fields(session, 0, update_values, MARK_COLUMNS_READ, 0, 0);
   }
 
   if (res)
     return(res);
 
-  if (!table)
+  if (not table)
     table= table_list->table;
 
-  if (!select_insert)
+  if (not select_insert)
   {
     TableList *duplicate;
     if ((duplicate= unique_table(table_list, table_list->next_global, true)))
@@ -695,6 +696,7 @@ bool prepare_insert(Session *session, TableList *table_list,
       return true;
     }
   }
+
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)
     table->prepare_for_position();
 
@@ -1014,7 +1016,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
       }
     }
   }
-  return session->abort_on_warning ? err : 0;
+  return session->abortOnWarning() ? err : 0;
 }
 
 /***************************************************************************
@@ -1103,11 +1105,11 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   if (!res && fields->elements)
   {
-    bool saved_abort_on_warning= session->abort_on_warning;
-    session->abort_on_warning= !info.ignore;
+    bool saved_abort_on_warning= session->abortOnWarning();
+    session->setAbortOnWarning(not info.ignore);
     res= check_that_all_fields_are_given_values(session, table_list->table,
                                                 table_list);
-    session->abort_on_warning= saved_abort_on_warning;
+    session->setAbortOnWarning(saved_abort_on_warning);
   }
 
   if (info.handle_duplicates == DUP_UPDATE && !res)
@@ -1200,13 +1202,17 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->next_number_field=table->found_next_number_field;
 
   session->cuted_fields=0;
+
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
     table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   if (info.handle_duplicates == DUP_REPLACE)
     table->cursor->extra(HA_EXTRA_WRITE_CAN_REPLACE);
+
   if (info.handle_duplicates == DUP_UPDATE)
     table->cursor->extra(HA_EXTRA_INSERT_WITH_UPDATE);
-  session->abort_on_warning= !info.ignore;
+
+  session->setAbortOnWarning(not info.ignore);
   table->mark_columns_needed_for_insert();
 
 
@@ -1255,7 +1261,7 @@ select_insert::~select_insert()
     table->cursor->ha_reset();
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
-  session->abort_on_warning= 0;
+  session->setAbortOnWarning(false);
   return;
 }
 
@@ -1268,14 +1274,14 @@ bool select_insert::send_data(List<Item> &values)
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return false;
   }
 
   session->count_cuted_fields= CHECK_FIELD_WARN;	// Calculate cuted fields
   store_values(values);
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   if (session->is_error())
-    return(1);
+    return true;
 
   // Release latches in case bulk insert takes a long time
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
@@ -1376,10 +1382,10 @@ bool select_insert::send_eof()
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  session->my_ok((ulong) session->row_count_func,
+  session->my_ok((ulong) session->rowCount(),
                  info.copied + info.deleted + info.touched, id, buff);
-  session->status_var.inserted_row_count+= session->row_count_func; 
-  DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
+  session->status_var.inserted_row_count+= session->rowCount(); 
+  DRIZZLE_INSERT_SELECT_DONE(0, session->rowCount());
   return 0;
 }
 
@@ -1508,18 +1514,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   {
     table::Shell tmp_table(share);		// Used during 'CreateField()'
-    tmp_table.timestamp_field= 0;
-
-    tmp_table.getMutableShare()->db_create_options= 0;
-    tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
 
     if (not table_proto.engine().name().compare("MyISAM"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
     else if (not table_proto.engine().name().compare("MEMORY"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
-
-    tmp_table.null_row= false;
-    tmp_table.maybe_null= false;
 
     tmp_table.in_use= session;
 
@@ -1711,14 +1710,18 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
     table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   if (info.handle_duplicates == DUP_REPLACE)
     table->cursor->extra(HA_EXTRA_WRITE_CAN_REPLACE);
+
   if (info.handle_duplicates == DUP_UPDATE)
     table->cursor->extra(HA_EXTRA_INSERT_WITH_UPDATE);
+
   table->cursor->ha_start_bulk_insert((ha_rows) 0);
-  session->abort_on_warning= !info.ignore;
+  session->setAbortOnWarning(not info.ignore);
   if (check_that_all_fields_are_given_values(session, table, table_list))
     return(1);
+
   table->mark_columns_needed_for_insert();
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
   return(0);
@@ -1762,7 +1765,7 @@ bool select_create::send_eof()
     if (!table->getShare()->getType())
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.autocommitOrRollback(session, 0);
+      transaction_services.autocommitOrRollback(*session, 0);
       (void) session->endActiveTransaction();
     }
 

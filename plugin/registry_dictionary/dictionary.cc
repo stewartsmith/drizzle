@@ -46,7 +46,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Provides dictionary for plugin registry system.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  NULL,               /* system variables */
+  NULL,               /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

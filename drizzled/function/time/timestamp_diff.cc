@@ -34,8 +34,8 @@ int64_t Item_func_timestamp_diff::val_int()
   int neg= 1;
 
   null_value= 0;
-  if (args[0]->get_date(&ltime1, TIME_NO_ZERO_DATE) ||
-      args[1]->get_date(&ltime2, TIME_NO_ZERO_DATE))
+  if (args[0]->get_date(ltime1, TIME_NO_ZERO_DATE) ||
+      args[1]->get_date(ltime2, TIME_NO_ZERO_DATE))
     goto null_date;
 
   if (calc_time_diff(&ltime2,&ltime1, 1,

@@ -24,10 +24,12 @@
 #include "drizzled/plugin.h"
 #include "drizzled/statistics_variables.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
-class StatusHelper 
+class DRIZZLED_API StatusHelper 
 {
 public:
 

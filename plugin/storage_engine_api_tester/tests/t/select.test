@@ -3,7 +3,7 @@ CREATE TABLE t2 (a int) ENGINE=STORAGE_ENGINE_API_TESTER;
 start transaction with consistent snapshot;
 select * from data_dictionary.seapitester_engine_state_history;
 select seapitester_clear_engine_state_history();
-#--error 1146
+#--error ER_TABLE_UNKNOWN
 select * from t2;
 commit;
 drop table t2;

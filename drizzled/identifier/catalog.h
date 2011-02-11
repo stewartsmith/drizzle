@@ -71,6 +71,8 @@ public:
     return _name;
   }
 
+  virtual void getSQLPath(std::string &sql_path) const;
+
   bool isValid() const;
   bool compare(const std::string &arg) const;
 

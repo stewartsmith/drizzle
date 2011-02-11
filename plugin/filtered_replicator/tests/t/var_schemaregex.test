@@ -21,6 +21,7 @@ DROP SCHEMA bar;
 --echo
 --echo We should only see the 'bar' schema in the log
 --echo
---exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec ../plugin/transaction_log/utilities/transaction_reader $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

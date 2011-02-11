@@ -33,12 +33,14 @@ namespace statement
 class DropSchema : public Statement
 {
 public:
-  DropSchema(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  DropSchema(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_DROP_DB;
+  }
 
   bool execute();
+
   /* True if "IF EXISTS" */
   bool drop_if_exists;
 };

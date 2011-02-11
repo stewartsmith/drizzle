@@ -27,6 +27,24 @@
 namespace drizzled
 {
 
+namespace statement
+{
+
+Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
+  Statement(in_session)
+  {
+    if (is_query_kill)
+    {
+      getSession()->getLex()->type= ONLY_KILL_QUERY;
+    }
+
+    getSession()->getLex()->value_list.empty();
+    getSession()->getLex()->value_list.push_front(item);
+    getSession()->getLex()->sql_command= SQLCOM_KILL;
+  }
+
+} // namespace statement
+
 bool statement::Kill::kill(session_id_t id, bool only_kill_query)
 {
   drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id);
@@ -42,9 +60,9 @@ bool statement::Kill::kill(session_id_t id, bool only_kill_query)
 
 bool statement::Kill::execute()
 {
-  Item *it= (Item *) session->lex->value_list.head();
+  Item *it= (Item *) getSession()->lex->value_list.head();
 
-  if ((not it->fixed && it->fix_fields(session->lex->session, &it)) || it->check_cols(1))
+  if ((not it->fixed && it->fix_fields(getSession()->lex->session, &it)) || it->check_cols(1))
   {
     my_message(ER_SET_CONSTANTS_ONLY, 
                ER(ER_SET_CONSTANTS_ONLY),
@@ -52,9 +70,9 @@ bool statement::Kill::execute()
     return true;
   }
 
-  if (kill(static_cast<session_id_t>(it->val_int()), session->lex->type & ONLY_KILL_QUERY))
+  if (kill(static_cast<session_id_t>(it->val_int()), getSession()->lex->type & ONLY_KILL_QUERY))
   {
-    session->my_ok();
+    getSession()->my_ok();
   }
   else
   {

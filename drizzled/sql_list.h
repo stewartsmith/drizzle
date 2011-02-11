@@ -26,6 +26,8 @@
 #include <utility>
 #include <algorithm>
 #include "drizzled/memory/sql_alloc.h"
+#include "drizzled/visibility.h"
+
 
 namespace drizzled
 {
@@ -103,7 +105,7 @@ struct list_node : public memory::SqlAlloc
 };
 
 
-extern list_node end_of_list;
+extern DRIZZLED_API list_node end_of_list;
 
 class base_list :public memory::SqlAlloc
 {

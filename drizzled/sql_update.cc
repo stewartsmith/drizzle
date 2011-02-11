@@ -454,7 +454,7 @@ int update_query(Session *session, TableList *table_list,
   session->set_proc_info("Updating");
 
   transactional_table= table->cursor->has_transactions();
-  session->abort_on_warning= test(!ignore);
+  session->setAbortOnWarning(test(!ignore));
 
   /*
     Assure that we can use position()
@@ -576,11 +576,11 @@ int update_query(Session *session, TableList *table_list,
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();
-    session->my_ok((ulong) session->row_count_func, found, id, buff);
-    session->status_var.updated_row_count+= session->row_count_func;
+    session->my_ok((ulong) session->rowCount(), found, id, buff);
+    session->status_var.updated_row_count+= session->rowCount();
   }
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;		/* calc cuted fields */
-  session->abort_on_warning= 0;
+  session->setAbortOnWarning(false);
   DRIZZLE_UPDATE_DONE((error >= 0 || session->is_error()), found, updated);
   return ((error >= 0 || session->is_error()) ? 1 : 0);
 
@@ -595,7 +595,7 @@ err:
     table->key_read=0;
     table->cursor->extra(HA_EXTRA_NO_KEYREAD);
   }
-  session->abort_on_warning= 0;
+  session->setAbortOnWarning(false);
 
   DRIZZLE_UPDATE_DONE(1, 0, 0);
   return 1;

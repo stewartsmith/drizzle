@@ -114,29 +114,6 @@ int tmpfile(const char *prefix)
   return fd;
 }
 
-int session_tablespace_op(const Session *session)
-{
-  return test(session->tablespace_op);
-}
-
-/**
-   Set the process info field of the Session structure.
-
-   This function is used by plug-ins. Internally, the
-   Session::set_proc_info() function should be used.
-
-   @see Session::set_proc_info
- */
-void set_session_proc_info(Session *session, const char *info)
-{
-  session->set_proc_info(info);
-}
-
-const char *get_session_proc_info(Session *session)
-{
-  return session->get_proc_info();
-}
-
 void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
 {
   return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
@@ -153,16 +130,6 @@ int64_t session_test_options(const Session *session, int64_t test_options)
   return session->options & test_options;
 }
 
-int session_sql_command(const Session *session)
-{
-  return (int) session->lex->sql_command;
-}
-
-enum_tx_isolation session_tx_isolation(const Session *session)
-{
-  return (enum_tx_isolation)session->variables.tx_isolation;
-}
-
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
@@ -176,7 +143,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   lock_id(&main_lock_id),
   thread_stack(NULL),
   security_ctx(identifier::User::make_shared()),
-  where(Session::DEFAULT_WHERE),
+  _where(Session::DEFAULT_WHERE),
   dbug_sentry(Session_SENTRY_MAGIC),
   mysys_var(0),
   command(COM_CONNECT),
@@ -212,8 +179,8 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   is_fatal_error(false),
   transaction_rollback_request(false),
   is_fatal_sub_stmt_error(0),
-  derived_tables_processing(false),
   tablespace_op(false),
+  derived_tables_processing(false),
   m_lip(NULL),
   cached_table(0),
   transaction_message(NULL),
@@ -355,7 +322,7 @@ void Session::cleanup(void)
 #endif
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rollbackTransaction(this, true);
+    transaction_services.rollbackTransaction(*this, true);
     xid_cache_delete(&transaction.xid_state);
   }
 
@@ -388,7 +355,7 @@ Session::~Session()
     assert(security_ctx);
     if (global_system_variables.log_warnings)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),
+      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE),
                     internal::my_progname,
                     thread_id,
                     security_ctx->username().c_str());
@@ -783,7 +750,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
        * (Which of course should never happen...)
        */
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.commitTransaction(this, true))
+      if (transaction_services.commitTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       break;
@@ -800,7 +767,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
     case ROLLBACK_AND_CHAIN:
     {
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.rollbackTransaction(this, true))
+      if (transaction_services.rollbackTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
@@ -837,7 +804,7 @@ bool Session::endActiveTransaction()
   if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (transaction_services.commitTransaction(this, true))
+    if (transaction_services.commitTransaction(*this, true))
       result= false;
   }
   options&= ~(OPTION_BEGIN);
@@ -848,19 +815,14 @@ bool Session::startTransaction(start_transaction_option_t opt)
 {
   bool result= true;
 
-  if (! endActiveTransaction())
+  assert(! inTransaction());
+
+  options|= OPTION_BEGIN;
+  server_status|= SERVER_STATUS_IN_TRANS;
+
+  if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
   {
     result= false;
-  }
-  else
-  {
-    options|= OPTION_BEGIN;
-    server_status|= SERVER_STATUS_IN_TRANS;
-
-    if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
-    {
-      result= false;
-    }
   }
 
   return result;
@@ -883,11 +845,14 @@ void Session::cleanup_after_query()
     first_successful_insert_id_in_cur_stmt= 0;
     substitute_null_with_insert_id= true;
   }
+
   arg_of_last_insert_id_function= false;
+
   /* Free Items that were created during this execution */
   free_items();
-  /* Reset where. */
-  where= Session::DEFAULT_WHERE;
+
+  /* Reset _where. */
+  _where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
   for_each(temporary_shares.begin(),
@@ -1659,13 +1624,10 @@ void Session::set_db(const std::string &new_db)
   @param  session   Thread handle
   @param  all   true <=> rollback main transaction.
 */
-void mark_transaction_to_rollback(Session *session, bool all)
+void Session::markTransactionForRollback(bool all)
 {
-  if (session)
-  {
-    session->is_fatal_sub_stmt_error= true;
-    session->transaction_rollback_request= all;
-  }
+  is_fatal_sub_stmt_error= true;
+  transaction_rollback_request= all;
 }
 
 void Session::disconnect(enum error_t errcode)
@@ -1683,7 +1645,7 @@ void Session::disconnect(enum error_t errcode)
   {
     if (not getKilled() && variables.log_warnings > 1)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
+      errmsg_printf(error::WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
                   , (_schema->empty() ? "unconnected" : _schema->c_str())
                   , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
@@ -1821,13 +1783,12 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
 
 user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
 {
-  UserVarsRange ppp= user_vars.equal_range(name);
+  if (cleanup_done)
+    return NULL;
 
-  for (UserVars::iterator iter= ppp.first;
-       iter != ppp.second; ++iter)
-  {
+  UserVars::iterator iter= user_vars.find(name);
+  if (iter != user_vars.end())
     return (*iter).second;
-  }
 
   if (not create_if_not_exists)
     return NULL;
@@ -1851,12 +1812,14 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
 void Session::setVariable(const std::string &name, const std::string &value)
 {
   user_var_entry *updateable_var= getVariable(name.c_str(), true);
-
-  updateable_var->update_hash(false,
-                              (void*)value.c_str(),
-                              static_cast<uint32_t>(value.length()), STRING_RESULT,
-                              &my_charset_bin,
-                              DERIVATION_IMPLICIT, false);
+  if (updateable_var)
+  {
+    updateable_var->update_hash(false,
+                                (void*)value.c_str(),
+                                static_cast<uint32_t>(value.length()), STRING_RESULT,
+                                &my_charset_bin,
+                                DERIVATION_IMPLICIT, false);
+  }
 }
 
 void Open_tables_state::mark_temp_tables_as_free_for_reuse()
@@ -1911,7 +1874,7 @@ void Session::close_thread_tables()
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     main_da.can_overwrite_status= true;
-    transaction_services.autocommitOrRollback(this, is_error());
+    transaction_services.autocommitOrRollback(*this, is_error());
     main_da.can_overwrite_status= false;
     transaction.stmt.reset();
   }
@@ -1994,7 +1957,7 @@ bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, 
     {
       std::string path;
       identifier.getSQLPath(path);
-      errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+      errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
                     path.c_str(), errno);
     }
 
@@ -2013,7 +1976,7 @@ bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const id
   {
     std::string path;
     identifier.getSQLPath(path);
-    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+    errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path.c_str(), error);
 
     return true;
@@ -2038,8 +2001,8 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
   {
     bool have_proto= false;
 
-    message::Table *proto= table->getShare()->getTableProto();
-    if (table->getShare()->getTableProto())
+    message::Table *proto= table->getShare()->getTableMessage();
+    if (table->getShare()->getTableMessage())
       have_proto= true;
 
     const char *answer= have_proto ? "true" : "false";

@@ -58,8 +58,6 @@ using namespace std;
 namespace drizzled
 {
 
-extern pid_t current_pid;
-
 bool is_primary_key(KeyInfo *key_info)
 {
   static const char * primary_key_name="PRIMARY";
@@ -110,7 +108,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
 void write_bin_log(Session *session, const std::string &query)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.rawStatement(session, query);
+  transaction_services.rawStatement(*session, query);
 }
 
 /*
@@ -220,7 +218,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         if (plugin::StorageEngine::dropTable(*session, identifier, local_error))
         {
           TransactionServices &transaction_services= TransactionServices::singleton();
-          transaction_services.dropTable(session, identifier, if_exists);
+          transaction_services.dropTable(*session, identifier, if_exists);
         }
         else
         {
@@ -1331,9 +1329,7 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
       return error;
     }
@@ -1353,9 +1349,7 @@ static bool locked_create_event(Session *session,
       */
       if (definition::Cache::singleton().find(identifier.getKey()))
       {
-        std::string path;
-        identifier.getSQLPath(path);
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
         return error;
       }
@@ -1394,7 +1388,7 @@ static bool locked_create_event(Session *session,
   if (table_proto.type() == message::Table::STANDARD && not internal_tmp_table)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(session, table_proto);
+    transaction_services.createTable(*session, table_proto);
   }
 
   return false;
@@ -1458,10 +1452,10 @@ bool create_table_no_lock(Session *session,
 
   /* Build a Table object to pass down to the engine, and the do the actual create. */
   if (not prepare_create_table(session, create_info, table_proto, alter_info,
-                                     internal_tmp_table,
-                                     &db_options,
-                                     &key_info_buffer, &key_count,
-                                     select_field_count))
+                               internal_tmp_table,
+                               &db_options,
+                               &key_info_buffer, &key_count,
+                               select_field_count))
   {
     boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
@@ -1511,9 +1505,7 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, identifier);
       result= true;
     }
   }
@@ -1840,7 +1832,7 @@ static bool admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
       session->getClient()->store(buff, length);
-      transaction_services.autocommitOrRollback(session, false);
+      transaction_services.autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
@@ -1964,7 +1956,7 @@ send_result:
         }
       }
     }
-    transaction_services.autocommitOrRollback(session, false);
+    transaction_services.autocommitOrRollback(*session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -1976,7 +1968,7 @@ send_result:
   return(false);
 
 err:
-  transaction_services.autocommitOrRollback(session, true);
+  transaction_services.autocommitOrRollback(*session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
@@ -2069,7 +2061,7 @@ static bool create_table_wrapper(Session &session,
   if (success && not destination_identifier.isTmp())
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(&session, new_table_message);
+    transaction_services.createTable(session, new_table_message);
   }
 
   return success;

@@ -55,6 +55,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX INT
 INSERT INTO t1 (b) VALUES(2147483647);
@@ -109,6 +110,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 INT
 INSERT INTO t1 (b) VALUES(-2147483649);
@@ -164,6 +166,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 INT
 INSERT INTO t1 (b) VALUES(2147483648);
@@ -219,6 +222,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL INT
 INSERT INTO t1 (b) VALUES(NULL);
@@ -273,6 +277,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT INT1
 INSERT INTO t1 (b) VALUES('abbazabba');
@@ -328,6 +333,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT INT2
 INSERT INTO t1 (b) VALUES('a');
@@ -383,6 +389,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MULTI_INSERT INT
 INSERT INTO t1 (b) VALUES(1),(1),(2),(3),(5);
@@ -461,6 +468,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -521,6 +529,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX BIGINT
 INSERT INTO t1 (b) VALUES(9223372036854775807);
@@ -575,6 +584,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 BIGINT
 INSERT INTO t1 (b) VALUES(-9223372036854775809);
@@ -630,6 +640,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 BIGINT
 NOTE: Bug#316221 - 2**63 incorrectly inserted into bigint
@@ -686,6 +697,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL BIGINT
 INSERT INTO t1 (b) VALUES(NULL);
@@ -740,6 +752,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT BIGINT1
 INSERT INTO t1 (b) VALUES('abbazabba');
@@ -795,6 +808,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT BIGINT2
 INSERT INTO t1 (b) VALUES('a');
@@ -850,6 +864,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -911,6 +926,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX DECIMAL simple 
 INSERT INTO t1 (b) VALUES(999.99);
@@ -965,6 +981,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 DECIMAL simple 
 INSERT INTO t1 (b) VALUES(-1000);
@@ -1020,6 +1037,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 DECIMAL simple 
 INSERT INTO t1 (b) VALUES(1000);
@@ -1075,6 +1093,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL DECIMAL simple 
 INSERT INTO t1 (b) VALUES(NULL);
@@ -1129,6 +1148,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DECIMAL simple 
 INSERT INTO t1 (b) VALUES('abbazabba');
@@ -1184,6 +1204,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DECIMAL simple2 
 INSERT INTO t1 (b) VALUES('a');
@@ -1239,6 +1260,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing misc DECIMAL simple
 INSERT INTO t1 (b) VALUES(100);
@@ -1293,6 +1315,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing misc DECIMAL simple2
 INSERT INTO t1 (b) VALUES(.0898);
@@ -1348,6 +1371,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing misc DECIMAL simple3
 INSERT INTO t1 (b) VALUES(.1);
@@ -1402,6 +1426,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1463,6 +1488,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX FLOAT simple
 INSERT INTO t1 (b) VALUES(999.99);
@@ -1517,6 +1543,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 FLOAT simple
 INSERT INTO t1 (b) VALUES(-1000);
@@ -1572,6 +1599,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 FLOAT simple
 INSERT INTO t1 (b) VALUES(1000);
@@ -1627,6 +1655,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL FLOAT simple
 INSERT INTO t1 (b) VALUES(NULL);
@@ -1681,6 +1710,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT FLOAT simple
 INSERT INTO t1 (b) VALUES('abbazabba');
@@ -1736,6 +1766,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1797,6 +1828,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX CHAR simple
 INSERT INTO t1 (b) VALUES("zzzzzzzzzz");
@@ -1851,6 +1883,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 CHAR simple
 INSERT INTO t1 (b) VALUES('zzzzzzzzzzz');
@@ -1906,6 +1939,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL CHAR simple
 INSERT INTO t1 (b) VALUES(NULL);
@@ -1960,6 +1994,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NUMERIC INPUT CHAR simple
 INSERT INTO t1 (b) VALUES(1000000);
@@ -2014,6 +2049,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -2075,6 +2111,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX ENUM simple
 INSERT INTO t1 (b) VALUES(5);
@@ -2129,6 +2166,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT ENUM simple
 INSERT INTO t1 (b) VALUES(6);
@@ -2184,6 +2222,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL ENUM simple
 INSERT INTO t1 (b) VALUES(NULL);
@@ -2238,6 +2277,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -2299,6 +2339,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX DATE
 INSERT INTO t1 (b) VALUES('9999-12-31');
@@ -2353,10 +2394,11 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 DATE
 INSERT INTO t1 (b) VALUES('0000-12-31');
-ERROR HY000: Received an invalid datetime value '0000-12-31'.
+ERROR HY000: Received an invalid DATE value '0000-12-31'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2408,10 +2450,11 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 DATE
 INSERT INTO t1 (b) VALUES('10000-01-01');
-ERROR HY000: Received an invalid datetime value '10000-01-01'.
+ERROR HY000: Received an invalid DATE value '10000-01-01'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2463,6 +2506,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input format DATE1
 INSERT INTO t1 (b) VALUES('20000101');
@@ -2517,6 +2561,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input formate DATE2
 INSERT INTO t1 (b) VALUES('990601');
@@ -2571,6 +2616,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL DATE
 INSERT INTO t1 (b) VALUES(NULL);
@@ -2625,10 +2671,11 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATE1
 INSERT INTO t1 (b) VALUES('abbazabba');
-ERROR HY000: Received an invalid datetime value 'abbazabba'.
+ERROR HY000: Received an invalid DATE value 'abbazabba'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2680,10 +2727,11 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATE2
 INSERT INTO t1 (b) VALUES('a');
-ERROR HY000: Received an invalid datetime value 'a'.
+ERROR HY000: Received an invalid DATE value 'a'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -2735,6 +2783,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -2796,6 +2845,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX DATETIME
 INSERT INTO t1 (b) VALUES('9999-12-31 23:59:59');
@@ -2850,6 +2900,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 DATETIME
 INSERT INTO t1 (b) VALUES('0000-01-01');
@@ -2905,6 +2956,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 DATETIME
 INSERT INTO t1 (b) VALUES('10000-01-01');
@@ -2960,6 +3012,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input format DATETIME1
 INSERT INTO t1 (b) VALUES(20000101121559);
@@ -3014,6 +3067,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input formate DATETIME2
 INSERT INTO t1 (b) VALUES('19990601121547');
@@ -3068,6 +3122,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL DATETIME
 INSERT INTO t1 (b) VALUES(NULL);
@@ -3122,6 +3177,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATETIME1
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
@@ -3177,6 +3233,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATETIME2
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
@@ -3232,6 +3289,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATETIME3
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:70');
@@ -3287,6 +3345,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -3348,6 +3407,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX TIMESTAMP
 INSERT INTO t1 (b) VALUES('2038-01-19 03:14:07');
@@ -3402,6 +3462,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 TIMESTAMP
 INSERT INTO t1 (b) VALUES('1969-12-31 23:59:59');
@@ -3457,6 +3518,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 TIMESTAMP
 INSERT INTO t1 (b) VALUES('2038-01-19 03:14:08');
@@ -3512,6 +3574,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input format TIMESTAMP1
 INSERT INTO t1 (b) VALUES(20000101121559);
@@ -3566,6 +3629,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input formate TIMESTAMP2
 INSERT INTO t1 (b) VALUES(19990601121547);
@@ -3620,6 +3684,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL TIMESTAMP
 INSERT INTO t1 (b) VALUES(NULL);
@@ -3674,6 +3739,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT TIMESTAMP1
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
@@ -3729,6 +3795,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT TIMESTAMP2
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
@@ -3784,6 +3851,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT TIMESTAMP3
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:65');
@@ -3839,6 +3907,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -3900,6 +3969,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing BLOB simple2
 INSERT INTO t1 (b) VALUES("this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string");
@@ -3954,6 +4024,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing NULL BLOB simple
 INSERT INTO t1 (b) VALUES(NULL);
@@ -4008,6 +4079,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing INPUT BLOB simple1
 INSERT INTO t1 (b) VALUES(100);
@@ -4062,6 +4134,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing INPUT BLOB simple2
 INSERT INTO t1 (b) VALUES("");
@@ -4116,6 +4189,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing INPUT BLOB simple3
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:70');
@@ -4170,6 +4244,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -4230,6 +4305,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
 #Bug#594876 - transaction log not diffentiating NULL values and empty string for char columns
@@ -4288,6 +4364,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 INSERT INTO t1 VALUES (2,"");
 We check how the empty string was recorded in the log 
 Check transaction_log_entries
@@ -4341,6 +4418,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
 **** BEGIN LARGE DATA TYPE TESTS ****
@@ -4399,6 +4477,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Testing MAX DECIMAL + 1
 INSERT INTO t1 (b) VALUES (999999999999999999999999999999999999999999999999999999999999999990);
@@ -4454,6 +4533,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t1;
 a	b
@@ -4515,6 +4595,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999.999999999999999999999999999999);
 Check transaction_log_entries
@@ -4568,6 +4649,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 Too long value
 INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999.9999999999999999999999999999991);
@@ -4623,6 +4705,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t1;
 a	b
@@ -4685,6 +4768,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 INSERT INTO t1 (b) VALUES ("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
 Check transaction_log_entries
@@ -4738,6 +4822,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 INSERT INTO t1 (b) VALUES ("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
 Check transaction_log_entries
@@ -4815,6 +4900,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;

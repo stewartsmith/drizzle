@@ -35,7 +35,7 @@ namespace drizzled
 
 bool statement::AlterSchema::execute()
 {
-  LEX_STRING *db= &session->lex->name;
+  LEX_STRING *db= &getSession()->lex->name;
   message::schema::shared_ptr old_definition;
 
   if (not validateSchemaOptions())
@@ -43,7 +43,7 @@ bool statement::AlterSchema::execute()
 
   identifier::Schema schema_identifier(string(db->str, db->length));
 
-  if (not check_db_name(session, schema_identifier))
+  if (not check_db_name(getSession(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
@@ -57,7 +57,7 @@ bool statement::AlterSchema::execute()
     return true;
   }
 
-  if (session->inTransaction())
+  if (getSession()->inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -83,7 +83,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= alter_db(session, schema_message, old_definition);
+  bool res= alter_db(getSession(), schema_message, old_definition);
 
   return not res;
 }

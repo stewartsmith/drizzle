@@ -26,6 +26,11 @@
 #include "drizzled/message/catalog.h"
 
 namespace drizzled {
+namespace plugin {
+
+class Catalog;
+
+} // namespace plugin
 namespace catalog {
 
 class Engine
@@ -34,6 +39,9 @@ public:
   typedef boost::shared_ptr<Engine> shared_ptr;
   typedef std::vector<shared_ptr> vector;
 
+protected:
+  friend class drizzled::plugin::Catalog;
+
   Engine()
   { };
 
@@ -41,17 +49,14 @@ public:
   { };
 
   // DDL
-  virtual bool create(const identifier::Catalog &, message::catalog::shared_ptr &)= 0;
-  virtual bool drop(const identifier::Catalog &)= 0;
+  virtual bool create(identifier::Catalog::const_reference , message::catalog::shared_ptr &)= 0;
+  virtual bool drop(identifier::Catalog::const_reference)= 0;
 
   // Get Meta information
-  virtual bool exist(const identifier::Catalog &identifier)= 0;
+  virtual bool exist(identifier::Catalog::const_reference identifier)= 0;
   virtual void getIdentifiers(identifier::Catalog::vector &identifiers)= 0;
-  virtual bool getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message)= 0;
+  virtual message::catalog::shared_ptr getMessage(identifier::Catalog::const_reference)= 0;
   virtual void getMessages(message::catalog::vector &messages)= 0;
-
-  // Retrieve an instance to work with
-  virtual bool getInstance(const identifier::Catalog &identifier, catalog::Instance::shared_ptr &instance)= 0;
 };
 
 } /* namespace catalog */

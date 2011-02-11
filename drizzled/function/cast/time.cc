@@ -27,14 +27,11 @@ namespace drizzled {
 namespace function {
 namespace cast {
 
-bool Time::get_time(type::Time *ltime)
+bool Time::get_time(type::Time &ltime)
 {
   bool res= get_arg0_time(ltime);
 
-  if (ltime->time_type == type::DRIZZLE_TIMESTAMP_DATETIME)
-    ltime->year= ltime->month= ltime->day= 0;
-
-  ltime->time_type= type::DRIZZLE_TIMESTAMP_TIME;
+  ltime.truncate(type::DRIZZLE_TIMESTAMP_TIME);
 
   return res;
 }
@@ -44,7 +41,7 @@ String *Time::val_str(String *str)
   assert(fixed == 1);
   type::Time ltime;
 
-  if (not get_arg0_time(&ltime))
+  if (not get_arg0_time(ltime))
   {
     null_value= 0;
     ltime.convert(*str, type::DRIZZLE_TIMESTAMP_TIME);
@@ -61,7 +58,7 @@ int64_t Time::val_int()
   assert(fixed == 1);
   type::Time ltime;
 
-  if (get_time(&ltime))
+  if (get_time(ltime))
     return 0;
 
   return (ltime.neg ? -1 : 1) * (int64_t)((ltime.hour)*10000 + ltime.minute*100 + ltime.second);

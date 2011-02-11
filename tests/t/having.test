@@ -352,7 +352,7 @@ select count(s1) from t1 group by s1 having count(1+1)=2;
 
 select count(s1) from t1 group by s1 having s1*0=0;
 
--- error 1052
+--error ER_NON_UNIQ_ERROR
 select * from t1 a, t1 b group by a.s1 having s1 is null;
 # ANSI requires: 0 rows
 # MySQL returns:

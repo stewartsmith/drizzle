@@ -29,15 +29,16 @@ namespace drizzled
 
 bool statement::Analyze::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *all_tables= getSession()->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &session->lex->select_lex;
-  bool res= analyze_table(session, first_table, &check_opt);
+  Select_Lex *select_lex= &getSession()->lex->select_lex;
+  bool res= analyze_table(getSession(), first_table, &check_opt);
   /* ! we write after unlocking the table */
-  write_bin_log(session, *session->getQueryString());
+  write_bin_log(getSession(), *getSession()->getQueryString());
   select_lex->table_list.first= (unsigned char*) first_table;
-  session->lex->query_tables= all_tables;
+  getSession()->lex->query_tables= all_tables;
+
   return res;
 }
 

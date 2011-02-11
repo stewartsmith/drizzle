@@ -165,7 +165,7 @@ Item_field::Item_field(Name_resolution_context *context_arg,
    have_privileges(0),
    any_privileges(0)
 {
-  Select_Lex *select= current_session->lex->current_select;
+  Select_Lex *select= getSession().getLex()->current_select;
   collation.set(DERIVATION_IMPLICIT);
 
   if (select && select->parsing_place != IN_HAVING)
@@ -262,32 +262,32 @@ String *Item_field::str_result(String *str)
   return result_field->val_str(str,&str_value);
 }
 
-bool Item_field::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Item_field::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   if ((null_value=field->is_null()) || field->get_date(ltime,fuzzydate))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
 }
 
-bool Item_field::get_date_result(type::Time *ltime,uint32_t fuzzydate)
+bool Item_field::get_date_result(type::Time &ltime,uint32_t fuzzydate)
 {
   if ((null_value=result_field->is_null()) ||
       result_field->get_date(ltime,fuzzydate))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
 }
 
-bool Item_field::get_time(type::Time *ltime)
+bool Item_field::get_time(type::Time &ltime)
 {
   if ((null_value=field->is_null()) || field->get_time(ltime))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
@@ -332,7 +332,7 @@ bool Item_field::val_bool_result()
       type::Decimal decimal_value;
       type::Decimal *val= result_field->val_decimal(&decimal_value);
       if (val)
-        return not val->is_zero();
+        return not val->isZero();
       return 0;
     }
 
@@ -640,7 +640,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     if (upward_lookup)
     {
       // We can't say exactly what absent table or field
-      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where);
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where());
     }
     else
     {
@@ -824,7 +824,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
             {
               /* The column to which we link isn't valid. */
               my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name,
-                       current_session->where);
+                       session->where());
               return(1);
             }
 

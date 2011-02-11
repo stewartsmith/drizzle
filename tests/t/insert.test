@@ -51,9 +51,9 @@ drop table t1;
 #
 
 create table t1 (id int NOT NULL DEFAULT 8);
--- error 1048
+--error ER_BAD_NULL_ERROR
 insert into t1 values(NULL);
--- error 1048
+--error ER_BAD_NULL_ERROR
 insert into t1 values (1), (NULL), (2);
 select * from t1;
 drop table t1;

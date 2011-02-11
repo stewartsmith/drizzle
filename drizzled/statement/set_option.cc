@@ -26,15 +26,28 @@
 namespace drizzled
 {
 
+namespace statement
+{
+SetOption::SetOption(Session *in_session) :
+  Statement(in_session),
+  one_shot_set(false)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_SET_OPTION;
+    init_select(getSession()->getLex());
+    getSession()->getLex()->option_type= OPT_SESSION;
+    getSession()->getLex()->var_list.empty();
+  }
+} // namespace statement
+
 bool statement::SetOption::execute()
 {
-  TableList *all_tables= session->lex->query_tables;
+  TableList *all_tables= getSession()->lex->query_tables;
 
-  if (session->openTablesLock(all_tables))
+  if (getSession()->openTablesLock(all_tables))
   {
     return true;
   }
-  bool res= sql_set_variables(session, session->lex->var_list);
+  bool res= sql_set_variables(getSession(), getSession()->lex->var_list);
   if (res)
   {
     /*
@@ -42,14 +55,14 @@ bool statement::SetOption::execute()
      * Send something semi-generic here since we don't know which
      * assignment in the list caused the error.
      */
-    if (! session->is_error())
+    if (! getSession()->is_error())
     {
       my_error(ER_WRONG_ARGUMENTS, MYF(0), "SET");
     }
   }
   else
   {
-    session->my_ok();
+    getSession()->my_ok();
   }
 
   return res;

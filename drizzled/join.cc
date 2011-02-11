@@ -59,15 +59,15 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 
+#include <drizzled/debug.h>
+
 #include <algorithm>
 
 using namespace std;
 
 namespace drizzled
 {
-
 extern plugin::StorageEngine *heap_engine;
-extern std::bitset<12> test_flags;
 
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(Join *main_join, Join *curr_join);
@@ -212,7 +212,7 @@ int Join::prepare(Item ***rref_pointer_array,
   if (having)
   {
     nesting_map save_allow_sum_func= session->lex->allow_sum_func;
-    session->where="having clause";
+    session->setWhere("having clause");
     session->lex->allow_sum_func|= 1 << select_lex_arg->nest_level;
     select_lex->having_fix_field= 1;
     bool having_fix_rc= (!having->fixed &&
@@ -984,9 +984,8 @@ int Join::optimize()
 
     tmp_table_param.hidden_field_count= (all_fields.elements -
            fields_list.elements);
-    Order *tmp_group= ((!simple_group &&
-                           ! (test_flags.test(TEST_NO_KEY_GROUP))) ? group_list :
-                                                                     (Order*) 0);
+    Order *tmp_group= (((not simple_group) or not (getDebug().test(debug::NO_KEY_GROUP))) ? group_list : (Order*) 0);
+
     /*
       Pushing LIMIT to the temporary table creation is not applicable
       when there is ORDER BY or GROUP BY or there is no GROUP BY, but
@@ -4506,7 +4505,7 @@ static void make_outerjoin_info(Join *join)
       /* Ignore sj-nests: */
       if (!embedding->on_expr)
         continue;
-      nested_join_st *nested_join= embedding->getNestedJoin();
+      NestedJoin *nested_join= embedding->getNestedJoin();
       if (!nested_join->counter_)
       {
         /*
@@ -4622,6 +4621,12 @@ static bool make_join_select(Join *join,
          */
         if (i != join->const_tables && join->tables > join->const_tables + 1)
           join->full_join= 1;
+      }
+
+      if (join->full_join and not session->lex->current_select->is_cross and not cond)
+      {
+        my_error(ER_CARTESIAN_JOIN_ATTEMPTED, MYF(0));
+        return 1;
       }
 
       tmp= NULL;
@@ -5246,7 +5251,7 @@ static int return_zero_rows(Join *join,
 static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds, bool top)
 {
   TableList *table;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
   TableList *prev_table= 0;
   List_iterator<TableList> li(*join_list);
 
@@ -5584,7 +5589,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
       s->embedding_map.reset();
       do
       {
-        nested_join_st *nested_join= embedding->getNestedJoin();
+        NestedJoin *nested_join= embedding->getNestedJoin();
         s->embedding_map|= nested_join->nj_map;
         s->dependent|= embedding->getDepTables();
         embedding= embedding->getEmbedding();
@@ -5668,7 +5673,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     s= p_pos->getJoinTable();
     s->type= AM_SYSTEM;
     join->const_table_map|=s->table->map;
-    if ((tmp= join_read_const_table(s, p_pos)))
+    if ((tmp= s->joinReadConstTable(p_pos)))
     {
       if (tmp > 0)
         return 1;			// Fatal error
@@ -5742,7 +5747,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           join->const_table_map|=table->map;
           set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
           partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
-          if ((tmp= join_read_const_table(s, partial_pos)))
+          if ((tmp= s->joinReadConstTable(partial_pos)))
           {
             if (tmp > 0)
               return 1;			// Fatal error
@@ -5794,7 +5799,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
                 if (create_ref_for_key(join, s, start_keyuse, found_const_table_map))
                   return 1;
                 partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
-                if ((tmp=join_read_const_table(s, partial_pos)))
+                if ((tmp=s->joinReadConstTable(partial_pos)))
                 {
                   if (tmp > 0)
                     return 1;			// Fatal error
@@ -5878,6 +5883,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
       s->quick=select->quick;
       s->needed_reg=select->needed_reg;
       select->quick=0;
+
       if (records == 0 && s->table->reginfo.impossible_range)
       {
         /*
@@ -5959,7 +5965,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
   TableList *table;
   while ((table= li++))
   {
-    nested_join_st *nested_join;
+    NestedJoin *nested_join;
     if ((nested_join= table->getNestedJoin()))
     {
       /*
@@ -6016,9 +6022,9 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 }
 
 /**
-  Set nested_join_st::counter=0 in all nested joins in passed list.
+  Set NestedJoin::counter=0 in all nested joins in passed list.
 
-    Recursively set nested_join_st::counter=0 for all nested joins contained in
+    Recursively set NestedJoin::counter=0 for all nested joins contained in
     the passed join_list.
 
   @param join_list  List of nested joins to process. It may also contain base
@@ -6030,7 +6036,7 @@ static void reset_nj_counters(List<TableList> *join_list)
   TableList *table;
   while ((table= li++))
   {
-    nested_join_st *nested_join;
+    NestedJoin *nested_join;
     if ((nested_join= table->getNestedJoin()))
     {
       nested_join->counter_= 0;
@@ -6116,7 +6122,7 @@ static void restore_prev_nj_state(JoinTable *last)
   Join *join= last->join;
   for (;last_emb != NULL; last_emb= last_emb->getEmbedding())
   {
-    nested_join_st *nest= last_emb->getNestedJoin();
+    NestedJoin *nest= last_emb->getNestedJoin();
     
     bool was_fully_covered= nest->is_fully_covered();
     

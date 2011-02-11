@@ -73,7 +73,8 @@ void get_date_from_daynr(long daynr,
   NOTE
     See description of str_to_datetime() for more information.
 */
-type::timestamp_t str_to_datetime_with_warn(const char *str, 
+type::timestamp_t str_to_datetime_with_warn(Session *session,
+                                            const char *str, 
                                             uint32_t length,
                                             type::Time *l_time, 
                                             uint32_t flags);
@@ -85,7 +86,7 @@ type::timestamp_t str_to_datetime_with_warn(const char *str,
   NOTE
     See str_to_time() for more info.
 */
-bool str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time);
+bool str_to_time_with_warn(Session *session, const char *str, uint32_t length, type::Time *l_time);
 
 void make_truncated_value_warning(Session *session, 
                                   DRIZZLE_ERROR::enum_warning_level level,

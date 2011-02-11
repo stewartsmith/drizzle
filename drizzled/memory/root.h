@@ -18,12 +18,16 @@
  * @brief Memory root declarations
  */
 
+
+
 #ifndef DRIZZLED_MEMORY_ROOT_H
 #define DRIZZLED_MEMORY_ROOT_H
 
 #include <cstddef>
 
 #include <drizzled/definitions.h>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -60,7 +64,7 @@ static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::Use
 
 
 
-class Root
+class DRIZZLED_API Root
 {
 public:
 

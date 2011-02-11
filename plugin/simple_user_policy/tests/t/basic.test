@@ -9,7 +9,7 @@ create table t1 (kill_id int);
 insert into t1 values(connection_id());
 
 # Test that we get a normal don't exist error for things that don't exist
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 SELECT * from user1.dont_exist;
 
 # Connect as user1 - should only see information_schema, user1 and
@@ -64,9 +64,9 @@ connection should_succeed;
 --disable_query_log
 --disable_result_log
 # One of the following statements should fail
---error 0,5,20,23
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
 select 1;
---error 0,5,20,23
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
 select 1;
 --enable_query_log
 --enable_result_log
@@ -103,9 +103,9 @@ connection should_succeed;
 --disable_query_log
 --disable_result_log
 # One of the following statements should fail
---error 0,5,20,23
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
 select 1;
---error 0,5,20,23
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
 select 1;
 --enable_query_log
 --enable_result_log

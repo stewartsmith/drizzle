@@ -85,6 +85,7 @@ struct st_drizzleclient_options {
 #define CLIENT_PROTOCOL_MYSQL41 512     /* New 4.1 protocol */
 #define CLIENT_SSL              2048    /* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
+#define CLIENT_TRANSACTIONS     8192    /* Support transactions */
 #define CLIENT_RESERVED         16384   /* Old flag for 4.1 protocol  */
 #define CLIENT_SECURE_CONNECTION 32768  /* New 4.1 authentication */
 #define CLIENT_MULTI_STATEMENTS (1UL << 16) /* Enable/disable multi-stmt support */
@@ -106,6 +107,7 @@ struct st_drizzleclient_options {
                            CLIENT_IGNORE_SPACE | \
                            CLIENT_SSL | \
                            CLIENT_IGNORE_SIGPIPE | \
+                           CLIENT_TRANSACTIONS | \
                            CLIENT_RESERVED | \
                            CLIENT_SECURE_CONNECTION | \
                            CLIENT_MULTI_STATEMENTS | \

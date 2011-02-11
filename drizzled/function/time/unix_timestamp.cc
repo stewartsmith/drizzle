@@ -43,7 +43,7 @@ int64_t Item_func_unix_timestamp::val_int()
       return ((field::Epoch::pointer) field)->get_timestamp(&null_value);
   }
 
-  if (get_arg0_date(&ltime, 0))
+  if (get_arg0_date(ltime, 0))
   {
     /*
       We have to set null_value again because get_arg0_date will also set it

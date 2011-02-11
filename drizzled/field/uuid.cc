@@ -158,7 +158,7 @@ void Uuid::sort_string(unsigned char *to, uint32_t length_arg)
   memcpy(to, ptr, length_arg);
 }
 
-bool Uuid::get_date(type::Time *ltime, uint32_t )
+bool Uuid::get_date(type::Time &ltime, uint32_t )
 {
   type::Uuid uu;
 
@@ -172,16 +172,16 @@ bool Uuid::get_date(type::Time *ltime, uint32_t )
 
     uu.time(ret_tv);
 
-    ltime->store(ret_tv);
+    ltime.store(ret_tv);
 
     return false;
   }
-  ltime->reset();
+  ltime.reset();
 
   return true;
 }
 
-bool Uuid::get_time(type::Time *ltime)
+bool Uuid::get_time(type::Time &ltime)
 {
   return get_date(ltime, 0);
 }

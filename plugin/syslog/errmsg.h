@@ -42,7 +42,7 @@ public:
   explicit Syslog(const std::string& facility,
                   const std::string& priority);
 
-  virtual bool errmsg(drizzled::Session *, int, const char *format, va_list ap);
+  virtual bool errmsg(drizzled::error::level_t, const char *format, va_list ap);
 };
 
 } /* namespace error_message */

@@ -22,10 +22,12 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
-const std::string& version();
+DRIZZLED_API const std::string& version();
 
 } /* namespace drizzled */
 

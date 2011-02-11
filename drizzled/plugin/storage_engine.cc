@@ -378,7 +378,7 @@ int StorageEngine::getTableDefinition(Session& session,
     Table *table= session.find_temporary_table(identifier);
     if (table)
     {
-      table_message.reset(new message::Table(*table->getShare()->getTableProto()));
+      table_message.reset(new message::Table(*table->getShare()->getTableMessage()));
       return EEXIST;
     }
   }
@@ -418,7 +418,7 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
     if (table)
     {
       error= EE_OK;
-      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableProto()));
+      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableMessage()));
     }
   }
 
@@ -686,9 +686,6 @@ public:
 
 void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &schema_identifier, identifier::Table::vector &set_of_identifiers)
 {
-  static identifier::Schema INFORMATION_SCHEMA_IDENTIFIER("information_schema");
-  static identifier::Schema DATA_DICTIONARY_IDENTIFIER("data_dictionary");
-
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
@@ -982,9 +979,11 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
     textno=ER_TABLE_DEF_CHANGED;
     break;
   case HA_ERR_NO_SUCH_TABLE:
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table.getShare()->getSchemaName(),
-             table.getShare()->getTableName());
-    return;
+    {
+      identifier::Table identifier(table.getShare()->getSchemaName(), table.getShare()->getTableName());
+      my_error(ER_TABLE_UNKNOWN, identifier);
+      return;
+    }
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
     break;

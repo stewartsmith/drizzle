@@ -271,7 +271,7 @@ static int ib_err_t_to_drizzle_error(Session* session, ib_err_t err)
   case DB_DEADLOCK:
     /* HailDB will roll back a transaction itself due to DB_DEADLOCK.
        This means we have to tell Drizzle about it */
-    mark_transaction_to_rollback(session, true);
+    session->markTransactionForRollback(true);
     return HA_ERR_LOCK_DEADLOCK;
 
   case DB_LOCK_WAIT_TIMEOUT:
@@ -353,7 +353,7 @@ int HailDBEngine::doStartTransaction(Session *session,
   (void)options;
 
   transaction= get_trx(session);
-  isolation_level= tx_isolation_to_ib_trx_level((enum_tx_isolation)session_tx_isolation(session));
+  isolation_level= tx_isolation_to_ib_trx_level(session->getTxIsolation());
   *transaction= ib_trx_begin(isolation_level);
 
   return *transaction == NULL;
@@ -535,8 +535,8 @@ uint64_t HailDBCursor::getInitialAutoIncrementValue()
   doEndIndexScan();
   (void) extra(HA_EXTRA_NO_KEYREAD);
 
-  if (getTable()->getShare()->getTableProto()->options().auto_increment_value() > nr)
-    nr= getTable()->getShare()->getTableProto()->options().auto_increment_value();
+  if (getTable()->getShare()->getTableMessage()->options().auto_increment_value() > nr)
+    nr= getTable()->getShare()->getTableMessage()->options().auto_increment_value();
 
   return nr;
 }
@@ -649,7 +649,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
 
   /* the below is adapted from ha_innodb.cc */
 
-  const uint32_t sql_command = session_sql_command(session);
+  const uint32_t sql_command = session->getSqlCommand();
 
   if (sql_command == SQLCOM_DROP_TABLE) {
 
@@ -680,7 +680,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
     unexpected if an obsolete consistent read view would be
     used. */
 
-    enum_tx_isolation isolation_level= session_tx_isolation(session);
+    enum_tx_isolation isolation_level= session->getTxIsolation();
 
     if (isolation_level != ISO_SERIALIZABLE
         && (lock_type == TL_READ || lock_type == TL_READ_NO_INSERT)
@@ -723,7 +723,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
          && lock_type <= TL_WRITE)
-        && !session_tablespace_op(session)
+        && ! session->doing_tablespace_operation()
         && sql_command != SQLCOM_TRUNCATE
         && sql_command != SQLCOM_CREATE_TABLE) {
 
@@ -2123,7 +2123,7 @@ int HailDBCursor::delete_all_rows(void)
      so only support TRUNCATE and not DELETE FROM t;
      (this is what ha_innodb does)
   */
-  if (session_sql_command(getTable()->in_use) != SQLCOM_TRUNCATE)
+  if (getTable()->in_use->getSqlCommand() != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
 
   ib_id_t id;
@@ -3144,10 +3144,14 @@ extern "C" int haildb_errmsg_callback(ib_msg_stream_t, const char *fmt, ...)
   bool r= false;
   va_list args;
   va_start(args, fmt);
-  if (! shutdown_in_progress)
-    r= plugin::ErrorMessage::vprintf(NULL, ERRMSG_LVL_WARN, fmt, args);
+  if (not shutdown_in_progress)
+  {
+    r= plugin::ErrorMessage::vprintf(error::WARN, fmt, args);
+  }
   else
+  {
     vfprintf(stderr, fmt, args);
+  }
   va_end(args);
 
   return (! r==true);
@@ -3532,7 +3536,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Transactional Storage Engine using the HailDB Library",
   PLUGIN_LICENSE_GPL,
   haildb_init,     /* Plugin Init */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

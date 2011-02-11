@@ -73,7 +73,7 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   error = que_eval_sql(info,
                        "PROCEDURE CREATE_SYS_REPLICATION_LOG_PROC () IS\n"
                        "BEGIN\n"
-                       "CREATE TABLE SYS_REPLICATION_LOG(ID BINARY(8), MESSAGE BLOB);\n"
+                       "CREATE TABLE SYS_REPLICATION_LOG(ID BINARY(8), SEGID BINARY(4), MESSAGE BLOB);\n"
                        "CREATE UNIQUE CLUSTERED INDEX ID_IND ON SYS_REPLICATION_LOG (ID);\n"
                        "END;\n"
                        , FALSE, trx);
@@ -108,7 +108,7 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
 extern dtuple_t* row_get_prebuilt_insert_row(row_prebuilt_t*	prebuilt);
 
 ulint insert_replication_message(const char *message, size_t size, 
-                                 trx_t *trx, uint64_t trx_id)
+                                 trx_t *trx, uint64_t trx_id, uint32_t seg_id)
 {
   ulint error;
   row_prebuilt_t*	prebuilt;	/* For reading rows */
@@ -144,6 +144,9 @@ ulint insert_replication_message(const char *message, size_t size,
   dfield_set_data(dfield, &trx_id, 8);
 
   dfield = dtuple_get_nth_field(dtuple, 1);
+  dfield_set_data(dfield, &seg_id, 4);
+
+  dfield = dtuple_get_nth_field(dtuple, 2);
   dfield_set_data(dfield, message, size);
 
   ins_node_t*	node		= prebuilt->ins_node;
@@ -224,8 +227,12 @@ UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_
     field = rec_get_nth_field_old(rec, 0, &len);
     ret.id= *(uint64_t *)field;
 
-    // Handler message
+    // Store segment id
     field = rec_get_nth_field_old(rec, 3, &len);
+    ret.seg_id= *(uint32_t *)field;
+
+    // Handler message
+    field = rec_get_nth_field_old(rec, 4, &len);
     ret.message= (char *)field;
     ret.message_length= len;
 
