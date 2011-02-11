@@ -32,6 +32,7 @@
 #ifndef DRIZZLED_SQL_RESULT_SET_H
 #define DRIZZLED_SQL_RESULT_SET_H
 
+#include <drizzled/visibility.h>
 #include <drizzled/sql/exception.h>
 #include <drizzled/sql/result_set_meta_data.h>
 #include <cassert>
@@ -43,7 +44,7 @@ namespace plugin { class Client; }
 
 namespace sql {
 
-class ResultSet
+class DRIZZLED_API ResultSet
 {
   // First version of API stores everything as strings
   class Column {

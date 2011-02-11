@@ -24,14 +24,15 @@
 
 #include "drizzled/identifier.h"
 #include "drizzled/catalog/instance.h"
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
 namespace catalog
 {
 
-identifier::Catalog::const_reference local_identifier();
-Instance::shared_ptr local();
+DRIZZLED_API identifier::Catalog::const_reference local_identifier();
+DRIZZLED_API Instance::shared_ptr local();
 
 } /* namespace catalog */
 } /* namespace drizzled */

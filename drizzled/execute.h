@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_EXECUTE_H
 #define DRIZZLED_EXECUTE_H
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -29,7 +31,7 @@ namespace sql
   class ResultSet;
 }
 
-class Execute
+class DRIZZLED_API Execute
 {
   bool wait;
   Session &_session;
