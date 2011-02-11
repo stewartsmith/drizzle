@@ -40,7 +40,7 @@ DTRACEFILES= \
 	     drizzled/statement/insert.o \
 	     drizzled/statement/insert_select.o
 
-nobase_dist_include_HEADERS+= \
+nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/abort_exception.h \
 			      drizzled/alter_column.h \
 			      drizzled/alter_drop.h \

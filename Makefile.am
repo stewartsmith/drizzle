@@ -23,6 +23,9 @@ noinst_HEADERS =
 nobase_nodist_include_HEADERS =
 nobase_dist_include_HEADERS =
 dist_include_HEADERS =
+nobase_nodist_pkginclude_HEADERS =
+nobase_dist_pkginclude_HEADERS =
+dist_pkginclude_HEADERS =
 sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
@@ -94,7 +97,7 @@ indent:
         done
 
 BUILT_SOURCES+= drizzled/configmake.h
-nobase_nodist_include_HEADERS+= drizzled/configmake.h
+nobase_nodist_pkginclude_HEADERS+= drizzled/configmake.h
 drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	@echo "Making $@"
 	@rm -f $@-t $@
