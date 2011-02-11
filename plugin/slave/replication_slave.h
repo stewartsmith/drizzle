@@ -22,9 +22,9 @@
 #define PLUGIN_SLAVE_REPLICATION_SLAVE_H
 
 #include "plugin/slave/queue_consumer.h"
+#include "plugin/slave/queue_producer.h"
 #include "drizzled/plugin/daemon.h"
 #include <boost/thread.hpp>
-#include <cstdio>
 
 namespace slave
 {
@@ -37,25 +37,28 @@ public:
   {
     _consumer.setSleepInterval(5);
     _consumer_thread= boost::thread(&QueueConsumer::run, &_consumer);
-    //_producer_thread= boost::thread(&QueueProducer::run, &_producer);
+
+    _producer.setSleepInterval(5);
+    _producer.setMasterHost("kodiak");
+    _producer.setMasterUser("slave");
+    _producer_thread= boost::thread(&QueueProducer::run, &_producer);
   }
   
   ~ReplicationSlave()
   {
-    printf("Slave services shutting down\n");
     _consumer_thread.interrupt();
-    //_producer_thread.interrupt();
+    _producer_thread.interrupt();
   }
 
 private:
   QueueConsumer _consumer;
-  //QueueProducer _producer;
+  QueueProducer _producer;
 
-  /** Thread that will process the work queue */
+  /** Applier thread that will drain the work queue */
   boost::thread _consumer_thread;
 
-  /** Thread that will populate the work queue */
-  //boost::thread _producer_thread;
+  /** I/O thread that will populate the work queue */
+  boost::thread _producer_thread;
 };
   
 } /* namespace slave */

@@ -43,9 +43,9 @@ public:
     _check_interval(5)
   { }
 
-  virtual bool init();
-  virtual bool process();
-  virtual void shutdown();
+  bool init();
+  bool process();
+  void shutdown();
 
   void setSleepInterval(uint32_t seconds)
   {

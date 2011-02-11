@@ -28,6 +28,7 @@
 #include "drizzled/execute.h"
 #include "drizzled/internal/my_pthread.h"
 #include "drizzled/sql/result_set.h"
+#include "drizzled/errmsg_print.h"
 #include <string>
 #include <vector>
 #include <boost/thread.hpp>
@@ -165,7 +166,7 @@ bool QueueConsumer::createApplierSchemaAndTables()
 
   sql.clear();
   sql.push_back("COMMIT");
-  sql.push_back("CREATE TABLE IF NOT EXISTS replication.applier_queue"
+  sql.push_back("CREATE TABLE IF NOT EXISTS replication.queue"
                 " (trx_id BIGINT NOT NULL, seg_id INT NOT NULL,"
                 " commit_order INT, msg BLOB, PRIMARY KEY(trx_id, seg_id))");
 
@@ -181,7 +182,7 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
                               uint64_t trx_id,
                               uint32_t segment_id)
 {
-  string sql("SELECT msg, commit_order FROM replication.applier_queue"
+  string sql("SELECT msg, commit_order FROM replication.queue"
              " WHERE trx_id = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
   sql.append(" AND seg_id = ");
@@ -225,7 +226,7 @@ bool QueueConsumer::getListOfCompletedTransactions(TrxIdList &list)
 {
   Execute execute(*(_session.get()), true);
   
-  string sql("SELECT trx_id FROM replication.applier_queue"
+  string sql("SELECT trx_id FROM replication.queue"
              " WHERE commit_order IS NOT NULL ORDER BY commit_order ASC");
   
   /* ResultSet size must match column count */
@@ -444,8 +445,6 @@ bool QueueConsumer::executeSQL(vector<string> &sql)
     ++iter;
   }
 
-  //printf("execute: %s\n", combined_sql.c_str()); fflush(stdout);
-
   sql::ResultSet result_set(1);
 
   /* Execute wraps the SQL to run within a transaction */
@@ -467,11 +466,15 @@ bool QueueConsumer::executeSQL(vector<string> &sql)
     _error_message.append(") ");
     _error_message.append(exception.getErrorMessage());
 
-    std::cerr << _error_message << std::endl;
-    std::cerr << "Slave failed while executing:\n";
+    string bad_sql("Slave failed while executing:\n");
     for (size_t y= 0; y < sql.size(); y++)
-      std::cerr << sql[y] << std::endl;
+    {
+      bad_sql.append(sql[y]);
+      bad_sql.append("\n");
+    }
 
+    errmsg_printf(error::ERROR, _("%s\n%s\n"),
+                  _error_message.c_str(), bad_sql.c_str());
     return false;
   }
 
@@ -481,7 +484,7 @@ bool QueueConsumer::executeSQL(vector<string> &sql)
 
 bool QueueConsumer::deleteFromQueue(uint64_t trx_id)
 {
-  string sql("DELETE FROM replication.applier_queue WHERE trx_id = ");
+  string sql("DELETE FROM replication.queue WHERE trx_id = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
 
   vector<string> sql_vect;
