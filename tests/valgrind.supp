@@ -334,6 +334,7 @@
    fun:azwrite_row
    ...
 }
+
 {
    azwrite_row issue in libazio
    Memcheck:Value4
@@ -360,6 +361,28 @@
    fun:inflateReset2
    fun:inflateInit2_
    fun:uncompress
+   ...
+}
+
+{
+   uncompress issue in libz (32bit)
+   Memcheck:Cond
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:_ZL7azwriteP11azio_streamPvj
+   fun:azwrite_row
+   ...
+}
+
+{
+   uncompress issue in libz (32bit)
+   Memcheck:Value4
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:_ZL7azwriteP11azio_streamPvj
+   fun:azwrite_row
    ...
 }
 
@@ -412,6 +435,7 @@
    fun:_ZN8drizzled9SortParam10write_keysEPPhjPNS_8internal11st_io_cacheES5_
    ...
 }
+
 {
    Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
    Memcheck:Param
@@ -421,6 +445,27 @@
    ...
    fun:_ZN8drizzled8FileSort3runEPNS_5TableEPNS_9SortFieldEjPNS_9optimizer9SqlSelectEmbRm
    ...
+}
+
+{
+   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)  (32bit)
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN8drizzled8internalL11_my_b_writeEPNS0_11st_io_cacheEPKhj
+   ...
+   fun:_ZN8drizzled8FileSort3runEPNS_5TableEPNS_9SortFieldEjPNS_9optimizer9SqlSelectEybRy
+   ...
+}
+
+{
+   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)  (32bit)
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN8drizzled8FileSort3runEPNS_5TableEPNS_9SortFieldEjPNS_9optimizer9SqlSelectEybRy
+   ...
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEy
 }
 
 # https://bugs.launchpad.net/drizzle/+bug/582526

@@ -492,7 +492,7 @@ bool insert_query(Session *session,TableList *table_list,
 				    !session->cuted_fields))
   {
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id);
   }
   else
@@ -505,12 +505,12 @@ bool insert_query(Session *session,TableList *table_list,
       snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id, buff);
   }
-  session->status_var.inserted_row_count+= session->row_count_func;
+  session->status_var.inserted_row_count+= session->rowCount();
   session->setAbortOnWarning(false);
-  DRIZZLE_INSERT_DONE(0, session->row_count_func);
+  DRIZZLE_INSERT_DONE(0, session->rowCount());
 
   return false;
 }
@@ -1382,10 +1382,10 @@ bool select_insert::send_eof()
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  session->my_ok((ulong) session->row_count_func,
+  session->my_ok((ulong) session->rowCount(),
                  info.copied + info.deleted + info.touched, id, buff);
-  session->status_var.inserted_row_count+= session->row_count_func; 
-  DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
+  session->status_var.inserted_row_count+= session->rowCount(); 
+  DRIZZLE_INSERT_SELECT_DONE(0, session->rowCount());
   return 0;
 }
 

@@ -426,7 +426,7 @@ int Field_blob::key_cmp(const unsigned char *a,const unsigned char *b)
 
 uint32_t Field_blob::sort_length() const
 {
-  return (uint32_t) (current_session->variables.max_sort_length +
+  return (uint32_t) (getTable()->getSession()->variables.max_sort_length +
                      (field_charset == &my_charset_bin ? 0 : sizeof(uint32_t)));
 }
 

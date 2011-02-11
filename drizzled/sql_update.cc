@@ -576,8 +576,8 @@ int update_query(Session *session, TableList *table_list,
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();
-    session->my_ok((ulong) session->row_count_func, found, id, buff);
-    session->status_var.updated_row_count+= session->row_count_func;
+    session->my_ok((ulong) session->rowCount(), found, id, buff);
+    session->status_var.updated_row_count+= session->rowCount();
   }
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;		/* calc cuted fields */
   session->setAbortOnWarning(false);

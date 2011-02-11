@@ -181,7 +181,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();
-    session->my_ok((ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->rowCount());
     /*
       We don't need to call reset_auto_increment in this case, because
       mysql_truncate always gives a NULL conds argument, hence we never
@@ -347,7 +347,7 @@ cleanup:
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();    
-    session->my_ok((ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->rowCount());
   }
   session->status_var.deleted_row_count+= deleted;
 

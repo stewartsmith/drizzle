@@ -208,7 +208,7 @@ Field *Field_enum::new_field(memory::Root *root, Table *new_table,
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
   if (res)
   {
-    res->typelib= copy_typelib(root, typelib);
+    res->typelib= typelib->copy_typelib(root);
   }
   return res;
 }

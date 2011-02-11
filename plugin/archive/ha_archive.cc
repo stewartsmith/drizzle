@@ -1084,7 +1084,7 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
          lock_type <= TL_WRITE)
-        && !session_tablespace_op(session))
+        && ! session->doing_tablespace_operation())
       lock_type = TL_WRITE_ALLOW_WRITE;
 
     /*
@@ -1212,8 +1212,8 @@ int ha_archive::check(Session* session)
   int rc= 0;
   const char *old_proc_info;
 
-  old_proc_info= get_session_proc_info(session);
-  set_session_proc_info(session, "Checking table");
+  old_proc_info= session->get_proc_info();
+  session->set_proc_info("Checking table");
   /* Flush any waiting data */
   pthread_mutex_lock(&share->mutex());
   azflush(&(share->archive_write), Z_SYNC_FLUSH);
@@ -1234,7 +1234,7 @@ int ha_archive::check(Session* session)
       break;
   }
 
-  set_session_proc_info(session, old_proc_info);
+  session->set_proc_info(old_proc_info);
 
   if ((rc && rc != HA_ERR_END_OF_FILE))
   {
