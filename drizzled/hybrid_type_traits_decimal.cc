@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,14 +47,14 @@ Hybrid_type_traits_decimal::fix_length_and_dec(Item *item, Item *arg) const
 
 void Hybrid_type_traits_decimal::set_zero(Hybrid_type *val) const
 {
-  my_decimal_set_zero(&val->dec_buf[0]);
+  val->dec_buf[0].set_zero();
   val->used_dec_buf_no= 0;
 }
 
 
 void Hybrid_type_traits_decimal::add(Hybrid_type *val, Field *f) const
 {
-  my_decimal_add(E_DEC_FATAL_ERROR,
+  class_decimal_add(E_DEC_FATAL_ERROR,
                  &val->dec_buf[val->used_dec_buf_no ^ 1],
                  &val->dec_buf[val->used_dec_buf_no],
                  f->val_decimal(&val->dec_buf[2]));
@@ -68,9 +68,9 @@ void Hybrid_type_traits_decimal::add(Hybrid_type *val, Field *f) const
 */
 void Hybrid_type_traits_decimal::div(Hybrid_type *val, uint64_t u) const
 {
-  int2my_decimal(E_DEC_FATAL_ERROR, u, true, &val->dec_buf[2]);
+  int2_class_decimal(E_DEC_FATAL_ERROR, u, true, &val->dec_buf[2]);
   /* XXX: what is '4' for scale? */
-  my_decimal_div(E_DEC_FATAL_ERROR,
+  class_decimal_div(E_DEC_FATAL_ERROR,
                  &val->dec_buf[val->used_dec_buf_no ^ 1],
                  &val->dec_buf[val->used_dec_buf_no],
                  &val->dec_buf[2], 4);
@@ -82,8 +82,8 @@ int64_t
 Hybrid_type_traits_decimal::val_int(Hybrid_type *val, bool unsigned_flag) const
 {
   int64_t result;
-  my_decimal2int(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
-                 unsigned_flag, &result);
+  val->dec_buf[val->used_dec_buf_no].val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
+
   return result;
 }
 
@@ -91,14 +91,14 @@ Hybrid_type_traits_decimal::val_int(Hybrid_type *val, bool unsigned_flag) const
 double
 Hybrid_type_traits_decimal::val_real(Hybrid_type *val) const
 {
-  my_decimal2double(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
+  class_decimal2double(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                     &val->real);
   return val->real;
 }
 
 
-my_decimal *Hybrid_type_traits_decimal::val_decimal(Hybrid_type *val,
-                                                    my_decimal *) const
+type::Decimal *Hybrid_type_traits_decimal::val_decimal(Hybrid_type *val,
+                                                    type::Decimal *) const
 { return &val->dec_buf[val->used_dec_buf_no]; }
 
 
@@ -106,9 +106,9 @@ String *
 Hybrid_type_traits_decimal::val_str(Hybrid_type *val, String *to,
                                     uint8_t decimals) const
 {
-  my_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
+  class_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                    decimals, false, &val->dec_buf[2]);
-  my_decimal2string(E_DEC_FATAL_ERROR, &val->dec_buf[2], 0, 0, 0, to);
+  class_decimal2string(&val->dec_buf[2], 0, to);
   return to;
 }
 

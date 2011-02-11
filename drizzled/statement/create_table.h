@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,25 +33,43 @@ namespace statement
 
 class CreateTable : public Statement
 {
+  virtual bool check(const identifier::Table&);
+
 public:
-  CreateTable(Session *in_session)
-    :
-      Statement(in_session),
-      is_create_table_like(false),
-      is_if_not_exists(false),
-      is_engine_set(false)
+  CreateTable(Session *in_session, Table_ident *ident, bool is_temporary);
+  CreateTable(Session *in_session);
+
+  virtual bool is_alter() const
   {
-    memset(&create_info, 0, sizeof(create_info));
+    return false;
   }
 
   bool execute();
-  message::Table create_table_message;
+
+  virtual bool executeInner(identifier::Table::const_reference);
+
+public:
   message::Table &createTableMessage()
   {
-    return create_table_message;
+    return *getSession()->lex->table();
   };
-  message::Table::Field *current_proto_field;
-  HA_CREATE_INFO create_info;
+
+private:
+  HA_CREATE_INFO _create_info;
+
+public:
+
+  HA_CREATE_INFO &create_info()
+  {
+    if (createTableMessage().options().auto_increment_value())
+    {
+      _create_info.auto_increment_value= createTableMessage().options().auto_increment_value();
+      _create_info.used_fields|= HA_CREATE_USED_AUTO;
+    }
+
+    return _create_info;
+  }
+
   AlterInfo alter_info;
   KEY_CREATE_INFO key_create_info;
   message::Table::ForeignKeyConstraint::ForeignKeyMatchOption fk_match_option;
@@ -72,9 +90,11 @@ public:
   /* Poly-use */
   LEX_STRING comment;
 
-  bool is_create_table_like;
-  bool is_if_not_exists;
   bool is_engine_set;
+  bool is_create_table_like;
+  bool lex_identified_temp_table;
+  bool link_to_local;
+  TableList *create_table_list;
 
   bool validateCreateTableOption();
 };

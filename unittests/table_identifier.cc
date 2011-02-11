@@ -20,69 +20,72 @@
 
 #include "config.h"
 
-#include <gtest/gtest.h>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include <drizzled/identifier.h>
 
 using namespace drizzled;
 
-TEST(table_identifier_test_standard, Create)
+BOOST_AUTO_TEST_SUITE(TableIdentifierTest)
+BOOST_AUTO_TEST_CASE(CreateStandard)
 {
-  TableIdentifier identifier("test", "a");
-  EXPECT_EQ("test/a", identifier.getPath());
+  identifier::Table identifier("test", "a");
+  BOOST_REQUIRE_EQUAL("test/a", identifier.getPath());
   std::string path;
   identifier.getSQLPath(path);
-  EXPECT_EQ("test.a", path);
+  BOOST_REQUIRE_EQUAL("test.a", path);
 }
 
-TEST(table_identifier_test_temporary, Create)
+BOOST_AUTO_TEST_CASE(CreateTemporary)
 {
-  TableIdentifier identifier("test", "a", message::Table::TEMPORARY);
-  EXPECT_EQ("/#sql", identifier.getPath().substr(0, 5));
+  identifier::Table identifier("test", "a", message::Table::TEMPORARY);
+  BOOST_REQUIRE_EQUAL("/#sql", identifier.getPath().substr(0, 5));
   std::string path;
   identifier.getSQLPath(path);
-  EXPECT_EQ("test.#a", path);
+  BOOST_REQUIRE_EQUAL("test.#a", path);
 }
 
-TEST(table_identifier_test_internal, Create)
+BOOST_AUTO_TEST_CASE(CreateInternal)
 {
-  TableIdentifier identifier("test", "a", message::Table::TEMPORARY);
-  EXPECT_EQ("/#sql", identifier.getPath().substr(0, 5));
+  identifier::Table identifier("test", "a", message::Table::TEMPORARY);
+  BOOST_REQUIRE_EQUAL("/#sql", identifier.getPath().substr(0, 5));
   std::string path;
   identifier.getSQLPath(path);
-  EXPECT_EQ("test.#a", path);
+  BOOST_REQUIRE_EQUAL("test.#a", path);
 }
 
-TEST(table_identifier_test_build_tmptable_filename, Static)
+BOOST_AUTO_TEST_CASE(StaticTmpTable)
 {
   std::vector<char> pathname;
 
-  TableIdentifier::build_tmptable_filename(pathname);
+  identifier::Table::build_tmptable_filename(pathname);
 
-  EXPECT_GT(pathname.size(), 0);
-  EXPECT_GT(strlen(&pathname[0]), 0);
+  BOOST_REQUIRE_GT(pathname.size(), 0);
+  BOOST_REQUIRE_GT(strlen(&pathname[0]), 0);
 }
 
-TEST(table_identifier_test_key, Key)
+BOOST_AUTO_TEST_CASE(Key)
 {
-  TableIdentifier identifier("test", "a");
+  identifier::Table identifier("test", "a");
 
-  const TableIdentifier::Key key= identifier.getKey();
+  const identifier::Table::Key key= identifier.getKey();
 
-  EXPECT_EQ(key.size(), 7);
-  EXPECT_EQ(key.vector()[0], 't');
-  EXPECT_EQ(key.vector()[1], 'e');
-  EXPECT_EQ(key.vector()[2], 's');
-  EXPECT_EQ(key.vector()[3], 't');
-  EXPECT_EQ(key.vector()[4], 0);
-  EXPECT_EQ(key.vector()[5], 'a');
-  EXPECT_EQ(key.vector()[6], 0);
+  BOOST_REQUIRE_EQUAL(key.size(), 7);
+  BOOST_REQUIRE_EQUAL(key.vector()[0], 't');
+  BOOST_REQUIRE_EQUAL(key.vector()[1], 'e');
+  BOOST_REQUIRE_EQUAL(key.vector()[2], 's');
+  BOOST_REQUIRE_EQUAL(key.vector()[3], 't');
+  BOOST_REQUIRE_EQUAL(key.vector()[4], 0);
+  BOOST_REQUIRE_EQUAL(key.vector()[5], 'a');
+  BOOST_REQUIRE_EQUAL(key.vector()[6], 0);
 }
 
-TEST(table_identifier_test_key, KeyCompare)
+BOOST_AUTO_TEST_CASE(KeyCompare)
 {
-  TableIdentifier identifier("test", "a");
-  TableIdentifier identifier2("test", "a");
+  identifier::Table identifier("test", "a");
+  identifier::Table identifier2("test", "a");
 
-  EXPECT_EQ((identifier.getKey() == identifier.getKey()), true);
+  BOOST_REQUIRE_EQUAL((identifier.getKey() == identifier.getKey()), true);
 }
+BOOST_AUTO_TEST_SUITE_END()

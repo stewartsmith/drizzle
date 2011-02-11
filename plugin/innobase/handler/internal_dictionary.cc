@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2007, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2007, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -22,7 +22,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include "drizzled/current_session.h"
 
-extern "C" {
 #include "univ.i"
 #include "btr0sea.h"
 #include "os0file.h"
@@ -52,8 +51,6 @@ extern "C" {
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
-#include "mysql_addons.h"
-}
 #include "handler0vars.h"
 
 using namespace drizzled;
@@ -68,11 +65,7 @@ InnodbInternalTables::InnodbInternalTables() :
   add_field("TABLE_NAME");
 }
 
-extern "C" {
-  void my_dict_print_callback(void *ptr, const char *);
-}
-
-void my_dict_print_callback(void *ptr, const char *table_name)
+static void my_dict_print_callback(void *ptr, const char *table_name)
 {
   Recorder *myrec= static_cast<Recorder *>(ptr);
 

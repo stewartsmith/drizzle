@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,10 +33,13 @@ namespace statement
 class Commit : public Statement
 {
 public:
-  Commit(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Commit(Session *in_session, bool tx_chain_arg, bool tx_release_arg) :
+    Statement(in_session),
+    tx_chain(tx_chain_arg),
+    tx_release(tx_release_arg)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_COMMIT;
+  }
 
   bool execute();
 

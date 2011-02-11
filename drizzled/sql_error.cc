@@ -113,13 +113,14 @@ void drizzle_reset_errors(Session *session, bool force)
 */
 
 DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-                          uint32_t code, const char *msg)
+                            drizzled::error_t code, const char *msg)
 {
   DRIZZLE_ERROR *err= 0;
 
-  if (level == DRIZZLE_ERROR::WARN_LEVEL_NOTE &&
-      !(session->options & OPTION_SQL_NOTES))
-    return(0);
+  if (level == DRIZZLE_ERROR::WARN_LEVEL_NOTE && !(session->options & OPTION_SQL_NOTES))
+  {
+    return NULL;
+  }
 
   if (session->getQueryId() != session->getWarningQueryId())
     drizzle_reset_errors(session, 0);
@@ -127,7 +128,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 
   /* Abort if we are using strict mode and we are not using IGNORE */
   if ((int) level >= (int) DRIZZLE_ERROR::WARN_LEVEL_WARN &&
-      session->really_abort_on_warning())
+      session->abortOnWarning())
   {
     /* Avoid my_message() calling push_warning */
     bool no_warnings_for_error= session->no_warnings_for_error;
@@ -149,11 +150,14 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   {
     /* We have to use warn_root, as mem_root is freed after each query */
     if ((err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg)))
+    {
       session->warn_list.push_back(err, &session->warn_root);
+    }
   }
   session->warn_count[(uint32_t) level]++;
   session->total_warn_count++;
-  return(err);
+
+  return err;
 }
 
 /*
@@ -168,7 +172,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 */
 
 void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-			 uint32_t code, const char *format, ...)
+			 drizzled::error_t code, const char *format, ...)
 {
   va_list args;
   char    warning[ERRMSGSIZE+20];
@@ -177,7 +181,6 @@ void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level lev
   vsnprintf(warning, sizeof(warning), format, args);
   va_end(args);
   push_warning(session, level, code, warning);
-  return;
 }
 
 
@@ -185,7 +188,7 @@ void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level lev
   Send all notes, errors or warnings to the client in a result set
 
   SYNOPSIS
-    mysqld_show_warnings()
+    show_warnings()
     session			Thread handler
     levels_to_show	Bitmap for which levels to show
 
@@ -205,8 +208,8 @@ const LEX_STRING warning_level_names[]=
   { C_STRING_WITH_LEN("?") }
 };
 
-bool mysqld_show_warnings(Session *session,
-                          bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show)
+bool show_warnings(Session *session,
+                   bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show)
 {
   List<Item> field_list;
 
@@ -214,7 +217,7 @@ bool mysqld_show_warnings(Session *session,
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
-  if (session->client->sendFields(&field_list))
+  if (session->getClient()->sendFields(&field_list))
     return true;
 
   DRIZZLE_ERROR *err;
@@ -234,11 +237,11 @@ bool mysqld_show_warnings(Session *session,
       continue;
     if (idx > unit->select_limit_cnt)
       break;
-    session->client->store(warning_level_names[err->level].str,
-		           warning_level_names[err->level].length);
-    session->client->store((uint32_t) err->code);
-    session->client->store(err->msg, strlen(err->msg));
-    if (session->client->flush())
+    session->getClient()->store(warning_level_names[err->level].str,
+                                warning_level_names[err->level].length);
+    session->getClient()->store((uint32_t) err->code);
+    session->getClient()->store(err->msg, strlen(err->msg));
+    if (session->getClient()->flush())
       return(true);
   }
   session->my_eof();

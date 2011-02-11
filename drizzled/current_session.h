@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@
 #include <pthread.h>
 #include <boost/thread/tss.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -31,7 +33,7 @@ class Session;
 
 namespace memory { class Root; }
 
-Session *_current_session(void);
+DRIZZLED_API Session *_current_session(void);
 #define current_session ::drizzled::_current_session()
 memory::Root *current_mem_root(void);
 

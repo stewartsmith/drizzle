@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2007, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2007, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -22,7 +22,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include "drizzled/current_session.h"
 
-extern "C" {
 #include "trx0i_s.h"
 #include "trx0trx.h" /* for TRX_QUE_STATE_STR_MAX_LEN */
 #include "buf0buddy.h" /* for i_s_cmpmem */
@@ -34,7 +33,6 @@ extern "C" {
 #include "dict0load.h"	/* for file sys_tables related info. */
 #include "dict0mem.h"
 #include "dict0types.h"
-}
 #include "handler0vars.h"
 
 using namespace drizzled;
@@ -759,7 +757,7 @@ InnodbTrxTool::Generator::Generator(Field **arg, const char* in_table_name) :
 
   if (trx_i_s_cache_is_truncated(trx_i_s_cache))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Warning: data in %s truncated due to memory limit of %d bytes\n"), 
+    errmsg_printf(error::ERROR, _("Warning: data in %s truncated due to memory limit of %d bytes\n"), 
                   table_name, TRX_I_S_MEM_LIMIT);
   } 
 
@@ -847,7 +845,7 @@ void InnodbTrxTool::Generator::populate_innodb_locks()
    bufend = innobase_convert_name(buf, sizeof(buf),
                                   row->lock_table,
                                   strlen(row->lock_table),
-                                  current_session, TRUE);
+                                  &getSession(), TRUE);
    push(bufend);
 
    if (row->lock_index != NULL)
@@ -855,7 +853,7 @@ void InnodbTrxTool::Generator::populate_innodb_locks()
      bufend = innobase_convert_name(buf, sizeof(buf),
                                     row->lock_index,
                                     strlen(row->lock_index),
-                                    current_session, FALSE);
+                                    &getSession(), FALSE);
      push(bufend);     
    }
    else 

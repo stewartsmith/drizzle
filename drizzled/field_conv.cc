@@ -38,10 +38,10 @@
 #include <drizzled/field/decimal.h>
 #include <drizzled/field/real.h>
 #include <drizzled/field/double.h>
-#include <drizzled/field/long.h>
-#include <drizzled/field/int64_t.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/num.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
 
@@ -180,6 +180,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
     field->reset();
     return 0;
   }
+
   if (no_conversions)
     return -1;
 
@@ -188,24 +189,28 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
     when set to NULL (TIMESTAMP fields which allow setting to NULL
     are handled by first check).
   */
-  if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+  if (field->is_timestamp())
   {
-    ((Field_timestamp*) field)->set_time();
+    ((field::Epoch::pointer) field)->set_time();
     return 0;					// Ok to set time to NULL
   }
+
   field->reset();
   if (field == field->getTable()->next_number_field)
   {
     field->getTable()->auto_increment_field_not_null= false;
     return 0;				  // field is set in fill_record()
   }
+
   if (field->getTable()->in_use->count_cuted_fields == CHECK_FIELD_WARN)
   {
     field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_BAD_NULL_ERROR, 1);
     return 0;
   }
+
   if (!field->getTable()->in_use->no_errors)
     my_error(ER_BAD_NULL_ERROR, MYF(0), field->field_name);
+
   return -1;
 }
 
@@ -278,10 +283,12 @@ static void do_copy_timestamp(CopyField *copy)
   if (*copy->from_null_ptr & copy->from_bit)
   {
     /* Same as in set_field_to_null_with_conversions() */
-    ((Field_timestamp*) copy->to_field)->set_time();
+    ((field::Epoch::pointer) copy->to_field)->set_time();
   }
   else
+  {
     (copy->do_copy2)(copy);
+  }
 }
 
 
@@ -294,7 +301,9 @@ static void do_copy_next_number(CopyField *copy)
     copy->to_field->reset();
   }
   else
+  {
     (copy->do_copy2)(copy);
+  }
 }
 
 
@@ -307,7 +316,7 @@ static void do_copy_blob(CopyField *copy)
 
 static void do_conv_blob(CopyField *copy)
 {
-  copy->from_field->val_str(&copy->tmp);
+  copy->from_field->val_str_internal(&copy->tmp);
   ((Field_blob *) copy->to_field)->store(copy->tmp.ptr(),
                                          copy->tmp.length(),
                                          copy->tmp.charset());
@@ -319,7 +328,7 @@ static void do_save_blob(CopyField *copy)
 {
   char buff[MAX_FIELD_WIDTH];
   String res(buff, sizeof(buff), copy->tmp.charset());
-  copy->from_field->val_str(&res);
+  copy->from_field->val_str_internal(&res);
   copy->tmp.copy(res);
   ((Field_blob *) copy->to_field)->store(copy->tmp.ptr(),
                                          copy->tmp.length(),
@@ -331,7 +340,7 @@ static void do_field_string(CopyField *copy)
 {
   char buff[MAX_FIELD_WIDTH];
   copy->tmp.set_quick(buff,sizeof(buff),copy->tmp.charset());
-  copy->from_field->val_str(&copy->tmp);
+  copy->from_field->val_str_internal(&copy->tmp);
   copy->to_field->store(copy->tmp.c_ptr_quick(),copy->tmp.length(),
                         copy->tmp.charset());
 }
@@ -362,7 +371,7 @@ static void do_field_real(CopyField *copy)
 
 static void do_field_decimal(CopyField *copy)
 {
-  my_decimal value;
+  type::Decimal value;
   copy->to_field->store_decimal(copy->from_field->val_decimal(&value));
 }
 
@@ -375,7 +384,7 @@ static void do_field_decimal(CopyField *copy)
 static void do_cut_string(CopyField *copy)
 {
   const CHARSET_INFO * const cs= copy->from_field->charset();
-  memcpy(copy->to_ptr,copy->from_ptr,copy->to_length);
+  memcpy(copy->to_ptr, copy->from_ptr, copy->to_length);
 
   /* Check if we loosed any important characters */
   if (cs->cset->scan(cs,
@@ -452,8 +461,10 @@ static void do_varstring1(CopyField *copy)
   {
     length= copy->to_length - 1;
     if (copy->from_field->getTable()->in_use->count_cuted_fields)
+    {
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   *(unsigned char*) copy->to_ptr= (unsigned char) length;
   memcpy(copy->to_ptr+1, copy->from_ptr + 1, length);
@@ -473,8 +484,10 @@ static void do_varstring1_mb(CopyField *copy)
   if (length < from_length)
   {
     if (current_session->count_cuted_fields)
+    {
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   *copy->to_ptr= (unsigned char) length;
   memcpy(copy->to_ptr + 1, from_ptr, length);
@@ -488,8 +501,10 @@ static void do_varstring2(CopyField *copy)
   {
     length=copy->to_length-HA_KEY_BLOB_LENGTH;
     if (copy->from_field->getTable()->in_use->count_cuted_fields)
+    {
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   int2store(copy->to_ptr,length);
   memcpy(copy->to_ptr+HA_KEY_BLOB_LENGTH, copy->from_ptr + HA_KEY_BLOB_LENGTH,
@@ -510,8 +525,10 @@ static void do_varstring2_mb(CopyField *copy)
   if (length < from_length)
   {
     if (current_session->count_cuted_fields)
+    {
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   int2store(copy->to_ptr, length);
   memcpy(copy->to_ptr+HA_KEY_BLOB_LENGTH, from_beg, length);
@@ -611,7 +628,7 @@ void CopyField::set(Field *to,Field *from,bool save)
     }
     else
     {
-      if (to_field->type() == DRIZZLE_TYPE_TIMESTAMP)
+      if (to_field->is_timestamp())
       {
         do_copy= do_copy_timestamp;               // Automatic timestamp
       }
@@ -655,8 +672,8 @@ CopyField::get_copy_func(Field *to,Field *from)
     if (from_length != to_length || !compatible_db_low_byte_first)
     {
       // Correct pointer to point at char pointer
-      to_ptr+= to_length - to->getTable()->getShare()->blob_ptr_size;
-      from_ptr+= from_length- from->getTable()->getShare()->blob_ptr_size;
+      to_ptr+= to_length - to->getTable()->getShare()->sizeBlobPtr();
+      from_ptr+= from_length- from->getTable()->getShare()->sizeBlobPtr();
       return do_copy_blob;
     }
   }
@@ -682,11 +699,11 @@ CopyField::get_copy_func(Field *to,Field *from)
           {
             return do_field_int;  // Convert SET to number
           }
-          
+
           return do_field_string;
         }
       }
-      
+
       if (to->real_type() == DRIZZLE_TYPE_ENUM)
       {
         if (!to->eq_def(from))
@@ -703,12 +720,12 @@ CopyField::get_copy_func(Field *to,Field *from)
       else if (to->real_type() == DRIZZLE_TYPE_VARCHAR)
       {
         /* Field_blob is not part of the Field_varstring hierarchy,
-           and casting to varstring for calling pack_length_no_ptr()
-           is always incorrect. Previously the below comparison has
-           always evaluated to false as pack_length_no_ptr() for BLOB
-           will return 4 and varstring can only be <= 2.
-           If your brain slightly bleeds as to why this worked for
-           so many years, you are in no way alone.
+          and casting to varstring for calling pack_length_no_ptr()
+          is always incorrect. Previously the below comparison has
+          always evaluated to false as pack_length_no_ptr() for BLOB
+          will return 4 and varstring can only be <= 2.
+          If your brain slightly bleeds as to why this worked for
+          so many years, you are in no way alone.
         */
         if (from->flags & BLOB_FLAG)
           return do_field_string;
@@ -718,14 +735,14 @@ CopyField::get_copy_func(Field *to,Field *from)
         {
           return do_field_string;
         }
-        
+
         if (to_length != from_length)
         {
           return (((Field_varstring*) to)->pack_length_no_ptr() == 1 ?
                   (from->charset()->mbmaxlen == 1 ? do_varstring1 :
-                                                    do_varstring1_mb) :
+                   do_varstring1_mb) :
                   (from->charset()->mbmaxlen == 1 ? do_varstring2 :
-                                                    do_varstring2_mb));
+                   do_varstring2_mb));
         }
       }
       else if (to_length < from_length)
@@ -805,7 +822,7 @@ int field_conv(Field *to,Field *from)
   if (to->type() == DRIZZLE_TYPE_BLOB)
   {						// Be sure the value is stored
     Field_blob *blob=(Field_blob*) to;
-    from->val_str(&blob->value);
+    from->val_str_internal(&blob->value);
     /*
       Copy value if copy_blobs is set, or source is not a string and
       we have a pointer to its internal string conversion buffer.
@@ -829,7 +846,7 @@ int field_conv(Field *to,Field *from)
   {
     char buff[MAX_FIELD_WIDTH];
     String result(buff,sizeof(buff),from->charset());
-    from->val_str(&result);
+    from->val_str_internal(&result);
     /*
       We use c_ptr_quick() here to make it easier if to is a float/double
       as the conversion routines will do a copy of the result doesn't
@@ -839,14 +856,18 @@ int field_conv(Field *to,Field *from)
     return to->store(result.c_ptr_quick(),result.length(),from->charset());
   }
   else if (from->result_type() == REAL_RESULT)
+  {
     return to->store(from->val_real());
+  }
   else if (from->result_type() == DECIMAL_RESULT)
   {
-    my_decimal buff;
+    type::Decimal buff;
     return to->store_decimal(from->val_decimal(&buff));
   }
   else
+  {
     return to->store(from->val_int(), test(from->flags & UNSIGNED_FLAG));
+  }
 }
 
 } /* namespace drizzled */

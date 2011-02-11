@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,20 +28,30 @@
 namespace drizzled
 {
 
+namespace statement
+{
+
+CreateIndex::CreateIndex(Session *in_session, const drizzled::ha_build_method method_arg) :
+  CreateTable(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_CREATE_INDEX;
+    alter_info.flags.set(ALTER_ADD_INDEX);
+    alter_info.build_method= method_arg;
+    getSession()->getLex()->col_list.empty();
+  }
+
 bool statement::CreateIndex::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *all_tables= getSession()->lex->query_tables;
 
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::table::shared_ptr original_table_message;
   {
-    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
+    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
+    if (plugin::StorageEngine::getTableDefinition(*getSession(), identifier, original_table_message) != EEXIST)
     {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
+      my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
     }
   }
@@ -56,42 +66,43 @@ bool statement::CreateIndex::execute()
   */
 
   assert(first_table == all_tables && first_table != 0);
-  if (! session->endActiveTransaction())
+  if (getSession()->inTransaction())
   {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
   bool res;
   if (original_table_message->type() == message::Table::STANDARD )
   {
-    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
-    create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
+    create_info().default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
-    res= alter_table(session, 
+    res= alter_table(getSession(), 
                      identifier,
                      identifier,
-                     &create_info, 
+                     &create_info(), 
                      *original_table_message,
-                     create_table_message, 
+                     createTableMessage(), 
                      first_table,
                      &alter_info,
                      0, (Order*) 0, 0);
   }
   else
   {
-    TableIdentifier catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= session->find_temporary_table(catch22);
+    identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
+    Table *table= getSession()->find_temporary_table(catch22);
     assert(table);
     {
-      TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
-      create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+      identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
+      create_info().default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
-      res= alter_table(session, 
+      res= alter_table(getSession(), 
                        identifier,
                        identifier,
-                       &create_info, 
+                       &create_info(), 
                        *original_table_message,
-                       create_table_message, 
+                       createTableMessage(), 
                        first_table,
                        &alter_info,
                        0, (Order*) 0, 0);
@@ -101,4 +112,5 @@ bool statement::CreateIndex::execute()
   return res;
 }
 
+} /* namespace statement */
 } /* namespace drizzled */

@@ -16,7 +16,6 @@
 
 #include "drizzled/field.h"
 #include "drizzled/field/blob.h"
-#include "drizzled/field/timestamp.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
@@ -98,14 +97,14 @@ public:
 
   int doCreateTable(drizzled::Session &session,
                     drizzled::Table &table_arg,
-                    const drizzled::TableIdentifier &identifier,
+                    const drizzled::identifier::Table &identifier,
                     drizzled::message::Table& proto);
 
   int doGetTableDefinition(drizzled::Session& session,
-                           const drizzled::TableIdentifier &identifier,
+                           const drizzled::identifier::Table &identifier,
                            drizzled::message::Table &table_message);
 
-  int doDropTable(drizzled::Session&, const drizzled::TableIdentifier &identifier);
+  int doDropTable(drizzled::Session&, const drizzled::identifier::Table &identifier);
 
   ArchiveShare *findOpenTable(const std::string table_name);
   void addOpenTable(const std::string &table_name, ArchiveShare *);
@@ -120,12 +119,12 @@ public:
     return HA_ONLY_WHOLE_INDEX;
   }
 
-  bool doDoesTableExist(drizzled::Session&, const drizzled::TableIdentifier &identifier);
-  int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
+  bool doDoesTableExist(drizzled::Session&, const drizzled::identifier::Table &identifier);
+  int doRenameTable(drizzled::Session&, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
 };
 
 #endif /* PLUGIN_ARCHIVE_ARCHIVE_ENGINE_H */

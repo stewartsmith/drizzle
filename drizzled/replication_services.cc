@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
- *  Copyright (c) 2009-2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2009-2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  Authors:
  *
@@ -90,7 +90,7 @@ bool ReplicationServices::evaluateRegisteredPlugins()
 
   if (replicators.empty() && not appliers.empty())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   N_("You registered a TransactionApplier plugin but no "
                      "TransactionReplicator plugins were registered.\n"));
     return false;
@@ -121,7 +121,7 @@ bool ReplicationServices::evaluateRegisteredPlugins()
     }
     if (not found)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     N_("You registered a TransactionApplier plugin but no "
                        "TransactionReplicator plugins were registered that match the "
                        "requested replicator name of '%s'.\n"

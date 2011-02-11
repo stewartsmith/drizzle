@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ public:
    * @param[in] File extensions to allow
    */
   CachedDirectory(const std::string& in_path, std::set<std::string>& allowed_exts);
-  CachedDirectory(const std::string& in_path, enum CachedDirectory::FILTER filter);
+  CachedDirectory(const std::string& in_path, enum CachedDirectory::FILTER filter, bool use_full_path= false);
 
   /**
    * Destructor.  Cleans up any resources we've taken 
@@ -131,6 +131,7 @@ public:
 private:
   std::string path; ///< Path to the directory
   int error; ///< Error code stored from various syscalls
+  bool use_full_path;
   Entries entries; ///< Entries in the directory
 
   /**

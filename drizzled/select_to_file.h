@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ protected:
 public:
   select_to_file(file_exchange *ex);
   virtual ~select_to_file();
-  void send_error(uint32_t errcode,const char *err);
+  void send_error(drizzled::error_t errcode,const char *err);
   bool send_eof();
   void cleanup();
 };

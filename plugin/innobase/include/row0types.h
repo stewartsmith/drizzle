@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -55,11 +55,15 @@ typedef struct row_ext_struct row_ext_t;
 
 /* MySQL data types */
 #if defined(BUILD_DRIZZLE)
-# if defined(__cplusplus)
-typedef drizzled::Table TABLE;
-# else
+#if defined(__cplusplus)
+namespace drizzled
+{
+class Table;
+}
+typedef ::drizzled::Table TABLE;
+#else
 typedef void TABLE;
-# endif /* cplusplus */
+#endif
 #else
 typedef struct st_table TABLE;
 #endif

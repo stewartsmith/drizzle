@@ -1,4 +1,4 @@
-/* Copyright (C) 2009 Sun Microsystems
+/* Copyright (C) 2009 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Gearman Client UDFs",
   PLUGIN_LICENSE_BSD,
   gearman_udf_plugin_init, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

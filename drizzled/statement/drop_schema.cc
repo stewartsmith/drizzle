@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,20 +34,22 @@ namespace drizzled
 
 bool statement::DropSchema::execute()
 {
-  if (! session->endActiveTransaction())
+  if (getSession()->inTransaction())
   {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
-  SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
-  if (not check_db_name(session, schema_identifier))
-  {
-    std::string path;
-    schema_identifier.getSQLPath(path);
 
-    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
+  identifier::Schema schema_identifier(std::string(getSession()->lex->name.str, getSession()->lex->name.length));
+
+  if (not check_db_name(getSession(), schema_identifier))
+  {
+    my_error(ER_WRONG_DB_NAME, schema_identifier);
+
     return false;
   }
-  if (session->inTransaction())
+
+  if (getSession()->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
         ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
@@ -58,14 +60,14 @@ bool statement::DropSchema::execute()
   bool res = true;
   std::string path;
   schema_identifier.getSQLPath(path);
-  if (unlikely(plugin::EventObserver::beforeDropDatabase(*session, path))) 
+  if (unlikely(plugin::EventObserver::beforeDropDatabase(*getSession(), path))) 
   {
-    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
+    my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
   }
   else
   {
-    res= mysql_rm_db(session, schema_identifier, drop_if_exists);
-    if (unlikely(plugin::EventObserver::afterDropDatabase(*session, path, res)))
+    res= rm_db(getSession(), schema_identifier, drop_if_exists);
+    if (unlikely(plugin::EventObserver::afterDropDatabase(*getSession(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
       res = false;

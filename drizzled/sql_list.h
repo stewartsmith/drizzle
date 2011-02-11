@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@
 #include <utility>
 #include <algorithm>
 #include "drizzled/memory/sql_alloc.h"
+#include "drizzled/visibility.h"
+
 
 namespace drizzled
 {
@@ -103,7 +105,7 @@ struct list_node : public memory::SqlAlloc
 };
 
 
-extern list_node end_of_list;
+extern DRIZZLED_API list_node end_of_list;
 
 class base_list :public memory::SqlAlloc
 {

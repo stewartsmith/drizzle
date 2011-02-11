@@ -99,7 +99,7 @@ void Item_row::cleanup()
   Item::cleanup();
   /* Reset to the original values */
   used_tables_cache= 0;
-  const_item_cache= 1;
+  const_item_cache= true;
   with_null= 0;
 
   return;
@@ -118,7 +118,7 @@ void Item_row::split_sum_func(Session *session, Item **ref_pointer_array,
 void Item_row::update_used_tables()
 {
   used_tables_cache= 0;
-  const_item_cache= 1;
+  const_item_cache= true;
   for (uint32_t i= 0; i < arg_count; i++)
   {
     items[i]->update_used_tables();
@@ -130,7 +130,7 @@ void Item_row::update_used_tables()
 void Item_row::fix_after_pullout(Select_Lex *new_parent, Item **)
 {
   used_tables_cache= 0;
-  const_item_cache= 1;
+  const_item_cache= true;
   for (uint32_t i= 0; i < arg_count; i++)
   {
     items[i]->fix_after_pullout(new_parent, &items[i]);
@@ -188,7 +188,7 @@ Item *Item_row::transform(Item_transformer transformer, unsigned char *arg)
       change records at each execution.
     */
     if (items[i] != new_item)
-      current_session->change_item_tree(&items[i], new_item);
+      getSession().change_item_tree(&items[i], new_item);
   }
   return (this->*transformer)(arg);
 }

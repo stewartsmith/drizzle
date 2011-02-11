@@ -67,8 +67,8 @@ int mi_rprev(MI_INFO *info, unsigned char *buf, int inx)
   info->update|= HA_STATE_PREV_FOUND;
   if (error)
   {
-    if (errno == HA_ERR_KEY_NOT_FOUND)
-      errno=HA_ERR_END_OF_FILE;
+    if (errno ==  drizzled::HA_ERR_KEY_NOT_FOUND)
+      errno= drizzled::HA_ERR_END_OF_FILE;
   }
   else if (!buf)
   {

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 #define DRIZZLED_PLUGIN_MONITORED_IN_TRANSACTION_H
 
 #include <cstring>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -44,7 +46,7 @@ extern size_t num_trx_monitored_objects;
  * "is a" and is the appropriate use here since all implementing classes
  * *are* monitored in a transaction...
  */
-class MonitoredInTransaction
+class DRIZZLED_API MonitoredInTransaction
 {
 public:
 

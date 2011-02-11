@@ -518,8 +518,8 @@ bool Select_Lex_Unit::exec()
       {
 	/*
 	  allocate JOIN for fake select only once (prevent
-	  mysql_select automatic allocation)
-          TODO: The above is nonsense. mysql_select() will not allocate the
+	  select_query automatic allocation)
+          TODO: The above is nonsense. select_query() will not allocate the
           join if one already exists. There must be some other reason why we
           don't let it allocate the join. Perhaps this is because we need
           some special parameter values passed to join constructor?
@@ -537,7 +537,7 @@ bool Select_Lex_Unit::exec()
 	  allocation.
 	*/
 	fake_select_lex->item_list= item_list;
-        saved_error= mysql_select(session, &fake_select_lex->ref_pointer_array,
+        saved_error= select_query(session, &fake_select_lex->ref_pointer_array,
                               &result_table_list,
                               0, item_list, NULL,
                               global_parameters->order_list.elements,
@@ -560,7 +560,7 @@ bool Select_Lex_Unit::exec()
             to reset them back, we re-do all of the actions (yes it is ugly):
           */
 	        join->reset(session, item_list, fake_select_lex->options, result);
-          saved_error= mysql_select(session, &fake_select_lex->ref_pointer_array,
+          saved_error= select_query(session, &fake_select_lex->ref_pointer_array,
                                 &result_table_list,
                                 0, item_list, NULL,
                                 global_parameters->order_list.elements,

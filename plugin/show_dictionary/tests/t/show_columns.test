@@ -1,0 +1,4 @@
+SHOW COLUMNS FROM data_dictionary.columns;
+
+# Drizzle bug #698092
+SELECT * FROM `data_dictionary` . SHOW_COLUMNS;

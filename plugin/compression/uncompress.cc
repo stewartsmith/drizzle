@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ String *Item_func_uncompress::val_str(String *str)
   String *res= args[0]->val_str(str);
   ulong new_size;
   int err;
-  uint32_t code;
+  drizzled::error_t code;
 
   if (!res)
     goto err;

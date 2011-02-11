@@ -1,0 +1,3 @@
+# Anything bug null; null would crash the server :)
+SELECT ASSERT_AND_CRASH(1);
+SELECT ASSERT_AND_CRASH(0);

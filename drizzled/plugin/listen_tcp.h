@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@
 
 #include <netinet/in.h>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 namespace plugin
@@ -33,7 +35,7 @@ namespace plugin
  * This class is used by client plugins to provide and manage TCP listening
  * interfaces for new client instances.
  */
-class ListenTcp : public Listen
+class DRIZZLED_API ListenTcp : public Listen
 {
   ListenTcp();
   ListenTcp(const ListenTcp&);

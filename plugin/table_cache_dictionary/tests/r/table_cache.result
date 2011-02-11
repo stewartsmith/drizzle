@@ -5,7 +5,7 @@ TABLE_CACHE	CREATE TABLE `TABLE_CACHE` (
   `TABLE_SCHEMA` VARCHAR(256) NOT NULL,
   `TABLE_NAME` VARCHAR(256) NOT NULL,
   `VERSION` BIGINT NOT NULL,
-  `IS_NAME_LOCKED` VARCHAR(5) NOT NULL,
+  `IS_NAME_LOCKED` BOOLEAN NOT NULL,
   `ROWS` BIGINT NOT NULL,
   `AVG_ROW_LENGTH` BIGINT NOT NULL,
   `TABLE_SIZE` BIGINT NOT NULL,
@@ -17,14 +17,14 @@ count(*)
 flush tables;
 select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME;
 SESSION_ID	TABLE_SCHEMA	TABLE_NAME	VERSION	IS_NAME_LOCKED	ROWS	AVG_ROW_LENGTH	TABLE_SIZE	AUTO_INCREMENT
-#	data_dictionary	table_cache	#	#	#	2131	#	#
+#	data_dictionary	table_cache	#	#	#	2112	#	#
 create table a ( a int);
 create table b ( b int);
-select * FROM a,b;
+select * FROM a CROSS JOIN b;
 a	b
 select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME;
 SESSION_ID	TABLE_SCHEMA	TABLE_NAME	VERSION	IS_NAME_LOCKED	ROWS	AVG_ROW_LENGTH	TABLE_SIZE	AUTO_INCREMENT
-#	data_dictionary	table_cache	#	#	#	2131	#	#
+#	data_dictionary	table_cache	#	#	#	2112	#	#
 #	test	a	#	#	#	6	#	#
 #	test	b	#	#	#	6	#	#
 DROP TABLES a,b;

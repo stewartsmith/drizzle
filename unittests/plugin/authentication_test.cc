@@ -22,7 +22,7 @@
 
 #include <drizzled/error.h>
 #include <drizzled/plugin/authentication.h>
-#include <drizzled/security_context.h>
+#include <drizzled/identifier.h>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -30,7 +30,7 @@
 
 using namespace drizzled;
 
-static void error_handler_func_stub(uint32_t my_err, const char *str, myf MyFlags)
+static void error_handler_func_stub(drizzled::error_t my_err, const char *str, myf MyFlags)
 {
   (void)my_err;
   (void)str;
@@ -40,15 +40,17 @@ static void error_handler_func_stub(uint32_t my_err, const char *str, myf MyFlag
 class AuthenticationTest : public ::testing::Test
 {
 public:
-  SecurityContext sctx;
+  identifier::User::const_shared_ptr sctx;
   std::string passwd;
   AuthenticationStub stub1;
   AuthenticationStub stub2;
 
   AuthenticationTest() :
+    sctx(drizzled::identifier::User::make_shared()),
     stub1("AuthenticationStub1"),
     stub2("AuthenticationStub2")
-  {}
+  {
+  }
   
   virtual void SetUp ()
   {

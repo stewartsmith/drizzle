@@ -21,7 +21,33 @@
 #ifndef DRIZZLED_IDENTIFIER_H
 #define DRIZZLED_IDENTIFIER_H
 
-#include "drizzled/identifier/schema.h"
-#include "drizzled/identifier/table.h"
+#include <string>
+
+#include "drizzled/visibility.h"
+
+namespace drizzled {
+
+class DRIZZLED_API Identifier {
+public:
+  typedef const Identifier& const_reference;
+
+  virtual void getSQLPath(std::string &arg) const;
+
+  virtual ~Identifier()
+  { }
+};
+
+} // namespace drizzled
+
+#include <drizzled/identifier/catalog.h>
+#include <drizzled/identifier/schema.h>
+#include <drizzled/identifier/session.h>
+#include <drizzled/identifier/table.h>
+#include <drizzled/identifier/user.h>
+
+// Constant identifiers user internally
+#include <drizzled/identifier/constants/schema.h>
+#include <drizzled/identifier/constants/table.h>
+
 
 #endif /* DRIZZLED_IDENTIFIER_H */

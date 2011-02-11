@@ -1,4 +1,4 @@
-# Copyright (c) 2010 Edward "Koko" Konetzko <konetzed@quixoticagony.com>
+# Copyright (C) 2010 Edward "Koko" Konetzko <konetzed@quixoticagony.com>
 dn: cn=drizzle,cn=schema,cn=config
 objectClass: olcSchemaConfig
 cn: drizzle

@@ -7,12 +7,12 @@ INSERT INTO t1 (b) VALUES(-2147483648);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -51,20 +51,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX INT
 INSERT INTO t1 (b) VALUES(2147483647);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -103,8 +106,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 INT
 INSERT INTO t1 (b) VALUES(-2147483649);
@@ -112,12 +118,12 @@ ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -156,8 +162,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 INT
 INSERT INTO t1 (b) VALUES(2147483648);
@@ -165,12 +174,12 @@ ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -209,20 +218,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL INT
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -261,8 +273,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT INT1
 INSERT INTO t1 (b) VALUES('abbazabba');
@@ -270,12 +285,12 @@ ERROR HY000: Incorrect integer value: 'abbazabba' for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -314,8 +329,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT INT2
 INSERT INTO t1 (b) VALUES('a');
@@ -323,12 +341,12 @@ ERROR HY000: Incorrect integer value: 'a' for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -367,20 +385,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MULTI_INSERT INT
 INSERT INTO t1 (b) VALUES(1),(1),(2),(3),(5);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -443,8 +464,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -457,12 +481,12 @@ INSERT INTO t1 (b) VALUES(-9223372036854775808);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -501,20 +525,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX BIGINT
 INSERT INTO t1 (b) VALUES(9223372036854775807);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -553,8 +580,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 BIGINT
 INSERT INTO t1 (b) VALUES(-9223372036854775809);
@@ -562,12 +592,12 @@ ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -606,21 +636,80 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 BIGINT
 NOTE: Bug#316221 - 2**63 incorrectly inserted into bigint
 INSERT INTO t1 (b) VALUES(9223372036854775808);
+ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9223372036854775807"
+      is_null: false
+      is_null: false
+    }
+  }
+}
+segment_id: 1
+end_segment: true
+
+
+COMMIT;
+
+Testing NULL BIGINT
+INSERT INTO t1 (b) VALUES(NULL);
+Check transaction_log_entries
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+COUNT(*)
+4
+
+Check transaction_log_transactions
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+COUNT(*)
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -653,66 +742,17 @@ statement {
     end_segment: true
     record {
       insert_value: "3"
-      insert_value: "-9223372036854775808"
-      is_null: false
-      is_null: false
-    }
-  }
-}
-
-
-
-Testing NULL BIGINT
-INSERT INTO t1 (b) VALUES(NULL);
-Check transaction_log_entries
-SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
-COUNT(*)
-6
-
-Check transaction_log_transactions
-SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
-COUNT(*)
-6
-Check transaction log contents
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
-PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
-transaction_context {
-  server_id: 1
-  TRANSACTION_ID
-  START_TIMESTAMP
-  END_TIMESTAMP
-}
-statement {
-  type: INSERT
-  START_TIMESTAMP
-  END_TIMESTAMP
-  insert_header {
-    table_metadata {
-      schema_name: "test"
-      table_name: "t1"
-    }
-    field_metadata {
-      type: INTEGER
-      name: "a"
-    }
-    field_metadata {
-      type: BIGINT
-      name: "b"
-    }
-  }
-  insert_data {
-    segment_id: 1
-    end_segment: true
-    record {
-      insert_value: "4"
       insert_value: ""
       is_null: false
       is_null: true
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT BIGINT1
 INSERT INTO t1 (b) VALUES('abbazabba');
@@ -720,12 +760,12 @@ ERROR HY000: Incorrect integer value: 'abbazabba' for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -757,15 +797,18 @@ statement {
     segment_id: 1
     end_segment: true
     record {
-      insert_value: "4"
+      insert_value: "3"
       insert_value: ""
       is_null: false
       is_null: true
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT BIGINT2
 INSERT INTO t1 (b) VALUES('a');
@@ -773,12 +816,12 @@ ERROR HY000: Incorrect integer value: 'a' for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -810,15 +853,18 @@ statement {
     segment_id: 1
     end_segment: true
     record {
-      insert_value: "4"
+      insert_value: "3"
       insert_value: ""
       is_null: false
       is_null: true
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -832,12 +878,12 @@ INSERT INTO t1 (b) VALUES(-999.99);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -876,20 +922,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX DECIMAL simple 
 INSERT INTO t1 (b) VALUES(999.99);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -928,8 +977,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 DECIMAL simple 
 INSERT INTO t1 (b) VALUES(-1000);
@@ -937,12 +989,12 @@ ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -981,8 +1033,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 DECIMAL simple 
 INSERT INTO t1 (b) VALUES(1000);
@@ -990,12 +1045,12 @@ ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1034,20 +1089,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL DECIMAL simple 
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1086,8 +1144,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DECIMAL simple 
 INSERT INTO t1 (b) VALUES('abbazabba');
@@ -1095,12 +1156,12 @@ ERROR HY000: Incorrect decimal value: 'abbazabba' for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1139,8 +1200,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DECIMAL simple2 
 INSERT INTO t1 (b) VALUES('a');
@@ -1148,12 +1212,12 @@ ERROR HY000: Incorrect decimal value: 'a' for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1192,20 +1256,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing misc DECIMAL simple
 INSERT INTO t1 (b) VALUES(100);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1244,8 +1311,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing misc DECIMAL simple2
 INSERT INTO t1 (b) VALUES(.0898);
@@ -1253,12 +1323,12 @@ ERROR 01000: Data truncated for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1297,20 +1367,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing misc DECIMAL simple3
 INSERT INTO t1 (b) VALUES(.1);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1349,8 +1422,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1364,12 +1440,12 @@ INSERT INTO t1 (b) VALUES(-999.99);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1408,20 +1484,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX FLOAT simple
 INSERT INTO t1 (b) VALUES(999.99);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1460,8 +1539,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 FLOAT simple
 INSERT INTO t1 (b) VALUES(-1000);
@@ -1469,12 +1551,12 @@ ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1513,8 +1595,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 FLOAT simple
 INSERT INTO t1 (b) VALUES(1000);
@@ -1522,12 +1607,12 @@ ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1566,20 +1651,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL FLOAT simple
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1618,8 +1706,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT FLOAT simple
 INSERT INTO t1 (b) VALUES('abbazabba');
@@ -1627,12 +1718,12 @@ ERROR 01000: Data truncated for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1671,8 +1762,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1686,12 +1780,12 @@ INSERT INTO t1 (b) VALUES("");
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1730,20 +1824,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX CHAR simple
 INSERT INTO t1 (b) VALUES("zzzzzzzzzz");
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1782,8 +1879,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 CHAR simple
 INSERT INTO t1 (b) VALUES('zzzzzzzzzzz');
@@ -1791,12 +1891,12 @@ ERROR 22001: Data too long for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1835,20 +1935,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL CHAR simple
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1887,20 +1990,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NUMERIC INPUT CHAR simple
 INSERT INTO t1 (b) VALUES(1000000);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1939,8 +2045,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1954,12 +2063,12 @@ INSERT INTO t1 (b) VALUES(1);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1998,20 +2107,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX ENUM simple
 INSERT INTO t1 (b) VALUES(5);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2050,8 +2162,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT ENUM simple
 INSERT INTO t1 (b) VALUES(6);
@@ -2059,12 +2174,12 @@ ERROR HY000: Received an invalid enum value '6'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2103,20 +2218,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL ENUM simple
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2155,8 +2273,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -2170,12 +2291,12 @@ INSERT INTO t1 (b) VALUES('0001-01-01');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2214,20 +2335,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX DATE
 INSERT INTO t1 (b) VALUES('9999-12-31');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2266,21 +2390,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 DATE
 INSERT INTO t1 (b) VALUES('0000-12-31');
-ERROR HY000: Received an invalid datetime value '0000-12-31'.
+ERROR HY000: Received an invalid DATE value '0000-12-31'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2319,21 +2446,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 DATE
 INSERT INTO t1 (b) VALUES('10000-01-01');
-ERROR HY000: Received an invalid datetime value '10000-01-01'.
+ERROR HY000: Received an invalid DATE value '10000-01-01'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2372,20 +2502,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input format DATE1
 INSERT INTO t1 (b) VALUES('20000101');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2424,20 +2557,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input formate DATE2
 INSERT INTO t1 (b) VALUES('990601');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2476,20 +2612,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL DATE
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2528,21 +2667,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATE1
 INSERT INTO t1 (b) VALUES('abbazabba');
-ERROR HY000: Received an invalid datetime value 'abbazabba'.
+ERROR HY000: Received an invalid DATE value 'abbazabba'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2581,21 +2723,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATE2
 INSERT INTO t1 (b) VALUES('a');
-ERROR HY000: Received an invalid datetime value 'a'.
+ERROR HY000: Received an invalid DATE value 'a'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2634,8 +2779,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -2649,12 +2797,12 @@ INSERT INTO t1 (b) VALUES('0001-01-01 00:00:00');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2693,20 +2841,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX DATETIME
 INSERT INTO t1 (b) VALUES('9999-12-31 23:59:59');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2745,8 +2896,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 DATETIME
 INSERT INTO t1 (b) VALUES('0000-01-01');
@@ -2754,12 +2908,12 @@ ERROR HY000: Received an invalid datetime value '0000-01-01'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2798,8 +2952,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 DATETIME
 INSERT INTO t1 (b) VALUES('10000-01-01');
@@ -2807,12 +2964,12 @@ ERROR HY000: Received an invalid datetime value '10000-01-01'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2851,20 +3008,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input format DATETIME1
 INSERT INTO t1 (b) VALUES(20000101121559);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2903,20 +3063,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input formate DATETIME2
 INSERT INTO t1 (b) VALUES('19990601121547');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -2955,20 +3118,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL DATETIME
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3007,8 +3173,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATETIME1
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
@@ -3016,12 +3185,12 @@ ERROR HY000: Received an invalid datetime value '2000-01-01 25:00:00'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3060,8 +3229,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATETIME2
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
@@ -3069,12 +3241,12 @@ ERROR HY000: Received an invalid datetime value '2000-01-01 12:60:00'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3113,8 +3285,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT DATETIME3
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:70');
@@ -3122,12 +3297,12 @@ ERROR HY000: Received an invalid datetime value '2000-01-01 12:00:70'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3166,8 +3341,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -3181,12 +3359,12 @@ INSERT INTO t1 (b) VALUES('1970-01-01 00:00:00');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3210,7 +3388,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3225,20 +3403,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX TIMESTAMP
 INSERT INTO t1 (b) VALUES('2038-01-19 03:14:07');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3262,7 +3443,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3277,21 +3458,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MIN-1 TIMESTAMP
 INSERT INTO t1 (b) VALUES('1969-12-31 23:59:59');
-ERROR HY000: Received an invalid value '1969-12-31 23:59:59' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '1969-12-31 23:59:59'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3315,7 +3499,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3330,21 +3514,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX+1 TIMESTAMP
 INSERT INTO t1 (b) VALUES('2038-01-19 03:14:08');
-ERROR HY000: Received an invalid value '2038-01-19 03:14:08' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '2038-01-19 03:14:08'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3368,7 +3555,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3383,20 +3570,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input format TIMESTAMP1
 INSERT INTO t1 (b) VALUES(20000101121559);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3420,7 +3610,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3435,20 +3625,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing Alternate input formate TIMESTAMP2
 INSERT INTO t1 (b) VALUES(19990601121547);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3472,7 +3665,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3487,20 +3680,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL TIMESTAMP
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3524,7 +3720,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3539,21 +3735,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT TIMESTAMP1
 INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
-ERROR HY000: Received an invalid value '2000-01-01 25:00:00' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '2000-01-01 25:00:00'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3577,7 +3776,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3592,21 +3791,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT TIMESTAMP2
 INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
-ERROR HY000: Received an invalid value '2000-01-01 12:60:00' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '2000-01-01 12:60:00'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3630,7 +3832,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3645,21 +3847,24 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BAD INPUT TIMESTAMP3
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:65');
-ERROR HY000: Received an invalid value '2000-01-01 12:00:65' for a UNIX timestamp.
+ERROR HY000: Received an invalid timestamp value '2000-01-01 12:00:65'.
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3683,7 +3888,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3698,8 +3903,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -3713,12 +3921,12 @@ INSERT INTO t1 (b) VALUES("This is a string that will go into a BLOB column.  Le
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3757,20 +3965,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing BLOB simple2
 INSERT INTO t1 (b) VALUES("this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string");
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3809,20 +4020,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing NULL BLOB simple
 INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3861,20 +4075,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing INPUT BLOB simple1
 INSERT INTO t1 (b) VALUES(100);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3913,20 +4130,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing INPUT BLOB simple2
 INSERT INTO t1 (b) VALUES("");
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+6
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+6
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -3965,20 +4185,23 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing INPUT BLOB simple3
 INSERT INTO t1 (b) VALUES('2000-01-01 12:00:70');
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-8
+7
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-8
+7
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4017,8 +4240,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -4031,12 +4257,12 @@ We check how the NULL was recorded
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4075,8 +4301,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
 #Bug#594876 - transaction log not diffentiating NULL values and empty string for char columns
@@ -4087,12 +4316,12 @@ We check how the NULL was recorded in the log
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4131,19 +4360,22 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 INSERT INTO t1 VALUES (2,"");
 We check how the empty string was recorded in the log 
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4182,8 +4414,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
 **** BEGIN LARGE DATA TYPE TESTS ****
@@ -4194,12 +4429,12 @@ INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999999999999999999999
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4238,8 +4473,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing MAX DECIMAL + 1
 INSERT INTO t1 (b) VALUES (999999999999999999999999999999999999999999999999999999999999999990);
@@ -4247,12 +4485,12 @@ ERROR 22003: Out of range value for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4291,8 +4529,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t1;
 a	b
@@ -4306,12 +4547,12 @@ INSERT INTO t1 (b) VALUES (999999999999999);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4350,19 +4591,22 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999.999999999999999999999999999999);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4401,8 +4645,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Too long value
 INSERT INTO t1 (b) VALUES (99999999999999999999999999999999999.9999999999999999999999999999991);
@@ -4410,12 +4657,12 @@ ERROR 01000: Data truncated for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4454,8 +4701,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t1;
 a	b
@@ -4470,12 +4720,12 @@ INSERT INTO t1 (b) VALUES (999999999999999);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4514,19 +4764,22 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 INSERT INTO t1 (b) VALUES ("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4565,19 +4818,22 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 INSERT INTO t1 (b) VALUES ("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -4640,8 +4896,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;

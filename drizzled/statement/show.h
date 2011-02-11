@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,11 +38,7 @@ class Show : public Select
   bool if_exists;
 
 public:
-  Show(Session *in_session)
-    :
-      Select(in_session),
-      if_exists(false)
-  {}
+  Show(Session *in_session);
 
   void setShowPredicate(const std::string &schema_arg, const std::string &table_arg)
   {
@@ -76,6 +72,8 @@ public:
   }
 
   bool execute();
+
+  bool isShow() { return true; }
 };
 
 } /* namespace statement */

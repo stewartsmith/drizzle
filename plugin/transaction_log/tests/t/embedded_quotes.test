@@ -13,7 +13,8 @@ INSERT INTO t VALUES (1, "don't");
 
 # Read in the transaction.log.
 
---exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec ../plugin/transaction_log/utilities/transaction_reader $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 DROP TABLE t;
 

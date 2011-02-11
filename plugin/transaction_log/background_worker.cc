@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  Authors:
  *
@@ -71,12 +71,7 @@ bool initTransactionLogBackgroundWorker()
   int error;
   if ((error= pthread_create(&thread, NULL, collectTransactionLogStats, 0)))
   {
-    char errmsg[STRERROR_MAX];
-    strerror_r(errno, errmsg, sizeof(errmsg));
-    drizzled::errmsg_printf(ERRMSG_LVL_ERROR,
-                            _("Unable to create background worker thread. "
-                              "Got error %s.\n"),
-                  errmsg);
+    drizzled::sql_perror("Unable to create background worker thread.");
     return true;
   }
   return false;

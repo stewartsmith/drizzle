@@ -47,6 +47,9 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   is_primed(false),
   scopedLock(table::Cache::singleton().mutex())
 {
+  if (not isShowQuery())
+   return;
+
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   schema_predicate.append(select->getShowSchema());
@@ -180,5 +183,16 @@ void ShowTableStatus::Generator::fill()
   push(table->getCursor().tableSize());
 
   /* Auto_increment 10 */
-  push(table->getCursor().getNextInsertId());
+  bool session_set= false;
+  if (table->in_use == NULL)
+  {
+    table->in_use= &getSession();
+    session_set= true;
+  }
+
+  table->getCursor().info(HA_STATUS_AUTO);
+  push(table->getCursor().getAutoIncrement());
+
+  if (session_set)
+    table->in_use= NULL;
 }

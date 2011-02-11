@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ public:
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("logging '%s' pre() failed"),
                     handler->getName().c_str());
       return true;
@@ -86,7 +86,7 @@ public:
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("logging '%s' post() failed"),
                     handler->getName().c_str());
       return true;
@@ -110,7 +110,7 @@ public:
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("logging '%s' postEnd() failed"),
                     handler->getName().c_str());
       return true;
@@ -133,7 +133,7 @@ public:
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("logging '%s' resetCurrentScoreboard() failed"),
                     handler->getName().c_str());
       return true;

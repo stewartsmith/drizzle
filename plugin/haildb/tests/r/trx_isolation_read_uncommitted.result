@@ -29,4 +29,5 @@ SELECT * from t1 order by a;
 a
 1
 2
+COMMIT;
 DROP TABLE t1;

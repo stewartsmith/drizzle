@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,18 +27,17 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
-
-extern boost::mutex LOCK_global_system_variables;
 
 typedef boost::unique_lock<boost::mutex>  boost_unique_lock_t;
 
 typedef boost::shared_ptr<boost::thread> boost_thread_shared_ptr;
 
 extern boost::condition_variable_any COND_refresh;
-extern boost::condition_variable COND_thread_count;
-extern boost::condition_variable COND_server_end;
+extern DRIZZLED_API boost::condition_variable COND_thread_count;
 extern pthread_t signal_thread;
 
 } /* namespace drizzled */

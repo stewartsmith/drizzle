@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,14 +41,17 @@
 namespace drizzled
 {
 
+class Table;
+
+namespace optimizer
+{
+  class Position;
+}
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
 #define TAB_INFO_USING_INDEX 2
 #define TAB_INFO_USING_WHERE 4
 #define TAB_INFO_FULL_SCAN_ON_NULL 8
-
-class Table;
-
 
 /** Description of an access method */
 enum access_method
@@ -243,6 +246,8 @@ public:
   }
 
   void readCachedRecord();
+  int joinReadConstTable(optimizer::Position *pos);
+  int joinReadSystem();
 };
 
 } /* namespace drizzled */

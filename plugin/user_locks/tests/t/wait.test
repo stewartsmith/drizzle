@@ -10,7 +10,7 @@ connection default;
 set @count_barrier= "count_barrier";
 set @barrier_limit= 6;
 SELECT create_barrier(@count_barrier, @barrier_limit);
-SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, if ((WAITER_LIMIT = @barrier_limit), "YES", "NO") from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier  ORDER BY USER_BARRIER_NAME;
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, if ((WAITER_LIMIT = @barrier_limit), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier  ORDER BY USER_BARRIER_NAME;
 
 connection con1;
 set @count_barrier= "count_barrier";
@@ -32,5 +32,11 @@ send SELECT wait(@count_barrier), "con4";
 connection con5;
 set @count_barrier= "count_barrier";
 SELECT WAIT_UNTIL(@count_barrier, 4);
-SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+SELECT USERNAME, INFO FROM DATA_DICTIONARY.PROCESSLIST
+  WHERE 
+    INFO LIKE '%con1"' OR
+    INFO LIKE '%con2"' OR
+    INFO LIKE '%con3"' OR
+    INFO LIKE '%con4"'
+  ORDER BY ID;
 SELECT signal(@count_barrier);

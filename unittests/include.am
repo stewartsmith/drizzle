@@ -2,16 +2,28 @@
 # included from Top Level Makefile.am
 # All paths should be given relative to the root
 
-if HAVE_LIBGTEST
+#  Copyright (C) 2010 Monty Taylor
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; version 2 of the License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+if HAVE_BOOST_TEST
 check_PROGRAMS += unittests/unittests
 endif
 
 noinst_HEADERS += \
 		  unittests/plugin/plugin_stubs.h \
 		  unittests/temporal_generator.h
-
-EXTRA_DIST += \
-	      unittests/client_server.c
 
 unit: unittests/unittests
 	unittests/unittests
@@ -22,30 +34,26 @@ unit: unittests/unittests
 #		     
 
 unittests_unittests_SOURCES = \
+                              unittests/main.cc \
 			      unittests/atomics_test.cc \
 			      unittests/calendar_test.cc \
 			      unittests/constrained_value.cc \
 			      unittests/date_test.cc \
 			      unittests/date_time_test.cc \
-			      unittests/generators.cc \
-                              unittests/global_buffer_test.cc \
-                              unittests/libdrizzle_test.cc \
-			      unittests/main.cc \
+			      unittests/global_buffer_test.cc \
+			      unittests/libdrizzle_test.cc \
 			      unittests/micro_timestamp_test.cc \
 			      unittests/nano_timestamp_test.cc \
 			      unittests/option_context.cc \
-			      unittests/plugin/authentication_test.cc \
-			      unittests/plugin/client_test.cc \
-			      unittests/plugin/error_message_test.cc \
 			      unittests/pthread_atomics_test.cc \
 			      unittests/table_identifier.cc \
 			      unittests/temporal_format_test.cc \
-			      unittests/temporal_generator.cc \
-			      unittests/time_test.cc \
+			      unittests/temporal_generator.cc  \
 			      unittests/timestamp_test.cc \
+			      unittests/time_test.cc \
 			      unittests/utf8_test.cc
 
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
-  ${drizzled_drizzled_LDADD} ${LTLIBGTEST} ${BOOST_LIBS} \
-  libdrizzle/libdrizzle.la
+  ${drizzled_drizzled_LDADD} ${BOOST_LIBS} libdrizzle/libdrizzle.la \
+  ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}

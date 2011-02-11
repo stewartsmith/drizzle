@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ ModulesTool::ModulesTool() :
   add_field("MODULE_NAME");
   add_field("MODULE_VERSION", 20);
   add_field("MODULE_AUTHOR");
-  add_field("IS_BUILTIN", plugin::TableFunction::BOOLEAN);
+  add_field("IS_BUILTIN", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("MODULE_LIBRARY", 254);
   add_field("MODULE_DESCRIPTION", 254);
   add_field("MODULE_LICENSE", 80);
@@ -51,7 +51,7 @@ ModulesTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   module::Registry &registry= module::Registry::singleton();
-  modules= registry.getList(true);
+  modules= registry.getList();
   it= modules.begin();
 }
 

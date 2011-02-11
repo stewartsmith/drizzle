@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,11 +74,11 @@ int64_t Item_float::val_int()
   return (int64_t) rint(value);
 }
 
-my_decimal *Item_float::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_float::val_decimal(type::Decimal *decimal_value)
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
-  double2my_decimal(E_DEC_FATAL_ERROR, value, decimal_value);
+  double2_class_decimal(E_DEC_FATAL_ERROR, value, decimal_value);
   return (decimal_value);
 }
 

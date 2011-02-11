@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,11 +28,11 @@ namespace drizzled
 
 bool statement::Commit::execute()
 {
-  if (! session->endTransaction(tx_release ? COMMIT_RELEASE : tx_chain ? COMMIT_AND_CHAIN : COMMIT))
+  if (! getSession()->endTransaction(tx_release ? COMMIT_RELEASE : tx_chain ? COMMIT_AND_CHAIN : COMMIT))
   {
     return true;
   }
-  session->my_ok();
+  getSession()->my_ok();
   return false;
 }
 

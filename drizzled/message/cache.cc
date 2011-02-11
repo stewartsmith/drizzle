@@ -27,7 +27,7 @@ namespace drizzled {
 
 namespace message {
 
-table::shared_ptr Cache::find(const TableIdentifier &identifier)
+table::shared_ptr Cache::find(const identifier::Table &identifier)
 {
   boost_unique_lock_t scoped_lock(_access);
 
@@ -40,14 +40,14 @@ table::shared_ptr Cache::find(const TableIdentifier &identifier)
   return table::shared_ptr();
 }
 
-void Cache::erase(const TableIdentifier &identifier)
+void Cache::erase(const identifier::Table &identifier)
 {
   boost_unique_lock_t scoped_lock(_access);
   
   cache.erase(identifier.getKey());
 }
 
-bool Cache::insert(const TableIdentifier &identifier, table::shared_ptr share)
+bool Cache::insert(const identifier::Table &identifier, table::shared_ptr share)
 {
   boost_unique_lock_t scoped_lock(_access);
 
@@ -57,7 +57,7 @@ bool Cache::insert(const TableIdentifier &identifier, table::shared_ptr share)
   return ret.second;
 }
 
-bool Cache::insert(const TableIdentifier &identifier, drizzled::message::Table &message)
+bool Cache::insert(const identifier::Table &identifier, drizzled::message::Table &message)
 {
   boost_unique_lock_t scoped_lock(_access);
 

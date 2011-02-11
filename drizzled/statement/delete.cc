@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,22 +30,22 @@ namespace drizzled
 
 bool statement::Delete::execute()
 {
-  DRIZZLE_DELETE_START(session->getQueryString()->c_str());
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
-  Select_Lex *select_lex= &session->lex->select_lex;
-  Select_Lex_Unit *unit= &session->lex->unit;
+  DRIZZLE_DELETE_START(getSession()->getQueryString()->c_str());
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *all_tables= getSession()->lex->query_tables;
+  Select_Lex *select_lex= &getSession()->lex->select_lex;
+  Select_Lex_Unit *unit= &getSession()->lex->unit;
   assert(first_table == all_tables && first_table != 0);
   assert(select_lex->offset_limit == 0);
   unit->set_limit(select_lex);
   bool need_start_waiting= false;
 
-  if (! (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
+  if (! (need_start_waiting= not getSession()->wait_if_global_read_lock(0, 1)))
   {
     return true;
   }
 
-  bool res= mysql_delete(session, all_tables, select_lex->where,
+  bool res= delete_query(getSession(), all_tables, select_lex->where,
                          &select_lex->order_list,
                          unit->select_limit_cnt, select_lex->options,
                          false);
@@ -53,7 +53,7 @@ bool statement::Delete::execute()
     Release the protection against the global read lock and wake
     everyone, who might want to set a global read lock.
   */
-  session->startWaitingGlobalReadLock();
+  getSession()->startWaitingGlobalReadLock();
 
   return res;
 }

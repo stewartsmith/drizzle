@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ struct Manifest
   const char *descr;         /* general descriptive text (for SHOW PLUGINS ) */
   plugin_license_type license; /* plugin license (PLUGIN_LICENSE_XXX)          */
   initialize_func_t init;     /* function to invoke when plugin is loaded     */
-  drizzle_sys_var **system_vars;
+  const char *depends;
   options_func_t init_options; /* register command line options              */
 };
 

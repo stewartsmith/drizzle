@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,23 +49,31 @@ Session::shared_ptr Cache::find(const session_id_t &id)
   return Session::shared_ptr();
 }
 
+void Cache::shutdownFirst()
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+  _ready_to_exit= true;
+
+  /* do the broadcast inside the lock to ensure that my_end() is not called */
+  _end.notify_all();
+}
+
+  /* Wait until cleanup is done */
+void Cache::shutdownSecond()
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+
+  while (not _ready_to_exit)
+  {
+    _end.wait(scopedLock);
+  }
+}
+
 size_t Cache::count()
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 
   return cache.size();
-}
-
-void Cache::erase(Session::Ptr arg)
-{
-  BOOST_FOREACH(list::const_reference it, cache)
-  {
-    if (it.get() == arg)
-    {
-      cache.remove(it);
-      return;
-    }
-  }
 }
 
 void Cache::insert(Session::shared_ptr &arg)
@@ -76,7 +84,9 @@ void Cache::insert(Session::shared_ptr &arg)
 
 void Cache::erase(Session::shared_ptr &arg)
 {
-  cache.erase(remove(cache.begin(), cache.end(), arg));
+  list::iterator iter= std::find(cache.begin(), cache.end(), arg);
+  assert(iter != cache.end());
+  cache.erase(iter);
 }
 
 } /* namespace session */

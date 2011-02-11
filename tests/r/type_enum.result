@@ -1646,7 +1646,7 @@ select * from t1;
 a
 drop table t1;
 create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
-ERROR HY000: Corrupt or invalid table definition: 
+ERROR HY000: Corrupt or invalid table definition for 't1': 
 create table t1 (a enum(0xC3A4, '1', '2') not null default 0xC3A4);
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -1661,7 +1661,7 @@ CREATE TABLE t1 (
 a INT  default 1,
 b ENUM('value','öäü_value','ÊÃÕ') NOT NULL
 );
-ERROR HY000: Corrupt or invalid table definition: 
+ERROR HY000: Corrupt or invalid table definition for 't1': 
 CREATE TABLE t1 (c enum('ae','oe','ue','ss') collate utf8_unicode_ci);
 INSERT INTO t1 VALUES ('ä');
 ERROR HY000: Received an invalid enum value 'ä'.
@@ -1677,7 +1677,7 @@ DROP TABLE t1;
 CREATE TABLE t1 (
 a ENUM('ä','ö','ü') default 'ü'
 );
-ERROR HY000: Corrupt or invalid table definition: 
+ERROR HY000: Corrupt or invalid table definition for 't1': 
 CREATE TABLE t1 (
 a ENUM('Ã¤','Ã¶','Ã¼') default 'Ã¼'
 );
@@ -1713,7 +1713,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
-ERROR HY000: Corrupt or invalid table definition: 
+ERROR HY000: Corrupt or invalid table definition for 't1': 
 create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
 show create table t1;
 Table	Create Table
@@ -1722,7 +1722,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
-ERROR HY000: Corrupt or invalid table definition: 
+ERROR HY000: Corrupt or invalid table definition for 't1': 
 CREATE TABLE t1 (
 id INT AUTO_INCREMENT PRIMARY KEY,
 c1 ENUM('a', '', 'b')

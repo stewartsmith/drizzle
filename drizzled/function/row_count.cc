@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,9 +28,7 @@ namespace drizzled
 int64_t Item_func_row_count::val_int()
 {
   assert(fixed == 1);
-  Session *session= current_session;
-
-  return session->row_count_func;
+  return getSession().rowCount();
 }
 
 

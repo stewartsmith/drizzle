@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,8 +31,14 @@ namespace drizzled {
 #define COLUMN_COMMENT_MAXLEN 1024
 #define INDEX_COMMENT_MAXLEN 1024
 
+bool fill_table_proto(message::Table &table_proto,
+                      List<CreateField> &create_fields,
+                      HA_CREATE_INFO *create_info,
+                      uint32_t keys,
+                      KeyInfo *key_info);
+
 bool rea_create_table(Session *session,
-                      const TableIdentifier &identifier,
+                      const identifier::Table &identifier,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_field,

@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -37,6 +37,8 @@ Created 3/26/1996 Heikki Tuuri
 #include "read0types.h"
 #include "trx0xa.h"
 #include "ut0vec.h"
+
+namespace drizzled { class Session; }
 
 /** Dummy session used currently in MySQL interface */
 extern sess_t*	trx_dummy_sess;
@@ -500,9 +502,6 @@ struct trx_struct{
 					in that case we must flush the log
 					in trx_commit_complete_for_mysql() */
 	ulint		duplicates;	/*!< TRX_DUP_IGNORE | TRX_DUP_REPLACE */
-	ulint		active_trans;	/*!< 1 - if a transaction in MySQL
- 					is active. 2 - if prepare_commit_mutex
- 					was taken */
 	unsigned	has_search_latch;
 					/* TRUE if this trx has latched the
 					search system latch in S-mode */
@@ -548,7 +547,7 @@ struct trx_struct{
 	table_id_t	table_id;	/*!< Table to drop iff dict_operation
 					is TRUE, or 0. */
 	/*------------------------------*/
-	void*		mysql_thd;	/*!< MySQL thread handle corresponding
+        drizzled::Session *mysql_thd;	/*!< MySQL thread handle corresponding
 					to this trx, or NULL */
 	const char*	mysql_log_file_name;
 					/* if MySQL binlog is used, this field
@@ -708,6 +707,15 @@ struct trx_struct{
 	/*------------------------------*/
 	char detailed_error[256];	/*!< detailed error message for last
 					error, or empty. */
+
+        inline drizzled::Session *session()
+        {
+          return mysql_thd;
+        }
+        inline drizzled::Session *session() const
+        {
+          return mysql_thd;
+        }
 };
 
 #define TRX_MAX_N_THREADS	32	/* maximum number of

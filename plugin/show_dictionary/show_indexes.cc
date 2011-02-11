@@ -44,12 +44,15 @@ ShowIndexes::Generator::Generator(Field **arg) :
   index_iterator(0),
   index_part_iterator(0)
 {
+  if (not isShowQuery())
+    return;
+
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
   {
     table_name.append(select->getShowTable().c_str());
-    TableIdentifier identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
+    identifier::Table identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
 
     is_tables_primed= plugin::StorageEngine::getTableDefinition(getSession(),
                                                                 identifier,

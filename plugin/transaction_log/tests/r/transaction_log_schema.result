@@ -30,15 +30,19 @@ statement {
       engine {
         name: "filesystem"
       }
+      catalog: "LOCAL"
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 Testing simple DROP SCHEMA
 DROP SCHEMA my_test_schema;
@@ -68,8 +72,11 @@ statement {
     schema_name: "my_test_schema"
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SET GLOBAL transaction_log_truncate_debug= true;
 
@@ -109,6 +116,8 @@ statement {
     if_exists_clause: true
   }
 }
+segment_id: 1
+end_segment: true
 
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
@@ -136,8 +145,11 @@ statement {
     schema_name: "my_test_schema"
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SET GLOBAL transaction_log_truncate_debug= true;
 
@@ -172,13 +184,41 @@ transaction_context {
   END_TIMESTAMP
 }
 statement {
-  type: RAW_SQL
+  type: ALTER_SCHEMA
   START_TIMESTAMP
   END_TIMESTAMP
-  sql: "ALTER SCHEMA my_test_schema COLLATE utf8_turkish_ci"
+  alter_schema_statement {
+    before {
+      name: "my_test_schema"
+      collation: "utf8_general_ci"
+      engine {
+        name: "filesystem"
+      }
+      catalog: "LOCAL"
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+      UUID
+      version: 1
+    }
+    after {
+      name: "my_test_schema"
+      collation: "utf8_turkish_ci"
+      engine {
+        name: "filesystem"
+      }
+      catalog: "LOCAL"
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+      UUID
+      version: 2
+    }
+  }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 CREATE TABLE t2 LIKE t1;
 Check transaction_log_entries
@@ -213,7 +253,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           is_autoincrement: true
@@ -253,14 +293,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP SCHEMA my_test_schema;
 SET GLOBAL transaction_log_truncate_debug= true;

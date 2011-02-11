@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -95,19 +95,20 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
   std::ostringstream oss;
   std::string return_value;
 
-  LOCK_global_system_variables.lock();
-
-  if (show_type == SHOW_SYS)
   {
-    show_type= ((sys_var*) value)->show_type();
-    value= (char*) ((sys_var*) value)->value_ptr(&(getSession()), option_type,
-                                                 &null_lex_str);
+    boost::mutex::scoped_lock scopedLock(getSession().catalog().systemVariableLock());
+
+    if (show_type == SHOW_SYS)
+    {
+      show_type= ((sys_var*) value)->show_type();
+      value= (char*) ((sys_var*) value)->value_ptr(&(getSession()), option_type,
+                                                   &null_lex_str);
+    }
+
+    return_value= StatusHelper::fillHelper(NULL, value, show_type); 
   }
-
-  return_value= StatusHelper::fillHelper(NULL, value, show_type); 
-
-  LOCK_global_system_variables.unlock();
   push(name);
+
   if (return_value.length())
     push(return_value);
   else 

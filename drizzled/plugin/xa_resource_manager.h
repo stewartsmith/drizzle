@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@
 
 #include <boost/unordered_set.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -35,7 +37,7 @@ namespace plugin
  * An abstract interface class which exposes the participation
  * of implementing classes in distributed transactions in the XA protocol.
  */
-class XaResourceManager
+class DRIZZLED_API XaResourceManager
 {
 public:
   XaResourceManager() {}

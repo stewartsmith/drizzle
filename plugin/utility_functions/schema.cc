@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ String *Schema::val_str(String *str)
     return 0;
   }
 
-  str->copy(schema->c_str(), schema->size(), system_charset_info);
+  str->copy(*schema, system_charset_info);
 
   return str;
 }

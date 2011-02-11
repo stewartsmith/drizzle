@@ -1,5 +1,5 @@
 /* vim: expandtab:shiftwidth=2:tabstop=2:smarttab:
-   Copyright (C) 2009 Sun Microsystems
+   Copyright (C) 2009 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
   message::schema::shared_ptr proto;
 
 
-  SchemaIdentifier schema_identifier(db);
+  identifier::Schema schema_identifier(db);
   if (not plugin::StorageEngine::getSchemaDefinition(schema_identifier, proto))
   {
     my_error(ER_BAD_DB_ERROR, MYF(0), db);
@@ -122,7 +122,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Shows text representation of schema definition proto",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

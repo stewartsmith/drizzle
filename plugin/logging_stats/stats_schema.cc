@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Joseph Daly <skinny.moey@gmail.com>
+ * Copyright (C) 2010 Joseph Daly <skinny.moey@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * +----------------+---------+-------+---------+-----------------+-----------+
  * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +----------------+---------+-------+---------+-----------------+-----------+
- * | USER           | VARCHAR | FALSE |         | FALSE           |           |
+ * | USERNAME       | VARCHAR | FALSE |         | FALSE           |           |
  * | IP             | VARCHAR | FALSE |         | FALSE           |           |
  * | COUNT_SELECT   | BIGINT  | FALSE |         | FALSE           |           |
  * | COUNT_DELETE   | BIGINT  | FALSE |         | FALSE           |           |
@@ -70,7 +70,7 @@
  * +----------------+---------+-------+---------+-----------------+-----------+
  * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +----------------+---------+-------+---------+-----------------+-----------+
- * | USER           | VARCHAR | FALSE |         | FALSE           |           |
+ * | USERNAME       | VARCHAR | FALSE |         | FALSE           |           |
  * | COUNT_SELECT   | BIGINT  | FALSE |         | FALSE           |           |
  * | COUNT_DELETE   | BIGINT  | FALSE |         | FALSE           |           |
  * | COUNT_UPDATE   | BIGINT  | FALSE |         | FALSE           |           |
@@ -87,7 +87,7 @@
  * +---------------------+---------+-------+---------+-----------------+-----------+
  * | Field               | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +---------------------+---------+-------+---------+-----------------+-----------+
- * | USER                | VARCHAR | FALSE |         | FALSE           |           | 
+ * | USERNAME            | VARCHAR | FALSE |         | FALSE           |           | 
  * | BYTES_RECEIVED      | VARCHAR | FALSE |         | FALSE           |           | 
  * | BYTES_SENT          | VARCHAR | FALSE |         | FALSE           |           | 
  * | DENIED_CONNECTIONS  | VARCHAR | FALSE |         | FALSE           |           | 
@@ -226,7 +226,7 @@ CurrentCommandsTool::CurrentCommandsTool(LoggingStats *logging_stats) :
 {
   outer_logging_stats= logging_stats;
 
-  add_field("USER");
+  add_field("USERNAME");
   add_field("IP");
 
   uint32_t number_commands= UserCommands::getUserCounts();
@@ -318,7 +318,7 @@ CumulativeCommandsTool::CumulativeCommandsTool(LoggingStats *logging_stats) :
 {
   outer_logging_stats= logging_stats;
 
-  add_field("USER");
+  add_field("USERNAME");
 
   uint32_t number_commands= UserCommands::getUserCounts();
 
@@ -384,7 +384,7 @@ CumulativeUserStatsTool::CumulativeUserStatsTool(LoggingStats *logging_stats) :
 {
   outer_logging_stats= logging_stats;
 
-  add_field("USER");
+  add_field("USERNAME");
   add_field("BYTES_RECEIVED");
   add_field("BYTES_SENT");
   add_field("DENIED_CONNECTIONS");

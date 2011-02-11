@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@ bool statement::Flush::execute()
      *
      * Presumably, RESET and binlog writing doesn't require synchronization
      */
-    write_bin_log(session, *session->getQueryString());
-    session->my_ok();
+    write_bin_log(getSession(), *getSession()->getQueryString());
+    getSession()->my_ok();
   }
 
   return false;
@@ -53,7 +53,7 @@ bool statement::Flush::execute()
 bool statement::Flush::reloadCache()
 {
   bool result= false;
-  TableList *tables= (TableList *) session->lex->select_lex.table_list.first;
+  TableList *tables= (TableList *) getSession()->lex->select_lex.table_list.first;
 
   if (flush_log)
   {
@@ -68,37 +68,37 @@ bool statement::Flush::reloadCache()
   */
   if (flush_tables || flush_tables_with_read_lock)
   {
-    if (session && flush_tables_with_read_lock)
+    if (getSession() && flush_tables_with_read_lock)
     {
-      if (session->lockGlobalReadLock())
+      if (getSession()->lockGlobalReadLock())
       {
         return true; /* Killed */
       }
-      result= session->close_cached_tables(tables, true, true);
+      result= getSession()->close_cached_tables(tables, true, true);
 
-      if (session->makeGlobalReadLockBlockCommit()) /* Killed */
+      if (getSession()->makeGlobalReadLockBlockCommit()) /* Killed */
       {
         /* Don't leave things in a half-locked state */
-        session->unlockGlobalReadLock();
+        getSession()->unlockGlobalReadLock();
         return true;
       }
     }
     else
     {
-      result= session->close_cached_tables(tables, true, false);
+      result= getSession()->close_cached_tables(tables, true, false);
     }
   }
 
-  if (session && flush_status)
+  if (getSession() && flush_status)
   {
-    session->refresh_status();
+    getSession()->refresh_status();
   }
 
-  if (session && flush_global_status)
+  if (getSession() && flush_global_status)
   {
     memset(&current_global_counters, 0, sizeof(current_global_counters));
-    plugin::Logging::resetStats(session);
-    session->refresh_status();
+    plugin::Logging::resetStats(getSession());
+    getSession()->refresh_status();
   }
 
   return result;

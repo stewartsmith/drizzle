@@ -112,6 +112,7 @@ Partitioning
 
 INFORMATION_SCHEMA
 ------------------
+
 The INFORMATION_SCHEMA provides access to database metadata.
 
 The INFORMATION_SCHEMA in Drizzle is strictly ANSI compliant. If you write
@@ -166,7 +167,13 @@ or DATA_DICTIONARY views. All SHOW commands are aliases to INFORMATION_SCHEMA
 queries. Our INFORMATION_SCHEMA implementation does not have the drawbacks
 of the MySQL implementation.
 
+Here are some specific SHOW differences:
+
  * SHOW ENGINES: use DATA_DICTIONARY
+ * SHOW CREATE TABLE: specifies the AUTO_INCREMENT at CREATE/ALTER TABLE time,
+   not the current AUTO_INCREMENT
+ * SHOW TABLE STATUS: only shows tables in the current table cache
+ * SHOW [ENGINE] STATUS: use the DATA_DICTIONARY tables for that engine
 
 Removed commands
 ----------------
@@ -176,11 +183,19 @@ Removed commands
  * CREATE FUNCTION
  * CONVERT
  * SET NAMES
+ * Multi-table delete and multi-table update code was removed and can be accomplished through subqueries. More detailed information can be found in the :doc:`dml` section.
 
 Operators Removed
 -----------------
 
-Bit operators: &&, >>, <<, ~, ^, |, &
+Bit operators
+ * &&
+ * >>
+ * <<
+ * ~
+ * ^
+ * '|'
+ * &
 
 Removed functions
 -----------------
@@ -191,6 +206,7 @@ Removed functions
 
 Keywords removed
 ----------------
+
  * BIT_AND
  * BIT_OR
  * BIT_XOR

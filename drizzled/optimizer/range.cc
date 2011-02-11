@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -348,7 +348,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
   {
     return 0;
   }
-  if (! (select= new optimizer::SqlSelect))
+  if (! (select= new optimizer::SqlSelect()))
   {
     *error= 1;			// out of memory
     return 0;
@@ -3257,8 +3257,11 @@ sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
 
 #define CLONE_KEY1_MAYBE 1
 #define CLONE_KEY2_MAYBE 2
-#define swap_clone_flag(A) ((A & 1) << 1) | ((A & 2) >> 1)
 
+static uint32_t swap_clone_flag(uint32_t a)
+{
+  return ((a & 1) << 1) | ((a & 2) >> 1);
+}
 
 static optimizer::SEL_TREE *
 tree_and(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer::SEL_TREE *tree2)

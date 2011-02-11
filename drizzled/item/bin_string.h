@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 
 #include <drizzled/item/hex_string.h>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -31,7 +33,8 @@ public:
   Item_bin_string(const char *str,uint32_t str_length);
 };
 
-class Item_result_field :public Item    /* Item with result field */
+class DRIZZLED_API Item_result_field :
+  public Item    /* Item with result field */
 {
 public:
   Field *result_field;                          /* Save result here */

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 
 /* Structs that defines the Table */
 
+
+
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
@@ -33,9 +35,11 @@
 #include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
-#include "drizzled/definition/table.h"
+#include "drizzled/table/instance.h"
 #include "drizzled/atomics.h"
 #include "drizzled/query_id.h"
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -47,7 +51,9 @@ class Select_Lex;
 class COND_EQUAL;
 class SecurityContext;
 class TableList;
-class Field_timestamp;
+namespace field {
+class Epoch;
+}
 class Field_blob;
 
 extern uint64_t refresh_version;
@@ -59,7 +65,7 @@ typedef struct st_columndef MI_COLUMNDEF;
  * Class representing a set of records, either in a temporary, 
  * normal, or derived table.
  */
-class Table 
+class DRIZZLED_API Table 
 {
   Field **field; /**< Pointer to fields collection */
 public:
@@ -85,8 +91,10 @@ public:
   }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
+
 private:
   Table *next;
+
 public:
   Table *getNext() const
   {
@@ -158,7 +166,7 @@ public:
   KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
-  Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
+  field::Epoch *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
 
   TableList *pos_in_table_list; /* Element referring to this table */
   Order *group;
@@ -280,7 +288,7 @@ public:
     statement then the variable contains TIMESTAMP_NO_AUTO_SET (i.e. 0).
 
     Value of this variable is set for each statement in open_table() and
-    if needed cleared later in statement processing code (see mysql_update()
+    if needed cleared later in statement processing code (see update_query()
     as example).
   */
   timestamp_auto_set_type timestamp_field_type;
@@ -308,8 +316,10 @@ public:
     The set is implemented as a bitmap.
   */
   key_map keys_in_use_for_query;
+
   /* Map of keys that can be used to calculate GROUP BY without sorting */
   key_map keys_in_use_for_group_by;
+
   /* Map of keys that can be used to calculate ORDER BY without sorting */
   key_map keys_in_use_for_order_by;
 
@@ -408,14 +418,14 @@ public:
 
     return NULL;
   }
-  inline uint8_t getBlobPtrSize() { return getShare()->blob_ptr_size; }
-  inline uint32_t getNullBytes() { return getShare()->null_bytes; }
-  inline uint32_t getNullFields() { return getShare()->null_fields; }
+  inline uint8_t getBlobPtrSize() const { return getShare()->sizeBlobPtr(); }
+  inline uint32_t getNullBytes() const { return getShare()->null_bytes; }
+  inline uint32_t getNullFields() const { return getShare()->null_fields; }
   inline unsigned char *getDefaultValues() { return  getMutableShare()->getDefaultValues(); }
   inline const char *getSchemaName()  const { return getShare()->getSchemaName(); }
   inline const char *getTableName()  const { return getShare()->getTableName(); }
 
-  inline bool isDatabaseLowByteFirst() { return getShare()->db_low_byte_first; } /* Portable row format */
+  inline bool isDatabaseLowByteFirst() const { return getShare()->db_low_byte_first; } /* Portable row format */
   inline bool isNameLock() const { return open_placeholder; }
 
   uint32_t index_flags(uint32_t idx) const
@@ -603,26 +613,7 @@ public:
   */
   bool operator<(const Table &right) const
   {
-    int result= strcasecmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
-
-    if (result <  0)
-      return true;
-
-    if (result >  0)
-      return false;
-
-    result= strcasecmp(this->getShare()->getTableName(), right.getShare()->getTableName());
-
-    if (result <  0)
-      return true;
-
-    if (result >  0)
-      return false;
-
-    if (this->getShare()->getTableProto()->type()  < right.getShare()->getTableProto()->type())
-      return true;
-
-    return false;
+    return getShare()->getCacheKey() < right.getShare()->getCacheKey();
   }
 
   static bool compare(const Table *a, const Table *b)
@@ -860,14 +851,14 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 
-int rename_file_ext(const char * from,const char * to,const char * ext);
+DRIZZLED_API int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
-bool check_db_name(Session *session, SchemaIdentifier &schema);
+bool check_db_name(Session *session, identifier::Schema &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
 
-#include "drizzled/table/instance.h"
+#include "drizzled/table/singular.h"
 #include "drizzled/table/concurrent.h"
 
 #endif /* DRIZZLED_TABLE_H */

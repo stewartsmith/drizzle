@@ -1,4 +1,4 @@
-/* Copyright (c) 2010 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2010 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -87,7 +87,7 @@ DRIZZLE_DECLARE_PLUGIN
 	"The Media Stream daemon for Drizzle",
 	PLUGIN_LICENSE_GPL,
 	my_init, /* Plugin Init */
-	NULL,          /* system variables                */
+	NULL,          /* depends */
 	init_options                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
@@ -115,7 +115,7 @@ mysql_declare_plugin(pbms)
 	0x0001 /* 0.1 */,
 	NULL, 											/* status variables								*/
 #if MYSQL_VERSION_ID >= 50118
-	pbms_system_variables, 							/* system variables								*/
+	pbms_system_variables, 							/* depends */
 #else
 	NULL,
 #endif

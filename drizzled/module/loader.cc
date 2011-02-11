@@ -141,9 +141,6 @@ static int test_plugin_options(memory::Root *, module::Module *,
 static void unlock_variables(Session *session, drizzle_system_variables *vars);
 static void cleanup_variables(drizzle_system_variables *vars);
 
-/* declared in set_var.cc */
-extern sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error);
-
 
 /****************************************************************************
   Plugin support code
@@ -165,7 +162,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
 
   if (registry.find(library->getName()))
   {
-    errmsg_printf(ERRMSG_LVL_WARN, ER(ER_PLUGIN_EXISTS),
+    errmsg_printf(error::WARN, ER(ER_PLUGIN_EXISTS),
                   library->getName().c_str());
     return false;
   }
@@ -176,7 +173,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
 
   if (registry.find(manifest->name))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, 
+    errmsg_printf(error::ERROR, 
                   _("Plugin '%s' contains the name '%s' in its manifest, which "
                     "has already been registered.\n"),
                   library->getName().c_str(),
@@ -193,7 +190,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
     registry.add(tmp);
     return false;
   }
-  errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY),
+  errmsg_printf(error::ERROR, ER(ER_CANT_FIND_DL_ENTRY),
                 library->getName().c_str());
   return true;
 }
@@ -223,7 +220,7 @@ static bool plugin_initialize(module::Registry &registry,
   {
     if (module->getManifest().init(loading_context))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Plugin '%s' init function returned error.\n"),
                     module->getName().c_str());
       return true;
@@ -373,12 +370,12 @@ bool plugin_finalize(module::Registry &registry)
   /*
     Now we initialize all remaining plugins
   */
-  std::map<std::string, module::Module *>::const_iterator modules=
-    registry.getModulesMap().begin();
+  module::Registry::ModuleList module_list= registry.getList();
+  module::Registry::ModuleList::iterator modules= module_list.begin();
     
-  while (modules != registry.getModulesMap().end())
+  while (modules != module_list.end())
   {
-    module::Module *module= (*modules).second;
+    module::Module *module= *modules;
     ++modules;
     if (module->isInited == false)
     {
@@ -391,12 +388,24 @@ bool plugin_finalize(module::Registry &registry)
     }
   }
 
+
   BOOST_FOREACH(plugin::Plugin::map::value_type value, registry.getPluginsMap())
   {
     value.second->prime();
   }
 
   return false;
+}
+
+/*
+  Window of opportunity for plugins to issue any queries with the database up and running but with no user's connected.
+*/
+void plugin_startup_window(module::Registry &registry, drizzled::Session &session)
+{
+  BOOST_FOREACH(plugin::Plugin::map::value_type value, registry.getPluginsMap())
+  {
+    value.second->startup(session);
+  }
 }
 
 class PrunePlugin :
@@ -450,7 +459,7 @@ static bool plugin_load_list(module::Registry &registry,
     library= registry.addLibrary(plugin_name, builtin);
     if (library == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Couldn't load plugin library named '%s'.\n"),
                     plugin_name.c_str());
       return true;
@@ -460,7 +469,7 @@ static bool plugin_load_list(module::Registry &registry,
     if (plugin_add(registry, tmp_root, library, long_options))
     {
       registry.removeLibrary(plugin_name);
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Couldn't load plugin named '%s'.\n"),
                     plugin_name.c_str());
       return true;
@@ -499,11 +508,6 @@ void module_shutdown(module::Registry &registry)
   System Variables support
 ****************************************************************************/
 
-
-sys_var *find_sys_var(const char *str, uint32_t length)
-{
-  return intern_find_sys_var(str, length, false);
-}
 
 
 void plugin_sessionvar_init(Session *session)

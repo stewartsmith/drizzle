@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS t1;
-CREATE TABLE t1 (a INT, b VARCHAR(20)) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/basic_update.data";
+CREATE TABLE t1 (a INT, b VARCHAR(20)) ENGINE=FILESYSTEM,FILE="VARDIR/filesystem_ln/basic_update.data";
 INSERT INTO t1 VALUES (222, "bbb");
 INSERT INTO t1 VALUES (333, "ccc");
 INSERT INTO t1 VALUES (444, "ddd");
@@ -12,4 +12,7 @@ a	b
 111	aaa
 333	ccc
 DELETE FROM t1 WHERE a!=111;
+SELECT * FROM t1;
+a	b
+111	aaa
 DROP TABLE t1;

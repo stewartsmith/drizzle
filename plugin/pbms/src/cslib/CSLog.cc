@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -107,6 +107,7 @@ void CSLog::log(CSThread *self, const char *func, const char *file, int line, in
 {
 	const char	*end_ptr;
 	size_t		len;
+	size_t ret;
 
 	if (level > iLogLevel)
 		return;
@@ -120,7 +121,7 @@ void CSLog::log(CSThread *self, const char *func, const char *file, int line, in
 		/* Write until the next \n... */
 		if ((end_ptr = strchr((char*)buffer, '\n'))) {
 			len = end_ptr - buffer;
-			fwrite(buffer, len, 1, iStream);
+			ret= fwrite(buffer, len, 1, iStream);
 			fprintf(iStream, "\n");
 			fflush(iStream);
 			iHeaderPending = true;
@@ -128,11 +129,13 @@ void CSLog::log(CSThread *self, const char *func, const char *file, int line, in
 		}
 		else {
 			len = strlen(buffer);
-			fwrite(buffer, len, 1, iStream);
+                        ret = fwrite(buffer, len, 1, iStream);
+
 		}
 		buffer += len;
 	}
 	unlock();
+        (void)ret;
 }
 
 void CSLog::log(CSThread *self, int level, const char *buffer)

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,10 +23,12 @@
 #ifndef DRIZZLED_UNIREG_H
 #define DRIZZLED_UNIREG_H
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
-void unireg_abort(int exit_code) __attribute__((noreturn));
+DRIZZLED_API void unireg_abort(int exit_code) __attribute__((noreturn));
 
 } /* namespace drizzled */
 

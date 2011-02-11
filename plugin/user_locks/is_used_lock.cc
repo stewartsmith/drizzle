@@ -37,7 +37,7 @@ int64_t IsUsedLock::val_int()
   null_value= false;
 
   drizzled::session_id_t id;
-  bool result= user_locks::Locks::getInstance().isUsed(Key(getSession().getSecurityContext(), res->c_str()), id);
+  bool result= user_locks::Locks::getInstance().isUsed(Key(*getSession().user(), res->c_str()), id);
 
   if (not result)
   {

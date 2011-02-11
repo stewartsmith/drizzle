@@ -63,12 +63,11 @@
 #include <stdarg.h>
 #include <boost/unordered_map.hpp>
 
-#include "errname.h"
-
 /* Added this for string translation. */
 #include "drizzled/gettext.h"
-#include "drizzled/drizzle_time.h"
+#include "drizzled/type/time.h"
 #include "drizzled/charset.h"
+#include "drizzled/typelib.h"
 #include <drizzled/configmake.h>
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
@@ -90,6 +89,7 @@ int get_one_option(int optid, const struct option *, char *argument);
 #define QUERY_SEND_FLAG  1
 #define QUERY_REAP_FLAG  2
 
+typedef boost::unordered_map<std::string, uint32_t> ErrorCodes;
 ErrorCodes global_error_names;
 
 enum {
@@ -844,7 +844,6 @@ static void check_command_args(struct st_command *command,
 
 static void handle_command_error(struct st_command *command, uint32_t error)
 {
-
   if (error != 0)
   {
     uint32_t i;
@@ -871,7 +870,6 @@ static void handle_command_error(struct st_command *command, uint32_t error)
         command->first_word_len, command->query,
         command->expected_errors.err[0].code.errnum);
   }
-  return;
 }
 
 
@@ -1462,7 +1460,7 @@ static int string_cmp(string* ds, const char *fname)
   int fd;
   char temp_file_path[FN_REFLEN];
 
-  if ((fd= internal::create_temp_file(temp_file_path, NULL,
+  if ((fd= internal::create_temp_file(temp_file_path, TMPDIR,
                             "tmp", MYF(MY_WME))) < 0)
     die("Failed to create temporary file for ds");
 
@@ -2481,7 +2479,6 @@ static void do_remove_file(struct st_command *command)
 
   error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2516,7 +2513,6 @@ static void do_copy_file(struct st_command *command)
   error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
                   MYF(MY_DONT_OVERWRITE_FILE)) != 0);
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2554,7 +2550,6 @@ static void do_chmod_file(struct st_command *command)
     die("You must write a 4 digit octal number for mode");
 
   handle_command_error(command, chmod(ds_file.c_str(), mode));
-  return;
 }
 
 
@@ -2584,7 +2579,6 @@ static void do_file_exist(struct st_command *command)
 
   error= (access(ds_filename.c_str(), F_OK) != 0);
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2613,7 +2607,6 @@ static void do_mkdir(struct st_command *command)
 
   error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
   handle_command_error(command, error);
-  return;
 }
 
 /*
@@ -2641,7 +2634,6 @@ static void do_rmdir(struct st_command *command)
 
   error= rmdir(ds_dirname.c_str()) != 0;
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2880,7 +2872,6 @@ static void do_diff_files(struct st_command *command)
   }
 
   handle_command_error(command, error);
-  return;
 }
 
 
@@ -2930,8 +2921,6 @@ static void do_send_quit(struct st_command *command)
 
   if (drizzle_quit(&con->con,&result, &ret))
     drizzle_result_free(&result);
-
-  return;
 }
 
 
@@ -3028,7 +3017,6 @@ static void do_perl(struct st_command *command)
   internal::my_delete(temp_file_path, MYF(0));
 
   handle_command_error(command, WEXITSTATUS(error));
-  return;
 }
 
 
@@ -3387,17 +3375,78 @@ static void do_set_charset(struct st_command *command)
     abort_not_supported_test("Test requires charset '%s'", charset_name);
 }
 
+static void fill_global_error_names()
+{
+  drizzle_result_st res;
+  drizzle_return_t ret;
+  drizzle_row_t row;
+  drizzle_con_st *con= &cur_con->con;
+
+  global_error_names.clear();
+
+  const std::string ds_query("select error_name, error_code "
+                             "from data_dictionary.errors");
+  if (drizzle_query_str(con, &res, ds_query.c_str(), &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      die("Error running query '%s': %d %s", ds_query.c_str(),
+          drizzle_result_error_code(&res), drizzle_result_error(&res));
+      drizzle_result_free(&res);
+    }
+    else
+    {
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
+          drizzle_con_error(con));
+    }
+  }
+  if (drizzle_result_column_count(&res) == 0 ||
+      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+  {
+    drizzle_result_free(&res);
+    die("Query '%s' didn't return a result set", ds_query.c_str());
+  }
+
+  while ((row= drizzle_row_next(&res)) && row[0])
+  {
+    /*
+      Concatenate all fields in the first row with tab in between
+      and assign that string to the $variable
+    */
+    size_t *lengths= drizzle_row_field_sizes(&res);
+    const std::string error_name(row[0], lengths[0]);
+    const std::string error_code(row[1], lengths[1]);
+
+    try
+    {
+      global_error_names.insert(ErrorCodes::value_type(error_name,
+                                                       boost::lexical_cast<uint32_t>(error_code)));
+    }
+    catch (boost::bad_lexical_cast &ex)
+    {
+      drizzle_result_free(&res);
+      die("Invalid error_code from Drizzle: %s", ex.what());
+    }
+
+  }
+
+  drizzle_result_free(&res);
+}
+
 static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 {
   size_t err_name_len= error_end - error_name;
   string error_name_s(error_name, err_name_len);
 
-  uint32_t code= global_error_names.getErrorCode(error_name_s);
+  ErrorCodes::iterator it= global_error_names.find(error_name_s);
+  if (it != global_error_names.end())
+  {
+    return (*it).second;
+  }
 
-  if (!code)
-    die("Unknown SQL error name '%s'", error_name_s.c_str());
-
-  return(code);
+  die("Unknown SQL error name '%s'", error_name_s.c_str());
+  return 0;
 }
 
 static void do_get_errcodes(struct st_command *command)
@@ -3465,27 +3514,16 @@ static void do_get_errcodes(struct st_command *command)
     {
       die("The error name definition must start with an uppercase E");
     }
+    else if (*p == 'H')
+    {
+      /* Error name string */
+
+      to->code.errnum= get_errcode_from_name(p, end);
+      to->type= ERR_ERRNO;
+    }
     else
     {
-      long val;
-      char *start= p;
-      /* Check that the string passed to str2int only contain digits */
-      while (*p && p != end)
-      {
-        if (!my_isdigit(charset_info, *p))
-          die("Invalid argument to error: '%s' - "              \
-              "the errno may only consist of digits[0-9]",
-              command->first_argument);
-        p++;
-      }
-
-      /* Convert the sting to int */
-      istringstream buff(start);
-      if ((buff >> val).fail())
-        die("Invalid argument to error: '%s'", command->first_argument);
-
-      to->code.errnum= (uint32_t) val;
-      to->type= ERR_ERRNO;
+      die ("You must either use the SQLSTATE or built in drizzle error label, numbers are not accepted");
     }
     to++;
     count++;
@@ -4438,7 +4476,7 @@ static void scan_command_for_warnings(struct st_command *command)
         end++;
       save= *end;
       *end= 0;
-      type= find_type(start, &command_typelib, 1+2);
+      type= command_typelib.find_type(start, 1+2);
       if (type)
         warning_msg("Embedded drizzletest command '--%s' detected in "
                     "query '%s' was this intentional? ",
@@ -5261,7 +5299,7 @@ static void get_command_type(struct st_command* command)
 
   save= command->query[command->first_word_len];
   command->query[command->first_word_len]= 0;
-  type= find_type(command->query, &command_typelib, 1+2);
+  type= command_typelib.find_type(command->query, 1+2);
   command->query[command->first_word_len]= save;
   if (type > 0)
   {
@@ -5305,7 +5343,7 @@ static void get_command_type(struct st_command* command)
         */
         save= command->query[command->first_word_len-1];
         command->query[command->first_word_len-1]= 0;
-        if (find_type(command->query, &command_typelib, 1+2) > 0)
+        if (command_typelib.find_type(command->query, 1+2) > 0)
           die("Extra delimiter \";\" found");
         command->query[command->first_word_len-1]= save;
 
@@ -5693,6 +5731,8 @@ try
     die("Out of memory");
   safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
+
+  fill_global_error_names();
 
   /* Use all time until exit if no explicit 'start_timer' */
   timer_start= timer_now();

@@ -80,7 +80,7 @@ drop table t1;
 #
 # Bug#21042  	mysql client segfaults on importing a mysqldump export
 #
-#--error 1
+#--error EE_ERROR_FIRST
 #--exec $DRIZZLE test -e "connect verylongdatabasenamethatshouldblowthe256byteslongbufferincom_connectfunctionxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxendcccccccdxxxxxxxxxxxxxxxxxkskskskskkskskskskskskskskskskkskskskskkskskskskskskskskskend" 2>&1
 #--enable_parsing
 
@@ -105,7 +105,7 @@ drop table t1;
 --exec echo "/*"          >  $DRIZZLETEST_VARDIR/tmp/bug20432.sql
 --exec echo "xxx"         >> $DRIZZLETEST_VARDIR/tmp/bug20432.sql
 --exec echo "*/ use"      >> $DRIZZLETEST_VARDIR/tmp/bug20432.sql
---error 1
+--error EE_ERROR_FIRST
 --exec $DRIZZLE              < $DRIZZLETEST_VARDIR/tmp/bug20432.sql 2>&1
 
 # client comment recognized, but parameter missing => error
@@ -170,13 +170,13 @@ drop table t17583;
 --exec $DRIZZLE test -e "\r test" 2>&1
 --exec $DRIZZLE test -e "connect test" 2>&1
 --exec $DRIZZLE test -e "\rtest" 2>&1
---error 1
+--error EE_ERROR_FIRST
 --exec $DRIZZLE test -e "connecttest" 2>&1
 
 --echo Test connect with _invalid_ dbname only => new invalid dbname, old hostname
---error 1
+--error EE_ERROR_FIRST
 --exec $DRIZZLE test -e "\r invalid" 2>&1
---error 1
+--error EE_ERROR_FIRST
 --exec $DRIZZLE test -e "connect invalid" 2>&1
 
 --echo Test connect with dbname + hostname
@@ -186,28 +186,28 @@ drop table t17583;
 --echo Test connect with dbname + _invalid_ hostname
 # Mask the errno of the error message
 #--replace_regex /\([0-9]*\)/(errno)/
-#--error 1
+#--error EE_ERROR_FIRST
 #--exec $DRIZZLE test -e "\r test invalid_hostname" 2>&1
 #--replace_regex /\([0-9]*\)/(errno)/
-#--error 1
+#--error EE_ERROR_FIRST
 #--exec $DRIZZLE test -e "connect test invalid_hostname" 2>&1
 
 #--echo The commands reported in the bug report
 #--replace_regex /\([0-9]*\)/(errno)/
-#--error 1
+#--error EE_ERROR_FIRST
 #--exec $DRIZZLE test -e "\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
 #
 ##--replace_regex /\([0-9]*\)/(errno)/
-##--error 1
+##--error EE_ERROR_FIRST
 ##--exec echo '\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' | $DRIZZLE 2>&1
 #
 #--echo Too long dbname
-#--error 1
+#--error EE_ERROR_FIRST
 #--exec $DRIZZLE test -e "\r test_really_long_dbnamexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx localhost" 2>&1
 #
 #--echo Too long hostname
 #--replace_regex /\([0-9]*\)/(errno)/
-#--error 1
+#--error EE_ERROR_FIRST
 #--exec $DRIZZLE test -e "\r  test cyrils_superlonghostnameXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
 
 
@@ -253,7 +253,7 @@ drop table t17583;
 #
 
 # allow error 7(invalid argument) since --pager does not always exist in mysql
---error 0,1,7
+--error EE_OK,EE_ERROR_FIRST,EE_DELETE
 --exec $DRIZZLE --pager="540bytelengthstringxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -e "select 1" > /dev/null 2>&1
 
 #

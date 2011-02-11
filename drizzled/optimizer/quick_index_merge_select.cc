@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -177,7 +177,11 @@ int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
   /* index_merge currently doesn't support "using index" at all */
   cursor->extra(HA_EXTRA_NO_KEYREAD);
   /* start table scan */
-  read_record.init_read_record(session, head, (optimizer::SqlSelect*) 0, 1, 1);
+  if ((result= read_record.init_read_record(session, head, (optimizer::SqlSelect*) 0, 1, 1)))
+  {
+    head->print_error(result, MYF(0));
+    return 0;
+  }
   return result;
 }
 

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 class Session;
@@ -38,7 +40,7 @@ namespace plugin
  * file-descriptor based, so for non-fd client sources (like from another
  * thread), derived classes will need to use a pipe() for event notifications.
  */
-class Client
+class DRIZZLED_API Client
 {
 protected:
   Session *session;
@@ -104,6 +106,16 @@ public:
    */
   virtual bool authenticate(void)= 0;
 
+  virtual bool isConsole()
+  {
+    return false;
+  }
+
+  virtual  catalog::Instance::shared_ptr catalog()
+  {
+    return catalog::local();
+  }
+
   /**
    * Read command from client.
    */
@@ -112,7 +124,7 @@ public:
   /* Send responses. */
   virtual void sendOK(void)= 0;
   virtual void sendEOF(void)= 0;
-  virtual void sendError(uint32_t sql_errno, const char *err)= 0;
+  virtual void sendError(const drizzled::error_t sql_errno, const char *err)= 0;
 
   /**
    * Send field list for result set.
@@ -127,7 +139,7 @@ public:
   virtual bool store(int64_t from)= 0;
   virtual bool store(uint64_t from)= 0;
   virtual bool store(double from, uint32_t decimals, String *buffer)= 0;
-  virtual bool store(const DRIZZLE_TIME *from);
+  virtual bool store(const type::Time *from);
   virtual bool store(const char *from);
   virtual bool store(const char *from, size_t length)= 0;
   virtual bool store(const std::string &from)

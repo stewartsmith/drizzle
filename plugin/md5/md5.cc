@@ -96,7 +96,7 @@ static int initialize(module::Context &context)
   /* Initialize libgcrypt */
   if (not gcry_check_version(GCRYPT_VERSION))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("libgcrypt library version mismatch\n"));
+    errmsg_printf(error::ERROR, _("libgcrypt library version mismatch"));
     return 1;
   }
   /* Disable secure memory.  */
@@ -119,7 +119,7 @@ DRIZZLE_DECLARE_PLUGIN
   "UDF for computing md5sum",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

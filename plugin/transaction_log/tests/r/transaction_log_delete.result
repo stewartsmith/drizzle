@@ -6,12 +6,12 @@ DELETE FROM t1;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -58,8 +58,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -72,12 +75,12 @@ DELETE FROM t1 WHERE a%2=0 ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -115,8 +118,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -129,12 +135,12 @@ DELETE FROM t1 WHERE a%2=0 LIMIT 1;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -166,8 +172,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -180,12 +189,12 @@ DELETE FROM t1 WHERE a%2=0 ORDER BY a DESC LIMIT 1;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -217,8 +226,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -231,12 +243,12 @@ DELETE FROM t1 WHERE a%2=0 ORDER BY a DESC LIMIT 10000;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -274,8 +286,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -291,12 +306,12 @@ DELETE FROM t1 WHERE b%2=0;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -343,8 +358,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;
@@ -363,12 +381,12 @@ DELETE FROM t1 WHERE b%2=0;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-7
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-7
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -415,8 +433,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;
@@ -436,12 +457,12 @@ ERROR 23000: Cannot delete or update a parent row: a foreign key constraint fail
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -546,8 +567,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;
@@ -566,12 +590,12 @@ DELETE FROM t1 where id = 1;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -603,8 +627,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -686,8 +713,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -707,12 +737,12 @@ COMMIT;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -802,8 +832,11 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -111,7 +111,7 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
   if (field->getTable() == table || !table)
-    field->getTable()->setReadSet(field->field_index);
+    field->getTable()->setReadSet(field->position());
 
   return 0;
 }
@@ -165,7 +165,7 @@ Item_field::Item_field(Name_resolution_context *context_arg,
    have_privileges(0),
    any_privileges(0)
 {
-  Select_Lex *select= current_session->lex->current_select;
+  Select_Lex *select= getSession().getLex()->current_select;
   collation.set(DERIVATION_IMPLICIT);
 
   if (select && select->parsing_place != IN_HAVING)
@@ -246,7 +246,7 @@ int64_t Item_field::val_int()
 }
 
 
-my_decimal *Item_field::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_field::val_decimal(type::Decimal *decimal_value)
 {
   if ((null_value= field->is_null()))
     return 0;
@@ -262,32 +262,32 @@ String *Item_field::str_result(String *str)
   return result_field->val_str(str,&str_value);
 }
 
-bool Item_field::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Item_field::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   if ((null_value=field->is_null()) || field->get_date(ltime,fuzzydate))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
 }
 
-bool Item_field::get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Item_field::get_date_result(type::Time &ltime,uint32_t fuzzydate)
 {
   if ((null_value=result_field->is_null()) ||
       result_field->get_date(ltime,fuzzydate))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
 }
 
-bool Item_field::get_time(DRIZZLE_TIME *ltime)
+bool Item_field::get_time(type::Time &ltime)
 {
   if ((null_value=field->is_null()) || field->get_time(ltime))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
@@ -308,7 +308,7 @@ int64_t Item_field::val_int_result()
 }
 
 
-my_decimal *Item_field::val_decimal_result(my_decimal *decimal_value)
+type::Decimal *Item_field::val_decimal_result(type::Decimal *decimal_value)
 {
   if ((null_value= result_field->is_null()))
     return 0;
@@ -319,26 +319,34 @@ my_decimal *Item_field::val_decimal_result(my_decimal *decimal_value)
 bool Item_field::val_bool_result()
 {
   if ((null_value= result_field->is_null()))
+  {
     return false;
+  }
+
   switch (result_field->result_type()) {
   case INT_RESULT:
     return result_field->val_int() != 0;
+
   case DECIMAL_RESULT:
-  {
-    my_decimal decimal_value;
-    my_decimal *val= result_field->val_decimal(&decimal_value);
-    if (val)
-      return !my_decimal_is_zero(val);
-    return 0;
-  }
+    {
+      type::Decimal decimal_value;
+      type::Decimal *val= result_field->val_decimal(&decimal_value);
+      if (val)
+        return not val->isZero();
+      return 0;
+    }
+
   case REAL_RESULT:
   case STRING_RESULT:
     return result_field->val_real() != 0.0;
+
   case ROW_RESULT:
-  default:
     assert(0);
     return 0;                                   // Shut up compiler
   }
+
+  assert(0);
+  return 0;                                   // Shut up compiler
 }
 
 
@@ -361,21 +369,21 @@ bool Item_field::eq(const Item *item, bool) const
     (In cases where we would choose wrong we would have to generate a
     ER_NON_UNIQ_ERROR).
   */
-  return (!my_strcasecmp(system_charset_info, item_field->name,
-			 field_name) &&
-	  (!item_field->table_name || !table_name ||
-	   (!my_strcasecmp(table_alias_charset, item_field->table_name,
-			   table_name) &&
-	    (!item_field->db_name || !db_name ||
-	     (item_field->db_name && !strcasecmp(item_field->db_name,
-					     db_name))))));
+  return (not my_strcasecmp(system_charset_info, item_field->name, field_name) &&
+          (not item_field->table_name || not table_name ||
+           (not my_strcasecmp(table_alias_charset, item_field->table_name, table_name) &&
+            (not item_field->db_name || not db_name ||
+             (item_field->db_name && not my_strcasecmp(system_charset_info, item_field->db_name, db_name))))));
 }
 
 
 table_map Item_field::used_tables() const
 {
   if (field->getTable()->const_table)
+  {
     return 0;					// const item
+  }
+
   return (depended_from ? OUTER_REF_TABLE_BIT : field->getTable()->map);
 }
 
@@ -533,7 +541,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
         if (*from_field != view_ref_found)
         {
           prev_subselect_item->used_tables_cache|= (*from_field)->getTable()->map;
-          prev_subselect_item->const_item_cache= 0;
+          prev_subselect_item->const_item_cache= false;
           set_field(*from_field);
           if (!last_checked_context->select_lex->having_fix_field &&
               select->group_list.elements &&
@@ -621,7 +629,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       case it does not matter which used tables bits we set)
     */
     prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
   }
 
   assert(ref != 0);
@@ -632,7 +640,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     if (upward_lookup)
     {
       // We can't say exactly what absent table or field
-      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where);
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where());
     }
     else
     {
@@ -816,7 +824,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
             {
               /* The column to which we link isn't valid. */
               my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name,
-                       current_session->where);
+                       session->where());
               return(1);
             }
 
@@ -902,10 +910,10 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    //if (! current_bitmap->testAndSet(field->field_index))
-    if (! current_bitmap->test(field->field_index))
+    //if (! current_bitmap->testAndSet(field->position()))
+    if (! current_bitmap->test(field->position()))
     {
-      if (! other_bitmap->test(field->field_index))
+      if (! other_bitmap->test(field->position()))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
@@ -1263,7 +1271,7 @@ void Item_field::print(String *str, enum_query_type query_type)
   {
     char buff[MAX_FIELD_WIDTH];
     String tmp(buff,sizeof(buff),str->charset());
-    field->val_str(&tmp);
+    field->val_str_internal(&tmp);
     if (field->is_null())  {
       str->append("NULL");
     }

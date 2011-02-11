@@ -1,4 +1,4 @@
-/* Copyright (C) 2009 Sun Microsystems
+/* Copyright (C) 2009 Sun Microsystems, Inc.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ bool TableList::placeholder()
 TableList *TableList::last_leaf_for_name_resolution()
 {
   TableList *cur_table_ref= this;
-  nested_join_st *cur_nested_join;
+  NestedJoin *cur_nested_join;
 
   if (is_leaf_for_name_resolution())
     return this;
@@ -114,7 +114,7 @@ TableList *TableList::last_leaf_for_name_resolution()
 TableList *TableList::first_leaf_for_name_resolution()
 {
   TableList *cur_table_ref= NULL;
-  nested_join_st *cur_nested_join;
+  NestedJoin *cur_nested_join;
 
   if (is_leaf_for_name_resolution())
     return this;

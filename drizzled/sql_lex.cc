@@ -17,7 +17,11 @@
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
 #include "config.h"
+
 #define DRIZZLE_LEX 1
+
+#include "drizzled/sql_reserved_words.h"
+
 #include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
@@ -45,16 +49,19 @@ static int lex_one_token(void *arg, void *yysession);
 static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
   Order *order;
+
   if (!(order = (Order *) session->alloc(sizeof(Order))))
-    return(1);
+    return true;
+
   order->item_ptr= item;
   order->item= &order->item_ptr;
   order->asc = asc;
   order->free_me=0;
   order->used=0;
   order->counter_used= 0;
-  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return(0);
+  list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
+
+  return false;
 }
 
 /**
@@ -64,8 +71,8 @@ const LEX_STRING null_lex_str= {NULL, 0};
 
 Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
-                                   unsigned int length)
-: m_session(session),
+                                   unsigned int length) :
+  m_session(session),
   yylineno(1),
   yytoklen(0),
   yylval(NULL),
@@ -242,6 +249,7 @@ void lex_start(Session *session)
   lex->derived_tables= 0;
   lex->lock_option= TL_READ;
   lex->leaf_tables_insert= 0;
+  lex->var_list.clear();
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
@@ -261,12 +269,12 @@ void lex_start(Session *session)
   lex->nest_level=0 ;
   lex->allow_sum_func= 0;
   lex->in_sum_func= NULL;
+  lex->type= 0;
 
   lex->is_lex_started= true;
   lex->statement= NULL;
   
   lex->is_cross= false;
-
   lex->reset();
 }
 
@@ -281,6 +289,9 @@ void LEX::end()
   }
 
   delete result;
+  delete _create_table;
+  _create_table= NULL;
+  _create_field= NULL;
 
   result= 0;
   setCacheable(true);
@@ -1386,6 +1397,7 @@ void Select_Lex::init_select()
   select_limit= 0;      /* denotes the default limit = HA_POS_ERROR */
   offset_limit= 0;      /* denotes the default offset = 0 */
   with_sum_func= 0;
+  is_cross= false;
   is_correlated= 0;
   cur_pos_in_select_list= UNDEF_POS;
   non_agg_fields.empty();
@@ -1801,19 +1813,9 @@ void Select_Lex::print_limit(Session *, String *str,
   }
 }
 
-/**
-  @brief Restore the LEX and Session in case of a parse error.
-
-  This is a clean up call that is invoked by the Bison generated
-  parser before returning an error from DRIZZLEparse. If your
-  semantic actions manipulate with the global thread state (which
-  is a very bad practice and should not normally be employed) and
-  need a clean-up in case of error, and you can not use %destructor
-  rule in the grammar file itself, this function should be used
-  to implement the clean up.
-*/
-void LEX::cleanup_lex_after_parse_error(Session *)
+LEX::~LEX()
 {
+  delete _create_table;
 }
 
 /*
@@ -1863,20 +1865,24 @@ void Query_tables_list::reset_query_tables_list(bool init)
     statement parsing. On should use lex_start() function to prepare LEX
     for this.
 */
-LEX::LEX()
-  :
+LEX::LEX() :
     result(0), 
     yacc_yyss(0), 
     yacc_yyvs(0),
+    session(NULL),
     charset(NULL),
+    var_list(),
     sql_command(SQLCOM_END), 
+    statement(NULL),
     option_type(OPT_DEFAULT), 
     is_lex_started(0),
     cacheable(true),
-    sum_expr_used(false)
+    sum_expr_used(false),
+    _create_table(NULL),
+    _create_field(NULL),
+    _exists(false)
 {
   reset_query_tables_list(true);
-  statement= NULL;
 }
 
 /**
@@ -2151,5 +2157,22 @@ bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
                                             current_index_hint_clause,
                                             str, length));
 }
+
+bool check_for_sql_keyword(drizzled::lex_string_t const& string)
+{
+  if (sql_reserved_words::in_word_set(string.str, string.length))
+      return true;
+
+  return false;
+}
+
+bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
+{
+  if (sql_reserved_words::in_word_set(string.str, string.length))
+      return true;
+
+  return false;
+}
+
 
 } /* namespace drizzled */

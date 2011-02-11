@@ -22,7 +22,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include <drizzled/db.h>
@@ -81,7 +81,7 @@ public:
 
   /*
     Either this method, or we need to make cache public
-    Arg must be set from mysql_load() since constructor does not see
+    Arg must be set from load() since constructor does not see
     either the table or Session value
   */
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
@@ -103,7 +103,7 @@ static int read_sep_field(Session *session, CopyInfo &info, TableList *table_lis
   Execute LOAD DATA query
 
   SYNOPSYS
-    mysql_load()
+    load()
       session - current thread
       ex  - file_exchange object representing source cursor and its parsing rules
       table_list  - list of tables to which we are loading data
@@ -119,7 +119,7 @@ static int read_sep_field(Session *session, CopyInfo &info, TableList *table_lis
     true - error / false - success
 */
 
-int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
+int load(Session *session,file_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore)
@@ -206,11 +206,13 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     */
     if (table->timestamp_field)
     {
-      if (table->isWriteSet(table->timestamp_field->field_index))
+      if (table->isWriteSet(table->timestamp_field->position()))
+      {
         table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+      }
       else
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
     /* Fix the expressions in SET clause */
@@ -317,7 +319,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
-  SchemaIdentifier identifier(*schema);
+  identifier::Schema identifier(*schema);
   READ_INFO read_info(file, tot_length,
                       ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(identifier),
 		      *field_term, *ex->line_start, *ex->line_term, *enclosed,
@@ -363,7 +365,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
     table->copy_blobs=1;
 
-    session->abort_on_warning= true;
+    session->setAbortOnWarning(true);
 
     if (!field_term->length() && !enclosed->length())
       error= read_fixed_length(session, info, table_list, fields_vars,
@@ -412,7 +414,8 @@ err:
               session->transaction.stmt.hasModifiedNonTransData());
   table->cursor->ha_release_auto_increment();
   table->auto_increment_field_not_null= false;
-  session->abort_on_warning= 0;
+  session->setAbortOnWarning(false);
+
   return(error);
 }
 
@@ -482,8 +485,9 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_WARN_TOO_FEW_RECORDS,
                             ER(ER_WARN_TOO_FEW_RECORDS), session->row_count);
-        if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
-            ((Field_timestamp*) field)->set_time();
+
+        if (not field->maybe_null() and field->is_timestamp())
+            ((field::Epoch::pointer) field)->set_time();
       }
       else
       {
@@ -599,13 +603,16 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
             return(1);
           }
           field->set_null();
-          if (!field->maybe_null())
+          if (not field->maybe_null())
           {
-            if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
-              ((Field_timestamp*) field)->set_time();
+            if (field->is_timestamp())
+            {
+              ((field::Epoch::pointer) field)->set_time();
+            }
             else if (field != table->next_number_field)
-              field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 ER_WARN_NULL_TO_NOTNULL, 1);
+            {
+              field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_NULL_TO_NOTNULL, 1);
+            }
           }
 	}
         else if (item->type() == Item::STRING_ITEM)
@@ -666,8 +673,8 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                      session->row_count);
             return(1);
           }
-          if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
-              ((Field_timestamp*) field)->set_time();
+          if (not field->maybe_null() and field->is_timestamp())
+              ((field::Epoch::pointer) field)->set_time();
           /*
             QQ: We probably should not throw warning for each field.
             But how about intention to always have the same number

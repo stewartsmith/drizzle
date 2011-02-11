@@ -17,6 +17,8 @@
 
 #define DRIZZLE_LEX 1
 
+#include "drizzled/item/num.h"
+#include "drizzled/abort_exception.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
@@ -49,6 +51,7 @@
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/plugin/event_observer.h"
+#include "drizzled/visibility.h"
 
 #include <limits.h>
 
@@ -67,7 +70,7 @@ namespace drizzled
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-void mysql_parse(Session *session, const char *inBuf, uint32_t length);
+void parse(Session *session, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -77,16 +80,21 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length);
 extern size_t my_thread_stack_size;
 extern const CHARSET_INFO *character_set_filesystem;
 
-const LEX_STRING command_name[COM_END+1]={
-  { C_STRING_WITH_LEN("Sleep") },
-  { C_STRING_WITH_LEN("Quit") },
-  { C_STRING_WITH_LEN("Init DB") },
-  { C_STRING_WITH_LEN("Query") },
-  { C_STRING_WITH_LEN("Shutdown") },
-  { C_STRING_WITH_LEN("Connect") },
-  { C_STRING_WITH_LEN("Ping") },
-  { C_STRING_WITH_LEN("Error") }  // Last command number
+namespace
+{
+
+static const std::string command_name[COM_END+1]={
+  "Sleep",
+  "Quit",
+  "Init DB",
+  "Query",
+  "Shutdown",
+  "Connect",
+  "Ping",
+  "Error"  // Last command number
 };
+
+}
 
 const char *xa_state_names[]={
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
@@ -105,6 +113,11 @@ const char *xa_state_names[]={
           a number of modified rows
 */
 bitset<CF_BIT_SIZE> sql_command_flags[SQLCOM_END+1];
+
+const std::string &getCommandName(const enum_server_command& command)
+{
+  return command_name[command];
+}
 
 void init_update_queries(void)
 {
@@ -187,7 +200,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     query_id.next();
   }
 
-  /* TODO: set session->lex->sql_command to SQLCOM_END here */
+  /* @todo set session->lex->sql_command to SQLCOM_END here */
 
   plugin::Logging::preDo(session);
   if (unlikely(plugin::EventObserver::beforeStatement(*session)))
@@ -208,9 +221,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     string tmp(packet, packet_length);
 
-    SchemaIdentifier identifier(tmp);
+    identifier::Schema identifier(tmp);
 
-    if (not mysql_change_db(session, identifier))
+    if (not change_db(session, identifier))
     {
       session->my_ok();
     }
@@ -224,7 +237,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         session->thread_id,
                         const_cast<const char *>(session->schema()->c_str()));
 
-    mysql_parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
+    parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
 
     break;
   }
@@ -257,7 +270,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.autocommitOrRollback(session, session->is_error());
+  transaction_services.autocommitOrRollback(*session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -282,16 +295,16 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->client->sendError(session->main_da.sql_errno(),
+    session->getClient()->sendError(session->main_da.sql_errno(),
                                session->main_da.message());
     break;
 
   case Diagnostics_area::DA_EOF:
-    session->client->sendEOF();
+    session->getClient()->sendEOF();
     break;
 
   case Diagnostics_area::DA_OK:
-    session->client->sendOK();
+    session->getClient()->sendOK();
     break;
 
   case Diagnostics_area::DA_DISABLED:
@@ -299,7 +312,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   case Diagnostics_area::DA_EMPTY:
   default:
-    session->client->sendOK();
+    session->getClient()->sendOK();
     break;
   }
 
@@ -429,7 +442,7 @@ int prepare_new_schema_table(Session *session, LEX *lex,
     true        Error
 */
 
-static int mysql_execute_command(Session *session)
+static int execute_command(Session *session)
 {
   bool res= false;
   LEX  *lex= session->lex;
@@ -475,6 +488,17 @@ static int mysql_execute_command(Session *session)
 
   assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 
+  if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && ! session->inTransaction()
+      && lex->statement->isTransactional())
+  {
+    if (session->startTransaction() == false)
+    {
+      my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
+      return true;
+    }
+  }
+
   /* now we are ready to execute the statement */
   res= lex->statement->execute();
   session->set_proc_info("query end");
@@ -503,6 +527,19 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
+
+  if (all_tables
+      && ! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && ! session->inTransaction()
+      && ! lex->statement->isShow())
+  {
+    if (session->startTransaction() == false)
+    {
+      my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
+      return true;
+    }
+  }
+
   if (not (res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
@@ -587,7 +624,7 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 
 
 void
-mysql_init_select(LEX *lex)
+init_select(LEX *lex)
 {
   Select_Lex *select_lex= lex->current_select;
   select_lex->init_select();
@@ -601,23 +638,26 @@ mysql_init_select(LEX *lex)
 
 
 bool
-mysql_new_select(LEX *lex, bool move_down)
+new_select(LEX *lex, bool move_down)
 {
   Select_Lex *select_lex;
   Session *session= lex->session;
 
   if (!(select_lex= new (session->mem_root) Select_Lex()))
-    return(1);
+    return true;
+
   select_lex->select_number= ++session->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
   select_lex->init_query();
   select_lex->init_select();
   lex->nest_level++;
+
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
     return(1);
   }
+
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
@@ -645,12 +685,15 @@ mysql_new_select(LEX *lex, bool move_down)
     if (lex->current_select->order_list.first && !lex->current_select->braces)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UNION", "order_st BY");
-      return(1);
+      return true;
     }
+
     select_lex->include_neighbour(lex->current_select);
     Select_Lex_Unit *unit= select_lex->master_unit();
-    if (!unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
-      return(1);
+
+    if (not unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
+      return true;
+
     select_lex->context.outer_context=
                 unit->first_select()->context.outer_context;
   }
@@ -663,7 +706,8 @@ mysql_new_select(LEX *lex, bool move_down)
     list
   */
   select_lex->context.resolve_in_select_list= true;
-  return(0);
+
+  return false;
 }
 
 /**
@@ -676,18 +720,16 @@ mysql_new_select(LEX *lex, bool move_down)
   @param var_name		Variable name
 */
 
-void create_select_for_variable(const char *var_name)
+void create_select_for_variable(Session *session, const char *var_name)
 {
-  Session *session;
   LEX *lex;
   LEX_STRING tmp, null_lex_string;
   Item *var;
   char buff[MAX_SYS_VAR_LENGTH*2+4+8];
   char *end= buff;
 
-  session= current_session;
   lex= session->lex;
-  mysql_init_select(lex);
+  init_select(lex);
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
@@ -702,7 +744,6 @@ void create_select_for_variable(const char *var_name)
     var->set_name(buff, end-buff, system_charset_info);
     session->add_item_to_list(var);
   }
-  return;
 }
 
 
@@ -714,9 +755,8 @@ void create_select_for_variable(const char *var_name)
   @param       length  Length of the query text
 */
 
-void mysql_parse(Session *session, const char *inBuf, uint32_t length)
+void parse(Session *session, const char *inBuf, uint32_t length)
 {
-  boost::posix_time::ptime start_time=boost::posix_time::microsec_clock::local_time();
   session->lex->start(session);
 
   session->reset_for_next_command();
@@ -748,13 +788,13 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
         /* Actually execute the query */
         try 
         {
-          mysql_execute_command(session);
+          execute_command(session);
         }
         catch (...)
         {
           // Just try to catch any random failures that could have come
           // during execution.
-          unireg_abort(1);
+          DRIZZLE_ABORT;
         }
         DRIZZLE_QUERY_EXEC_DONE(0);
       }
@@ -768,8 +808,7 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
-  boost::posix_time::ptime end_time=boost::posix_time::microsec_clock::local_time();
-  session->status_var.execution_time_nsec+=(end_time-start_time).total_microseconds();
+  session->set_end_timer();
 }
 
 
@@ -829,7 +868,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     */
     if (default_value->type() == Item::FUNC_ITEM &&
         !(((Item_func*)default_value)->functype() == Item_func::NOW_FUNC &&
-         type == DRIZZLE_TYPE_TIMESTAMP))
+         (type == DRIZZLE_TYPE_TIMESTAMP or type == DRIZZLE_TYPE_MICROTIME)))
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
       return true;
@@ -837,8 +876,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     else if (default_value->type() == Item::NULL_ITEM)
     {
       default_value= 0;
-      if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) ==
-	  NOT_NULL_FLAG)
+      if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) == NOT_NULL_FLAG)
       {
 	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
 	return true;
@@ -851,7 +889,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     }
   }
 
-  if (on_update_value && type != DRIZZLE_TYPE_TIMESTAMP)
+  if (on_update_value && (type != DRIZZLE_TYPE_TIMESTAMP and type != DRIZZLE_TYPE_MICROTIME))
   {
     my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
     return true;
@@ -869,13 +907,6 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
   return false;
 }
 
-
-/** Store position for column in ALTER TABLE .. ADD column. */
-
-void store_position_for_column(const char *name)
-{
-  current_session->lex->last_field->after=const_cast<char*> (name);
-}
 
 /**
   Add a table to list of used tables.
@@ -897,11 +928,11 @@ void store_position_for_column(const char *name)
 */
 
 TableList *Select_Lex::add_table_to_list(Session *session,
-					                     Table_ident *table,
-					                     LEX_STRING *alias,
-					                     const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
-					                     thr_lock_type lock_type,
-					                     List<Index_hint> *index_hints_arg,
+                                         Table_ident *table,
+                                         LEX_STRING *alias,
+                                         const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
+                                         thr_lock_type lock_type,
+                                         List<Index_hint> *index_hints_arg,
                                          LEX_STRING *option)
 {
   TableList *ptr;
@@ -923,7 +954,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     my_casedn_str(files_charset_info, table->db.str);
 
-    SchemaIdentifier schema_identifier(string(table->db.str));
+    identifier::Schema schema_identifier(string(table->db.str));
     if (not check_db_name(session, schema_identifier))
     {
 
@@ -976,8 +1007,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables ;
 	 tables=tables->next_local)
     {
-      if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
+      if (not my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
+	  not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;
@@ -1041,12 +1072,12 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 bool Select_Lex::init_nested_join(Session *session)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
+                                       sizeof(NestedJoin))))
     return true;
-  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
   ptr->setEmbedding(embedding);
@@ -1076,7 +1107,7 @@ bool Select_Lex::init_nested_join(Session *session)
 TableList *Select_Lex::end_nested_join(Session *)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
 
   assert(embedding);
   ptr= embedding;
@@ -1117,13 +1148,13 @@ TableList *Select_Lex::end_nested_join(Session *)
 TableList *Select_Lex::nest_last_join(Session *session)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
   List<TableList> *embedded_list;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                          sizeof(nested_join_st))))
+                                          sizeof(NestedJoin))))
     return NULL;
-  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
@@ -1423,9 +1454,8 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     1	error	; In this case the error messege is sent to the client
 */
 
-bool check_simple_select()
+bool check_simple_select(Session::pointer session)
 {
-  Session *session= current_session;
   LEX *lex= session->lex;
   if (lex->current_select != &lex->select_lex)
   {
@@ -1542,37 +1572,6 @@ bool insert_precheck(Session *session, TableList *)
 
 
 /**
-  CREATE TABLE query pre-check.
-
-  @param session			Thread handler
-  @param tables		Global table list
-  @param create_table	        Table which will be created
-
-  @retval
-    false   OK
-  @retval
-    true   Error
-*/
-
-bool create_table_precheck(TableIdentifier &identifier)
-{
-  if (not plugin::StorageEngine::canCreateTable(identifier))
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
-    return true;
-  }
-
-  if (not plugin::StorageEngine::doesSchemaExist(identifier))
-  {
-    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
-    return true;
-  }
-
-  return false;
-}
-
-
-/**
   negate given expression.
 
   @param session  thread handler
@@ -1639,7 +1638,7 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
+bool check_identifier_name(LEX_STRING *str, error_t err_code,
                            uint32_t max_char_length,
                            const char *param_for_err_msg)
 {
@@ -1665,7 +1664,7 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
 
   switch (err_code)
   {
-  case 0:
+  case EE_OK:
     break;
   case ER_WRONG_STRING_LENGTH:
     my_error(err_code, MYF(0), str->str, param_for_err_msg, max_char_length);
@@ -1677,6 +1676,7 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
     assert(0);
     break;
   }
+
   return true;
 }
 
@@ -1705,21 +1705,21 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 
   /* Parse the query. */
 
-  bool mysql_parse_status= DRIZZLEparse(session) != 0;
+  bool parse_status= DRIZZLEparse(session) != 0;
 
   /* Check that if DRIZZLEparse() failed, session->is_error() is set. */
 
-  assert(!mysql_parse_status || session->is_error());
+  assert(!parse_status || session->is_error());
 
   /* Reset Lex_input_stream. */
 
   session->m_lip= NULL;
 
-  DRIZZLE_QUERY_PARSE_DONE(mysql_parse_status || session->is_fatal_error);
+  DRIZZLE_QUERY_PARSE_DONE(parse_status || session->is_fatal_error);
 
   /* That's it. */
 
-  return mysql_parse_status || session->is_fatal_error;
+  return parse_status || session->is_fatal_error;
 }
 
 /**

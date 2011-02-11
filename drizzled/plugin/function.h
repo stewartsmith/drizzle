@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@
 #include <vector>
 #include <functional>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -44,7 +46,7 @@ namespace plugin
 /**
  * Functions in the server: AKA UDF
  */
-class Function
+class DRIZZLED_API Function
   : public Plugin,
     public std::unary_function<memory::Root*, Item_func *>
 {
@@ -69,13 +71,10 @@ public:
    */
   static void removePlugin(const plugin::Function *function_obj);
 
-  /**
-   * Accept a new connection (Protocol object) on one of the configured
-   * listener interfaces.
-   */
   static const plugin::Function *get(const char *name, size_t len=0);
 
   typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> UdfMap;
+  typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> Map;
 
   static const UdfMap &getMap();
 };

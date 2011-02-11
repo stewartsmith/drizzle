@@ -3,7 +3,7 @@
  *
  *  Definitions required for TableFunction plugin
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Monty Taylor
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,8 @@
 #include <set>
 #include <algorithm>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -61,14 +63,14 @@ static const char *local_string_append(const char *arg1, const char *arg2)
   return buffer;
 }
 
-class TableFunction : public Plugin
+class DRIZZLED_API TableFunction : public Plugin
 {
   TableFunction();
   TableFunction(const TableFunction &);
   TableFunction& operator=(const TableFunction &);
 
   message::Table proto;
-  TableIdentifier identifier;
+  identifier::Table identifier;
   std::string local_path;
   std::string original_table_label;
 
@@ -99,7 +101,8 @@ public:
     BOOLEAN,
     NUMBER,
     STRING,
-    VARBINARY
+    VARBINARY,
+    SIZE
   };
 
   class Generator 

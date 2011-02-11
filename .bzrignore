@@ -121,6 +121,7 @@ drizzled/sql_builtin.cc
 drizzled/sql_yacc.cc
 drizzled/sql_yacc.h
 drizzled/sql_yacc.output
+drizzled/sql_reserved_words.h
 drizzled/symbol_hash.h
 drizzled/version.h
 dtcollation.gcno
@@ -204,8 +205,10 @@ plugin/blackhole/Makefile.in
 plugin/csv/Makefile.in
 plugin/heap/Makefile.in
 plugin/innobase/Makefile.in
+plugin/innobase/include/pars0grm.hh
 plugin/innobase/include/pars0grm.h
 plugin/innobase/pars/pars0grm.c
+plugin/innobase/pars/pars0grm.cc
 plugin/innobase/pars/pars0grm.h
 plugin/innobase/pars/pars0lex.c
 plugin/memcached_functions/start_mc.sh
@@ -312,6 +315,7 @@ temporal_format.gcno
 tests/Makefile.in
 tests/dtr
 tests/dtr@
+tests/dbqp_work
 tests/install_test_db
 tests/mtr
 tests/mtr@
@@ -333,3 +337,9 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
+docs/man
+.pc
+drizzled/message/catalog.pb.cc
+drizzled/message/catalog.pb.h
+drizzled/message/catalog_reader
+drizzled/message/catalog_writer

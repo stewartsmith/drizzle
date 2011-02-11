@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,8 @@
 namespace drizzled
 {
 
-class Item_int_func :public Item_func
+class DRIZZLED_API Item_int_func :
+  public Item_func
 {
 public:
   Item_int_func() :Item_func() { max_length= 21; }

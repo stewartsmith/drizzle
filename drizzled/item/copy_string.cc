@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,12 +42,13 @@ String *Item_copy_string::val_str(String *)
 }
 
 
-my_decimal *Item_copy_string::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_copy_string::val_decimal(type::Decimal *decimal_value)
 {
   // Item_copy_string is used without fix_fields call
   if (null_value)
     return 0;
-  string2my_decimal(E_DEC_FATAL_ERROR, &str_value, decimal_value);
+  decimal_value->store(E_DEC_FATAL_ERROR, &str_value);
+
   return (decimal_value);
 }
 

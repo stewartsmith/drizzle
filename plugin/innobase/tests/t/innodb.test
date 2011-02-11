@@ -54,7 +54,7 @@ INSERT INTO t1 VALUES (1,0,0),(3,1,1),(4,1,1),(8,2,2),(9,2,2),(17,3,2),(22,4,2),
 update t1 set parent_id=parent_id+100;
 select * from t1 where parent_id=102;
 update t1 set id=id+1000;
--- error ER_DUP_ENTRY,1022
+--error ER_DUP_ENTRY, ER_DUP_KEY
 update t1 set id=1024 where id=1009; 
 select * from t1;
 update ignore t1 set id=id+1; # This will change all rows
@@ -135,13 +135,13 @@ commit;
 select n, "after commit" from t1;
 commit;
 insert into t1 values (5);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t1 values (4);
 commit;
 select n, "after commit" from t1;
 set autocommit=1;
 insert into t1 values (6);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t1 values (4);
 select n from t1;
 set autocommit=0;
@@ -161,7 +161,7 @@ rollback to savepoint savept3;
 rollback to savepoint savept2;
 release savepoint `my_savepoint`;
 select n from t1;
---error 1305
+--error ER_SP_DOES_NOT_EXIST
 rollback to savepoint `my_savepoint`;
 rollback to savepoint savept2;
 insert into t1 values (8);
@@ -214,7 +214,7 @@ drop table t1;
 
 CREATE TABLE t1 (id char(8) not null primary key, val int not null) engine=innodb;
 insert into t1 values ('pippo', 12);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t1 values ('pippo', 12); # Gives error
 delete from t1;
 delete from t1 where id = 'pippo';
@@ -228,6 +228,7 @@ select * from t1;
 delete from t1;
 commit;
 select * from t1;
+commit;
 drop table t1;
 
 #
@@ -235,9 +236,9 @@ drop table t1;
 #
 
 create table t1 (a integer) engine=innodb;
-start transaction;
 rename table t1 to t2;
 create table t1 (b integer) engine=innodb;
+start transaction;
 insert into t1 values (1);
 rollback;
 drop table t1;
@@ -260,6 +261,7 @@ INSERT INTO t1  SET _userid='marc@anyware.co.uk';
 COMMIT;
 SELECT * FROM t1;
 SELECT _userid FROM t1 WHERE _userid='marc@anyware.co.uk';
+COMMIT;
 drop table t1;
 set autocommit=1;
 
@@ -549,6 +551,7 @@ show tables from mysqltest;
 set autocommit=0;
 create table t1 (a int not null) engine= innodb;
 insert into t1 values(1),(2);
+commit;
 truncate table t1;
 commit;
 truncate table t1;
@@ -779,7 +782,7 @@ create table t1(
 	foreign key(pid) references t1(id) on delete cascade) engine=innodb;
 insert into t1 values(0,0),(1,0),(2,1),(3,2),(4,3),(5,4),(6,5),(7,6),
 	(8,7),(9,8),(10,9),(11,10),(12,11),(13,12),(14,13),(15,14);
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 delete from t1 where id=0;
 delete from t1 where id=15;
 delete from t1 where id=0;
@@ -1051,6 +1054,7 @@ show status like "Innodb_row_lock_time_max";
 show status like "Innodb_row_lock_time_avg";
 
 # Test for innodb_sync_spin_loops variable
+set @my_innodb_sync_spin_loops = @@global.innodb_sync_spin_loops;
 show variables like "innodb_sync_spin_loops";
 set global innodb_sync_spin_loops=1000;
 show variables like "innodb_sync_spin_loops";
@@ -1058,8 +1062,10 @@ set global innodb_sync_spin_loops=0;
 show variables like "innodb_sync_spin_loops";
 set global innodb_sync_spin_loops=20;
 show variables like "innodb_sync_spin_loops";
+set @@global.innodb_sync_spin_loops = @my_innodb_sync_spin_loops;
 
 # Test for innodb_thread_concurrency variable
+set @my_innodb_thread_concurrency = @@global.innodb_thread_concurrency;
 show variables like "innodb_thread_concurrency";
 set global innodb_thread_concurrency=1001;
 show variables like "innodb_thread_concurrency";
@@ -1067,6 +1073,7 @@ set global innodb_thread_concurrency=0;
 show variables like "innodb_thread_concurrency";
 set global innodb_thread_concurrency=16;
 show variables like "innodb_thread_concurrency";
+set @@global.innodb_thread_concurrency = @my_innodb_thread_concurrency;
 
 # Test for innodb_concurrency_tickets variable
 show variables like "innodb_concurrency_tickets";
@@ -1307,7 +1314,7 @@ set foreign_key_checks=0;
 create table t2 (a int primary key, b int, foreign key (b) references t1(a)) engine = innodb;
 # Embedded server doesn't chdir to data directory
 --replace_result $DRIZZLETEST_VARDIR . master-data/ ''
--- error 1005
+--error ER_CANT_CREATE_TABLE
 create table t1(a char(10) primary key, b varchar(20)) engine = innodb;
 set foreign_key_checks=1;
 drop table t2;
@@ -1317,7 +1324,7 @@ drop table t2;
 set foreign_key_checks=0;
 create table t2 (a varchar(10), foreign key (a) references t1(a)) engine = innodb;
 create table t1(a varchar(10) primary key) engine = innodb;
--- error 1025,1025
+--error ER_ERROR_ON_RENAME, ER_ERROR_ON_RENAME
 alter table t1 modify column a int;
 set foreign_key_checks=1;
 drop table t2,t1;
@@ -1331,23 +1338,23 @@ create table t4(a int primary key,constraint foreign key(a)references t3(a)) row
 
 insert into t1 values(1);
 insert into t3 values(1);
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 insert into t2 values(2);
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 insert into t4 values(2);
 insert into t2 values(1);
 insert into t4 values(1);
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t1 set a=2;
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 update t2 set a=2;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t3 set a=2;
--- error 1452
+--error ER_NO_REFERENCED_ROW_2
 update t4 set a=2;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 truncate t1;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 truncate t3;
 truncate t2;
 truncate t4;
@@ -1382,10 +1389,10 @@ create table t3 (s1 varchar(2) ,primary key (s1)) engine=innodb;
 create table t4 (s1 char(2) ,primary key (s1)) engine=innodb;
 
 insert into t1 values (0x41),(0x4120),(0x4100);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t3 values (0x41),(0x4120),(0x4100);
 insert into t3 values (0x41),(0x4100);
--- error ER_DUP_ENTRY
+--error ER_DUP_ENTRY
 insert into t4 values (0x41),(0x4120),(0x4100);
 insert into t4 values (0x41),(0x4100);
 select hex(s1) from t1;
@@ -1400,11 +1407,11 @@ insert into t1 values(1,0x4100),(2,0x41),(3,0x4120),(4,0x42);
 insert into t2 values(0x42);
 insert into t2 values(0x41);
 select hex(s1) from t2;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 update t1 set s1=0x123456 where a=2;
 select hex(s1) from t2;
 update t1 set s1=0x12 where a=1;
--- error 1406
+--error ER_DATA_TOO_LONG
 update t1 set s1=0x12345678 where a=1;
 update t1 set s1=0x123457 where a=1;
 update t1 set s1=0x1220 where a=1;
@@ -1415,7 +1422,7 @@ update t1 set s1=0x4200 where a=1;
 select hex(s1) from t2;
 delete from t1 where a=1;
 update t2 set s1=0x4120;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 delete from t1;
 delete from t1 where a!=3;
 select a,hex(s1) from t1;
@@ -1434,7 +1441,7 @@ select hex(s1) from t2;
 update t1 set s1=0x12 where a=2;
 select hex(s1) from t2;
 delete from t1 where a=1;
--- error 1451
+--error ER_ROW_IS_REFERENCED_2
 delete from t1 where a=2;
 select a,hex(s1) from t1;
 select hex(s1) from t2;
@@ -1616,6 +1623,7 @@ set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 insert into t1 select * from t2;
 update t1 set b = (select e from t2 where a = d);
+commit;
 create table t3(d int not null, e int, primary key(d)) engine=innodb
 select * from t2;
 commit;
@@ -1766,7 +1774,7 @@ disconnect j;
 drop table t1, t2, t3, t5, t6, t8, t9;
 
 # bug 18934, "InnoDB crashes when table uses column names like DB_ROW_ID"
---error ER_CANT_CREATE_TABLE,1166
+--error ER_CANT_CREATE_TABLE, ER_WRONG_COLUMN_NAME
 CREATE TABLE t1 (DB_ROW_ID int) engine=innodb;
 
 #
@@ -1810,6 +1818,7 @@ drop table t2, t1;
 CREATE TABLE t1 ( a int ) ENGINE=innodb;
 BEGIN;
 INSERT INTO t1 VALUES (1);
+COMMIT;
 ALTER TABLE t1 ENGINE=innodb;
 DROP TABLE t1;
 

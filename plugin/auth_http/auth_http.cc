@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 #include <cassert>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/gettext.h"
 namespace po= boost::program_options;
@@ -73,23 +73,23 @@ public:
     curl_global_cleanup();
   }
 
-  virtual bool authenticate(const SecurityContext &sctx, const string &password)
+  virtual bool authenticate(const identifier::User &sctx, const string &password)
   {
     long http_response_code;
 
-    assert(sctx.getUser().c_str());
+    assert(sctx.username().c_str());
 
     // set the parameters: url, username, password
     rv= curl_easy_setopt(curl_handle, CURLOPT_URL, auth_url.c_str());
 #if defined(HAVE_CURLOPT_USERNAME)
 
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME,
-                         sctx.getUser().c_str());
+                         sctx.username().c_str());
     rv= curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password.c_str());
 
 #else
 
-    string userpwd(sctx.getUser());
+    string userpwd(sctx.username());
     userpwd.append(":");
     userpwd.append(password);
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERPWD, userpwd.c_str());
@@ -131,7 +131,7 @@ static int initialize(drizzled::module::Context &context)
   const string auth_url(vm["url"].as<string>());
   if (auth_url.size() == 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("auth_http plugin loaded but required option url not "
                     "specified. Against which URL are you intending on "
                     "authenticating?\n"));

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@
 namespace drizzled
 {
 
+class st_lex_symbol;
 class select_result_interceptor;
 
 /* YACC and LEX Definitions */
@@ -294,7 +295,7 @@ public:
   {}
 
   friend class Select_Lex_Unit;
-  friend bool mysql_new_select(LEX *lex, bool move_down);
+  friend bool new_select(LEX *lex, bool move_down);
 private:
   void fast_exclude();
 };
@@ -449,6 +450,7 @@ public:
     n_sum_items(0),
     n_child_sum_items(0),
     explicit_limit(0),
+    is_cross(false),
     subquery_in_having(0),
     is_correlated(0),
     exclude_from_table_unique_test(0),
@@ -533,6 +535,10 @@ public:
 
   /* explicit LIMIT clause was used */
   bool explicit_limit;
+
+  /* explicit CROSS JOIN was used */
+  bool is_cross;
+
   /*
     there are subquery in HAVING clause => we can't close tables before
     query processing end even if we use temporary table
@@ -628,7 +634,7 @@ public:
     order_list.next= (unsigned char**) &order_list.first;
   }
   /*
-    This method created for reiniting LEX in mysql_admin_table() and can be
+    This method created for reiniting LEX in admin_table() and can be
     used only if you are going remove all Select_Lex & units except belonger
     to LEX (LEX::unit & LEX::select, for other purposes there are
     Select_Lex_Unit::exclude_level & Select_Lex_Unit::exclude_tree
@@ -850,7 +856,7 @@ public:
   List<Lex_Column>    columns;
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
-  List<set_var_base>  var_list;
+  SetVarVector  var_list;
   /*
     A stack of name resolution contexts for the query. This stack is used
     at parse time to set local name resolution contexts for various parts
@@ -930,9 +936,7 @@ public:
      statement in a session. It's re-used by doing lex_end, lex_start
      in sql_lex.cc
   */
-  virtual ~LEX()
-  {
-  }
+  virtual ~LEX();
 
   TableList *unlink_first_table(bool *link_to_local);
   void link_first_table_back(TableList *first, bool link_to_local);
@@ -956,10 +960,6 @@ public:
   {
     return context_stack.head();
   }
-  /*
-    Restore the LEX and Session in case of a parse error.
-  */
-  static void cleanup_lex_after_parse_error(Session *session);
 
   /**
     @brief check if the statement is a single-level join
@@ -995,6 +995,7 @@ public:
   void reset()
   {
     sum_expr_used= false;
+    _exists= false;
   }
 
   void setSumExprUsed()
@@ -1010,14 +1011,48 @@ public:
   void start(Session *session);
   void end();
 
+  message::Table *table()
+  {
+    if (not _create_table)
+      _create_table= new message::Table;
+
+    return _create_table;
+  }
+
+  message::Table::Field *field()
+  {
+    return _create_field;
+  }
+
+  void setField(message::Table::Field *arg)
+  {
+    _create_field= arg;
+  }
+
+  void setExists()
+  {
+    _exists= true;
+  }
+
+  bool exists() const
+  {
+    return _exists;
+  }
+
 private: 
   bool cacheable;
   bool sum_expr_used;
+  message::Table *_create_table;
+  message::Table::Field *_create_field;
+  bool _exists;
 };
 
 extern void lex_start(Session *session);
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 extern bool is_lex_native_function(const LEX_STRING *name);
+
+bool check_for_sql_keyword(drizzled::st_lex_symbol const&);
+bool check_for_sql_keyword(drizzled::lex_string_t const&);
 
 /**
   @} (End of group Semantic_Analysis)

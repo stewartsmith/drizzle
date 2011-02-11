@@ -51,7 +51,7 @@ CREATE TEMPORARY TABLE t1 (
   client varchar(255) NOT NULL default '',
   replyto varchar(255) NOT NULL default '',
   subject varchar(100) NOT NULL default '',
-  timestamp int NOT NULL default '0',
+  timestamp_arg int NOT NULL default '0',
   tstamp timestamp NOT NULL,
   status int NOT NULL default '0',
   type varchar(15) NOT NULL default '',
@@ -66,7 +66,7 @@ CREATE TEMPORARY TABLE t1 (
   comment text,
   header text,
   PRIMARY KEY  (lfdnr),
-  KEY k1 (timestamp),
+  KEY k1 (timestamp_arg),
   KEY k2 (type),
   KEY k3 (parent),
   KEY k4 (assignment),
@@ -214,7 +214,7 @@ drop table t1;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
 create table t2 (a int, filler1 char(200), filler2 char(200), key(a));
-insert into t2 select A.a + 10*B.a, 'filler','filler' from t1 A, t1 B;
+insert into t2 select A.a + 10*B.a, 'filler','filler' from t1 A CROSS JOIN t1 B;
 flush status;
 update t2 set a=3 where a=2;
 --replace_column 2 #

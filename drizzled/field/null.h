@@ -70,7 +70,7 @@ public:
     null[0]= 1;
     return 0;
   }
-  int store_decimal(const my_decimal *)
+  int store_decimal(const type::Decimal *)
   {
     null[0]= 1;
     return 0;
@@ -87,7 +87,7 @@ public:
   {
     return 0;
   }
-  my_decimal *val_decimal(my_decimal *)
+  type::Decimal *val_decimal(type::Decimal *)
   {
     return 0;
   }

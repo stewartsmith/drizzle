@@ -1,0 +1,7 @@
+SELECT LENGTH(UUID());
+LENGTH(UUID())
+36
+CREATE UUID ( a int );
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'UUID ( a int )' at line 1
+CREATE bad ( UUID int );
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'bad ( UUID int )' at line 1

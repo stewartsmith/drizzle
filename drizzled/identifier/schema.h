@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,12 +29,15 @@
   This will replace Table_ident.
   */
 
+
+
 #ifndef DRIZZLED_IDENTIFIER_SCHEMA_H
 #define DRIZZLED_IDENTIFIER_SCHEMA_H
 
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
 #include "drizzled/message/table.pb.h"
+#include "drizzled/catalog/local.h"
 #include <string.h>
 
 #include <assert.h>
@@ -47,30 +50,27 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled {
+namespace identifier {
 
-static std::string catalog("local");
-
-class SchemaIdentifier
+class DRIZZLED_API Schema : public Identifier
 {
   std::string db;
   std::string db_path;
-  std::string catalog;
-
-
-  // @note this should be changed to protected once Session contains an
-  // identifier for current db.
-public:
 
 public:
-  typedef std::vector <SchemaIdentifier> vector;
+  typedef std::vector <Schema> vector;
+  typedef const Schema& const_reference;
 
-  SchemaIdentifier(const std::string &db_arg);
+  Schema(const std::string &db_arg);
 
-  virtual ~SchemaIdentifier()
+  virtual ~Schema()
   { }
 
   virtual void getSQLPath(std::string &arg) const;
+
   const std::string &getPath() const;
 
   const std::string &getSchemaName() const
@@ -78,42 +78,34 @@ public:
     return db;
   }
 
-  const std::string &getCatalogName() const
+  const std::string &getCatalogName() const;
+
+  virtual bool isValid() const;
+
+  inline virtual bool isSystem() const
   {
-    return catalog;
+    return false;
   }
 
-  bool isValid() const;
   bool compare(const std::string &arg) const;
+  bool compare(Schema::const_reference) const;
 
-  friend bool operator<(const SchemaIdentifier &left, const SchemaIdentifier &right)
+  friend bool operator<(Schema::const_reference left, Schema::const_reference right)
   {
     return  boost::algorithm::to_upper_copy(left.getSchemaName()) < boost::algorithm::to_upper_copy(right.getSchemaName());
   }
 
-  friend std::ostream& operator<<(std::ostream& output,
-                                  SchemaIdentifier &identifier)
-  {
-    output << "SchemaIdentifier:(";
-    output <<  identifier.catalog;
-    output << ", ";
-    output <<  identifier.db;
-    output << ", ";
-    output << identifier.getPath();
-    output << ")";
-
-    return output;  // for multiple << operators.
-  }
-
-  friend bool operator==(const SchemaIdentifier &left,
-                         const SchemaIdentifier &right)
+  friend bool operator==(Schema::const_reference left,
+                         Schema::const_reference right)
   {
     return boost::iequals(left.getSchemaName(), right.getSchemaName());
   }
-
 };
 
+std::ostream& operator<<(std::ostream& output, const Schema&identifier);
 
+
+} /* namespace identifier */
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_IDENTIFIER_SCHEMA_H */

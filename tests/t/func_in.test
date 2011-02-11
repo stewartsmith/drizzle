@@ -142,7 +142,7 @@ create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9); 
 create temporary table t2 (a int, filler char(200), key(a)) engine=myisam;
 
-insert into t2 select C.a*2,   'no'  from t1 A, t1 B, t1 C;
+insert into t2 select C.a*2,   'no'  from t1 A, t1 B, t1 C where A.a < 10;
 insert into t2 select C.a*2+1, 'yes' from t1 C;
 
 explain 
@@ -180,9 +180,9 @@ drop table t2;
 #
 create table t2 (a varchar(10), filler char(200), key(a));
 
-insert into t2 select 'foo', 'no' from t1 A, t1 B;
-insert into t2 select 'barbar', 'no' from t1 A, t1 B;
-insert into t2 select 'bazbazbaz', 'no' from t1 A, t1 B;
+insert into t2 select 'foo', 'no' from t1 A, t1 B where A.a < 10;
+insert into t2 select 'barbar', 'no' from t1 A, t1 B where A.a < 10;
+insert into t2 select 'bazbazbaz', 'no' from t1 A, t1 B where A.a < 10;
 
 insert into t2 values ('fon', '1'), ('fop','1'), ('barbaq','1'), 
   ('barbas','1'), ('bazbazbay', '1'),('zz','1');
@@ -196,9 +196,9 @@ drop table t2;
 #
 create table t2 (a decimal(10,5), filler char(200), key(a));
 
-insert into t2 select 345.67890, 'no' from t1 A, t1 B;
-insert into t2 select 43245.34, 'no' from t1 A, t1 B;
-insert into t2 select 64224.56344, 'no' from t1 A, t1 B;
+insert into t2 select 345.67890, 'no' from t1 A, t1 B where A.a < 10;
+insert into t2 select 43245.34, 'no' from t1 A, t1 B where A.a < 10;
+insert into t2 select 64224.56344, 'no' from t1 A, t1 B where A.a < 10;
 
 insert into t2 values (0, '1'), (22334.123,'1'), (33333,'1'), 
   (55555,'1'), (77777, '1');
@@ -217,7 +217,7 @@ set @cnt= 1;
 set @str="update t2 set b=1 where a not in (";
 select count(*) from (
   select @str:=concat(@str, @cnt:=@cnt+1, ",") 
-  from t1 A, t1 B, t1 C, t1 D) Z;
+  from t1 A, t1 B, t1 C, t1 D  where A.a < 10) Z;
 
 set @str:=concat(@str, "10000)");
 select substr(@str, 1, 50);
@@ -295,7 +295,7 @@ INSERT INTO t1 VALUES (0x0FFFFFFFFFFFFFFF);
 SELECT * FROM t1 WHERE a=-1 OR a=-2 ;
 SELECT * FROM t1 WHERE a IN (-1, -2);
 
-CREATE TABLE t2 (a BIGINT);
+CREATE TABLE t2 (a BIGINT UNSIGNED);
 insert into t2 values(13491727406643098568),
        (0x0fffffefffffffff),
        (0x0ffffffeffffffff),

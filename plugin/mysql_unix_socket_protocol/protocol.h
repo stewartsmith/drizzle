@@ -54,6 +54,16 @@ public:
   in_port_t getPort(void) const;
   static ProtocolCounters *mysql_unix_counters;
   virtual ProtocolCounters *getCounters(void) const {return mysql_unix_counters; }
+  drizzled::plugin::Client *getClient(int fd);
+};
+
+class ClientMySQLUnixSocketProtocol: public ClientMySQLProtocol
+{
+public:
+  ClientMySQLUnixSocketProtocol(int fd, bool __using_mysql41_protocol, ProtocolCounters *set_counters): ClientMySQLProtocol(fd, __using_mysql41_protocol, set_counters) {}
+
+  /* Unix socket protocol is for MySQL compatibility so do not allow admin connections */
+  bool isAdminAllowed(void) { return false; }
 };
 
 

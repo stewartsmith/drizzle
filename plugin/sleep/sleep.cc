@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- * Copyright 2009 Sun Microsystems
+ * Copyright (C) 2009 Sun Microsystems, Inc.
  *
  * Authors:
  *

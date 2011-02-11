@@ -1,7 +1,7 @@
 /* -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Stewart Smith
+ *  Copyright (C) 2011 Andrew Hutchings
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,15 +18,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
+#include <iostream>
 
-#include <gtest/gtest.h>
-
-#include <drizzled/internal/my_sys.h>
-
-int main(int argc, char **argv)
+struct MyConfig
 {
-	MY_INIT(argv[0]);
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+    MyConfig()
+    {
+       boost::unit_test::unit_test_log.set_threshold_level(boost::unit_test::log_messages);
+    }
+
+    ~MyConfig()
+    {
+    }
+};
+
+BOOST_GLOBAL_FIXTURE( MyConfig )
+
+BOOST_AUTO_TEST_CASE(MainInit)
+{
+  BOOST_REQUIRE(true);
 }

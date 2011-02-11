@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,8 @@ namespace drizzled
 
 /* This file defines all string functions */
 
-class Item_str_func :public Item_func
+class DRIZZLED_API Item_str_func :
+  public Item_func
 {
 public:
   Item_str_func() :Item_func() { decimals=NOT_FIXED_DEC; }
@@ -40,7 +41,7 @@ public:
   virtual ~Item_str_func();
   int64_t val_int();
   double val_real();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type () const { return STRING_RESULT; }
   void left_right_max_length();
   bool fix_fields(Session *session, Item **ref);

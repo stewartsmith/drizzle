@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 #include <security/pam_misc.h>
 #endif
 
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/plugin/authentication.h"
 
 using namespace drizzled;
@@ -106,7 +106,7 @@ class Auth_pam : public drizzled::plugin::Authentication
 public:
   Auth_pam(std::string name_arg)
     : drizzled::plugin::Authentication(name_arg) {}
-  virtual bool authenticate(const SecurityContext &sctx,
+  virtual bool authenticate(const identifier::User &sctx,
                             const std::string &password)
   {
     int retval;
@@ -114,7 +114,7 @@ public:
     struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
     pam_handle_t *pamh= NULL;
 
-    userinfo.name= sctx.getUser().c_str();
+    userinfo.name= sctx.username().c_str();
     userinfo.password= password.c_str();
 
     retval= pam_start("drizzle", userinfo.name, &conv_info, &pamh);
@@ -150,7 +150,7 @@ DRIZZLE_DECLARE_PLUGIN
   "PAM based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

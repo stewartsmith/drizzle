@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@
 #include "drizzled/sql_parse.h"
 #include "drizzled/plugin.h"
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -51,7 +53,31 @@ typedef class Item COND;
 int wild_case_compare(const CHARSET_INFO * const cs, 
                       const char *str,const char *wildstr);
 
-int get_quote_char_for_identifier();
+DRIZZLED_API int get_quote_char_for_identifier();
+
+namespace show {
+
+bool buildColumns(Session *session, const char *schema_ident, Table_ident *table_ident);
+bool buildCreateSchema(Session *session, LEX_STRING &ident);
+bool buildCreateTable(Session *session, Table_ident *ident);
+bool buildDescribe(Session *session, Table_ident *ident);
+bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_ident);
+bool buildProcesslist(Session *session);
+bool buildScemas(Session *session);
+bool buildStatus(Session *session, const drizzled::sql_var_t is_global);
+bool buildEngineStatus(Session *session, LEX_STRING);
+bool buildTableStatus(Session *session, const char *ident);
+bool buildTables(Session *session, const char *ident);
+bool buildTemporaryTables(Session *session);
+bool buildVariables(Session *session, const drizzled::sql_var_t is_global);
+
+void buildErrors(Session *session);
+void buildWarnings(Session *session);
+
+void buildSelectWarning(Session *session);
+void buildSelectError(Session *session);
+
+} // namespace show
 
 } /* namespace drizzled */
 

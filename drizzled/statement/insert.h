@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,12 +33,17 @@ namespace statement
 class Insert : public Statement
 {
 public:
-  Insert(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Insert(Session *in_session) :
+    Statement(in_session)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_INSERT;
+  }
 
   bool execute();
+  bool isTransactional()
+  {
+    return true;
+  }
 };
 
 } /* namespace statement */

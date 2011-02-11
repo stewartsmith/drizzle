@@ -1,0 +1,132 @@
+DROP TABLE if exists t1;
+CREATE TABLE t1 (t time);
+INSERT INTO t1 VALUES ("10:22:33");
+INSERT INTO t1 VALUES ("12:34:56.78");
+INSERT INTO t1 VALUES (10);
+INSERT INTO t1 VALUES (1234);
+INSERT INTO t1 VALUES (123456.78);
+INSERT INTO t1 VALUES (1234559.99);
+ERROR HY000: Received an invalid TIME value '1234559.99'.
+INSERT INTO t1 VALUES ("1");
+INSERT INTO t1 VALUES ("1:23");
+INSERT INTO t1 VALUES ("1:23:45");
+INSERT INTO t1 VALUES ("10.22");
+INSERT INTO t1 VALUES ("20 10:22:33");
+ERROR HY000: Received an invalid TIME value '20 10:22:33'.
+INSERT INTO t1 VALUES ("-10  1:22:33.45");
+ERROR HY000: Received an invalid TIME value '-10  1:22:33.45'.
+INSERT INTO t1 VALUES ("1999-02-03 20:33:34");
+insert t1 values (30);
+insert t1 values (1230);
+insert t1 values ("1230");
+insert t1 values ("12:30");
+insert t1 values ("12:30:35");
+insert t1 values ("1 12:30:31.32");
+ERROR HY000: Received an invalid TIME value '1 12:30:31.32'.
+select t from t1;
+t
+00:00:01
+00:00:10
+00:00:10
+00:00:30
+00:01:23
+00:12:30
+00:12:30
+00:20:30
+00:20:34
+01:23:45
+10:22:33
+12:30:35
+12:34:56
+12:34:56
+20:33:34
+INSERT INTO t1 VALUES ("10.22.22");
+ERROR HY000: Received an invalid TIME value '10.22.22'.
+INSERT INTO t1 VALUES (1234567);
+INSERT INTO t1 VALUES (123456789);
+INSERT INTO t1 VALUES (123456789.10);
+ERROR HY000: Received an invalid TIME value '123456789.10'.
+INSERT INTO t1 VALUES ("10 22:22");
+ERROR HY000: Received an invalid TIME value '10 22:22'.
+INSERT INTO t1 VALUES ("12.45a");
+ERROR HY000: Received an invalid TIME value '12.45a'.
+select t from t1;
+t
+00:00:01
+00:00:10
+00:00:10
+00:00:30
+00:01:23
+00:12:30
+00:12:30
+00:20:30
+00:20:34
+01:23:45
+06:56:07
+10:22:33
+12:30:35
+12:34:56
+12:34:56
+20:33:34
+21:33:09
+DROP TABLE t1;
+CREATE TABLE t1 (t time);
+INSERT INTO t1 VALUES ('09:00:00');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('19:38:34');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('09:00:00');
+INSERT INTO t1 VALUES ('09:00:00');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('09:00:00');
+select t, time_to_sec(t),sec_to_time(time_to_sec(t)) from t1;
+ERROR 42000: FUNCTION time_to_sec does not exist
+select sec_to_time(time_to_sec(t)) from t1;
+ERROR 42000: FUNCTION time_to_sec does not exist
+DROP TABLE t1;
+SELECT CAST('100:55:50' as time) < cast('24:00:00' as time);
+CAST('100:55:50' as time) < cast('24:00:00' as time)
+0
+SELECT CAST('100:55:50' as time) < cast('024:00:00' as time);
+CAST('100:55:50' as time) < cast('024:00:00' as time)
+0
+SELECT CAST('300:55:50' as time) < cast('240:00:00' as time);
+CAST('300:55:50' as time) < cast('240:00:00' as time)
+0
+SELECT CAST('100:55:50' as time) > cast('24:00:00' as time);
+CAST('100:55:50' as time) > cast('24:00:00' as time)
+1
+SELECT CAST('100:55:50' as time) > cast('024:00:00' as time);
+CAST('100:55:50' as time) > cast('024:00:00' as time)
+1
+SELECT CAST('300:55:50' as time) > cast('240:00:00' as time);
+CAST('300:55:50' as time) > cast('240:00:00' as time)
+1
+CREATE TABLE t1 (f1 time);
+INSERT INTO t1 VALUES ('24:00:00');
+ERROR HY000: Received an invalid TIME value '24:00:00'.
+SELECT CAST('24:00:00' as time) = (select f1 from t1);
+CAST('24:00:00' as time) = (select f1 from t1)
+NULL
+DROP TABLE t1;
+CREATE TABLE t1(f1 time, f2 time);
+INSERT INTO t1 VALUES('20:00:00','150:00:00');
+ERROR HY000: Received an invalid TIME value '150:00:00'.
+select 1 from t1 where cast('100:00:00' as time) between f1 and f2;
+1
+DROP TABLE t1;
+CREATE TABLE  t1 (
+f2 date NOT NULL,
+f3 int NOT NULL default '0',
+PRIMARY KEY  (f3, f2)
+);
+INSERT INTO t1 VALUES ('2007-07-01', 1);
+INSERT INTO t1 VALUES ('2007-07-01', 2);
+INSERT INTO t1 VALUES ('2007-07-02', 1);
+INSERT INTO t1 VALUES ('2007-07-02', 2);
+SELECT sum(f3) FROM t1 WHERE f2='2007-07-01 00:00:00' group by f2;
+sum(f3)
+3
+DROP TABLE t1;

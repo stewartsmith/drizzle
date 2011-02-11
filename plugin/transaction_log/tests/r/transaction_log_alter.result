@@ -5,12 +5,12 @@ ALTER TABLE t1 RENAME TO t1_new_name;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -26,8 +26,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 RENAME TO t1_new_name"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1_new_name;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -41,12 +44,12 @@ ERROR 42S01: Table 'test.t2' already exists
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -70,14 +73,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -115,14 +118,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -136,12 +142,12 @@ ERROR 42S01: Table 'test.t2' already exists
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -165,14 +171,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -210,14 +216,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -231,12 +240,12 @@ ALTER TABLE t1 RENAME to t1_new_name;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -252,8 +261,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 RENAME to t1_new_name"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t2;
 Table	Create Table
@@ -274,12 +286,12 @@ ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -295,8 +307,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -309,12 +324,12 @@ ERROR 42S21: Duplicate column name 'b'
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -338,14 +353,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -370,13 +385,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -388,12 +407,12 @@ ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL AFTER a;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -409,8 +428,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL AFTER a"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -422,12 +444,12 @@ ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL FIRST ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -443,8 +465,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL FIRST"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -456,12 +481,12 @@ ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL FIRST, ADD COLUMN d BLOB AFTER a 
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -477,8 +502,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL FIRST, ADD COLUMN d BLOB AFTER a"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -490,12 +518,12 @@ ALTER TABLE t1 DROP COLUMN b ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -511,8 +539,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP COLUMN b"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -524,12 +555,12 @@ ALTER TABLE t1 DROP COLUMN b, DROP COLUMN d ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -545,8 +576,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP COLUMN b, DROP COLUMN d"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -559,12 +593,12 @@ ERROR 42000: You can't delete all columns with ALTER TABLE; use DROP TABLE inste
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -588,14 +622,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -620,13 +654,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -640,12 +678,12 @@ Note	1031	Table storage engine for 't1' doesn't have this option
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -661,8 +699,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DISABLE KEYS"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 ENABLE KEYS ;
 Warnings:
@@ -670,12 +711,12 @@ Note	1031	Table storage engine for 't1' doesn't have this option
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -691,8 +732,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ENABLE KEYS"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -704,12 +748,12 @@ ALTER TABLE t1 ADD INDEX b_key (b,a) ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -725,19 +769,22 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD INDEX b_key (b,a)"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 DROP INDEX b_key;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -753,8 +800,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP INDEX b_key"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -766,12 +816,12 @@ ALTER TABLE t1 ADD INDEX b_key (b(10),a) ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -787,19 +837,22 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD INDEX b_key (b(10),a)"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 DROP INDEX b_key;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -815,8 +868,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP INDEX b_key"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -829,12 +885,12 @@ ERROR 42000: Duplicate key name 'b_key'
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -858,14 +914,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -903,13 +959,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -922,12 +982,12 @@ ERROR 42000: Can't DROP 'i_dont_exist'; check that column/key exists
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -951,14 +1011,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -983,13 +1043,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1001,12 +1065,12 @@ ALTER TABLE t1 ALTER COLUMN b SET DEFAULT 999 ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1022,8 +1086,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ALTER COLUMN b SET DEFAULT 999"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1036,12 +1103,12 @@ ALTER TABLE t1 ALTER COLUMN b DROP DEFAULT ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1057,8 +1124,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ALTER COLUMN b DROP DEFAULT"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1077,12 +1147,12 @@ ALTER TABLE t1 CHANGE COLUMN b new_b_name CHAR(500) DEFAULT 'I am not an int now
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1098,8 +1168,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 CHANGE COLUMN b new_b_name CHAR(500) DEFAULT \'I am not an int now\' FIRST"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1118,12 +1191,12 @@ ALTER TABLE t1 MODIFY COLUMN b CHAR(50) DEFAULT 'I am now a CHAR field' AFTER c 
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1139,8 +1212,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 MODIFY COLUMN b CHAR(50) DEFAULT \'I am now a CHAR field\' AFTER c"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1161,12 +1237,12 @@ ERROR 42S22: Unknown column 'b' in 't1'
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1190,14 +1266,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1229,13 +1305,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1255,12 +1335,12 @@ ALTER TABLE t1 MODIFY COLUMN b INT NOT NULL ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1276,8 +1356,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t1 MODIFY COLUMN b INT NOT NULL"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1296,12 +1379,12 @@ CREATE TABLE t1(a INT NOT NULL, b INT NOT NULL, PRIMARY KEY(a), KEY b_key1 (b));
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1325,14 +1408,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -1370,25 +1453,29 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 CREATE TABLE t2(a INT NOT NULL, b INT , PRIMARY KEY(a), KEY b_key (b));
 ALTER TABLE t2 ADD CONSTRAINT fk_constraint_t2 FOREIGN KEY(b) REFERENCES t1(b) ON DELETE SET NULL ON UPDATE CASCADE;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-5
+3
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-5
+3
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1404,19 +1491,22 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t2 ADD CONSTRAINT fk_constraint_t2 FOREIGN KEY(b) REFERENCES t1(b) ON DELETE SET NULL ON UPDATE CASCADE"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t2 DROP FOREIGN KEY fk_constraint_t2 ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+4
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+4
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1432,8 +1522,11 @@ statement {
   END_TIMESTAMP
   sql: "ALTER TABLE t2 DROP FOREIGN KEY fk_constraint_t2"
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;

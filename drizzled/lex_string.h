@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,13 +30,21 @@ namespace drizzled
 */
 
 /* This definition must match the one given in mysql/plugin.h */
-typedef struct drizzle_lex_string
+typedef struct lex_string_t
 {
   char *str;
   size_t length;
 } LEX_STRING;
 
-struct execute_string_t : public drizzle_lex_string
+inline const LEX_STRING &null_lex_string()
+{
+  static LEX_STRING tmp= { NULL, 0 };
+  return tmp;
+}
+
+#define NULL_LEX_STRING null_lex_string()
+
+struct execute_string_t : public lex_string_t
 {
 private:
   bool is_variable;
@@ -47,7 +55,7 @@ public:
     return is_variable;
   }
 
-  void set(const drizzle_lex_string& ptr, bool is_variable_arg= false)
+  void set(const lex_string_t& ptr, bool is_variable_arg= false)
   {
     is_variable= is_variable_arg;
     str= ptr.str;

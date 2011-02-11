@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  Authors:
  *
@@ -102,12 +102,9 @@ String *HexdumpTransactionMessageFunction::val_str(String *str)
   int log_file= open(filename.c_str(), O_RDONLY);
   if (log_file == -1)
   {
-    char errmsg[STRERROR_MAX];
-    strerror_r(errno, errmsg, sizeof(errmsg));
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open transaction log file %s.  Got error: %s\n"), 
-                  filename.c_str(), 
-                  errmsg);
+    drizzled::sql_perror(_("Failed to open transaction log file"), filename);
     null_value= true;
+
     return NULL;
   }
 

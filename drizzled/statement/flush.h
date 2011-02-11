@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,15 +33,17 @@ namespace statement
 class Flush : public Statement
 {
 public:
-  Flush(Session *in_session)
-    :
+  Flush(Session *in_session) :
     Statement(in_session),
     flush_log(false),
     flush_tables(false),
     flush_tables_with_read_lock(false),
     flush_status(false),
     flush_global_status(false)
-  {}
+  {
+    getSession()->getLex()->sql_command= SQLCOM_FLUSH;
+    getSession()->getLex()->type= 0;
+  }
 
   bool execute();
 

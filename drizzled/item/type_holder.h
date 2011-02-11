@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,9 @@ namespace drizzled
 
 typedef struct st_typelib TYPELIB;
 class String;
-class my_decimal;
+namespace type {
+class Decimal;
+}
 class Session;
 class Item;
 
@@ -67,7 +69,7 @@ public:
   enum Type type() const { return TYPE_HOLDER; }
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *val);
+  type::Decimal *val_decimal(type::Decimal *val);
   String *val_str(String* val);
 
   /**

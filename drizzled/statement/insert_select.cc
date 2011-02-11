@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,16 +30,16 @@ namespace drizzled
 
 bool statement::InsertSelect::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *all_tables= getSession()->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &session->lex->select_lex;
-  Select_Lex_Unit *unit= &session->lex->unit;
+  Select_Lex *select_lex= &getSession()->lex->select_lex;
+  Select_Lex_Unit *unit= &getSession()->lex->unit;
   select_result *sel_result= NULL;
   bool res= false;
   bool need_start_waiting= false;
 
-  if (insert_precheck(session, all_tables))
+  if (insert_precheck(getSession(), all_tables))
   {
     return true;
   }
@@ -49,30 +49,30 @@ bool statement::InsertSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (! (need_start_waiting= not session->wait_if_global_read_lock(false, true)))
+  if (! (need_start_waiting= not getSession()->wait_if_global_read_lock(false, true)))
   {
     return true;
   }
 
-  if (! (res= session->openTablesLock(all_tables)))
+  if (! (res= getSession()->openTablesLock(all_tables)))
   {
-    DRIZZLE_INSERT_SELECT_START(session->getQueryString()->c_str());
+    DRIZZLE_INSERT_SELECT_START(getSession()->getQueryString()->c_str());
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
     select_lex->context.table_list=
       select_lex->context.first_name_resolution_table= second_table;
-    res= mysql_insert_select_prepare(session);
+    res= insert_select_prepare(getSession());
     if (! res && (sel_result= new select_insert(first_table,
                                                 first_table->table,
-                                                &session->lex->field_list,
-                                                &session->lex->update_list,
-                                                &session->lex->value_list,
-                                                session->lex->duplicates,
-                                                session->lex->ignore)))
+                                                &getSession()->lex->field_list,
+                                                &getSession()->lex->update_list,
+                                                &getSession()->lex->value_list,
+                                                getSession()->lex->duplicates,
+                                                getSession()->lex->ignore)))
     {
-      res= handle_select(session, 
-                         session->lex, 
+      res= handle_select(getSession(), 
+                         getSession()->lex, 
                          sel_result, 
                          OPTION_SETUP_TABLES_DONE);
 
@@ -82,8 +82,7 @@ bool statement::InsertSelect::execute()
          TODO: this is a workaround. right way will be move invalidating in
          the unlock procedure.
        */
-      if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT &&
-          session->lock)
+      if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT && getSession()->lock)
       {
         /* INSERT ... SELECT should invalidate only the very first table */
         TableList *save_table= first_table->next_local;
@@ -100,7 +99,7 @@ bool statement::InsertSelect::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  session->startWaitingGlobalReadLock();
+  getSession()->startWaitingGlobalReadLock();
 
   return res;
 }

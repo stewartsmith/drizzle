@@ -18,19 +18,13 @@ SELECT is_free_lock();
 
 SELECT is_used_lock();
 
-SELECT wait_for_lock();
-
-SELECT release_lock_and_wait();
-
 If a session should exit, whatever locks it was holding will be deleted.
+
+FIXME: deleted or released? are locks recursive?
 
 Please note, get_lock() was designed to be compatible with MySQL. If you
 hold any locks when calling get_lock() they will be released. For this
 reason you may want to consider calling get_locks() instead.
-
-release_lock_and_wait() released the named lock, and then waits for another
-session to try to obtain ownership. If it does not own the lock, it returns
-with a zero.
 
 Information on all barriers can be found in the DATA_DICTIONARY.USER_LOCKS
 table;

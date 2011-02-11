@@ -1,0 +1,63 @@
+CREATE TEMPORARY TABLE t1 (a UUID, PRIMARY KEY(a)) ENGINE=MEMORY;
+show create table t1;
+Table	Create Table
+t1	CREATE TEMPORARY TABLE `t1` (
+  `a` UUID NOT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+INSERT INTO t1 VALUES (uuid());
+INSERT INTO t1 VALUES (uuid());
+INSERT INTO t1 VALUES (uuid());
+INSERT INTO t1 VALUES (uuid());
+SELECT count(a) FROM t1;
+count(a)
+4
+TRUNCATE t1;
+SELECT count(a) FROM t1;
+count(a)
+0
+INSERT INTO t1 VALUES ("1b4e28ba-2fa1-11d2-883f-b9a761bde3fb");
+INSERT INTO t1 VALUES ("4843cbfb-7b27-4f1b-b05d-757d1d4daaaa");
+INSERT INTO t1 VALUES ("41e5daca-e4ef-4dad-a7ca-50293e89aaaa");
+INSERT INTO t1 VALUES ("a2a4ab7a-968b-4353-8dcc-5ae82a07aaaa");
+INSERT INTO t1 VALUES ("92b6ac44-04ad-451e-bed8-395325dfaaaa");
+INSERT INTO t1 VALUES ("e3ec4f25-8bb0-4cca-8835-6ba00a1caaaa");
+INSERT INTO t1 VALUES ("85b6fd2e-b384-46b3-9718-0e303a90aaaa");
+INSERT INTO t1 VALUES ("d9163f3c-6228-4f62-9c21-0af56883aaaa");
+INSERT INTO t1 VALUES ("d9163f3c-6228-4f62-9c21-0af56883aaaa");
+ERROR 23000: Duplicate entry 'd9163f3c-6228-4f62-9c21-0af56883aaaa' for key 'PRIMARY'
+SELECT a FROM t1 ORDER BY a;
+a
+1b4e28ba-2fa1-11d2-883f-b9a761bde3fb
+41e5daca-e4ef-4dad-a7ca-50293e89aaaa
+4843cbfb-7b27-4f1b-b05d-757d1d4daaaa
+85b6fd2e-b384-46b3-9718-0e303a90aaaa
+92b6ac44-04ad-451e-bed8-395325dfaaaa
+a2a4ab7a-968b-4353-8dcc-5ae82a07aaaa
+d9163f3c-6228-4f62-9c21-0af56883aaaa
+e3ec4f25-8bb0-4cca-8835-6ba00a1caaaa
+INSERT INTO t1 VALUES ("d9163f3c-6228-4f62-9c21-0af56883");
+ERROR HY000: Received an invalid UUID value
+SELECT a FROM t1 ORDER BY a;
+a
+1b4e28ba-2fa1-11d2-883f-b9a761bde3fb
+41e5daca-e4ef-4dad-a7ca-50293e89aaaa
+4843cbfb-7b27-4f1b-b05d-757d1d4daaaa
+85b6fd2e-b384-46b3-9718-0e303a90aaaa
+92b6ac44-04ad-451e-bed8-395325dfaaaa
+a2a4ab7a-968b-4353-8dcc-5ae82a07aaaa
+d9163f3c-6228-4f62-9c21-0af56883aaaa
+e3ec4f25-8bb0-4cca-8835-6ba00a1caaaa
+INSERT INTO t1 VALUES(NULL);
+ERROR 23000: Column 'a' cannot be null
+SELECT a FROM t1 ORDER BY a;
+a
+1b4e28ba-2fa1-11d2-883f-b9a761bde3fb
+41e5daca-e4ef-4dad-a7ca-50293e89aaaa
+4843cbfb-7b27-4f1b-b05d-757d1d4daaaa
+85b6fd2e-b384-46b3-9718-0e303a90aaaa
+92b6ac44-04ad-451e-bed8-395325dfaaaa
+a2a4ab7a-968b-4353-8dcc-5ae82a07aaaa
+d9163f3c-6228-4f62-9c21-0af56883aaaa
+e3ec4f25-8bb0-4cca-8835-6ba00a1caaaa
+DROP TABLE t1;

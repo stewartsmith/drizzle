@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 
   if (iter != all_schedulers.end())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Attempted to register a scheduler %s, but a scheduler "
                     "has already been registered with that name.\n"),
                     sched->getName().c_str());
@@ -95,7 +95,7 @@ bool plugin::Scheduler::setPlugin(const std::string& name)
     return false;
   }
 
-  errmsg_printf(ERRMSG_LVL_WARN,
+  errmsg_printf(error::WARN,
                 _("Attempted to configure %s as the scheduler, which did "
                   "not exist.\n"), name.c_str());
   return true;

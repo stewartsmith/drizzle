@@ -26,6 +26,8 @@ k	v
 key1	value1
 key2	value2
 START TRANSACTION;
+Warnings:
+Warning	1746	There is already a transaction in progress
 INSERT INTO t1_trx VALUES ('key1','value1');
 INSERT INTO t1_trx VALUES ('key2','value2');
 SELECT t1_trx.k, t1_trx.v
@@ -39,5 +41,6 @@ SELECT t1_trx.k, t1_trx.v
 FROM t1_trx
 INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
 k	v
+COMMIT;
 DROP TABLE t1_trx;
 DROP TABLE t1_non_trx;

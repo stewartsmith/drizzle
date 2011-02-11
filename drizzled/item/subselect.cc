@@ -20,7 +20,7 @@
   subselect Item
 
   @todo
-    - add function from mysql_select that use JOIN* as parameter to JOIN
+    - add function from select_query that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
 #include "config.h"
@@ -180,7 +180,7 @@ Item_subselect::select_transformer(Join *)
 
 bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 {
-  char const *save_where= session_param->where;
+  char const *save_where= session_param->where();
   bool res;
 
   assert(fixed == 0);
@@ -223,12 +223,13 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
         engine->exclude();
       }
       substitution= 0;
-      session->where= "checking transformed subquery";
+      session->setWhere("checking transformed subquery");
       if (! (*ref)->fixed)
       {
         ret= (*ref)->fix_fields(session, ref);
       }
-      session->where= save_where;
+      session->setWhere(save_where);
+
       return ret;
     }
     // Is it one field subselect?
@@ -244,7 +245,7 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 
   if (engine->uncacheable())
   {
-    const_item_cache= 0;
+    const_item_cache= false;
     if (engine->uncacheable(UNCACHEABLE_RAND))
     {
       used_tables_cache|= RAND_TABLE_BIT;
@@ -253,7 +254,7 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
   fixed= 1;
 
 err:
-  session->where= save_where;
+  session->setWhere(save_where);
   return res;
 }
 
@@ -394,7 +395,7 @@ void Item_subselect::update_used_tables()
   {
     // did all used tables become static?
     if (!(used_tables_cache & ~engine->upper_select_const_tables()))
-      const_item_cache= 1;
+      const_item_cache= true;
   }
 }
 
@@ -668,7 +669,7 @@ String *Item_singlerow_subselect::val_str(String *str)
 }
 
 
-my_decimal *Item_singlerow_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_singlerow_subselect::val_decimal(type::Decimal *decimal_value)
 {
   if (!exec() && !value->null_value)
   {
@@ -818,7 +819,7 @@ String *Item_exists_subselect::val_str(String *str)
 }
 
 
-my_decimal *Item_exists_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_exists_subselect::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
   if (exec())
@@ -826,7 +827,7 @@ my_decimal *Item_exists_subselect::val_decimal(my_decimal *decimal_value)
     reset();
     return 0;
   }
-  int2my_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
   return decimal_value;
 }
 
@@ -929,7 +930,7 @@ bool Item_in_subselect::val_bool()
   return value;
 }
 
-my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_in_subselect::val_decimal(type::Decimal *decimal_value)
 {
   /*
     As far as Item_in_subselect called only from Item_in_optimizer this
@@ -946,7 +947,7 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
   }
   if (was_null && !value)
     null_value= 1;
-  int2my_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
   return decimal_value;
 }
 
@@ -1650,7 +1651,7 @@ Item_subselect::trans_res
 Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *func)
 {
   Select_Lex *current= session->lex->current_select, *up;
-  const char *save_where= session->where;
+  const char *save_where= session->where();
   Item_subselect::trans_res res= RES_ERROR;
   bool result;
 
@@ -1670,7 +1671,7 @@ Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *fu
   if (changed)
     return(RES_OK);
 
-  session->where= "IN/ALL/ANY subquery";
+  session->setWhere("IN/ALL/ANY subquery");
 
   /*
     In some optimisation cases we will not need this Item_in_optimizer
@@ -1721,7 +1722,7 @@ Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *fu
     res= row_value_transformer(join);
   }
 err:
-  session->where= save_where;
+  session->setWhere(save_where);
   return(res);
 }
 
@@ -2140,13 +2141,9 @@ void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **)
   assert(0);
 }
 
-int  init_read_record_seq(JoinTable *tab);
-int join_read_always_key_or_null(JoinTable *tab);
-int join_read_next_same_or_null(ReadRecord *info);
-
 int subselect_single_select_engine::exec()
 {
-  char const *save_where= session->where;
+  char const *save_where= session->where();
   Select_Lex *save_select= session->lex->current_select;
   session->lex->current_select= select_lex;
   if (!join->optimized)
@@ -2156,26 +2153,14 @@ int subselect_single_select_engine::exec()
     unit->set_limit(unit->global_parameters);
     if (join->optimize())
     {
-      session->where= save_where;
+      session->setWhere(save_where);
       executed= 1;
       session->lex->current_select= save_select;
       return(join->error ? join->error : 1);
     }
-    if (select_lex->uncacheable.none() && session->lex->describe &&
-        !(join->select_options & SELECT_DESCRIBE) &&
-        join->need_tmp && item->const_item())
-    {
-      /*
-        Force join->join_tmp creation, because this subquery will be replaced
-        by a simple select from the materialization temp table by optimize()
-        called by EXPLAIN and we need to preserve the initial query structure
-        so we can display it.
-       */
-      select_lex->uncacheable.set(UNCACHEABLE_EXPLAIN);
-      select_lex->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
-      if (join->init_save_join_tab())
-        return(1);
-    }
+    if (save_join_if_explain())
+     return(1);
+
     if (item->engine_changed)
     {
       return(1);
@@ -2187,7 +2172,7 @@ int subselect_single_select_engine::exec()
   {
     if (join->reinit())
     {
-      session->where= save_where;
+      session->setWhere(save_where);
       session->lex->current_select= save_select;
       return 1;
     }
@@ -2246,20 +2231,59 @@ int subselect_single_select_engine::exec()
       tab->read_record.read_record= tab->save_read_record;
     }
     executed= 1;
-    session->where= save_where;
+    session->setWhere(save_where);
     session->lex->current_select= save_select;
     return(join->error||session->is_fatal_error);
   }
-  session->where= save_where;
+  session->setWhere(save_where);
   session->lex->current_select= save_select;
   return(0);
 }
 
+bool 
+subselect_single_select_engine::save_join_if_explain()
+{
+  /*
+    Save this JOIN to join->tmp_join since the original layout will be
+    replaced when JOIN::exec() calls make_simple_join() if:
+     1) We are executing an EXPLAIN query
+     2) An uncacheable flag has not been set for the select_lex. If
+        set, JOIN::optimize() has already saved the JOIN
+     3) Call does not come from select_describe()). If it does,
+        JOIN::exec() will not call make_simple_join() and the JOIN we
+        plan to save will not be replaced anyway.
+     4) A temp table is needed. This is what triggers JOIN::exec() to
+        make a replacement JOIN by calling make_simple_join(). 
+     5) The Item_subselect is cacheable
+  */
+  if (session->lex->describe &&                          // 1
+      select_lex->uncacheable.none() &&                  // 2
+      !(join->select_options & SELECT_DESCRIBE) &&       // 3
+      join->need_tmp &&                                  // 4
+      item->const_item())                                // 5
+  {
+    /*
+      Save this JOIN to join->tmp_join since the original layout will
+      be replaced when JOIN::exec() calls make_simple_join() due to
+      need_tmp==TRUE. The original layout is needed so we can describe
+      the query. No need to do this if uncacheable != 0 since in this
+      case the JOIN has already been saved during JOIN::optimize()
+    */
+    select_lex->uncacheable.set(UNCACHEABLE_EXPLAIN);
+    select_lex->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
+    if (join->init_save_join_tab())
+      return true;
+  }
+  return false;
+}
+
+
 int subselect_union_engine::exec()
 {
-  char const *save_where= session->where;
+  char const *save_where= session->where();
   int res= unit->exec();
-  session->where= save_where;
+  session->setWhere(save_where);
+
   return res;
 }
 
@@ -2290,9 +2314,15 @@ int subselect_uniquesubquery_engine::scan_table()
   if (table->cursor->inited)
     table->cursor->endIndexScan();
 
-  table->cursor->startTableScan(1);
+  if ((error= table->cursor->startTableScan(1)))
+  {
+    table->print_error(error, MYF(0));
+    return 1;
+  }
+
+  assert(table->getSession());
   table->cursor->extra_opt(HA_EXTRA_CACHE,
-                           current_session->variables.read_buff_size);
+                           table->getSession()->variables.read_buff_size);
   table->null_row= 0;
   for (;;)
   {
@@ -2467,7 +2497,16 @@ int subselect_uniquesubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, 0);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, 0);
+
+    if (error != 0)
+    {
+      error= table->report_error(error);
+      return (error != 0);
+    }
+  }
+
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
@@ -2580,7 +2619,15 @@ int subselect_indexsubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, 1);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, 1);
+
+    if (error != 0)
+    {
+      error= table->report_error(error);
+      return(error != 0);
+    }
+  }
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
@@ -3022,6 +3069,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   */
   if (!(tab= (JoinTable*) session->alloc(sizeof(JoinTable))))
     return(true);
+  new (tab) JoinTable();
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
@@ -3136,6 +3184,10 @@ int subselect_hash_sj_engine::exec()
     session->lex->current_select= materialize_engine->select_lex;
     if ((res= materialize_join->optimize()))
       goto err;
+
+    if (materialize_engine->save_join_if_explain())
+      goto err;
+
     materialize_join->exec();
     if ((res= test(materialize_join->error || session->is_fatal_error)))
       goto err;

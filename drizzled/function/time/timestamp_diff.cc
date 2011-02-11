@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,15 +27,15 @@ namespace drizzled
 
 int64_t Item_func_timestamp_diff::val_int()
 {
-  DRIZZLE_TIME ltime1, ltime2;
+  type::Time ltime1, ltime2;
   int64_t seconds;
   long microseconds;
   long months= 0;
   int neg= 1;
 
   null_value= 0;
-  if (args[0]->get_date(&ltime1, TIME_NO_ZERO_DATE) ||
-      args[1]->get_date(&ltime2, TIME_NO_ZERO_DATE))
+  if (args[0]->get_date(ltime1, TIME_NO_ZERO_DATE) ||
+      args[1]->get_date(ltime2, TIME_NO_ZERO_DATE))
     goto null_date;
 
   if (calc_time_diff(&ltime2,&ltime1, 1,

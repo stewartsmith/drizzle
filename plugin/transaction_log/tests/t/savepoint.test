@@ -1,0 +1,100 @@
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+--enable_warnings
+
+CREATE TABLE t1(a INT NOT NULL AUTO_INCREMENT, b VARCHAR(10), c VARCHAR(10), PRIMARY KEY(a));
+CREATE TABLE t2(a INT NOT NULL AUTO_INCREMENT, b VARCHAR(10), c VARCHAR(10), PRIMARY KEY(a));
+CREATE TABLE t3(a INT NOT NULL AUTO_INCREMENT, b VARCHAR(10), c VARCHAR(10), PRIMARY KEY(a));
+
+INSERT INTO t1 (b,c) VALUES ('1','ok'), ('3','ok');
+INSERT INTO t2 (b,c) VALUES ('2','ok'), ('4','ok');
+INSERT INTO t3 (b,c) VALUES ('1','ok'), ('2','ok'), ('3','ok'), ('4','ok'), ('5','ok'), ('6','ok'), ('7','ok'), ('8','ok'), ('9','ok'), ('10','ok');
+
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+--echo Test deadlock
+--echo
+
+# To create a deadlock (without a lock wait timeout), we need two
+# connections dependent on each other:
+#   con1> lock t1;
+#   con2> lock t2;
+#   con2> lock t1;  <-- a deadlock that would timeout
+#   con1> lock t2;  <-- a deadlock causing InnoDB to choose a trx to rollback
+
+connect (con1, localhost, root, , test);
+connect (con2, localhost, root, , test);
+
+connection con1;
+SET AUTOCOMMIT=OFF;
+START TRANSACTION;
+UPDATE t1 SET c = 'trx1' WHERE a > 0;
+SAVEPOINT A;
+--echo
+--echo Should have one savepoint: A
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+--echo
+
+connection con2;
+SET AUTOCOMMIT=OFF;
+START TRANSACTION;
+UPDATE t2 SET a = a*3;
+send UPDATE t1 SET b = 'trx2' WHERE a > 0;
+sleep 1;
+
+connection con1;
+--ERROR ER_LOCK_DEADLOCK
+DELETE FROM t2 WHERE a > 0;
+
+--echo
+--echo Should have no savepoints
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+
+--echo
+SAVEPOINT A;
+UPDATE t3 SET c = 'TRX1a' WHERE a < 10 ORDER BY b LIMIT 4;
+UPDATE t3 SET b = 'TRX1b' WHERE a < 10 ORDER BY c LIMIT 4;
+ROLLBACK TO SAVEPOINT A;
+SAVEPOINT A;
+ROLLBACK;
+
+START TRANSACTION;
+--echo
+--echo Definitely should have no savepoints
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+--echo
+UPDATE t3 SET b = 'TRX1c' WHERE a > 7;
+--ERROR ER_SP_DOES_NOT_EXIST
+ROLLBACK TO SAVEPOINT A;
+COMMIT;
+
+connection con2;
+reap;
+COMMIT;
+
+disconnect con1;
+disconnect con2;
+
+connection default;
+
+--echo
+SELECT * FROM t1;
+--echo
+SELECT * FROM t2;
+--echo
+SELECT * FROM t3;
+
+--echo
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /transaction_id: [0-9]+/TRANSACTION_ID/
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log', ENTRY_OFFSET) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+
+DROP TABLE t1, t2, t3;
+
+--source ../plugin/transaction_log/tests/t/truncate_log.inc

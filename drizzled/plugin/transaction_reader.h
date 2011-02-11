@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  Authors:
  *
@@ -27,6 +27,8 @@
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/replication_services.h" /* For global transaction ID typedef */
 
+#include "drizzled/visibility.h"
+
 /**
  * @file Defines the API for a TransactionReader
  *
@@ -44,7 +46,7 @@ namespace plugin
 /**
  * Class which can read Transaction messages from some source
  */
-class TransactionReader : public Plugin
+class DRIZZLED_API TransactionReader : public Plugin
 {
   TransactionReader();
   TransactionReader(const TransactionReader &);

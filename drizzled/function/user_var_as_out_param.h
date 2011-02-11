@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
-  my_decimal *val_decimal(my_decimal *decimal_buffer);
+  type::Decimal *val_decimal(type::Decimal *decimal_buffer);
   /* fix_fields() binds variable name with its entry structure */
   bool fix_fields(Session *session, Item **ref);
   virtual void print(String *str, enum_query_type query_type);

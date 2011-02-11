@@ -368,8 +368,7 @@ static int com_quit(string *str,const char*),
   com_nopager(string *str, const char*), com_pager(string *str, const char*);
 
 static int read_and_execute(bool interactive);
-static int sql_connect(const string &host, const string &database, const string &user, const string &password,
-                       uint32_t silent);
+static int sql_connect(const string &host, const string &database, const string &user, const string &password);
 static const char *server_version_string(drizzle_con_st *con);
 static int put_info(const char *str,INFO_TYPE info,uint32_t error,
                     const char *sql_state);
@@ -491,7 +490,7 @@ static Commands commands[] = {
   Commands( "tee",    'T', com_tee,    1,
     N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
   Commands( "use",    'u', com_use,    1,
-    N_("Use another database. Takes database name as argument.") ),
+    N_("Use another schema. Takes schema name as argument.") ),
   Commands( "shutdown",    'u', com_shutdown,    1,
     N_("Shutdown the instance you are connected too.") ),
   Commands( "warnings", 'W', com_warnings,  0,
@@ -1281,118 +1280,122 @@ try
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle", LOCALEDIR);
-  textdomain("drizzle");
+  bindtextdomain("drizzle7", LOCALEDIR);
+  textdomain("drizzle7");
 #endif
 
-  po::options_description commandline_options(N_("Options used only in command line"));
+  po::options_description commandline_options(_("Options used only in command line"));
   commandline_options.add_options()
-  ("help,?",N_("Displays this help and exit."))
-  ("batch,B",N_("Don't use history file. Disable interactive behavior. (Enables --silent)"))
+  ("help,?",_("Displays this help and exit."))
+  ("batch,B",_("Don't use history file. Disable interactive behavior. (Enables --silent)"))
   ("column-type-info", po::value<bool>(&column_types_flag)->default_value(false)->zero_tokens(),
-  N_("Display column type information."))
+  _("Display column type information."))
   ("comments,c", po::value<bool>(&preserve_comments)->default_value(false)->zero_tokens(),
-  N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
+  _("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
   ("vertical,E", po::value<bool>(&vertical)->default_value(false)->zero_tokens(),
-  N_("Print the output of a query (rows) vertically."))
+  _("Print the output of a query (rows) vertically."))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
-  N_("Continue even if we get an sql error."))
+  _("Continue even if we get an sql error."))
   ("named-commands,G", po::value<bool>(&named_cmds)->default_value(false)->zero_tokens(),
-  N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter."))
+  _("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter."))
   ("no-beep,b", po::value<bool>(&opt_nobeep)->default_value(false)->zero_tokens(),
-  N_("Turn off beep on error."))
-  ("disable-line-numbers", N_("Do not write line numbers for errors."))
-  ("disable-column-names", N_("Do not write column names in results."))
+  _("Turn off beep on error."))
+  ("disable-line-numbers", _("Do not write line numbers for errors."))
+  ("disable-column-names", _("Do not write column names in results."))
   ("skip-column-names,N", 
-  N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
+  _("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
   ("set-variable,O", po::value<string>(),
-  N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."))
+  _("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."))
   ("table,t", po::value<bool>(&output_tables)->default_value(false)->zero_tokens(),
-  N_("Output in table format.")) 
+  _("Output in table format.")) 
   ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
-  N_("Only allow UPDATE and DELETE that uses keys."))
+  _("Only allow UPDATE and DELETE that uses keys."))
   ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
-  N_("Synonym for option --safe-updates, -U."))
+  _("Synonym for option --safe-updates, -U."))
   ("verbose,v", po::value<string>(&opt_verbose)->default_value(""),
-  N_("-v vvv implies that verbose= 3, Used to specify verbose"))
-  ("version,V", N_("Output version information and exit."))
+  _("-v vvv implies that verbose= 3, Used to specify verbose"))
+  ("version,V", _("Output version information and exit."))
   ("secure-auth", po::value<bool>(&opt_secure_auth)->default_value(false)->zero_tokens(),
-  N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
+  _("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
   ("show-warnings", po::value<bool>(&show_warnings)->default_value(false)->zero_tokens(),
-  N_("Show warnings after every statement."))
+  _("Show warnings after every statement."))
   ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(0),
-  N_("Number of lines before each import progress report."))
+  _("Number of lines before each import progress report."))
   ("ping", po::value<bool>(&opt_ping)->default_value(false)->zero_tokens(),
-  N_("Ping the server to check if it's alive."))
+  _("Ping the server to check if it's alive."))
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
-  N_("Configuration file defaults are not used if no-defaults is set"))
+  _("Configuration file defaults are not used if no-defaults is set"))
   ;
 
-  po::options_description drizzle_options(N_("Options specific to the drizzle client"));
+  po::options_description drizzle_options(_("Options specific to the drizzle client"));
   drizzle_options.add_options()
   ("disable-auto-rehash,A",
-  N_("Disable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time."))
+  _("Disable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time."))
   ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
-  N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
+  _("Automatically switch to vertical output mode if the result is wider than the terminal width."))
   ("database,D", po::value<string>(&current_db)->default_value(""),
-  N_("Database to use."))
+  _("Database to use."))
   ("default-character-set",po::value<string>(),
-  N_("(not used)"))
+  _("(not used)"))
   ("delimiter", po::value<string>(&delimiter_str)->default_value(";"),
-  N_("Delimiter to be used."))
+  _("Delimiter to be used."))
   ("execute,e", po::value<string>(),
-  N_("Execute command and quit. (Disables --force and history file)"))
+  _("Execute command and quit. (Disables --force and history file)"))
   ("local-infile", po::value<bool>(&opt_local_infile)->default_value(false)->zero_tokens(),
-  N_("Enable LOAD DATA LOCAL INFILE."))
+  _("Enable LOAD DATA LOCAL INFILE."))
   ("unbuffered,n", po::value<bool>(&unbuffered)->default_value(false)->zero_tokens(),
-  N_("Flush buffer after each query."))
+  _("Flush buffer after each query."))
   ("sigint-ignore", po::value<bool>(&opt_sigint_ignore)->default_value(false)->zero_tokens(),
-  N_("Ignore SIGINT (CTRL-C)"))
+  _("Ignore SIGINT (CTRL-C)"))
   ("one-database,o", po::value<bool>(&one_database)->default_value(false)->zero_tokens(),
-  N_("Only update the default database. This is useful for skipping updates to other database in the update log."))
+  _("Only update the default database. This is useful for skipping updates to other database in the update log."))
   ("pager", po::value<string>(),
-  N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
+  _("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
   ("disable-pager", po::value<bool>(&opt_nopager)->default_value(false)->zero_tokens(),
-  N_("Disable pager and print to stdout. See interactive help (\\h) also."))
+  _("Disable pager and print to stdout. See interactive help (\\h) also."))
   ("prompt", po::value<string>(&current_prompt)->default_value(""),  
-  N_("Set the drizzle prompt to this value."))
+  _("Set the drizzle prompt to this value."))
   ("quick,q", po::value<bool>(&quick)->default_value(false)->zero_tokens(),
-  N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."))
+  _("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."))
   ("raw,r", po::value<bool>(&opt_raw_data)->default_value(false)->zero_tokens(),
-  N_("Write fields without conversion. Used with --batch.")) 
-  ("disable-reconnect", N_("Do not reconnect if the connection is lost."))
+  _("Write fields without conversion. Used with --batch.")) 
+  ("disable-reconnect", _("Do not reconnect if the connection is lost."))
   ("shutdown", po::value<bool>()->zero_tokens(),
-  N_("Shutdown the server"))
-  ("silent,s", N_("Be more silent. Print results with a tab as separator, each row on new line."))
+  _("Shutdown the server"))
+  ("silent,s", _("Be more silent. Print results with a tab as separator, each row on new line."))
   ("tee", po::value<string>(),
-  N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
+  _("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
-  N_("Disable outfile. See interactive help (\\h) also."))
+  _("Disable outfile. See interactive help (\\h) also."))
   ("connect-timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
-  N_("Number of seconds before connection timeout."))
+  _("Number of seconds before connection timeout."))
   ("max-input-line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
-  N_("Max length of input line"))
+  _("Max length of input line"))
   ("select-limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
-  N_("Automatic limit for SELECT when using --safe-updates"))
+  _("Automatic limit for SELECT when using --safe-updates"))
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
-  N_("Automatic limit for rows in a join when using --safe-updates"))
+  _("Automatic limit for rows in a join when using --safe-updates"))
   ;
 
-  po::options_description client_options(N_("Options specific to the client"));
+  po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
-  N_("Connect to host"))
+  _("Connect to host"))
   ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
-  N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
+  _("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
-  N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
+  _("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
+#ifdef DRIZZLE_ADMIN_TOOL
+  ("user,u", po::value<string>(&current_user)->default_value("root"),
+#else
   ("user,u", po::value<string>(&current_user)->default_value(""),
-  N_("User for login if not current user."))
+#endif
+  _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
-  N_("The protocol of connection (mysql or drizzle)."))
+  _("The protocol of connection (mysql or drizzle)."))
   ;
 
-  po::options_description long_options(N_("Allowed Options"));
+  po::options_description long_options(_("Allowed Options"));
   long_options.add(commandline_options).add(drizzle_options).add(client_options);
 
   std::string system_config_dir_drizzle(SYSCONFDIR); 
@@ -1446,9 +1449,15 @@ try
 
   po::notify(vm);
 
+#ifdef DRIZZLE_ADMIN_TOOL
+  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
+                         getenv("DRIZZLE_PS1") :
+                         "drizzleadmin> ");
+#else
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
+#endif
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -1480,7 +1489,6 @@ try
   if (! isatty(0) || ! isatty(1))
   {
     status.setBatch(1); opt_silent=1;
-    ignore_errors=0;
   }
   else
     status.setAddToHistory(1);
@@ -1657,7 +1665,7 @@ try
   }
   if (vm.count("silent"))
   {
-    opt_silent++;
+    opt_silent= 2;
   }
   
   if (vm.count("help") || vm.count("version"))
@@ -1673,7 +1681,7 @@ try
            "This is free software,\n"
            "and you are welcome to modify and redistribute it "
            "under the GPL license\n"));
-    printf(_("Usage: drizzle [OPTIONS] [database]\n"));
+    printf(_("Usage: drizzle [OPTIONS] [schema]\n"));
     cout << long_options;
     exit(0);
   }
@@ -1685,7 +1693,7 @@ try
   }
 
   memset(&drizzle, 0, sizeof(drizzle));
-  if (sql_connect(current_host, current_db, current_user, opt_password,opt_silent))
+  if (sql_connect(current_host, current_db, current_user, opt_password))
   {
     quick= 1;          // Avoid history
     status.setExitStatus(1);
@@ -2527,8 +2535,8 @@ static void build_completion_hash(bool rehash, bool write_info)
   drizzle_return_t ret;
   drizzle_result_st databases,tables,fields;
   drizzle_row_t database_row,table_row;
-  drizzle_column_st *sql_field;
   string tmp_str, tmp_str_lower;
+  std::string query;
 
   if (status.getBatch() || quick || current_db.empty())
     return;      // We don't need completion in batches
@@ -2548,7 +2556,7 @@ static void build_completion_hash(bool rehash, bool write_info)
   /* hash Drizzle functions (to be implemented) */
 
   /* hash all database names */
-  if (drizzle_query_str(&con, &databases, "show databases", &ret) != NULL)
+  if (drizzle_query_str(&con, &databases, "select schema_name from information_schema.schemata", &ret) != NULL)
   {
     if (ret == DRIZZLE_RETURN_OK)
     {
@@ -2568,18 +2576,15 @@ static void build_completion_hash(bool rehash, bool write_info)
     drizzle_result_free(&databases);
   }
 
-  /* hash all table names */
-  if (drizzle_query_str(&con, &tables, "show tables", &ret) != NULL)
+  query= "select table_name, column_name from information_schema.columns where table_schema='";
+  query.append(current_db);
+  query.append("' order by table_name");
+  
+  if (drizzle_query(&con, &fields, query.c_str(), query.length(),
+                    &ret) != NULL)
   {
-    if (ret != DRIZZLE_RETURN_OK)
-    {
-      drizzle_result_free(&tables);
-      return;
-    }
-
-    if (drizzle_result_buffer(&tables) != DRIZZLE_RETURN_OK)
-      put_info(drizzle_error(&drizzle),INFO_INFO,0,0);
-    else
+    if (ret == DRIZZLE_RETURN_OK &&
+        drizzle_result_buffer(&fields) == DRIZZLE_RETURN_OK)
     {
       if (drizzle_result_row_count(&tables) > 0 && !opt_silent && write_info)
       {
@@ -2589,57 +2594,30 @@ static void build_completion_hash(bool rehash, bool write_info)
                       "You can turn off this feature to get a quicker "
                       "startup with -A\n\n"));
       }
-      while ((table_row=drizzle_row_next(&tables)))
+
+      std::string table_name;
+      while ((table_row=drizzle_row_next(&fields)))
       {
+        if (table_name.compare(table_row[0]) != 0)
+        {
+          tmp_str= table_row[0];
+          tmp_str_lower= lower_string(tmp_str);
+          completion_map[tmp_str_lower]= tmp_str;
+          table_name= table_row[0];
+        }
         tmp_str= table_row[0];
+        tmp_str.append(".");
+        tmp_str.append(table_row[1]);
+        tmp_str_lower= lower_string(tmp_str);
+        completion_map[tmp_str_lower]= tmp_str;
+
+        tmp_str= table_row[1];
         tmp_str_lower= lower_string(tmp_str);
         completion_map[tmp_str_lower]= tmp_str;
       }
     }
   }
-  else
-    return;
-
-  /* hash all field names, both with the table prefix and without it */
-  if (drizzle_result_row_count(&tables) == 0)
-  {
-    drizzle_result_free(&tables);
-    return;
-  }
-
-  drizzle_row_seek(&tables, 0);
-
-  while ((table_row=drizzle_row_next(&tables)))
-  {
-    string query;
-
-    query.append("show fields in `");
-    query.append(table_row[0]);
-    query.append("`");
-    
-    if (drizzle_query(&con, &fields, query.c_str(), query.length(),
-                      &ret) != NULL)
-    {
-      if (ret == DRIZZLE_RETURN_OK &&
-          drizzle_result_buffer(&fields) == DRIZZLE_RETURN_OK)
-      {
-        while ((sql_field=drizzle_column_next(&fields)))
-        {
-          tmp_str=table_row[0];
-          tmp_str.append(".");
-          tmp_str.append(drizzle_column_name(sql_field));
-          tmp_str_lower= lower_string(tmp_str);
-          completion_map[tmp_str_lower]= tmp_str;
-
-          tmp_str=drizzle_column_name(sql_field);
-          tmp_str_lower= lower_string(tmp_str);
-          completion_map[tmp_str_lower]= tmp_str;
-        }
-      }
-      drizzle_result_free(&fields);
-    }
-  }
-  drizzle_result_free(&tables);
+  drizzle_result_free(&fields);
   completion_iter= completion_map.begin();
 }
 
@@ -3076,7 +3054,7 @@ print_field_types(drizzle_result_st *result)
   {
     tee_fprintf(PAGER, _("Field %3u:  `%s`\n"
                 "Catalog:    `%s`\n"
-                "Database:   `%s`\n"
+                "Schema:     `%s`\n"
                 "Table:      `%s`\n"
                 "Org_table:  `%s`\n"
                 "Type:       UTF-8\n"
@@ -3715,14 +3693,14 @@ com_connect(string *buffer, const char *line)
   }
   else
     opt_rehash= 0;
-  error=sql_connect(current_host, current_db, current_user, opt_password,0);
+  error=sql_connect(current_host, current_db, current_user, opt_password);
   opt_rehash= save_rehash;
 
   if (connected)
   {
     sprintf(buff, _("Connection id:    %u"), drizzle_con_thread_id(&con));
     put_info(buff,INFO_INFO,0,0);
-    sprintf(buff, _("Current database: %.128s\n"),
+    sprintf(buff, _("Current schema: %.128s\n"),
             !current_db.empty() ? current_db.c_str() : _("*** NONE ***"));
     put_info(buff,INFO_INFO,0,0);
   }
@@ -3835,7 +3813,7 @@ com_use(string *, const char *line)
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
   {
-    put_info(_("USE must be followed by a database name"), INFO_ERROR, 0, 0);
+    put_info(_("USE must be followed by a schema name"), INFO_ERROR, 0, 0);
     return 0;
   }
   /*
@@ -3903,7 +3881,7 @@ com_use(string *, const char *line)
       build_completion_hash(opt_rehash, 1);
   }
 
-  put_info(_("Database changed"),INFO_INFO, 0, 0);
+  put_info(_("Schema changed"),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -4024,8 +4002,7 @@ char *get_arg(char *line, bool get_next_arg)
 
 
 static int
-sql_connect(const string &host, const string &database, const string &user, const string &password,
-                 uint32_t silent)
+sql_connect(const string &host, const string &database, const string &user, const string &password)
 {
   drizzle_return_t ret;
   if (connected)
@@ -4035,10 +4012,17 @@ sql_connect(const string &host, const string &database, const string &user, cons
     drizzle_free(&drizzle);
   }
   drizzle_create(&drizzle);
+
+#ifdef DRIZZLE_ADMIN_TOOL
+  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL));
+#else
+  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+#endif
+
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
     opt_drizzle_port, (char *)user.c_str(),
     (char *)password.c_str(), (char *)database.c_str(),
-    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
+    options) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
@@ -4067,8 +4051,8 @@ sql_connect(const string &host, const string &database, const string &user, cons
 */
   if ((ret= drizzle_con_connect(&con)) != DRIZZLE_RETURN_OK)
   {
-    if (!silent || (ret != DRIZZLE_RETURN_GETADDRINFO &&
-                    ret != DRIZZLE_RETURN_COULD_NOT_CONNECT))
+
+    if (opt_silent < 2)
     {
       (void) put_error(&con, NULL);
       (void) fflush(stdout);
@@ -4113,7 +4097,7 @@ com_status(string *, const char *)
       drizzle_row_t cur=drizzle_row_next(&result);
       if (cur)
       {
-        tee_fprintf(stdout, _("Current database:\t%s\n"), cur[0] ? cur[0] : "");
+        tee_fprintf(stdout, _("Current schema:\t%s\n"), cur[0] ? cur[0] : "");
         tee_fprintf(stdout, _("Current user:\t\t%s\n"), cur[1]);
       }
       drizzle_result_free(&result);
@@ -4132,7 +4116,7 @@ com_status(string *, const char *)
   if (skip_updates)
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, _("\nAll updates ignored to this database\n"));
+    tee_fprintf(stdout, _("\nAll updates ignored to this schema\n"));
     vidattr(A_NORMAL);
   }
   tee_fprintf(stdout, _("Current pager:\t\t%s\n"), pager.c_str());

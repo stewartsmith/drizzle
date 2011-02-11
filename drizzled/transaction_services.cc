@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
@@ -313,11 +313,11 @@ TransactionServices::TransactionServices()
   }
 }
 
-void TransactionServices::registerResourceForStatement(Session *session,
+void TransactionServices::registerResourceForStatement(Session::reference session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
 {
-  if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  if (session_test_options(&session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     /* 
      * Now we automatically register this resource manager for the
@@ -329,8 +329,8 @@ void TransactionServices::registerResourceForStatement(Session *session,
     registerResourceForTransaction(session, monitored, engine);
   }
 
-  TransactionContext *trans= &session->transaction.stmt;
-  ResourceContext *resource_context= session->getResourceContext(monitored, 0);
+  TransactionContext *trans= &session.transaction.stmt;
+  ResourceContext *resource_context= session.getResourceContext(monitored, 0);
 
   if (resource_context->isStarted())
     return; /* already registered, return */
@@ -345,12 +345,12 @@ void TransactionServices::registerResourceForStatement(Session *session,
   trans->no_2pc|= true;
 }
 
-void TransactionServices::registerResourceForStatement(Session *session,
+void TransactionServices::registerResourceForStatement(Session::reference session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine,
                                                        plugin::XaResourceManager *resource_manager)
 {
-  if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  if (session_test_options(&session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     /* 
      * Now we automatically register this resource manager for the
@@ -362,8 +362,8 @@ void TransactionServices::registerResourceForStatement(Session *session,
     registerResourceForTransaction(session, monitored, engine, resource_manager);
   }
 
-  TransactionContext *trans= &session->transaction.stmt;
-  ResourceContext *resource_context= session->getResourceContext(monitored, 0);
+  TransactionContext *trans= &session.transaction.stmt;
+  ResourceContext *resource_context= session.getResourceContext(monitored, 0);
 
   if (resource_context->isStarted())
     return; /* already registered, return */
@@ -379,17 +379,17 @@ void TransactionServices::registerResourceForStatement(Session *session,
   trans->no_2pc|= false;
 }
 
-void TransactionServices::registerResourceForTransaction(Session *session,
+void TransactionServices::registerResourceForTransaction(Session::reference session,
                                                          plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine)
 {
-  TransactionContext *trans= &session->transaction.all;
-  ResourceContext *resource_context= session->getResourceContext(monitored, 1);
+  TransactionContext *trans= &session.transaction.all;
+  ResourceContext *resource_context= session.getResourceContext(monitored, 1);
 
   if (resource_context->isStarted())
     return; /* already registered, return */
 
-  session->server_status|= SERVER_STATUS_IN_TRANS;
+  session.server_status|= SERVER_STATUS_IN_TRANS;
 
   trans->registerResource(resource_context);
 
@@ -400,26 +400,26 @@ void TransactionServices::registerResourceForTransaction(Session *session,
   resource_context->setTransactionalStorageEngine(engine);
   trans->no_2pc|= true;
 
-  if (session->transaction.xid_state.xid.is_null())
-    session->transaction.xid_state.xid.set(session->getQueryId());
+  if (session.transaction.xid_state.xid.is_null())
+    session.transaction.xid_state.xid.set(session.getQueryId());
 
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
-  if (! session->getResourceContext(monitored, 0)->isStarted())
+  if (! session.getResourceContext(monitored, 0)->isStarted())
     registerResourceForStatement(session, monitored, engine);
 }
 
-void TransactionServices::registerResourceForTransaction(Session *session,
+void TransactionServices::registerResourceForTransaction(Session::reference session,
                                                          plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine,
                                                          plugin::XaResourceManager *resource_manager)
 {
-  TransactionContext *trans= &session->transaction.all;
-  ResourceContext *resource_context= session->getResourceContext(monitored, 1);
+  TransactionContext *trans= &session.transaction.all;
+  ResourceContext *resource_context= session.getResourceContext(monitored, 1);
 
   if (resource_context->isStarted())
     return; /* already registered, return */
 
-  session->server_status|= SERVER_STATUS_IN_TRANS;
+  session.server_status|= SERVER_STATUS_IN_TRANS;
 
   trans->registerResource(resource_context);
 
@@ -430,13 +430,13 @@ void TransactionServices::registerResourceForTransaction(Session *session,
   resource_context->setTransactionalStorageEngine(engine);
   trans->no_2pc|= true;
 
-  if (session->transaction.xid_state.xid.is_null())
-    session->transaction.xid_state.xid.set(session->getQueryId());
+  if (session.transaction.xid_state.xid.is_null())
+    session.transaction.xid_state.xid.set(session.getQueryId());
 
-  engine->startTransaction(session, START_TRANS_NO_OPTIONS);
+  engine->startTransaction(&session, START_TRANS_NO_OPTIONS);
 
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
-  if (! session->getResourceContext(monitored, 0)->isStarted())
+  if (! session.getResourceContext(monitored, 0)->isStarted())
     registerResourceForStatement(session, monitored, engine, resource_manager);
 }
 
@@ -453,41 +453,28 @@ void TransactionServices::allocateNewTransactionId()
   my_session->setXaId(xa_id);
 }
 
-uint64_t TransactionServices::getCurrentTransactionId(Session *session)
+uint64_t TransactionServices::getCurrentTransactionId(Session::reference session)
 {
-  if (session->getXaId() == 0)
+  if (session.getXaId() == 0)
   {
-    session->setXaId(xa_storage_engine->getNewTransactionId(session)); 
+    session.setXaId(xa_storage_engine->getNewTransactionId(&session)); 
   }
 
-  return session->getXaId();
+  return session.getXaId();
 }
 
-/**
-  @retval
-    0   ok
-  @retval
-    1   transaction was rolled back
-  @retval
-    2   error during commit, data may be inconsistent
-
-  @todo
-    Since we don't support nested statement transactions in 5.0,
-    we can't commit or rollback stmt transactions while we are inside
-    stored functions or triggers. So we simply do nothing now.
-    TODO: This should be fixed in later ( >= 5.1) releases.
-*/
-int TransactionServices::commitTransaction(Session *session, bool normal_transaction)
+int TransactionServices::commitTransaction(Session::reference session,
+                                           bool normal_transaction)
 {
   int error= 0, cookie= 0;
   /*
     'all' means that this is either an explicit commit issued by
     user, or an implicit commit issued by a DDL.
   */
-  TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
+  TransactionContext *trans= normal_transaction ? &session.transaction.all : &session.transaction.stmt;
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
 
-  bool is_real_trans= normal_transaction || session->transaction.all.getResourceContexts().empty();
+  bool is_real_trans= normal_transaction || session.transaction.all.getResourceContexts().empty();
 
   /*
     We must not commit the normal transaction if a statement
@@ -495,12 +482,12 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
     flags will not get propagated to its normal transaction's
     counterpart.
   */
-  assert(session->transaction.stmt.getResourceContexts().empty() ||
-              trans == &session->transaction.stmt);
+  assert(session.transaction.stmt.getResourceContexts().empty() ||
+              trans == &session.transaction.stmt);
 
   if (resource_contexts.empty() == false)
   {
-    if (is_real_trans && session->wait_if_global_read_lock(false, false))
+    if (is_real_trans && session.wait_if_global_read_lock(false, false))
     {
       rollbackTransaction(session, normal_transaction);
       return 1;
@@ -531,14 +518,14 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
 
         if (resource->participatesInXaTransaction())
         {
-          if ((err= resource_context->getXaResourceManager()->xaPrepare(session, normal_transaction)))
+          if ((err= resource_context->getXaResourceManager()->xaPrepare(&session, normal_transaction)))
           {
             my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
             error= 1;
           }
           else
           {
-            session->status_var.ha_prepare_count++;
+            session.status_var.ha_prepare_count++;
           }
         }
       }
@@ -560,7 +547,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
     error= commitPhaseOne(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
 end:
     if (is_real_trans)
-      session->startWaitingGlobalReadLock();
+      session.startWaitingGlobalReadLock();
   }
   return error;
 }
@@ -569,13 +556,21 @@ end:
   @note
   This function does not care about global read lock. A caller should.
 */
-int TransactionServices::commitPhaseOne(Session *session, bool normal_transaction)
+int TransactionServices::commitPhaseOne(Session::reference session,
+                                        bool normal_transaction)
 {
   int error=0;
-  TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
+  TransactionContext *trans= normal_transaction ? &session.transaction.all : &session.transaction.stmt;
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
 
-  bool is_real_trans= normal_transaction || session->transaction.all.getResourceContexts().empty();
+  bool is_real_trans= normal_transaction || session.transaction.all.getResourceContexts().empty();
+  bool all= normal_transaction;
+
+  /* If we're in autocommit then we have a real transaction to commit
+     (except if it's BEGIN)
+  */
+  if (! session_test_options(&session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+    all= true;
 
   if (resource_contexts.empty() == false)
   {
@@ -590,58 +585,60 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaCommit(session, normal_transaction)))
+        if ((err= resource_context->getXaResourceManager()->xaCommit(&session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
         else if (normal_transaction)
         {
-          session->status_var.ha_commit_count++;
+          session.status_var.ha_commit_count++;
         }
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->commit(session, normal_transaction)))
+        if ((err= resource_context->getTransactionalStorageEngine()->commit(&session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
         else if (normal_transaction)
         {
-          session->status_var.ha_commit_count++;
+          session.status_var.ha_commit_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
     }
 
     if (is_real_trans)
-      session->transaction.xid_state.xid.null();
+      session.transaction.xid_state.xid.null();
 
     if (normal_transaction)
     {
-      session->variables.tx_isolation= session->session_tx_isolation;
-      session->transaction.cleanup();
+      session.variables.tx_isolation= session.session_tx_isolation;
+      session.transaction.cleanup();
     }
   }
   trans->reset();
   return error;
 }
 
-int TransactionServices::rollbackTransaction(Session *session, bool normal_transaction)
+int TransactionServices::rollbackTransaction(Session::reference session,
+                                             bool normal_transaction)
 {
   int error= 0;
-  TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
+  TransactionContext *trans= normal_transaction ? &session.transaction.all : &session.transaction.stmt;
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
 
-  bool is_real_trans= normal_transaction || session->transaction.all.getResourceContexts().empty();
+  bool is_real_trans= normal_transaction || session.transaction.all.getResourceContexts().empty();
+  bool all = normal_transaction || !session_test_options(&session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
 
   /*
     We must not rollback the normal transaction if a statement
     transaction is pending.
   */
-  assert(session->transaction.stmt.getResourceContexts().empty() ||
-              trans == &session->transaction.stmt);
+  assert(session.transaction.stmt.getResourceContexts().empty() ||
+              trans == &session.transaction.stmt);
 
   if (resource_contexts.empty() == false)
   {
@@ -656,26 +653,26 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaRollback(session, normal_transaction)))
+        if ((err= resource_context->getXaResourceManager()->xaRollback(&session, all)))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
         else if (normal_transaction)
         {
-          session->status_var.ha_rollback_count++;
+          session.status_var.ha_rollback_count++;
         }
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->rollback(session, normal_transaction)))
+        if ((err= resource_context->getTransactionalStorageEngine()->rollback(&session, all)))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
         else if (normal_transaction)
         {
-          session->status_var.ha_rollback_count++;
+          session.status_var.ha_rollback_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
@@ -688,30 +685,30 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
      * a rollback statement with the corresponding transaction ID
      * to rollback.
      */
-    if (normal_transaction)
+    if (all)
       rollbackTransactionMessage(session);
     else
       rollbackStatementMessage(session);
 
     if (is_real_trans)
-      session->transaction.xid_state.xid.null();
+      session.transaction.xid_state.xid.null();
     if (normal_transaction)
     {
-      session->variables.tx_isolation=session->session_tx_isolation;
-      session->transaction.cleanup();
+      session.variables.tx_isolation=session.session_tx_isolation;
+      session.transaction.cleanup();
     }
   }
   if (normal_transaction)
-    session->transaction_rollback_request= false;
+    session.transaction_rollback_request= false;
 
   /*
    * If a non-transactional table was updated, warn the user
    */
   if (is_real_trans &&
-      session->transaction.all.hasModifiedNonTransData() &&
-      session->getKilled() != Session::KILL_CONNECTION)
+      session.transaction.all.hasModifiedNonTransData() &&
+      session.getKilled() != Session::KILL_CONNECTION)
   {
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,
                  ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
   }
@@ -719,27 +716,17 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
   return error;
 }
 
-/**
-  This is used to commit or rollback a single statement depending on
-  the value of error.
-
-  @note
-    Note that if the autocommit is on, then the following call inside
-    InnoDB will commit or rollback the whole transaction (= the statement). The
-    autocommit mechanism built into InnoDB is based on counting locks, but if
-    the user has used LOCK TABLES then that mechanism does not know to do the
-    commit.
-*/
-int TransactionServices::autocommitOrRollback(Session *session, int error)
+int TransactionServices::autocommitOrRollback(Session::reference session,
+                                              int error)
 {
   /* One GPB Statement message per SQL statement */
-  message::Statement *statement= session->getStatementMessage();
+  message::Statement *statement= session.getStatementMessage();
   if ((statement != NULL) && (! error))
     finalizeStatementMessage(*statement, session);
 
-  if (session->transaction.stmt.getResourceContexts().empty() == false)
+  if (session.transaction.stmt.getResourceContexts().empty() == false)
   {
-    TransactionContext *trans = &session->transaction.stmt;
+    TransactionContext *trans = &session.transaction.stmt;
     TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
     for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
          it != resource_contexts.end();
@@ -747,7 +734,7 @@ int TransactionServices::autocommitOrRollback(Session *session, int error)
     {
       ResourceContext *resource_context= *it;
 
-      resource_context->getTransactionalStorageEngine()->endStatement(session);
+      resource_context->getTransactionalStorageEngine()->endStatement(&session);
     }
 
     if (! error)
@@ -758,12 +745,16 @@ int TransactionServices::autocommitOrRollback(Session *session, int error)
     else
     {
       (void) rollbackTransaction(session, false);
-      if (session->transaction_rollback_request)
+      if (session.transaction_rollback_request)
+      {
         (void) rollbackTransaction(session, true);
+        session.server_status&= ~SERVER_STATUS_IN_TRANS;
+      }
     }
 
-    session->variables.tx_isolation= session->session_tx_isolation;
+    session.variables.tx_isolation= session.session_tx_isolation;
   }
+
   return error;
 }
 
@@ -777,10 +768,11 @@ struct ResourceContextCompare : public std::binary_function<ResourceContext *, R
   }
 };
 
-int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::rollbackToSavepoint(Session::reference session,
+                                             NamedSavepoint &sv)
 {
   int error= 0;
-  TransactionContext *trans= &session->transaction.all;
+  TransactionContext *trans= &session.transaction.all;
   TransactionContext::ResourceContexts &tran_resource_contexts= trans->getResourceContexts();
   TransactionContext::ResourceContexts &sv_resource_contexts= sv.getResourceContexts();
 
@@ -800,14 +792,14 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
 
     if (resource->participatesInSqlTransaction())
     {
-      if ((err= resource_context->getTransactionalStorageEngine()->rollbackToSavepoint(session, sv)))
+      if ((err= resource_context->getTransactionalStorageEngine()->rollbackToSavepoint(&session, sv)))
       {
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
         error= 1;
       }
       else
       {
-        session->status_var.ha_savepoint_rollback_count++;
+        session.status_var.ha_savepoint_rollback_count++;
       }
     }
     trans->no_2pc|= not resource->participatesInXaTransaction();
@@ -857,14 +849,14 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
 
       if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->rollback(session, !(0))))
+        if ((err= resource_context->getTransactionalStorageEngine()->rollback(&session, !(0))))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
         else
         {
-          session->status_var.ha_rollback_count++;
+          session.status_var.ha_rollback_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
@@ -887,13 +879,13 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
       uint32_t num_statements = savepoint_transaction_copy->statement_size();
       if (num_statements == 0)
       {    
-        session->setStatementMessage(NULL);
+        session.setStatementMessage(NULL);
       }    
       else 
       {
-        session->setStatementMessage(savepoint_transaction_copy->mutable_statement(num_statements - 1));    
+        session.setStatementMessage(savepoint_transaction_copy->mutable_statement(num_statements - 1));    
       }    
-      session->setTransactionMessage(savepoint_transaction_copy);
+      session.setTransactionMessage(savepoint_transaction_copy);
     }
   }
 
@@ -906,10 +898,11 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
   section "4.33.4 SQL-statements and transaction states",
   NamedSavepoint is *not* transaction-initiating SQL-statement
 */
-int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::setSavepoint(Session::reference session,
+                                      NamedSavepoint &sv)
 {
   int error= 0;
-  TransactionContext *trans= &session->transaction.all;
+  TransactionContext *trans= &session.transaction.all;
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
 
   if (resource_contexts.empty() == false)
@@ -925,14 +918,14 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
 
       if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->setSavepoint(session, sv)))
+        if ((err= resource_context->getTransactionalStorageEngine()->setSavepoint(&session, sv)))
         {
           my_error(ER_GET_ERRNO, MYF(0), err);
           error= 1;
         }
         else
         {
-          session->status_var.ha_savepoint_count++;
+          session.status_var.ha_savepoint_count++;
         }
       }
     }
@@ -944,7 +937,7 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
 
   if (shouldConstructMessages())
   {
-    message::Transaction *transaction= session->getTransactionMessage();
+    message::Transaction *transaction= session.getTransactionMessage();
                   
     if (transaction != NULL)
     {
@@ -957,7 +950,8 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
   return error;
 }
 
-int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::releaseSavepoint(Session::reference session,
+                                          NamedSavepoint &sv)
 {
   int error= 0;
 
@@ -974,7 +968,7 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
 
     if (resource->participatesInSqlTransaction())
     {
-      if ((err= resource_context->getTransactionalStorageEngine()->releaseSavepoint(session, sv)))
+      if ((err= resource_context->getTransactionalStorageEngine()->releaseSavepoint(&session, sv)))
       {
         my_error(ER_GET_ERRNO, MYF(0), err);
         error= 1;
@@ -991,9 +985,10 @@ bool TransactionServices::shouldConstructMessages()
   return replication_services.isActive();
 }
 
-message::Transaction *TransactionServices::getActiveTransactionMessage(Session *in_session, bool should_inc_trx_id)
+message::Transaction *TransactionServices::getActiveTransactionMessage(Session::reference session,
+                                                                       bool should_inc_trx_id)
 {
-  message::Transaction *transaction= in_session->getTransactionMessage();
+  message::Transaction *transaction= session.getTransactionMessage();
 
   if (unlikely(transaction == NULL))
   {
@@ -1003,51 +998,56 @@ message::Transaction *TransactionServices::getActiveTransactionMessage(Session *
      * deleting transaction message when done with it.
      */
     transaction= new (nothrow) message::Transaction();
-    initTransactionMessage(*transaction, in_session, should_inc_trx_id);
-    in_session->setTransactionMessage(transaction);
+    initTransactionMessage(*transaction, session, should_inc_trx_id);
+    session.setTransactionMessage(transaction);
     return transaction;
   }
   else
     return transaction;
 }
 
-void TransactionServices::initTransactionMessage(message::Transaction &in_transaction,
-                                                 Session *in_session,
+void TransactionServices::initTransactionMessage(message::Transaction &transaction,
+                                                 Session::reference session,
                                                  bool should_inc_trx_id)
 {
-  message::TransactionContext *trx= in_transaction.mutable_transaction_context();
-  trx->set_server_id(in_session->getServerId());
+  message::TransactionContext *trx= transaction.mutable_transaction_context();
+  trx->set_server_id(session.getServerId());
 
   if (should_inc_trx_id)
   {
-    trx->set_transaction_id(getCurrentTransactionId(in_session));
-    in_session->setXaId(0);
-  }  
+    trx->set_transaction_id(getCurrentTransactionId(session));
+    session.setXaId(0);
+  }
   else
-  { 
+  {
+    /* trx and seg id will get set properly elsewhere */
     trx->set_transaction_id(0);
   }
 
-  trx->set_start_timestamp(in_session->getCurrentTimestamp());
+  trx->set_start_timestamp(session.getCurrentTimestamp());
+  
+  /* segment info may get set elsewhere as needed */
+  transaction.set_segment_id(1);
+  transaction.set_end_segment(true);
 }
 
-void TransactionServices::finalizeTransactionMessage(message::Transaction &in_transaction,
-                                              Session *in_session)
+void TransactionServices::finalizeTransactionMessage(message::Transaction &transaction,
+                                                     Session::const_reference session)
 {
-  message::TransactionContext *trx= in_transaction.mutable_transaction_context();
-  trx->set_end_timestamp(in_session->getCurrentTimestamp());
+  message::TransactionContext *trx= transaction.mutable_transaction_context();
+  trx->set_end_timestamp(session.getCurrentTimestamp());
 }
 
-void TransactionServices::cleanupTransactionMessage(message::Transaction *in_transaction,
-                                             Session *in_session)
+void TransactionServices::cleanupTransactionMessage(message::Transaction *transaction,
+                                                    Session::reference session)
 {
-  delete in_transaction;
-  in_session->setStatementMessage(NULL);
-  in_session->setTransactionMessage(NULL);
-  in_session->setXaId(0);
+  delete transaction;
+  session.setStatementMessage(NULL);
+  session.setTransactionMessage(NULL);
+  session.setXaId(0);
 }
 
-int TransactionServices::commitTransactionMessage(Session *in_session)
+int TransactionServices::commitTransactionMessage(Session::reference session)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -1057,18 +1057,18 @@ int TransactionServices::commitTransactionMessage(Session *in_session)
    * If no Transaction message was ever created, then no data modification
    * occurred inside the transaction, so nothing to do.
    */
-  if (in_session->getTransactionMessage() == NULL)
+  if (session.getTransactionMessage() == NULL)
     return 0;
   
   /* If there is an active statement message, finalize it. */
-  message::Statement *statement= in_session->getStatementMessage();
+  message::Statement *statement= session.getStatementMessage();
 
   if (statement != NULL)
   {
-    finalizeStatementMessage(*statement, in_session);
+    finalizeStatementMessage(*statement, session);
   }
 
-  message::Transaction* transaction= getActiveTransactionMessage(in_session);
+  message::Transaction* transaction= getActiveTransactionMessage(session);
 
   /*
    * It is possible that we could have a Transaction without any Statements
@@ -1078,44 +1078,44 @@ int TransactionServices::commitTransactionMessage(Session *in_session)
    */
   if (transaction->statement_size() == 0)
   {
-    cleanupTransactionMessage(transaction, in_session);
+    cleanupTransactionMessage(transaction, session);
     return 0;
   }
   
-  finalizeTransactionMessage(*transaction, in_session);
+  finalizeTransactionMessage(*transaction, session);
   
-  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(*in_session, *transaction);
+  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(session, *transaction);
 
-  cleanupTransactionMessage(transaction, in_session);
+  cleanupTransactionMessage(transaction, session);
 
   return static_cast<int>(result);
 }
 
 void TransactionServices::initStatementMessage(message::Statement &statement,
-                                        message::Statement::Type in_type,
-                                        Session *in_session)
+                                               message::Statement::Type type,
+                                               Session::const_reference session)
 {
-  statement.set_type(in_type);
-  statement.set_start_timestamp(in_session->getCurrentTimestamp());
+  statement.set_type(type);
+  statement.set_start_timestamp(session.getCurrentTimestamp());
 
-  if (in_session->variables.replicate_query)
-    statement.set_sql(in_session->getQueryString()->c_str());
+  if (session.variables.replicate_query)
+    statement.set_sql(session.getQueryString()->c_str());
 }
 
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,
-                                            Session *in_session)
+                                                   Session::reference session)
 {
-  statement.set_end_timestamp(in_session->getCurrentTimestamp());
-  in_session->setStatementMessage(NULL);
+  statement.set_end_timestamp(session.getCurrentTimestamp());
+  session.setStatementMessage(NULL);
 }
 
-void TransactionServices::rollbackTransactionMessage(Session *in_session)
+void TransactionServices::rollbackTransactionMessage(Session::reference session)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
   
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Transaction *transaction= getActiveTransactionMessage(session);
 
   /*
    * OK, so there are two situations that we need to deal with here:
@@ -1138,36 +1138,40 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
   {
     /* Remember the transaction ID so we can re-use it */
     uint64_t trx_id= transaction->transaction_context().transaction_id();
+    uint32_t seg_id= transaction->segment_id();
 
     /*
      * Clear the transaction, create a Rollback statement message, 
      * attach it to the transaction, and push it to replicators.
      */
     transaction->Clear();
-    initTransactionMessage(*transaction, in_session, false);
+    initTransactionMessage(*transaction, session, false);
 
     /* Set the transaction ID to match the previous messages */
     transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+    transaction->set_segment_id(seg_id);
+    transaction->set_end_segment(true);
 
     message::Statement *statement= transaction->add_statement();
 
-    initStatementMessage(*statement, message::Statement::ROLLBACK, in_session);
-    finalizeStatementMessage(*statement, in_session);
+    initStatementMessage(*statement, message::Statement::ROLLBACK, session);
+    finalizeStatementMessage(*statement, session);
 
-    finalizeTransactionMessage(*transaction, in_session);
+    finalizeTransactionMessage(*transaction, session);
     
-    (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+    (void) replication_services.pushTransactionMessage(session, *transaction);
   }
-  cleanupTransactionMessage(transaction, in_session);
+
+  cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::rollbackStatementMessage(Session *in_session)
+void TransactionServices::rollbackStatementMessage(Session::reference session)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
 
-  message::Statement *current_statement= in_session->getStatementMessage();
+  message::Statement *current_statement= session.getStatementMessage();
 
   /* If we never added a Statement message, nothing to undo. */
   if (current_statement == NULL)
@@ -1206,11 +1210,11 @@ void TransactionServices::rollbackStatementMessage(Session *in_session)
    * Remove the Statement message we've been working with (same as
    * current_statement).
    */
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Transaction *transaction= getActiveTransactionMessage(session);
   google::protobuf::RepeatedPtrField<message::Statement> *statements_in_txn;
   statements_in_txn= transaction->mutable_statement();
   statements_in_txn->RemoveLast();
-  in_session->setStatementMessage(NULL);
+  session.setStatementMessage(NULL);
   
   /*
    * Create the ROLLBACK_STATEMENT message, if we need to. This serves as
@@ -1222,120 +1226,124 @@ void TransactionServices::rollbackStatementMessage(Session *in_session)
     current_statement= transaction->add_statement();
     initStatementMessage(*current_statement,
                          message::Statement::ROLLBACK_STATEMENT,
-                         in_session);
-    finalizeStatementMessage(*current_statement, in_session);
+                         session);
+    finalizeStatementMessage(*current_statement, session);
   }
 }
+
+message::Transaction *TransactionServices::segmentTransactionMessage(Session::reference session,
+                                                                     message::Transaction *transaction)
+{
+  uint64_t trx_id= transaction->transaction_context().transaction_id();
+  uint32_t seg_id= transaction->segment_id();
   
-message::Statement &TransactionServices::getInsertStatement(Session *in_session,
-                                                            Table *in_table,
+  transaction->set_end_segment(false);
+  commitTransactionMessage(session);
+  transaction= getActiveTransactionMessage(session, false);
+  
+  /* Set the transaction ID to match the previous messages */
+  transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+  transaction->set_segment_id(seg_id + 1);
+  transaction->set_end_segment(true);
+
+  return transaction;
+}
+
+message::Statement &TransactionServices::getInsertStatement(Session::reference session,
+                                                            Table &table,
                                                             uint32_t *next_segment_id)
 {
-  message::Statement *statement= in_session->getStatementMessage();
+  message::Statement *statement= session.getStatementMessage();
   message::Transaction *transaction= NULL;
-
-  /* 
-   * Check the type for the current Statement message, if it is anything
-   * other then INSERT we need to call finalize, this will ensure a 
-   * new InsertStatement is created. If it is of type INSERT check
-   * what table the INSERT belongs to, if it is a different table
-   * call finalize, so a new InsertStatement can be created. 
+  
+  /*
+   * If statement is NULL, this is a new statement.
+   * If statement is NOT NULL, this a continuation of the same statement.
+   * This is because autocommitOrRollback() finalizes the statement so that
+   * we guarantee only one Statement message per statement (i.e., we no longer
+   * share a single GPB message for multiple statements).
    */
-  if (statement != NULL && statement->type() != message::Statement::INSERT)
+  if (statement == NULL)
   {
-    finalizeStatementMessage(*statement, in_session);
-    statement= in_session->getStatementMessage();
-  } 
-  else if (statement != NULL)
-  {
-    transaction= getActiveTransactionMessage(in_session);
+    transaction= getActiveTransactionMessage(session);
 
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+        session.variables.transaction_message_threshold)
+    {
+      transaction= segmentTransactionMessage(session, transaction);
+    }
+
+    statement= transaction->add_statement();
+    setInsertHeader(*statement, session, table);
+    session.setStatementMessage(statement);
+  }
+  else
+  {
+    transaction= getActiveTransactionMessage(session);
+    
     /*
      * If we've passed our threshold for the statement size (possible for
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-      in_session->variables.transaction_message_threshold)
+        session.variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
-
+      uint32_t seg_id= transaction->segment_id();
+      
       message::InsertData *current_data= statement->mutable_insert_data();
-
+      
       /* Caller should use this value when adding a new record */
       *next_segment_id= current_data->segment_id() + 1;
-
+      
       current_data->set_end_segment(false);
-
+      transaction->set_end_segment(false);
+      
       /* 
        * Send the trx message to replicators after finalizing the 
        * statement and transaction. This will also set the Transaction
        * and Statement objects in Session to NULL.
        */
-      commitTransactionMessage(in_session);
-
+      commitTransactionMessage(session);
+      
       /*
        * Statement and Transaction should now be NULL, so new ones will get
        * created. We reuse the transaction id since we are segmenting
        * one transaction.
        */
-      statement= in_session->getStatementMessage();
-      transaction= getActiveTransactionMessage(in_session, false);
+      transaction= getActiveTransactionMessage(session, false);
       assert(transaction != NULL);
 
+      statement= transaction->add_statement();
+      setInsertHeader(*statement, session, table);
+      session.setStatementMessage(statement);
+            
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
-      const message::InsertHeader &insert_header= statement->insert_header();
-      string old_table_name= insert_header.table_metadata().table_name();
-     
-      string current_table_name;
-      (void) in_table->getShare()->getTableName(current_table_name);
-
-      if (current_table_name.compare(old_table_name))
-      {
-        finalizeStatementMessage(*statement, in_session);
-        statement= in_session->getStatementMessage();
-      }
-      else
-      {
-        /* carry forward the existing segment id */
-        const message::InsertData &current_data= statement->insert_data();
-        *next_segment_id= current_data.segment_id();
-      }
+      /*
+       * Continuation of the same statement. Carry forward the existing
+       * segment id.
+       */
+      const message::InsertData &current_data= statement->insert_data();
+      *next_segment_id= current_data.segment_id();
     }
-  } 
-
-  if (statement == NULL)
-  {
-    /*
-     * Transaction will be non-NULL only if we had to segment it due to
-     * transaction size above.
-     */
-    if (transaction == NULL)
-      transaction= getActiveTransactionMessage(in_session);
-
-    /* 
-     * Transaction message initialized and set, but no statement created
-     * yet.  We construct one and initialize it, here, then return the
-     * message after attaching the new Statement message pointer to the 
-     * Session for easy retrieval later...
-     */
-    statement= transaction->add_statement();
-    setInsertHeader(*statement, in_session, in_table);
-    in_session->setStatementMessage(statement);
   }
+  
   return *statement;
 }
 
 void TransactionServices::setInsertHeader(message::Statement &statement,
-                                          Session *in_session,
-                                          Table *in_table)
+                                          Session::const_reference session,
+                                          Table &table)
 {
-  initStatementMessage(statement, message::Statement::INSERT, in_session);
+  initStatementMessage(statement, message::Statement::INSERT, session);
 
   /* 
    * Now we construct the specialized InsertHeader message inside
@@ -1346,20 +1354,20 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
   string schema_name;
-  (void) in_table->getShare()->getSchemaName(schema_name);
+  (void) table.getShare()->getSchemaName(schema_name);
   string table_name;
-  (void) in_table->getShare()->getTableName(table_name);
+  (void) table.getShare()->getTableName(table_name);
 
   table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
   table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
-  Field **table_fields= in_table->getFields();
+  Field **table_fields= table.getFields();
 
   message::FieldMetadata *field_metadata;
 
   /* We will read all the table's fields... */
-  in_table->setReadSet();
+  table.setReadSet();
 
   while ((current_field= *table_fields++) != NULL) 
   {
@@ -1369,11 +1377,13 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   }
 }
 
-bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
+bool TransactionServices::insertRecord(Session::reference session,
+                                       Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return false;
+
   /**
    * We do this check here because we don't want to even create a 
    * statement if there isn't a primary key on the table...
@@ -1382,14 +1392,14 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
    *
    * Multi-column primary keys are handled how exactly?
    */
-  if (not in_table->getShare()->hasPrimaryKey())
+  if (not table.getShare()->hasPrimaryKey())
   {
     my_error(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, MYF(0));
     return true;
   }
 
   uint32_t next_segment_id= 1;
-  message::Statement &statement= getInsertStatement(in_session, in_table, &next_segment_id);
+  message::Statement &statement= getInsertStatement(session, table, &next_segment_id);
 
   message::InsertData *data= statement.mutable_insert_data();
   data->set_segment_id(next_segment_id);
@@ -1397,13 +1407,13 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
   message::InsertRecord *record= data->add_record();
 
   Field *current_field;
-  Field **table_fields= in_table->getFields();
+  Field **table_fields= table.getFields();
 
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  String *string_value= new (session.mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
   /* We will read all the table's fields... */
-  in_table->setReadSet();
+  table.setReadSet();
 
   while ((current_field= *table_fields++) != NULL) 
   {
@@ -1414,7 +1424,7 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
     } 
     else 
     {
-      string_value= current_field->val_str(string_value);
+      string_value= current_field->val_str_internal(string_value);
       record->add_is_null(false);
       record->add_insert_value(string_value->c_ptr(), string_value->length());
       string_value->free();
@@ -1423,182 +1433,105 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
   return false;
 }
 
-message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
-                                                            Table *in_table,
+message::Statement &TransactionServices::getUpdateStatement(Session::reference session,
+                                                            Table &table,
                                                             const unsigned char *old_record, 
                                                             const unsigned char *new_record,
                                                             uint32_t *next_segment_id)
 {
-  message::Statement *statement= in_session->getStatementMessage();
+  message::Statement *statement= session.getStatementMessage();
   message::Transaction *transaction= NULL;
 
   /*
-   * Check the type for the current Statement message, if it is anything
-   * other then UPDATE we need to call finalize, this will ensure a
-   * new UpdateStatement is created. If it is of type UPDATE check
-   * what table the UPDATE belongs to, if it is a different table
-   * call finalize, so a new UpdateStatement can be created.
+   * If statement is NULL, this is a new statement.
+   * If statement is NOT NULL, this a continuation of the same statement.
+   * This is because autocommitOrRollback() finalizes the statement so that
+   * we guarantee only one Statement message per statement (i.e., we no longer
+   * share a single GPB message for multiple statements).
    */
-  if (statement != NULL && statement->type() != message::Statement::UPDATE)
+  if (statement == NULL)
   {
-    finalizeStatementMessage(*statement, in_session);
-    statement= in_session->getStatementMessage();
+    transaction= getActiveTransactionMessage(session);
+    
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+        session.variables.transaction_message_threshold)
+    {
+      transaction= segmentTransactionMessage(session, transaction);
+    }
+    
+    statement= transaction->add_statement();
+    setUpdateHeader(*statement, session, table, old_record, new_record);
+    session.setStatementMessage(statement);
   }
-  else if (statement != NULL)
+  else
   {
-    transaction= getActiveTransactionMessage(in_session);
-
+    transaction= getActiveTransactionMessage(session);
+    
     /*
      * If we've passed our threshold for the statement size (possible for
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-      in_session->variables.transaction_message_threshold)
+        session.variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
-
+      uint32_t seg_id= transaction->segment_id();
+      
       message::UpdateData *current_data= statement->mutable_update_data();
-
+      
       /* Caller should use this value when adding a new record */
       *next_segment_id= current_data->segment_id() + 1;
-
+      
       current_data->set_end_segment(false);
-
-      /*
+      transaction->set_end_segment(false);
+      
+      /* 
        * Send the trx message to replicators after finalizing the 
        * statement and transaction. This will also set the Transaction
        * and Statement objects in Session to NULL.
        */
-      commitTransactionMessage(in_session);
-
+      commitTransactionMessage(session);
+      
       /*
        * Statement and Transaction should now be NULL, so new ones will get
        * created. We reuse the transaction id since we are segmenting
        * one transaction.
        */
-      statement= in_session->getStatementMessage();
-      transaction= getActiveTransactionMessage(in_session, false);
+      transaction= getActiveTransactionMessage(session, false);
       assert(transaction != NULL);
-
+      
+      statement= transaction->add_statement();
+      setUpdateHeader(*statement, session, table, old_record, new_record);
+      session.setStatementMessage(statement);
+      
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
-      if (useExistingUpdateHeader(*statement, in_table, old_record, new_record))
-      {
-        /* carry forward the existing segment id */
-        const message::UpdateData &current_data= statement->update_data();
-        *next_segment_id= current_data.segment_id();
-      } 
-      else 
-      {
-        finalizeStatementMessage(*statement, in_session);
-        statement= in_session->getStatementMessage();
-      }
+      /*
+       * Continuation of the same statement. Carry forward the existing
+       * segment id.
+       */
+      const message::UpdateData &current_data= statement->update_data();
+      *next_segment_id= current_data.segment_id();
     }
   }
-
-  if (statement == NULL)
-  {
-    /*
-     * Transaction will be non-NULL only if we had to segment it due to
-     * transaction size above.
-     */
-    if (transaction == NULL)
-      transaction= getActiveTransactionMessage(in_session);
-
-    /* 
-     * Transaction message initialized and set, but no statement created
-     * yet.  We construct one and initialize it, here, then return the
-     * message after attaching the new Statement message pointer to the 
-     * Session for easy retrieval later...
-     */
-    statement= transaction->add_statement();
-    setUpdateHeader(*statement, in_session, in_table, old_record, new_record);
-    in_session->setStatementMessage(statement);
-  }
+  
   return *statement;
 }
 
-bool TransactionServices::useExistingUpdateHeader(message::Statement &statement,
-                                                  Table *in_table,
-                                                  const unsigned char *old_record,
-                                                  const unsigned char *new_record)
-{
-  const message::UpdateHeader &update_header= statement.update_header();
-  string old_table_name= update_header.table_metadata().table_name();
-
-  string current_table_name;
-  (void) in_table->getShare()->getTableName(current_table_name);
-  if (current_table_name.compare(old_table_name))
-  {
-    return false;
-  }
-  else
-  {
-    /* Compare the set fields in the existing UpdateHeader and see if they
-     * match the updated fields in the new record, if they do not we must
-     * create a new UpdateHeader 
-     */
-    size_t num_set_fields= update_header.set_field_metadata_size();
-
-    Field *current_field;
-    Field **table_fields= in_table->getFields();
-    in_table->setReadSet();
-
-    size_t num_calculated_updated_fields= 0;
-    bool found= false;
-    while ((current_field= *table_fields++) != NULL)
-    {
-      if (num_calculated_updated_fields > num_set_fields)
-      {
-        break;
-      }
-
-      if (isFieldUpdated(current_field, in_table, old_record, new_record))
-      {
-        /* check that this field exists in the UpdateHeader record */
-        found= false;
-
-        for (size_t x= 0; x < num_set_fields; ++x)
-        {
-          const message::FieldMetadata &field_metadata= update_header.set_field_metadata(x);
-          string name= field_metadata.name();
-          if (name.compare(current_field->field_name) == 0)
-          {
-            found= true;
-            ++num_calculated_updated_fields;
-            break;
-          } 
-        }
-        if (! found)
-        {
-          break;
-        } 
-      }
-    }
-
-    if ((num_calculated_updated_fields == num_set_fields) && found)
-    {
-      return true;
-    } 
-    else 
-    {
-      return false;
-    }
-  }
-}  
-
 void TransactionServices::setUpdateHeader(message::Statement &statement,
-                                          Session *in_session,
-                                          Table *in_table,
+                                          Session::const_reference session,
+                                          Table &table,
                                           const unsigned char *old_record, 
                                           const unsigned char *new_record)
 {
-  initStatementMessage(statement, message::Statement::UPDATE, in_session);
+  initStatementMessage(statement, message::Statement::UPDATE, session);
 
   /* 
    * Now we construct the specialized UpdateHeader message inside
@@ -1609,20 +1542,20 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
   string schema_name;
-  (void) in_table->getShare()->getSchemaName(schema_name);
+  (void) table.getShare()->getSchemaName(schema_name);
   string table_name;
-  (void) in_table->getShare()->getTableName(table_name);
+  (void) table.getShare()->getTableName(table_name);
 
   table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
   table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
-  Field **table_fields= in_table->getFields();
+  Field **table_fields= table.getFields();
 
   message::FieldMetadata *field_metadata;
 
   /* We will read all the table's fields... */
-  in_table->setReadSet();
+  table.setReadSet();
 
   while ((current_field= *table_fields++) != NULL) 
   {
@@ -1630,14 +1563,14 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
      * We add the "key field metadata" -- i.e. the fields which is
      * the primary key for the table.
      */
-    if (in_table->getShare()->fieldInPrimaryKey(current_field))
+    if (table.getShare()->fieldInPrimaryKey(current_field))
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
       field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
     }
 
-    if (isFieldUpdated(current_field, in_table, old_record, new_record))
+    if (isFieldUpdated(current_field, table, old_record, new_record))
     {
       /* Field is changed from old to new */
       field_metadata= header->add_set_field_metadata();
@@ -1646,8 +1579,8 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
     }
   }
 }
-void TransactionServices::updateRecord(Session *in_session,
-                                       Table *in_table, 
+void TransactionServices::updateRecord(Session::reference session,
+                                       Table &table, 
                                        const unsigned char *old_record, 
                                        const unsigned char *new_record)
 {
@@ -1656,7 +1589,7 @@ void TransactionServices::updateRecord(Session *in_session,
     return;
 
   uint32_t next_segment_id= 1;
-  message::Statement &statement= getUpdateStatement(in_session, in_table, old_record, new_record, &next_segment_id);
+  message::Statement &statement= getUpdateStatement(session, table, old_record, new_record, &next_segment_id);
 
   message::UpdateData *data= statement.mutable_update_data();
   data->set_segment_id(next_segment_id);
@@ -1664,8 +1597,8 @@ void TransactionServices::updateRecord(Session *in_session,
   message::UpdateRecord *record= data->add_record();
 
   Field *current_field;
-  Field **table_fields= in_table->getFields();
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  Field **table_fields= table.getFields();
+  String *string_value= new (session.mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
   while ((current_field= *table_fields++) != NULL) 
@@ -1681,16 +1614,16 @@ void TransactionServices::updateRecord(Session *in_session,
      *
      * We will generate two UpdateRecord messages with different set_value byte arrays.
      */
-    if (isFieldUpdated(current_field, in_table, old_record, new_record))
+    if (isFieldUpdated(current_field, table, old_record, new_record))
     {
       /* Store the original "read bit" for this field */
       bool is_read_set= current_field->isReadSet();
 
       /* We need to mark that we will "read" this field... */
-      in_table->setReadSet(current_field->field_index);
+      table.setReadSet(current_field->position());
 
       /* Read the string value of this field's contents */
-      string_value= current_field->val_str(string_value);
+      string_value= current_field->val_str_internal(string_value);
 
       /* 
        * Reset the read bit after reading field to its original state.  This 
@@ -1716,16 +1649,16 @@ void TransactionServices::updateRecord(Session *in_session,
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->getShare()->fieldInPrimaryKey(current_field))
+    if (table.getShare()->fieldInPrimaryKey(current_field))
     {
       /**
        * To say the below is ugly is an understatement. But it works.
        * 
        * @todo Move this crap into a real Record API.
        */
-      string_value= current_field->val_str(string_value,
-                                           old_record + 
-                                           current_field->offset(const_cast<unsigned char *>(new_record)));
+      string_value= current_field->val_str_internal(string_value,
+                                                    old_record + 
+                                                    current_field->offset(const_cast<unsigned char *>(new_record)));
       record->add_key_value(string_value->c_ptr(), string_value->length());
       string_value->free();
     }
@@ -1734,7 +1667,7 @@ void TransactionServices::updateRecord(Session *in_session,
 }
 
 bool TransactionServices::isFieldUpdated(Field *current_field,
-                                         Table *in_table,
+                                         Table &table,
                                          const unsigned char *old_record,
                                          const unsigned char *new_record)
 {
@@ -1743,8 +1676,8 @@ bool TransactionServices::isFieldUpdated(Field *current_field,
    * we do this crazy pointer fiddling to figure out if the current field
    * has been updated in the supplied record raw byte pointers.
    */
-  const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord());
-  const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord());
+  const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - table.getInsertRecord());
+  const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - table.getInsertRecord());
 
   uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
 
@@ -1774,114 +1707,101 @@ bool TransactionServices::isFieldUpdated(Field *current_field,
   return isUpdated;
 }  
 
-message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
-                                                            Table *in_table,
+message::Statement &TransactionServices::getDeleteStatement(Session::reference session,
+                                                            Table &table,
                                                             uint32_t *next_segment_id)
 {
-  message::Statement *statement= in_session->getStatementMessage();
+  message::Statement *statement= session.getStatementMessage();
   message::Transaction *transaction= NULL;
 
   /*
-   * Check the type for the current Statement message, if it is anything
-   * other then DELETE we need to call finalize, this will ensure a
-   * new DeleteStatement is created. If it is of type DELETE check
-   * what table the DELETE belongs to, if it is a different table
-   * call finalize, so a new DeleteStatement can be created.
+   * If statement is NULL, this is a new statement.
+   * If statement is NOT NULL, this a continuation of the same statement.
+   * This is because autocommitOrRollback() finalizes the statement so that
+   * we guarantee only one Statement message per statement (i.e., we no longer
+   * share a single GPB message for multiple statements).
    */
-  if (statement != NULL && statement->type() != message::Statement::DELETE)
+  if (statement == NULL)
   {
-    finalizeStatementMessage(*statement, in_session);
-    statement= in_session->getStatementMessage();
+    transaction= getActiveTransactionMessage(session);
+    
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+        session.variables.transaction_message_threshold)
+    {
+      transaction= segmentTransactionMessage(session, transaction);
+    }
+    
+    statement= transaction->add_statement();
+    setDeleteHeader(*statement, session, table);
+    session.setStatementMessage(statement);
   }
-  else if (statement != NULL)
+  else
   {
-    transaction= getActiveTransactionMessage(in_session);
-
+    transaction= getActiveTransactionMessage(session);
+    
     /*
      * If we've passed our threshold for the statement size (possible for
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-      in_session->variables.transaction_message_threshold)
+        session.variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
-
+      uint32_t seg_id= transaction->segment_id();
+      
       message::DeleteData *current_data= statement->mutable_delete_data();
-
+      
       /* Caller should use this value when adding a new record */
       *next_segment_id= current_data->segment_id() + 1;
-
+      
       current_data->set_end_segment(false);
-
+      transaction->set_end_segment(false);
+      
       /* 
        * Send the trx message to replicators after finalizing the 
        * statement and transaction. This will also set the Transaction
        * and Statement objects in Session to NULL.
        */
-      commitTransactionMessage(in_session);
-
+      commitTransactionMessage(session);
+      
       /*
        * Statement and Transaction should now be NULL, so new ones will get
        * created. We reuse the transaction id since we are segmenting
        * one transaction.
        */
-      statement= in_session->getStatementMessage();
-      transaction= getActiveTransactionMessage(in_session, false);
+      transaction= getActiveTransactionMessage(session, false);
       assert(transaction != NULL);
-
+      
+      statement= transaction->add_statement();
+      setDeleteHeader(*statement, session, table);
+      session.setStatementMessage(statement);
+      
       /* Set the transaction ID to match the previous messages */
       transaction->mutable_transaction_context()->set_transaction_id(trx_id);
+      transaction->set_segment_id(seg_id + 1);
+      transaction->set_end_segment(true);
     }
     else
     {
-      const message::DeleteHeader &delete_header= statement->delete_header();
-      string old_table_name= delete_header.table_metadata().table_name();
-
-      string current_table_name;
-      (void) in_table->getShare()->getTableName(current_table_name);
-      if (current_table_name.compare(old_table_name))
-      {
-        finalizeStatementMessage(*statement, in_session);
-        statement= in_session->getStatementMessage();
-      }
-      else
-      {
-        /* carry forward the existing segment id */
-        const message::DeleteData &current_data= statement->delete_data();
-        *next_segment_id= current_data.segment_id();
-      }
+      /*
+       * Continuation of the same statement. Carry forward the existing
+       * segment id.
+       */
+      const message::DeleteData &current_data= statement->delete_data();
+      *next_segment_id= current_data.segment_id();
     }
   }
-
-  if (statement == NULL)
-  {
-    /*
-     * Transaction will be non-NULL only if we had to segment it due to
-     * transaction size above.
-     */
-    if (transaction == NULL)
-      transaction= getActiveTransactionMessage(in_session);
-
-    /* 
-     * Transaction message initialized and set, but no statement created
-     * yet.  We construct one and initialize it, here, then return the
-     * message after attaching the new Statement message pointer to the 
-     * Session for easy retrieval later...
-     */
-    statement= transaction->add_statement();
-    setDeleteHeader(*statement, in_session, in_table);
-    in_session->setStatementMessage(statement);
-  }
+  
   return *statement;
 }
 
 void TransactionServices::setDeleteHeader(message::Statement &statement,
-                                          Session *in_session,
-                                          Table *in_table)
+                                          Session::const_reference session,
+                                          Table &table)
 {
-  initStatementMessage(statement, message::Statement::DELETE, in_session);
+  initStatementMessage(statement, message::Statement::DELETE, session);
 
   /* 
    * Now we construct the specialized DeleteHeader message inside
@@ -1891,15 +1811,15 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
   string schema_name;
-  (void) in_table->getShare()->getSchemaName(schema_name);
+  (void) table.getShare()->getSchemaName(schema_name);
   string table_name;
-  (void) in_table->getShare()->getTableName(table_name);
+  (void) table.getShare()->getTableName(table_name);
 
   table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
   table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
-  Field **table_fields= in_table->getFields();
+  Field **table_fields= table.getFields();
 
   message::FieldMetadata *field_metadata;
 
@@ -1910,7 +1830,7 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->getShare()->fieldInPrimaryKey(current_field))
+    if (table.getShare()->fieldInPrimaryKey(current_field))
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
@@ -1919,14 +1839,16 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   }
 }
 
-void TransactionServices::deleteRecord(Session *in_session, Table *in_table, bool use_update_record)
+void TransactionServices::deleteRecord(Session::reference session,
+                                       Table &table,
+                                       bool use_update_record)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
 
   uint32_t next_segment_id= 1;
-  message::Statement &statement= getDeleteStatement(in_session, in_table, &next_segment_id);
+  message::Statement &statement= getDeleteStatement(session, table, &next_segment_id);
 
   message::DeleteData *data= statement.mutable_delete_data();
   data->set_segment_id(next_segment_id);
@@ -1934,8 +1856,8 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table, boo
   message::DeleteRecord *record= data->add_record();
 
   Field *current_field;
-  Field **table_fields= in_table->getFields();
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  Field **table_fields= table.getFields();
+  String *string_value= new (session.mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
   while ((current_field= *table_fields++) != NULL) 
@@ -1945,7 +1867,7 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table, boo
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->getShare()->fieldInPrimaryKey(current_field))
+    if (table.getShare()->fieldInPrimaryKey(current_field))
     {
       if (use_update_record)
       {
@@ -1957,13 +1879,13 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table, boo
          * We are careful not to change anything in old_ptr.
          */
         const unsigned char *old_ptr= current_field->ptr;
-        current_field->ptr= in_table->getUpdateRecord() + static_cast<ptrdiff_t>(old_ptr - in_table->getInsertRecord());
-        string_value= current_field->val_str(string_value);
+        current_field->ptr= table.getUpdateRecord() + static_cast<ptrdiff_t>(old_ptr - table.getInsertRecord());
+        string_value= current_field->val_str_internal(string_value);
         current_field->ptr= const_cast<unsigned char *>(old_ptr);
       }
       else
       {
-        string_value= current_field->val_str(string_value);
+        string_value= current_field->val_str_internal(string_value);
         /**
          * @TODO Store optional old record value in the before data member
          */
@@ -1974,17 +1896,17 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table, boo
   }
 }
 
-void TransactionServices::createTable(Session *in_session,
+void TransactionServices::createTable(Session::reference session,
                                       const message::Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
   
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
-  initStatementMessage(*statement, message::Statement::CREATE_TABLE, in_session);
+  initStatementMessage(*statement, message::Statement::CREATE_TABLE, session);
 
   /* 
    * Construct the specialized CreateTableStatement message and attach
@@ -1994,27 +1916,27 @@ void TransactionServices::createTable(Session *in_session,
   message::Table *new_table_message= create_table_statement->mutable_table();
   *new_table_message= table;
 
-  finalizeStatementMessage(*statement, in_session);
+  finalizeStatementMessage(*statement, session);
 
-  finalizeTransactionMessage(*transaction, in_session);
+  finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+  (void) replication_services.pushTransactionMessage(session, *transaction);
 
-  cleanupTransactionMessage(transaction, in_session);
+  cleanupTransactionMessage(transaction, session);
 
 }
 
-void TransactionServices::createSchema(Session *in_session,
+void TransactionServices::createSchema(Session::reference session,
                                        const message::Schema &schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
   
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
-  initStatementMessage(*statement, message::Statement::CREATE_SCHEMA, in_session);
+  initStatementMessage(*statement, message::Statement::CREATE_SCHEMA, session);
 
   /* 
    * Construct the specialized CreateSchemaStatement message and attach
@@ -2024,26 +1946,27 @@ void TransactionServices::createSchema(Session *in_session,
   message::Schema *new_schema_message= create_schema_statement->mutable_schema();
   *new_schema_message= schema;
 
-  finalizeStatementMessage(*statement, in_session);
+  finalizeStatementMessage(*statement, session);
 
-  finalizeTransactionMessage(*transaction, in_session);
+  finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+  (void) replication_services.pushTransactionMessage(session, *transaction);
 
-  cleanupTransactionMessage(transaction, in_session);
+  cleanupTransactionMessage(transaction, session);
 
 }
 
-void TransactionServices::dropSchema(Session *in_session, const string &schema_name)
+void TransactionServices::dropSchema(Session::reference session,
+                                     identifier::Schema::const_reference identifier)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
   
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
-  initStatementMessage(*statement, message::Statement::DROP_SCHEMA, in_session);
+  initStatementMessage(*statement, message::Statement::DROP_SCHEMA, session);
 
   /* 
    * Construct the specialized DropSchemaStatement message and attach
@@ -2051,30 +1974,63 @@ void TransactionServices::dropSchema(Session *in_session, const string &schema_n
    */
   message::DropSchemaStatement *drop_schema_statement= statement->mutable_drop_schema_statement();
 
-  drop_schema_statement->set_schema_name(schema_name);
+  drop_schema_statement->set_schema_name(identifier.getSchemaName());
 
-  finalizeStatementMessage(*statement, in_session);
+  finalizeStatementMessage(*statement, session);
 
-  finalizeTransactionMessage(*transaction, in_session);
+  finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+  (void) replication_services.pushTransactionMessage(session, *transaction);
 
-  cleanupTransactionMessage(transaction, in_session);
+  cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::dropTable(Session *in_session,
-                                    const string &schema_name,
-                                    const string &table_name,
+void TransactionServices::alterSchema(Session::reference session,
+                                      const message::schema::shared_ptr &old_schema,
+                                      const message::Schema &new_schema)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::ALTER_SCHEMA, session);
+
+  /* 
+   * Construct the specialized AlterSchemaStatement message and attach
+   * it to the generic Statement message
+   */
+  message::AlterSchemaStatement *alter_schema_statement= statement->mutable_alter_schema_statement();
+
+  message::Schema *before= alter_schema_statement->mutable_before();
+  message::Schema *after= alter_schema_statement->mutable_after();
+
+  *before= *old_schema;
+  *after= new_schema;
+
+  finalizeStatementMessage(*statement, session);
+
+  finalizeTransactionMessage(*transaction, session);
+  
+  (void) replication_services.pushTransactionMessage(session, *transaction);
+
+  cleanupTransactionMessage(transaction, session);
+}
+
+void TransactionServices::dropTable(Session::reference session,
+                                    const identifier::Table &table,
                                     bool if_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
   
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
-  initStatementMessage(*statement, message::Statement::DROP_TABLE, in_session);
+  initStatementMessage(*statement, message::Statement::DROP_TABLE, session);
 
   /* 
    * Construct the specialized DropTableStatement message and attach
@@ -2086,28 +2042,29 @@ void TransactionServices::dropTable(Session *in_session,
 
   message::TableMetadata *table_metadata= drop_table_statement->mutable_table_metadata();
 
-  table_metadata->set_schema_name(schema_name);
-  table_metadata->set_table_name(table_name);
+  table_metadata->set_schema_name(table.getSchemaName());
+  table_metadata->set_table_name(table.getTableName());
 
-  finalizeStatementMessage(*statement, in_session);
+  finalizeStatementMessage(*statement, session);
 
-  finalizeTransactionMessage(*transaction, in_session);
+  finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+  (void) replication_services.pushTransactionMessage(session, *transaction);
 
-  cleanupTransactionMessage(transaction, in_session);
+  cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::truncateTable(Session *in_session, Table *in_table)
+void TransactionServices::truncateTable(Session::reference session,
+                                        Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
   
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
-  initStatementMessage(*statement, message::Statement::TRUNCATE_TABLE, in_session);
+  initStatementMessage(*statement, message::Statement::TRUNCATE_TABLE, session);
 
   /* 
    * Construct the specialized TruncateTableStatement message and attach
@@ -2117,43 +2074,45 @@ void TransactionServices::truncateTable(Session *in_session, Table *in_table)
   message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
 
   string schema_name;
-  (void) in_table->getShare()->getSchemaName(schema_name);
+  (void) table.getShare()->getSchemaName(schema_name);
   string table_name;
-  (void) in_table->getShare()->getTableName(table_name);
+  (void) table.getShare()->getTableName(table_name);
 
   table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
   table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
-  finalizeStatementMessage(*statement, in_session);
+  finalizeStatementMessage(*statement, session);
 
-  finalizeTransactionMessage(*transaction, in_session);
+  finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+  (void) replication_services.pushTransactionMessage(session, *transaction);
 
-  cleanupTransactionMessage(transaction, in_session);
+  cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::rawStatement(Session *in_session, const string &query)
+void TransactionServices::rawStatement(Session::reference session,
+                                       const string &query)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
  
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
-  initStatementMessage(*statement, message::Statement::RAW_SQL, in_session);
+  initStatementMessage(*statement, message::Statement::RAW_SQL, session);
   statement->set_sql(query);
-  finalizeStatementMessage(*statement, in_session);
+  finalizeStatementMessage(*statement, session);
 
-  finalizeTransactionMessage(*transaction, in_session);
+  finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+  (void) replication_services.pushTransactionMessage(session, *transaction);
 
-  cleanupTransactionMessage(transaction, in_session);
+  cleanupTransactionMessage(transaction, session);
 }
 
-int TransactionServices::sendEvent(Session *session, const message::Event &event)
+int TransactionServices::sendEvent(Session::reference session,
+                                   const message::Event &event)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -2171,14 +2130,14 @@ int TransactionServices::sendEvent(Session *session, const message::Event &event
 
   trx_event->CopyFrom(event);
 
-  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(*session, *transaction);
+  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(session, *transaction);
 
   delete transaction;
 
   return static_cast<int>(result);
 }
 
-bool TransactionServices::sendStartupEvent(Session *session)
+bool TransactionServices::sendStartupEvent(Session::reference session)
 {
   message::Event event;
   event.set_type(message::Event::STARTUP);
@@ -2187,7 +2146,7 @@ bool TransactionServices::sendStartupEvent(Session *session)
   return true;
 }
 
-bool TransactionServices::sendShutdownEvent(Session *session)
+bool TransactionServices::sendShutdownEvent(Session::reference session)
 {
   message::Event event;
   event.set_type(message::Event::SHUTDOWN);

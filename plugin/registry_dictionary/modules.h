@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,8 +29,8 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    std::vector<drizzled::module::Module *> modules;
-    std::vector<drizzled::module::Module *>::iterator it;
+    drizzled::module::Registry::ModuleList modules;
+    drizzled::module::Registry::ModuleList::iterator it;
 
   public:
     Generator(drizzled::Field **arg);

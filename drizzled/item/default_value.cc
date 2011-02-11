@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/current_session.h>
 #include <drizzled/item/default_value.h>
 
 namespace drizzled
@@ -139,7 +138,8 @@ Item *Item_default_value::transform(Item_transformer transformer, unsigned char 
     change records at each execution.
   */
   if (arg != new_item)
-    current_session->change_item_tree(&arg, new_item);
+    getSession().change_item_tree(&arg, new_item);
+
   return (this->*transformer)(args);
 }
 

@@ -19,6 +19,8 @@
 # We then use the transaction_reader in plugin/transaction_log/utilities to read the events.
 #
 
+select seapitester_clear_engine_state_history();
+
 --disable_warnings
 DROP TABLE IF EXISTS t1;
 --enable_warnings
@@ -30,15 +32,17 @@ CREATE TABLE t1 (
 #enable error inject
 SELECT seapitester_error_inject(1);
 
---error 1213,1205
+--error ER_LOCK_DEADLOCK,ER_LOCK_WAIT_TIMEOUT
 INSERT INTO t1 (id,padding) values (40, "boo"),(41,"scary");
 begin;
 INSERT INTO t1 (id,padding) VALUES (1, "I love testing.");
---error 1213,1205
+--error ER_LOCK_DEADLOCK,ER_LOCK_WAIT_TIMEOUT
 INSERT INTO t1 (id,padding) VALUES (2, "I hate testing.");
 update t1 set padding="bar" where id=1;
 commit;
 INSERT INTO t1 (id,padding) VALUES (2, "I hate testing.");
+--error ER_LOCK_DEADLOCK,ER_LOCK_WAIT_TIMEOUT
+INSERT INTO t1 (id,padding) VALUES (3, "I hate testing too.");
 COMMIT;
 select * from t1;
 DROP TABLE t1;
@@ -46,8 +50,14 @@ DROP TABLE t1;
 select seapitester_error_inject(0);
 # Read in the transaction.log.
 
---exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec ../plugin/transaction_log/utilities/transaction_reader $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
+
+select * from data_dictionary.seapitester_engine_state_history;
 

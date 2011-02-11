@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_PLUGIN_PLUGIN_H
 #define DRIZZLED_PLUGIN_PLUGIN_H
 
@@ -24,8 +26,13 @@
 #include <vector>
 #include <map>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
+
+class Session;
+
 namespace module
 {
 class Module;
@@ -34,7 +41,7 @@ class Module;
 namespace plugin
 {
 
-class Plugin
+class DRIZZLED_API Plugin
 {
 private:
   const std::string _name;
@@ -46,7 +53,8 @@ private:
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin &);
 public:
-  typedef std::map<std::string, Plugin *> map;
+  typedef std::pair<const std::string, const std::string> map_key;
+  typedef std::map<const map_key, plugin::Plugin *> map;
   typedef std::vector<Plugin *> vector;
 
   explicit Plugin(const std::string &name, const std::string &type_name);
@@ -63,6 +71,10 @@ public:
 
   // This is run after all plugins have been initialized.
   virtual void prime()
+  {
+  }
+
+  virtual void startup(drizzled::Session &)
   {
   }
  
@@ -94,6 +106,11 @@ public:
   const std::string& getTypeName() const
   {
     return _type_name;
+  }
+
+  virtual bool removeLast() const
+  {
+    return false;
   }
 
   const std::string& getModuleName() const;

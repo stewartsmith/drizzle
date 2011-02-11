@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,13 +27,31 @@
 namespace drizzled
 {
 
-static bool kill_one_thread(session_id_t id, bool only_kill_query)
+namespace statement
 {
-  drizzled::Session::shared_ptr session= session::Cache::singleton().find(id);
 
-  if (session and session->isViewable())
+Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
+  Statement(in_session)
   {
-    session->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+    if (is_query_kill)
+    {
+      getSession()->getLex()->type= ONLY_KILL_QUERY;
+    }
+
+    getSession()->getLex()->value_list.empty();
+    getSession()->getLex()->value_list.push_front(item);
+    getSession()->getLex()->sql_command= SQLCOM_KILL;
+  }
+
+} // namespace statement
+
+bool statement::Kill::kill(session_id_t id, bool only_kill_query)
+{
+  drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id);
+
+  if (session_param and session_param->isViewable(*getSession()->user()))
+  {
+    session_param->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
     return true;
   }
 
@@ -42,9 +60,9 @@ static bool kill_one_thread(session_id_t id, bool only_kill_query)
 
 bool statement::Kill::execute()
 {
-  Item *it= (Item *) session->lex->value_list.head();
+  Item *it= (Item *) getSession()->lex->value_list.head();
 
-  if ((not it->fixed && it->fix_fields(session->lex->session, &it)) || it->check_cols(1))
+  if ((not it->fixed && it->fix_fields(getSession()->lex->session, &it)) || it->check_cols(1))
   {
     my_message(ER_SET_CONSTANTS_ONLY, 
                ER(ER_SET_CONSTANTS_ONLY),
@@ -52,9 +70,9 @@ bool statement::Kill::execute()
     return true;
   }
 
-  if (kill_one_thread(static_cast<session_id_t>(it->val_int()), session->lex->type & ONLY_KILL_QUERY))
+  if (kill(static_cast<session_id_t>(it->val_int()), getSession()->lex->type & ONLY_KILL_QUERY))
   {
-    session->my_ok();
+    getSession()->my_ok();
   }
   else
   {

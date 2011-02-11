@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ void Item_func_curdate::fix_length_and_dec()
 
   /* We don't need to set second_part and neg because they already 0 */
   ltime.hour= ltime.minute= ltime.second= 0;
-  ltime.time_type= DRIZZLE_TIMESTAMP_DATE;
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATE;
 
   /** 
    * @TODO Remove ltime completely when timezones are reworked.  Using this
@@ -49,13 +49,13 @@ void Item_func_curdate::fix_length_and_dec()
 }
 
 /**
-    Converts current time in time_t to DRIZZLE_TIME represenatation for local
+    Converts current time in time_t to type::Time represenatation for local
     time zone. Defines time zone (local) used for whole CURDATE function.
 */
-void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
+void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
-  time_t tmp= session->query_start();
+  time_t tmp= session->getCurrentTimestampEpoch();
 
   (void) cached_temporal.from_time_t(tmp);
 
@@ -65,16 +65,17 @@ void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
   now_time->hour= 0;
   now_time->minute= 0;
   now_time->second= 0;
+  now_time->second_part= 0;
 }
 
 /**
-    Converts current time in time_t to DRIZZLE_TIME represenatation for UTC
+    Converts current time in time_t to type::Time represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_DATE function.
 */
-void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
+void Item_func_curdate_utc::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
-  time_t tmp= session->query_start();
+  time_t tmp= session->getCurrentTimestampEpoch();
 
   (void) cached_temporal.from_time_t(tmp);
 
@@ -84,6 +85,7 @@ void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
   now_time->hour= 0;
   now_time->minute= 0;
   now_time->second= 0;
+  now_time->second_part= 0;
 }
 
 bool Item_func_curdate::get_temporal(Date &to)

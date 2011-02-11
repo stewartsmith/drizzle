@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,13 +36,21 @@ class StartTransaction : public Statement
   start_transaction_option_t start_transaction_opt;
 
 public:
-  StartTransaction(Session *in_session, start_transaction_option_t opt= START_TRANS_NO_OPTIONS)
-    :
-      Statement(in_session),
-      start_transaction_opt(opt)
-  {}
+  StartTransaction(Session *in_session, start_transaction_option_t opt= START_TRANS_NO_OPTIONS) :
+    Statement(in_session),
+    start_transaction_opt(opt)
+  {
+    getSession()->getLex()->sql_command= SQLCOM_BEGIN;
+  }
 
   bool execute();
+
+  /* we kinda cheat here as START TRANSACTION will start a transaction,
+     so having an autocommit=off implicit start txn doesn't make sense. */
+  bool isTransactional()
+  {
+    return false;
+  }
 };
 
 } /* namespace statement */

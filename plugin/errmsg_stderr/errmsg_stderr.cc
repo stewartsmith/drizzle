@@ -36,7 +36,7 @@ class Error_message_stderr : public plugin::ErrorMessage
 public:
   Error_message_stderr()
    : plugin::ErrorMessage("Error_message_stderr") {}
-  virtual bool errmsg(Session *, int , const char *format, va_list ap)
+  virtual bool errmsg(error::level_t , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
     int prv, wrv;
@@ -47,8 +47,10 @@ public:
     /* a single write has a OS level thread lock
        so there is no need to have mutexes guarding this write,
     */
-    wrv= write(2, msgbuf, prv);
-    if ((wrv < 0) || (wrv != prv)) return true;
+    wrv= write(fileno(stderr), msgbuf, prv);
+    fputc('\n', stderr);
+    if ((wrv < 0) || (wrv != prv))
+      return true;
 
     return false;
   }
@@ -72,7 +74,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Error Messages to stderr"),
   PLUGIN_LICENSE_GPL,
   errmsg_stderr_plugin_init,
-  NULL, /* system variables */
+  NULL, /* depends */
   NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

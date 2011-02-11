@@ -148,7 +148,7 @@ our $default_top_builddir;
 
 our $opt_usage;
 our $opt_suites;
-our $opt_suites_default= "main,jp"; # Default suites to run
+our $opt_suites_default= "main"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
@@ -156,6 +156,7 @@ our $opt_repeat_test= 1;
 
 our $exe_master_drizzled;
 our $exe_drizzle;
+our $exe_drizzleadmin;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
@@ -229,6 +230,7 @@ our $opt_master_myport;
 our $opt_slave_myport;
 our $opt_memc_myport;
 our $opt_pbms_myport;
+our $opt_rabbitmq_myport;
 our $opt_record;
 my $opt_report_features;
 our $opt_check_testcases;
@@ -372,23 +374,23 @@ sub main () {
   }
   else
   {
-    # Figure out which tests we are going to run
+
     if (!$opt_suites)
     {
-      $opt_suites= $opt_suites_default;
 
-      # Check for any extra suites to enable based on the path name
-      my %extra_suites= ();
+        $opt_suites= $opt_suites_default;
 
-      foreach my $dir ( reverse splitdir($glob_basedir) )
-      {
-	my $extra_suite= $extra_suites{$dir};
-	if (defined $extra_suite){
-	  dtr_report("Found extra suite: $extra_suite");
-	  $opt_suites= "$extra_suite,$opt_suites";
-	  last;
-	}
-      }
+        my %extra_suites= ();
+
+        foreach my $dir ( reverse splitdir($glob_basedir) )
+        {
+            my $extra_suite= $extra_suites{$dir};
+            if (defined $extra_suite){
+                dtr_report("Found extra suite: $extra_suite");
+                $opt_suites= "$extra_suite,$opt_suites";
+                last;
+            }
+        }
     }
 
     my $tests= collect_test_cases($opt_suites);
@@ -507,6 +509,7 @@ sub command_line_setup () {
              'slave_port=i'             => \$opt_slave_myport,
              'memc_port=i'              => \$opt_memc_myport,
 	     'pbms_port=i'              => \$opt_pbms_myport,
+	     'rabbitmq_port=i'              => \$opt_rabbitmq_myport,
 	     'dtr-build-thread=i'       => \$opt_dtr_build_thread,
 
              # Test case authoring
@@ -612,8 +615,6 @@ sub command_line_setup () {
              'help|h'                   => \$opt_usage,
             ) or usage("Can't read options");
 
-  usage("") if $opt_usage;
-
   usage("you cannot specify --gdb and --dbx both!") if 
 	($opt_gdb && $opt_dbx) ||
 	($opt_manual_gdb && $opt_manual_dbx);
@@ -659,6 +660,35 @@ sub command_line_setup () {
   # is the parent directory of the "drizzle-test" directory. For source
   # distributions, TAR binary distributions and some other packages.
   $glob_basedir= dirname($glob_drizzle_test_dir);
+
+  # Figure out which tests we are going to run
+  my $suitedir= "$glob_drizzle_test_dir/suite";
+  if ( -d $suitedir )
+  {
+      opendir(SUITE_DIR, $suitedir)
+          or dtr_error("can't open directory \"$suitedir\": $!");
+
+      while ( my $elem= readdir(SUITE_DIR) )
+      {
+          next if $elem eq ".";
+          next if $elem eq "..";
+          next if $elem eq "big"; # Eats up too much disk
+          next if $elem eq "large_tests"; # Eats up too much disk
+          next if $elem eq "stress"; # Currently fails
+          next if $elem eq "broken"; # Old broken test, mainly unsupported featurs
+
+          my $local_dir= "$suitedir/$elem";
+
+          next unless -d $local_dir;
+          next unless -d "$local_dir/t"; # We want to make sure it has tests
+          next unless -d "$local_dir/r"; # Ditto, results
+
+          $opt_suites_default.= ",$elem";
+      }
+      closedir(SUITE_DIR);
+  }
+
+  usage("") if $opt_usage;
 
   # In the RPM case, binaries and libraries are installed in the
   # default system locations, instead of having our own private base
@@ -1140,6 +1170,7 @@ sub set_dtr_build_thread_ports($) {
   $opt_slave_myport=          gimme_a_good_port($opt_master_myport + 2);  # and 3 4
   $opt_memc_myport= gimme_a_good_port($opt_master_myport + 10);
   $opt_pbms_myport= gimme_a_good_port($opt_master_myport + 11);
+  $opt_rabbitmq_myport= gimme_a_good_port($opt_master_myport + 12);
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
@@ -1266,6 +1297,7 @@ sub executable_setup () {
   $exe_drizzledump= dtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= dtr_exe_exists("$path_client_bindir/drizzleimport");
   $exe_drizzle=          dtr_exe_exists("$path_client_bindir/drizzle");
+  $exe_drizzleadmin= dtr_exe_exists("$path_client_bindir/drizzleadmin");
 
   if (!$opt_extern)
   {
@@ -1320,6 +1352,12 @@ sub generate_cmdline_drizzle ($) {
     " -uroot --port=$drizzled->{'port'} ";
 }
 
+sub generate_cmdline_drizzleadmin ($) {
+  my($drizzled) = @_;
+  return
+    dtr_native_path($exe_drizzleadmin) .
+    " -uroot --port=$drizzled->{'port'} ";
+}
 
 ##############################################################################
 #
@@ -1462,8 +1500,9 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
-  $ENV{'PBMS_PORT'}=            $opt_pbms_myport;
-  $ENV{'DRIZZLE_TCP_PORT'}=     $drizzled_variables{'drizzle-protocol.port'};
+  $ENV{'PBMS_PORT'}=          $opt_pbms_myport;
+  $ENV{'RABBITMQ_NODE_PORT'}= $opt_rabbitmq_myport;
+  $ENV{'DRIZZLE_TCP_PORT'}=   $drizzled_variables{'drizzle-protocol.port'};
 
   $ENV{'DTR_BUILD_THREAD'}=      $opt_dtr_build_thread;
 
@@ -1473,6 +1512,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
   # ----------------------------------------------------
+  my $cmdline_drizzleadmin= generate_cmdline_drizzleadmin($master->[0]);
   my $cmdline_drizzledump= generate_cmdline_drizzledump($master->[0]);
   my $cmdline_drizzledumpslave= generate_cmdline_drizzledump($slave->[0]);
   my $cmdline_drizzledump_secondary= dtr_native_path($exe_drizzledump) .
@@ -1488,6 +1528,7 @@ sub environment_setup () {
     $cmdline_drizzledump_secondary .=
       " --debug=d:t:A,$path_vardir_trace/log/drizzledump-drizzle.trace";
   }
+  $ENV{'DRIZZLE_ADMIN'}= $cmdline_drizzleadmin;
   $ENV{'DRIZZLE_DUMP'}= $cmdline_drizzledump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_drizzledumpslave;
   $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_drizzledump_secondary;
@@ -1619,6 +1660,7 @@ sub environment_setup () {
     print "Using SLAVE_MYPORT2         = $ENV{SLAVE_MYPORT2}\n";
     print "Using MC_PORT               = $ENV{MC_PORT}\n";
     print "Using PBMS_PORT             = $ENV{PBMS_PORT}\n";
+    print "Using RABBITMQ_NODE_PORT    = $ENV{RABBITMQ_NODE_PORT}\n";
   }
 
   # Create an environment variable to make it possible
@@ -3285,7 +3327,7 @@ sub dbx_arguments {
   {
     # write init file for drizzled
     dtr_tofile($dbx_init_file,
-               "stop in __1cIdrizzledLmysql_parse6Fpn0AHSession_pkcI_v_\n" .
+               "stop in __1cIdrizzledLparse6Fpn0AHSession_pkcI_v_\n" .
                "runargs $str\n" .
                "run\n" .
                "\n");
@@ -3356,7 +3398,7 @@ sub gdb_arguments {
 	       "set args $str\n" .
                "$extra_gdb_init" .
                "set breakpoint pending on\n" .
-	       "break drizzled::mysql_parse\n" .
+	       "break drizzled::parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end\n" .
@@ -3422,7 +3464,7 @@ sub ddd_arguments {
     dtr_tofile($gdb_init_file,
 	       "file $$exe\n" .
 	       "set args $str\n" .
-	       "break drizzled::mysql_parse\n" .
+	       "break drizzled::parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end");

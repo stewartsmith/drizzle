@@ -39,16 +39,17 @@ insert into src (d) values (NULL);
 --enable_query_log
 
 START TRANSACTION;
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT into dst SELECT * from src ORDER BY pk ASC;
 COMMIT;
 
 --echo
---replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /transaction_id: [0-9]+/TRANSACTION_ID/
---exec ../plugin/transaction_log/utilities/transaction_reader --raw var/master-data/local/transaction.log
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /transaction_id: [0-9]+/TRANSACTION_ID/ /$DRIZZLETEST_VARDIR/VARDIR/
+--exec ../plugin/transaction_log/utilities/transaction_reader --raw $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 --echo
---exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec ../plugin/transaction_log/utilities/transaction_reader $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 --disable_query_log
 DROP TABLE src;
@@ -64,7 +65,7 @@ CREATE TABLE dst (pk int auto_increment primary key, d varchar(5) not null);
 --echo
 START TRANSACTION;
 INSERT INTO src (d) VALUES ('aaa'), ('bbb'), (NULL);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO dst (d) SELECT d FROM src ORDER BY pk;
 INSERT INTO dst (d) VALUES ('xyz');
 COMMIT;

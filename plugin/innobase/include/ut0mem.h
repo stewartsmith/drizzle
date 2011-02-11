@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -96,6 +96,9 @@ ut_malloc_low(
 Allocates memory. Sets it also to zero if UNIV_SET_MEM_TO_ZERO is
 defined.
 @return	own: allocated memory */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void*
 ut_malloc(
@@ -116,6 +119,9 @@ ut_test_malloc(
 /**********************************************************************//**
 Frees a memory block allocated with ut_malloc. Freeing a NULL pointer is
 a nop. */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void
 ut_free(
@@ -147,6 +153,9 @@ RETURN VALUE
        original	 block	is  left  untouched  - it is not freed or
        moved.
 @return	own: pointer to new mem block or NULL */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void*
 ut_realloc(

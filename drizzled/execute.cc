@@ -23,6 +23,7 @@
 #include "drizzled/session.h"
 #include "drizzled/user_var_entry.h"
 #include "drizzled/plugin/client/concurrent.h"
+#include "drizzled/catalog/local.h"
 #include "drizzled/execute.h"
 
 namespace drizzled
@@ -52,7 +53,7 @@ void Execute::run(std::string &execution_string)
   {
     plugin::client::Concurrent *client= new plugin::client::Concurrent;
     client->pushSQL(execution_string);
-    Session::shared_ptr new_session(new Session(client));
+    Session::shared_ptr new_session= Session::make_shared(client, catalog::local());
 
     // We set the current schema.  @todo do the same with catalog
     util::string::const_shared_ptr schema(_session.schema());
@@ -64,7 +65,7 @@ void Execute::run(std::string &execution_string)
     // Overwrite the context in the next session, with what we have in our
     // session. Eventually we will allow someone to change the effective
     // user.
-    new_session->getSecurityContext()= _session.getSecurityContext();
+    new_session->user()= _session.user();
 
     if (Session::schedule(new_session))
     {
@@ -84,16 +85,23 @@ void Execute::run(std::string &execution_string)
   if (wait && thread && thread->joinable())
   {
     // We want to make sure that we can be killed
-    boost::this_thread::restore_interruption dl(_session.getThreadInterupt());
-    try {
-      thread->join();
-    }
-    catch(boost::thread_interrupted const&)
+    if (_session.getThread())
     {
-      // Just surpress and return the error
-      my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+      boost::this_thread::restore_interruption dl(_session.getThreadInterupt());
 
-      return;
+      try {
+        thread->join();
+      }
+      catch(boost::thread_interrupted const&)
+      {
+        // Just surpress and return the error
+        my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+        return;
+      }
+    }
+    else
+    {
+      thread->join();
     }
   }
 }

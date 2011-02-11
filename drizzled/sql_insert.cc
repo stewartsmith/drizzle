@@ -25,7 +25,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/lock.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
@@ -129,7 +129,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
       }
       else
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
   }
@@ -170,8 +170,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
-    table->write_set->reset(table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->test(table->timestamp_field->position());
+    table->write_set->reset(table->timestamp_field->position());
   }
 
   /* Check the fields we are going to modify */
@@ -189,7 +189,7 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
 
     if (timestamp_mark)
     {
-      table->setWriteSet(table->timestamp_field->field_index);
+      table->setWriteSet(table->timestamp_field->position());
     }
   }
   return 0;
@@ -227,7 +227,7 @@ void upgrade_lock_type(Session *,
   end of dispatch_command().
 */
 
-bool mysql_insert(Session *session,TableList *table_list,
+bool insert_query(Session *session,TableList *table_list,
                   List<Item> &fields,
                   List<List_item> &values_list,
                   List<Item> &update_fields,
@@ -271,7 +271,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   values= its++;
   value_count= values->elements;
 
-  if (mysql_prepare_insert(session, table_list, table, fields, values,
+  if (prepare_insert(session, table_list, table, fields, values,
 			   update_fields, update_values, duplic, &unused_conds,
                            false,
                            (fields.elements || !value_count ||
@@ -281,7 +281,7 @@ bool mysql_insert(Session *session,TableList *table_list,
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
       free_underlaid_joins(session, &session->lex->select_lex);
-    session->abort_on_warning= 0;
+    session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
   }
@@ -320,7 +320,7 @@ bool mysql_insert(Session *session,TableList *table_list,
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
         free_underlaid_joins(session, &session->lex->select_lex);
-      session->abort_on_warning= 0;
+      session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
 
       return true;
@@ -331,7 +331,7 @@ bool mysql_insert(Session *session,TableList *table_list,
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
         free_underlaid_joins(session, &session->lex->select_lex);
-      session->abort_on_warning= 0;
+      session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
       return true;
     }
@@ -372,7 +372,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   }
 
 
-  session->abort_on_warning= !ignore;
+  session->setAbortOnWarning(not ignore);
 
   table->mark_columns_needed_for_insert();
 
@@ -483,7 +483,7 @@ bool mysql_insert(Session *session,TableList *table_list,
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
       free_underlaid_joins(session, &session->lex->select_lex);
-    session->abort_on_warning= 0;
+    session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
   }
@@ -492,7 +492,7 @@ bool mysql_insert(Session *session,TableList *table_list,
 				    !session->cuted_fields))
   {
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id);
   }
   else
@@ -505,12 +505,12 @@ bool mysql_insert(Session *session,TableList *table_list,
       snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id, buff);
   }
-  session->status_var.inserted_row_count+= session->row_count_func;
-  session->abort_on_warning= 0;
-  DRIZZLE_INSERT_DONE(0, session->row_count_func);
+  session->status_var.inserted_row_count+= session->rowCount();
+  session->setAbortOnWarning(false);
+  DRIZZLE_INSERT_DONE(0, session->rowCount());
 
   return false;
 }
@@ -520,7 +520,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   Check if table can be updated
 
   SYNOPSIS
-     mysql_prepare_insert_check_table()
+     prepare_insert_check_table()
      session		Thread handle
      table_list		Table list
      fields		List of fields to be updated
@@ -532,7 +532,7 @@ bool mysql_insert(Session *session,TableList *table_list,
      true  ERROR
 */
 
-static bool mysql_prepare_insert_check_table(Session *session, TableList *table_list,
+static bool prepare_insert_check_table(Session *session, TableList *table_list,
                                              List<Item> &,
                                              bool select_insert)
 {
@@ -560,7 +560,7 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
   Prepare items in INSERT statement
 
   SYNOPSIS
-    mysql_prepare_insert()
+    prepare_insert()
     session			Thread handler
     table_list	        Global/local table list
     table		Table to insert into (can be NULL if table should
@@ -587,7 +587,7 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
     true  error
 */
 
-bool mysql_prepare_insert(Session *session, TableList *table_list,
+bool prepare_insert(Session *session, TableList *table_list,
                           Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
@@ -610,7 +610,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
     inserting (for INSERT ... SELECT this is done by changing table_list,
     because INSERT ... SELECT share Select_Lex it with SELECT.
   */
-  if (!select_insert)
+  if (not select_insert)
   {
     for (Select_Lex_Unit *un= select_lex->first_inner_unit();
          un;
@@ -632,7 +632,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
       return(true);
   }
 
-  if (mysql_prepare_insert_check_table(session, table_list, fields, select_insert))
+  if (prepare_insert_check_table(session, table_list, fields, select_insert))
     return(true);
 
 
@@ -658,13 +658,14 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
 
     if (!res && check_fields)
     {
-      bool saved_abort_on_warning= session->abort_on_warning;
-      session->abort_on_warning= abort_on_warning;
+      bool saved_abort_on_warning= session->abortOnWarning();
+
+      session->setAbortOnWarning(abort_on_warning);
       res= check_that_all_fields_are_given_values(session,
                                                   table ? table :
                                                   context->table_list->table,
                                                   context->table_list);
-      session->abort_on_warning= saved_abort_on_warning;
+      session->setAbortOnWarning(saved_abort_on_warning);
     }
 
     if (!res && duplic == DUP_UPDATE)
@@ -675,17 +676,17 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
     /* Restore the current context. */
     ctx_state.restore_state(context, table_list);
 
-    if (!res)
+    if (not res)
       res= setup_fields(session, 0, update_values, MARK_COLUMNS_READ, 0, 0);
   }
 
   if (res)
     return(res);
 
-  if (!table)
+  if (not table)
     table= table_list->table;
 
-  if (!select_insert)
+  if (not select_insert)
   {
     TableList *duplicate;
     if ((duplicate= unique_table(table_list, table_list->next_global, true)))
@@ -695,6 +696,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
       return true;
     }
   }
+
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)
     table->prepare_for_position();
 
@@ -868,7 +870,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
           /*
             If ON DUP KEY UPDATE updates a row instead of inserting one, it's
             like a regular UPDATE statement: it should not affect the value of a
-            next SELECT LAST_INSERT_ID() or mysql_insert_id().
+            next SELECT LAST_INSERT_ID() or insert_id().
             Except if LAST_INSERT_ID(#) was in the INSERT query, which is
             handled separately by Session::arg_of_last_insert_id_function.
           */
@@ -1014,7 +1016,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
       }
     }
   }
-  return session->abort_on_warning ? err : 0;
+  return session->abortOnWarning() ? err : 0;
 }
 
 /***************************************************************************
@@ -1026,7 +1028,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
   make insert specific preparation and checks after opening tables
 
   SYNOPSIS
-    mysql_insert_select_prepare()
+    insert_select_prepare()
     session         thread handler
 
   RETURN
@@ -1034,7 +1036,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
     true  Error
 */
 
-bool mysql_insert_select_prepare(Session *session)
+bool insert_select_prepare(Session *session)
 {
   LEX *lex= session->lex;
   Select_Lex *select_lex= &lex->select_lex;
@@ -1044,7 +1046,7 @@ bool mysql_insert_select_prepare(Session *session)
     clause if table is VIEW
   */
 
-  if (mysql_prepare_insert(session, lex->query_tables,
+  if (prepare_insert(session, lex->query_tables,
                            lex->query_tables->table, lex->field_list, 0,
                            lex->update_list, lex->value_list,
                            lex->duplicates,
@@ -1103,11 +1105,11 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   if (!res && fields->elements)
   {
-    bool saved_abort_on_warning= session->abort_on_warning;
-    session->abort_on_warning= !info.ignore;
+    bool saved_abort_on_warning= session->abortOnWarning();
+    session->setAbortOnWarning(not info.ignore);
     res= check_that_all_fields_are_given_values(session, table_list->table,
                                                 table_list);
-    session->abort_on_warning= saved_abort_on_warning;
+    session->setAbortOnWarning(saved_abort_on_warning);
   }
 
   if (info.handle_duplicates == DUP_UPDATE && !res)
@@ -1200,13 +1202,17 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->next_number_field=table->found_next_number_field;
 
   session->cuted_fields=0;
+
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
     table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   if (info.handle_duplicates == DUP_REPLACE)
     table->cursor->extra(HA_EXTRA_WRITE_CAN_REPLACE);
+
   if (info.handle_duplicates == DUP_UPDATE)
     table->cursor->extra(HA_EXTRA_INSERT_WITH_UPDATE);
-  session->abort_on_warning= !info.ignore;
+
+  session->setAbortOnWarning(not info.ignore);
   table->mark_columns_needed_for_insert();
 
 
@@ -1255,7 +1261,7 @@ select_insert::~select_insert()
     table->cursor->ha_reset();
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
-  session->abort_on_warning= 0;
+  session->setAbortOnWarning(false);
   return;
 }
 
@@ -1268,14 +1274,14 @@ bool select_insert::send_data(List<Item> &values)
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return false;
   }
 
   session->count_cuted_fields= CHECK_FIELD_WARN;	// Calculate cuted fields
   store_values(values);
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   if (session->is_error())
-    return(1);
+    return true;
 
   // Release latches in case bulk insert takes a long time
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
@@ -1325,13 +1331,9 @@ void select_insert::store_values(List<Item> &values)
     fill_record(session, table->getFields(), values, true);
 }
 
-void select_insert::send_error(uint32_t errcode,const char *err)
+void select_insert::send_error(drizzled::error_t errcode,const char *err)
 {
-
-
   my_message(errcode, err, MYF(0));
-
-  return;
 }
 
 
@@ -1380,10 +1382,10 @@ bool select_insert::send_eof()
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  session->my_ok((ulong) session->row_count_func,
+  session->my_ok((ulong) session->rowCount(),
                  info.copied + info.deleted + info.touched, id, buff);
-  session->status_var.inserted_row_count+= session->row_count_func; 
-  DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
+  session->status_var.inserted_row_count+= session->rowCount(); 
+  DRIZZLE_INSERT_SELECT_DONE(0, session->rowCount());
   return 0;
 }
 
@@ -1485,7 +1487,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       List<Item> *items,
                                       bool is_if_not_exists,
                                       DrizzleLock **lock,
-				      TableIdentifier &identifier)
+				      identifier::Table::const_reference identifier)
 {
   TableShare share(message::Table::INTERNAL);
   uint32_t select_field_count= items->elements;
@@ -1493,7 +1495,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   List_iterator_fast<Item> it(*items);
   Item *item;
   Field *tmp_field;
-  bool not_used;
 
   if (not (identifier.isTmp()) && create_table->table->db_stat)
   {
@@ -1513,18 +1514,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   {
     table::Shell tmp_table(share);		// Used during 'CreateField()'
-    tmp_table.timestamp_field= 0;
-
-    tmp_table.getMutableShare()->db_create_options= 0;
-    tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
 
     if (not table_proto.engine().name().compare("MyISAM"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
     else if (not table_proto.engine().name().compare("MEMORY"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
-
-    tmp_table.null_row= false;
-    tmp_table.maybe_null= false;
 
     tmp_table.in_use= session;
 
@@ -1576,14 +1570,14 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   */
   Table *table= 0;
   {
-    if (not mysql_create_table_no_lock(session,
-				       identifier,
-				       create_info,
-				       table_proto,
-				       alter_info,
-				       false,
-				       select_field_count,
-				       is_if_not_exists))
+    if (not create_table_no_lock(session,
+				 identifier,
+				 create_info,
+				 table_proto,
+				 alter_info,
+				 false,
+				 select_field_count,
+				 is_if_not_exists))
     {
       if (create_info->table_existed && not identifier.isTmp())
       {
@@ -1607,7 +1601,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
           if (concurrent_table->reopen_name_locked_table(create_table, session))
           {
-            plugin::StorageEngine::dropTable(*session, identifier);
+            (void)plugin::StorageEngine::dropTable(*session, identifier);
           }
           else
           {
@@ -1616,7 +1610,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         }
         else
         {
-          plugin::StorageEngine::dropTable(*session, identifier);
+          (void)plugin::StorageEngine::dropTable(*session, identifier);
         }
       }
       else
@@ -1639,7 +1633,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   }
 
   table->reginfo.lock_type=TL_WRITE;
-  if (! ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
+  if (not ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH)))
   {
     if (*lock)
     {
@@ -1704,7 +1698,9 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
-    table->setWriteSet((*f)->field_index);
+  {
+    table->setWriteSet((*f)->position());
+  }
 
   /* Don't set timestamp if used */
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
@@ -1714,14 +1710,18 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
     table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   if (info.handle_duplicates == DUP_REPLACE)
     table->cursor->extra(HA_EXTRA_WRITE_CAN_REPLACE);
+
   if (info.handle_duplicates == DUP_UPDATE)
     table->cursor->extra(HA_EXTRA_INSERT_WITH_UPDATE);
+
   table->cursor->ha_start_bulk_insert((ha_rows) 0);
-  session->abort_on_warning= !info.ignore;
+  session->setAbortOnWarning(not info.ignore);
   if (check_that_all_fields_are_given_values(session, table, table_list))
     return(1);
+
   table->mark_columns_needed_for_insert();
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
   return(0);
@@ -1733,7 +1733,7 @@ void select_create::store_values(List<Item> &values)
 }
 
 
-void select_create::send_error(uint32_t errcode,const char *err)
+void select_create::send_error(drizzled::error_t errcode,const char *err)
 {
   /*
     This will execute any rollbacks that are necessary before writing
@@ -1747,8 +1747,6 @@ void select_create::send_error(uint32_t errcode,const char *err)
 
   */
   select_insert::send_error(errcode, err);
-
-  return;
 }
 
 
@@ -1767,7 +1765,7 @@ bool select_create::send_eof()
     if (!table->getShare()->getType())
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.autocommitOrRollback(session, 0);
+      transaction_services.autocommitOrRollback(*session, 0);
       (void) session->endActiveTransaction();
     }
 

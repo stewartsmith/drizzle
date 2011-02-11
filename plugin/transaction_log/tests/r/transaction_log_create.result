@@ -4,12 +4,12 @@ CREATE TABLE t1(a INT NOT NULL, PRIMARY KEY(a));
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -33,7 +33,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -58,13 +58,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -75,12 +79,12 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR, c BLOB, d TEXT, e DATE NOT NULL, f BLOB 
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -104,7 +108,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -145,14 +149,14 @@ statement {
         name: "e"
         type: DATE
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "f"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 63
@@ -181,13 +185,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -198,12 +206,12 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -227,7 +235,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -237,7 +245,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -267,13 +275,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -284,12 +296,12 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -313,7 +325,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -323,7 +335,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -340,9 +352,9 @@ statement {
       }
       field {
         name: "d"
-        type: TIMESTAMP
+        type: EPOCH
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -377,13 +389,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -394,12 +410,12 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -423,7 +439,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -433,7 +449,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -450,7 +466,7 @@ statement {
       }
       field {
         name: "d"
-        type: TIMESTAMP
+        type: EPOCH
         options {
           default_null: true
         }
@@ -480,13 +496,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -497,12 +517,12 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -526,7 +546,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -536,7 +556,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -553,7 +573,7 @@ statement {
       }
       field {
         name: "d"
-        type: TIMESTAMP
+        type: EPOCH
         options {
           default_null: true
         }
@@ -608,13 +628,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -625,12 +649,12 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -654,7 +678,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -664,7 +688,7 @@ statement {
           default_value: "this_is_a_default_value"
         }
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 25
@@ -681,7 +705,7 @@ statement {
       }
       field {
         name: "d"
-        type: TIMESTAMP
+        type: EPOCH
         options {
           default_null: true
         }
@@ -733,13 +757,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -751,12 +779,12 @@ CREATE TABLE IF NOT EXISTS t1(a INT NOT NULL, PRIMARY KEY(a));
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -780,7 +808,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -805,13 +833,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 negative test (should not be created / logged)
 CREATE TABLE IF NOT EXISTS t1(b CHAR(100) NOT NULL, PRIMARY KEY(b));
@@ -820,12 +852,12 @@ Note	1050	Table 't1' already exists
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -849,7 +881,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -874,13 +906,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -891,12 +927,12 @@ CREATE TABLE t1(a INT NOT NULL, b INT NOT NULL, PRIMARY KEY(a), KEY b_key1 (b));
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -920,14 +956,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -965,25 +1001,29 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 CREATE TABLE t2(a INT NOT NULL, b INT , PRIMARY KEY(a), KEY b_key (b), 
 CONSTRAINT fk_constraint_t2 FOREIGN KEY (b) REFERENCES t1(b) ON DELETE SET NULL ON UPDATE CASCADE);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1007,7 +1047,7 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1062,13 +1102,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;
@@ -1080,12 +1124,12 @@ CREATE TABLE t1(a INT NOT NULL, b INT NOT NULL, PRIMARY KEY(a), KEY b_key1 (b));
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1109,14 +1153,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -1154,24 +1198,28 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 CREATE TABLE t2 LIKE t1;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-4
+2
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-4
+2
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1195,14 +1243,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       indexes {
@@ -1240,14 +1288,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      catalog: ""
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;
@@ -1261,12 +1312,12 @@ Warning	1071	Specified key was too long; max key length is 1023 bytes
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1290,14 +1341,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 1000
@@ -1355,13 +1406,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1372,12 +1427,12 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(1000) NOT NULL , c CHAR(1) COLLATE utf8_b
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1401,14 +1456,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 1000
@@ -1450,13 +1505,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1467,12 +1526,12 @@ CREATE TABLE t1(a INT NOT NULL, b BLOB NOT NULL, c CHAR(1) DEFAULT '0', PRIMARY 
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-3
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-3
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1496,14 +1555,14 @@ statement {
         name: "a"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "b"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 63
@@ -1544,13 +1603,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1586,12 +1649,12 @@ autoinc_int_field INT NOT NULL AUTO_INCREMENT
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1615,7 +1678,7 @@ statement {
         name: "autoinc_int_field"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           is_autoincrement: true
@@ -1627,15 +1690,12 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_nullable: true
-        }
       }
       field {
         name: "not_null_bigint_field"
         type: BIGINT
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1644,15 +1704,12 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_nullable: true
-        }
       }
       field {
         name: "not_null_int_field"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1660,9 +1717,6 @@ statement {
         type: VARCHAR
         options {
           default_null: true
-        }
-        constraints {
-          is_nullable: true
         }
         string_options {
           length: 100
@@ -1674,7 +1728,7 @@ statement {
         name: "not_null_varchar_field"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 100
@@ -1688,9 +1742,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_nullable: true
-        }
         enumeration_values {
           collation_id: 45
           collation: "utf8_general_ci"
@@ -1702,7 +1753,7 @@ statement {
         name: "not_null_enum_field"
         type: ENUM
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         enumeration_values {
           collation_id: 45
@@ -1717,15 +1768,12 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_nullable: true
-        }
       }
       field {
         name: "not_null_date_field"
         type: DATE
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1734,15 +1782,12 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_nullable: true
-        }
       }
       field {
         name: "not_null_datetime_field"
         type: DATETIME
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1750,9 +1795,6 @@ statement {
         type: BLOB
         options {
           default_null: true
-        }
-        constraints {
-          is_nullable: true
         }
         string_options {
           collation_id: 63
@@ -1763,7 +1805,7 @@ statement {
         name: "not_null_blob_field"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 63
@@ -1776,9 +1818,6 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_nullable: true
-        }
         string_options {
           collation_id: 45
           collation: "utf8_general_ci"
@@ -1788,7 +1827,7 @@ statement {
         name: "not_null_text_field"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 45
@@ -1797,19 +1836,16 @@ statement {
       }
       field {
         name: "null_timestamp_field"
-        type: TIMESTAMP
+        type: EPOCH
         options {
           default_null: true
-        }
-        constraints {
-          is_nullable: true
         }
       }
       field {
         name: "not_null_timestamp_field"
-        type: TIMESTAMP
+        type: EPOCH
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1818,15 +1854,12 @@ statement {
         options {
           default_null: true
         }
-        constraints {
-          is_nullable: true
-        }
       }
       field {
         name: "not_null_double_field"
         type: DOUBLE
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
@@ -1834,9 +1867,6 @@ statement {
         type: DECIMAL
         options {
           default_null: true
-        }
-        constraints {
-          is_nullable: true
         }
         numeric_options {
           scale: 2
@@ -1847,7 +1877,7 @@ statement {
         name: "not_null_decimal_field"
         type: DECIMAL
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           scale: 2
@@ -1876,13 +1906,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1901,12 +1935,12 @@ id INT NOT NULL AUTO_INCREMENT PRIMARY KEY
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-2
+1
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-2
+1
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1930,7 +1964,7 @@ statement {
         name: "id"
         type: INTEGER
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         numeric_options {
           is_autoincrement: true
@@ -1940,7 +1974,7 @@ statement {
         name: "key1"
         type: VARCHAR
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           length: 10
@@ -1952,14 +1986,14 @@ statement {
         name: "key2"
         type: DOUBLE
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
       }
       field {
         name: "key3"
         type: BLOB
         constraints {
-          is_nullable: false
+          is_notnull: true
         }
         string_options {
           collation_id: 63
@@ -2032,13 +2066,17 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
-      
+      catalog: "LOCAL"
+      UUID
       version: 1
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;

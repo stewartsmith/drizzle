@@ -1,0 +1,56 @@
+#
+# We check that no one can create tables into some of the schemas.
+#
+
+CREATE SCHEMA admin;
+CREATE SCHEMA temporary;
+
+SELECT SCHEMA();
+
+CREATE TABLE admin.t1 (A SERIAL);
+DROP TABLE admin.t1;
+
+--error ER_SYNTAX_ERROR,ER_PARSE_ERROR
+CREATE TABLE .admin.t1 (A SERIAL);
+
+--error ER_WRONG_DB_NAME
+CREATE TABLE `.admin`.t1 (A SERIAL);
+
+CREATE TABLE temporary.t1 (A SERIAL);
+DROP TABLE temporary.t1;
+
+--error ER_SYNTAX_ERROR,ER_PARSE_ERROR
+CREATE TABLE .temporary.t1 (A SERIAL);
+--error ER_WRONG_DB_NAME
+CREATE TABLE `.temporary`.t1 (A SERIAL);
+
+use admin;
+# This will succeed because we parse the . as being the current schema.
+CREATE TABLE .temporary (A SERIAL);
+DROP TABLE .temporary;
+
+--error ER_WRONG_TABLE_NAME
+CREATE TABLE `.temporary` (A SERIAL);
+
+CREATE TABLE `temporary` (A SERIAL);
+DROP TABLE `temporary`;
+
+CREATE TABLE `#temporary` (A SERIAL);
+DROP TABLE `#temporary`;
+
+--error ER_PARSE_ERROR
+CREATE TABLE #temporary (A SERIAL);
+
+--error ER_WRONG_TABLE_NAME
+CREATE TABLE `temporary ` (A SERIAL);
+
+SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA=SCHEMA();
+
+--error ER_WRONG_TABLE_NAME,ER_WRONG_DB_NAME
+CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (A SERIAL);
+
+--error ER_WRONG_TABLE_NAME,ER_WRONG_DB_NAME
+CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (A SERIAL);
+
+DROP SCHEMA admin;
+DROP SCHEMA temporary;

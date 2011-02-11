@@ -1,8 +1,8 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  Authors:
  *
@@ -166,10 +166,7 @@ static int init(drizzled::module::Context &context)
 
     if (transaction_log == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLog instance.  Got error: %s\n"), 
-                    errmsg);
+      sql_perror(_("Failed to allocate the TransactionLog instance"), sysvar_transaction_log_file);
       return 1;
     }
     else
@@ -177,7 +174,7 @@ static int init(drizzled::module::Context &context)
       /* Check to see if the log was not created properly */
       if (transaction_log->hasError())
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the Transaction Log.  Got error: %s\n"), 
+        errmsg_printf(error::ERROR, _("Failed to initialize the Transaction Log.  Got error: %s\n"), 
                       transaction_log->getErrorMessage().c_str());
         return 1;
       }
@@ -187,10 +184,7 @@ static int init(drizzled::module::Context &context)
     transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
     if (transaction_log_index == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"), 
-                    errmsg);
+      sql_perror(_("Failed to allocate the TransactionLogIndex instance"), sysvar_transaction_log_file);
       return 1;
     }
     else
@@ -198,7 +192,7 @@ static int init(drizzled::module::Context &context)
       /* Check to see if the index was not created properly */
       if (transaction_log_index->hasError())
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the Transaction Log Index.  Got error: %s\n"), 
+        errmsg_printf(error::ERROR, _("Failed to initialize the Transaction Log Index.  Got error: %s\n"), 
                       transaction_log_index->getErrorMessage().c_str());
         return 1;
       }
@@ -211,10 +205,7 @@ static int init(drizzled::module::Context &context)
                                                                  static_cast<uint32_t>(sysvar_transaction_log_num_write_buffers));
     if (transaction_log_applier == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"), 
-                    errmsg);
+      sql_perror(_("Failed to allocate the TransactionLogApplier instance"), sysvar_transaction_log_file);
       return 1;
     }
     context.add(transaction_log_applier);
@@ -255,25 +246,25 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("truncate-debug",
           po::value<bool>(&sysvar_transaction_log_truncate_debug)->default_value(false)->zero_tokens(),
-          N_("DEBUGGING - Truncate transaction log"));
+          _("DEBUGGING - Truncate transaction log"));
   context("enable-checksum",
           po::value<bool>(&sysvar_transaction_log_checksum_enabled)->default_value(false)->zero_tokens(),
-          N_("Enable CRC32 Checksumming of each written transaction log entry"));  
+          _("Enable CRC32 Checksumming of each written transaction log entry"));  
   context("enable",
           po::value<bool>(&sysvar_transaction_log_enabled)->default_value(false)->zero_tokens(),
-          N_("Enable transaction log"));
+          _("Enable transaction log"));
   context("file",
           po::value<string>(&sysvar_transaction_log_file)->default_value(DEFAULT_LOG_FILE_PATH),
-          N_("Path to the file to use for transaction log"));
+          _("Path to the file to use for transaction log"));
   context("use-replicator",
           po::value<string>(&sysvar_transaction_log_use_replicator)->default_value(DEFAULT_USE_REPLICATOR),
-          N_("Name of the replicator plugin to use (default='default_replicator')")); 
+          _("Name of the replicator plugin to use (default='default_replicator')")); 
   context("flush-frequency",
           po::value<flush_constraint>(&sysvar_transaction_log_flush_frequency)->default_value(0),
-          N_("0 == rely on operating system to sync log file (default), 1 == sync file at each transaction write, 2 == sync log file once per second"));
+          _("0 == rely on operating system to sync log file (default), 1 == sync file at each transaction write, 2 == sync log file once per second"));
   context("num-write-buffers",
           po::value<write_buffers_constraint>(&sysvar_transaction_log_num_write_buffers)->default_value(8),
-          N_("Number of slots for in-memory write buffers (default=8)."));
+          _("Number of slots for in-memory write buffers (default=8)."));
 }
 
 DRIZZLE_PLUGIN(init, NULL, init_options);

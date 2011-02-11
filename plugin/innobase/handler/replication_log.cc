@@ -29,7 +29,6 @@
 #include <drizzled/session.h>
 
 /* Include necessary InnoDB headers */
-extern "C" {
 #include "univ.i"
 #include "btr0sea.h"
 #include "os0file.h"
@@ -60,8 +59,6 @@ extern "C" {
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
-#include "mysql_addons.h"
-}
 
 using namespace std;
 using namespace drizzled;

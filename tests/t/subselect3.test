@@ -225,7 +225,7 @@ select a,b, oref, (a,b) in (select a,b from t1 where c=t2.oref) Z from t2;
 
 # Then check that we do turn off 'ref' scans in the subquery
 create table t4 (x int);
-insert into t4 select A.a + 10*B.a from t1 A, t1 B;
+insert into t4 select A.a + 10*B.a from t1 A CROSS JOIN t1 B;
 explain extended 
   select a,b, oref, 
          (a,b) in (select a,b from t1,t4 where c=t2.oref) Z 
@@ -618,6 +618,7 @@ DROP TABLE t1, t2;
 
 create table t1 (a int, b decimal(13, 3)); 
 insert into t1 values (1, 0.123);
+system rm -f $DRIZZLETEST_VARDIR/subselect.out.file.1;
 --replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 eval select a, (select max(b) from t1) into outfile "$DRIZZLETEST_VARDIR/subselect.out.file.1" from t1;
 delete from t1;

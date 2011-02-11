@@ -190,8 +190,12 @@ enum enum_field_types {
                         DRIZZLE_TYPE_DECIMAL,
                         DRIZZLE_TYPE_ENUM,
                         DRIZZLE_TYPE_BLOB,
-                        DRIZZLE_TYPE_MAX=DRIZZLE_TYPE_BLOB
+                        DRIZZLE_TYPE_TIME,
+                        DRIZZLE_TYPE_BOOLEAN,
+                        DRIZZLE_TYPE_UUID,
+                        DRIZZLE_TYPE_MICROTIME
 };
+const int enum_field_types_size= DRIZZLE_TYPE_MICROTIME + 1;
 
 } /* namespace drizzled */
 

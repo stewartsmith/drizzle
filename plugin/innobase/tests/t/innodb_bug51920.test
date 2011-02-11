@@ -35,8 +35,9 @@ let $wait_condition =
 -- source include/wait_condition.inc
 
 connection con1;
--- error ER_QUERY_INTERRUPTED,20,2
+-- error ER_QUERY_INTERRUPTED, EE_UNKNOWN_CHARSET, EE_CANTCREATEFILE
 reap;
 connection default;
+COMMIT;
 DROP TABLE bug51920;
 -- disconnect con1

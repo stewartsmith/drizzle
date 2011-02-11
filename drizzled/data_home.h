@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,18 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_DATA_HOME_H
 #define DRIZZLED_DATA_HOME_H
 
 #include <boost/filesystem.hpp>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
-extern boost::filesystem::path full_data_home;
-
-boost::filesystem::path& getDataHome();
-boost::filesystem::path& getDataHomeCatalog();
+DRIZZLED_API boost::filesystem::path& getFullDataHome();
+DRIZZLED_API boost::filesystem::path& getDataHome();
+DRIZZLED_API boost::filesystem::path& getDataHomeCatalog();
 
 } /* namespace drizzled */
 

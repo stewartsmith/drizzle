@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,15 +22,16 @@
 
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
-#include <drizzled/table_list.h>
 
 #include <bitset>
 
 namespace drizzled
 {
+class TableList;
 
-struct nested_join_st
+class NestedJoin
 {
+public:
   /* list of elements in the nested join */
   List<TableList> join_list;
 

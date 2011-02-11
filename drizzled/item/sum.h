@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -416,7 +416,7 @@ public:
   bool fix_fields(Session *, Item **);
   int64_t val_int();
   String *val_str(String*str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   void reset_field();
 };
 
@@ -429,7 +429,7 @@ public:
   Item_sum_int(Session *session, Item_sum_int *item) :Item_sum_num(session, item) {}
   double val_real() { assert(fixed == 1); return (double) val_int(); }
   String *val_str(String*str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type () const { return INT_RESULT; }
   void fix_length_and_dec()
   { decimals=0; max_length=21; maybe_null=null_value=0; }
@@ -441,7 +441,7 @@ class Item_sum_sum :public Item_sum_num
 protected:
   Item_result hybrid_type;
   double sum;
-  my_decimal dec_buffs[2];
+  type::Decimal dec_buffs[2];
   uint32_t curr_dec_buff;
   void fix_length_and_dec();
 
@@ -454,7 +454,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String*str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type () const { return hybrid_type; }
   void reset_field();
   void update_field();
@@ -491,7 +491,7 @@ public:
   void cleanup();
   bool add();
   double val_real();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   int64_t val_int();
   String *val_str(String *str);
 
@@ -657,7 +657,7 @@ public:
   enum Type type() const { return FIELD_AVG_ITEM; }
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool is_null() { update_null_value(); return null_value; }
   String *val_str(String*);
   enum_field_types field_type() const
@@ -689,7 +689,7 @@ public:
   double val_real();
   // In SPs we might force the "wrong" type with select into a declare variable
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   String *val_str(String *str);
   void reset_field();
   void update_field();
@@ -724,7 +724,7 @@ public:
   int64_t val_int();
   String *val_str(String *str)
   { return val_string_from_real(str); }
-  my_decimal *val_decimal(my_decimal *dec_buf)
+  type::Decimal *val_decimal(type::Decimal *dec_buf)
   { return val_decimal_from_real(dec_buf); }
   bool is_null() { update_null_value(); return null_value; }
   enum_field_types field_type() const
@@ -781,7 +781,7 @@ public:
   bool add();
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   void reset_field();
   void update_field();
   Item *result_item(Field *)
@@ -807,7 +807,7 @@ public:
   Item_std_field(Item_sum_std *item);
   enum Type type() const { return FIELD_STD_ITEM; }
   double val_real();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type () const { return REAL_RESULT; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_DOUBLE;}
 };
@@ -842,7 +842,7 @@ protected:
   String value,tmp_value;
   double sum;
   int64_t sum_int;
-  my_decimal sum_dec;
+  type::Decimal sum_dec;
   Item_result hybrid_type;
   enum_field_types hybrid_field_type;
   int cmp_sign;
@@ -859,7 +859,7 @@ protected:
   void clear();
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   void reset_field();
   String *val_str(String *);
   bool keep_field_type(void) const { return 1; }
@@ -1035,7 +1035,7 @@ public:
   void make_unique();
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *decimal_value)
+  type::Decimal *val_decimal(type::Decimal *decimal_value)
   {
     return val_decimal_from_string(decimal_value);
   }

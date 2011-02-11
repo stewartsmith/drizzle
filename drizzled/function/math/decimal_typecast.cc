@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,59 +28,61 @@ namespace drizzled
 
 String *Item_decimal_typecast::val_str(String *str)
 {
-  my_decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   if (null_value)
     return NULL;
-  my_decimal2string(E_DEC_FATAL_ERROR, tmp, 0, 0, 0, str);
+  class_decimal2string(tmp, 0, str);
   return str;
 }
 
 
 double Item_decimal_typecast::val_real()
 {
-  my_decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   double res;
   if (null_value)
     return 0.0;
-  my_decimal2double(E_DEC_FATAL_ERROR, tmp, &res);
+  class_decimal2double(E_DEC_FATAL_ERROR, tmp, &res);
   return res;
 }
 
 
 int64_t Item_decimal_typecast::val_int()
 {
-  my_decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   int64_t res;
   if (null_value)
     return 0;
-  my_decimal2int(E_DEC_FATAL_ERROR, tmp, unsigned_flag, &res);
+
+  tmp->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &res);
+
   return res;
 }
 
 
-my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
+type::Decimal *Item_decimal_typecast::val_decimal(type::Decimal *dec)
 {
-  my_decimal tmp_buf, *tmp= args[0]->val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= args[0]->val_decimal(&tmp_buf);
   bool sign;
   uint32_t precision;
 
   if ((null_value= args[0]->null_value))
     return NULL;
-  my_decimal_round(E_DEC_FATAL_ERROR, tmp, decimals, false, dec);
+  class_decimal_round(E_DEC_FATAL_ERROR, tmp, decimals, false, dec);
   sign= dec->sign();
   if (unsigned_flag)
   {
     if (sign)
     {
-      my_decimal_set_zero(dec);
+      dec->set_zero();
       goto err;
     }
   }
-  precision= my_decimal_length_to_precision(max_length,
+  precision= class_decimal_length_to_precision(max_length,
                                             decimals, unsigned_flag);
-  if (precision - decimals < (uint) my_decimal_intg(dec))
+  if (precision - decimals < (uint) class_decimal_intg(dec))
   {
-    max_my_decimal(dec, precision, decimals);
+    max_Decimal(dec, precision, decimals);
     dec->sign(sign);
     goto err;
   }
@@ -100,7 +102,7 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   char len_buf[20*3 + 1];
   char *end;
 
-  uint32_t precision= my_decimal_length_to_precision(max_length, decimals,
+  uint32_t precision= class_decimal_length_to_precision(max_length, decimals,
                                                  unsigned_flag);
   str->append(STRING_WITH_LEN("cast("));
   args[0]->print(str, query_type);

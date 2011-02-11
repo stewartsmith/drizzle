@@ -31,10 +31,13 @@
 
 #include <boost/unordered_map.hpp>
 
+#include "engine_state_history.h"
+
 using namespace std;
 using namespace drizzled;
 
 string engine_state;
+
 typedef multimap<string, string> state_multimap;
 typedef multimap<string, string>::value_type state_pair;
 typedef multimap<string, string>::iterator state_multimap_iter;
@@ -131,6 +134,7 @@ static inline void ENGINE_NEW_STATE(const string &new_state)
   }
 
   engine_state= new_state;
+  engine_state_history.push_back(new_state);
 
   cerr << "\tENGINE STATE : " << engine_state << endl;
 }
@@ -174,7 +178,7 @@ public:
   int doStartTableScan(bool scan) { CURSOR_NEW_STATE("::doStartTableScan()"); return realCursor->doStartTableScan(scan); }
   int doEndTableScan() { CURSOR_NEW_STATE("::doEndTableScan()"); return realCursor->doEndTableScan(); }
 
-  int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  int doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked);
 
   THR_LOCK_DATA **store_lock(Session *,
                                      THR_LOCK_DATA **to,
@@ -214,7 +218,7 @@ private:
   Session* user_session;
 };
 
-int SEAPITesterCursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+int SEAPITesterCursor::doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked)
 {
   CURSOR_NEW_STATE("::doOpen()");
 
@@ -361,25 +365,25 @@ public:
 
   int doCreateTable(Session&,
                     Table&,
-                    const drizzled::TableIdentifier &identifier,
+                    const drizzled::identifier::Table &identifier,
                     drizzled::message::Table& create_proto);
 
-  int doDropTable(Session&, const TableIdentifier &identifier);
+  int doDropTable(Session&, const identifier::Table &identifier);
 
   int doRenameTable(drizzled::Session& session,
-                    const drizzled::TableIdentifier& from,
-                    const drizzled::TableIdentifier& to)
+                    const drizzled::identifier::Table& from,
+                    const drizzled::identifier::Table& to)
     { return getRealEngine()->renameTable(session, from, to); }
 
   int doGetTableDefinition(Session& ,
-                           const TableIdentifier &,
+                           const identifier::Table &,
                            drizzled::message::Table &);
 
-  bool doDoesTableExist(Session&, const TableIdentifier &identifier);
+  bool doDoesTableExist(Session&, const identifier::Table &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
-                             const drizzled::SchemaIdentifier &,
-                             drizzled::TableIdentifier::vector &);
+                             const drizzled::identifier::Schema &,
+                             drizzled::identifier::Table::vector &);
 
   virtual int doStartTransaction(Session *session,
                                  start_transaction_option_t options);
@@ -435,21 +439,21 @@ public:
 
 };
 
-bool SEAPITester::doDoesTableExist(Session &session, const TableIdentifier &identifier)
+bool SEAPITester::doDoesTableExist(Session &session, const identifier::Table &identifier)
 {
   return getRealEngine()->doDoesTableExist(session, identifier);
 }
 
 void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &cd,
-                                        const drizzled::SchemaIdentifier &si,
-                                        drizzled::TableIdentifier::vector &ti)
+                                        const drizzled::identifier::Schema &si,
+                                        drizzled::identifier::Table::vector &ti)
 {
   return getRealEngine()->doGetTableIdentifiers(cd, si, ti);
 }
 
 int SEAPITester::doCreateTable(Session& session,
                                Table& table,
-                               const drizzled::TableIdentifier &identifier,
+                               const drizzled::identifier::Table &identifier,
                                drizzled::message::Table& create_proto)
 {
   ENGINE_NEW_STATE("::doCreateTable()");
@@ -460,13 +464,13 @@ int SEAPITester::doCreateTable(Session& session,
   return r;
 }
 
-int SEAPITester::doDropTable(Session& session, const TableIdentifier &identifier)
+int SEAPITester::doDropTable(Session& session, const identifier::Table &identifier)
 {
   return getRealEngine()->doDropTable(session, identifier);
 }
 
 int SEAPITester::doGetTableDefinition(Session& session,
-                                      const TableIdentifier &identifier,
+                                      const identifier::Table &identifier,
                                       drizzled::message::Table &table)
 {
   return getRealEngine()->doGetTableDefinition(session, identifier, table);
@@ -495,7 +499,7 @@ void SEAPITester::doEndStatement(Session *session)
 
 int SEAPITester::doCommit(Session *session, bool all)
 {
-  if (all     || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  if (all)
   {
     ENGINE_NEW_STATE("COMMIT");
     ENGINE_NEW_STATE("::SEAPITester()");
@@ -510,8 +514,7 @@ int SEAPITester::doCommit(Session *session, bool all)
 
 int SEAPITester::doRollback(Session *session, bool all)
 {
-  if (all
-    || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  if (all)
   {
     ENGINE_NEW_STATE("ROLLBACK");
     ENGINE_NEW_STATE("::SEAPITester()");
@@ -538,6 +541,8 @@ static int seapi_tester_init(drizzled::module::Context &context)
 
   context.add(new plugin::Create_function<SEAPITesterErrorInjectFunc>("seapitester_error_inject"));
 
+  engine_state_history_table_initialize(context);
+
   return 0;
 }
 
@@ -550,7 +555,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Test the Storage Engine API callls are in correct order",
   PLUGIN_LICENSE_GPL,
   seapi_tester_init,     /* Plugin Init */
-  NULL, /* system variables */
+  NULL, /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

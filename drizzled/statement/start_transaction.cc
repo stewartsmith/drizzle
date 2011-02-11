@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,20 +28,28 @@ namespace drizzled
 
 bool statement::StartTransaction::execute()
 {
-  if (session->transaction.xid_state.xa_state != XA_NOTR)
+  if (getSession()->inTransaction())
+  {
+    push_warning_printf(getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                        ER_TRANSACTION_ALREADY_STARTED,
+                        ER(ER_TRANSACTION_ALREADY_STARTED));
+    return false;
+  }
+
+  if (getSession()->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
-        xa_state_names[session->transaction.xid_state.xa_state]);
+        xa_state_names[getSession()->transaction.xid_state.xa_state]);
     return false;
   }
   /*
      Breakpoints for backup testing.
    */
-  if (! session->startTransaction(start_transaction_opt))
+  if (! getSession()->startTransaction(start_transaction_opt))
   {
     return true;
   }
-  session->my_ok();
+  getSession()->my_ok();
   return false;
 }
 

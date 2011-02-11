@@ -1,0 +1,44 @@
+CREATE TABLE t1 (A INT);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `A` INT DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+ALTER TABLE t1 ADD COLUMN b UUID NOT NULL;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `A` INT DEFAULT NULL,
+  `b` UUID NOT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE t1;
+CREATE TABLE t1 (A INT);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `A` INT DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+INSERT INTO t1 VALUES (1), (2), (3);
+SELECT COUNT(*) = 3 FROM t1;
+COUNT(*) = 3
+1
+ALTER TABLE t1 ADD COLUMN b UUID NOT NULL;
+ERROR HY000: Either a DEFAULt value or NULL NULL description is required for a new column if table is not empty
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `A` INT DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+ALTER TABLE t1 ADD COLUMN b UUID DEFAULT NULL;
+SELECT A,B FROM t1;
+A	B
+1	NULL
+2	NULL
+3	NULL
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `A` INT DEFAULT NULL,
+  `b` UUID DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE t1;

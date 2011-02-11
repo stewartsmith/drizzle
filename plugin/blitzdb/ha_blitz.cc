@@ -65,26 +65,26 @@ public:
 
   int doCreateTable(drizzled::Session &session,
                     drizzled::Table &table_arg,
-                    const drizzled::TableIdentifier &identifier,
+                    const drizzled::identifier::Table &identifier,
                     drizzled::message::Table &table_proto);
 
   int doRenameTable(drizzled::Session &session,
-                    const drizzled::TableIdentifier &from_identifier,
-                    const drizzled::TableIdentifier &to_identifier);
+                    const drizzled::identifier::Table &from_identifier,
+                    const drizzled::identifier::Table &to_identifier);
 
   int doDropTable(drizzled::Session &session,
-                  const drizzled::TableIdentifier &identifier);
+                  const drizzled::identifier::Table &identifier);
 
   int doGetTableDefinition(drizzled::Session &session,
-                           const drizzled::TableIdentifier &identifier,
+                           const drizzled::identifier::Table &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
 
   bool doDoesTableExist(drizzled::Session &session,
-                        const drizzled::TableIdentifier &identifier);
+                        const drizzled::identifier::Table &identifier);
 
   bool validateCreateTableOption(const std::string &key,
                                  const std::string &state);
@@ -121,7 +121,7 @@ static bool str_is_numeric(const std::string &str);
 
 int BlitzEngine::doCreateTable(drizzled::Session &,
                                drizzled::Table &table,
-                               const drizzled::TableIdentifier &identifier,
+                               const drizzled::identifier::Table &identifier,
                                drizzled::message::Table &proto) {
   BlitzData dict;
   BlitzTree btree;
@@ -162,8 +162,8 @@ int BlitzEngine::doCreateTable(drizzled::Session &,
 }
 
 int BlitzEngine::doRenameTable(drizzled::Session &,
-                               const drizzled::TableIdentifier &from,
-                               const drizzled::TableIdentifier &to) {
+                               const drizzled::identifier::Table &from,
+                               const drizzled::identifier::Table &to) {
   int rv = 0;
 
   BlitzData blitz_table;
@@ -241,7 +241,7 @@ int BlitzEngine::doRenameTable(drizzled::Session &,
 }
 
 int BlitzEngine::doDropTable(drizzled::Session &,
-                             const drizzled::TableIdentifier &identifier) {
+                             const drizzled::identifier::Table &identifier) {
   BlitzData dict;
   BlitzTree btree;
   char buf[FN_REFLEN];
@@ -282,7 +282,7 @@ int BlitzEngine::doDropTable(drizzled::Session &,
 }
 
 int BlitzEngine::doGetTableDefinition(drizzled::Session &,
-                                      const drizzled::TableIdentifier &identifier,
+                                      const drizzled::identifier::Table &identifier,
                                       drizzled::message::Table &proto) {
   struct stat stat_info;
   std::string path(identifier.getPath());
@@ -324,8 +324,8 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
 }
 
 void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                        const drizzled::SchemaIdentifier &schema_id,
-                                        drizzled::TableIdentifier::vector &ids) {
+                                        const drizzled::identifier::Schema &schema_id,
+                                        drizzled::identifier::Table::vector &ids) {
   drizzled::CachedDirectory::Entries entries = directory.getEntries();
 
   for (drizzled::CachedDirectory::Entries::iterator entry_iter = entries.begin();
@@ -344,18 +344,18 @@ void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len = TableIdentifier::filename_to_tablename(filename->c_str(),
+      file_name_len = identifier::Table::filename_to_tablename(filename->c_str(),
                                                              uname,
                                                              sizeof(uname));
 
       uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';
-      ids.push_back(TableIdentifier(schema_id, uname));
+      ids.push_back(identifier::Table(schema_id, uname));
     }
   }
 }
 
 bool BlitzEngine::doDoesTableExist(drizzled::Session &,
-                                   const drizzled::TableIdentifier &identifier) {
+                                   const drizzled::identifier::Table &identifier) {
   std::string proto_path(identifier.getPath());
   proto_path.append(BLITZ_DATA_EXT);
 
@@ -497,7 +497,7 @@ int ha_blitz::info(uint32_t flag) {
 
 int ha_blitz::doStartTableScan(bool scan) {
   /* Obtain the query type for this scan */
-  sql_command_type = session_sql_command(getTable()->getSession());
+  sql_command_type = getTable()->getSession()->getSqlCommand();
   table_scan = scan;
   table_based = true;
 
@@ -622,7 +622,7 @@ const char *ha_blitz::index_type(uint32_t /*key_num*/) {
 
 int ha_blitz::doStartIndexScan(uint32_t key_num, bool) {
   active_index = key_num;
-  sql_command_type = session_sql_command(getTable()->getSession());
+  sql_command_type = getTable()->getSession()->getSqlCommand();
 
   /* This is unlikely to happen but just for assurance, re-obtain
      the lock if this thread already has a certain lock. This makes

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,12 +64,12 @@ public:
   bool eq(const Item *item, bool binary_cmp) const;
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   String *val_str(String*);
   double val_result();
   int64_t val_int_result();
   String *str_result(String* tmp);
-  my_decimal *val_decimal_result(my_decimal *);
+  type::Decimal *val_decimal_result(type::Decimal *);
   bool val_bool_result();
   bool send(plugin::Client *client, String *str_arg);
   void reset_field(Field *f);
@@ -85,9 +85,9 @@ public:
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
   Field *tmp_table_field(Table *) { return result_field; }
-  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_date(type::Time &ltime,uint32_t fuzzydate);
+  bool get_date_result(type::Time &ltime, uint32_t fuzzydate);
+  bool get_time(type::Time &ltime);
   bool is_null();
   void update_null_value();
   Item *get_tmp_table_item(Session *session);

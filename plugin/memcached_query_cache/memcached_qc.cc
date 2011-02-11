@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2010, Djellel Eddine Difallah
+ * Copyright (C) 2010 Djellel Eddine Difallah
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -385,13 +385,13 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("servers",
           po::value<string>()->default_value("127.0.0.1:11211"),
-          N_("List of memcached servers."));
+          _("List of memcached servers."));
   context("expiry",
           po::value<uint64_constraint>(&expiry_time)->default_value(1000),
-          N_("Expiry time of memcached entries"));
+          _("Expiry time of memcached entries"));
   context("enable",
           po::value<bool>(&sysvar_memcached_qc_enable)->default_value(false)->zero_tokens(),
-          N_("Enable Memcached Query Cache"));
+          _("Enable Memcached Query Cache"));
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -403,7 +403,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Caches Select resultsets in Memcached",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -3,7 +3,7 @@
  *
  *  Definitions required for Configuration Variables plugin
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -40,7 +42,7 @@ namespace plugin
  * This class should be used by scheduler plugins to implement custom session
  * schedulers.
  */
-class Scheduler : public Plugin
+class DRIZZLED_API Scheduler : public Plugin
 {
   /* Disable default constructors */
   Scheduler();

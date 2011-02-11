@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ public:
   void fix_length_and_dec();
   enum_field_types field_type() const { return cached_field_type; }
   int64_t val_int();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  bool get_date(type::Time &res, uint32_t fuzzy_date);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual void print(String *str, enum_query_type query_type);
 };

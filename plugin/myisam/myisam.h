@@ -18,7 +18,7 @@
 #ifndef PLUGIN_MYISAM_MYISAM_H
 #define PLUGIN_MYISAM_MYISAM_H
 
-#include "drizzled/identifier/table.h"
+#include "drizzled/identifier.h"
 
 #include <drizzled/key_map.h>
 
@@ -277,7 +277,7 @@ extern uint32_t data_pointer_size;
 
 extern int mi_close(struct st_myisam_info *file);
 extern int mi_delete(struct st_myisam_info *file,const unsigned char *buff);
-extern struct st_myisam_info *mi_open(const drizzled::TableIdentifier &identifier,
+extern struct st_myisam_info *mi_open(const drizzled::identifier::Table &identifier,
                                       int mode,
 				      uint32_t wait_if_locked);
 extern int mi_panic(enum drizzled::ha_panic_function function);

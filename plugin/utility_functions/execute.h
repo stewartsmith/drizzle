@@ -22,7 +22,7 @@
 #ifndef PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H
 #define PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H
 
-#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/function/boolean.h>
 #include <drizzled/execute.h>
 #include <iostream>
 
@@ -32,14 +32,14 @@ namespace drizzled
 namespace utility_functions
 {
 
-class Execute :public Item_bool_func
+class Execute :public drizzled::item::function::Boolean
 {
   drizzled::String _res;
   drizzled::Execute execute;
 
 public:
   Execute() :
-    Item_bool_func(),
+    drizzled::item::function::Boolean(),
     execute(getSession(), false)
   {
     unsigned_flag= true;

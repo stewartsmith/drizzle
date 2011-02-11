@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
  */
 
 #include "config.h"
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/statement/savepoint.h>
+#include "drizzled/show.h"
+#include "drizzled/session.h"
+#include "drizzled/statement/savepoint.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/named_savepoint.h"
 
@@ -35,18 +35,34 @@ namespace drizzled
 
 bool statement::Savepoint::execute()
 {
-  if (! (session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  if (! (getSession()->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
   {
-    session->my_ok();
+    /* AUTOCOMMIT is on and not in a BEGIN */
+    getSession()->my_ok();
   }
   else
   {
+    /*
+     * If AUTOCOMMIT is off and resource contexts are empty then we need
+     * to start a transaction. It will be empty when SAVEPOINT starts the
+     * transaction. Table affecting statements do this work in lockTables()
+     * by calling startStatement().
+     */
+    if ( (getSession()->options & OPTION_NOT_AUTOCOMMIT) &&
+         (getSession()->transaction.all.getResourceContexts().empty() == true) )
+    {
+      if (getSession()->startTransaction() == false)
+      {
+        return false;
+      }
+    }
+
     /*
      * Look through the savepoints.  If we find one with
      * the same name, delete it.
      */
     TransactionServices &transaction_services= TransactionServices::singleton();
-    deque<NamedSavepoint> &savepoints= session->transaction.savepoints;
+    deque<NamedSavepoint> &savepoints= getSession()->transaction.savepoints;
     deque<NamedSavepoint>::iterator iter;
 
     for (iter= savepoints.begin();
@@ -56,8 +72,8 @@ bool statement::Savepoint::execute()
       NamedSavepoint &sv= *iter;
       const string &sv_name= sv.getName();
       if (my_strnncoll(system_charset_info,
-                       (unsigned char *) session->lex->ident.str,
-                       session->lex->ident.length,
+                       (unsigned char *) getSession()->lex->ident.str,
+                       getSession()->lex->ident.length,
                        (unsigned char *) sv_name.c_str(),
                        sv_name.size()) == 0)
         break;
@@ -65,20 +81,20 @@ bool statement::Savepoint::execute()
     if (iter != savepoints.end())
     {
       NamedSavepoint &sv= *iter;
-      (void) transaction_services.releaseSavepoint(session, sv);
+      (void) transaction_services.releaseSavepoint(*getSession(), sv);
       savepoints.erase(iter);
     }
     
-    NamedSavepoint newsv(session->lex->ident.str, session->lex->ident.length);
+    NamedSavepoint newsv(getSession()->lex->ident.str, getSession()->lex->ident.length);
 
-    if (transaction_services.setSavepoint(session, newsv))
+    if (transaction_services.setSavepoint(*getSession(), newsv))
     {
       return true;
     }
     else
     {
       savepoints.push_front(newsv);
-      session->my_ok();
+      getSession()->my_ok();
     }
   }
   return false;

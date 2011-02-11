@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,11 +35,11 @@ bool statement::UnlockTables::execute()
      done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
      false, mysqldump will not work.
    */
-  if (session->isGlobalReadLock())
+  if (getSession()->isGlobalReadLock())
   {
-    session->unlockGlobalReadLock();
+    getSession()->unlockGlobalReadLock();
   }
-  session->my_ok();
+  getSession()->my_ok();
 
   return false;
 }

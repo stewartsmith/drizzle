@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008,2009 Sun Microsystems
+ *  Copyright (C) 2008, 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/errmsg_print.h>
 #include <boost/date_time.hpp>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
@@ -181,10 +182,7 @@ public:
 
     if (gearman_client_create(&_gearman_client) == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
-                              errmsg);
+      drizzled::sql_perror(_("fail gearman_client_create()"));
       return;
     }
 
@@ -194,7 +192,7 @@ public:
                                    host.c_str(), 0);
     if (ret != GEARMAN_SUCCESS)
     {
-      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_add_server(): %s"),
+      drizzled::errmsg_printf(drizzled::error::ERROR, _("fail gearman_client_add_server(): %s"),
                               gearman_client_error(&_gearman_client));
       return;
     }
@@ -225,13 +223,12 @@ public:
     if (not _gearman_client_ok)
         return false;
   
-    /* TODO, the session object should have a "utime command completed"
-       inside itself, so be more accurate, and so this doesnt have to
-       keep calling current_utime, which can be slow */
-  
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    uint64_t t_mark= (mytime-epoch).total_microseconds();
+    /* 
+      TODO, the session object should have a "utime command completed"
+      inside itself, so be more accurate, and so this doesnt have to
+      keep calling current_utime, which can be slow.
+    */
+    uint64_t t_mark= session->getCurrentTimestamp(false);
   
 
     // buffer to quotify the query
@@ -252,13 +249,13 @@ public:
                (int)dbs->size(), dbs->c_str(),
                // do need to quote the query
                quotify((const unsigned char *)session->getQueryString()->c_str(), session->getQueryString()->length(), qs, sizeof(qs)),
-               // command_name is defined in drizzled/sql_parse.cc
-               // dont need to quote the command name, always CSV safe
-               (int)drizzled::command_name[session->command].length,
-               drizzled::command_name[session->command].str,
+               // getCommandName is defined in drizzled/sql_parse.h dont
+               // need to quote the command name, always CSV safe
+               (int)drizzled::getCommandName(session->command).size(),
+               drizzled::getCommandName(session->command).c_str(),
                // counters are at end, to make it easier to add more
                (t_mark - session->getConnectMicroseconds()),
-               (t_mark - session->start_utime),
+               (session->getElapsedTime()),
                (t_mark - session->utime_after_lock),
                session->sent_row_count,
                session->examined_row_count,
@@ -300,10 +297,10 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("host",
           po::value<std::string>()->default_value("localhost"),
-          N_("Hostname for logging to a Gearman server"));
+          _("Hostname for logging to a Gearman server"));
   context("function",
           po::value<std::string>()->default_value("drizzlelog"),
-          N_("Gearman Function to send logging to"));
+          _("Gearman Function to send logging to"));
 }
 
 } /* namespace drizzle_plugin */

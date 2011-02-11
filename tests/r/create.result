@@ -19,9 +19,9 @@ drop table t1;
 create temporary table t1 (a int not null auto_increment,primary key (a)) engine=MEMORY;
 drop table t1;
 create temporary table t2 engine=MEMORY select * from t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR 42S02: Unknown table 'test.t1'
 create table t2 select auto+1 from t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR 42S02: Unknown table 'test.t1'
 drop table if exists t1,t2;
 Warnings:
 Note	1051	Unknown table 't1'
@@ -167,7 +167,7 @@ INSERT INTO t1 values (1),(2),(1);
 CREATE TABLE t2 (primary key(a)) SELECT * FROM t1;
 ERROR 23000: Duplicate entry '1' for key 'PRIMARY'
 SELECT * from t2;
-ERROR 42S02: Table 'test.t2' doesn't exist
+ERROR 42S02: Unknown table 'test.t2'
 DROP TABLE t1;
 DROP TABLE IF EXISTS t2;
 Warnings:
@@ -280,7 +280,7 @@ show warnings;
 Level	Code	Message
 Note	1050	Table 't1' already exists
 Error	1062	Duplicate entry '3' for key 'PRIMARY'
-select * from DATA_DICTIONARY.TABLE_DEFINITION_CACHE WHERE TABLE_COUNT > 1 ORDER BY TABLE_SCHEMA, TABLE_NAME;
+select * from DATA_DICTIONARY.TABLE_DEFINITION_CACHE WHERE TABLE_COUNT AND TABLE_SCHEMA = SCHEMA() > 1 ORDER BY TABLE_SCHEMA, TABLE_NAME;
 TABLE_SCHEMA	TABLE_NAME	VERSION	TABLE_COUNT	IS_NAME_LOCKED
 select * from t1;
 a	b
@@ -362,15 +362,15 @@ t2	CREATE TABLE `t2` (
 select * from t2;
 id	name
 create table t3 like t1;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.t3' already exists
 create table t3 like mysqltest.t3;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.t3' already exists
 create table non_existing_database.t1 like t1;
 ERROR 42000: Unknown schema 'non_existing_database'
-create table t3 like non_existing_table;
-ERROR 42S02: Table 'test.non_existing_table' doesn't exist
+create table t4 like non_existing_table;
+ERROR 42S02: Unknown table 'test.non_existing_table'
 create temporary table t3 like t1;
-ERROR 42S01: Table 't3' already exists
+ERROR 42S01: Table 'test.#t3' already exists
 drop table t1, t2, t3;
 drop database mysqltest;
 SET SESSION storage_engine="MEMORY";
@@ -441,6 +441,22 @@ a	b	c	d	e	f	h
 2	-2	2	1825-12-14	a	2003-01-01 03:02:01	binary data
 drop table t1, t2;
 create table t1 (a int, b int, d int, e bigint, f float(3,2), g double(4,3), h decimal(5,4), j date, k timestamp, l datetime, m enum('a','b'), o char(10));
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT DEFAULT NULL,
+  `b` INT DEFAULT NULL,
+  `d` INT DEFAULT NULL,
+  `e` BIGINT DEFAULT NULL,
+  `f` DOUBLE(3,2) DEFAULT NULL,
+  `g` DOUBLE(4,3) DEFAULT NULL,
+  `h` DECIMAL(5,4) DEFAULT NULL,
+  `j` DATE DEFAULT NULL,
+  `k` TIMESTAMP NULL DEFAULT NULL,
+  `l` DATETIME DEFAULT NULL,
+  `m` ENUM('a','b') DEFAULT NULL,
+  `o` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 create table t2 select ifnull(a,a), ifnull(b,b), ifnull(d,d), ifnull(e,e), ifnull(f,f), ifnull(g,g), ifnull(h,h), ifnull(j,j), ifnull(k,k), ifnull(l,l), ifnull(m,m), ifnull(o,o) from t1;
 show create table t2;
 Table	Create Table
@@ -666,7 +682,7 @@ t2	CREATE TABLE `t2` (
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
 create table t1 select * from t2;
-ERROR 42S02: Table 'test.t2' doesn't exist
+ERROR 42S02: Unknown table 'test.t2'
 create table t1 select * from t1;
 ERROR HY000: You can't specify target table 't1' for update in FROM clause
 create table t1 select coalesce('a' collate utf8_swedish_ci,'b' collate utf8_bin);
@@ -694,7 +710,7 @@ j
 1
 drop temporary table t1;
 select * from t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR 42S02: Unknown table 'test.t1'
 drop table t1;
 ERROR 42S02: Unknown table 't1'
 create table t1 (upgrade int);
@@ -1444,37 +1460,37 @@ Table	Create Table
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 create table t1 like data_dictionary.processlist;
-ERROR HY000: Can't create table 'test.t1' (errno: 1)
+Got one of the listed errors
 create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `ID` BIGINT NOT NULL,
-  `USER` VARCHAR(16) NOT NULL,
+  `USERNAME` VARCHAR(16) NOT NULL,
   `HOST` VARCHAR(1025) NOT NULL,
-  `DB` VARCHAR(256) NOT NULL,
+  `DB` VARCHAR(256) DEFAULT NULL,
   `COMMAND` VARCHAR(16) NOT NULL,
-  `TIME` BIGINT NOT NULL,
+  `TIME` BIGINT UNSIGNED NOT NULL,
   `STATE` VARCHAR(256) DEFAULT NULL,
   `INFO` VARCHAR(100) DEFAULT NULL,
-  `HAS_GLOBAL_LOCK` VARCHAR(5) NOT NULL
+  `HAS_GLOBAL_LOCK` BOOLEAN NOT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 like data_dictionary.processlist;
-ERROR HY000: Can't create table 'test.#t1' (errno: 138)
+Got one of the listed errors
 create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `ID` BIGINT NOT NULL,
-  `USER` VARCHAR(16) NOT NULL,
+  `USERNAME` VARCHAR(16) NOT NULL,
   `HOST` VARCHAR(1025) NOT NULL,
-  `DB` VARCHAR(256) NOT NULL,
+  `DB` VARCHAR(256) DEFAULT NULL,
   `COMMAND` VARCHAR(16) NOT NULL,
-  `TIME` BIGINT NOT NULL,
+  `TIME` BIGINT UNSIGNED NOT NULL,
   `STATE` VARCHAR(256) DEFAULT NULL,
   `INFO` VARCHAR(100) DEFAULT NULL,
-  `HAS_GLOBAL_LOCK` VARCHAR(5) NOT NULL
+  `HAS_GLOBAL_LOCK` BOOLEAN NOT NULL
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 

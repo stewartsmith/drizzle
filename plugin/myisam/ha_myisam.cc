@@ -31,7 +31,6 @@
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/table.h"
-#include "drizzled/field/timestamp.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/plugin/daemon.h"
 
@@ -117,15 +116,15 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    const TableIdentifier &identifier,
+                    const identifier::Table &identifier,
                     message::Table&);
 
-  int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+  int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 
-  int doDropTable(Session&, const TableIdentifier &identifier);
+  int doDropTable(Session&, const identifier::Table &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const TableIdentifier &identifier,
+                           const identifier::Table &identifier,
                            message::Table &table_message);
 
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
@@ -140,11 +139,11 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
-  bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
+  bool doDoesTableExist(Session& session, const identifier::Table &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state)
   {
     (void)state;
@@ -158,18 +157,18 @@ public:
 };
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                         const drizzled::SchemaIdentifier&,
-                                         drizzled::TableIdentifier::vector&)
+                                         const drizzled::identifier::Schema&,
+                                         drizzled::identifier::Table::vector&)
 {
 }
 
-bool MyisamEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
+bool MyisamEngine::doDoesTableExist(Session &session, const identifier::Table &identifier)
 {
   return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 int MyisamEngine::doGetTableDefinition(Session &session,
-                                       const TableIdentifier &identifier,
+                                       const identifier::Table &identifier,
                                        message::Table &table_message)
 {
   if (session.getMessageCache().getTableMessage(identifier, table_message))
@@ -285,7 +284,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
         keydef[i].seg[j].flag|= HA_BLOB_PART;
         /* save number of bytes used to pack length */
         keydef[i].seg[j].bit_start= (uint) (field->pack_length() -
-                                            share->blob_ptr_size);
+                                            share->sizeBlobPtr());
       }
     }
     keyseg+= pos->key_parts;
@@ -295,7 +294,8 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   record= table_arg->getInsertRecord();
   recpos= 0;
   recinfo_pos= recinfo;
-  while (recpos < (uint) share->stored_rec_length)
+
+  while (recpos < (uint) share->sizeStoredRecord())
   {
     Field **field, *found= 0;
     minpos= share->getRecordLength();
@@ -309,6 +309,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
         /* skip null fields */
         if (!(temp_length= (*field)->pack_length_in_rec()))
           continue; /* Skip null-fields */
+
         if (! found || fieldpos < minpos ||
             (fieldpos == minpos && temp_length < length))
         {
@@ -530,17 +531,23 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 {
   Session *cur_session;
   if ((cur_session= file->in_use))
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
+  {
+    errmsg_printf(error::ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
                     cur_session->thread_id,
                     sfile, sline);
+  }
   else
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from unknown thread, %s:%d"), sfile, sline);
+  {
+    errmsg_printf(error::ERROR, _("Got an error from unknown thread, %s:%d"), sfile, sline);
+  }
+
   if (message)
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s", message);
+    errmsg_printf(error::ERROR, "%s", message);
+
   list<Session *>::iterator it= file->s->in_use->begin();
   while (it != file->s->in_use->end())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s", _("Unknown thread accessing table"));
+    errmsg_printf(error::ERROR, "%s", _("Unknown thread accessing table"));
     ++it;
   }
 }
@@ -567,7 +574,7 @@ const char *ha_myisam::index_type(uint32_t )
 }
 
 /* Name is here without an extension */
-int ha_myisam::doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+int ha_myisam::doOpen(const drizzled::identifier::Table &identifier, int mode, uint32_t test_if_locked)
 {
   MI_KEYDEF *keyinfo;
   MI_COLUMNDEF *recinfo= 0;
@@ -691,9 +698,9 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   */
   if (file->dfile == -1)
   {
-    errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' failed. "
-                          "Please try REPAIR EXTENDED or myisamchk",
-                          getTable()->getShare()->getPath());
+    errmsg_printf(error::INFO, "Retrying repair of: '%s' failed. "
+		  "Please try REPAIR EXTENDED or myisamchk",
+		  getTable()->getShare()->getPath());
     return(HA_ADMIN_FAILED);
   }
 
@@ -918,7 +925,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
-      errmsg_printf(ERRMSG_LVL_WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
+      errmsg_printf(error::WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
                         errno, param.db_name, param.table_name);
       /* Repairing by sort failed. Now try standard repair method. */
       param.testflag&= ~(T_REP_BY_SORT | T_QUICK);
@@ -928,7 +935,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
         might have been set by the first repair. They can still be seen
         with SHOW WARNINGS then.
       */
-      if (! error)
+      if (not error)
         session->clear_error();
     }
     info(HA_STATUS_CONST);
@@ -1329,7 +1336,7 @@ int ha_myisam::delete_all_rows()
 }
 
 int MyisamEngine::doDropTable(Session &session,
-                              const TableIdentifier &identifier)
+                              const identifier::Table &identifier)
 {
   session.getMessageCache().removeTableMessage(identifier);
 
@@ -1347,7 +1354,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 
 int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
-                                const TableIdentifier &identifier,
+                                const identifier::Table &identifier,
                                 message::Table& create_proto)
 {
   int error;
@@ -1393,7 +1400,7 @@ int MyisamEngine::doCreateTable(Session &session,
 }
 
 
-int MyisamEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
+int MyisamEngine::doRenameTable(Session &session, const identifier::Table &from, const identifier::Table &to)
 {
   session.getMessageCache().renameTableMessage(from, to);
 
@@ -1504,10 +1511,10 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("max-sort-file-size",
           po::value<uint64_t>(&max_sort_file_size)->default_value(INT32_MAX),
-          N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
+          _("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
   context("sort-buffer-size",
           po::value<sort_buffer_constraint>(&sort_buffer_size)->default_value(8192*1024),
-          N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
+          _("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
 }
 
 
@@ -1520,7 +1527,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
-  NULL,           /* system variables */
+  NULL,           /* depends */
   init_options                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
- *  Copyright (c) 2009-2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2009-2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  Authors:
  *
@@ -32,6 +32,8 @@
 #include <vector>
 #include <utility>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -54,7 +56,7 @@ namespace message
  * transactional events into GPB messages and sending those
  * events out through registered replicators and appliers.
  */
-class ReplicationServices
+class DRIZZLED_API ReplicationServices
 {
 public:
   typedef uint64_t GlobalTransactionId;

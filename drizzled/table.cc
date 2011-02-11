@@ -54,7 +54,7 @@
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
 
-#include "drizzled/table/instance.h"
+#include "drizzled/table/singular.h"
 
 #include "drizzled/table_proto.h"
 
@@ -69,9 +69,6 @@ extern plugin::StorageEngine *myisam_engine;
 
 /* Functions defined in this cursor */
 
-void open_table_error(TableShare *share, int error, int db_errno,
-                      myf errortype, int errarg);
-
 /*************************************************************************/
 
 // @note this should all be the destructor
@@ -82,6 +79,7 @@ int Table::delete_table(bool free_share)
   if (db_stat)
     error= cursor->close();
   _alias.clear();
+
   if (field)
   {
     for (Field **ptr=field ; *ptr ; ptr++)
@@ -112,6 +110,8 @@ void Table::resetTable(Session *session,
                        uint32_t db_stat_arg)
 {
   setShare(share);
+  in_use= session;
+
   field= NULL;
 
   cursor= NULL;
@@ -124,7 +124,6 @@ void Table::resetTable(Session *session,
   tablenr= 0;
   db_stat= db_stat_arg;
 
-  in_use= session;
   record[0]= (unsigned char *) NULL;
   record[1]= (unsigned char *) NULL;
 
@@ -333,9 +332,9 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
     true ok
 */
 
-bool check_db_name(Session *session, SchemaIdentifier &schema_identifier)
+bool check_db_name(Session *session, identifier::Schema &schema_identifier)
 {
-  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(), schema_identifier))
+  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
   {
     return false;
   }
@@ -521,8 +520,8 @@ void Table::mark_auto_increment_column()
     We must set bit in read set as update_auto_increment() is using the
     store() to check overflow of auto_increment values
   */
-  setReadSet(found_next_number_field->field_index);
-  setWriteSet(found_next_number_field->field_index);
+  setReadSet(found_next_number_field->position());
+  setWriteSet(found_next_number_field->position());
   if (getShare()->next_number_keypart)
     mark_columns_used_by_index_no_reset(getShare()->next_number_index);
 }
@@ -571,7 +570,7 @@ void Table::mark_columns_needed_for_delete()
     for (reg_field= field ; *reg_field ; reg_field++)
     {
       if ((*reg_field)->flags & PART_KEY_FLAG)
-        setReadSet((*reg_field)->field_index);
+        setReadSet((*reg_field)->position());
     }
   }
 }
@@ -620,7 +619,7 @@ void Table::mark_columns_needed_for_update()
     {
       /* Merge keys is all keys that had a column refered to in the query */
       if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
-        setReadSet((*reg_field)->field_index);
+        setReadSet((*reg_field)->position());
     }
   }
 
@@ -838,7 +837,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  table::Instance *table;
+  table::Singular *table;
   table= session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
   if (not table->getMemRoot()->multi_alloc_root(0,
@@ -884,7 +883,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table->getMutableShare()->blob_field.resize(field_count+1);
   uint32_t *blob_field= &table->getMutableShare()->blob_field[0];
-  table->getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
   table->getMutableShare()->db_low_byte_first=1;                // True for HEAP and MyISAM
   table->getMutableShare()->table_charset= param->table_charset;
   table->getMutableShare()->keys_for_keyread.reset();
@@ -965,7 +963,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
             */
             (*argp)->maybe_null=1;
           }
-          new_field->field_index= fieldnr++;
+          new_field->setPosition(fieldnr++);
 	}
       }
     }
@@ -1012,7 +1010,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	group_null_items++;
 	new_field->flags|= GROUP_FLAG;
       }
-      new_field->field_index= fieldnr++;
+      new_field->setPosition(fieldnr++);
       *(reg_field++)= new_field;
     }
     if (!--hidden_field_count)
@@ -1035,7 +1033,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   field_count= fieldnr;
   *reg_field= 0;
   *blob_field= 0;				// End marker
-  table->getMutableShare()->fields= field_count;
+  table->getMutableShare()->setFieldSize(field_count);
 
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
@@ -1507,7 +1505,7 @@ bool Table::compare_records()
     for (Field **ptr= this->field ; *ptr != NULL; ptr++)
     {
       Field *f= *ptr;
-      if (write_set->test(f->field_index))
+      if (write_set->test(f->position()))
       {
         if (f->real_maybe_null())
         {
@@ -1540,7 +1538,7 @@ bool Table::compare_records()
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {
-    if (isWriteSet((*ptr)->field_index) &&
+    if (isWriteSet((*ptr)->position()) &&
 	(*ptr)->cmp_binary_offset(getShare()->rec_buff_length))
       return true;
   }
@@ -1647,25 +1645,14 @@ Table::Table() :
   query_id(0),
   quick_condition_rows(0),
   timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-  map(0)
+  map(0),
+  quick_rows(),
+  const_key_parts(),
+  quick_key_parts(),
+  quick_n_ranges()
 {
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
-
-  reginfo.reset();
-  covering_keys.reset();
-  quick_keys.reset();
-  merge_keys.reset();
-
-  keys_in_use_for_query.reset();
-  keys_in_use_for_group_by.reset();
-  keys_in_use_for_order_by.reset();
-
-  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
-  memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-  memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-  memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 }
 
 /*****************************************************************************
@@ -1687,7 +1674,7 @@ int Table::report_error(int error)
     print them to the .err log
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
+    errmsg_printf(error::ERROR, _("Got error %d when reading table '%s'"),
                   error, getShare()->getPath());
   print_error(error, MYF(0));
 

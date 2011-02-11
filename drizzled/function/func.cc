@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,10 +23,11 @@
 #include <drizzled/sql_list.h>
 
 #include <drizzled/function/math/int.h>
-#include <drizzled/field/int64_t.h>
-#include <drizzled/field/long.h>
-#include <drizzled/field/double.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/decimal.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/size.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/check_stack_overrun.h>
@@ -61,7 +62,8 @@ void Item_func::set_arguments(List<Item> &list)
 
 Item_func::Item_func(List<Item> &list) :
   _session(*current_session),
-  allowed_arg_cols(1)
+  allowed_arg_cols(1),
+  const_item_cache(false)
 {
   collation.set(DERIVATION_SYSCONST);
   set_arguments(list);
@@ -133,7 +135,7 @@ Item_func::fix_fields(Session *session, Item **)
   unsigned char buff[STACK_BUFF_ALLOC];      // Max argument in function
   session->session_marker= 0;
   used_tables_cache= not_null_tables_cache= 0;
-  const_item_cache=1;
+  const_item_cache= true;
 
   if (check_stack_overrun(session, STACK_MIN_SIZE, buff))
     return true;        // Fatal error if flag is set!
@@ -188,7 +190,7 @@ void Item_func::fix_after_pullout(Select_Lex *new_parent,
   Item **arg,**arg_end;
 
   used_tables_cache= not_null_tables_cache= 0;
-  const_item_cache=1;
+  const_item_cache= false;
 
   if (arg_count)
   {
@@ -353,7 +355,7 @@ void Item_func::split_sum_func(Session *session, Item **ref_pointer_array,
 void Item_func::update_used_tables()
 {
   used_tables_cache=0;
-  const_item_cache=1;
+  const_item_cache= true;
   for (uint32_t i=0 ; i < arg_count ; i++)
   {
     args[i]->update_used_tables();
@@ -433,15 +435,15 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
 }
 
 
-bool Item_func::get_arg0_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date)
+bool Item_func::get_arg0_date(type::Time &ltime, uint32_t fuzzy_date)
 {
   return (null_value=args[0]->get_date(ltime, fuzzy_date));
 }
 
 
-bool Item_func::get_arg0_time(DRIZZLE_TIME *ltime)
+bool Item_func::get_arg0_time(type::Time &ltime)
 {
-  return (null_value=args[0]->get_time(ltime));
+  return (null_value= args[0]->get_time(ltime));
 }
 
 
@@ -454,22 +456,34 @@ bool Item_func::is_null()
 
 Field *Item_func::tmp_table_field(Table *table)
 {
-  Field *field;
+  Field *field= NULL;
 
   switch (result_type()) {
   case INT_RESULT:
-    if (max_length > MY_INT32_NUM_DECIMAL_DIGITS)
-      field= new Field_int64_t(max_length, maybe_null, name, unsigned_flag);
+    if (unsigned_flag)
+    {
+      field= new field::Size(max_length, maybe_null, name, true);
+    } 
+    else if (max_length > MY_INT32_NUM_DECIMAL_DIGITS)
+    {
+      field= new field::Int64(max_length, maybe_null, name, false);
+    }
     else
-      field= new Field_long(max_length, maybe_null, name, unsigned_flag);
+    {
+      field= new field::Int32(max_length, maybe_null, name, false);
+    }
+
     break;
+
   case REAL_RESULT:
     field= new Field_double(max_length, maybe_null, name, decimals);
     break;
+
   case STRING_RESULT:
     return make_string_field(table);
+
   case DECIMAL_RESULT:
-    field= new Field_decimal(my_decimal_precision_to_length(decimal_precision(),
+    field= new Field_decimal(class_decimal_precision_to_length(decimal_precision(),
                                                             decimals,
                                                             unsigned_flag),
                              maybe_null,
@@ -478,22 +492,22 @@ Field *Item_func::tmp_table_field(Table *table)
                              unsigned_flag);
     break;
   case ROW_RESULT:
-  default:
     // This case should never be chosen
     assert(0);
-    field= 0;
     break;
   }
+
   if (field)
     field->init(table);
+
   return field;
 }
 
 
-my_decimal *Item_func::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_func::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed);
-  int2my_decimal(E_DEC_FATAL_ERROR, val_int(), unsigned_flag, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, val_int(), unsigned_flag, decimal_value);
   return decimal_value;
 }
 
@@ -567,7 +581,7 @@ void Item_func::count_decimal_length()
     set_if_smaller(unsigned_flag, args[i]->unsigned_flag);
   }
   int precision= min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
-  max_length= my_decimal_precision_to_length(precision, decimals,
+  max_length= class_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
 

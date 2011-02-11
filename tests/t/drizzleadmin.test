@@ -1,0 +1,13 @@
+# Test uses max-connections of 2 to test drizzleadmin override of this setting
+# along with admin-ip-address of 127.0.0.1
+
+connect (con1,localhost,root,,);
+# This next one should hit max-connections limit
+--disable_query_log
+--error ER_CON_COUNT_ERROR
+connect (con2,localhost,root,,);
+--enable_query_log
+
+# This should override max-connections and give an admin error
+--error EE_ERROR_FIRST
+--exec $DRIZZLE_ADMIN -e "SELECT 1;"

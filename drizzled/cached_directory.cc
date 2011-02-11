@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,7 +50,8 @@ CachedDirectory::CachedDirectory() :
 
 
 CachedDirectory::CachedDirectory(const string &in_path) :
-  error(0)
+  error(0),
+  use_full_path(false)
 {
   // TODO: Toss future exception
   (void) open(in_path);
@@ -58,14 +59,16 @@ CachedDirectory::CachedDirectory(const string &in_path) :
 
 
 CachedDirectory::CachedDirectory(const string& in_path, set<string>& allowed_exts) :
-  error(0)
+  error(0),
+  use_full_path(false)
 {
   // TODO: Toss future exception
   (void) open(in_path, allowed_exts);
 }
 
-CachedDirectory::CachedDirectory(const string& in_path, enum CachedDirectory::FILTER filter) :
-  error(0)
+CachedDirectory::CachedDirectory(const string& in_path, enum CachedDirectory::FILTER filter, bool use_full_path_arg) :
+  error(0),
+  use_full_path(use_full_path_arg)
 {
   set<string> empty;
   // TODO: Toss future exception
@@ -128,7 +131,7 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
          result != NULL)
   {
     std::string buffered_fullpath;
-    if (! allowed_exts.empty())
+    if (not allowed_exts.empty())
     {
       char *ptr= rindex(result->d_name, '.');
 
@@ -154,11 +157,14 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
           if (result->d_name[0] == '.') // We don't pass back anything hidden at the moment.
             continue;
 
-          buffered_fullpath.append(in_path);
-          if (buffered_fullpath[buffered_fullpath.length()] != '/')
-            buffered_fullpath.append(1, FN_LIBCHAR);
+          if (use_full_path)
+          {
+            buffered_fullpath.append(in_path);
+            if (buffered_fullpath[buffered_fullpath.length()] != '/')
+              buffered_fullpath.append(1, FN_LIBCHAR);
+          }
 
-          buffered_fullpath.assign(result->d_name);
+          buffered_fullpath.append(result->d_name);
 
           stat(buffered_fullpath.c_str(), &entrystat);
 

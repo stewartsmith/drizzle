@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,19 +22,24 @@
   variables must declare the size_of() member function.
 */
 
+
+
 #ifndef DRIZZLED_FIELD_H
 #define DRIZZLED_FIELD_H
 
 #include "drizzled/sql_error.h"
-#include "drizzled/decimal.h"
+#include "drizzled/type/decimal.h"
 #include "drizzled/key_map.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/item_result.h"
+#include "drizzled/visibility.h"
 
 #include <string>
 #include <vector>
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -75,11 +80,12 @@ int field_conv(Field *to,Field *from);
  * The store_xxx() methods take various input and convert
  * the input into the raw bytes stored in the ptr member variable.
  */
-class Field
+class DRIZZLED_API Field
 {
   /* Prevent use of these */
   Field(const Field&);
   void operator=(Field &);
+
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
@@ -92,6 +98,7 @@ public:
    */
 private:
   Table *table;
+
 public:
   Table *getTable()
   {
@@ -140,7 +147,27 @@ public:
   utype	unireg_check;
   uint32_t field_length; /**< Length of this field in bytes */
   uint32_t flags;
+
+  bool isUnsigned() const
+  {
+    return flags & UNSIGNED_FLAG;
+  }
+
+private:
   uint16_t field_index; /**< Index of this Field in Table::fields array */
+
+public:
+
+  uint16_t position() const
+  {
+    return field_index;
+  }
+
+  void setPosition(uint32_t arg)
+  {
+    field_index= arg;
+  }
+
   unsigned char null_bit; /**< Bit used to test null bit */
   /**
      If true, this field was created in create_tmp_field_from_item from a NULL
@@ -178,25 +205,26 @@ public:
                     const CHARSET_INFO * const cs)=0;
   virtual int store(double nr)=0;
   virtual int store(int64_t nr, bool unsigned_val)=0;
-  virtual int store_decimal(const my_decimal *d)=0;
-  int store(const char *to,
-            uint32_t length,
-            const CHARSET_INFO * const cs,
-            enum_check_fields check_level);
+  virtual int store_decimal(const type::Decimal *d)=0;
+  int store_and_check(enum_check_fields check_level,
+                      const char *to,
+                      uint32_t length,
+                      const CHARSET_INFO * const cs);
   /**
     This is called when storing a date in a string.
 
     @note
       Needs to be changed if/when we want to support different time formats.
   */
-  virtual int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type t_type);
-  virtual double val_real(void)=0;
-  virtual int64_t val_int(void)=0;
-  virtual my_decimal *val_decimal(my_decimal *);
-  inline String *val_str(String *str)
+  virtual int store_time(type::Time &ltime, type::timestamp_t t_type);
+  virtual double val_real()=0;
+  virtual int64_t val_int()=0;
+  virtual type::Decimal *val_decimal(type::Decimal *);
+  String *val_str_internal(String *str)
   {
     return val_str(str, str);
   }
+
   /*
      val_str(buf1, buf2) gets two buffers and should use them as follows:
      if it needs a temp buffer to convert result to string - use buf1
@@ -210,6 +238,7 @@ public:
      This trickery is used to decrease a number of malloc calls.
   */
   virtual String *val_str(String*, String *)=0;
+
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.
@@ -218,6 +247,7 @@ public:
   virtual Item_result result_type () const=0;
   virtual Item_result cmp_type () const { return result_type(); }
   virtual Item_result cast_to_int_type () const { return result_type(); }
+
   /**
      Check whether a field type can be partially indexed by a key.
 
@@ -264,6 +294,11 @@ public:
    */
   virtual bool eq_def(Field *field);
 
+  virtual bool is_timestamp() const
+  {
+    return false;
+  }
+
   /**
    * Returns size (in bytes) used to store field data in memory
    * (i.e. it returns the maximum size of the field in a row of the table,
@@ -307,10 +342,9 @@ public:
   virtual uint32_t key_length() const;
   virtual enum_field_types type() const =0;
   virtual enum_field_types real_type() const;
-  inline  int cmp(const unsigned char *str) { return cmp(ptr,str); }
-  virtual int cmp_max(const unsigned char *a, const unsigned char *b,
-                      uint32_t max_len);
+  virtual int cmp_max(const unsigned char *a, const unsigned char *b, uint32_t max_len);
   virtual int cmp(const unsigned char *,const unsigned char *)=0;
+  int cmp_internal(const unsigned char *str) { return cmp(ptr,str); }
   virtual int cmp_binary(const unsigned char *a,const unsigned char *b,
                          uint32_t max_length=UINT32_MAX);
   virtual int cmp_offset(uint32_t row_offset);
@@ -362,13 +396,13 @@ public:
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
   Field *clone(memory::Root *mem_root, Table *new_table);
-  inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
+  void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;
     null_ptr= null_ptr_arg;
     null_bit= null_bit_arg;
   }
-  inline void move_field(unsigned char *ptr_arg) { ptr=ptr_arg; }
+  void move_field(unsigned char *ptr_arg) { ptr=ptr_arg; }
   virtual void move_field_offset(ptrdiff_t ptr_diff)
   {
     ptr= ADD_TO_PTR(ptr,ptr_diff, unsigned char*);
@@ -426,7 +460,7 @@ public:
   {
     set_image(buff,length, &my_charset_bin);
   }
-  inline int64_t val_int_offset(uint32_t row_offset)
+  int64_t val_int_offset(uint32_t row_offset)
   {
     ptr+=row_offset;
     int64_t tmp=val_int();
@@ -434,7 +468,7 @@ public:
     return tmp;
   }
 
-  inline int64_t val_int(const unsigned char *new_ptr)
+  int64_t val_int_internal(const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
     int64_t return_value;
@@ -443,11 +477,12 @@ public:
     ptr= old_ptr;
     return return_value;
   }
-  inline String *val_str(String *str, const unsigned char *new_ptr)
+
+  String *val_str_internal(String *str, const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
     ptr= const_cast<unsigned char*>(new_ptr);
-    val_str(str);
+    val_str_internal(str);
     ptr= old_ptr;
     return str;
   }
@@ -556,14 +591,14 @@ public:
     return max_length;
   }
 
-  inline uint32_t offset(const unsigned char *record)
+  uint32_t offset(const unsigned char *record)
   {
     return (uint32_t) (ptr - record);
   }
   void copy_from_tmp(int offset);
   uint32_t fill_cache_field(CacheField *copy);
-  virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  virtual bool get_time(DRIZZLE_TIME *ltime);
+  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate);
+  virtual bool get_time(type::Time &ltime);
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
@@ -595,7 +630,7 @@ public:
       0 otherwise
   */
   bool set_warning(DRIZZLE_ERROR::enum_warning_level,
-                   unsigned int code,
+                   drizzled::error_t code,
                    int cuted_increment);
   /**
     Produce warning or note about datetime string data saved into field.
@@ -613,10 +648,10 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            uint32_t code,
+                            drizzled::error_t code,
                             const char *str,
                             uint32_t str_len,
-                            enum enum_drizzle_timestamp_type ts_type,
+                            type::timestamp_t ts_type,
                             int cuted_increment);
   /**
     Produce warning or note about integer datetime value saved into field.
@@ -633,9 +668,9 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            uint32_t code,
+                            drizzled::error_t code,
                             int64_t nr,
-                            enum enum_drizzle_timestamp_type ts_type,
+                            type::timestamp_t ts_type,
                             int cuted_increment);
   /**
     Produce warning or note about double datetime data saved into field.
@@ -651,10 +686,10 @@ public:
       thread.
   */
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
-                            const uint32_t code,
+                            const drizzled::error_t code,
                             double nr,
-                            enum enum_drizzle_timestamp_type ts_type);
-  inline bool check_overflow(int op_result)
+                            type::timestamp_t ts_type);
+  bool check_overflow(int op_result)
   {
     return (op_result == E_DEC_OVERFLOW);
   }
@@ -688,16 +723,16 @@ public:
     @return
       value converted from val
   */
-  int64_t convert_decimal2int64_t(const my_decimal *val,
+  int64_t convert_decimal2int64_t(const type::Decimal *val,
                                   bool unsigned_flag,
                                   int *err);
   /* The max. number of characters */
-  inline uint32_t char_length() const
+  uint32_t char_length() const
   {
     return field_length / charset()->mbmaxlen;
   }
 
-  inline enum column_format_type column_format() const
+  enum column_format_type column_format() const
   {
     return (enum column_format_type)
       ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
@@ -724,7 +759,16 @@ public:
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
+
+protected:
+
+  void pack_num(uint64_t arg, unsigned char *destination= NULL);
+  void pack_num(uint32_t arg, unsigned char *destination= NULL);
+  uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const;
+  uint32_t unpack_num(uint32_t &destination, const unsigned char *arg= NULL) const;
 };
+
+std::ostream& operator<<(std::ostream& output, const Field &field);
 
 } /* namespace drizzled */
 
@@ -769,6 +813,7 @@ class CopyField :public memory::SqlAlloc
   */
   typedef void Copy_func(CopyField*);
   Copy_func *get_copy_func(Field *to, Field *from);
+
 public:
   unsigned char *from_ptr;
   unsigned char *to_ptr;
@@ -783,8 +828,23 @@ public:
   Field *to_field;
   String tmp;					// For items
 
-  CopyField() {}
-  ~CopyField() {}
+  CopyField() :
+    from_ptr(0),
+    to_ptr(0),
+    from_null_ptr(0),
+    to_null_ptr(0),
+    null_row(0),
+    from_bit(0),
+    to_bit(0),
+    from_length(0),
+    to_length(0),
+    from_field(0),
+    to_field(0)
+  {}
+
+  ~CopyField()
+  {}
+
   void set(Field *to,Field *from,bool save);	// Field to field
   void set(unsigned char *to,Field *from);		// Field to string
   void (*do_copy)(CopyField *);

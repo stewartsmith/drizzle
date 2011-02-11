@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -196,25 +196,19 @@ void Item_char_typecast::fix_length_and_dec()
 String *Item_datetime_typecast::val_str(String *str)
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
-  if (! get_arg0_date(&ltime, TIME_FUZZY_DATE))
+  if (not get_arg0_date(ltime, TIME_FUZZY_DATE))
   {
     if (ltime.second_part)
     {
-      uint32_t length= sprintf(str->c_ptr(), "%04u-%02u-%02u %02u:%02u:%02u.%06u",
-                            ltime.year,
-                            ltime.month,
-                            ltime.day,
-                            ltime.hour,
-                            ltime.minute,
-                            ltime.second,
-                            (uint32_t) ltime.second_part);
-      str->length(length);
-      str->set_charset(&my_charset_bin);
+      ltime.convert(*str);
     }
     else
-      make_datetime(&ltime, str);
+    {
+      ltime.convert(*str);
+    }
+
     return str;
   }
 
@@ -226,29 +220,35 @@ String *Item_datetime_typecast::val_str(String *str)
 int64_t Item_datetime_typecast::val_int()
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-  if (get_arg0_date(&ltime,1))
+  type::Time ltime;
+  if (get_arg0_date(ltime, 1))
   {
     null_value= 1;
     return 0;
   }
 
-  return TIME_to_uint64_t_datetime(&ltime);
+  int64_t tmp;
+  ltime.convert(tmp);
+
+  return tmp;
 }
 
 
-bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint32_t )
+bool Item_date_typecast::get_date(type::Time &ltime, uint32_t )
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
-  ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
+
+  ltime.hour= ltime.minute= ltime.second= ltime.second_part= 0;
+  ltime.time_type= type::DRIZZLE_TIMESTAMP_DATE;
+
   return res;
 }
 
 
-bool Item_date_typecast::get_time(DRIZZLE_TIME *ltime)
+bool Item_date_typecast::get_time(type::Time &ltime)
 {
-  memset(ltime, 0, sizeof(DRIZZLE_TIME));
+  ltime.reset();
+
   return args[0]->null_value;
 }
 
@@ -256,12 +256,13 @@ bool Item_date_typecast::get_time(DRIZZLE_TIME *ltime)
 String *Item_date_typecast::val_str(String *str)
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
 
-  if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
-      !str->alloc(MAX_DATE_STRING_REP_LENGTH))
+  if (!get_arg0_date(ltime, TIME_FUZZY_DATE) &&
+      !str->alloc(type::Time::MAX_STRING_LENGTH))
   {
-    make_date(&ltime, str);
+    ltime.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
+
     return str;
   }
 
@@ -272,9 +273,11 @@ String *Item_date_typecast::val_str(String *str)
 int64_t Item_date_typecast::val_int()
 {
   assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-  if ((null_value= args[0]->get_date(&ltime, TIME_FUZZY_DATE)))
+  type::Time ltime;
+
+  if ((null_value= args[0]->get_date(ltime, TIME_FUZZY_DATE)))
     return 0;
+
   return (int64_t) (ltime.year * 10000L + ltime.month * 100 + ltime.day);
 }
 

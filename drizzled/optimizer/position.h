@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_OPTIMIZER_POSITION_H
 #define DRIZZLED_OPTIMIZER_POSITION_H
 
-#include <drizzled/join_table.h>
+#include "drizzled/join_table.h"
 
 namespace drizzled
 {

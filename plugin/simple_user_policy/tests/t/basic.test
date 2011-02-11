@@ -9,7 +9,7 @@ create table t1 (kill_id int);
 insert into t1 values(connection_id());
 
 # Test that we get a normal don't exist error for things that don't exist
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 SELECT * from user1.dont_exist;
 
 # Connect as user1 - should only see information_schema, user1 and
@@ -51,7 +51,7 @@ connect (con2,localhost,user2,,user2,);
 connection con1;
 
 # Check that we don't see other people's connections
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
 
 # Check that we can kill a process that is owned by our user
 --disable_reconnect
@@ -64,9 +64,9 @@ connection should_succeed;
 --disable_query_log
 --disable_result_log
 # One of the following statements should fail
---error 0,5,20,23
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
 select 1;
---error 0,5,20,23
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
 select 1;
 --enable_query_log
 --enable_result_log
@@ -80,15 +80,16 @@ update t1 set kill_id = connection_id();
 
 # Test that we cannot kill a process owned by someone else
 connection con2;
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
 select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
 
+--replace_regex /Unknown session id: [0-9]+/Unknown session id: #/
 --error ER_NO_SUCH_THREAD
 kill @id;
 
 # Test that root can see everybody
 connection default;
-SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
 
 # Test that root can kill someone else
 use user1;
@@ -102,9 +103,9 @@ connection should_succeed;
 --disable_query_log
 --disable_result_log
 # One of the following statements should fail
---error 0,5,20,23
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
 select 1;
---error 0,5,20,23
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
 select 1;
 --enable_query_log
 --enable_result_log

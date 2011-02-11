@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_GLOBAL_CHARSET_INFO_H
 #define DRIZZLED_GLOBAL_CHARSET_INFO_H
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
@@ -29,8 +31,8 @@ typedef struct charset_info_st CHARSET_INFO;
 /*
   External variables
 */
-extern const CHARSET_INFO *default_charset_info;
-extern const CHARSET_INFO *system_charset_info;
+extern DRIZZLED_API const CHARSET_INFO *default_charset_info;
+extern DRIZZLED_API const CHARSET_INFO *system_charset_info;
 extern const CHARSET_INFO *files_charset_info;
 extern const CHARSET_INFO *table_alias_charset;
 

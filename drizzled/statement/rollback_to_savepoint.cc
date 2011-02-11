@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
  */
 
 #include "config.h"
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/statement/rollback_to_savepoint.h>
+#include "drizzled/show.h"
+#include "drizzled/session.h"
+#include "drizzled/statement/rollback_to_savepoint.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/named_savepoint.h"
 #include "drizzled/util/functors.h"
@@ -36,6 +36,21 @@ namespace drizzled
 bool statement::RollbackToSavepoint::execute()
 {
   /*
+   * If AUTOCOMMIT is off and resource contexts are empty then we need
+   * to start a transaction. It will be empty when ROLLBACK TO SAVEPOINT
+   * starts the transaction. Table affecting statements do this work in
+   * lockTables() by calling startStatement().
+   */
+  if ( (getSession()->options & OPTION_NOT_AUTOCOMMIT) &&
+       (getSession()->transaction.all.getResourceContexts().empty() == true) )
+  {
+    if (getSession()->startTransaction() == false)
+    {
+      return false;
+    }
+  }
+
+  /*
    * Handle these situations:
    *
    * If the first savepoint on the deck matches the
@@ -49,7 +64,7 @@ bool statement::RollbackToSavepoint::execute()
    * find it, we must restructure the deque by removing
    * all savepoints "above" the one we find.
    */
-  deque<NamedSavepoint> &savepoints= session->transaction.savepoints;
+  deque<NamedSavepoint> &savepoints= getSession()->transaction.savepoints;
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   /* Short-circuit for no savepoints */
@@ -58,7 +73,7 @@ bool statement::RollbackToSavepoint::execute()
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 
-             session->lex->ident.str);
+             getSession()->lex->ident.str);
     return false;
   }
 
@@ -67,22 +82,22 @@ bool statement::RollbackToSavepoint::execute()
     NamedSavepoint &first_savepoint= savepoints.front();
     const string &first_savepoint_name= first_savepoint.getName();
     if (my_strnncoll(system_charset_info,
-                     (unsigned char *) session->lex->ident.str, 
-                     session->lex->ident.length,
+                     (unsigned char *) getSession()->lex->ident.str, 
+                     getSession()->lex->ident.length,
                      (unsigned char *) first_savepoint_name.c_str(), 
                      first_savepoint_name.size()) == 0)
     {
       /* Found the named savepoint we want to rollback to */
-      (void) transaction_services.rollbackToSavepoint(session, first_savepoint);
+      (void) transaction_services.rollbackToSavepoint(*getSession(), first_savepoint);
 
-      if (session->transaction.all.hasModifiedNonTransData())
+      if (getSession()->transaction.all.hasModifiedNonTransData())
       {
-        push_warning(session, 
+        push_warning(getSession(), 
                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      ER_WARNING_NOT_COMPLETE_ROLLBACK,
                      ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
       }
-      session->my_ok();
+      getSession()->my_ok();
       return false;
     }
   }
@@ -103,15 +118,15 @@ bool statement::RollbackToSavepoint::execute()
     const string &sv_name= sv.getName();
     if (! found && 
         my_strnncoll(system_charset_info,
-                     (unsigned char *) session->lex->ident.str, 
-                     session->lex->ident.length,
+                     (unsigned char *) getSession()->lex->ident.str, 
+                     getSession()->lex->ident.length,
                      (unsigned char *) sv_name.c_str(), 
                      sv_name.size()) == 0)
     {
       /* Found the named savepoint we want to rollback to */
       found= true;
 
-      (void) transaction_services.rollbackToSavepoint(session, sv);
+      (void) transaction_services.rollbackToSavepoint(*getSession(), sv);
     }
     if (found)
     {
@@ -126,25 +141,25 @@ bool statement::RollbackToSavepoint::execute()
   }
   if (found)
   {
-    if (session->transaction.all.hasModifiedNonTransData())
+    if (getSession()->transaction.all.hasModifiedNonTransData())
     {
-      push_warning(session, 
+      push_warning(getSession(), 
                    DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    ER_WARNING_NOT_COMPLETE_ROLLBACK,
                    ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
     }
     /* Store new savepoints list */
-    session->transaction.savepoints= new_savepoints;
-    session->my_ok();
+    getSession()->transaction.savepoints= new_savepoints;
+    getSession()->my_ok();
   }
   else
   {
     /* restore the original savepoint list */
-    session->transaction.savepoints= copy_savepoints;
+    getSession()->transaction.savepoints= copy_savepoints;
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 
-             session->lex->ident.str);
+             getSession()->lex->ident.str);
   }
   return false;
 }

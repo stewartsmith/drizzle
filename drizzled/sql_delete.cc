@@ -43,7 +43,7 @@ namespace drizzled
   end of dispatch_command().
 */
 
-bool mysql_delete(Session *session, TableList *table_list, COND *conds,
+bool delete_query(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows limit, uint64_t,
                   bool reset_auto_increment)
 {
@@ -71,7 +71,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   session->set_proc_info("init");
   table->map=1;
 
-  if (mysql_prepare_delete(session, table_list, &conds))
+  if (prepare_delete(session, table_list, &conds))
   {
     DRIZZLE_DELETE_DONE(1, 0);
     return true;
@@ -173,13 +173,15 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     delete select;
     free_underlaid_joins(session, select_lex);
     session->row_count_func= 0;
+    if (session->is_error())
+      return true;
     DRIZZLE_DELETE_DONE(0, 0);
     /**
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();
-    session->my_ok((ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->rowCount());
     /*
       We don't need to call reset_auto_increment in this case, because
       mysql_truncate always gives a NULL conds argument, hence we never
@@ -241,11 +243,23 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   if (usable_index==MAX_KEY)
   {
-    info.init_read_record(session,table,select,1,1);
+    if ((error= info.init_read_record(session,table,select,1,1)))
+    {
+      table->print_error(error, MYF(0));
+      delete select;
+      free_underlaid_joins(session, select_lex);
+      return true;
+    }
   }
   else
   {
-    info.init_read_record_idx(session, table, 1, usable_index);
+    if ((error= info.init_read_record_idx(session, table, 1, usable_index)))
+    {
+      table->print_error(error, MYF(0));
+      delete select;
+      free_underlaid_joins(session, select_lex);
+      return true;
+    }
   }
 
   session->set_proc_info("updating");
@@ -333,7 +347,7 @@ cleanup:
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();    
-    session->my_ok((ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->rowCount());
   }
   session->status_var.deleted_row_count+= deleted;
 
@@ -345,7 +359,7 @@ cleanup:
   Prepare items in DELETE statement
 
   SYNOPSIS
-    mysql_prepare_delete()
+    prepare_delete()
     session			- thread handler
     table_list		- global/local table list
     conds		- conditions
@@ -354,7 +368,7 @@ cleanup:
     false OK
     true  error
 */
-int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
+int prepare_delete(Session *session, TableList *table_list, Item **conds)
 {
   Select_Lex *select_lex= &session->lex->select_lex;
 
@@ -378,7 +392,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
 
   if (select_lex->inner_refs_list.elements &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
-    return(-1);
+    return(true);
 
   return(false);
 }
@@ -393,7 +407,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
   This will work even if the .ISM and .ISD tables are destroyed
 */
 
-bool mysql_truncate(Session& session, TableList *table_list)
+bool truncate(Session& session, TableList *table_list)
 {
   bool error;
   TransactionServices &transaction_services= TransactionServices::singleton();
@@ -401,14 +415,14 @@ bool mysql_truncate(Session& session, TableList *table_list)
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  mysql_init_select(session.lex);
-  error= mysql_delete(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
+  init_select(session.lex);
+  error= delete_query(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
-  error= transaction_services.autocommitOrRollback(&session, error);
+  error= transaction_services.autocommitOrRollback(session, error);
   session.options= save_options;
 
   return error;

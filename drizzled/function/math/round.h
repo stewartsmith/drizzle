@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ public:
   const char *func_name() const { return truncate ? "truncate" : "round"; }
   double real_op();
   int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   void fix_length_and_dec();
 };
 

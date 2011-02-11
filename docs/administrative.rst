@@ -1,5 +1,5 @@
 Administrative Commands
-==============
+=======================
 
 .. toctree::
    :maxdepth: 2

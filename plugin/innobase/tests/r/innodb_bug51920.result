@@ -8,4 +8,5 @@ UPDATE bug51920 SET i=2;
 SET @thread_id= ID;
 KILL @thread_id;
 Got one of the listed errors
+COMMIT;
 DROP TABLE bug51920;

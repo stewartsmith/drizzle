@@ -27,13 +27,17 @@
 
 #include <string>
 
+#include "drizzled/visibility.h"
+
 namespace drizzled
 {
 
 /**
  * Class representing a BLOB data type column
  */
-class Field_blob :public Field_str {
+class DRIZZLED_API Field_blob :
+  public Field_str
+{
 protected:
   String value;				// For temporaries
 public:
@@ -76,7 +80,7 @@ public:
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   int cmp_max(const unsigned char *, const unsigned char *, uint32_t max_length);
   int cmp(const unsigned char *a,const unsigned char *b)
     { return cmp_max(a, b, UINT32_MAX); }
@@ -128,9 +132,9 @@ public:
   */
   uint32_t get_packed_size(const unsigned char *ptr_arg, bool low_byte_first);
 
-  uint32_t get_length(uint32_t row_offset= 0);
-  uint32_t get_length(const unsigned char *ptr, bool low_byte_first);
-  uint32_t get_length(const unsigned char *ptr_arg);
+  DRIZZLED_API uint32_t get_length(uint32_t row_offset= 0);
+  DRIZZLED_API uint32_t get_length(const unsigned char *ptr, bool low_byte_first);
+  DRIZZLED_API uint32_t get_length(const unsigned char *ptr_arg);
   void put_length(unsigned char *pos, uint32_t length);
   inline void get_ptr(unsigned char **str)
     {

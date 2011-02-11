@@ -102,18 +102,18 @@ Field_str::report_if_important_data(const char *field_ptr, const char *end)
     !=0  error
 */
 
-int Field_str::store_decimal(const my_decimal *d)
+int Field_str::store_decimal(const type::Decimal *d)
 {
   char buff[DECIMAL_MAX_STR_LENGTH+1];
   String str(buff, sizeof(buff), &my_charset_bin);
-  my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
+  class_decimal2string(d, 0, &str);
   return store(str.ptr(), str.length(), str.charset());
 }
 
-my_decimal *Field_str::val_decimal(my_decimal *decimal_value)
+type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value)
 {
   int64_t nr= val_int();
-  int2my_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);
   return decimal_value;
 }
 
@@ -137,10 +137,14 @@ int Field_str::store(double nr)
   length= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
   {
-    if (getTable()->in_use->abort_on_warning)
+    if (getTable()->getSession()->abortOnWarning())
+    {
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+    }
     else
+    {
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   return store(buff, length, charset());
 }
@@ -195,7 +199,7 @@ bool check_string_copy_error(Field_str *field,
   }
   *t= '\0';
   push_warning_printf(field->getTable()->in_use,
-                      field->getTable()->in_use->abort_on_warning ?
+                      field->getTable()->in_use->abortOnWarning() ?
                       DRIZZLE_ERROR::WARN_LEVEL_ERROR :
                       DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,

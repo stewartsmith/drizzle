@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2002-2004 Vladimir Prus.
- * Copyright (c) 2010 Monty Taylor
+ * Copyright (C) 2002-2004 Vladimir Prus.
+ * Copyright (C) 2010 Monty Taylor
  *
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at

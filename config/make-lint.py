@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#  Copyright (C) 2009 Sun Microsystems
+#  Copyright (C) 2009 Sun Microsystems, Inc.
 #  Copyright (C) 2009 Robert Collins
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -129,7 +129,10 @@ def should_lint(path):
     # We need to figure out how to better express this
     for exclude in ['innobase', 'pbxt', 'pbms', 'gnulib', '.pb.', 'bak-header', 'm4',
         'sql_yacc', 'gperf', 'drizzled/probes.h',
-        'drizzled/function_hash.h', 'drizzled/symbol_hash.h',
+        'drizzled/function_hash.h',
+        'drizzled/symbol_hash.h',
+        'sql_non_reserved_words.h',
+        'sql_reserved_words.h',
         'util/dummy.cc', 'drizzled/sql_yacc.h', 'drizzled/configmake.h',
 	'drizzled/plugin/version.h',
         'drizzled/generated_probes.h',

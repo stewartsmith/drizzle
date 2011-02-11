@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2007, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2007, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -66,13 +66,13 @@ do {								\
 		strncpy(buff, data, constraint);		\
 		buff[constraint] = '\0';			\
 								\
-		field = ha_storage_put_memlim(			\
+		field = static_cast<const char *>(ha_storage_put_memlim(			\
 			(tcache)->storage, buff, constraint + 1,\
-			MAX_ALLOWED_FOR_STORAGE(tcache));	\
+			MAX_ALLOWED_FOR_STORAGE(tcache)));	\
 	} else {						\
-		field = ha_storage_put_str_memlim(		\
+		field = static_cast<const char *>(ha_storage_put_str_memlim(		\
 			(tcache)->storage, data,		\
-			MAX_ALLOWED_FOR_STORAGE(tcache));	\
+			MAX_ALLOWED_FOR_STORAGE(tcache)));	\
 	}							\
 } while (0)
 

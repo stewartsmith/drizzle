@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jayjpipes@gmail.com>
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  Authors:
  *
@@ -59,6 +59,7 @@ class CreateTableStatement;
 class TruncateTableStatement;
 class CreateSchemaStatement;
 class DropSchemaStatement;
+class AlterSchemaStatement;
 class SetVariableStatement;
 
 /** A Variation of SQL to be output during transformation */
@@ -75,7 +76,8 @@ enum TransformSqlError
 {
   NONE= 0,
   MISSING_HEADER= 1, /* A data segment without a header segment was found */
-  MISSING_DATA= 2 /* A header segment without a data segment was found */
+  MISSING_DATA= 2,   /* A header segment without a data segment was found */
+  UUID_MISMATCH= 3
 };
 
 /**
@@ -344,6 +346,25 @@ enum TransformSqlError
 transformDropSchemaStatementToSql(const DropSchemaStatement &statement,
                                   std::string &destination,
                                   enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * This function looks at a supplied AlterSchemaStatement
+ * and constructs a correctly-formatted SQL
+ * statement to the supplied destination string.
+ *
+ * @param AlterSchemaStatement message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformAlterSchemaStatementToSql(const AlterSchemaStatement &statement,
+                                   std::string &destination,
+                                   enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * This function looks at a supplied SetVariableStatement

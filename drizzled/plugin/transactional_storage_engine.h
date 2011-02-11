@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2009-2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2009-2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@
 #include "drizzled/definitions.h" /* for start_transaction_option_t */
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/transaction_services.h"
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -56,7 +58,7 @@ namespace plugin
  * kill two_phase_commit member. Use an HTON flag if
  * absolutely needed to keep.
  */
-class TransactionalStorageEngine :public StorageEngine
+class DRIZZLED_API TransactionalStorageEngine :public StorageEngine
 {
   friend class SEAPITester;
 public:
@@ -68,14 +70,14 @@ public:
   virtual int startTransaction(Session *session, start_transaction_option_t options)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForTransaction(session, this, this);
+    transaction_services.registerResourceForTransaction(*session, this, this);
     return doStartTransaction(session, options);
   }
 
   virtual void startStatement(Session *session)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForStatement(session, this, this);
+    transaction_services.registerResourceForStatement(*session, this, this);
     doStartStatement(session);
   }
 

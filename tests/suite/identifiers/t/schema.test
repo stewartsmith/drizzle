@@ -1,0 +1,31 @@
+#
+# We check that no one can create bad schemas
+#
+
+CREATE SCHEMA admin;
+CREATE SCHEMA temporary;
+
+SELECT SCHEMA();
+
+--error ER_PARSE_ERROR,ER_SYNTAX_ERROR
+CREATE SCHEMA .admin;
+
+--error ER_WRONG_DB_NAME
+CREATE SCHEMA `.admin `;
+
+--error ER_WRONG_DB_NAME
+CREATE SCHEMA `.admin`;
+
+--error ER_PARSE_ERROR
+CREATE SCHEMA #admin;
+
+CREATE SCHEMA `#admin`;
+DROP SCHEMA `#admin`;
+
+SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA=SCHEMA();
+
+--error ER_WRONG_DB_NAME
+CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+
+DROP SCHEMA admin;
+DROP SCHEMA temporary;

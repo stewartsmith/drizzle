@@ -17,7 +17,7 @@
   @file
 
   @brief
-  mysql_select and join optimization
+  select_query and join optimization
 
   @defgroup Query_Optimizer  Query Optimizer
   @{
@@ -78,7 +78,7 @@ static COND *build_equal_items(Session *session, COND *cond,
 static Item* part_of_refkey(Table *form,Field *field);
 static bool cmp_buffer_with_ref(JoinTable *tab);
 static void change_cond_ref_to_const(Session *session,
-                                     vector<COND_CMP>& save_list,
+                                     list<COND_CMP>& save_list,
                                      Item *and_father,
                                      Item *cond,
                                      Item *field,
@@ -131,13 +131,15 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
     unit->set_limit(unit->global_parameters);
     session->session_marker= 0;
     /*
-      'options' of mysql_select will be set in JOIN, as far as JOIN for
+      'options' of select_query will be set in JOIN, as far as JOIN for
       every PS/SP execution new, we will not need reset this flag if
       setup_tables_done_option changed for next rexecution
     */
-    res= mysql_select(session, &select_lex->ref_pointer_array,
+    res= select_query(session,
+                      &select_lex->ref_pointer_array,
 		      (TableList*) select_lex->table_list.first,
-		      select_lex->with_wild, select_lex->item_list,
+		      select_lex->with_wild,
+                      select_lex->item_list,
 		      select_lex->where,
 		      select_lex->order_list.elements +
 		      select_lex->group_list.elements,
@@ -268,7 +270,7 @@ bool fix_inner_refs(Session *session,
 
 /*****************************************************************************
   Check fields, find best join, do the select and output fields.
-  mysql_select assumes that all tables are already opened
+  select_query assumes that all tables are already opened
 *****************************************************************************/
 
 /*
@@ -348,7 +350,7 @@ void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
   @retval
     true   an error
 */
-bool mysql_select(Session *session,
+bool select_query(Session *session,
                   Item ***rref_pointer_array,
                   TableList *tables, 
                   uint32_t wild_num, 
@@ -929,7 +931,7 @@ bool store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
 
   /*
     we should restore old value of count_cuted_fields because
-    store_val_in_field can be called from mysql_insert
+    store_val_in_field can be called from insert_query
     with select_insert, which make count_cuted_fields= 1
    */
   enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
@@ -2305,7 +2307,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
   @param cond       condition whose multiple equalities are to be checked
   @param table      constant table that has been read
 */
-static void update_const_equal_items(COND *cond, JoinTable *tab)
+void update_const_equal_items(COND *cond, JoinTable *tab)
 {
   if (!(cond->used_tables() & tab->table->map))
     return;
@@ -2362,7 +2364,7 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
   and_level
 */
 static void change_cond_ref_to_const(Session *session,
-                                     vector<COND_CMP>& save_list,
+                                     list<COND_CMP>& save_list,
                                      Item *and_father,
                                      Item *cond,
                                      Item *field,
@@ -2375,6 +2377,7 @@ static void change_cond_ref_to_const(Session *session,
     Item *item;
     while ((item=li++))
       change_cond_ref_to_const(session, save_list, and_level ? cond : item, item, field, value);
+
     return;
   }
   if (cond->eq_cmp_result() == Item::COND_OK)
@@ -2467,7 +2470,7 @@ Item *remove_additional_cond(Item* conds)
 }
 
 static void propagate_cond_constants(Session *session, 
-                                     vector<COND_CMP>& save_list, 
+                                     list<COND_CMP>& save_list, 
                                      COND *and_father, 
                                      COND *cond)
 {
@@ -2476,7 +2479,7 @@ static void propagate_cond_constants(Session *session,
     bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
     List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
     Item *item;
-    vector<COND_CMP> save;
+    list<COND_CMP> save;
     while ((item=li++))
     {
       propagate_cond_constants(session, save, and_level ? cond : item, item);
@@ -2484,13 +2487,13 @@ static void propagate_cond_constants(Session *session,
     if (and_level)
     {
       // Handle other found items
-      for (vector<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
+      for (list<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
       {
-        Item **args= iter->cmp_func->arguments();
-        if (!args[0]->const_item())
+        Item **args= iter->second->arguments();
+        if (not args[0]->const_item())
         {
-          change_cond_ref_to_const( session, save, iter->and_level,
-                                    iter->and_level, args[0], args[1] );
+          change_cond_ref_to_const(session, save, iter->first,
+                                   iter->first, args[0], args[1] );
         }
       }
     }
@@ -2603,7 +2606,7 @@ static void propagate_cond_constants(Session *session,
          position:
           1. join->cur_embedding_map - bitmap of pairs of brackets (aka nested
              joins) we've opened but didn't close.
-          2. {each nested_join_st structure not simplified away}->counter - number
+          2. {each NestedJoin class not simplified away}->counter - number
              of this nested join's children that have already been added to to
              the partial join order.
   @endverbatim
@@ -2681,7 +2684,7 @@ COND *optimize_cond(Join *join, COND *conds, List<TableList> *join_list, Item::c
                              &join->cond_equal);
 
     /* change field = field to field = const for each found field = const */
-    vector<COND_CMP> temp;
+    list<COND_CMP> temp;
     propagate_cond_constants(session, temp, conds, conds);
     /*
       Remove all instances of item == item
@@ -3050,7 +3053,15 @@ int do_select(Join *join, List<Item> *fields, Table *table)
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
         table->getShare()->sizeKeys() && !table->cursor->inited)
-      table->cursor->startIndexScan(0, 0);
+    {
+      int tmp_error;
+      tmp_error= table->cursor->startIndexScan(0, 0);
+      if (tmp_error != 0)
+      {
+        table->print_error(tmp_error, MYF(0));
+        return -1;
+      }
+    }
   }
   /* Set up select_end */
   Next_select_func end_select= setup_end_select_func(join);
@@ -3356,107 +3367,6 @@ int safe_index_read(JoinTable *tab)
   return 0;
 }
 
-int join_read_const_table(JoinTable *tab, optimizer::Position *pos)
-{
-  int error;
-  Table *table=tab->table;
-  table->const_table=1;
-  table->null_row=0;
-  table->status=STATUS_NO_RECORD;
-
-  if (tab->type == AM_SYSTEM)
-  {
-    if ((error=join_read_system(tab)))
-    {						// Info for DESCRIBE
-      tab->info="const row not found";
-      /* Mark for EXPLAIN that the row was not found */
-      pos->setFanout(0.0);
-      pos->clearRefDependMap();
-      if (! table->maybe_null || error > 0)
-        return(error);
-    }
-  }
-  else
-  {
-    if (! table->key_read && 
-        table->covering_keys.test(tab->ref.key) && 
-        ! table->no_keyread &&
-        (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS)
-    {
-      table->key_read=1;
-      table->cursor->extra(HA_EXTRA_KEYREAD);
-      tab->index= tab->ref.key;
-    }
-    error=join_read_const(tab);
-    if (table->key_read)
-    {
-      table->key_read=0;
-      table->cursor->extra(HA_EXTRA_NO_KEYREAD);
-    }
-    if (error)
-    {
-      tab->info="unique row not found";
-      /* Mark for EXPLAIN that the row was not found */
-      pos->setFanout(0.0);
-      pos->clearRefDependMap();
-      if (!table->maybe_null || error > 0)
-        return(error);
-    }
-  }
-  if (*tab->on_expr_ref && !table->null_row)
-  {
-    if ((table->null_row= test((*tab->on_expr_ref)->val_int() == 0)))
-      table->mark_as_null_row();
-  }
-  if (!table->null_row)
-    table->maybe_null=0;
-
-  /* Check appearance of new constant items in Item_equal objects */
-  Join *join= tab->join;
-  if (join->conds)
-    update_const_equal_items(join->conds, tab);
-  TableList *tbl;
-  for (tbl= join->select_lex->leaf_tables; tbl; tbl= tbl->next_leaf)
-  {
-    TableList *embedded;
-    TableList *embedding= tbl;
-    do
-    {
-      embedded= embedding;
-      if (embedded->on_expr)
-         update_const_equal_items(embedded->on_expr, tab);
-      embedding= embedded->getEmbedding();
-    }
-    while (embedding &&
-           embedding->getNestedJoin()->join_list.head() == embedded);
-  }
-
-  return(0);
-}
-
-int join_read_system(JoinTable *tab)
-{
-  Table *table= tab->table;
-  int error;
-  if (table->status & STATUS_GARBAGE)		// If first read
-  {
-    if ((error=table->cursor->read_first_row(table->getInsertRecord(),
-					   table->getShare()->getPrimaryKey())))
-    {
-      if (error != HA_ERR_END_OF_FILE)
-        return table->report_error(error);
-      tab->table->mark_as_null_row();
-      table->emptyRecord();			// Make empty record
-      return -1;
-    }
-    table->storeRecord();
-  }
-  else if (!table->status)			// Only happens with left join
-    table->restoreRecord();			// restore old record
-  table->null_row=0;
-  return table->status ? -1 : 0;
-}
-
 /**
   Read a (constant) table when there is at most one matching row.
 
@@ -3528,7 +3438,11 @@ int join_read_key(JoinTable *tab)
 
   if (!table->cursor->inited)
   {
-    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+    error= table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+    if (error != 0)
+    {
+      table->print_error(error, MYF(0));
+    }
   }
 
   /* TODO: Why don't we do "Late NULLs Filtering" here? */
@@ -3576,7 +3490,11 @@ int join_read_always_key(JoinTable *tab)
 
   /* Initialize the index first */
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+    if (error != 0)
+      return table->report_error(error);
+  }
 
   /* Perform "Late NULLs Filtering" (see internals manual for explanations) */
   for (uint32_t i= 0 ; i < tab->ref.key_parts ; i++)
@@ -3610,7 +3528,11 @@ int join_read_last_key(JoinTable *tab)
   Table *table= tab->table;
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+  {
+    error= table->cursor->startIndexScan(tab->ref.key, tab->sorted);
+    if (error != 0)
+      return table->report_error(error);
+  }
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
   if ((error=table->cursor->index_read_last_map(table->getInsertRecord(),
@@ -3725,7 +3647,8 @@ int join_init_read_record(JoinTable *tab)
   if (tab->select && tab->select->quick && tab->select->quick->reset())
     return 1;
 
-  tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true);
+  if (tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true))
+    return 1;
 
   return (*tab->read_record.read_record)(&tab->read_record);
 }
@@ -3758,7 +3681,14 @@ int join_read_first(JoinTable *tab)
   }
 
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->index, tab->sorted);
+  {
+    error= table->cursor->startIndexScan(tab->index, tab->sorted);
+    if (error != 0)
+    {
+      table->report_error(error);
+      return -1;
+    }
+  }
   if ((error=tab->table->cursor->index_first(tab->table->getInsertRecord())))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
@@ -3817,7 +3747,11 @@ int join_read_last(JoinTable *tab)
   tab->read_record.index=tab->index;
   tab->read_record.record=table->getInsertRecord();
   if (!table->cursor->inited)
-    table->cursor->startIndexScan(tab->index, 1);
+  {
+    error= table->cursor->startIndexScan(tab->index, 1);
+    if (error != 0)
+      return table->report_error(error);
+  }
   if ((error= tab->table->cursor->index_last(tab->table->getInsertRecord())))
     return table->report_error(error);
 
@@ -3897,7 +3831,7 @@ enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_recor
               error=join->result->send_data(*join->fields) ? 1 : 0;
             join->send_records++;
           }
-          if (join->rollup.state != ROLLUP::STATE_NONE && error <= 0)
+          if (join->rollup.getState() != Rollup::STATE_NONE && error <= 0)
           {
             if (join->rollup_send_data((uint32_t) (idx+1)))
               error= 1;
@@ -3987,7 +3921,7 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
             return NESTED_LOOP_ERROR;
           }
         }
-        if (join->rollup.state != ROLLUP::STATE_NONE)
+        if (join->rollup.getState() != Rollup::STATE_NONE)
         {
           if (join->rollup_write_data((uint32_t) (idx+1), table))
             return NESTED_LOOP_ERROR;
@@ -5096,7 +5030,9 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   org_record=(char*) (record=table->getInsertRecord())+offset;
   new_record=(char*) table->getUpdateRecord()+offset;
 
-  cursor->startTableScan(1);
+  if ((error= cursor->startTableScan(1)))
+    goto err;
+
   error=cursor->rnd_next(record);
   for (;;)
   {
@@ -5213,7 +5149,9 @@ int remove_dup_with_hash_index(Session *session,
     return(1);
   }
 
-  cursor->startTableScan(1);
+  if ((error= cursor->startTableScan(1)))
+    goto err;
+
   key_pos= &key_buffer[0];
   for (;;)
   {
@@ -5425,7 +5363,7 @@ static bool find_order_in_list(Session *session,
     if (!count || count > fields.elements)
     {
       my_error(ER_BAD_FIELD_ERROR, MYF(0),
-               order_item->full_name(), session->where);
+               order_item->full_name(), session->where());
       return true;
     }
     order->item= ref_pointer_array + count - 1;
@@ -5502,7 +5440,7 @@ static bool find_order_in_list(Session *session,
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR),
                           ((Item_ident*) order_item)->field_name,
-                          session->where);
+                          session->where());
     }
   }
 
@@ -5544,7 +5482,7 @@ int setup_order(Session *session,
                 List<Item> &all_fields,
                 Order *order)
 {
-  session->where="order clause";
+  session->setWhere("order clause");
   for (; order; order=order->next)
   {
     if (find_order_in_list(session, ref_pointer_array, tables, order, fields,
@@ -5595,7 +5533,7 @@ int setup_group(Session *session,
 
   uint32_t org_fields=all_fields.elements;
 
-  session->where="group statement";
+  session->setWhere("group statement");
   for (ord= order; ord; ord= ord->next)
   {
     if (find_order_in_list(session, ref_pointer_array, tables, ord, fields,

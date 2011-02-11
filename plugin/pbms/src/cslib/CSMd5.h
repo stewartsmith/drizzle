@@ -47,7 +47,7 @@
   1999-05-03 lpd Original version.
  */
 
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase S3Daemon
  *

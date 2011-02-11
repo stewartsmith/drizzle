@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,36 +30,36 @@ namespace drizzled
 
 bool statement::Insert::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *all_tables= getSession()->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   bool need_start_waiting= false;
 
-  if (insert_precheck(session, all_tables))
+  if (insert_precheck(getSession(), all_tables))
   {
     return true;
   }
 
-  if (! (need_start_waiting= ! session->wait_if_global_read_lock(false, true)))
+  if (! (need_start_waiting= ! getSession()->wait_if_global_read_lock(false, true)))
   {
     return true;
   }
 
-  DRIZZLE_INSERT_START(session->getQueryString()->c_str());
+  DRIZZLE_INSERT_START(getSession()->getQueryString()->c_str());
 
-  bool res= mysql_insert(session,
+  bool res= insert_query(getSession(),
                          all_tables,
-                         session->lex->field_list,
-                         session->lex->many_values,
-                         session->lex->update_list,
-                         session->lex->value_list,
-                         session->lex->duplicates,
-                         session->lex->ignore);
+                         getSession()->lex->field_list,
+                         getSession()->lex->many_values,
+                         getSession()->lex->update_list,
+                         getSession()->lex->value_list,
+                         getSession()->lex->duplicates,
+                         getSession()->lex->ignore);
   /*
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  session->startWaitingGlobalReadLock();
+  getSession()->startWaitingGlobalReadLock();
 
   return res;
 }

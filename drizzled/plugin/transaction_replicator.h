@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes
  *
  *  Authors:
  *
@@ -27,6 +27,8 @@
 
 #include "drizzled/plugin/replication.h"
 #include "drizzled/plugin/plugin.h"
+
+#include "drizzled/visibility.h"
 
 /**
  * @file Defines the API for a TransactionReplicator.  
@@ -55,7 +57,7 @@ class TransactionApplier;
 /**
  * Class which replicates Transaction messages
  */
-class TransactionReplicator : public Plugin
+class DRIZZLED_API TransactionReplicator : public Plugin
 {
   TransactionReplicator();
   TransactionReplicator(const TransactionReplicator &);

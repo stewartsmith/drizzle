@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@
 
 #include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/plugin/xa_resource_manager.h"
+
+#include "drizzled/visibility.h"
 
 namespace drizzled
 {
@@ -45,8 +47,9 @@ namespace plugin
  * virtual abstract base class with the X/Open XA distributed
  * transaction protocol interface for resource managers.
  */
-class XaStorageEngine :public TransactionalStorageEngine,
-                       public XaResourceManager
+class DRIZZLED_API XaStorageEngine :
+  public TransactionalStorageEngine,
+  public XaResourceManager
 {
 public:
   XaStorageEngine(const std::string name_arg,
@@ -57,14 +60,14 @@ public:
   int startTransaction(Session *session, start_transaction_option_t options)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForTransaction(session, this, this, this);
+    transaction_services.registerResourceForTransaction(*session, this, this, this);
     return doStartTransaction(session, options);
   }
 
   void startStatement(Session *session)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForStatement(session, this, this, this);
+    transaction_services.registerResourceForStatement(*session, this, this, this);
     doStartStatement(session);
   }
 

@@ -1,0 +1,14 @@
+CREATE TABLE t1 (A BOOLEAN, PRIMARY KEY (A));
+insert into t1 VALUES ("no");
+insert into t1 VALUES ("true");
+insert into t1 VALUES ("true");
+Got one of the listed errors
+SELECT A from t1 ORDER BY a ASC;
+A
+FALSE
+TRUE
+SELECT A from t1 ORDER BY a DESC;
+A
+TRUE
+FALSE
+DROP TABLE t1;

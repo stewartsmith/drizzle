@@ -1,4 +1,4 @@
-/* Copyright (c) 2005 PrimeBase Technologies GmbH
+/* Copyright (C) 2005 PrimeBase Technologies GmbH
  *
  * Derived from ha_example.h
  * Copyright (C) 2003 MySQL AB
@@ -47,7 +47,6 @@
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/session.h>
 
 #include <string>
@@ -2505,19 +2504,19 @@ xtPublic void ha_set_auto_increment(XTOpenTablePtr ot, Field *nr)
 	nr_int_val = nr->val_int();
 	tab = ot->ot_table;
 
-	if (nr->cmp((const unsigned char *)&tab->tab_auto_inc) > 0) {
+	if (nr->cmp_internal((const unsigned char *)&tab->tab_auto_inc) > 0) {
 		xt_spinlock_lock(&tab->tab_ainc_lock);
 
-		if (nr->cmp((const unsigned char *)&tab->tab_auto_inc) > 0) {
-			/* {PRE-INC}
-			 * We increment later, so just set the value!
-			MX_ULONGLONG_T nr_int_val_plus_one = nr_int_val + 1;
-			if (nr->cmp((const unsigned char *)&nr_int_val_plus_one) < 0)
-				tab->tab_auto_inc = nr_int_val_plus_one;
-			else
-			 */
-			tab->tab_auto_inc = nr_int_val;
-		}
+                if (nr->cmp_internal((const unsigned char *)&tab->tab_auto_inc) > 0) {
+                  /* {PRE-INC}
+                   * We increment later, so just set the value!
+                   MX_ULONGLONG_T nr_int_val_plus_one = nr_int_val + 1;
+                   if (nr->cmp((const unsigned char *)&nr_int_val_plus_one) < 0)
+                   tab->tab_auto_inc = nr_int_val_plus_one;
+                   else
+                 */
+                  tab->tab_auto_inc = nr_int_val;
+                }
 		xt_spinlock_unlock(&tab->tab_ainc_lock);
 	}
 
@@ -3902,7 +3901,7 @@ int ha_pbxt::info(uint flag)
 			 * #1	0x0022e1f1 in make_sortkey at filesort.cc:769
 			 * #2	0x0022f1cf in find_all_keys at filesort.cc:619
 			 * #3	0x00230eec in filesort at filesort.cc:243
-			 * #4	0x001b9d89 in mysql_update at sql_update.cc:415
+			 * #4	0x001b9d89 in update_query at sql_update.cc:415
 			 * #5	0x0010db12 in mysql_execute_command at sql_parse.cc:2959
 			 * #6	0x0011480d in mysql_parse at sql_parse.cc:5787
 			 * #7	0x00115afb in dispatch_command at sql_parse.cc:1200
@@ -4195,7 +4194,7 @@ void ha_pbxt::unlock_row()
  *
  * Called from item_sum.cc by Item_func_group_concat::clear(),
  * Item_sum_count_distinct::clear(), and Item_func_group_concat::clear().
- * Called from sql_delete.cc by mysql_delete().
+ * Called from sql_delete.cc by delete_query().
  * Called from sql_select.cc by JOIN::reinit().
  * Called from sql_union.cc by st_select_lex_unit::exec().
  */
@@ -5724,13 +5723,11 @@ int PBXTStorageEngine::doReleaseSavepoint(drizzled::Session* thd, drizzled::Name
 	return xt_ha_pbxt_thread_error_for_mysql(thd, xt_ha_thd_to_self(thd), false);
 }
 
-int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool)
+int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool real_commit)
 {
 	int err = 0;
 	XTThreadPtr self = (XTThreadPtr) *thd->getEngineData(pbxt_hton);
 
-	bool real_commit = !session_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
-	
 	XT_PRINT1(self, "PBXTStorageEngine::doCommit(real_commit = %s)\n", real_commit ? "true" : "false");
 
 	if (real_commit && self) {
@@ -5741,12 +5738,10 @@ int PBXTStorageEngine::doCommit(drizzled::Session* thd, bool)
 	return err;
 }
 
-int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool)
+int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool real_commit)
 {
         int err = 0;
         XTThreadPtr self = (XTThreadPtr) *thd->getEngineData(pbxt_hton);
-
-        bool real_commit = !session_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
 
 	XT_PRINT1(self, "PBXTStorageEngine::doRollback(real_commit = %s)\n", real_commit ? "true" : "false");
 
@@ -6218,7 +6213,7 @@ DRIZZLE_DECLARE_PLUGIN
         "High performance, multi-versioning transactional engine",
         PLUGIN_LICENSE_GPL,
         pbxt_init, /* Plugin Init */
-        NULL,          /* system variables                */
+        NULL,          /* depends */
         NULL                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
@@ -6236,7 +6231,7 @@ mysql_declare_plugin(pbxt)
         0x0001 /* 0.1 */,
         NULL,                       /* status variables                */
 #if MYSQL_VERSION_ID >= 50118
-        pbxt_system_variables,          /* system variables                */
+        pbxt_system_variables,          /* depends */
 #else
 	NULL,
 #endif
@@ -6252,7 +6247,7 @@ mysql_declare_plugin(pbxt)
 	pbxt_exit_statistics,						/* plugin deinit */
 	0x0005,
 	NULL,										/* status variables */
-	NULL,										/* system variables */
+	NULL,										/* depends */
 	NULL										/* config options */
 }
 mysql_declare_plugin_end;

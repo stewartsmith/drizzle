@@ -1,0 +1,156 @@
+#
+# testing of the TIME column type
+#
+
+--disable_warnings
+DROP TABLE if exists t1;
+--enable_warnings
+
+CREATE TABLE t1 (t time);
+INSERT INTO t1 VALUES ("10:22:33");
+INSERT INTO t1 VALUES ("12:34:56.78");
+
+INSERT INTO t1 VALUES (10);
+
+INSERT INTO t1 VALUES (1234);
+
+INSERT INTO t1 VALUES (123456.78);
+
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES (1234559.99);
+
+INSERT INTO t1 VALUES ("1");
+
+INSERT INTO t1 VALUES ("1:23");
+
+INSERT INTO t1 VALUES ("1:23:45");
+
+INSERT INTO t1 VALUES ("10.22");
+
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES ("20 10:22:33");
+
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES ("-10  1:22:33.45");
+
+INSERT INTO t1 VALUES ("1999-02-03 20:33:34");
+
+insert t1 values (30);
+insert t1 values (1230);
+insert t1 values ("1230");
+insert t1 values ("12:30");
+insert t1 values ("12:30:35");
+--error ER_INVALID_TIME_VALUE
+insert t1 values ("1 12:30:31.32");
+
+--sorted_result
+select t from t1;
+# Test wrong values
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES ("10.22.22");
+
+INSERT INTO t1 VALUES (1234567);
+
+INSERT INTO t1 VALUES (123456789);
+
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES (123456789.10);
+
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES ("10 22:22");
+
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES ("12.45a");
+--sorted_result
+select t from t1;
+DROP TABLE t1;
+
+CREATE TABLE t1 (t time);
+INSERT INTO t1 VALUES ('09:00:00');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('19:38:34');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('09:00:00');
+INSERT INTO t1 VALUES ('09:00:00');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('13:00:00');
+INSERT INTO t1 VALUES ('09:00:00');
+
+--error ER_SP_DOES_NOT_EXIST
+select t, time_to_sec(t),sec_to_time(time_to_sec(t)) from t1;
+
+--error ER_SP_DOES_NOT_EXIST
+select sec_to_time(time_to_sec(t)) from t1;
+
+DROP TABLE t1;
+
+#
+# BUG #12440: Incorrect processing of time values containing
+# long fraction part and/or large exponent part.
+#
+# These must return normal result:
+# ##########################################################
+# To be uncommented after fix BUG #15805
+# ##########################################################
+# SELECT CAST(235959.123456 AS TIME);
+# SELECT CAST(0.235959123456e+6 AS TIME);
+# SELECT CAST(235959123456e-6 AS TIME);
+# These must cut fraction part and produce warning:
+# SELECT CAST(235959.1234567 AS TIME);
+# SELECT CAST(0.2359591234567e6 AS TIME);
+# This must return NULL and produce warning:
+# SELECT CAST(0.2359591234567e+30 AS TIME);
+# ##########################################################
+
+# End of 4.1 tests
+
+#
+# Bug#29555: Comparing time values as strings may lead to a wrong result.
+#
+SELECT CAST('100:55:50' as time) < cast('24:00:00' as time);
+
+SELECT CAST('100:55:50' as time) < cast('024:00:00' as time);
+
+SELECT CAST('300:55:50' as time) < cast('240:00:00' as time);
+
+SELECT CAST('100:55:50' as time) > cast('24:00:00' as time);
+
+SELECT CAST('100:55:50' as time) > cast('024:00:00' as time);
+
+SELECT CAST('300:55:50' as time) > cast('240:00:00' as time);
+
+CREATE TABLE t1 (f1 time);
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES ('24:00:00');
+
+SELECT CAST('24:00:00' as time) = (select f1 from t1);
+
+DROP TABLE t1;
+
+#
+# Bug#29739: Incorrect time comparison in BETWEEN.
+#
+CREATE TABLE t1(f1 time, f2 time);
+--error ER_INVALID_TIME_VALUE
+INSERT INTO t1 VALUES('20:00:00','150:00:00');
+
+select 1 from t1 where cast('100:00:00' as time) between f1 and f2;
+
+DROP TABLE t1;
+
+#
+# Bug#29729: Wrong conversion error led to an empty result set.
+#
+CREATE TABLE  t1 (
+  f2 date NOT NULL,
+  f3 int NOT NULL default '0',
+  PRIMARY KEY  (f3, f2)
+);
+INSERT INTO t1 VALUES ('2007-07-01', 1);
+INSERT INTO t1 VALUES ('2007-07-01', 2);
+INSERT INTO t1 VALUES ('2007-07-02', 1);
+INSERT INTO t1 VALUES ('2007-07-02', 2);
+SELECT sum(f3) FROM t1 WHERE f2='2007-07-01 00:00:00' group by f2;
+
+DROP TABLE t1;

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,12 +24,22 @@
 
 namespace drizzled
 {
+namespace statement
+{
+
+Show::Show(Session *in_session) :
+  Select(in_session),
+  if_exists(false)
+  {
+  }
+
+} /* namespace statement */
 
 bool statement::Show::execute()
 {
-  TableList *all_tables= session->lex->query_tables;
-  session->status_var.last_query_cost= 0.0;
-  bool res= execute_sqlcom_select(session, all_tables);
+  TableList *all_tables= getSession()->lex->query_tables;
+  getSession()->status_var.last_query_cost= 0.0;
+  bool res= execute_sqlcom_select(getSession(), all_tables);
 
   return res;
 }

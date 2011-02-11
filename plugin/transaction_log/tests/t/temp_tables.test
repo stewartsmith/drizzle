@@ -6,8 +6,8 @@
 --source ../plugin/transaction_log/tests/t/temp_tables.inc
 
 # Read in the transaction.log.
-
---exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec ../plugin/transaction_log/utilities/transaction_reader --ignore-events $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

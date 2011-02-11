@@ -48,7 +48,7 @@ int64_t Kill::val_int()
     return 0;
   }
 
-  if (not die_session->isViewable())
+  if (not die_session->isViewable(*getSession().user()))
   {
     my_error(drizzled::ER_KILL_DENIED_ERROR, session_id_for_kill, MYF(0));
     return 0;

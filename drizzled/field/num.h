@@ -32,21 +32,33 @@ public:
   const uint8_t dec;
   bool decimal_precision;       // Purify cannot handle bit fields & only for decimal type
   bool unsigned_flag;   // Purify cannot handle bit fields
+
   Field_num(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
             unsigned char null_bit_arg, utype unireg_check_arg,
             const char *field_name_arg,
             uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
+
   Item_result result_type () const { return REAL_RESULT; }
+
   friend class CreateField;
+
   void make_field(SendField *);
+
   uint32_t decimals() const { return (uint32_t) dec; }
+
   uint32_t size_of() const { return sizeof(*this); }
+
   bool eq_def(Field *field);
-  int store_decimal(const my_decimal *);
-  my_decimal *val_decimal(my_decimal *);
+
+  int store_decimal(const type::Decimal *);
+
+  type::Decimal *val_decimal(type::Decimal *);
+
   uint32_t is_equal(CreateField *new_field);
+
   int check_int(const CHARSET_INFO * const cs, const char *str, int length,
                 const char *int_end, int error);
+
   bool get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
                int64_t *rnd, uint64_t unsigned_max,
                int64_t signed_min, int64_t signed_max);

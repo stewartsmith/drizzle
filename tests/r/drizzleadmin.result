@@ -1,4 +1,1 @@
-drizzled is alive
-drizzleadmin: unknown variable 'database=db1'
-Warning: drizzleadmin: unknown variable 'loose-database=db2'
-drizzled is alive
+ERROR 08004: Too many connections

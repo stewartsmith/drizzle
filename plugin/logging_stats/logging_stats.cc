@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Joseph Daly <skinny.moey@gmail.com>
+ * Copyright (C) 2010 Joseph Daly <skinny.moey@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -210,12 +210,12 @@ bool LoggingStats::postEnd(Session *session)
        the scoreboard would be filled up quickly with invalid users. 
     */
     scoreboard_slot= new ScoreboardSlot();
-    scoreboard_slot->setUser(session->getSecurityContext().getUser());
-    scoreboard_slot->setIp(session->getSecurityContext().getIp());
+    scoreboard_slot->setUser(session->user()->username());
+    scoreboard_slot->setIp(session->user()->address());
   }
 
   scoreboard_slot->getStatusVars()->logStatusVar(session);
-  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= time(NULL) - session->start_time; 
+  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= session->getConnectSeconds(); 
 
   cumulative_stats->logUserStats(scoreboard_slot, isInScoreboard);
   cumulative_stats->logGlobalStats(scoreboard_slot);
@@ -370,14 +370,14 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("max-user-count",
           po::value<max_user_count_constraint>(&sysvar_logging_stats_max_user_count)->default_value(500),
-          N_("Max number of users that will be logged"));
+          _("Max number of users that will be logged"));
   context("bucket-count",
           po::value<bucket_count_constraint>(&sysvar_logging_stats_bucket_count)->default_value(10),
-          N_("Max number of range locks to use for Scoreboard"));
+          _("Max number of range locks to use for Scoreboard"));
   context("scoreboard-size",
           po::value<scoreboard_size_constraint>(&sysvar_logging_stats_scoreboard_size)->default_value(2000),
-          N_("Max number of concurrent sessions that will be logged"));
-  context("disable", N_("Enable Logging Statistics Collection"));
+          _("Max number of concurrent sessions that will be logged"));
+  context("disable", _("Enable Logging Statistics Collection"));
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -389,7 +389,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("User Statistics as DATA_DICTIONARY tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -33,16 +33,9 @@ namespace utility_functions
 String *Catalog::val_str(String *str)
 {
   assert(fixed == 1);
-  Session *session= current_session;
-  if (session->catalog.empty())
-  {
-    null_value= 1;
-    return 0;
-  }
-  else
-  {
-    str->copy(session->catalog.c_str(), session->catalog.length(), system_charset_info);
-  }
+  assert(not getSession().catalog().name().empty());
+
+  str->copy(getSession().catalog().name(), system_charset_info);
 
   return str;
 }

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -183,7 +183,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Convert a string to HEX() or from UNHEX()",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

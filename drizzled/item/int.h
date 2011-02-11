@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,32 +30,52 @@ class Item_int :public Item_num
 {
 public:
   int64_t value;
-  Item_int(int32_t i,uint32_t length= MY_INT32_NUM_DECIMAL_DIGITS)
-    :value((int64_t) i)
+
+  Item_int(int32_t i,uint32_t length= MY_INT32_NUM_DECIMAL_DIGITS) :
+    value((int64_t) i)
     { max_length=length; fixed= 1; }
-  Item_int(int64_t i,uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS)
-    :value(i)
+
+  Item_int(int64_t i,uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS) :
+    value(i)
     { max_length=length; fixed= 1; }
-  Item_int(uint64_t i, uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS)
-    :value((int64_t)i)
+
+  Item_int(uint64_t i, uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS) :
+    value((int64_t)i)
   { max_length=length; fixed=1; }
-  Item_int(const char *str_arg,int64_t i,uint32_t length) :value(i)
+
+  Item_int(const char *str_arg,int64_t i,uint32_t length) :
+    value(i)
     { max_length= length; name= const_cast<char *>(str_arg); fixed= 1; }
+
   Item_int(const char *str_arg, uint32_t length=64);
+
   enum Type type() const { return INT_ITEM; }
+
   enum Item_result result_type () const { return INT_RESULT; }
+
   enum_field_types field_type() const { return DRIZZLE_TYPE_LONGLONG; }
+
   int64_t val_int() { assert(fixed == 1); return value; }
+
   double val_real() { assert(fixed == 1); return (double) value; }
-  my_decimal *val_decimal(my_decimal *);
+
+  type::Decimal *val_decimal(type::Decimal *);
+
   String *val_str(String*);
+
   int save_in_field(Field *field, bool no_conversions);
+
   bool basic_const_item() const { return 1; }
+
   Item *clone_item() { return new Item_int(name,value,max_length); }
+
   virtual void print(String *str, enum_query_type query_type);
+
   Item_num *neg() { value= -value; return this; }
+
   uint32_t decimal_precision() const
   { return (uint32_t)(max_length - test(value < 0)); }
+
   bool eq(const Item *, bool binary_cmp) const;
 };
 

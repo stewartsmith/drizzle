@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ public:
   LEX_STRING get_name() { return name; }
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal*);
+  type::Decimal *val_decimal(type::Decimal*);
   String *val_str(String* str);
   void fix_length_and_dec();
   virtual void print(String *str, enum_query_type query_type);

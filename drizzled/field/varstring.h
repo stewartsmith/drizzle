@@ -78,7 +78,7 @@ public:
   int64_t val_int(void);
   String *val_str(String*,String *);
   inline String *val_str(String *str) { return val_str(str, str); }
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   int cmp_max(const unsigned char *, const unsigned char *, uint32_t max_length);
   inline  int cmp(const unsigned char *str) { return cmp(ptr,str); }
   int cmp(const unsigned char *a,const unsigned char *b)
