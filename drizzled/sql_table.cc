@@ -59,8 +59,6 @@ using namespace std;
 namespace drizzled
 {
 
-extern pid_t current_pid;
-
 bool is_primary_key(KeyInfo *key_info)
 {
   static const char * primary_key_name="PRIMARY";

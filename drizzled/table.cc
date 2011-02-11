@@ -64,7 +64,6 @@ using namespace std;
 namespace drizzled
 {
 
-extern pid_t current_pid;
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
 

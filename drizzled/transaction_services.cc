@@ -746,11 +746,15 @@ int TransactionServices::autocommitOrRollback(Session::reference session,
     {
       (void) rollbackTransaction(session, false);
       if (session.transaction_rollback_request)
+      {
         (void) rollbackTransaction(session, true);
+        session.server_status&= ~SERVER_STATUS_IN_TRANS;
+      }
     }
 
     session.variables.tx_isolation= session.session_tx_isolation;
   }
+
   return error;
 }
 

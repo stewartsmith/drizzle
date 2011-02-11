@@ -231,6 +231,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -564,6 +565,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -668,6 +670,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t1;
 a	b
@@ -879,6 +882,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1067,6 +1071,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 COMMIT;
 Check transaction_log_entries
@@ -1138,6 +1143,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1327,6 +1333,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 COMMIT;
 Check transaction_log_entries
@@ -1499,6 +1506,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1635,6 +1643,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 connection1 - COMMIT work done earlier
 COMMIT;
@@ -1802,6 +1811,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t1;
 a	b
@@ -1970,6 +1980,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 connection con1 - ROLLBACK earlier INSERTs
 ROLLBACK;
@@ -2090,6 +2101,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t1;
 a	b
@@ -2331,6 +2343,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 connection con1 
 DELETE FROM t2 WHERE b%10=0 ;
@@ -2587,6 +2600,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SELECT * FROM t1;
 a	b

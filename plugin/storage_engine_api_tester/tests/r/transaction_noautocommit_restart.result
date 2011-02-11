@@ -1,0 +1,11 @@
+create table t1 (a int) engine=storage_engine_api_tester;
+set autocommit=off;
+insert into t1 values (1);
+rollback;
+select * from t1;
+a
+START TRANSACTION;
+Warnings:
+Warning	1746	There is already a transaction in progress
+ROLLBACK;
+drop table t1;

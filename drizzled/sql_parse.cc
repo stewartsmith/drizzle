@@ -488,6 +488,17 @@ static int execute_command(Session *session)
 
   assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 
+  if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && ! session->inTransaction()
+      && lex->statement->isTransactional())
+  {
+    if (session->startTransaction() == false)
+    {
+      my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
+      return true;
+    }
+  }
+
   /* now we are ready to execute the statement */
   res= lex->statement->execute();
   session->set_proc_info("query end");
@@ -516,6 +527,19 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
+
+  if (all_tables
+      && ! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && ! session->inTransaction()
+      && ! lex->statement->isShow())
+  {
+    if (session->startTransaction() == false)
+    {
+      my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
+      return true;
+    }
+  }
+
   if (not (res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
