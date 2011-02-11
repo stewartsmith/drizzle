@@ -162,7 +162,7 @@ public:
 
     if (error_injected == 3 && (count++ % 2))
     {
-      mark_transaction_to_rollback(user_session, false);
+      user_session->markTransactionForRollback(false);
       return HA_ERR_LOCK_WAIT_TIMEOUT;
     }
     return realCursor->rnd_next(buf);
@@ -193,13 +193,13 @@ public:
 
     if (error_injected == 1 && (i++ % 2))
     {
-      mark_transaction_to_rollback(user_session, false);
+      user_session->markTransactionForRollback(false);
       return HA_ERR_LOCK_WAIT_TIMEOUT;
     }
 
     if (error_injected == 2 && (i++ % 2))
     {
-      mark_transaction_to_rollback(user_session, true);
+      user_session->markTransactionForRollback(true);
       return HA_ERR_LOCK_DEADLOCK;
     }
 
