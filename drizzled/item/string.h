@@ -21,6 +21,7 @@
 #define DRIZZLED_ITEM_STRING_H
 
 #include <drizzled/item/basic_constant.h>
+#include <drizzled/charset_info.h>
 
 namespace drizzled
 {

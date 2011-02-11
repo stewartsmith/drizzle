@@ -830,8 +830,6 @@ void change_byte(unsigned char *,uint,char,char);
 namespace optimizer { class SqlSelect; }
 
 void change_double_for_sort(double nr,unsigned char *to);
-double my_double_round(double value, int64_t dec, bool dec_unsigned,
-                       bool truncate);
 int get_quick_record(optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);

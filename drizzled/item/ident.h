@@ -25,6 +25,8 @@
 namespace drizzled
 {
 
+class Name_resolution_context;
+class TableList;
 extern uint32_t lower_case_table_names;
 
 class Item_ident :public Item

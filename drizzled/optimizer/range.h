@@ -22,11 +22,13 @@
 #ifndef DRIZZLED_OPTIMIZER_RANGE_H
 #define DRIZZLED_OPTIMIZER_RANGE_H
 
-#include "drizzled/field.h"
-#include "drizzled/item/sum.h"
-#include "drizzled/table_reference.h"
+#include <drizzled/field.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/table_reference.h>
 
 #include <queue>
+
+#include <boost/dynamic_bitset.hpp>
 
 namespace drizzled
 {

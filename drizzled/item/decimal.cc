@@ -19,6 +19,8 @@
 
 #include "config.h"
 
+#include <drizzled/charset_info.h>
+#include <drizzled/field.h>
 #include <drizzled/item/decimal.h>
 
 namespace drizzled

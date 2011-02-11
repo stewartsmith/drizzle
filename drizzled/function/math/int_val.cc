@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <drizzled/type/decimal.h>
 #include <drizzled/function/math/int_val.h>
 
 namespace drizzled

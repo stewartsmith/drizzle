@@ -20,8 +20,11 @@
 #ifndef DRIZZLED_PLUGIN_CLIENT_H
 #define DRIZZLED_PLUGIN_CLIENT_H
 
-#include <drizzled/sql_list.h>
+#include <drizzled/catalog/instance.h>
+#include <drizzled/catalog/local.h>
+#include <drizzled/error_t.h>
 #include <drizzled/item.h>
+#include <drizzled/sql_list.h>
 
 #include "drizzled/visibility.h"
 
@@ -111,7 +114,7 @@ public:
     return false;
   }
 
-  virtual  catalog::Instance::shared_ptr catalog()
+  virtual catalog::Instance::shared_ptr catalog()
   {
     return catalog::local();
   }

@@ -29,6 +29,8 @@
 #include <vector>
 #include <functional>
 
+#include <boost/unordered_map.hpp>
+
 #include "drizzled/visibility.h"
 
 namespace drizzled
@@ -39,6 +41,12 @@ class Item_func;
 namespace memory
 {
   class Root;
+}
+
+namespace util
+{
+struct insensitive_hash;
+struct insensitive_equal_to;
 }
 
 namespace plugin

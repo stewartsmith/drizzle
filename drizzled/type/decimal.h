@@ -456,6 +456,10 @@ inline type::Decimal &decimal_zero_const()
   return _decimal_zero;
 }
 
+double my_double_round(double value, int64_t dec, bool dec_unsigned,
+                       bool truncate);
+
+
 #define decimal_zero decimal_zero_const()
 
 } /* namespace drizzled */

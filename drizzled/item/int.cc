@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
+
+#include <drizzled/charset_info.h>
+#include <drizzled/field.h>
+#include <drizzled/internal/m_string.h>
 #include <drizzled/item/int.h>
-#include "drizzled/internal/m_string.h"
 
 namespace drizzled
 {

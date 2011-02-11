@@ -19,9 +19,12 @@
  */
 
 #include "config.h"
-#include <drizzled/plugin/function.h>
-#include <drizzled/item/func.h>
+
+#include <drizzled/charset_info.h>
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/item/func.h>
+#include <drizzled/plugin/function.h>
+
 #include <uuid/uuid.h>
 
 #define UUID_LENGTH (8+1+4+1+4+1+4+1+12)

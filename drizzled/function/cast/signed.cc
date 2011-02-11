@@ -20,8 +20,10 @@
 
 #include "config.h"
 
-#include "drizzled/function/cast/signed.h"
-#include "drizzled/error.h"
+#include <drizzled/charset_info.h>
+#include <drizzled/error.h>
+#include <drizzled/function/cast/signed.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled {
 namespace function {
