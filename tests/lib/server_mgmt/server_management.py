@@ -150,12 +150,16 @@ class serverManager:
                                              , env=working_environ
                                              , stdout=error_log
                                              , stderr=error_log
+                                             , close_fds=True
                                              )
             server_subproc.wait()
             server_retcode = server_subproc.returncode
         else: 
             # This is a bit hackish - need to see if there is a cleaner
             # way of handling this
+            # It is annoying that we have to say stdout + stderr = None
+            # We might need to further manipulate things so that we 
+            # have a log
             server_subproc = subprocess.Popen( start_cmd
                                              , shell=True
                                              , env = working_environ
@@ -164,6 +168,7 @@ class serverManager:
                                              , stderr=None
                                              , close_fds=True
                                              )
+        
             server_retcode = 0
         #print server_subproc.pid
         timer = float(0)
