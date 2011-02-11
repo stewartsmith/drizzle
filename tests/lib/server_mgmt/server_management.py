@@ -39,6 +39,9 @@ class serverManager:
     def __init__(self, system_manager, variables):
         self.skip_keys = [ 'ld_lib_paths'
                          , 'system_manager'
+                         , 'logging'
+                         , 'gdb'
+                         , 'code_tree'
                          ]
         self.debug = variables['debug']
         self.verbose = variables['verbose']
@@ -47,12 +50,13 @@ class serverManager:
         self.no_secure_file_priv = variables['nosecurefilepriv']
         self.system_manager = system_manager
         self.logging = system_manager.logging
+        self.gdb  = self.system_manager.gdb
         self.code_tree = system_manager.code_tree
         self.servers = {}
         # We track this
         self.ld_lib_paths = system_manager.ld_lib_paths
         self.mutex = thread.allocate_lock()
-        self.timer_increment = .25
+        self.timer_increment = .5
 
         if self.debug:
             self.logging.debug_class(self)
@@ -139,12 +143,28 @@ class serverManager:
         # we don't know the server is running (still starting up)
         # so we give it a few minutes
         self.tried_start = 1
-        server_subproc = subprocess.Popen( start_cmd
-                                         , shell=True
-                                         , env=working_environ
-                                         )
-        server_subproc.wait()
-        server_retcode = server_subproc.returncode
+        error_log = open(server.error_log,'w')
+        if not self.gdb:
+            server_subproc = subprocess.Popen( start_cmd
+                                             , shell=True
+                                             , env=working_environ
+                                             , stdout=error_log
+                                             , stderr=error_log
+                                             )
+            server_subproc.wait()
+            server_retcode = server_subproc.returncode
+        else: 
+            # This is a bit hackish - need to see if there is a cleaner
+            # way of handling this
+            server_subproc = subprocess.Popen( start_cmd
+                                             , shell=True
+                                             , env = working_environ
+                                             , stdin=None
+                                             , stdout=None
+                                             , stderr=None
+                                             , close_fds=True
+                                             )
+            server_retcode = 0
         #print server_subproc.pid
         timer = float(0)
         timeout = float(server.server_start_timeout)
