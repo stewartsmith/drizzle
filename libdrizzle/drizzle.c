@@ -92,12 +92,13 @@ drizzle_st *drizzle_create(drizzle_st *drizzle)
   WSADATA wsaData;
   if ( WSAStartup( MAKEWORD(2,2), &wsaData ) != 0 )
     printf("Error at WSAStartup()\n");
-#endif
+#else
   struct sigaction act;
   memset(&act, 0, sizeof(act));
 
   act.sa_handler = SIG_IGN;
   sigaction(SIGPIPE, &act, NULL);
+#endif
 
   if (drizzle == NULL)
   {
@@ -426,7 +427,7 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
 
   if (drizzle->pfds_size < drizzle->con_count)
   {
-    pfds= realloc(drizzle->pfds, drizzle->con_count * sizeof(struct pollfd));
+    pfds= (pollfd *)realloc(drizzle->pfds, drizzle->con_count * sizeof(pollfd));
     if (pfds == NULL)
     {
       drizzle_set_error(drizzle, "drizzle_con_wait", "realloc");

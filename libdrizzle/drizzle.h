@@ -47,6 +47,8 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
+# define WIN32_LEAN_AND_MEAN
+# include <Windows.h>
 # include <winsock2.h>
 # include <ws2tcpip.h>
 
@@ -61,6 +63,9 @@ struct sockaddr_un
   short int sun_family;
   char sun_path[108];
 };
+
+# define poll WSAPoll
+//# define pollfd WSAPOLLFD
 
 #if defined(__GNUC__)
 # include <stdbool.h>
@@ -78,11 +83,11 @@ typedef _Bool bool;
 # include <arpa/inet.h>
 # include <sys/un.h>
 # include <netdb.h>
+# include <poll.h>
 #endif
 
 #include <assert.h>
 #include <errno.h>
-#include <poll.h>
 
 #include <libdrizzle/visibility.h>
 #include <libdrizzle/constants.h>

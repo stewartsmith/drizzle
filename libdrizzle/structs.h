@@ -43,8 +43,7 @@
 #define __DRIZZLE_STRUCTS_H
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+
 #ifndef NI_MAXHOST
 # define NI_MAXHOST 1025
 #endif
