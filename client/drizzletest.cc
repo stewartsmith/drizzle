@@ -6759,7 +6759,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   word_states=make_new_set(&sets);    /* Start of new word */
   start_states=make_new_set(&sets);    /* This is first state */
   vector<FOLLOWS> follow(states + 2);
-  FOLLOWS *follow_ptr= follow.data() + 1;
+  FOLLOWS *follow_ptr= &follow[1];
   /* Init follow_ptr[] */
   for (i=0, states=1; i < count; i++)
   {
@@ -6844,7 +6844,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
     for (i= UINT32_MAX; (i= set->get_next_bit(i)) ;)
     {
       if (!follow[i].chr && !default_state)
-        default_state= find_found(found_set.data(), set->table_offset, set->found_offset+1);
+        default_state= find_found(&found_set.front(), set->table_offset, set->found_offset+1);
     }
     sets.set[used_sets].copy_bits(set);    /* Save set for changes */
     if (!default_state)
@@ -6926,7 +6926,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
           }
           if (bits_set == 1)
           {
-            set->next[chr] = find_found(found_set.data(), new_set->table_offset, new_set->found_offset);
+            set->next[chr] = find_found(&found_set.front(), new_set->table_offset, new_set->found_offset);
             sets.free_last_set();
           }
           else
