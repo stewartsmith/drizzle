@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="alloca.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\libdrizzle\column.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -122,9 +119,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="alloca.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\libdrizzle\column.c">
       <Filter>Source Files</Filter>
     </ClCompile>

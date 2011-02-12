@@ -88,7 +88,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="alloca.h" />
     <ClInclude Include="..\libdrizzle\column.h" />
     <ClInclude Include="..\libdrizzle\column_client.h" />
     <ClInclude Include="..\libdrizzle\column_server.h" />
@@ -125,7 +124,6 @@
     <ClInclude Include="..\libdrizzle\visibility.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="alloca.c" />
     <ClCompile Include="..\libdrizzle\column.c" />
     <ClCompile Include="..\libdrizzle\command.c" />
     <ClCompile Include="..\libdrizzle\conn.c" />
