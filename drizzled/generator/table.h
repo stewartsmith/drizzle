@@ -21,10 +21,12 @@
 #ifndef DRIZZLED_GENERATOR_TABLE_H
 #define DRIZZLED_GENERATOR_TABLE_H
 
-#include "drizzled/session.h"
 #include "drizzled/plugin/storage_engine.h"
 
 namespace drizzled {
+
+class Session;
+
 namespace generator {
 
 class Table
