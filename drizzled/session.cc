@@ -49,6 +49,14 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
+#include <drizzled/select_to_file.h>
+#include <drizzled/select_export.h>
+#include <drizzled/select_dump.h>
+#include <drizzled/select_subselect.h>
+#include <drizzled/select_singlerow_subselect.h>
+#include <drizzled/select_max_min_finder_subselect.h>
+#include <drizzled/select_exists_subselect.h>
+#include <drizzled/tmp_table_param.h>
 
 #include "drizzled/identifier.h"
 

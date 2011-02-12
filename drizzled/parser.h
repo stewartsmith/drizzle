@@ -107,6 +107,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
 #include "drizzled/internal/m_string.h"
+#include <drizzled/select_export.h>
+#include <drizzled/select_dump.h>
 
 #include "drizzled/item/boolean.h"
 

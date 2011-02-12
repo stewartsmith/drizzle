@@ -22,8 +22,8 @@
 #ifndef DRIZZLED_PLUGIN_SCHEDULER_H
 #define DRIZZLED_PLUGIN_SCHEDULER_H
 
-#include "drizzled/session.h"
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/session.h"
 
 #include <string>
 #include <vector>

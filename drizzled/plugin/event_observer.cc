@@ -430,6 +430,11 @@ namespace plugin
     return EventData::callEventObservers();
   }
 
+  bool SessionEventData::hasEvents(Session &in_session)
+  {
+    return (in_session.getSessionObservers() != NULL);
+  }
+
   //--------
   bool SchemaEventData::callEventObservers()
   {
@@ -449,6 +454,11 @@ namespace plugin
     observerList= table.getMutableShare()->getTableObservers();
 
     return EventData::callEventObservers();
+  }
+
+  bool TableEventData::hasEvents(Table &in_table)
+  {
+    return (in_table.getMutableShare()->getTableObservers() != NULL);
   }
 
   /*==========================================================*/

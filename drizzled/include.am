@@ -799,6 +799,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/refresh_version.cc \
 			   drizzled/replication_services.cc \
 			   drizzled/resource_context.cc \
+			   drizzled/select_dumpvar.cc \
 			   drizzled/session.cc \
 			   drizzled/session/cache.cc \
 			   drizzled/session/state.cc \

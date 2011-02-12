@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
@@ -26,6 +27,7 @@
 #include <drizzled/message.h>
 #include <drizzled/identifier.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/select_create.h>
 
 #include <iostream>
 

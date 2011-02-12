@@ -30,6 +30,7 @@
 #include <drizzled/optimizer/position.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_select.h>
+#include <drizzled/tmp_table_param.h>
 #include <bitset>
 
 namespace drizzled

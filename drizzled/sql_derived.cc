@@ -18,7 +18,9 @@
   These were introduced by Sinisa <sinisa@mysql.com>
 */
 #include "config.h"
+
 #include "drizzled/sql_select.h"
+#include <drizzled/select_union.h>
 
 namespace drizzled
 {

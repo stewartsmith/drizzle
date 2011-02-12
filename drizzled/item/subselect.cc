@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <limits.h>
 
+#include <drizzled/session.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/cache.h>
@@ -40,6 +41,10 @@
 #include <drizzled/item/direct_ref.h>
 #include <drizzled/join.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/select_singlerow_subselect.h>
+#include <drizzled/select_max_min_finder_subselect.h>
+#include <drizzled/select_exists_subselect.h>
+#include <drizzled/select_union.h>
 
 namespace drizzled
 {

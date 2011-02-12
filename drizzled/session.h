@@ -69,6 +69,12 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/make_shared.hpp>
 
+#include <drizzled/table_ident.h>
+#include <drizzled/user_var_entry.h>
+#include <drizzled/unique.h>
+#include <drizzled/var.h>
+#include <drizzled/select_dumpvar.h>
+
 #include <drizzled/lex_column.h>
 #include "drizzled/sql_lex.h"
 
@@ -1661,24 +1667,6 @@ class Join;
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
 
-} /* namespace drizzled */
-
-/** @TODO why is this in the middle of the file */
-#include <drizzled/select_to_file.h>
-#include <drizzled/select_export.h>
-#include <drizzled/select_dump.h>
-#include <drizzled/select_insert.h>
-#include <drizzled/select_create.h>
-#include <drizzled/tmp_table_param.h>
-#include <drizzled/select_union.h>
-#include <drizzled/select_subselect.h>
-#include <drizzled/select_singlerow_subselect.h>
-#include <drizzled/select_max_min_finder_subselect.h>
-#include <drizzled/select_exists_subselect.h>
-
-namespace drizzled
-{
-
 /**
  * A structure used to describe sort information
  * for a field or item used in ORDER BY.
@@ -1707,14 +1695,6 @@ public:
 };
 
 } /* namespace drizzled */
-
-/** @TODO why is this in the middle of the file */
-
-#include <drizzled/table_ident.h>
-#include <drizzled/user_var_entry.h>
-#include <drizzled/unique.h>
-#include <drizzled/var.h>
-#include <drizzled/select_dumpvar.h>
 
 namespace drizzled
 {

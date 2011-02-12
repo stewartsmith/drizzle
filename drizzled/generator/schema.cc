@@ -20,7 +20,8 @@
 
 #include "config.h"
 
-#include "drizzled/generator.h"
+#include <drizzled/generator.h>
+#include <drizzled/session.h>
 
 using namespace std;
 

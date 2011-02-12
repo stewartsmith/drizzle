@@ -27,6 +27,7 @@ namespace drizzled
 {
 
 class Join;
+class Select_Lex_Unit;
 
 class select_result :public memory::SqlAlloc {
 protected:
