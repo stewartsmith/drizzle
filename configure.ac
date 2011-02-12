@@ -60,8 +60,6 @@ AS_IF([test "x$GPERF" = "x"],
 # libexecinfo provides backtrace_symbols on FreeBSD
 AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
 
-PANDORA_RUN_CPPLINT
-
 PANDORA_REQUIRE_LIBPROTOBUF
 PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
 PANDORA_REQUIRE_PROTOC

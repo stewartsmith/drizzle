@@ -37,12 +37,11 @@
 
 #include "config.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <iostream>
 
 #include <libdrizzle/drizzle_client.h>
 
-#define BUFFER_CHUNK 8192
+static const uint32_t BUFFER_CHUNK= 8192;
 
 int main(int argc, char *argv[])
 {
@@ -50,13 +49,13 @@ int main(int argc, char *argv[])
 
   if (argc != 2)
   {
-    printf("Usage: %s <password to hash>\n", argv[0]);
+    std::cerr << "Usage: " << argv[0] << " <password to hash>" << std::endl;
     return 1;
   }
 
   drizzle_mysql_password_hash(hashed_password, argv[1], strlen(argv[1]));
 
-  printf("%s\n", hashed_password);
+  std::cout << hashed_password << std::endl;
 
   return 0;
 }

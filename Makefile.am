@@ -52,13 +52,9 @@ EXTRA_DIST= \
 	    config/config.rpath \
 	    config/drizzle.ver \
 	    config/link-warning.h \
-	    config/make-lint.py \
 	    config/pandora_vc_revinfo \
 	    config/pre_hook.sh \
 	    config/uncrustify.cfg \
-	    extra/clean_source.sh \
-	    extra/cpplint.py \
-	    extra/run_cpplint.sh \
 	    po/Makefile.in.in \
 	    ${top_srcdir}/m4/pandora*m4
 
@@ -140,7 +136,6 @@ clean-local:
 	find . -name '*.gcno' | xargs rm -f 
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
-include config/lint-source.am
 include config/lcov.am
 
 include docs/include.am
@@ -150,7 +145,6 @@ include drizzled/internal/include.am
 include drizzled/algorithm/include.am
 include drizzled/util/include.am
 include client/include.am
-include extra/include.am
 include support-files/include.am
 include tests/include.am
 include unittests/include.am
