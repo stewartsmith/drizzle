@@ -686,90 +686,90 @@ inline static char my_toprint(char c)
   return (c | 64);
 }
 
-inline static char my_toupper(const charset_info_st *s, char c)
+inline static char my_toupper(const charset_info_st *s, unsigned char c)
 {
-  return (char)(s->to_upper[(unsigned char)c]);
+  return s->to_upper[c];
 }
 
-inline static char my_tolower(const charset_info_st *s, char c)
+inline static char my_tolower(const charset_info_st *s, unsigned char c)
 {
-  return (char)(s->to_lower[(unsigned char)c]);
+  return s->to_lower[c];
 }
 
-inline static bool my_isalpha(const charset_info_st *s, char c)
+inline static bool my_isalpha(const charset_info_st *s, unsigned char c)
 {
-  return ((s->ctype+1)[(unsigned char)c] & (_MY_U | _MY_L));
+  return (s->ctype+1)[c] & (_MY_U | _MY_L);
 }
 
-inline static bool my_isupper(const charset_info_st *s, char c)
+inline static bool my_isupper(const charset_info_st *s, unsigned char c)
 {
-  return ((s->ctype+1)[(unsigned char)c] & _MY_U);
+  return (s->ctype+1)[c] & _MY_U;
 }
 
-inline static bool my_islower(const charset_info_st *s, char c)
+inline static bool my_islower(const charset_info_st *s, unsigned char c)
 {
-  return ((s->ctype+1)[(unsigned char)c] & _MY_L);
+  return (s->ctype+1)[c] & _MY_L;
 }
 
-inline static bool my_isdigit(const charset_info_st *s, char c)
+inline static bool my_isdigit(const charset_info_st *s, unsigned char c)
 {
-  return ((s->ctype+1)[(unsigned char)c] & _MY_NMR);
+  return (s->ctype+1)[c] & _MY_NMR;
 }
 
-inline static bool my_isxdigit(const charset_info_st *s, char c)
+inline static bool my_isxdigit(const charset_info_st *s, unsigned char c)
 {
-  return ((s->ctype+1)[(unsigned char)c] & _MY_X);
+  return (s->ctype+1)[c] & _MY_X;
 }
 
-inline static bool my_isalnum(const charset_info_st *s, char c) 
+inline static bool my_isalnum(const charset_info_st *s, unsigned char c) 
 {
-  return ((s->ctype+1)[(unsigned char)c] & (_MY_U | _MY_L | _MY_NMR));
+  return (s->ctype+1)[c] & (_MY_U | _MY_L | _MY_NMR);
 }
 
-inline static bool my_isspace(const charset_info_st *s, char c)
+inline static bool my_isspace(const charset_info_st *s, unsigned char c)
 {
-  return ((s->ctype+1)[(unsigned char)c] & _MY_SPC);
+  return (s->ctype+1)[c] & _MY_SPC;
 }
 
-inline static bool my_ispunct(const charset_info_st *s, char c)  
+inline static bool my_ispunct(const charset_info_st *s, unsigned char c)  
 {
-  return ((s->ctype+1)[(unsigned char)c] & _MY_PNT);
+  return (s->ctype+1)[c] & _MY_PNT;
 }
 
-inline static bool my_isprint(const charset_info_st *s, char c)  
+inline static bool my_isprint(const charset_info_st *s, unsigned char c)  
 {
-  return ((s->ctype+1)[(unsigned char)c] & (_MY_PNT | _MY_U | _MY_L | _MY_NMR | _MY_B));
+  return (s->ctype+1)[c] & (_MY_PNT | _MY_U | _MY_L | _MY_NMR | _MY_B);
 }
 
-inline static bool my_isgraph(const charset_info_st *s, char c)
+inline static bool my_isgraph(const charset_info_st *s, unsigned char c)
 {
-  return ((s->ctype+1)[(unsigned char)c] & (_MY_PNT | _MY_U | _MY_L | _MY_NMR));
+  return (s->ctype+1)[c] & (_MY_PNT | _MY_U | _MY_L | _MY_NMR);
 }
 
-inline static bool my_iscntrl(const charset_info_st *s, char c)  
+inline static bool my_iscntrl(const charset_info_st *s, unsigned char c)  
 {
-  return ((s->ctype+1)[(unsigned char)c] & _MY_CTR);
+  return (s->ctype+1)[c] & _MY_CTR;
 }
 
 /* Some macros that should be cleaned up a little */
 inline static bool my_isvar(const charset_info_st *s, char c)
 {
-  return (my_isalnum(s,c) || (c) == '_');
+  return my_isalnum(s,c) || (c) == '_';
 }
 
 inline static bool my_isvar_start(const charset_info_st *s, char c)
 {
-  return (my_isalpha(s,c) || (c) == '_');
+  return my_isalpha(s,c) || (c) == '_';
 }
 
 inline static bool my_binary_compare(const charset_info_st *s)
 {
-  return (s->state  & MY_CS_BINSORT);
+  return s->state  & MY_CS_BINSORT;
 }
 
 inline static bool use_strnxfrm(const charset_info_st *s)
 {
-  return (s->state & MY_CS_STRNXFRM);
+  return s->state & MY_CS_STRNXFRM;
 }
 
 inline static size_t my_strnxfrm(const charset_info_st *cs, 
@@ -821,33 +821,33 @@ template <typename CHAR_T>
 inline static size_t my_charpos(const charset_info_st *cs, 
                                 const CHAR_T *b, const CHAR_T* e, size_t num)
 {
-  return (cs->cset->charpos(cs, (const char*) b, (const char *)e, num));
+  return cs->cset->charpos(cs, reinterpret_cast<const char*>(b), reinterpret_cast<const char*>(e), num);
 }
 
 inline static bool use_mb(const charset_info_st *cs)
 {
-  return (cs->cset->ismbchar != NULL);
+  return cs->cset->ismbchar != NULL;
 }
 
 inline static unsigned int  my_ismbchar(const charset_info_st *cs, const char *a, const char *b)
 {
-  return (cs->cset->ismbchar(cs, a, b));
+  return cs->cset->ismbchar(cs, a, b);
 }
 
 inline static unsigned int my_mbcharlen(const charset_info_st *cs, uint32_t c)
 {
-  return (cs->cset->mbcharlen(cs, c));
+  return cs->cset->mbcharlen(cs, c);
 }
 
 
 inline static size_t my_caseup_str(const charset_info_st *cs, char *src)
 {
-  return (cs->cset->caseup_str(cs, src));
+  return cs->cset->caseup_str(cs, src);
 }
 
 inline static size_t my_casedn_str(const charset_info_st *cs, char *src)
 {
-  return (cs->cset->casedn_str(cs, src));
+  return cs->cset->casedn_str(cs, src);
 }
 
 inline static long my_strntol(const charset_info_st *cs, 
