@@ -758,6 +758,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/optimizer/access_method_factory.cc \
 			   drizzled/optimizer/explain_plan.cc \
 			   drizzled/optimizer/key_field.cc \
+			   drizzled/optimizer/position.cc \
 			   drizzled/optimizer/quick_group_min_max_select.cc \
 			   drizzled/optimizer/quick_index_merge_select.cc \
 			   drizzled/optimizer/quick_range.cc \

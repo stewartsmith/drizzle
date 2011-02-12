@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_OPTIMIZER_POSITION_H
 #define DRIZZLED_OPTIMIZER_POSITION_H
 
-#include <drizzled/session.h>
 #include <drizzled/join_table.h>
 
 namespace drizzled
@@ -132,14 +131,7 @@ public:
     return (cmp_table != table->table);
   }
 
-  bool examinePosition(table_map found_ref)
-  {
-    if (table->table->map & found_ref)
-    {
-      return true;
-    }
-    return false;
-  }
+  bool examinePosition(table_map found_ref);
 
   KeyUse *getKeyUse()
   {
