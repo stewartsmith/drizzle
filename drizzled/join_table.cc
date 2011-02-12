@@ -19,9 +19,13 @@
  */
 
 #include "config.h"
-#include <drizzled/join_table.h>
+
 #include <drizzled/field/blob.h>
+#include <drizzled/join_table.h>
+#include <drizzled/sql_lex.h>
 #include <drizzled/sql_select.h>
+#include <drizzled/table.h>
+#include <drizzled/util/test.h>
 
 namespace drizzled
 {

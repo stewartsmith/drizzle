@@ -59,6 +59,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/plugin/storage_engine.h"
+#include <drizzled/session.h>
 
 #include <drizzled/debug.h>
 

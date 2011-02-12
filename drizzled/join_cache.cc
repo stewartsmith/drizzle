@@ -28,10 +28,13 @@
  */
 
 #include "config.h"
+
 #include "drizzled/sql_select.h" /* include join.h */
 #include "drizzled/field/blob.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/internal/my_sys.h"
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 #include <algorithm>
 

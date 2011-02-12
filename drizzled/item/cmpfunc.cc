@@ -22,6 +22,7 @@
 */
 
 #include "config.h"
+
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/temporal.h"
@@ -32,6 +33,9 @@
 #include "drizzled/check_stack_overrun.h"
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/my_sys.h"
+#include <drizzled/item/subselect.h>
+#include <drizzled/session.h>
+
 #include <math.h>
 #include <algorithm>
 

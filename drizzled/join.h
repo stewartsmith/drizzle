@@ -28,7 +28,6 @@
 #define DRIZZLED_JOIN_H
 
 #include <drizzled/optimizer/position.h>
-#include <drizzled/session.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/tmp_table_param.h>
 #include <bitset>
@@ -36,7 +35,9 @@
 namespace drizzled
 {
 
+class DrizzleLock;
 class Session;
+class SortField;
 
 class Join :public memory::SqlAlloc
 {

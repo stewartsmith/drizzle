@@ -25,6 +25,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_union.h>
 #include <drizzled/select_union.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
 
 namespace drizzled
 {
