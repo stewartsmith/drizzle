@@ -52,10 +52,10 @@ public:
         continue;
       }
 
-      bool is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
+      schema= plugin::StorageEngine::getSchemaDefinition(schema_identifier);
       schema_iterator++;
 
-      if (is_schema_parsed)
+      if (schema)
         return schema;
     }
 

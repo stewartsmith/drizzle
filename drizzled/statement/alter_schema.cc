@@ -51,7 +51,7 @@ bool statement::AlterSchema::execute()
   }
 
   identifier::Schema identifier(db->str);
-  if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
+  if (not (old_definition= plugin::StorageEngine::getSchemaDefinition(identifier)))
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 
     return true;

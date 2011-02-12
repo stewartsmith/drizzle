@@ -83,41 +83,42 @@ public:
 /*
   Return value is "if parsed"
 */
-bool StorageEngine::getSchemaDefinition(const drizzled::identifier::Table &identifier, message::schema::shared_ptr &proto)
+message::schema::shared_ptr StorageEngine::getSchemaDefinition(const drizzled::identifier::Table &identifier)
 {
-  return StorageEngine::getSchemaDefinition(identifier, proto);
+  return StorageEngine::getSchemaDefinition(identifier);
 }
 
-bool StorageEngine::getSchemaDefinition(const identifier::Schema &identifier, message::schema::shared_ptr &proto)
+message::schema::shared_ptr StorageEngine::getSchemaDefinition(const identifier::Schema &identifier)
 {
+  message::schema::shared_ptr proto;
+
   EngineVector::iterator iter=
     std::find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
                  StorageEngineGetSchemaDefinition(identifier, proto));
 
   if (iter != StorageEngine::getSchemaEngines().end())
   {
-    return true;
+    return proto;
   }
 
-  return false;
+  return message::schema::shared_ptr();
 }
 
 bool StorageEngine::doesSchemaExist(const identifier::Schema &identifier)
 {
   message::schema::shared_ptr proto;
 
-  return StorageEngine::getSchemaDefinition(identifier, proto);
+  return StorageEngine::getSchemaDefinition(identifier);
 }
 
 
 const CHARSET_INFO *StorageEngine::getSchemaCollation(const identifier::Schema &identifier)
 {
   message::schema::shared_ptr schmema_proto;
-  bool found;
 
-  found= StorageEngine::getSchemaDefinition(identifier, schmema_proto);
+  schmema_proto= StorageEngine::getSchemaDefinition(identifier);
 
-  if (found && schmema_proto->has_collation())
+  if (schmema_proto && schmema_proto->has_collation())
   {
     const std::string buffer= schmema_proto->collation();
     const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
