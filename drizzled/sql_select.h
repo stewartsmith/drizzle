@@ -21,7 +21,6 @@
 #define DRIZZLED_SQL_SELECT_H
 
 #include "drizzled/cached_item.h"
-#include "drizzled/session.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/item/null.h"
 #include <drizzled/enum_nested_loop_state.h>
@@ -37,7 +36,10 @@
 namespace drizzled
 {
 
+class Item_func;
+class Select_Lex_Unit;
 class select_result;
+class st_dynamic_array;
 
 /**
  * @file API and Classes to use when handling where clause

@@ -28,6 +28,7 @@
 #define DRIZZLED_JOIN_H
 
 #include <drizzled/optimizer/position.h>
+#include <drizzled/session.h>
 #include <drizzled/sql_select.h>
 #include <bitset>
 

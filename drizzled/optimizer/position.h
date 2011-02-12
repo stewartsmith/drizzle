@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_OPTIMIZER_POSITION_H
 #define DRIZZLED_OPTIMIZER_POSITION_H
 
-#include "drizzled/join_table.h"
+#include <drizzled/session.h>
+#include <drizzled/join_table.h>
 
 namespace drizzled
 {
