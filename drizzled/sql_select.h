@@ -30,6 +30,7 @@
 #include "drizzled/join_cache.h"
 #include "drizzled/join_table.h"
 #include "drizzled/records.h"
+#include "drizzled/stored_key.h"
 
 #include <vector>
 
@@ -274,15 +275,6 @@ bool only_eq_ref_tables(Join *join, Order *order, table_map tables);
 bool create_ref_for_key(Join *join, JoinTable *j, 
                         optimizer::KeyUse *org_keyuse, 
                         table_map used_tables);
-
-} /* namespace drizzled */
-
-/** @TODO why is this in the middle of the file??? */
-
-#include "drizzled/stored_key.h"
-
-namespace drizzled
-{
 
 bool cp_buffer_from_ref(Session *session, table_reference_st *ref);
 int safe_index_read(JoinTable *tab);
