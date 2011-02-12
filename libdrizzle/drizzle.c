@@ -427,7 +427,7 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
 
   if (drizzle->pfds_size < drizzle->con_count)
   {
-    pfds= (pollfd *)realloc(drizzle->pfds, drizzle->con_count * sizeof(pollfd));
+    pfds= (struct pollfd *)realloc(drizzle->pfds, drizzle->con_count * sizeof(struct pollfd));
     if (pfds == NULL)
     {
       drizzle_set_error(drizzle, "drizzle_con_wait", "realloc");
