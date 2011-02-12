@@ -75,6 +75,7 @@ extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
 extern char *default_tz_name;
 extern const char *opt_scheduler;
+extern size_t transaction_message_threshold;
 
 uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 
@@ -314,6 +315,16 @@ public:
   SHOW_TYPE show_type() { return SHOW_SIZE; }
   unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
   { return (unsigned char*) value; }
+};
+
+class DRIZZLED_API sys_var_size_t_ptr_readonly :public sys_var_size_t_ptr
+{
+public:
+  sys_var_size_t_ptr_readonly(const char *name_arg,
+                            size_t *value_arg)
+    :sys_var_size_t_ptr(name_arg, value_arg)
+  {}
+  bool is_readonly() const { return 1; }
 };
 
 class DRIZZLED_API sys_var_bool_ptr :public sys_var

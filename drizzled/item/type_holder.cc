@@ -207,6 +207,10 @@ uint32_t Item_type_holder::display_length(Item *item)
 
   switch (item->field_type())
   {
+  case DRIZZLE_TYPE_TIME:
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
@@ -214,7 +218,7 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_DECIMAL:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
-    return 4;
+    return item->max_length;
   case DRIZZLE_TYPE_LONG:
     return MY_INT32_NUM_DECIMAL_DIGITS;
   case DRIZZLE_TYPE_DOUBLE:
@@ -223,10 +227,9 @@ uint32_t Item_type_holder::display_length(Item *item)
     return 0;
   case DRIZZLE_TYPE_LONGLONG:
     return 20;
-  default:
-    assert(0); // we should never go there
-    return 0;
   }
+  assert(0);
+  abort();
 }
 
 
