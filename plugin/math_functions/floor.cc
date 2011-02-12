@@ -21,6 +21,8 @@
 #include <math.h>
 #include "floor.h"
 
+#include <drizzled/type/decimal.h>
+
 namespace drizzled
 {
 

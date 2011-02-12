@@ -20,6 +20,8 @@
  */
 
 #include "config.h"
+
+#include <drizzled/plugin.h>
 #include "plugin/string_functions/functions.h"
 
 using namespace drizzled;

@@ -20,14 +20,16 @@
   Functions for easy reading of records, possible through a cache
 */
 #include "config.h"
-#include "drizzled/error.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
-#include "drizzled/records.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
+
 #include "drizzled/drizzled.h"
+#include "drizzled/error.h"
+#include "drizzled/internal/iocache.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/optimizer/range.h"
+#include "drizzled/plugin/storage_engine.h"
+#include "drizzled/records.h"
+#include "drizzled/session.h"
+#include "drizzled/table.h"
 
 namespace drizzled
 {

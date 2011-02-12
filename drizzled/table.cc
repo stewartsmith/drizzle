@@ -46,6 +46,7 @@
 #include "drizzled/charset.h"
 #include "drizzled/internal/m_string.h"
 #include "plugin/myisam/myisam.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
@@ -53,6 +54,8 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
+
+#include <drizzled/refresh_version.h>
 
 #include "drizzled/table/singular.h"
 
@@ -1749,6 +1752,24 @@ void Table::filesort_free_buffers(bool full)
     sort.addon_buf=0;
     sort.addon_field=0;
   }
+}
+
+/*
+  Is this instance of the table should be reopen or represents a name-lock?
+*/
+bool Table::needs_reopen_or_name_lock() const
+{ 
+  return getShare()->getVersion() != refresh_version;
+}
+
+uint32_t Table::index_flags(uint32_t idx) const
+{
+  return getShare()->getEngine()->index_flags(getShare()->getKeyInfo(idx).algorithm);
+}
+
+void Table::print_error(int error, myf errflag) const
+{
+  getShare()->getEngine()->print_error(error, errflag, *this);
 }
 
 } /* namespace drizzled */

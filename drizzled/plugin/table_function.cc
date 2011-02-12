@@ -19,12 +19,13 @@
 
 #include "config.h"
 
-#include <drizzled/plugin/table_function.h>
-#include <drizzled/table_function_container.h>
+#include <drizzled/current_session.h>
 #include <drizzled/gettext.h>
-#include "drizzled/global_charset_info.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
+#include <drizzled/global_charset_info.h>
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/session.h>
+#include <drizzled/show.h>
+#include <drizzled/table_function_container.h>
 
 #include <vector>
 

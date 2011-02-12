@@ -98,7 +98,7 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   null_pack_length= (null_count + 7)/8;
   getMutableShare()->setRecordLength(record_length + null_pack_length);
   getMutableShare()->rec_buff_length= ALIGN_SIZE(getMutableShare()->getRecordLength() + 1);
-  record[0]= (unsigned char*)session->alloc(getMutableShare()->rec_buff_length);
+  record[0]= (unsigned char*)session->getMemRoot()->allocate(getMutableShare()->rec_buff_length);
   if (not getInsertRecord())
   {
     throw "Memory allocation failure";

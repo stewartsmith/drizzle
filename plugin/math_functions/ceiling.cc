@@ -20,6 +20,7 @@
 #include "config.h"
 #include <math.h>
 #include "ceiling.h"
+#include <drizzled/type/decimal.h>
 
 namespace drizzled
 {

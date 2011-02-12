@@ -21,7 +21,9 @@
 #ifndef PLUGIN_UTILITY_FUNCTIONS_CATALOG_H
 #define PLUGIN_UTILITY_FUNCTIONS_CATALOG_H
 
+#include <drizzled/charset_info.h>
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/global_charset_info.h>
 
 namespace drizzled
 {

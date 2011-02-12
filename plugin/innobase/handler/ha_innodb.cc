@@ -466,7 +466,7 @@ public:
   UNIV_INTERN int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
   UNIV_INTERN int doDropTable(Session &session, const identifier::Table &identifier);
 
-  UNIV_INTERN virtual bool get_error_message(int error, String *buf);
+  UNIV_INTERN virtual bool get_error_message(int error, String *buf) const;
 
   UNIV_INTERN uint32_t max_supported_keys() const;
   UNIV_INTERN uint32_t max_supported_key_length() const;
@@ -7759,7 +7759,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
                               tmp_foreign_fields, tmp_referenced_fields);
 
     ForeignKeyInfo *pf_key_info = (ForeignKeyInfo *)
-      session->memdup(&f_key_info, sizeof(ForeignKeyInfo));
+      session->getMemRoot()->duplicate(&f_key_info, sizeof(ForeignKeyInfo));
     f_key_list->push_back(pf_key_info);
     foreign = UT_LIST_GET_NEXT(foreign_list, foreign);
   }
@@ -8703,7 +8703,7 @@ ha_innobase::reset_auto_increment(
 /* See comment in Cursor.cc */
 UNIV_INTERN
 bool
-InnobaseEngine::get_error_message(int, String *buf)
+InnobaseEngine::get_error_message(int, String *buf) const
 {
   trx_t*  trx = check_trx_exists(current_session);
 

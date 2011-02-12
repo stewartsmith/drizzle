@@ -21,6 +21,7 @@
 #include "drizzled/key.h"
 #include "drizzled/field/blob.h"
 #include "drizzled/util/test.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -329,7 +330,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
      idx	Key number
 */
 
-void key_unpack(String *to, Table *table, uint32_t idx)
+void key_unpack(String *to, const Table *table, uint32_t idx)
 {
   KeyPartInfo *key_part,*key_part_end;
   Field *field;

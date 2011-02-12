@@ -36,6 +36,8 @@
 #include <drizzled/algorithm/crc32.h>
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/charset.h"
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
 
 #include <fcntl.h>
 #include <errno.h>

@@ -20,8 +20,10 @@
 #include "config.h"
 
 #include <drizzled/error.h>
-#include <drizzled/item/string.h>
+#include <drizzled/field.h>
 #include <drizzled/item/hex_string.h>
+#include <drizzled/item/string.h>
+#include <drizzled/type/decimal.h>
 
 #include <algorithm>
 
