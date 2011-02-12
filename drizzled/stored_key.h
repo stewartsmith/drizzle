@@ -20,8 +20,15 @@
 #ifndef DRIZZLED_STORED_KEY_H
 #define DRIZZLED_STORED_KEY_H
 
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/copy_field.h>
+
 namespace drizzled
 {
+
+class Field;
+class Session;
+class Item;
 
 /** class to store an field/item as a key struct */
 class StoredKey :public memory::SqlAlloc
@@ -34,11 +41,13 @@ public:
     STORE_KEY_FATAL, 
     STORE_KEY_CONV 
   };
+
 protected:
   Field *to_field;				// Store data here
   unsigned char *null_ptr;
   unsigned char err;
   virtual enum store_key_result copy_inner()=0;
+
 public:
   StoredKey(Session *session,
             Field *field_arg, 
@@ -67,11 +76,11 @@ class store_key_field: public StoredKey
 public:
   store_key_field(Session *session, Field *to_field_arg, unsigned char *ptr,
                   unsigned char *null_ptr_arg,
-		  uint32_t length, Field *from_field, const char *name_arg)
-    :StoredKey(session, to_field_arg,ptr,
-	       null_ptr_arg ? null_ptr_arg : from_field->maybe_null() ? &err
-	       : (unsigned char*) 0, length), field_name(name_arg)
-  {
+                  uint32_t length, Field *from_field, const char *name_arg) :
+    StoredKey(session, to_field_arg,ptr,
+              null_ptr_arg ? null_ptr_arg : from_field->maybe_null() ? &err
+              : (unsigned char*) 0, length), field_name(name_arg)
+    {
     if (to_field)
     {
       copy_field.set(to_field,from_field,0);
@@ -90,8 +99,9 @@ protected:
 
 class store_key_item :public StoredKey
 {
- protected:
+protected:
   Item *item;
+
 public:
   store_key_item(Session *session, Field *to_field_arg, unsigned char *ptr,
                  unsigned char *null_ptr_arg, uint32_t length, Item *item_arg) :
@@ -113,10 +123,11 @@ public:
 class store_key_const_item :public store_key_item
 {
   bool inited;
+
 public:
   store_key_const_item(Session *session, Field *to_field_arg, unsigned char *ptr,
-		       unsigned char *null_ptr_arg, uint32_t length,
-		       Item *item_arg) :
+                       unsigned char *null_ptr_arg, uint32_t length,
+                       Item *item_arg) :
     store_key_item(session, to_field_arg,ptr,
                    null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
                    &err : (unsigned char*) 0, length, item_arg), inited(0)

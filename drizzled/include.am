@@ -64,6 +64,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/common.h \
 			      drizzled/comp_creator.h \
 			      drizzled/constrained_value.h \
+			      drizzled/copy_field.h \
 			      drizzled/copy_info.h \
 			      drizzled/create_field.h \
 			      drizzled/current_session.h \

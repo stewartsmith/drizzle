@@ -22,9 +22,10 @@
  */
 
 #include "config.h"
+
+#include <drizzled/copy_field.h>
 #include "drizzled/session.h"
 #include "drizzled/session/cache.h"
-#include <sys/stat.h>
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/query_id.h"
@@ -64,9 +65,10 @@
 
 #include "drizzled/display.h"
 
-#include <fcntl.h>
 #include <algorithm>
 #include <climits>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/checked_delete.hpp>

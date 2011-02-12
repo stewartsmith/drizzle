@@ -25,24 +25,26 @@
 */
 
 #include "config.h"
+
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
-#include <drizzled/field/str.h>
-#include <drizzled/field/num.h>
+#include <drizzled/copy_field.h>
 #include <drizzled/field/blob.h>
-#include <drizzled/field/enum.h>
-#include <drizzled/field/null.h>
 #include <drizzled/field/date.h>
+#include <drizzled/field/datetime.h>
 #include <drizzled/field/decimal.h>
-#include <drizzled/field/real.h>
 #include <drizzled/field/double.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/field/int32.h>
 #include <drizzled/field/int64.h>
+#include <drizzled/field/null.h>
 #include <drizzled/field/num.h>
-#include <drizzled/field/epoch.h>
-#include <drizzled/field/datetime.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/str.h>
 #include <drizzled/field/varstring.h>
 
 namespace drizzled
