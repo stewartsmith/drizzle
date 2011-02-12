@@ -44,7 +44,6 @@ namespace identifier
 {
 
 extern string drizzle_tmpdir;
-extern pid_t current_pid;
 
 static size_t build_schema_filename(string &path, const string &db)
 {

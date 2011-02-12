@@ -635,6 +635,7 @@ show tables from mysqltest;
 set autocommit=0;
 eval create $temp table t1 (a int not null) engine= $engine_type;
 insert into t1 values(1),(2);
+commit;
 truncate table t1;
 commit;
 truncate table t1;

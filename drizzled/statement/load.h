@@ -40,6 +40,10 @@ public:
   }
 
   bool execute();
+  bool isTransactional()
+  {
+    return true;
+  }
 
   /*
     Pointers to part of LOAD DATA statement that should be rewritten

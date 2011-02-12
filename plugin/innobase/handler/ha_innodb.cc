@@ -523,6 +523,15 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
+  std::string search_string(schema_identifier.getSchemaName());
+
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    set_of_identifiers.push_back(identifier::Table(schema_identifier.getSchemaName(), "SYS_REPLICATION_LOG"));
+  }
+
   for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
        entry_iter != entries.end(); ++entry_iter)
   {
@@ -565,6 +574,12 @@ bool InnobaseEngine::doDoesTableExist(Session &session, const identifier::Table 
   if (session.getMessageCache().doesTableMessageExist(identifier))
     return true;
 
+  std::string search_string(identifier.getPath());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary/sys_replication_log") == 0)
+    return true;
+
   if (access(proto_path.c_str(), F_OK))
   {
     return false;
@@ -582,6 +597,9 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
 
   // First we check the temporary tables.
   if (session.getMessageCache().getTableMessage(identifier, table_proto))
+    return EEXIST;
+
+  if (read_replication_log_table_message(identifier.getTableName().c_str(), &table_proto) == 0)
     return EEXIST;
 
   if (access(proto_path.c_str(), F_OK))
@@ -872,7 +890,7 @@ thd_is_select(
 /*==========*/
   const drizzled::Session *session)  /*!< in: thread handle (Session*) */
 {
-  return(session_sql_command(session) == SQLCOM_SELECT);
+  return(session->getSqlCommand() == SQLCOM_SELECT);
 }
 
 /******************************************************************//**
@@ -943,7 +961,11 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
 
   uint64_t trx_id= message.transaction_context().transaction_id();
   uint32_t seg_id= message.segment_id();
-  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id, seg_id);
+  uint64_t end_timestamp= message.transaction_context().end_timestamp();
+  bool is_end_segment= message.end_segment();
+  trx->log_commit_id= TRUE;
+  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id,
+               end_timestamp, is_end_segment, seg_id);
   (void)error;
 
   delete[] data;
@@ -1054,7 +1076,7 @@ convert_error_code_to_mysql(
     tell it also to MySQL so that MySQL knows to empty the
     cached binlog for this transaction */
 
-    mark_transaction_to_rollback(session, TRUE);
+    session->markTransactionForRollback(TRUE);
 
     return(HA_ERR_LOCK_DEADLOCK);
 
@@ -1063,7 +1085,7 @@ convert_error_code_to_mysql(
     latest SQL statement in a lock wait timeout. Previously, we
     rolled back the whole transaction. */
 
-    mark_transaction_to_rollback(session, (bool)row_rollback_on_timeout);
+    session->markTransactionForRollback((bool)row_rollback_on_timeout);
 
     return(HA_ERR_LOCK_WAIT_TIMEOUT);
 
@@ -1110,7 +1132,7 @@ convert_error_code_to_mysql(
     tell it also to MySQL so that MySQL knows to empty the
     cached binlog for this transaction */
 
-    mark_transaction_to_rollback(session, TRUE);
+    session->markTransactionForRollback(TRUE);
 
     return(HA_ERR_LOCK_TABLE_FULL);
 
@@ -3227,9 +3249,24 @@ ha_innobase::doOpen(const identifier::Table &identifier,
 
   user_session = NULL;
 
-  if (!(share=get_share(identifier.getKeyPath().c_str()))) {
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
 
-    return(1);
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    std::string table_name(identifier.getTableName());
+    boost::algorithm::to_upper(table_name);
+    if (!(share=get_share(table_name.c_str())))
+    {
+      return 1;
+    }
+  }
+  else
+  {
+    if (!(share=get_share(identifier.getKeyPath().c_str())))
+    {
+      return(1);
+    }
   }
 
   /* Create buffers for packing the fields of a record. Why
@@ -3256,7 +3293,16 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   }
 
   /* Get pointer to a table object in InnoDB dictionary cache */
-  ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    std::string table_name(identifier.getTableName());
+    boost::algorithm::to_upper(table_name);
+    ib_table = dict_table_get(table_name.c_str(), TRUE);
+  }
+  else
+  {
+    ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
+  }
   
   if (NULL == ib_table) {
     errmsg_printf(error::ERROR, "Cannot find or open table %s from\n"
@@ -3282,7 +3328,7 @@ ha_innobase::doOpen(const identifier::Table &identifier,
     return(HA_ERR_NO_SUCH_TABLE);
   }
 
-  if (ib_table->ibd_file_missing && !session_tablespace_op(session)) {
+  if (ib_table->ibd_file_missing && ! session->doing_tablespace_operation()) {
     errmsg_printf(error::ERROR, "MySQL is trying to open a table handle but "
         "the .ibd file for\ntable %s does not exist.\n"
         "Have you deleted the .ibd file from the "
@@ -4291,7 +4337,7 @@ ha_innobase::doInsertRecord(
     ut_error;
   }
 
-  sql_command = session_sql_command(user_session);
+  sql_command = user_session->getSqlCommand();
 
   if ((sql_command == SQLCOM_ALTER_TABLE
        || sql_command == SQLCOM_CREATE_INDEX
@@ -4738,7 +4784,7 @@ ha_innobase::doUpdateRecord(
   if (error == DB_SUCCESS
       && getTable()->next_number_field
       && new_row == getTable()->getInsertRecord()
-      && session_sql_command(user_session) == SQLCOM_INSERT
+      && user_session->getSqlCommand() == SQLCOM_INSERT
       && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
     == TRX_DUP_IGNORE)  {
 
@@ -5995,6 +6041,14 @@ InnobaseEngine::doCreateTable(
   const char* stmt;
   size_t stmt_len;
 
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    return HA_WRONG_CREATE_OPTION;
+  }
+
   if (form.getShare()->sizeFields() > 1000) {
     /* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
       but we play safe here */
@@ -6170,7 +6224,7 @@ InnobaseEngine::doCreateTable(
     string generated_create_table;
     const char *query= stmt;
 
-    if (session_sql_command(&session) == SQLCOM_CREATE_TABLE)
+    if (session.getSqlCommand() == SQLCOM_CREATE_TABLE)
     {
       message::transformTableDefinitionToSql(create_proto,
                                              generated_create_table,
@@ -6245,8 +6299,8 @@ InnobaseEngine::doCreateTable(
     does a table copy too. */
 
   if ((create_proto.options().has_auto_increment_value()
-       || session_sql_command(&session) == SQLCOM_ALTER_TABLE
-       || session_sql_command(&session) == SQLCOM_CREATE_INDEX)
+       || session.getSqlCommand() == SQLCOM_ALTER_TABLE
+       || session.getSqlCommand() == SQLCOM_CREATE_INDEX)
       && create_proto.options().auto_increment_value() != 0) {
 
     /* Query was one of :
@@ -6339,7 +6393,7 @@ ha_innobase::delete_all_rows(void)
 
   update_session(getTable()->in_use);
 
-  if (session_sql_command(user_session) != SQLCOM_TRUNCATE) {
+  if (user_session->getSqlCommand() != SQLCOM_TRUNCATE) {
   fallback:
     /* We only handle TRUNCATE TABLE t as a special case.
     DELETE FROM t will have to use ha_innobase::doDeleteRecord(),
@@ -6381,6 +6435,14 @@ InnobaseEngine::doDropTable(
 
   ut_a(identifier.getPath().length() < 1000);
 
+  std::string search_string(identifier.getSchemaName());
+  boost::algorithm::to_lower(search_string);
+
+  if (search_string.compare("data_dictionary") == 0)
+  {
+    return HA_ERR_TABLE_READONLY;
+  }
+
   /* Get the transaction associated with the current session, or create one
     if not yet created */
 
@@ -6398,7 +6460,7 @@ InnobaseEngine::doDropTable(
   /* Drop the table in InnoDB */
 
   error = row_drop_table_for_mysql(identifier.getKeyPath().c_str(), trx,
-                                   session_sql_command(&session)
+                                   session.getSqlCommand()
                                    == SQLCOM_DROP_DB);
 
   session.setXaId(trx->id);
@@ -6426,7 +6488,7 @@ InnobaseEngine::doDropTable(
     if (identifier.getType() == message::Table::TEMPORARY)
     {
       session.getMessageCache().removeTableMessage(identifier);
-      ulint sql_command = session_sql_command(&session);
+      ulint sql_command = session.getSqlCommand();
 
       // If this was the final removal to an alter table then we will need
       // to remove the .dfe that was left behind.
@@ -7069,7 +7131,7 @@ ha_innobase::info(
     n_rows can not be 0 unless the table is empty, set to 1
     instead. The original problem of bug#29507 is actually
     fixed in the server code. */
-    if (session_sql_command(user_session) == SQLCOM_TRUNCATE) {
+    if (user_session->getSqlCommand() == SQLCOM_TRUNCATE) {
 
       n_rows = 1;
 
@@ -8323,7 +8385,7 @@ ha_innobase::store_lock(
   trx = check_trx_exists(session);
 
   assert(EQ_CURRENT_SESSION(session));
-  const uint32_t sql_command = session_sql_command(session);
+  const uint32_t sql_command = session->getSqlCommand();
 
   if (sql_command == SQLCOM_DROP_TABLE) {
 
@@ -8409,7 +8471,7 @@ ha_innobase::store_lock(
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
          && lock_type <= TL_WRITE)
-        && !session_tablespace_op(session)
+        && ! session->doing_tablespace_operation()
         && sql_command != SQLCOM_TRUNCATE
         && sql_command != SQLCOM_CREATE_TABLE) {
 
@@ -8818,7 +8880,7 @@ InnobaseEngine::doStartStatement(
   trx->detailed_error[0]= '\0';
 
   /* Set the isolation level of the transaction. */
-  trx->isolation_level= innobase_map_isolation_level(session_tx_isolation(session));
+  trx->isolation_level= innobase_map_isolation_level(session->getTxIsolation());
 }
 
 void

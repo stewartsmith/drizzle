@@ -44,6 +44,13 @@ public:
   }
 
   bool execute();
+
+  /* we kinda cheat here as START TRANSACTION will start a transaction,
+     so having an autocommit=off implicit start txn doesn't make sense. */
+  bool isTransactional()
+  {
+    return false;
+  }
 };
 
 } /* namespace statement */

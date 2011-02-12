@@ -222,7 +222,6 @@ struct drizzle_system_variables
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
-  size_t transaction_message_threshold;
   uint32_t completion_type;
   /* Determines which non-standard SQL behaviour should be enabled */
   uint32_t sql_mode;
@@ -260,8 +259,6 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
 namespace drizzled
 {
-
-DRIZZLED_API void mark_transaction_to_rollback(Session *session, bool all);
 
 /**
   Storage engine specific thread local data.
@@ -417,6 +414,12 @@ public:
   {
     return lex;
   }
+
+  enum_sql_command getSqlCommand() const
+  {
+    return lex->sql_command;
+  }
+
   /** query associated with this statement */
   typedef boost::shared_ptr<const std::string> QueryString;
 private:
@@ -577,6 +580,12 @@ public:
   }
 
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
+
+  enum_tx_isolation getTxIsolation()
+  {
+    return (enum_tx_isolation)variables.tx_isolation;
+  }
+
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
@@ -1038,13 +1047,24 @@ public:
 
 private:
   bool abort_on_warning;
+  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
 
 public:
   bool got_warning; /**< Set on call to push_warning() */
   bool no_warnings_for_error; /**< no warnings on call to my_error() */
   /** set during loop of derived table processing */
   bool derived_tables_processing;
-  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
+
+  bool doing_tablespace_operation(void)
+  {
+    return tablespace_op;
+  }
+
+  void setDoingTablespaceOperation(bool doing)
+  {
+    tablespace_op= doing;
+  }
+
 
   /** Used by the sys_var class to store temporary values */
   union
@@ -1269,6 +1289,7 @@ public:
   bool endTransaction(enum enum_mysql_completiontype completion);
   bool endActiveTransaction();
   bool startTransaction(start_transaction_option_t opt= START_TRANS_NO_OPTIONS);
+  void markTransactionForRollback(bool all);
 
   /**
    * Authenticates users, with error reporting.
