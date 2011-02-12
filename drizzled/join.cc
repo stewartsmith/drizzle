@@ -134,6 +134,184 @@ static void restore_prev_nj_state(JoinTable *last);
 static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab);
 static void free_blobs(Field **ptr); /* Rename this method...conflicts with another in global namespace... */
 
+Join::Join(Session *session_arg, 
+           List<Item> &fields_arg, 
+           uint64_t select_options_arg,
+           select_result *result_arg) :
+  join_tab(NULL),
+  best_ref(NULL),
+  map2table(NULL),
+  join_tab_save(NULL),
+  table(NULL),
+  all_tables(NULL),
+  sort_by_table(NULL),
+  tables(0),
+  outer_tables(0),
+  const_tables(0),
+  send_group_parts(0),
+  sort_and_group(false),
+  first_record(false),
+  full_join(false),
+  group(false),
+  no_field_update(false),
+  do_send_rows(true),
+  resume_nested_loop(false),
+  no_const_tables(false),
+  select_distinct(false),
+  group_optimized_away(false),
+  simple_order(false),
+  simple_group(false),
+  no_order(false),
+  skip_sort_order(false),
+  union_part(false),
+  optimized(false),
+  need_tmp(false),
+  hidden_group_fields(false),
+  const_table_map(0),
+  found_const_table_map(0),
+  outer_join(0),
+  send_records(0),
+  found_records(0),
+  examined_rows(0),
+  row_limit(0),
+  select_limit(0),
+  fetch_limit(HA_POS_ERROR),
+  session(session_arg),
+  fields_list(fields_arg), 
+  join_list(NULL),
+  unit(NULL),
+  select_lex(NULL),
+  select(NULL),
+  exec_tmp_table1(NULL),
+  exec_tmp_table2(NULL),
+  sum_funcs(NULL),
+  sum_funcs2(NULL),
+  having(NULL),
+  tmp_having(NULL),
+  having_history(NULL),
+  select_options(select_options_arg),
+  result(result_arg),
+  lock(session_arg->lock),
+  tmp_join(NULL),
+  all_fields(fields_arg),
+  error(0),
+  cond_equal(NULL),
+  return_tab(NULL),
+  ref_pointer_array(NULL),
+  items0(NULL),
+  items1(NULL),
+  items2(NULL),
+  items3(NULL),
+  ref_pointer_array_size(0),
+  zero_result_cause(NULL),
+  sortorder(NULL),
+  table_reexec(NULL),
+  join_tab_reexec(NULL)
+{
+  select_distinct= test(select_options & SELECT_DISTINCT);
+  if (&fields_list != &fields_arg) /* only copy if not same*/
+    fields_list= fields_arg;
+  memset(&keyuse, 0, sizeof(keyuse));
+  tmp_table_param.init();
+  tmp_table_param.end_write_records= HA_POS_ERROR;
+  rollup.setState(Rollup::STATE_NONE);
+}
+
+  /** 
+   * This method is currently only used when a subselect EXPLAIN is performed.
+   * I pulled out the init() method and have simply reset the values to what
+   * was previously in the init() method.  See the note about the hack in 
+   * sql_union.cc...
+   */
+void Join::reset(Session *session_arg, 
+                 List<Item> &fields_arg, 
+                 uint64_t select_options_arg,
+                 select_result *result_arg)
+{
+  join_tab= NULL;
+  best_ref= NULL;
+  map2table= NULL;
+  join_tab_save= NULL;
+  table= NULL;
+  all_tables= NULL;
+  sort_by_table= NULL;
+  tables= 0;
+  outer_tables= 0;
+  const_tables= 0;
+  send_group_parts= 0;
+  sort_and_group= false;
+  first_record= false;
+  full_join= false;
+  group= false;
+  no_field_update= false;
+  do_send_rows= true;
+  resume_nested_loop= false;
+  no_const_tables= false;
+  select_distinct= false;
+  group_optimized_away= false;
+  simple_order= false;
+  simple_group= false;
+  no_order= false;
+  skip_sort_order= false;
+  union_part= false;
+  optimized= false;
+  need_tmp= false;
+  hidden_group_fields= false;
+  const_table_map= 0;
+  found_const_table_map= 0;
+  outer_join= 0;
+  send_records= 0;
+  found_records= 0;
+  examined_rows= 0;
+  row_limit= 0;
+  select_limit= 0;
+  fetch_limit= HA_POS_ERROR;
+  session= session_arg;
+  fields_list= fields_arg; 
+  join_list= NULL;
+  unit= NULL;
+  select_lex= NULL;
+  select= NULL;
+  exec_tmp_table1= NULL;
+  exec_tmp_table2= NULL;
+  sum_funcs= NULL;
+  sum_funcs2= NULL;
+  having= NULL;
+  tmp_having= NULL;
+  having_history= NULL;
+  select_options= select_options_arg;
+  result= result_arg;
+  lock= session_arg->lock;
+  tmp_join= NULL;
+  all_fields= fields_arg;
+  error= 0;
+  cond_equal= NULL;
+  return_tab= NULL;
+  ref_pointer_array= NULL;
+  items0= NULL;
+  items1= NULL;
+  items2= NULL;
+  items3= NULL;
+  ref_pointer_array_size= 0;
+  zero_result_cause= NULL;
+  sortorder= NULL;
+  table_reexec= NULL;
+  join_tab_reexec= NULL;
+  select_distinct= test(select_options & SELECT_DISTINCT);
+  if (&fields_list != &fields_arg) /* only copy if not same*/
+    fields_list= fields_arg;
+  memset(&keyuse, 0, sizeof(keyuse));
+  tmp_table_param.init();
+  tmp_table_param.end_write_records= HA_POS_ERROR;
+  rollup.setState(Rollup::STATE_NONE);
+}
+
+bool Join::is_top_level_join() const
+{
+  return (unit == &session->lex->unit && (unit->fake_select_lex == 0 ||
+                                          select_lex == unit->fake_select_lex));
+}
+
 /**
   Prepare of whole select (including sub queries in future).
 
