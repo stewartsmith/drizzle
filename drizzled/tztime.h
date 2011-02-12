@@ -21,7 +21,8 @@
 #ifndef DRIZZLED_TZTIME_H
 #define DRIZZLED_TZTIME_H
 
-#include "drizzled/memory/sql_alloc.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/type/time.h>
 
 #include "drizzled/type/time.h"
 
@@ -29,8 +30,6 @@ namespace drizzled
 {
 
 class String;
-
-namespace type { class Time; }
 
 /**
   This class represents abstract time zone and provides
