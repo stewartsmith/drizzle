@@ -41,7 +41,6 @@
 
 #include "libdrizzle/common.h"
 
-
 /**
  * @addtogroup drizzle_static Static Drizzle Declarations
  * @ingroup drizzle

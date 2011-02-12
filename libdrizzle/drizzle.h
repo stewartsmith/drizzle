@@ -48,10 +48,14 @@
 
 #ifdef _WIN32
 # define WIN32_LEAN_AND_MEAN
+
 # include <Windows.h>
 # include <winsock2.h>
 # include <ws2tcpip.h>
+# include <io.h>
 
+# undef close
+# define close _close
 typedef unsigned int in_port_t;
 typedef long ssize_t;
 
