@@ -115,8 +115,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;J:\Documents
-                                and Settings\monty\My Documents\libdrizzle\autoconf-cleanup\win32\windows&quot;;&quot;J:\Documents and Settings\monty\My Documents\libdrizzle\autoconf-cleanup\win32&quot;;&quot;J:\Documents and Settings\monty\My Documents\libdrizzle\autoconf-cleanup&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\win32\windows&quot;;&quot;$(ProjectDir)\win32&quot;;&quot;$(ProjectDir)&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBDRIZZLE_EXPORTS;"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"

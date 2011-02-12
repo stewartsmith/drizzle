@@ -42,9 +42,6 @@
 #ifndef __DRIZZLE_H
 #define __DRIZZLE_H
 
-#if !defined(__cplusplus)
-# include <stdbool.h>
-#endif
 
 #include <inttypes.h>
 #include <sys/types.h>
@@ -53,20 +50,11 @@
 # include <winsock2.h>
 # include <ws2tcpip.h>
 
-# include <errno.h>
-# define EINPROGRESS WSAEINPROGRESS
-# define EALREADY WSAEALREADY
-# define EISCONN WSAEISCONN
-# define ENOBUFS WSAENOBUFS
-# define ECONNREFUSED WSAECONNREFUSED
-# define ENETUNREACH WSAENETUNREACH
-# define ETIMEDOUT WSAETIMEDOUT
-# define ECONNRESET WSAECONNRESET 
-# define EADDRINUSE WSAEADDRINUSE
-# define EOPNOTSUPP WSAEOPNOTSUPP
-# define ENOPROTOOPT WSAENOPROTOOPT
-
 typedef unsigned int in_port_t;
+typedef long ssize_t;
+
+# define snprintf _snprintf
+# define inline __inline
 
 struct sockaddr_un
 {
@@ -74,8 +62,17 @@ struct sockaddr_un
   char sun_path[108];
 };
 
+#if defined(__GNUC__)
+# include <stdbool.h>
+#else
+typedef enum { false = 0, true = 1 } _Bool;
+typedef _Bool bool;
+#endif
 
 #else
+# if !defined(__cplusplus)
+#  include <stdbool.h>
+# endif
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
@@ -83,6 +80,8 @@ struct sockaddr_un
 # include <netdb.h>
 #endif
 
+#include <assert.h>
+#include <errno.h>
 #include <poll.h>
 
 #include <libdrizzle/visibility.h>
