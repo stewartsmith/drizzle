@@ -44,33 +44,8 @@ public:
             Field *field_arg, 
             unsigned char *ptr,
             unsigned char *null, 
-            uint32_t length)
-    :
-      null_key(0), 
-      null_ptr(null), 
-      err(0)
-  {
-    if (field_arg->type() == DRIZZLE_TYPE_BLOB)
-    {
-      /*
-        Key segments are always packed with a 2 byte length prefix.
-        See mi_rkey for details.
-      */
-      to_field= new Field_varstring(ptr,
-                                    length,
-                                    2,
-                                    null,
-                                    1,
-                                    field_arg->field_name,
-                                    field_arg->charset());
-      to_field->init(field_arg->getTable());
-    }
-    else
-      to_field= field_arg->new_key_field(session->mem_root, field_arg->getTable(),
-                                        ptr, null, 1);
+            uint32_t length);
 
-    to_field->setWriteSet();
-  }
   virtual ~StoredKey() {}			/** Not actually needed */
   virtual const char *name() const=0;
 
@@ -80,23 +55,15 @@ public:
     @details this function makes sure truncation warnings when preparing the
     key buffers don't end up as errors (because of an enclosing INSERT/UPDATE).
   */
-  enum store_key_result copy()
-  {
-    enum store_key_result result;
-    Session *session= to_field->getTable()->in_use;
-    enum_check_fields saved_count_cuted_fields= session->count_cuted_fields;
-    session->count_cuted_fields= CHECK_FIELD_IGNORE;
-    result= copy_inner();
-    session->count_cuted_fields= saved_count_cuted_fields;
+  enum store_key_result copy();
 
-    return result;
-  }
 };
 
 class store_key_field: public StoredKey
 {
   CopyField copy_field;
   const char *field_name;
+
 public:
   store_key_field(Session *session, Field *to_field_arg, unsigned char *ptr,
                   unsigned char *null_ptr_arg,
@@ -127,8 +94,8 @@ class store_key_item :public StoredKey
   Item *item;
 public:
   store_key_item(Session *session, Field *to_field_arg, unsigned char *ptr,
-                 unsigned char *null_ptr_arg, uint32_t length, Item *item_arg)
-    :StoredKey(session, to_field_arg, ptr,
+                 unsigned char *null_ptr_arg, uint32_t length, Item *item_arg) :
+    StoredKey(session, to_field_arg, ptr,
 	       null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
 	       &err : (unsigned char*) 0, length), item(item_arg)
   {}
@@ -149,10 +116,10 @@ class store_key_const_item :public store_key_item
 public:
   store_key_const_item(Session *session, Field *to_field_arg, unsigned char *ptr,
 		       unsigned char *null_ptr_arg, uint32_t length,
-		       Item *item_arg)
-    :store_key_item(session, to_field_arg,ptr,
-		    null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
-		    &err : (unsigned char*) 0, length, item_arg), inited(0)
+		       Item *item_arg) :
+    store_key_item(session, to_field_arg,ptr,
+                   null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
+                   &err : (unsigned char*) 0, length, item_arg), inited(0)
   {
   }
   const char *name() const { return "const"; }

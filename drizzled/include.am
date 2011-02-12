@@ -862,6 +862,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/statement/unlock_tables.cc \
 			   drizzled/statement/update.cc \
 			   drizzled/status_helper.cc \
+			   drizzled/stored_key.cc \
 			   drizzled/strfunc.cc \
 			   drizzled/sys_var.cc \
 			   drizzled/table.cc \
