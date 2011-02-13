@@ -57,7 +57,6 @@ EXTRA_DIST= \
 	    config/link-warning.h \
 	    config/pandora_vc_revinfo \
 	    config/pre_hook.sh \
-	    config/uncrustify.cfg \
 	    po/Makefile.in.in \
 	    ${top_srcdir}/m4/pandora*m4
 
