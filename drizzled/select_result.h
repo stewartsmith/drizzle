@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_RESULT_H
 #define DRIZZLED_SELECT_RESULT_H
 
+#include <drizzled/current_session.h>
+
 namespace drizzled
 {
 
@@ -30,6 +32,7 @@ class select_result :public memory::SqlAlloc {
 protected:
   Session *session;
   Select_Lex_Unit *unit;
+
 public:
   select_result()
   {

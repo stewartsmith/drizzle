@@ -75,6 +75,7 @@ class systemManager:
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
         self.gdb = variables['gdb']
+        self.manual_gdb = variables['manualgdb']
 
         # we use this to preface commands in order to run valgrind and such
         self.cmd_prefix = '' 
@@ -130,10 +131,10 @@ class systemManager:
         # check for libtool
         self.libtool = self.libtool_check()
 
-        # do we need to setup for valgrind?
-        if self.valgrind:
-            self.handle_valgrind_reqs(variables['valgrindarglist'])
-            
+        # See if we need to do any further processing for special
+        # options like valgrind and gdb
+        self.handle_additional_reqs(variables)
+     
         if self.debug:
             self.logging.debug_class(self)
         
@@ -213,8 +214,6 @@ class systemManager:
             uuid_file.close()
         else:
             uuid = uuid4()
-            print uuid
-            print uuid4()
             uuid_file = open(uuid_file_name,'w')
             uuid_file.write(str(uuid))
             uuid_file.close()
@@ -436,11 +435,87 @@ class systemManager:
         else:
             return None
 
+    def handle_additional_reqs(self, variables):
+        """ Do what we need to do to set things up for
+            options like valgrind and gdb
+
+        """
+
+        # do we need to setup for valgrind?
+        if self.valgrind:
+            self.handle_valgrind_reqs(variables['valgrindarglist'])
+
+    def handle_gdb_reqs(self, server, server_args):
+        """ We generate the gdb init file and whatnot so we
+            can run gdb properly
+
+            if the user has specified manual-gdb, we provide
+            them with a message about when to start and
+            signal the server manager to simply wait
+            for the server to be started by the user
+
+        """
+        extra_args = ''
+        gdb_term_cmd = "xterm -title %s.%s " %( server.owner
+                                              , server.name
+                                              )
+        gdb_file_name = "%s.gdbinit" %(server.name)
+
+        if self.cur_os == 'Darwin': # Mac...ick ; P
+            extra_args = [ "set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib"
+                         , "set env MallocStackLogging 1"
+                         , "set env MallocScribble 1"
+                         , "set env MallocPreScribble 1"
+                         , "set env MallocStackLogging 1"
+                         , "set env MallocStackLoggingNoCompact 1"
+                         , "set env MallocGuardEdges 1"
+                         ] 
+
+        # produce our init file
+        if extra_args:
+            extra_args = "\n".join(extra_args)
+        gdb_file_contents = [ "set args %s" %(" ".join(server_args))
+                            , "%s" % (extra_args)
+                            , "set breakpoint pending on"
+	                          , "break drizzled::parse"
+	                          , "commands 1"
+                            , "disable 1"
+	                          , "end"
+                            , "set breakpoint pending off"
+	                          , "run"
+                            ]
+        gdb_file_path = os.path.join(server.tmpdir, gdb_file_name)
+        gdb_init_file = open(gdb_file_path,'w')
+        gdb_init_file.write("\n".join(gdb_file_contents))
+        gdb_init_file.close()
+
+        # return our command line
+        if self.libtool:
+            libtool_string = "%s --mode=execute " %(self.libtool)
+        else:
+            libtool_string = ""
+
+        if self.manual_gdb:
+            self.logging.info("To start gdb, open another terminal and enter:")
+            self.logging.info("%s/../libtool --mode=execute gdb -cd %s -x %s %s" %( self.code_tree.testdir
+                                                                                  , self.code_tree.testdir
+                                                                                  , gdb_file_path
+                                                                                  , server.server_path
+                                                                                  ) )
+            return None
+
+        else:
+            return "%s -e %s gdb -x %s %s" %( gdb_term_cmd
+                                            , libtool_string
+                                            , gdb_file_path
+                                            , server.server_path
+                                            )
+
     def handle_valgrind_reqs(self, optional_args, mode='valgrind'):
         """ We do what voodoo we need to do to run valgrind """
         valgrind_args = [ "--show-reachable=yes"
-                        , "--malloc-fill=55"
-                        , "--free-fill=55"
+                        , "--malloc-fill=22"
+                        , "--free-fill=22"
                         # , "--trace-children=yes" this is for callgrind only
                         ]
         if optional_args:

@@ -22,6 +22,10 @@
 
 #include <limits>
 
+#include <drizzled/charset_info.h>
+#include <drizzled/type/decimal.h>
+#include <drizzled/table.h>
+
 using namespace std;
 
 namespace drizzled

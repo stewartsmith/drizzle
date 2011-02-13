@@ -21,6 +21,7 @@
 #define DRIZZLED_FUNCTION_MATH_DECIMAL_TYPECAST_H
 
 #include <drizzled/function/func.h>
+#include <drizzled/type/decimal.h>
 
 namespace drizzled
 {

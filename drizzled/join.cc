@@ -58,6 +58,7 @@
 #include "drizzled/internal/my_bit.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <drizzled/debug.h>
 
@@ -132,6 +133,184 @@ static bool test_if_subpart(Order *a,Order *b);
 static void restore_prev_nj_state(JoinTable *last);
 static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab);
 static void free_blobs(Field **ptr); /* Rename this method...conflicts with another in global namespace... */
+
+Join::Join(Session *session_arg, 
+           List<Item> &fields_arg, 
+           uint64_t select_options_arg,
+           select_result *result_arg) :
+  join_tab(NULL),
+  best_ref(NULL),
+  map2table(NULL),
+  join_tab_save(NULL),
+  table(NULL),
+  all_tables(NULL),
+  sort_by_table(NULL),
+  tables(0),
+  outer_tables(0),
+  const_tables(0),
+  send_group_parts(0),
+  sort_and_group(false),
+  first_record(false),
+  full_join(false),
+  group(false),
+  no_field_update(false),
+  do_send_rows(true),
+  resume_nested_loop(false),
+  no_const_tables(false),
+  select_distinct(false),
+  group_optimized_away(false),
+  simple_order(false),
+  simple_group(false),
+  no_order(false),
+  skip_sort_order(false),
+  union_part(false),
+  optimized(false),
+  need_tmp(false),
+  hidden_group_fields(false),
+  const_table_map(0),
+  found_const_table_map(0),
+  outer_join(0),
+  send_records(0),
+  found_records(0),
+  examined_rows(0),
+  row_limit(0),
+  select_limit(0),
+  fetch_limit(HA_POS_ERROR),
+  session(session_arg),
+  fields_list(fields_arg), 
+  join_list(NULL),
+  unit(NULL),
+  select_lex(NULL),
+  select(NULL),
+  exec_tmp_table1(NULL),
+  exec_tmp_table2(NULL),
+  sum_funcs(NULL),
+  sum_funcs2(NULL),
+  having(NULL),
+  tmp_having(NULL),
+  having_history(NULL),
+  select_options(select_options_arg),
+  result(result_arg),
+  lock(session_arg->lock),
+  tmp_join(NULL),
+  all_fields(fields_arg),
+  error(0),
+  cond_equal(NULL),
+  return_tab(NULL),
+  ref_pointer_array(NULL),
+  items0(NULL),
+  items1(NULL),
+  items2(NULL),
+  items3(NULL),
+  ref_pointer_array_size(0),
+  zero_result_cause(NULL),
+  sortorder(NULL),
+  table_reexec(NULL),
+  join_tab_reexec(NULL)
+{
+  select_distinct= test(select_options & SELECT_DISTINCT);
+  if (&fields_list != &fields_arg) /* only copy if not same*/
+    fields_list= fields_arg;
+  memset(&keyuse, 0, sizeof(keyuse));
+  tmp_table_param.init();
+  tmp_table_param.end_write_records= HA_POS_ERROR;
+  rollup.setState(Rollup::STATE_NONE);
+}
+
+  /** 
+   * This method is currently only used when a subselect EXPLAIN is performed.
+   * I pulled out the init() method and have simply reset the values to what
+   * was previously in the init() method.  See the note about the hack in 
+   * sql_union.cc...
+   */
+void Join::reset(Session *session_arg, 
+                 List<Item> &fields_arg, 
+                 uint64_t select_options_arg,
+                 select_result *result_arg)
+{
+  join_tab= NULL;
+  best_ref= NULL;
+  map2table= NULL;
+  join_tab_save= NULL;
+  table= NULL;
+  all_tables= NULL;
+  sort_by_table= NULL;
+  tables= 0;
+  outer_tables= 0;
+  const_tables= 0;
+  send_group_parts= 0;
+  sort_and_group= false;
+  first_record= false;
+  full_join= false;
+  group= false;
+  no_field_update= false;
+  do_send_rows= true;
+  resume_nested_loop= false;
+  no_const_tables= false;
+  select_distinct= false;
+  group_optimized_away= false;
+  simple_order= false;
+  simple_group= false;
+  no_order= false;
+  skip_sort_order= false;
+  union_part= false;
+  optimized= false;
+  need_tmp= false;
+  hidden_group_fields= false;
+  const_table_map= 0;
+  found_const_table_map= 0;
+  outer_join= 0;
+  send_records= 0;
+  found_records= 0;
+  examined_rows= 0;
+  row_limit= 0;
+  select_limit= 0;
+  fetch_limit= HA_POS_ERROR;
+  session= session_arg;
+  fields_list= fields_arg; 
+  join_list= NULL;
+  unit= NULL;
+  select_lex= NULL;
+  select= NULL;
+  exec_tmp_table1= NULL;
+  exec_tmp_table2= NULL;
+  sum_funcs= NULL;
+  sum_funcs2= NULL;
+  having= NULL;
+  tmp_having= NULL;
+  having_history= NULL;
+  select_options= select_options_arg;
+  result= result_arg;
+  lock= session_arg->lock;
+  tmp_join= NULL;
+  all_fields= fields_arg;
+  error= 0;
+  cond_equal= NULL;
+  return_tab= NULL;
+  ref_pointer_array= NULL;
+  items0= NULL;
+  items1= NULL;
+  items2= NULL;
+  items3= NULL;
+  ref_pointer_array_size= 0;
+  zero_result_cause= NULL;
+  sortorder= NULL;
+  table_reexec= NULL;
+  join_tab_reexec= NULL;
+  select_distinct= test(select_options & SELECT_DISTINCT);
+  if (&fields_list != &fields_arg) /* only copy if not same*/
+    fields_list= fields_arg;
+  memset(&keyuse, 0, sizeof(keyuse));
+  tmp_table_param.init();
+  tmp_table_param.end_write_records= HA_POS_ERROR;
+  rollup.setState(Rollup::STATE_NONE);
+}
+
+bool Join::is_top_level_join() const
+{
+  return (unit == &session->lex->unit && (unit->fake_select_lex == 0 ||
+                                          select_lex == unit->fake_select_lex));
+}
 
 /**
   Prepare of whole select (including sub queries in future).
@@ -1171,7 +1350,7 @@ int Join::reinit()
 */
 bool Join::init_save_join_tab()
 {
-  if (!(tmp_join= (Join*)session->alloc(sizeof(Join))))
+  if (!(tmp_join= (Join*)session->getMemRoot()->allocate(sizeof(Join))))
     return 1;
 
   error= 0;              // Ensure that tmp_join.error= 0
@@ -1184,7 +1363,7 @@ bool Join::save_join_tab()
 {
   if (! join_tab_save && select_lex->master_unit()->uncacheable.any())
   {
-    if (!(join_tab_save= (JoinTable*)session->memdup((unsigned char*) join_tab,
+    if (!(join_tab_save= (JoinTable*)session->getMemRoot()->duplicate((unsigned char*) join_tab,
             sizeof(JoinTable) * tables)))
       return 1;
   }
@@ -2078,7 +2257,7 @@ bool Join::rollup_init()
   */
   tmp_table_param.group_parts= send_group_parts;
 
-  rollup.setNullItems((Item_null_result**) session->alloc((sizeof(Item*) +
+  rollup.setNullItems((Item_null_result**) session->getMemRoot()->allocate((sizeof(Item*) +
                                                                 sizeof(Item**) +
                                                                 sizeof(List<Item>) +
                                                                 ref_pointer_array_size)
@@ -3226,7 +3405,7 @@ static bool get_best_combination(Join *join)
 
   table_count=join->tables;
   if (!(join->join_tab=join_tab=
-  (JoinTable*) session->alloc(sizeof(JoinTable)*table_count)))
+  (JoinTable*) session->getMemRoot()->allocate(sizeof(JoinTable)*table_count)))
     return(true);
 
   for (i= 0; i < table_count; i++)
@@ -4384,7 +4563,7 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   */
   if (!join->table_reexec)
   {
-    if (!(join->table_reexec= (Table**) join->session->alloc(sizeof(Table*))))
+    if (!(join->table_reexec= (Table**) join->session->getMemRoot()->allocate(sizeof(Table*))))
       return(true);
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
@@ -4392,7 +4571,7 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   if (!join->join_tab_reexec)
   {
     if (!(join->join_tab_reexec=
-          (JoinTable*) join->session->alloc(sizeof(JoinTable))))
+          (JoinTable*) join->session->getMemRoot()->allocate(sizeof(JoinTable))))
       return(true);
     new (join->join_tab_reexec) JoinTable();
     if (join->tmp_join)
@@ -4659,7 +4838,7 @@ static bool make_join_select(Join *join,
           tab->type == AM_EQ_REF)
       {
         optimizer::SqlSelect *sel= tab->select= ((optimizer::SqlSelect*)
-            session->memdup((unsigned char*) select,
+            session->getMemRoot()->duplicate((unsigned char*) select,
               sizeof(*select)));
         if (! sel)
           return 1;			// End of memory
@@ -4797,7 +4976,7 @@ static bool make_join_select(Join *join,
                                          current_map, 0)))
             {
               tab->cache.select= (optimizer::SqlSelect*)
-                session->memdup((unsigned char*) sel, sizeof(optimizer::SqlSelect));
+                session->getMemRoot()->duplicate((unsigned char*) sel, sizeof(optimizer::SqlSelect));
               tab->cache.select->cond= tmp;
               tab->cache.select->read_tables= join->const_table_map;
             }
@@ -4933,7 +5112,7 @@ static bool make_join_readinfo(Join *join)
 
     if (tab->insideout_match_tab)
     {
-      if (! (tab->insideout_buf= (unsigned char*) join->session->alloc(tab->table->key_info
+      if (! (tab->insideout_buf= (unsigned char*) join->session->getMemRoot()->allocate(tab->table->key_info
                                                                        [tab->index].
                                                                        key_length)))
         return true;
@@ -5524,8 +5703,8 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 
   table_count= join->tables;
   stat= (JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
-  stat_ref= (JoinTable**) join->session->alloc(sizeof(JoinTable*)*MAX_TABLES);
-  table_vector= (Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
+  stat_ref= (JoinTable**) join->session->getMemRoot()->allocate(sizeof(JoinTable*)*MAX_TABLES);
+  table_vector= (Table**) join->session->getMemRoot()->allocate(sizeof(Table*)*(table_count*2));
   if (! stat || ! stat_ref || ! table_vector)
     return 1;
 

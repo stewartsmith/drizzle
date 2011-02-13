@@ -25,6 +25,7 @@
 #include <drizzled/statement/create_table.h>
 #include <drizzled/message.h>
 #include <drizzled/identifier.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <iostream>
 

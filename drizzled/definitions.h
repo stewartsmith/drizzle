@@ -387,10 +387,10 @@ typedef int myf;
 #define MY_COLL_DISALLOW_NONE         4
 #define MY_COLL_CMP_CONV              7
 
-inline static void clear_timestamp_auto_bits(enum timestamp_auto_set_type &_target_, 
-                                             const enum timestamp_auto_set_type _bits_)
+inline static void clear_timestamp_auto_bits(timestamp_auto_set_type &_target_, 
+                                             timestamp_auto_set_type _bits_)
 {
-  _target_= (enum timestamp_auto_set_type)((int)(_target_) & ~_bits_);
+  _target_= static_cast<timestamp_auto_set_type>(_target_ & ~_bits_);
 }
 
 /*

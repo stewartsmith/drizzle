@@ -147,7 +147,7 @@ test-jp:
 test-plugins: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
-test-dbqp: check
+test-dbqp: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) )
 
 

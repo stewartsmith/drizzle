@@ -31,7 +31,6 @@
 #include "drizzled/item/decimal.h"
 #include "drizzled/function/math/int.h"
 #include "drizzled/function/numhybrid.h"
-#include "drizzled/session.h"
 #include "drizzled/common.h"
 #include "drizzled/qsort_cmp.h"
 #include "drizzled/item/function/boolean.h"
@@ -40,10 +39,12 @@ namespace drizzled
 {
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
+
 class Item_bool_func2;
 class Arg_comparator;
 class Item_sum_hybrid;
 class Item_row;
+class Session;
 
 typedef int (Arg_comparator::*arg_cmp_func)();
 

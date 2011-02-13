@@ -56,6 +56,7 @@
 #include "drizzled/item/sum.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/optimizer/sum.h"
+#include "drizzled/plugin/storage_engine.h"
 
 namespace drizzled
 {

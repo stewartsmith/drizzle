@@ -21,10 +21,15 @@
 #ifndef DRIZZLED_TABLE_IDENT_H
 #define DRIZZLED_TABLE_IDENT_H
 
-#include "drizzled/session.h"
+#include "drizzled/lex_string.h"
+#include "drizzled/memory/sql_alloc.h"
+#include "drizzled/util/test.h"
 
 namespace drizzled
 {
+
+extern char empty_c_string[1];
+extern char internal_table_name[2];
 
 /* Structure for db & table in sql_yacc */
 class Table_ident :public memory::SqlAlloc

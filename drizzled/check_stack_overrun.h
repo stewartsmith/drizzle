@@ -23,6 +23,8 @@
 namespace drizzled
 {
 
+class Session;
+
 /**
   @note
   Note: The 'buf' parameter is necessary, even if it is unused here.

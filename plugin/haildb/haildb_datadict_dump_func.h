@@ -19,6 +19,8 @@
 #ifndef PLUGIN_HAILDB_HAILDB_DATADICT_DUMP_FUNC_H
 #define PLUGIN_HAILDB_HAILDB_DATADICT_DUMP_FUNC_H
 
+#include <drizzled/plugin/storage_engine.h>
+
 int haildb_datadict_dump_func_initialize(drizzled::module::Context &context);
 
 #endif /* PLUGIN_HAILDB_HAILDB_DATADICT_DUMP_FUNC_H */

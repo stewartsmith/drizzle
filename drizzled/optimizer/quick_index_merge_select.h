@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_OPTIMIZER_QUICK_INDEX_MERGE_SELECT_H
 #define DRIZZLED_OPTIMIZER_QUICK_INDEX_MERGE_SELECT_H
 
-#include "drizzled/optimizer/range.h"
+#include <drizzled/optimizer/range.h>
+#include <drizzled/records.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <vector>

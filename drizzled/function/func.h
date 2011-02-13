@@ -24,10 +24,13 @@
 
 /// TODO: Rename this file - func.h is stupid.
 
+#include <drizzled/charset_info.h>
+#include <drizzled/current_session.h>
 #include <drizzled/item.h>
-#include <drizzled/sql_list.h>
 #include <drizzled/item/bin_string.h>
-#include "drizzled/current_session.h"
+#include <drizzled/lex_string.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/type/decimal.h>
 
 #include "drizzled/visibility.h"
 

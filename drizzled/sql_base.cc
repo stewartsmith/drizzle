@@ -56,6 +56,9 @@
 #include "drizzled/table/temporary.h"
 #include "drizzled/table/placeholder.h"
 #include "drizzled/table/unused.h"
+#include "drizzled/plugin/storage_engine.h"
+
+#include <drizzled/refresh_version.h>
 
 using namespace std;
 
@@ -1758,7 +1761,7 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
   Table **start,**ptr;
   uint32_t lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
 
-  if (!(ptr=start=(Table**) session->alloc(sizeof(Table*)*count)))
+  if (!(ptr=start=(Table**) session->getMemRoot()->allocate(sizeof(Table*)*count)))
     return -1;
 
   for (table= tables; table; table= table->next_global)

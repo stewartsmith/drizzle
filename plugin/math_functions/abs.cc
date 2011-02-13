@@ -18,8 +18,10 @@
  */
 
 #include "config.h"
+
 #include <math.h>
 #include "abs.h"
+#include <drizzled/type/decimal.h>
 
 namespace drizzled
 {

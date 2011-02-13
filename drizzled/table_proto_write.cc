@@ -21,6 +21,8 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/message/statement_transform.h"
 
+#include <drizzled/plugin/storage_engine.h>
+
 #include "drizzled/internal/my_sys.h"
 
 

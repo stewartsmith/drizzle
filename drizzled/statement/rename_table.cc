@@ -25,6 +25,7 @@
 #include <drizzled/statement/rename_table.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/plugin/storage_engine.h"
 
 namespace drizzled
 {
