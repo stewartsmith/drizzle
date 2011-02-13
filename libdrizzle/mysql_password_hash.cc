@@ -37,6 +37,7 @@
 
 #include "config.h"
 
+#include <cstring>
 #include <iostream>
 
 #include <libdrizzle/drizzle_client.h>
