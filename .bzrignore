@@ -300,6 +300,7 @@ strings/Makefile.in
 strings/tests/Makefile.in
 support-files/Makefile.in
 support-files/drizzle-log-rotate
+support-files/drizzle7.pc
 support-files/drizzle.server
 support-files/drizzle.spec
 support-files/libdrizzle.pc

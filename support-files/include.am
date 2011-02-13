@@ -22,3 +22,8 @@ EXTRA_DIST+= \
 	     support-files/smf/drizzle \
 	     support-files/smf/drizzle.xml \
 	     support-files/smf/install.sh 
+
+pkgconfigdir= $(libdir)/pkgconfig
+pkgconfig_DATA= \
+		support-files/drizzle7.pc \
+		support-files/libdrizzle.pc
