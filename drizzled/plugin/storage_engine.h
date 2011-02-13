@@ -324,10 +324,6 @@ public:
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
-  static int getTableDefinition(Session& session,
-                                const drizzled::identifier::Table &identifier,
-                                message::table::shared_ptr &table_proto,
-                                bool include_temporary_tables= true);
   static message::table::shared_ptr getTableMessage(Session& session,
                                                     const drizzled::identifier::Table &identifier,
                                                     drizzled::error_t &error,

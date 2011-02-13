@@ -29,7 +29,6 @@ namespace generator {
 class AllTables
 {
   Session &session;
-  message::table::shared_ptr table;
 
   identifier::Table::vector table_names;
   identifier::Table::vector::const_iterator table_iterator;
@@ -50,10 +49,12 @@ public:
     do {
       while (table_iterator != table_names.end())
       {
-        bool is_table_parsed= plugin::StorageEngine::getTableDefinition(session, *table_iterator, table);
+        message::table::shared_ptr table;
+        drizzled::error_t toss;
+        table= plugin::StorageEngine::getTableMessage(session, *table_iterator, toss);
         table_iterator++;
 
-        if (is_table_parsed)
+        if (table)
           return table;
       }
     } while ((schema_ptr= schema_generator) && table_setup());

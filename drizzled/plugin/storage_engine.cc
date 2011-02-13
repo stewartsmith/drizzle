@@ -361,50 +361,6 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::identifie
   return false;
 }
 
-/**
-  Call this function in order to give the Cursor the possiblity
-  to ask engine if there are any new tables that should be written to disk
-  or any dropped tables that need to be removed from disk
-*/
-int StorageEngine::getTableDefinition(Session& session,
-                                      const identifier::Table &identifier,
-                                      message::table::shared_ptr &table_message,
-                                      bool include_temporary_tables)
-{
-  drizzled::error_t err= static_cast<drizzled::error_t>(ENOENT);
-
-  if (include_temporary_tables)
-  {
-    Table *table= session.find_temporary_table(identifier);
-    if (table)
-    {
-      table_message.reset(new message::Table(*table->getShare()->getTableMessage()));
-      return EEXIST;
-    }
-  }
-
-  drizzled::message::table::shared_ptr table_ptr;
-  if ((table_ptr= drizzled::message::Cache::singleton().find(identifier)))
-  {
-    table_message= table_ptr;
-  }
-
-  message::Table message;
-  EngineVector::iterator iter=
-    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
-                 StorageEngineGetTableDefinition(session, identifier, message, err));
-
-  if (iter == vector_of_engines.end())
-  {
-    return ENOENT;
-  }
-  table_message.reset(new message::Table(message));
-
- drizzled::message::Cache::singleton().insert(identifier, table_message);
-
-  return err;
-}
-
 message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
                                                           identifier::Table::const_reference identifier,
                                                           drizzled::error_t &error,
