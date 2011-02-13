@@ -20,26 +20,33 @@
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
-#include "drizzled/cursor.h"
-#include "drizzled/diagnostics_area.h"
-#include "drizzled/file_exchange.h"
-#include "drizzled/identifier.h"
-#include "drizzled/internal_error_handler.h"
-#include "drizzled/my_hash.h"
-#include "drizzled/named_savepoint.h"
-#include "drizzled/open_tables_state.h"
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/query_id.h"
-#include "drizzled/resource_context.h"
-#include "drizzled/select_result_interceptor.h"
-#include "drizzled/sql_error.h"
-#include "drizzled/sql_locale.h"
-#include "drizzled/statistics_variables.h"
-#include "drizzled/transaction_context.h"
-#include "drizzled/util/storable.h"
-#include "drizzled/xid.h"
+#include <drizzled/cursor.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/file_exchange.h>
+#include <drizzled/identifier.h>
+#include <drizzled/internal_error_handler.h>
+#include <drizzled/lex_column.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/named_savepoint.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/query_id.h>
+#include <drizzled/resource_context.h>
+#include <drizzled/select_dumpvar.h>
+#include <drizzled/select_result_interceptor.h>
+#include <drizzled/sql_error.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/sql_locale.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/table_ident.h>
+#include <drizzled/transaction_context.h>
+#include <drizzled/unique.h>
+#include <drizzled/user_var_entry.h>
+#include <drizzled/util/storable.h>
+#include <drizzled/var.h>
+#include <drizzled/xid.h>
 
 
 #include <netdb.h>
@@ -51,32 +58,23 @@
 #include <map>
 #include <string>
 
-#include "drizzled/catalog/instance.h"
-#include "drizzled/catalog/local.h"
+#include <drizzled/catalog/instance.h>
+#include <drizzled/catalog/local.h>
 
+#include <drizzled/copy_info.h>
+#include <drizzled/ha_data.h>
 #include <drizzled/session/property_map.h>
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/system_variables.h>
-#include <drizzled/copy_info.h>
 #include <drizzled/system_variables.h>
-#include <drizzled/ha_data.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/make_shared.hpp>
-
-#include <drizzled/table_ident.h>
-#include <drizzled/user_var_entry.h>
-#include <drizzled/unique.h>
-#include <drizzled/var.h>
-#include <drizzled/select_dumpvar.h>
-
-#include <drizzled/lex_column.h>
-#include "drizzled/sql_lex.h"
 
 #include "drizzled/visibility.h"
 
