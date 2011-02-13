@@ -45,7 +45,7 @@
  * Common definitions
  */
 
-const char *drizzle_con_uds(drizzle_con_st *con)
+const char *drizzle_con_uds(const drizzle_con_st *con)
 {
   (void)con;
   return (const char *)NULL;
