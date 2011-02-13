@@ -116,21 +116,22 @@ void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
   mutex.unlock_shared();
 }
 
-bool Schema::doGetSchemaDefinition(const identifier::Schema &schema_identifier, message::schema::shared_ptr &schema_message)
+drizzled::message::schema::shared_ptr Schema::doGetSchemaDefinition(const identifier::Schema &schema_identifier)
 {
   mutex.lock_shared();
   SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
 
   if (iter != schema_cache.end())
   {
+    drizzled::message::schema::shared_ptr schema_message;
     schema_message= (*iter).second;
     mutex.unlock_shared();
 
-    return true;
+    return schema_message;
   }
   mutex.unlock_shared();
 
-  return false;
+  return drizzled::message::schema::shared_ptr();
 }
 
 
@@ -168,13 +169,11 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 
 bool Schema::doDropSchema(const identifier::Schema &schema_identifier)
 {
-  message::schema::shared_ptr schema_message;
-
   string schema_file(schema_identifier.getPath());
   schema_file.append(1, FN_LIBCHAR);
   schema_file.append(MY_DB_OPT_FILE);
 
-  if (not doGetSchemaDefinition(schema_identifier, schema_message))
+  if (not doGetSchemaDefinition(schema_identifier))
     return false;
 
   // No db.opt file, no love from us.

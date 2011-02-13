@@ -84,7 +84,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
   identifier::Schema schema_identifier(db);
   if (not (proto= plugin::StorageEngine::getSchemaDefinition(schema_identifier)))
-  
+  {
     my_error(ER_BAD_DB_ERROR, schema_identifier);
     return NULL;
   }

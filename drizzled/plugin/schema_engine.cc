@@ -76,7 +76,8 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    return engine->doGetSchemaDefinition(identifier, schema_proto);
+    schema_proto= engine->doGetSchemaDefinition(identifier);
+    return schema_proto;
   }
 };
 

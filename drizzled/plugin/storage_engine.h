@@ -376,9 +376,9 @@ protected:
   virtual void doGetSchemaIdentifiers(identifier::Schema::vector&)
   { }
 
-  virtual bool doGetSchemaDefinition(const drizzled::identifier::Schema&, drizzled::message::schema::shared_ptr&)
+  virtual drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&)
   { 
-    return false; 
+    return drizzled::message::schema::shared_ptr(); 
   }
 
   virtual bool doCreateSchema(const drizzled::message::Schema&)
