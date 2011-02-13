@@ -20,9 +20,10 @@
 
 #include "config.h"
 
-#include "drizzled/function/cast/boolean.h"
-#include "drizzled/type/boolean.h"
-#include "drizzled/error.h"
+#include <drizzled/error.h>
+#include <drizzled/function/cast/boolean.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/type/boolean.h>
 
 namespace drizzled {
 namespace function {

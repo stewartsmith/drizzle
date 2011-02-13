@@ -22,12 +22,12 @@
 
 /* classes for sum functions */
 
-
 #include "drizzled/tree.h"
 #include <drizzled/hybrid_type.h>
 #include <drizzled/item.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
+#include <drizzled/charset_info.h>
 
 namespace drizzled
 {

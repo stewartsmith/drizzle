@@ -22,9 +22,10 @@
  */
 
 #include "config.h"
+
+#include <drizzled/copy_field.h>
 #include "drizzled/session.h"
 #include "drizzled/session/cache.h"
-#include <sys/stat.h>
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/query_id.h"
@@ -51,6 +52,8 @@
 
 #include "drizzled/identifier.h"
 
+#include <drizzled/refresh_version.h>
+
 #include "drizzled/table/singular.h"
 
 #include "plugin/myisam/myisam.h"
@@ -62,9 +65,10 @@
 
 #include "drizzled/display.h"
 
-#include <fcntl.h>
 #include <algorithm>
 #include <climits>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/checked_delete.hpp>
@@ -388,12 +392,6 @@ Session::~Session()
 
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(*this); 
-
-  for (PropertyMap::iterator iter= life_properties.begin(); iter != life_properties.end(); iter++)
-  {
-    boost::checked_delete((*iter).second);
-  }
-  life_properties.clear();
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -715,7 +713,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     plugin::QueryRewriter::rewriteQuery(*_schema, *new_query);
   }
   query.reset(new_query);
-  _state.reset(new State(in_packet, in_packet_length));
+  _state.reset(new session::State(in_packet, in_packet_length));
 
   return true;
 }
@@ -873,7 +871,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    if (!(lex_str= (LEX_STRING *)alloc(sizeof(LEX_STRING))))
+    if (!(lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING))))
       return 0;
   if (!(lex_str->str= mem_root->strmake_root(str, length)))
     return 0;
@@ -2007,74 +2005,6 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
       cerr << "\tTabl;e Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
     }
   }
-}
-
-bool Session::TableMessages::storeTableMessage(const identifier::Table &identifier, message::Table &table_message)
-{
-  table_message_cache.insert(make_pair(identifier.getPath(), table_message));
-
-  return true;
-}
-
-bool Session::TableMessages::removeTableMessage(const identifier::Table &identifier)
-{
-  TableMessageCache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
-  if (iter == table_message_cache.end())
-    return false;
-
-  table_message_cache.erase(iter);
-
-  return true;
-}
-
-bool Session::TableMessages::getTableMessage(const identifier::Table &identifier, message::Table &table_message)
-{
-  TableMessageCache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
-  if (iter == table_message_cache.end())
-    return false;
-
-  table_message.CopyFrom(((*iter).second));
-
-  return true;
-}
-
-bool Session::TableMessages::doesTableMessageExist(const identifier::Table &identifier)
-{
-  TableMessageCache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
-  if (iter == table_message_cache.end())
-  {
-    return false;
-  }
-
-  return true;
-}
-
-bool Session::TableMessages::renameTableMessage(const identifier::Table &from, const identifier::Table &to)
-{
-  TableMessageCache::iterator iter;
-
-  table_message_cache[to.getPath()]= table_message_cache[from.getPath()];
-
-  iter= table_message_cache.find(to.getPath());
-
-  if (iter == table_message_cache.end())
-  {
-    return false;
-  }
-
-  (*iter).second.set_schema(to.getSchemaName());
-  (*iter).second.set_name(to.getTableName());
-
-  return true;
 }
 
 table::Singular *Session::getInstanceTable()

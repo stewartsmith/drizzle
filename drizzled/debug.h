@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_DEBUG_H
 #define DRIZZLED_DEBUG_H
 
+#include <bitset>
+
 namespace drizzled {
 
 /* Bits from testflag */

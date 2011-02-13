@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
+
 #include <cstdio>
-#include "drizzled/plugin/client.h"
+
+#include <drizzled/plugin/client.h>
+#include <drizzled/type/time.h>
 
 namespace drizzled
 {

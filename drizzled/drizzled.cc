@@ -18,9 +18,10 @@
  */
 
 #include "config.h"
-#include "drizzled/configmake.h"
-#include "drizzled/atomics.h"
-#include "drizzled/data_home.h"
+
+#include <drizzled/configmake.h>
+#include <drizzled/atomics.h>
+#include <drizzled/data_home.h>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -31,7 +32,7 @@
 #include <stdexcept>
 
 #include <boost/program_options.hpp>
-#include "drizzled/program_options/config_file.h"
+#include <drizzled/program_options/config_file.h>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -39,50 +40,48 @@
 #include <boost/filesystem.hpp>
 #include <boost/detail/atomic_count.hpp>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/my_bit.h"
-#include <drizzled/my_hash.h>
-#include <drizzled/error.h>
+#include <drizzled/cached_directory.h>
+#include <drizzled/charset.h>
+#include <drizzled/data_home.h>
+#include <drizzled/debug.h>
+#include <drizzled/definition/cache.h>
+#include <drizzled/drizzled.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/tztime.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/show.h>
-#include <drizzled/sql_parse.h>
+#include <drizzled/error.h>
+#include <drizzled/global_buffer.h>
+#include <drizzled/internal/my_bit.h>
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/session.h>
 #include <drizzled/item/create.h>
+#include <drizzled/message/cache.h>
+#include <drizzled/module/load_list.h>
+#include <drizzled/module/registry.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/error_message.h>
+#include <drizzled/plugin/event_observer.h>
+#include <drizzled/plugin/listen.h>
+#include <drizzled/plugin/monitored_in_transaction.h>
+#include <drizzled/plugin/scheduler.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/plugin/xa_resource_manager.h>
+#include <drizzled/probes.h>
+#include <drizzled/replication_services.h> /* For ReplicationServices::evaluateRegisteredPlugins() */
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/show.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/temporal_format.h> /* For init_temporal_formats() */
+#include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
-#include "drizzled/temporal_format.h" /* For init_temporal_formats() */
-#include "drizzled/plugin/listen.h"
-#include "drizzled/plugin/error_message.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/plugin/scheduler.h"
-#include "drizzled/plugin/xa_resource_manager.h"
-#include "drizzled/plugin/monitored_in_transaction.h"
-#include "drizzled/replication_services.h" /* For ReplicationServices::evaluateRegisteredPlugins() */
-#include "drizzled/probes.h"
-#include "drizzled/session/cache.h"
-#include "drizzled/charset.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/drizzled.h"
-#include "drizzled/module/registry.h"
-#include "drizzled/module/load_list.h"
-#include "drizzled/global_buffer.h"
-#include "drizzled/typelib.h"
-
-#include "drizzled/debug.h"
-
-#include "drizzled/definition/cache.h"
-
-#include "drizzled/plugin/event_observer.h"
-
-#include "drizzled/data_home.h"
-
-#include "drizzled/message/cache.h"
-
+#include <plugin/myisam/myisam.h>
+#include <drizzled/typelib.h>
 #include "drizzled/visibility.h"
 
 #include <google/protobuf/stubs/common.h>
+
+#include <drizzled/refresh_version.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -361,11 +360,6 @@ global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
 global_buffer_constraint<uint64_t> global_read_buffer(0);
 
 DRIZZLED_API size_t transaction_message_threshold;
-
-/** 
-  Refresh value. We use to test this to find out if a refresh even has happened recently.
-*/
-uint64_t refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
 bool drizzle_rm_tmp_tables();

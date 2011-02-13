@@ -18,8 +18,10 @@
  */
 
 #include "config.h"
-#include <drizzled/gettext.h>
+
+#include <drizzled/errmsg_print.h>
 #include <drizzled/error.h>
+#include <drizzled/gettext.h>
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/null_client.h>

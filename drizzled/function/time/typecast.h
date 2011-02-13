@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTION_TIME_TYPECAST_H
 #define DRIZZLED_FUNCTION_TIME_TYPECAST_H
 
+#include <drizzled/charset_info.h>
+#include <drizzled/field.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/temporal.h>
 

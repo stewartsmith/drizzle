@@ -40,9 +40,6 @@
 namespace drizzled
 {
 
-extern int wild_case_compare(const CHARSET_INFO * const cs, 
-                             const char *str,const char *wildstr);
-
 namespace plugin
 {
 

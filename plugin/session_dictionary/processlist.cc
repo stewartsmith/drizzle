@@ -65,7 +65,7 @@ bool ProcesslistTool::Generator::populate()
 
   while ((tmp= session_generator))
   {
-    drizzled::Session::State::const_shared_ptr state(tmp->state());
+    drizzled::session::State::const_shared_ptr state(tmp->state());
     identifier::User::const_shared_ptr tmp_sctx= tmp->user();
 
     /* ID */

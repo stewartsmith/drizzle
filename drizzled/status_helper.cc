@@ -25,6 +25,8 @@
 #include "drizzled/drizzled.h"
 #include "plugin/myisam/myisam.h"
 
+#include <drizzled/refresh_version.h>
+
 #include <sstream>
 
 using namespace std;
@@ -32,7 +34,6 @@ using namespace std;
 namespace drizzled
 {
 
-extern uint64_t refresh_version;
 extern time_t server_start_time;
 extern time_t flush_status_time;
 

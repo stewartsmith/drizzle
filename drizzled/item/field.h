@@ -20,11 +20,15 @@
 #ifndef DRIZZLED_ITEM_FIELD_H
 #define DRIZZLED_ITEM_FIELD_H
 
+#include <drizzled/item/ident.h>
+
 namespace drizzled
 {
 
-extern Item **not_found_item;
 class COND_EQUAL;
+class Item;
+
+extern Item **not_found_item;
 
 class Item_field :public Item_ident
 {

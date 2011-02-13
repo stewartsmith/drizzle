@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+
 #include "plugin/information_schema_dictionary/dictionary.h"
 
 using namespace std;

@@ -49,8 +49,6 @@
 namespace drizzled
 {
 
-extern uint64_t refresh_version;
-
 const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
 
 namespace plugin
@@ -365,10 +363,7 @@ public:
     return version;
   }
 
-  void refreshVersion()
-  {
-   version= refresh_version;
-  }
+  void refreshVersion();
 
   void resetVersion()
   {

@@ -19,12 +19,14 @@
 
 #include "config.h"
 
+#include <drizzled/field.h>
 #include <drizzled/item/cache.h>
-#include <drizzled/item/cache_row.h>
+#include <drizzled/item/cache_decimal.h>
 #include <drizzled/item/cache_int.h>
 #include <drizzled/item/cache_real.h>
-#include <drizzled/item/cache_decimal.h>
+#include <drizzled/item/cache_row.h>
 #include <drizzled/item/cache_str.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {

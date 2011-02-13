@@ -22,6 +22,7 @@
 #define PLUGIN_STRING_FUNCTIONS_FUNCTIONS_H
 
 #include "drizzled/plugin/function.h"
+
 #include "plugin/string_functions/elt.h"
 #include "plugin/string_functions/format.h"
 #include "plugin/string_functions/quote.h"

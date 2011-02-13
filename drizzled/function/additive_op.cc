@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <drizzled/function/additive_op.h>
+#include <drizzled/type/decimal.h>
 
 #include <algorithm>
 

@@ -20,8 +20,9 @@
 #ifndef DRIZZLED_ITEM_COPY_STRING_H
 #define DRIZZLED_ITEM_COPY_STRING_H
 
-#include <drizzled/item/ident.h>
+#include <drizzled/charset_info.h>
 #include <drizzled/item/field.h>
+#include <drizzled/item/ident.h>
 
 namespace drizzled
 {

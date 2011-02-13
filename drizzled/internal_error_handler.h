@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_INTERNAL_ERROR_HANDLER_H
 #define DRIZZLED_INTERNAL_ERROR_HANDLER_H
 
+#include <drizzled/sql_error.h>
+
 namespace drizzled
 {
 
