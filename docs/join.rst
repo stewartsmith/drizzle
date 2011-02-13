@@ -49,7 +49,12 @@ Here are the types of JOIN you can use, and the differences between them. Click 
     * JOIN: Return rows when there is at least one match in both tables
     * LEFT JOIN: Return all rows from the left table, even if there are no matches in the right table
     * RIGHT JOIN: Return all rows from the right table, even if there are no matches in the left table
-    * FULL JOIN: Return rows when there is a match in one of the tables
+    * CROSS JOIN: Return rows when there is a match in one of the tables
 
+.. note::
+
+   Implicit cartesian products of the form ``SELECT * FROM t1, t2`` without a 
+   ``WHERE`` or ``ON`` condition will error.  If such behaviour is intended
+   please use ``SELECT * FROM t1 CROSS JOIN t2``.
 
 FIXME: how joins are executed. i.e. nested loop join.
