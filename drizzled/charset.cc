@@ -174,7 +174,7 @@ static bool init_available_charsets(myf myflags)
 
 void free_charsets()
 {
-  charset_initialized= true; // olaf: shouldn't this be = false?
+  charset_initialized= false;
 
   while (not memory_vector.empty())
   {
