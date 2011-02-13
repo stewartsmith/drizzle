@@ -47,6 +47,8 @@
 #include "drizzled/atomics.h"
 #include "drizzled/global_buffer.h"
 
+#include <drizzled/sort_field.h>
+
 
 using namespace std;
 

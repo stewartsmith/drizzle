@@ -1661,41 +1661,7 @@ private:
   struct rusage usage;
 };
 
-class Join;
-
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
-
-/**
- * A structure used to describe sort information
- * for a field or item used in ORDER BY.
- */
-class SortField 
-{
-public:
-  Field *field;	/**< Field to sort */
-  Item	*item; /**< Item if not sorting fields */
-  size_t length; /**< Length of sort field */
-  uint32_t suffix_length; /**< Length suffix (0-4) */
-  Item_result result_type; /**< Type of item */
-  bool reverse; /**< if descending sort */
-  bool need_strxnfrm;	/**< If we have to use strxnfrm() */
-
-  SortField() :
-    field(0),
-    item(0),
-    length(0),
-    suffix_length(0),
-    result_type(STRING_RESULT),
-    reverse(0),
-    need_strxnfrm(0)
-  { }
-
-};
-
-} /* namespace drizzled */
-
-namespace drizzled
-{
 
 /* Bits in sql_command_flags */
 
