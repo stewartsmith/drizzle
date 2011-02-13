@@ -262,7 +262,7 @@ MySQL or Drizzle database server.  If it is connected to a MySQL server it will
 automatically convert all the structures and data into a Drizzle compatible 
 format.
 
-.. note::
+.. warning::
 
    :program:`drizzledump` will by default try to connect via. port 4427 so to
    connect to a MySQL server a port (such as 3306) must be specified.

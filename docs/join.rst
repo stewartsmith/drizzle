@@ -57,4 +57,6 @@ Here are the types of JOIN you can use, and the differences between them. Click 
    ``WHERE`` or ``ON`` condition will error.  If such behaviour is intended
    please use ``SELECT * FROM t1 CROSS JOIN t2``.
 
-FIXME: how joins are executed. i.e. nested loop join.
+.. todo::
+
+   how joins are executed. i.e. nested loop join.

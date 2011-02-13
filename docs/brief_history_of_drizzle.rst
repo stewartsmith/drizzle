@@ -12,4 +12,4 @@ Drizzle is open source software, designed in an organic manner by developers tha
 
 Drizzle today is the largest fork of the MySQL server. At the time of writing, core developers span five companies, with as many, and sometimes more then, 30+ developers participating each month. Drizzle provides releases every other week and is the most well-tested database in the MySQL family tree.
 
-More narrative on the project can be found here http://en.wikipedia.org/wiki/Drizzle_(database_server)
+More narrative on the project can be found on `Wikipedia <http://en.wikipedia.org/wiki/Drizzle_(database_server)>`_
