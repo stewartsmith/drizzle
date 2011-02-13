@@ -363,9 +363,9 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::identifie
 
 message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
                                                           identifier::Table::const_reference identifier,
-                                                          drizzled::error_t &error,
                                                           bool include_temporary_tables)
 {
+  drizzled::error_t error;
   error= static_cast<drizzled::error_t>(ENOENT);
 
   if (include_temporary_tables)
@@ -373,7 +373,6 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
     Table *table= session.find_temporary_table(identifier);
     if (table)
     {
-      error= EE_OK;
       return message::table::shared_ptr(new message::Table(*table->getShare()->getTableMessage()));
     }
   }
@@ -391,7 +390,6 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
 
   if (iter == vector_of_engines.end())
   {
-    error= static_cast<drizzled::error_t>(ENOENT);
     return message::table::shared_ptr();
   }
   message::table::shared_ptr table_message(new message::Table(message));

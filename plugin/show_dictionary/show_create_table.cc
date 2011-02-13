@@ -49,8 +49,7 @@ ShowCreateTable::Generator::Generator(Field **arg) :
   {
     identifier::Table identifier(select->getShowSchema(), select->getShowTable());
 
-    drizzled::error_t junk;
-    table_message= plugin::StorageEngine::getTableMessage(getSession(), identifier, junk);
+    table_message= plugin::StorageEngine::getTableMessage(getSession(), identifier);
 
     if (table_message)
       is_primed= true;

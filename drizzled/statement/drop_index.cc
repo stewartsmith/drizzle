@@ -37,8 +37,7 @@ bool statement::DropIndex::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    drizzled::error_t junk;
-    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier, junk)))
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;

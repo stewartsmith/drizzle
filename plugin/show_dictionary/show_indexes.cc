@@ -54,8 +54,7 @@ ShowIndexes::Generator::Generator(Field **arg) :
     table_name.append(select->getShowTable().c_str());
     identifier::Table identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
 
-    drizzled::error_t error;
-    table_proto= plugin::StorageEngine::getTableMessage(getSession(), identifier, error);
+    table_proto= plugin::StorageEngine::getTableMessage(getSession(), identifier);
 
     if (table_proto)
       is_tables_primed= true;

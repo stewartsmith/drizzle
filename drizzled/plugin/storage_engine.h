@@ -326,7 +326,6 @@ public:
 
   static message::table::shared_ptr getTableMessage(Session& session,
                                                     const drizzled::identifier::Table &identifier,
-                                                    drizzled::error_t &error,
                                                     bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::identifier::Table &identifier,

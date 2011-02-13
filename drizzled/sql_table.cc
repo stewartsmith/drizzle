@@ -2001,9 +2001,8 @@ static bool create_table_wrapper(Session &session,
   // a "new" message and it will not have all of the information that the
   // source table message would have.
   message::Table new_table_message;
-  drizzled::error_t error;
 
-  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier, error);
+  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier);
 
   if (not source_table_message)
   {

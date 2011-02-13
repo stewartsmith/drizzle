@@ -50,8 +50,7 @@ public:
       while (table_iterator != table_names.end())
       {
         message::table::shared_ptr table;
-        drizzled::error_t toss;
-        table= plugin::StorageEngine::getTableMessage(session, *table_iterator, toss);
+        table= plugin::StorageEngine::getTableMessage(session, *table_iterator);
         table_iterator++;
 
         if (table)
