@@ -24,7 +24,6 @@
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/identifier.h>
-#include <drizzled/internal_error_handler.h>
 #include <drizzled/lex_column.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/named_savepoint.h>
@@ -46,7 +45,6 @@
 #include <drizzled/user_var_entry.h>
 #include <drizzled/util/storable.h>
 #include <drizzled/var.h>
-#include <drizzled/xid.h>
 
 
 #include <netdb.h>
@@ -98,15 +96,17 @@ class Resultset;
 }
 
 namespace internal { struct st_my_thread_var; }
-
 namespace table { class Placeholder; }
 
-class Lex_input_stream;
-class user_var_entry;
 class CopyField;
-class Table_ident;
-
+class DrizzleXid;
+class Internal_error_handler;
+class Lex_input_stream;
 class TableShareInstance;
+class Table_ident;
+class Time_zone;
+class select_result;
+class user_var_entry;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -115,9 +115,6 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
-
-class select_result;
-class Time_zone;
 
 #define Session_SENTRY_MAGIC 0xfeedd1ff
 #define Session_SENTRY_GONE  0xdeadbeef
@@ -1613,7 +1610,7 @@ public:
     return global_system_variables.storage_engine;
   }
 
-  void get_xid(DRIZZLE_XID *xid); // Innodb only
+  void get_xid(DrizzleXid *xid); // Innodb only
 
   table::Singular *getInstanceTable();
   table::Singular *getInstanceTable(List<CreateField> &field_list);

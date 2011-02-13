@@ -57,6 +57,7 @@
 #include <drizzled/select_max_min_finder_subselect.h>
 #include <drizzled/select_exists_subselect.h>
 #include <drizzled/tmp_table_param.h>
+#include <drizzled/internal_error_handler.h>
 
 #include "drizzled/identifier.h"
 
@@ -347,9 +348,9 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-void Session::get_xid(DRIZZLE_XID *xid)
+void Session::get_xid(DrizzleXid *xid)
 {
-  *xid = *(DRIZZLE_XID *) &transaction.xid_state.xid;
+  *xid = *(DrizzleXid *) &transaction.xid_state.xid;
 }
 
 /* Do operations that may take a long time */

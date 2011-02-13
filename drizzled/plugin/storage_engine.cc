@@ -53,6 +53,7 @@
 
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
+#include <drizzled/internal_error_handler.h>
 
 #include <drizzled/table/shell.h>
 
