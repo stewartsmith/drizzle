@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <drizzled/type/decimal.h>
 #include <drizzled/item/copy_string.h>
 
 namespace drizzled

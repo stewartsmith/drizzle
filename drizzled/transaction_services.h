@@ -25,11 +25,11 @@
 #ifndef DRIZZLED_TRANSACTION_SERVICES_H
 #define DRIZZLED_TRANSACTION_SERVICES_H
 
-#include "drizzled/atomics.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/identifier/table.h"
-#include "drizzled/message/schema.h"
-#include "drizzled/session.h"
+#include <drizzled/atomics.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/identifier/table.h>
+#include <drizzled/message/schema.h>
+#include <drizzled/session.h>
 
 #include "drizzled/visibility.h"
 
@@ -45,6 +45,7 @@ namespace plugin
   class TransactionalStorageEngine;
 }
 
+class Session;
 class NamedSavepoint;
 class Field;
 

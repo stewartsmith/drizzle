@@ -21,6 +21,7 @@
 
 #include <drizzled/function/min_max.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/session.h>
 
 namespace drizzled
 {

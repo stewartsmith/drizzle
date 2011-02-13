@@ -83,9 +83,7 @@ class testExecutor():
         #self.test_manager.mutex.acquire()
         self.current_testcase = self.test_manager.get_testCase(self.name)
         #self.test_manager.mutex.release()
-        if self.debug:
-            self.logging.debug("Executor: %s, assigned test: %s" %(self.name
-                                            , self.current_testcase.fullname))
+        
 
     def handle_server_reqs(self, start_and_exit):
         """ Get the servers required to execute the testCase 

@@ -21,6 +21,8 @@
 
 #include "quote.h"
 
+#include <drizzled/lex_string.h>
+
 namespace drizzled
 {
 

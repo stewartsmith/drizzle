@@ -39,5 +39,43 @@ Schema::Schema(Session &arg) :
     schema_iterator= schema_names.begin();
   }
 
+Schema::operator const drizzled::message::schema::shared_ptr()
+{
+  while (schema_iterator != schema_names.end())
+  {
+    identifier::Schema schema_identifier(*schema_iterator);
+
+    if (not plugin::Authorization::isAuthorized(session.user(), schema_identifier, false))
+    {
+      schema_iterator++;
+      continue;
+    }
+
+    bool is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
+    schema_iterator++;
+
+    if (is_schema_parsed)
+      return schema;
+  }
+
+  return message::schema::shared_ptr();
+}
+
+Schema::operator const drizzled::identifier::Schema*()
+{
+  while (schema_iterator != schema_names.end())
+  {
+    const drizzled::identifier::Schema *_ptr= &(*schema_iterator);
+    schema_iterator++;
+
+    if (not plugin::Authorization::isAuthorized(session.user(), *_ptr, false))
+      continue;
+
+    return _ptr;
+  }
+
+  return NULL;
+}
+
 } /* namespace generator */
 } /* namespace drizzled */

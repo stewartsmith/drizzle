@@ -21,25 +21,24 @@
 #define DRIZZLED_PLUGIN_STORAGE_ENGINE_H
 
 
+#include <drizzled/cached_directory.h>
 #include <drizzled/definitions.h>
-#include <drizzled/plugin.h>
+#include <drizzled/error_t.h>
 #include <drizzled/handler_structs.h>
+#include <drizzled/identifier.h>
 #include <drizzled/message.h>
 #include <drizzled/message/cache.h>
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/sql_string.h"
-#include "drizzled/identifier.h"
-#include "drizzled/cached_directory.h"
-#include "drizzled/plugin/monitored_in_transaction.h"
-
-#include <drizzled/error_t.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/monitored_in_transaction.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/sql_string.h>
 
 #include <bitset>
 #include <string>
 #include <vector>
 #include <set>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -223,11 +222,11 @@ protected:
   }
 
   /* Old style cursor errors */
-  void print_keydup_error(uint32_t key_nr, const char *msg, Table &table);
-  virtual bool get_error_message(int error, String *buf);
+  void print_keydup_error(uint32_t key_nr, const char *msg, const Table &table) const;
+  virtual bool get_error_message(int error, String *buf) const;
 
 public:
-  virtual void print_error(int error, myf errflag, Table& table);
+  virtual void print_error(int error, myf errflag, const Table& table) const;
 
   bool is_user_selectable() const
   {

@@ -15,19 +15,22 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
-#include <drizzled/plugin/function.h>
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
-#include <drizzled/error.h>
+
+#include <drizzled/charset.h>
 #include <drizzled/current_session.h>
 #include <drizzled/db.h>
-#include "drizzled/charset.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/error.h>
+#include <drizzled/function/str/strfunc.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/item/func.h>
+#include <drizzled/message/schema.h>
+#include <drizzled/plugin/function.h>
+#include <drizzled/plugin/storage_engine.h>
 
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
 #include <string>
-#include <drizzled/message/schema.pb.h>
+
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>

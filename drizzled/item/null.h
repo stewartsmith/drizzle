@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_ITEM_NULL_H
 #define DRIZZLED_ITEM_NULL_H
 
-#include "drizzled/item/basic_constant.h"
+#include <drizzled/charset_info.h>
+#include <drizzled/item/basic_constant.h>
 
 namespace drizzled
 {

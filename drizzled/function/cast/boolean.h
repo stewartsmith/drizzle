@@ -21,7 +21,8 @@
 #ifndef DRIZZLED_FUNCTION_CAST_BOOLEAN_H
 #define DRIZZLED_FUNCTION_CAST_BOOLEAN_H
 
-#include "drizzled/function/str/strfunc.h"
+#include <drizzled/charset_info.h>
+#include <drizzled/function/str/strfunc.h>
 
 namespace drizzled {
 namespace function {
