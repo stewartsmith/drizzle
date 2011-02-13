@@ -176,7 +176,7 @@ void free_charsets()
 {
   charset_initialized= true; // olaf: shouldn't this be = false?
 
-  while (!memory_vector.empty())
+  while (not memory_vector.empty())
   {
     delete[] memory_vector.back();
     memory_vector.pop_back();
