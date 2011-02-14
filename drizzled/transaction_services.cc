@@ -1986,7 +1986,7 @@ void TransactionServices::dropSchema(Session::reference session,
 }
 
 void TransactionServices::alterSchema(Session::reference session,
-                                      const message::schema::shared_ptr &old_schema,
+                                      const message::Schema &old_schema,
                                       const message::Schema &new_schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
@@ -2007,7 +2007,7 @@ void TransactionServices::alterSchema(Session::reference session,
   message::Schema *before= alter_schema_statement->mutable_before();
   message::Schema *after= alter_schema_statement->mutable_after();
 
-  *before= *old_schema;
+  *before= old_schema;
   *after= new_schema;
 
   finalizeStatementMessage(*statement, session);

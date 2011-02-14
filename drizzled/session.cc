@@ -646,7 +646,7 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     identifier::Schema identifier(in_db);
-    if (schema::change(this, identifier))
+    if (schema::change(*this, identifier))
     {
       /* change_db() has pushed the error message. */
       return false;

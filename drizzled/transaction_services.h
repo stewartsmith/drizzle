@@ -154,7 +154,7 @@ public:
    * @param[in] new_schema New schema definition
    */
   void alterSchema(Session::reference session,
-                   const message::schema::shared_ptr &old_schema,
+                   const message::Schema &old_schema,
                    const message::Schema &new_schema);
 
   /**

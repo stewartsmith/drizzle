@@ -60,7 +60,7 @@ bool statement::CreateSchema::execute()
   }
   else
   {
-    res= schema::create(getSession(), schema_message, getSession()->getLex()->exists());
+    res= schema::create(*getSession(), schema_message, getSession()->getLex()->exists());
     if (unlikely(plugin::EventObserver::afterCreateDatabase(*getSession(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);

@@ -44,7 +44,7 @@ bool statement::DropSchema::execute()
 
   identifier::Schema schema_identifier(std::string(getSession()->lex->name.str, getSession()->lex->name.length));
 
-  if (not check_db_name(getSession(), schema_identifier))
+  if (not schema::check(*getSession(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
@@ -68,7 +68,7 @@ bool statement::DropSchema::execute()
   }
   else
   {
-    res= schema::drop(getSession(), schema_identifier, drop_if_exists);
+    res= schema::drop(*getSession(), schema_identifier, drop_if_exists);
     if (unlikely(plugin::EventObserver::afterDropDatabase(*getSession(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());

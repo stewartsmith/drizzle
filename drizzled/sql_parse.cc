@@ -224,7 +224,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     identifier::Schema identifier(tmp);
 
-    if (not schema::change(session, identifier))
+    if (not schema::change(*session, identifier))
     {
       session->my_ok();
     }
@@ -956,7 +956,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     my_casedn_str(files_charset_info, table->db.str);
 
     identifier::Schema schema_identifier(string(table->db.str));
-    if (not check_db_name(session, schema_identifier))
+    if (not schema::check(*session, schema_identifier))
     {
 
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
