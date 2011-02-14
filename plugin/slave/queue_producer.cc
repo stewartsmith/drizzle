@@ -21,16 +21,22 @@
 #include "config.h"
 #include "plugin/slave/queue_producer.h"
 #include "drizzled/errmsg_print.h"
+#include "drizzled/gettext.h"
 
-#include <iostream>
+using namespace std;
+using namespace drizzled;
 
 namespace slave
 {
 
+QueueProducer::~QueueProducer()
+{
+  closeConnection();
+}
+
 bool QueueProducer::init()
 {
-  /* Connect to master */
-  return true;
+  return openConnection();
 }
 
 bool QueueProducer::process()
@@ -41,6 +47,55 @@ bool QueueProducer::process()
 void QueueProducer::shutdown()
 {
   /* Disconnect from master */
+}
+
+bool QueueProducer::openConnection()
+{
+  drizzle_return_t ret;
+
+  if (drizzle_create(&drizzle) == NULL)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: Error during drizzle_create()"));
+    return false;
+  }
+  
+  if (drizzle_con_create(&drizzle, &connection) == NULL)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: %s"),
+                  drizzle_error(&drizzle));
+    return false;
+  }
+  
+  drizzle_con_set_tcp(&connection, _master_host.c_str(), _master_port);
+  drizzle_con_set_auth(&connection, _master_user.c_str(), _master_pass.c_str());
+
+  ret= drizzle_con_connect(&connection);
+
+  if (ret != DRIZZLE_RETURN_OK)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: %s"),
+                  drizzle_error(&drizzle));
+    return false;
+  }
+  
+  return true;
+}
+
+bool QueueProducer::closeConnection()
+{
+  drizzle_return_t ret;
+  drizzle_result_st result;
+
+  if (drizzle_quit(&connection, &result, &ret) == NULL)
+  {
+    return false;
+  }
+
+  drizzle_result_free(&result);
+  return true;
 }
 
 } /* namespace slave */

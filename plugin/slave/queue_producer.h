@@ -22,6 +22,7 @@
 #define PLUGIN_SLAVE_QUEUE_PRODUCER_H
 
 #include "plugin/slave/queue_thread.h"
+#include "client/client_priv.h"
 #include <string>
 
 namespace slave
@@ -35,8 +36,7 @@ public:
     _master_port(3306)
   {}
 
-  virtual ~QueueProducer()
-  {}
+  virtual ~QueueProducer();
 
   bool init();
   bool process();
@@ -81,6 +81,12 @@ private:
   uint16_t    _master_port;
   std::string _master_user;
   std::string _master_pass;
+
+  drizzle_st drizzle;
+  drizzle_con_st connection;
+
+  bool openConnection();
+  bool closeConnection();
 };
 
 } /* namespace slave */
