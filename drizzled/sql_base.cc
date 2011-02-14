@@ -1595,7 +1595,7 @@ restart:
      * table/schema information via error messages
      */
     identifier::Table the_table(tables->getSchemaName(), tables->getTableName());
-    if (not plugin::Authorization::isAuthorized(user(), the_table))
+    if (not plugin::Authorization::isAuthorized(*user(), the_table))
     {
       result= -1;                               // Fatal error
       break;

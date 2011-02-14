@@ -590,7 +590,7 @@ bool Session::schedule(Session::shared_ptr &arg)
 */
 bool Session::isViewable(identifier::User::const_reference user_arg) const
 {
-  return plugin::Authorization::isAuthorized(user_arg, this, false);
+  return plugin::Authorization::isAuthorized(user_arg, *this, false);
 }
 
 
@@ -633,7 +633,7 @@ bool Session::checkUser(const std::string &passwd_str,
                         const std::string &in_db)
 {
   bool is_authenticated=
-    plugin::Authentication::isAuthenticated(user(), passwd_str);
+    plugin::Authentication::isAuthenticated(*user(), passwd_str);
 
   if (is_authenticated != true)
   {

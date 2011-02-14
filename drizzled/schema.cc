@@ -343,7 +343,7 @@ bool drop(Session &session, identifier::Schema &schema_identifier, const bool if
 bool change(Session &session, identifier::Schema &schema_identifier)
 {
 
-  if (not plugin::Authorization::isAuthorized(session.user(), schema_identifier))
+  if (not plugin::Authorization::isAuthorized(*session.user(), schema_identifier))
   {
     /* Error message is set in isAuthorized */
     return true;
@@ -427,7 +427,7 @@ static void change_db_impl(Session &session)
 
 bool check(Session &session, identifier::Schema &schema_identifier)
 {
-  if (not plugin::Authorization::isAuthorized(session.user(), schema_identifier))
+  if (not plugin::Authorization::isAuthorized(*session.user(), schema_identifier))
   {
     return false;
   }

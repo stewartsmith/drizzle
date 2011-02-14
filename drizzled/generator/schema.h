@@ -46,7 +46,7 @@ public:
     {
       identifier::Schema schema_identifier(*schema_iterator);
 
-      if (not plugin::Authorization::isAuthorized(session.user(), schema_identifier, false))
+      if (not plugin::Authorization::isAuthorized(*session.user(), schema_identifier, false))
       {
         schema_iterator++;
         continue;
@@ -69,7 +69,7 @@ public:
       const drizzled::identifier::Schema *_ptr= &(*schema_iterator);
       schema_iterator++;
 
-      if (not plugin::Authorization::isAuthorized(session.user(), *_ptr, false))
+      if (not plugin::Authorization::isAuthorized(*session.user(), *_ptr, false))
         continue;
 
       return _ptr;
