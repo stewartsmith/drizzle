@@ -17,41 +17,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_SORT_FIELD_H
+#define DRIZZLED_SORT_FIELD_H
 
-#ifndef DRIZZLED_SELECT_TO_FILE_H
-#define DRIZZLED_SELECT_TO_FILE_H
-
-#include <drizzled/select_result_interceptor.h>
-#include <drizzled/file_exchange.h>
-
-#include <boost/filesystem.hpp>
+#include <drizzled/item_result.h>
 
 namespace drizzled
 {
 
-namespace internal
-{
-typedef struct st_io_cache IO_CACHE;
-}
+class Field;
+class Item;
 
-class select_to_file :
-  public select_result_interceptor
+/**
+ * A structure used to describe sort information
+ * for a field or item used in ORDER BY.
+ */
+class SortField 
 {
-protected:
-  file_exchange *exchange;
-  int file;
-  internal::IO_CACHE *cache;
-  ha_rows row_count;
-  boost::filesystem::path path;
-
 public:
-  select_to_file(file_exchange *ex);
-  virtual ~select_to_file();
-  void send_error(drizzled::error_t errcode,const char *err);
-  bool send_eof();
-  void cleanup();
+  Field *field;	/**< Field to sort */
+  Item	*item; /**< Item if not sorting fields */
+  size_t length; /**< Length of sort field */
+  uint32_t suffix_length; /**< Length suffix (0-4) */
+  Item_result result_type; /**< Type of item */
+  bool reverse; /**< if descending sort */
+  bool need_strxnfrm;	/**< If we have to use strxnfrm() */
+
+  SortField() :
+    field(0),
+    item(0),
+    length(0),
+    suffix_length(0),
+    result_type(STRING_RESULT),
+    reverse(0),
+    need_strxnfrm(0)
+  { }
+
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_TO_FILE_H */
+#endif /* DRIZZLED_SORT_FIELD_H */

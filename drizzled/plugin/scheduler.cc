@@ -21,10 +21,9 @@
 
 #include <algorithm>
 
-#include "drizzled/plugin/scheduler.h"
-
-#include "drizzled/gettext.h"
-#include "drizzled/errmsg_print.h"
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
+#include <drizzled/plugin/scheduler.h>
 
 namespace drizzled
 {

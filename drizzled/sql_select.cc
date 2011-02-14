@@ -29,41 +29,45 @@
 #include <algorithm>
 #include <vector>
 
-#include "drizzled/sql_select.h" /* include join.h */
+#include <drizzled/sql_select.h> /* include join.h */
 
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/util/test.h"
-#include "drizzled/name_resolution_context_state.h"
-#include "drizzled/nested_join.h"
-#include "drizzled/probes.h"
-#include "drizzled/show.h"
-#include "drizzled/item/cache.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/item/copy_string.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/outer_ref.h"
-#include "drizzled/index_hint.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/drizzled.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/util/test.h>
+#include <drizzled/name_resolution_context_state.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/probes.h>
+#include <drizzled/show.h>
+#include <drizzled/item/cache.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/copy_string.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/outer_ref.h>
+#include <drizzled/index_hint.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/plugin/storage_engine.h>
 
-#include "drizzled/sql_union.h"
-#include "drizzled/optimizer/key_field.h"
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/sargable_param.h"
-#include "drizzled/optimizer/key_use.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
+#include <drizzled/sql_union.h>
+#include <drizzled/optimizer/key_field.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
 
-#include "drizzled/filesort.h"
+#include <drizzled/filesort.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
+#include <drizzled/sort_field.h>
+#include <drizzled/select_result.h>
 
 using namespace std;
 

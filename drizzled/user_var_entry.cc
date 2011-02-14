@@ -18,8 +18,10 @@
  */
 
 #include "config.h"
+
 #include <drizzled/session.h>
 #include "drizzled/internal/m_string.h"
+#include <drizzled/user_var_entry.h>
 
 namespace drizzled
 {

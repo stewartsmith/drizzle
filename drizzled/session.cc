@@ -49,6 +49,15 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
+#include <drizzled/select_to_file.h>
+#include <drizzled/select_export.h>
+#include <drizzled/select_dump.h>
+#include <drizzled/select_subselect.h>
+#include <drizzled/select_singlerow_subselect.h>
+#include <drizzled/select_max_min_finder_subselect.h>
+#include <drizzled/select_exists_subselect.h>
+#include <drizzled/tmp_table_param.h>
+#include <drizzled/internal_error_handler.h>
 
 #include "drizzled/identifier.h"
 
@@ -60,6 +69,8 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/plugin/event_observer.h"
+
+#include <drizzled/user_var_entry.h>
 
 #include "drizzled/util/functors.h"
 
@@ -306,9 +317,9 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-void Session::get_xid(DRIZZLE_XID *xid)
+void Session::get_xid(DrizzleXid *xid)
 {
-  *xid = *(DRIZZLE_XID *) &transaction.xid_state.xid;
+  *xid = *(DrizzleXid *) &transaction.xid_state.xid;
 }
 
 /* Do operations that may take a long time */

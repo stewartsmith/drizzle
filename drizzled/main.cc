@@ -66,6 +66,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <drizzled/util/backtrace.h>
+#include <drizzled/current_session.h>
 
 extern "C" int daemonize(int nochdir, int noclose, int wait_sigusr1);
 extern "C" int daemon_is_ready(void);

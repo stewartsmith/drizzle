@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "plugin/session_dictionary/dictionary.h"
+#include <drizzled/user_var_entry.h>
 
 #define LARGEST_USER_VARIABLE_NAME 128
 

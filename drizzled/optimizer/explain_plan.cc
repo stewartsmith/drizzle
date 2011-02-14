@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+
 #include "drizzled/session.h"
 #include "drizzled/item/uint.h"
 #include "drizzled/item/float.h"
@@ -29,6 +30,7 @@
 #include "drizzled/sql_select.h"
 #include "drizzled/join.h"
 #include "drizzled/internal/m_string.h"
+#include <drizzled/select_result.h>
 
 #include <cstdio>
 #include <string>

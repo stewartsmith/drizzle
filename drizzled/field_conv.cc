@@ -29,6 +29,7 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/current_session.h>
 
 #include <drizzled/copy_field.h>
 #include <drizzled/field/blob.h>

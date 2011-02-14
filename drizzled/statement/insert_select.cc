@@ -24,6 +24,7 @@
 #include <drizzled/session.h>
 #include <drizzled/probes.h>
 #include <drizzled/statement/insert_select.h>
+#include <drizzled/select_insert.h>
 
 namespace drizzled
 {

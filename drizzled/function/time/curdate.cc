@@ -19,10 +19,11 @@
 
 #include "config.h"
 
-#include "drizzled/function/time/curdate.h"
-#include "drizzled/tztime.h"
-#include "drizzled/temporal.h"
-#include "drizzled/session.h"
+#include <drizzled/function/time/curdate.h>
+#include <drizzled/tztime.h>
+#include <drizzled/temporal.h>
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
 
 namespace drizzled
 {

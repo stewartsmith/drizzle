@@ -33,6 +33,8 @@
 
 #ifdef DRIZZLED
 #include "config.h"
+
+#include <drizzled/current_session.h>
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
