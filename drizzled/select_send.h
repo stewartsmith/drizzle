@@ -24,6 +24,7 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/query_cache.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/select_result.h>
 
 namespace drizzled
 {

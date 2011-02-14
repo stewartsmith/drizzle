@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_QUERY_ID_H
 #define DRIZZLED_QUERY_ID_H
 
-#include <pthread.h>
 #include <drizzled/atomics.h>
 
 namespace drizzled

@@ -23,6 +23,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/replace_select.h>
+#include <drizzled/select_insert.h>
 
 namespace drizzled
 {

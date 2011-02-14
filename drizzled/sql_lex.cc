@@ -29,6 +29,7 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/lookup_symbol.h"
 #include "drizzled/index_hint.h"
+#include <drizzled/select_result.h>
 
 #include <cstdio>
 #include <ctype.h>
@@ -50,7 +51,7 @@ static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
   Order *order;
 
-  if (!(order = (Order *) session->alloc(sizeof(Order))))
+  if (!(order = (Order *) session->getMemRoot()->allocate(sizeof(Order))))
     return true;
 
   order->item_ptr= item;
@@ -95,7 +96,7 @@ Lex_input_stream::Lex_input_stream(Session *session,
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
-  m_cpp_buf= (char*) session->alloc(length + 1);
+  m_cpp_buf= (char*) session->getMemRoot()->allocate(length + 1);
   m_cpp_ptr= m_cpp_buf;
 }
 
@@ -122,7 +123,7 @@ void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
     (m_buf_length / default_charset_info->mbminlen) *
     my_charset_utf8_bin.mbmaxlen;
 
-  m_body_utf8= (char *) session->alloc(body_utf8_length + 1);
+  m_body_utf8= (char *) session->getMemRoot()->allocate(body_utf8_length + 1);
   m_body_utf8_ptr= m_body_utf8;
   *m_body_utf8_ptr= 0;
 
@@ -358,7 +359,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
   char *to;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length= lip->yytoklen=length;
-  tmp.str=(char*) lip->m_session->alloc(tmp.length+1);
+  tmp.str=(char*) lip->m_session->getMemRoot()->allocate(tmp.length+1);
   from= lip->get_tok_start() + skip;
   to= tmp.str;
   end= to+length;
@@ -434,7 +435,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       end-= post_skip;
       assert(end >= str);
 
-      if (!(start= (char*) lip->m_session->alloc((uint32_t) (end-str)+1)))
+      if (!(start= (char*) lip->m_session->getMemRoot()->allocate((uint32_t) (end-str)+1)))
         return (char*) "";		// memory::SqlAlloc has set error flag
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
@@ -1713,7 +1714,7 @@ bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
     return false;
 
   return (ref_pointer_array=
-          (Item **)session->alloc(sizeof(Item*) * (n_child_sum_items +
+          (Item **)session->getMemRoot()->allocate(sizeof(Item*) * (n_child_sum_items +
                                                  item_list.elements +
                                                  select_n_having_items +
                                                  select_n_where_fields +

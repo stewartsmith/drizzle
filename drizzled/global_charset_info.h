@@ -26,15 +26,15 @@
 namespace drizzled
 {
 
-typedef struct charset_info_st CHARSET_INFO;
+struct charset_info_st;
 
 /*
   External variables
 */
-extern DRIZZLED_API const CHARSET_INFO *default_charset_info;
-extern DRIZZLED_API const CHARSET_INFO *system_charset_info;
-extern const CHARSET_INFO *files_charset_info;
-extern const CHARSET_INFO *table_alias_charset;
+extern DRIZZLED_API const charset_info_st *default_charset_info;
+extern DRIZZLED_API const charset_info_st *system_charset_info;
+extern const charset_info_st *files_charset_info;
+extern const charset_info_st *table_alias_charset;
 
 } /* namespace drizzled */
 

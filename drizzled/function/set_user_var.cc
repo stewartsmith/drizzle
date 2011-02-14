@@ -23,6 +23,7 @@
 #include <drizzled/field/num.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/user_var_entry.h>
 
 namespace drizzled
 {

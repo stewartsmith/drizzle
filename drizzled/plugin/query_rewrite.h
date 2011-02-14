@@ -26,7 +26,6 @@
 
 #include "drizzled/atomics.h"
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/session.h"
 
 #include "drizzled/visibility.h"
 

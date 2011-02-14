@@ -22,6 +22,7 @@
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/charset_info.h>
 
 using namespace drizzled;
 

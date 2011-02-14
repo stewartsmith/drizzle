@@ -35,7 +35,8 @@ namespace drizzled
   Create a formated date/time value in a string.
 */
 
-static bool make_date_time(String *format, type::Time *l_time,
+static bool make_date_time(Session &session,
+                           String *format, type::Time *l_time,
                            type::timestamp_t type, String *str)
 {
   char intbuff[15];
@@ -43,8 +44,7 @@ static bool make_date_time(String *format, type::Time *l_time,
   uint32_t weekday;
   ulong length;
   const char *ptr, *end;
-  Session *session= current_session;
-  MY_LOCALE *locale= session->variables.lc_time_names;
+  MY_LOCALE *locale= session.variables.lc_time_names;
 
   str->length(0);
 
@@ -265,11 +265,10 @@ static bool make_date_time(String *format, type::Time *l_time,
 
 void Item_func_date_format::fix_length_and_dec()
 {
-  Session* session= current_session;
   Item *arg1= args[1];
 
   decimals=0;
-  const CHARSET_INFO * const cs= session->variables.getCollation();
+  const CHARSET_INFO * const cs= getSession().variables.getCollation();
   collation.set(cs, arg1->collation.derivation);
   if (arg1->type() == STRING_ITEM)
   {                                             // Optimize the normal case
@@ -399,7 +398,7 @@ String *Item_func_date_format::val_str(String *str)
   {
     String *res;
     if (!(res=args[0]->val_str(str)) ||
-        (str_to_time_with_warn(current_session, res->ptr(), res->length(), &l_time)))
+        (str_to_time_with_warn(&getSession(), res->ptr(), res->length(), &l_time)))
       goto null_date;
 
     l_time.year=l_time.month=l_time.day=0;
@@ -425,7 +424,8 @@ String *Item_func_date_format::val_str(String *str)
 
   /* Create the result string */
   str->set_charset(collation.collation);
-  if (not make_date_time(format, &l_time,
+  if (not make_date_time(getSession(),
+                         format, &l_time,
                          is_time_format ? type::DRIZZLE_TIMESTAMP_TIME :
                          type::DRIZZLE_TIMESTAMP_DATE,
                          str))

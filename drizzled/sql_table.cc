@@ -47,6 +47,7 @@
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <algorithm>
 #include <sstream>

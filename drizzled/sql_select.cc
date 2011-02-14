@@ -29,40 +29,45 @@
 #include <algorithm>
 #include <vector>
 
-#include "drizzled/sql_select.h" /* include join.h */
+#include <drizzled/sql_select.h> /* include join.h */
 
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/util/test.h"
-#include "drizzled/name_resolution_context_state.h"
-#include "drizzled/nested_join.h"
-#include "drizzled/probes.h"
-#include "drizzled/show.h"
-#include "drizzled/item/cache.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/item/copy_string.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/outer_ref.h"
-#include "drizzled/index_hint.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/drizzled.h"
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/util/test.h>
+#include <drizzled/name_resolution_context_state.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/probes.h>
+#include <drizzled/show.h>
+#include <drizzled/item/cache.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/copy_string.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/outer_ref.h>
+#include <drizzled/index_hint.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/plugin/storage_engine.h>
 
-#include "drizzled/sql_union.h"
-#include "drizzled/optimizer/key_field.h"
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/sargable_param.h"
-#include "drizzled/optimizer/key_use.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
+#include <drizzled/sql_union.h>
+#include <drizzled/optimizer/key_field.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
 
-#include "drizzled/filesort.h"
+#include <drizzled/filesort.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
+#include <drizzled/sort_field.h>
+#include <drizzled/select_result.h>
 
 using namespace std;
 
@@ -572,7 +577,7 @@ bool update_ref_and_keys(Session *session,
   sz= sizeof(optimizer::KeyField) *
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
-  if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
+  if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
     return true;
   and_level= 0;
   field= end= key_fields;
@@ -1004,10 +1009,10 @@ bool create_ref_for_key(Join *join,
   j->ref.key_length=length;
   j->ref.key=(int) key;
   if (!(j->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(length)*2)) ||
-      !(j->ref.key_copy= (StoredKey**) session->alloc((sizeof(StoredKey*) *
+      !(j->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
                (keyparts+1)))) ||
-      !(j->ref.items=    (Item**) session->alloc(sizeof(Item*)*keyparts)) ||
-      !(j->ref.cond_guards= (bool**) session->alloc(sizeof(uint*)*keyparts)))
+      !(j->ref.items=    (Item**) session->getMemRoot()->allocate(sizeof(Item*)*keyparts)) ||
+      !(j->ref.cond_guards= (bool**) session->getMemRoot()->allocate(sizeof(uint*)*keyparts)))
   {
     return(true);
   }
@@ -5636,7 +5641,7 @@ Order *create_distinct_group(Session *session,
   {
     if (order->in_field_list)
     {
-      Order *ord=(Order*) session->memdup((char*) order,sizeof(Order));
+      Order *ord=(Order*) session->getMemRoot()->duplicate((char*) order,sizeof(Order));
       if (!ord)
         return 0;
       *prev=ord;
@@ -6291,7 +6296,7 @@ void print_join(Session *session, String *str,
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TableList> ti(*tables);
-  TableList **table= (TableList **)session->alloc(sizeof(TableList*) *
+  TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
     return;  // out of memory

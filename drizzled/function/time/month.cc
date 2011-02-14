@@ -116,7 +116,6 @@ String* Item_func_monthname::val_str(String* str)
   }
   const char *month_name;
   uint32_t   month= (uint) val_int();
-  Session *session= current_session;
 
   if (null_value || !month)
   {
@@ -124,7 +123,7 @@ String* Item_func_monthname::val_str(String* str)
     return (String*) 0;
   }
   null_value=0;
-  month_name= session->variables.lc_time_names->month_names->type_names[month-1];
+  month_name= getSession().variables.lc_time_names->month_names->type_names[month-1];
   str->set(month_name, strlen(month_name), system_charset_info);
   return str;
 }

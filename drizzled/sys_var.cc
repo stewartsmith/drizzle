@@ -61,6 +61,7 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/constrained_value.h"
 #include "drizzled/visibility.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <cstdio>
 #include <map>
@@ -212,8 +213,8 @@ static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
 static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
                                                 &drizzle_system_variables::sortbuff_size);
 
-static sys_var_session_size_t sys_transaction_message_threshold("transaction_message_threshold",
-                                                                &drizzle_system_variables::transaction_message_threshold);
+static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transaction_message_threshold",
+                                                                &transaction_message_threshold);
 
 static sys_var_session_storage_engine sys_storage_engine("storage_engine",
 				       &drizzle_system_variables::storage_engine);
@@ -1489,7 +1490,7 @@ static struct option *find_option(struct option *opt, const char *name)
 drizzle_show_var* enumerate_sys_vars(Session *session)
 {
   int size= sizeof(drizzle_show_var) * (system_variable_map.size() + 1);
-  drizzle_show_var *result= (drizzle_show_var*) session->alloc(size);
+  drizzle_show_var *result= (drizzle_show_var*) session->getMemRoot()->allocate(size);
 
   if (result)
   {

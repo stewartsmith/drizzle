@@ -111,29 +111,34 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include "drizzled/sql_base.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/optimizer/cost_vector.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/field/num.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/optimizer/sum.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_group_min_max_select.h"
-#include "drizzled/optimizer/quick_index_merge_select.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
-#include "drizzled/optimizer/quick_ror_union_select.h"
-#include "drizzled/optimizer/table_read_plan.h"
-#include "drizzled/optimizer/sel_arg.h"
-#include "drizzled/optimizer/sel_imerge.h"
-#include "drizzled/optimizer/sel_tree.h"
-#include "drizzled/optimizer/range_param.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/error.h>
+#include <drizzled/field/num.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/optimizer/cost_vector.h>
+#include <drizzled/optimizer/quick_group_min_max_select.h>
+#include <drizzled/optimizer/quick_index_merge_select.h>
+#include <drizzled/optimizer/quick_range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
+#include <drizzled/optimizer/quick_ror_union_select.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/range_param.h>
+#include <drizzled/optimizer/sel_arg.h>
+#include <drizzled/optimizer/sel_imerge.h>
+#include <drizzled/optimizer/sel_tree.h>
+#include <drizzled/optimizer/sum.h>
+#include <drizzled/optimizer/table_read_plan.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/records.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/table_reference.h>
+#include <drizzled/session.h>
+
+#include <drizzled/unique.h>
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 

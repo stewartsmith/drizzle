@@ -20,14 +20,16 @@
 #ifndef DRIZZLED_NESTED_JOIN_H
 #define DRIZZLED_NESTED_JOIN_H
 
-#include <drizzled/sql_list.h>
 #include <drizzled/item.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/sql_list.h>
 
 #include <bitset>
 
 namespace drizzled
 {
 class TableList;
+class JoinTable;
 
 class NestedJoin
 {

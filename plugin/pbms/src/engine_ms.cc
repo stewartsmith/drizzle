@@ -28,7 +28,9 @@
  */
 #ifdef DRIZZLED
 #include "config.h"
+
 #include <drizzled/common.h>
+#include <drizzled/current_session.h>
 #include <drizzled/session.h>
 #endif
 

@@ -17,6 +17,7 @@
 /* Copy data from a textfile to table */
 
 #include "config.h"
+
 #include <drizzled/sql_load.h>
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
@@ -26,6 +27,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include <drizzled/db.h>
+#include "drizzled/plugin/storage_engine.h"
 
 #include <sys/stat.h>
 #include <fcntl.h>

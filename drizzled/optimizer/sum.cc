@@ -52,10 +52,14 @@
 */
 
 #include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/item/sum.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/optimizer/sum.h"
+
+#include <drizzled/sql_select.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/optimizer/sum.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/table_list.h>
+#include <drizzled/key.h>
 
 namespace drizzled
 {

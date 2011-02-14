@@ -22,10 +22,13 @@
 #ifndef DRIZZLED_OPTIMIZER_RANGE_H
 #define DRIZZLED_OPTIMIZER_RANGE_H
 
-#include "drizzled/field.h"
-#include "drizzled/item/sum.h"
+#include <drizzled/field.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/table_reference.h>
 
 #include <queue>
+
+#include <boost/dynamic_bitset.hpp>
 
 namespace drizzled
 {
@@ -312,9 +315,9 @@ class SqlSelect : public memory::SqlAlloc
 };
 
 QuickRangeSelect *get_quick_select_for_ref(Session *session, 
-                                             Table *table,
-                                             struct table_reference_st *ref,
-                                             ha_rows records);
+                                           Table *table,
+                                           table_reference_st *ref,
+                                           ha_rows records);
 
 /*
   Create a QuickRangeSelect from given key and SEL_ARG tree for that key.

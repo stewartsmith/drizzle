@@ -22,6 +22,7 @@
 #define PLUGIN_STATUS_DICTIONARY_VARIABLES_H
 
 #include "plugin/status_dictionary/dictionary.h"
+#include <drizzled/current_session.h>
 
 class VariablesTool : public StateTool
 {

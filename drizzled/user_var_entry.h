@@ -21,10 +21,13 @@
 #ifndef DRIZZLED_USER_VAR_ENTRY_H
 #define DRIZZLED_USER_VAR_ENTRY_H
 
-#include "drizzled/query_id.h"
+#include <drizzled/dtcollation.h>
+#include <drizzled/query_id.h>
 
 namespace drizzled
 {
+
+namespace type { class Decimal; }
 
 // this is needed for user_vars hash
 class user_var_entry

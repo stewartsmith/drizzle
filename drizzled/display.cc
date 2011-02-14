@@ -20,10 +20,12 @@
 
 #include "config.h"
 
-#include "drizzled/display.h"
-#include "drizzled/item.h"
+#include <drizzled/display.h>
+#include <drizzled/item.h>
 
-#include <assert.h>
+#include <cassert>
+#include <iostream>
+#include <sstream>
 
 namespace drizzled {
 namespace display {

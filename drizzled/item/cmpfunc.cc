@@ -22,16 +22,21 @@
 */
 
 #include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/temporal.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/item/cache_int.h"
-#include "drizzled/item/int_with_ref.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/time_functions.h"
-#include "drizzled/internal/my_sys.h"
+
+#include <drizzled/cached_item.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/item/cache_int.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/int_with_ref.h>
+#include <drizzled/item/subselect.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/temporal.h>
+#include <drizzled/time_functions.h>
+
 #include <math.h>
 #include <algorithm>
 
@@ -567,6 +572,19 @@ void Item_bool_func2::fix_length_and_dec()
   set_cmp_func();
 }
 
+Arg_comparator::Arg_comparator():
+  session(current_session),
+  a_cache(0),
+  b_cache(0)
+{}
+
+Arg_comparator::Arg_comparator(Item **a1, Item **a2):
+  a(a1),
+  b(a2),
+  session(current_session),
+  a_cache(0),
+  b_cache(0)
+{}
 
 int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
 {
@@ -3199,6 +3217,13 @@ unsigned char *in_int64_t::get_value(Item *item)
   return (unsigned char*) &tmp;
 }
 
+in_datetime::in_datetime(Item *warn_item_arg, uint32_t elements) :
+  in_int64_t(elements),
+  session(current_session),
+  warn_item(warn_item_arg),
+  lval_cache(0)
+{}
+
 void in_datetime::set(uint32_t pos, Item *item)
 {
   Item **tmp_item= &item;
@@ -4463,9 +4488,9 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       {
         pattern     = first + 1;
         pattern_len = (int) len - 2;
-        int *suff = (int*) session->alloc((int) (sizeof(int)*
-                                      ((pattern_len + 1)*2+
-                                      alphabet_size)));
+        int *suff = (int*) session->getMemRoot()->allocate((int) (sizeof(int)*
+                                                                  ((pattern_len + 1)*2+
+                                                                   alphabet_size)));
         bmGs      = suff + pattern_len + 1;
         bmBc      = bmGs + pattern_len + 1;
         turboBM_compute_good_suffix_shifts(suff);
@@ -5187,5 +5212,11 @@ void Item_equal::print(String *str, enum_query_type query_type)
   }
   str->append(')');
 }
+
+cmp_item_datetime::cmp_item_datetime(Item *warn_item_arg) :
+  session(current_session),
+  warn_item(warn_item_arg),
+  lval_cache(0)
+{}
 
 } /* namespace drizzled */

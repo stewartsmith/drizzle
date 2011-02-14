@@ -36,9 +36,13 @@
 #ifndef DRIZZLED_UTIL_STRING_H
 #define DRIZZLED_UTIL_STRING_H
 
+#include <utility>
 #include <string>
+#include <vector>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace drizzled
 {

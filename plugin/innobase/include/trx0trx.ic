@@ -56,6 +56,17 @@ trx_start_if_not_started_low(
 	}
 }
 
+/******************************************************************//**
+Checks if the commit id should be logged to the sys header file
+@return TRUE if the commit id should be logged */
+UNIV_INLINE
+ibool
+trx_log_commit_id(const trx_t*	trx)
+/*===============*/
+{
+	return (trx->log_commit_id);
+}
+
 /****************************************************************//**
 Retrieves the error_info field from a trx.
 @return	the error info */

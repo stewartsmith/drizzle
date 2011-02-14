@@ -19,7 +19,9 @@
 
 #include "config.h"
 
+#include <drizzled/charset_info.h>
 #include <drizzled/function/locate.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {

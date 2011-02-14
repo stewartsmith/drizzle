@@ -17,11 +17,6 @@
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #ifndef _GL_ERRNO_H
-
-
-#include <errno.h>
-
-#ifndef _GL_ERRNO_H
 #define _GL_ERRNO_H
 
 
@@ -37,32 +32,36 @@
 
 /* These are intentionally the same values as the WSA* error numbers, defined
    in <winsock2.h>.  */
-#  define EINPROGRESS     10036
-#  define EALREADY        10037
+#  define EINPROGRESS WSAEINPROGRESS
+#  define EALREADY WSAEALREADY
+#  define EISCONN WSAEISCONN
+#  define ENOBUFS WSAENOBUFS
+#  define EAGAIN WSAEWOULDBLOCK
+#  define EINTR WSAEINTR
+#  define EPIPE WSAECONNRESET
+#  define EINVAL WSAEINVAL
+#  define ECONNREFUSED WSAECONNREFUSED
+#  define ENETUNREACH WSAENETUNREACH
+#  define ETIMEDOUT WSAETIMEDOUT
+#  define ECONNRESET WSAECONNRESET 
+#  define EADDRINUSE WSAEADDRINUSE
+#  define EOPNOTSUPP WSAEOPNOTSUPP
+#  define ENOPROTOOPT WSAENOPROTOOPT
 #  define ENOTSOCK        10038
 #  define EDESTADDRREQ    10039
 #  define EMSGSIZE        10040
 #  define EPROTOTYPE      10041
-#  define ENOPROTOOPT     10042
 #  define EPROTONOSUPPORT 10043
 #  define ESOCKTNOSUPPORT 10044  /* not required by POSIX */
-#  define EOPNOTSUPP      10045
 #  define EPFNOSUPPORT    10046  /* not required by POSIX */
 #  define EAFNOSUPPORT    10047
-#  define EADDRINUSE      10048
 #  define EADDRNOTAVAIL   10049
 #  define ENETDOWN        10050
-#  define ENETUNREACH     10051
 #  define ENETRESET       10052
 #  define ECONNABORTED    10053
-#  define ECONNRESET      10054
-#  define ENOBUFS         10055
-#  define EISCONN         10056
 #  define ENOTCONN        10057
 #  define ESHUTDOWN       10058  /* not required by POSIX */
 #  define ETOOMANYREFS    10059  /* not required by POSIX */
-#  define ETIMEDOUT       10060
-#  define ECONNREFUSED    10061
 #  define ELOOP           10062
 #  define EHOSTDOWN       10064  /* not required by POSIX */
 #  define EHOSTUNREACH    10065
@@ -131,5 +130,4 @@
 # endif
 
 
-#endif /* _GL_ERRNO_H */
 #endif /* _GL_ERRNO_H */

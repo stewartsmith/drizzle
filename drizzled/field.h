@@ -34,7 +34,7 @@
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/item_result.h"
-#include "drizzled/visibility.h"
+#include "drizzled/charset_info.h"
 
 #include <string>
 #include <vector>
@@ -800,55 +800,6 @@ public:
   uint32_t decimals;
   enum_field_types type;
   SendField() {}
-};
-
-/**
- * A class for quick copying data to fields
- */
-class CopyField :public memory::SqlAlloc
-{
-  /**
-    Convenience definition of a copy function returned by
-    get_copy_func.
-  */
-  typedef void Copy_func(CopyField*);
-  Copy_func *get_copy_func(Field *to, Field *from);
-
-public:
-  unsigned char *from_ptr;
-  unsigned char *to_ptr;
-  unsigned char *from_null_ptr;
-  unsigned char *to_null_ptr;
-  bool *null_row;
-  uint32_t from_bit;
-  uint32_t to_bit;
-  uint32_t from_length;
-  uint32_t to_length;
-  Field *from_field;
-  Field *to_field;
-  String tmp;					// For items
-
-  CopyField() :
-    from_ptr(0),
-    to_ptr(0),
-    from_null_ptr(0),
-    to_null_ptr(0),
-    null_row(0),
-    from_bit(0),
-    to_bit(0),
-    from_length(0),
-    to_length(0),
-    from_field(0),
-    to_field(0)
-  {}
-
-  ~CopyField()
-  {}
-
-  void set(Field *to,Field *from,bool save);	// Field to field
-  void set(unsigned char *to,Field *from);		// Field to string
-  void (*do_copy)(CopyField *);
-  void (*do_copy2)(CopyField *);		// Used to handle null values
 };
 
 uint32_t pack_length_to_packflag(uint32_t type);

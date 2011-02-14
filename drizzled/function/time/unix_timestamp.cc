@@ -34,7 +34,7 @@ int64_t Item_func_unix_timestamp::val_int()
 
   assert(fixed == 1);
   if (arg_count == 0)
-    return (int64_t) current_session->getCurrentTimestampEpoch();
+    return (int64_t) getSession().getCurrentTimestampEpoch();
 
   if (args[0]->type() == FIELD_ITEM)
   {                                             // Optimize timestamp field

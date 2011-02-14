@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_INSERT_H
 #define DRIZZLED_SELECT_INSERT_H
 
+#include <drizzled/select_result_interceptor.h>
+
 namespace drizzled
 {
 

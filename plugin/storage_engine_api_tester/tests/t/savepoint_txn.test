@@ -1,0 +1,29 @@
+select seapitester_clear_engine_state_history();
+
+CREATE TABLE t1(a int, b VARCHAR(10), c VARCHAR(10)) ENGINE=STORAGE_ENGINE_API_TESTER;
+
+INSERT INTO t1 (a,b,c) VALUES (1,'1','ok'), (2,'2', 'ok'), (3,'3','ok');
+
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
+
+SET AUTOCOMMIT=OFF;
+SAVEPOINT A;
+
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
+
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+UPDATE t1 SET c = 'fail' WHERE a > 0;
+ROLLBACK TO SAVEPOINT A;
+COMMIT;
+SELECT * FROM t1;
+COMMIT;
+DROP TABLE t1;
+
+select * from data_dictionary.seapitester_engine_state_history;
+select seapitester_clear_engine_state_history();
+
+

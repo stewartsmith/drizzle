@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <drizzled/item/cache_str.h>
+#include <drizzled/field.h>
 
 namespace drizzled
 {

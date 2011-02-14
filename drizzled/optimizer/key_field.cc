@@ -19,11 +19,14 @@
  */
 
 #include "config.h"
+
 #include <drizzled/sql_select.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/item/cmpfunc.h>
-#include "drizzled/optimizer/key_field.h"
-#include "drizzled/optimizer/key_use.h"
+#include <drizzled/table.h>
+#include <drizzled/optimizer/key_field.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/sql_lex.h>
 
 #include <vector>
 
