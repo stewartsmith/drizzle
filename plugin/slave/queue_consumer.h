@@ -57,6 +57,14 @@ public:
     return _check_interval;
   }
   
+  /**
+   * Update applier status in state table.
+   *
+   * @param err_msg Error message string
+   * @param status false = STOPPED, true = RUNNING
+   */
+  void setApplierState(const std::string &err_msg, bool status);
+
 private:
   typedef std::vector<uint64_t> TrxIdList;
 
@@ -76,14 +84,6 @@ private:
    * @retval false Failure
    */
   bool createApplierSchemaAndTables();
-
-  /**
-   * Update applier status in state table.
-   *
-   * @param err_msg Error message string
-   * @param status false = STOPPED, true = RUNNING
-   */
-  void setApplierState(const std::string &err_msg, bool status);
 
   bool getListOfCompletedTransactions(TrxIdList &list);
 

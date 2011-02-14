@@ -69,7 +69,6 @@ void QueueThread::run(void)
     }
     catch (boost::thread_interrupted &)
     {
-      shutdown();
       return;
     }
   }

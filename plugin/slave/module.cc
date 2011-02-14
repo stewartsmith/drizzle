@@ -47,7 +47,7 @@ static int init(module::Context &context)
 
   ReplicationSlave *slave= new ReplicationSlave();
 
-  if (not slave->initWithConfig(vm["slave-config"].as<string>()))
+  if (not slave->initWithConfig(vm["config-file"].as<string>()))
   {
     errmsg_printf(error::ERROR,
                   _("Could not start slave services: %s\n"),
@@ -62,7 +62,7 @@ static int init(module::Context &context)
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("slave-config",
+  context("config-file",
           po::value<string>()->default_value(DEFAULT_SLAVE_CFG_FILE.string()),
           N_("Path to the slave configuration file"));
 }
@@ -72,7 +72,7 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Replication Slave",
+  "slave",
   "1.0",
   "David Shrewsbury",
   "Implements Drizzle replication slave.",

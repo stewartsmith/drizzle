@@ -22,6 +22,8 @@
 #include "plugin/slave/queue_producer.h"
 #include "drizzled/errmsg_print.h"
 
+#include <iostream>
+
 namespace slave
 {
 

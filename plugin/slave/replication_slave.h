@@ -24,7 +24,12 @@
 #include "plugin/slave/queue_consumer.h"
 #include "plugin/slave/queue_producer.h"
 #include "drizzled/plugin/daemon.h"
+#include "drizzled/program_options/config_file.h"
 #include <boost/thread.hpp>
+#include <boost/program_options.hpp>
+#include <fstream>
+
+namespace po= boost::program_options;
 
 namespace slave
 {
@@ -55,10 +60,35 @@ public:
    */
   bool initWithConfig(const std::string &config_file)
   {
-    /* parse config file */
-    (void)config_file;
+    po::variables_map vm;
+    po::options_description slave_options("Options for the slave plugin");
+
+    slave_options.add_options()
+      ("master-host", po::value<std::string>()->default_value(""))
+      ("master-port", po::value<uint16_t>()->default_value(3306))
+      ("master-user", po::value<std::string>()->default_value(""))
+      ("master-pass", po::value<std::string>()->default_value(""));
+
+    std::ifstream cf_stream(config_file.c_str());
+    po::store(drizzled::program_options::parse_config_file(cf_stream, slave_options), vm);
+
+    po::notify(vm);
+
+    if (vm.count("master-host"))
+      _producer.setMasterHost(vm["master-host"].as<std::string>());
+
+    if (vm.count("master-port"))
+      _producer.setMasterPort(vm["master-port"].as<uint16_t>());
+
+    if (vm.count("master-user"))
+      _producer.setMasterUser(vm["master-user"].as<std::string>());
+
+    if (vm.count("master-pass"))
+      _producer.setMasterPassword(vm["master-pass"].as<std::string>());
+
     _consumer_thread= boost::thread(&QueueConsumer::run, &_consumer);
     _producer_thread= boost::thread(&QueueProducer::run, &_producer);
+
     return true;
   }
 
