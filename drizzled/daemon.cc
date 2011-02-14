@@ -52,11 +52,9 @@
 namespace drizzled
 {
 
-void sigusr1_handler(int sig);
-
 pid_t parent_pid;
 
-void sigusr1_handler(int sig)
+static void sigusr1_handler(int sig)
 {
   if (sig == SIGUSR1)
     _exit(EXIT_SUCCESS);
