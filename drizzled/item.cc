@@ -1681,16 +1681,11 @@ static Field *create_tmp_field_from_item(Session *,
   case STRING_RESULT:
     assert(item->collation.collation);
 
-    enum enum_field_types type;
     /*
       DATE/TIME fields have STRING_RESULT result type.
       To preserve type they needed to be handled separately.
     */
-    if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
-        type == DRIZZLE_TYPE_TIME ||
-        type == DRIZZLE_TYPE_MICROTIME ||
-        type == DRIZZLE_TYPE_DATE ||
-        type == DRIZZLE_TYPE_TIMESTAMP)
+    if (field::isDateTime(item->field_type()))
     {
       new_field= item->tmp_table_field_from_field_type(table, 1);
       /*
