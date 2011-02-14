@@ -737,7 +737,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/locking/global.cc \
 			   drizzled/lookup_symbol.cc \
 			   drizzled/main.cc \
-			   drizzled/daemon.c \
 			   drizzled/message.cc \
 			   drizzled/message/cache.cc \
 			   drizzled/message/catalog.cc \
