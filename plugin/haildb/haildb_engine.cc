@@ -275,6 +275,7 @@ static int ib_err_t_to_drizzle_error(Session* session, ib_err_t err)
     return HA_ERR_LOCK_DEADLOCK;
 
   case DB_LOCK_WAIT_TIMEOUT:
+    session->markTransactionForRollback(false);
     return HA_ERR_LOCK_WAIT_TIMEOUT;
 
   case DB_NO_REFERENCED_ROW:
