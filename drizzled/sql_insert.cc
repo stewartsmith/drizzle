@@ -31,6 +31,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include <drizzled/select_insert.h>
+#include <drizzled/select_create.h>
 
 #include "drizzled/table/shell.h"
 

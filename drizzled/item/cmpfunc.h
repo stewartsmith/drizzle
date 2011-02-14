@@ -22,18 +22,18 @@
 
 /* compare and test functions */
 
-#include "drizzled/comp_creator.h"
-#include "drizzled/item/row.h"
-#include "drizzled/item/sum.h"
-#include "drizzled/item/int.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/string.h"
-#include "drizzled/item/decimal.h"
-#include "drizzled/function/math/int.h"
-#include "drizzled/function/numhybrid.h"
-#include "drizzled/common.h"
-#include "drizzled/qsort_cmp.h"
-#include "drizzled/item/function/boolean.h"
+#include <drizzled/common.h>
+#include <drizzled/comp_creator.h>
+#include <drizzled/function/math/int.h>
+#include <drizzled/function/numhybrid.h>
+#include <drizzled/item/decimal.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/function/boolean.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/row.h>
+#include <drizzled/item/string.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/qsort_cmp.h>
 
 namespace drizzled
 {
@@ -75,19 +75,9 @@ class Arg_comparator: public memory::SqlAlloc
 public:
   DTCollation cmp_collation;
 
-  Arg_comparator():
-    session(current_session),
-    a_cache(0),
-    b_cache(0)
-  {};
+  Arg_comparator();
 
-  Arg_comparator(Item **a1, Item **a2):
-    a(a1),
-    b(a2),
-    session(current_session),
-    a_cache(0),
-    b_cache(0)
-  {};
+  Arg_comparator(Item **a1, Item **a2);
 
   int set_compare_func(Item_bool_func2 *owner, Item_result type);
   inline int set_compare_func(Item_bool_func2 *owner_arg)
@@ -890,9 +880,8 @@ public:
   /* Cache for the left item. */
   Item *lval_cache;
 
-  in_datetime(Item *warn_item_arg, uint32_t elements)
-    :in_int64_t(elements), session(current_session), warn_item(warn_item_arg),
-     lval_cache(0) {};
+  in_datetime(Item *warn_item_arg, uint32_t elements);
+
   void set(uint32_t pos,Item *item);
   unsigned char *get_value(Item *item);
   friend int cmp_int64_t(void *cmp_arg, packed_int64_t *a,packed_int64_t *b);
@@ -1053,8 +1042,8 @@ public:
   /* Cache for the left item. */
   Item *lval_cache;
 
-  cmp_item_datetime(Item *warn_item_arg)
-    :session(current_session), warn_item(warn_item_arg), lval_cache(0) {}
+  cmp_item_datetime(Item *warn_item_arg);
+
   void store_value(Item *item);
   int cmp(Item *arg);
   int compare(cmp_item *ci);

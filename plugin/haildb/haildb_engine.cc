@@ -74,7 +74,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "config.h"
 #include <drizzled/table.h>
 #include <drizzled/error.h>
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/internal/my_pthread.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/plugin/error_message.h>
 
@@ -102,14 +102,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <drizzled/field.h>
 #include "drizzled/field/blob.h"
-#include "drizzled/field/enum.h"
+#include <drizzled/field/enum.h>
 #include <drizzled/session.h>
-#include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include <iostream>
 #include <drizzled/charset.h>
+#include <drizzled/current_session.h>
+
+#include <iostream>
 
 namespace po= boost::program_options;
+#include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;

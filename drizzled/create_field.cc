@@ -47,6 +47,7 @@
 #include "drizzled/field/uuid.h"
 #include "drizzled/temporal.h"
 #include "drizzled/item/string.h"
+#include <drizzled/table.h>
 
 #include "drizzled/display.h"
 

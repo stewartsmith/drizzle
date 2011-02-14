@@ -29,6 +29,7 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/lookup_symbol.h"
 #include "drizzled/index_hint.h"
+#include <drizzled/select_result.h>
 
 #include <cstdio>
 #include <ctype.h>

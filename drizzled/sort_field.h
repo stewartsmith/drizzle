@@ -17,27 +17,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#ifndef DRIZZLED_SORT_FIELD_H
+#define DRIZZLED_SORT_FIELD_H
 
-#include <drizzled/function/time/dayname.h>
-#include <drizzled/session.h>
-#include "drizzled/typelib.h"
+#include <drizzled/item_result.h>
 
 namespace drizzled
 {
 
-String* Item_func_dayname::val_str(String* str)
+class Field;
+class Item;
+
+/**
+ * A structure used to describe sort information
+ * for a field or item used in ORDER BY.
+ */
+class SortField 
 {
-  assert(fixed == 1);
-  uint32_t weekday=(uint) val_int();            // Always Item_func_daynr()
-  const char *day_name;
+public:
+  Field *field;	/**< Field to sort */
+  Item	*item; /**< Item if not sorting fields */
+  size_t length; /**< Length of sort field */
+  uint32_t suffix_length; /**< Length suffix (0-4) */
+  Item_result result_type; /**< Type of item */
+  bool reverse; /**< if descending sort */
+  bool need_strxnfrm;	/**< If we have to use strxnfrm() */
 
-  if (null_value)
-    return (String*) 0;
+  SortField() :
+    field(0),
+    item(0),
+    length(0),
+    suffix_length(0),
+    result_type(STRING_RESULT),
+    reverse(0),
+    need_strxnfrm(0)
+  { }
 
-  day_name= getSession().variables.lc_time_names->day_names->type_names[weekday];
-  str->set(day_name, strlen(day_name), system_charset_info);
-  return str;
-}
+};
 
 } /* namespace drizzled */
+
+#endif /* DRIZZLED_SORT_FIELD_H */

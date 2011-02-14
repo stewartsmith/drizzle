@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_EXPORT_H
 #define DRIZZLED_SELECT_EXPORT_H
 
+#include <drizzled/select_to_file.h>
+
 /*
  List of all possible characters of a numeric value text representation.
 */

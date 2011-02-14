@@ -50,9 +50,12 @@
 #include "drizzled/field/uuid.h"
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
-#include "drizzled/typelib.h"
-
+#include <drizzled/table.h>
+#include <drizzled/util/test.h>
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
 #include "drizzled/display.h"
+#include <drizzled/typelib.h>
 
 namespace drizzled
 {

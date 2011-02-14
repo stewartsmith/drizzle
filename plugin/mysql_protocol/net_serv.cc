@@ -19,8 +19,10 @@
  */
 
 #include "config.h"
-#include <drizzled/session.h>
+
+#include <drizzled/current_session.h>
 #include <drizzled/error.h>
+#include <drizzled/session.h>
 
 #include <assert.h>
 #include <stdio.h>

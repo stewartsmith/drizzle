@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+pkgincludedir=@pkgincludedir@
+
+Name: drizzle7
+Description: Drizzle Development Headers
+Version: @VERSION@
+Cflags: -I${pkgincludedir}
+

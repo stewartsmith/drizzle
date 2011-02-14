@@ -214,7 +214,6 @@ public:
 };
 
 /* used in static ALL/ANY optimization */
-class select_max_min_finder_subselect;
 class Item_maxmin_subselect :public Item_singlerow_subselect
 {
 protected:

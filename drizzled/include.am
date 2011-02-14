@@ -40,7 +40,7 @@ DTRACEFILES= \
 	     drizzled/statement/insert.o \
 	     drizzled/statement/insert_select.o
 
-nobase_dist_include_HEADERS+= \
+nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/abort_exception.h \
 			      drizzled/alter_column.h \
 			      drizzled/alter_drop.h \
@@ -406,6 +406,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/show.h \
 			      drizzled/show_type.h \
 			      drizzled/signal_handler.h \
+			      drizzled/sort_field.h \
 			      drizzled/sql_base.h \
 			      drizzled/sql_error.h \
 			      drizzled/sql_lex.h \
@@ -800,6 +801,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/refresh_version.cc \
 			   drizzled/replication_services.cc \
 			   drizzled/resource_context.cc \
+			   drizzled/select_dumpvar.cc \
 			   drizzled/session.cc \
 			   drizzled/session/cache.cc \
 			   drizzled/session/state.cc \

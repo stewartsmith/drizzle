@@ -18,11 +18,15 @@
   UNION's  were introduced by Monty and Sinisa <sinisa@mysql.com>
 */
 #include "config.h"
+
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_union.h>
+#include <drizzled/select_union.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
 
 namespace drizzled
 {

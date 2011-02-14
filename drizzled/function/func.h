@@ -25,7 +25,6 @@
 /// TODO: Rename this file - func.h is stupid.
 
 #include <drizzled/charset_info.h>
-#include <drizzled/current_session.h>
 #include <drizzled/item.h>
 #include <drizzled/item/bin_string.h>
 #include <drizzled/lex_string.h>
@@ -49,6 +48,7 @@ protected:
     0 means get this number from first argument
   */
   uint32_t allowed_arg_cols;
+
 public:
 
   using Item::split_sum_func;
@@ -73,82 +73,17 @@ public:
   virtual enum Functype functype() const   { return UNKNOWN_FUNC; }
   virtual ~Item_func() {}
 
-  Item_func(void):
-    _session(*current_session),
-    allowed_arg_cols(1), arg_count(0),
-    const_item_cache(false)
-  {
-    with_sum_func= 0;
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(void);
 
-  Item_func(Item *a):
-    _session(*current_session),
-    allowed_arg_cols(1), arg_count(1),
-    const_item_cache(false)
-  {
-    args= tmp_arg;
-    args[0]= a;
-    with_sum_func= a->with_sum_func;
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a);
   
-  Item_func(Item *a,Item *b):
-    _session(*current_session),
-    allowed_arg_cols(1), arg_count(2),
-    const_item_cache(false)
-  {
-    args= tmp_arg;
-    args[0]= a; args[1]= b;
-    with_sum_func= a->with_sum_func || b->with_sum_func;
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a,Item *b);
   
-  Item_func(Item *a,Item *b,Item *c):
-    _session(*current_session),
-    allowed_arg_cols(1),
-    const_item_cache(false)
-  {
-    arg_count= 0;
-    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*3)))
-    {
-      arg_count= 3;
-      args[0]= a; args[1]= b; args[2]= c;
-      with_sum_func= a->with_sum_func || b->with_sum_func || c->with_sum_func;
-    }
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a,Item *b,Item *c);
   
-  Item_func(Item *a,Item *b,Item *c,Item *d):
-    _session(*current_session),
-    allowed_arg_cols(1),
-    const_item_cache(false)
-  {
-    arg_count= 0;
-    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*4)))
-    {
-      arg_count= 4;
-      args[0]= a; args[1]= b; args[2]= c; args[3]= d;
-      with_sum_func= a->with_sum_func || b->with_sum_func ||
-        c->with_sum_func || d->with_sum_func;
-    }
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a,Item *b,Item *c,Item *d);
   
-  Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
-    _session(*current_session),
-    allowed_arg_cols(1),
-    const_item_cache(false)
-  {
-    arg_count= 5;
-    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*5)))
-    {
-      args[0]= a; args[1]= b; args[2]= c; args[3]= d; args[4]= e;
-      with_sum_func= a->with_sum_func || b->with_sum_func ||
-        c->with_sum_func || d->with_sum_func || e->with_sum_func ;
-    }
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a,Item *b,Item *c,Item *d,Item* e);
   
   Item_func(List<Item> &list);
   

@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_SELECT_CREATE_H
 #define DRIZZLED_SELECT_CREATE_H
 
+#include <drizzled/select_insert.h>
+
 namespace drizzled
 {
 

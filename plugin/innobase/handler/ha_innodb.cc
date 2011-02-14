@@ -8923,7 +8923,7 @@ InnobaseEngine::doXaPrepare(
     return(0);
   }
 
-  session->get_xid(reinterpret_cast<DRIZZLE_XID*>(&trx->xid));
+  session->get_xid(reinterpret_cast<DrizzleXid*>(&trx->xid));
 
   /* Release a possible FIFO ticket and search latch. Since we will
   reserve the kernel mutex, we have to release the search system latch
