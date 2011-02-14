@@ -163,7 +163,7 @@ struct charset_info_st;
 /* See strings/CHARSET_INFO.txt for information about this structure  */
 typedef struct my_collation_handler_st
 {
-  bool (*init)(struct charset_info_st *, void *(*alloc)(size_t));
+  bool (*init)(struct charset_info_st *, unsigned char *(*alloc)(size_t));
   /* Collation routines */
   int     (*strnncoll)(const struct charset_info_st * const,
 		       const unsigned char *, size_t, const unsigned char *, size_t, bool);
@@ -214,7 +214,7 @@ typedef size_t (*my_charset_conv_case)(const struct charset_info_st * const,
 /* See strings/CHARSET_INFO.txt about information on this structure  */
 typedef struct my_charset_handler_st
 {
-  bool (*init)(struct charset_info_st *, void *(*alloc)(size_t));
+  bool (*init)(struct charset_info_st *, unsigned char *(*alloc)(size_t));
   /* Multibyte routines */
   uint32_t    (*ismbchar)(const struct charset_info_st * const, const char *, const char *);
   uint32_t    (*mbcharlen)(const struct charset_info_st * const, uint32_t c);
@@ -439,7 +439,7 @@ size_t my_numcells_8bit(const CHARSET_INFO * const, const char *b, const char *e
 size_t my_charpos_8bit(const CHARSET_INFO * const, const char *b, const char *e, size_t pos);
 size_t my_well_formed_len_8bit(const CHARSET_INFO * const, const char *b, const char *e,
                              size_t pos, int *error);
-typedef  void *(*cs_alloc_func)(size_t);
+typedef unsigned char *(*cs_alloc_func)(size_t);
 bool my_coll_init_simple(CHARSET_INFO *cs, cs_alloc_func alloc);
 bool my_cset_init_8bit(CHARSET_INFO *cs, cs_alloc_func alloc);
 uint32_t my_mbcharlen_8bit(const CHARSET_INFO * const, uint32_t c);
