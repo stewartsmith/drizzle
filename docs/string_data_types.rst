@@ -8,6 +8,11 @@ VARCHAR and VARBINARY
 
 A VARCHAR or VARBINARY type is used to store variable length data. Indexes on these types are by default the full length of the data stored. The only difference between the two types is the COLLATION which is used. VARBINARY uses a binary collation for all index usage.
 
+.. note::
+
+   ``CHAR`` and ``BINARY`` types are implicitly changed to ``VARCHAR`` and
+   ``VARBINARY`` respectively.
+
 TEXT and BLOB
 -------------
 

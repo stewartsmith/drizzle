@@ -307,12 +307,11 @@ void optimizer::ExplainPlan::printPlan()
       double examined_rows;
       if (tab->select && tab->select->quick)
       {
-        examined_rows= rows2double(tab->select->quick->records);
+        examined_rows= tab->select->quick->records;
       }
       else if (tab->type == AM_NEXT || tab->type == AM_ALL)
       {
-        examined_rows= rows2double(tab->limit ? tab->limit :
-                                                tab->table->cursor->records());
+        examined_rows= tab->limit ? tab->limit : tab->table->cursor->records();
       }
       else
       {
