@@ -21,12 +21,15 @@
 #ifndef DRIZZLED_UTIL_BACKTRACE_H
 #define DRIZZLED_UTIL_BACKTRACE_H
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
 namespace util
 {
 
+DRIZZLED_API
 void custom_backtrace(void);
 
 } /* namespace util */
