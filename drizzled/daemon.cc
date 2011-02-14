@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#include "config.h"
+
 #if defined __SUNPRO_C || defined __DECC || defined __HP_cc
 # pragma ident "@(#)$Header: /cvsroot/wikipedia/willow/src/bin/willow/daemon.c,v 1.1 2005/05/02 19:15:21 kateturner Exp $"
 # pragma ident "$NetBSD: daemon.c,v 1.9 2003/08/07 16:42:46 agc Exp $"
@@ -45,25 +47,25 @@
 #include <unistd.h>
 #include <sys/select.h>
 
-int daemonize(int nochdir, int noclose, int wait_sigusr1);
-int daemon_is_ready(void);
-void sigusr1_handler(int sig);
+#include <drizzled/daemon.h>
+
+namespace drizzled
+{
 
 pid_t parent_pid;
 
-void sigusr1_handler(int sig)
+static void sigusr1_handler(int sig)
 {
   if (sig == SIGUSR1)
     _exit(EXIT_SUCCESS);
 }
 
-int daemon_is_ready()
+void daemon_is_ready()
 {
   kill(parent_pid, SIGUSR1);
-  return 0;
 }
 
-int daemonize(int nochdir, int noclose, int wait_sigusr1)
+bool daemonize(bool nochdir, bool noclose, bool wait_sigusr1)
 {
     int fd;
     pid_t child= -1;
@@ -76,7 +78,7 @@ int daemonize(int nochdir, int noclose, int wait_sigusr1)
     switch (child)
     {
     case -1:
-        return (-1);
+        return true;
     case 0:
         break;
     default:
@@ -104,35 +106,37 @@ int daemonize(int nochdir, int noclose, int wait_sigusr1)
 
     /* child */
     if (setsid() == -1)
-        return (-1);
+        return true;
 
     if (nochdir == 0) {
         if(chdir("/") != 0) {
             perror("chdir");
-            return (-1);
+            return true;
         }
     }
 
     if (noclose == 0 && (fd = open("/dev/null", O_RDWR, 0)) != -1) {
         if(dup2(fd, STDIN_FILENO) < 0) {
             perror("dup2 stdin");
-            return (-1);
+            return true;
         }
         if(dup2(fd, STDOUT_FILENO) < 0) {
             perror("dup2 stdout");
-            return (-1);
+            return true;
         }
         if(dup2(fd, STDERR_FILENO) < 0) {
             perror("dup2 stderr");
-            return (-1);
+            return true;
         }
 
         if (fd > STDERR_FILENO) {
             if(close(fd) < 0) {
                 perror("close");
-                return (-1);
+                return true;
             }
         }
     }
-    return (0);
+    return false; 
 }
+
+} /* namespace drizzled */
