@@ -78,6 +78,7 @@ AC_DEFUN([PANDORA_WARNINGS],[
     AS_IF([test "$ac_cv_warnings_as_errors" = "yes"],[
       W_FAIL="-Werror"
       SPHINX_WARNINGS="-W"
+      INTLTOOL_WARNINGS="yes"
     ])
 
     AC_CACHE_CHECK([whether it is safe to use -fdiagnostics-show-option],
@@ -441,5 +442,6 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
   AC_SUBST(NO_WERROR)
   AC_SUBST([GCOV_LIBS])
   AC_SUBST([SPHINX_WARNINGS])
+  AC_SUBST([INTLTOOL_WARNINGS])
 
 ])
