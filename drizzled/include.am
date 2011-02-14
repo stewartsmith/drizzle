@@ -69,6 +69,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/create_field.h \
 			      drizzled/current_session.h \
 			      drizzled/cursor.h \
+			      drizzled/daemon.h \
 			      drizzled/data_home.h \
 			      drizzled/db.h \
 			      drizzled/debug.h \
@@ -551,6 +552,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/create_field.cc \
 			   drizzled/current_session.cc \
 			   drizzled/cursor.cc \
+			   drizzled/daemon.cc \
 			   drizzled/data_home.cc \
 			   drizzled/debug.cc \
 			   drizzled/definition/cache.cc \
