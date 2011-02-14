@@ -31,7 +31,8 @@ namespace slave
 
 QueueProducer::~QueueProducer()
 {
-  closeConnection();
+  if (_is_connected)
+    closeConnection();
 }
 
 bool QueueProducer::init()
@@ -41,12 +42,54 @@ bool QueueProducer::init()
 
 bool QueueProducer::process()
 {
+  // SLAVE QUERIES
+
+  /*
+  1. SELECT MAX(commit_order) FROM replication.queue
+  
+  2. If nothing from #1: SELECT last_applied_commit_id FROM replication.applier_state
+
+  5. INSERT INTO replication.queue (trx_id, seg_id, commit_order, msg)
+     VALUES (?, ?, ?, ?)
+   */
+
+  // MASTER QUERIES
+
+  /*
+  3. SELECT id FROM data_dictionary.sys_replication_log
+     WHERE commit_id > ?
+
+  4. SELECT id, segid, commit_id, message
+     FROM data_dictionary.sys_replication_log
+     WHERE id IN (?)
+   */
+
+  string id_query("");
+
+  drizzle_return_t ret;
+  drizzle_result_st result;
+  drizzle_result_create(&connection, &result);
+  drizzle_query_str(&connection, &result, id_query.c_str(), &ret);
+  
+  if (ret != DRIZZLE_RETURN_OK)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: %s\n"),
+                  drizzle_error(&drizzle));
+    /* TODO: put in a retry or similar */
+    return false;
+  }
+  
+  /* Get list of completed transaction ids from master where commit_id > (max(commit_id) || last_applied_commit_id) */
+  /* Select from master where trx_id in list from above */
+  /* Insert into local queue */
   return true;
 }
 
 void QueueProducer::shutdown()
 {
-  /* Disconnect from master */
+  if (_is_connected)
+    closeConnection();
 }
 
 bool QueueProducer::openConnection()
@@ -56,14 +99,14 @@ bool QueueProducer::openConnection()
   if (drizzle_create(&drizzle) == NULL)
   {
     errmsg_printf(error::ERROR,
-                  _("Replication slave: Error during drizzle_create()"));
+                  _("Replication slave: Error during drizzle_create()\n"));
     return false;
   }
   
   if (drizzle_con_create(&drizzle, &connection) == NULL)
   {
     errmsg_printf(error::ERROR,
-                  _("Replication slave: %s"),
+                  _("Replication slave: %s\n"),
                   drizzle_error(&drizzle));
     return false;
   }
@@ -76,11 +119,13 @@ bool QueueProducer::openConnection()
   if (ret != DRIZZLE_RETURN_OK)
   {
     errmsg_printf(error::ERROR,
-                  _("Replication slave: %s"),
+                  _("Replication slave: %s\n"),
                   drizzle_error(&drizzle));
     return false;
   }
   
+  _is_connected= true;
+
   return true;
 }
 
@@ -89,12 +134,15 @@ bool QueueProducer::closeConnection()
   drizzle_return_t ret;
   drizzle_result_st result;
 
+  _is_connected= false;
+
   if (drizzle_quit(&connection, &result, &ret) == NULL)
   {
     return false;
   }
 
   drizzle_result_free(&result);
+
   return true;
 }
 

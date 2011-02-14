@@ -33,7 +33,8 @@ class QueueProducer : public QueueThread
 public:
   QueueProducer() :
     _check_interval(5),
-    _master_port(3306)
+    _master_port(3306),
+    _is_connected(false)
   {}
 
   virtual ~QueueProducer();
@@ -84,6 +85,8 @@ private:
 
   drizzle_st drizzle;
   drizzle_con_st connection;
+
+  bool _is_connected;
 
   bool openConnection();
   bool closeConnection();
