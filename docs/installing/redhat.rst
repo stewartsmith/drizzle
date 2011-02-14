@@ -11,9 +11,9 @@ A pre-requisite of this repository is that the
 `EPEL <http://fedoraproject.org/wiki/EPEL>`_ repository is also added to your
 distribution.
 
-To add that repository, run the following command:
+To add that repository, run the following command::
 
-sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+  sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
 
 To add the repository to your distribution you also need to create a /etc/yum.repos.d/drizzle.repo file with the following content:
 

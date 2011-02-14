@@ -1,7 +1,9 @@
 TRUNCATE
 ========
 
-FIXME: I don't think the below SERIAL/AUTO_INCREMENT thing below is true.
+.. todo::
+
+   I don't think the below SERIAL/AUTO_INCREMENT thing below is true.
 
 This will delete all data in a table but unlike a DROP TABLE it will allow you to keep the table in your database. It deletes the rows but leaves all counters, such as a SERIAL, in place. ::
 

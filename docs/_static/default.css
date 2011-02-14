@@ -225,6 +225,14 @@ tt {
     background: #efc2c2;
 }
 
+div.admonition-todo {
+border-top: 2px solid red;
+border-bottom: 2px solid red;
+border-left: 2px solid red;
+border-right: 2px solid red;
+background-color: #ff6347
+}
+
 .note tt {
     background: #d6d6d6;
 }
