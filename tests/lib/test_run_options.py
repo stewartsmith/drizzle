@@ -184,7 +184,14 @@ test_control_group.add_option(
   , help = "sort the testcases so that they are executed optimally for the given mode [%default]"
   )
 
-
+test_control_group.add_option(
+    "--repeat"
+  , dest="repeat"
+  , type='int'
+  , action="store"
+  , default=1
+  , help = "Run each test case the specified number of times.  For a given sequence, the first test will be run n times, then the second, etc [%default]"
+  )
 
 parser.add_option_group(test_control_group)
 # end test_control_group

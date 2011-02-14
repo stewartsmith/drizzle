@@ -40,8 +40,13 @@ class drizzleServer():
 
     """
 
-    def __init__(self, name, server_manager, server_options
-                , requester, workdir_root):
+    def __init__( self
+                , name
+                , server_manager
+                , default_storage_engine
+                , server_options
+                , requester
+                , workdir_root):
         self.skip_keys = [ 'server_manager'
                          , 'system_manager'
                          , 'dirset'
@@ -55,6 +60,7 @@ class drizzleServer():
         self.initial_run = 1
         self.owner = requester
         self.server_options = server_options
+        self.default_storage_engine = default_storage_engine
         self.server_manager = server_manager
         # We register with server_manager asap
         self.server_manager.log_server(self, requester)
@@ -168,6 +174,7 @@ class drizzleServer():
                       , "--mysql-unix-socket-protocol.path=%s" %(self.socket_file)
                       , "--pid-file=%s" %(self.pid_file)
                       , "--drizzle-protocol.port=%d" %(self.drizzle_tcp_port)
+                      , "--default-storage-engine=%s" %(self.default_storage_engine)
                       , "--datadir=%s" %(self.datadir)
                       , "--tmpdir=%s" %(self.tmpdir)
                       , self.secure_file_string
