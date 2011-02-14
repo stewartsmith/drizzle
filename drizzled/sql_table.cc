@@ -27,7 +27,6 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include "drizzled/strfunc.h"
-#include <drizzled/db.h>
 #include <drizzled/lock.h>
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
@@ -42,7 +41,6 @@
 #include "drizzled/charset.h"
 
 #include "drizzled/definition/cache.h"
-
 
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/sql_table.h"

@@ -23,7 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/plugin/storage_engine.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 #include <drizzled/message.h>
 
 #include <string>
@@ -83,7 +83,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= alter_db(getSession(), schema_message, old_definition);
+  bool res= schema::alter(getSession(), schema_message, old_definition);
 
   return not res;
 }

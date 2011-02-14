@@ -23,7 +23,6 @@
 #include "drizzled/session.h"
 #include "drizzled/statement/create_index.h"
 #include "drizzled/statement/alter_table.h"
-#include "drizzled/db.h"
 
 namespace drizzled
 {

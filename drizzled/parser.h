@@ -102,7 +102,6 @@
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
-#include <drizzled/db.h>
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"

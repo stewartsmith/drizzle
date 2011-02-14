@@ -68,7 +68,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/current_session.h \
 			      drizzled/cursor.h \
 			      drizzled/data_home.h \
-			      drizzled/db.h \
 			      drizzled/debug.h \
 			      drizzled/definition/cache.h \
 			      drizzled/definitions.h \
@@ -378,6 +377,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
+			      drizzled/schema.h \
 			      drizzled/select_create.h \
 			      drizzled/select_dump.h \
 			      drizzled/select_dumpvar.h \
@@ -913,7 +913,7 @@ drizzled_libtemporal_la_SOURCES= \
 				 drizzled/temporal_format.cc \
 				 drizzled/temporal_interval.cc
 drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
-drizzled_libserialutil_la_SOURCES = drizzled/db.cc drizzled/table_proto_write.cc
+drizzled_libserialutil_la_SOURCES = drizzled/schema.cc drizzled/table_proto_write.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
 drizzled_libcached_directory_la_SOURCES=drizzled/cached_directory.cc

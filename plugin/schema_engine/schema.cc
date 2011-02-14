@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include "plugin/schema_engine/schema.h"
-#include "drizzled/db.h"
+#include "drizzled/schema.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"

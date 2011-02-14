@@ -49,7 +49,6 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/db.h"
 
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>

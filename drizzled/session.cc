@@ -44,7 +44,6 @@
 #include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
-#include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
@@ -70,6 +69,8 @@
 #include <boost/checked_delete.hpp>
 
 #include "drizzled/util/backtrace.h"
+
+#include <drizzled/schema.h>
 
 using namespace std;
 
@@ -645,7 +646,7 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     identifier::Schema identifier(in_db);
-    if (change_db(this, identifier))
+    if (schema::change(this, identifier))
     {
       /* change_db() has pushed the error message. */
       return false;

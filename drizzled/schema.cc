@@ -25,33 +25,35 @@
 #include <string>
 #include <fstream>
 
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/my_hash.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 #include <drizzled/session.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/message/schema.pb.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/charset.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <boost/thread/mutex.hpp>
-
-#include "drizzled/internal/my_sys.h"
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
 using namespace std;
 
 namespace drizzled
+{
+
+namespace schema
 {
 
 static void change_db_impl(Session *session);
@@ -78,7 +80,7 @@ static void change_db_impl(Session *session, identifier::Schema &schema_identifi
 
 */
 
-bool create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
+bool create(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
   bool error= false;
@@ -143,9 +145,9 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
 
 /* db-name is already validated when we come here */
 
-bool alter_db(Session *session,
-              const message::Schema &schema_message,
-              const message::schema::shared_ptr &original_schema)
+bool alter(Session *session,
+           const message::Schema &schema_message,
+           const message::schema::shared_ptr &original_schema)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
 
@@ -211,7 +213,7 @@ bool alter_db(Session *session,
     ERROR Error
 */
 
-bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool if_exists)
+bool drop(Session *session, identifier::Schema &schema_identifier, const bool if_exists)
 {
   bool error= false;
 
@@ -338,7 +340,7 @@ bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool i
     @retval true  Error
 */
 
-bool change_db(Session *session, identifier::Schema &schema_identifier)
+bool change(Session *session, identifier::Schema &schema_identifier)
 {
 
   if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
@@ -410,5 +412,7 @@ static void change_db_impl(Session *session)
 {
   session->set_db(string());
 }
+
+} /* namespace schema */
 
 } /* namespace drizzled */
