@@ -1090,29 +1090,7 @@ enum_field_types Item::field_type() const
 
 bool Item::is_datetime()
 {
-  switch (field_type())
-  {
-    case DRIZZLE_TYPE_TIME:
-    case DRIZZLE_TYPE_DATE:
-    case DRIZZLE_TYPE_DATETIME:
-    case DRIZZLE_TYPE_TIMESTAMP:
-    case DRIZZLE_TYPE_MICROTIME:
-      return true;
-    case DRIZZLE_TYPE_BLOB:
-    case DRIZZLE_TYPE_VARCHAR:
-    case DRIZZLE_TYPE_DOUBLE:
-    case DRIZZLE_TYPE_DECIMAL:
-    case DRIZZLE_TYPE_ENUM:
-    case DRIZZLE_TYPE_LONG:
-    case DRIZZLE_TYPE_LONGLONG:
-    case DRIZZLE_TYPE_NULL:
-    case DRIZZLE_TYPE_UUID:
-    case DRIZZLE_TYPE_BOOLEAN:
-      return false;
-  }
-
-  assert(0);
-  abort();
+  return field::isDateTime(field_type());
 }
 
 String *Item::check_well_formed_result(String *str, bool send_error)
@@ -1219,10 +1197,10 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
                             name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
-    field= new Field_null((unsigned char*) 0, max_length, name, &my_charset_bin);
+    field= new Field_null((unsigned char*) 0, max_length, name);
     break;
   case DRIZZLE_TYPE_DATE:
-    field= new Field_date(maybe_null, name, &my_charset_bin);
+    field= new Field_date(maybe_null, name);
     break;
 
   case DRIZZLE_TYPE_MICROTIME:
@@ -1233,10 +1211,10 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     field= new field::Epoch(maybe_null, name);
     break;
   case DRIZZLE_TYPE_DATETIME:
-    field= new Field_datetime(maybe_null, name, &my_charset_bin);
+    field= new Field_datetime(maybe_null, name);
     break;
   case DRIZZLE_TYPE_TIME:
-    field= new field::Time(maybe_null, name, &my_charset_bin);
+    field= new field::Time(maybe_null, name);
     break;
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:

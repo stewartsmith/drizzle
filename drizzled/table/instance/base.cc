@@ -1913,15 +1913,6 @@ Field *TableShare::make_field(const message::Table::Field &,
     null_bit= ((unsigned char) 1) << null_bit;
   }
 
-  switch (field_type) 
-  {
-  case DRIZZLE_TYPE_DATE:
-  case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_UUID:
-    field_charset= &my_charset_bin;
-  default: break;
-  }
-
   switch (field_type)
   {
   case DRIZZLE_TYPE_ENUM:
@@ -2022,25 +2013,21 @@ Field *TableShare::make_field(const message::Table::Field &,
                                        field_length,
                                        null_pos,
                                        null_bit,
-                                       field_name,
-                                       field_charset);
+                                       field_name);
   case DRIZZLE_TYPE_DATE:
     return new (&mem_root) Field_date(ptr,
                                  null_pos,
                                  null_bit,
-                                 field_name,
-                                 field_charset);
+                                 field_name);
   case DRIZZLE_TYPE_DATETIME:
     return new (&mem_root) Field_datetime(ptr,
                                      null_pos,
                                      null_bit,
-                                     field_name,
-                                     field_charset);
+                                     field_name);
   case DRIZZLE_TYPE_NULL:
     return new (&mem_root) Field_null(ptr,
-                                 field_length,
-                                 field_name,
-                                 field_charset);
+                                      field_length,
+                                      field_name);
   }
   assert(0);
   abort();
