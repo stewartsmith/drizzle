@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_DUMP_H
 #define DRIZZLED_SELECT_DUMP_H
 
+#include <drizzled/select_to_file.h>
+
 namespace drizzled
 {
 

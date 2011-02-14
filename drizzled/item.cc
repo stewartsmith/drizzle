@@ -51,6 +51,7 @@
 #include "drizzled/field/time.h"
 #include "drizzled/field/varstring.h"
 
+#include <drizzled/current_session.h>
 #include <drizzled/session.h>
 
 #include "drizzled/internal/m_string.h"

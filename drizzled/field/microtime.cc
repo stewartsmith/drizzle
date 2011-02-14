@@ -25,6 +25,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/current_session.h>
 
 #include <math.h>
 

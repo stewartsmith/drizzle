@@ -33,16 +33,12 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
 #include <drizzled/resource_context.h>
-#include <drizzled/select_dumpvar.h>
-#include <drizzled/select_result_interceptor.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/table_ident.h>
 #include <drizzled/transaction_context.h>
-#include <drizzled/unique.h>
-#include <drizzled/user_var_entry.h>
 #include <drizzled/util/storable.h>
 #include <drizzled/var.h>
 

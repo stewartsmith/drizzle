@@ -66,6 +66,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <drizzled/util/backtrace.h>
+#include <drizzled/current_session.h>
 
 using namespace drizzled;
 using namespace std;

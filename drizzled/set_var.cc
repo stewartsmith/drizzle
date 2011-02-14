@@ -26,6 +26,7 @@
 #include "drizzled/session.h"
 #include "drizzled/item/string.h"
 #include "drizzled/sql_list.h"
+#include <drizzled/function/set_user_var.h>
 
 using namespace std;
 

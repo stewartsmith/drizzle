@@ -67,6 +67,7 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sort_field.h>
+#include <drizzled/select_result.h>
 
 using namespace std;
 

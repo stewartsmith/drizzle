@@ -48,6 +48,7 @@
  */
 
 #include "config.h"
+#include <drizzled/current_session.h>
 #include "drizzled/my_hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"

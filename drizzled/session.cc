@@ -70,6 +70,8 @@
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/plugin/event_observer.h"
 
+#include <drizzled/user_var_entry.h>
+
 #include "drizzled/util/functors.h"
 
 #include "drizzled/display.h"

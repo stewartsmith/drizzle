@@ -27,6 +27,7 @@
 #include "drizzled/temporal.h"
 #include "drizzled/session.h"
 #include "drizzled/time_functions.h"
+#include <drizzled/current_session.h>
 
 #include <math.h>
 

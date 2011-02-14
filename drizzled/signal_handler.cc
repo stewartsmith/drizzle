@@ -29,6 +29,7 @@
 #include "drizzled/probes.h"
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/scheduler.h"
+#include <drizzled/current_session.h>
 
 #include "drizzled/util/backtrace.h"
 

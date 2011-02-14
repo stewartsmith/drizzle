@@ -36,6 +36,7 @@
 #include "drizzled/session.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/internal/iocache.h"
+#include <drizzled/unique.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

@@ -22,6 +22,7 @@
 #include <cassert>
 
 #include <drizzled/function/user_var_as_out_param.h>
+#include <drizzled/user_var_entry.h>
 #include <drizzled/session.h>
 
 namespace drizzled

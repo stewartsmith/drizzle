@@ -37,6 +37,7 @@
 #include <drizzled/field/int64.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
+#include <drizzled/unique.h>
 
 #include <drizzled/type/decimal.h>
 
