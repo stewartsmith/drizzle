@@ -60,6 +60,8 @@ class serverManager:
         self.mutex = thread.allocate_lock()
         self.timer_increment = .5
 
+        self.logging.info("Using default-storage-engine: %s" %(self.default_storage_engine))
+
         if self.debug:
             self.logging.debug_class(self)
 
