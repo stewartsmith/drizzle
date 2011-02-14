@@ -23,6 +23,7 @@
 #define DRIZZLED_SQL_BASE_H
 
 #include <drizzled/table.h>
+#include <drizzled/table_list.h>
 #include <drizzled/table/concurrent.h>
 
 #include "drizzled/visibility.h"
