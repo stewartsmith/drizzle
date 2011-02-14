@@ -21,14 +21,53 @@
 #include "config.h"
 #include "plugin/slave/replication_slave.h"
 #include "drizzled/plugin.h"
+#include "drizzled/errmsg_print.h"
+#include "drizzled/configmake.h"   // for SYSCONFDIR
+#include "drizzled/module/option_map.h"
+#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+#include <string>
 
 using namespace drizzled;
+using namespace std;
+
+namespace po= boost::program_options;
+namespace fs= boost::filesystem;
+
+namespace slave
+{
+
+static const fs::path DEFAULT_SLAVE_CFG_FILE= SYSCONFDIR "/slave.cfg";
+
+static string slave_config;
 
 static int init(module::Context &context)
 {
-  context.add(new slave::ReplicationSlave);
+  const module::option_map &vm= context.getOptions();
+
+  ReplicationSlave *slave= new ReplicationSlave();
+
+  if (not slave->initWithConfig(vm["slave-config"].as<string>()))
+  {
+    errmsg_printf(error::ERROR,
+                  _("Could not start slave services: %s\n"),
+                  slave->getError().c_str());
+    delete slave;
+    return 1;
+  }
+
+  context.add(slave);
   return 0;
 }
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("slave-config",
+          po::value<string>()->default_value(DEFAULT_SLAVE_CFG_FILE.string()),
+          N_("Path to the slave configuration file"));
+}
+
+} /* namespace slave */
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -38,8 +77,8 @@ DRIZZLE_DECLARE_PLUGIN
   "David Shrewsbury",
   "Implements Drizzle replication slave.",
   PLUGIN_LICENSE_GPL,
-  init,
-  "multi_thread",      /* depends */
-  NULL                 /* config options */
+  slave::init,
+  "multi_thread",        /* depends */
+  slave::init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -34,15 +34,7 @@ class ReplicationSlave : public drizzled::plugin::Daemon
 public:
 
   ReplicationSlave() : drizzled::plugin::Daemon("Replication Slave")
-  {
-    _consumer.setSleepInterval(5);
-    _consumer_thread= boost::thread(&QueueConsumer::run, &_consumer);
-
-    _producer.setSleepInterval(5);
-    _producer.setMasterHost("kodiak");
-    _producer.setMasterUser("slave");
-    _producer_thread= boost::thread(&QueueProducer::run, &_producer);
-  }
+  {}
   
   ~ReplicationSlave()
   {
@@ -50,7 +42,37 @@ public:
     _producer_thread.interrupt();
   }
 
+  /**
+   * Initialize slave services with the given configuration file.
+   *
+   * In case of an error during initialization, you can call the getError()
+   * method to get a string describing what went wrong.
+   *
+   * @param[in] config_file Full path to the configuration file.
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool initWithConfig(const std::string &config_file)
+  {
+    /* parse config file */
+    (void)config_file;
+    _consumer_thread= boost::thread(&QueueConsumer::run, &_consumer);
+    _producer_thread= boost::thread(&QueueProducer::run, &_producer);
+    return true;
+  }
+
+  /**
+   * Get the error message describing what went wrong during setup.
+   */
+  const std::string &getError() const
+  {
+    return _error;
+  }
+
 private:
+  std::string _error;
+
   QueueConsumer _consumer;
   QueueProducer _producer;
 
