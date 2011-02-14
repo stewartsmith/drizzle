@@ -55,7 +55,6 @@ ORDER BY `col_bigint`,`col_bigint_key`,`col_bigint_not_null`,
 ERROR HY000: Received an invalid enum value '923074560'.
 SELECT LOAD_FILE('DTR_VARDIR/tmp/enum_errlog.tmp');
 LOAD_FILE('DTR_VARDIR/tmp/enum_errlog.tmp')
-CURRENT_TEST: regression.676770
 
 
 

@@ -56,7 +56,7 @@ WHERE `col_enum_key` = 923074560
 `col_text_not_null_key`,`pk` LIMIT 1;
 
 --replace_result $DRIZZLETEST_VARDIR DTR_VARDIR
---system cat $DRIZZLETEST_VARDIR/log/master.err |awk 'BEGIN {x=0}; /^CURRENT_TEST: regression.676770/{x=1; print}; /Sort aborted/{ if (x==1) print}; /^CURRENT_TEST: (^regression.676770)/{x=0;}' > $DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp
+--system cat $DRIZZLETEST_VARDIR/log/master.err |awk 'BEGIN {x=0}; /^CURRENT_TEST: regression.676770/{x=1;}; /Sort aborted/{ if (x==1) print}; /^CURRENT_TEST: (^regression.676770)/{x=0;}' > $DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp
 
 --replace_result $DRIZZLETEST_VARDIR DTR_VARDIR
 eval SELECT LOAD_FILE('$DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp');
