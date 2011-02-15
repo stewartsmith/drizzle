@@ -18,10 +18,10 @@
 /* This file is for binary pseudo charset, created by bar@mysql.com */
 
 
-#include "config.h"
-#include "drizzled/definitions.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
+#include <config.h>
+#include <drizzled/definitions.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
 
 #include <algorithm>
 
@@ -418,7 +418,7 @@ uint32_t my_instr_bin(const CHARSET_INFO * const,
                       const char *s, size_t s_length,
                       my_match_t *match, uint32_t nmatch)
 {
-  register const unsigned char *str, *search, *end, *search_end;
+  const unsigned char *str, *search, *end, *search_end;
 
   if (s_length <= b_length)
   {
@@ -443,7 +443,7 @@ skip:
     {
       if ( (*str++) == (*search))
       {
-	register const unsigned char *i,*j;
+	const unsigned char *i,*j;
 
 	i= str;
 	j= search+1;
