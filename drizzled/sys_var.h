@@ -56,7 +56,6 @@ extern const char *first_keyword;
 extern const char *in_left_expr_name;
 extern const char *in_additional_cond;
 extern const char *in_having_cond;
-extern char glob_hostname[FN_REFLEN];
 extern boost::filesystem::path basedir;
 extern boost::filesystem::path pid_file;
 extern boost::filesystem::path secure_file_priv;
@@ -77,6 +76,7 @@ extern size_t transaction_message_threshold;
 
 uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 
+const std::string &getServerHostname();
 int sys_var_init();
 
 /**

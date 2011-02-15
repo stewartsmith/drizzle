@@ -308,8 +308,6 @@ fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
 
-DRIZZLED_API char glob_hostname[FN_REFLEN];
-
 char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
@@ -386,6 +384,25 @@ po::variables_map &getVariablesMap()
   return vm;
 }
 
+namespace
+{
+
+std::string &getGlobHostname()
+{
+  static std::string glob_hostname("localhost");
+  return glob_hostname;
+}
+
+void setServerHostname(const std::string &hostname)
+{
+  getGlobHostname()= hostname;
+}
+}
+
+const std::string &getServerHostname()
+{
+  return getGlobHostname();
+}
 
 /****************************************************************************
 ** Code to end drizzled
@@ -1086,16 +1103,18 @@ int init_basic_variables(int argc, char **argv)
   */
   global_system_variables.time_zone= my_tz_SYSTEM;
 
-  if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
+  char ret_hostname[FN_REFLEN];
+  if (gethostname(ret_hostname,sizeof(ret_hostname)) < 0)
   {
-    strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-    errmsg_printf(error::WARN, _("gethostname failed, using '%s' as hostname"),
-                  glob_hostname);
+    errmsg_printf(error::WARN,
+                  _("gethostname failed, using '%s' as hostname"),
+                  getServerHostname().c_str());
     pid_file= "drizzle";
   }
   else
   {
-    pid_file= glob_hostname;
+    setServerHostname(ret_hostname);
+    pid_file= getServerHostname();
   }
   pid_file.replace_extension(".pid");
 
