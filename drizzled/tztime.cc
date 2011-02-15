@@ -153,7 +153,7 @@ Time_zone *my_tz_SYSTEM= &tz_SYSTEM;
  *  1 - Error
  */
 bool
-my_tz_init(Session *session, const char *default_tzname)
+my_tz_init(Session *, const char *default_tzname)
 {
   if (default_tzname)
   {
@@ -163,7 +163,7 @@ my_tz_init(Session *session, const char *default_tzname)
       most of them once more, but this is OK for system tables open
       for READ.
     */
-    if (!(global_system_variables.time_zone= my_tz_find(session, &tmp_tzname2)))
+    if (!(global_system_variables.time_zone= NULL))
     {
       errmsg_printf(error::ERROR,
                     _("Fatal error: Illegal or unknown default time zone '%s'"),
@@ -173,20 +173,6 @@ my_tz_init(Session *session, const char *default_tzname)
   }
 
   return false;
-}
-
-/**
- * @brief
- * Get Time_zone object for specified time zone.
- *
- * @todo
- * Not implemented yet. This needs to hook into some sort of OS system call.
- */
-Time_zone *
-my_tz_find(Session *,
-           const String *)
-{
-  return NULL;
 }
 
 } /* namespace drizzled */

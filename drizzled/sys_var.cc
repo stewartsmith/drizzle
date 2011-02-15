@@ -1162,30 +1162,14 @@ unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
 }
 
 
-bool sys_var_session_time_zone::update(Session *session, set_var *var)
+bool sys_var_session_time_zone::update(Session *, set_var *var)
 {
   char buff[MAX_TIME_ZONE_NAME_LENGTH];
   String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
   String *res= var->value->val_str(&str);
 
-  Time_zone *tmp= my_tz_find(session, res);
-  if (tmp == NULL)
-  {
-    boost::throw_exception(invalid_option_value(var->var->getName()) << invalid_value(std::string(res ? res->c_ptr() : "NULL")));
-    return 1;
-  }
-  /* We are using Time_zone object found during check() phase. */
-  if (var->type == OPT_GLOBAL)
-  {
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    global_system_variables.time_zone= tmp;
-  }
-  else
-  {
-    session->variables.time_zone= tmp;
-  }
-
-  return 0;
+  boost::throw_exception(invalid_option_value(var->var->getName()) << invalid_value(std::string(res ? res->c_ptr() : "NULL")));
+  return 1;
 }
 
 
@@ -1226,7 +1210,7 @@ void sys_var_session_time_zone::set_default(Session *session, sql_var_t type)
         We are guaranteed to find this time zone since its existence
         is checked during start-up.
       */
-      global_system_variables.time_zone= my_tz_find(session, &str);
+      global_system_variables.time_zone= NULL;
     }
     else
       global_system_variables.time_zone= my_tz_SYSTEM;
