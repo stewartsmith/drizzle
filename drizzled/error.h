@@ -82,6 +82,15 @@ void add_error_message(drizzled::error_t error_code, const std::string &error_na
                        const std::string& message);
 #define DRIZZLE_ADD_ERROR_MESSAGE(code, msg) add_error_message(code, STRINGIFY_ARG(code), msg)
 
+namespace error {
+
+void access(drizzled::identifier::User::const_reference user);
+void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Schema::const_reference schema);
+void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Table::const_reference table);
+
+} // namespace error
+
+
 DRIZZLED_API void my_error(const std::string &ref, error_t nr, myf MyFlags= MYF(0));
 DRIZZLED_API void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags= MYF(0));
 DRIZZLED_API void my_error(error_t nr);

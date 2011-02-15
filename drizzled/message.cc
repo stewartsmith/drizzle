@@ -22,7 +22,7 @@
 
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/message.h>
 

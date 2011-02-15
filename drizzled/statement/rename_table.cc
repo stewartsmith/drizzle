@@ -153,22 +153,22 @@ bool statement::RenameTable::rename(TableList *ren_table,
   }
 
   plugin::StorageEngine *engine= NULL;
-  message::table::shared_ptr table_proto;
+  message::table::shared_ptr table_message;
 
   identifier::Table old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
-  if (plugin::StorageEngine::getTableDefinition(*getSession(), old_identifier, table_proto) != EEXIST)
+  if (not (table_message= plugin::StorageEngine::getTableMessage(*getSession(), old_identifier)))
   {
     my_error(ER_TABLE_UNKNOWN, old_identifier);
     return true;
   }
 
-  engine= plugin::StorageEngine::findByName(*getSession(), table_proto->engine().name());
+  engine= plugin::StorageEngine::findByName(*getSession(), table_message->engine().name());
 
   identifier::Table new_identifier(new_db, new_alias, message::Table::STANDARD);
   if (plugin::StorageEngine::doesTableExist(*getSession(), new_identifier))
   {
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
+    my_error(ER_TABLE_EXISTS_ERROR, new_identifier);
     return 1; // This can't be skipped
   }
 

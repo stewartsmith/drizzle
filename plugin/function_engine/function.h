@@ -82,7 +82,7 @@ public:
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::identifier::Table &identifier);
 
-  bool doGetSchemaDefinition(const drizzled::identifier::Schema &schema, drizzled::message::schema::shared_ptr &schema_message);
+  drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema &schema);
 
   int doRenameTable(drizzled::Session&, const drizzled::identifier::Table &, const drizzled::identifier::Table &)
   {
