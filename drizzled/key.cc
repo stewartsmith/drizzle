@@ -16,12 +16,12 @@
 
 /* Functions to handle keys and fields in forms */
 
-#include "config.h"
-#include "drizzled/table.h"
-#include "drizzled/key.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/util/test.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <config.h>
+#include <drizzled/table.h>
+#include <drizzled/key.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/util/test.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -64,8 +64,8 @@ namespace drizzled
 int find_ref_key(KeyInfo *key, uint32_t key_count, unsigned char *record, Field *field,
                  uint32_t *key_length, uint32_t *keypart)
 {
-  register int i;
-  register KeyInfo *key_info;
+  int i;
+  KeyInfo *key_info;
   uint32_t fieldpos;
 
   fieldpos= field->offset(record);
@@ -450,7 +450,7 @@ int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length
     if (key_part->null_bit)
     {
       /* This key part allows null values; NULL is lower than everything */
-      register bool field_is_null= key_part->field->is_null();
+      bool field_is_null= key_part->field->is_null();
       if (*key)                                 // If range key is null
       {
 	/* the range is expecting a null value */

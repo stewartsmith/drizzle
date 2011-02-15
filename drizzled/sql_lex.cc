@@ -16,19 +16,19 @@
 
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
-#include "config.h"
+#include <config.h>
 
 #define DRIZZLE_LEX 1
 
-#include "drizzled/sql_reserved_words.h"
+#include <drizzled/sql_reserved_words.h>
 
-#include "drizzled/configmake.h"
-#include "drizzled/item/num.h"
-#include "drizzled/error.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/lookup_symbol.h"
-#include "drizzled/index_hint.h"
+#include <drizzled/configmake.h>
+#include <drizzled/item/num.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/lookup_symbol.h>
+#include <drizzled/index_hint.h>
 #include <drizzled/select_result.h>
 
 #include <cstdio>
@@ -386,7 +386,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
 */
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
-  register unsigned char c,sep;
+  unsigned char c,sep;
   bool found_escape= false;
   const CHARSET_INFO * const cs= lip->m_session->charset();
 
@@ -665,7 +665,7 @@ namespace drizzled
 
 int lex_one_token(void *arg, void *yysession)
 {
-  register unsigned char c= 0; /* Just set to shutup GCC */
+  unsigned char c= 0; /* Just set to shutup GCC */
   bool comment_closed;
   int	tokval, result_state;
   unsigned int length;
