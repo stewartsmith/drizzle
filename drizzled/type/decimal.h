@@ -122,8 +122,6 @@ inline int decimal_string_size(const decimal_t *dec)
 
 
 #define DECIMAL_LONGLONG_DIGITS 22
-#define DECIMAL_LONG_DIGITS 10
-#define DECIMAL_LONG3_DIGITS 8
 
 /** maximum length of buffer in our big digits (uint32_t). */
 #define DECIMAL_BUFF_LENGTH 9
