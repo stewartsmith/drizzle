@@ -76,9 +76,9 @@ CREATE TABLE t1(AFIELD INT primary key);
 INSERT INTO t1 VALUES(1);
 CREATE TABLE t2(GMT  VARCHAR(32) primary key);
 INSERT INTO t2 VALUES('GMT-0800');
-SELECT DATE_FORMAT("2002-03-06 10:11:12", CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.GMT)) FROM t1, t2 GROUP BY t1.AFIELD;
+SELECT DATE_FORMAT("2002-03-06 10:11:12", CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.GMT)) FROM t1 CROSS JOIN t2 GROUP BY t1.AFIELD;
 INSERT INTO t1 VALUES(2);
-SELECT DATE_FORMAT("2002-03-06 10:11:12", CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.GMT)), DATE_FORMAT("2002-03-06 10:11:12",  CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.GMT)) FROM t1,t2 GROUP BY t1.AFIELD;
+SELECT DATE_FORMAT("2002-03-06 10:11:12", CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.GMT)), DATE_FORMAT("2002-03-06 10:11:12",  CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.GMT)) FROM t1 CROSS JOIN t2 GROUP BY t1.AFIELD;
 drop table t1,t2;
 
 #
@@ -121,7 +121,7 @@ select @d:=1311;
 --error ER_INVALID_DATETIME_VALUE # Invalid datetime of 1311
 select year(@d), month(@d), day(@d), cast(@d as date);
 create table t1 (d  date , dt datetime , ts timestamp, primary key (d));
---error ER_INVALID_DATETIME_VALUE # Bad dates
+--error ER_INVALID_DATE_VALUE # Bad dates
 insert into t1 values (9912101,9912101,9912101);
 insert into t1 values (11111,11111,11111);
 select * from t1;
