@@ -17,7 +17,6 @@
 #define DRIZZLED_PARSER_H
 
 #include <drizzled/charset.h>
-#include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/foreign_key.h>
 #include <drizzled/function/get_system_var.h>
@@ -110,7 +109,6 @@
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
-#include <drizzled/thr_lock.h>
 
 namespace drizzled {
 

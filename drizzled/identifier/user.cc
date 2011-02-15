@@ -36,12 +36,15 @@ void User::getSQLPath(std::string &arg) const
 {
   if (_user.empty())
   {
-    arg.append("no user");
+    arg+= "<no user>";
   }
   else
   {
-    arg.append(_user);
+    arg+= _user;
   }
+  arg+= "@";
+  arg+= _address;
+
 }
 
 } /* namespace identifier */
