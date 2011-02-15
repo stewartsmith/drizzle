@@ -185,7 +185,6 @@ const uint32_t MAX_KEY_LENGTH_DECIMAL_WIDTH = 4; // strlen("4096")
 
 /* The following can also be changed from the command line */
 #define DEFAULT_CONCURRENCY	10
-#define FLUSH_TIME		0		/**< Don't flush tables */
 
 /* Bits for different SQL modes modes (including ANSI mode) */
 #define MODE_NO_ZERO_DATE		(2)
