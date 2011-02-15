@@ -260,7 +260,7 @@ int main(int argc, char **argv)
     {
       perror("Failed to ignore SIGHUP");
     }
-    if (daemonize() == -1)
+    if (daemonize())
     {
       fprintf(stderr, "failed to daemon() in order to daemonize\n");
       exit(EXIT_FAILURE);
