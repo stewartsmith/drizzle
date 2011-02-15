@@ -37,7 +37,7 @@ namespace util { struct insensitive_equal_to; }
 namespace session
 {
 
-class TableMessages
+class DRIZZLED_API TableMessages
 {
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> Cache;
 
