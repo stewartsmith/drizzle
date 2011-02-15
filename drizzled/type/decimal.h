@@ -146,11 +146,6 @@ inline int decimal_string_size(const decimal_t *dec)
 */
 #define DECIMAL_MAX_STR_LENGTH (DECIMAL_MAX_POSSIBLE_PRECISION + 2)
 
-/**
-  maximum size of packet length.
-*/
-#define DECIMAL_MAX_FIELD_SIZE DECIMAL_MAX_PRECISION
-
 namespace type {
 class Decimal;
 }
