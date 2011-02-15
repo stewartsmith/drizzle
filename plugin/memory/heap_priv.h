@@ -39,7 +39,6 @@
 
 #define CHUNK_STATUS_DELETED 0    /* this chunk has been deleted and can be reused */
 #define CHUNK_STATUS_ACTIVE  1    /* this chunk represents the first part of a live record */
-#define CHUNK_STATUS_LINKED  2    /* this chunk is a continuation from another chunk (part of chunkset) */
 
 	/* Some extern variables */
 
