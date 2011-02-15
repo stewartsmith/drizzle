@@ -419,10 +419,6 @@ public:
 
 /* For number of records */
 typedef uint64_t	ha_rows;
-inline static double rows2double(ha_rows rows)
-{  
-  return uint64_t2double(rows);
-}
 
 #define HA_POS_ERROR	(~ (::drizzled::ha_rows) 0)
 #define HA_OFFSET_ERROR	(~ (::drizzled::internal::my_off_t) 0)

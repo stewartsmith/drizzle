@@ -471,9 +471,8 @@ public:
   int64_t val_int_internal(const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
-    int64_t return_value;
     ptr= const_cast<unsigned char*>(new_ptr);
-    return_value= val_int();
+    int64_t return_value= val_int();
     ptr= old_ptr;
     return return_value;
   }

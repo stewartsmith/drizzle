@@ -392,9 +392,9 @@ public:
   inline bool push_back(T *a, memory::Root *mem_root)
   { return base_list::push_back(a, mem_root); }
   inline bool push_front(T *a) { return base_list::push_front(a); }
-  inline T* head() {return (T*) base_list::head(); }
-  inline T** head_ref() {return (T**) base_list::head_ref(); }
-  inline T* pop()  {return (T*) base_list::pop(); }
+  inline T* head() {return static_cast<T*>(base_list::head()); }
+  inline T** head_ref() {return static_cast<T**>(base_list::head_ref()); }
+  inline T* pop()  {return static_cast<T*>(base_list::pop()); }
   inline void concat(List<T> *list) { base_list::concat(list); }
   inline void disjoin(List<T> *list) { base_list::disjoin(list); }
   inline void prepand(List<T> *list) { base_list::prepand(list); }
