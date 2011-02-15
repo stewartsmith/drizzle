@@ -54,10 +54,15 @@ namespace drizzled
 
 pid_t parent_pid;
 
+extern "C"
+{
+
 static void sigusr1_handler(int sig)
 {
   if (sig == SIGUSR1)
     _exit(EXIT_SUCCESS);
+}
+
 }
 
 void daemon_is_ready()
