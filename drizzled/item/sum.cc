@@ -738,11 +738,11 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   */
   switch (args[0]->field_type()) {
   case DRIZZLE_TYPE_DATE:
-    field= new Field_date(maybe_null, name, collation.collation);
+    field= new Field_date(maybe_null, name);
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
-    field= new Field_datetime(maybe_null, name, collation.collation);
+    field= new Field_datetime(maybe_null, name);
     break;
   default:
     return Item_sum::create_tmp_field(group, table, convert_blob_length);

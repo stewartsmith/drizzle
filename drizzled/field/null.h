@@ -42,15 +42,15 @@ public:
 
   Field_null(unsigned char *ptr_arg,
              uint32_t len_arg,
-             const char *field_name_arg,
-             const CHARSET_INFO * const cs)
-    :Field_str(ptr_arg,
-               len_arg,
-               null,
-               1,
-	             field_name_arg,
-               cs)
+             const char *field_name_arg) :
+    Field_str(ptr_arg,
+              len_arg,
+              null,
+              1,
+              field_name_arg,
+              &my_charset_bin)
   {}
+
   enum_field_types type() const
   {
     return DRIZZLE_TYPE_NULL;

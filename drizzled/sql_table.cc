@@ -1231,7 +1231,7 @@ static int prepare_create_table(Session *session,
 
     if (session->variables.sql_mode & MODE_NO_ZERO_DATE &&
         !sql_field->def &&
-        sql_field->sql_type == DRIZZLE_TYPE_TIMESTAMP &&
+        (sql_field->sql_type == DRIZZLE_TYPE_TIMESTAMP  or sql_field->sql_type == DRIZZLE_TYPE_MICROTIME) &&
         (sql_field->flags & NOT_NULL_FLAG) &&
         (type == Field::NONE || type == Field::TIMESTAMP_UN_FIELD))
     {
