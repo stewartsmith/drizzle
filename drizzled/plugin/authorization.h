@@ -68,8 +68,8 @@ public:
    *
    * @returns true if the user cannot access the table
    */
-  virtual bool restrictTable(const drizzled::identifier::User &user_ctx,
-                             identifier::Table &table);
+  virtual bool restrictTable(drizzled::identifier::User::const_reference user_ctx,
+                             drizzled::identifier::Table::const_reference table);
 
   /**
    * Should we restrict the current user's access to see this process?
@@ -90,7 +90,7 @@ public:
 
   /** Server API method for checking table authorization */
   static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                           identifier::Table &table_identifier,
+                           drizzled::identifier::Table::const_reference table_identifier,
                            bool send_error= true);
 
   /** Server API method for checking process authorization */
@@ -113,8 +113,8 @@ public:
 
 };
 
-inline bool Authorization::restrictTable(const drizzled::identifier::User &user_ctx,
-                                         identifier::Table &table)
+inline bool Authorization::restrictTable(drizzled::identifier::User::const_reference user_ctx,
+                                         drizzled::identifier::Table::const_reference table)
 {
   return restrictSchema(user_ctx, table);
 }

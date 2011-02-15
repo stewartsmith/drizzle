@@ -78,11 +78,11 @@ public:
 class RestrictTableFunctor :
   public std::unary_function<plugin::Authorization *, bool>
 {
-  const identifier::User &user_ctx;
-  identifier::Table &table;
+  identifier::User::const_reference user_ctx;
+  identifier::Table::const_reference table;
 public:
-  RestrictTableFunctor(const identifier::User &user_ctx_arg,
-                       identifier::Table &table_arg) :
+  RestrictTableFunctor(identifier::User::const_reference user_ctx_arg,
+                       identifier::Table::const_reference table_arg) :
     std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     table(table_arg)
@@ -155,13 +155,7 @@ bool plugin::Authorization::isAuthorized(identifier::User::const_reference user_
   {
     if (send_error)
     {
-      std::string path;
-      schema_identifier.getSQLPath(path);
-
-      my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
-               user_ctx.username().c_str(),
-               user_ctx.address().c_str(),
-               path.c_str());
+      error::access(user_ctx, schema_identifier);
     }
     return false;
   }
@@ -169,7 +163,7 @@ bool plugin::Authorization::isAuthorized(identifier::User::const_reference user_
 }
 
 bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                                         identifier::Table &table,
+                                         identifier::Table::const_reference table_identifier,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
@@ -180,7 +174,7 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_refer
   std::vector<plugin::Authorization *>::const_iterator iter=
     std::find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
-            RestrictTableFunctor(user_ctx, table));
+            RestrictTableFunctor(user_ctx, table_identifier));
 
   /*
    * If iter is == end() here, that means that all of the plugins returned
@@ -191,13 +185,7 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_refer
   {
     if (send_error)
     {
-      std::string path;
-      table.getSQLPath(path);
-
-      my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
-               user_ctx.username().c_str(),
-               user_ctx.address().c_str(),
-               path.c_str());
+      error::access(user_ctx, table_identifier);
     }
     return false;
   }

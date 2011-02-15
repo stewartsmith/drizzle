@@ -153,7 +153,7 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 use data_dictionary;
 use data_dictionary;
 create temporary table schemas(f1 char(10));
-ERROR 42000: Access denied for user ''@'' to schema 'data_dictionary'
+ERROR 42000: Access denied for user 'root@127.0.0.1' to schema 'data_dictionary'
 use test;
 create table t1(id int);
 insert into t1(id) values (1);

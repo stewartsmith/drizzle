@@ -203,7 +203,7 @@ bool buildTables(Session *session, const char *ident)
     session->getLex()->select_lex.db= const_cast<char *>(ident);
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
-      my_error(ER_BAD_DB_ERROR, MYF(0), ident);
+      my_error(ER_BAD_DB_ERROR, identifier);
     }
     select->setShowPredicate(ident, "");
   }
@@ -276,7 +276,7 @@ bool buildTableStatus(Session *session, const char *ident)
     identifier::Schema identifier(ident);
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
-      my_error(ER_BAD_DB_ERROR, MYF(0), ident);
+      my_error(ER_BAD_DB_ERROR, identifier);
     }
 
     select->setShowPredicate(ident, "");

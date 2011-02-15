@@ -82,10 +82,7 @@ bool plugin::Authentication::isAuthenticated(drizzled::identifier::User::const_r
    */
   if (iter == all_authentication.end())
   {
-    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
-             sctx.username().c_str(),
-             sctx.address().c_str(),
-             password.empty() ? ER(ER_NO) : ER(ER_YES));
+    error::access(sctx);
 
     return false;
   }
