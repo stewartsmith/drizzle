@@ -55,8 +55,6 @@ if (!(info->update & HA_STATE_AKTIV))\
 
 #define get_chunk_status(info,ptr) (ptr[(info)->offset_status])
 
-#define get_chunk_count(info,rec_length) ((rec_length + (info)->chunk_dataspace_length - 1) / (info)->chunk_dataspace_length)
-
 typedef struct st_hp_hash_info
 {
   struct st_hp_hash_info *next_key;
