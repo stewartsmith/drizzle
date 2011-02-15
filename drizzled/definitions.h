@@ -112,7 +112,6 @@ const uint32_t MAX_KEY_LENGTH_DECIMAL_WIDTH = 4; // strlen("4096")
   Configuration parameters
 ****************************************************************************/
 #define MAX_FIELDS_BEFORE_HASH	32
-#define USER_VARS_HASH_SIZE     16
 #define TABLE_OPEN_CACHE_MIN    64
 #define TABLE_OPEN_CACHE_DEFAULT 1024
 
