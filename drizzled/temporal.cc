@@ -1427,9 +1427,9 @@ bool Time::is_valid() const
   return (_years == 0)
       && (_months == 0)
       && (_days == 0)
-      && (_hours <= 23)
-      && (_minutes <= 59)
-      && (_seconds <= 59); /* No Leap second... TIME is for elapsed time... */
+      && (_hours <= DRIZZLE_MAX_HOURS)
+      && (_minutes <= DRIZZLE_MAX_MINUTES)
+      && (_seconds <= DRIZZLE_MAX_SECONDS); /* No Leap second... TIME is for elapsed time... */
 }
 
 bool Time::is_fuzzy_valid() const
@@ -1440,9 +1440,9 @@ bool Time::is_fuzzy_valid() const
   return (_years >= DRIZZLE_MIN_YEARS_SQL && _years <= DRIZZLE_MAX_YEARS_SQL)
       && (_months >= 1 && _months <= DRIZZLE_MAX_MONTHS)
       && (_days >= 1 && _days <= days_in_gregorian_year_month(_years, _months))
-      && (_hours <= 23)
-      && (_minutes <= 59)
-      && (_seconds <= 59); /* No Leap second... TIME is for elapsed time... */
+      && (_hours <= DRIZZLE_MAX_HOURS)
+      && (_minutes <= DRIZZLE_MAX_MINUTES)
+      && (_seconds <= DRIZZLE_MAX_SECONDS); /* No Leap second... TIME is for elapsed time... */
 }
 
 bool DateTime::is_valid() const
@@ -1450,16 +1450,16 @@ bool DateTime::is_valid() const
   return (_years >= DRIZZLE_MIN_YEARS_SQL && _years <= DRIZZLE_MAX_YEARS_SQL)
       && (_months >= 1 && _months <= DRIZZLE_MAX_MONTHS)
       && (_days >= 1 && _days <= days_in_gregorian_year_month(_years, _months))
-      && (_hours <= 23)
-      && (_minutes <= 59)
-      && (_seconds <= 61); /* Leap second... */
+      && (_hours <= DRIZZLE_MAX_HOURS)
+      && (_minutes <= DRIZZLE_MAX_MINUTES)
+      && (_seconds <= DRIZZLE_MAX_SECONDS_WITH_LEAP); /* Leap second... */
 }
 
 bool Timestamp::is_valid() const
 {
-  return DateTime::is_valid() 
+  return DateTime::is_valid()
       && in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds)
-      && (_seconds <= 59);
+      && (_seconds <= DRIZZLE_MAX_SECONDS);
 }
 
 bool MicroTimestamp::is_valid() const
