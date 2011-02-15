@@ -5,11 +5,15 @@ In Dizzle you can make use of UPDATE to modify an existing record in a table.
 
 A type query:
 
-UPDATE TABLE_1 SET a="1" WHERE <condition>;
+.. code-block:: mysql
+
+   UPDATE TABLE_1 SET a="1" WHERE <condition>;
 
 Multi-table delete and multi-table update code was removed from Drizzle.
 
-Multi-update/delete can be accomplished through subqueries. For example: ::
+Multi-update/delete can be accomplished through subqueries. For example:
+
+.. code-block:: mysql
 
 	UPDATE tableX SET tableXfield = (SELECT MAX(tableY.tableYfield) FROM tableY WHERE tableX.tableXfield = tableY.tableYfield)
 
