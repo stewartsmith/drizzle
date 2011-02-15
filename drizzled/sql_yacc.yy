@@ -442,6 +442,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, unsigned long *yystacksize);
 %token  REPEATABLE_SYM                /* SQL-2003-N */
 %token  REPEAT_SYM                    /* MYSQL-FUNC */
 %token  REPLACE                       /* MYSQL-FUNC */
+%token  REPLICATION
 %token  RESTRICT
 %token  RETURNS_SYM                   /* SQL-2003-R */
 %token  RETURN_SYM                    /* SQL-2003-R */
@@ -971,6 +972,18 @@ custom_database_option:
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
             statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
           }
+        | REPLICATION opt_equal TRUE_SYM
+          {
+            statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+            message::Schema::Options *options= statement->schema_message.mutable_options();
+            options->set_dont_replicate(true);
+          }
+        | REPLICATION opt_equal FALSE_SYM
+          {
+            statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+            message::Schema::Options *options= statement->schema_message.mutable_options();
+            options->set_dont_replicate(false);
+          }
         | ident_or_text equal ident_or_text
           {
             parser::buildSchemaOption(Lex, $1.str, $3);
@@ -1021,6 +1034,14 @@ custom_engine_option:
         | AUTO_INC opt_equal ulonglong_num
           {
             Lex->table()->mutable_options()->set_auto_increment_value($3);
+          }
+        | REPLICATION opt_equal TRUE_SYM
+          {
+            Lex->table()->mutable_options()->set_dont_replicate(false);
+          }
+        | REPLICATION opt_equal FALSE_SYM
+          {
+            Lex->table()->mutable_options()->set_dont_replicate(true);
           }
         |  ROW_FORMAT_SYM equal row_format_or_text
           {

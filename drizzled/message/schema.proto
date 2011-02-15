@@ -10,6 +10,9 @@ option java_outer_classname = "SchemaMessage";
 import "engine.proto";
 
 message Schema {
+  message Options {
+    optional bool dont_replicate = 1;
+  }
   required string name = 1;
   optional string collation = 2;
   required Engine engine = 3;
@@ -21,4 +24,5 @@ message Schema {
     A version value of 0, means that it was never set.
     */
   optional uint64 version = 14;
+  optional Options options = 15;
 }
