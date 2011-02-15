@@ -87,7 +87,9 @@ bool daemonize(bool nochdir, bool noclose, bool wait_sigusr1)
         /* parent */
         int exit_code= -1;
         int status;
-        while (waitpid(child, &status, 0) != child);
+        while (waitpid(child, &status, 0) != child)
+        { }
+
         if (WIFEXITED(status))
         {
           exit_code= WEXITSTATUS(status);
