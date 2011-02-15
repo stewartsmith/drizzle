@@ -25,6 +25,7 @@
 #include <drizzled/statement/rename_table.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/plugin/storage_engine.h"
 
 namespace drizzled
 {
@@ -158,7 +159,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   if (plugin::StorageEngine::getTableDefinition(*getSession(), old_identifier, table_proto) != EEXIST)
   {
-    my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->getSchemaName(), old_alias);
+    my_error(ER_TABLE_UNKNOWN, old_identifier);
     return true;
   }
 

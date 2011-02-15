@@ -20,20 +20,16 @@
 
 if BUILD_WIN32
 libdrizzle_libdrizzle_la_SOURCES+= \
-				   win32/alloca.c \
-				   win32/conn_uds.c \
-				   win32/mingw/poll.c
+				   win32/conn_uds.c
 endif
 
 noinst_HEADERS+= \
-		 win32/alloca.h \
-		 win32/mingw/errno.h \
-		 win32/mingw/poll.h \
 		 win32/windows/inttypes.h \
 		 win32/windows/stdint.h
 
 EXTRA_DIST+= \
 	     win32/drizzle.sln \
-	     win32/libdrizzle.vcproj \
+	     win32/libdrizzle.vcxproj \
+	     win32/libdrizzle.vcxproj.filters \
 	     win32/windows/errno.h
 

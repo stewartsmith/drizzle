@@ -21,10 +21,11 @@
 
 #include <gcrypt.h>
 
-#include <drizzled/plugin/function.h>
-#include <drizzled/item/func.h>
-#include "drizzled/charset.h"
+#include <drizzled/charset.h>
+#include <drizzled/charset_info.h>
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/item/func.h>
+#include <drizzled/plugin/function.h>
 
 using namespace std;
 using namespace drizzled;
@@ -96,7 +97,7 @@ static int initialize(module::Context &context)
   /* Initialize libgcrypt */
   if (not gcry_check_version(GCRYPT_VERSION))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("libgcrypt library version mismatch\n"));
+    errmsg_printf(error::ERROR, _("libgcrypt library version mismatch"));
     return 1;
   }
   /* Disable secure memory.  */

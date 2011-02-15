@@ -397,5 +397,255 @@ void buildCreateFieldIdent(LEX *lex)
   lex->setField(alter_proto.add_added_field());
 }
 
+void storeAlterColumnPosition(LEX *lex, const char *position)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+
+  lex->last_field->after=const_cast<char*> (position);
+  statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
+}
+
+bool buildCollation(LEX *lex, const CHARSET_INFO *arg)
+{
+  statement::CreateTable *statement= (statement::CreateTable *)lex->statement;
+
+  HA_CREATE_INFO *cinfo= &statement->create_info();
+  if ((cinfo->used_fields & HA_CREATE_USED_DEFAULT_CHARSET) &&
+      cinfo->default_table_charset && arg &&
+      !my_charset_same(cinfo->default_table_charset, arg))
+  {
+    my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
+             arg->name, cinfo->default_table_charset->csname);
+    return false;
+  }
+  statement->create_info().default_table_charset= arg;
+  statement->create_info().used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+
+  return true;
+}
+
+void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+  Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0,
+                    lex->col_list);
+  statement->alter_info.key_list.push_back(key);
+  lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+}
+
+void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+  Key *key= new Foreign_key(name_arg, lex->col_list,
+                            table,
+                            lex->ref_list,
+                            statement->fk_delete_opt,
+                            statement->fk_update_opt,
+                            statement->fk_match_option);
+
+  statement->alter_info.key_list.push_back(key);
+  key= new Key(Key::MULTIPLE, name_arg,
+               &default_key_create_info, 1,
+               lex->col_list);
+  statement->alter_info.key_list.push_back(key);
+  lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+  /* Only used for ALTER TABLE. Ignored otherwise. */
+  statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
+}
+
+drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_types final_type, const bool is_unsigned)
+{ 
+  lex->length=(char*) 0; /* use default length */
+
+  if (is_unsigned)
+  {
+    final_type= DRIZZLE_TYPE_LONGLONG;
+  }
+
+  if (lex->field())
+  {
+    assert (final_type == DRIZZLE_TYPE_LONG or final_type == DRIZZLE_TYPE_LONGLONG);
+    // We update the type for unsigned types
+    if (is_unsigned)
+    {
+      lex->field()->set_type(message::Table::Field::BIGINT);
+      lex->field()->mutable_constraints()->set_is_unsigned(true);
+    }
+    else if (final_type == DRIZZLE_TYPE_LONG)
+    {
+      lex->field()->set_type(message::Table::Field::INTEGER);
+    }
+    else if (final_type == DRIZZLE_TYPE_LONGLONG)
+    {
+      lex->field()->set_type(message::Table::Field::BIGINT);
+    }
+  }
+
+  return final_type;
+}
+
+drizzled::enum_field_types buildSerialColumn(LEX *lex)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+  statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+  lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG | UNSIGNED_FLAG);
+
+  if (lex->field())
+  {
+    lex->field()->mutable_constraints()->set_is_notnull(true);
+    lex->field()->mutable_constraints()->set_is_unsigned(true);
+
+    lex->field()->set_type(message::Table::Field::BIGINT);
+  }
+
+  return DRIZZLE_TYPE_LONGLONG;
+}
+
+drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length)
+{
+  lex->length= const_cast<char *>(length);
+
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::VARCHAR);
+
+    message::Table::Field::StringFieldOptions *string_field_options;
+
+    string_field_options= lex->field()->mutable_string_options();
+
+    string_field_options->set_length(atoi(length));
+  }
+
+  return DRIZZLE_TYPE_VARCHAR;
+}
+
+drizzled::enum_field_types buildDecimalColumn(LEX *lex)
+{
+  if (lex->field())
+    lex->field()->set_type(message::Table::Field::DECIMAL);
+
+  return DRIZZLE_TYPE_DECIMAL;
+}
+
+drizzled::enum_field_types buildVarbinaryColumn(LEX *lex, const char *length)
+{
+  lex->length= const_cast<char *>(length);
+  lex->charset= &my_charset_bin;
+
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::VARCHAR);
+
+    message::Table::Field::StringFieldOptions *string_field_options;
+
+    string_field_options= lex->field()->mutable_string_options();
+
+    string_field_options->set_length(atoi(length));
+    string_field_options->set_collation_id(my_charset_bin.number);
+    string_field_options->set_collation(my_charset_bin.name);
+  }
+
+  return DRIZZLE_TYPE_VARCHAR;
+}
+
+drizzled::enum_field_types buildBlobColumn(LEX *lex)
+{
+  lex->charset=&my_charset_bin;
+  lex->length=(char*) 0; /* use default length */
+
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::BLOB);
+    message::Table::Field::StringFieldOptions *string_field_options;
+
+    string_field_options= lex->field()->mutable_string_options();
+    string_field_options->set_collation_id(my_charset_bin.number);
+    string_field_options->set_collation(my_charset_bin.name);
+  }
+
+  return DRIZZLE_TYPE_BLOB;
+}
+
+drizzled::enum_field_types buildBooleanColumn(LEX *lex)
+{
+  if (lex->field())
+    lex->field()->set_type(message::Table::Field::BOOLEAN);
+
+  return DRIZZLE_TYPE_BOOLEAN;
+}
+
+drizzled::enum_field_types buildUuidColumn(LEX *lex)
+{
+  if (lex->field())
+    lex->field()->set_type(message::Table::Field::UUID);
+
+  return DRIZZLE_TYPE_UUID;
+}
+
+drizzled::enum_field_types buildDoubleColumn(LEX *lex)
+{
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::DOUBLE);
+  }
+
+  return DRIZZLE_TYPE_DOUBLE;
+}
+
+drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length)
+{
+  if (lex->field())
+  {
+    lex->field()->set_type(message::Table::Field::EPOCH);
+  }
+
+  if (length)
+  {
+    lex->length= const_cast<char *>(length);
+    return DRIZZLE_TYPE_MICROTIME;
+  }
+
+  lex->length= NULL;
+
+  return DRIZZLE_TYPE_TIMESTAMP;
+}
+
+void buildKeyOnColumn(LEX *lex)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+
+  lex->type|= UNIQUE_KEY_FLAG;
+  statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+  if (lex->field())
+  {
+    lex->field()->mutable_constraints()->set_is_unique(true);
+  }
+}
+
+void buildAutoOnColumn(LEX *lex)
+{
+  lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;
+
+  if (lex->field())
+  {
+    lex->field()->mutable_constraints()->set_is_notnull(true);
+  }
+}
+
+void buildPrimaryOnColumn(LEX *lex)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+
+  lex->type|= PRI_KEY_FLAG | NOT_NULL_FLAG;
+  statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+  if (lex->field())
+  {
+    lex->field()->mutable_constraints()->set_is_notnull(true);
+  }
+}
+
 } // namespace parser
 } // namespace drizzled

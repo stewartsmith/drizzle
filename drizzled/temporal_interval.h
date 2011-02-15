@@ -25,7 +25,8 @@
 #define DRIZZLED_TEMPORAL_INTERVAL_H
 
 /* @TODO Replace this include with some forward decls */
-#include "drizzled/item.h"
+#include <drizzled/item.h>
+#include <drizzled/type/time.h>
 
 namespace drizzled 
 {
@@ -39,34 +40,32 @@ class TemporalInterval
 public:
 
   TemporalInterval(uint32_t in_year,
-      uint32_t in_month,
-      uint32_t in_day,
-      uint32_t in_hour,
-      uint64_t in_minute,
-      uint64_t in_second,
-      uint64_t in_second_part,
-      bool in_neg)
-    :
-      year(in_year),
-      month(in_month),
-      day(in_day),
-      hour(in_hour),
-      minute(in_minute),
-      second(in_second),
-      second_part(in_second_part),
-      neg(in_neg)
+                   uint32_t in_month,
+                   uint32_t in_day,
+                   uint32_t in_hour,
+                   uint64_t in_minute,
+                   uint64_t in_second,
+                   uint64_t in_second_part,
+                   bool in_neg) :
+    year(in_year),
+    month(in_month),
+    day(in_day),
+    hour(in_hour),
+    minute(in_minute),
+    second(in_second),
+    second_part(in_second_part),
+    neg(in_neg)
   {}
 
-  TemporalInterval()
-    :
-      year(0),
-      month(0),
-      day(0),
-      hour(0),
-      minute(0),
-      second(0),
-      second_part(0),
-      neg(false)
+  TemporalInterval() :
+    year(0),
+    month(0),
+    day(0),
+    hour(0),
+    minute(0),
+    second(0),
+    second_part(0),
+    neg(false)
   {}
 
   /**

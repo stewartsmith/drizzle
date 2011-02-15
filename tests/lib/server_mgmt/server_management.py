@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -26,6 +26,8 @@
 # imports
 import thread
 import time
+import os
+import subprocess
 
 class serverManager:
     """ code that handles the server objects
@@ -37,6 +39,9 @@ class serverManager:
     def __init__(self, system_manager, variables):
         self.skip_keys = [ 'ld_lib_paths'
                          , 'system_manager'
+                         , 'logging'
+                         , 'gdb'
+                         , 'code_tree'
                          ]
         self.debug = variables['debug']
         self.verbose = variables['verbose']
@@ -45,17 +50,20 @@ class serverManager:
         self.no_secure_file_priv = variables['nosecurefilepriv']
         self.system_manager = system_manager
         self.logging = system_manager.logging
+        self.gdb  = self.system_manager.gdb
         self.code_tree = system_manager.code_tree
+        self.user_server_opts = variables['drizzledoptions']
         self.servers = {}
         # We track this
         self.ld_lib_paths = system_manager.ld_lib_paths
         self.mutex = thread.allocate_lock()
+        self.timer_increment = .5
 
         if self.debug:
             self.logging.debug_class(self)
 
     def request_servers( self, requester, workdir, master_count
-                   , slave_count, server_options
+                   , slave_count, server_options, working_environ
                    , expect_fail = 0):
         """ We produce the server objects / start the server processes
             as requested.  We report errors and whatnot if we can't
@@ -76,7 +84,8 @@ class serverManager:
         self.evaluate_existing_servers(requester, server_options)
 
         # Fire our servers up
-        bad_start = self.start_servers(requester, expect_fail)
+        bad_start = self.start_servers( requester, working_environ
+                                      , expect_fail)
  
         # Return them to the requester
         return (self.get_server_list(requester), bad_start)        
@@ -88,37 +97,128 @@ class serverManager:
             Start up occurs elsewhere
 
         """
+
         # Get a name for our server
         server_name = self.get_server_name(requester)
 
-        # initialize a server_object
+        # initialize our new server_object
         if self.code_tree.type == 'Drizzle':
           from lib.server_mgmt.drizzled import drizzleServer as server_type
         new_server = server_type( server_name, self, server_options
                                 , requester, workdir )
+        self.add_server(requester, new_server)
+        return new_server
 
-    def start_servers(self, requester, expect_fail):
+    def start_servers(self, requester, working_environ, expect_fail):
         """ Start all servers for the requester """
         bad_start = 0
         for server in self.get_server_list(requester):
             if server.status == 0:
                 bad_start = bad_start + self.start_server( server
                                                          , requester
-                                                         , expect_fail)
+                                                         , working_environ
+                                                         , expect_fail
+                                                         )
         return bad_start
 
-    def start_server(self, server, requester, expect_fail):
+    def start_server(self, server, requester, working_environ, expect_fail):
         """ Start an individual server and return
             an error code if it did not start in a timely manner
  
+            Start the server, using the options in option_list
+            as well as self.standard_options
+            
+            if expect_fail = 1, we know the server shouldn't 
+            start up
+
         """
-        bad_start = server.start(expect_fail)
-        if bad_start:
-            # Our server didn't start, we need to return an 
-            # error
-            return 1
+
+        if self.verbose:
+            self.logging.verbose("Starting server: %s.%s" %(server.owner, server.name))
+        start_cmd = server.get_start_cmd()
+        if self.debug:
+            self.logging.debug("Starting server with:")
+            self.logging.debug("%s" %(start_cmd))
+        # we signal we tried to start as an attempt
+        # to catch the case where a server is just 
+        # starting up and the user ctrl-c's
+        # we don't know the server is running (still starting up)
+        # so we give it a few minutes
+        self.tried_start = 1
+        error_log = open(server.error_log,'w')
+        if start_cmd: # It will be none if --manual-gdb used
+            if not self.gdb:
+                server_subproc = subprocess.Popen( start_cmd
+                                                 , shell=True
+                                                 , env=working_environ
+                                                 , stdout=error_log
+                                                 , stderr=error_log
+                                                 )
+                server_subproc.wait()
+                server_retcode = server_subproc.returncode
+            else: 
+                # This is a bit hackish - need to see if there is a cleaner
+                # way of handling this
+                # It is annoying that we have to say stdout + stderr = None
+                # We might need to further manipulate things so that we 
+                # have a log
+                server_subproc = subprocess.Popen( start_cmd
+                                                 , shell=True
+                                                 , env = working_environ
+                                                 , stdin=None
+                                                 , stdout=None
+                                                 , stderr=None
+                                                 , close_fds=True
+                                                 )
+        
+                server_retcode = 0
         else:
-            return 0
+            # manual-gdb issue
+            server_retcode = 0
+        timer = float(0)
+        timeout = float(server.server_start_timeout)
+
+        #if server_retcode: # We know we have an error, no need to wait
+        #    timer = timeout
+
+        # We experiment with waiting for a pid file to be created vs. pinging
+        # This is what test-run.pl does and it helps us pass logging_stats tests
+        # while not self.ping_server(server, quiet=True) and timer != timeout:
+        while not self.system_manager.find_path( [server.pid_file]
+                                               , required=0) and timer != timeout:
+            time.sleep(self.timer_increment)
+            # If manual-gdb, this == None and we want to give the 
+            # user all the time they need
+            if start_cmd:
+                timer= timer + self.timer_increment
+            
+        if timer == timeout and not self.ping_server(server, quiet=True):
+            self.logging.error(( "Server failed to start within %d seconds.  This could be a problem with the test machine or the server itself" %(timeout)))
+            server_retcode = 1
+     
+        if server_retcode == 0:
+            server.status = 1 # we are running
+
+        if server_retcode != 0 and not expect_fail and self.debug:
+            self.logging.debug("Server startup command: %s failed with error code %d" %( start_cmd
+                                                                                  , server_retcode))
+        elif server_retcode == 0 and expect_fail:
+        # catch a startup that should have failed and report
+            self.logging.error("Server startup command :%s expected to fail, but succeeded" %(start_cmd))
+
+        server.tried_start = 0 
+        return server_retcode ^ expect_fail
+
+    def ping_server(self, server, quiet=False):
+        """ Ping / check if the server is alive 
+            Return True if server is up and running, False otherwise
+        """
+ 
+        ping_cmd = server.get_ping_cmd()
+        if not quiet:
+            self.logging.info("Pinging Drizzled server on port %d" % server.master_port)
+        (retcode, output)= self.system_manager.execute_cmd(ping_cmd, must_pass = 0)
+        return retcode == 0
              
 
     def stop_server(self, server):
@@ -128,11 +228,23 @@ class serverManager:
             # the server but it isn't up and running
             # we kill a bit of time waiting for it
             attempts_remain = 10
-            while not server.ping(quiet= True) and attempts_remain:
+            while not self.ping_server(server, quiet=True) and attempts_remain:
                 time.sleep(1)
                 attempts_remain = attempts_remain - 1
-        if server.status == 1 or server.ping(quiet=True):
-            server.stop()
+        # Now we try to shut the server down
+        if self.ping_server(server, quiet=True):
+            if self.verbose:
+                self.logging.verbose("Stopping server %s.%s" %(server.owner, server.name))
+            stop_cmd = server.get_stop_cmd()
+            retcode, output = self.system_manager.execute_cmd(stop_cmd)
+            if retcode:
+                self.logging.error("Problem shutting down server:")
+                self.logging.error("%s : %s" %(retcode, output))
+            else:
+                server.status = 0 # indicate we are shutdown
+        else:
+            # make sure the server is indicated as stopped
+            server.status = 0
 
     def stop_servers(self, requester):
         """ Stop all servers running for the requester """
@@ -170,15 +282,20 @@ class serverManager:
             appropriately
 
         """
-
+        self.has_servers(requester) # if requester isn't there, we create a blank entry
         server_count = self.server_count(requester)
         return "%s%d" %(self.server_base_name, server_count)
 
     def has_servers(self, requester):
         """ Check if the given requester has any servers """
         if requester not in self.servers: # new requester
-            self.servers[requester] = []
+           self.log_requester(requester) 
         return self.server_count(requester)
+
+    def log_requester(self, requester):
+        """ We create a log entry for the new requester """
+
+        self.servers[requester] = []
 
     def log_server(self, new_server, requester):
         self.servers[requester].append(new_server)
@@ -191,6 +308,8 @@ class serverManager:
         current_servers = self.servers[requester]
         
         for server in current_servers:
+            # We add in any user-supplied options here
+            server_options = server_options + self.user_server_opts
             if self.compare_options( server.server_options
                                    , server_options):
                 return 1

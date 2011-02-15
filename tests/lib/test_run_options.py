@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -51,6 +51,8 @@ def organize_options(args, test_cases):
     variables = {}
     variables = vars(args)
     variables['test_cases']= test_cases
+    if variables['manualgdb']:
+        variables['gdb']=True
     return variables
 
 # Create the CLI option parser
@@ -291,9 +293,24 @@ environment_control_group.add_option(
   , help = "Turn off the use of --secure-file-priv=vardir for started servers"
   )
 
- 
 parser.add_option_group(environment_control_group)
 # end environment control group
+
+option_passing_group = optparse.OptionGroup(parser,
+                          "Options to pass options on to the server")
+
+option_passing_group.add_option(
+    "--drizzled"
+  , dest="drizzledoptions"
+  , type='string'
+  , action='append' 
+  , default = []
+  , help = "Pass additional options to the server.  Will be passed to all servers for all tests (mostly for --start-and-exit)"
+  )
+
+parser.add_option_group(option_passing_group)
+# end option passing group
+ 
 
 analysis_control_group = optparse.OptionGroup(parser, 
                             "Options for defining the tools we use for code analysis (valgrind, gprof, gcov, etc)")
@@ -326,10 +343,15 @@ debugger_control_group.add_option(
   , help="Start the drizzled server(s) in gdb"
   )
 
+debugger_control_group.add_option(
+    "--manual-gdb"
+  , dest="manualgdb"
+  , action='store_true'
+  , default=False
+  , help="Allows you to start the drizzled server(s) in gdb manually (in another window, etc)"
+  )
+
 parser.add_option_group(debugger_control_group)
-
-
-
 
 
 # supplied will be those arguments matching an option, 

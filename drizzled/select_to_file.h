@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_SELECT_TO_FILE_H
 #define DRIZZLED_SELECT_TO_FILE_H
 
+#include <drizzled/select_result_interceptor.h>
+#include <drizzled/file_exchange.h>
+
 #include <boost/filesystem.hpp>
 
 namespace drizzled

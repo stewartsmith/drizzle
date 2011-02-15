@@ -61,6 +61,7 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/constrained_value.h"
 #include "drizzled/visibility.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <cstdio>
 #include <map>
@@ -212,8 +213,8 @@ static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
 static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
                                                 &drizzle_system_variables::sortbuff_size);
 
-static sys_var_session_size_t sys_transaction_message_threshold("transaction_message_threshold",
-                                                                &drizzle_system_variables::transaction_message_threshold);
+static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transaction_message_threshold",
+                                                                &transaction_message_threshold);
 
 static sys_var_session_storage_engine sys_storage_engine("storage_engine",
 				       &drizzle_system_variables::storage_engine);
@@ -431,7 +432,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
 {
   if (fixed)
   {
-    char buf[22];
+    char buf[DECIMAL_LONGLONG_DIGITS];
 
     if (unsignd)
       internal::ullstr((uint64_t) val, buf);
@@ -1244,7 +1245,7 @@ bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
   {
     if (!(locale_match= my_locale_by_number((uint32_t) var->value->val_int())))
     {
-      char buf[20];
+      char buf[DECIMAL_LONGLONG_DIGITS];
       internal::int10_to_str((int) var->value->val_int(), buf, -10);
       my_printf_error(ER_UNKNOWN_ERROR, "Unknown locale: '%s'", MYF(0), buf);
       return 1;
@@ -1489,7 +1490,7 @@ static struct option *find_option(struct option *opt, const char *name)
 drizzle_show_var* enumerate_sys_vars(Session *session)
 {
   int size= sizeof(drizzle_show_var) * (system_variable_map.size() + 1);
-  drizzle_show_var *result= (drizzle_show_var*) session->alloc(size);
+  drizzle_show_var *result= (drizzle_show_var*) session->getMemRoot()->allocate(size);
 
   if (result)
   {
@@ -1523,7 +1524,7 @@ void add_sys_var_to_list(sys_var *var)
   /* this fails if there is a conflicting variable name. */
   if (system_variable_map.find(lower_name) != system_variable_map.end())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Variable named %s already exists!\n"),
+    errmsg_printf(error::ERROR, _("Variable named %s already exists!\n"),
                   var->getName().c_str());
     throw exception();
   } 
@@ -1532,7 +1533,7 @@ void add_sys_var_to_list(sys_var *var)
     system_variable_map.insert(make_pair(lower_name, var));
   if (ret.second == false)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not add Variable: %s\n"),
+    errmsg_printf(error::ERROR, _("Could not add Variable: %s\n"),
                   var->getName().c_str());
     throw exception();
   }
@@ -1630,7 +1631,7 @@ int sys_var_init()
   }
   catch (std::exception&)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
+    errmsg_printf(error::ERROR, _("Failed to initialize system variables"));
     return(1);
   }
   return(0);

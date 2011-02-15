@@ -20,8 +20,11 @@
 #ifndef DRIZZLED_PLUGIN_CLIENT_H
 #define DRIZZLED_PLUGIN_CLIENT_H
 
-#include <drizzled/sql_list.h>
+#include <drizzled/catalog/instance.h>
+#include <drizzled/catalog/local.h>
+#include <drizzled/error_t.h>
 #include <drizzled/item.h>
+#include <drizzled/sql_list.h>
 
 #include "drizzled/visibility.h"
 
@@ -111,7 +114,7 @@ public:
     return false;
   }
 
-  virtual  catalog::Instance::shared_ptr catalog()
+  virtual catalog::Instance::shared_ptr catalog()
   {
     return catalog::local();
   }
@@ -124,7 +127,7 @@ public:
   /* Send responses. */
   virtual void sendOK(void)= 0;
   virtual void sendEOF(void)= 0;
-  virtual void sendError(uint32_t sql_errno, const char *err)= 0;
+  virtual void sendError(const drizzled::error_t sql_errno, const char *err)= 0;
 
   /**
    * Send field list for result set.

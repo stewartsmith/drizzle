@@ -19,12 +19,14 @@
  */
 
 #include "config.h"
+
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/plugin/logging.h"
+#include "drizzled/plugin/storage_engine.h"
 
 namespace drizzled
 {

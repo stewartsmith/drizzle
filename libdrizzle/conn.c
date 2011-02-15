@@ -1319,8 +1319,11 @@ static drizzle_return_t _con_setsockopt(drizzle_con_st *con)
   }
 
 #if defined (_WIN32)
-  unsigned long asyncmode = 1;
-  ioctlsocket(con->fd, FIONBIO, &asyncmode);
+  {
+    unsigned long asyncmode;
+    asyncmode= 1;
+    ioctlsocket(con->fd, FIONBIO, &asyncmode);
+  }
 #else
   ret= fcntl(con->fd, F_GETFL, 0);
   if (ret == -1)

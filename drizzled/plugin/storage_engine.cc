@@ -53,6 +53,7 @@
 
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
+#include <drizzled/internal_error_handler.h>
 
 #include <drizzled/table/shell.h>
 
@@ -378,7 +379,7 @@ int StorageEngine::getTableDefinition(Session& session,
     Table *table= session.find_temporary_table(identifier);
     if (table)
     {
-      table_message.reset(new message::Table(*table->getShare()->getTableProto()));
+      table_message.reset(new message::Table(*table->getShare()->getTableMessage()));
       return EEXIST;
     }
   }
@@ -418,7 +419,7 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
     if (table)
     {
       error= EE_OK;
-      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableProto()));
+      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableMessage()));
     }
   }
 
@@ -847,7 +848,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     - table->getShare()->path
     - table->alias
 */
-void StorageEngine::print_error(int error, myf errflag, Table &table)
+void StorageEngine::print_error(int error, myf errflag, const Table &table) const
 {
   drizzled::error_t textno= ER_GET_ERRNO;
   switch (error) {
@@ -979,9 +980,11 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
     textno=ER_TABLE_DEF_CHANGED;
     break;
   case HA_ERR_NO_SUCH_TABLE:
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table.getShare()->getSchemaName(),
-             table.getShare()->getTableName());
-    return;
+    {
+      identifier::Table identifier(table.getShare()->getSchemaName(), table.getShare()->getTableName());
+      my_error(ER_TABLE_UNKNOWN, identifier);
+      return;
+    }
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
     break;
@@ -1049,13 +1052,13 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
   @return
     Returns true if this is a temporary error
 */
-bool StorageEngine::get_error_message(int , String* )
+bool StorageEngine::get_error_message(int , String* ) const
 {
   return false;
 }
 
 
-void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, Table &table)
+void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, const Table &table) const
 {
   /* Write the duplicated key in the error message */
   char key[MAX_KEY_LENGTH];

@@ -46,6 +46,7 @@
 #include "drizzled/charset.h"
 #include "drizzled/internal/m_string.h"
 #include "plugin/myisam/myisam.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
@@ -53,6 +54,8 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
+
+#include <drizzled/refresh_version.h>
 
 #include "drizzled/table/singular.h"
 
@@ -63,14 +66,10 @@ using namespace std;
 namespace drizzled
 {
 
-extern pid_t current_pid;
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
 
 /* Functions defined in this cursor */
-
-void open_table_error(TableShare *share, int error, int db_errno,
-                      myf errortype, int errarg);
 
 /*************************************************************************/
 
@@ -82,6 +81,7 @@ int Table::delete_table(bool free_share)
   if (db_stat)
     error= cursor->close();
   _alias.clear();
+
   if (field)
   {
     for (Field **ptr=field ; *ptr ; ptr++)
@@ -112,6 +112,8 @@ void Table::resetTable(Session *session,
                        uint32_t db_stat_arg)
 {
   setShare(share);
+  in_use= session;
+
   field= NULL;
 
   cursor= NULL;
@@ -124,7 +126,6 @@ void Table::resetTable(Session *session,
   tablenr= 0;
   db_stat= db_stat_arg;
 
-  in_use= session;
   record[0]= (unsigned char *) NULL;
   record[1]= (unsigned char *) NULL;
 
@@ -884,7 +885,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table->getMutableShare()->blob_field.resize(field_count+1);
   uint32_t *blob_field= &table->getMutableShare()->blob_field[0];
-  table->getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
   table->getMutableShare()->db_low_byte_first=1;                // True for HEAP and MyISAM
   table->getMutableShare()->table_charset= param->table_charset;
   table->getMutableShare()->keys_for_keyread.reset();
@@ -1647,25 +1647,14 @@ Table::Table() :
   query_id(0),
   quick_condition_rows(0),
   timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-  map(0)
+  map(0),
+  quick_rows(),
+  const_key_parts(),
+  quick_key_parts(),
+  quick_n_ranges()
 {
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
-
-  reginfo.reset();
-  covering_keys.reset();
-  quick_keys.reset();
-  merge_keys.reset();
-
-  keys_in_use_for_query.reset();
-  keys_in_use_for_group_by.reset();
-  keys_in_use_for_order_by.reset();
-
-  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
-  memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-  memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-  memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 }
 
 /*****************************************************************************
@@ -1687,7 +1676,7 @@ int Table::report_error(int error)
     print them to the .err log
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
+    errmsg_printf(error::ERROR, _("Got error %d when reading table '%s'"),
                   error, getShare()->getPath());
   print_error(error, MYF(0));
 
@@ -1763,6 +1752,24 @@ void Table::filesort_free_buffers(bool full)
     sort.addon_buf=0;
     sort.addon_field=0;
   }
+}
+
+/*
+  Is this instance of the table should be reopen or represents a name-lock?
+*/
+bool Table::needs_reopen_or_name_lock() const
+{ 
+  return getShare()->getVersion() != refresh_version;
+}
+
+uint32_t Table::index_flags(uint32_t idx) const
+{
+  return getShare()->getEngine()->index_flags(getShare()->getKeyInfo(idx).algorithm);
+}
+
+void Table::print_error(int error, myf errflag) const
+{
+  getShare()->getEngine()->print_error(error, errflag, *this);
 }
 
 } /* namespace drizzled */

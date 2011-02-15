@@ -22,16 +22,21 @@
 */
 
 #include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/temporal.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/item/cache_int.h"
-#include "drizzled/item/int_with_ref.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/time_functions.h"
-#include "drizzled/internal/my_sys.h"
+
+#include <drizzled/cached_item.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/item/cache_int.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/int_with_ref.h>
+#include <drizzled/item/subselect.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/temporal.h>
+#include <drizzled/time_functions.h>
+
 #include <math.h>
 #include <algorithm>
 
@@ -493,7 +498,6 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
 void Item_bool_func2::fix_length_and_dec()
 {
   max_length= 1;				     // Function returns 0 or 1
-  Session *session;
 
   /*
     As some compare functions are generated after sql_yacc,
@@ -531,7 +535,6 @@ void Item_bool_func2::fix_length_and_dec()
     return;
   }
 
-  session= current_session;
   Item_field *field_item= NULL;
 
   if (args[0]->real_item()->type() == FIELD_ITEM)
@@ -540,7 +543,7 @@ void Item_bool_func2::fix_length_and_dec()
     if (field_item->field->can_be_compared_as_int64_t() &&
         !(field_item->is_datetime() && args[1]->result_type() == STRING_RESULT))
     {
-      if (convert_constant_item(session, field_item, &args[1]))
+      if (convert_constant_item(&getSession(), field_item, &args[1]))
       {
         cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
                          INT_RESULT);		// Works for all types.
@@ -556,7 +559,7 @@ void Item_bool_func2::fix_length_and_dec()
           !(field_item->is_datetime() &&
             args[0]->result_type() == STRING_RESULT))
       {
-        if (convert_constant_item(session, field_item, &args[0]))
+        if (convert_constant_item(&getSession(), field_item, &args[0]))
         {
           cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
                            INT_RESULT); // Works for all types.
@@ -569,6 +572,19 @@ void Item_bool_func2::fix_length_and_dec()
   set_cmp_func();
 }
 
+Arg_comparator::Arg_comparator():
+  session(current_session),
+  a_cache(0),
+  b_cache(0)
+{}
+
+Arg_comparator::Arg_comparator(Item **a1, Item **a2):
+  a(a1),
+  b(a2),
+  session(current_session),
+  a_cache(0),
+  b_cache(0)
+{}
 
 int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
 {
@@ -871,7 +887,6 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
 
   if ((cmp_type= can_compare_as_dates(*a, *b, &const_value)))
   {
-    session= current_session;
     owner= owner_arg;
     a_type= (*a)->field_type();
     b_type= (*b)->field_type();
@@ -909,7 +924,6 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
 
 void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
 {
-  session= current_session;
   /* A caller will handle null values by itself. */
   owner= NULL;
   a= a1;
@@ -1670,7 +1684,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, unsigned char *
     change records at each execution.
   */
   if ((*args) != new_item)
-    current_session->change_item_tree(args, new_item);
+    getSession().change_item_tree(args, new_item);
 
   /*
     Transform the right IN operand which should be an Item_in_subselect or a
@@ -2004,7 +2018,6 @@ void Item_func_between::fix_length_and_dec()
   int i;
   bool datetime_found= false;
   compare_as_dates= true;
-  Session *session= current_session;
 
   /*
     As some compare functions are generated after sql_yacc,
@@ -2051,9 +2064,9 @@ void Item_func_between::fix_length_and_dec()
         The following can't be recoded with || as convert_constant_item
         changes the argument
       */
-      if (convert_constant_item(session, field_item, &args[1]))
+      if (convert_constant_item(&getSession(), field_item, &args[1]))
         cmp_type=INT_RESULT;			// Works for all types.
-      if (convert_constant_item(session, field_item, &args[2]))
+      if (convert_constant_item(&getSession(), field_item, &args[2]))
         cmp_type=INT_RESULT;			// Works for all types.
     }
   }
@@ -3204,6 +3217,13 @@ unsigned char *in_int64_t::get_value(Item *item)
   return (unsigned char*) &tmp;
 }
 
+in_datetime::in_datetime(Item *warn_item_arg, uint32_t elements) :
+  in_int64_t(elements),
+  session(current_session),
+  warn_item(warn_item_arg),
+  lval_cache(0)
+{}
+
 void in_datetime::set(uint32_t pos, Item *item)
 {
   Item **tmp_item= &item;
@@ -3554,7 +3574,6 @@ void Item_func_in::fix_length_and_dec()
 {
   Item **arg, **arg_end;
   bool const_itm= 1;
-  Session *session= current_session;
   bool datetime_found= false;
   /* true <=> arguments values will be compared as DATETIMEs. */
   bool compare_as_datetime= false;
@@ -3702,7 +3721,7 @@ void Item_func_in::fix_length_and_dec()
           bool all_converted= true;
           for (arg=args+1, arg_end=args+arg_count; arg != arg_end ; arg++)
           {
-            if (!convert_constant_item (session, field_item, &arg[0]))
+            if (!convert_constant_item (&getSession(), field_item, &arg[0]))
               all_converted= false;
           }
           if (all_converted)
@@ -3739,7 +3758,7 @@ void Item_func_in::fix_length_and_dec()
       }
     }
 
-    if (array && !(session->is_fatal_error))		// If not EOM
+    if (array && !(getSession().is_fatal_error))		// If not EOM
     {
       uint32_t j=0;
       for (uint32_t arg_num=1 ; arg_num < arg_count ; arg_num++)
@@ -4029,7 +4048,7 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
       change records at each execution.
     */
     if (new_item != item)
-      current_session->change_item_tree(li.ref(), new_item);
+      getSession().change_item_tree(li.ref(), new_item);
   }
   return Item_func::transform(transformer, arg);
 }
@@ -4469,9 +4488,9 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       {
         pattern     = first + 1;
         pattern_len = (int) len - 2;
-        int *suff = (int*) session->alloc((int) (sizeof(int)*
-                                      ((pattern_len + 1)*2+
-                                      alphabet_size)));
+        int *suff = (int*) session->getMemRoot()->allocate((int) (sizeof(int)*
+                                                                  ((pattern_len + 1)*2+
+                                                                   alphabet_size)));
         bmGs      = suff + pattern_len + 1;
         bmBc      = bmGs + pattern_len + 1;
         turboBM_compute_good_suffix_shifts(suff);
@@ -4488,12 +4507,14 @@ void Item_func_like::cleanup()
   Item_bool_func2::cleanup();
 }
 
+static unsigned char likeconv(const CHARSET_INFO *cs, unsigned char a)
+{
 #ifdef LIKE_CMP_TOUPPER
-#define likeconv(cs,A) (unsigned char) (cs)->toupper(A)
+  return cs->toupper(a);
 #else
-#define likeconv(cs,A) (unsigned char) (cs)->sort_order[(unsigned char) (A)]
+  return cs->sort_order[a];
 #endif
-
+}
 
 /**
   Precomputation dependent only on pattern_len.
@@ -5165,7 +5186,7 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
       change records at each execution.
     */
     if (new_item != item)
-      current_session->change_item_tree((Item **) it.ref(), new_item);
+      getSession().change_item_tree((Item **) it.ref(), new_item);
   }
   return Item_func::transform(transformer, arg);
 }
@@ -5191,5 +5212,11 @@ void Item_equal::print(String *str, enum_query_type query_type)
   }
   str->append(')');
 }
+
+cmp_item_datetime::cmp_item_datetime(Item *warn_item_arg) :
+  session(current_session),
+  warn_item(warn_item_arg),
+  lval_cache(0)
+{}
 
 } /* namespace drizzled */

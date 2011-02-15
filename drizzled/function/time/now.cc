@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <drizzled/function/time/now.h>
+#include <drizzled/current_session.h>
 #include <drizzled/session.h>
 
 #include "drizzled/temporal.h"

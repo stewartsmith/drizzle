@@ -54,13 +54,16 @@ extern global_buffer_constraint<uint64_t> global_join_buffer;
 extern global_buffer_constraint<uint64_t> global_read_rnd_buffer;
 extern global_buffer_constraint<uint64_t> global_read_buffer;
 
+extern size_t transaction_message_threshold;
+
 extern const char * const DRIZZLE_CONFIG_NAME;
 
 boost::program_options::variables_map &getVariablesMap();
 
 int init_thread_environment();
 int init_server_components(module::Registry &modules);
-int init_common_variables(int argc, char **argv, module::Registry &modules);
+int init_basic_variables(int argc, char **argv);
+int init_remaining_variables(module::Registry &modules);
 
 passwd *check_user(const char *user);
 void set_user(const char *user, passwd *user_info_arg);

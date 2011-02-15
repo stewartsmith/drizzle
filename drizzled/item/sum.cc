@@ -29,6 +29,7 @@
 #include <drizzled/hybrid_type_traits_integer.h>
 #include <drizzled/hybrid_type_traits_decimal.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/session.h>
 
 #include <drizzled/item/sum.h>
 #include <drizzled/field/decimal.h>
@@ -36,6 +37,9 @@
 #include <drizzled/field/int64.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
+#include <drizzled/unique.h>
+
+#include <drizzled/type/decimal.h>
 
 #include "drizzled/internal/m_string.h"
 
@@ -46,7 +50,6 @@ using namespace std;
 namespace drizzled
 {
 
-extern type::Decimal decimal_zero;
 extern plugin::StorageEngine *heap_engine;
 
 /**
@@ -411,7 +414,7 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
   if (arg_count <= 2)
     args=tmp_args;
   else
-    if (!(args= (Item**) session->alloc(sizeof(Item*)*arg_count)))
+    if (!(args= (Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
       return;
   memcpy(args, item->args, sizeof(Item*)*arg_count);
 }
@@ -419,7 +422,7 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
 
 void Item_sum::mark_as_sum_func()
 {
-  Select_Lex *cur_select= current_session->lex->current_select;
+  Select_Lex *cur_select= getSession().getLex()->current_select;
   cur_select->n_sum_items++;
   cur_select->with_sum_func= 1;
   with_sum_func= 1;
@@ -723,7 +726,7 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   {
     field= ((Item_field*) args[0])->field;
 
-    if ((field= create_tmp_field_from_field(current_session, field, name, table,
+    if ((field= create_tmp_field_from_field(&getSession(), field, name, table,
 					    NULL, convert_blob_length)))
       field->flags&= ~NOT_NULL_FLAG;
     return field;
@@ -744,8 +747,10 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   default:
     return Item_sum::create_tmp_field(group, table, convert_blob_length);
   }
+
   if (field)
     field->init(table);
+
   return field;
 }
 
@@ -1162,7 +1167,7 @@ void
 Item_sum_avg_distinct::fix_length_and_dec()
 {
   Item_sum_distinct::fix_length_and_dec();
-  prec_increment= current_session->variables.div_precincrement;
+  prec_increment= getSession().variables.div_precincrement;
   /*
     AVG() will divide val by count. We need to reserve digits
     after decimal point as the result can be fractional.
@@ -1225,7 +1230,8 @@ void Item_sum_avg::fix_length_and_dec()
 {
   Item_sum_sum::fix_length_and_dec();
   maybe_null=null_value=1;
-  prec_increment= current_session->variables.div_precincrement;
+  prec_increment= getSession().variables.div_precincrement;
+
   if (hybrid_type == DECIMAL_RESULT)
   {
     int precision= args[0]->decimal_precision() + prec_increment;
@@ -1422,7 +1428,7 @@ Item_sum_variance::Item_sum_variance(Session *session, Item_sum_variance *item):
 void Item_sum_variance::fix_length_and_dec()
 {
   maybe_null= null_value= 1;
-  prec_increment= current_session->variables.div_precincrement;
+  prec_increment= getSession().variables.div_precincrement;
 
   /*
     According to the SQL2003 standard (Part 2, Foundations; sec 10.9,
@@ -1707,7 +1713,7 @@ Item_sum_hybrid::val_str(String *str)
     str->set_real(sum,decimals, &my_charset_bin);
     break;
   case DECIMAL_RESULT:
-    class_decimal2string(E_DEC_FATAL_ERROR, &sum_dec, 0, 0, 0, str);
+    class_decimal2string(&sum_dec, 0, str);
     return str;
   case INT_RESULT:
     str->set_int(sum_int, unsigned_flag, &my_charset_bin);
@@ -2663,7 +2669,7 @@ bool Item_sum_count_distinct::setup(Session *session)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
+        field_lengths= (uint32_t*) session->getMemRoot()->allocate(table->getShare()->sizeFields() * sizeof(uint32_t));
         for (tree_key_length= 0, length= field_lengths, field= table->getFields();
              field < field_end; ++field, ++length)
         {
@@ -3047,7 +3053,7 @@ void Item_func_group_concat::cleanup()
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
     snprintf(warn_buff, sizeof(warn_buff), ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
-    warning->set_msg(current_session, warn_buff);
+    warning->set_msg(&getSession(), warn_buff);
     warning= 0;
   }
 

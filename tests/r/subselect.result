@@ -1036,7 +1036,7 @@ drop table t1;
 # error in IN
 #
 select t1.Continent, t2.Name, t2.Population from t1 LEFT JOIN t2 ON t1.Code = t2.Country  where t2.Population IN (select max(t2.Population) AS Population from t2, t1 where t2.Country = t1.Code group by Continent);
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR 42S02: Unknown table 'test.t1'
 #
 # complex subquery
 #
@@ -4524,17 +4524,9 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 SELECT * FROM t1 JOIN ((t1 t1a)) t1a ON 1;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 't1a ON 1' at line 1
 SELECT * FROM t1 JOIN  (t1 t1a)  ON 1;
-a	a
-1	1
-1	2
-2	1
-2	2
+ERROR HY000: Implicit cartesian join attempted.
 SELECT * FROM t1 JOIN ((t1 t1a)) ON 1;
-a	a
-1	1
-2	1
-1	2
-2	2
+ERROR HY000: Implicit cartesian join attempted.
 SELECT * FROM (t1 t1a);
 a
 1

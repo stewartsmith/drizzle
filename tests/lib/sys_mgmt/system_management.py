@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -33,6 +33,8 @@
 # imports
 import os
 import sys
+import copy
+from uuid import uuid4
 import shutil
 import getpass
 import commands
@@ -66,44 +68,62 @@ class systemManager:
         self.shm_path = self.find_path(["/dev/shm", "/tmp"], required=0)
         self.cur_os = os.uname()[0]
         self.cur_user = getpass.getuser()
-        self.symlink_name = 'dbqp_workdir_%s' %(self.cur_user)
         self.workdir = os.path.abspath(variables['workdir'])
+        self.datadir = os.path.abspath(os.path.join(variables['testdir'],'dbqp_data'))
         self.top_srcdir = os.path.abspath(variables['topsrcdir'])
         self.top_builddir = os.path.abspath(variables['topbuilddir'])
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
         self.gdb = variables['gdb']
+        self.manual_gdb = variables['manualgdb']
 
         # we use this to preface commands in order to run valgrind and such
         self.cmd_prefix = '' 
         
         self.port_manager = portManager(self,variables['debug'])
         self.time_manager = timeManager(self)
-       
-            
+                   
         # Make sure the tree we are testing looks good
         self.code_tree = self.get_code_tree(variables, tree_type)
 
-        self.ld_lib_paths = self.code_tree.ld_lib_paths
+        self.ld_lib_paths = self.join_env_var_values(self.code_tree.ld_lib_paths)
 
         # Some ENV vars are system-standard
         # We describe and set them here and now
         # The format is name: (value, append, suffix)
-        self.environment_reqs = { 'UMASK':('0660',0,0)
-                                , 'UMASK_DIR' : ('0770',0,0)
-                                , 'LC_ALL' : ('C',0,0)
-                                , 'LC_CTYPE' : ('C',0,0)
-                                , 'LC_COLLATE' : ('C',0,0)
-                                , 'USE_RUNNING_SERVER' : ("0",0,0)
-                                , 'TOP_SRCDIR' : (self.top_srcdir,0,0)
-                                , 'TOP_BUILDDIR' : (self.top_builddir,0,0)
-                                , 'DRIZZLE_TEST_DIR' : (self.code_tree.testdir,0,0)
-                                , 'DTR_BUILD_THREAD' : ("-69.5",0,0)
-                                , 'LD_LIBRARY_PATH' : (self.ld_lib_paths,1,1)
-                                , 'DYLD_LIBRARY_PATH' : (self.ld_lib_paths,1,1)
+        self.environment_reqs = { 'UMASK':'0660'
+                                , 'UMASK_DIR' : '0770'
+                                , 'LC_ALL' : 'C'
+                                , 'LC_CTYPE' : 'C'
+                                , 'LC_COLLATE' : 'C'
+                                , 'USE_RUNNING_SERVER' : "0"
+                                , 'TOP_SRCDIR' : self.top_srcdir
+                                , 'TOP_BUILDDIR' : self.top_builddir
+                                , 'DRIZZLE_TEST_DIR' : self.code_tree.testdir
+                                , 'DTR_BUILD_THREAD' : "-69.5"
+                                , 'LD_LIBRARY_PATH' : self.append_env_var( 'LD_LIBRARY_PATH'
+                                                                         , self.ld_lib_paths
+                                                                         , suffix = 0
+                                                                         , quiet = 1
+                                                                         )
+                                , 'DYLD_LIBRARY_PATH' : self.append_env_var( 'DYLD_LIBRARY_PATH'
+                                                                         , self.ld_lib_paths
+                                                                         , suffix = 0
+                                                                         , quiet = 1
+                                                                         )
                                 }
         # set the env vars we need
-        self.process_environment_reqs(self.environment_reqs)
+        # self.process_environment_reqs(self.environment_reqs)
+        self.update_environment_vars(self.environment_reqs)
+
+        # We find or generate our id file
+        # We use a uuid to identify the symlinked
+        # workdirs.  That way, each installation
+        # Will have a uuid/tmpfs workingdir
+        # We store in a file so we know what
+        # is ours
+        self.uuid = self.get_uuid()
+        self.symlink_name = 'dbqp_workdir_%s_%s' %(self.cur_user, self.uuid)
 
         # initialize our workdir
         self.process_workdir()
@@ -111,16 +131,13 @@ class systemManager:
         # check for libtool
         self.libtool = self.libtool_check()
 
-        # do we need to setup for valgrind?
-        if self.valgrind:
-            self.handle_valgrind_reqs(variables['valgrindarglist'])
-            
-
+        # See if we need to do any further processing for special
+        # options like valgrind and gdb
+        self.handle_additional_reqs(variables)
+     
         if self.debug:
             self.logging.debug_class(self)
         
-
-
     def get_code_tree(self, variables, tree_type):
         """Find out the important files, directories, and env. vars
            for a particular type of tree.  We import a definition module
@@ -135,8 +152,6 @@ class systemManager:
         test_tree = self.process_tree_type(tree_type, variables)
         return test_tree
 
-    
-
     def process_tree_type(self, tree_type, variables):
         """Import the appropriate module depending on the type of tree
            we are testing. 
@@ -144,6 +159,7 @@ class systemManager:
            Drizzle is the only supported type currently
 
         """
+
         if self.verbose:
             self.logging.verbose("Processing source tree under test...")
         if tree_type == 'drizzle':
@@ -153,42 +169,9 @@ class systemManager:
             return test_tree
         else:
             self.logging.error("Tree_type: %s not supported yet" %(tree_type))
-            sys.exit(1)
+            sys.exit(1)        
 
-   
-    def process_environment_reqs(self, environment_reqs, quiet=0):
-        """ We process a dictionary in a specific format
-            that asks for various env vars to be set
-            These values can be used to overwrite,
-            append, or prepend a new value string to
-            a named variable.
-
-            Currently, we require multiple values to
-            already to joined into a single string
-            We can fix this later
-
-        """
- 
-        for var_name, data_tuple in environment_reqs.items():
-            value, append_flag, suffix_flag = data_tuple
-            if type(value) is list:
-                value = self.join_env_var_values(value)
-            if append_flag:
-                self.append_env_var(var_name, value, suffix_flag, quiet=quiet)
-            else:
-                self.set_env_var(var_name, value, quiet)
-            
-            
-
-    def get_port_block(self, requester, base_port, block_size):
-        """ Try to assign a block of ports for test execution
-            purposes
-
-        """
-     
-        return self.port_manager.get_port_block( requester
-                                               , base_port, block_size)
-
+    
     def create_dirset(self, rootdir, dirset):
         """ We produce the set of directories defined in dirset
             dirset is a set of dictionaries like
@@ -215,6 +198,26 @@ class systemManager:
                     self.create_dirset(full_path,subdirset)
 
         return full_path    
+
+    def get_uuid(self):
+        """ We look to see if a uuid file exists
+            If so, we use that to know where to work
+            If not we produce one so future runs
+            have a definitive id to use
+
+        """
+
+        uuid_file_name = os.path.join(self.datadir, 'uuid')
+        if os.path.exists(uuid_file_name):
+            uuid_file = open(uuid_file_name,'r')
+            uuid = uuid_file.readline().strip()
+            uuid_file.close()
+        else:
+            uuid = uuid4()
+            uuid_file = open(uuid_file_name,'w')
+            uuid_file.write(str(uuid))
+            uuid_file.close()
+        return uuid
 
     def process_workdir(self):
         """ We create our workdir, analyze relevant variables
@@ -341,10 +344,31 @@ class systemManager:
             self.logging.error("%s" %(e))
             sys.exit(1)
 
+    def update_environment_vars(self, desired_vars, working_environment=None):
+        """ We update the environment vars with desired_vars
+            The expectation is that you know what you are asking for ; )
+            If working_environment is provided, we will update that with
+            desired_vars.  We operate directly on os.environ by default
+            We return our updated environ dictionary
+
+        """
+
+        if not working_environment:
+            working_environment = os.environ
+        working_environment.update(desired_vars)
+        return working_environment
+
+    def create_working_environment(self, desired_vars):
+        """ We return a copy of os.environ updated with desired_vars """
+
+        working_copy = copy.deepcopy(os.environ)
+        return self.update_environment_vars( desired_vars
+                                    , working_environment = working_copy )
+
     def append_env_var(self, var_name, append_string, suffix=1, quiet=0):
         """ We add the values in var_values to the environment variable 
             var_name.  Depending on suffix value, we either append or prepend
-            Use set_env_var to just overwrite an ENV var
+            we return a string suitable for os.putenv
 
         """
         new_var_value = ""
@@ -358,7 +382,7 @@ class systemManager:
         else:
             # No existing variable value
             new_var_value = append_string
-        self.set_env_var(var_name, new_var_value, quiet=quiet)
+        return new_var_value
 
     def find_path(self, paths, required=1):
         """We search for the files we need / want to be aware of
@@ -411,11 +435,87 @@ class systemManager:
         else:
             return None
 
+    def handle_additional_reqs(self, variables):
+        """ Do what we need to do to set things up for
+            options like valgrind and gdb
+
+        """
+
+        # do we need to setup for valgrind?
+        if self.valgrind:
+            self.handle_valgrind_reqs(variables['valgrindarglist'])
+
+    def handle_gdb_reqs(self, server, server_args):
+        """ We generate the gdb init file and whatnot so we
+            can run gdb properly
+
+            if the user has specified manual-gdb, we provide
+            them with a message about when to start and
+            signal the server manager to simply wait
+            for the server to be started by the user
+
+        """
+        extra_args = ''
+        gdb_term_cmd = "xterm -title %s.%s " %( server.owner
+                                              , server.name
+                                              )
+        gdb_file_name = "%s.gdbinit" %(server.name)
+
+        if self.cur_os == 'Darwin': # Mac...ick ; P
+            extra_args = [ "set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib"
+                         , "set env MallocStackLogging 1"
+                         , "set env MallocScribble 1"
+                         , "set env MallocPreScribble 1"
+                         , "set env MallocStackLogging 1"
+                         , "set env MallocStackLoggingNoCompact 1"
+                         , "set env MallocGuardEdges 1"
+                         ] 
+
+        # produce our init file
+        if extra_args:
+            extra_args = "\n".join(extra_args)
+        gdb_file_contents = [ "set args %s" %(" ".join(server_args))
+                            , "%s" % (extra_args)
+                            , "set breakpoint pending on"
+	                          , "break drizzled::parse"
+	                          , "commands 1"
+                            , "disable 1"
+	                          , "end"
+                            , "set breakpoint pending off"
+	                          , "run"
+                            ]
+        gdb_file_path = os.path.join(server.tmpdir, gdb_file_name)
+        gdb_init_file = open(gdb_file_path,'w')
+        gdb_init_file.write("\n".join(gdb_file_contents))
+        gdb_init_file.close()
+
+        # return our command line
+        if self.libtool:
+            libtool_string = "%s --mode=execute " %(self.libtool)
+        else:
+            libtool_string = ""
+
+        if self.manual_gdb:
+            self.logging.info("To start gdb, open another terminal and enter:")
+            self.logging.info("%s/../libtool --mode=execute gdb -cd %s -x %s %s" %( self.code_tree.testdir
+                                                                                  , self.code_tree.testdir
+                                                                                  , gdb_file_path
+                                                                                  , server.server_path
+                                                                                  ) )
+            return None
+
+        else:
+            return "%s -e %s gdb -x %s %s" %( gdb_term_cmd
+                                            , libtool_string
+                                            , gdb_file_path
+                                            , server.server_path
+                                            )
+
     def handle_valgrind_reqs(self, optional_args, mode='valgrind'):
         """ We do what voodoo we need to do to run valgrind """
         valgrind_args = [ "--show-reachable=yes"
-                        , "--malloc-fill=0xDEADBEEF"
-                        , "--free-fill=0xDEADBEEF"
+                        , "--malloc-fill=22"
+                        , "--free-fill=22"
                         # , "--trace-children=yes" this is for callgrind only
                         ]
         if optional_args:
@@ -450,6 +550,8 @@ class systemManager:
         if os.path.exists(debug_path):
             self.append_env_var("LD_LIBRARY_PATH", debug_path, suffix=1)
             self.append_env_var("DYLD_LIBRARY_PATH", debug_path, suffix=1)
+
+   
     
 
 

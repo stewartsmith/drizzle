@@ -1608,7 +1608,7 @@ a	c	a	c
 b	c	b	c
 a	d	a	d
 b	d	b	d
-select distinct t1.a1,t2.a1 from t1,t2;
+select distinct t1.a1,t2.a1 from t1,t2 where t1.a1 >= '';
 a1	a1
 a	a
 a	b

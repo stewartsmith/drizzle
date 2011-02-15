@@ -50,6 +50,10 @@
 #include "drizzled/field/uuid.h"
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
+#include <drizzled/table.h>
+#include <drizzled/util/test.h>
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
 
 #include "drizzled/display.h"
 
@@ -827,26 +831,24 @@ Field::Field(unsigned char *ptr_arg,
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
              utype unireg_check_arg, 
-             const char *field_name_arg)
-  :
+             const char *field_name_arg) :
     ptr(ptr_arg),
     null_ptr(null_ptr_arg),
     table(NULL),
     orig_table(NULL),
     field_name(field_name_arg),
+    comment(NULL_LEX_STRING),
     key_start(0),
     part_of_key(0),
     part_of_key_not_clustered(0),
     part_of_sortkey(0),
     unireg_check(unireg_check_arg),
     field_length(length_arg),
+    flags(null_ptr ? 0: NOT_NULL_FLAG),
+    field_index(0),
     null_bit(null_bit_arg),
     is_created_from_null_item(false)
 {
-  flags= null_ptr ? 0: NOT_NULL_FLAG;
-  comment.str= (char*) "";
-  comment.length= 0;
-  field_index= 0;
 }
 
 void Field::hash(uint32_t *nr, uint32_t *nr2)
@@ -999,7 +1001,7 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   {
     copy->blob_field=(Field_blob*) this;
     copy->strip=0;
-    copy->length-= table->getShare()->blob_ptr_size;
+    copy->length-= table->getShare()->sizeBlobPtr();
     return copy->length;
   }
   else
@@ -1010,9 +1012,9 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(type::Time &ltime,uint32_t fuzzydate)
+bool Field::get_date(type::Time &ltime, uint32_t fuzzydate)
 {
-  char buff[40];
+  char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
   assert(getTable() and getTable()->getSession());
@@ -1030,10 +1032,11 @@ bool Field::get_date(type::Time &ltime,uint32_t fuzzydate)
 
 bool Field::get_time(type::Time &ltime)
 {
-  char buff[40];
+  char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
-  if (!(res=val_str_internal(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), &ltime))
+  if (not (res= val_str_internal(&tmp)) or
+      str_to_time_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime))
   {
     return true;
   }
@@ -1225,7 +1228,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   if (session->abortOnWarning() or
       set_warning(level, code, cuted_increment))
   {
-    char str_nr[22];
+    char str_nr[DECIMAL_LONGLONG_DIGITS];
     char *str_end= internal::int64_t10_to_str(nr, str_nr, -10);
     make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr),
                                  ts_type, field_name);

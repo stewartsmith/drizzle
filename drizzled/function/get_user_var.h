@@ -21,6 +21,7 @@
 #define DRIZZLED_FUNCTION_GET_USER_VAR_H
 
 #include <drizzled/function/func.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {

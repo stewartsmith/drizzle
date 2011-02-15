@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -289,4 +289,7 @@ class testManager:
         """
   
         self.logging.verbose("Reordering testcases to optimize test execution...")
+
+    def has_failing_tests(self):
+        return (self.get_count_by_status('fail') + self.get_count_by_status('timeout'))
 

@@ -450,6 +450,7 @@ public:
     n_sum_items(0),
     n_child_sum_items(0),
     explicit_limit(0),
+    is_cross(false),
     subquery_in_having(0),
     is_correlated(0),
     exclude_from_table_unique_test(0),
@@ -534,6 +535,10 @@ public:
 
   /* explicit LIMIT clause was used */
   bool explicit_limit;
+
+  /* explicit CROSS JOIN was used */
+  bool is_cross;
+
   /*
     there are subquery in HAVING clause => we can't close tables before
     query processing end even if we use temporary table

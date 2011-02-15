@@ -22,6 +22,7 @@
 #include <drizzled/error.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/session.h>
+#include <drizzled/sys_var.h>
 
 namespace drizzled
 {
@@ -49,6 +50,7 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   */
   if (!(item= var->item(session, var_type, &component)))
     return(1);                             // Impossible
+
   item->set_name(name, 0, system_charset_info); // don't allocate a new name
   session->change_item_tree(ref, item);
 

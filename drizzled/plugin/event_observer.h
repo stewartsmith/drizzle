@@ -44,7 +44,6 @@
 #define DRIZZLED_PLUGIN_EVENT_OBSERVER_H
 
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/session.h"
 
 #include <string>
 
@@ -296,7 +295,7 @@ public:
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
   
-  static bool hasEvents(Session &in_session) { return (in_session.getSessionObservers() != NULL);}
+  static bool hasEvents(Session &in_session);
 };
 
 //-----
@@ -337,7 +336,7 @@ public:
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
   
-  static bool hasEvents(Table &in_table) { return (in_table.getMutableShare()->getTableObservers() != NULL);}
+  static bool hasEvents(Table &in_table);
 };
 
 //-----

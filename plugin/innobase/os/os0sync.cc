@@ -877,7 +877,7 @@ os_fast_mutex_init(
 
 	InitializeCriticalSection((LPCRITICAL_SECTION) fast_mutex);
 #else
-	ut_a(0 == innobase_fast_mutex_init(fast_mutex));
+	ut_a(0 == pthread_mutex_init(fast_mutex, NULL));
 #endif
 	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		/* When creating os_sync_mutex itself (in Unix) we cannot

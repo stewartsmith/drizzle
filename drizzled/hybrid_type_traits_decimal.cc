@@ -18,10 +18,12 @@
  */
 
 #include "config.h"
-#include "drizzled/hybrid_type_traits_decimal.h"
-#include "drizzled/hybrid_type.h"
-#include "drizzled/definitions.h"
-#include "drizzled/item.h"
+
+#include <drizzled/definitions.h>
+#include <drizzled/field.h>
+#include <drizzled/hybrid_type.h>
+#include <drizzled/hybrid_type_traits_decimal.h>
+#include <drizzled/item.h>
 
 #include <algorithm>
 
@@ -108,7 +110,7 @@ Hybrid_type_traits_decimal::val_str(Hybrid_type *val, String *to,
 {
   class_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                    decimals, false, &val->dec_buf[2]);
-  class_decimal2string(E_DEC_FATAL_ERROR, &val->dec_buf[2], 0, 0, 0, to);
+  class_decimal2string(&val->dec_buf[2], 0, to);
   return to;
 }
 

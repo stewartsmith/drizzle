@@ -3,6 +3,7 @@ Installing In Ubuntu
 
 Using DEBs
 ----------
+
 Ubuntu Natty (11.04) has Drizzle .deb files in the repositories. For Ubuntu 10.04 and 10.10 we have a PPA available at
 https://launchpad.net/~drizzle-developers/+archive/ppa
 

@@ -34,6 +34,7 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/null.h>
 #include <drizzled/session.h>
+#include <drizzled/session/cache.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
@@ -41,7 +42,6 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
-#include "drizzled/session/cache.h"
 #include "drizzled/global_charset_info.h"
 
 #include "drizzled/plugin/logging.h"
@@ -488,6 +488,17 @@ static int execute_command(Session *session)
 
   assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 
+  if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && ! session->inTransaction()
+      && lex->statement->isTransactional())
+  {
+    if (session->startTransaction() == false)
+    {
+      my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
+      return true;
+    }
+  }
+
   /* now we are ready to execute the statement */
   res= lex->statement->execute();
   session->set_proc_info("query end");
@@ -516,6 +527,19 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
+
+  if (all_tables
+      && ! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && ! session->inTransaction()
+      && ! lex->statement->isShow())
+  {
+    if (session->startTransaction() == false)
+    {
+      my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
+      return true;
+    }
+  }
+
   if (not (res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
@@ -696,16 +720,14 @@ new_select(LEX *lex, bool move_down)
   @param var_name		Variable name
 */
 
-void create_select_for_variable(const char *var_name)
+void create_select_for_variable(Session *session, const char *var_name)
 {
-  Session *session;
   LEX *lex;
   LEX_STRING tmp, null_lex_string;
   Item *var;
   char buff[MAX_SYS_VAR_LENGTH*2+4+8];
   char *end= buff;
 
-  session= current_session;
   lex= session->lex;
   init_select(lex);
   lex->sql_command= SQLCOM_SELECT;
@@ -722,7 +744,6 @@ void create_select_for_variable(const char *var_name)
     var->set_name(buff, end-buff, system_charset_info);
     session->add_item_to_list(var);
   }
-  return;
 }
 
 
@@ -887,13 +908,6 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 }
 
 
-/** Store position for column in ALTER TABLE .. ADD column. */
-
-void store_position_for_column(const char *name)
-{
-  current_session->lex->last_field->after=const_cast<char*> (name);
-}
-
 /**
   Add a table to list of used tables.
 
@@ -957,7 +971,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                  ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    if (!(alias_str= (char*) session->memdup(alias_str,table->table.length+1)))
+    if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
       return NULL;
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
@@ -1058,12 +1072,12 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 bool Select_Lex::init_nested_join(Session *session)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
+                                       sizeof(NestedJoin))))
     return true;
-  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
   ptr->setEmbedding(embedding);
@@ -1093,7 +1107,7 @@ bool Select_Lex::init_nested_join(Session *session)
 TableList *Select_Lex::end_nested_join(Session *)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
 
   assert(embedding);
   ptr= embedding;
@@ -1134,13 +1148,13 @@ TableList *Select_Lex::end_nested_join(Session *)
 TableList *Select_Lex::nest_last_join(Session *session)
 {
   TableList *ptr;
-  nested_join_st *nested_join;
+  NestedJoin *nested_join;
   List<TableList> *embedded_list;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                          sizeof(nested_join_st))))
+                                          sizeof(NestedJoin))))
     return NULL;
-  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);

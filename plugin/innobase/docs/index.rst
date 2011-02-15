@@ -30,8 +30,9 @@ libaio development files installed (typically a package called libaio-dev or
 libaio-devel).  For more information on the advantages of this please see
 http://blogs.innodb.com/wp/2010/04/innodb-performance-aio-linux/
 
-To confirm that Linux native AIO is enabled execute this command:
-"show global variables like 'innodb_use_native_aio';"
+To confirm that Linux native AIO is enabled execute this command::
+
+  show global variables like 'innodb_use_native_aio';
 
 Compatibility with MySQL
 ------------------------

@@ -118,6 +118,7 @@ private:
 
   Type type;
   std::string path;
+  std::string key_path;
   std::string table_name;
   Key key;
   size_t hash_value;
@@ -170,6 +171,7 @@ public:
   {
     if (type == message::Table::TEMPORARY || type == message::Table::INTERNAL)
       return true;
+
     return false;
   }
 
@@ -202,6 +204,7 @@ public:
   virtual void getSQLPath(std::string &sql_path) const;
 
   virtual const std::string &getPath() const;
+  const std::string &getKeyPath() const;
 
   void setPath(const std::string &new_path)
   {
@@ -223,41 +226,6 @@ public:
     }
 
     return false;
-  }
-
-  friend std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
-  {
-    const char *type_str;
-
-    output << "Table:(";
-    output <<  identifier.getSchemaName();
-    output << ", ";
-    output << identifier.getTableName();
-    output << ", ";
-
-    switch (identifier.type) {
-    case message::Table::STANDARD:
-      type_str= "standard";
-      break;
-    case message::Table::INTERNAL:
-      type_str= "internal";
-      break;
-    case message::Table::TEMPORARY:
-      type_str= "temporary";
-      break;
-    case message::Table::FUNCTION:
-      type_str= "function";
-      break;
-    }
-
-    output << type_str;
-    output << ", ";
-    output << identifier.path;
-    output << ", ";
-    output << identifier.getHashValue();
-    output << ")";
-
-    return output;  // for multiple << operators.
   }
 
   friend bool operator==(Table::const_reference left, Table::const_reference right)
@@ -290,6 +258,7 @@ public:
   }
 };
 
+std::ostream& operator<<(std::ostream& output, Table::const_reference identifier);
 std::size_t hash_value(Table const& b);
 std::size_t hash_value(Table::Key const& b);
 

@@ -25,6 +25,7 @@
 #include <drizzled/item/null.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
+#include <drizzled/user_var_entry.h>
 
 namespace drizzled
 {

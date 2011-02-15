@@ -55,10 +55,10 @@ namespace drizzled
 #define MAX_FIELD_NAME 34			/* Max colum name length +2 */
 #define MAX_SYS_VAR_LENGTH 32
 #define MAX_INDEXES 64
-#define MAX_KEY MAX_INDEXES                     /* Max used keys */
-#define MAX_REF_PARTS 16			/* Max parts used as ref */
-#define MAX_KEY_LENGTH 4096			/* max possible key */
-#define MAX_KEY_LENGTH_DECIMAL_WIDTH 4          /* strlen("4096") */
+const uint32_t MAX_KEY = MAX_INDEXES;                     /* Max used keys */
+const uint32_t MAX_REF_PARTS = 16;			/* Max parts used as ref */
+const uint32_t MAX_KEY_LENGTH = 4096;			 // max possible key
+const uint32_t MAX_KEY_LENGTH_DECIMAL_WIDTH = 4; // strlen("4096")
 
 #if SIZEOF_OFF_T > 4
 #define MAX_REFLENGTH 8				/* Max length for record ref */
@@ -303,7 +303,7 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_KEY_NULL_LENGTH	1
 #define HA_KEY_BLOB_LENGTH	2
 
-#define HA_MAX_REC_LENGTH	65535
+const uint32_t HA_MAX_REC_LENGTH = 65535;
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
 enum start_transaction_option_t
@@ -387,10 +387,10 @@ typedef int myf;
 #define MY_COLL_DISALLOW_NONE         4
 #define MY_COLL_CMP_CONV              7
 
-inline static void clear_timestamp_auto_bits(enum timestamp_auto_set_type &_target_, 
-                                             const enum timestamp_auto_set_type _bits_)
+inline static void clear_timestamp_auto_bits(timestamp_auto_set_type &_target_, 
+                                             timestamp_auto_set_type _bits_)
 {
-  _target_= (enum timestamp_auto_set_type)((int)(_target_) & ~_bits_);
+  _target_= static_cast<timestamp_auto_set_type>(_target_ & ~_bits_);
 }
 
 /*

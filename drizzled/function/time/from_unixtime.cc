@@ -20,6 +20,7 @@
 #include "config.h"
 #include <boost/lexical_cast.hpp>
 #include "drizzled/function/time/from_unixtime.h"
+#include "drizzled/current_session.h"
 #include "drizzled/session.h"
 #include "drizzled/temporal.h"
 #include "drizzled/time_functions.h"

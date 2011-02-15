@@ -18,9 +18,11 @@
  */
 
 #include "config.h"
+
 #include <drizzled/item/ref.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {

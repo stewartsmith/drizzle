@@ -162,7 +162,7 @@ public:
 
     if (error_injected == 3 && (count++ % 2))
     {
-      mark_transaction_to_rollback(user_session, false);
+      user_session->markTransactionForRollback(false);
       return HA_ERR_LOCK_WAIT_TIMEOUT;
     }
     return realCursor->rnd_next(buf);
@@ -193,13 +193,13 @@ public:
 
     if (error_injected == 1 && (i++ % 2))
     {
-      mark_transaction_to_rollback(user_session, false);
+      user_session->markTransactionForRollback(false);
       return HA_ERR_LOCK_WAIT_TIMEOUT;
     }
 
     if (error_injected == 2 && (i++ % 2))
     {
-      mark_transaction_to_rollback(user_session, true);
+      user_session->markTransactionForRollback(true);
       return HA_ERR_LOCK_DEADLOCK;
     }
 
@@ -392,13 +392,22 @@ public:
 
   virtual int doSetSavepoint(Session*,
                              drizzled::NamedSavepoint &)
-    { return 0; }
+    {
+      ENGINE_NEW_STATE("SET SAVEPOINT");
+      ENGINE_NEW_STATE("In Transaction");
+      return 0; }
   virtual int doRollbackToSavepoint(Session*,
                                      drizzled::NamedSavepoint &)
-    { return 0; }
+    {
+      ENGINE_NEW_STATE("ROLLBACK TO SAVEPOINT");
+      ENGINE_NEW_STATE("In Transaction");
+      return 0; }
   virtual int doReleaseSavepoint(Session*,
                                  drizzled::NamedSavepoint &)
-    { return 0; }
+    {
+      ENGINE_NEW_STATE("RELEASE SAVEPOINT");
+      ENGINE_NEW_STATE("In Transaction");
+      return 0; }
   virtual int doCommit(Session*, bool);
 
   virtual int doRollback(Session*, bool);

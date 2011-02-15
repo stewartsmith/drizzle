@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <drizzled/function/math/minus.h>
+#include <drizzled/type/decimal.h>
 
 namespace drizzled
 {

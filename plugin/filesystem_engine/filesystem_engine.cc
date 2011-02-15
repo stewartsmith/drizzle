@@ -490,7 +490,7 @@ int FilesystemCursor::close(void)
 
 int FilesystemCursor::doStartTableScan(bool)
 {
-  sql_command_type = session_sql_command(getTable()->getSession());
+  sql_command_type = getTable()->getSession()->getSqlCommand();
 
   if (thread_locked)
     critical_section_exit();
@@ -701,7 +701,7 @@ int FilesystemCursor::openUpdateFile()
 
 int FilesystemCursor::doEndTableScan()
 {
-  sql_command_type = session_sql_command(getTable()->getSession());
+  sql_command_type = getTable->getSession()->getSqlCommand();
 
   if (share->format.isTagFormat())
   {
@@ -822,7 +822,7 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   if (share->format.isTagFormat())
     return 0;
 
-  sql_command_type = session_sql_command(getTable()->getSession());
+  sql_command_type = getTable()->getSession()->getSqlCommand();
 
   critical_section_enter();
 

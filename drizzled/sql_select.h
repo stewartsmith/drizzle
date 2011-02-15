@@ -21,7 +21,6 @@
 #define DRIZZLED_SQL_SELECT_H
 
 #include "drizzled/cached_item.h"
-#include "drizzled/session.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/item/null.h"
 #include <drizzled/enum_nested_loop_state.h>
@@ -30,13 +29,18 @@
 #include "drizzled/optimizer/key_use.h"
 #include "drizzled/join_cache.h"
 #include "drizzled/join_table.h"
+#include "drizzled/records.h"
+#include "drizzled/stored_key.h"
 
 #include <vector>
 
 namespace drizzled
 {
 
+class Item_func;
+class Select_Lex_Unit;
 class select_result;
+class st_dynamic_array;
 
 /**
  * @file API and Classes to use when handling where clause
@@ -203,9 +207,7 @@ bool change_refs_to_tmp_fields(Session *session,
 			                         List<Item> &all_fields);
 bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *next);
-
-int join_read_const_table(JoinTable *tab, optimizer::Position *pos);
-int join_read_system(JoinTable *tab);
+void update_const_equal_items(COND *cond, JoinTable *tab);
 int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);
 int join_read_always_key(JoinTable *tab);
@@ -273,15 +275,6 @@ bool only_eq_ref_tables(Join *join, Order *order, table_map tables);
 bool create_ref_for_key(Join *join, JoinTable *j, 
                         optimizer::KeyUse *org_keyuse, 
                         table_map used_tables);
-
-} /* namespace drizzled */
-
-/** @TODO why is this in the middle of the file??? */
-
-#include "drizzled/stored_key.h"
-
-namespace drizzled
-{
 
 bool cp_buffer_from_ref(Session *session, table_reference_st *ref);
 int safe_index_read(JoinTable *tab);

@@ -1862,11 +1862,11 @@ UPDATE bug25126 SET MissingCol = MissingCol ORDER BY MissingCol;
 ERROR 42S22: Unknown column 'MissingCol' in 'order clause'
 DROP TABLE bug25126;
 CREATE TABLE t1 (a int);
-SELECT p.a AS val, q.a AS val1 FROM t1 p, t1 q ORDER BY val > 1;
+SELECT p.a AS val, q.a AS val1 FROM t1 p CROSS JOIN t1 q ORDER BY val > 1;
 val	val1
-SELECT p.a AS val, q.a AS val FROM t1 p, t1 q ORDER BY val;
+SELECT p.a AS val, q.a AS val FROM t1 p CROSS JOIN t1 q ORDER BY val;
 ERROR 23000: Column 'val' in order clause is ambiguous
-SELECT p.a AS val, q.a AS val FROM t1 p, t1 q ORDER BY val > 1;
+SELECT p.a AS val, q.a AS val FROM t1 p CROSS JOIN t1 q ORDER BY val > 1;
 ERROR 23000: Column 'val' in order clause is ambiguous
 DROP TABLE t1;
 CREATE TABLE t1 (a int);

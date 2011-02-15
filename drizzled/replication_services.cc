@@ -90,7 +90,7 @@ bool ReplicationServices::evaluateRegisteredPlugins()
 
   if (replicators.empty() && not appliers.empty())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   N_("You registered a TransactionApplier plugin but no "
                      "TransactionReplicator plugins were registered.\n"));
     return false;
@@ -121,7 +121,7 @@ bool ReplicationServices::evaluateRegisteredPlugins()
     }
     if (not found)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     N_("You registered a TransactionApplier plugin but no "
                        "TransactionReplicator plugins were registered that match the "
                        "requested replicator name of '%s'.\n"

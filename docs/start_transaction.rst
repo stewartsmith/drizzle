@@ -6,4 +6,9 @@ A transaction can be started with either the BEGIN or START TRANSACTION statemen
 	START TRANSACTION [WITH CONSISTENT SNAPSHOT]
 	BEGIN
 
-When https://bugs.launchpad.net/drizzle/+bug/674719 is fixed, Drizzle will have the PostgreSQL like behaviour of giving an error if a transaction is already in progress.
+.. warning::
+
+   If you are currently already in a transaction Drizzle will give a warning
+   stating that you are in a transaction in a similar way to PostgreSQL.
+   This is instead of implicitly committing the transaction in the way MySQL
+   does.

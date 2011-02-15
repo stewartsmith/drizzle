@@ -8,7 +8,10 @@ this is a list of some of these and how to deal with them:
 
 Old Password Error
 ------------------
-*drizzle_state_handshake_result_read:old insecure authentication mechanism not supported*
+
+::
+
+   drizzle_state_handshake_result_read:old insecure authentication mechanism not supported
 
 This error happens because the Drizzle client is trying to connect to a MySQL
 server which has the password stored in the Old Password (or pre-MySQL-4.1)

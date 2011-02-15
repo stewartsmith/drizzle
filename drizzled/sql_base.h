@@ -23,6 +23,7 @@
 #define DRIZZLED_SQL_BASE_H
 
 #include <drizzled/table.h>
+#include <drizzled/table_list.h>
 #include <drizzled/table/concurrent.h>
 
 #include "drizzled/visibility.h"
@@ -57,7 +58,6 @@ CreateField * new_create_field(Session *session, char *field_name, enum_field_ty
                                Item *default_value, Item *on_update_value,
                                LEX_STRING *comment, char *change,
                                List<String> *interval_list, CHARSET_INFO *cs);
-void store_position_for_column(const char *name);
 bool push_new_name_resolution_context(Session *session,
                                       TableList *left_op,
                                       TableList *right_op);

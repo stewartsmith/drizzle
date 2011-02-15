@@ -44,18 +44,22 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 #include <drizzled/plugin/listen.h>
-#include "drizzled/cached_directory.h"
+#include <drizzled/cached_directory.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/field/null.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/drizzled.h"
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/table/temporary.h"
-#include "drizzled/table/placeholder.h"
-#include "drizzled/table/unused.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/table/temporary.h>
+#include <drizzled/table/placeholder.h>
+#include <drizzled/table/unused.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/session.h>
+
+#include <drizzled/refresh_version.h>
 
 using namespace std;
 
@@ -575,7 +579,7 @@ bool Open_tables_state::doDoesTableExist(const identifier::Table &identifier)
 }
 
 int Open_tables_state::doGetTableDefinition(const identifier::Table &identifier,
-                                  message::Table &table_proto)
+                                            message::Table &table_proto)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
@@ -583,7 +587,7 @@ int Open_tables_state::doGetTableDefinition(const identifier::Table &identifier,
     {
       if (identifier.getKey() == table->getShare()->getCacheKey())
       {
-        table_proto.CopyFrom(*(table->getShare()->getTableProto()));
+        table_proto.CopyFrom(*(table->getShare()->getTableMessage()));
 
         return EEXIST;
       }
@@ -950,7 +954,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   {
     if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->getSchemaName(), table_list->getTableName());
+      my_error(ER_TABLE_UNKNOWN, identifier);
       return NULL;
     }
 
@@ -1001,7 +1005,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     */
 
     {
-      table::Cache::singleton().mutex().lock(); /* Lock for FLUSH TABLES for open table */
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
 
       /*
         Actually try to find the table in the open_cache.
@@ -1053,7 +1057,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           /* Avoid self-deadlocks by detecting self-dependencies. */
           if (table->open_placeholder && table->in_use == this)
           {
-            table::Cache::singleton().mutex().unlock();
             my_error(ER_UPDATE_TABLE_USED, MYF(0), table->getShare()->getTableName());
             return NULL;
           }
@@ -1088,20 +1091,24 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           {
             /* wait_for_conditionwill unlock table::Cache::singleton().mutex() for us */
             wait_for_condition(table::Cache::singleton().mutex(), COND_refresh);
+            scopedLock.release();
           }
           else
           {
-            table::Cache::singleton().mutex().unlock();
+            scopedLock.unlock();
           }
+
           /*
             There is a refresh in progress for this table.
             Signal the caller that it has to try again.
           */
           if (refresh)
             *refresh= true;
+
           return NULL;
         }
       }
+
       if (table)
       {
         table::getUnused().unlink(static_cast<table::Concurrent *>(table));
@@ -1125,7 +1132,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             */
             if (!(table= table_cache_insert_placeholder(lock_table_identifier)))
             {
-              table::Cache::singleton().mutex().unlock();
               return NULL;
             }
             /*
@@ -1136,7 +1142,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             table->open_placeholder= true;
             table->setNext(open_tables);
             open_tables= table;
-            table::Cache::singleton().mutex().unlock();
 
             return table ;
           }
@@ -1149,7 +1154,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           table= new_table;
           if (new_table == NULL)
           {
-            table::Cache::singleton().mutex().unlock();
             return NULL;
           }
 
@@ -1157,15 +1161,13 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           if (error != 0)
           {
             delete new_table;
-            table::Cache::singleton().mutex().unlock();
             return NULL;
           }
           (void)table::Cache::singleton().insert(new_table);
         }
       }
-
-      table::Cache::singleton().mutex().unlock();
     }
+
     if (refresh)
     {
       table->setNext(open_tables); /* Link into simple list */
@@ -1760,7 +1762,7 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
   Table **start,**ptr;
   uint32_t lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
 
-  if (!(ptr=start=(Table**) session->alloc(sizeof(Table*)*count)))
+  if (!(ptr=start=(Table**) session->getMemRoot()->allocate(sizeof(Table*)*count)))
     return -1;
 
   for (table= tables; table; table= table->next_global)

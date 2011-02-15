@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+
 #include "drizzled/session.h"
 #include "drizzled/item/uint.h"
 #include "drizzled/item/float.h"
@@ -29,6 +30,7 @@
 #include "drizzled/sql_select.h"
 #include "drizzled/join.h"
 #include "drizzled/internal/m_string.h"
+#include <drizzled/select_result.h>
 
 #include <cstdio>
 #include <string>
@@ -305,12 +307,11 @@ void optimizer::ExplainPlan::printPlan()
       double examined_rows;
       if (tab->select && tab->select->quick)
       {
-        examined_rows= rows2double(tab->select->quick->records);
+        examined_rows= tab->select->quick->records;
       }
       else if (tab->type == AM_NEXT || tab->type == AM_ALL)
       {
-        examined_rows= rows2double(tab->limit ? tab->limit :
-                                                tab->table->cursor->records());
+        examined_rows= tab->limit ? tab->limit : tab->table->cursor->records();
       }
       else
       {

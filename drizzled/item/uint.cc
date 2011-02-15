@@ -18,6 +18,8 @@
  */
 
 #include "config.h"
+
+#include <drizzled/charset_info.h>
 #include <drizzled/item/uint.h>
 
 namespace drizzled

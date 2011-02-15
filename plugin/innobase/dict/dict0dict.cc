@@ -56,6 +56,8 @@ UNIV_INTERN dict_index_t*	dict_ind_compact;
 
 #include <ctype.h>
 
+#include <drizzled/session.h>
+
 /** the dictionary system */
 UNIV_INTERN dict_sys_t*	dict_sys	= NULL;
 
@@ -3836,7 +3838,7 @@ dict_create_foreign_constraints(
 	heap = mem_heap_create(10000);
 
 	err = dict_create_foreign_constraints_low(
-		trx, heap, innobase_get_charset(trx->mysql_thd), str, name,
+		trx, heap, trx->session()->charset(), str, name,
 		reject_fks);
 
 	mem_heap_free(heap);
@@ -3874,13 +3876,13 @@ dict_foreign_parse_drop_constraints(
 	ut_a(trx);
 	ut_a(trx->mysql_thd);
 
-	cs = innobase_get_charset(trx->mysql_thd);
+	cs = trx->session()->charset();
 
 	*n = 0;
 
 	*constraints_to_drop = static_cast<const char **>(mem_heap_alloc(heap, 1000 * sizeof(char*)));
 
-        ptr = innobase_get_stmt(trx->mysql_thd, &len);
+        ptr= trx->session()->getQueryStringCopy(len);
 
         str = dict_strip_comments(ptr, len);
 

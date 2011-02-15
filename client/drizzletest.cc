@@ -56,7 +56,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <boost/array.hpp>
+#include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
+#include <boost/smart_ptr.hpp>
 
 #include PCRE_HEADER
 
@@ -67,6 +70,7 @@
 #include "drizzled/gettext.h"
 #include "drizzled/type/time.h"
 #include "drizzled/charset.h"
+#include "drizzled/typelib.h"
 #include <drizzled/configmake.h>
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
@@ -115,6 +119,7 @@ static bool server_initialized= false;
 static bool is_windows= false;
 static bool use_drizzle_protocol= false;
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
+static void free_all_replace();
 
 std::string opt_basedir,
   opt_charsets_dir,
@@ -164,10 +169,8 @@ struct st_test_file
   uint32_t lineno; /* Current line in file */
 };
 
-static struct st_test_file file_stack[16];
-static struct st_test_file* cur_file;
-static struct st_test_file* file_stack_end;
-
+static boost::array<st_test_file, 16> file_stack;
+static st_test_file* cur_file;
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default charset */
 
@@ -177,8 +180,8 @@ static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default
 */
 static char *timer_file = NULL;
 static uint64_t timer_start;
-static void timer_output(void);
-static uint64_t timer_now(void);
+static void timer_output();
+static uint64_t timer_now();
 
 static uint64_t progress_start= 0;
 
@@ -199,8 +202,9 @@ master_pos_st master_pos;
 
 /* if set, all results are concated and compared against this file */
 
-typedef struct st_var
+class VAR
 {
+public:
   char *name;
   int name_len;
   char *str_val;
@@ -210,13 +214,13 @@ typedef struct st_var
   int int_dirty; /* do not update string if int is updated until first read */
   int alloced;
   char *env_s;
-} VAR;
+};
 
 /*Perl/shell-like variable registers */
-VAR var_reg[10];
+boost::array<VAR, 10> var_reg;
 
-
-boost::unordered_map<string, VAR *> var_hash;
+typedef boost::unordered_map<string, VAR *> var_hash_t;
+var_hash_t var_hash;
 
 struct st_connection
 {
@@ -389,16 +393,18 @@ struct st_expected_errors
   struct st_match_err err[10];
   uint32_t count;
 };
-static struct st_expected_errors saved_expected_errors;
 
-struct st_command
+static st_expected_errors saved_expected_errors;
+
+class st_command
 {
+public:
   char *query, *query_buf,*first_argument,*last_argument,*end;
   int first_word_len, query_len;
   bool abort_on_error;
   st_expected_errors expected_errors;
   string require_file;
-  enum enum_commands type;
+  enum_commands type;
 
   st_command()
     : query(NULL), query_buf(NULL), first_argument(NULL), last_argument(NULL),
@@ -410,10 +416,7 @@ struct st_command
 
   ~st_command()
   {
-    if (query_buf != NULL)
-    {
-      free(query_buf);
-    }
+    free(query_buf);
   }
 };
 
@@ -438,15 +441,14 @@ void log_msg(const char *fmt, ...)
 VAR* var_from_env(const char *, const char *);
 VAR* var_init(VAR* v, const char *name, int name_len, const char *val,
               int val_len);
-void var_free(pair<string, VAR*> v);
 VAR* var_get(const char *var_name, const char** var_name_end,
              bool raw, bool ignore_not_existing);
 void eval_expr(VAR* v, const char *p, const char** p_end);
 bool match_delimiter(int c, const char *delim, uint32_t length);
 void dump_result_to_reject_file(char *buf, int size);
 void dump_result_to_log_file(const char *buf, int size);
-void dump_warning_messages(void);
-void dump_progress(void);
+void dump_warning_messages();
+void dump_progress();
 
 void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars);
@@ -457,25 +459,14 @@ void str_to_file2(const char *fname, const char *str, int size, bool append);
 static char *replace_column[MAX_COLUMNS];
 static uint32_t max_replace_column= 0;
 void do_get_replace_column(struct st_command*);
-void free_replace_column(void);
+void free_replace_column();
 
 /* For replace */
 void do_get_replace(struct st_command *command);
-void free_replace(void);
+void free_replace();
 
 /* For replace_regex */
 void do_get_replace_regex(struct st_command *command);
-void free_replace_regex(void);
-
-
-void free_all_replace(void);
-
-
-void free_all_replace(void){
-  free_replace();
-  free_replace_regex();
-  free_replace_column();
-}
 
 void replace_append_mem(string *ds, const char *val,
                         int len);
@@ -492,13 +483,11 @@ void handle_no_error(struct st_command*);
 void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars)
 {
-  const char *p;
-  register char c, next_c;
-  register int escaped = 0;
+  char c, next_c;
+  int escaped = 0;
   VAR *v;
 
-
-  for (p= query; (c= *p) && p < query_end; ++p)
+  for (const char *p= query; (c= *p) && p < query_end; ++p)
   {
     switch(c) {
     case '$':
@@ -872,7 +861,7 @@ static void handle_command_error(struct st_command *command, uint32_t error)
 }
 
 
-static void close_connections(void)
+static void close_connections()
 {
   for (--next_con; next_con >= connections; --next_con)
   {
@@ -883,53 +872,41 @@ static void close_connections(void)
     }
     free(next_con->name);
   }
-  return;
 }
 
 
-static void close_files(void)
+static void close_files()
 {
-
-  for (; cur_file >= file_stack; cur_file--)
+  for (; cur_file >= file_stack.data(); cur_file--)
   {
     if (cur_file->file && cur_file->file != stdin)
-    {
       fclose(cur_file->file);
-    }
-    free((unsigned char*) cur_file->file_name);
+    free(const_cast<char*>(cur_file->file_name));
     cur_file->file_name= 0;
   }
-  return;
 }
 
-
-static void free_used_memory(void)
+static void free_used_memory()
 {
-  uint32_t i;
-
-
   close_connections();
   close_files();
-  for_each(var_hash.begin(), var_hash.end(), var_free);
-  var_hash.clear();
-
-  vector<st_command *>::iterator iter;
-  for (iter= q_lines.begin() ; iter < q_lines.end() ; iter++)
+  BOOST_FOREACH(var_hash_t::reference i, var_hash)
   {
-    struct st_command * q_line= *iter;
-    delete q_line;
+    free(i.second->str_val);
+    free(i.second->env_s);
+    if (i.second->alloced)
+      free(i.second);
   }
-
-  for (i= 0; i < 10; i++)
+  var_hash.clear();
+  BOOST_FOREACH(vector<st_command*>::reference i, q_lines)
+    delete i;
+  for (size_t i= 0; i < var_reg.size(); i++)
   {
     if (var_reg[i].alloced_len)
       free(var_reg[i].str_val);
   }
-
   free_all_replace();
   free(opt_pass);
-
-  return;
 }
 
 
@@ -954,7 +931,6 @@ static void cleanup_and_exit(int exit_code)
       assert(0);
     }
   }
-
   exit(exit_code);
 }
 
@@ -974,7 +950,7 @@ void die(const char *fmt, ...)
 
   /* Print the error message */
   fprintf(stderr, "drizzletest: ");
-  if (cur_file && cur_file != file_stack)
+  if (cur_file && cur_file != file_stack.data())
     fprintf(stderr, "In included file \"%s\": ",
             cur_file->file_name);
   if (start_lineno > 0)
@@ -1035,10 +1011,10 @@ void abort_not_supported_test(const char *fmt, ...)
 
   /* Print include filestack */
   fprintf(stderr, "The test '%s' is not supported by this installation\n",
-          file_stack->file_name);
+          file_stack[0].file_name);
   fprintf(stderr, "Detected in file %s at line %d\n",
           err_file->file_name, err_file->lineno);
-  while (err_file != file_stack)
+  while (err_file != file_stack.data())
   {
     err_file--;
     fprintf(stderr, "included from %s at line %d\n",
@@ -1069,7 +1045,7 @@ void verbose_msg(const char *fmt, ...)
 
   va_start(args, fmt);
   fprintf(stderr, "drizzletest: ");
-  if (cur_file && cur_file != file_stack)
+  if (cur_file && cur_file != file_stack.data())
     fprintf(stderr, "In included file \"%s\": ",
             cur_file->file_name);
   if (start_lineno != 0)
@@ -1077,8 +1053,6 @@ void verbose_msg(const char *fmt, ...)
   vfprintf(stderr, fmt, args);
   fprintf(stderr, "\n");
   va_end(args);
-
-  return;
 }
 
 
@@ -1094,7 +1068,7 @@ void warning_msg(const char *fmt, ...)
   if (start_lineno != 0)
   {
     ds_warning_messages.append("Warning detected ");
-    if (cur_file && cur_file != file_stack)
+    if (cur_file && cur_file != file_stack.data())
     {
       len= snprintf(buff, sizeof(buff), "in included file %s ",
                     cur_file->file_name);
@@ -1627,22 +1601,17 @@ static void strip_parentheses(struct st_command *command)
 VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
               int val_len)
 {
-  int val_alloc_len;
-  VAR *tmp_var;
   if (!name_len && name)
     name_len = strlen(name);
   if (!val_len && val)
     val_len = strlen(val) ;
-  val_alloc_len = val_len + 16; /* room to grow */
-  if (!(tmp_var=v) && !(tmp_var = (VAR*)malloc(sizeof(*tmp_var)
-                                               + name_len+1)))
-    die("Out of memory");
+  VAR *tmp_var = v ? v : (VAR*)malloc(sizeof(*tmp_var) + name_len+1);
 
-  tmp_var->name = (name) ? (char*) tmp_var + sizeof(*tmp_var) : 0;
+  tmp_var->name = name ? (char*)&tmp_var[1] : 0;
   tmp_var->alloced = (v == 0);
 
-  if (!(tmp_var->str_val = (char *)malloc(val_alloc_len+1)))
-    die("Out of memory");
+  int val_alloc_len = val_len + 16; /* room to grow */
+  tmp_var->str_val = (char*)malloc(val_alloc_len+1);
 
   memcpy(tmp_var->name, name, name_len);
   if (val)
@@ -1653,42 +1622,25 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
   tmp_var->name_len = name_len;
   tmp_var->str_val_len = val_len;
   tmp_var->alloced_len = val_alloc_len;
-  tmp_var->int_val = (val) ? atoi(val) : 0;
-  tmp_var->int_dirty = 0;
+  tmp_var->int_val = val ? atoi(val) : 0;
+  tmp_var->int_dirty = false;
   tmp_var->env_s = 0;
   return tmp_var;
 }
 
-
-void var_free(pair<string, VAR *> v)
-{
-  free(v.second->str_val);
-  free(v.second->env_s);
-  if (v.second->alloced)
-    free(v.second);
-}
-
-
 VAR* var_from_env(const char *name, const char *def_val)
 {
-  const char *tmp;
-  VAR *v;
-  if (!(tmp = getenv(name)))
+  const char *tmp= getenv(name);
+  if (!tmp)
     tmp = def_val;
-
-  v = var_init(0, name, strlen(name), tmp, strlen(tmp));
-  string var_name(name);
-  var_hash.insert(make_pair(var_name, v));
-  return v;
+  return var_hash[name] = var_init(0, name, strlen(name), tmp, strlen(tmp));
 }
-
 
 VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
              bool ignore_not_existing)
 {
   int digit;
   VAR *v;
-
   if (*var_name != '$')
     goto err;
   digit = *++var_name - '0';
@@ -1710,8 +1662,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    boost::unordered_map<string, VAR*>::iterator iter=
-      var_hash.find(save_var_name_str);
+    var_hash_t::iterator iter= var_hash.find(save_var_name_str);
     if (iter == var_hash.end())
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
@@ -1721,12 +1672,12 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     }
     else
     {
-      v= (*iter).second;
+      v= iter->second;
     }
     var_name--;  /* Point at last character */
   }
   else
-    v = var_reg + digit;
+    v = &var_reg[digit];
 
   if (!raw && v->int_dirty)
   {
@@ -1748,13 +1699,10 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  boost::unordered_map<string, VAR*>::iterator iter=
-    var_hash.find(var_name);
+  var_hash_t::iterator iter= var_hash.find(var_name);
   if (iter != var_hash.end())
-    return (*iter).second;
-  VAR *v = var_init(0, name, len, "", 0);
-  var_hash.insert(make_pair(var_name, v));
-  return v;
+    return iter->second;
+  return var_hash[var_name] = var_init(0, name, len, "", 0);
 }
 
 
@@ -1781,7 +1729,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     v= var_obtain(var_name, (uint32_t) (var_name_end - var_name));
   }
   else
-    v= var_reg + digit;
+    v= &var_reg[digit];
 
   eval_expr(v, var_val, (const char**) &var_val_end);
 
@@ -2065,8 +2013,6 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     eval_expr(var, value, 0);
   }
   drizzle_result_free(&res);
-
-  return;
 }
 
 
@@ -2097,8 +2043,8 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
 {
   if (*p == '$')
   {
-    VAR *vp;
-    if ((vp= var_get(p, p_end, 0, 0)))
+    VAR *vp= var_get(p, p_end, 0, 0);
+    if (vp)
       var_copy(v, vp);
     return;
   }
@@ -2159,9 +2105,9 @@ static int open_file(const char *name)
   }
   internal::fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
 
-  if (cur_file == file_stack_end)
-    die("Source directives are nesting too deep");
   cur_file++;
+  if (cur_file == &*file_stack.end())
+    die("Source directives are nesting too deep");
   if (!(cur_file->file= fopen(buff, "r")))
   {
     cur_file--;
@@ -2223,10 +2169,9 @@ static void do_source(struct st_command *command)
 }
 
 
-static void init_builtin_echo(void)
+static void init_builtin_echo()
 {
   builtin_echo[0]= 0;
-  return;
 }
 
 
@@ -3189,7 +3134,7 @@ static void do_sync_with_master(struct st_command *command)
   when ndb binlog is on, this call will wait until last updated epoch
   (locally in the drizzled) has been received into the binlog
 */
-static int do_save_master_pos(void)
+static int do_save_master_pos()
 {
   drizzle_result_st res;
   drizzle_return_t ret;
@@ -3328,18 +3273,18 @@ static int do_sleep(struct st_command *command, bool real_sleep)
     sleep_val= opt_sleep;
 
   if (sleep_val)
-    usleep((uint32_t) (sleep_val * 1000000L));
+    usleep(sleep_val * 1000000);
   command->last_argument= sleep_end;
   return 0;
 }
 
 
-static void do_get_file_name(struct st_command *command, string &dest)
+static void do_get_file_name(st_command *command, string &dest)
 {
-  char *p= command->first_argument, *name;
+  char *p= command->first_argument;
   if (!*p)
     die("Missing file name argument");
-  name= p;
+  char *name= p;
   while (*p && !my_isspace(charset_info,*p))
     p++;
   if (*p)
@@ -3414,13 +3359,9 @@ static void fill_global_error_names()
       and assign that string to the $variable
     */
     size_t *lengths= drizzle_row_field_sizes(&res);
-    const std::string error_name(row[0], lengths[0]);
-    const std::string error_code(row[1], lengths[1]);
-
     try
     {
-      global_error_names.insert(ErrorCodes::value_type(error_name,
-                                                       boost::lexical_cast<uint32_t>(error_code)));
+      global_error_names[string(row[0], lengths[0])] = boost::lexical_cast<uint32_t>(string(row[1], lengths[1]));
     }
     catch (boost::bad_lexical_cast &ex)
     {
@@ -3440,9 +3381,7 @@ static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 
   ErrorCodes::iterator it= global_error_names.find(error_name_s);
   if (it != global_error_names.end())
-  {
-    return (*it).second;
-  }
+    return it->second;
 
   die("Unknown SQL error name '%s'", error_name_s.c_str());
   return 0;
@@ -3513,27 +3452,16 @@ static void do_get_errcodes(struct st_command *command)
     {
       die("The error name definition must start with an uppercase E");
     }
+    else if (*p == 'H')
+    {
+      /* Error name string */
+
+      to->code.errnum= get_errcode_from_name(p, end);
+      to->type= ERR_ERRNO;
+    }
     else
     {
-      long val;
-      char *start= p;
-      /* Check that the string passed to str2int only contain digits */
-      while (*p && p != end)
-      {
-        if (!my_isdigit(charset_info, *p))
-          die("Invalid argument to error: '%s' - "              \
-              "the errno may only consist of digits[0-9]",
-              command->first_argument);
-        p++;
-      }
-
-      /* Convert the sting to int */
-      istringstream buff(start);
-      if ((buff >> val).fail())
-        die("Invalid argument to error: '%s'", command->first_argument);
-
-      to->code.errnum= (uint32_t) val;
-      to->type= ERR_ERRNO;
+      die ("You must either use the SQLSTATE or built in drizzle error label, numbers are not accepted");
     }
     to++;
     count++;
@@ -4074,7 +4002,6 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
 {
   char *p= command->first_argument;
   const char *expr_start, *expr_end;
-  VAR v;
   const char *cmd_name= (cmd == cmd_while ? "while" : "if");
   bool not_expr= false;
 
@@ -4117,6 +4044,7 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
   if (*p && *p != '{')
     die("Missing '{' after %s. Found \"%s\"", cmd_name, p);
 
+  VAR v;
   var_init(&v,0,0,0,0);
   eval_expr(&v, expr_start, &expr_end);
 
@@ -4252,7 +4180,7 @@ static int read_line(char *buf, int size)
       }
       free((unsigned char*) cur_file->file_name);
       cur_file->file_name= 0;
-      if (cur_file == file_stack)
+      if (cur_file == file_stack.data())
       {
         /* We're back at the first file, check if
            all { have matching }
@@ -4486,7 +4414,7 @@ static void scan_command_for_warnings(struct st_command *command)
         end++;
       save= *end;
       *end= 0;
-      type= find_type(start, &command_typelib, 1+2);
+      type= command_typelib.find_type(start, 1+2);
       if (type)
         warning_msg("Embedded drizzletest command '--%s' detected in "
                     "query '%s' was this intentional? ",
@@ -4692,7 +4620,7 @@ void dump_result_to_log_file(const char *buf, int size)
           log_file);
 }
 
-void dump_progress(void)
+void dump_progress()
 {
   char progress_file[FN_REFLEN];
   str_to_file(internal::fn_format(progress_file, result_file_name.c_str(),
@@ -4702,7 +4630,7 @@ void dump_progress(void)
               ds_progress.c_str(), ds_progress.length());
 }
 
-void dump_warning_messages(void)
+void dump_warning_messages()
 {
   char warn_file[FN_REFLEN];
 
@@ -5309,7 +5237,7 @@ static void get_command_type(struct st_command* command)
 
   save= command->query[command->first_word_len];
   command->query[command->first_word_len]= 0;
-  type= find_type(command->query, &command_typelib, 1+2);
+  type= command_typelib.find_type(command->query, 1+2);
   command->query[command->first_word_len]= save;
   if (type > 0)
   {
@@ -5353,7 +5281,7 @@ static void get_command_type(struct st_command* command)
         */
         save= command->query[command->first_word_len-1];
         command->query[command->first_word_len-1]= 0;
-        if (find_type(command->query, &command_typelib, 1+2) > 0)
+        if (command_typelib.find_type(command->query, 1+2) > 0)
           die("Extra delimiter \";\" found");
         command->query[command->first_word_len-1]= save;
 
@@ -5527,8 +5455,7 @@ try
 
   if (user_config_dir.compare(0, 2, "~/") == 0)
   {
-    char *homedir;
-    homedir= getenv("HOME");
+    const char *homedir= getenv("HOME");
     if (homedir != NULL)
       user_config_dir.replace(0, 1, homedir);
   }
@@ -5575,10 +5502,8 @@ try
   next_con= connections + 1;
 
   /* Init file stack */
-  memset(file_stack, 0, sizeof(file_stack));
-  file_stack_end=
-    file_stack + (sizeof(file_stack)/sizeof(struct st_test_file)) - 1;
-  cur_file= file_stack;
+  memset(file_stack.data(), 0, sizeof(file_stack));
+  cur_file= file_stack.data();
 
   /* Init block stack */
   memset(block_stack, 0, sizeof(block_stack));
@@ -5617,7 +5542,7 @@ try
       tmp= buff;
     }
     internal::fn_format(buff, tmp.c_str(), "", "", MY_UNPACK_FILENAME);
-    assert(cur_file == file_stack && cur_file->file == 0);
+    assert(cur_file == file_stack.data() && cur_file->file == 0);
     if (!(cur_file->file= fopen(buff, "r")))
     {
       fprintf(stderr, _("Could not open '%s' for reading: errno = %d"), buff, errno);
@@ -5722,7 +5647,7 @@ try
   }
 
   server_initialized= 1;
-  if (cur_file == file_stack && cur_file->file == 0)
+  if (cur_file == file_stack.data() && cur_file->file == 0)
   {
     cur_file->file= stdin;
     cur_file->file_name= strdup("<stdin>");
@@ -6147,7 +6072,7 @@ try
   the time between executing the two commands.
 */
 
-void timer_output(void)
+void timer_output()
 {
   if (timer_file)
   {
@@ -6161,7 +6086,7 @@ void timer_output(void)
 }
 
 
-uint64_t timer_now(void)
+uint64_t timer_now()
 {
 #if defined(HAVE_GETHRTIME)
   return gethrtime()/1000/1000;
@@ -6201,10 +6126,9 @@ void do_get_replace_column(struct st_command *command)
   start= buff= (char *)malloc(strlen(from)+1);
   while (*from)
   {
-    char *to;
     uint32_t column_number;
 
-    to= get_string(&buff, &from, command);
+    char *to= get_string(&buff, &from, command);
     if (!(column_number= atoi(to)) || column_number > MAX_COLUMNS)
       die("Wrong column number to replace_column in '%s'", command->query);
     if (!*from)
@@ -6223,14 +6147,10 @@ void do_get_replace_column(struct st_command *command)
 
 void free_replace_column()
 {
-  uint32_t i;
-  for (i=0 ; i < max_replace_column ; i++)
+  for (uint32_t i= 0 ; i < max_replace_column; i++)
   {
-    if (replace_column[i])
-    {
-      free(replace_column[i]);
-      replace_column[i]= 0;
-    }
+    free(replace_column[i]);
+    replace_column[i]= 0;
   }
   max_replace_column= 0;
 }
@@ -6251,14 +6171,14 @@ typedef struct st_pointer_array {    /* when using array-strings */
 } POINTER_ARRAY;
 
 struct st_replace;
-struct st_replace *init_replace(char * *from, char * *to, uint32_t count,
-                                char * word_end_chars);
+struct st_replace *init_replace(const char **from, const char **to, uint32_t count,
+                                char *word_end_chars);
 int insert_pointer_name(POINTER_ARRAY *pa,char * name);
 void replace_strings_append(struct st_replace *rep, string* ds,
                             const char *from, int len);
-void free_pointer_array(POINTER_ARRAY *pa);
 
-struct st_replace *glob_replace= NULL;
+st_replace *glob_replace= NULL;
+// boost::scoped_ptr<st_replace> glob_replace;
 
 /*
   Get arguments for replace. The syntax is:
@@ -6267,6 +6187,16 @@ struct st_replace *glob_replace= NULL;
   A argument may also be a variable, in which case the value of the
   variable is replaced.
 */
+
+static void free_pointer_array(POINTER_ARRAY *pa)
+{
+  if (!pa->typelib.count)
+    return;
+  pa->typelib.count=0;
+  free((char*) pa->typelib.type_names);
+  pa->typelib.type_names=0;
+  free(pa->str);
+}
 
 void do_get_replace(struct st_command *command)
 {
@@ -6299,9 +6229,9 @@ void do_get_replace(struct st_command *command)
     if (my_isspace(charset_info,i))
       *pos++= i;
   *pos=0;          /* End pointer */
-  if (!(glob_replace= init_replace((char**) from_array.typelib.type_names,
-                                   (char**) to_array.typelib.type_names,
-                                   (uint32_t) from_array.typelib.count,
+  if (!(glob_replace= init_replace(from_array.typelib.type_names,
+                                   to_array.typelib.type_names,
+                                   from_array.typelib.count,
                                    word_end_chars)))
     die("Can't initialize replace from '%s'", command->query);
   free_pointer_array(&from_array);
@@ -6314,13 +6244,8 @@ void do_get_replace(struct st_command *command)
 
 void free_replace()
 {
-
-  if (glob_replace)
-  {
-    free(glob_replace);
-    glob_replace=0;
-  }
-  return;
+  free(glob_replace);
+  glob_replace=0;
 }
 
 
@@ -6340,8 +6265,8 @@ typedef struct st_replace_found {
 void replace_strings_append(REPLACE *rep, string* ds,
                             const char *str, int len)
 {
-  register REPLACE *rep_pos;
-  register REPLACE_STRING *rep_str;
+  REPLACE *rep_pos;
+  REPLACE_STRING *rep_str;
   const char *start, *from;
 
 
@@ -6394,9 +6319,11 @@ struct st_regex
                  i.e. repeat the matching until the end of the string */
 };
 
-struct st_replace_regex
+class st_replace_regex
 {
-  DYNAMIC_ARRAY regex_arr; /* stores a list of st_regex subsitutions */
+public:
+  st_replace_regex(char* expr);
+  int multi_reg_replace(char* val);
 
   /*
     Temporary storage areas for substitutions. To reduce unnessary copying
@@ -6405,14 +6332,19 @@ struct st_replace_regex
     st_regex substition. At the end of substitutions  buf points to the
     one containing the final result.
   */
-  char* buf;
+  typedef vector<st_regex> regex_arr_t;
+
+  char* buf_;
   char* even_buf;
   char* odd_buf;
   int even_buf_len;
   int odd_buf_len;
+  boost::array<char, 8 << 10> buf0_;
+  boost::array<char, 8 << 10> buf1_;
+  regex_arr_t regex_arr;
 };
 
-struct st_replace_regex *glob_replace_regex= 0;
+boost::scoped_ptr<st_replace_regex> glob_replace_regex;
 
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
                 char *string, int icase, int global);
@@ -6454,25 +6386,16 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
   Returns: st_replace_regex struct with pairs of substitutions
 */
 
-static struct st_replace_regex* init_replace_regex(char* expr)
+st_replace_regex::st_replace_regex(char* expr)
 {
-  struct st_replace_regex* res;
-  char* buf,*expr_end;
-  char* p;
-  char* buf_p;
   uint32_t expr_len= strlen(expr);
   char last_c = 0;
-  struct st_regex reg;
+  st_regex reg;
 
-  res=(st_replace_regex*)malloc(sizeof(*res)+expr_len);
-  if (!res)
-    return NULL;
-  my_init_dynamic_array(&res->regex_arr,sizeof(struct st_regex),128,128);
-
-  buf= (char*)res + sizeof(*res);
-  expr_end= expr + expr_len;
-  p= expr;
-  buf_p= buf;
+  char* buf= new char[expr_len];
+  char* expr_end= expr + expr_len;
+  char* p= expr;
+  char* buf_p= buf;
 
   /* for each regexp substitution statement */
   while (p < expr_end)
@@ -6488,7 +6411,7 @@ static struct st_replace_regex* init_replace_regex(char* expr)
 
     if (p == expr_end || ++p == expr_end)
     {
-      if (res->regex_arr.elements)
+      if (!regex_arr.empty())
         break;
       else
         goto err;
@@ -6527,22 +6450,17 @@ static struct st_replace_regex* init_replace_regex(char* expr)
       p++;
       reg.global= 1;
     }
-
-    /* done parsing the statement, now place it in regex_arr */
-    if (insert_dynamic(&res->regex_arr,(unsigned char*) &reg))
-      die("Out of memory");
+    regex_arr.push_back(reg);
   }
-  res->odd_buf_len= res->even_buf_len= 8192;
-  res->even_buf= (char*)malloc(res->even_buf_len);
-  res->odd_buf= (char*)malloc(res->odd_buf_len);
-  res->buf= res->even_buf;
+  odd_buf_len= even_buf_len= buf0_.size();
+  even_buf= buf0_.data();
+  odd_buf= buf1_.data();
+  buf_= even_buf;
 
-  return res;
+  return;
 
 err:
-  free(res);
   die("Error parsing replace_regex \"%s\"", expr);
-  return 0;
 }
 
 /*
@@ -6564,49 +6482,36 @@ err:
   in one pass
 */
 
-static int multi_reg_replace(struct st_replace_regex* r,char* val)
+int st_replace_regex::multi_reg_replace(char* val)
 {
-  uint32_t i;
-  char* in_buf, *out_buf;
-  int* buf_len_p;
-
-  in_buf= val;
-  out_buf= r->even_buf;
-  buf_len_p= &r->even_buf_len;
-  r->buf= 0;
+  char* in_buf= val;
+  char* out_buf= even_buf;
+  int* buf_len_p= &even_buf_len;
+  buf_= 0;
 
   /* For each substitution, do the replace */
-  for (i= 0; i < r->regex_arr.elements; i++)
+  BOOST_FOREACH(regex_arr_t::const_reference i, regex_arr)
   {
-    struct st_regex re;
     char* save_out_buf= out_buf;
-
-    get_dynamic(&r->regex_arr,(unsigned char*)&re,i);
-
-    if (!reg_replace(&out_buf, buf_len_p, re.pattern, re.replace,
-                     in_buf, re.icase, re.global))
+    if (!reg_replace(&out_buf, buf_len_p, i.pattern, i.replace,
+                     in_buf, i.icase, i.global))
     {
       /* if the buffer has been reallocated, make adjustements */
       if (save_out_buf != out_buf)
       {
-        if (save_out_buf == r->even_buf)
-          r->even_buf= out_buf;
+        if (save_out_buf == even_buf)
+          even_buf= out_buf;
         else
-          r->odd_buf= out_buf;
+          odd_buf= out_buf;
       }
-
-      r->buf= out_buf;
+      buf_= out_buf;
       if (in_buf == val)
-        in_buf= r->odd_buf;
-
-      std::swap(in_buf,out_buf);
-
-      buf_len_p= (out_buf == r->even_buf) ? &r->even_buf_len :
-        &r->odd_buf_len;
+        in_buf= odd_buf;
+      std::swap(in_buf, out_buf);
+      buf_len_p= (out_buf == even_buf) ? &even_buf_len : &odd_buf_len;
     }
   }
-
-  return (r->buf == 0);
+  return buf_ == 0;
 }
 
 /*
@@ -6621,25 +6526,9 @@ static int multi_reg_replace(struct st_replace_regex* r,char* val)
 void do_get_replace_regex(struct st_command *command)
 {
   char *expr= command->first_argument;
-  free_replace_regex();
-  if (!(glob_replace_regex=init_replace_regex(expr)))
-    die("Could not init replace_regex");
+  glob_replace_regex.reset(new st_replace_regex(expr));
   command->last_argument= command->end;
 }
-
-void free_replace_regex()
-{
-  if (glob_replace_regex)
-  {
-    delete_dynamic(&glob_replace_regex->regex_arr);
-    free(glob_replace_regex->even_buf);
-    free(glob_replace_regex->odd_buf);
-    free(glob_replace_regex);
-    glob_replace_regex=0;
-  }
-}
-
-
 
 /*
   Performs a regex substitution
@@ -6747,57 +6636,60 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
 #define SET_MALLOC_HUNC 64
 #define LAST_CHAR_CODE 259
 
-typedef struct st_rep_set {
+class REP_SET
+{
+public:
+  void internal_set_bit(uint32_t bit);
+  void internal_clear_bit(uint32_t bit);
+  void or_bits(const REP_SET *from);
+  void copy_bits(const REP_SET *from);
+  int cmp_bits(const REP_SET *set2) const;
+  int get_next_bit(uint32_t lastpos) const;
+
   uint32_t  *bits;        /* Pointer to used sets */
   short next[LAST_CHAR_CODE];    /* Pointer to next sets */
   uint32_t  found_len;      /* Best match to date */
   int  found_offset;
   uint32_t  table_offset;
   uint32_t  size_of_bits;      /* For convinience */
-} REP_SET;
+};
 
-typedef struct st_rep_sets {
+class REP_SETS
+{
+public:
+  int find_set(const REP_SET *find);
+  void free_last_set();
+  void free_sets();
+  void make_sets_invisible();
+
   uint32_t    count;      /* Number of sets */
   uint32_t    extra;      /* Extra sets in buffer */
-  uint32_t    invisible;    /* Sets not chown */
+  uint32_t    invisible;    /* Sets not shown */
   uint32_t    size_of_bits;
   REP_SET  *set,*set_buffer;
   uint32_t    *bit_buffer;
-} REP_SETS;
+};
 
-typedef struct st_found_set {
+struct FOUND_SET 
+{
   uint32_t table_offset;
   int found_offset;
-} FOUND_SET;
+};
 
-typedef struct st_follow {
+struct FOLLOWS
+{
   int chr;
   uint32_t table_offset;
   uint32_t len;
-} FOLLOWS;
+};
 
-
-int init_sets(REP_SETS *sets,uint32_t states);
+int init_sets(REP_SETS *sets, uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
-void make_sets_invisible(REP_SETS *sets);
-void free_last_set(REP_SETS *sets);
-void free_sets(REP_SETS *sets);
-void internal_set_bit(REP_SET *set, uint32_t bit);
-void internal_clear_bit(REP_SET *set, uint32_t bit);
-void or_bits(REP_SET *to,REP_SET *from);
-void copy_bits(REP_SET *to,REP_SET *from);
-int cmp_bits(REP_SET *set1,REP_SET *set2);
-int get_next_bit(REP_SET *set,uint32_t lastpos);
-int find_set(REP_SETS *sets,REP_SET *find);
-int find_found(FOUND_SET *found_set,uint32_t table_offset,
-               int found_offset);
-uint32_t start_at_word(char * pos);
-uint32_t end_of_word(char * pos);
+int find_found(FOUND_SET *found_set, uint32_t table_offset, int found_offset);
 
-static uint32_t found_sets=0;
+static uint32_t found_sets= 0;
 
-
-static uint32_t replace_len(char * str)
+static uint32_t replace_len(const char *str)
 {
   uint32_t len=0;
   while (*str)
@@ -6810,26 +6702,31 @@ static uint32_t replace_len(char * str)
   return len;
 }
 
+/* Return 1 if regexp starts with \b or ends with \b*/
+
+static bool start_at_word(const char *pos)
+{
+  return ((!memcmp(pos, "\\b",2) && pos[2]) || !memcmp(pos, "\\^", 2));
+}
+
+static bool end_of_word(const char *pos)
+{
+  const char *end= strchr(pos, '\0');
+  return (end > pos+2 && !memcmp(end-2, "\\b", 2)) || (end >= pos+2 && !memcmp(end-2, "\\$",2));
+}
+
 /* Init a replace structure for further calls */
 
-REPLACE *init_replace(char * *from, char * *to,uint32_t count,
-                      char * word_end_chars)
+REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *word_end_chars)
 {
-  static const int SPACE_CHAR= 256;
-  static const int START_OF_LINE= 257;
-  static const int END_OF_LINE= 258;
+  const int SPACE_CHAR= 256;
+  const int START_OF_LINE= 257;
+  const int END_OF_LINE= 258;
 
   uint32_t i,j,states,set_nr,len,result_len,max_length,found_end,bits_set,bit_nr;
   int used_sets,chr,default_state;
   char used_chars[LAST_CHAR_CODE],is_word_end[256];
-  char * pos, *to_pos, **to_array;
-  REP_SETS sets;
-  REP_SET *set,*start_states,*word_states,*new_set;
-  FOLLOWS *follow,*follow_ptr;
-  REPLACE *replace;
-  FOUND_SET *found_set;
-  REPLACE_STRING *rep_str;
-
+  char *to_pos, **to_array;
 
   /* Count number of states */
   for (i=result_len=max_length=0 , states=2 ; i < count ; i++)
@@ -6849,33 +6746,26 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
   for (i=0 ; word_end_chars[i] ; i++)
     is_word_end[(unsigned char) word_end_chars[i]]=1;
 
-  if (init_sets(&sets,states))
-    return(0);
+  REP_SETS sets;
+  REP_SET *set,*start_states,*word_states,*new_set;
+  REPLACE_STRING *rep_str;
+  if (init_sets(&sets, states))
+    return 0;
   found_sets=0;
-  if (!(found_set= (FOUND_SET*) malloc(sizeof(FOUND_SET)*max_length*count)))
-                                
-  {
-    free_sets(&sets);
-    return(0);
-  }
+  vector<FOUND_SET> found_set(max_length * count);
   make_new_set(&sets);      /* Set starting set */
-  make_sets_invisible(&sets);      /* Hide previus sets */
+  sets.make_sets_invisible();      /* Hide previus sets */
   used_sets=-1;
   word_states=make_new_set(&sets);    /* Start of new word */
   start_states=make_new_set(&sets);    /* This is first state */
-  if (!(follow=(FOLLOWS*) malloc((states+2)*sizeof(FOLLOWS))))
-  {
-    free_sets(&sets);
-    free(found_set);
-    return(0);
-  }
-
+  vector<FOLLOWS> follow(states + 2);
+  FOLLOWS *follow_ptr= &follow[1];
   /* Init follow_ptr[] */
-  for (i=0, states=1, follow_ptr=follow+1 ; i < count ; i++)
+  for (i=0, states=1; i < count; i++)
   {
     if (from[i][0] == '\\' && from[i][1] == '^')
     {
-      internal_set_bit(start_states,states+1);
+      start_states->internal_set_bit(states + 1);
       if (!from[i][2])
       {
         start_states->table_offset=i;
@@ -6884,8 +6774,8 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
     }
     else if (from[i][0] == '\\' && from[i][1] == '$')
     {
-      internal_set_bit(start_states,states);
-      internal_set_bit(word_states,states);
+      start_states->internal_set_bit(states);
+      word_states->internal_set_bit(states);
       if (!from[i][2] && start_states->table_offset == UINT32_MAX)
       {
         start_states->table_offset=i;
@@ -6894,13 +6784,14 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
     }
     else
     {
-      internal_set_bit(word_states,states);
+      word_states->internal_set_bit(states);
       if (from[i][0] == '\\' && (from[i][1] == 'b' && from[i][2]))
-        internal_set_bit(start_states,states+1);
+        start_states->internal_set_bit(states + 1);
       else
-        internal_set_bit(start_states,states);
+        start_states->internal_set_bit(states);
     }
-    for (pos=from[i], len=0; *pos ; pos++)
+    const char *pos;
+    for (pos= from[i], len=0; *pos ; pos++)
     {
       if (*pos == '\\' && *(pos+1))
       {
@@ -6943,29 +6834,25 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
   }
 
 
-  for (set_nr=0,pos=0 ; set_nr < sets.count ; set_nr++)
+  for (set_nr=0; set_nr < sets.count ; set_nr++)
   {
     set=sets.set+set_nr;
     default_state= 0;        /* Start from beginning */
 
     /* If end of found-string not found or start-set with current set */
 
-    for (i= UINT32_MAX; (i=get_next_bit(set,i)) ;)
+    for (i= UINT32_MAX; (i= set->get_next_bit(i)) ;)
     {
-      if (!follow[i].chr)
-      {
-        if (! default_state)
-          default_state= find_found(found_set,set->table_offset,
-                                    set->found_offset+1);
-      }
+      if (!follow[i].chr && !default_state)
+        default_state= find_found(&found_set.front(), set->table_offset, set->found_offset+1);
     }
-    copy_bits(sets.set+used_sets,set);    /* Save set for changes */
+    sets.set[used_sets].copy_bits(set);    /* Save set for changes */
     if (!default_state)
-      or_bits(sets.set+used_sets,sets.set);  /* Can restart from start */
+      sets.set[used_sets].or_bits(sets.set);  /* Can restart from start */
 
     /* Find all chars that follows current sets */
     memset(used_chars, 0, sizeof(used_chars));
-    for (i= UINT32_MAX; (i=get_next_bit(sets.set+used_sets,i)) ;)
+    for (i= UINT32_MAX; (i= sets.set[used_sets].get_next_bit(i)) ;)
     {
       used_chars[follow[i].chr]=1;
       if ((follow[i].chr == SPACE_CHAR && !follow[i+1].chr &&
@@ -6975,7 +6862,7 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
 
     /* Mark word_chars used if \b is in state */
     if (used_chars[SPACE_CHAR])
-      for (pos= word_end_chars ; *pos ; pos++)
+      for (const char *pos= word_end_chars ; *pos ; pos++)
         used_chars[(int) (unsigned char) *pos] = 1;
 
     /* Handle other used characters */
@@ -6992,7 +6879,7 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
         new_set->found_offset=set->found_offset+1;
         found_end=0;
 
-        for (i= UINT32_MAX ; (i=get_next_bit(sets.set+used_sets,i)) ; )
+        for (i= UINT32_MAX ; (i= sets.set[used_sets].get_next_bit(i)) ; )
         {
           if (!follow[i].chr || follow[i].chr == chr ||
               (follow[i].chr == SPACE_CHAR &&
@@ -7004,16 +6891,16 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
                 follow[i].len > found_end)
               found_end=follow[i].len;
             if (chr && follow[i].chr)
-              internal_set_bit(new_set,i+1);    /* To next set */
+              new_set->internal_set_bit(i + 1);    /* To next set */
             else
-              internal_set_bit(new_set,i);
+              new_set->internal_set_bit(i);
           }
         }
         if (found_end)
         {
           new_set->found_len=0;      /* Set for testing if first */
           bits_set=0;
-          for (i= UINT32_MAX; (i=get_next_bit(new_set,i)) ;)
+          for (i= UINT32_MAX; (i= new_set->get_next_bit(i)) ;)
           {
             if ((follow[i].chr == SPACE_CHAR ||
                  follow[i].chr == END_OF_LINE) && ! chr)
@@ -7023,7 +6910,7 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
             if (follow[bit_nr-1].len < found_end ||
                 (new_set->found_len &&
                  (chr == 0 || !follow[bit_nr].chr)))
-              internal_clear_bit(new_set,i);
+              new_set->internal_clear_bit(i);
             else
             {
               if (chr == 0 || !follow[bit_nr].chr)
@@ -7039,25 +6926,23 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
           }
           if (bits_set == 1)
           {
-            set->next[chr] = find_found(found_set,
-                                        new_set->table_offset,
-                                        new_set->found_offset);
-            free_last_set(&sets);
+            set->next[chr] = find_found(&found_set.front(), new_set->table_offset, new_set->found_offset);
+            sets.free_last_set();
           }
           else
-            set->next[chr] = find_set(&sets,new_set);
+            set->next[chr] = sets.find_set(new_set);
         }
         else
-          set->next[chr] = find_set(&sets,new_set);
+          set->next[chr] = sets.find_set(new_set);
       }
     }
   }
 
   /* Alloc replace structure for the replace-state-machine */
 
-  if ((replace=(REPLACE*) malloc(sizeof(REPLACE)*(sets.count)+
-                                 sizeof(REPLACE_STRING)*(found_sets+1)+
-                                 sizeof(char *)*count+result_len)))
+  REPLACE *replace= (REPLACE*)malloc(sizeof(REPLACE) * (sets.count)
+    + sizeof(REPLACE_STRING) * (found_sets + 1) + sizeof(char*) * count + result_len);
+  if (replace)
   {
     memset(replace, 0, sizeof(REPLACE)*(sets.count)+
                        sizeof(REPLACE_STRING)*(found_sets+1)+
@@ -7074,12 +6959,11 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
     rep_str[0].replace_string=0;
     for (i=1 ; i <= found_sets ; i++)
     {
-      pos=from[found_set[i-1].table_offset];
+      const char *pos= from[found_set[i-1].table_offset];
       rep_str[i].found= !memcmp(pos, "\\^", 3) ? 2 : 1;
-      rep_str[i].replace_string=to_array[found_set[i-1].table_offset];
-      rep_str[i].to_offset=found_set[i-1].found_offset-start_at_word(pos);
-      rep_str[i].from_offset=found_set[i-1].found_offset-replace_len(pos)+
-        end_of_word(pos);
+      rep_str[i].replace_string= to_array[found_set[i-1].table_offset];
+      rep_str[i].to_offset= found_set[i-1].found_offset-start_at_word(pos);
+      rep_str[i].from_offset= found_set[i-1].found_offset-replace_len(pos) + end_of_word(pos);
     }
     for (i=0 ; i < sets.count ; i++)
     {
@@ -7090,10 +6974,8 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
           replace[i].next[j]=(REPLACE*) (rep_str+(-sets.set[i].next[j]-1));
     }
   }
-  free(follow);
-  free_sets(&sets);
-  free(found_set);
-  return(replace);
+  sets.free_sets();
+  return replace;
 }
 
 
@@ -7114,11 +6996,11 @@ int init_sets(REP_SETS *sets,uint32_t states)
 
 /* Make help sets invisible for nicer codeing */
 
-void make_sets_invisible(REP_SETS *sets)
+void REP_SETS::make_sets_invisible()
 {
-  sets->invisible=sets->count;
-  sets->set+=sets->count;
-  sets->count=0;
+  invisible= count;
+  set += count;
+  count= 0;
 }
 
 REP_SET *make_new_set(REP_SETS *sets)
@@ -7156,71 +7038,61 @@ REP_SET *make_new_set(REP_SETS *sets)
   return make_new_set(sets);
 }
 
-void free_last_set(REP_SETS *sets)
+void REP_SETS::free_last_set()
 {
-  sets->count--;
-  sets->extra++;
-  return;
+  count--;
+  extra++;
 }
 
-void free_sets(REP_SETS *sets)
+void REP_SETS::free_sets()
 {
-  free(sets->set_buffer);
-  free(sets->bit_buffer);
-  return;
+  free(set_buffer);
+  free(bit_buffer);
 }
 
-void internal_set_bit(REP_SET *set, uint32_t bit)
+void REP_SET::internal_set_bit(uint32_t bit)
 {
-  set->bits[bit / WORD_BIT] |= 1 << (bit % WORD_BIT);
-  return;
+  bits[bit / WORD_BIT] |= 1 << (bit % WORD_BIT);
 }
 
-void internal_clear_bit(REP_SET *set, uint32_t bit)
+void REP_SET::internal_clear_bit(uint32_t bit)
 {
-  set->bits[bit / WORD_BIT] &= ~ (1 << (bit % WORD_BIT));
-  return;
+  bits[bit / WORD_BIT] &= ~ (1 << (bit % WORD_BIT));
 }
 
 
-void or_bits(REP_SET *to,REP_SET *from)
+void REP_SET::or_bits(const REP_SET *from)
 {
-  register uint32_t i;
-  for (i=0 ; i < to->size_of_bits ; i++)
-    to->bits[i]|=from->bits[i];
-  return;
+  for (uint32_t i= 0 ; i < size_of_bits; i++)
+    bits[i]|=from->bits[i];
 }
 
-void copy_bits(REP_SET *to,REP_SET *from)
+void REP_SET::copy_bits(const REP_SET *from)
 {
-  memcpy(to->bits,from->bits,
-         (size_t) (sizeof(uint32_t) * to->size_of_bits));
+  memcpy(bits, from->bits, sizeof(uint32_t) * size_of_bits);
 }
 
-int cmp_bits(REP_SET *set1,REP_SET *set2)
+int REP_SET::cmp_bits(const REP_SET *set2) const
 {
-  return memcmp(set1->bits,set2->bits, sizeof(uint32_t) * set1->size_of_bits);
+  return memcmp(bits, set2->bits, sizeof(uint32_t) * size_of_bits);
 }
-
 
 /* Get next set bit from set. */
 
-int get_next_bit(REP_SET *set,uint32_t lastpos)
+int REP_SET::get_next_bit(uint32_t lastpos) const
 {
-  uint32_t pos,*start,*end,bits;
+  uint32_t *start= bits + ((lastpos+1) / WORD_BIT);
+  uint32_t *end= bits + size_of_bits;
+  uint32_t bits0= start[0] & ~((1 << ((lastpos+1) % WORD_BIT)) -1);
 
-  start=set->bits+ ((lastpos+1) / WORD_BIT);
-  end=set->bits + set->size_of_bits;
-  bits=start[0] & ~((1 << ((lastpos+1) % WORD_BIT)) -1);
-
-  while (! bits && ++start < end)
-    bits=start[0];
-  if (!bits)
+  while (!bits0 && ++start < end)
+    bits0= start[0];
+  if (!bits0)
     return 0;
-  pos=(uint32_t) (start-set->bits)*WORD_BIT;
-  while (! (bits & 1))
+  uint32_t pos= (start - bits) * WORD_BIT;
+  while (!(bits0 & 1))
   {
-    bits>>=1;
+    bits0 >>=1;
     pos++;
   }
   return pos;
@@ -7230,14 +7102,14 @@ int get_next_bit(REP_SET *set,uint32_t lastpos)
    free given set, else put in given set in sets and return its
    position */
 
-int find_set(REP_SETS *sets,REP_SET *find)
+int REP_SETS::find_set(const REP_SET *find)
 {
-  uint32_t i;
-  for (i=0 ; i < sets->count-1 ; i++)
+  uint32_t i= 0;
+  for (; i < count - 1; i++)
   {
-    if (!cmp_bits(sets->set+i,find))
+    if (!set[i].cmp_bits(find))
     {
-      free_last_set(sets);
+      free_last_set();
       return i;
     }
   }
@@ -7251,32 +7123,19 @@ int find_set(REP_SETS *sets,REP_SET *find)
    set->next[] == -1 is reserved for end without replaces.
 */
 
-int find_found(FOUND_SET *found_set,uint32_t table_offset, int found_offset)
+int find_found(FOUND_SET *found_set, uint32_t table_offset, int found_offset)
 {
-  int i;
-  for (i=0 ; (uint32_t) i < found_sets ; i++)
+  uint32_t i= 0;
+  for (; i < found_sets; i++)
+  {
     if (found_set[i].table_offset == table_offset &&
         found_set[i].found_offset == found_offset)
-      return -i-2;
-  found_set[i].table_offset=table_offset;
-  found_set[i].found_offset=found_offset;
+      return - i - 2;
+  }
+  found_set[i].table_offset= table_offset;
+  found_set[i].found_offset= found_offset;
   found_sets++;
-  return -i-2;        /* return new postion */
-}
-
-/* Return 1 if regexp starts with \b or ends with \b*/
-
-uint32_t start_at_word(char * pos)
-{
-  return (((!memcmp(pos, "\\b",2) && pos[2]) ||
-           !memcmp(pos, "\\^", 2)) ? 1 : 0);
-}
-
-uint32_t end_of_word(char * pos)
-{
-  char * end= strchr(pos, '\0');
-  return ((end > pos+2 && !memcmp(end-2, "\\b", 2)) ||
-          (end >= pos+2 && !memcmp(end-2, "\\$",2))) ? 1 : 0;
+  return - i - 2; // return new postion
 }
 
 /****************************************************************************
@@ -7355,47 +7214,25 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
 } /* insert_pointer_name */
 
 
-/* free pointer array */
-
-void free_pointer_array(POINTER_ARRAY *pa)
-{
-  if (pa->typelib.count)
-  {
-    pa->typelib.count=0;
-    free((char*) pa->typelib.type_names);
-    pa->typelib.type_names=0;
-    free(pa->str);
-  }
-} /* free_pointer_array */
-
-
 /* Functions that uses replace and replace_regex */
 
 /* Append the string to ds, with optional replace */
-void replace_append_mem(string *ds,
-                        const char *val, int len)
+void replace_append_mem(string *ds, const char *val, int len)
 {
   char *v= strdup(val);
 
-  if (glob_replace_regex)
+  if (glob_replace_regex && !glob_replace_regex->multi_reg_replace(v))
   {
-    /* Regex replace */
-    if (!multi_reg_replace(glob_replace_regex, v))
-    {
-      v= glob_replace_regex->buf;
-      len= strlen(v);
-    }
+    v= glob_replace_regex->buf_;
+    len= strlen(v);
   }
-
   if (glob_replace)
   {
     /* Normal replace */
     replace_strings_append(glob_replace, ds, v, len);
   }
   else
-  {
     ds->append(v, len);
-  }
 }
 
 
@@ -7463,4 +7300,11 @@ void append_sorted(string* ds, string *ds_input)
   }
 
   return;
+}
+
+static void free_all_replace()
+{
+  free_replace();
+  glob_replace_regex.reset();
+  free_replace_column();
 }

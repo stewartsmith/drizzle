@@ -41,6 +41,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/copy_field.h>
 
 #include "drizzled/transaction_services.h"
 
@@ -664,9 +666,9 @@ static bool prepare_alter_table(Session *session,
     table_message.set_type(message::Table::TEMPORARY);
   }
 
-  table_message.set_creation_timestamp(table->getShare()->getTableProto()->creation_timestamp());
-  table_message.set_version(table->getShare()->getTableProto()->version());
-  table_message.set_uuid(table->getShare()->getTableProto()->uuid());
+  table_message.set_creation_timestamp(table->getShare()->getTableMessage()->creation_timestamp());
+  table_message.set_version(table->getShare()->getTableMessage()->version());
+  table_message.set_uuid(table->getShare()->getTableMessage()->uuid());
 
   rc= false;
   alter_info->create_list.swap(new_create_list);
@@ -721,10 +723,10 @@ static int discard_or_import_tablespace(Session *session,
    We set this flag so that ha_innobase::open and ::external_lock() do
    not complain when we lock the table
  */
-  session->tablespace_op= true;
+  session->setDoingTablespaceOperation(true);
   if (not (table= session->openTableLock(table_list, TL_WRITE)))
   {
-    session->tablespace_op= false;
+    session->setDoingTablespaceOperation(false);
     return -1;
   }
 
@@ -750,7 +752,7 @@ static int discard_or_import_tablespace(Session *session,
   } while(0);
 
   (void) transaction_services.autocommitOrRollback(*session, error);
-  session->tablespace_op=false;
+  session->setDoingTablespaceOperation(false);
 
   if (error == 0)
   {
@@ -1523,8 +1525,8 @@ copy_data_between_tables(Session *session,
         from->sort.io_cache= new internal::IO_CACHE;
 
         tables.table= from;
-        tables.setTableName(const_cast<char *>(from->getMutableShare()->getTableName()));
-        tables.alias= const_cast<char *>(tables.getTableName());
+        tables.setTableName(from->getMutableShare()->getTableName());
+        tables.alias= tables.getTableName();
         tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
         error= 1;
 

@@ -20,6 +20,7 @@
 #include "config.h"
 #include <math.h>
 #include <drizzled/function/math/mod.h>
+#include <drizzled/type/decimal.h>
 
 #include <algorithm>
 

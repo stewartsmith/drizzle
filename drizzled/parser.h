@@ -16,9 +16,13 @@
 #ifndef DRIZZLED_PARSER_H
 #define DRIZZLED_PARSER_H
 
+#include <drizzled/charset.h>
+#include <drizzled/db.h>
+#include <drizzled/error.h>
 #include <drizzled/foreign_key.h>
-#include <drizzled/lex_symbol.h>
+#include <drizzled/function/get_system_var.h>
 #include <drizzled/function/locate.h>
+#include <drizzled/function/set_user_var.h>
 #include <drizzled/function/str/char.h>
 #include <drizzled/function/str/collation.h>
 #include <drizzled/function/str/insert.h>
@@ -43,25 +47,29 @@
 #include <drizzled/function/time/timestamp_diff.h>
 #include <drizzled/function/time/typecast.h>
 #include <drizzled/function/time/year.h>
-
-#include <drizzled/error.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/item/copy_string.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/item/boolean.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/uint.h>
-#include <drizzled/item/null.h>
-#include <drizzled/session.h>
-#include <drizzled/item/func.h>
-#include <drizzled/sql_base.h>
+#include <drizzled/item/copy_string.h>
 #include <drizzled/item/create.h>
 #include <drizzled/item/default_value.h>
+#include <drizzled/item/func.h>
 #include <drizzled/item/insert_value.h>
+#include <drizzled/item/null.h>
+#include <drizzled/item/uint.h>
 #include <drizzled/lex_string.h>
-#include <drizzled/function/get_system_var.h>
-#include <drizzled/thr_lock.h>
-#include <drizzled/message/table.pb.h>
+#include <drizzled/lex_symbol.h>
 #include <drizzled/message/schema.pb.h>
+#include <drizzled/message/table.pb.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/select_dump.h>
+#include <drizzled/select_dumpvar.h>
+#include <drizzled/select_export.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_parse.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/statement/alter_table.h>
@@ -94,21 +102,15 @@
 #include <drizzled/statement/rollback_to_savepoint.h>
 #include <drizzled/statement/savepoint.h>
 #include <drizzled/statement/select.h>
-#include <drizzled/statement/show.h>
 #include <drizzled/statement/set_option.h>
+#include <drizzled/statement/show.h>
 #include <drizzled/statement/show_errors.h>
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/statement/start_transaction.h>
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
-#include <drizzled/db.h>
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-
-#include "drizzled/item/boolean.h"
+#include <drizzled/thr_lock.h>
 
 namespace drizzled {
 
@@ -147,6 +149,27 @@ Item *buildIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &tabl
 Item *buildTableWild(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
 
 void buildCreateFieldIdent(LEX *lex);
+
+void storeAlterColumnPosition(LEX *lex, const char *position);
+
+bool buildCollation(LEX *lex, const CHARSET_INFO *arg);
+void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg);
+void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table);
+
+drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_types final_type, const bool is_unsigned);
+drizzled::enum_field_types buildSerialColumn(LEX *lex);
+drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length);
+drizzled::enum_field_types buildVarbinaryColumn(LEX *lex, const char *length);
+drizzled::enum_field_types buildBlobColumn(LEX *lex);
+drizzled::enum_field_types buildBooleanColumn(LEX *lex);
+drizzled::enum_field_types buildUuidColumn(LEX *lex);
+drizzled::enum_field_types buildDoubleColumn(LEX *lex);
+drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length);
+drizzled::enum_field_types buildDecimalColumn(LEX *lex);
+
+void buildKeyOnColumn(LEX *lex);
+void buildAutoOnColumn(LEX *lex);
+void buildPrimaryOnColumn(LEX *lex);
 
 } // namespace parser
 } // namespace drizzled

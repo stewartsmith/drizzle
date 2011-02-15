@@ -24,7 +24,6 @@
 
 namespace drizzled
 {
-
 class Item;
 typedef struct st_typelib TYPELIB;
 

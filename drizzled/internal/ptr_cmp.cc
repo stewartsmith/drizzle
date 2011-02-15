@@ -54,7 +54,7 @@ qsort2_cmp get_ptr_compare (size_t size)
 
 
 	/*
-	  Compare to keys to see witch is smaller.
+	  Compare two keys to see which is smaller.
 	  Loop unrolled to make it quick !!
 	*/
 

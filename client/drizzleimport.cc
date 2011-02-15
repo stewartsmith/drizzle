@@ -39,7 +39,7 @@ extern "C" void * worker_thread(void *arg);
 
 int exitcode= 0;
 
-const char *program_name= "drizzlesimport";
+const char *program_name= "drizzleimport";
 
 /* Global Thread counter */
 uint32_t counter;

@@ -31,6 +31,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include <drizzled/select_insert.h>
+#include <drizzled/select_create.h>
 
 #include "drizzled/table/shell.h"
 
@@ -492,7 +494,7 @@ bool insert_query(Session *session,TableList *table_list,
 				    !session->cuted_fields))
   {
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id);
   }
   else
@@ -505,12 +507,12 @@ bool insert_query(Session *session,TableList *table_list,
       snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id, buff);
   }
-  session->status_var.inserted_row_count+= session->row_count_func;
+  session->status_var.inserted_row_count+= session->rowCount();
   session->setAbortOnWarning(false);
-  DRIZZLE_INSERT_DONE(0, session->row_count_func);
+  DRIZZLE_INSERT_DONE(0, session->rowCount());
 
   return false;
 }
@@ -1382,10 +1384,10 @@ bool select_insert::send_eof()
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  session->my_ok((ulong) session->row_count_func,
+  session->my_ok((ulong) session->rowCount(),
                  info.copied + info.deleted + info.touched, id, buff);
-  session->status_var.inserted_row_count+= session->row_count_func; 
-  DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
+  session->status_var.inserted_row_count+= session->rowCount(); 
+  DRIZZLE_INSERT_SELECT_DONE(0, session->rowCount());
   return 0;
 }
 
@@ -1514,18 +1516,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   {
     table::Shell tmp_table(share);		// Used during 'CreateField()'
-    tmp_table.timestamp_field= 0;
-
-    tmp_table.getMutableShare()->db_create_options= 0;
-    tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
 
     if (not table_proto.engine().name().compare("MyISAM"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
     else if (not table_proto.engine().name().compare("MEMORY"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
-
-    tmp_table.null_row= false;
-    tmp_table.maybe_null= false;
 
     tmp_table.in_use= session;
 

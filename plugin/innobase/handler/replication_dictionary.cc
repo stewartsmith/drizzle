@@ -52,10 +52,11 @@
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
-#include "mysql_addons.h"
 #include "create_replication.h"
 #include "read_replication.h"
 #include "handler0vars.h"
+
+#include "drizzled/drizzled.h"
 
 #include "drizzled/replication_services.h"
 
@@ -75,8 +76,10 @@ InnodbReplicationTable::InnodbReplicationTable() :
   plugin::TableFunction("DATA_DICTIONARY", "INNODB_REPLICATION_LOG")
 {
   add_field("TRANSACTION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, 2048, false);
-  add_field("TRANSACTION_MESSAGE_BINARY", plugin::TableFunction::VARBINARY, 2048, false);
+  add_field("TRANSACTION_SEGMENT_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("COMMIT_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("END_TIMESTAMP", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, transaction_message_threshold, false);
   add_field("TRANSACTION_LENGTH", plugin::TableFunction::NUMBER, 0, false);
 }
 
@@ -98,9 +101,16 @@ bool InnodbReplicationTable::Generator::populate()
   if (ret.message == NULL)
     return false;
 
-  /* TABLE_NAME */
-  push(static_cast<int64_t>(ret.id));
+  /* Transaction ID */
+  push(static_cast<uint64_t>(ret.id));
 
+  /* Segment ID */
+  push(static_cast<uint64_t>(ret.seg_id));
+
+  push(static_cast<uint64_t>(ret.commit_id));
+
+  push(static_cast<uint64_t>(ret.end_timestamp));
+  
   /* Message in viewable format */
   bool result= message.ParseFromArray(ret.message, ret.message_length);
 
@@ -108,13 +118,11 @@ bool InnodbReplicationTable::Generator::populate()
   {
     fprintf(stderr, _("Unable to parse transaction. Got error: %s.\n"), message.InitializationErrorString().c_str());
     push("error");
-    push("error");
   }
   else
   {
     google::protobuf::TextFormat::PrintToString(message, &transaction_text);
     push(transaction_text);
-    push(ret.message, ret.message_length);
   }
 
   push(static_cast<int64_t>(ret.message_length));

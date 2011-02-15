@@ -29,40 +29,45 @@
 #include <algorithm>
 #include <vector>
 
-#include "drizzled/sql_select.h" /* include join.h */
+#include <drizzled/sql_select.h> /* include join.h */
 
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/util/test.h"
-#include "drizzled/name_resolution_context_state.h"
-#include "drizzled/nested_join.h"
-#include "drizzled/probes.h"
-#include "drizzled/show.h"
-#include "drizzled/item/cache.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/item/copy_string.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/outer_ref.h"
-#include "drizzled/index_hint.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/drizzled.h"
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/util/test.h>
+#include <drizzled/name_resolution_context_state.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/probes.h>
+#include <drizzled/show.h>
+#include <drizzled/item/cache.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/copy_string.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/outer_ref.h>
+#include <drizzled/index_hint.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/plugin/storage_engine.h>
 
-#include "drizzled/sql_union.h"
-#include "drizzled/optimizer/key_field.h"
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/sargable_param.h"
-#include "drizzled/optimizer/key_use.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
+#include <drizzled/sql_union.h>
+#include <drizzled/optimizer/key_field.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
 
-#include "drizzled/filesort.h"
+#include <drizzled/filesort.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
+#include <drizzled/sort_field.h>
+#include <drizzled/select_result.h>
 
 using namespace std;
 
@@ -572,7 +577,7 @@ bool update_ref_and_keys(Session *session,
   sz= sizeof(optimizer::KeyField) *
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
-  if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
+  if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
     return true;
   and_level= 0;
   field= end= key_fields;
@@ -1004,10 +1009,10 @@ bool create_ref_for_key(Join *join,
   j->ref.key_length=length;
   j->ref.key=(int) key;
   if (!(j->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(length)*2)) ||
-      !(j->ref.key_copy= (StoredKey**) session->alloc((sizeof(StoredKey*) *
+      !(j->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
                (keyparts+1)))) ||
-      !(j->ref.items=    (Item**) session->alloc(sizeof(Item*)*keyparts)) ||
-      !(j->ref.cond_guards= (bool**) session->alloc(sizeof(uint*)*keyparts)))
+      !(j->ref.items=    (Item**) session->getMemRoot()->allocate(sizeof(Item*)*keyparts)) ||
+      !(j->ref.cond_guards= (bool**) session->getMemRoot()->allocate(sizeof(uint*)*keyparts)))
   {
     return(true);
   }
@@ -2307,7 +2312,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
   @param cond       condition whose multiple equalities are to be checked
   @param table      constant table that has been read
 */
-static void update_const_equal_items(COND *cond, JoinTable *tab)
+void update_const_equal_items(COND *cond, JoinTable *tab)
 {
   if (!(cond->used_tables() & tab->table->map))
     return;
@@ -2606,7 +2611,7 @@ static void propagate_cond_constants(Session *session,
          position:
           1. join->cur_embedding_map - bitmap of pairs of brackets (aka nested
              joins) we've opened but didn't close.
-          2. {each nested_join_st structure not simplified away}->counter - number
+          2. {each NestedJoin class not simplified away}->counter - number
              of this nested join's children that have already been added to to
              the partial join order.
   @endverbatim
@@ -3365,107 +3370,6 @@ int safe_index_read(JoinTable *tab)
                                          HA_READ_KEY_EXACT)))
     return table->report_error(error);
   return 0;
-}
-
-int join_read_const_table(JoinTable *tab, optimizer::Position *pos)
-{
-  int error;
-  Table *table=tab->table;
-  table->const_table=1;
-  table->null_row=0;
-  table->status=STATUS_NO_RECORD;
-
-  if (tab->type == AM_SYSTEM)
-  {
-    if ((error=join_read_system(tab)))
-    {						// Info for DESCRIBE
-      tab->info="const row not found";
-      /* Mark for EXPLAIN that the row was not found */
-      pos->setFanout(0.0);
-      pos->clearRefDependMap();
-      if (! table->maybe_null || error > 0)
-        return(error);
-    }
-  }
-  else
-  {
-    if (! table->key_read && 
-        table->covering_keys.test(tab->ref.key) && 
-        ! table->no_keyread &&
-        (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS)
-    {
-      table->key_read=1;
-      table->cursor->extra(HA_EXTRA_KEYREAD);
-      tab->index= tab->ref.key;
-    }
-    error=join_read_const(tab);
-    if (table->key_read)
-    {
-      table->key_read=0;
-      table->cursor->extra(HA_EXTRA_NO_KEYREAD);
-    }
-    if (error)
-    {
-      tab->info="unique row not found";
-      /* Mark for EXPLAIN that the row was not found */
-      pos->setFanout(0.0);
-      pos->clearRefDependMap();
-      if (!table->maybe_null || error > 0)
-        return(error);
-    }
-  }
-  if (*tab->on_expr_ref && !table->null_row)
-  {
-    if ((table->null_row= test((*tab->on_expr_ref)->val_int() == 0)))
-      table->mark_as_null_row();
-  }
-  if (!table->null_row)
-    table->maybe_null=0;
-
-  /* Check appearance of new constant items in Item_equal objects */
-  Join *join= tab->join;
-  if (join->conds)
-    update_const_equal_items(join->conds, tab);
-  TableList *tbl;
-  for (tbl= join->select_lex->leaf_tables; tbl; tbl= tbl->next_leaf)
-  {
-    TableList *embedded;
-    TableList *embedding= tbl;
-    do
-    {
-      embedded= embedding;
-      if (embedded->on_expr)
-         update_const_equal_items(embedded->on_expr, tab);
-      embedding= embedded->getEmbedding();
-    }
-    while (embedding &&
-           embedding->getNestedJoin()->join_list.head() == embedded);
-  }
-
-  return(0);
-}
-
-int join_read_system(JoinTable *tab)
-{
-  Table *table= tab->table;
-  int error;
-  if (table->status & STATUS_GARBAGE)		// If first read
-  {
-    if ((error=table->cursor->read_first_row(table->getInsertRecord(),
-					   table->getShare()->getPrimaryKey())))
-    {
-      if (error != HA_ERR_END_OF_FILE)
-        return table->report_error(error);
-      tab->table->mark_as_null_row();
-      table->emptyRecord();			// Make empty record
-      return -1;
-    }
-    table->storeRecord();
-  }
-  else if (!table->status)			// Only happens with left join
-    table->restoreRecord();			// restore old record
-  table->null_row=0;
-  return table->status ? -1 : 0;
 }
 
 /**
@@ -5737,7 +5641,7 @@ Order *create_distinct_group(Session *session,
   {
     if (order->in_field_list)
     {
-      Order *ord=(Order*) session->memdup((char*) order,sizeof(Order));
+      Order *ord=(Order*) session->getMemRoot()->duplicate((char*) order,sizeof(Order));
       if (!ord)
         return 0;
       *prev=ord;
@@ -6392,7 +6296,7 @@ void print_join(Session *session, String *str,
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TableList> ti(*tables);
-  TableList **table= (TableList **)session->alloc(sizeof(TableList*) *
+  TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
     return;  // out of memory

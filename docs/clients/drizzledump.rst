@@ -199,6 +199,20 @@ single database.  Requires
 
 .. versionadded:: 2010-09-27
 
+.. option:: --my-data-is-mangled
+
+If your data is UTF8 but has been stored in a latin1 table using a latin1
+connection then corruption is likely and drizzledump by default will retrieve
+mangled data.  This is because MySQL will convert the data to UTF8 on the way
+out to drizzledump and you effectively get a double-conversion to UTF8.
+
+This typically happens with PHP apps that do not use 'SET NAMES'.
+
+In these cases setting this option will retrieve the data as you see it in your
+application.
+
+.. versionadded:: 2011-01-31
+
 .. option:: -h, --host hostname (=localhost)
 
 The hostname of the database server.
@@ -246,8 +260,12 @@ MySQL to Drizzle using :program:`drizzledump`.
 :program:`drizzledump` will automatically detect whether it is talking to a
 MySQL or Drizzle database server.  If it is connected to a MySQL server it will
 automatically convert all the structures and data into a Drizzle compatible 
-format.  It will, however, by default try to connect via. port 4427 so to
-connect to a MySQL server a port must be specified.
+format.
+
+.. warning::
+
+   :program:`drizzledump` will by default try to connect via. port 4427 so to
+   connect to a MySQL server a port (such as 3306) must be specified.
 
 So, simply connecting to a MySQL server with :program:`drizzledump` as follows
 will give you a Drizzle compatible output::
@@ -259,8 +277,15 @@ into a Drizzle server as follows::
 
 $ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
 
-Please take special note of :ref:`old-passwords-label` if you have connection
-issues from :program:`drizzledump` to your MySQL server.
+.. note::
+
+   Please take special note of :ref:`old-passwords-label` if you have connection
+   issues from :program:`drizzledump` to your MySQL server.
+
+.. note::
+   If you find your VARCHAR and TEXT data does not look correct in a drizzledump
+   output, it is likely that you have UTF8 data stored in a non-UTF8 table.  In
+   which case please check the :option:`--my-data-is-mangled` option.
 
 When you migrate from MySQL to Drizzle, the following conversions are required:
 
@@ -276,13 +301,16 @@ When you migrate from MySQL to Drizzle, the following conversions are required:
  * tinyblob -> blob
  * mediumblob -> blob
  * longblob -> blob
- * time -> int (of seconds)
  * year -> int
  * set -> text
  * date/datetime default 0000-00-00 -> default NULL (Currently, ALL date columns have their DEFAULT set to NULL on migration)
  * date/datetime NOT NULL columns -> NULL
  * any date data containing 0000-00-00 -> NULL
- * TIME -> INT of the number of seconds*
+ * time -> int of the number of seconds [1]_
  * enum-> DEFAULT NULL
 
-* This prevents data loss since MySQL's TIME data type has a range of -838:59:59 - 838:59:59, and Drizzle's TIME type has a range of 00:00:00 - 23:59:61.999999.
+.. rubric:: Footnotes
+
+.. [1] This prevents data loss since MySQL's TIME data type has a range of
+       -838:59:59 - 838:59:59, and Drizzle's TIME type has a range of
+       00:00:00 - 23:59:61.999999.

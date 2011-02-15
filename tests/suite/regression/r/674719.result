@@ -1,0 +1,16 @@
+START TRANSACTION;
+START TRANSACTION;
+Warnings:
+Warning	1746	There is already a transaction in progress
+ROLLBACK;
+CREATE TABLE t1 (a int);
+START TRANSACTION;
+INSERT INTO t1 VALUES (1);
+START TRANSACTION;
+Warnings:
+Warning	1746	There is already a transaction in progress
+INSERT INTO t1 VALUES (2);
+ROLLBACK;
+SELECT * FROM t1;
+a
+DROP TABLE t1;

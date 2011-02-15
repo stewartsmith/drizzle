@@ -43,7 +43,7 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
 {
   if (FunctionContainer::getMap().find(udf->getName()) != FunctionContainer::getMap().end())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("A function named %s already exists!\n"),
                   udf->getName().c_str());
     return true;
@@ -51,7 +51,7 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
 
   if (udf_registry.find(udf->getName()) != udf_registry.end())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("A function named %s already exists!\n"),
                   udf->getName().c_str());
     return true;
@@ -61,7 +61,7 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
     udf_registry.insert(make_pair(udf->getName(), udf));
   if (ret.second == false)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Could not add Function!\n"));
     return true;
   }
