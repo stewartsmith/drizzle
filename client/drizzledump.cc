@@ -58,7 +58,6 @@ namespace po= boost::program_options;
 #define EX_DRIZZLEERR 2
 #define EX_EOF 5 /* ferror for output file was got */
 
-bool opt_alltspcs= false;
 bool opt_complete_insert= false;
 bool  verbose= false;
 static bool use_drizzle_protocol= false;
@@ -463,8 +462,6 @@ try
   commandline_options.add_options()
   ("all-databases,A", po::value<bool>(&opt_alldbs)->default_value(false)->zero_tokens(),
   _("Dump all the databases. This will be same as --databases with all databases selected."))
-  ("all-tablespaces,Y", po::value<bool>(&opt_alltspcs)->default_value(false)->zero_tokens(),
-  _("Dump all the tablespaces."))
   ("complete-insert,c", po::value<bool>(&opt_complete_insert)->default_value(false)->zero_tokens(),
   _("Use complete insert statements."))
   ("flush-logs,F", po::value<bool>(&flush_logs)->default_value(false)->zero_tokens(),
