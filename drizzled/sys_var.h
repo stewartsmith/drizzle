@@ -72,7 +72,6 @@ extern bool opt_endinfo;
 extern uint32_t volatile thread_running;
 extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
-extern char *default_tz_name;
 extern const char *opt_scheduler;
 extern size_t transaction_message_threshold;
 

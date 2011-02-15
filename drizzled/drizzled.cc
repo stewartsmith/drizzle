@@ -308,7 +308,6 @@ fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
 
-char *default_tz_name;
 DRIZZLED_API char glob_hostname[FN_REFLEN];
 
 char *opt_tc_log_file;
