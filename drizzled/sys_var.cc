@@ -218,8 +218,6 @@ static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transactio
 
 static sys_var_session_storage_engine sys_storage_engine("storage_engine",
 				       &drizzle_system_variables::storage_engine);
-static sys_var_const_str	sys_system_time_zone("system_time_zone",
-                                             system_time_zone);
 static sys_var_size_t_ptr	sys_table_def_size("table_definition_cache",
                                              &table_def_size);
 static sys_var_uint64_t_ptr	sys_table_cache_size("table_open_cache",
@@ -1531,7 +1529,6 @@ int sys_var_init()
     add_sys_var_to_list(&sys_sql_notes, my_long_options);
     add_sys_var_to_list(&sys_sql_warnings, my_long_options);
     add_sys_var_to_list(&sys_storage_engine, my_long_options);
-    add_sys_var_to_list(&sys_system_time_zone, my_long_options);
     add_sys_var_to_list(&sys_table_cache_size, my_long_options);
     add_sys_var_to_list(&sys_table_def_size, my_long_options);
     add_sys_var_to_list(&sys_table_lock_wait_timeout, my_long_options);
