@@ -18,50 +18,56 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/slave/queue_thread.h"
-#include <drizzled/internal/my_pthread.h>
-#include <boost/thread.hpp>
+#ifndef PLUGIN_SLAVE_SQL_EXECUTOR_H
+#define PLUGIN_SLAVE_SQL_EXECUTOR_H
 
-using namespace drizzled;
+#include <string>
+#include <vector>
+#include <drizzled/session.h>
 
 namespace slave
 {
 
-void QueueThread::run(void)
+class SQLExecutor
 {
-  boost::posix_time::seconds duration(getSleepInterval());
+public:
 
-  /* thread setup needed to do things like create a Session */
-  internal::my_thread_init();
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
+  SQLExecutor(const std::string &user, const std::string &schema);
 
-  if (not init())
-    return;
-
-  while (1)
+  void markInErrorState()
   {
-    {
-      /* This uninterruptable block processes the message queue */
-      boost::this_thread::disable_interruption di;
-
-      if (not process())
-      {
-        shutdown();
-        return;
-      }
-    }
-
-    /* Interruptable only when not doing work (aka, sleeping) */
-    try
-    {
-      boost::this_thread::sleep(duration);
-    }
-    catch (boost::thread_interrupted &)
-    {
-      return;
-    }
+    _in_error_state= true;
   }
-}
+
+  void clearErrorState()
+  {
+    _in_error_state= false;
+  }
+
+  const std::string &getErrorMessage()
+  {
+    return _error_message;
+  }
+
+  /**
+   * Execute a batch of SQL statements.
+   *
+   * @param sql Batch of SQL statements to execute.
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool executeSQL(std::vector<std::string> &sql);
+
+protected:
+  drizzled::Session::shared_ptr _session;
+
+private:
+  bool _in_error_state;
+  std::string _error_message;
+
+};
 
 } /* namespace slave */
+
+#endif /* PLUGIN_SLAVE_SQL_EXECUTOR_H */

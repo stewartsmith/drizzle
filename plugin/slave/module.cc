@@ -20,10 +20,9 @@
 
 #include "config.h"
 #include "plugin/slave/replication_slave.h"
-#include "drizzled/plugin.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/configmake.h"   // for SYSCONFDIR
-#include "drizzled/module/option_map.h"
+#include <drizzled/plugin.h>
+#include <drizzled/configmake.h>   // for SYSCONFDIR
+#include <drizzled/module/option_map.h>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <string>
@@ -45,17 +44,7 @@ static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  ReplicationSlave *slave= new ReplicationSlave();
-
-  if (not slave->initWithConfig(vm["config-file"].as<string>()))
-  {
-    errmsg_printf(error::ERROR,
-                  _("Could not start slave services: %s\n"),
-                  slave->getError().c_str());
-    delete slave;
-    return 1;
-  }
-
+  ReplicationSlave *slave= new ReplicationSlave(vm["config-file"].as<string>());
   context.add(slave);
   return 0;
 }

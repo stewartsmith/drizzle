@@ -20,8 +20,9 @@
 
 #include "config.h"
 #include "plugin/slave/queue_producer.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/gettext.h"
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace drizzled;
@@ -40,49 +41,22 @@ bool QueueProducer::init()
   return openConnection();
 }
 
+/* TODO: Add ability to retry after an error */
 bool QueueProducer::process()
 {
-  // SLAVE QUERIES
-
-  /*
-  1. SELECT MAX(commit_order) FROM replication.queue
-  
-  2. If nothing from #1: SELECT last_applied_commit_id FROM replication.applier_state
-
-  5. INSERT INTO replication.queue (trx_id, seg_id, commit_order, msg)
-     VALUES (?, ?, ?, ?)
-   */
-
-  // MASTER QUERIES
-
-  /*
-  3. SELECT id FROM data_dictionary.sys_replication_log
-     WHERE commit_id > ?
-
-  4. SELECT id, segid, commit_id, message
-     FROM data_dictionary.sys_replication_log
-     WHERE id IN (?)
-   */
-
-  string id_query("");
-
-  drizzle_return_t ret;
-  drizzle_result_st result;
-  drizzle_result_create(&connection, &result);
-  drizzle_query_str(&connection, &result, id_query.c_str(), &ret);
-  
-  if (ret != DRIZZLE_RETURN_OK)
+  if (_saved_max_commit_id == 0)
   {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: %s\n"),
-                  drizzle_error(&drizzle));
-    /* TODO: put in a retry or similar */
+    if (not queryForMaxCommitId(&_saved_max_commit_id))
+    {
+      return false;
+    }
+  }
+
+  if (not queryForReplicationEvents(_saved_max_commit_id))
+  {
     return false;
   }
-  
-  /* Get list of completed transaction ids from master where commit_id > (max(commit_id) || last_applied_commit_id) */
-  /* Select from master where trx_id in list from above */
-  /* Insert into local queue */
+
   return true;
 }
 
@@ -96,31 +70,31 @@ bool QueueProducer::openConnection()
 {
   drizzle_return_t ret;
 
-  if (drizzle_create(&drizzle) == NULL)
+  if (drizzle_create(&_drizzle) == NULL)
   {
     errmsg_printf(error::ERROR,
                   _("Replication slave: Error during drizzle_create()\n"));
     return false;
   }
   
-  if (drizzle_con_create(&drizzle, &connection) == NULL)
+  if (drizzle_con_create(&_drizzle, &_connection) == NULL)
   {
     errmsg_printf(error::ERROR,
                   _("Replication slave: %s\n"),
-                  drizzle_error(&drizzle));
+                  drizzle_error(&_drizzle));
     return false;
   }
   
-  drizzle_con_set_tcp(&connection, _master_host.c_str(), _master_port);
-  drizzle_con_set_auth(&connection, _master_user.c_str(), _master_pass.c_str());
+  drizzle_con_set_tcp(&_connection, _master_host.c_str(), _master_port);
+  drizzle_con_set_auth(&_connection, _master_user.c_str(), _master_pass.c_str());
 
-  ret= drizzle_con_connect(&connection);
+  ret= drizzle_con_connect(&_connection);
 
   if (ret != DRIZZLE_RETURN_OK)
   {
     errmsg_printf(error::ERROR,
                   _("Replication slave: %s\n"),
-                  drizzle_error(&drizzle));
+                  drizzle_error(&_drizzle));
     return false;
   }
   
@@ -136,13 +110,111 @@ bool QueueProducer::closeConnection()
 
   _is_connected= false;
 
-  if (drizzle_quit(&connection, &result, &ret) == NULL)
+  if (drizzle_quit(&_connection, &result, &ret) == NULL)
   {
     return false;
   }
 
   drizzle_result_free(&result);
 
+  return true;
+}
+
+bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
+{
+  /*
+   * This SQL will get the maximum commit_id value we have pulled over from
+   * the master. We query two tables because either the queue will be empty,
+   * in which case the last_applied_commit_id will be the value we want, or
+   * we have yet to drain the queue,  we get the maximum value still in
+   * the queue.
+   */
+  string sql("SELECT MAX(x.cid) FROM"
+             " (SELECT MAX(commit_order) AS cid FROM replication.queue"
+             "  UNION ALL SELECT last_applied_commit_id AS cid"
+             "  FROM replication.applier_state) AS x");
+
+  (void)*max_commit_id;
+  return true;
+}
+
+bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
+{
+  //vector<uint64_t> trx_id_list;
+  (void)max_commit_id;
+
+  // SELECT id FROM data_dictionary.sys_replication_log WHERE commit_id > ?
+
+  string select_sql("SELECT id, segid, commit_id, message "
+                    " FROM data_dictionary.sys_replication_log WHERE id IN (");
+  // append from trx_id_list
+  select_sql.append(")");
+
+  string insert_sql("INSERT INTO replication.queue"
+                    " (trx_id, seg_id, commit_order, msg) VALUES (");
+  // append from results above
+  insert_sql.append(")");
+
+  drizzle_return_t ret;
+  drizzle_result_st result;
+  drizzle_result_create(&_connection, &result);
+  drizzle_query_str(&_connection, &result, select_sql.c_str(), &ret);
+  
+  if (ret != DRIZZLE_RETURN_OK)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: %s\n"),
+                  drizzle_error(&_drizzle));
+    return false;
+  }
+
+  printf("queryForMaxCommitId()\n");
+  printf("Result:     row_count=%" PRId64 "\n"
+         "            insert_id=%" PRId64 "\n"
+         "        warning_count=%u\n"
+         "         column_count=%u\n"
+         "        affected_rows=%" PRId64 "\n\n",
+         drizzle_result_row_count(&result),
+         drizzle_result_insert_id(&result),
+         drizzle_result_warning_count(&result),
+         drizzle_result_column_count(&result),
+         drizzle_result_affected_rows(&result));
+  fflush(stdout);
+
+  ret= drizzle_result_buffer(&result);
+
+  if (ret != DRIZZLE_RETURN_OK)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: %s\n"),
+                  drizzle_error(&_drizzle));
+    drizzle_result_free(&result);
+    return false;
+  }
+
+  /* only 1 row to process */
+  drizzle_row_t row;
+  if ((row= drizzle_row_next(&result)) == NULL)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: No results for max commit id\n"));
+    drizzle_result_free(&result);
+    return false;
+  }
+
+  if (row[0])
+  {
+    max_commit_id= boost::lexical_cast<uint32_t>(row[0]);
+  }
+  else
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: Unexpected NULL for max commit id\n"));
+    drizzle_result_free(&result);
+    return false;
+  }
+
+  drizzle_result_free(&result);
   return true;
 }
 

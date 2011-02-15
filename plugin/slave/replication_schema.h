@@ -18,50 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/slave/queue_thread.h"
-#include <drizzled/internal/my_pthread.h>
-#include <boost/thread.hpp>
+#ifndef PLUGIN_SLAVE_REPLICATION_SCHEMA_H
+#define PLUGIN_SLAVE_REPLICATION_SCHEMA_H
 
-using namespace drizzled;
+#include "plugin/slave/sql_executor.h"
 
 namespace slave
 {
 
-void QueueThread::run(void)
+class ReplicationSchema : public SQLExecutor
 {
-  boost::posix_time::seconds duration(getSleepInterval());
+public:
+  ReplicationSchema() : SQLExecutor("slave", "replication")
+  { }
 
-  /* thread setup needed to do things like create a Session */
-  internal::my_thread_init();
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
-
-  if (not init())
-    return;
-
-  while (1)
-  {
-    {
-      /* This uninterruptable block processes the message queue */
-      boost::this_thread::disable_interruption di;
-
-      if (not process())
-      {
-        shutdown();
-        return;
-      }
-    }
-
-    /* Interruptable only when not doing work (aka, sleeping) */
-    try
-    {
-      boost::this_thread::sleep(duration);
-    }
-    catch (boost::thread_interrupted &)
-    {
-      return;
-    }
-  }
-}
+  bool create();
+};
 
 } /* namespace slave */
+
+#endif /* PLUGIN_SLAVE_REPLICATION_SCHEMA_H */

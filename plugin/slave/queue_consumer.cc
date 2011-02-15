@@ -20,15 +20,11 @@
 
 #include "config.h"
 #include "plugin/slave/queue_consumer.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/message/statement_transform.h"
-#include "drizzled/plugin/listen.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/catalog/local.h"
-#include "drizzled/execute.h"
-#include "drizzled/internal/my_pthread.h"
-#include "drizzled/sql/result_set.h"
-#include "drizzled/errmsg_print.h"
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/statement_transform.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/sql/result_set.h>
+#include <drizzled/execute.h>
 #include <string>
 #include <vector>
 #include <boost/thread.hpp>
@@ -43,24 +39,14 @@ namespace slave
 
 bool QueueConsumer::init()
 {
-  /* setup a Session object */
-  _session= Session::make_shared(plugin::Listen::getNullClient(),
-                                 catalog::local());
-  identifier::User::shared_ptr user= identifier::User::make_shared();
-  user->setUser("slave");
-  _session->setUser(user);
-  _session->set_db("replication");
-
-  if (not createApplierSchemaAndTables())
-    return false;
-
+  setApplierState("", true);
   return true;
 }
 
 
 void QueueConsumer::shutdown()
 {
-  setApplierState(_error_message, false);
+  setApplierState(getErrorMessage(), false);
 }
 
 
@@ -96,7 +82,7 @@ bool QueueConsumer::process()
 
     if (not aggregate_sql.empty())
     {
-      if (not executeSQL(aggregate_sql, commit_id))
+      if (not executeSQLWithCommitId(aggregate_sql, commit_id))
       {
         return false;
       }
@@ -112,71 +98,6 @@ bool QueueConsumer::process()
 }
 
 
-bool QueueConsumer::createApplierSchemaAndTables()
-{
-  vector<string> sql;
- 
-  sql.push_back("COMMIT");
-  sql.push_back("CREATE SCHEMA IF NOT EXISTS replication");
-  
-  if (not executeSQL(sql))
-    return false;
-  
-  /*
-   * Create our applier thread state information table if we need to.
-   */
-
-  sql.clear();
-  sql.push_back("COMMIT");
-  sql.push_back("CREATE TABLE IF NOT EXISTS replication.applier_state"
-                " (last_applied_commit_id BIGINT NOT NULL PRIMARY KEY,"
-                " status VARCHAR(20) NOT NULL,"
-                " error_msg VARCHAR(250))");
-  
-  if (not executeSQL(sql))
-    return false;
-
-  sql.clear();
-  sql.push_back("SELECT COUNT(*) FROM replication.applier_state");
-  
-  sql::ResultSet result_set(1);
-  Execute execute(*(_session.get()), true);
-  execute.run(sql[0], result_set);
-  result_set.next();
-  string count= result_set.getString(0);
-
-  /* Must always be at least one row in the table */
-  if (count == "0")
-  {
-    sql.clear();
-    sql.push_back("INSERT INTO replication.applier_state"
-                  " (last_applied_commit_id, status)"
-                  " VALUES (0, 'RUNNING')");
-    if (not executeSQL(sql))
-      return false;
-  }
-  else
-  {
-    setApplierState("", true);
-  }
-
-  /*
-   * Create our message queue table if we need to.
-   */
-
-  sql.clear();
-  sql.push_back("COMMIT");
-  sql.push_back("CREATE TABLE IF NOT EXISTS replication.queue"
-                " (trx_id BIGINT NOT NULL, seg_id INT NOT NULL,"
-                " commit_order INT, msg BLOB, PRIMARY KEY(trx_id, seg_id))");
-
-  if (not executeSQL(sql))
-    return false;
-                
-  return true;
-}  
-  
-  
 bool QueueConsumer::getMessage(message::Transaction &transaction,
                               string &commit_id,
                               uint64_t trx_id,
@@ -415,8 +336,8 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
 }
 
 
-bool QueueConsumer::executeSQL(vector<string> &sql,
-                              const string &commit_id)
+bool QueueConsumer::executeSQLWithCommitId(vector<string> &sql,
+                                           const string &commit_id)
 {
   string tmp("UPDATE replication.applier_state"
              " SET last_applied_commit_id = ");
@@ -424,61 +345,6 @@ bool QueueConsumer::executeSQL(vector<string> &sql,
   sql.push_back(tmp);
   
   return executeSQL(sql);
-}
-
-
-bool QueueConsumer::executeSQL(vector<string> &sql)
-{
-  string combined_sql;
-
-  if (not _in_error_state)
-    _error_message.clear();
-
-  Execute execute(*(_session.get()), true);
-
-  vector<string>::iterator iter= sql.begin();
-
-  while (iter != sql.end())
-  {
-    combined_sql.append(*iter);
-    combined_sql.append("; ");
-    ++iter;
-  }
-
-  sql::ResultSet result_set(1);
-
-  /* Execute wraps the SQL to run within a transaction */
-  execute.run(combined_sql, result_set);
-
-  sql::Exception exception= result_set.getException();
-  
-  drizzled::error_t err= exception.getErrorCode();
-
-  if ((err != drizzled::EE_OK) && (err != drizzled::ER_EMPTY_QUERY))
-  {
-    /* avoid recursive errors from setApplierState() */
-    if (_in_error_state)
-      return true;
-
-    _in_error_state= true;
-    _error_message= "(SQLSTATE ";
-    _error_message.append(exception.getSQLState());
-    _error_message.append(") ");
-    _error_message.append(exception.getErrorMessage());
-
-    string bad_sql("Slave failed while executing:\n");
-    for (size_t y= 0; y < sql.size(); y++)
-    {
-      bad_sql.append(sql[y]);
-      bad_sql.append("\n");
-    }
-
-    errmsg_printf(error::ERROR, _("%s\n%s\n"),
-                  _error_message.c_str(), bad_sql.c_str());
-    return false;
-  }
-
-  return true;
 }
 
 

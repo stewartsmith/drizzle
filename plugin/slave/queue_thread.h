@@ -21,6 +21,8 @@
 #ifndef PLUGIN_SLAVE_QUEUE_THREAD_H
 #define PLUGIN_SLAVE_QUEUE_THREAD_H
 
+#include <drizzled/internal/my_pthread.h>
+
 namespace slave
 {
 

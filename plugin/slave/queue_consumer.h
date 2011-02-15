@@ -22,7 +22,8 @@
 #define PLUGIN_SLAVE_QUEUE_CONSUMER_H
 
 #include "plugin/slave/queue_thread.h"
-#include "drizzled/session.h"
+#include "plugin/slave/sql_executor.h"
+#include <drizzled/session.h>
 
 namespace drizzled
 {
@@ -35,11 +36,12 @@ namespace drizzled
 namespace slave
 {
 
-class QueueConsumer : public QueueThread
+class QueueConsumer : public QueueThread, public SQLExecutor
 {
 public:
   QueueConsumer() :
-    _in_error_state(false),
+    QueueThread(),
+    SQLExecutor("slave", "replication"),
     _check_interval(5)
   { }
 
@@ -68,22 +70,8 @@ public:
 private:
   typedef std::vector<uint64_t> TrxIdList;
 
-  drizzled::Session::shared_ptr _session;
-
-  bool _in_error_state;
-  std::string _error_message;
-
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
-
-  /**
-   * Create the schema and tables (if necessary) that will store
-   * information about replication state of the applier thread.
-   *
-   * @retval true Success
-   * @retval false Failure
-   */
-  bool createApplierSchemaAndTables();
 
   bool getListOfCompletedTransactions(TrxIdList &list);
 
@@ -115,10 +103,8 @@ private:
    * @retval true Success
    * @retval false Failure
    */
-  bool executeSQL(std::vector<std::string> &sql,
-                  const std::string &commit_id);
-
-  bool executeSQL(std::vector<std::string> &sql);
+  bool executeSQLWithCommitId(std::vector<std::string> &sql,
+                              const std::string &commit_id);
   
   /**
    * Remove messages for a given transaction from the queue.

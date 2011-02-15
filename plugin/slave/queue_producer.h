@@ -22,19 +22,23 @@
 #define PLUGIN_SLAVE_QUEUE_PRODUCER_H
 
 #include "plugin/slave/queue_thread.h"
+#include "plugin/slave/sql_executor.h"
 #include "client/client_priv.h"
 #include <string>
+#include <vector>
 
 namespace slave
 {
   
-class QueueProducer : public QueueThread
+class QueueProducer : public QueueThread, public SQLExecutor
 {
 public:
   QueueProducer() :
+    SQLExecutor("slave", "replication"),
     _check_interval(5),
     _master_port(3306),
-    _is_connected(false)
+    _is_connected(false),
+    _saved_max_commit_id(0)
   {}
 
   virtual ~QueueProducer();
@@ -83,13 +87,16 @@ private:
   std::string _master_user;
   std::string _master_pass;
 
-  drizzle_st drizzle;
-  drizzle_con_st connection;
+  drizzle_st _drizzle;
+  drizzle_con_st _connection;
 
   bool _is_connected;
+  uint32_t _saved_max_commit_id;
 
   bool openConnection();
   bool closeConnection();
+  bool queryForMaxCommitId(uint32_t *max_commit_id);
+  bool queryForReplicationEvents(uint32_t max_commit_id);
 };
 
 } /* namespace slave */
