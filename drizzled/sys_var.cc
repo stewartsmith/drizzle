@@ -61,6 +61,7 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/constrained_value.h"
 #include "drizzled/visibility.h"
+#include "drizzled/typelib.h"
 #include "drizzled/plugin/storage_engine.h"
 
 #include <cstdio>
@@ -859,7 +860,7 @@ bool sys_var::check_enum(Session *,
       goto err;
     }
 
-    uint64_t tmp_val= find_type(enum_names, res->ptr(), res->length(),1);
+    uint64_t tmp_val= enum_names->find_type(res->ptr(), res->length(), true);
     if (tmp_val == 0)
     {
       value= res->c_ptr();

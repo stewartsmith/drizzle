@@ -24,7 +24,7 @@
 #include <drizzled/plugin/storage_engine.h>
 
 #include "drizzled/internal/my_sys.h"
-
+#include "drizzled/typelib.h"
 
 /* For proto */
 #include <string>

@@ -76,7 +76,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <plugin/myisam/myisam.h>
-
+#include <drizzled/typelib.h>
 #include "drizzled/visibility.h"
 
 #include <google/protobuf/stubs/common.h>
