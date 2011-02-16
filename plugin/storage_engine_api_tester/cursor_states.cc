@@ -31,7 +31,11 @@ void load_cursor_state_transitions(state_multimap &states);
 void load_cursor_state_transitions(state_multimap &states)
 {
   states.insert(state_pair("Cursor()", "::doOpen()"));
+  states.insert(state_pair("::doOpen()", "::extra()"));
+  states.insert(state_pair("::extra()", "::external_lock()"));
+  states.insert(state_pair("::extra()", "::store_lock()"));
   states.insert(state_pair("::doOpen()", "::store_lock()"));
+  states.insert(state_pair("locked", "::extra()"));
 
   // only in alter table
   states.insert(state_pair("::doOpen()", "::external_lock()"));
@@ -45,6 +49,7 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("locked", "::scan_time()"));
   states.insert(state_pair("::scan_time()", "locked"));
   states.insert(state_pair("::scan_time()", "::scan_time()"));
+
 
   // we can always set a new lock
   states.insert(state_pair("::store_lock()", "::store_lock()"));
@@ -61,6 +66,10 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("locked", "::doStartTableScan()"));
   states.insert(state_pair("::doStartTableScan()", "::rnd_next()"));
   states.insert(state_pair("::doStartTableScan()", "::rnd_pos()"));
+  states.insert(state_pair("::doStartTableScan()", "::extra()"));
+  states.insert(state_pair("::extra()", "::rnd_next()"));
+  states.insert(state_pair("::extra()", "::rnd_pos()"));
+
   states.insert(state_pair("::rnd_pos()", "::rnd_pos()"));
   states.insert(state_pair("::rnd_pos()", "::doUpdateRecord()"));
 
@@ -69,6 +78,10 @@ void load_cursor_state_transitions(state_multimap &states)
 
   states.insert(state_pair("::rnd_next()", "::doEndTableScan()"));
   states.insert(state_pair("::rnd_next()", "::rnd_next()"));
+  states.insert(state_pair("::doEndTableScan()", "::extra()"));
+  states.insert(state_pair("::extra()", "::close()"));
+  states.insert(state_pair("::extra()", "::doStartTableScan()"));
+
   states.insert(state_pair("::doEndTableScan()", "::close()"));
   states.insert(state_pair("::doEndTableScan()", "::doStartTableScan()"));
 
