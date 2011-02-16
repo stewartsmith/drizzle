@@ -50,7 +50,6 @@ namespace drizzled
 #define STRERROR_MAX 256
 
 /* extra 4+4 bytes for slave tmp tables */
-#define MAX_DBKEY_LENGTH (NAME_LEN*2+1+1+4+4)
 #define MAX_FIELD_NAME 34			/* Max colum name length +2 */
 #define MAX_SYS_VAR_LENGTH 32
 #define MAX_INDEXES 64
