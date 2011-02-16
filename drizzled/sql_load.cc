@@ -26,7 +26,6 @@
 #include <drizzled/field/epoch.h>
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
-#include <drizzled/db.h>
 #include "drizzled/plugin/storage_engine.h"
 
 #include <sys/stat.h>

@@ -323,13 +323,8 @@ public:
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
-  static int getTableDefinition(Session& session,
-                                const drizzled::identifier::Table &identifier,
-                                message::table::shared_ptr &table_proto,
-                                bool include_temporary_tables= true);
   static message::table::shared_ptr getTableMessage(Session& session,
                                                     const drizzled::identifier::Table &identifier,
-                                                    drizzled::error_t &error,
                                                     bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::identifier::Table &identifier,
@@ -362,8 +357,8 @@ public:
 
   // @note All schema methods defined here
   static void getIdentifiers(Session &session, identifier::Schema::vector &schemas);
-  static bool getSchemaDefinition(const drizzled::identifier::Table &identifier, message::schema::shared_ptr &proto);
-  static bool getSchemaDefinition(const drizzled::identifier::Schema &identifier, message::schema::shared_ptr &proto);
+  static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Table &identifier);
+  static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Schema &identifier);
   static bool doesSchemaExist(const drizzled::identifier::Schema &identifier);
   static const CHARSET_INFO *getSchemaCollation(const drizzled::identifier::Schema &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
@@ -375,9 +370,9 @@ protected:
   virtual void doGetSchemaIdentifiers(identifier::Schema::vector&)
   { }
 
-  virtual bool doGetSchemaDefinition(const drizzled::identifier::Schema&, drizzled::message::schema::shared_ptr&)
+  virtual drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&)
   { 
-    return false; 
+    return drizzled::message::schema::shared_ptr(); 
   }
 
   virtual bool doCreateSchema(const drizzled::message::Schema&)

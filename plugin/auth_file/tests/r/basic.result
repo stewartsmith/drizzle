@@ -1,5 +1,5 @@
 connect(localhost,bad_user,,test,MASTER_PORT,);
-ERROR 28000: Access denied for user 'bad_user'@'LOCALHOST' (using password: NO)
+ERROR 28000: Access denied for user 'bad_user' (using password: NO)
 SELECT 1;
 1
 1
@@ -7,6 +7,6 @@ SELECT 1;
 1
 1
 connect(localhost,auth_file_password,bad_password,test,MASTER_PORT,);
-ERROR 28000: Access denied for user 'auth_file_password'@'LOCALHOST' (using password: YES)
+ERROR 28000: Access denied for user 'auth_file_password' (using password: YES)
 1
 1

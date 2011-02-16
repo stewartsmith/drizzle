@@ -37,7 +37,6 @@ ShowCreateSchema::ShowCreateSchema() :
 
 ShowCreateSchema::Generator::Generator(Field **arg) :
   show_dictionary::Show::Generator(arg),
-  is_primed(false),
   if_not_exists(false)
 {
   if (not isShowQuery())
@@ -50,8 +49,7 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
     schema_name.append(select->getShowTable());
     identifier::Schema identifier(select->getShowSchema());
 
-    is_primed= plugin::StorageEngine::getSchemaDefinition(identifier,
-                                                          schema_message);
+    schema_message= plugin::StorageEngine::getSchemaDefinition(identifier);
 
     if_not_exists= select->getShowExists();
   }
@@ -59,7 +57,7 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
 
 bool ShowCreateSchema::Generator::populate()
 {
-  if (not is_primed)
+  if (not schema_message)
     return false;
 
   std::string buffer;
@@ -84,7 +82,8 @@ bool ShowCreateSchema::Generator::populate()
 
   push(schema_message->name());
   push(buffer);
-  is_primed= false;
+
+  schema_message.reset();
 
   return true;
 }
