@@ -3231,11 +3231,7 @@ static void calc_group_buffer(Join *join, Order *group)
             have STRING_RESULT result type, we increase the length
             by 8 as maximum pack length of such fields.
           */
-          if (type == DRIZZLE_TYPE_DATE ||
-              type == DRIZZLE_TYPE_TIME ||
-              type == DRIZZLE_TYPE_DATETIME ||
-              type == DRIZZLE_TYPE_MICROTIME ||
-              type == DRIZZLE_TYPE_TIMESTAMP)
+          if (field::isDateTime(type))
           {
             key_length+= 8;
           }
@@ -4044,7 +4040,7 @@ static void best_access_path(Join *join,
         will ensure that this will be used
       */
       best= tmp;
-      records= rows2double(rnd_records);
+      records= rnd_records;
       best_key= 0;
       /* range/index_merge/ALL/index access method are "independent", so: */
       best_ref_depends_map= 0;
@@ -4795,7 +4791,7 @@ static bool make_join_select(Join *join,
         tab->ref.key= -1;
         tab->ref.key_parts= 0;		// Don't use ref key.
         cur_pos= join->getPosFromOptimalPlan(i);
-        cur_pos.setFanout(rows2double(tab->quick->records));
+        cur_pos.setFanout(tab->quick->records);
         /*
            We will use join cache here : prevent sorting of the first
            table only and sort at the end.

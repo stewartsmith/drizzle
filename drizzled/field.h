@@ -471,9 +471,8 @@ public:
   int64_t val_int_internal(const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
-    int64_t return_value;
     ptr= const_cast<unsigned char*>(new_ptr);
-    return_value= val_int();
+    int64_t return_value= val_int();
     ptr= old_ptr;
     return return_value;
   }
@@ -767,6 +766,38 @@ protected:
   uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const;
   uint32_t unpack_num(uint32_t &destination, const unsigned char *arg= NULL) const;
 };
+
+namespace field {
+
+inline bool isDateTime(const enum_field_types &arg)
+{
+  switch (arg)
+  {
+  case DRIZZLE_TYPE_DATE:
+  case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_MICROTIME:
+  case DRIZZLE_TYPE_TIME:
+  case DRIZZLE_TYPE_TIMESTAMP:
+    return true;
+
+  case DRIZZLE_TYPE_BLOB:
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_DECIMAL:
+  case DRIZZLE_TYPE_DOUBLE:
+  case DRIZZLE_TYPE_ENUM:
+  case DRIZZLE_TYPE_LONG:
+  case DRIZZLE_TYPE_LONGLONG:
+  case DRIZZLE_TYPE_NULL:
+  case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_VARCHAR:
+    return false;
+  }
+
+  assert(0);
+  abort();
+}
+
+} // namespace field
 
 std::ostream& operator<<(std::ostream& output, const Field &field);
 

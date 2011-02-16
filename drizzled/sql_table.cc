@@ -27,7 +27,6 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include "drizzled/strfunc.h"
-#include <drizzled/db.h>
 #include <drizzled/lock.h>
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
@@ -42,7 +41,6 @@
 #include "drizzled/charset.h"
 
 #include "drizzled/definition/cache.h"
-
 
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/sql_table.h"
@@ -1231,7 +1229,7 @@ static int prepare_create_table(Session *session,
 
     if (session->variables.sql_mode & MODE_NO_ZERO_DATE &&
         !sql_field->def &&
-        sql_field->sql_type == DRIZZLE_TYPE_TIMESTAMP &&
+        (sql_field->sql_type == DRIZZLE_TYPE_TIMESTAMP  or sql_field->sql_type == DRIZZLE_TYPE_MICROTIME) &&
         (sql_field->flags & NOT_NULL_FLAG) &&
         (type == Field::NONE || type == Field::TIMESTAMP_UN_FIELD))
     {
@@ -2002,9 +2000,8 @@ static bool create_table_wrapper(Session &session,
   // a "new" message and it will not have all of the information that the
   // source table message would have.
   message::Table new_table_message;
-  drizzled::error_t error;
 
-  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier, error);
+  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier);
 
   if (not source_table_message)
   {

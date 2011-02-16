@@ -19,11 +19,13 @@
  */
 
 #include "config.h"
+
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_schema.h>
-#include <drizzled/db.h>
 #include <drizzled/plugin/event_observer.h>
+
+#include <drizzled/schema.h>
 
 #include <string>
 
@@ -42,7 +44,7 @@ bool statement::DropSchema::execute()
 
   identifier::Schema schema_identifier(std::string(getSession()->lex->name.str, getSession()->lex->name.length));
 
-  if (not check_db_name(getSession(), schema_identifier))
+  if (not schema::check(*getSession(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
@@ -66,7 +68,7 @@ bool statement::DropSchema::execute()
   }
   else
   {
-    res= rm_db(getSession(), schema_identifier, drop_if_exists);
+    res= schema::drop(*getSession(), schema_identifier, drop_if_exists);
     if (unlikely(plugin::EventObserver::afterDropDatabase(*getSession(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());

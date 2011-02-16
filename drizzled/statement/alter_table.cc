@@ -119,7 +119,7 @@ bool statement::AlterTable::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (plugin::StorageEngine::getTableDefinition(*getSession(), identifier, original_table_message) != EEXIST)
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
@@ -1525,8 +1525,8 @@ copy_data_between_tables(Session *session,
         from->sort.io_cache= new internal::IO_CACHE;
 
         tables.table= from;
-        tables.setTableName(const_cast<char *>(from->getMutableShare()->getTableName()));
-        tables.alias= const_cast<char *>(tables.getTableName());
+        tables.setTableName(from->getMutableShare()->getTableName());
+        tables.alias= tables.getTableName();
         tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
         error= 1;
 

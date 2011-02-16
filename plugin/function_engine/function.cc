@@ -73,9 +73,9 @@ void Function::doGetSchemaIdentifiers(identifier::Schema::vector& schemas)
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
 }
 
-bool Function::doGetSchemaDefinition(const identifier::Schema &schema_identifier, message::schema::shared_ptr &schema_message)
+drizzled::message::schema::shared_ptr Function::doGetSchemaDefinition(const identifier::Schema &schema_identifier)
 {
-  schema_message.reset(new message::Schema); // This should be fixed, we could just be using ones we built on startup.
+  drizzled::message::schema::shared_ptr schema_message;
 
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
   {
@@ -87,10 +87,10 @@ bool Function::doGetSchemaDefinition(const identifier::Schema &schema_identifier
   }
   else
   {
-    return false;
+    return drizzled::message::schema::shared_ptr();
   }
 
-  return true;
+  return schema_message;
 }
 
 bool Function::doCanCreateTable(const drizzled::identifier::Table &table_identifier)

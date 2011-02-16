@@ -27,7 +27,7 @@ t3
 rename table t3 to t1, t2 to t3, t1 to t2, t4 to t1;
 Got one of the listed errors
 rename table t3 to t4, t5 to t3, t1 to t2, t4 to t1;
-ERROR 42S02: Table 'test.t5' doesn't exist
+ERROR 42S02: Unknown table 'test.t5'
 select * from t1;
 a	b
 1	table 1

@@ -34,7 +34,6 @@
 #include "drizzled/field_iterator.h"
 #include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
-#include "drizzled/table_list.h"
 #include "drizzled/table/instance.h"
 #include "drizzled/atomics.h"
 #include "drizzled/query_id.h"
@@ -840,7 +839,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 
 DRIZZLED_API int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
-bool check_db_name(Session *session, identifier::Schema &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */

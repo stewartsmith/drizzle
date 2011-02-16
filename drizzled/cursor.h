@@ -276,9 +276,9 @@ public:
 
   /* Estimates calculation */
   virtual double scan_time(void)
-  { return uint64_t2double(stats.data_file_length) / IO_SIZE + 2; }
+  { return static_cast<double>(stats.data_file_length) / IO_SIZE + 2; }
   virtual double read_time(uint32_t, uint32_t ranges, ha_rows rows)
-  { return rows2double(ranges+rows); }
+  { return ranges + rows; }
 
   virtual double index_only_read_time(uint32_t keynr, double records);
 

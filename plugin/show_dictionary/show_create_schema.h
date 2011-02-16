@@ -30,7 +30,6 @@ public:
 
   class Generator : public show_dictionary::Show::Generator 
   {
-    bool is_primed;
     bool if_not_exists;
     std::string schema_name;
     drizzled::message::schema::shared_ptr schema_message;

@@ -323,13 +323,8 @@ public:
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
-  static int getTableDefinition(Session& session,
-                                const drizzled::identifier::Table &identifier,
-                                message::table::shared_ptr &table_proto,
-                                bool include_temporary_tables= true);
   static message::table::shared_ptr getTableMessage(Session& session,
                                                     const drizzled::identifier::Table &identifier,
-                                                    drizzled::error_t &error,
                                                     bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::identifier::Table &identifier,
@@ -362,8 +357,8 @@ public:
 
   // @note All schema methods defined here
   static void getIdentifiers(Session &session, identifier::Schema::vector &schemas);
-  static bool getSchemaDefinition(const drizzled::identifier::Table &identifier, message::schema::shared_ptr &proto);
-  static bool getSchemaDefinition(const drizzled::identifier::Schema &identifier, message::schema::shared_ptr &proto);
+  static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Table &identifier);
+  static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Schema &identifier);
   static bool doesSchemaExist(const drizzled::identifier::Schema &identifier);
   static const CHARSET_INFO *getSchemaCollation(const drizzled::identifier::Schema &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
@@ -375,9 +370,9 @@ protected:
   virtual void doGetSchemaIdentifiers(identifier::Schema::vector&)
   { }
 
-  virtual bool doGetSchemaDefinition(const drizzled::identifier::Schema&, drizzled::message::schema::shared_ptr&)
+  virtual drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&)
   { 
-    return false; 
+    return drizzled::message::schema::shared_ptr(); 
   }
 
   virtual bool doCreateSchema(const drizzled::message::Schema&)
@@ -404,15 +399,15 @@ public:
   Cursor *getCursor(Table &share);
 
   uint32_t max_record_length() const
-  { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
+  { return std::min(HA_MAX_REC_LENGTH, max_supported_record_length()); }
   uint32_t max_keys() const
-  { return std::min((unsigned int)MAX_KEY, max_supported_keys()); }
+  { return std::min(MAX_KEY, max_supported_keys()); }
   uint32_t max_key_parts() const
-  { return std::min((unsigned int)MAX_REF_PARTS, max_supported_key_parts()); }
+  { return std::min(MAX_REF_PARTS, max_supported_key_parts()); }
   uint32_t max_key_length() const
-  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_length()); }
+  { return std::min(MAX_KEY_LENGTH, max_supported_key_length()); }
   uint32_t max_key_part_length(void) const
-  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_part_length()); }
+  { return std::min(MAX_KEY_LENGTH, max_supported_key_part_length()); }
 
   virtual uint32_t max_supported_record_length(void) const
   { return HA_MAX_REC_LENGTH; }
