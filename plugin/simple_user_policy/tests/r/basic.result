@@ -19,11 +19,11 @@ DATA_DICTIONARY
 INFORMATION_SCHEMA
 user1
 SELECT * from user2.dont_exist;
-ERROR 42000: Access denied for user 'user1@127.0.0.1' to schema 'user2'
+ERROR 42000: Access denied for user 'user1' to schema 'user2'
 create schema authorize_fail;
-ERROR 42000: Access denied for user 'user1@127.0.0.1' to schema 'authorize_fail'
+ERROR 42000: Access denied for user 'user1' to schema 'authorize_fail'
 drop schema user2;
-ERROR 42000: Access denied for user 'user1@127.0.0.1' to schema 'user2'
+ERROR 42000: Access denied for user 'user1' to schema 'user2'
 create table t1 (kill_id int);
 insert into t1 values(connection_id());
 SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
@@ -67,6 +67,6 @@ select @id != connection_id();
 @id != connection_id()
 1
 connect(localhost,authz,,authz_no,MASTER_PORT,);
-ERROR 42000: Access denied for user 'authz@127.0.0.1' to schema 'authz_no'
+ERROR 42000: Access denied for user 'authz' to schema 'authz_no'
 drop schema user1;
 drop schema user2;
