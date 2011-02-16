@@ -127,9 +127,7 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
     assert(result_set.isNull(0) == false);
     assert(result_set.isNull(1) == false);
 
-printf("MESSAGE: %s", msg.c_str()); fflush(stdout);
     google::protobuf::TextFormat::ParseFromString(msg, &transaction);
-printf("RETURNED FROM PARSING\n"); fflush(stdout);
 
     commit_id= com_id;
     found_rows++;

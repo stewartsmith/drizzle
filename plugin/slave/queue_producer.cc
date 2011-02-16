@@ -71,8 +71,6 @@ bool QueueProducer::process()
     }
   }
 
-  printf("_saved_max_commit_id = %d\n", _saved_max_commit_id); fflush(stdout);
-
   if (not queryForReplicationEvents(_saved_max_commit_id))
   {
     if (_last_return == DRIZZLE_RETURN_LOST_CONNECTION)
@@ -312,8 +310,10 @@ bool QueueProducer::queueInsert(const char *trx_id,
   string message_text;
   google::protobuf::TextFormat::PrintToString(message, &message_text);  
 
-  /* escape embedded quotes */
-/*
+  /*
+   * Escape embedded quotes. client->pushSQL() will remove double quotes
+   * if we don't escape them.
+   */
   string::iterator it= message_text.begin();
   for (; it != message_text.end(); ++it)
   {
@@ -322,8 +322,12 @@ bool QueueProducer::queueInsert(const char *trx_id,
       it= message_text.insert(it, '\'');
       ++it;
     }
+    else if (*it == '\"')
+    {
+      it= message_text.insert(it, '\\');
+      ++it;
+    }
   }
-*/
 
   sql.append(message_text);
   sql.append("')", 2);
@@ -349,9 +353,8 @@ bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
   if (not queryForTrxIdList(max_commit_id, trx_id_list))
     return false;
 
-  if (trx_id_list.size() == 0)    /* nothing to get */
+  if (trx_id_list.size() == 0)    /* nothing to get from the master */
   {
-    printf("no results from master\n"); fflush(stdout);
     return true;
   }
 
