@@ -4,12 +4,16 @@ Installing in RedHat and Fedora
 Using RPMs
 ----------
 We have a custom RedHat/Fedora repository at
-http://5dollarwhitebox.org/repos/drizzle/dev/ which includes everything needed
-to install or compile Drizzle on RedHat 5 and 6 as well as Fedora 12 - 14.
+http://rpm.drizzle.org/7-dev/ which includes everything needed
+to install or compile Drizzle on RedHat 5 and 6 as well as Fedora 13 - 14.
 
-A pre-requisite of this repository is that the
+A pre-requisite of this repository in RedHat is that the
 `EPEL <http://fedoraproject.org/wiki/EPEL>`_ repository is also added to your
 distribution.
+
+.. note::
+
+   The EPEL repository is not required in Fedora.
 
 To add that repository, run the following command::
 
@@ -21,13 +25,13 @@ To add the repository to your distribution you also need to create a /etc/yum.re
 
    [drizzle]
    name=drizzle
-   baseurl=http://5dollarwhitebox.org/repos/drizzle/dev/Redhat/$releasever/$basearch/
+   baseurl=http://rpm.drizzle.org/7-dev/redhat/$releasever/$basearch/
    enabled=1
    gpgcheck=0
 
    [drizzle-src]
    name=drizzle-src
-   baseurl=http://5dollarwhitebox.org/repos/drizzle/dev/Redhat/$releasever/SRPMS
+   baseurl=http://rpm.drizzle.org/7-dev/redhat/$releasever/SRPMS
    enabled=1
    gpgcheck=0
 
@@ -35,13 +39,13 @@ To add the repository to your distribution you also need to create a /etc/yum.re
 
    [drizzle]
    name=drizzle
-   baseurl=http://5dollarwhitebox.org/repos/drizzle/dev/Fedora/$releasever/$basearch/
+   baseurl=http://rpm.drizzle.org/7-dev/fedora/$releasever/$basearch/
    enabled=1
    gpgcheck=0
 
    [drizzle-src]
    name=drizzle-src
-   baseurl=http://5dollarwhitebox.org/repos/drizzle/dev/Fedora/$releasever/SRPMS
+   baseurl=http://rpm.drizzle.org/7-dev/fedora/$releasever/SRPMS
    enabled=1
    gpgcheck=0
 
