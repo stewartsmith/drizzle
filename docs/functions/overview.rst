@@ -10,6 +10,7 @@ Several SQL functions are built into Drizzle--functions perform calculations on 
    mathematical
    datetime
    aggregatefunctions
+   control_flow
    string
    scalarfunctions
   
