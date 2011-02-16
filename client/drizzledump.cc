@@ -56,27 +56,7 @@ namespace po= boost::program_options;
 
 #define EX_USAGE 1
 #define EX_DRIZZLEERR 2
-#define EX_CONSCHECK 3
-#define EX_EOM 4
 #define EX_EOF 5 /* ferror for output file was got */
-#define EX_ILLEGAL_TABLE 6
-#define EX_TABLE_STATUS 7
-
-/* index into 'show fields from table' */
-
-#define SHOW_FIELDNAME  0
-#define SHOW_TYPE  1
-#define SHOW_NULL  2
-#define SHOW_DEFAULT  4
-#define SHOW_EXTRA  5
-
-/* Size of buffer for dump's select query */
-#define QUERY_LENGTH 1536
-
-/* ignore table flags */
-#define IGNORE_NONE 0x00 /* no ignore */
-#define IGNORE_DATA 0x01 /* don't dump data for this table */
-#define IGNORE_INSERT_DELAYED 0x02 /* table doesn't support INSERT DELAYED */
 
 bool opt_alltspcs= false;
 bool opt_complete_insert= false;
