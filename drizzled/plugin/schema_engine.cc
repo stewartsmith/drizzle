@@ -226,6 +226,17 @@ static bool drop_all_tables_in_schema(Session& session,
        it++)
   {
     boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+
+    drizzled::error_t junk;
+    message::table::shared_ptr message= StorageEngine::getTableMessage(session, *it,
+                                                                       junk,
+                                                                       false);
+    if (not message)
+    {
+      my_error(ER_TABLE_DROP, *it);
+      return false;
+    }
+
     table::Cache::singleton().removeTable(&session, *it,
                                           RTFC_WAIT_OTHER_THREAD_FLAG |
                                           RTFC_CHECK_KILLED_FLAG);
@@ -234,7 +245,7 @@ static bool drop_all_tables_in_schema(Session& session,
       my_error(ER_TABLE_DROP, *it);
       return false;
     }
-    transaction_services.dropTable(session, *it, true);
+    transaction_services.dropTable(session, *message, *it, true);
     deleted++;
   }
 
@@ -246,7 +257,13 @@ bool StorageEngine::dropSchema(Session::reference session, identifier::Schema::c
   uint64_t deleted= 0;
   bool error= false;
   identifier::Table::vector dropped_tables;
-  message::Schema schema_proto;
+  message::schema::shared_ptr schema_message;
+
+  if (not getSchemaDefinition(identifier, schema_message))
+  {
+    return true;
+  }
+
 
   do
   {
@@ -294,7 +311,7 @@ bool StorageEngine::dropSchema(Session::reference session, identifier::Schema::c
     {
       /* We've already verified that the schema does exist, so safe to log it */
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropSchema(session, identifier);
+      transaction_services.dropSchema(session, *schema_message, identifier);
     }
   } while (0);
 

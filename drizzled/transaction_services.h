@@ -28,6 +28,7 @@
 #include <drizzled/atomics.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/identifier/table.h>
+#include <drizzled/identifier/schema.h>
 #include <drizzled/message/schema.h>
 #include <drizzled/session.h>
 
@@ -143,6 +144,7 @@ public:
    * @param[in] identifier Identifier for the schema to drop
    */
   void dropSchema(Session::reference session,
+                  message::schema::const_reference schema,
                   identifier::Schema::const_reference identifier);
 
   /**
@@ -178,7 +180,8 @@ public:
    * @param[in] if_exists Did the user specify an IF EXISTS clause?
    */
   void dropTable(Session::reference session,
-                 const identifier::Table &table,
+                 message::table::const_reference table,
+                 identifier::Table::const_reference identifier,
                  bool if_exists);
 
   /**

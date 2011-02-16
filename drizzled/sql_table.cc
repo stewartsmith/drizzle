@@ -199,13 +199,18 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
       }
       identifier::Table identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
+      drizzled::error_t toss;
+      message::table::shared_ptr message= plugin::StorageEngine::getTableMessage(*session, identifier, toss, true);
+
       if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
       {
         // Table was not found on disk and table can't be created from engine
         if (if_exists)
+        {
           push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                               ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
                               table->getTableName());
+        }
         else
         {
           error= 1;
@@ -218,8 +223,11 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         /* Generate transaction event ONLY when we successfully drop */ 
         if (plugin::StorageEngine::dropTable(*session, identifier, local_error))
         {
-          TransactionServices &transaction_services= TransactionServices::singleton();
-          transaction_services.dropTable(*session, identifier, if_exists);
+          if (message) // If we have no definition, we don't know if the table should have been replicated
+          {
+            TransactionServices &transaction_services= TransactionServices::singleton();
+            transaction_services.dropTable(*session, *message, identifier, if_exists);
+          }
         }
         else
         {

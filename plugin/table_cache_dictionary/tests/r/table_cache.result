@@ -10,7 +10,7 @@ TABLE_CACHE	CREATE TABLE `TABLE_CACHE` (
   `AVG_ROW_LENGTH` BIGINT NOT NULL,
   `TABLE_SIZE` BIGINT NOT NULL,
   `AUTO_INCREMENT` BIGINT NOT NULL
-) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATION = FALSE
 select count(*) FROM data_dictionary.TABLE_CACHE;
 count(*)
 #
