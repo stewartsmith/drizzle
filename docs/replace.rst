@@ -8,11 +8,15 @@ then REPLACE is equivalent to INSERT.
 
 A typical query:
 
-REPLACE INTO table_1 SET a=5;
+.. code-block:: mysql
+
+   REPLACE INTO table_1 SET a=5;
 
 or
 
-REPLACE INTO table_1 VALUES (4);
+.. code-block:: mysql
+
+   REPLACE INTO table_1 VALUES (4);
 
 
 REPLACE is an extension to the SQL Standard that first appeared in MySQL.

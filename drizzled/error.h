@@ -36,7 +36,6 @@ namespace drizzled
 /* Max width of screen (for error messages) */
 #define SC_MAXWIDTH 256
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
-#define NRERRBUFFS	(2)	/* Buffers for parameters */
 #define MY_FILE_ERROR	((size_t) -1)
 #define ME_FATALERROR   1024    /* Fatal statement error */
 
@@ -81,6 +80,15 @@ DRIZZLED_API const char * error_message(drizzled::error_t err_index);
 void add_error_message(drizzled::error_t error_code, const std::string &error_name,
                        const std::string& message);
 #define DRIZZLE_ADD_ERROR_MESSAGE(code, msg) add_error_message(code, STRINGIFY_ARG(code), msg)
+
+namespace error {
+
+void access(drizzled::identifier::User::const_reference user);
+void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Schema::const_reference schema);
+void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Table::const_reference table);
+
+} // namespace error
+
 
 DRIZZLED_API void my_error(const std::string &ref, error_t nr, myf MyFlags= MYF(0));
 DRIZZLED_API void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags= MYF(0));

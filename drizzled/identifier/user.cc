@@ -36,12 +36,19 @@ void User::getSQLPath(std::string &arg) const
 {
   if (_user.empty())
   {
-    arg.append("no user");
+    arg+= "<no user>";
   }
   else
   {
-    arg.append(_user);
+    arg+= _user;
   }
+  // We should fix the below, to do so we need to match on localhost when we
+  // create the object.
+#if 0
+  arg+= "@";
+  arg+= _address;
+#endif
+
 }
 
 } /* namespace identifier */

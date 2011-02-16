@@ -45,7 +45,6 @@
 #include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
-#include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
@@ -85,6 +84,8 @@
 #include <boost/checked_delete.hpp>
 
 #include "drizzled/util/backtrace.h"
+
+#include <drizzled/schema.h>
 
 using namespace std;
 
@@ -598,7 +599,7 @@ bool Session::schedule(Session::shared_ptr &arg)
 */
 bool Session::isViewable(identifier::User::const_reference user_arg) const
 {
-  return plugin::Authorization::isAuthorized(user_arg, this, false);
+  return plugin::Authorization::isAuthorized(user_arg, *this, false);
 }
 
 
@@ -641,7 +642,7 @@ bool Session::checkUser(const std::string &passwd_str,
                         const std::string &in_db)
 {
   bool is_authenticated=
-    plugin::Authentication::isAuthenticated(user(), passwd_str);
+    plugin::Authentication::isAuthenticated(*user(), passwd_str);
 
   if (is_authenticated != true)
   {
@@ -654,7 +655,7 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     identifier::Schema identifier(in_db);
-    if (change_db(this, identifier))
+    if (schema::change(*this, identifier))
     {
       /* change_db() has pushed the error message. */
       return false;

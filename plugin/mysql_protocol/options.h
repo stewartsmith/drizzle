@@ -71,9 +71,6 @@ struct st_drizzleclient_options {
 };
 
 
-#define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
-#define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
-
 #define CLIENT_LONG_PASSWORD    1       /* new more secure passwords */
 #define CLIENT_FOUND_ROWS       2       /* Found instead of affected rows */
 #define CLIENT_LONG_FLAG        4       /* Get all column flags */

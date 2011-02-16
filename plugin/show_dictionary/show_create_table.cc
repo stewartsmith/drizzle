@@ -49,11 +49,9 @@ ShowCreateTable::Generator::Generator(Field **arg) :
   {
     identifier::Table identifier(select->getShowSchema(), select->getShowTable());
 
-    int error= plugin::StorageEngine::getTableDefinition(getSession(),
-                                                         identifier,
-                                                         table_message);
+    table_message= plugin::StorageEngine::getTableMessage(getSession(), identifier);
 
-    if (error == EEXIST)
+    if (table_message)
       is_primed= true;
   }
 }

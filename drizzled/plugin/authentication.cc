@@ -64,7 +64,7 @@ public:
   }
 };
 
-bool plugin::Authentication::isAuthenticated(drizzled::identifier::User::const_shared_ptr sctx,
+bool plugin::Authentication::isAuthenticated(drizzled::identifier::User::const_reference sctx,
                                              const std::string &password)
 {
   /* If we never loaded any auth plugins, just return true */
@@ -74,7 +74,7 @@ bool plugin::Authentication::isAuthenticated(drizzled::identifier::User::const_s
   /* Use find_if instead of foreach so that we can collect return codes */
   std::vector<plugin::Authentication *>::iterator iter=
     std::find_if(all_authentication.begin(), all_authentication.end(),
-                 AuthenticateBy(*sctx, password));
+                 AuthenticateBy(sctx, password));
 
   /* We only require one plugin to return success in order to authenticate.
    * If iter is == end() here, that means that all of the plugins returned
@@ -82,10 +82,7 @@ bool plugin::Authentication::isAuthenticated(drizzled::identifier::User::const_s
    */
   if (iter == all_authentication.end())
   {
-    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
-             sctx->username().c_str(),
-             sctx->address().c_str(),
-             password.empty() ? ER(ER_NO) : ER(ER_YES));
+    error::access(sctx);
 
     return false;
   }

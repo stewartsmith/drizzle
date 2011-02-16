@@ -23,7 +23,7 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_schema.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/message.h>
 #include <drizzled/plugin/storage_engine.h>
@@ -62,7 +62,7 @@ bool statement::CreateSchema::execute()
   }
   else
   {
-    res= create_db(getSession(), schema_message, getSession()->getLex()->exists());
+    res= schema::create(*getSession(), schema_message, getSession()->getLex()->exists());
     if (unlikely(plugin::EventObserver::afterCreateDatabase(*getSession(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
@@ -79,7 +79,7 @@ bool statement::CreateSchema::check(const identifier::Schema &identifier)
   if (not identifier.isValid())
     return false;
 
-  if (not plugin::Authorization::isAuthorized(getSession()->user(), identifier))
+  if (not plugin::Authorization::isAuthorized(*getSession()->user(), identifier))
     return false;
 
   if (not getSession()->getLex()->exists())

@@ -767,6 +767,38 @@ protected:
   uint32_t unpack_num(uint32_t &destination, const unsigned char *arg= NULL) const;
 };
 
+namespace field {
+
+inline bool isDateTime(const enum_field_types &arg)
+{
+  switch (arg)
+  {
+  case DRIZZLE_TYPE_DATE:
+  case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_MICROTIME:
+  case DRIZZLE_TYPE_TIME:
+  case DRIZZLE_TYPE_TIMESTAMP:
+    return true;
+
+  case DRIZZLE_TYPE_BLOB:
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_DECIMAL:
+  case DRIZZLE_TYPE_DOUBLE:
+  case DRIZZLE_TYPE_ENUM:
+  case DRIZZLE_TYPE_LONG:
+  case DRIZZLE_TYPE_LONGLONG:
+  case DRIZZLE_TYPE_NULL:
+  case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_VARCHAR:
+    return false;
+  }
+
+  assert(0);
+  abort();
+}
+
+} // namespace field
+
 std::ostream& operator<<(std::ostream& output, const Field &field);
 
 } /* namespace drizzled */

@@ -3231,11 +3231,7 @@ static void calc_group_buffer(Join *join, Order *group)
             have STRING_RESULT result type, we increase the length
             by 8 as maximum pack length of such fields.
           */
-          if (type == DRIZZLE_TYPE_DATE ||
-              type == DRIZZLE_TYPE_TIME ||
-              type == DRIZZLE_TYPE_DATETIME ||
-              type == DRIZZLE_TYPE_MICROTIME ||
-              type == DRIZZLE_TYPE_TIMESTAMP)
+          if (field::isDateTime(type))
           {
             key_length+= 8;
           }

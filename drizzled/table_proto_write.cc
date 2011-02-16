@@ -24,7 +24,7 @@
 #include <drizzled/plugin/storage_engine.h>
 
 #include "drizzled/internal/my_sys.h"
-
+#include "drizzled/typelib.h"
 
 /* For proto */
 #include <string>
@@ -300,11 +300,7 @@ bool fill_table_proto(message::Table &table_proto,
 	  return true;
 	}
 
-        if (field_arg->sql_type == DRIZZLE_TYPE_DATE
-            || field_arg->sql_type == DRIZZLE_TYPE_TIME
-            || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
-            || field_arg->sql_type == DRIZZLE_TYPE_MICROTIME
-            || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
+        if (field::isDateTime(field_arg->sql_type))
         {
           type::Time ltime;
 

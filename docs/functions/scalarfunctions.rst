@@ -3,7 +3,9 @@ Scalar functions
 
 *SQL scalar functions are based on the input value, and return a single value.*
 
-General syntax for scalar functions is: ::
+General syntax for scalar functions is:
+
+.. code-block:: mysql
 
 	SELECT "function type" ("column_name")
 	FROM "table_name"

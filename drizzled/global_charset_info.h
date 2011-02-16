@@ -26,7 +26,7 @@
 namespace drizzled
 {
 
-struct charset_info_st;
+typedef struct charset_info_st CHARSET_INFO;
 
 /*
   External variables

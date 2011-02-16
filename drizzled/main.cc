@@ -67,9 +67,7 @@
 #include <drizzled/unireg.h>
 #include <drizzled/util/backtrace.h>
 #include <drizzled/current_session.h>
-
-extern "C" int daemonize(int nochdir, int noclose, int wait_sigusr1);
-extern "C" int daemon_is_ready(void);
+#include <drizzled/daemon.h>
 
 using namespace drizzled;
 using namespace std;
@@ -262,7 +260,7 @@ int main(int argc, char **argv)
     {
       perror("Failed to ignore SIGHUP");
     }
-    if (daemonize(1, 1, 1) == -1)
+    if (daemonize())
     {
       fprintf(stderr, "failed to daemon() in order to daemonize\n");
       exit(EXIT_FAILURE);
@@ -350,7 +348,7 @@ int main(int argc, char **argv)
     unireg_abort(1);
 
   assert(plugin::num_trx_monitored_objects > 0);
-  if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
+  if (drizzle_rm_tmp_tables())
   {
     abort_loop= true;
     select_thread_in_use=0;

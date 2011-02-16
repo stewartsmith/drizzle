@@ -60,6 +60,7 @@
 #include "drizzled/table/singular.h"
 
 #include "drizzled/table_proto.h"
+#include "drizzled/typelib.h"
 
 using namespace std;
 
@@ -320,28 +321,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
   to_s.append(to);
   to_s.append(ext);
   return (internal::my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
-}
-
-/*
-  Check if database name is valid
-
-  SYNPOSIS
-    check_db_name()
-    org_name		Name of database and length
-
-  RETURN
-    false error
-    true ok
-*/
-
-bool check_db_name(Session *session, identifier::Schema &schema_identifier)
-{
-  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
-  {
-    return false;
-  }
-
-  return schema_identifier.isValid();
 }
 
 /*

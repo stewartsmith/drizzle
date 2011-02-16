@@ -40,11 +40,11 @@ public:
                   uint32_t len_arg,
                   unsigned char *null_ptr_arg,
                   unsigned char null_bit_arg,
-                  const char *field_name_arg,
-                  const CHARSET_INFO * const cs);
+                  const char *field_name_arg);
+
   Time(bool maybe_null_arg,
-                  const char *field_name_arg,
-                  const CHARSET_INFO * const cs);
+                  const char *field_name_arg);
+
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_LONG_INT; }
   enum Item_result cmp_type () const { return INT_RESULT; }
