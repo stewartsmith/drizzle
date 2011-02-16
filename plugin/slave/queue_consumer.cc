@@ -22,7 +22,6 @@
 #include "plugin/slave/queue_consumer.h"
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/message/statement_transform.h>
-#include <drizzled/errmsg_print.h>
 #include <drizzled/sql/result_set.h>
 #include <drizzled/execute.h>
 #include <string>
@@ -105,9 +104,9 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
 {
   string sql("SELECT msg, commit_order FROM replication.queue"
              " WHERE trx_id = ");
-  sql.append(boost::lexical_cast<std::string>(trx_id));
-  sql.append(" AND seg_id = ");
-  sql.append(boost::lexical_cast<std::string>(segment_id));
+  sql.append(boost::lexical_cast<string>(trx_id));
+  sql.append(" AND seg_id = ", 14);
+  sql.append(boost::lexical_cast<string>(segment_id));
 
   sql::ResultSet result_set(2);
   Execute execute(*(_session.get()), true);
@@ -130,7 +129,6 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
     assert(result_set.isNull(0) == false);
     assert(result_set.isNull(1) == false);
 
-    //transaction.ParseFromString(value);
     google::protobuf::TextFormat::ParseFromString(msg, &transaction);
     commit_id= com_id;
 
@@ -310,7 +308,7 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
     sql= "UPDATE replication.applier_state SET status = 'RUNNING'";
   }
   
-  sql.append(", error_msg = '");
+  sql.append(", error_msg = '", 15);
 
   /* Escape embedded quotes and statement terminators */
   string::iterator it;
@@ -329,7 +327,7 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
   }
   
   sql.append(msg);
-  sql.append("'");
+  sql.append("'", 1);
 
   statements.push_back(sql);
   executeSQL(statements);

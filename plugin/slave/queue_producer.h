@@ -37,8 +37,11 @@ public:
     SQLExecutor("slave", "replication"),
     _check_interval(5),
     _master_port(3306),
+    _last_return(DRIZZLE_RETURN_OK),
     _is_connected(false),
-    _saved_max_commit_id(0)
+    _saved_max_commit_id(0),
+    _max_reconnects(10),
+    _seconds_between_reconnects(30)
   {}
 
   virtual ~QueueProducer();
@@ -89,14 +92,25 @@ private:
 
   drizzle_st _drizzle;
   drizzle_con_st _connection;
+  drizzle_return_t _last_return;
 
   bool _is_connected;
   uint32_t _saved_max_commit_id;
+  uint32_t _max_reconnects;
+  uint32_t _seconds_between_reconnects;
 
   bool openConnection();
   bool closeConnection();
+  bool reconnect();
   bool queryForMaxCommitId(uint32_t *max_commit_id);
   bool queryForReplicationEvents(uint32_t max_commit_id);
+  bool queryForTrxIdList(uint32_t max_commit_id, std::vector<uint64_t> &list);
+  bool queueInsert(const char *trx_id,
+                   const char *seg_id,
+                   const char *commit_id,
+                   const char *msg,
+                   const char *msg_length);
+
 };
 
 } /* namespace slave */

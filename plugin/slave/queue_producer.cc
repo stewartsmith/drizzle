@@ -21,8 +21,12 @@
 #include "config.h"
 #include "plugin/slave/queue_producer.h"
 #include <drizzled/errmsg_print.h>
+#include <drizzled/sql/result_set.h>
+#include <drizzled/execute.h>
 #include <drizzled/gettext.h>
+#include <drizzled/message/transaction.pb.h>
 #include <boost/lexical_cast.hpp>
+#include <google/protobuf/text_format.h>
 
 using namespace std;
 using namespace drizzled;
@@ -41,20 +45,49 @@ bool QueueProducer::init()
   return openConnection();
 }
 
-/* TODO: Add ability to retry after an error */
 bool QueueProducer::process()
 {
   if (_saved_max_commit_id == 0)
   {
     if (not queryForMaxCommitId(&_saved_max_commit_id))
     {
-      return false;
+      if (_last_return == DRIZZLE_RETURN_LOST_CONNECTION)
+      {
+        if (reconnect())
+        {
+          return true;    /* reconnect successful, try again */
+        }
+        else
+        {
+          return false;   /* reconnect failed, shutdown the thread */
+        }
+      }
+      else
+      {
+        return false;     /* unrecoverable error, shutdown the thread */
+      }
     }
   }
 
+  printf("_saved_max_commit_id = %d\n", _saved_max_commit_id); fflush(stdout);
+
   if (not queryForReplicationEvents(_saved_max_commit_id))
   {
-    return false;
+    if (_last_return == DRIZZLE_RETURN_LOST_CONNECTION)
+    {
+      if (reconnect())
+      {
+        return true;    /* reconnect successful, try again */
+      }
+      else
+      {
+        return false;   /* reconnect failed, shutdown the thread */
+      }
+    }
+    else
+    {
+      return false;     /* unrecoverable error, shutdown the thread */
+    }
   }
 
   return true;
@@ -66,35 +99,56 @@ void QueueProducer::shutdown()
     closeConnection();
 }
 
+bool QueueProducer::reconnect()
+{
+  errmsg_printf(error::ERROR, _("Lost connection to master. Reconnecting."));
+
+  _is_connected= false;
+  _last_return= DRIZZLE_RETURN_OK;
+  boost::posix_time::seconds duration(_seconds_between_reconnects);
+
+  uint32_t attempts= 1;
+
+  while (not openConnection())
+  {
+    if (attempts++ == _max_reconnects)
+      break;
+    boost::this_thread::sleep(duration);
+  }
+
+  return _is_connected;
+}
+
 bool QueueProducer::openConnection()
 {
-  drizzle_return_t ret;
-
   if (drizzle_create(&_drizzle) == NULL)
   {
     errmsg_printf(error::ERROR,
-                  _("Replication slave: Error during drizzle_create()\n"));
+                  _("Replication slave: Error during drizzle_create()"));
+    _last_return= DRIZZLE_RETURN_INTERNAL_ERROR;
     return false;
   }
   
   if (drizzle_con_create(&_drizzle, &_connection) == NULL)
   {
     errmsg_printf(error::ERROR,
-                  _("Replication slave: %s\n"),
+                  _("Replication slave: %s"),
                   drizzle_error(&_drizzle));
+    _last_return= DRIZZLE_RETURN_INTERNAL_ERROR;
     return false;
   }
   
   drizzle_con_set_tcp(&_connection, _master_host.c_str(), _master_port);
   drizzle_con_set_auth(&_connection, _master_user.c_str(), _master_pass.c_str());
 
-  ret= drizzle_con_connect(&_connection);
+  drizzle_return_t ret= drizzle_con_connect(&_connection);
 
   if (ret != DRIZZLE_RETURN_OK)
   {
     errmsg_printf(error::ERROR,
-                  _("Replication slave: %s\n"),
+                  _("Replication slave: %s"),
                   drizzle_error(&_drizzle));
+    _last_return= ret;
     return false;
   }
   
@@ -112,6 +166,7 @@ bool QueueProducer::closeConnection()
 
   if (drizzle_quit(&_connection, &result, &ret) == NULL)
   {
+    _last_return= ret;
     return false;
   }
 
@@ -134,87 +189,209 @@ bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
              "  UNION ALL SELECT last_applied_commit_id AS cid"
              "  FROM replication.applier_state) AS x");
 
-  (void)*max_commit_id;
+  sql::ResultSet result_set(1);
+  Execute execute(*(_session.get()), true);
+  execute.run(sql, result_set);
+  assert(result_set.getMetaData().getColumnCount() == 1);
+
+  /* Really should only be 1 returned row */
+  uint32_t found_rows= 0;
+  while (result_set.next())
+  {
+    string value= result_set.getString(0);
+
+    if ((value == "") || (found_rows == 1))
+      break;
+
+    assert(result_set.isNull(0) == false);
+    *max_commit_id= boost::lexical_cast<uint32_t>(value);
+    found_rows++;
+  }
+
+  if (found_rows == 0)
+    return false;
+
   return true;
 }
 
-bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
+bool QueueProducer::queryForTrxIdList(uint32_t max_commit_id,
+                                      vector<uint64_t> &list)
 {
-  //vector<uint64_t> trx_id_list;
-  (void)max_commit_id;
-
-  // SELECT id FROM data_dictionary.sys_replication_log WHERE commit_id > ?
-
-  string select_sql("SELECT id, segid, commit_id, message "
-                    " FROM data_dictionary.sys_replication_log WHERE id IN (");
-  // append from trx_id_list
-  select_sql.append(")");
-
-  string insert_sql("INSERT INTO replication.queue"
-                    " (trx_id, seg_id, commit_order, msg) VALUES (");
-  // append from results above
-  insert_sql.append(")");
+  (void)list;
+  string sql("SELECT id FROM data_dictionary.sys_replication_log"
+             " WHERE commit_id > ");
+  sql.append(boost::lexical_cast<string>(max_commit_id));
+  sql.append(" LIMIT 25", 9);
 
   drizzle_return_t ret;
   drizzle_result_st result;
   drizzle_result_create(&_connection, &result);
-  drizzle_query_str(&_connection, &result, select_sql.c_str(), &ret);
+  drizzle_query_str(&_connection, &result, sql.c_str(), &ret);
   
   if (ret != DRIZZLE_RETURN_OK)
   {
     errmsg_printf(error::ERROR,
-                  _("Replication slave: %s\n"),
+                  _("Replication slave: %s"),
                   drizzle_error(&_drizzle));
+    _last_return= ret;
     return false;
   }
-
-  printf("queryForMaxCommitId()\n");
-  printf("Result:     row_count=%" PRId64 "\n"
-         "            insert_id=%" PRId64 "\n"
-         "        warning_count=%u\n"
-         "         column_count=%u\n"
-         "        affected_rows=%" PRId64 "\n\n",
-         drizzle_result_row_count(&result),
-         drizzle_result_insert_id(&result),
-         drizzle_result_warning_count(&result),
-         drizzle_result_column_count(&result),
-         drizzle_result_affected_rows(&result));
-  fflush(stdout);
 
   ret= drizzle_result_buffer(&result);
 
   if (ret != DRIZZLE_RETURN_OK)
   {
     errmsg_printf(error::ERROR,
-                  _("Replication slave: %s\n"),
+                  _("Replication slave: %s"),
                   drizzle_error(&_drizzle));
     drizzle_result_free(&result);
+    _last_return= ret;
     return false;
   }
 
-  /* only 1 row to process */
   drizzle_row_t row;
-  if ((row= drizzle_row_next(&result)) == NULL)
-  {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: No results for max commit id\n"));
-    drizzle_result_free(&result);
-    return false;
-  }
 
-  if (row[0])
+  while ((row= drizzle_row_next(&result)) != NULL)
   {
-    max_commit_id= boost::lexical_cast<uint32_t>(row[0]);
-  }
-  else
-  {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: Unexpected NULL for max commit id\n"));
-    drizzle_result_free(&result);
-    return false;
+    if (row[0])
+    {
+      list.push_back(boost::lexical_cast<uint32_t>(row[0]));
+    }
+    else
+    {
+      errmsg_printf(error::ERROR,
+                    _("Replication slave: Unexpected NULL for trx id"));
+      drizzle_result_free(&result);
+      _last_return= ret;
+      return false;
+    }
   }
 
   drizzle_result_free(&result);
+  return true;
+}
+
+
+bool QueueProducer::queueInsert(const char *trx_id,
+                                const char *seg_id,
+                                const char *commit_id,
+                                const char *msg,
+                                const char *msg_length)
+{
+  message::Transaction message;
+
+  message.ParseFromArray(msg, boost::lexical_cast<int>(msg_length));
+
+  /*
+   * The SQL to insert our results into the local queue.
+   */
+  string sql= "INSERT INTO replication.queue"
+              " (trx_id, seg_id, commit_order, msg) VALUES (";
+  sql.append(trx_id);
+  sql.append(", ", 2);
+  sql.append(seg_id);
+  sql.append(", ", 2);
+  sql.append(commit_id);
+  sql.append(", '", 3);
+
+  /*
+   * Ideally we would store the Transaction message in binary form, as it
+   * it stored on the master and tranferred to the slave. However, we are
+   * inserting using drizzle::Execute which doesn't really handle binary
+   * data. Until that is changed, we store as plain text.
+   */
+  string message_text;
+  google::protobuf::TextFormat::PrintToString(message, &message_text);  
+
+  /* escape embedded quotes */
+  string::iterator it= message_text.begin();
+  for (; it != message_text.end(); ++it)
+  {
+    if (*it == '\'')
+    {
+      it= message_text.insert(it, '\'');
+      ++it;
+    }
+  }
+
+  sql.append(message_text);
+  sql.append("')", 2);
+
+  printf("%s\n", sql.c_str()); fflush(stdout);
+  return true;
+}
+
+
+bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
+{
+  vector<uint64_t> trx_id_list;
+
+  if (not queryForTrxIdList(max_commit_id, trx_id_list))
+    return false;
+
+  if (trx_id_list.size() == 0)    /* nothing to get */
+  {
+    printf("no results from master\n"); fflush(stdout);
+    return true;
+  }
+
+  /*
+   * The SQL to pull everything we need from the master.
+   */
+  string sql= "SELECT id, segid, commit_id, message, message_len "
+              " FROM data_dictionary.sys_replication_log WHERE id IN (";
+
+  for (size_t x= 0; x < trx_id_list.size(); x++)
+  {
+    if (x > 0)
+      sql.append(", ", 2);
+    sql.append(boost::lexical_cast<string>(trx_id_list[x]));
+  }
+
+  sql.append(")", 1);
+
+  drizzle_return_t ret;
+  drizzle_result_st result;
+  drizzle_result_create(&_connection, &result);
+  drizzle_query_str(&_connection, &result, sql.c_str(), &ret);
+  
+  if (ret != DRIZZLE_RETURN_OK)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: %s"),
+                  drizzle_error(&_drizzle));
+    _last_return= ret;
+    return false;
+  }
+
+  /* TODO: Investigate 1-row-at-a-time buffering */
+
+  ret= drizzle_result_buffer(&result);
+
+  if (ret != DRIZZLE_RETURN_OK)
+  {
+    errmsg_printf(error::ERROR,
+                  _("Replication slave: %s"),
+                  drizzle_error(&_drizzle));
+    drizzle_result_free(&result);
+    _last_return= ret;
+    return false;
+  }
+
+  drizzle_row_t row;
+
+  while ((row= drizzle_row_next(&result)) != NULL)
+  {
+    if (not queueInsert(row[0], row[1], row[2], row[3], row[4]))
+    {
+      errmsg_printf(error::ERROR,
+                    _("Replication slave: Unable to insert into queue."));
+      return false;
+    }
+  }
+
+  drizzle_result_free(&result);
+
   return true;
 }
 

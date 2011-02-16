@@ -80,7 +80,7 @@ bool ReplicationSlave::initWithConfig()
 
   /* setup schema and tables */
   ReplicationSchema rs;
-  if (rs.create())
+  if (not rs.create())
   {
     _error= rs.getErrorMessage();
     return false;

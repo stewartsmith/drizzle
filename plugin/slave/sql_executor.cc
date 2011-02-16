@@ -5,6 +5,7 @@
 #include <drizzled/catalog/local.h>
 #include <drizzled/execute.h>
 #include <drizzled/sql/result_set.h>
+#include <drizzled/errmsg_print.h>
 
 using namespace std;
 using namespace drizzled;
