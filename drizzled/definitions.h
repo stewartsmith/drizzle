@@ -42,7 +42,6 @@ namespace drizzled
 
 #define LANGUAGE	"english/"
 #define TEMP_PREFIX	"MY"
-#define LOG_PREFIX	"ML"
 
 #define ER(X) ::drizzled::error_message((X))
 
