@@ -272,7 +272,7 @@ void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
 
 
 void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(string *key_names,
-                                                              String *used_lengths)
+                                                              string *used_lengths)
 {
   char buf[64];
   uint32_t length;
@@ -289,7 +289,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(string *key_names,
     else
     {
       key_names->append(",");
-      used_lengths->append(',');
+      used_lengths->append(",");
     }
     key_names->append(key_info->name);
     length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
@@ -302,7 +302,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(string *key_names,
     key_names->append(",");
     key_names->append(key_info->name);
     length= internal::int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(',');
+    used_lengths->append(",");
     used_lengths->append(buf, length);
   }
 }

@@ -182,15 +182,13 @@ void optimizer::ExplainPlan::printPlan()
       JoinTable *tab= join->join_tab + i;
       Table *table= tab->table;
       char buff[512];
-      char buff3[512];
       char keylen_str_buf[64];
       String extra(buff, sizeof(buff),cs);
       char table_name_buffer[NAME_LEN];
       string tmp1;
       string tmp2;
-      String tmp3(buff3,sizeof(buff3),cs);
+      string tmp3;
       extra.length(0);
-      tmp3.length(0);
 
       quick_type= -1;
       item_list.empty();
@@ -288,7 +286,7 @@ void optimizer::ExplainPlan::printPlan()
       {
         tab->select->quick->add_keys_and_lengths(&tmp2, &tmp3);
         item_list.push_back(new Item_string(tmp2.c_str(),tmp2.length(),cs));
-        item_list.push_back(new Item_string(tmp3.ptr(),tmp3.length(),cs));
+        item_list.push_back(new Item_string(tmp3.c_str(),tmp3.length(),cs));
         item_list.push_back(item_null);
       }
       else

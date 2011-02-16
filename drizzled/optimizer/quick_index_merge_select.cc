@@ -251,7 +251,7 @@ void optimizer::QuickIndexMergeSelect::add_info_string(String *str)
 
 
 void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(string *key_names,
-                                                            String *used_lengths)
+                                                            string *used_lengths)
 {
   char buf[64];
   uint32_t length= 0;
@@ -266,7 +266,7 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(string *key_names,
     else
     {
       key_names->append(",");
-      used_lengths->append(',');
+      used_lengths->append(",");
     }
 
     KeyInfo *key_info= head->key_info + (*it)->index;
@@ -280,7 +280,7 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(string *key_names,
     key_names->append(",");
     key_names->append(key_info->name);
     length= internal::int64_t2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(',');
+    used_lengths->append(",");
     used_lengths->append(buf, length);
   }
 }

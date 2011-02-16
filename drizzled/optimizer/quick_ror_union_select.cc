@@ -249,7 +249,7 @@ void optimizer::QuickRorUnionSelect::add_info_string(String *str)
 
 
 void optimizer::QuickRorUnionSelect::add_keys_and_lengths(string *key_names,
-                                                          String *used_lengths)
+                                                          string *used_lengths)
 {
   bool first= true;
   for (vector<optimizer::QuickSelectInterface *>::iterator it= quick_selects.begin();
@@ -262,7 +262,7 @@ void optimizer::QuickRorUnionSelect::add_keys_and_lengths(string *key_names,
     }
     else
     {
-      used_lengths->append(',');
+      used_lengths->append(",");
       key_names->append(",");
     }
     (*it)->add_keys_and_lengths(key_names, used_lengths);

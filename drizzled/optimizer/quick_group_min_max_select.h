@@ -450,7 +450,7 @@ public:
    * This method is used by select_describe to extract the names of the
    * indexes used by a quick select.
    */
-  void add_keys_and_lengths(std::string *key_names, String *used_lengths);
+  void add_keys_and_lengths(std::string *key_names, std::string *used_lengths);
 
 };
 

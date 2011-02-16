@@ -427,7 +427,7 @@ void optimizer::QuickRangeSelect::add_info_string(String *str)
 
 
 void optimizer::QuickRangeSelect::add_keys_and_lengths(string *key_names,
-                                                       String *used_lengths)
+                                                       string *used_lengths)
 {
   char buf[64];
   uint32_t length;
