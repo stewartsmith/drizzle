@@ -237,9 +237,10 @@ bool drop(Session &session, identifier::Schema &schema_identifier, const bool if
   do
   {
     boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
+    message::schema::shared_ptr message= plugin::StorageEngine::getSchemaDefinition(schema_identifier);
 
     /* See if the schema exists */
-    if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
+    if (not message)
     {
       if (if_exists)
       {
@@ -259,7 +260,7 @@ bool drop(Session &session, identifier::Schema &schema_identifier, const bool if
     }
     else
     {
-      error= plugin::StorageEngine::dropSchema(session, schema_identifier);
+      error= plugin::StorageEngine::dropSchema(session, schema_identifier, *message);
     }
 
   } while (0);

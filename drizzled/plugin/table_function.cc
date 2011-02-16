@@ -40,6 +40,8 @@ void plugin::TableFunction::init()
   proto.set_type(drizzled::message::Table::FUNCTION);
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
+
+  proto.mutable_options()->set_dont_replicate(true);
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)

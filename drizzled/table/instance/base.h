@@ -721,6 +721,11 @@ private:
                               bool &error_reported);
 public:
   bool parse_table_proto(Session& session, message::Table &table);
+
+  virtual bool replicate() const
+  {
+    return false;
+  }
 };
 
 } /* namespace drizzled */
