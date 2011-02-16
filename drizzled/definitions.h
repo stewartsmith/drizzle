@@ -183,9 +183,6 @@ const uint32_t MAX_KEY_LENGTH_DECIMAL_WIDTH = 4; // strlen("4096")
 /** Characters shown for the command in 'show processlist'. */
 #define PROCESS_LIST_WIDTH 100
 
-/* The following can also be changed from the command line */
-#define DEFAULT_CONCURRENCY	10
-
 /* Bits for different SQL modes modes (including ANSI mode) */
 #define MODE_NO_ZERO_DATE		(2)
 #define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)
@@ -263,15 +260,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_KEY_SWITCH_ALL          1
 #define HA_KEY_SWITCH_NONUNIQ_SAVE 2
 #define HA_KEY_SWITCH_ALL_SAVE     3
-
-/*
-  Note: the following includes binlog and closing 0.
-  so: innodb + bdb + ndb + binlog + myisam + myisammrg + archive +
-      example + csv + heap + blackhole + federated + 0
-  (yes, the sum is deliberately inaccurate)
-  TODO remove the limit, use dynarrays
-*/
-#define MAX_HA 15
 
 /*
   Parameters for open() (in register form->filestat)
