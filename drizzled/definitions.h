@@ -295,7 +295,6 @@ enum start_transaction_option_t
 #define HA_CREATE_USED_AUTO             (1L << 0)
 #define HA_CREATE_USED_CHARSET          (1L << 8)
 #define HA_CREATE_USED_DEFAULT_CHARSET  (1L << 9)
-#define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 
 /*
   The below two are not used (and not handled) in this milestone of this WL
