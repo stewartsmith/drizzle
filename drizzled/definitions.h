@@ -467,7 +467,6 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
-#define ulong_to_double(X) ((double) (ulong) (X))
 
 /* From limits.h instead */
 #ifndef DBL_MIN
