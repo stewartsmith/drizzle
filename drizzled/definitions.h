@@ -497,8 +497,6 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 */
 #define MY_ALIGN(A,L)  (((A) + (L) - 1) & ~((L) - 1))
 #define ALIGN_SIZE(A)  MY_ALIGN((A),sizeof(double))
-/* Offset of field f in structure t */
-#define OFFSET(t, f)  ((size_t)(char *)&((t *)0)->f)
 #ifdef __cplusplus
 #define ADD_TO_PTR(ptr,size,type) (type) (reinterpret_cast<const unsigned char*>(ptr)+size)
 #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
