@@ -77,18 +77,6 @@ void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record
   memcpy(curr_chunk, record, (size_t) info->fixed_data_length);
 }
 
-
-/*
-  Macro to switch curr_chunk to the next chunk in the chunkset and reset src_offset
-*/
-#define SWITCH_TO_NEXT_CHUNK_FOR_READ(info, curr_chunk, src_offset) \
-      { \
-        curr_chunk= *((unsigned char**) (curr_chunk + info->recordspace.offset_link)); \
-        src_offset= 0; \
-        /*dump_chunk(info, curr_chunk);*/ \
-      }
-
-
 /**
   Copies record data from storage to unpacked record format
 

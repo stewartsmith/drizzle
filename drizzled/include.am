@@ -501,7 +501,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/type/time.h \
 			      drizzled/type/uuid.h \
 			      drizzled/typelib.h \
-			      drizzled/tzfile.h \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \

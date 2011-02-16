@@ -127,9 +127,6 @@ typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 #define STATUS_GARBAGE		1
 #define STATUS_NOT_FOUND	2	/* No record in database when needed */
 #define STATUS_NO_PARENT	4	/* Parent record wasn't found */
-#define STATUS_NOT_READ		8	/* Record isn't read */
-#define STATUS_UPDATED		16	/* Record is updated by formula */
 #define STATUS_NULL_ROW		32	/* table->null_row is set */
-#define STATUS_DELETED		64
 
 #endif /* DRIZZLED_STRUCTS_H */

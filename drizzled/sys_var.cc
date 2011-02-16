@@ -61,6 +61,7 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/constrained_value.h"
 #include "drizzled/visibility.h"
+#include "drizzled/typelib.h"
 #include "drizzled/plugin/storage_engine.h"
 
 #include <cstdio>
@@ -218,8 +219,6 @@ static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transactio
 
 static sys_var_session_storage_engine sys_storage_engine("storage_engine",
 				       &drizzle_system_variables::storage_engine);
-static sys_var_const_str	sys_system_time_zone("system_time_zone",
-                                             system_time_zone);
 static sys_var_size_t_ptr	sys_table_def_size("table_definition_cache",
                                              &table_def_size);
 static sys_var_uint64_t_ptr	sys_table_cache_size("table_open_cache",
@@ -307,8 +306,6 @@ static sys_var_readonly sys_warning_count("warning_count",
 
 sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len",
                                                   &drizzle_system_variables::group_concat_max_len);
-
-sys_var_session_time_zone sys_time_zone("time_zone");
 
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname("hostname", glob_hostname);
@@ -859,7 +856,7 @@ bool sys_var::check_enum(Session *,
       goto err;
     }
 
-    uint64_t tmp_val= find_type(enum_names, res->ptr(), res->length(),1);
+    uint64_t tmp_val= enum_names->find_type(res->ptr(), res->length(), true);
     if (tmp_val == 0)
     {
       value= res->c_ptr();
@@ -1160,82 +1157,6 @@ unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
     session->read_first_successful_insert_id_in_prev_stmt();
   return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
 }
-
-
-bool sys_var_session_time_zone::update(Session *session, set_var *var)
-{
-  char buff[MAX_TIME_ZONE_NAME_LENGTH];
-  String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-  String *res= var->value->val_str(&str);
-
-  Time_zone *tmp= my_tz_find(session, res);
-  if (tmp == NULL)
-  {
-    boost::throw_exception(invalid_option_value(var->var->getName()) << invalid_value(std::string(res ? res->c_ptr() : "NULL")));
-    return 1;
-  }
-  /* We are using Time_zone object found during check() phase. */
-  if (var->type == OPT_GLOBAL)
-  {
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    global_system_variables.time_zone= tmp;
-  }
-  else
-  {
-    session->variables.time_zone= tmp;
-  }
-
-  return 0;
-}
-
-
-unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
-                                                    sql_var_t type,
-                                                    const LEX_STRING *)
-{
-  /*
-    We can use ptr() instead of c_ptr() here because String contaning
-    time zone name is guaranteed to be zero ended.
-  */
-  if (type == OPT_GLOBAL)
-    return (unsigned char *)(global_system_variables.time_zone->get_name()->ptr());
-  else
-  {
-    /*
-      This is an ugly fix for replication: we don't replicate properly queries
-      invoking system variables' values to update tables; but
-      CONVERT_TZ(,,@@session.time_zone) is so popular that we make it
-      replicable (i.e. we tell the binlog code to store the session
-      timezone). If it's the global value which was used we can't replicate
-      (binlog code stores session value only).
-    */
-    return (unsigned char *)(session->variables.time_zone->get_name()->ptr());
-  }
-}
-
-
-void sys_var_session_time_zone::set_default(Session *session, sql_var_t type)
-{
-  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-  if (type == OPT_GLOBAL)
-  {
-    if (default_tz_name)
-    {
-      String str(default_tz_name, &my_charset_utf8_general_ci);
-      /*
-        We are guaranteed to find this time zone since its existence
-        is checked during start-up.
-      */
-      global_system_variables.time_zone= my_tz_find(session, &str);
-    }
-    else
-      global_system_variables.time_zone= my_tz_SYSTEM;
-  }
-  else
-    session->variables.time_zone= global_system_variables.time_zone;
-}
-
-
 
 bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
 {
@@ -1609,12 +1530,10 @@ int sys_var_init()
     add_sys_var_to_list(&sys_sql_notes, my_long_options);
     add_sys_var_to_list(&sys_sql_warnings, my_long_options);
     add_sys_var_to_list(&sys_storage_engine, my_long_options);
-    add_sys_var_to_list(&sys_system_time_zone, my_long_options);
     add_sys_var_to_list(&sys_table_cache_size, my_long_options);
     add_sys_var_to_list(&sys_table_def_size, my_long_options);
     add_sys_var_to_list(&sys_table_lock_wait_timeout, my_long_options);
     add_sys_var_to_list(&sys_thread_stack_size, my_long_options);
-    add_sys_var_to_list(&sys_time_zone, my_long_options);
     add_sys_var_to_list(&sys_timed_mutexes, my_long_options);
     add_sys_var_to_list(&sys_timestamp, my_long_options);
     add_sys_var_to_list(&sys_tmp_table_size, my_long_options);

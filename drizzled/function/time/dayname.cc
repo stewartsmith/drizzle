@@ -21,6 +21,7 @@
 
 #include <drizzled/function/time/dayname.h>
 #include <drizzled/session.h>
+#include "drizzled/typelib.h"
 
 namespace drizzled
 {

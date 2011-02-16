@@ -49,6 +49,7 @@
 
 #include "azio.h"
 
+#define DEFAULT_CONCURRENCY	10
 #define DEFAULT_INITIAL_LOAD 10000
 #define DEFAULT_EXECUTE_SECONDS 120
 #define TEST_FILENAME "concurrency_test.az"

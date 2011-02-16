@@ -54,8 +54,8 @@
 #include <drizzled/util/test.h>
 #include <drizzled/session.h>
 #include <drizzled/current_session.h>
-
 #include "drizzled/display.h"
+#include <drizzled/typelib.h>
 
 namespace drizzled
 {
