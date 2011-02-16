@@ -42,6 +42,9 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("::reset()", "::doOpen()"));
   states.insert(state_pair("::doEndTableScan()", "::reset()"));
   states.insert(state_pair("locked", "::reset()"));
+  states.insert(state_pair("locked", "::scan_time()"));
+  states.insert(state_pair("::scan_time()", "locked"));
+  states.insert(state_pair("::scan_time()", "::scan_time()"));
 
   // we can always set a new lock
   states.insert(state_pair("::store_lock()", "::store_lock()"));

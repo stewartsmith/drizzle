@@ -212,6 +212,13 @@ public:
     return realCursor->doUpdateRecord(old_row, new_row);
   }
 
+  double scan_time()
+  {
+    CURSOR_NEW_STATE("::scan_time()");
+    CURSOR_NEW_STATE("locked");
+    return realCursor->scan_time();
+  }
+
 private:
   string cursor_state;
   void CURSOR_NEW_STATE(const string &new_state);

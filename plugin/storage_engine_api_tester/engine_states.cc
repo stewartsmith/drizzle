@@ -45,6 +45,7 @@ void load_engine_state_transitions(state_multimap &states)
   states.insert(state_pair("::max_supported_key_part_length()", "::max_supported_key_part_length()"));
   states.insert(state_pair("::max_supported_key_part_length()", "::doCreateTable()"));
 
+  states.insert(state_pair("::max_supported_key_parts()", "::max_supported_key_parts()"));
   states.insert(state_pair("::max_supported_key_parts()", "::max_supported_keys()"));
 
   // what the
