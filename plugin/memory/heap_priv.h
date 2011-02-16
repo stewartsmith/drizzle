@@ -39,7 +39,6 @@
 
 #define CHUNK_STATUS_DELETED 0    /* this chunk has been deleted and can be reused */
 #define CHUNK_STATUS_ACTIVE  1    /* this chunk represents the first part of a live record */
-#define CHUNK_STATUS_LINKED  2    /* this chunk is a continuation from another chunk (part of chunkset) */
 
 	/* Some extern variables */
 
@@ -55,8 +54,6 @@ if (!(info->update & HA_STATE_AKTIV))\
 #define hp_find_record(info,pos) (info)->current_ptr= hp_find_block(&(info)->getShare()->recordspace.block,pos)
 
 #define get_chunk_status(info,ptr) (ptr[(info)->offset_status])
-
-#define get_chunk_count(info,rec_length) ((rec_length + (info)->chunk_dataspace_length - 1) / (info)->chunk_dataspace_length)
 
 typedef struct st_hp_hash_info
 {

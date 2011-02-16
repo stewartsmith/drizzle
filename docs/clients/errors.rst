@@ -20,5 +20,5 @@ MySQL installation.
 
 To resolve this, look for the old-passwords option in your MySQL configuration
 and disable it.  Then update the password for the user you are trying to connect
-with using the 'SET PASSWORD' syntax so that it can be re-recorded in the newer
-password format.
+with using the ``SET PASSWORD`` syntax so that it can be re-recorded in the
+newer password format.

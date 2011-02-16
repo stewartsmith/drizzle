@@ -84,6 +84,7 @@
 #include "drizzled/plugin/storage_engine.h"
 
 #include "drizzled/definition/cache.h"
+#include "drizzled/typelib.h"
 
 #include <drizzled/refresh_version.h>
 

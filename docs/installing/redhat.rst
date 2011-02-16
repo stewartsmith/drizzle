@@ -15,13 +15,17 @@ distribution.
 
    The EPEL repository is not required in Fedora.
 
-To add that repository, run the following command::
+To add that repository, run the following command:
+
+.. code-block:: bash
 
   sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
 
 To add the repository to your distribution you also need to create a /etc/yum.repos.d/drizzle.repo file with the following content:
 
-*RedHat*::
+*RedHat*
+
+.. code-block:: ini
 
    [drizzle]
    name=drizzle
@@ -35,7 +39,9 @@ To add the repository to your distribution you also need to create a /etc/yum.re
    enabled=1
    gpgcheck=0
 
-*Fedora*::
+*Fedora*
+
+.. code-block:: ini
 
    [drizzle]
    name=drizzle
@@ -49,7 +55,9 @@ To add the repository to your distribution you also need to create a /etc/yum.re
    enabled=1
    gpgcheck=0
 
-You can then use the following shell command::
+You can then use the following shell command:
+
+.. code-block:: bash
 
    yum install drizzle7
 
