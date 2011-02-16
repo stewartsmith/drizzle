@@ -42,6 +42,41 @@ bool ReplicationSchema::create()
     return false;
 
   /*
+   * Create our IO thread state information table if we need to.
+   */
+
+  sql.clear();
+  sql.push_back("COMMIT");
+  sql.push_back("CREATE TABLE IF NOT EXISTS replication.io_state ("
+                " status VARCHAR(20) NOT NULL,"
+                " error_msg VARCHAR(250))"
+                " COMMENT = 'VERSION 1.0'");
+
+  if (not executeSQL(sql))
+    return false;
+
+  sql.clear();
+  sql.push_back("SELECT COUNT(*) FROM replication.io_state");
+
+  {
+    sql::ResultSet result_set(1);
+    Execute execute(*(_session.get()), true);
+    execute.run(sql[0], result_set);
+    result_set.next();
+    string count= result_set.getString(0);
+
+    /* Must always be at least one row in the table */
+    if (count == "0")
+    {
+      sql.clear();
+      sql.push_back("INSERT INTO replication.io_state (status)"
+                    " VALUES ('STOPPED')");
+      if (not executeSQL(sql))
+        return false;
+    }
+  }
+
+  /*
    * Create our applier thread state information table if we need to.
    */
 
@@ -50,7 +85,8 @@ bool ReplicationSchema::create()
   sql.push_back("CREATE TABLE IF NOT EXISTS replication.applier_state"
                 " (last_applied_commit_id BIGINT NOT NULL PRIMARY KEY,"
                 " status VARCHAR(20) NOT NULL,"
-                " error_msg VARCHAR(250))");
+                " error_msg VARCHAR(250))"
+                " COMMENT = 'VERSION 1.0'");
 
   if (not executeSQL(sql))
     return false;
@@ -58,21 +94,23 @@ bool ReplicationSchema::create()
   sql.clear();
   sql.push_back("SELECT COUNT(*) FROM replication.applier_state");
 
-  sql::ResultSet result_set(1);
-  Execute execute(*(_session.get()), true);
-  execute.run(sql[0], result_set);
-  result_set.next();
-  string count= result_set.getString(0);
-
-  /* Must always be at least one row in the table */
-  if (count == "0")
   {
-    sql.clear();
-    sql.push_back("INSERT INTO replication.applier_state"
-                  " (last_applied_commit_id, status)"
-                  " VALUES (0, 'STOPPED')");
-    if (not executeSQL(sql))
-      return false;
+    sql::ResultSet result_set(1);
+    Execute execute(*(_session.get()), true);
+    execute.run(sql[0], result_set);
+    result_set.next();
+    string count= result_set.getString(0);
+
+    /* Must always be at least one row in the table */
+    if (count == "0")
+    {
+      sql.clear();
+      sql.push_back("INSERT INTO replication.applier_state"
+                    " (last_applied_commit_id, status)"
+                    " VALUES (0, 'STOPPED')");
+      if (not executeSQL(sql))
+        return false;
+    }
   }
 
   /*
@@ -83,7 +121,8 @@ bool ReplicationSchema::create()
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS replication.queue"
                 " (trx_id BIGINT NOT NULL, seg_id INT NOT NULL,"
-                " commit_order INT, msg BLOB, PRIMARY KEY(trx_id, seg_id))");
+                " commit_order INT, msg BLOB, PRIMARY KEY(trx_id, seg_id))"
+                " COMMENT = 'VERSION 1.0'");
   if (not executeSQL(sql))
     return false;
 

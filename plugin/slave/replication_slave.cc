@@ -59,7 +59,9 @@ bool ReplicationSlave::initWithConfig()
     ("master-host", po::value<string>()->default_value(""))
     ("master-port", po::value<uint16_t>()->default_value(3306))
     ("master-user", po::value<string>()->default_value(""))
-    ("master-pass", po::value<string>()->default_value(""));
+    ("master-pass", po::value<string>()->default_value(""))
+    ("max-reconnects", po::value<uint32_t>()->default_value(10))
+    ("seconds-between-reconnects", po::value<uint32_t>()->default_value(30));
 
   ifstream cf_stream(_config_file.c_str());
   po::store(drizzled::program_options::parse_config_file(cf_stream, slave_options), vm);
@@ -77,6 +79,12 @@ bool ReplicationSlave::initWithConfig()
 
   if (vm.count("master-pass"))
     _producer.setMasterPassword(vm["master-pass"].as<string>());
+
+  if (vm.count("max-reconnects"))
+    _producer.setMaxReconnectAttempts(vm["max-reconnects"].as<uint32_t>());
+
+  if (vm.count("seconds-between-reconnects"))
+    _producer.setMaxReconnectAttempts(vm["seconds-between-reconnects"].as<uint32_t>());
 
   /* setup schema and tables */
   ReplicationSchema rs;

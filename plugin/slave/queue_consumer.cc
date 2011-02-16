@@ -69,6 +69,7 @@ bool QueueConsumer::process()
     while (getMessage(transaction, commit_id, trx_id, segment_id++))
     {
       convertToSQL(transaction, aggregate_sql, segmented_sql);
+      transaction.Clear();
     }
 
     /*
@@ -79,12 +80,9 @@ bool QueueConsumer::process()
     assert((not commit_id.empty()) && (commit_id != "0"));
     assert(segmented_sql.empty());
 
-    if (not aggregate_sql.empty())
+    if (not executeSQLWithCommitId(aggregate_sql, commit_id))
     {
-      if (not executeSQLWithCommitId(aggregate_sql, commit_id))
-      {
-        return false;
-      }
+      return false;
     }
 
     if (not deleteFromQueue(trx_id))
@@ -129,9 +127,11 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
     assert(result_set.isNull(0) == false);
     assert(result_set.isNull(1) == false);
 
+printf("MESSAGE: %s", msg.c_str()); fflush(stdout);
     google::protobuf::TextFormat::ParseFromString(msg, &transaction);
-    commit_id= com_id;
+printf("RETURNED FROM PARSING\n"); fflush(stdout);
 
+    commit_id= com_id;
     found_rows++;
   }
 

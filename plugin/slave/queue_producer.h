@@ -80,6 +80,16 @@ public:
     _master_pass= password;
   }
 
+  void setMaxReconnectAttempts(uint32_t max)
+  {
+    _max_reconnects= max;
+  }
+
+  void setSecondsBetweenReconnects(uint32_t seconds)
+  {
+    _seconds_between_reconnects= seconds;
+  }
+
 private:
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
@@ -99,9 +109,29 @@ private:
   uint32_t _max_reconnects;
   uint32_t _seconds_between_reconnects;
 
+  std::string _last_error_message;
+
+  /**
+   * Open connection to the master server.
+   */
   bool openConnection();
+
+  /**
+   * Close connection to the master server.
+   */
   bool closeConnection();
+
+  /**
+   * Attempt to reconnect to the master server.
+   *
+   * This method does not return until reconnect succeeds, or we exceed our
+   * maximum number of retries defined by _max_reconnects.
+   *
+   * @retval true Reconnect succeeded
+   * @retval false Reconnect failed
+   */
   bool reconnect();
+
   bool queryForMaxCommitId(uint32_t *max_commit_id);
   bool queryForReplicationEvents(uint32_t max_commit_id);
   bool queryForTrxIdList(uint32_t max_commit_id, std::vector<uint64_t> &list);
@@ -110,6 +140,14 @@ private:
                    const char *commit_id,
                    const char *msg,
                    const char *msg_length);
+
+  /**
+   * Update IO thread status in state table.
+   *
+   * @param err_msg Error message string
+   * @param status false = STOPPED, true = RUNNING
+   */
+  void setIOState(const std::string &err_msg, bool status);
 
 };
 

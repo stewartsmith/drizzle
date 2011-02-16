@@ -42,6 +42,7 @@ QueueProducer::~QueueProducer()
 
 bool QueueProducer::init()
 {
+  setIOState("", true);
   return openConnection();
 }
 
@@ -59,6 +60,7 @@ bool QueueProducer::process()
         }
         else
         {
+          _last_error_message= "Master offline";
           return false;   /* reconnect failed, shutdown the thread */
         }
       }
@@ -81,6 +83,7 @@ bool QueueProducer::process()
       }
       else
       {
+        _last_error_message= "Master offline";
         return false;   /* reconnect failed, shutdown the thread */
       }
     }
@@ -95,6 +98,7 @@ bool QueueProducer::process()
 
 void QueueProducer::shutdown()
 {
+  setIOState(_last_error_message, false);
   if (_is_connected)
     closeConnection();
 }
@@ -105,6 +109,7 @@ bool QueueProducer::reconnect()
 
   _is_connected= false;
   _last_return= DRIZZLE_RETURN_OK;
+  _last_error_message.clear();
   boost::posix_time::seconds duration(_seconds_between_reconnects);
 
   uint32_t attempts= 1;
@@ -123,18 +128,19 @@ bool QueueProducer::openConnection()
 {
   if (drizzle_create(&_drizzle) == NULL)
   {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: Error during drizzle_create()"));
     _last_return= DRIZZLE_RETURN_INTERNAL_ERROR;
+    _last_error_message= "Replication slave: ";
+    _last_error_message.append(drizzle_error(&_drizzle));
+    errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
   
   if (drizzle_con_create(&_drizzle, &_connection) == NULL)
   {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: %s"),
-                  drizzle_error(&_drizzle));
     _last_return= DRIZZLE_RETURN_INTERNAL_ERROR;
+    _last_error_message= "Replication slave: ";
+    _last_error_message.append(drizzle_error(&_drizzle));
+    errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
   
@@ -145,10 +151,10 @@ bool QueueProducer::openConnection()
 
   if (ret != DRIZZLE_RETURN_OK)
   {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: %s"),
-                  drizzle_error(&_drizzle));
     _last_return= ret;
+    _last_error_message= "Replication slave: ";
+    _last_error_message.append(drizzle_error(&_drizzle));
+    errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
   
@@ -209,7 +215,10 @@ bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
   }
 
   if (found_rows == 0)
+  {
+    _last_error_message= "Could not determine last committed transaction.";
     return false;
+  }
 
   return true;
 }
@@ -230,10 +239,10 @@ bool QueueProducer::queryForTrxIdList(uint32_t max_commit_id,
   
   if (ret != DRIZZLE_RETURN_OK)
   {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: %s"),
-                  drizzle_error(&_drizzle));
     _last_return= ret;
+    _last_error_message= "Replication slave: ";
+    _last_error_message.append(drizzle_error(&_drizzle));
+    errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
 
@@ -241,11 +250,11 @@ bool QueueProducer::queryForTrxIdList(uint32_t max_commit_id,
 
   if (ret != DRIZZLE_RETURN_OK)
   {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: %s"),
-                  drizzle_error(&_drizzle));
-    drizzle_result_free(&result);
     _last_return= ret;
+    _last_error_message= "Replication slave: ";
+    _last_error_message.append(drizzle_error(&_drizzle));
+    errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
+    drizzle_result_free(&result);
     return false;
   }
 
@@ -259,10 +268,10 @@ bool QueueProducer::queryForTrxIdList(uint32_t max_commit_id,
     }
     else
     {
-      errmsg_printf(error::ERROR,
-                    _("Replication slave: Unexpected NULL for trx id"));
-      drizzle_result_free(&result);
       _last_return= ret;
+      _last_error_message= "Replication slave: Unexpected NULL for trx id";
+      errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
+      drizzle_result_free(&result);
       return false;
     }
   }
@@ -304,6 +313,7 @@ bool QueueProducer::queueInsert(const char *trx_id,
   google::protobuf::TextFormat::PrintToString(message, &message_text);  
 
   /* escape embedded quotes */
+/*
   string::iterator it= message_text.begin();
   for (; it != message_text.end(); ++it)
   {
@@ -313,11 +323,21 @@ bool QueueProducer::queueInsert(const char *trx_id,
       ++it;
     }
   }
+*/
 
   sql.append(message_text);
   sql.append("')", 2);
 
-  printf("%s\n", sql.c_str()); fflush(stdout);
+  vector<string> statements;
+  statements.push_back(sql);
+
+  if (not executeSQL(statements))
+  {
+    markInErrorState();
+    return false;
+  }
+
+  _saved_max_commit_id= boost::lexical_cast<uint32_t>(commit_id);
   return true;
 }
 
@@ -357,10 +377,10 @@ bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
   
   if (ret != DRIZZLE_RETURN_OK)
   {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: %s"),
-                  drizzle_error(&_drizzle));
     _last_return= ret;
+    _last_error_message= "Replication slave: ";
+    _last_error_message.append(drizzle_error(&_drizzle));
+    errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
 
@@ -370,11 +390,11 @@ bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
 
   if (ret != DRIZZLE_RETURN_OK)
   {
-    errmsg_printf(error::ERROR,
-                  _("Replication slave: %s"),
-                  drizzle_error(&_drizzle));
-    drizzle_result_free(&result);
     _last_return= ret;
+    _last_error_message= "Replication slave: ";
+    _last_error_message.append(drizzle_error(&_drizzle));
+    errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
+    drizzle_result_free(&result);
     return false;
   }
 
@@ -393,6 +413,47 @@ bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
   drizzle_result_free(&result);
 
   return true;
+}
+
+
+void QueueProducer::setIOState(const string &err_msg, bool status)
+{
+  vector<string> statements;
+  string sql;
+  string msg(err_msg);
+
+  if (not status)
+  {
+    sql= "UPDATE replication.io_state SET status = 'STOPPED'";
+  }
+  else
+  {
+    sql= "UPDATE replication.io_state SET status = 'RUNNING'";
+  }
+  
+  sql.append(", error_msg = '", 15);
+
+  /* Escape embedded quotes and statement terminators */
+  string::iterator it;
+  for (it= msg.begin(); it != msg.end(); ++it)
+  {
+    if (*it == '\'')
+    {
+      it= msg.insert(it, '\'');
+      ++it;  /* advance back to the quote */
+    }
+    else if (*it == ';')
+    {
+      it= msg.insert(it, '\\');
+      ++it;  /* advance back to the semicolon */
+    }
+  }
+  
+  sql.append(msg);
+  sql.append("'", 1);
+
+  statements.push_back(sql);
+  executeSQL(statements);
 }
 
 } /* namespace slave */
