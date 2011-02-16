@@ -74,8 +74,6 @@ const uint32_t MAX_KEY_LENGTH_DECIMAL_WIDTH = 4; // strlen("4096")
 /* Max column width +1 */
 #define MAX_FIELD_WIDTH		(MAX_FIELD_CHARLENGTH*MAX_MBWIDTH+1)
 
-#define MAX_DATETIME_COMPRESSED_WIDTH 14  /* YYYYMMDDHHMMSS */
-
 #define MAX_TABLES	(sizeof(table_map)*8-3)	/* Max tables in join */
 #define PARAM_TABLE_BIT	(((table_map) 1) << (sizeof(table_map)*8-3))
 #define OUTER_REF_TABLE_BIT	(((table_map) 1) << (sizeof(table_map)*8-2))
