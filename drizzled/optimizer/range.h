@@ -253,9 +253,9 @@ public:
    * This function is implemented only by quick selects that merge other quick
    * selects output and/or can produce output suitable for merging.
    */
-  virtual void add_info_string(String *) 
+  virtual void add_info_string(std::string *)
   {}
-  
+
   /**
    * Returns true if any index used by this quick select
    * uses field which is marked in passed bitmap.

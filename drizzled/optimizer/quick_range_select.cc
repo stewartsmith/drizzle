@@ -419,7 +419,7 @@ int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 }
 
 
-void optimizer::QuickRangeSelect::add_info_string(String *str)
+void optimizer::QuickRangeSelect::add_info_string(string *str)
 {
   KeyInfo *key_info= head->key_info + index;
   str->append(key_info->name);

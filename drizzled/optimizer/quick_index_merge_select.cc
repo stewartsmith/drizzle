@@ -227,26 +227,26 @@ bool optimizer::QuickIndexMergeSelect::is_keys_used(const boost::dynamic_bitset<
 }
 
 
-void optimizer::QuickIndexMergeSelect::add_info_string(String *str)
+void optimizer::QuickIndexMergeSelect::add_info_string(string *str)
 {
   bool first= true;
-  str->append(STRING_WITH_LEN("sort_union("));
+  str->append("sort_union(");
   for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
        it != quick_selects.end();
        ++it)
   {
     if (! first)
-      str->append(',');
+      str->append(",");
     else
       first= false;
     (*it)->add_info_string(str);
   }
   if (pk_quick_select)
   {
-    str->append(',');
+    str->append(",");
     pk_quick_select->add_info_string(str);
   }
-  str->append(')');
+  str->append(")");
 }
 
 

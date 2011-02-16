@@ -230,21 +230,21 @@ int optimizer::QuickRorUnionSelect::get_next()
 }
 
 
-void optimizer::QuickRorUnionSelect::add_info_string(String *str)
+void optimizer::QuickRorUnionSelect::add_info_string(string *str)
 {
   bool first= true;
-  str->append(STRING_WITH_LEN("union("));
+  str->append("union(");
   for (vector<optimizer::QuickSelectInterface *>::iterator it= quick_selects.begin();
        it != quick_selects.end();
        ++it)
   {
     if (! first)
-      str->append(',');
+      str->append(",");
     else
       first= false;
     (*it)->add_info_string(str);
   }
-  str->append(')');
+  str->append(")");
 }
 
 

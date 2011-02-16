@@ -246,17 +246,17 @@ int optimizer::QuickRorIntersectSelect::get_next()
 }
 
 
-void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
+void optimizer::QuickRorIntersectSelect::add_info_string(string *str)
 {
   bool first= true;
-  str->append(STRING_WITH_LEN("intersect("));
+  str->append("intersect(");
   for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
        it != quick_selects.end();
        ++it)
   {
     KeyInfo *key_info= head->key_info + (*it)->index;
     if (! first)
-      str->append(',');
+      str->append(",");
     else
       first= false;
     str->append(key_info->name);
@@ -264,10 +264,10 @@ void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
   if (cpk_quick)
   {
     KeyInfo *key_info= head->key_info + cpk_quick->index;
-    str->append(',');
+    str->append(",");
     str->append(key_info->name);
   }
-  str->append(')');
+  str->append(")");
 }
 
 
