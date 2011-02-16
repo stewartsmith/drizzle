@@ -89,6 +89,9 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("::rnd_next()", "::store_lock()"));
   states.insert(state_pair("::rnd_next()", "::close()"));
 
+  states.insert(state_pair("::rnd_next()", "::extra()"));
+  states.insert(state_pair("::extra()", "::doEndTableScan()"));
+
   states.insert(state_pair("::rnd_next()", "::position()"));
   states.insert(state_pair("::position()", "::rnd_next()"));
   states.insert(state_pair("::rnd_next()", "::doUpdateRecord()"));
@@ -101,5 +104,6 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("::doInsertRecord()", "::reset()"));
 
   states.insert(state_pair("::doUpdateRecord()", "::doEndTableScan()"));
+  states.insert(state_pair("::doUpdateRecord()", "::extra()"));
   states.insert(state_pair("::doUpdateRecord()", "::rnd_next()"));
 }
