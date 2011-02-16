@@ -647,5 +647,12 @@ void buildPrimaryOnColumn(LEX *lex)
   }
 }
 
+void buildReplicationOption(LEX *lex, bool arg)
+{
+  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  message::ReplicationOptions *options= statement->schema_message.mutable_replication_options();
+  options->set_dont_replicate(arg);
+}
+
 } // namespace parser
 } // namespace drizzled

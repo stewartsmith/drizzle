@@ -168,6 +168,7 @@ drizzled::enum_field_types buildDecimalColumn(LEX *lex);
 void buildKeyOnColumn(LEX *lex);
 void buildAutoOnColumn(LEX *lex);
 void buildPrimaryOnColumn(LEX *lex);
+void buildReplicationOption(LEX *lex, bool arg);
 
 } // namespace parser
 } // namespace drizzled
