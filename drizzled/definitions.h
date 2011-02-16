@@ -544,8 +544,6 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 #define IO_SIZE 4096
 /* Max file name len */
 #define FN_LEN 256
-/* Max length of extension (part of FN_LEN) */
-#define FN_EXTLEN 20
 /* Max length of full path-name */
 #define FN_REFLEN 512
 /* File extension character */
