@@ -87,7 +87,9 @@ Do not dump the CREATE TABLE / CREATE DATABASE statements.
 
 .. option:: --skip-extended-insert
 
-Dump every row on an individual line.  For example::
+Dump every row on an individual line.  For example:
+
+.. code-block:: mysql
 
 	INSERT INTO `t1` VALUES (1,'hello');
 	INSERT INTO `t1` VALUES (2,'world');
@@ -243,13 +245,17 @@ The Drizzle protocol.
 Backups using Drizzledump
 -------------------------
 
-Backups of a database can be made very simply by running the following::
+Backups of a database can be made very simply by running the following:
 
-$ drizzledump --all-databases > dumpfile.sql
+.. code-block:: bash
 
-This can then be re-imported into drizzle at a later date using::
+  $ drizzledump --all-databases > dumpfile.sql
 
-$ drizzle < dumpfile.sql
+This can then be re-imported into drizzle at a later date using:
+
+.. code-block:: bash
+
+  $ drizzle < dumpfile.sql
 
 MySQL Migration using Drizzledump
 ---------------------------------
@@ -268,14 +274,18 @@ format.
    connect to a MySQL server a port (such as 3306) must be specified.
 
 So, simply connecting to a MySQL server with :program:`drizzledump` as follows
-will give you a Drizzle compatible output::
+will give you a Drizzle compatible output:
 
-$ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password > dumpfile.sql
+.. code-block:: bash
+
+  $ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password > dumpfile.sql
 
 Additionally :program:`drizzledump` can now dump from MySQL and import directly
-into a Drizzle server as follows::
+into a Drizzle server as follows:
 
-$ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
+.. code-block:: bash
+
+  $ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
 
 .. note::
 
@@ -302,15 +312,24 @@ When you migrate from MySQL to Drizzle, the following conversions are required:
  * mediumblob -> blob
  * longblob -> blob
  * year -> int
- * set -> text
- * date/datetime default 0000-00-00 -> default NULL (Currently, ALL date columns have their DEFAULT set to NULL on migration)
- * date/datetime NOT NULL columns -> NULL
- * any date data containing 0000-00-00 -> NULL
- * time -> int of the number of seconds [1]_
- * enum-> DEFAULT NULL
+ * set -> text [1]_
+ * date/datetime default 0000-00-00 -> default NULL [2]_
+ * date/datetime NOT NULL columns -> NULL [2]_
+ * any date data containing 0000-00-00 -> NULL [2]_
+ * time -> int of the number of seconds [3]_
+ * enum-> DEFAULT NULL [4]_
 
 .. rubric:: Footnotes
 
-.. [1] This prevents data loss since MySQL's TIME data type has a range of
+.. [1] There is currently no good alternative to SET, this is simply to preserve
+       the data in the column.  There is a new alternative to SET to be included
+       at a later date.
+
+.. [2] Currently, ALL date columns have their DEFAULT set to NULL on migration.
+       This is so that any rows with 0000-00-00 dates can convert to NULL.
+
+.. [3] This prevents data loss since MySQL's TIME data type has a range of
        -838:59:59 - 838:59:59, and Drizzle's TIME type has a range of
-       00:00:00 - 23:59:61.999999.
+       00:00:00 - 23:59:59.
+
+.. [4] This is so that empty entries such as '' will convert to NULL.
