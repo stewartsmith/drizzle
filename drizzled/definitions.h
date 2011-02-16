@@ -278,10 +278,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_BLOCK_LOCK		256	/* unlock when reading some records */
 #define HA_OPEN_TEMPORARY	512
 
-/* For transactional LOCK Table. handler::lock_table() */
-#define HA_LOCK_IN_SHARE_MODE      F_RDLCK
-#define HA_LOCK_IN_EXCLUSIVE_MODE  F_WRLCK
-
 /* Some key definitions */
 #define HA_KEY_NULL_LENGTH	1
 #define HA_KEY_BLOB_LENGTH	2
