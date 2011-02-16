@@ -75,7 +75,6 @@ static const string select_type_str[]=
 
 void optimizer::ExplainPlan::printPlan()
 {
-  List<Item> field_list;
   List<Item> item_list;
   Session *session= join->session;
   select_result *result= join->result;
