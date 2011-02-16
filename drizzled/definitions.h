@@ -499,10 +499,8 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 #define ALIGN_SIZE(A)  MY_ALIGN((A),sizeof(double))
 #ifdef __cplusplus
 #define ADD_TO_PTR(ptr,size,type) (type) (reinterpret_cast<const unsigned char*>(ptr)+size)
-#define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
 #else
  #define ADD_TO_PTR(ptr,size,type) (type) ((unsigned char*) (ptr)+size)
- #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
 #endif
 
 #define MY_DIV_UP(A, B) (((A) + (B) - 1) / (B))
