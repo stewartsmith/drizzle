@@ -426,7 +426,7 @@ void optimizer::QuickRangeSelect::add_info_string(String *str)
 }
 
 
-void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
+void optimizer::QuickRangeSelect::add_keys_and_lengths(string *key_names,
                                                        String *used_lengths)
 {
   char buf[64];

@@ -182,15 +182,14 @@ void optimizer::ExplainPlan::printPlan()
       JoinTable *tab= join->join_tab + i;
       Table *table= tab->table;
       char buff[512];
-      char buff2[512], buff3[512];
+      char buff3[512];
       char keylen_str_buf[64];
       String extra(buff, sizeof(buff),cs);
       char table_name_buffer[NAME_LEN];
       string tmp1;
-      String tmp2(buff2,sizeof(buff2),cs);
+      string tmp2;
       String tmp3(buff3,sizeof(buff3),cs);
       extra.length(0);
-      tmp2.length(0);
       tmp3.length(0);
 
       quick_type= -1;
@@ -267,12 +266,11 @@ void optimizer::ExplainPlan::printPlan()
         for (StoredKey **ref= tab->ref.key_copy; *ref; ref++)
         {
           if (tmp2.length())
-            tmp2.append(',');
-          tmp2.append((*ref)->name(), 
-                       strlen((*ref)->name()),
-                       system_charset_info);
+            tmp2.append(",");
+          tmp2.append((*ref)->name(),
+                      strlen((*ref)->name()));
         }
-        item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
+        item_list.push_back(new Item_string(tmp2.c_str(),tmp2.length(),cs));
       }
       else if (tab->type == AM_NEXT)
       {
@@ -289,7 +287,7 @@ void optimizer::ExplainPlan::printPlan()
       else if (tab->select && tab->select->quick)
       {
         tab->select->quick->add_keys_and_lengths(&tmp2, &tmp3);
-        item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
+        item_list.push_back(new Item_string(tmp2.c_str(),tmp2.length(),cs));
         item_list.push_back(new Item_string(tmp3.ptr(),tmp3.length(),cs));
         item_list.push_back(item_null);
       }

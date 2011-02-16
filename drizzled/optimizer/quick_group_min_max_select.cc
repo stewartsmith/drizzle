@@ -737,7 +737,7 @@ void optimizer::QuickGroupMinMaxSelect::update_max_result()
 }
 
 
-void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(String *key_names,
+void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(string *key_names,
                                                              String *used_lengths)
 {
   char buf[64];

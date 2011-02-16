@@ -248,7 +248,7 @@ void optimizer::QuickRorUnionSelect::add_info_string(String *str)
 }
 
 
-void optimizer::QuickRorUnionSelect::add_keys_and_lengths(String *key_names,
+void optimizer::QuickRorUnionSelect::add_keys_and_lengths(string *key_names,
                                                           String *used_lengths)
 {
   bool first= true;
@@ -263,7 +263,7 @@ void optimizer::QuickRorUnionSelect::add_keys_and_lengths(String *key_names,
     else
     {
       used_lengths->append(',');
-      key_names->append(',');
+      key_names->append(",");
     }
     (*it)->add_keys_and_lengths(key_names, used_lengths);
   }

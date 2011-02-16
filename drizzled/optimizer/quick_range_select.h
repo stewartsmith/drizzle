@@ -203,7 +203,7 @@ public:
     return QS_TYPE_RANGE;
   }
 
-  void add_keys_and_lengths(String *key_names, String *used_lengths);
+  void add_keys_and_lengths(std::string *key_names, String *used_lengths);
 
   void add_info_string(String *str);
 

@@ -241,7 +241,8 @@ public:
    * 
    * @note This is used by during explain plan.
    */
-  virtual void add_keys_and_lengths(String *key_names, String *used_lengths)=0;
+  virtual void add_keys_and_lengths(std::string *key_names,
+                                    String *used_lengths)=0;
 
   /**
    * Append text representation of quick select structure (what and how is
