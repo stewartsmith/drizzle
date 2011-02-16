@@ -1645,6 +1645,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
     if (not create_info->table_existed)
       session->drop_open_table(table, identifier);
+
     return NULL;
   }
 

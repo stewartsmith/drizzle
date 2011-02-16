@@ -143,7 +143,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                    bool drop_temporary)
 {
   TableList *table;
-  String wrong_tables;
+  util::string::vector wrong_tables;
   int error= 0;
   bool foreign_key_error= false;
 
@@ -248,9 +248,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
       if (error)
       {
-        if (wrong_tables.length())
-          wrong_tables.append(',');
-        wrong_tables.append(String(table->getTableName(), system_charset_info));
+        wrong_tables.push_back(table->getTableName());
       }
     }
 
@@ -258,12 +256,23 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   } while (0);
 
-  if (wrong_tables.length())
+  if (wrong_tables.size())
   {
     if (not foreign_key_error)
     {
+      std::string table_error;
+
+      for (util::string::vector::iterator iter= wrong_tables.begin();
+           iter != wrong_tables.end();
+           iter++)
+      {
+        table_error+= *iter;
+        table_error+= ',';
+      }
+      table_error.resize(table_error.size() -1);
+
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
-                      wrong_tables.c_ptr());
+                      table_error.c_str());
     }
     else
     {
