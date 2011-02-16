@@ -654,5 +654,21 @@ void buildReplicationOption(LEX *lex, bool arg)
   options->set_dont_replicate(arg);
 }
 
+void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+
+  statement->alter_info.flags.set(ALTER_DROP_INDEX);
+  if (is_foreign_key)
+  {
+    statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
+    statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY, name));
+  }
+  else
+  {
+    statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY, name));
+  }
+}
+
 } // namespace parser
 } // namespace drizzled

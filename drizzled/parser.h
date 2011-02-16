@@ -169,6 +169,7 @@ void buildKeyOnColumn(LEX *lex);
 void buildAutoOnColumn(LEX *lex);
 void buildPrimaryOnColumn(LEX *lex);
 void buildReplicationOption(LEX *lex, bool arg);
+void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key= false);
 
 } // namespace parser
 } // namespace drizzled

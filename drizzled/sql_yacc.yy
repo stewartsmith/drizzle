@@ -1807,27 +1807,15 @@ alter_list_item:
           }
         | DROP FOREIGN KEY_SYM opt_ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY,
-                                                                    $4.str));
-            statement->alter_info.flags.set(ALTER_DROP_INDEX);
-            statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
+            parser::buildAddAlterDropIndex(Lex, $4.str, true);
           }
         | DROP PRIMARY_SYM KEY_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
-                                                               "PRIMARY"));
-            statement->alter_info.flags.set(ALTER_DROP_INDEX);
+            parser::buildAddAlterDropIndex(Lex, "PRIMARY");
           }
         | DROP key_or_index field_ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
-                                                                    $3.str));
-            statement->alter_info.flags.set(ALTER_DROP_INDEX);
+            parser::buildAddAlterDropIndex(Lex, $3.str);
           }
         | DISABLE_SYM KEYS
           {
