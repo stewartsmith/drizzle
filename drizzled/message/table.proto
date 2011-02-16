@@ -8,6 +8,7 @@ option java_package = "org.drizzle.messages";
 option java_outer_classname = "TableMessage";
 
 import "engine.proto";
+import "replication_options.proto";
 
 message Table {
 
@@ -191,6 +192,8 @@ message Table {
     A version value of 0, means that it was never set.
     */
   optional uint64 version = 15;
+
+  optional ReplicationOptions replication_options= 16;
 }
 
 message AlterTable {

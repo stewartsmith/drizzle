@@ -975,13 +975,13 @@ custom_database_option:
         | REPLICATION opt_equal TRUE_SYM
           {
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-            message::Schema::Options *options= statement->schema_message.mutable_options();
+            message::ReplicationOptions *options= statement->schema_message.mutable_replication_options();
             options->set_dont_replicate(true);
           }
         | REPLICATION opt_equal FALSE_SYM
           {
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-            message::Schema::Options *options= statement->schema_message.mutable_options();
+            message::ReplicationOptions *options= statement->schema_message.mutable_replication_options();
             options->set_dont_replicate(false);
           }
         | ident_or_text equal ident_or_text

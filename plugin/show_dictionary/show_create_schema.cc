@@ -79,10 +79,10 @@ bool ShowCreateSchema::Generator::populate()
       buffer.append(schema_message->collation());
     }
 
-    if (schema_message->has_options())
+    if (schema_message->has_replication_options())
     {
-      if (schema_message->options().has_dont_replicate() and
-          schema_message->options().dont_replicate())
+      if (schema_message->replication_options().has_dont_replicate() and
+          schema_message->replication_options().dont_replicate())
       {
         buffer.append(" REPLICATE = FALSE");
       }

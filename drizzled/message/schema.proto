@@ -8,10 +8,10 @@ option java_package = "org.drizzle.messages";
 option java_outer_classname = "SchemaMessage";
 
 import "engine.proto";
+import "replication_options.proto";
 
 message Schema {
   message Options {
-    optional bool dont_replicate = 1;
   }
   required string name = 1;
   optional string collation = 2;
@@ -25,4 +25,5 @@ message Schema {
     */
   optional uint64 version = 14;
   optional Options options = 15;
+  optional ReplicationOptions replication_options= 16;
 }

@@ -1947,7 +1947,7 @@ void TransactionServices::createSchema(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (schema.has_options() and schema.options().has_dont_replicate() and schema.options().dont_replicate())
+  if (schema.has_replication_options() and schema.replication_options().has_dont_replicate() and schema.replication_options().dont_replicate())
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -1981,7 +1981,7 @@ void TransactionServices::dropSchema(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (schema.has_options() and schema.options().has_dont_replicate() and schema.options().dont_replicate())
+  if (schema.has_replication_options() and schema.replication_options().has_dont_replicate() and schema.replication_options().dont_replicate())
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -2014,7 +2014,7 @@ void TransactionServices::alterSchema(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (old_schema.has_options() and old_schema.options().has_dont_replicate() and old_schema.options().dont_replicate())
+  if (old_schema.has_replication_options() and old_schema.replication_options().has_dont_replicate() and old_schema.replication_options().dont_replicate())
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
