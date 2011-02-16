@@ -182,15 +182,14 @@ void optimizer::ExplainPlan::printPlan()
       JoinTable *tab= join->join_tab + i;
       Table *table= tab->table;
       char buff[512];
-      char buff1[512], buff2[512], buff3[512];
+      char buff2[512], buff3[512];
       char keylen_str_buf[64];
       String extra(buff, sizeof(buff),cs);
       char table_name_buffer[NAME_LEN];
-      String tmp1(buff1,sizeof(buff1),cs);
+      string tmp1;
       String tmp2(buff2,sizeof(buff2),cs);
       String tmp3(buff3,sizeof(buff3),cs);
       extra.length(0);
-      tmp1.length(0);
       tmp2.length(0);
       tmp3.length(0);
 
@@ -242,15 +241,14 @@ void optimizer::ExplainPlan::printPlan()
           if (tab->keys.test(j))
           {
             if (tmp1.length())
-              tmp1.append(',');
+              tmp1.append(",");
             tmp1.append(table->key_info[j].name,
-                        strlen(table->key_info[j].name),
-                        system_charset_info);
+                        strlen(table->key_info[j].name));
           }
         }
       }
       if (tmp1.length())
-        item_list.push_back(new Item_string(tmp1.ptr(),tmp1.length(),cs));
+        item_list.push_back(new Item_string(tmp1.c_str(),tmp1.length(),cs));
       else
         item_list.push_back(item_null);
 
