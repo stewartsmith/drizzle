@@ -67,7 +67,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Implements Drizzle replication slave.",
   PLUGIN_LICENSE_GPL,
   slave::init,
-  "multi_thread",        /* depends */
+  NULL,                  /* depends */
   slave::init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
