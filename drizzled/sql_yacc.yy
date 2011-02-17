@@ -32,7 +32,6 @@
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
 
-#define DRIZZLE_YACC
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
@@ -69,9 +68,6 @@ int yylex(void *yylval, void *yysession);
     parser::my_parse_error(YYSession->m_lip);\
     DRIZZLE_YYABORT;                      \
   }
-
-
-#define YYDEBUG 0
 
 namespace drizzled
 {
