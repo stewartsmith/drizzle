@@ -34,7 +34,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
 #include "drizzled/message.h"
 #include "drizzled/util/string.h"
@@ -721,6 +720,11 @@ private:
                               bool &error_reported);
 public:
   bool parse_table_proto(Session& session, message::Table &table);
+
+  virtual bool replicate() const
+  {
+    return false;
+  }
 };
 
 } /* namespace drizzled */

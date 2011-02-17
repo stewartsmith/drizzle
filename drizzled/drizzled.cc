@@ -76,7 +76,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <plugin/myisam/myisam.h>
-
+#include <drizzled/typelib.h>
 #include "drizzled/visibility.h"
 
 #include <google/protobuf/stubs/common.h>
@@ -308,8 +308,6 @@ fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
 
-char system_time_zone[30];
-char *default_tz_name;
 DRIZZLED_API char glob_hostname[FN_REFLEN];
 
 char *opt_tc_log_file;
@@ -1099,13 +1097,7 @@ int init_basic_variables(int argc, char **argv)
   drizzle_init_variables();
 
   find_plugin_dir(argv[0]);
-  {
-    struct tm tm_tmp;
-    localtime_r(&server_start_time,&tm_tmp);
-    strncpy(system_time_zone, tzname[tm_tmp.tm_isdst != 0 ? 1 : 0],
-            sizeof(system_time_zone)-1);
 
-  }
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.

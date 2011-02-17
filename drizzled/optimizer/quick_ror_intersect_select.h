@@ -116,8 +116,8 @@ public:
     return QS_TYPE_ROR_INTERSECT;
   }
 
-  void add_keys_and_lengths(String *key_names, String *used_lengths);
-  void add_info_string(String *str);
+  void add_keys_and_lengths(std::string *key_names, std::string *used_lengths);
+  void add_info_string(std::string *str);
   bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
   /**

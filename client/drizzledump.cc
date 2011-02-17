@@ -56,30 +56,8 @@ namespace po= boost::program_options;
 
 #define EX_USAGE 1
 #define EX_DRIZZLEERR 2
-#define EX_CONSCHECK 3
-#define EX_EOM 4
 #define EX_EOF 5 /* ferror for output file was got */
-#define EX_ILLEGAL_TABLE 6
-#define EX_TABLE_STATUS 7
 
-/* index into 'show fields from table' */
-
-#define SHOW_FIELDNAME  0
-#define SHOW_TYPE  1
-#define SHOW_NULL  2
-#define SHOW_DEFAULT  4
-#define SHOW_EXTRA  5
-
-/* Size of buffer for dump's select query */
-#define QUERY_LENGTH 1536
-
-/* ignore table flags */
-#define IGNORE_NONE 0x00 /* no ignore */
-#define IGNORE_DATA 0x01 /* don't dump data for this table */
-#define IGNORE_INSERT_DELAYED 0x02 /* table doesn't support INSERT DELAYED */
-
-bool opt_alltspcs= false;
-bool opt_complete_insert= false;
 bool  verbose= false;
 static bool use_drizzle_protocol= false;
 bool ignore_errors= false;
@@ -483,10 +461,6 @@ try
   commandline_options.add_options()
   ("all-databases,A", po::value<bool>(&opt_alldbs)->default_value(false)->zero_tokens(),
   _("Dump all the databases. This will be same as --databases with all databases selected."))
-  ("all-tablespaces,Y", po::value<bool>(&opt_alltspcs)->default_value(false)->zero_tokens(),
-  _("Dump all the tablespaces."))
-  ("complete-insert,c", po::value<bool>(&opt_complete_insert)->default_value(false)->zero_tokens(),
-  _("Use complete insert statements."))
   ("flush-logs,F", po::value<bool>(&flush_logs)->default_value(false)->zero_tokens(),
   _("Flush logs file in server before starting dump. Note that if you dump many databases at once (using the option --databases= or --all-databases), the logs will be flushed for each database dumped. The exception is when using --lock-all-tables in this case the logs will be flushed only once, corresponding to the moment all tables are locked. So if you want your dump and the log flush to happen at the same exact moment you should use --lock-all-tables or --flush-logs"))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),

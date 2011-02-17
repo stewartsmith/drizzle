@@ -7,6 +7,8 @@ A savepoint is a marker inside a transaction that allows all commands that are e
 
 This sets a savepoint that can be returned to in the current transaction. The "identifier" is the name given to the new savepoint. If the identifier has already been used then the original identifier is replaced. Example:
 
+.. code-block:: mysql
+
      SAVEPOINT A;
      INSERT INTO t1 values (1);
      SAVEPOINT A;
