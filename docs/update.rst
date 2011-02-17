@@ -1,9 +1,9 @@
 Updating Data
 =============
 
-In Dizzle you can make use of UPDATE to modify an existing record in a table.
+In Drizzle you can make use of UPDATE to modify an existing record in a table.
 
-A type query:
+An example query:
 
 .. code-block:: mysql
 
