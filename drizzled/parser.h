@@ -133,7 +133,7 @@ Item* reserved_keyword_function(Session *session, const std::string &name, List<
 void my_parse_error(Lex_input_stream *lip);
 void my_parse_error(const char *message);
 bool check_reserved_words(LEX_STRING *name);
-void errorOn(const char *s);
+void errorOn(drizzled::Session *session, const char *s);
 
 
 bool buildOrderBy(LEX *lex);

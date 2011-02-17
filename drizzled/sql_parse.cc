@@ -63,13 +63,13 @@
 
 using namespace std;
 
-extern int DRIZZLEparse(void *session); // from sql_yacc.cc
+extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
 
 namespace drizzled
 {
 
 /* Prototypes */
-bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
 void parse(Session *session, const char *inBuf, uint32_t length);
 
@@ -594,7 +594,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
 #define MY_YACC_INIT 1000			// Start with big alloc
 #define MY_YACC_MAX  32000			// Because of 'short'
 
-bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
+bool my_yyoverflow(short **yyss, ParserType **yyvs, ulong *yystacksize)
 {
   LEX	*lex= current_session->lex;
   ulong old_info=0;
@@ -619,7 +619,7 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
     memcpy(lex->yacc_yyvs, *yyvs, old_info*sizeof(**yyvs));
   }
   *yyss=(short*) lex->yacc_yyss;
-  *yyvs=(YYSTYPE*) lex->yacc_yyvs;
+  *yyvs=(ParserType*) lex->yacc_yyvs;
   return 0;
 }
 
@@ -1706,7 +1706,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 
   /* Parse the query. */
 
-  bool parse_status= DRIZZLEparse(session) != 0;
+  bool parse_status= base_sql_parse(session) != 0;
 
   /* Check that if DRIZZLEparse() failed, session->is_error() is set. */
 
