@@ -178,6 +178,24 @@ public:
   int doStartTableScan(bool scan) { CURSOR_NEW_STATE("::doStartTableScan()"); return realCursor->doStartTableScan(scan); }
   int doEndTableScan() { CURSOR_NEW_STATE("::doEndTableScan()"); return realCursor->doEndTableScan(); }
 
+  const char *index_type(uint32_t key_number);
+
+  int doStartIndexScan(uint32_t, bool);
+  int index_read(unsigned char *buf, const unsigned char *key_ptr,
+                 uint32_t key_len, drizzled::ha_rkey_function find_flag);
+  int index_read_idx_map(unsigned char * buf,
+                         uint32_t index,
+                         const unsigned char * key,
+                         drizzled::key_part_map keypart_map,
+                         drizzled::ha_rkey_function find_flag);
+
+  int index_next(unsigned char * buf);
+  int doEndIndexScan();
+  int index_prev(unsigned char * buf);
+  int index_first(unsigned char * buf);
+  int index_last(unsigned char * buf);
+
+
   int doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked);
 
   THR_LOCK_DATA **store_lock(Session *,
@@ -285,6 +303,83 @@ int SEAPITesterCursor::info(uint32_t flag)
     errkey= realCursor->errkey;
 
   return r;
+}
+
+const char * SEAPITesterCursor::index_type(uint32_t key_number)
+{
+  CURSOR_NEW_STATE("::index_type()");
+  return realCursor->index_type(key_number);
+}
+
+int SEAPITesterCursor::doStartIndexScan(uint32_t keynr, bool scan)
+{
+  int r;
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  r= realCursor->doStartIndexScan(keynr, scan);
+
+  active_index= realCursor->get_index();
+
+  return r;
+}
+
+int SEAPITesterCursor::index_read(unsigned char *buf,
+                                  const unsigned char *key_ptr,
+                                  uint32_t key_len,
+                                  drizzled::ha_rkey_function find_flag)
+{
+  CURSOR_NEW_STATE("::index_read()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_read(buf, key_ptr, key_len, find_flag);
+}
+
+int SEAPITesterCursor::index_read_idx_map(unsigned char * buf,
+                                          uint32_t index,
+                                          const unsigned char * key,
+                                          drizzled::key_part_map keypart_map,
+                                          drizzled::ha_rkey_function find_flag)
+{
+  CURSOR_NEW_STATE("::index_read_idx_map()");
+  CURSOR_NEW_STATE("locked");
+  return realCursor->index_read_idx_map(buf, index, key, keypart_map, find_flag);
+}
+
+int SEAPITesterCursor::index_next(unsigned char * buf)
+{
+  CURSOR_NEW_STATE("::index_next()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_next(buf);
+}
+
+int SEAPITesterCursor::doEndIndexScan()
+{
+  CURSOR_NEW_STATE("::doEndIndexScan()");
+  CURSOR_NEW_STATE("locked");
+  int r= realCursor->doEndIndexScan();
+
+  active_index= realCursor->get_index();
+
+  return r;
+}
+
+int SEAPITesterCursor::index_prev(unsigned char * buf)
+{
+  CURSOR_NEW_STATE("::index_prev()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_prev(buf);
+}
+
+int SEAPITesterCursor::index_first(unsigned char * buf)
+{
+  CURSOR_NEW_STATE("::index_first()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_first(buf);
+}
+
+int SEAPITesterCursor::index_last(unsigned char * buf)
+{
+  CURSOR_NEW_STATE("::index_last()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_last(buf);
 }
 
 int SEAPITesterCursor::external_lock(Session *session, int lock_type)
