@@ -63,7 +63,7 @@
 
 using namespace std;
 
-extern int base_sql_parse(void *session); // from sql_yacc.cc
+extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
 
 namespace drizzled
 {
