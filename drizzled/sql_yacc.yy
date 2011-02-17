@@ -25,14 +25,12 @@
 ** The type will be void*, so it must be  cast to (Session*) when used.
 ** Use the YYSession macro for this.
 */
-#define YYPARSE_PARAM yysession
-#define YYLEX_PARAM yysession
-#define YYSession (static_cast<Session *>(yysession))
+
+#define YYSession (session)
 
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
 
-#define DRIZZLE_YACC
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
@@ -41,14 +39,14 @@
 #include <cstdio>
 #include <drizzled/parser.h>
 
-int yylex(void *yylval, void *yysession);
+int yylex(union ParserType *yylval, drizzled::Session *session);
 
 #define yyoverflow(A,B,C,D,E,F)               \
   {                                           \
     unsigned long val= *(F);                          \
     if (drizzled::my_yyoverflow((B), (D), &val)) \
     {                                         \
-      yyerror((char*) (A));                   \
+      yyerror(NULL, (char*) (A));                   \
       return 2;                               \
     }                                         \
     else                                      \
@@ -69,9 +67,6 @@ int yylex(void *yylval, void *yysession);
     parser::my_parse_error(YYSession->m_lip);\
     DRIZZLE_YYABORT;                      \
   }
-
-
-#define YYDEBUG 0
 
 namespace drizzled
 {
@@ -108,16 +103,16 @@ class False;
   to abort from the parser.
 */
 
-static void DRIZZLEerror(const char *s)
+static void base_sql_error(drizzled::Session *session, const char *s)
 {
-  parser::errorOn(s);
+  parser::errorOn(session, s);
 }
 
 } /* namespace drizzled; */
 
 using namespace drizzled;
 %}
-%union {
+%union ParserType {
   bool boolean;
   int  num;
   unsigned long ulong_num;
@@ -161,12 +156,18 @@ using namespace drizzled;
 %{
 namespace drizzled
 {
-bool my_yyoverflow(short **a, YYSTYPE **b, unsigned long *yystacksize);
+bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 }
 %}
 
 %debug
-%pure_parser                                    /* We have threads */
+%define api.pure
+%name-prefix "base_sql_"
+%parse-param { drizzled::Session *session }
+%lex-param { drizzled::Session *session }
+%verbose
+%require "2.2"
+
 
 /*
   Currently there are 70 shift/reduce conflicts.
@@ -777,15 +778,14 @@ rule: <-- starts at col 1
 query:
           END_OF_INPUT
           {
-            Session *session= YYSession;
-            if (!(session->lex->select_lex.options & OPTION_FOUND_COMMENT))
+            if (!(YYSession->lex->select_lex.options & OPTION_FOUND_COMMENT))
             {
               my_message(ER_EMPTY_QUERY, ER(ER_EMPTY_QUERY), MYF(0));
               DRIZZLE_YYABORT;
             }
             else
             {
-              session->lex->statement= new statement::EmptyQuery(YYSession);
+              YYSession->lex->statement= new statement::EmptyQuery(YYSession);
             }
           }
         | verb_clause END_OF_INPUT {}
