@@ -573,6 +573,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %left  INTERVAL_SYM
 %right UMINUS
 %left  '(' ')'
+%left  '{' '}'
 
 %type <lex_str>
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
@@ -750,10 +751,6 @@ END_OF_INPUT
 %type <num> index_hint_clause
 %type <filetype> data_file
 
-%type <NONE>
-        '-' '+' '*' '/' '%' '(' ')'
-        ',' '!' '{' '}' AND_SYM OR_SYM BETWEEN_SYM
-        THEN_SYM WHEN_SYM DIV_SYM MOD_SYM DELETE_SYM
 %%
 
 /*
