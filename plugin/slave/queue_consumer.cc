@@ -100,10 +100,10 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
                               uint64_t trx_id,
                               uint32_t segment_id)
 {
-  string sql("SELECT msg, commit_order FROM replication.queue"
-             " WHERE trx_id = ");
+  string sql("SELECT `msg`, `commit_order` FROM `replication`.`queue`"
+             " WHERE `trx_id` = ");
   sql.append(boost::lexical_cast<string>(trx_id));
-  sql.append(" AND seg_id = ", 14);
+  sql.append(" AND `seg_id` = ", 16);
   sql.append(boost::lexical_cast<string>(segment_id));
 
   sql::ResultSet result_set(2);
@@ -143,8 +143,8 @@ bool QueueConsumer::getListOfCompletedTransactions(TrxIdList &list)
 {
   Execute execute(*(_session.get()), true);
   
-  string sql("SELECT trx_id FROM replication.queue"
-             " WHERE commit_order IS NOT NULL ORDER BY commit_order ASC");
+  string sql("SELECT `trx_id` FROM `replication`.`queue`"
+             " WHERE `commit_order` IS NOT NULL ORDER BY `commit_order` ASC");
   
   /* ResultSet size must match column count */
   sql::ResultSet result_set(1);
@@ -299,14 +299,14 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
 
   if (not status)
   {
-    sql= "UPDATE replication.applier_state SET status = 'STOPPED'";
+    sql= "UPDATE `replication`.`applier_state` SET `status` = 'STOPPED'";
   }
   else
   {
-    sql= "UPDATE replication.applier_state SET status = 'RUNNING'";
+    sql= "UPDATE `replication`.`applier_state` SET `status` = 'RUNNING'";
   }
   
-  sql.append(", error_msg = '", 15);
+  sql.append(", `error_msg` = '", 17);
 
   /* Escape embedded quotes and statement terminators */
   string::iterator it;
@@ -335,8 +335,8 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
 bool QueueConsumer::executeSQLWithCommitId(vector<string> &sql,
                                            const string &commit_id)
 {
-  string tmp("UPDATE replication.applier_state"
-             " SET last_applied_commit_id = ");
+  string tmp("UPDATE `replication`.`applier_state`"
+             " SET `last_applied_commit_id` = ");
   tmp.append(commit_id);
   sql.push_back(tmp);
   
@@ -346,7 +346,7 @@ bool QueueConsumer::executeSQLWithCommitId(vector<string> &sql,
 
 bool QueueConsumer::deleteFromQueue(uint64_t trx_id)
 {
-  string sql("DELETE FROM replication.queue WHERE trx_id = ");
+  string sql("DELETE FROM `replication`.`queue` WHERE `trx_id` = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
 
   vector<string> sql_vect;

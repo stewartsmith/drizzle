@@ -189,9 +189,9 @@ bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
    * the queue.
    */
   string sql("SELECT MAX(x.cid) FROM"
-             " (SELECT MAX(commit_order) AS cid FROM replication.queue"
-             "  UNION ALL SELECT last_applied_commit_id AS cid"
-             "  FROM replication.applier_state) AS x");
+             " (SELECT MAX(`commit_order`) AS cid FROM `replication`.`queue`"
+             "  UNION ALL SELECT `last_applied_commit_id` AS cid"
+             "  FROM `replication`.`applier_state`) AS x");
 
   sql::ResultSet result_set(1);
   Execute execute(*(_session.get()), true);
@@ -225,7 +225,7 @@ bool QueueProducer::queryForTrxIdList(uint32_t max_commit_id,
                                       vector<uint64_t> &list)
 {
   (void)list;
-  string sql("SELECT id FROM data_dictionary.sys_replication_log"
+  string sql("SELECT `id` FROM `data_dictionary`.`sys_replication_log`"
              " WHERE commit_id > ");
   sql.append(boost::lexical_cast<string>(max_commit_id));
   sql.append(" LIMIT 25", 9);
@@ -292,8 +292,8 @@ bool QueueProducer::queueInsert(const char *trx_id,
   /*
    * The SQL to insert our results into the local queue.
    */
-  string sql= "INSERT INTO replication.queue"
-              " (trx_id, seg_id, commit_order, msg) VALUES (";
+  string sql= "INSERT INTO `replication`.`queue`"
+              " (`trx_id`, `seg_id`, `commit_order`, `msg`) VALUES (";
   sql.append(trx_id);
   sql.append(", ", 2);
   sql.append(seg_id);
@@ -361,8 +361,8 @@ bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
   /*
    * The SQL to pull everything we need from the master.
    */
-  string sql= "SELECT id, segid, commit_id, message, message_len "
-              " FROM data_dictionary.sys_replication_log WHERE id IN (";
+  string sql= "SELECT `id`, `segid`, `commit_id`, `message`, `message_len` "
+              " FROM `data_dictionary`.`sys_replication_log` WHERE `id` IN (";
 
   for (size_t x= 0; x < trx_id_list.size(); x++)
   {
@@ -427,14 +427,14 @@ void QueueProducer::setIOState(const string &err_msg, bool status)
 
   if (not status)
   {
-    sql= "UPDATE replication.io_state SET status = 'STOPPED'";
+    sql= "UPDATE `replication`.`io_state` SET `status` = 'STOPPED'";
   }
   else
   {
-    sql= "UPDATE replication.io_state SET status = 'RUNNING'";
+    sql= "UPDATE `replication`.`io_state` SET `status` = 'RUNNING'";
   }
   
-  sql.append(", error_msg = '", 15);
+  sql.append(", `error_msg` = '", 17);
 
   /* Escape embedded quotes and statement terminators */
   string::iterator it;
