@@ -244,7 +244,6 @@ public:
 
   int extra(enum ha_extra_function operation)
   {
-    CURSOR_NEW_STATE("::extra()");
     return realCursor->extra(operation);
   }
 
