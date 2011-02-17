@@ -63,7 +63,7 @@
 
 using namespace std;
 
-extern int DRIZZLEparse(void *session); // from sql_yacc.cc
+extern int base_sql_parse(void *session); // from sql_yacc.cc
 
 namespace drizzled
 {
@@ -1706,7 +1706,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 
   /* Parse the query. */
 
-  bool parse_status= DRIZZLEparse(session) != 0;
+  bool parse_status= base_sql_parse(session) != 0;
 
   /* Check that if DRIZZLEparse() failed, session->is_error() is set. */
 

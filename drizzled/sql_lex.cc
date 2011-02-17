@@ -37,7 +37,7 @@
 using namespace std;
 
 /* Stay outside of the namespace because otherwise bison goes nuts */
-int DRIZZLElex(void *arg, void *yysession);
+int base_sql_lex(void *arg, void *yysession);
 
 namespace drizzled
 {
@@ -601,13 +601,13 @@ static inline uint32_t int_token(const char *str,uint32_t length)
 
 } /* namespace drizzled */
 /*
-  DRIZZLElex remember the following states from the following DRIZZLElex()
+  base_sql_lex remember the following states from the following sql_baselex()
 
   - MY_LEX_EOQ			Found end of query
   - MY_LEX_OPERATOR_OR_IDENT	Last state was an ident, text or number
 				(which can't be followed by a signed number)
 */
-int DRIZZLElex(void *arg, void *yysession)
+int base_sql_lex(void *arg, void *yysession)
 {
   drizzled::Session *session= (drizzled::Session *)yysession;
   drizzled::Lex_input_stream *lip= session->m_lip;

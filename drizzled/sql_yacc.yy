@@ -39,7 +39,7 @@
 
 #include "config.h"
 #include <cstdio>
-#include "drizzled/parser.h"
+#include <drizzled/parser.h>
 
 int yylex(void *yylval, void *yysession);
 
@@ -108,7 +108,7 @@ class False;
   to abort from the parser.
 */
 
-static void DRIZZLEerror(const char *s)
+static void base_sql_error(const char *s)
 {
   parser::errorOn(s);
 }
@@ -166,7 +166,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, unsigned long *yystacksize);
 %}
 
 %debug
-%pure_parser                                    /* We have threads */
+%define api.pure
+%name-prefix "base_sql_"
 
 /*
   Currently there are 70 shift/reduce conflicts.
