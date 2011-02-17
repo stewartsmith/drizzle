@@ -396,7 +396,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  NATIONAL_SYM                  /* SQL-2003-R */
 %token  NATURAL                       /* SQL-2003-R */
 %token  NE                            /* OPERATOR */
-%token  NEG
 %token  NEW_SYM                       /* SQL-2003-R */
 %token  NEXT_SYM                      /* SQL-2003-N */
 %token  NONE_SYM                      /* SQL-2003-R */
@@ -556,24 +555,27 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  YEAR_SYM                      /* SQL-2003-R */
 %token  ZEROFILL_SYM
 
+/* Lowest to highest */
 %left   JOIN_SYM INNER_SYM STRAIGHT_JOIN CROSS LEFT RIGHT
 /* A dummy token to force the priority of table_ref production in a join. */
-%left   TABLE_REF_PRIORITY
-%left   SET_VAR
-%left   OR_SYM
-%left   XOR
-%left   AND_SYM
-%right  NOT_SYM
+%left  TABLE_REF_PRIORITY
+%left  SET_VAR
+%left  OR_SYM
+%left  XOR
+%left  AND_SYM
+%right NOT_SYM
+%right EQ
+%nonassoc EQUAL_SYM GE GT_SYM LE LT NE
 %nonassoc LIKE REGEXP_SYM
 %nonassoc BETWEEN_SYM
 %nonassoc IN_SYM
-%left   ELSE
-%left   EQ EQUAL_SYM GE GT_SYM LE LT NE IS
+%nonassoc IS NULL_SYM TRUE_SYM FALSE_SYM
 %left   '-' '+'
 %left   '*' '/' '%' DIV_SYM MOD_SYM
-%left   NEG
 %right  BINARY COLLATE_SYM
 %left  INTERVAL_SYM
+%right UMINUS
+%left  '(' ')'
 
 %type <lex_str>
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
@@ -2487,7 +2489,7 @@ simple_expr:
         | function_call_nonkeyword
         | function_call_generic
         | function_call_conflict
-        | simple_expr COLLATE_SYM ident_or_text %prec NEG
+        | simple_expr COLLATE_SYM ident_or_text %prec UMINUS
           {
             Item *i1= new (YYSession->mem_root) Item_string($3.str,
                                                       $3.length,
@@ -2500,8 +2502,8 @@ simple_expr:
           {
             Lex->setSumExprUsed();
           }
-        | '+' simple_expr %prec NEG { $$= $2; }
-        | '-' simple_expr %prec NEG
+        | '+' simple_expr %prec UMINUS { $$= $2; }
+        | '-' simple_expr %prec UMINUS
           { $$= new (YYSession->mem_root) Item_func_neg($2); }
         | '(' subselect ')'
           {
@@ -2523,7 +2525,7 @@ simple_expr:
             $$= new (YYSession->mem_root) Item_exists_subselect($3);
           }
         | '{' ident expr '}' { $$= $3; }
-        | BINARY simple_expr %prec NEG
+        | BINARY simple_expr %prec UMINUS
           {
             $$= create_func_cast(YYSession, $2, ITEM_CAST_CHAR, NULL, NULL,
                                  &my_charset_bin);
