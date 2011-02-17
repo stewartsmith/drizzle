@@ -22,13 +22,13 @@
  * Errors a drizzled can give you
  */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/definitions.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/definitions.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
-#include "drizzled/identifier.h"
+#include <drizzled/identifier.h>
 
 #include <boost/unordered_map.hpp>
 #include <exception>

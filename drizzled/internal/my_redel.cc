@@ -13,11 +13,11 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/error.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/error.h>
 #if defined(HAVE_UTIME_H)
 #include <utime.h>
 #elif defined(HAVE_SYS_UTIME_H)

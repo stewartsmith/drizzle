@@ -21,6 +21,6 @@
 #ifndef PLUGIN_MATH_FUNCTIONS_FUNCTIONS_H
 #define PLUGIN_MATH_FUNCTIONS_FUNCTIONS_H
 
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/plugin/table_function.h>
 
 #endif /* PLUGIN_MATH_FUNCTIONS_FUNCTIONS_H */

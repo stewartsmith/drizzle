@@ -24,7 +24,7 @@
     gives much more speed.
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/error.h>
 #include <drizzled/table.h>

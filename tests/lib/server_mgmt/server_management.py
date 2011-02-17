@@ -52,12 +52,15 @@ class serverManager:
         self.logging = system_manager.logging
         self.gdb  = self.system_manager.gdb
         self.code_tree = system_manager.code_tree
+        self.default_storage_engine = variables['defaultengine']
         self.user_server_opts = variables['drizzledoptions']
         self.servers = {}
         # We track this
         self.ld_lib_paths = system_manager.ld_lib_paths
         self.mutex = thread.allocate_lock()
         self.timer_increment = .5
+
+        self.logging.info("Using default-storage-engine: %s" %(self.default_storage_engine))
 
         if self.debug:
             self.logging.debug_class(self)
@@ -104,8 +107,12 @@ class serverManager:
         # initialize our new server_object
         if self.code_tree.type == 'Drizzle':
           from lib.server_mgmt.drizzled import drizzleServer as server_type
-        new_server = server_type( server_name, self, server_options
-                                , requester, workdir )
+        new_server = server_type( server_name
+                                , self
+                                , self.default_storage_engine
+                                , server_options
+                                , requester
+                                , workdir )
         self.add_server(requester, new_server)
         return new_server
 
@@ -332,6 +339,7 @@ class serverManager:
         remove_options = [ '--restart'
                          , '--skip-stack-trace'
                          , '--skip-core-file'
+                         , '--'
                          ]
         for remove_option in remove_options:
             if remove_option in server_options:

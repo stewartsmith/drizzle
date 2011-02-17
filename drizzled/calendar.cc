@@ -24,7 +24,7 @@
  * Common functions for dealing with calendrical calculations
  */
 
-#include "config.h"
+#include <config.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -38,7 +38,7 @@
 #endif
 #include <cstdlib>
 
-#include "drizzled/calendar.h"
+#include <drizzled/calendar.h>
 
 namespace drizzled
 {

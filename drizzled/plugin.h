@@ -23,17 +23,17 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
-#include "drizzled/module/manifest.h"
-#include "drizzled/module/module.h"
-#include "drizzled/plugin/version.h"
-#include "drizzled/module/context.h"
-#include "drizzled/definitions.h"
+#include <drizzled/module/manifest.h>
+#include <drizzled/module/module.h>
+#include <drizzled/plugin/version.h>
+#include <drizzled/module/context.h>
+#include <drizzled/definitions.h>
 
-#include "drizzled/lex_string.h"
-#include "drizzled/sys_var.h"
-#include "drizzled/xid.h"
+#include <drizzled/lex_string.h>
+#include <drizzled/sys_var.h>
+#include <drizzled/xid.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

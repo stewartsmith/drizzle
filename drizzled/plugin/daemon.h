@@ -22,9 +22,9 @@
 #ifndef DRIZZLED_PLUGIN_DAEMON_H
 #define DRIZZLED_PLUGIN_DAEMON_H
 
-#include "drizzled/plugin/plugin.h"
+#include <drizzled/plugin/plugin.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

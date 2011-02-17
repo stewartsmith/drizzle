@@ -23,24 +23,24 @@
 
 #include <set>
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/statement/select.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/statement/select.h>
 
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/message/schema.pb.h"
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
+#include <drizzled/message/schema.pb.h>
 
-#include "drizzled/generator.h"
+#include <drizzled/generator.h>
 
-#include "plugin/schema_dictionary/data_dictionary.h"
+#include <plugin/schema_dictionary/data_dictionary.h>
 
-#include "plugin/schema_dictionary/schemas.h"
-#include "plugin/schema_dictionary/tables.h"
-#include "plugin/schema_dictionary/columns.h"
-#include "plugin/schema_dictionary/indexes.h"
-#include "plugin/schema_dictionary/index_parts.h"
-#include "plugin/schema_dictionary/foreign_keys.h"
-#include "plugin/schema_dictionary/table_constraints.h"
+#include <plugin/schema_dictionary/schemas.h>
+#include <plugin/schema_dictionary/tables.h>
+#include <plugin/schema_dictionary/columns.h>
+#include <plugin/schema_dictionary/indexes.h>
+#include <plugin/schema_dictionary/index_parts.h>
+#include <plugin/schema_dictionary/foreign_keys.h>
+#include <plugin/schema_dictionary/table_constraints.h>
 
 #endif /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

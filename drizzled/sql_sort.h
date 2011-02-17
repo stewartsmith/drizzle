@@ -21,8 +21,8 @@
 #define DRIZZLED_SQL_SORT_H
 
 #include <unistd.h>
-#include "drizzled/base.h"
-#include "drizzled/qsort_cmp.h"
+#include <drizzled/base.h>
+#include <drizzled/qsort_cmp.h>
 
 namespace drizzled
 {

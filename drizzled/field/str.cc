@@ -19,12 +19,12 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/field/str.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {

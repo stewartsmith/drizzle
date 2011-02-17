@@ -84,7 +84,7 @@
  * 
  */
 
-#include "config.h"
+#include <config.h>
 #include "user_commands.h"
 #include "status_vars.h"
 #include "global_stats.h"

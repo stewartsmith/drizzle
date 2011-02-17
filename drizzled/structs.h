@@ -23,10 +23,10 @@
 #ifndef DRIZZLED_STRUCTS_H
 #define DRIZZLED_STRUCTS_H
 
-#include "drizzled/base.h"
-#include "drizzled/definitions.h"
-#include "drizzled/lex_string.h"
-#include "drizzled/thr_lock.h"
+#include <drizzled/base.h>
+#include <drizzled/definitions.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/thr_lock.h>
 
 namespace drizzled
 {

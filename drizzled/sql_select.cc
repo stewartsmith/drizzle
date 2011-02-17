@@ -22,7 +22,7 @@
   @defgroup Query_Optimizer  Query Optimizer
   @{
 */
-#include "config.h"
+#include <config.h>
 
 #include <string>
 #include <iostream>

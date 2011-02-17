@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_OPTIMIZER_QUICK_GROUP_MIN_MAX_SELECT_H
 #define DRIZZLED_OPTIMIZER_QUICK_GROUP_MIN_MAX_SELECT_H
 
-#include "drizzled/optimizer/range.h"
+#include <drizzled/optimizer/range.h>
 
 #include <vector>
 
@@ -450,7 +450,7 @@ public:
    * This method is used by select_describe to extract the names of the
    * indexes used by a quick select.
    */
-  void add_keys_and_lengths(String *key_names, String *used_lengths);
+  void add_keys_and_lengths(std::string *key_names, std::string *used_lengths);
 
 };
 

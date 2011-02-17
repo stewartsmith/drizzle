@@ -17,11 +17,11 @@
   The beginnings of locale(7) support.
   Sponsored for subset of LC_TIME support,  WorkLog entry 2928, -- Josh Chamas
 */
-#include "config.h"
+#include <config.h>
 #include <cassert>
-#include "drizzled/sql_locale.h"
-#include "drizzled/typelib.h"
-#include "drizzled/charset_info.h"
+#include <drizzled/sql_locale.h>
+#include <drizzled/typelib.h>
+#include <drizzled/charset_info.h>
 
 namespace drizzled
 {

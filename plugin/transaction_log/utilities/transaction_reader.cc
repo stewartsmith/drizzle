@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
@@ -30,9 +30,9 @@
 #include <algorithm>
 #include <vector>
 #include <unistd.h>
-#include "drizzled/gettext.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/message/statement_transform.h"
+#include <drizzled/gettext.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/statement_transform.h>
 #include "transaction_manager.h"
 #include "transaction_file_reader.h"
 #include "transaction_log_connection.h"

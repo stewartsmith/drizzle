@@ -22,14 +22,14 @@
 #ifndef DRIZZLED_SQL_ERROR_H
 #define DRIZZLED_SQL_ERROR_H
 
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/lex_string.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/lex_string.h>
 
 #include <drizzled/error_t.h>
 
 #include <bitset>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

@@ -15,9 +15,9 @@
 
 /* Funktions for comparing with wild-cards */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 namespace drizzled
 {

@@ -27,11 +27,11 @@
  *
  * Implementation of SQL index hints
  */
-#include "config.h"
-#include "drizzled/sql_string.h"
-#include "drizzled/session.h"
-#include "drizzled/index_hint.h"
-#include "drizzled/sql_table.h"
+#include <config.h>
+#include <drizzled/sql_string.h>
+#include <drizzled/session.h>
+#include <drizzled/index_hint.h>
+#include <drizzled/sql_table.h>
 
 namespace drizzled
 {

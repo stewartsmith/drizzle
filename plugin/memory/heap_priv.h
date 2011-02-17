@@ -17,14 +17,14 @@
 #ifndef PLUGIN_MEMORY_HEAP_PRIV_H
 #define PLUGIN_MEMORY_HEAP_PRIV_H
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/base.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/internal/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
-#include "drizzled/tree.h"
+#include <drizzled/tree.h>
 #include <list>
 
 #include <boost/thread/mutex.hpp>

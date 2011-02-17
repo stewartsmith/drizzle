@@ -21,8 +21,8 @@
 #define DRIZZLED_LOCK_H
 
 #include <vector>
-#include "drizzled/thr_lock.h"
-#include "drizzled/locking/global.h"
+#include <drizzled/thr_lock.h>
+#include <drizzled/locking/global.h>
 
 namespace drizzled
 {

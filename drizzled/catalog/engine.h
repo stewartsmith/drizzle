@@ -22,8 +22,8 @@
 #define DRIZZLED_CATALOG_ENGINE_H
 
 #include <boost/shared_ptr.hpp>
-#include "drizzled/identifier/catalog.h"
-#include "drizzled/message/catalog.h"
+#include <drizzled/identifier/catalog.h>
+#include <drizzled/message/catalog.h>
 
 namespace drizzled {
 namespace plugin {

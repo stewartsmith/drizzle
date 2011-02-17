@@ -21,7 +21,7 @@
 #ifndef PLUGIN_FUNCTION_DICTIONARY_FUNCTIONS_H
 #define PLUGIN_FUNCTION_DICTIONARY_FUNCTIONS_H
 
-#include "drizzled/generator/functions.h"
+#include <drizzled/generator/functions.h>
 
 namespace function_dictionary {
 

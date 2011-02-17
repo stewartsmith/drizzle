@@ -22,7 +22,7 @@
 
 #include <drizzled/function/time/date.h>
 
-#include "drizzled/temporal.h"
+#include <drizzled/temporal.h>
 
 namespace drizzled
 {

@@ -19,10 +19,10 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/catalog/local.h"
-#include "drizzled/plugin/catalog.h"
+#include <drizzled/catalog/local.h>
+#include <drizzled/plugin/catalog.h>
 
 #include <boost/thread/once.hpp>
 

@@ -22,7 +22,7 @@
 #ifndef DRIZZLED_MY_HASH_H
 #define DRIZZLED_MY_HASH_H
 
-#include "drizzled/dynamic_array.h"
+#include <drizzled/dynamic_array.h>
 
 namespace drizzled
 {

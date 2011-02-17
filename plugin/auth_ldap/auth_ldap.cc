@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 /* This is needed for simple auth, we're not ready for SASL yet. */
 #define LDAP_DEPRECATED 1
@@ -28,10 +28,10 @@
 #include <map>
 #include <string>
 
-#include "drizzled/plugin/authentication.h"
-#include "drizzled/identifier.h"
-#include "drizzled/util/convert.h"
-#include "drizzled/algorithm/sha1.h"
+#include <drizzled/plugin/authentication.h>
+#include <drizzled/identifier.h>
+#include <drizzled/util/convert.h>
+#include <drizzled/algorithm/sha1.h>
 
 #include <drizzled/module/option_map.h>
 #include <boost/program_options.hpp>

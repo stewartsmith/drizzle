@@ -27,10 +27,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "drizzled/session.h"
+#include <config.h>
+#include <drizzled/session.h>
 #include "query_cache_service.h"
-#include "drizzled/table_list.h"
+#include <drizzled/table_list.h>
 
 using namespace std;
 

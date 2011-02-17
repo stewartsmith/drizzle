@@ -15,9 +15,9 @@
 
 /* Handling of arrays that can grow dynamicly. */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 
 #include <algorithm>
 

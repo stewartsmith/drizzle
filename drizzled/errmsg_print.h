@@ -27,7 +27,7 @@
 #ifndef DRIZZLED_ERRMSG_PRINT_H
 #define DRIZZLED_ERRMSG_PRINT_H
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 #include <drizzled/error/level_t.h>
 
 #include <string>

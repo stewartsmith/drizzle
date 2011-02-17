@@ -21,7 +21,7 @@
   This file defines all compare functions
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/cached_item.h>
 #include <drizzled/check_stack_overrun.h>

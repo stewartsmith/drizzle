@@ -101,12 +101,12 @@
   I/O finished.
 */
 
-#include "config.h"
-#include "drizzled/error.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
 #include "keycache.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/internal/my_bit.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_bit.h>
 #include <errno.h>
 #include <stdarg.h>
 

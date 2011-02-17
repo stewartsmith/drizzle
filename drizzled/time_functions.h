@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_TIME_FUNCTIONS_H
 #define DRIZZLED_TIME_FUNCTIONS_H
 
-#include "drizzled/sql_error.h"
-#include "drizzled/type/time.h"
+#include <drizzled/sql_error.h>
+#include <drizzled/type/time.h>
 
 namespace drizzled
 {

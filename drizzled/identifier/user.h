@@ -25,7 +25,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

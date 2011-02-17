@@ -17,8 +17,8 @@
 #ifndef DRIZZLED_TYPELIB_H
 #define DRIZZLED_TYPELIB_H
 
-#include "drizzled/global_charset_info.h"
-#include "drizzled/memory/root.h"
+#include <drizzled/global_charset_info.h>
+#include <drizzled/memory/root.h>
 
 namespace drizzled
 {

@@ -71,7 +71,7 @@
 
 */
 
-#include "config.h"
+#include <config.h>
 #include "client_priv.h"
 
 #include "option_string.h"

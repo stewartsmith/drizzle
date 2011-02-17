@@ -21,10 +21,10 @@
 /* One of key_length or key_length_offset must be given */
 /* Key length of 0 isn't allowed */
 
-#include "config.h"
-#include "drizzled/my_hash.h"
-#include "drizzled/charset.h"
-#include "drizzled/charset_info.h"
+#include <config.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/charset.h>
+#include <drizzled/charset_info.h>
 
 namespace drizzled
 {

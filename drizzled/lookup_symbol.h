@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_LOOKUP_SYMBOL_H
 #define DRIZZLED_LOOKUP_SYMBOL_H
 
-#include "drizzled/lex_symbol.h"
+#include <drizzled/lex_symbol.h>
 
 namespace drizzled
 {

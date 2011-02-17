@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/error_dictionary/errors.h"
+#include <config.h>
+#include <plugin/error_dictionary/errors.h>
 
 namespace drizzle_plugin
 {

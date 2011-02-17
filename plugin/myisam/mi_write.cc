@@ -17,7 +17,7 @@
 
 #include "myisam_priv.h"
 
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 #include <drizzled/util/test.h>
 
 using namespace drizzled;

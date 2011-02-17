@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
-#include "drizzled/message.h"
-#include "drizzled/message/statement_transform.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
+#include <drizzled/message.h>
+#include <drizzled/message/statement_transform.h>
 #include <string>
 
 using namespace std;
@@ -77,6 +77,15 @@ bool ShowCreateSchema::Generator::populate()
     {
       buffer.append(" COLLATE = ");
       buffer.append(schema_message->collation());
+    }
+
+    if (schema_message->has_replication_options())
+    {
+      if (schema_message->replication_options().has_dont_replicate() and
+          schema_message->replication_options().dont_replicate())
+      {
+        buffer.append(" REPLICATE = FALSE");
+      }
     }
   }
 

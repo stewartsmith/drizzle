@@ -18,14 +18,14 @@
   a shared library
 */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/error.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/error.h>
 #include "my_static.h"
 #include <stdlib.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

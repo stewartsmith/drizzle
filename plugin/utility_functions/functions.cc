@@ -19,10 +19,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/plugin.h>
-#include "plugin/utility_functions/functions.h"
+#include <plugin/utility_functions/functions.h>
 
 using namespace drizzled;
 

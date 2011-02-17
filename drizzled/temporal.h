@@ -67,7 +67,7 @@
 
 #define DRIZZLE_YY_PART_YEAR  70
 
-#include "drizzled/calendar.h"
+#include <drizzled/calendar.h>
 
 #include <cassert>
 #include <ostream>

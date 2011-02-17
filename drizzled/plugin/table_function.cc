@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/current_session.h>
 #include <drizzled/gettext.h>
@@ -40,6 +40,8 @@ void plugin::TableFunction::init()
   proto.set_type(drizzled::message::Table::FUNCTION);
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
+
+  proto.mutable_options()->set_dont_replicate(true);
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)

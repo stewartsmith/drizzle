@@ -20,9 +20,9 @@
 #ifndef DRIZZLED_SELECT_DUMPVAR_H
 #define DRIZZLED_SELECT_DUMPVAR_H
 
-#include "drizzled/error.h"
-#include "drizzled/function/set_user_var.h"
-#include "drizzled/select_result_interceptor.h"
+#include <drizzled/error.h>
+#include <drizzled/function/set_user_var.h>
+#include <drizzled/select_result_interceptor.h>
 #include <drizzled/base.h>
 
 #include <vector>

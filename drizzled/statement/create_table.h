@@ -21,8 +21,8 @@
 #ifndef DRIZZLED_STATEMENT_CREATE_TABLE_H
 #define DRIZZLED_STATEMENT_CREATE_TABLE_H
 
-#include "drizzled/statement.h"
-#include "drizzled/foreign_key.h"
+#include <drizzled/statement.h>
+#include <drizzled/foreign_key.h>
 
 namespace drizzled
 {

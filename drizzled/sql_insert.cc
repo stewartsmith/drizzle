@@ -16,7 +16,7 @@
 
 /* Insert of records */
 
-#include "config.h"
+#include <config.h>
 #include <cstdio>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
@@ -27,14 +27,14 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/lock.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/select_insert.h>
 #include <drizzled/select_create.h>
 
-#include "drizzled/table/shell.h"
+#include <drizzled/table/shell.h>
 
 namespace drizzled
 {
@@ -1645,6 +1645,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
     if (not create_info->table_existed)
       session->drop_open_table(table, identifier);
+
     return NULL;
   }
 

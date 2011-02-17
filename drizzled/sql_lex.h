@@ -25,18 +25,18 @@
 */
 #include <drizzled/message/table.pb.h>
 
-#include "drizzled/plugin/function.h"
-#include "drizzled/name_resolution_context.h"
-#include "drizzled/item/subselect.h"
-#include "drizzled/table_list.h"
-#include "drizzled/function/math/real.h"
-#include "drizzled/alter_drop.h"
-#include "drizzled/alter_column.h"
-#include "drizzled/alter_info.h"
-#include "drizzled/key_part_spec.h"
-#include "drizzled/index_hint.h"
-#include "drizzled/statement.h"
-#include "drizzled/optimizer/explain_plan.h"
+#include <drizzled/plugin/function.h>
+#include <drizzled/name_resolution_context.h>
+#include <drizzled/item/subselect.h>
+#include <drizzled/table_list.h>
+#include <drizzled/function/math/real.h>
+#include <drizzled/alter_drop.h>
+#include <drizzled/alter_column.h>
+#include <drizzled/alter_info.h>
+#include <drizzled/key_part_spec.h>
+#include <drizzled/index_hint.h>
+#include <drizzled/statement.h>
+#include <drizzled/optimizer/explain_plan.h>
 
 #include <bitset>
 #include <string>
@@ -801,7 +801,7 @@ enum enum_comment_state
 
 } /* namespace drizzled */
 
-#include "drizzled/lex_input_stream.h"
+#include <drizzled/lex_input_stream.h>
 
 namespace drizzled
 {

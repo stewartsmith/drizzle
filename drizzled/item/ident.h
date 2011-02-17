@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_ITEM_IDENT_H
 #define DRIZZLED_ITEM_IDENT_H
 
-#include "drizzled/item.h"
+#include <drizzled/item.h>
 
 namespace drizzled
 {

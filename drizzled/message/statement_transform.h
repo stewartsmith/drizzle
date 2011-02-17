@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-#include "drizzled/common.h"
+#include <drizzled/common.h>
 
 namespace drizzled
 {

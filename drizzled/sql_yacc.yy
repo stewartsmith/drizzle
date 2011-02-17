@@ -25,30 +25,28 @@
 ** The type will be void*, so it must be  cast to (Session*) when used.
 ** Use the YYSession macro for this.
 */
-#define YYPARSE_PARAM yysession
-#define YYLEX_PARAM yysession
-#define YYSession (static_cast<Session *>(yysession))
+
+#define YYSession (session)
 
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
 
-#define DRIZZLE_YACC
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
 
-#include "config.h"
+#include <config.h>
 #include <cstdio>
-#include "drizzled/parser.h"
+#include <drizzled/parser.h>
 
-int yylex(void *yylval, void *yysession);
+int yylex(union ParserType *yylval, drizzled::Session *session);
 
 #define yyoverflow(A,B,C,D,E,F)               \
   {                                           \
     unsigned long val= *(F);                          \
     if (drizzled::my_yyoverflow((B), (D), &val)) \
     {                                         \
-      yyerror((char*) (A));                   \
+      yyerror(NULL, (char*) (A));                   \
       return 2;                               \
     }                                         \
     else                                      \
@@ -69,9 +67,6 @@ int yylex(void *yylval, void *yysession);
     parser::my_parse_error(YYSession->m_lip);\
     DRIZZLE_YYABORT;                      \
   }
-
-
-#define YYDEBUG 0
 
 namespace drizzled
 {
@@ -108,16 +103,16 @@ class False;
   to abort from the parser.
 */
 
-static void DRIZZLEerror(const char *s)
+static void base_sql_error(drizzled::Session *session, const char *s)
 {
-  parser::errorOn(s);
+  parser::errorOn(session, s);
 }
 
 } /* namespace drizzled; */
 
 using namespace drizzled;
 %}
-%union {
+%union ParserType {
   bool boolean;
   int  num;
   unsigned long ulong_num;
@@ -161,12 +156,18 @@ using namespace drizzled;
 %{
 namespace drizzled
 {
-bool my_yyoverflow(short **a, YYSTYPE **b, unsigned long *yystacksize);
+bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 }
 %}
 
 %debug
-%pure_parser                                    /* We have threads */
+%require "2.2"
+%pure-parser
+%name-prefix="base_sql_"
+%parse-param { drizzled::Session *session }
+%lex-param { drizzled::Session *session }
+%verbose
+
 
 /*
   Currently there are 70 shift/reduce conflicts.
@@ -442,6 +443,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, unsigned long *yystacksize);
 %token  REPEATABLE_SYM                /* SQL-2003-N */
 %token  REPEAT_SYM                    /* MYSQL-FUNC */
 %token  REPLACE                       /* MYSQL-FUNC */
+%token  REPLICATION
 %token  RESTRICT
 %token  RETURNS_SYM                   /* SQL-2003-R */
 %token  RETURN_SYM                    /* SQL-2003-R */
@@ -776,15 +778,14 @@ rule: <-- starts at col 1
 query:
           END_OF_INPUT
           {
-            Session *session= YYSession;
-            if (!(session->lex->select_lex.options & OPTION_FOUND_COMMENT))
+            if (!(YYSession->lex->select_lex.options & OPTION_FOUND_COMMENT))
             {
               my_message(ER_EMPTY_QUERY, ER(ER_EMPTY_QUERY), MYF(0));
               DRIZZLE_YYABORT;
             }
             else
             {
-              session->lex->statement= new statement::EmptyQuery(YYSession);
+              YYSession->lex->statement= new statement::EmptyQuery(YYSession);
             }
           }
         | verb_clause END_OF_INPUT {}
@@ -971,6 +972,14 @@ custom_database_option:
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
             statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
           }
+        | REPLICATION opt_equal TRUE_SYM
+          {
+            parser::buildReplicationOption(Lex, true);
+          }
+        | REPLICATION opt_equal FALSE_SYM
+          {
+            parser::buildReplicationOption(Lex, false);
+          }
         | ident_or_text equal ident_or_text
           {
             parser::buildSchemaOption(Lex, $1.str, $3);
@@ -1021,6 +1030,14 @@ custom_engine_option:
         | AUTO_INC opt_equal ulonglong_num
           {
             Lex->table()->mutable_options()->set_auto_increment_value($3);
+          }
+        | REPLICATION opt_equal TRUE_SYM
+          {
+            Lex->table()->mutable_options()->set_dont_replicate(false);
+          }
+        | REPLICATION opt_equal FALSE_SYM
+          {
+            Lex->table()->mutable_options()->set_dont_replicate(true);
           }
         |  ROW_FORMAT_SYM equal row_format_or_text
           {
@@ -1790,27 +1807,15 @@ alter_list_item:
           }
         | DROP FOREIGN KEY_SYM opt_ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY,
-                                                                    $4.str));
-            statement->alter_info.flags.set(ALTER_DROP_INDEX);
-            statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
+            parser::buildAddAlterDropIndex(Lex, $4.str, true);
           }
         | DROP PRIMARY_SYM KEY_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
-                                                               "PRIMARY"));
-            statement->alter_info.flags.set(ALTER_DROP_INDEX);
+            parser::buildAddAlterDropIndex(Lex, "PRIMARY");
           }
         | DROP key_or_index field_ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
-                                                                    $3.str));
-            statement->alter_info.flags.set(ALTER_DROP_INDEX);
+            parser::buildAddAlterDropIndex(Lex, $3.str);
           }
         | DISABLE_SYM KEYS
           {
@@ -2562,8 +2567,7 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_char(*$3); }
         | CURRENT_USER optional_braces
           {
-            std::string user_str("user");
-            if (! ($$= parser::reserved_keyword_function(YYSession, user_str, NULL)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "user", NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2683,46 +2687,42 @@ function_call_nonkeyword:
           { $$= new (YYSession->mem_root) Item_date_add_interval($3, $6, $7, 1); }
         | SUBSTRING '(' expr ',' expr ',' expr ')'
           {
-            std::string reverse_str("substr");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
             args->push_back($7);
-            if (! ($$= parser::reserved_keyword_function(YYSession, reverse_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "substr", args)))
             {
               DRIZZLE_YYABORT;
             }
           }
         | SUBSTRING '(' expr ',' expr ')'
           {
-            std::string reverse_str("substr");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= parser::reserved_keyword_function(YYSession, reverse_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "substr", args)))
             {
               DRIZZLE_YYABORT;
             }
           }
         | SUBSTRING '(' expr FROM expr FOR_SYM expr ')'
           {
-            std::string reverse_str("substr");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
             args->push_back($7);
-            if (! ($$= parser::reserved_keyword_function(YYSession, reverse_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "substr", args)))
             {
               DRIZZLE_YYABORT;
             }
           }
         | SUBSTRING '(' expr FROM expr ')'
           {
-            std::string reverse_str("substr");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= parser::reserved_keyword_function(YYSession, reverse_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "substr", args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2798,7 +2798,6 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
         | KILL_SYM kill_option '(' expr ')'
           {
-            std::string kill_str("kill");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($4);
 
@@ -2807,7 +2806,7 @@ function_call_conflict:
               args->push_back(new (YYSession->mem_root) Item_uint(1));
             }
 
-            if (! ($$= parser::reserved_keyword_function(YYSession, kill_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "kill", args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2826,10 +2825,9 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
         | WAIT_SYM '(' expr ')'
           {
-            std::string wait_str("wait");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
-            if (! ($$= parser::reserved_keyword_function(YYSession, wait_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "wait", args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2844,11 +2842,10 @@ function_call_conflict:
 	  }
         | WAIT_SYM '(' expr ',' expr ')'
           {
-            std::string wait_str("wait");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= parser::reserved_keyword_function(YYSession, wait_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "wait", args)))
             {
               DRIZZLE_YYABORT;
             }

@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include <boost/thread/tss.hpp>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

@@ -24,11 +24,11 @@
 #include <string>
 #include <boost/unordered_map.hpp>
 
-#include "drizzled/error_t.h"
-#include "drizzled/definitions.h"
-#include "drizzled/identifier.h"
+#include <drizzled/error_t.h>
+#include <drizzled/definitions.h>
+#include <drizzled/identifier.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

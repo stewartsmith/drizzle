@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <plugin/function_engine/function.h>
 #include <plugin/function_engine/cursor.h>
@@ -39,10 +39,12 @@ Function::Function(const std::string &name_arg) :
 
 {
   information_message->set_name(INFORMATION_SCHEMA_IDENTIFIER.getSchemaName());
-  data_dictionary_message->set_collation("utf8_general_ci");
+  information_message->set_collation("utf8_general_ci");
+  information_message->mutable_replication_options()->set_dont_replicate(true);
 
   data_dictionary_message->set_name(DATA_DICTIONARY_IDENTIFIER.getSchemaName());
   data_dictionary_message->set_collation("utf8_general_ci");
+  data_dictionary_message->mutable_replication_options()->set_dont_replicate(true);
 }
 
 
