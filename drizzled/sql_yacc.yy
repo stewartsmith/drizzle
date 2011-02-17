@@ -324,7 +324,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  GLOBAL_SYM                    /* SQL-2003-R */
 %token  GROUP_SYM                     /* SQL-2003-R */
 %token  GROUP_CONCAT_SYM
-%token  GT_SYM                        /* OPERATOR */
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
@@ -374,7 +373,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  LOGS_SYM
 %token  LONG_NUM
 %token  LONG_SYM
-%token  LT                            /* OPERATOR */
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_SYM                       /* SQL-2003-N */
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
@@ -564,7 +562,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %left  AND_SYM
 %right NOT_SYM
 %right '='
-%nonassoc EQUAL_SYM GE GT_SYM LE LT NE
+%nonassoc EQUAL_SYM GE '>' LE '<' NE
 %nonassoc LIKE REGEXP_SYM
 %nonassoc BETWEEN_SYM
 %nonassoc IN_SYM
@@ -2470,9 +2468,9 @@ not:
 comp_op:
           '='     { $$ = &comp_eq_creator; }
         | GE     { $$ = &comp_ge_creator; }
-        | GT_SYM { $$ = &comp_gt_creator; }
+        | '>' { $$ = &comp_gt_creator; }
         | LE     { $$ = &comp_le_creator; }
-        | LT     { $$ = &comp_lt_creator; }
+        | '<'     { $$ = &comp_lt_creator; }
         | NE     { $$ = &comp_ne_creator; }
         ;
 
