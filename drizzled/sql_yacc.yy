@@ -165,6 +165,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %name-prefix "base_sql_"
 %parse-param { drizzled::Session *session }
 %lex-param { drizzled::Session *session }
+%verbose
 
 
 /*
