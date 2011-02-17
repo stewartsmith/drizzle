@@ -298,7 +298,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  END_OF_INPUT                  /* INTERNAL */
 %token  ENGINE_SYM
 %token  ENUM_SYM
-%token  EQ                            /* OPERATOR */
 %token  EQUAL_SYM                     /* OPERATOR */
 %token  ERRORS
 %token  ESCAPED
@@ -564,7 +563,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %left  XOR
 %left  AND_SYM
 %right NOT_SYM
-%right EQ
+%right '='
 %nonassoc EQUAL_SYM GE GT_SYM LE LT NE
 %nonassoc LIKE REGEXP_SYM
 %nonassoc BETWEEN_SYM
@@ -1926,7 +1925,6 @@ opt_place:
 opt_to:
           /* empty */ {}
         | TO_SYM {}
-        | EQ {}
         | AS {}
         ;
 
@@ -2354,9 +2352,9 @@ bool_pri:
           { $$= new Item_func_isnotnull($1); }
         | bool_pri EQUAL_SYM predicate %prec EQUAL_SYM
           { $$= new Item_func_equal($1,$3); }
-        | bool_pri comp_op predicate %prec EQ
+        | bool_pri comp_op predicate %prec '='
           { $$= (*$2)(0)->create($1,$3); }
-        | bool_pri comp_op all_or_any '(' subselect ')' %prec EQ
+        | bool_pri comp_op all_or_any '(' subselect ')' %prec '='
           { $$= all_any_subquery_creator($1, $2, $3, $5); }
         | predicate
         ;
@@ -2470,7 +2468,7 @@ not:
         ;
 
 comp_op:
-          EQ     { $$ = &comp_eq_creator; }
+          '='     { $$ = &comp_eq_creator; }
         | GE     { $$ = &comp_ge_creator; }
         | GT_SYM { $$ = &comp_gt_creator; }
         | LE     { $$ = &comp_le_creator; }
@@ -3686,7 +3684,6 @@ interval_time_st:
 table_alias:
           /* empty */
         | AS
-        | EQ
         ;
 
 opt_table_alias:
@@ -4183,7 +4180,7 @@ ident_eq_value:
         ;
 
 equal:
-          EQ {}
+          '=' {}
         | SET_VAR {}
         ;
 

@@ -46,7 +46,6 @@ struct st_symbol
 <=, LE
 <>, NE
 !=, NE
-=, EQ
 >, GT_SYM
 >=, GE
 <=>, EQUAL_SYM
