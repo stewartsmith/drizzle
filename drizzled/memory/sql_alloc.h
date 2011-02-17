@@ -23,9 +23,9 @@
 #define DRIZZLED_MEMORY_SQL_ALLOC_H
 
 #include <unistd.h>
-#include "drizzled/memory/root.h"
+#include <drizzled/memory/root.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/catalog/module.h"
+#include <plugin/catalog/module.h>
 
 #include <drizzled/atomics.h>
 #include <drizzled/session.h>

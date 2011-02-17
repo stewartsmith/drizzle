@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/records.h"
-#include "drizzled/util/functors.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_index_merge_select.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+#include <drizzled/session.h>
+#include <drizzled/records.h>
+#include <drizzled/util/functors.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_index_merge_select.h>
+#include <drizzled/internal/m_string.h>
 #include <drizzled/unique.h>
 
 #include <vector>

@@ -21,10 +21,10 @@
 #ifndef DRIZZLED_PLUGIN_XA_STORAGE_ENGINE_H
 #define DRIZZLED_PLUGIN_XA_STORAGE_ENGINE_H
 
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/plugin/xa_resource_manager.h"
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/plugin/xa_resource_manager.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

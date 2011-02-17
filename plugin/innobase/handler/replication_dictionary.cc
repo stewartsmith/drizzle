@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "replication_dictionary.h"
-#include "drizzled/current_session.h"
+#include <drizzled/current_session.h>
 
 #include "univ.i"
 #include "btr0sea.h"
@@ -56,9 +56,9 @@
 #include "read_replication.h"
 #include "handler0vars.h"
 
-#include "drizzled/drizzled.h"
+#include <drizzled/drizzled.h>
 
-#include "drizzled/replication_services.h"
+#include <drizzled/replication_services.h>
 
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>

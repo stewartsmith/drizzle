@@ -103,12 +103,12 @@
       implementation-defined.
 */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/definitions.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/type/decimal.h"
+#include <drizzled/definitions.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/type/decimal.h>
 
 #include <plugin/myisam/myisampack.h>
 #include <drizzled/util/test.h>
@@ -119,10 +119,10 @@
 
 #include <algorithm>
 #include <time.h>
-#include "drizzled/current_session.h"
-#include "drizzled/error.h"
-#include "drizzled/field.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
+#include <drizzled/field.h>
+#include <drizzled/internal/my_sys.h>
 
 using namespace std;
 

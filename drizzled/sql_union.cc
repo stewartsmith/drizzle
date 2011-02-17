@@ -17,7 +17,7 @@
   UNION  of select's
   UNION's  were introduced by Monty and Sinisa <sinisa@mysql.com>
 */
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>

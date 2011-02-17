@@ -18,13 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "drizzled/display.h"
+#include <drizzled/display.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
@@ -32,10 +32,10 @@
 #include <fstream>
 #include <string>
 
-#include "drizzled/data_home.h"
-#include "drizzled/cached_directory.h"
+#include <drizzled/data_home.h>
+#include <drizzled/cached_directory.h>
 #include <drizzled/catalog/local.h>
-#include "plugin/catalog/module.h"
+#include <plugin/catalog/module.h>
 
 namespace plugin {
 namespace catalog {

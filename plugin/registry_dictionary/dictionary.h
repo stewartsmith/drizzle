@@ -23,9 +23,9 @@
 
 #include <set>
 
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/plugin/table_function.h>
 
-#include "plugin/registry_dictionary/plugins.h"
-#include "plugin/registry_dictionary/modules.h"
+#include <plugin/registry_dictionary/plugins.h>
+#include <plugin/registry_dictionary/modules.h>
 
 #endif /* PLUGIN_REGISTRY_DICTIONARY_DICTIONARY_H */

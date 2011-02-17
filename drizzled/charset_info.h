@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <cstddef>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

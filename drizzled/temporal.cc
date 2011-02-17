@@ -34,14 +34,14 @@
  * their single parameter.
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/charset_info.h"
-#include "drizzled/type/decimal.h"
-#include "drizzled/calendar.h"
-#include "drizzled/temporal.h"
-#include "drizzled/temporal_format.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/charset_info.h>
+#include <drizzled/type/decimal.h>
+#include <drizzled/calendar.h>
+#include <drizzled/temporal.h>
+#include <drizzled/temporal_format.h>
+#include <drizzled/time_functions.h>
 #include "time.h"
 
 #include <drizzled/util/gmtime.h>

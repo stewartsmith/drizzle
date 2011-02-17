@@ -31,7 +31,7 @@
 #include <drizzled/message/schema.h>
 #include <drizzled/session.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

@@ -103,7 +103,7 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "stats_schema.h"
 

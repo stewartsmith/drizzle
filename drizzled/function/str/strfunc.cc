@@ -25,14 +25,14 @@
     (This shouldn't be needed)
 */
 
-#include "config.h"
+#include <config.h>
 #include <zlib.h>
 #include <drizzled/query_id.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 
 // For soundex_map
-#include "drizzled/internal/my_static.h"
+#include <drizzled/internal/my_static.h>
 
 using namespace std;
 

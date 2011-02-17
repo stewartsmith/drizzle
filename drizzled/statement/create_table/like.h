@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_CREATE_TABLE_LIKE_H
 #define DRIZZLED_STATEMENT_CREATE_TABLE_LIKE_H
 
-#include "drizzled/statement/create_table.h"
+#include <drizzled/statement/create_table.h>
 
 namespace drizzled
 {

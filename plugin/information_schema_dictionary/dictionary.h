@@ -23,32 +23,32 @@
 
 #include <set>
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/plugin/storage_engine.h>
 
-#include "plugin/information_schema_dictionary/information_schema.h"
+#include <plugin/information_schema_dictionary/information_schema.h>
 
-#include "drizzled/generator.h"
+#include <drizzled/generator.h>
 
-#include "plugin/information_schema_dictionary/check_constraints.h"
-#include "plugin/information_schema_dictionary/column_domain_usage.h"
-#include "plugin/information_schema_dictionary/column_privileges.h"
-#include "plugin/information_schema_dictionary/columns.h"
-#include "plugin/information_schema_dictionary/constraint_column_usage.h"
-#include "plugin/information_schema_dictionary/constraint_table_usage.h"
-#include "plugin/information_schema_dictionary/domain_constraints.h"
-#include "plugin/information_schema_dictionary/domains.h"
-#include "plugin/information_schema_dictionary/key_column_usage.h"
-#include "plugin/information_schema_dictionary/parameters.h"
-#include "plugin/information_schema_dictionary/referential_constraints.h"
-#include "plugin/information_schema_dictionary/routines.h"
-#include "plugin/information_schema_dictionary/routine_columns.h"
-#include "plugin/information_schema_dictionary/schemata.h"
-#include "plugin/information_schema_dictionary/table_constraints.h"
-#include "plugin/information_schema_dictionary/table_privileges.h"
-#include "plugin/information_schema_dictionary/tables.h"
-#include "plugin/information_schema_dictionary/view_column_usage.h"
-#include "plugin/information_schema_dictionary/view_table_usage.h"
-#include "plugin/information_schema_dictionary/views.h"
+#include <plugin/information_schema_dictionary/check_constraints.h>
+#include <plugin/information_schema_dictionary/column_domain_usage.h>
+#include <plugin/information_schema_dictionary/column_privileges.h>
+#include <plugin/information_schema_dictionary/columns.h>
+#include <plugin/information_schema_dictionary/constraint_column_usage.h>
+#include <plugin/information_schema_dictionary/constraint_table_usage.h>
+#include <plugin/information_schema_dictionary/domain_constraints.h>
+#include <plugin/information_schema_dictionary/domains.h>
+#include <plugin/information_schema_dictionary/key_column_usage.h>
+#include <plugin/information_schema_dictionary/parameters.h>
+#include <plugin/information_schema_dictionary/referential_constraints.h>
+#include <plugin/information_schema_dictionary/routines.h>
+#include <plugin/information_schema_dictionary/routine_columns.h>
+#include <plugin/information_schema_dictionary/schemata.h>
+#include <plugin/information_schema_dictionary/table_constraints.h>
+#include <plugin/information_schema_dictionary/table_privileges.h>
+#include <plugin/information_schema_dictionary/tables.h>
+#include <plugin/information_schema_dictionary/view_column_usage.h>
+#include <plugin/information_schema_dictionary/view_table_usage.h>
+#include <plugin/information_schema_dictionary/views.h>
 
 #endif /* PLUGIN_INFORMATION_SCHEMA_DICTIONARY_DICTIONARY_H */

@@ -21,11 +21,11 @@
 #ifndef PLUGIN_STATUS_DICTIONARY_DICTIONARY_H
 #define PLUGIN_STATUS_DICTIONARY_DICTIONARY_H
 
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/plugin/table_function.h>
 
-#include "drizzled/session.h"
+#include <drizzled/session.h>
 
-#include "plugin/status_dictionary/state_tool.h"
-#include "plugin/status_dictionary/variables.h"
+#include <plugin/status_dictionary/state_tool.h>
+#include <plugin/status_dictionary/variables.h>
 
 #endif /* PLUGIN_STATUS_DICTIONARY_DICTIONARY_H */

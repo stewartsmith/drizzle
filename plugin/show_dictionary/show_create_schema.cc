@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
-#include "drizzled/message.h"
-#include "drizzled/message/statement_transform.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
+#include <drizzled/message.h>
+#include <drizzled/message/statement_transform.h>
 #include <string>
 
 using namespace std;

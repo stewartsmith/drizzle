@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/configmake.h>
 #include <drizzled/atomics.h>
@@ -77,7 +77,7 @@
 #include <drizzled/unireg.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/typelib.h>
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 #include <google/protobuf/stubs/common.h>
 
@@ -102,7 +102,7 @@
 
 #include <errno.h>
 #include <sys/stat.h>
-#include "drizzled/option.h"
+#include <drizzled/option.h>
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
 #endif
@@ -136,8 +136,8 @@
 #include <sys/fpu.h>
 #endif
 
-#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
-#include "drizzled/constrained_value.h"
+#include <drizzled/internal/my_pthread.h>			// For thr_setconcurency()
+#include <drizzled/constrained_value.h>
 
 #include <drizzled/gettext.h>
 

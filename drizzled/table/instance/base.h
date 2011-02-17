@@ -34,14 +34,14 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "drizzled/memory/root.h"
-#include "drizzled/message.h"
-#include "drizzled/util/string.h"
+#include <drizzled/memory/root.h>
+#include <drizzled/message.h>
+#include <drizzled/util/string.h>
 
-#include "drizzled/lex_string.h"
-#include "drizzled/key_map.h"
+#include <drizzled/lex_string.h>
+#include <drizzled/key_map.h>
  
-#include "drizzled/table/cache.h"
+#include <drizzled/table/cache.h>
  
 #include <drizzled/field.h>
 

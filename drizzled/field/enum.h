@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_FIELD_ENUM_H
 #define DRIZZLED_FIELD_ENUM_H
 
-#include "drizzled/field/str.h"
+#include <drizzled/field/str.h>
 
 namespace drizzled
 {

@@ -17,23 +17,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
 #include <drizzled/error/sql_state.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 #include <algorithm>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include "drizzled/util/tokenize.h"
+#include <drizzled/util/tokenize.h>
 #include "errmsg.h"
 #include "mysql_protocol.h"
 #include "mysql_password.h"
 #include "options.h"
 
-#include "drizzled/identifier.h"
+#include <drizzled/identifier.h>
 
 #define PROTOCOL_VERSION 10
 

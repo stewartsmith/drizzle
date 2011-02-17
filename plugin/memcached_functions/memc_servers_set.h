@@ -37,7 +37,7 @@
 #include <string>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
-#include "drizzled/charset.h"
+#include <drizzled/charset.h>
 
 /* implements memc_servers_set */
 class MemcachedServersSet : public drizzled::Item_int_func

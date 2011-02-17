@@ -47,17 +47,17 @@ TODO:
   write buffer to the read buffer before we start to reuse it.
 */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/drizzled.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/drizzled.h>
 #ifdef HAVE_AIOWAIT
-#include "drizzled/error.h"
-#include "drizzled/internal/aio_result.h"
+#include <drizzled/error.h>
+#include <drizzled/internal/aio_result.h>
 static void my_aiowait(my_aio_result *result);
 #endif
-#include "drizzled/internal/iocache.h"
+#include <drizzled/internal/iocache.h>
 #include <errno.h>
 #include <drizzled/util/test.h>
 #include <stdlib.h>

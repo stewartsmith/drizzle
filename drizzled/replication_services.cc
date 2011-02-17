@@ -34,14 +34,14 @@
  * ReplicationServices is a bridge between replication modules and the kernel,
  * and its primary function is to  */
 
-#include "config.h"
-#include "drizzled/replication_services.h"
-#include "drizzled/plugin/transaction_replicator.h"
-#include "drizzled/plugin/transaction_applier.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/gettext.h"
-#include "drizzled/session.h"
-#include "drizzled/error.h"
+#include <config.h>
+#include <drizzled/replication_services.h>
+#include <drizzled/plugin/transaction_replicator.h>
+#include <drizzled/plugin/transaction_applier.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/gettext.h>
+#include <drizzled/session.h>
+#include <drizzled/error.h>
 
 #include <string>
 #include <vector>

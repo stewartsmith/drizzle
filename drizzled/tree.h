@@ -18,9 +18,9 @@
 
 #include <unistd.h>
 
-#include "drizzled/base.h"		/* get 'enum ha_rkey_function' */
-#include "drizzled/qsort_cmp.h"
-#include "drizzled/memory/root.h"
+#include <drizzled/base.h>		/* get 'enum ha_rkey_function' */
+#include <drizzled/qsort_cmp.h>
+#include <drizzled/memory/root.h>
 
 namespace drizzled
 {

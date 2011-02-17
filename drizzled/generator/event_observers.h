@@ -21,9 +21,9 @@
 #ifndef DRIZZLED_GENERATOR_EVENT_OBSERVERS_H
 #define DRIZZLED_GENERATOR_EVENT_OBSERVERS_H
 
-#include "drizzled/plugin/event_observer.h"
+#include <drizzled/plugin/event_observer.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled {
 namespace generator {

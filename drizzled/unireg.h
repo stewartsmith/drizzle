@@ -23,7 +23,7 @@
 #ifndef DRIZZLED_UNIREG_H
 #define DRIZZLED_UNIREG_H
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

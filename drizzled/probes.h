@@ -22,7 +22,7 @@
 #define DRIZZLED_PROBES_H
 
 #ifdef HAVE_DTRACE
-#include "drizzled/generated_probes.h"
+#include <drizzled/generated_probes.h>
 #else
 #define DRIZZLE_COMMAND_DONE(arg0)
 #define DRIZZLE_COMMAND_DONE_ENABLED() (0)

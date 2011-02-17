@@ -34,12 +34,12 @@
  *
  **/
 
-#include "config.h"
+#include <config.h>
 #include <libdrizzle/drizzle_client.h>
 
-#include "client/get_password.h"
+#include <client/get_password.h>
 
-#include "boost/date_time/posix_time/posix_time.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <cerrno>
 #include <string>
@@ -53,11 +53,11 @@
 #include <stdarg.h>
 #include <math.h>
 #include <memory>
-#include "client/linebuffer.h"
+#include <client/linebuffer.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
-#include "drizzled/utf8/utf8.h"
+#include <drizzled/utf8/utf8.h>
 #include <cstdlib>
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
@@ -151,7 +151,7 @@ typedef Function drizzle_compentry_func_t;
 #endif
 #include <boost/program_options.hpp>
 #include <boost/scoped_ptr.hpp>
-#include "drizzled/program_options/config_file.h"
+#include <drizzled/program_options/config_file.h>
 
 using namespace std;
 namespace po=boost::program_options;

@@ -41,7 +41,7 @@
 */
 
 #include "myisam_priv.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 #include <stdarg.h>
 #ifdef HAVE_SYS_VADVISE_H
 #include <sys/vadvise.h>
@@ -53,7 +53,7 @@
 #include <sys/mman.h>
 #endif
 #include <drizzled/util/test.h>
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 
 #include <algorithm>
 

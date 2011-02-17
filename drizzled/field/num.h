@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_FIELD_NUM_H
 #define DRIZZLED_FIELD_NUM_H
 
-#include "drizzled/field.h"
+#include <drizzled/field.h>
 
 namespace drizzled
 {

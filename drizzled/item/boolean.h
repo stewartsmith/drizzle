@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_ITEM_BOOLEAN_H
 #define DRIZZLED_ITEM_BOOLEAN_H
 
-#include "drizzled/item/basic_constant.h"
+#include <drizzled/item/basic_constant.h>
 
 namespace drizzled
 {
@@ -102,7 +102,7 @@ public:
 } /* namespace item */
 } /* namespace drizzled */
 
-#include "drizzled/item/true.h"
-#include "drizzled/item/false.h"
+#include <drizzled/item/true.h>
+#include <drizzled/item/false.h>
 
 #endif /* DRIZZLED_ITEM_BOOLEAN_H */

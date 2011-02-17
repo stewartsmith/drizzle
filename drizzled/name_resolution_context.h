@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_NAME_RESOLUTION_CONTEXT_H
 #define DRIZZLED_NAME_RESOLUTION_CONTEXT_H
 
-#include "drizzled/item.h"
+#include <drizzled/item.h>
 
 namespace drizzled
 {

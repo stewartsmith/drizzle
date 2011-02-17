@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/status_dictionary/dictionary.h"
+#include <plugin/status_dictionary/dictionary.h>
 
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/m_string.h>

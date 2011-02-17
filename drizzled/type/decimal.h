@@ -17,8 +17,8 @@
 #define DRIZZLED_TYPE_DECIMAL_H
 #include <assert.h>
 #include <drizzled/sql_string.h>
-#include "drizzled/definitions.h"
-#include "drizzled/type/time.h"
+#include <drizzled/definitions.h>
+#include <drizzled/type/time.h>
 namespace drizzled
 {
 

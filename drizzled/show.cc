@@ -20,19 +20,19 @@
 
 
 /* Function with list databases, tables or fields */
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/data_home.h"
-#include "drizzled/error.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/session.h"
-#include "drizzled/show.h"
-#include "drizzled/sql_select.h"
+#include <drizzled/data_home.h>
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/session.h>
+#include <drizzled/show.h>
+#include <drizzled/sql_select.h>
 
-#include "drizzled/statement/show.h"
-#include "drizzled/statement/show_errors.h"
-#include "drizzled/statement/show_warnings.h"
+#include <drizzled/statement/show.h>
+#include <drizzled/statement/show_errors.h>
+#include <drizzled/statement/show_warnings.h>
 
 
 #include <sys/stat.h>

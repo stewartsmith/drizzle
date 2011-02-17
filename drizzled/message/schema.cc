@@ -19,15 +19,15 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
 #include <uuid/uuid.h>
 
-#include "drizzled/show.h"
-#include "drizzled/message/schema.h"
-#include "drizzled/session.h"
+#include <drizzled/show.h>
+#include <drizzled/message/schema.h>
+#include <drizzled/session.h>
 
-#include "drizzled/catalog/local.h"
+#include <drizzled/catalog/local.h>
 
 namespace drizzled {
 namespace message {

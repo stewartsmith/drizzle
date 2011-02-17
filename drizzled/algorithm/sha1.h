@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

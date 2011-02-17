@@ -41,7 +41,7 @@
  * );
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "query_cache_service.h"
 #include "data_dictionary_schema.h"

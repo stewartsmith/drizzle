@@ -18,22 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/schema_engine/schema.h"
-#include "drizzled/schema.h"
-#include "drizzled/sql_table.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/cursor.h"
-#include "drizzled/data_home.h"
+#include <plugin/schema_engine/schema.h>
+#include <drizzled/schema.h>
+#include <drizzled/sql_table.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/cursor.h>
+#include <drizzled/data_home.h>
 
 #include <drizzled/pthread_globals.h>
 
 #include <drizzled/execute.h>
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>

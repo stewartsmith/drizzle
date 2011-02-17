@@ -21,11 +21,11 @@
 #ifndef DRIZZLED_PLUGIN_TRANSACTIONAL_STORAGE_ENGINE_H
 #define DRIZZLED_PLUGIN_TRANSACTIONAL_STORAGE_ENGINE_H
 
-#include "drizzled/definitions.h" /* for start_transaction_option_t */
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/transaction_services.h"
+#include <drizzled/definitions.h> /* for start_transaction_option_t */
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/transaction_services.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

@@ -37,9 +37,9 @@
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
 
-#include "config.h"
+#include <config.h>
 #include <cstdio>
-#include "drizzled/parser.h"
+#include <drizzled/parser.h>
 
 int yylex(void *yylval, void *yysession);
 

@@ -23,7 +23,7 @@
 
 #include <drizzled/field.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

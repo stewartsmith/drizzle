@@ -15,7 +15,7 @@
 
 
 /* create and drop of databases */
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>

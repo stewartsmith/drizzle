@@ -17,17 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/join.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_group_min_max_select.h"
-#include "drizzled/optimizer/quick_range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/sel_arg.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/util/functors.h"
+#include <config.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/join.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/quick_group_min_max_select.h>
+#include <drizzled/optimizer/quick_range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/sel_arg.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/util/functors.h>
 
 #include <vector>
 

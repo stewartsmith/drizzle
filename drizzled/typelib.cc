@@ -15,13 +15,13 @@
 
 /* Functions to handle typelib */
 
-#include "config.h"
+#include <config.h>
 
 #include <stdio.h>
 
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/typelib.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/typelib.h>
 
 namespace drizzled
 {

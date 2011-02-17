@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/session.h"
-#include "drizzled/optimizer/quick_range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/session.h>
+#include <drizzled/optimizer/quick_range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/internal/m_string.h>
 #include <drizzled/current_session.h>
 
 #include <fcntl.h>

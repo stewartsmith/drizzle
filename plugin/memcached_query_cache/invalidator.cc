@@ -27,7 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
 #include "invalidator.h"
 #include "query_cache_service.h"
 #include "memcached_qc.h"

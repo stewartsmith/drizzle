@@ -29,9 +29,9 @@
 #ifndef PLUGIN_MEMCACHED_QUERY_CACHE_MEMCACHED_QC_H
 #define PLUGIN_MEMCACHED_QUERY_CACHE_MEMCACHED_QC_H
 
-#include "drizzled/plugin/query_cache.h"
+#include <drizzled/plugin/query_cache.h>
 #include "query_cache_service.h"
-#include "drizzled/atomics.h"
+#include <drizzled/atomics.h>
 #include <libmemcached/memcached.hpp>
 
 namespace drizzled 

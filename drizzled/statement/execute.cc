@@ -18,16 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/statement/execute.h"
-#include "drizzled/session.h"
-#include "drizzled/execute.h"
-#include "drizzled/user_var_entry.h"
-#include "drizzled/plugin/listen.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/plugin/null_client.h"
-#include "drizzled/plugin/client/concurrent.h"
+#include <drizzled/statement/execute.h>
+#include <drizzled/session.h>
+#include <drizzled/execute.h>
+#include <drizzled/user_var_entry.h>
+#include <drizzled/plugin/listen.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/null_client.h>
+#include <drizzled/plugin/client/concurrent.h>
 
 namespace drizzled
 {

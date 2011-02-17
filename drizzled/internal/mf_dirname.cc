@@ -13,10 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 
 #include <algorithm>
 

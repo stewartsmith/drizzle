@@ -19,18 +19,18 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
 #include <algorithm>
 
 #include <uuid/uuid.h>
 
-#include "drizzled/field/uuid.h"
+#include <drizzled/field/uuid.h>
 
-#include "drizzled/error.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/session.h"
-#include "drizzled/table.h"
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
 
 namespace drizzled
 {
