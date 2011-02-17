@@ -166,6 +166,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %parse-param { drizzled::Session *session }
 %lex-param { drizzled::Session *session }
 %verbose
+%require "2.2"
 
 
 /*
