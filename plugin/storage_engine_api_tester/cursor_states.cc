@@ -105,6 +105,8 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("::index_last()", "::doStartIndexScan()"));
   states.insert(state_pair("::index_next()", "::doStartIndexScan()"));
   states.insert(state_pair("::index_prev()", "::doStartIndexScan()"));
+  states.insert(state_pair("::doStartIndexScan()", "::doStartIndexScan() ERROR"));
+  states.insert(state_pair("::doStartIndexScan() ERROR", "locked"));
 
   states.insert(state_pair("::doStartIndexScan()", "::index_read()"));
   states.insert(state_pair("::doStartIndexScan()", "::index_read_idx_map()"));

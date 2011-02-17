@@ -326,6 +326,8 @@ int SEAPITesterCursor::doStartIndexScan(uint32_t keynr, bool scan)
 
   if (error_injected == 4)
   {
+    CURSOR_NEW_STATE("::doStartIndexScan() ERROR");
+    CURSOR_NEW_STATE("locked");
     return HA_ERR_LOCK_DEADLOCK;
   }
 
