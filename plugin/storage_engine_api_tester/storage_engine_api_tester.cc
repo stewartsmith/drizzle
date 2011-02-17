@@ -195,16 +195,6 @@ public:
   int index_first(unsigned char * buf);
   int index_last(unsigned char * buf);
 
-  /* just copied from innobase... */
-  uint32_t index_flags(enum  ha_key_alg) const
-  {
-    return (HA_READ_NEXT |
-            HA_READ_PREV |
-            HA_READ_RANGE |
-            HA_READ_ORDER |
-            HA_KEYREAD_ONLY);
-  }
-
   bool primary_key_is_clustered()
   {
     return realCursor->primary_key_is_clustered();
@@ -569,6 +559,16 @@ public:
   uint32_t max_supported_key_part_length(void) const {
     ENGINE_NEW_STATE("::max_supported_key_part_length()");
     return getRealEngine()->max_supported_key_part_length();
+  }
+
+  /* just copied from innobase... */
+  uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_RANGE |
+            HA_READ_ORDER |
+            HA_KEYREAD_ONLY);
   }
 
 };
