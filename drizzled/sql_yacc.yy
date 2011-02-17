@@ -563,12 +563,15 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %left   OR_SYM
 %left   XOR
 %left   AND_SYM
-%left   BETWEEN_SYM CASE_SYM WHEN_SYM THEN_SYM ELSE
-%left   EQ EQUAL_SYM GE GT_SYM LE LT NE IS LIKE REGEXP_SYM IN_SYM
+%right  NOT_SYM
+%nonassoc LIKE REGEXP_SYM
+%nonassoc BETWEEN_SYM
+%nonassoc IN_SYM
+%left   ELSE
+%left   EQ EQUAL_SYM GE GT_SYM LE LT NE IS
 %left   '-' '+'
 %left   '*' '/' '%' DIV_SYM MOD_SYM
 %left   NEG
-%right  NOT_SYM
 %right  BINARY COLLATE_SYM
 %left  INTERVAL_SYM
 
@@ -750,7 +753,7 @@ END_OF_INPUT
 
 %type <NONE>
         '-' '+' '*' '/' '%' '(' ')'
-        ',' '!' '{' '}' AND_SYM OR_SYM BETWEEN_SYM CASE_SYM
+        ',' '!' '{' '}' AND_SYM OR_SYM BETWEEN_SYM
         THEN_SYM WHEN_SYM DIV_SYM MOD_SYM DELETE_SYM
 %%
 
