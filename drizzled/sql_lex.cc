@@ -34,15 +34,17 @@
 #include <cstdio>
 #include <ctype.h>
 
+union ParserType;
+
 using namespace std;
 
 /* Stay outside of the namespace because otherwise bison goes nuts */
-int base_sql_lex(void *arg, drizzled::Session *yysession);
+int base_sql_lex(ParserType *arg, drizzled::Session *yysession);
 
 namespace drizzled
 {
 
-static int lex_one_token(void *arg, drizzled::Session *yysession);
+static int lex_one_token(ParserType *arg, drizzled::Session *yysession);
 
 /**
   save order by and tables in own lists.
@@ -607,10 +609,9 @@ static inline uint32_t int_token(const char *str,uint32_t length)
   - MY_LEX_OPERATOR_OR_IDENT	Last state was an ident, text or number
 				(which can't be followed by a signed number)
 */
-int base_sql_lex(void *arg, drizzled::Session *session)
+int base_sql_lex(union ParserType *yylval, drizzled::Session *session)
 {
   drizzled::Lex_input_stream *lip= session->m_lip;
-  YYSTYPE *yylval=(YYSTYPE*) arg;
   int token;
 
   if (lip->lookahead_token != END_OF_INPUT)
@@ -626,7 +627,7 @@ int base_sql_lex(void *arg, drizzled::Session *session)
     return token;
   }
 
-  token= drizzled::lex_one_token(arg, session);
+  token= drizzled::lex_one_token(yylval, session);
 
   switch(token) {
   case WITH:
@@ -637,7 +638,7 @@ int base_sql_lex(void *arg, drizzled::Session *session)
       to transform the grammar into a LALR(1) grammar,
       which sql_yacc.yy can process.
     */
-    token= drizzled::lex_one_token(arg, session);
+    token= drizzled::lex_one_token(yylval, session);
     if (token == ROLLUP_SYM)
     {
       return WITH_ROLLUP_SYM;
@@ -662,7 +663,7 @@ int base_sql_lex(void *arg, drizzled::Session *session)
 namespace drizzled
 {
 
-int lex_one_token(void *arg, drizzled::Session *session)
+int lex_one_token(ParserType *yylval, drizzled::Session *session)
 {
   register unsigned char c= 0; /* Just set to shutup GCC */
   bool comment_closed;
@@ -671,7 +672,6 @@ int lex_one_token(void *arg, drizzled::Session *session)
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
   LEX *lex= session->lex;
-  YYSTYPE *yylval=(YYSTYPE*) arg;
   const CHARSET_INFO * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
