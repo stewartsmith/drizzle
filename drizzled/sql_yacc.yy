@@ -27,7 +27,7 @@
 */
 
 #define YYLEX_PARAM session
-#define YYSession (static_cast<Session *>(session))
+#define YYSession (session)
 
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
