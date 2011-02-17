@@ -12,19 +12,24 @@ insert into t1 (b) values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
 explain select min(b) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+SELECT seapitester_error_inject(4);
+seapitester_error_inject(4)
+4
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
 select min(b) from t1;
-min(b)
-1
+Got one of the listed errors
 select * from data_dictionary.seapitester_engine_state_history;
 STATE
 START STATEMENT
 END STATEMENT
-COMMIT
+ROLLBACK
 ::SEAPITester()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
+0
+SELECT seapitester_error_inject(0);
+seapitester_error_inject(0)
 0
 drop table t1;
