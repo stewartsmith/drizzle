@@ -22,7 +22,7 @@
  * Implementation of the TransactionManager class.
  */
 
-#include "config.h"
+#include <config.h>
 #include "transaction_manager.h"
 
 using namespace std;

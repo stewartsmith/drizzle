@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_NATURAL_JOIN_COLUMN_H
 #define DRIZZLED_NATURAL_JOIN_COLUMN_H
 
-#include "drizzled/memory/sql_alloc.h"
+#include <drizzled/memory/sql_alloc.h>
 
 namespace drizzled
 {

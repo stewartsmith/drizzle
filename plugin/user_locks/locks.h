@@ -23,12 +23,12 @@
 #include <boost/unordered_map.hpp>
 #include <boost/unordered/unordered_set.hpp>
 
-#include "plugin/user_locks/lock.h"
+#include <plugin/user_locks/lock.h>
 
 #include <string>
 
-#include "drizzled/session.h"
-#include "drizzled/util/string.h"
+#include <drizzled/session.h>
+#include <drizzled/util/string.h>
 
 
 #ifndef PLUGIN_USER_LOCKS_LOCKS_H

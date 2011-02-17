@@ -31,7 +31,7 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "memcached_functions.h"
 #include "memc_servers_set.h"

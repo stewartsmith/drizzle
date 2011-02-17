@@ -15,13 +15,13 @@
 
 /* Open a temporary file and cache it with io_cache. Delete it on close */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/internal/my_static.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/error.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_static.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/error.h>
 
 namespace drizzled
 {

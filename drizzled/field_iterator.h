@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_FIELD_ITERATOR_H
 #define DRIZZLED_FIELD_ITERATOR_H
 
-#include "drizzled/memory/sql_alloc.h"
+#include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/natural_join_column.h>
 

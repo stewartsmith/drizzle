@@ -19,12 +19,12 @@
   The bytes are compare as unsigned chars.
   */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <assert.h>
 
-#include "plugin/myisam/myisampack.h"
+#include <plugin/myisam/myisampack.h>
 
 namespace drizzled
 {

@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_GLOBAL_CHARSET_INFO_H
 #define DRIZZLED_GLOBAL_CHARSET_INFO_H
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

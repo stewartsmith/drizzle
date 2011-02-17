@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/sql_string.h"
-#include "drizzled/type/boolean.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset_info.h"
+#include <drizzled/sql_string.h>
+#include <drizzled/type/boolean.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset_info.h>
 
 namespace drizzled
 {

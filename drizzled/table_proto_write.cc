@@ -13,18 +13,18 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 #include <drizzled/unireg.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/message/statement_transform.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/message/statement_transform.h>
 
 #include <drizzled/plugin/storage_engine.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/typelib.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/typelib.h>
 
 /* For proto */
 #include <string>
@@ -39,7 +39,7 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/charset.h>
 
-#include "drizzled/function/time/typecast.h"
+#include <drizzled/function/time/typecast.h>
 
 using namespace std;
 

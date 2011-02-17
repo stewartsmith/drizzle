@@ -17,15 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/m_string.h"
-#include "drizzled/error.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/function/time/date.h"
-#include "drizzled/temporal_interval.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
+#include <drizzled/function/time/date.h>
+#include <drizzled/temporal_interval.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {

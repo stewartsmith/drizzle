@@ -23,7 +23,7 @@
 #include <drizzled/charset_info.h>
 #include <drizzled/item/hex_string.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

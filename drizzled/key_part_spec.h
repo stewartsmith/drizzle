@@ -21,8 +21,8 @@
 #ifndef DRIZZLED_KEY_PART_SPEC_H
 #define DRIZZLED_KEY_PART_SPEC_H
 
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/lex_string.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {

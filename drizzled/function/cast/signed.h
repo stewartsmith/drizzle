@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_FUNCTION_CAST_SIGNED_H
 #define DRIZZLED_FUNCTION_CAST_SIGNED_H
 
-#include "drizzled/function/math/int.h"
+#include <drizzled/function/math/int.h>
 
 namespace drizzled {
 namespace function {

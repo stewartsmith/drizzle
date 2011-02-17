@@ -25,11 +25,11 @@
 #ifndef DRIZZLED_ALTER_INFO_H
 #define DRIZZLED_ALTER_INFO_H
 
-#include "drizzled/base.h"
-#include "drizzled/enum.h"
-#include "drizzled/sql_list.h" /** @TODO use STL vectors! */
-#include "drizzled/key.h"
-#include "drizzled/message/table.pb.h"
+#include <drizzled/base.h>
+#include <drizzled/enum.h>
+#include <drizzled/sql_list.h> /** @TODO use STL vectors! */
+#include <drizzled/key.h>
+#include <drizzled/message/table.pb.h>
 
 #include <bitset>
 

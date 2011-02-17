@@ -29,15 +29,15 @@
  * Statement messages to other formats, including SQL strings.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <boost/lexical_cast.hpp>
-#include "drizzled/message/statement_transform.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/message/table.pb.h"
-#include "drizzled/charset.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/message/statement_transform.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/table.pb.h>
+#include <drizzled/charset.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/global_charset_info.h>
 
 #include <string>
 #include <vector>

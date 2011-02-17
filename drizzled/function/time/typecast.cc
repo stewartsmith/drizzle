@@ -17,15 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <cstdio>
 
-#include "drizzled/current_session.h"
-#include "drizzled/error.h"
-#include "drizzled/function/time/typecast.h"
-#include "drizzled/time_functions.h"
-#include "drizzled/charset.h"
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
+#include <drizzled/function/time/typecast.h>
+#include <drizzled/time_functions.h>
+#include <drizzled/charset.h>
 
 namespace drizzled
 {

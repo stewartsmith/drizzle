@@ -28,7 +28,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

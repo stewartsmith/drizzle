@@ -17,21 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 #include <vector>
 #include <map>
 
-#include "drizzled/module/registry.h"
-#include "drizzled/module/library.h"
-#include "drizzled/module/graph.h"
-#include "drizzled/module/vertex_handle.h"
+#include <drizzled/module/registry.h>
+#include <drizzled/module/library.h>
+#include <drizzled/module/graph.h>
+#include <drizzled/module/vertex_handle.h>
 
-#include "drizzled/plugin.h"
-#include "drizzled/show.h"
-#include "drizzled/cursor.h"
-#include "drizzled/abort_exception.h"
+#include <drizzled/plugin.h>
+#include <drizzled/show.h>
+#include <drizzled/cursor.h>
+#include <drizzled/abort_exception.h>
 
 #include <boost/bind.hpp>
 

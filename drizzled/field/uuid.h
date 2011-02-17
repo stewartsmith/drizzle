@@ -24,7 +24,7 @@
 #include <drizzled/field.h>
 #include <string>
 
-#include "drizzled/type/uuid.h"
+#include <drizzled/type/uuid.h>
 
 namespace drizzled
 {

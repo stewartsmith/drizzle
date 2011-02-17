@@ -69,7 +69,7 @@
  * as a skeleton and a springboard.
  */
 
-#include "config.h"
+#include <config.h>
 #include "transaction_log.h"
 
 #include <sys/stat.h>

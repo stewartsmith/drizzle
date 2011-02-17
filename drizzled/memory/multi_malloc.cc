@@ -13,14 +13,14 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "drizzled/memory/multi_malloc.h"
-#include "drizzled/definitions.h"
+#include <drizzled/memory/multi_malloc.h>
+#include <drizzled/definitions.h>
 
 namespace drizzled
 {

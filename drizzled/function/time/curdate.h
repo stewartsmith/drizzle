@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTION_TIME_CURDATE_H
 #define DRIZZLED_FUNCTION_TIME_CURDATE_H
 
-#include "drizzled/function/time/date.h"
-#include "drizzled/temporal.h"
+#include <drizzled/function/time/date.h>
+#include <drizzled/temporal.h>
 
 namespace drizzled
 {

@@ -17,7 +17,7 @@
 
 #include "myisam_priv.h"
 #include <sys/stat.h>
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 
 using namespace drizzled;
 

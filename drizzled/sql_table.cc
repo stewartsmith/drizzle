@@ -15,7 +15,7 @@
 
 /* drop and alter of tables */
 
-#include "config.h"
+#include <config.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
@@ -26,27 +26,27 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include "drizzled/strfunc.h"
+#include <drizzled/strfunc.h>
 #include <drizzled/lock.h>
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
-#include "drizzled/transaction_services.h"
+#include <drizzled/transaction_services.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/identifier.h>
-#include "drizzled/internal/m_string.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 
-#include "drizzled/definition/cache.h"
+#include <drizzled/definition/cache.h>
 
-#include "drizzled/statement/alter_table.h"
-#include "drizzled/sql_table.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/typelib.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/statement/alter_table.h>
+#include <drizzled/sql_table.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/typelib.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <algorithm>
 #include <sstream>

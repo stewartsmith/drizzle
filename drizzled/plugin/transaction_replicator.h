@@ -25,10 +25,10 @@
 #ifndef DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
 #define DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
 
-#include "drizzled/plugin/replication.h"
-#include "drizzled/plugin/plugin.h"
+#include <drizzled/plugin/replication.h>
+#include <drizzled/plugin/plugin.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 /**
  * @file Defines the API for a TransactionReplicator.  

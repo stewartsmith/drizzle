@@ -15,24 +15,24 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/unireg.h>
 #include <drizzled/plugin/storage_engine.h>
-#include "drizzled/pthread_globals.h"
-#include "drizzled/internal/my_pthread.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/plugin/daemon.h"
-#include "drizzled/signal_handler.h"
+#include <drizzled/pthread_globals.h>
+#include <drizzled/internal/my_pthread.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/plugin/daemon.h>
+#include <drizzled/signal_handler.h>
 
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
 
-#include "drizzled/debug.h"
+#include <drizzled/debug.h>
 
-#include "drizzled/drizzled.h"
+#include <drizzled/drizzled.h>
 
 #include <drizzled/refresh_version.h>
 

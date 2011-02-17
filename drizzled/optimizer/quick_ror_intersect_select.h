@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_OPTIMIZER_QUICK_ROR_INTERSECT_SELECT_H
 #define DRIZZLED_OPTIMIZER_QUICK_ROR_INTERSECT_SELECT_H
 
-#include "drizzled/optimizer/range.h"
+#include <drizzled/optimizer/range.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <vector>

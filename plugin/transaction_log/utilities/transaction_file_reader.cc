@@ -22,7 +22,7 @@
  * Implementation of the TransactionFileReader class.
  */
 
-#include "config.h"
+#include <config.h>
 #include "transaction_file_reader.h"
 #include <cstdlib>
 #include <cstdio>
@@ -30,11 +30,11 @@
 #include <fcntl.h>
 #include <boost/lexical_cast.hpp>
 #include <google/protobuf/io/coded_stream.h>
-#include "drizzled/definitions.h"
-#include "drizzled/algorithm/crc32.h"
-#include "drizzled/replication_services.h"
-#include "drizzled/gettext.h"
-#include "drizzled/util/convert.h"
+#include <drizzled/definitions.h>
+#include <drizzled/algorithm/crc32.h>
+#include <drizzled/replication_services.h>
+#include <drizzled/gettext.h>
+#include <drizzled/util/convert.h>
 
 using namespace std;
 using namespace drizzled;

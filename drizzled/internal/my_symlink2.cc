@@ -20,11 +20,11 @@
   rename files and symlinks like they would be one unit.
 */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/error.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/error.h>
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {

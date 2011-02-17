@@ -18,15 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <vector>
 
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/identifier.h"
-#include "drizzled/error.h"
-#include "drizzled/session.h"
-#include "drizzled/gettext.h"
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/identifier.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/gettext.h>
 
 namespace drizzled
 {

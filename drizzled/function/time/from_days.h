@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_FROM_DAYS_H
 #define DRIZZLED_FUNCTION_TIME_FROM_DAYS_H
 
-#include "drizzled/function/time/date.h"
+#include <drizzled/function/time/date.h>
 
 namespace drizzled
 {

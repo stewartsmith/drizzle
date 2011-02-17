@@ -36,13 +36,13 @@
  * the event will not be passed along to the applier.
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/transaction_applier.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/plugin.h>
 
-#include "drizzled/item/string.h"
+#include <drizzled/item/string.h>
 #include "filtered_replicator.h"
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>

@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/session.h"
-#include "drizzled/generator/session.h"
+#include <drizzled/session.h>
+#include <drizzled/generator/session.h>
 
 #ifndef PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
 #define PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H

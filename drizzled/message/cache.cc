@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/pthread_globals.h>
-#include "drizzled/message/cache.h"
+#include <drizzled/message/cache.h>
 
 namespace drizzled {
 

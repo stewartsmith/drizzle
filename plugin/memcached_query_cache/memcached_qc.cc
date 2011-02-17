@@ -29,12 +29,12 @@
 
 
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/plugin.h"
-#include "drizzled/session.h"
-#include "drizzled/select_send.h"
-#include "drizzled/item/null.h"
+#include <drizzled/plugin.h>
+#include <drizzled/session.h>
+#include <drizzled/select_send.h>
+#include <drizzled/item/null.h>
 
 #include <gcrypt.h>
 #include <string>

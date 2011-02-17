@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
 #define DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
 
-#include "drizzled/definition/cache.h"
+#include <drizzled/definition/cache.h>
 
 namespace drizzled {
 namespace generator {

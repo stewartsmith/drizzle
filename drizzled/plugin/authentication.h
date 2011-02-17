@@ -24,11 +24,11 @@
 
 #include <string>
 
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/identifier.h"
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/identifier.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

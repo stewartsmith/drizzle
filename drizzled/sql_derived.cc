@@ -17,7 +17,7 @@
   Derived tables
   These were introduced by Sinisa <sinisa@mysql.com>
 */
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/sql_lex.h>
 #include <drizzled/select_union.h>

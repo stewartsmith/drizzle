@@ -21,7 +21,7 @@
   Just a test application for threads.
   */
 
-#include "config.h"
+#include <config.h>
 
 #include "azio.h"
 #include <stdio.h>

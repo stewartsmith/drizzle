@@ -13,17 +13,17 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #define DRIZZLE_LEX 1
 
-#include "drizzled/item/num.h"
-#include "drizzled/abort_exception.h"
+#include <drizzled/item/num.h>
+#include <drizzled/abort_exception.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
-#include "drizzled/transaction_services.h"
+#include <drizzled/transaction_services.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
@@ -40,17 +40,17 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
-#include "drizzled/probes.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/probes.h>
+#include <drizzled/global_charset_info.h>
 
-#include "drizzled/plugin/logging.h"
-#include "drizzled/plugin/query_rewrite.h"
-#include "drizzled/plugin/query_cache.h"
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/optimizer/explain_plan.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/plugin/event_observer.h"
-#include "drizzled/visibility.h"
+#include <drizzled/plugin/logging.h>
+#include <drizzled/plugin/query_rewrite.h>
+#include <drizzled/plugin/query_cache.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/optimizer/explain_plan.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/plugin/event_observer.h>
+#include <drizzled/visibility.h>
 
 #include <drizzled/schema.h>
 
@@ -59,7 +59,7 @@
 #include <bitset>
 #include <algorithm>
 #include <boost/date_time.hpp>
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 using namespace std;
 

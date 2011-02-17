@@ -22,7 +22,7 @@
 
 #include <drizzled/function/func.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

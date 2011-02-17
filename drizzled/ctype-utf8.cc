@@ -18,10 +18,10 @@
 /* UTF8 according RFC 2279 */
 /* Written by Alexander Barkov <bar@udm.net> */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
 #include <errno.h>
 
 #include <algorithm>

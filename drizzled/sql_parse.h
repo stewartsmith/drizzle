@@ -22,14 +22,14 @@
 
 #include <string>
 
-#include "drizzled/definitions.h"
-#include "drizzled/common.h"
-#include "drizzled/lex_string.h"
-#include "drizzled/comp_creator.h"
-#include "drizzled/identifier.h"
+#include <drizzled/definitions.h>
+#include <drizzled/common.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/comp_creator.h>
+#include <drizzled/identifier.h>
 
-#include "drizzled/error_t.h"
-#include "drizzled/visibility.h"
+#include <drizzled/error_t.h>
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

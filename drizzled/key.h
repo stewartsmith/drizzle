@@ -24,12 +24,12 @@
 #include <string>
 #include <boost/dynamic_bitset.hpp>
 
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/key_part_spec.h"
-#include "drizzled/sql_list.h"
-#include "drizzled/lex_string.h"
-#include "drizzled/sql_string.h"
-#include "drizzled/handler_structs.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/key_part_spec.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/sql_string.h>
+#include <drizzled/handler_structs.h>
 
 namespace drizzled
 {

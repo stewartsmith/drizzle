@@ -21,8 +21,8 @@
 #ifndef PLUGIN_INNOBASE_HANDLER_INTERNAL_DICTIONARY_H
 #define PLUGIN_INNOBASE_HANDLER_INTERNAL_DICTIONARY_H 
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/field.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/field.h>
 
 class Recorder {
   std::vector<std::string> string_list;

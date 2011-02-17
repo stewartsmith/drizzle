@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/natural_join_column.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>

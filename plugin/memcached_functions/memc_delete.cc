@@ -28,7 +28,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/function/str/strfunc.h>
 
 #include "memcached_functions.h"

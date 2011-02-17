@@ -26,7 +26,7 @@
 #include <drizzled/table_list.h>
 #include <drizzled/table/concurrent.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

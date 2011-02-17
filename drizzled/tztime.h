@@ -24,7 +24,7 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/type/time.h>
 
-#include "drizzled/type/time.h"
+#include <drizzled/type/time.h>
 
 namespace drizzled
 {

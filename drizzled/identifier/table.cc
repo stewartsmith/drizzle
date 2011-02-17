@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <assert.h>
 #include <boost/lexical_cast.hpp>
-#include "drizzled/identifier.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/identifier.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <drizzled/error.h>
 #include <drizzled/errmsg_print.h>
@@ -31,8 +31,8 @@
 
 #include <drizzled/table.h>
 
-#include "drizzled/util/string.h"
-#include "drizzled/util/tablename_to_filename.h"
+#include <drizzled/util/string.h>
+#include <drizzled/util/tablename_to_filename.h>
 
 #include <algorithm>
 #include <sstream>

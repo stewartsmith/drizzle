@@ -14,12 +14,12 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Some useful string utility functions used by the MySQL server */
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/strfunc.h"
-#include "drizzled/typelib.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/strfunc.h>
+#include <drizzled/typelib.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/global_charset_info.h>
 
 namespace drizzled
 {

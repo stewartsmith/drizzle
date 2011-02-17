@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/function/time/timestamp_diff.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/function/time/timestamp_diff.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {

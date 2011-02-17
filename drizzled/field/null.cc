@@ -19,7 +19,7 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/field/null.h>
 
 namespace drizzled

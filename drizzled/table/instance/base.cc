@@ -25,7 +25,7 @@
 */
 
 /* Basic functions needed by many modules */
-#include "config.h"
+#include <config.h>
 
 #include <pthread.h>
 #include <float.h>
@@ -37,54 +37,54 @@
 
 #include <cassert>
 
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/internal/my_pthread.h>
 
-#include "drizzled/table.h"
-#include "drizzled/table/shell.h"
+#include <drizzled/table.h>
+#include <drizzled/table/shell.h>
 
-#include "drizzled/session.h"
+#include <drizzled/session.h>
 
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/charset.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_sys.h>
 
-#include "drizzled/item/string.h"
-#include "drizzled/item/int.h"
-#include "drizzled/item/decimal.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/null.h"
-#include "drizzled/temporal.h"
+#include <drizzled/item/string.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/decimal.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/null.h>
+#include <drizzled/temporal.h>
 
-#include "drizzled/field.h"
-#include "drizzled/field/str.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/field/boolean.h"
-#include "drizzled/field/enum.h"
-#include "drizzled/field/null.h"
-#include "drizzled/field/date.h"
-#include "drizzled/field/decimal.h"
-#include "drizzled/field/real.h"
-#include "drizzled/field/double.h"
-#include "drizzled/field/int32.h"
-#include "drizzled/field/int64.h"
-#include "drizzled/field/size.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/time.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/field/datetime.h"
-#include "drizzled/field/microtime.h"
-#include "drizzled/field/varstring.h"
-#include "drizzled/field/uuid.h"
+#include <drizzled/field.h>
+#include <drizzled/field/str.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/boolean.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/decimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
+#include <drizzled/field/size.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/time.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/microtime.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/uuid.h>
 
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/plugin/storage_engine.h>
 
-#include "drizzled/definition/cache.h"
-#include "drizzled/typelib.h"
+#include <drizzled/definition/cache.h>
+#include <drizzled/typelib.h>
 
 #include <drizzled/refresh_version.h>
 

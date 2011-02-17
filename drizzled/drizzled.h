@@ -26,8 +26,8 @@
 
 #include <boost/detail/atomic_count.hpp>
 
-#include "drizzled/global_buffer.h"
-#include "drizzled/definitions.h"
+#include <drizzled/global_buffer.h>
+#include <drizzled/definitions.h>
 
 struct passwd;
 

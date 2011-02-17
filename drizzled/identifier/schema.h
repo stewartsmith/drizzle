@@ -35,9 +35,9 @@
 #define DRIZZLED_IDENTIFIER_SCHEMA_H
 
 #include <drizzled/enum.h>
-#include "drizzled/definitions.h"
-#include "drizzled/message/table.pb.h"
-#include "drizzled/catalog/local.h"
+#include <drizzled/definitions.h>
+#include <drizzled/message/table.pb.h>
+#include <drizzled/catalog/local.h>
 #include <string.h>
 
 #include <assert.h>
@@ -50,7 +50,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled {
 namespace identifier {

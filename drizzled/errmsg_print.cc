@@ -22,7 +22,7 @@
    errmsg_printf()
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/definitions.h>
 #include <drizzled/errmsg_print.h>

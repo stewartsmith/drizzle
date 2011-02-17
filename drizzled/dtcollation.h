@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_DTCOLLATION_H
 #define DRIZZLED_DTCOLLATION_H
 
-#include "drizzled/definitions.h"
-#include "drizzled/visibility.h"
+#include <drizzled/definitions.h>
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
