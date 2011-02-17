@@ -270,10 +270,21 @@ void SEAPITesterCursor::position(const unsigned char *record)
 
 int SEAPITesterCursor::info(uint32_t flag)
 {
+  int r;
   CURSOR_NEW_STATE("::info()");
   CURSOR_NEW_STATE("locked");
 
-  return realCursor->info(flag);
+  r= realCursor->info(flag);
+
+  if (flag & (HA_STATUS_VARIABLE|HA_STATUS_AUTO|HA_STATUS_CONST))
+  {
+    stats= realCursor->stats;
+  }
+
+  if (flag & HA_STATUS_ERRKEY)
+    errkey= realCursor->errkey;
+
+  return r;
 }
 
 int SEAPITesterCursor::external_lock(Session *session, int lock_type)
