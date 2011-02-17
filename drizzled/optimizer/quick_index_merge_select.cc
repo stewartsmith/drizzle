@@ -227,31 +227,31 @@ bool optimizer::QuickIndexMergeSelect::is_keys_used(const boost::dynamic_bitset<
 }
 
 
-void optimizer::QuickIndexMergeSelect::add_info_string(String *str)
+void optimizer::QuickIndexMergeSelect::add_info_string(string *str)
 {
   bool first= true;
-  str->append(STRING_WITH_LEN("sort_union("));
+  str->append("sort_union(");
   for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
        it != quick_selects.end();
        ++it)
   {
     if (! first)
-      str->append(',');
+      str->append(",");
     else
       first= false;
     (*it)->add_info_string(str);
   }
   if (pk_quick_select)
   {
-    str->append(',');
+    str->append(",");
     pk_quick_select->add_info_string(str);
   }
-  str->append(')');
+  str->append(")");
 }
 
 
-void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(String *key_names,
-                                                            String *used_lengths)
+void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(string *key_names,
+                                                            string *used_lengths)
 {
   char buf[64];
   uint32_t length= 0;
@@ -265,8 +265,8 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(String *key_names,
       first= false;
     else
     {
-      key_names->append(',');
-      used_lengths->append(',');
+      key_names->append(",");
+      used_lengths->append(",");
     }
 
     KeyInfo *key_info= head->key_info + (*it)->index;
@@ -277,10 +277,10 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(String *key_names,
   if (pk_quick_select)
   {
     KeyInfo *key_info= head->key_info + pk_quick_select->index;
-    key_names->append(',');
+    key_names->append(",");
     key_names->append(key_info->name);
     length= internal::int64_t2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(',');
+    used_lengths->append(",");
     used_lengths->append(buf, length);
   }
 }
