@@ -53,13 +53,17 @@ plugin::TransactionalStorageEngine *realEngine;
    -------------------------------
 
    IF you add a new error injection, document it here!
+   You test via error_injected variable.
 
    Conflicting error inject numbers will lead to tears
    (not Borsch, Vodka and Tears - that's quite nice).
 
+   0 - DISABLED
+
    1 - doInsertRecord(): every 2nd row, LOCK_WAIT_TIMEOUT.
    2 - doInsertRecord(): every 2nd row, DEADLOCK.
    3 - rnd_next(): every 2nd row, LOCK_WAIT_TIMEOUT
+   4 - doStartIndexScan returns an error.
  */
 static uint32_t error_injected= 0;
 
@@ -319,6 +323,12 @@ int SEAPITesterCursor::doStartIndexScan(uint32_t keynr, bool scan)
 {
   int r;
   CURSOR_NEW_STATE("::doStartIndexScan()");
+
+  if (error_injected == 4)
+  {
+    return HA_ERR_LOCK_DEADLOCK;
+  }
+
   r= realCursor->doStartIndexScan(keynr, scan);
 
   active_index= realCursor->get_index();
