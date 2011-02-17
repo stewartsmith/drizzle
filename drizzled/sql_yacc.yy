@@ -26,7 +26,6 @@
 ** Use the YYSession macro for this.
 */
 
-#define YYLEX_PARAM session
 #define YYSession (session)
 
 #define YYENABLE_NLS 0
@@ -165,6 +164,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %define api.pure
 %name-prefix "base_sql_"
 %parse-param { drizzled::Session *session }
+%lex-param { drizzled::Session *session }
 
 
 /*
