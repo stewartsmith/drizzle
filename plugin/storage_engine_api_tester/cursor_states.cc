@@ -91,6 +91,8 @@ void load_cursor_state_transitions(state_multimap &states)
 
   states.insert(state_pair("::rnd_next()", "::extra()"));
   states.insert(state_pair("::extra()", "::doEndTableScan()"));
+  states.insert(state_pair("::extra()", "::extra()"));
+  states.insert(state_pair("::extra()", "::reset()"));
 
   states.insert(state_pair("::rnd_next()", "::position()"));
   states.insert(state_pair("::position()", "::rnd_next()"));

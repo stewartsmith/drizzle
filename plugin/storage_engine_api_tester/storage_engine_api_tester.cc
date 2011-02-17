@@ -195,6 +195,21 @@ public:
   int index_first(unsigned char * buf);
   int index_last(unsigned char * buf);
 
+  /* just copied from innobase... */
+  uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_RANGE |
+            HA_READ_ORDER |
+            HA_KEYREAD_ONLY);
+  }
+
+  bool primary_key_is_clustered()
+  {
+    return realCursor->primary_key_is_clustered();
+  }
+
 
   int doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked);
 
