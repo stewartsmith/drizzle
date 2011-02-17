@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/slave/queue_producer.h"
+#include <config.h>
+#include <plugin/slave/queue_producer.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/sql/result_set.h>
 #include <drizzled/execute.h>

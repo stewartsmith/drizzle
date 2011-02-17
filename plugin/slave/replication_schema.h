@@ -21,7 +21,7 @@
 #ifndef PLUGIN_SLAVE_REPLICATION_SCHEMA_H
 #define PLUGIN_SLAVE_REPLICATION_SCHEMA_H
 
-#include "plugin/slave/sql_executor.h"
+#include <plugin/slave/sql_executor.h>
 
 namespace slave
 {

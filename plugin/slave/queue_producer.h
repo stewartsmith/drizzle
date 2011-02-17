@@ -21,9 +21,9 @@
 #ifndef PLUGIN_SLAVE_QUEUE_PRODUCER_H
 #define PLUGIN_SLAVE_QUEUE_PRODUCER_H
 
-#include "plugin/slave/queue_thread.h"
-#include "plugin/slave/sql_executor.h"
-#include "client/client_priv.h"
+#include <plugin/slave/queue_thread.h>
+#include <plugin/slave/sql_executor.h>
+#include <client/client_priv.h>
 #include <string>
 #include <vector>
 

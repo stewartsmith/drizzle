@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/slave/queue_consumer.h"
+#include <config.h>
+#include <plugin/slave/queue_consumer.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/message/statement_transform.h>
 #include <drizzled/sql/result_set.h>

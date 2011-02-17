@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/slave/sql_executor.h"
+#include <config.h>
+#include <plugin/slave/sql_executor.h>
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/catalog/local.h>

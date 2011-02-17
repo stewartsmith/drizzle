@@ -21,8 +21,8 @@
 #ifndef PLUGIN_SLAVE_QUEUE_CONSUMER_H
 #define PLUGIN_SLAVE_QUEUE_CONSUMER_H
 
-#include "plugin/slave/queue_thread.h"
-#include "plugin/slave/sql_executor.h"
+#include <plugin/slave/queue_thread.h>
+#include <plugin/slave/sql_executor.h>
 #include <drizzled/session.h>
 
 namespace drizzled

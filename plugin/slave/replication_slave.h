@@ -21,9 +21,9 @@
 #ifndef PLUGIN_SLAVE_REPLICATION_SLAVE_H
 #define PLUGIN_SLAVE_REPLICATION_SLAVE_H
 
-#include "plugin/slave/queue_consumer.h"
-#include "plugin/slave/queue_producer.h"
-#include "plugin/slave/replication_schema.h"
+#include <plugin/slave/queue_consumer.h>
+#include <plugin/slave/queue_producer.h>
+#include <plugin/slave/replication_schema.h>
 #include <drizzled/plugin/daemon.h>
 #include <boost/thread.hpp>
 

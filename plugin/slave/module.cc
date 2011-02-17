@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/slave/replication_slave.h"
+#include <config.h>
+#include <plugin/slave/replication_slave.h>
 #include <drizzled/plugin.h>
 #include <drizzled/configmake.h>   // for SYSCONFDIR
 #include <drizzled/module/option_map.h>
