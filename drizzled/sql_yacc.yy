@@ -2567,8 +2567,7 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_char(*$3); }
         | CURRENT_USER optional_braces
           {
-            std::string user_str("user");
-            if (! ($$= parser::reserved_keyword_function(YYSession, user_str, NULL)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "user", NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2688,46 +2687,42 @@ function_call_nonkeyword:
           { $$= new (YYSession->mem_root) Item_date_add_interval($3, $6, $7, 1); }
         | SUBSTRING '(' expr ',' expr ',' expr ')'
           {
-            std::string reverse_str("substr");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
             args->push_back($7);
-            if (! ($$= parser::reserved_keyword_function(YYSession, reverse_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "substr", args)))
             {
               DRIZZLE_YYABORT;
             }
           }
         | SUBSTRING '(' expr ',' expr ')'
           {
-            std::string reverse_str("substr");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= parser::reserved_keyword_function(YYSession, reverse_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "substr", args)))
             {
               DRIZZLE_YYABORT;
             }
           }
         | SUBSTRING '(' expr FROM expr FOR_SYM expr ')'
           {
-            std::string reverse_str("substr");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
             args->push_back($7);
-            if (! ($$= parser::reserved_keyword_function(YYSession, reverse_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "substr", args)))
             {
               DRIZZLE_YYABORT;
             }
           }
         | SUBSTRING '(' expr FROM expr ')'
           {
-            std::string reverse_str("substr");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= parser::reserved_keyword_function(YYSession, reverse_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "substr", args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2803,7 +2798,6 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
         | KILL_SYM kill_option '(' expr ')'
           {
-            std::string kill_str("kill");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($4);
 
@@ -2812,7 +2806,7 @@ function_call_conflict:
               args->push_back(new (YYSession->mem_root) Item_uint(1));
             }
 
-            if (! ($$= parser::reserved_keyword_function(YYSession, kill_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "kill", args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2831,10 +2825,9 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
         | WAIT_SYM '(' expr ')'
           {
-            std::string wait_str("wait");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
-            if (! ($$= parser::reserved_keyword_function(YYSession, wait_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "wait", args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2849,11 +2842,10 @@ function_call_conflict:
 	  }
         | WAIT_SYM '(' expr ',' expr ')'
           {
-            std::string wait_str("wait");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= parser::reserved_keyword_function(YYSession, wait_str, args)))
+            if (! ($$= parser::reserved_keyword_function(YYSession, "wait", args)))
             {
               DRIZZLE_YYABORT;
             }
