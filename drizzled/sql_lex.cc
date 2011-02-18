@@ -388,7 +388,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
 */
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
-  register unsigned char c,sep;
+  unsigned char c,sep;
   bool found_escape= false;
   const CHARSET_INFO * const cs= lip->m_session->charset();
 
@@ -665,7 +665,7 @@ namespace drizzled
 
 int lex_one_token(ParserType *yylval, drizzled::Session *session)
 {
-  register unsigned char c= 0; /* Just set to shutup GCC */
+  unsigned char c= 0; /* Just set to shutup GCC */
   bool comment_closed;
   int	tokval, result_state;
   unsigned int length;
