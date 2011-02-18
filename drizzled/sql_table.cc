@@ -1000,7 +1000,7 @@ static int prepare_create_table(Session *session,
       Key_part_spec *dup_column;
       int proto_field_nr= 0;
 
-      it.rewind();
+      it= alter_info->create_list;
       field=0;
       while ((sql_field=it++) && ++proto_field_nr &&
 	     my_strcasecmp(system_charset_info,
@@ -1240,7 +1240,7 @@ static int prepare_create_table(Session *session,
 	             (qsort_cmp) sort_keys);
 
   /* Check fields. */
-  it.rewind();
+  it= alter_info->create_list;
   while ((sql_field=it++))
   {
     Field::utype type= (Field::utype) MTYP_TYPENR(sql_field->unireg_check);
