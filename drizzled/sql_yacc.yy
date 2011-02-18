@@ -4228,7 +4228,7 @@ opt_insert_update:
 /* Update rows in a table */
 
 update:
-          UPDATE_SYM opt_ignore table_ident
+          UPDATE_SYM opt_ignore table_ident SET_SYM update_list
           {
             init_select(Lex);
             Lex->statement= new statement::Update(YYSession);
@@ -4236,9 +4236,7 @@ update:
             Lex->duplicates= DUP_ERROR;
             if (not Lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
-          }
-          SET_SYM update_list
-          {
+
             if (Lex->select_lex.get_table_list()->derived)
             {
               /* it is single table update and it is update of derived table */
