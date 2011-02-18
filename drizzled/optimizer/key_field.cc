@@ -626,7 +626,7 @@ void optimizer::add_key_fields(Join *join,
                           sargables);
           }
         }
-        it.rewind();
+        it= *item_equal;
       }
     }
     break;
