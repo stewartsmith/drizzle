@@ -273,7 +273,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
   {
     for (Select_Lex *lex= unit->first_select(); lex; lex= lex->next_select())
     {
-      List_iterator<Item> li(lex->item_list);
+      List<Item>::iterator li(lex->item_list);
       Item *item;
       Order *order;
 
@@ -1057,7 +1057,7 @@ Item_in_subselect::single_value_transformer(Join *join,
         upper_item->set_sum_test(item);
       *select_lex->ref_pointer_array= item;
       {
-	List_iterator<Item> it(select_lex->item_list);
+	List<Item>::iterator it(select_lex->item_list);
 	it++;
 	it.replace(item);
       }
