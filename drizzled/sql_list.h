@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_SQL_LIST_H
 #define DRIZZLED_SQL_LIST_H
 
-
 #include <cstdlib>
 #include <cassert>
 #include <utility>
@@ -28,17 +27,14 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/visibility.h>
 
+namespace drizzled {
 
-namespace drizzled
+typedef struct st_sql_list 
 {
-
-/** Struct to handle simple linked lists. */
-typedef struct st_sql_list {
   uint32_t elements;
   unsigned char *first;
   unsigned char **next;
 
-  st_sql_list() {}                              /* Remove gcc warning */
   inline void empty()
   {
     elements=0;
@@ -333,10 +329,6 @@ public:
     el= &tmp->next;
     return tmp->info;
   }
-  inline void rewind(void)
-  {
-    el= &list->first;
-  }  
   inline void *replace(void *element)
   {						// Return old element
     void *tmp=current->info;
