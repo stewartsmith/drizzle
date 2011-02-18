@@ -610,8 +610,7 @@ bool Select_Lex_Unit::cleanup()
 
   if (union_result)
   {
-    delete union_result;
-    union_result=0; // Safety
+    safe_delete(union_result);
     table= 0; // Safety
   }
 
@@ -713,8 +712,7 @@ bool Select_Lex::cleanup()
   {
     assert((Select_Lex*)join->select_lex == this);
     error= join->destroy();
-    delete join;
-    join= 0;
+    safe_delete(join);
   }
   for (Select_Lex_Unit *lex_unit= first_inner_unit(); lex_unit ;
        lex_unit= lex_unit->next_unit())
