@@ -557,8 +557,8 @@ static int prepare_create_table(Session *session,
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		dup_no;
   int		select_field_pos,auto_increment=0;
-  List_iterator<CreateField> it(alter_info->create_list);
-  List_iterator<CreateField> it2(alter_info->create_list);
+  List<CreateField>::iterator it(alter_info->create_list);
+  List<CreateField>::iterator it2(alter_info->create_list);
   uint32_t total_uneven_bit_length= 0;
 
   plugin::StorageEngine *engine= plugin::StorageEngine::findByName(create_proto.engine().name());
@@ -652,7 +652,7 @@ static int prepare_create_table(Session *session,
         interval= sql_field->interval= typelib(session->mem_root,
                                                sql_field->interval_list);
 
-        List_iterator<String> int_it(sql_field->interval_list);
+        List<String>::iterator int_it(sql_field->interval_list);
         String conv, *tmp;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
@@ -829,8 +829,8 @@ static int prepare_create_table(Session *session,
 
   /* Create keys */
 
-  List_iterator<Key> key_iterator(alter_info->key_list);
-  List_iterator<Key> key_iterator2(alter_info->key_list);
+  List<Key>::iterator key_iterator(alter_info->key_list);
+  List<Key>::iterator key_iterator2(alter_info->key_list);
   uint32_t key_parts=0, fk_key_count=0;
   bool primary_key=0,unique_key=0;
   Key *key, *key2;
@@ -992,7 +992,7 @@ static int prepare_create_table(Session *session,
 
     message::Table::Field *protofield= NULL;
 
-    List_iterator<Key_part_spec> cols(key->columns), cols2(key->columns);
+    List<Key_part_spec>::iterator cols(key->columns), cols2(key->columns);
     for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint32_t length;

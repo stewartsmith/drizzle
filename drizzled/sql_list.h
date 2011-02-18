@@ -473,7 +473,7 @@ void
 list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
 {
   /* Make a deep copy of each element */
-  List_iterator<T> it(list);
+  typename List<T>::iterator it(list);
   T *el;
   while ((el= it++))
     it.replace(el->clone(mem_root));

@@ -5430,7 +5430,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
   TableList *table;
   NestedJoin *nested_join;
   TableList *prev_table= 0;
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
 
   /*
     Try to simplify join operations from join_list.
@@ -5573,7 +5573,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     if (nested_join && !table->on_expr)
     {
       TableList *tbl;
-      List_iterator<TableList> it(nested_join->join_list);
+      List<TableList>::iterator it(nested_join->join_list);
       while ((tbl= it++))
       {
         tbl->setEmbedding(table->getEmbedding());
@@ -6138,7 +6138,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 */
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused)
 {
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
   TableList *table;
   while ((table= li++))
   {
@@ -6209,7 +6209,7 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 */
 static void reset_nj_counters(List<TableList> *join_list)
 {
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
   TableList *table;
   while ((table= li++))
   {

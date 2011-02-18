@@ -167,7 +167,7 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
   CreateField  *sql_field;
   Key_part_spec *column;
   List<Key_part_spec>::iterator cols(columns);
-  List_iterator<CreateField> it(table_fields);
+  List<CreateField>::iterator it(table_fields);
   while ((column= cols++))
   {
     it.rewind();
