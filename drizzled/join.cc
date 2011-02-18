@@ -2294,7 +2294,7 @@ bool Join::rollup_init()
     }
   }
 
-  List_iterator<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   Item *item;
   while ((item= it++))
   {
@@ -2400,7 +2400,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     uint32_t pos= send_group_parts - level -1;
     bool real_fields= 0;
     Item *item;
-    List_iterator<Item> new_it(rollup.getFields()[pos]);
+    List<Item>::iterator new_it(rollup.getFields()[pos]);
     Item **ref_array_start= rollup.getRefPointerArrays()[pos];
     Order *start_group;
 
@@ -5596,7 +5596,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
 
   /* Calculate how many saved fields there is in list */
   field_count=0;
-  List_iterator<Item> it(fields);
+  List<Item>::iterator it(fields);
   Item *item;
   while ((item=it++))
   {
