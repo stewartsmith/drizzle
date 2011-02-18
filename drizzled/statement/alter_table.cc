@@ -256,7 +256,6 @@ static bool prepare_alter_table(Session *session,
   /* New key definitions are added here */
   List<Key> new_key_list;
   List_iterator<CreateField> def_it(alter_info->create_list);
-  List_iterator<AlterColumn> alter_it(alter_info->alter_list);
   List_iterator<Key> key_it(alter_info->key_list);
   List_iterator<CreateField> find_it(new_create_list);
   List_iterator<CreateField> field_it(new_create_list);
@@ -342,16 +341,15 @@ static bool prepare_alter_table(Session *session,
       */
       def= new CreateField(field, field);
       new_create_list.push_back(def);
-      alter_it.rewind(); /* Change default if ALTER */
-      AlterColumn *alter;
+      AlterInfo::alter_list_t::iterator alter_it(alter_info->alter_list.begin());
 
-      while ((alter= alter_it++))
+      for (; alter_it != alter_info->alter_list.end(); alter_it++)
       {
-        if (! my_strcasecmp(system_charset_info,field->field_name, alter->name))
+        if (not my_strcasecmp(system_charset_info,field->field_name, alter_it->name))
           break;
       }
 
-      if (alter)
+      if (alter_it != alter_info->alter_list.end())
       {
         if (def->sql_type == DRIZZLE_TYPE_BLOB)
         {
@@ -359,7 +357,7 @@ static bool prepare_alter_table(Session *session,
           return true;
         }
 
-        if ((def->def= alter->def))
+        if ((def->def= alter_it->def))
         {
           /* Use new default */
           def->flags&= ~NO_DEFAULT_VALUE_FLAG;
@@ -368,7 +366,7 @@ static bool prepare_alter_table(Session *session,
         {
           def->flags|= NO_DEFAULT_VALUE_FLAG;
         }
-        alter_it.remove();
+        alter_info->alter_list.erase(alter_it);
       }
     }
   }
@@ -435,11 +433,11 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  if (alter_info->alter_list.elements)
+  if (not alter_info->alter_list.empty())
   {
     my_error(ER_BAD_FIELD_ERROR,
              MYF(0),
-             alter_info->alter_list.head()->name,
+             alter_info->alter_list.front().name,
              table->getMutableShare()->getTableName());
     return true;
   }
@@ -634,7 +632,7 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  if (!alter_info->drop_list.empty())
+  if (not alter_info->drop_list.empty())
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
@@ -642,11 +640,11 @@ static bool prepare_alter_table(Session *session,
     return true;
   }
 
-  if (alter_info->alter_list.elements)
+  if (not alter_info->alter_list.empty())
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
-             alter_info->alter_list.head()->name);
+             alter_info->alter_list.front().name);
     return true;
   }
 

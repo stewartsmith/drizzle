@@ -82,9 +82,10 @@ class AlterInfo
 {
 public:
   typedef std::list<AlterDrop> drop_list_t;
+  typedef std::list<AlterColumn> alter_list_t;
   
   drop_list_t drop_list;
-  List<AlterColumn> alter_list;
+  alter_list_t alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
   message::AlterTable alter_proto;
