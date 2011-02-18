@@ -336,7 +336,7 @@ public:
   inline void rewind(void)
   {
     el= &list->first;
-  }
+  }  
   inline void *replace(void *element)
   {						// Return old element
     void *tmp=current->info;
@@ -411,6 +411,11 @@ public:
     }
     empty();
   }
+
+  iterator begin()
+  {
+    return iterator(*this);
+  }
 };
 
 
@@ -419,13 +424,9 @@ template <class T> class List_iterator :public base_list_iterator
 public:
   List_iterator(List<T> &a) : base_list_iterator(a) {}
   List_iterator() : base_list_iterator() {}
-  inline void init(List<T> &a) { base_list_iterator::init(a); }
   inline T* operator++(int) { return (T*) base_list_iterator::next(); }
   inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
   inline T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
-  inline void rewind(void)  { base_list_iterator::rewind(); }
-  inline void remove()      { base_list_iterator::remove(); }
-  inline void after(T *a)   { base_list_iterator::after(a); }
   inline T** ref(void)	    { return (T**) base_list_iterator::ref(); }
 };
 
@@ -444,7 +445,6 @@ public:
   inline List_iterator_fast() : base_list_iterator() {}
   inline void init(List<T> &a) { base_list_iterator::init(a); }
   inline T* operator++(int) { return (T*) base_list_iterator::next_fast(); }
-  inline void rewind(void)  { base_list_iterator::rewind(); }
   void sublist(List<T> &list_arg, uint32_t el_arg)
   {
     base_list_iterator::sublist(list_arg, el_arg);

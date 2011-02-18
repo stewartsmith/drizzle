@@ -2414,7 +2414,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     for (i= 0, start_group= group_list ;i++ < pos ;start_group= start_group->next)
     {}
 
-    it.rewind();
+    it= fields_arg;
     while ((item= it++))
     {
       if (item == first_field)
@@ -5566,7 +5566,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     Flatten nested joins that can be flattened.
     no ON expression and not a semi-join => can be flattened.
   */
-  li.rewind();
+  li= *join_list;
   while ((table= li++))
   {
     nested_join= table->getNestedJoin();
