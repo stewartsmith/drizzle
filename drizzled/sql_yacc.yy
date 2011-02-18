@@ -1487,11 +1487,7 @@ opt_primary:
         ;
 
 references:
-          REFERENCES
-          table_ident
-          opt_ref_list
-          opt_match_clause
-          opt_on_update_delete
+          REFERENCES table_ident opt_ref_list opt_match_clause opt_on_update_delete
           {
             $$=$2;
           }
