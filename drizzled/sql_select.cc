@@ -1845,7 +1845,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
        Make replacement of equality predicates for lower levels
        of the condition expression.
     */
-    li.rewind();
+    li= args->begin();
     while ((item= li++))
     {
       Item *new_item;
@@ -5652,7 +5652,7 @@ Order *create_distinct_group(Session *session,
       *all_order_by_fields_used= 0;
   }
 
-  li.rewind();
+  li= fields.begin();
   while ((item=li++))
   {
     if (!item->const_item() && !item->with_sum_func && !item->marker)

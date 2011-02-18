@@ -130,7 +130,7 @@ bool foreign_key_prefix(Key *a, Key *b)
   while ((col1= col_it1++))
   {
     bool found= 0;
-    col_it2.rewind();
+    col_it2=b->columns.begin();
     while ((col2= col_it2++))
     {
       if (*col1 == *col2)
@@ -170,7 +170,7 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
   List<CreateField>::iterator it(table_fields);
   while ((column= cols++))
   {
-    it.rewind();
+    it= table_fields;
     while ((sql_field= it++) &&
            my_strcasecmp(system_charset_info,
                          column->field_name.str,

@@ -782,14 +782,14 @@ static int prepare_create_table(Session *session,
       (*db_options)|= HA_OPTION_PACK_RECORD;
     }
 
-    it2.rewind();
+    it2= alter_info->create_list;
   }
 
   /* record_offset will be increased with 'length-of-null-bits' later */
   record_offset= 0;
   null_fields+= total_uneven_bit_length;
 
-  it.rewind();
+  it= alter_info->create_list;
   while ((sql_field=it++))
   {
     assert(sql_field->charset != 0);
@@ -880,7 +880,7 @@ static int prepare_create_table(Session *session,
     }
     if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
       return(true);
-    key_iterator2.rewind ();
+    key_iterator2= alter_info->key_list;
     if (key->type != Key::FOREIGN_KEY)
     {
       while ((key2 = key_iterator2++) != key)
@@ -933,7 +933,7 @@ static int prepare_create_table(Session *session,
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 
-  key_iterator.rewind();
+  key_iterator= alter_info->key_list;
   key_number=0;
   for (; (key=key_iterator++) ; key_number++)
   {
@@ -992,14 +992,15 @@ static int prepare_create_table(Session *session,
 
     message::Table::Field *protofield= NULL;
 
-    List<Key_part_spec>::iterator cols(key->columns), cols2(key->columns);
+    List<Key_part_spec>::iterator cols(key->columns);
+    List<Key_part_spec>::iterator cols2(key->columns);
     for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint32_t length;
       Key_part_spec *dup_column;
       int proto_field_nr= 0;
 
-      it.rewind();
+      it= alter_info->create_list;
       field=0;
       while ((sql_field=it++) && ++proto_field_nr &&
 	     my_strcasecmp(system_charset_info,
@@ -1026,7 +1027,7 @@ static int prepare_create_table(Session *session,
 	  return(true);
 	}
       }
-      cols2.rewind();
+      cols2= key->columns;
 
       if (create_proto.field_size() > 0)
         protofield= create_proto.mutable_field(proto_field_nr - 1);
@@ -1239,7 +1240,7 @@ static int prepare_create_table(Session *session,
 	             (qsort_cmp) sort_keys);
 
   /* Check fields. */
-  it.rewind();
+  it= alter_info->create_list;
   while ((sql_field=it++))
   {
     Field::utype type= (Field::utype) MTYP_TYPENR(sql_field->unireg_check);

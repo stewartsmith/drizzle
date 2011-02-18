@@ -5064,7 +5064,7 @@ void Item_equal::sort(Item_field_cmpfunc cmp, void *arg)
         ref1= ref2;
       }
     }
-    it.rewind();
+    it= fields;
   } while (swap);
 }
 

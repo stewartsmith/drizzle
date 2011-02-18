@@ -457,7 +457,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
       skip_lines--;
       continue;
     }
-    it.rewind();
+    it= fields_vars;
     unsigned char *pos=read_info.row_start;
 #ifdef HAVE_VALGRIND
     read_info.row_end[0]=0;
@@ -562,7 +562,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
   enclosed_length=enclosed.length();
   id= 0;
 
-  for (;;it.rewind())
+  for (;;it= fields_vars)
   {
     if (session->getKilled())
     {

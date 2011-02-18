@@ -487,14 +487,14 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	sql_field->sql_type == MYSQL_TYPE_VARCHAR &&
 	create_info->row_type != ROW_TYPE_FIXED)
       (*db_options)|= HA_OPTION_PACK_RECORD;
-    it2.rewind();
+    it2= alter_info->create_list;
   }
 
   /* record_offset will be increased with 'length-of-null-bits' later */
   record_offset= 0;
   null_fields+= total_uneven_bit_length;
 
-  it.rewind();
+  it= alter_info->create_list;
   while ((sql_field=it++))
   {
     DBUG_ASSERT(sql_field->charset != 0);
@@ -584,7 +584,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       my_error(ER_TOO_LONG_IDENT, MYF(0), key->DOT_STR(name));
       DBUG_RETURN(TRUE);
     }
-    key_iterator2.rewind ();
+    key_iterator2= alter_info->key_list;
     if (key->type != Key::FOREIGN_KEY)
     {
       while ((key2 = key_iterator2++) != key)
@@ -637,7 +637,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
   if (!*key_info_buffer || ! key_part_info)
     DBUG_RETURN(TRUE);				// Out of memory
 
-  key_iterator.rewind();
+  key_iterator= alter_info->key_list;
   key_number=0;
   for (; (key=key_iterator++) ; key_number++)
   {
@@ -751,14 +751,15 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
 
-    List<Key_part_spec>::iterator cols(key->columns), cols2(key->columns);
+    List<Key_part_spec>::iterator cols(key->columns);
+    List<Key_part_spec>::iterator cols2(key->columns);
     CHARSET_INFO *ft_key_charset=0;  // for FULLTEXT
     for (uint column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint length;
       Key_part_spec *dup_column;
 
-      it.rewind();
+      it= alter_info->create_list;
       field=0;
       while ((sql_field=it++) &&
 	     my_strcasecmp(system_charset_info,
@@ -781,7 +782,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	  DBUG_RETURN(TRUE);
 	}
       }
-      cols2.rewind();
+      cols2= key->columns;
       if (key->type == Key::FULLTEXT)
       {
 	if ((sql_field->sql_type != MYSQL_TYPE_STRING &&
@@ -1024,7 +1025,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
   create_info->null_bits= null_fields;
 
   /* Check fields. */
-  it.rewind();
+  it= alter_info->create_list;
   while ((sql_field=it++))
   {
     Field::utype type= (Field::utype) MTYP_TYPENR(sql_field->unireg_check);

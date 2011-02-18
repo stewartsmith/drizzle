@@ -3824,7 +3824,7 @@ fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignor
     field= static_cast<Item_field *>(f++);
     table= field->field->getTable();
     table->auto_increment_field_not_null= false;
-    f.rewind();
+    f= fields;
   }
 
   while ((field= static_cast<Item_field *>(f++)))

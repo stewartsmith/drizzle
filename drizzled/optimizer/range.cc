@@ -4755,7 +4755,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     */
     else if (join->select_distinct)
     {
-      select_items_it.rewind();
+      select_items_it= join->fields_list;
       used_key_parts_map.reset();
       uint32_t max_key_part= 0;
       while ((item= select_items_it++))
