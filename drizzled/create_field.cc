@@ -221,7 +221,7 @@ bool CreateField::init(Session *,
   interval= 0;
   pack_length= key_length= 0;
   charset= fld_charset;
-  interval_list.empty();
+  interval_list.clear();
 
   comment= *fld_comment;
 

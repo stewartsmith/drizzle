@@ -3314,7 +3314,7 @@ tree_and(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer
   /* dispose index_merge if there is a "range" option */
   if (result_keys.any())
   {
-    tree1->merges.empty();
+    tree1->merges.clear();
     return(tree1);
   }
 

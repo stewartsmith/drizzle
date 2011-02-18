@@ -2770,7 +2770,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     {						
       /* Argument list contains only one element, so reduce it so a single item, then remove list */
       item= ((Item_cond*) cond)->argument_list()->head();
-      ((Item_cond*) cond)->argument_list()->empty();
+      ((Item_cond*) cond)->argument_list()->clear();
       return item;
     }
   }
@@ -5800,8 +5800,8 @@ bool setup_copy_fields(Session *session,
   Item *pos;
   List_iterator_fast<Item> li(all_fields);
   CopyField *copy= NULL;
-  res_selected_fields.empty();
-  res_all_fields.empty();
+  res_selected_fields.clear();
+  res_all_fields.clear();
   List_iterator_fast<Item> itr(res_all_fields);
   List<Item> extra_funcs;
   uint32_t i, border= all_fields.elements - elements;
@@ -5810,7 +5810,7 @@ bool setup_copy_fields(Session *session,
       !(copy=param->copy_field= new CopyField[param->field_count]))
     goto err2;
 
-  param->copy_funcs.empty();
+  param->copy_funcs.clear();
   for (i= 0; (pos= li++); i++)
   {
     Field *field;
@@ -5966,8 +5966,8 @@ bool change_to_use_tmp_fields(Session *session,
   List_iterator_fast<Item> it(all_fields);
   Item *item_field,*item;
 
-  res_selected_fields.empty();
-  res_all_fields.empty();
+  res_selected_fields.clear();
+  res_all_fields.clear();
 
   uint32_t i, border= all_fields.elements - elements;
   for (i= 0; (item= it++); i++)
@@ -6044,8 +6044,8 @@ bool change_refs_to_tmp_fields(Session *session,
 {
   List_iterator_fast<Item> it(all_fields);
   Item *item, *new_item;
-  res_selected_fields.empty();
-  res_all_fields.empty();
+  res_selected_fields.clear();
+  res_all_fields.clear();
 
   uint32_t i, border= all_fields.elements - elements;
   for (i= 0; (item= it++); i++)

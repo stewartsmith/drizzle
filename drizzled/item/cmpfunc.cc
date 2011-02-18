@@ -3936,7 +3936,7 @@ Item_cond::fix_fields(Session *session, Item **)
            !((Item_cond*) item)->list.is_empty())
     {						// Identical function
       li.replace(((Item_cond*) item)->list);
-      ((Item_cond*) item)->list.empty();
+      ((Item_cond*) item)->list.clear();
       item= *li.ref();				// new current item
     }
     if (abort_on_null)

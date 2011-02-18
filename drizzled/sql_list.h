@@ -35,7 +35,7 @@ typedef struct st_sql_list
   unsigned char *first;
   unsigned char **next;
 
-  inline void empty()
+  inline void clear()
   {
     elements=0;
     first=0;
@@ -51,7 +51,7 @@ typedef struct st_sql_list
   inline void save_and_clear(struct st_sql_list *save)
   {
     *save= *this;
-    empty();
+    clear();
   }
   inline void push_front(struct st_sql_list *save)
   {
@@ -111,8 +111,8 @@ protected:
 public:
   uint32_t elements;
 
-  inline void empty() { elements=0; first= &end_of_list; last=&first;}
-  inline base_list() { empty(); }
+  inline void clear() { elements=0; first= &end_of_list; last=&first;}
+  inline base_list() { clear(); }
   /**
     This is a shallow copy constructor that implicitly passes the ownership
     from the source list to the new instance. The old instance is not
@@ -401,7 +401,7 @@ public:
       next=element->next;
       delete (T*) element->info;
     }
-    empty();
+    clear();
   }
 
   iterator begin()

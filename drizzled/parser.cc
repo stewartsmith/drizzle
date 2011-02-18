@@ -428,7 +428,7 @@ void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
   Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0,
                     lex->col_list);
   statement->alter_info.key_list.push_back(key);
-  lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+  lex->col_list.clear(); /* Alloced by memory::sql_alloc */
 }
 
 void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table)
@@ -446,7 +446,7 @@ void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ide
                &default_key_create_info, 1,
                lex->col_list);
   statement->alter_info.key_list.push_back(key);
-  lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+  lex->col_list.clear(); /* Alloced by memory::sql_alloc */
   /* Only used for ALTER TABLE. Ignored otherwise. */
   statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
 }

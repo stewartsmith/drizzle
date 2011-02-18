@@ -2112,7 +2112,7 @@ void Join::cleanup(bool full)
       We can't call delete_elements() on copy_funcs as this will cause
       problems in free_elements() as some of the elements are then deleted.
     */
-    tmp_table_param.copy_funcs.empty();
+    tmp_table_param.copy_funcs.clear();
     /*
       If we have tmp_join and 'this' Join is not tmp_join and
       tmp_table_param.copy_field's  of them are equal then we have to remove
@@ -2281,7 +2281,7 @@ bool Join::rollup_init()
   {
     rollup.getNullItems()[i]= new (session->mem_root) Item_null_result();
     List<Item> *rollup_fields= &rollup.getFields()[i];
-    rollup_fields->empty();
+    rollup_fields->clear();
     rollup.getRefPointerArrays()[i]= ref_array;
     ref_array+= all_fields.elements;
   }
