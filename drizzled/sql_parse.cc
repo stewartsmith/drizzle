@@ -570,6 +570,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         result->abort();
       else
         result->send_eof();
+
       delete result;
     }
     else

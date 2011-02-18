@@ -91,8 +91,7 @@ int Table::delete_table(bool free_share)
     }
     field= 0;
   }
-  delete cursor;
-  cursor= 0;				/* For easier errorchecking */
+  safe_delete(cursor);
 
   if (free_share)
   {

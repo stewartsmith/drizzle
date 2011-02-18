@@ -298,7 +298,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  END_OF_INPUT                  /* INTERNAL */
 %token  ENGINE_SYM
 %token  ENUM_SYM
-%token  EQ                            /* OPERATOR */
 %token  EQUAL_SYM                     /* OPERATOR */
 %token  ERRORS
 %token  ESCAPED
@@ -325,7 +324,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  GLOBAL_SYM                    /* SQL-2003-R */
 %token  GROUP_SYM                     /* SQL-2003-R */
 %token  GROUP_CONCAT_SYM
-%token  GT_SYM                        /* OPERATOR */
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
@@ -375,7 +373,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  LOGS_SYM
 %token  LONG_NUM
 %token  LONG_SYM
-%token  LT                            /* OPERATOR */
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_SYM                       /* SQL-2003-N */
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
@@ -396,7 +393,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  NATIONAL_SYM                  /* SQL-2003-R */
 %token  NATURAL                       /* SQL-2003-R */
 %token  NE                            /* OPERATOR */
-%token  NEG
 %token  NEW_SYM                       /* SQL-2003-R */
 %token  NEXT_SYM                      /* SQL-2003-N */
 %token  NONE_SYM                      /* SQL-2003-R */
@@ -556,21 +552,28 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  YEAR_SYM                      /* SQL-2003-R */
 %token  ZEROFILL_SYM
 
+/* Lowest to highest */
 %left   JOIN_SYM INNER_SYM STRAIGHT_JOIN CROSS LEFT RIGHT
 /* A dummy token to force the priority of table_ref production in a join. */
-%left   TABLE_REF_PRIORITY
-%left   SET_VAR
-%left   OR_SYM
-%left   XOR
-%left   AND_SYM
-%left   BETWEEN_SYM CASE_SYM WHEN_SYM THEN_SYM ELSE
-%left   EQ EQUAL_SYM GE GT_SYM LE LT NE IS LIKE REGEXP_SYM IN_SYM
+%left  TABLE_REF_PRIORITY
+%left  SET_VAR
+%left  OR_SYM
+%left  XOR
+%left  AND_SYM
+%right NOT_SYM
+%right '='
+%nonassoc EQUAL_SYM GE '>' LE '<' NE
+%nonassoc LIKE REGEXP_SYM
+%nonassoc BETWEEN_SYM
+%nonassoc IN_SYM
+%nonassoc IS NULL_SYM TRUE_SYM FALSE_SYM
 %left   '-' '+'
 %left   '*' '/' '%' DIV_SYM MOD_SYM
-%left   NEG
-%right  NOT_SYM
 %right  BINARY COLLATE_SYM
 %left  INTERVAL_SYM
+%right UMINUS
+%left  '(' ')'
+%left  '{' '}'
 
 %type <lex_str>
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
@@ -725,7 +728,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         opt_precision opt_ignore opt_column
         set unlock string_list
         ref_list opt_match_clause opt_on_update_delete use
-        opt_delete_options opt_delete_option varchar
+        opt_delete_option varchar
         opt_outer table_list table_name
         opt_option opt_place
         opt_attribute opt_attribute_list attribute
@@ -733,7 +736,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         equal optional_braces
         normal_join
         table_to_table_list table_to_table opt_table_list
-        single_multi
         union_clause union_list
         precision subselect_start
         subselect_end select_var_list select_var_list_init opt_len
@@ -748,10 +750,6 @@ END_OF_INPUT
 %type <num> index_hint_clause
 %type <filetype> data_file
 
-%type <NONE>
-        '-' '+' '*' '/' '%' '(' ')'
-        ',' '!' '{' '}' AND_SYM OR_SYM BETWEEN_SYM CASE_SYM
-        THEN_SYM WHEN_SYM DIV_SYM MOD_SYM DELETE_SYM
 %%
 
 /*
@@ -1489,11 +1487,7 @@ opt_primary:
         ;
 
 references:
-          REFERENCES
-          table_ident
-          opt_ref_list
-          opt_match_clause
-          opt_on_update_delete
+          REFERENCES table_ident opt_ref_list opt_match_clause opt_on_update_delete
           {
             $$=$2;
           }
@@ -1921,7 +1915,6 @@ opt_place:
 opt_to:
           /* empty */ {}
         | TO_SYM {}
-        | EQ {}
         | AS {}
         ;
 
@@ -2349,9 +2342,9 @@ bool_pri:
           { $$= new Item_func_isnotnull($1); }
         | bool_pri EQUAL_SYM predicate %prec EQUAL_SYM
           { $$= new Item_func_equal($1,$3); }
-        | bool_pri comp_op predicate %prec EQ
+        | bool_pri comp_op predicate %prec '='
           { $$= (*$2)(0)->create($1,$3); }
-        | bool_pri comp_op all_or_any '(' subselect ')' %prec EQ
+        | bool_pri comp_op all_or_any '(' subselect ')' %prec '='
           { $$= all_any_subquery_creator($1, $2, $3, $5); }
         | predicate
         ;
@@ -2465,11 +2458,11 @@ not:
         ;
 
 comp_op:
-          EQ     { $$ = &comp_eq_creator; }
+          '='     { $$ = &comp_eq_creator; }
         | GE     { $$ = &comp_ge_creator; }
-        | GT_SYM { $$ = &comp_gt_creator; }
+        | '>' { $$ = &comp_gt_creator; }
         | LE     { $$ = &comp_le_creator; }
-        | LT     { $$ = &comp_lt_creator; }
+        | '<'     { $$ = &comp_lt_creator; }
         | NE     { $$ = &comp_ne_creator; }
         ;
 
@@ -2484,7 +2477,7 @@ simple_expr:
         | function_call_nonkeyword
         | function_call_generic
         | function_call_conflict
-        | simple_expr COLLATE_SYM ident_or_text %prec NEG
+        | simple_expr COLLATE_SYM ident_or_text %prec UMINUS
           {
             Item *i1= new (YYSession->mem_root) Item_string($3.str,
                                                       $3.length,
@@ -2497,8 +2490,8 @@ simple_expr:
           {
             Lex->setSumExprUsed();
           }
-        | '+' simple_expr %prec NEG { $$= $2; }
-        | '-' simple_expr %prec NEG
+        | '+' simple_expr %prec UMINUS { $$= $2; }
+        | '-' simple_expr %prec UMINUS
           { $$= new (YYSession->mem_root) Item_func_neg($2); }
         | '(' subselect ')'
           {
@@ -2520,7 +2513,7 @@ simple_expr:
             $$= new (YYSession->mem_root) Item_exists_subselect($3);
           }
         | '{' ident expr '}' { $$= $3; }
-        | BINARY simple_expr %prec NEG
+        | BINARY simple_expr %prec UMINUS
           {
             $$= create_func_cast(YYSession, $2, ITEM_CAST_CHAR, NULL, NULL,
                                  &my_charset_bin);
@@ -3681,7 +3674,6 @@ interval_time_st:
 table_alias:
           /* empty */
         | AS
-        | EQ
         ;
 
 opt_table_alias:
@@ -4178,7 +4170,7 @@ ident_eq_value:
         ;
 
 equal:
-          EQ {}
+          '=' {}
         | SET_VAR {}
         ;
 
@@ -4232,7 +4224,7 @@ opt_insert_update:
 /* Update rows in a table */
 
 update:
-          UPDATE_SYM opt_ignore table_ident
+          UPDATE_SYM opt_ignore table_ident SET_SYM update_list
           {
             init_select(Lex);
             Lex->statement= new statement::Update(YYSession);
@@ -4240,9 +4232,7 @@ update:
             Lex->duplicates= DUP_ERROR;
             if (not Lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
-          }
-          SET_SYM update_list
-          {
+
             if (Lex->select_lex.get_table_list()->derived)
             {
               /* it is single table update and it is update of derived table */
@@ -4290,21 +4280,14 @@ insert_update_elem:
 /* Delete rows from a table */
 
 delete:
-          DELETE_SYM
+          DELETE_SYM opt_delete_option FROM table_ident
           {
             Lex->statement= new statement::Delete(YYSession);
             init_select(Lex);
             Lex->lock_option= TL_WRITE_DEFAULT;
-            Lex->ignore= 0;
             Lex->select_lex.init_order();
-          }
-          opt_delete_options single_multi
-        ;
 
-single_multi:
-          FROM table_ident
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession, $2, NULL, TL_OPTION_UPDATING,
+            if (!Lex->current_select->add_table_to_list(YYSession, $4, NULL, TL_OPTION_UPDATING,
                                            Lex->lock_option))
               DRIZZLE_YYABORT;
           }
@@ -4312,13 +4295,9 @@ single_multi:
           delete_limit_clause {}
         ;
 
-opt_delete_options:
-          /* empty */ {}
-        | opt_delete_option opt_delete_options {}
-        ;
-
 opt_delete_option:
-         IGNORE_SYM   { Lex->ignore= 1; }
+           /* empty */ { Lex->ignore= 0; }
+         | IGNORE_SYM  { Lex->ignore= 1; }
         ;
 
 truncate:
