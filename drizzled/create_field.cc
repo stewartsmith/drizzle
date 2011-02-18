@@ -375,7 +375,7 @@ bool CreateField::init(Session *,
         /* Should be safe. */
         pack_length= 4;
 
-        List_iterator<String> it(*fld_interval_list);
+        List<String>::iterator it(*fld_interval_list);
         String *tmp;
         while ((tmp= it++))
           interval_list.push_back(tmp);

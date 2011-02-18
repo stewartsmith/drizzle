@@ -2294,7 +2294,7 @@ bool Join::rollup_init()
     }
   }
 
-  List_iterator<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   Item *item;
   while ((item= it++))
   {
@@ -2400,7 +2400,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     uint32_t pos= send_group_parts - level -1;
     bool real_fields= 0;
     Item *item;
-    List_iterator<Item> new_it(rollup.getFields()[pos]);
+    List<Item>::iterator new_it(rollup.getFields()[pos]);
     Item **ref_array_start= rollup.getRefPointerArrays()[pos];
     Order *start_group;
 
@@ -5430,7 +5430,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
   TableList *table;
   NestedJoin *nested_join;
   TableList *prev_table= 0;
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
 
   /*
     Try to simplify join operations from join_list.
@@ -5573,7 +5573,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     if (nested_join && !table->on_expr)
     {
       TableList *tbl;
-      List_iterator<TableList> it(nested_join->join_list);
+      List<TableList>::iterator it(nested_join->join_list);
       while ((tbl= it++))
       {
         tbl->setEmbedding(table->getEmbedding());
@@ -5596,7 +5596,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
 
   /* Calculate how many saved fields there is in list */
   field_count=0;
-  List_iterator<Item> it(fields);
+  List<Item>::iterator it(fields);
   Item *item;
   while ((item=it++))
   {
@@ -6138,7 +6138,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 */
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused)
 {
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
   TableList *table;
   while ((table= li++))
   {
@@ -6209,7 +6209,7 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 */
 static void reset_nj_counters(List<TableList> *join_list)
 {
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
   TableList *table;
   while ((table= li++))
   {

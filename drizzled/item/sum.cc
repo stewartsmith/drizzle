@@ -256,7 +256,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
         select the field belongs to. If there are some then an error is
         raised.
     */
-    List_iterator<Item_field> of(outer_fields);
+    List<Item_field>::iterator of(outer_fields);
     while ((field= of++))
     {
       Select_Lex *sel= field->cached_table->select_lex;

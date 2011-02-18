@@ -381,9 +381,13 @@ public:
   friend class error_list_iterator;
 };
 
+template <class T> class List_iterator;
+
 template <class T> class List :public base_list
 {
 public:
+  typedef List_iterator<T> iterator;
+
   inline List() :base_list() {}
   inline List(const List<T> &tmp) :base_list(tmp) {}
   inline List(const List<T> &tmp, memory::Root *mem_root) :
@@ -393,7 +397,6 @@ public:
   { return base_list::push_back(a, mem_root); }
   inline bool push_front(T *a) { return base_list::push_front(a); }
   inline T* head() {return static_cast<T*>(base_list::head()); }
-  inline T** head_ref() {return static_cast<T**>(base_list::head_ref()); }
   inline T* pop()  {return static_cast<T*>(base_list::pop()); }
   inline void concat(List<T> *list) { base_list::concat(list); }
   inline void disjoin(List<T> *list) { base_list::disjoin(list); }
@@ -470,7 +473,7 @@ void
 list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
 {
   /* Make a deep copy of each element */
-  List_iterator<T> it(list);
+  typename List<T>::iterator it(list);
   T *el;
   while ((el= it++))
     it.replace(el->clone(mem_root));
