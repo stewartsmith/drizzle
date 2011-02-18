@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_EXECUTE_H
 #define DRIZZLED_EXECUTE_H
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
