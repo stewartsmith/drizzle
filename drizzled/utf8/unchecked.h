@@ -28,7 +28,7 @@ DEALINGS IN THE SOFTWARE.
 #ifndef DRIZZLED_UTF8_UNCHECKED_H
 #define DRIZZLED_UTF8_UNCHECKED_H
 
-#include "drizzled/utf8/core.h"
+#include <drizzled/utf8/core.h>
 
 namespace drizzled
 {

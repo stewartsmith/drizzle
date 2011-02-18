@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/generator.h>
 #include <drizzled/session.h>
@@ -46,16 +46,16 @@ Schema::operator const drizzled::message::schema::shared_ptr()
   {
     identifier::Schema schema_identifier(*schema_iterator);
 
-    if (not plugin::Authorization::isAuthorized(session.user(), schema_identifier, false))
+    if (not plugin::Authorization::isAuthorized(*session.user(), schema_identifier, false))
     {
       schema_iterator++;
       continue;
     }
 
-    bool is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
+    schema= plugin::StorageEngine::getSchemaDefinition(schema_identifier);
     schema_iterator++;
 
-    if (is_schema_parsed)
+    if (schema)
       return schema;
   }
 
@@ -69,7 +69,7 @@ Schema::operator const drizzled::identifier::Schema*()
     const drizzled::identifier::Schema *_ptr= &(*schema_iterator);
     schema_iterator++;
 
-    if (not plugin::Authorization::isAuthorized(session.user(), *_ptr, false))
+    if (not plugin::Authorization::isAuthorized(*session.user(), *_ptr, false))
       continue;
 
     return _ptr;

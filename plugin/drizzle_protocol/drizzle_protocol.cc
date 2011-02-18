@@ -19,18 +19,18 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 #include <algorithm>
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include "drizzled/util/tokenize.h"
+#include <drizzled/util/tokenize.h>
 #include "drizzle_protocol.h"
 
 namespace po= boost::program_options;

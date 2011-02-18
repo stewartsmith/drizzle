@@ -19,7 +19,7 @@
  * 2010-06-01
  */
 
-#include "config.h"
+#include <config.h>
 #include <string>
 #include <inttypes.h>
 

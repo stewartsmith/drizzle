@@ -23,7 +23,7 @@
     - add function from select_query that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
-#include "config.h"
+#include <config.h>
 
 #include <cstdio>
 #include <limits.h>

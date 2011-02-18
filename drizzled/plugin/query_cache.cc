@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/plugin/query_cache.h"
-#include "drizzled/errmsg_print.h"
+#include <config.h>
+#include <drizzled/plugin/query_cache.h>
+#include <drizzled/errmsg_print.h>
 
-#include "drizzled/gettext.h"
+#include <drizzled/gettext.h>
 
 #include <algorithm>
 #include <vector>

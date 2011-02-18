@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/time.h>
 #include <drizzled/error.h>
@@ -30,7 +30,7 @@
 
 #include <sstream>
 
-#include "drizzled/temporal.h"
+#include <drizzled/temporal.h>
 
 namespace drizzled
 {
@@ -49,26 +49,24 @@ namespace field
              uint32_t,
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
-             const char *field_name_arg,
-             const CHARSET_INFO * const cs) :
+             const char *field_name_arg) :
     Field_str(ptr_arg,
               DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
               null_ptr_arg,
               null_bit_arg,
               field_name_arg,
-              cs)
+              &my_charset_bin)
 {
 }
 
 Time::Time(bool maybe_null_arg,
-           const char *field_name_arg,
-           const CHARSET_INFO * const cs) :
+           const char *field_name_arg) :
   Field_str((unsigned char*) NULL,
             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
             maybe_null_arg ? (unsigned char*) "": 0,
             0,
             field_name_arg,
-            cs)
+            &my_charset_bin)
 {
 }
 

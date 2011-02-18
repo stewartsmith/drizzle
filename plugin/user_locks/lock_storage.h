@@ -21,7 +21,7 @@
 #ifndef PLUGIN_USER_LOCKS_LOCK_STORAGE_H
 #define PLUGIN_USER_LOCKS_LOCK_STORAGE_H
 
-#include "drizzled/session.h"
+#include <drizzled/session.h>
 
 #include <boost/unordered_set.hpp>
 

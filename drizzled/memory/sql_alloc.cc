@@ -16,17 +16,17 @@
 
 /* Mallocs for used in threads */
 
-#include "config.h"
+#include <config.h>
 
 #include <string.h>
 
-#include "drizzled/errmsg_print.h"
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/current_session.h"
-#include "drizzled/error.h"
-#include "drizzled/definitions.h"
+#include <drizzled/errmsg_print.h>
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
+#include <drizzled/definitions.h>
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 namespace drizzled
 {

@@ -33,7 +33,7 @@
 
 #ifdef DRIZZLED
 //#include "drizzled/global.h"
-#include "config.h"
+#include <config.h>
 //#include <drizzled/cursor.h>
 //#include <drizzled/thr_lock.h>
 //#include <drizzled/plugin/transactional_storage_engine.h>

@@ -22,7 +22,7 @@
 #ifndef UNITTESTS_STUB_PLUGIN_STUBS_H
 #define UNITTESTS_STUB_PLUGIN_STUBS_H
  
-#include "config.h"
+#include <config.h>
 
 #include <cstring>
 #include <drizzled/plugin/authentication.h>

@@ -40,7 +40,7 @@ Created 1/20/1994 Heikki Tuuri
 #ifndef univ_i
 #define univ_i
 
-#include "config.h"
+#include <config.h>
 
 #ifndef __cplusplus
 # include <stdbool.h>

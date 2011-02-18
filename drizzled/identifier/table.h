@@ -34,8 +34,8 @@
 #define DRIZZLED_IDENTIFIER_TABLE_H
 
 #include <drizzled/enum.h>
-#include "drizzled/definitions.h"
-#include "drizzled/message/table.pb.h"
+#include <drizzled/definitions.h>
+#include <drizzled/message/table.pb.h>
 
 #include <string.h>
 
@@ -48,7 +48,7 @@
 
 #include <boost/functional/hash.hpp>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled {
 class Table;

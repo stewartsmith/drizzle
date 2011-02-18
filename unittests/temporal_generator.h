@@ -21,7 +21,7 @@
 #ifndef UNITTESTS_GENERATOR_H
 #define UNITTESTS_GENERATOR_H
 
-#include "config.h"
+#include <config.h>
 
 namespace drizzled
 {

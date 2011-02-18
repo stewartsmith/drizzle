@@ -3,7 +3,9 @@ Having
 
 The WHERE keyword cannot be used with aggregate functions, but the HAVING clause can be; this is its primary use.
 
-SQL HAVING Syntax: ::
+SQL HAVING Syntax:
+
+.. code-block:: mysql
 
 	SELECT column_name, aggregate_function(column_name)
 	FROM table_name
@@ -31,7 +33,9 @@ Take a look at the "Activities" table:
 | 6       |2011-01-03    | Food         |20           |175       |
 +---------+--------------+--------------+-------------+----------+
 
-In order to find if any users have spent more than $100 on recreational activities, use the following SQL statement: ::
+In order to find if any users have spent more than $100 on recreational activities, use the following SQL statement:
+
+.. code-block:: mysql
 
 	SELECT userID,SUM(ActivityCost) FROM Activities
 	GROUP BY userID
@@ -47,7 +51,9 @@ userID    SUM(OrderPrice)
 
 Now we want to find if userIDs "131", "256", or "175" spent less than $50 on Activities.
 
-We add an ordinary WHERE clause to the SQL statement: ::
+We add an ordinary WHERE clause to the SQL statement:
+
+.. code-block:: mysql
 
 	SELECT userID,SUM(ActivityCost) FROM Activities
 	WHERE userID='131' OR userID='256' OR userID="175"

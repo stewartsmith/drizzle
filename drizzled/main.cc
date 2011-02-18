@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <pthread.h>
 #include <signal.h>
@@ -348,7 +348,7 @@ int main(int argc, char **argv)
     unireg_abort(1);
 
   assert(plugin::num_trx_monitored_objects > 0);
-  if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
+  if (drizzle_rm_tmp_tables())
   {
     abort_loop= true;
     select_thread_in_use=0;

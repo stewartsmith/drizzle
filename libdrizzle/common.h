@@ -42,7 +42,7 @@
 #ifndef __DRIZZLE_COMMON_H
 #define __DRIZZLE_COMMON_H
 
-#include "config.h"
+#include <config.h>
 
 #include "drizzle_client.h"
 #include "drizzle_server.h"

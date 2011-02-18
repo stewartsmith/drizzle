@@ -100,7 +100,7 @@
            subject and may omit some details.
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <math.h>
 #include <float.h>
@@ -140,7 +140,7 @@
 
 #include <drizzled/unique.h>
 
-#include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
+#include <drizzled/temporal.h> /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
 using namespace std;
 namespace drizzled
@@ -2977,7 +2977,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
    * it is, then we must convert to the highest Timestamp value (or lowest,
    * depending on whether the datetime is before or after the epoch.
    */
-  if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+  if (field->is_timestamp())
   {
     /*
      * The left-side of the range comparison is a timestamp field.  Therefore,

@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
 #include <string>
 
 using namespace std;
@@ -67,9 +67,10 @@ ShowColumns::Generator::Generator(Field **arg) :
     table_name.append(select->getShowTable().c_str());
     identifier::Table identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
 
-    is_tables_primed= plugin::StorageEngine::getTableDefinition(getSession(),
-                                                                identifier,
-                                                                table_proto);
+    table_proto= plugin::StorageEngine::getTableMessage(getSession(), identifier);
+
+    if (table_proto)
+      is_tables_primed= true;
   }
 }
 

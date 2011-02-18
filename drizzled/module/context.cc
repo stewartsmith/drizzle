@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/module/context.h"
-#include "drizzled/module/option_map.h"
-#include "drizzled/module/module.h"
-#include "drizzled/drizzled.h"
-#include "drizzled/sys_var.h"
+#include <config.h>
+#include <drizzled/module/context.h>
+#include <drizzled/module/option_map.h>
+#include <drizzled/module/module.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/sys_var.h>
 
 namespace drizzled
 {

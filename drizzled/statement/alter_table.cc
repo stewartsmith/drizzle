@@ -18,37 +18,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 
 #include <sstream>
 
-#include "drizzled/show.h"
-#include "drizzled/lock.h"
-#include "drizzled/session.h"
-#include "drizzled/statement/alter_table.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/show.h>
+#include <drizzled/lock.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/alter_table.h>
+#include <drizzled/global_charset_info.h>
 
 
-#include "drizzled/gettext.h"
-#include "drizzled/data_home.h"
-#include "drizzled/sql_table.h"
-#include "drizzled/table_proto.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/time_functions.h"
-#include "drizzled/records.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/gettext.h>
+#include <drizzled/data_home.h>
+#include <drizzled/sql_table.h>
+#include <drizzled/table_proto.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/time_functions.h>
+#include <drizzled/records.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/copy_field.h>
 
-#include "drizzled/transaction_services.h"
+#include <drizzled/transaction_services.h>
 
-#include "drizzled/filesort.h"
+#include <drizzled/filesort.h>
 
-#include "drizzled/message.h"
+#include <drizzled/message.h>
 
 using namespace std;
 
@@ -119,7 +119,7 @@ bool statement::AlterTable::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (plugin::StorageEngine::getTableDefinition(*getSession(), identifier, original_table_message) != EEXIST)
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;

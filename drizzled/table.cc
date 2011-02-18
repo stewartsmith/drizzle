@@ -16,7 +16,7 @@
 
 /* Some general useful functions */
 
-#include "config.h"
+#include <config.h>
 
 #include <float.h>
 #include <fcntl.h>
@@ -28,8 +28,8 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/plugin/authorization.h"
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/plugin/authorization.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -42,11 +42,11 @@
 #include <drizzled/field/double.h>
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/charset.h>
+#include <drizzled/internal/m_string.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
@@ -57,9 +57,10 @@
 
 #include <drizzled/refresh_version.h>
 
-#include "drizzled/table/singular.h"
+#include <drizzled/table/singular.h>
 
-#include "drizzled/table_proto.h"
+#include <drizzled/table_proto.h>
+#include <drizzled/typelib.h>
 
 using namespace std;
 
@@ -320,28 +321,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
   to_s.append(to);
   to_s.append(ext);
   return (internal::my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
-}
-
-/*
-  Check if database name is valid
-
-  SYNPOSIS
-    check_db_name()
-    org_name		Name of database and length
-
-  RETURN
-    false error
-    true ok
-*/
-
-bool check_db_name(Session *session, identifier::Schema &schema_identifier)
-{
-  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
-  {
-    return false;
-  }
-
-  return schema_identifier.isValid();
 }
 
 /*

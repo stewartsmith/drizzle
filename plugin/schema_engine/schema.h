@@ -59,7 +59,7 @@ public:
   }
 
   void doGetSchemaIdentifiers(drizzled::identifier::Schema::vector &set_of_names);
-  bool doGetSchemaDefinition(const drizzled::identifier::Schema&, drizzled::message::schema::shared_ptr &proto);
+  drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&);
 
   bool doCreateSchema(const drizzled::message::Schema &schema_message);
 

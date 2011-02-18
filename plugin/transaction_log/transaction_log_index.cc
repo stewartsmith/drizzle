@@ -28,7 +28,7 @@
  * Defines the implementation of a simple index into a transaction log.
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/message/transaction.pb.h>
 
 #include "transaction_log_index.h"

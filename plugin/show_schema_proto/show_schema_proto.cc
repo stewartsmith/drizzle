@@ -14,11 +14,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/charset.h>
-#include <drizzled/current_session.h>
-#include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/internal/my_sys.h>
@@ -86,9 +84,9 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
 
   identifier::Schema schema_identifier(db);
-  if (not plugin::StorageEngine::getSchemaDefinition(schema_identifier, proto))
+  if (not (proto= plugin::StorageEngine::getSchemaDefinition(schema_identifier)))
   {
-    my_error(ER_BAD_DB_ERROR, MYF(0), db);
+    my_error(ER_BAD_DB_ERROR, schema_identifier);
     return NULL;
   }
 

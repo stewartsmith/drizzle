@@ -25,8 +25,8 @@
 #include <cassert>
 #include <utility>
 #include <algorithm>
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/visibility.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/visibility.h>
 
 
 namespace drizzled

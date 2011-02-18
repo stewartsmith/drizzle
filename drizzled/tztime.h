@@ -24,7 +24,7 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/type/time.h>
 
-#include "drizzled/type/time.h"
+#include <drizzled/type/time.h>
 
 namespace drizzled
 {
@@ -70,7 +70,6 @@ public:
 };
 
 extern Time_zone * my_tz_SYSTEM;
-Time_zone * my_tz_find(Session *session, const String *name);
 bool     my_tz_init(Session *org_session, const char *default_tzname);
 
 } /* namespace drizzled */

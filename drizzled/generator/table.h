@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_GENERATOR_TABLE_H
 #define DRIZZLED_GENERATOR_TABLE_H
 
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled {
 
@@ -32,7 +32,6 @@ namespace generator {
 class Table
 {
   Session &session;
-  message::table::shared_ptr table;
 
   identifier::Table::vector table_names;
   identifier::Table::vector::const_iterator table_iterator;
@@ -45,11 +44,11 @@ public:
   {
     while (table_iterator != table_names.end())
     {
-      table->Clear();
-      bool is_table_parsed= plugin::StorageEngine::getTableDefinition(session, *table_iterator, table);
+      message::table::shared_ptr table;
+      table= plugin::StorageEngine::getTableMessage(session, *table_iterator);
       table_iterator++;
 
-      if (is_table_parsed)
+      if (table)
         return table;
     }
 

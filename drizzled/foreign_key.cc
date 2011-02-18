@@ -17,15 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 
-#include "drizzled/foreign_key.h"
-#include "drizzled/error.h"
-#include "drizzled/create_field.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/table_ident.h"
+#include <drizzled/foreign_key.h>
+#include <drizzled/error.h>
+#include <drizzled/create_field.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/table_ident.h>
 
 namespace drizzled
 {

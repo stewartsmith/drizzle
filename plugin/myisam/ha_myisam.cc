@@ -15,24 +15,24 @@
 
 
 
-#include "config.h"
-#include "drizzled/internal/my_bit.h"
+#include <config.h>
+#include <drizzled/internal/my_bit.h>
 #include "myisampack.h"
 #include "ha_myisam.h"
 #include "myisam_priv.h"
-#include "drizzled/option.h"
-#include "drizzled/internal/my_bit.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/util/test.h"
-#include "drizzled/error.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/gettext.h"
-#include "drizzled/session.h"
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/table.h"
-#include "drizzled/memory/multi_malloc.h"
-#include "drizzled/plugin/daemon.h"
+#include <drizzled/option.h>
+#include <drizzled/internal/my_bit.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/util/test.h>
+#include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
+#include <drizzled/session.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/table.h>
+#include <drizzled/memory/multi_malloc.h>
+#include <drizzled/plugin/daemon.h>
 
 #include <drizzled/plugin/storage_engine.h>
 

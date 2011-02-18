@@ -41,7 +41,7 @@
  * the log file(s)
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 
@@ -59,7 +59,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <drizzled/algorithm/crc32.h>
 #include <drizzled/errmsg_print.h>
-#include "drizzled/definitions.h"
+#include <drizzled/definitions.h>
 
 using namespace std;
 using namespace drizzled;

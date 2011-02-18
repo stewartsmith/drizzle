@@ -54,6 +54,7 @@ namespace util
 namespace string {
 typedef boost::shared_ptr<std::string> shared_ptr;
 typedef boost::shared_ptr<const std::string> const_shared_ptr;
+typedef std::vector< std::string > vector;
 }
 
 struct insensitive_equal_to : std::binary_function<std::string, std::string, bool>

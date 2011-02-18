@@ -67,11 +67,13 @@
 #include <boost/unordered_map.hpp>
 
 /* Added this for string translation. */
-#include "drizzled/gettext.h"
-#include "drizzled/type/time.h"
-#include "drizzled/charset.h"
-#include "drizzled/typelib.h"
+#include <drizzled/gettext.h>
+#include <drizzled/type/time.h>
+#include <drizzled/charset.h>
+#include <drizzled/typelib.h>
 #include <drizzled/configmake.h>
+
+#define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
 #define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE

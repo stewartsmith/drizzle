@@ -38,36 +38,36 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
     in Windows?
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <limits.h>
 #include <fcntl.h>
 
-#include "drizzled/error.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/my_hash.h"
-#include "drizzled/plugin.h"
-#include "drizzled/show.h"
-#include "drizzled/data_home.h"
-#include "drizzled/error.h"
-#include "drizzled/field.h"
-#include "drizzled/charset.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/table.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/field/varstring.h"
-#include "drizzled/plugin/xa_storage_engine.h"
-#include "drizzled/plugin/daemon.h"
-#include "drizzled/memory/multi_malloc.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/named_savepoint.h"
+#include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/plugin.h>
+#include <drizzled/show.h>
+#include <drizzled/data_home.h>
+#include <drizzled/error.h>
+#include <drizzled/field.h>
+#include <drizzled/charset.h>
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
+#include <drizzled/table.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/plugin/xa_storage_engine.h>
+#include <drizzled/plugin/daemon.h>
+#include <drizzled/memory/multi_malloc.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/named_savepoint.h>
 
 #include <drizzled/transaction_services.h>
-#include "drizzled/message/statement_transform.h"
+#include <drizzled/message/statement_transform.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -125,8 +125,8 @@ using namespace std;
 #include <sstream>
 #include <string>
 
-#include "plugin/innobase/handler/status_function.h"
-#include "plugin/innobase/handler/replication_log.h"
+#include <plugin/innobase/handler/status_function.h>
+#include <plugin/innobase/handler/replication_log.h>
 
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>

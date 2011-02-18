@@ -20,9 +20,9 @@
 #ifndef DRIZZLED_CACHED_ITEM_H
 #define DRIZZLED_CACHED_ITEM_H
 
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/sql_string.h"
-#include "drizzled/type/decimal.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/sql_string.h>
+#include <drizzled/type/decimal.h>
 
 namespace drizzled
 {

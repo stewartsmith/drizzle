@@ -21,34 +21,33 @@
  * @file Implementation of the Session class and API
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/copy_field.h>
-#include "drizzled/session.h"
-#include "drizzled/session/cache.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/query_id.h"
-#include "drizzled/data_home.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/cache.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/return_int.h"
-#include "drizzled/item/empty_string.h"
-#include "drizzled/show.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/plugin/scheduler.h"
-#include "drizzled/plugin/authentication.h"
-#include "drizzled/plugin/logging.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/plugin/query_rewrite.h"
-#include "drizzled/probes.h"
-#include "drizzled/table_proto.h"
-#include "drizzled/db.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/drizzled.h"
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/query_id.h>
+#include <drizzled/data_home.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/cache.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/return_int.h>
+#include <drizzled/item/empty_string.h>
+#include <drizzled/show.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/scheduler.h>
+#include <drizzled/plugin/authentication.h>
+#include <drizzled/plugin/logging.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/plugin/query_rewrite.h>
+#include <drizzled/probes.h>
+#include <drizzled/table_proto.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/drizzled.h>
 #include <drizzled/select_to_file.h>
 #include <drizzled/select_export.h>
 #include <drizzled/select_dump.h>
@@ -59,22 +58,22 @@
 #include <drizzled/tmp_table_param.h>
 #include <drizzled/internal_error_handler.h>
 
-#include "drizzled/identifier.h"
+#include <drizzled/identifier.h>
 
 #include <drizzled/refresh_version.h>
 
-#include "drizzled/table/singular.h"
+#include <drizzled/table/singular.h>
 
-#include "plugin/myisam/myisam.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/internal/thread_var.h"
-#include "drizzled/plugin/event_observer.h"
+#include <plugin/myisam/myisam.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/internal/thread_var.h>
+#include <drizzled/plugin/event_observer.h>
 
 #include <drizzled/user_var_entry.h>
 
-#include "drizzled/util/functors.h"
+#include <drizzled/util/functors.h>
 
-#include "drizzled/display.h"
+#include <drizzled/display.h>
 
 #include <algorithm>
 #include <climits>
@@ -84,7 +83,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/checked_delete.hpp>
 
-#include "drizzled/util/backtrace.h"
+#include <drizzled/util/backtrace.h>
+
+#include <drizzled/schema.h>
 
 using namespace std;
 
@@ -598,7 +599,7 @@ bool Session::schedule(Session::shared_ptr &arg)
 */
 bool Session::isViewable(identifier::User::const_reference user_arg) const
 {
-  return plugin::Authorization::isAuthorized(user_arg, this, false);
+  return plugin::Authorization::isAuthorized(user_arg, *this, false);
 }
 
 
@@ -641,7 +642,7 @@ bool Session::checkUser(const std::string &passwd_str,
                         const std::string &in_db)
 {
   bool is_authenticated=
-    plugin::Authentication::isAuthenticated(user(), passwd_str);
+    plugin::Authentication::isAuthenticated(*user(), passwd_str);
 
   if (is_authenticated != true)
   {
@@ -654,7 +655,7 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     identifier::Schema identifier(in_db);
-    if (change_db(this, identifier))
+    if (schema::change(*this, identifier))
     {
       /* change_db() has pushed the error message. */
       return false;

@@ -19,7 +19,7 @@
  */
 
 /* Functions to map drizzle errno to sql_state */
-#include "config.h"
+#include <config.h>
 
 #include <algorithm>
 

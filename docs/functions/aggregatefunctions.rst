@@ -3,7 +3,9 @@ Aggregate Functions
 
 SQL group (aggregate) functions operate on sets of values. If you use an aggregate function in a statement containing no GROUP BY clause, it is equivalent to grouping on all rows.
 
-General syntax for aggregate functions is: ::
+General syntax for aggregate functions is:
+
+.. code-block:: mysql
 
 	SELECT "function type" ("column_name")
 	FROM "table_name";

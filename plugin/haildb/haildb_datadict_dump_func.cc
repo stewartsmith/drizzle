@@ -16,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
-#include "drizzled/charset.h"
+#include <drizzled/charset.h>
 #include <drizzled/function/str/strfunc.h>
 #include "haildb_datadict_dump_func.h"
 

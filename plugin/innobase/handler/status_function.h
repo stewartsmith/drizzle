@@ -21,7 +21,7 @@
 #ifndef PLUGIN_INNOBASE_HANDLER_STATUS_FUNCTION_H
 #define PLUGIN_INNOBASE_HANDLER_STATUS_FUNCTION_H
 
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/plugin/table_function.h>
 
 class InnodbStatusTool : public drizzled::plugin::TableFunction
 {

@@ -32,9 +32,9 @@
 */
 
 
-#include "config.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/internal/m_string.h>
 #include <stdio.h>
 
 #include <algorithm>

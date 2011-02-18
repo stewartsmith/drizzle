@@ -20,17 +20,17 @@
 #ifndef DRIZZLED_SQL_SELECT_H
 #define DRIZZLED_SQL_SELECT_H
 
-#include "drizzled/cached_item.h"
-#include "drizzled/field/varstring.h"
-#include "drizzled/item/null.h"
+#include <drizzled/cached_item.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/item/null.h>
 #include <drizzled/enum_nested_loop_state.h>
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/sargable_param.h"
-#include "drizzled/optimizer/key_use.h"
-#include "drizzled/join_cache.h"
-#include "drizzled/join_table.h"
-#include "drizzled/records.h"
-#include "drizzled/stored_key.h"
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/join_cache.h>
+#include <drizzled/join_table.h>
+#include <drizzled/records.h>
+#include <drizzled/stored_key.h>
 
 #include <vector>
 
@@ -135,7 +135,7 @@ private:
 
 /** @TODO why is this in the middle of the file??? */
 
-#include "drizzled/join.h"
+#include <drizzled/join.h>
 
 namespace drizzled
 {

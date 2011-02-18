@@ -24,7 +24,9 @@ Configuration Options
     default global value is FALSE which will not include the query in the
     messages. It can be controlled per session, as well. For example:
 
-    ``drizzle> set @@replicate_query = 1;``
+    .. code-block:: mysql
+
+       drizzle> set @@replicate_query = 1;
 
     The stored query should be used as a guide only, and never executed
     on a slave to perform replication as this will lead to incorrect results.
@@ -164,7 +166,9 @@ values changed in the statement.
 It's easiest to understand this mechanism by following through a real-world
 scenario.
 
-Suppose the following table::
+Suppose the following table:
+
+.. code-block:: mysql
 
   CREATE TABLE test.person
   (
@@ -176,7 +180,9 @@ Suppose the following table::
 
 Also suppose that test.t1 contains 1 million records.
 
-Next, suppose a client issues the SQL statement::
+Next, suppose a client issues the SQL statement:
+
+.. code-block:: mysql
 
   UPDATE test.person SET is_active = 'N';
 

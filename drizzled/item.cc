@@ -17,44 +17,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/show.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/item/cache_row.h"
-#include "drizzled/item/type_holder.h"
-#include "drizzled/item/sum.h"
-#include "drizzled/item/copy_string.h"
-#include "drizzled/function/str/conv_charset.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/util/convert.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/time_functions.h"
+#include <config.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/error.h>
+#include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/cache_row.h>
+#include <drizzled/item/type_holder.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/item/copy_string.h>
+#include <drizzled/function/str/conv_charset.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/util/convert.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/time_functions.h>
 
-#include "drizzled/field/str.h"
-#include "drizzled/field/num.h"
+#include <drizzled/field/str.h>
+#include <drizzled/field/num.h>
 
-#include "drizzled/field/blob.h"
-#include "drizzled/field/date.h"
-#include "drizzled/field/datetime.h"
-#include "drizzled/field/decimal.h"
-#include "drizzled/field/double.h"
-#include "drizzled/field/enum.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/field/int32.h"
-#include "drizzled/field/int64.h"
-#include "drizzled/field/microtime.h"
-#include "drizzled/field/null.h"
-#include "drizzled/field/real.h"
-#include "drizzled/field/size.h"
-#include "drizzled/field/time.h"
-#include "drizzled/field/varstring.h"
+#include <drizzled/field/blob.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/decimal.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
+#include <drizzled/field/microtime.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/size.h>
+#include <drizzled/field/time.h>
+#include <drizzled/field/varstring.h>
 
 #include <drizzled/current_session.h>
 #include <drizzled/session.h>
 
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 #include <cstdio>
 #include <math.h>
@@ -1090,29 +1090,7 @@ enum_field_types Item::field_type() const
 
 bool Item::is_datetime()
 {
-  switch (field_type())
-  {
-    case DRIZZLE_TYPE_TIME:
-    case DRIZZLE_TYPE_DATE:
-    case DRIZZLE_TYPE_DATETIME:
-    case DRIZZLE_TYPE_TIMESTAMP:
-    case DRIZZLE_TYPE_MICROTIME:
-      return true;
-    case DRIZZLE_TYPE_BLOB:
-    case DRIZZLE_TYPE_VARCHAR:
-    case DRIZZLE_TYPE_DOUBLE:
-    case DRIZZLE_TYPE_DECIMAL:
-    case DRIZZLE_TYPE_ENUM:
-    case DRIZZLE_TYPE_LONG:
-    case DRIZZLE_TYPE_LONGLONG:
-    case DRIZZLE_TYPE_NULL:
-    case DRIZZLE_TYPE_UUID:
-    case DRIZZLE_TYPE_BOOLEAN:
-      return false;
-  }
-
-  assert(0);
-  abort();
+  return field::isDateTime(field_type());
 }
 
 String *Item::check_well_formed_result(String *str, bool send_error)
@@ -1219,10 +1197,10 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
                             name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
-    field= new Field_null((unsigned char*) 0, max_length, name, &my_charset_bin);
+    field= new Field_null((unsigned char*) 0, max_length, name);
     break;
   case DRIZZLE_TYPE_DATE:
-    field= new Field_date(maybe_null, name, &my_charset_bin);
+    field= new Field_date(maybe_null, name);
     break;
 
   case DRIZZLE_TYPE_MICROTIME:
@@ -1233,10 +1211,10 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     field= new field::Epoch(maybe_null, name);
     break;
   case DRIZZLE_TYPE_DATETIME:
-    field= new Field_datetime(maybe_null, name, &my_charset_bin);
+    field= new Field_datetime(maybe_null, name);
     break;
   case DRIZZLE_TYPE_TIME:
-    field= new field::Time(maybe_null, name, &my_charset_bin);
+    field= new field::Time(maybe_null, name);
     break;
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
@@ -1703,16 +1681,11 @@ static Field *create_tmp_field_from_item(Session *,
   case STRING_RESULT:
     assert(item->collation.collation);
 
-    enum enum_field_types type;
     /*
       DATE/TIME fields have STRING_RESULT result type.
       To preserve type they needed to be handled separately.
     */
-    if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
-        type == DRIZZLE_TYPE_TIME ||
-        type == DRIZZLE_TYPE_MICROTIME ||
-        type == DRIZZLE_TYPE_DATE ||
-        type == DRIZZLE_TYPE_TIMESTAMP)
+    if (field::isDateTime(item->field_type()))
     {
       new_field= item->tmp_table_field_from_field_type(table, 1);
       /*

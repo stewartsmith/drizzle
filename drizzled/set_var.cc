@@ -17,15 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/exception/get_error_info.hpp>
 #include <string>
 
-#include "drizzled/session.h"
-#include "drizzled/item/string.h"
-#include "drizzled/sql_list.h"
+#include <drizzled/session.h>
+#include <drizzled/item/string.h>
+#include <drizzled/sql_list.h>
 #include <drizzled/function/set_user_var.h>
 
 using namespace std;

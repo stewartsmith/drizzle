@@ -51,7 +51,7 @@
   (assuming a index for column d of table t2 is defined)
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/sql_select.h>
 #include <drizzled/item/sum.h>

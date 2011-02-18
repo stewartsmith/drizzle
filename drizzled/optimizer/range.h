@@ -241,7 +241,8 @@ public:
    * 
    * @note This is used by during explain plan.
    */
-  virtual void add_keys_and_lengths(String *key_names, String *used_lengths)=0;
+  virtual void add_keys_and_lengths(std::string *key_names,
+                                    std::string *used_lengths)=0;
 
   /**
    * Append text representation of quick select structure (what and how is
@@ -252,9 +253,9 @@ public:
    * This function is implemented only by quick selects that merge other quick
    * selects output and/or can produce output suitable for merging.
    */
-  virtual void add_info_string(String *) 
+  virtual void add_info_string(std::string *)
   {}
-  
+
   /**
    * Returns true if any index used by this quick select
    * uses field which is marked in passed bitmap.

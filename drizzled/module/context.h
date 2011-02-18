@@ -35,9 +35,9 @@
  * to force things like proper name prefixing and the like.
  */
 
-#include "drizzled/module/registry.h"
+#include <drizzled/module/registry.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

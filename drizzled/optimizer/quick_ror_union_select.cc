@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/util/functors.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_ror_union_select.h"
+#include <config.h>
+#include <drizzled/session.h>
+#include <drizzled/util/functors.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_ror_union_select.h>
 
 #include <vector>
 #include <algorithm>
@@ -230,26 +230,26 @@ int optimizer::QuickRorUnionSelect::get_next()
 }
 
 
-void optimizer::QuickRorUnionSelect::add_info_string(String *str)
+void optimizer::QuickRorUnionSelect::add_info_string(string *str)
 {
   bool first= true;
-  str->append(STRING_WITH_LEN("union("));
+  str->append("union(");
   for (vector<optimizer::QuickSelectInterface *>::iterator it= quick_selects.begin();
        it != quick_selects.end();
        ++it)
   {
     if (! first)
-      str->append(',');
+      str->append(",");
     else
       first= false;
     (*it)->add_info_string(str);
   }
-  str->append(')');
+  str->append(")");
 }
 
 
-void optimizer::QuickRorUnionSelect::add_keys_and_lengths(String *key_names,
-                                                          String *used_lengths)
+void optimizer::QuickRorUnionSelect::add_keys_and_lengths(string *key_names,
+                                                          string *used_lengths)
 {
   bool first= true;
   for (vector<optimizer::QuickSelectInterface *>::iterator it= quick_selects.begin();
@@ -262,8 +262,8 @@ void optimizer::QuickRorUnionSelect::add_keys_and_lengths(String *key_names,
     }
     else
     {
-      used_lengths->append(',');
-      key_names->append(',');
+      used_lengths->append(",");
+      key_names->append(",");
     }
     (*it)->add_keys_and_lengths(key_names, used_lengths);
   }

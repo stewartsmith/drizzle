@@ -28,10 +28,11 @@
 #include <drizzled/atomics.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/identifier/table.h>
+#include <drizzled/identifier/schema.h>
 #include <drizzled/message/schema.h>
 #include <drizzled/session.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -143,7 +144,8 @@ public:
    * @param[in] identifier Identifier for the schema to drop
    */
   void dropSchema(Session::reference session,
-                  identifier::Schema::const_reference identifier);
+                  identifier::Schema::const_reference identifier,
+                  message::schema::const_reference schema);
 
   /**
    * Creates an AlterSchema Statement GPB message and adds it
@@ -155,7 +157,7 @@ public:
    * @param[in] new_schema New schema definition
    */
   void alterSchema(Session::reference session,
-                   const message::schema::shared_ptr &old_schema,
+                   const message::Schema &old_schema,
                    const message::Schema &new_schema);
 
   /**
@@ -178,7 +180,8 @@ public:
    * @param[in] if_exists Did the user specify an IF EXISTS clause?
    */
   void dropTable(Session::reference session,
-                 const identifier::Table &table,
+                 identifier::Table::const_reference identifier,
+                 message::table::const_reference table,
                  bool if_exists);
 
   /**

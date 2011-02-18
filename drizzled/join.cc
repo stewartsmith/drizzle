@@ -27,38 +27,38 @@
  * @{
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <float.h>
 #include <math.h>
 
-#include "drizzled/item/cache.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/item/copy_string.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/sql_select.h" /* include join.h */
-#include "drizzled/lock.h"
-#include "drizzled/nested_join.h"
-#include "drizzled/join.h"
-#include "drizzled/join_cache.h"
-#include "drizzled/show.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/sargable_param.h"
-#include "drizzled/optimizer/key_use.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/sum.h"
-#include "drizzled/optimizer/explain_plan.h"
-#include "drizzled/optimizer/access_method_factory.h"
-#include "drizzled/optimizer/access_method.h"
-#include "drizzled/records.h"
-#include "drizzled/probes.h"
-#include "drizzled/internal/my_bit.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/item/cache.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/copy_string.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_select.h> /* include join.h */
+#include <drizzled/lock.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/join.h>
+#include <drizzled/join_cache.h>
+#include <drizzled/show.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/sum.h>
+#include <drizzled/optimizer/explain_plan.h>
+#include <drizzled/optimizer/access_method_factory.h>
+#include <drizzled/optimizer/access_method.h>
+#include <drizzled/records.h>
+#include <drizzled/probes.h>
+#include <drizzled/internal/my_bit.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/select_result.h>
 
@@ -3231,11 +3231,7 @@ static void calc_group_buffer(Join *join, Order *group)
             have STRING_RESULT result type, we increase the length
             by 8 as maximum pack length of such fields.
           */
-          if (type == DRIZZLE_TYPE_DATE ||
-              type == DRIZZLE_TYPE_TIME ||
-              type == DRIZZLE_TYPE_DATETIME ||
-              type == DRIZZLE_TYPE_MICROTIME ||
-              type == DRIZZLE_TYPE_TIMESTAMP)
+          if (field::isDateTime(type))
           {
             key_length+= 8;
           }

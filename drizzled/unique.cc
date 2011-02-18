@@ -26,16 +26,16 @@
   deletes in disk order.
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <math.h>
 
 #include <queue>
 
-#include "drizzled/sql_sort.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_list.h"
-#include "drizzled/internal/iocache.h"
+#include <drizzled/sql_sort.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/internal/iocache.h>
 #include <drizzled/unique.h>
 
 #if defined(CMATH_NAMESPACE)

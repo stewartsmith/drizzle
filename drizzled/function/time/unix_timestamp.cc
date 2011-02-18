@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/session.h>
 
-#include "drizzled/temporal.h"
+#include <drizzled/temporal.h>
 
 namespace drizzled
 {
@@ -39,7 +39,7 @@ int64_t Item_func_unix_timestamp::val_int()
   if (args[0]->type() == FIELD_ITEM)
   {                                             // Optimize timestamp field
     Field *field=((Item_field*) args[0])->field;
-    if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+    if (field->is_timestamp())
       return ((field::Epoch::pointer) field)->get_timestamp(&null_value);
   }
 

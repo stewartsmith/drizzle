@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/util/functors.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+#include <drizzled/session.h>
+#include <drizzled/util/functors.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
+#include <drizzled/internal/m_string.h>
 
 #include <vector>
 
@@ -246,17 +246,17 @@ int optimizer::QuickRorIntersectSelect::get_next()
 }
 
 
-void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
+void optimizer::QuickRorIntersectSelect::add_info_string(string *str)
 {
   bool first= true;
-  str->append(STRING_WITH_LEN("intersect("));
+  str->append("intersect(");
   for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
        it != quick_selects.end();
        ++it)
   {
     KeyInfo *key_info= head->key_info + (*it)->index;
     if (! first)
-      str->append(',');
+      str->append(",");
     else
       first= false;
     str->append(key_info->name);
@@ -264,15 +264,15 @@ void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
   if (cpk_quick)
   {
     KeyInfo *key_info= head->key_info + cpk_quick->index;
-    str->append(',');
+    str->append(",");
     str->append(key_info->name);
   }
-  str->append(')');
+  str->append(")");
 }
 
 
-void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
-                                                              String *used_lengths)
+void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(string *key_names,
+                                                              string *used_lengths)
 {
   char buf[64];
   uint32_t length;
@@ -288,8 +288,8 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
     }
     else
     {
-      key_names->append(',');
-      used_lengths->append(',');
+      key_names->append(",");
+      used_lengths->append(",");
     }
     key_names->append(key_info->name);
     length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
@@ -299,10 +299,10 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
   if (cpk_quick)
   {
     KeyInfo *key_info= head->key_info + cpk_quick->index;
-    key_names->append(',');
+    key_names->append(",");
     key_names->append(key_info->name);
     length= internal::int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(',');
+    used_lengths->append(",");
     used_lengths->append(buf, length);
   }
 }

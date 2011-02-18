@@ -33,16 +33,16 @@
  --print-defaults	  ; Print the modified command line and exit
 ****************************************************************************/
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/typelib.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/typelib.h>
 #include <drizzled/configmake.h>
 #include <drizzled/gettext.h>
 
-#include "drizzled/cached_directory.h"
+#include <drizzled/cached_directory.h>
 
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>

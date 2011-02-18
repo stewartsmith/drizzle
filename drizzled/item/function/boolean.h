@@ -23,7 +23,7 @@
 #ifndef DRIZZLED_ITEM_FUNCTION_BOOLEAN_H
 #define DRIZZLED_ITEM_FUNCTION_BOOLEAN_H
 
-#include "drizzled/function/math/int.h"
+#include <drizzled/function/math/int.h>
 
 namespace drizzled
 {

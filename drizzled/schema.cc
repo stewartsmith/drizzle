@@ -15,7 +15,7 @@
 
 
 /* create and drop of databases */
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -25,27 +25,26 @@
 #include <string>
 #include <fstream>
 
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/my_hash.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 #include <drizzled/session.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/message/schema.pb.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/charset.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <boost/thread/mutex.hpp>
-
-#include "drizzled/internal/my_sys.h"
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
@@ -54,8 +53,11 @@ using namespace std;
 namespace drizzled
 {
 
-static void change_db_impl(Session *session);
-static void change_db_impl(Session *session, identifier::Schema &schema_identifier);
+namespace schema
+{
+
+static void change_db_impl(Session &session);
+static void change_db_impl(Session &session, identifier::Schema &schema_identifier);
 
 /*
   Create a database
@@ -78,7 +80,7 @@ static void change_db_impl(Session *session, identifier::Schema &schema_identifi
 
 */
 
-bool create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
+bool create(Session &session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
   bool error= false;
@@ -95,7 +97,7 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (session->wait_if_global_read_lock(false, true))
+  if (session.wait_if_global_read_lock(false, true))
   {
     return false;
   }
@@ -105,7 +107,7 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
 
   // @todo push this lock down into the engine
   {
-    boost::mutex::scoped_lock scopedLock(session->catalog().schemaLock());
+    boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
 
     // Check to see if it exists already.  
     identifier::Schema schema_identifier(schema_message.name());
@@ -118,10 +120,10 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
       }
       else
       {
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+        push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
                             schema_message.name().c_str());
-        session->my_ok();
+        session.my_ok();
       }
     }
     else if (not plugin::StorageEngine::createSchema(schema_message)) // Try to create it 
@@ -131,11 +133,11 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
     }
     else // Created !
     {
-      transaction_services.createSchema(*session, schema_message);
-      session->my_ok(1);
+      transaction_services.createSchema(session, schema_message);
+      session.my_ok(1);
     }
   }
-  session->startWaitingGlobalReadLock();
+  session.startWaitingGlobalReadLock();
 
   return error;
 }
@@ -143,9 +145,9 @@ bool create_db(Session *session, const message::Schema &schema_message, const bo
 
 /* db-name is already validated when we come here */
 
-bool alter_db(Session *session,
-              const message::Schema &schema_message,
-              const message::schema::shared_ptr &original_schema)
+bool alter(Session &session,
+           const message::Schema &schema_message,
+           const message::Schema &original_schema)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
 
@@ -161,12 +163,12 @@ bool alter_db(Session *session,
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if ((session->wait_if_global_read_lock(false, true)))
+  if ((session.wait_if_global_read_lock(false, true)))
     return false;
 
   bool success;
   {
-    boost::mutex::scoped_lock scopedLock(session->catalog().schemaLock());
+    boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
 
     identifier::Schema schema_idenifier(schema_message.name());
     if (not plugin::StorageEngine::doesSchemaExist(schema_idenifier))
@@ -180,15 +182,15 @@ bool alter_db(Session *session,
 
     if (success)
     {
-      transaction_services.alterSchema(*session, original_schema, schema_message);
-      session->my_ok(1);
+      transaction_services.alterSchema(session, original_schema, schema_message);
+      session.my_ok(1);
     }
     else
     {
       my_error(ER_ALTER_SCHEMA, schema_idenifier);
     }
   }
-  session->startWaitingGlobalReadLock();
+  session.startWaitingGlobalReadLock();
 
   return success;
 }
@@ -211,7 +213,7 @@ bool alter_db(Session *session,
     ERROR Error
 */
 
-bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool if_exists)
+bool drop(Session &session, identifier::Schema &schema_identifier, const bool if_exists)
 {
   bool error= false;
 
@@ -227,24 +229,25 @@ bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool i
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (session->wait_if_global_read_lock(false, true))
+  if (session.wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
   do
   {
-    boost::mutex::scoped_lock scopedLock(session->catalog().schemaLock());
+    boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
+    message::schema::shared_ptr message= plugin::StorageEngine::getSchemaDefinition(schema_identifier);
 
     /* See if the schema exists */
-    if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
+    if (not message)
     {
       if (if_exists)
       {
         std::string path;
         schema_identifier.getSQLPath(path);
 
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+        push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
                             path.c_str());
       }
@@ -257,7 +260,7 @@ bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool i
     }
     else
     {
-      error= plugin::StorageEngine::dropSchema(*session, schema_identifier);
+      error= plugin::StorageEngine::dropSchema(session, schema_identifier, *message);
     }
 
   } while (0);
@@ -268,10 +271,10 @@ bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool i
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (not error and schema_identifier.compare(*session->schema()))
+  if (not error and schema_identifier.compare(*session.schema()))
     change_db_impl(session);
 
-  session->startWaitingGlobalReadLock();
+  session.startWaitingGlobalReadLock();
 
   return error;
 }
@@ -338,16 +341,16 @@ bool rm_db(Session *session, identifier::Schema &schema_identifier, const bool i
     @retval true  Error
 */
 
-bool change_db(Session *session, identifier::Schema &schema_identifier)
+bool change(Session &session, identifier::Schema &schema_identifier)
 {
 
-  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
+  if (not plugin::Authorization::isAuthorized(*session.user(), schema_identifier))
   {
     /* Error message is set in isAuthorized */
     return true;
   }
 
-  if (not check_db_name(session, schema_identifier))
+  if (not check(session, schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
@@ -379,7 +382,7 @@ bool change_db(Session *session, identifier::Schema &schema_identifier)
   @param new_db_charset Character set of the new database.
 */
 
-static void change_db_impl(Session *session, identifier::Schema &schema_identifier)
+static void change_db_impl(Session &session, identifier::Schema &schema_identifier)
 {
   /* 1. Change current database in Session. */
 
@@ -402,13 +405,37 @@ static void change_db_impl(Session *session, identifier::Schema &schema_identifi
       the previous database name, we should do it explicitly.
     */
 
-    session->set_db(schema_identifier.getSchemaName());
+    session.set_db(schema_identifier.getSchemaName());
   }
 }
 
-static void change_db_impl(Session *session)
+static void change_db_impl(Session &session)
 {
-  session->set_db(string());
+  session.set_db(string());
 }
+
+/*
+  Check if database name is valid
+
+  SYNPOSIS
+    check()
+    org_name		Name of database and length
+
+  RETURN
+    false error
+    true ok
+*/
+
+bool check(Session &session, identifier::Schema &schema_identifier)
+{
+  if (not plugin::Authorization::isAuthorized(*session.user(), schema_identifier))
+  {
+    return false;
+  }
+
+  return schema_identifier.isValid();
+}
+
+} /* namespace schema */
 
 } /* namespace drizzled */

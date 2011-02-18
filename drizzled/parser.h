@@ -17,7 +17,6 @@
 #define DRIZZLED_PARSER_H
 
 #include <drizzled/charset.h>
-#include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/foreign_key.h>
 #include <drizzled/function/get_system_var.h>
@@ -110,7 +109,6 @@
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
-#include <drizzled/thr_lock.h>
 
 namespace drizzled {
 
@@ -135,7 +133,7 @@ Item* reserved_keyword_function(Session *session, const std::string &name, List<
 void my_parse_error(Lex_input_stream *lip);
 void my_parse_error(const char *message);
 bool check_reserved_words(LEX_STRING *name);
-void errorOn(const char *s);
+void errorOn(drizzled::Session *session, const char *s);
 
 
 bool buildOrderBy(LEX *lex);
@@ -170,6 +168,8 @@ drizzled::enum_field_types buildDecimalColumn(LEX *lex);
 void buildKeyOnColumn(LEX *lex);
 void buildAutoOnColumn(LEX *lex);
 void buildPrimaryOnColumn(LEX *lex);
+void buildReplicationOption(LEX *lex, bool arg);
+void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key= false);
 
 } // namespace parser
 } // namespace drizzled

@@ -28,17 +28,17 @@
 #include <string>
 #include <boost/dynamic_bitset.hpp>
 
-#include "drizzled/order.h"
-#include "drizzled/filesort_info.h"
-#include "drizzled/natural_join_column.h"
-#include "drizzled/field_iterator.h"
-#include "drizzled/cursor.h"
-#include "drizzled/lex_string.h"
-#include "drizzled/table/instance.h"
-#include "drizzled/atomics.h"
-#include "drizzled/query_id.h"
+#include <drizzled/order.h>
+#include <drizzled/filesort_info.h>
+#include <drizzled/natural_join_column.h>
+#include <drizzled/field_iterator.h>
+#include <drizzled/cursor.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/table/instance.h>
+#include <drizzled/atomics.h>
+#include <drizzled/query_id.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -839,12 +839,11 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 
 DRIZZLED_API int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
-bool check_db_name(Session *session, identifier::Schema &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
 
-#include "drizzled/table/singular.h"
-#include "drizzled/table/concurrent.h"
+#include <drizzled/table/singular.h>
+#include <drizzled/table/concurrent.h>
 
 #endif /* DRIZZLED_TABLE_H */

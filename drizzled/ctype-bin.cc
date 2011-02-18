@@ -94,7 +94,7 @@ int my_strnncoll_binary(const CHARSET_INFO * const,
 {
   size_t len= min(slen,tlen);
   int cmp= memcmp(s,t,len);
-  return cmp ? cmp : (int)((t_is_prefix ? len : slen) - tlen);
+  return cmp ? cmp : static_cast<int>((t_is_prefix ? len : slen) - tlen);
 }
 
 
@@ -143,7 +143,7 @@ int my_strnncoll_8bit_bin(const CHARSET_INFO * const,
 {
   size_t len= min(slen,tlen);
   int cmp= memcmp(s,t,len);
-  return cmp ? cmp : (int)((t_is_prefix ? len : slen) - tlen);
+  return cmp ? cmp : static_cast<int>((t_is_prefix ? len : slen) - tlen);
 }
 
 
@@ -189,7 +189,7 @@ int my_strnncollsp_8bit_bin(const CHARSET_INFO * const,
   while (a < end)
   {
     if (*a++ != *b++)
-      return ((int) a[-1] - (int) b[-1]);
+      return a[-1] - b[-1];
   }
   res= 0;
   if (a_length != b_length)
@@ -267,7 +267,7 @@ int my_wc_mb_bin(const CHARSET_INFO * const, my_wc_t wc,
 
   if (wc < 256)
   {
-    str[0]= (char) wc;
+    str[0]= wc;
     return 1;
   }
   return MY_CS_ILUNI;
@@ -286,10 +286,9 @@ void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
   */
   key= internal::skip_trailing_space(key, len);
 
-  for (; pos < (unsigned char*) key ; pos++)
+  for (; pos < key ; pos++)
   {
-    nr1[0]^=(ulong) ((((uint32_t) nr1[0] & 63)+nr2[0]) *
-	     ((uint32_t)*pos)) + (nr1[0] << 8);
+    nr1[0]^= (((nr1[0] & 63) + nr2[0]) * *pos) + (nr1[0] << 8);
     nr2[0]+=3;
   }
 }
@@ -303,10 +302,9 @@ void my_hash_sort_bin(const CHARSET_INFO * const,
 
   key+= len;
 
-  for (; pos < (unsigned char*) key ; pos++)
+  for (; pos < key ; pos++)
   {
-    nr1[0]^=(ulong) ((((uint32_t) nr1[0] & 63)+nr2[0]) *
-	     ((uint32_t)*pos)) + (nr1[0] << 8);
+    nr1[0]^= (((nr1[0] & 63) + nr2[0]) * *pos) + (nr1[0] << 8);
     nr2[0]+=3;
   }
 }

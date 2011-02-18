@@ -31,7 +31,7 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/type/decimal.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

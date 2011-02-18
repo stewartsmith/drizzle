@@ -22,7 +22,7 @@
 #define DRIZZLED_MESSAGE_CATALOG_H
 
 #include <boost/shared_ptr.hpp>
-#include "drizzled/message/catalog.pb.h"
+#include <drizzled/message/catalog.pb.h>
 
 namespace drizzled {
 

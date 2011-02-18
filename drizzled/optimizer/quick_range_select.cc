@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/session.h"
-#include "drizzled/optimizer/quick_range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/session.h>
+#include <drizzled/optimizer/quick_range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/internal/m_string.h>
 #include <drizzled/current_session.h>
 
 #include <fcntl.h>
@@ -419,15 +419,15 @@ int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 }
 
 
-void optimizer::QuickRangeSelect::add_info_string(String *str)
+void optimizer::QuickRangeSelect::add_info_string(string *str)
 {
   KeyInfo *key_info= head->key_info + index;
   str->append(key_info->name);
 }
 
 
-void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
-                                                       String *used_lengths)
+void optimizer::QuickRangeSelect::add_keys_and_lengths(string *key_names,
+                                                       string *used_lengths)
 {
   char buf[64];
   uint32_t length;

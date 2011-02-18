@@ -19,15 +19,15 @@
  */
 
 /* This implements 'user defined functions' */
-#include "config.h"
+#include <config.h>
 
 #include <boost/unordered_map.hpp>
 
 #include <drizzled/gettext.h>
-#include "drizzled/plugin/function.h"
+#include <drizzled/plugin/function.h>
 #include <drizzled/function_container.h>
 
-#include "drizzled/util/string.h"
+#include <drizzled/util/string.h>
 
 namespace drizzled
 {

@@ -254,6 +254,11 @@ Options for controlling which tests are executed
    sort the testcases so that they are executed optimally
    for the given mode [False]
 
+.. option:: --repeat=REPEAT     
+    Run each test case the specified number of times.  For
+    a given sequence, the first test will be run n times,
+    then the second, etc [1]
+
 Options for defining the code that will be under test
 -----------------------------------------------------
 

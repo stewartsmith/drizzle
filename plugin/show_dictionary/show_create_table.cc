@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
-#include "drizzled/message.h"
-#include "drizzled/message/statement_transform.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
+#include <drizzled/message.h>
+#include <drizzled/message/statement_transform.h>
 #include <google/protobuf/text_format.h>
 #include <string>
 
@@ -49,11 +49,9 @@ ShowCreateTable::Generator::Generator(Field **arg) :
   {
     identifier::Table identifier(select->getShowSchema(), select->getShowTable());
 
-    int error= plugin::StorageEngine::getTableDefinition(getSession(),
-                                                         identifier,
-                                                         table_message);
+    table_message= plugin::StorageEngine::getTableMessage(getSession(), identifier);
 
-    if (error == EEXIST)
+    if (table_message)
       is_primed= true;
   }
 }

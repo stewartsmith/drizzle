@@ -71,7 +71,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ***********************************************************************/
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
 #include <drizzled/internal/my_pthread.h>
@@ -88,9 +88,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
-#include "drizzled/global_charset_info.h"
+#include <drizzled/global_charset_info.h>
 
 #include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"
@@ -101,7 +101,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "haildb_engine.h"
 
 #include <drizzled/field.h>
-#include "drizzled/field/blob.h"
+#include <drizzled/field/blob.h>
 #include <drizzled/field/enum.h>
 #include <drizzled/session.h>
 #include <drizzled/module/option_map.h>

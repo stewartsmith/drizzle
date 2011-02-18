@@ -21,8 +21,8 @@
 #ifndef DRIZZLED_GENERATOR_CATALOG_MESSAGE_H
 #define DRIZZLED_GENERATOR_CATALOG_MESSAGE_H
 
-#include "drizzled/message/catalog.h"
-#include "drizzled/plugin/catalog.h"
+#include <drizzled/message/catalog.h>
+#include <drizzled/plugin/catalog.h>
 
 namespace drizzled {
 namespace generator {

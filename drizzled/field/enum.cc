@@ -18,13 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <boost/lexical_cast.hpp>
-#include "drizzled/field/enum.h"
-#include "drizzled/error.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
-#include "drizzled/strfunc.h"
+#include <drizzled/field/enum.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include <drizzled/strfunc.h>
+#include <drizzled/typelib.h>
 
 #include <sstream>
 #include <string>
@@ -65,7 +66,7 @@ int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * co
 
   /* Remove end space */
   length= field_charset->cset->lengthsp(field_charset, from, length);
-  tmp= find_type2(typelib, from, length, field_charset);
+  tmp= typelib->find_type2(from, length, field_charset);
   if (! tmp)
   {
     if (length < 6) /* Can't be more than 99999 enums */

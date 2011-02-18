@@ -15,7 +15,7 @@
 
 /* drop and alter of tables */
 
-#include "config.h"
+#include <config.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
@@ -26,28 +26,27 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include "drizzled/strfunc.h"
-#include <drizzled/db.h>
+#include <drizzled/strfunc.h>
 #include <drizzled/lock.h>
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
-#include "drizzled/transaction_services.h"
+#include <drizzled/transaction_services.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/identifier.h>
-#include "drizzled/internal/m_string.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 
-#include "drizzled/definition/cache.h"
+#include <drizzled/definition/cache.h>
 
-
-#include "drizzled/statement/alter_table.h"
-#include "drizzled/sql_table.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/statement/alter_table.h>
+#include <drizzled/sql_table.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/typelib.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <algorithm>
 #include <sstream>
@@ -143,7 +142,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                    bool drop_temporary)
 {
   TableList *table;
-  String wrong_tables;
+  util::string::vector wrong_tables;
   int error= 0;
   bool foreign_key_error= false;
 
@@ -199,13 +198,17 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
       }
       identifier::Table identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
+      message::table::shared_ptr message= plugin::StorageEngine::getTableMessage(*session, identifier, true);
+
       if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
       {
         // Table was not found on disk and table can't be created from engine
         if (if_exists)
+        {
           push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                               ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
                               table->getTableName());
+        }
         else
         {
           error= 1;
@@ -218,8 +221,11 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         /* Generate transaction event ONLY when we successfully drop */ 
         if (plugin::StorageEngine::dropTable(*session, identifier, local_error))
         {
-          TransactionServices &transaction_services= TransactionServices::singleton();
-          transaction_services.dropTable(*session, identifier, if_exists);
+          if (message) // If we have no definition, we don't know if the table should have been replicated
+          {
+            TransactionServices &transaction_services= TransactionServices::singleton();
+            transaction_services.dropTable(*session, identifier, *message, if_exists);
+          }
         }
         else
         {
@@ -240,9 +246,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
       if (error)
       {
-        if (wrong_tables.length())
-          wrong_tables.append(',');
-        wrong_tables.append(String(table->getTableName(), system_charset_info));
+        wrong_tables.push_back(table->getTableName());
       }
     }
 
@@ -250,12 +254,23 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   } while (0);
 
-  if (wrong_tables.length())
+  if (wrong_tables.size())
   {
     if (not foreign_key_error)
     {
+      std::string table_error;
+
+      for (util::string::vector::iterator iter= wrong_tables.begin();
+           iter != wrong_tables.end();
+           iter++)
+      {
+        table_error+= *iter;
+        table_error+= ',';
+      }
+      table_error.resize(table_error.size() -1);
+
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
-                      wrong_tables.c_ptr());
+                      table_error.c_str());
     }
     else
     {
@@ -686,7 +701,7 @@ static int prepare_create_table(Session *session,
           else /* not NULL */
           {
             def->length(cs->cset->lengthsp(cs, def->ptr(), def->length()));
-            if (find_type2(interval, def->ptr(), def->length(), cs) == 0) /* not found */
+            if (interval->find_type2(def->ptr(), def->length(), cs) == 0) /* not found */
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
               return(true);
@@ -1231,7 +1246,7 @@ static int prepare_create_table(Session *session,
 
     if (session->variables.sql_mode & MODE_NO_ZERO_DATE &&
         !sql_field->def &&
-        sql_field->sql_type == DRIZZLE_TYPE_TIMESTAMP &&
+        (sql_field->sql_type == DRIZZLE_TYPE_TIMESTAMP  or sql_field->sql_type == DRIZZLE_TYPE_MICROTIME) &&
         (sql_field->flags & NOT_NULL_FLAG) &&
         (type == Field::NONE || type == Field::TIMESTAMP_UN_FIELD))
     {
@@ -2002,9 +2017,8 @@ static bool create_table_wrapper(Session &session,
   // a "new" message and it will not have all of the information that the
   // source table message would have.
   message::Table new_table_message;
-  drizzled::error_t error;
 
-  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier, error);
+  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier);
 
   if (not source_table_message)
   {

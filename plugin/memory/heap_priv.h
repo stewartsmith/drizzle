@@ -17,14 +17,14 @@
 #ifndef PLUGIN_MEMORY_HEAP_PRIV_H
 #define PLUGIN_MEMORY_HEAP_PRIV_H
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/base.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/internal/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
-#include "drizzled/tree.h"
+#include <drizzled/tree.h>
 #include <list>
 
 #include <boost/thread/mutex.hpp>
@@ -39,7 +39,6 @@
 
 #define CHUNK_STATUS_DELETED 0    /* this chunk has been deleted and can be reused */
 #define CHUNK_STATUS_ACTIVE  1    /* this chunk represents the first part of a live record */
-#define CHUNK_STATUS_LINKED  2    /* this chunk is a continuation from another chunk (part of chunkset) */
 
 	/* Some extern variables */
 
@@ -55,8 +54,6 @@ if (!(info->update & HA_STATE_AKTIV))\
 #define hp_find_record(info,pos) (info)->current_ptr= hp_find_block(&(info)->getShare()->recordspace.block,pos)
 
 #define get_chunk_status(info,ptr) (ptr[(info)->offset_status])
-
-#define get_chunk_count(info,rec_length) ((rec_length + (info)->chunk_dataspace_length - 1) / (info)->chunk_dataspace_length)
 
 typedef struct st_hp_hash_info
 {

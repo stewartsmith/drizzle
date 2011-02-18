@@ -76,7 +76,7 @@
   Change to use malloc() ONLY when using LOCK TABLES command or when
   we are forced to use mysql_lock_merge.
 */
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 

@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
-#include "drizzled/message.h"
-#include "drizzled/message/statement_transform.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
+#include <drizzled/message.h>
+#include <drizzled/message/statement_transform.h>
 #include <string>
 
 using namespace std;
@@ -37,7 +37,6 @@ ShowCreateSchema::ShowCreateSchema() :
 
 ShowCreateSchema::Generator::Generator(Field **arg) :
   show_dictionary::Show::Generator(arg),
-  is_primed(false),
   if_not_exists(false)
 {
   if (not isShowQuery())
@@ -50,8 +49,7 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
     schema_name.append(select->getShowTable());
     identifier::Schema identifier(select->getShowSchema());
 
-    is_primed= plugin::StorageEngine::getSchemaDefinition(identifier,
-                                                          schema_message);
+    schema_message= plugin::StorageEngine::getSchemaDefinition(identifier);
 
     if_not_exists= select->getShowExists();
   }
@@ -59,7 +57,7 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
 
 bool ShowCreateSchema::Generator::populate()
 {
-  if (not is_primed)
+  if (not schema_message)
     return false;
 
   std::string buffer;
@@ -80,11 +78,21 @@ bool ShowCreateSchema::Generator::populate()
       buffer.append(" COLLATE = ");
       buffer.append(schema_message->collation());
     }
+
+    if (schema_message->has_replication_options())
+    {
+      if (schema_message->replication_options().has_dont_replicate() and
+          schema_message->replication_options().dont_replicate())
+      {
+        buffer.append(" REPLICATE = FALSE");
+      }
+    }
   }
 
   push(schema_message->name());
   push(buffer);
-  is_primed= false;
+
+  schema_message.reset();
 
   return true;
 }

@@ -37,25 +37,25 @@ public:
   Field_datetime(unsigned char *ptr_arg,
                  unsigned char *null_ptr_arg,
                  unsigned char null_bit_arg,
-                 const char *field_name_arg,
-                 const CHARSET_INFO * const cs)
-    :Field_str(ptr_arg,
+                 const char *field_name_arg) :
+    Field_str(ptr_arg,
                19,
                null_ptr_arg,
                null_bit_arg,
                field_name_arg,
-               cs)
+               &my_charset_bin)
   {}
+
   Field_datetime(bool maybe_null_arg,
-                 const char *field_name_arg,
-                 const CHARSET_INFO * const cs)
-    :Field_str((unsigned char*) 0,
+                 const char *field_name_arg) :
+    Field_str((unsigned char*) 0,
                19,
                maybe_null_arg ? (unsigned char*) "": 0,
                0,
                field_name_arg,
-               cs) 
+               &my_charset_bin) 
   {}
+
   enum_field_types type() const { return DRIZZLE_TYPE_DATETIME;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
   enum Item_result cmp_type () const { return INT_RESULT; }

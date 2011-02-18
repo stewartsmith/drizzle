@@ -28,7 +28,7 @@
  * Defines the implementation of a transaction log entry POD class
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "transaction_log_entry.h"
 

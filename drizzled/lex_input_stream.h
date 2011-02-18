@@ -371,7 +371,7 @@ public:
     Starting position of the TEXT_STRING or IDENT in the pre-processed
     buffer.
 
-    NOTE: this member must be used within DRIZZLElex() function only.
+    NOTE: this member must be used within base_sql_lex() function only.
   */
   const char *m_cpp_text_start;
 
@@ -379,7 +379,7 @@ public:
     Ending position of the TEXT_STRING or IDENT in the pre-processed
     buffer.
 
-    NOTE: this member must be used within DRIZZLElex() function only.
+    NOTE: this member must be used within base_sql_lex() function only.
     */
   const char *m_cpp_text_end;
 

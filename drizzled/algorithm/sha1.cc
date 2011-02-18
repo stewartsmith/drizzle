@@ -23,7 +23,7 @@
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
  */
 
-#include "config.h"
+#include <config.h>
 #include "sha1.h"
 #include <string.h>
 

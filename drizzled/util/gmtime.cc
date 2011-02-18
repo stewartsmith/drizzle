@@ -31,7 +31,7 @@
 // SUCH DAMAGE.
 // 
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/type/time.h>
 #include <drizzled/util/gmtime.h>

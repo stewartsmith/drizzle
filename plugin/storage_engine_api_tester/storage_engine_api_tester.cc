@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
@@ -25,9 +25,9 @@
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
-#include "drizzled/global_charset_info.h"
+#include <drizzled/global_charset_info.h>
 
 #include <boost/unordered_map.hpp>
 

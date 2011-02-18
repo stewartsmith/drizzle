@@ -13,6 +13,6 @@ one another. You can create, modify, and delete them.
    drop_schema
 
 
-MySQL Compatibility:
+*MySQL Compatibility*:
 
 In Drizzle a "schema" is mapped to what MySQL refers to as a "database", and is stored in a "catalog".

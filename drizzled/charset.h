@@ -21,9 +21,9 @@
 #define DRIZZLED_CHARSET_H
 
 #include <cstddef>
-#include "drizzled/definitions.h"
+#include <drizzled/definitions.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

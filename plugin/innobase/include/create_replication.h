@@ -31,9 +31,9 @@
 
 #include "read_replication.h"
 
-#include "drizzled/message/table.pb.h"
-#include "drizzled/table.h"
-#include "drizzled/charset_info.h"
+#include <drizzled/message/table.pb.h>
+#include <drizzled/table.h>
+#include <drizzled/charset_info.h>
 
 struct read_replication_state_st {
   mtr_t mtr;

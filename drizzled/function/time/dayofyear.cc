@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/temporal.h"
-#include "drizzled/error.h"
-#include "drizzled/calendar.h"
-#include "drizzled/function/time/dayofyear.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+#include <drizzled/temporal.h>
+#include <drizzled/error.h>
+#include <drizzled/calendar.h>
+#include <drizzled/function/time/dayofyear.h>
+#include <drizzled/internal/my_sys.h>
 
 namespace drizzled
 {

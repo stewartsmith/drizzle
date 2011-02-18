@@ -21,10 +21,10 @@
 #ifndef DRIZZLED_DISPLAY_H
 #define DRIZZLED_DISPLAY_H
 
-#include "drizzled/common.h"
+#include <drizzled/common.h>
 #include <string>
 
-#include "drizzled/item/func.h"
+#include <drizzled/item/func.h>
 
 namespace drizzled {
 namespace display {
