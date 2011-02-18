@@ -266,6 +266,16 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 break;
               }
               error= table->cursor->startIndexScan(static_cast<uint32_t>(ref.key), 1);
+              if (error)
+              {
+                if (table->key_read)
+                {
+                  table->key_read= 0;
+                  table->cursor->extra(HA_EXTRA_NO_KEYREAD);
+                }
+                table->print_error(error, MYF(0));
+                return error;
+              }
 
               if (! ref.key_length)
               {
