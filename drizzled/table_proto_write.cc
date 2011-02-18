@@ -52,7 +52,7 @@ bool fill_table_proto(message::Table &table_proto,
                       KeyInfo *key_info)
 {
   CreateField *field_arg;
-  List_iterator<CreateField> it(create_fields);
+  List<CreateField>::iterator it(create_fields);
   message::Table::TableOptions *table_options= table_proto.mutable_options();
 
   if (create_fields.elements > MAX_FIELDS)

@@ -309,7 +309,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
 
     if (index_hints)
     {
-      List_iterator<Index_hint> it(*index_hints);
+      List<Index_hint>::iterator it(*index_hints);
       Index_hint *hint;
 
       while ((hint= it++))

@@ -88,8 +88,8 @@ private:
   uint32_t real_key_parts;  /**< A number of keyparts in the above value.      */
   List<Item_sum> *min_functions;
   List<Item_sum> *max_functions;
-  List_iterator<Item_sum> *min_functions_it;
-  List_iterator<Item_sum> *max_functions_it;
+  List<Item_sum>::iterator *min_functions_it;
+  List<Item_sum>::iterator *max_functions_it;
 
 public:
 

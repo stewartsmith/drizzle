@@ -73,7 +73,7 @@ public:
     { context= (Name_resolution_context *)cntx; return false; }
   friend bool insert_fields(Session *session, Name_resolution_context *context,
                             const char *db_name,
-                            const char *table_name, List_iterator<Item> *it,
+                            const char *table_name, List<Item>::iterator *it,
                             bool any_privileges);
 };
 
