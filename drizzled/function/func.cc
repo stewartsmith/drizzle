@@ -136,7 +136,7 @@ void Item_func::set_arguments(List<Item> &list)
       with_sum_func|=item->with_sum_func;
     }
   }
-  list.empty();          // Fields are used
+  list.clear();          // Fields are used
 }
 
 Item_func::Item_func(List<Item> &list) :

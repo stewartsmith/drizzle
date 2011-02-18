@@ -2565,7 +2565,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
 
   if (cond->type() == Item::COND_ITEM)
   {
-    List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
     {
@@ -3314,7 +3314,7 @@ tree_and(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer
   /* dispose index_merge if there is a "range" option */
   if (result_keys.any())
   {
-    tree1->merges.empty();
+    tree1->merges.clear();
     return(tree1);
   }
 
@@ -4599,7 +4599,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     return NULL;
 
   /* Analyze the query in more detail. */
-  List_iterator<Item> select_items_it(join->fields_list);
+  List<Item>::iterator select_items_it(join->fields_list);
 
   /* Check (SA1,SA4) and store the only MIN/MAX argument - the C attribute.*/
   if (join->make_sum_func_list(join->all_fields, join->fields_list, 1))
@@ -4755,7 +4755,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     */
     else if (join->select_distinct)
     {
-      select_items_it.rewind();
+      select_items_it= join->fields_list;
       used_key_parts_map.reset();
       uint32_t max_key_part= 0;
       while ((item= select_items_it++))

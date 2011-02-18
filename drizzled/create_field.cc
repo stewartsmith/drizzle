@@ -221,7 +221,7 @@ bool CreateField::init(Session *,
   interval= 0;
   pack_length= key_length= 0;
   charset= fld_charset;
-  interval_list.empty();
+  interval_list.clear();
 
   comment= *fld_comment;
 
@@ -375,7 +375,7 @@ bool CreateField::init(Session *,
         /* Should be safe. */
         pack_length= 4;
 
-        List_iterator<String> it(*fld_interval_list);
+        List<String>::iterator it(*fld_interval_list);
         String *tmp;
         while ((tmp= it++))
           interval_list.push_back(tmp);

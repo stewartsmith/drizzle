@@ -56,7 +56,7 @@ namespace drizzled
 bool Item_field::collect_item_field_processor(unsigned char *arg)
 {
   List<Item_field> *item_list= (List<Item_field>*) arg;
-  List_iterator<Item_field> item_list_it(*item_list);
+  List<Item_field>::iterator item_list_it(*item_list);
   Item_field *curr_item;
   while ((curr_item= item_list_it++))
   {

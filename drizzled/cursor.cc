@@ -267,7 +267,7 @@ int Cursor::ha_open(const identifier::Table &identifier,
 */
 int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
 {
-  register int error;
+  int error;
 
   ha_statistic_increment(&system_status_var::ha_read_first_count);
 

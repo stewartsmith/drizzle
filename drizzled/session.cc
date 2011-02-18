@@ -244,7 +244,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   open_options=ha_open_options;
   update_lock_default= TL_WRITE;
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
-  warn_list.empty();
+  warn_list.clear();
   memset(warn_count, 0, sizeof(warn_count));
   memset(&status_var, 0, sizeof(status_var));
 

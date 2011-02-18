@@ -2112,7 +2112,7 @@ void Join::cleanup(bool full)
       We can't call delete_elements() on copy_funcs as this will cause
       problems in free_elements() as some of the elements are then deleted.
     */
-    tmp_table_param.copy_funcs.empty();
+    tmp_table_param.copy_funcs.clear();
     /*
       If we have tmp_join and 'this' Join is not tmp_join and
       tmp_table_param.copy_field's  of them are equal then we have to remove
@@ -2281,7 +2281,7 @@ bool Join::rollup_init()
   {
     rollup.getNullItems()[i]= new (session->mem_root) Item_null_result();
     List<Item> *rollup_fields= &rollup.getFields()[i];
-    rollup_fields->empty();
+    rollup_fields->clear();
     rollup.getRefPointerArrays()[i]= ref_array;
     ref_array+= all_fields.elements;
   }
@@ -2294,7 +2294,7 @@ bool Join::rollup_init()
     }
   }
 
-  List_iterator<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   Item *item;
   while ((item= it++))
   {
@@ -2400,7 +2400,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     uint32_t pos= send_group_parts - level -1;
     bool real_fields= 0;
     Item *item;
-    List_iterator<Item> new_it(rollup.getFields()[pos]);
+    List<Item>::iterator new_it(rollup.getFields()[pos]);
     Item **ref_array_start= rollup.getRefPointerArrays()[pos];
     Order *start_group;
 
@@ -2414,7 +2414,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     for (i= 0, start_group= group_list ;i++ < pos ;start_group= start_group->next)
     {}
 
-    it.rewind();
+    it= fields_arg;
     while ((item= it++))
     {
       if (item == first_field)
@@ -5430,7 +5430,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
   TableList *table;
   NestedJoin *nested_join;
   TableList *prev_table= 0;
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
 
   /*
     Try to simplify join operations from join_list.
@@ -5566,14 +5566,14 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     Flatten nested joins that can be flattened.
     no ON expression and not a semi-join => can be flattened.
   */
-  li.rewind();
+  li= *join_list;
   while ((table= li++))
   {
     nested_join= table->getNestedJoin();
     if (nested_join && !table->on_expr)
     {
       TableList *tbl;
-      List_iterator<TableList> it(nested_join->join_list);
+      List<TableList>::iterator it(nested_join->join_list);
       while ((tbl= it++))
       {
         tbl->setEmbedding(table->getEmbedding());
@@ -5596,7 +5596,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
 
   /* Calculate how many saved fields there is in list */
   field_count=0;
-  List_iterator<Item> it(fields);
+  List<Item>::iterator it(fields);
   Item *item;
   while ((item=it++))
   {
@@ -6138,7 +6138,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 */
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused)
 {
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
   TableList *table;
   while ((table= li++))
   {
@@ -6209,7 +6209,7 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 */
 static void reset_nj_counters(List<TableList> *join_list)
 {
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
   TableList *table;
   while ((table= li++))
   {

@@ -65,11 +65,11 @@ long my_strntol_8bit(const CHARSET_INFO * const cs,
 		     char **endptr, int *err)
 {
   int negative;
-  register uint32_t cutoff;
-  register uint32_t cutlim;
-  register uint32_t i;
-  register const char *s;
-  register unsigned char c;
+  uint32_t cutoff;
+  uint32_t cutlim;
+  uint32_t i;
+  const char *s;
+  unsigned char c;
   const char *save, *e;
   int overflow;
 
@@ -188,11 +188,11 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
 		       char **endptr, int *err)
 {
   int negative;
-  register uint32_t cutoff;
-  register uint32_t cutlim;
-  register uint32_t i;
-  register const char *s;
-  register unsigned char c;
+  uint32_t cutoff;
+  uint32_t cutlim;
+  uint32_t i;
+  const char *s;
+  unsigned char c;
   const char *save, *e;
   int overflow;
 
@@ -302,10 +302,10 @@ int64_t my_strntoll_8bit(const CHARSET_INFO * const cs,
 			  char **endptr,int *err)
 {
   int negative;
-  register uint64_t cutoff;
-  register uint32_t cutlim;
-  register uint64_t i;
-  register const char *s, *e;
+  uint64_t cutoff;
+  uint32_t cutlim;
+  uint64_t i;
+  const char *s, *e;
   const char *save;
   int overflow;
 
@@ -370,7 +370,7 @@ int64_t my_strntoll_8bit(const CHARSET_INFO * const cs,
   i = 0;
   for ( ; s != e; s++)
   {
-    register unsigned char c= *s;
+    unsigned char c= *s;
     if (c>='0' && c<='9')
       c -= '0';
     else if (c>='A' && c<='Z')
@@ -425,10 +425,10 @@ uint64_t my_strntoull_8bit(const CHARSET_INFO * const cs,
 			   char **endptr, int *err)
 {
   int negative;
-  register uint64_t cutoff;
-  register uint32_t cutlim;
-  register uint64_t i;
-  register const char *s, *e;
+  uint64_t cutoff;
+  uint32_t cutlim;
+  uint64_t i;
+  const char *s, *e;
   const char *save;
   int overflow;
 
@@ -493,7 +493,7 @@ uint64_t my_strntoull_8bit(const CHARSET_INFO * const cs,
   i = 0;
   for ( ; s != e; s++)
   {
-    register unsigned char c= *s;
+    unsigned char c= *s;
 
     if (c>='0' && c<='9')
       c -= '0';
@@ -580,7 +580,7 @@ size_t my_long10_to_str_8bit(const CHARSET_INFO * const,
                              char *dst, size_t len, int radix, long int val)
 {
   char buffer[66];
-  register char *p, *e;
+  char *p, *e;
   long int new_val;
   uint32_t sign=0;
   unsigned long int uval = (unsigned long int) val;
@@ -622,7 +622,7 @@ size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const,
                                 int64_t val)
 {
   char buffer[65];
-  register char *p, *e;
+  char *p, *e;
   long long_val;
   uint32_t sign= 0;
   uint64_t uval = (uint64_t)val;
@@ -923,7 +923,7 @@ uint32_t my_instr_simple(const CHARSET_INFO * const cs,
                      const char *s, size_t s_length,
                      my_match_t *match, uint32_t nmatch)
 {
-  register const unsigned char *str, *search, *end, *search_end;
+  const unsigned char *str, *search, *end, *search_end;
 
   if (s_length <= b_length)
   {
@@ -948,7 +948,7 @@ skip:
     {
       if (cs->sort_order[*str++] == cs->sort_order[*search])
       {
-	register const unsigned char *i,*j;
+	const unsigned char *i,*j;
 
 	i= str;
 	j= search+1;

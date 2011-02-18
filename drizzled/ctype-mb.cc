@@ -28,8 +28,8 @@ namespace drizzled
 
 size_t my_caseup_str_mb(const CHARSET_INFO * const  cs, char *str)
 {
-  register uint32_t l;
-  register unsigned char *map= cs->to_upper;
+  uint32_t l;
+  unsigned char *map= cs->to_upper;
   char *str_orig= str;
 
   while (*str)
@@ -49,8 +49,8 @@ size_t my_caseup_str_mb(const CHARSET_INFO * const  cs, char *str)
 
 size_t my_casedn_str_mb(const CHARSET_INFO * const  cs, char *str)
 {
-  register uint32_t l;
-  register unsigned char *map= cs->to_lower;
+  uint32_t l;
+  unsigned char *map= cs->to_lower;
   char *str_orig= str;
 
   while (*str)
@@ -75,9 +75,9 @@ size_t my_caseup_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
   (void)dst;
   (void)dstlen;
 #endif
-  register uint32_t l;
-  register char *srcend= src + srclen;
-  register unsigned char *map= cs->to_upper;
+  uint32_t l;
+  char *srcend= src + srclen;
+  unsigned char *map= cs->to_upper;
 
   assert(src == dst && srclen == dstlen);
   while (src < srcend)
@@ -101,9 +101,9 @@ size_t my_casedn_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
   (void)dst;
   (void)dstlen;
 #endif
-  register uint32_t l;
-  register char *srcend= src + srclen;
-  register unsigned char *map=cs->to_lower;
+  uint32_t l;
+  char *srcend= src + srclen;
+  unsigned char *map=cs->to_lower;
 
   assert(src == dst && srclen == dstlen);
   while (src < srcend)
@@ -126,8 +126,8 @@ size_t my_casedn_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
 
 int my_strcasecmp_mb(const CHARSET_INFO * const  cs,const char *s, const char *t)
 {
-  register uint32_t l;
-  register unsigned char *map=cs->to_upper;
+  uint32_t l;
+  unsigned char *map=cs->to_upper;
 
   while (*s && *t)
   {
@@ -275,7 +275,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
 size_t my_numchars_mb(const CHARSET_INFO * const cs,
 		      const char *pos, const char *end)
 {
-  register size_t count= 0;
+  size_t count= 0;
   while (pos < end)
   {
     uint32_t mb_len;
@@ -328,7 +328,7 @@ uint32_t my_instr_mb(const CHARSET_INFO * const cs,
                  const char *s, size_t s_length,
                  my_match_t *match, uint32_t nmatch)
 {
-  register const char *end, *b0;
+  const char *end, *b0;
   int res= 0;
 
   if (s_length <= b_length)

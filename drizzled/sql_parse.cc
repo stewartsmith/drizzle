@@ -845,7 +845,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
                       &default_key_create_info,
                       0, lex->col_list);
     statement->alter_info.key_list.push_back(key);
-    lex->col_list.empty();
+    lex->col_list.clear();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
   {
@@ -855,7 +855,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
                  &default_key_create_info, 0,
                  lex->col_list);
     statement->alter_info.key_list.push_back(key);
-    lex->col_list.empty();
+    lex->col_list.clear();
   }
 
   if (default_value)
@@ -1086,7 +1086,7 @@ bool Select_Lex::init_nested_join(Session *session)
   ptr->alias= (char*) "(nested_join)";
   embedding= ptr;
   join_list= &nested_join->join_list;
-  join_list->empty();
+  join_list->clear();
   return false;
 }
 
@@ -1161,7 +1161,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
   embedded_list= &nested_join->join_list;
-  embedded_list->empty();
+  embedded_list->clear();
 
   for (uint32_t i=0; i < 2; i++)
   {

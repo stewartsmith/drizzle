@@ -38,7 +38,7 @@ Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
       getSession()->getLex()->type= ONLY_KILL_QUERY;
     }
 
-    getSession()->getLex()->value_list.empty();
+    getSession()->getLex()->value_list.clear();
     getSession()->getLex()->value_list.push_front(item);
     getSession()->getLex()->sql_command= SQLCOM_KILL;
   }

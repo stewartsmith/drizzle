@@ -224,7 +224,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  List_iterator<String> it(strings);
+  List<String>::iterator it(strings);
   String *tmp;
   for (uint32_t i= 0; (tmp= it++); i++)
   {
