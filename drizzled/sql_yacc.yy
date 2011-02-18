@@ -728,7 +728,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         opt_precision opt_ignore opt_column
         set unlock string_list
         ref_list opt_match_clause opt_on_update_delete use
-        opt_delete_options opt_delete_option varchar
+        opt_delete_option varchar
         opt_outer table_list table_name
         opt_option opt_place
         opt_attribute opt_attribute_list attribute
@@ -736,7 +736,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         equal optional_braces
         normal_join
         table_to_table_list table_to_table opt_table_list
-        single_multi
         union_clause union_list
         precision subselect_start
         subselect_end select_var_list select_var_list_init opt_len
@@ -4287,21 +4286,14 @@ insert_update_elem:
 /* Delete rows from a table */
 
 delete:
-          DELETE_SYM
+          DELETE_SYM opt_delete_option FROM table_ident
           {
             Lex->statement= new statement::Delete(YYSession);
             init_select(Lex);
             Lex->lock_option= TL_WRITE_DEFAULT;
-            Lex->ignore= 0;
             Lex->select_lex.init_order();
-          }
-          opt_delete_options single_multi
-        ;
 
-single_multi:
-          FROM table_ident
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession, $2, NULL, TL_OPTION_UPDATING,
+            if (!Lex->current_select->add_table_to_list(YYSession, $4, NULL, TL_OPTION_UPDATING,
                                            Lex->lock_option))
               DRIZZLE_YYABORT;
           }
@@ -4309,13 +4301,9 @@ single_multi:
           delete_limit_clause {}
         ;
 
-opt_delete_options:
-          /* empty */ {}
-        | opt_delete_option opt_delete_options {}
-        ;
-
 opt_delete_option:
-         IGNORE_SYM   { Lex->ignore= 1; }
+           /* empty */ { Lex->ignore= 0; }
+         | IGNORE_SYM  { Lex->ignore= 1; }
         ;
 
 truncate:
