@@ -27,11 +27,11 @@
 
 #include <drizzled/base.h>
 #include <drizzled/enum.h>
-#include <drizzled/sql_list.h> /** @TODO use STL vectors! */
 #include <drizzled/key.h>
 #include <drizzled/message/table.pb.h>
 
 #include <bitset>
+#include <list>
 
 namespace drizzled
 {
@@ -81,7 +81,9 @@ enum tablespace_op_type
 class AlterInfo
 {
 public:
-  List<AlterDrop> drop_list;
+  typedef std::list<AlterDrop> drop_list_t;
+  
+  drop_list_t drop_list;
   List<AlterColumn> alter_list;
   List<Key> key_list;
   List<CreateField> create_list;

@@ -1802,7 +1802,7 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::COLUMN, $3.str));
+            statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::COLUMN, $3.str));
             statement->alter_info.flags.set(ALTER_DROP_COLUMN);
           }
         | DROP FOREIGN KEY_SYM opt_ident
@@ -4001,7 +4001,7 @@ drop:
             Lex->statement= statement;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
             statement->alter_info.build_method= $2;
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY, $4.str));
+            statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::KEY, $4.str));
             if (not Lex->current_select->add_table_to_list(Lex->session, $6, NULL,
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;

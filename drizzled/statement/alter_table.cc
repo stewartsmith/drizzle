@@ -255,7 +255,6 @@ static bool prepare_alter_table(Session *session,
   List<CreateField> new_create_list;
   /* New key definitions are added here */
   List<Key> new_key_list;
-  List_iterator<AlterDrop> drop_it(alter_info->drop_list);
   List_iterator<CreateField> def_it(alter_info->create_list);
   List_iterator<AlterColumn> alter_it(alter_info->alter_list);
   List_iterator<Key> key_it(alter_info->key_list);
@@ -290,16 +289,15 @@ static bool prepare_alter_table(Session *session,
   for (Field **f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
-    AlterDrop *drop;
-    drop_it.rewind();
-    while ((drop= drop_it++))
+    AlterInfo::drop_list_t::iterator drop_it(alter_info->drop_list.begin());
+    for (; drop_it != alter_info->drop_list.end(); drop_it++)
     {
-      if (drop->type == AlterDrop::COLUMN &&
-          ! my_strcasecmp(system_charset_info, field->field_name, drop->name))
+      if (drop_it->type == AlterDrop::COLUMN &&
+          ! my_strcasecmp(system_charset_info, field->field_name, drop_it->name))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
-            ! (used_fields & HA_CREATE_USED_AUTO))
+            not (used_fields & HA_CREATE_USED_AUTO))
         {
           create_info->auto_increment_value= 0;
           create_info->used_fields|= HA_CREATE_USED_AUTO;
@@ -308,9 +306,9 @@ static bool prepare_alter_table(Session *session,
       }
     }
 
-    if (drop)
+    if (drop_it != alter_info->drop_list.end())
     {
-      drop_it.remove();
+      alter_info->drop_list.erase(drop_it);
       continue;
     }
     
@@ -461,19 +459,17 @@ static bool prepare_alter_table(Session *session,
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
     char *key_name= key_info->name;
-    AlterDrop *drop;
-
-    drop_it.rewind();
-    while ((drop= drop_it++))
+    AlterInfo::drop_list_t::iterator drop_it(alter_info->drop_list.begin());
+    for (; drop_it != alter_info->drop_list.end(); drop_it++)
     {
-      if (drop->type == AlterDrop::KEY &&
-          ! my_strcasecmp(system_charset_info, key_name, drop->name))
+      if (drop_it->type == AlterDrop::KEY &&
+          not my_strcasecmp(system_charset_info, key_name, drop_it->name))
         break;
     }
 
-    if (drop)
+    if (drop_it != alter_info->drop_list.end())
     {
-      drop_it.remove();
+      alter_info->drop_list.erase(drop_it);
       continue;
     }
 
@@ -567,19 +563,18 @@ static bool prepare_alter_table(Session *session,
   /* Copy over existing foreign keys */
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
-    AlterDrop *drop;
-    drop_it.rewind();
-    while ((drop= drop_it++))
+    AlterInfo::drop_list_t::iterator drop_it(alter_info->drop_list.begin());
+    for (; drop_it != alter_info->drop_list.end(); drop_it++)
     {
-      if (drop->type == AlterDrop::FOREIGN_KEY &&
-          ! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop->name))
+      if (drop_it->type == AlterDrop::FOREIGN_KEY &&
+          not my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop_it->name))
       {
         break;
       }
     }
-    if (drop)
+    if (drop_it != alter_info->drop_list.end())
     {
-      drop_it.remove();
+      alter_info->drop_list.erase(drop_it);
       continue;
     }
 
@@ -639,11 +634,11 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  if (alter_info->drop_list.elements)
+  if (!alter_info->drop_list.empty())
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
-             alter_info->drop_list.head()->name);
+             alter_info->drop_list.front().name);
     return true;
   }
 
