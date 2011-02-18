@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 #define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 
-#include "drizzled/util/functors.h"
+#include <drizzled/util/functors.h>
 #include <algorithm>
 
 namespace drizzled

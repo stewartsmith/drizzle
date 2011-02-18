@@ -18,12 +18,12 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <cstdio>
-#include "drizzled/tztime.h"
-#include "drizzled/gettext.h"
-#include "drizzled/session.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/tztime.h>
+#include <drizzled/gettext.h>
+#include <drizzled/session.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {

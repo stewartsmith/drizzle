@@ -19,9 +19,9 @@
  */
 
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
 
 using namespace std;
 using namespace drizzled;

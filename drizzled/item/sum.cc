@@ -20,7 +20,7 @@
   @brief
   Sum functions (COUNT, MIN...)
 */
-#include "config.h"
+#include <config.h>
 #include <cstdio>
 #include <math.h>
 #include <drizzled/sql_select.h>
@@ -41,7 +41,7 @@
 
 #include <drizzled/type/decimal.h>
 
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 #include <algorithm>
 

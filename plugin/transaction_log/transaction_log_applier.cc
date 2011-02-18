@@ -42,7 +42,7 @@
  * the written transaction to the transaction log index.
  */
 
-#include "config.h"
+#include <config.h>
 #include "write_buffer.h"
 #include "transaction_log.h"
 #include "transaction_log_applier.h"

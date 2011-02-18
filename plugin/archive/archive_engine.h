@@ -14,11 +14,11 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/field.h"
-#include "drizzled/field/blob.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
+#include <drizzled/field.h>
+#include <drizzled/field/blob.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 #include <drizzled/thr_lock.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/cursor.h>
@@ -32,10 +32,10 @@
 #include <zlib.h>
 
 #include <boost/unordered_map.hpp>
-#include "drizzled/util/string.h"
+#include <drizzled/util/string.h>
 
 #include "azio.h"
-#include "plugin/archive/ha_archive.h"
+#include <plugin/archive/ha_archive.h>
 
 
 

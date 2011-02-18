@@ -18,16 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/cached_directory.h"
+#include <drizzled/cached_directory.h>
 
 #include <drizzled/definitions.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/xa_storage_engine.h>
-#include "drizzled/xid.h"
+#include <drizzled/xid.h>
 
 #include <string>
 #include <vector>

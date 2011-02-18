@@ -43,11 +43,11 @@
 #ifndef DRIZZLED_PLUGIN_EVENT_OBSERVER_H
 #define DRIZZLED_PLUGIN_EVENT_OBSERVER_H
 
-#include "drizzled/plugin/plugin.h"
+#include <drizzled/plugin/plugin.h>
 
 #include <string>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

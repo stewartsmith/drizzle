@@ -16,11 +16,11 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
-#include "config.h"
+#include <config.h>
 
 #include "data_dictionary.h"
 
-#include "drizzled/current_session.h"
+#include <drizzled/current_session.h>
 
 #include "trx0i_s.h"
 #include "trx0trx.h" /* for TRX_QUE_STATE_STR_MAX_LEN */

@@ -100,7 +100,7 @@
            subject and may omit some details.
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <math.h>
 #include <float.h>
@@ -140,7 +140,7 @@
 
 #include <drizzled/unique.h>
 
-#include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
+#include <drizzled/temporal.h> /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
 using namespace std;
 namespace drizzled

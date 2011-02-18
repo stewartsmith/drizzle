@@ -15,16 +15,16 @@
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset.h>
+#include <drizzled/global_charset_info.h>
 
 #include <algorithm>
 
-#include "drizzled/sql_string.h"
+#include <drizzled/sql_string.h>
 
 using namespace std;
 

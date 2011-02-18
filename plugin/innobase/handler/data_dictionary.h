@@ -21,8 +21,8 @@
 #ifndef PLUGIN_INNOBASE_HANDLER_DATA_DICTIONARY_H
 #define PLUGIN_INNOBASE_HANDLER_DATA_DICTIONARY_H 
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/field.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/field.h>
 
 #include "trx0i_s.h"
 #include "trx0trx.h" /* for TRX_QUE_STATE_STR_MAX_LEN */

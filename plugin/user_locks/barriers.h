@@ -25,8 +25,8 @@
 
 #include <string>
 
-#include "drizzled/session.h"
-#include "drizzled/util/string.h"
+#include <drizzled/session.h>
+#include <drizzled/util/string.h>
 
 
 #ifndef PLUGIN_USER_LOCKS_BARRIERS_H

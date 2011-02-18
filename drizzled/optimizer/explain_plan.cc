@@ -17,19 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/session.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/string.h"
-#include "drizzled/optimizer/explain_plan.h"
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/join.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/session.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/string.h>
+#include <drizzled/optimizer/explain_plan.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/join.h>
+#include <drizzled/internal/m_string.h>
 #include <drizzled/select_result.h>
 
 #include <cstdio>

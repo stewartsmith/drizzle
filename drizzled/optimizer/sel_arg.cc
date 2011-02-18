@@ -17,11 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/range_param.h"
-#include "drizzled/optimizer/sel_arg.h"
-#include "drizzled/util/test.h"
+#include <config.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/range_param.h>
+#include <drizzled/optimizer/sel_arg.h>
+#include <drizzled/util/test.h>
 
 namespace drizzled
 {

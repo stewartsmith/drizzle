@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <fstream>
 #include <map>
@@ -27,12 +27,12 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
-#include "drizzled/configmake.h"
-#include "drizzled/plugin/authentication.h"
-#include "drizzled/identifier.h"
-#include "drizzled/util/convert.h"
-#include "drizzled/algorithm/sha1.h"
-#include "drizzled/module/option_map.h"
+#include <drizzled/configmake.h>
+#include <drizzled/plugin/authentication.h>
+#include <drizzled/identifier.h>
+#include <drizzled/util/convert.h>
+#include <drizzled/algorithm/sha1.h>
+#include <drizzled/module/option_map.h>
 
 namespace po= boost::program_options;
 namespace fs= boost::filesystem;

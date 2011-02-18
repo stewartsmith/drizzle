@@ -27,10 +27,10 @@
 #ifndef DRIZZLED_SHOW_H
 #define DRIZZLED_SHOW_H
 
-#include "drizzled/enum.h"
-#include "drizzled/lex_string.h"
+#include <drizzled/enum.h>
+#include <drizzled/lex_string.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

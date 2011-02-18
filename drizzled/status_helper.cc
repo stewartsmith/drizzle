@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <boost/lexical_cast.hpp>
 #include "status_helper.h"
-#include "drizzled/set_var.h"
-#include "drizzled/drizzled.h"
-#include "plugin/myisam/myisam.h"
+#include <drizzled/set_var.h>
+#include <drizzled/drizzled.h>
+#include <plugin/myisam/myisam.h>
 
 #include <drizzled/refresh_version.h>
 

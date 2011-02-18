@@ -20,11 +20,11 @@
 #ifndef DRIZZLED_PLUGIN_LISTEN_H
 #define DRIZZLED_PLUGIN_LISTEN_H
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/atomics.h"
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/atomics.h>
 #include <vector>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

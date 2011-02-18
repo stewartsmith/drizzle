@@ -21,7 +21,7 @@
 #ifndef PLUGIN_COLLATION_DICTIONARY_DICTIONARY_H
 #define PLUGIN_COLLATION_DICTIONARY_DICTIONARY_H
 
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/plugin/table_function.h>
 
 #include <plugin/collation_dictionary/character_sets.h>
 #include <plugin/collation_dictionary/collations.h>

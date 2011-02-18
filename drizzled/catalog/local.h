@@ -22,9 +22,9 @@
 #ifndef DRIZZLED_CATALOG_LOCAL_H
 #define DRIZZLED_CATALOG_LOCAL_H
 
-#include "drizzled/identifier.h"
-#include "drizzled/catalog/instance.h"
-#include "drizzled/visibility.h"
+#include <drizzled/identifier.h>
+#include <drizzled/catalog/instance.h>
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

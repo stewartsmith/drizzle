@@ -32,7 +32,7 @@
 #endif
 
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/current_session.h>
 #include <drizzled/common.h>

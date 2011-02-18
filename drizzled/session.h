@@ -70,7 +70,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/make_shared.hpp>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 

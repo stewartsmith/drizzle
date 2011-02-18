@@ -35,9 +35,9 @@
 
  ***************************************************************/
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/m_string.h"  /* for memcpy and NOT_FIXED_DEC */
+#include <drizzled/internal/m_string.h>  /* for memcpy and NOT_FIXED_DEC */
 
 #include <float.h>
 

@@ -21,9 +21,9 @@
 #ifndef DRIZZLED_GENERATOR_FUNCTIONS_H
 #define DRIZZLED_GENERATOR_FUNCTIONS_H
 
-#include "drizzled/plugin/function.h"
+#include <drizzled/plugin/function.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled {
 namespace generator {

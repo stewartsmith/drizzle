@@ -20,7 +20,7 @@
 #ifndef PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H
 #define PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H
 
-#include "client/client_priv.h"
+#include <client/client_priv.h>
 #include <string>
 
 

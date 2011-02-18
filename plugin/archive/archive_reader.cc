@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -34,8 +34,8 @@ namespace po= boost::program_options;
 #include <stdarg.h>
 #include <fcntl.h>
 #include <memory>
-#include "drizzled/charset_info.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/charset_info.h>
+#include <drizzled/internal/m_string.h>
 
 #define SHOW_VERSION "0.1"
 

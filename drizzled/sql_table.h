@@ -26,7 +26,7 @@
 #ifndef DRIZZLED_SQL_TABLE_H
 #define DRIZZLED_SQL_TABLE_H
 
-#include "drizzled/base.h"
+#include <drizzled/base.h>
 
 namespace drizzled
 {

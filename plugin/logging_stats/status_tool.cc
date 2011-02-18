@@ -51,10 +51,10 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "status_tool.h"
-#include "drizzled/status_helper.h"
+#include <drizzled/status_helper.h>
 
 #include <vector>
 #include <sstream>

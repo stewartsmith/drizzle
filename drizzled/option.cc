@@ -13,15 +13,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/gettext.h>
 
-#include "drizzled/internal/m_string.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/error.h"
-#include "drizzled/option.h"
-#include "drizzled/typelib.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/error.h>
+#include <drizzled/option.h>
+#include <drizzled/typelib.h>
 
 #include <stdio.h>
 #include <stdlib.h>

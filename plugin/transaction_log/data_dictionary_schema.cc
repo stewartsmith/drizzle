@@ -60,7 +60,7 @@
  * );
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "data_dictionary_schema.h"
 #include "transaction_log_index.h"

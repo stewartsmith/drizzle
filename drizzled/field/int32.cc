@@ -19,7 +19,7 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/field/int32.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>

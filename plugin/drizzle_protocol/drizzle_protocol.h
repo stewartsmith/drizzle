@@ -25,9 +25,9 @@
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/atomics.h>
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/plugin/table_function.h>
 
-#include "plugin/mysql_protocol/mysql_protocol.h"
+#include <plugin/mysql_protocol/mysql_protocol.h>
 
 namespace drizzle_plugin
 {

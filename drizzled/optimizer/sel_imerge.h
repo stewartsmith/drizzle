@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_OPTIMIZER_SEL_IMERGE_H
 #define DRIZZLED_OPTIMIZER_SEL_IMERGE_H
 
-#include "drizzled/memory/sql_alloc.h"
+#include <drizzled/memory/sql_alloc.h>
 
 namespace drizzled
 {

@@ -22,7 +22,7 @@
 
 #include <cstring>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

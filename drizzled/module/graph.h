@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_MODULE_GRAPH_H
 #define DRIZZLED_MODULE_GRAPH_H
 
-#include "drizzled/module/vertex.h"
+#include <drizzled/module/vertex.h>
 
 
 namespace drizzled

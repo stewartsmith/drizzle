@@ -32,7 +32,7 @@
  * event to the supplier.  This is meant as a skeleton replicator only.
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/transaction_applier.h>

@@ -18,10 +18,10 @@
 /* This file is for binary pseudo charset, created by bar@mysql.com */
 
 
-#include "config.h"
-#include "drizzled/definitions.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
+#include <config.h>
+#include <drizzled/definitions.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
 
 #include <algorithm>
 

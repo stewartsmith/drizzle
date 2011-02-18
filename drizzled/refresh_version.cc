@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_REFRESH_VERSION_H
 #define DRIZZLED_REFRESH_VERSION_H
 
-#include "config.h"
+#include <config.h>
 
 namespace drizzled
 {

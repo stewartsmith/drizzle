@@ -18,17 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/sql_select.h"
-#include "drizzled/join_table.h"
-#include "drizzled/optimizer/access_method.h"
-#include "drizzled/optimizer/access_method_factory.h"
-#include "drizzled/optimizer/access_method/system.h"
-#include "drizzled/optimizer/access_method/const.h"
-#include "drizzled/optimizer/access_method/unique_index.h"
-#include "drizzled/optimizer/access_method/index.h"
-#include "drizzled/optimizer/access_method/scan.h"
+#include <drizzled/sql_select.h>
+#include <drizzled/join_table.h>
+#include <drizzled/optimizer/access_method.h>
+#include <drizzled/optimizer/access_method_factory.h>
+#include <drizzled/optimizer/access_method/system.h>
+#include <drizzled/optimizer/access_method/const.h>
+#include <drizzled/optimizer/access_method/unique_index.h>
+#include <drizzled/optimizer/access_method/index.h>
+#include <drizzled/optimizer/access_method/scan.h>
 
 #include <boost/shared_ptr.hpp>
 

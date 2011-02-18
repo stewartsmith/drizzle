@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/temporal.h"
-#include "drizzled/error.h"
-#include "drizzled/session.h"
-#include "drizzled/function/time/month.h"
-#include "drizzled/typelib.h"
+#include <drizzled/temporal.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/function/time/month.h>
+#include <drizzled/typelib.h>
 
 namespace drizzled
 {

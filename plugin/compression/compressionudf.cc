@@ -13,12 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
-#include "drizzled/plugin/function.h"
+#include <config.h>
+#include <drizzled/plugin/function.h>
 
-#include "plugin/compression/compress.h"
-#include "plugin/compression/uncompress.h"
-#include "plugin/compression/uncompressed_length.h"
+#include <plugin/compression/compress.h>
+#include <plugin/compression/uncompress.h>
+#include <plugin/compression/uncompressed_length.h>
 
 using namespace std;
 using namespace drizzled;

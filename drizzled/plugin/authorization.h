@@ -22,14 +22,14 @@
 #ifndef DRIZZLED_PLUGIN_AUTHORIZATION_H
 #define DRIZZLED_PLUGIN_AUTHORIZATION_H
 
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/identifier.h"
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/identifier.h>
 
 #include <string>
 #include <set>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

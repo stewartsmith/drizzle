@@ -15,7 +15,7 @@
 
 
 /* Basic functions needed by many modules */
-#include "config.h"
+#include <config.h>
 #include <assert.h>
 
 #include <signal.h>
@@ -30,8 +30,8 @@
 #  include <time.h>
 # endif
 #endif
-#include "drizzled/internal/my_pthread.h"
-#include "drizzled/internal/thread_var.h"
+#include <drizzled/internal/my_pthread.h>
+#include <drizzled/internal/thread_var.h>
 
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>

@@ -29,7 +29,7 @@ DEALINGS IN THE SOFTWARE.
 #ifndef DRIZZLED_UTF8_CHECKED_H
 #define DRIZZLED_UTF8_CHECKED_H
  
-#include "drizzled/utf8/core.h"
+#include <drizzled/utf8/core.h>
 #include <stdexcept>
  
 namespace drizzled

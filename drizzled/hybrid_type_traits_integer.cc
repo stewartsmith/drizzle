@@ -18,7 +18,7 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/definitions.h>
 #include <drizzled/field.h>

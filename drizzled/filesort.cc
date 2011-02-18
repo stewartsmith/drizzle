@@ -21,7 +21,7 @@
   Sorts a database
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <float.h>
 #include <limits.h>
@@ -30,22 +30,22 @@
 #include <algorithm>
 #include <iostream>
 
-#include "drizzled/drizzled.h"
-#include "drizzled/sql_sort.h"
-#include "drizzled/filesort.h"
-#include "drizzled/error.h"
-#include "drizzled/probes.h"
-#include "drizzled/session.h"
-#include "drizzled/table.h"
-#include "drizzled/table_list.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/internal/my_sys.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/atomics.h"
-#include "drizzled/global_buffer.h"
+#include <drizzled/drizzled.h>
+#include <drizzled/sql_sort.h>
+#include <drizzled/filesort.h>
+#include <drizzled/error.h>
+#include <drizzled/probes.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/table_list.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/internal/my_sys.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/atomics.h>
+#include <drizzled/global_buffer.h>
 
 #include <drizzled/sort_field.h>
 

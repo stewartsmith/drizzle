@@ -21,9 +21,9 @@
 #ifndef DRIZZLED_FILE_EXCHANGE_H
 #define DRIZZLED_FILE_EXCHANGE_H
 
-#include "drizzled/sql_string.h"
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/enum.h"
+#include <drizzled/sql_string.h>
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/enum.h>
 
 namespace drizzled
 {

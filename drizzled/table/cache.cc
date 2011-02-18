@@ -18,22 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 
-#include "drizzled/identifier.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
-#include "drizzled/table/concurrent.h"
+#include <drizzled/identifier.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include <drizzled/table/concurrent.h>
 
-#include "drizzled/table/cache.h"
-#include "drizzled/table/unused.h"
+#include <drizzled/table/cache.h>
+#include <drizzled/table/unused.h>
 
-#include "drizzled/pthread_globals.h"
+#include <drizzled/pthread_globals.h>
 
 namespace drizzled
 {
