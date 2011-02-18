@@ -478,7 +478,7 @@ static bool prepare_alter_table(Session *session,
     }
 
     KeyPartInfo *key_part= key_info->key_part;
-    key_parts.empty();
+    key_parts.clear();
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
       if (! key_part->field)

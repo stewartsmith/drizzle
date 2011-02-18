@@ -678,7 +678,7 @@ static int prepare_create_table(Session *session,
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
-        sql_field->interval_list.empty(); // Don't need interval_list anymore
+        sql_field->interval_list.clear(); // Don't need interval_list anymore
       }
 
       /* DRIZZLE_TYPE_ENUM */

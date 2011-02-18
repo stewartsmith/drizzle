@@ -227,15 +227,15 @@ void lex_start(Session *session)
 
   lex->session= lex->unit.session= session;
 
-  lex->context_stack.empty();
+  lex->context_stack.clear();
   lex->unit.init_query();
   lex->unit.init_select();
   /* 'parent_lex' is used in init_query() so it must be before it. */
   lex->select_lex.parent_lex= lex;
   lex->select_lex.init_query();
-  lex->value_list.empty();
-  lex->update_list.empty();
-  lex->auxiliary_table_list.empty();
+  lex->value_list.clear();
+  lex->update_list.clear();
+  lex->auxiliary_table_list.clear();
   lex->unit.next= lex->unit.master=
     lex->unit.link_next= lex->unit.return_to= 0;
   lex->unit.prev= lex->unit.link_prev= 0;
@@ -247,7 +247,7 @@ void lex_start(Session *session)
   lex->select_lex.link_prev= (Select_Lex_Node**)&(lex->all_selects_list);
   lex->select_lex.options= 0;
   lex->select_lex.init_order();
-  lex->select_lex.group_list.empty();
+  lex->select_lex.group_list.clear();
   lex->describe= 0;
   lex->derived_tables= 0;
   lex->lock_option= TL_READ;
@@ -256,8 +256,8 @@ void lex_start(Session *session)
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
-  lex->select_lex.group_list.empty();
-  lex->select_lex.order_list.empty();
+  lex->select_lex.group_list.clear();
+  lex->select_lex.order_list.clear();
   lex->sql_command= SQLCOM_END;
   lex->duplicates= DUP_ERROR;
   lex->ignore= 0;
@@ -1335,7 +1335,7 @@ void Select_Lex_Unit::init_query()
   table= 0;
   fake_select_lex= 0;
   cleaned= 0;
-  item_list.empty();
+  item_list.clear();
   describe= 0;
   found_rows_for_union= 0;
 }
@@ -1343,11 +1343,11 @@ void Select_Lex_Unit::init_query()
 void Select_Lex::init_query()
 {
   Select_Lex_Node::init_query();
-  table_list.empty();
-  top_join_list.empty();
+  table_list.clear();
+  top_join_list.clear();
   join_list= &top_join_list;
   embedding= leaf_tables= 0;
-  item_list.empty();
+  item_list.clear();
   join= 0;
   having= where= 0;
   olap= UNSPECIFIED_OLAP_TYPE;
@@ -1379,14 +1379,14 @@ void Select_Lex::init_query()
 
 void Select_Lex::init_select()
 {
-  sj_nests.empty();
-  group_list.empty();
+  sj_nests.clear();
+  group_list.clear();
   db= 0;
   having= 0;
   in_sum_expr= with_wild= 0;
   options= 0;
   braces= 0;
-  interval_list.empty();
+  interval_list.clear();
   inner_sum_func_list= 0;
   linkage= UNSPECIFIED_TYPE;
   order_list.elements= 0;
@@ -1399,9 +1399,9 @@ void Select_Lex::init_select()
   is_cross= false;
   is_correlated= 0;
   cur_pos_in_select_list= UNDEF_POS;
-  non_agg_fields.empty();
+  non_agg_fields.clear();
   cond_value= having_value= Item::COND_UNDEF;
-  inner_refs_list.empty();
+  inner_refs_list.clear();
   full_group_by_flag.reset();
 }
 

@@ -92,7 +92,7 @@ bool Item_sum::init_sum_func_check(Session *session)
   aggr_sel= NULL;
   max_arg_level= -1;
   max_sum_func_level= -1;
-  outer_fields.empty();
+  outer_fields.clear();
   return false;
 }
 
@@ -396,7 +396,7 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
     }
   }
   mark_as_sum_func();
-  list.empty();					// Fields are used
+  list.clear();					// Fields are used
 }
 
 

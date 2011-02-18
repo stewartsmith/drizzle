@@ -116,7 +116,7 @@ void optimizer::ExplainPlan::printPlan()
        appreciated :)
      */
     char table_name_buffer[NAME_LEN];
-    item_list.empty();
+    item_list.clear();
     /* id */
     item_list.push_back(new Item_null);
     /* select_type */
@@ -189,7 +189,7 @@ void optimizer::ExplainPlan::printPlan()
       string tmp3;
 
       quick_type= -1;
-      item_list.empty();
+      item_list.clear();
       /* id */
       item_list.push_back(new Item_uint((uint32_t)
             join->select_lex->select_number));

@@ -1226,7 +1226,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
     {
       bool tmp;
       Item *having= item, *orig_item= item;
-      select_lex->item_list.empty();
+      select_lex->item_list.clear();
       select_lex->item_list.push_back(new Item_int("Not_used",
                                                    (int64_t) 1,
                                                    MY_INT64_NUM_DECIMAL_DIGITS));

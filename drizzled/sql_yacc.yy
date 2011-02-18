@@ -841,7 +841,7 @@ create:
                                                      TL_OPTION_UPDATING,
                                                      TL_WRITE))
               DRIZZLE_YYABORT;
-            Lex->col_list.empty();
+            Lex->col_list.clear();
           }
           create_table_definition
           {
@@ -1111,7 +1111,7 @@ column_def:
           field_spec opt_check_constraint
         | field_spec references
           {
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+            Lex->col_list.clear(); /* Alloced by memory::sql_alloc */
           }
         ;
 
@@ -1131,11 +1131,11 @@ key_def:
           }
         | constraint opt_check_constraint
           {
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+            Lex->col_list.clear(); /* Alloced by memory::sql_alloc */
           }
         | opt_constraint check_constraint
           {
-            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+            Lex->col_list.clear(); /* Alloced by memory::sql_alloc */
           }
         ;
 
@@ -1268,7 +1268,7 @@ field_definition:
           }
         | ENUM_SYM
           {
-            Lex->interval_list.empty();
+            Lex->interval_list.clear();
           }
           '(' string_list ')'
           {
@@ -1501,7 +1501,7 @@ references:
 
 opt_ref_list:
           /* empty */
-          { Lex->ref_list.empty(); }
+          { Lex->ref_list.clear(); }
         | '(' ref_list ')'
         ;
 
@@ -1510,7 +1510,7 @@ ref_list:
           { Lex->ref_list.push_back(new Key_part_spec($3, 0)); }
         | ident
           {
-            Lex->ref_list.empty();
+            Lex->ref_list.clear();
             Lex->ref_list.push_back(new Key_part_spec($1, 0));
           }
         ;
@@ -1685,7 +1685,7 @@ alter:
               DRIZZLE_YYABORT;
             }
 
-            Lex->col_list.empty();
+            Lex->col_list.clear();
             Lex->select_lex.init_order();
             Lex->select_lex.db= const_cast<char *>(((TableList*) Lex->select_lex.table_list.first)->getSchemaName());
           }
@@ -2996,7 +2996,7 @@ sum_expr:
             sel->in_sum_expr--;
             $$=new Item_func_group_concat(Lex->current_context(), $3, $5,
                                           sel->gorder_list, $7);
-            $5->empty();
+            $5->clear();
           }
         ;
 
@@ -3057,7 +3057,7 @@ opt_gorder_clause:
             select->gorder_list=
               (SQL_LIST*) memory::sql_memdup((char*) &select->order_list,
                                      sizeof(st_sql_list));
-            select->order_list.empty();
+            select->order_list.clear();
           }
         ;
 
@@ -4120,8 +4120,8 @@ insert2:
 insert_table:
           table_name
           {
-            Lex->field_list.empty();
-            Lex->many_values.empty();
+            Lex->field_list.clear();
+            Lex->many_values.clear();
             Lex->insert_list=0;
           };
 
@@ -4604,9 +4604,9 @@ load:
                     $12, NULL, TL_OPTION_UPDATING,
                     Lex->lock_option))
               DRIZZLE_YYABORT;
-            Lex->field_list.empty();
-            Lex->update_list.empty();
-            Lex->value_list.empty();
+            Lex->field_list.clear();
+            Lex->update_list.clear();
+            Lex->value_list.clear();
           }
           opt_field_term opt_line_term opt_ignore_lines opt_field_or_var_spec
           opt_load_data_set_spec
