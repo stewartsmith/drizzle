@@ -78,10 +78,9 @@ CachedDirectory::CachedDirectory(const string& in_path, enum CachedDirectory::FI
 
 CachedDirectory::~CachedDirectory()
 {
-  for (Entries::iterator p= entries.begin(); p != entries.end(); ++p)
+  for (Entries::iterator iter= entries.begin(); iter != entries.end(); ++iter)
   {
-    if (*p)
-      delete *p;
+    delete *iter;
   }
   entries.clear();
 }

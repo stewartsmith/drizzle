@@ -148,8 +148,7 @@ void Table::free_io_cache()
   if (sort.io_cache)
   {
     sort.io_cache->close_cached_file();
-    delete sort.io_cache;
-    sort.io_cache= 0;
+    safe_delete(sort.io_cache);
   }
 }
 
@@ -808,7 +807,7 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::iden
 
   if (not table::Cache::singleton().insert(table))
   {
-    delete table;
+    safe_delete(table);
 
     return NULL;
   }

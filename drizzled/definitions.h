@@ -430,6 +430,12 @@ template <class T> void set_if_smaller(T &a, const T &b)
   if (a > b)
     a=b;
 }
+
+template<class T> inline void safe_delete(T*& ptr)
+{
+  delete ptr;
+  ptr = 0;
+}
 #else
 #ifdef __GNUC__
 #define set_if_bigger(a,b) do {                 \

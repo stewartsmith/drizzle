@@ -330,8 +330,7 @@ int update_query(Session *session, TableList *table_list,
 	Filesort has already found and selected the rows we want to update,
 	so we don't need the where clause
       */
-      delete select;
-      select= 0;
+      safe_delete(select);
     }
     else
     {
@@ -409,10 +408,9 @@ int update_query(Session *session, TableList *table_list,
       /* Change select to use tempfile */
       if (select)
       {
-	delete select->quick;
+	safe_delete(select->quick);
 	if (select->free_cond)
 	  delete select->cond;
-	select->quick=0;
 	select->cond=0;
       }
       else

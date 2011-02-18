@@ -291,16 +291,15 @@ void LEX::end()
     yacc_yyvs= 0;
   }
 
-  delete result;
-  delete _create_table;
+  safe_delete(result);
+  safe_delete(_create_table);
   _create_table= NULL;
   _create_field= NULL;
 
   result= 0;
   setCacheable(true);
 
-  delete statement;
-  statement= NULL;
+  safe_delete(statement);
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)

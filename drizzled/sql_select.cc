@@ -1221,10 +1221,9 @@ COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab)
 */
 void JoinTable::cleanup()
 {
-  delete select;
-  select= 0;
-  delete quick;
-  quick= 0;
+  safe_delete(select);
+  safe_delete(quick);
+
   if (cache.buff)
   {
     size_t size= cache.end - cache.buff;
@@ -3641,8 +3640,8 @@ int init_read_record_seq(JoinTable *tab)
 
 int test_if_quick_select(JoinTable *tab)
 {
-  delete tab->select->quick;
-  tab->select->quick= 0;
+  safe_delete(tab->select->quick);
+
   return tab->select->test_quick_select(tab->join->session, tab->keys,
 					(table_map) 0, HA_POS_ERROR, 0, false);
 }
@@ -4801,8 +4800,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
           tab->type= AM_NEXT;           // Read with index_first(), index_next()
           if (select && select->quick)
           {
-            delete select->quick;
-            select->quick= 0;
+            safe_delete(select->quick);
           }
           if (table->covering_keys.test(best_key))
           {
@@ -4875,7 +4873,7 @@ check_reverse_order:
           tab->limit= 0;
           return 0; // Reverse sort not supported
         }
-        select->quick=tmp;
+        select->quick= tmp;
       }
     }
     else if (tab->type != AM_NEXT &&
