@@ -1352,7 +1352,7 @@ static Item_equal *find_item_equal(COND_EQUAL *cond_equal, Field *field, bool *i
   bool in_upper_level= false;
   while (cond_equal)
   {
-    List_iterator_fast<Item_equal> li(cond_equal->current_level);
+    List<Item_equal>::iterator li(cond_equal->current_level);
     while ((item= li++))
     {
       if (item->contains(field))
@@ -1828,7 +1828,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
           li.remove();
       }
 
-      List_iterator_fast<Item_equal> it(cond_equal.current_level);
+      List<Item_equal>::iterator it(cond_equal.current_level);
       while ((item_equal= it++))
       {
         item_equal->fix_length_and_dec();
@@ -1905,7 +1905,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
         Item_cond_and *and_cond= new Item_cond_and(eq_list);
         and_cond->quick_fix_field();
         List<Item> *args= and_cond->argument_list();
-        List_iterator_fast<Item_equal> it(cond_equal.current_level);
+        List<Item_equal>::iterator it(cond_equal.current_level);
         while ((item_equal= it++))
         {
           item_equal->fix_length_and_dec();
@@ -2246,7 +2246,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
       cond_equal= &((Item_cond_and *) cond)->cond_equal;
       cond_list->disjoin((List<Item> *) &cond_equal->current_level);
 
-      List_iterator_fast<Item_equal> it(cond_equal->current_level);
+      List<Item_equal>::iterator it(cond_equal->current_level);
       while ((item_equal= it++))
       {
         item_equal->sort(&compare_fields_by_table_order, table_join_idx);
@@ -2269,7 +2269,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
 
     if (and_level)
     {
-      List_iterator_fast<Item_equal> it(cond_equal->current_level);
+      List<Item_equal>::iterator it(cond_equal->current_level);
       while ((item_equal= it++))
       {
         cond= eliminate_item_equal(cond, cond_equal->upper_levels, item_equal);
@@ -2319,7 +2319,7 @@ void update_const_equal_items(COND *cond, JoinTable *tab)
   if (cond->type() == Item::COND_ITEM)
   {
     List<Item> *cond_list= ((Item_cond*) cond)->argument_list();
-    List_iterator_fast<Item> li(*cond_list);
+    List<Item>::iterator li(*cond_list);
     Item *item;
     while ((item= li++))
       update_const_equal_items(item, tab);
@@ -2481,7 +2481,7 @@ static void propagate_cond_constants(Session *session,
   if (cond->type() == Item::COND_ITEM)
   {
     bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item *item;
     list<COND_CMP> save;
     while ((item=li++))
@@ -2919,7 +2919,7 @@ bool const_expression_in_where(COND *cond, Item *comp_item, Item **const_item)
   {
     bool and_level= (((Item_cond*) cond)->functype()
 		     == Item_func::COND_AND_FUNC);
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item *item;
     while ((item=li++))
     {
@@ -3819,7 +3819,7 @@ enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_recor
         {
           if (!join->first_record)
           {
-                  List_iterator_fast<Item> it(*join->fields);
+                  List<Item>::iterator it(*join->fields);
                   Item *item;
             /* No matching rows for group function */
             join->clear();
@@ -5796,7 +5796,7 @@ bool setup_copy_fields(Session *session,
                        List<Item> &all_fields)
 {
   Item *pos;
-  List_iterator_fast<Item> li(all_fields);
+  List<Item>::iterator li(all_fields);
   CopyField *copy= NULL;
   res_selected_fields.clear();
   res_all_fields.clear();
@@ -5932,7 +5932,7 @@ void copy_fields(Tmp_Table_Param *param)
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);
 
-  List_iterator_fast<Item> it(param->copy_funcs);
+  List<Item>::iterator it(param->copy_funcs);
   Item_copy_string *item;
   while ((item = (Item_copy_string*) it++))
     item->copy();
@@ -5961,7 +5961,7 @@ bool change_to_use_tmp_fields(Session *session,
 			                        uint32_t elements,
                               List<Item> &all_fields)
 {
-  List_iterator_fast<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   Item *item_field,*item;
 
   res_selected_fields.clear();
@@ -6040,7 +6040,7 @@ bool change_refs_to_tmp_fields(Session *session,
                                uint32_t elements,
 			                         List<Item> &all_fields)
 {
-  List_iterator_fast<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   Item *item, *new_item;
   res_selected_fields.clear();
   res_all_fields.clear();
@@ -6293,7 +6293,7 @@ void print_join(Session *session, String *str,
                 List<TableList> *tables, enum_query_type)
 {
   /* List is reversed => we should reverse it before using */
-  List_iterator_fast<TableList> ti(*tables);
+  List<TableList>::iterator ti(*tables);
   TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
@@ -6330,7 +6330,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
 
   //Item List
   bool first= 1;
-  List_iterator_fast<Item> it(item_list);
+  List<Item>::iterator it(item_list);
   Item *item;
   while ((item= it++))
   {

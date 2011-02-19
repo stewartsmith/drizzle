@@ -2213,7 +2213,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
                               bool before_group_by, 
                               bool recompute)
 {
-  List_iterator_fast<Item> it(field_list);
+  List<Item>::iterator it(field_list);
   Item_sum **func;
   Item *item;
 
@@ -2369,7 +2369,7 @@ bool Join::rollup_init()
 */
 bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, Item_sum ***func)
 {
-  List_iterator_fast<Item> it(fields_arg);
+  List<Item>::iterator it(fields_arg);
   Item *first_field= sel_fields.head();
   uint32_t level;
 
@@ -2549,7 +2549,7 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
     {
       int write_error;
       Item *item;
-      List_iterator_fast<Item> it(rollup.getFields()[i]);
+      List<Item>::iterator it(rollup.getFields()[i]);
       while ((item= it++))
       {
         if (item->type() == Item::NULL_ITEM && item->is_result_field())
@@ -5292,7 +5292,7 @@ static int return_zero_rows(Join *join,
   {
     if (send_row)
     {
-      List_iterator_fast<Item> it(fields);
+      List<Item>::iterator it(fields);
       Item *item;
       while ((item= it++))
         item->no_rows_in_result();

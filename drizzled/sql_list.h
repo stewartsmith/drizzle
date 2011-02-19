@@ -414,14 +414,13 @@ public:
 template <class T> class List_iterator :public base_list_iterator
 {
 public:
-  explicit List_iterator(List<T> &a) : base_list_iterator(a) {}
+  List_iterator(List<T> &a) : base_list_iterator(a) {}
   List_iterator() : base_list_iterator() {}
   inline T* operator++(int) { return (T*) base_list_iterator::next(); }
   inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
   inline T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
   inline T** ref(void)	    { return (T**) base_list_iterator::ref(); }
 };
-
 
 template <class T> class List_iterator_fast :public base_list_iterator
 {
@@ -442,7 +441,6 @@ public:
     base_list_iterator::sublist(list_arg, el_arg);
   }
 };
-
 
 /**
   Make a deep copy of each list element.
