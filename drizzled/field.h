@@ -754,7 +754,7 @@ public:
   friend class Item_sum_max;
   friend class Item_func_group_concat;
 
-  bool isReadSet();
+  bool isReadSet() const;
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);

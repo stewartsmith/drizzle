@@ -1253,7 +1253,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   }
 }
 
-bool Field::isReadSet() 
+bool Field::isReadSet() const 
 { 
   return table->isReadSet(field_index); 
 }
