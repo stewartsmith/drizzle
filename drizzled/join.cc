@@ -5566,7 +5566,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     Flatten nested joins that can be flattened.
     no ON expression and not a semi-join => can be flattened.
   */
-  li= *join_list;
+  li= join_list->begin();
   while ((table= li++))
   {
     nested_join= table->getNestedJoin();

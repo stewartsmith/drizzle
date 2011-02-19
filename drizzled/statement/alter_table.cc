@@ -291,7 +291,7 @@ static bool prepare_alter_table(Session *session,
   {
     /* Check if field should be dropped */
     AlterDrop *drop;
-    drop_it= alter_info->drop_list;
+    drop_it= alter_info->drop_list.begin();
     while ((drop= drop_it++))
     {
       if (drop->type == AlterDrop::COLUMN &&
@@ -318,7 +318,7 @@ static bool prepare_alter_table(Session *session,
     field->setReadSet();
 
     /* Check if field is changed */
-    def_it= alter_info->create_list;
+    def_it= alter_info->create_list.begin();
     while ((def= def_it++))
     {
       if (def->change &&
@@ -344,7 +344,7 @@ static bool prepare_alter_table(Session *session,
       */
       def= new CreateField(field, field);
       new_create_list.push_back(def);
-      alter_it= alter_info->alter_list; /* Change default if ALTER */
+      alter_it= alter_info->alter_list.begin(); /* Change default if ALTER */
       AlterColumn *alter;
 
       while ((alter= alter_it++))
@@ -375,7 +375,7 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  def_it= alter_info->create_list;
+  def_it= alter_info->create_list.begin();
   while ((def= def_it++)) /* Add new columns */
   {
     if (def->change && ! def->field)
@@ -401,7 +401,7 @@ static bool prepare_alter_table(Session *session,
     else
     {
       CreateField *find;
-      find_it= new_create_list;
+      find_it= new_create_list.begin();
 
       while ((find= find_it++)) /* Add new columns */
       {
@@ -463,7 +463,7 @@ static bool prepare_alter_table(Session *session,
     char *key_name= key_info->name;
     AlterDrop *drop;
 
-    drop_it= alter_info->drop_list;
+    drop_it= alter_info->drop_list.begin();
     while ((drop= drop_it++))
     {
       if (drop->type == AlterDrop::KEY &&
@@ -486,7 +486,7 @@ static bool prepare_alter_table(Session *session,
 
       const char *key_part_name= key_part->field->field_name;
       CreateField *cfield;
-      field_it= new_create_list;
+      field_it= new_create_list.begin();
       while ((cfield= field_it++))
       {
         if (cfield->change)
@@ -568,7 +568,7 @@ static bool prepare_alter_table(Session *session,
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
     AlterDrop *drop;
-    drop_it= alter_info->drop_list;
+    drop_it= alter_info->drop_list.begin();
     while ((drop= drop_it++))
     {
       if (drop->type == AlterDrop::FOREIGN_KEY &&

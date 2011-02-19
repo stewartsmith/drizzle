@@ -414,7 +414,7 @@ public:
 template <class T> class List_iterator :public base_list_iterator
 {
 public:
-  List_iterator(List<T> &a) : base_list_iterator(a) {}
+  explicit List_iterator(List<T> &a) : base_list_iterator(a) {}
   List_iterator() : base_list_iterator() {}
   inline T* operator++(int) { return (T*) base_list_iterator::next(); }
   inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
@@ -425,12 +425,12 @@ public:
 
 template <class T> class List_iterator_fast :public base_list_iterator
 {
-protected:
-  inline T *replace(T *)   { return (T*) 0; }
-  inline T *replace(List<T> &) { return (T*) 0; }
-  inline void remove(void)  { }
-  inline void after(T *)   { }
-  inline T** ref(void)	    { return (T**) 0; }
+private:
+  inline T *replace(T *);
+  inline T *replace(List<T> &);
+  inline void remove(void);
+  inline void after(T *);
+  inline T** ref(void);
 
 public:
   inline List_iterator_fast(List<T> &a) : base_list_iterator(a) {}
