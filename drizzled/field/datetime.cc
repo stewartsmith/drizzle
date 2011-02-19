@@ -158,12 +158,12 @@ int Field_datetime::store_time(type::Time &ltime, type::timestamp_t)
   return 0;
 }
 
-double Field_datetime::val_real(void)
+double Field_datetime::val_real(void) const
 {
   return (double) Field_datetime::val_int();
 }
 
-int64_t Field_datetime::val_int(void)
+int64_t Field_datetime::val_int(void) const
 {
   int64_t j;
 
@@ -179,8 +179,7 @@ int64_t Field_datetime::val_int(void)
 }
 
 
-String *Field_datetime::val_str(String *val_buffer,
-				String *)
+String *Field_datetime::val_str(String *val_buffer, String *) const
 {
   val_buffer->alloc(DateTime::MAX_STRING_LENGTH);
   val_buffer->length(DateTime::MAX_STRING_LENGTH);
@@ -217,7 +216,7 @@ String *Field_datetime::val_str(String *val_buffer,
   return val_buffer;
 }
 
-bool Field_datetime::get_date(type::Time &ltime, uint32_t fuzzydate)
+bool Field_datetime::get_date(type::Time &ltime, uint32_t fuzzydate) const
 {
   int64_t tmp=Field_datetime::val_int();
   uint32_t part1,part2;

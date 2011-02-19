@@ -161,7 +161,7 @@ void Time::pack_time(drizzled::Time &temporal)
   memcpy(ptr, &tmp, sizeof(int32_t));
 }
 
-void Time::unpack_time(drizzled::Time &temporal)
+void Time::unpack_time(drizzled::Time &temporal) const
 {
   int32_t tmp;
 
@@ -171,18 +171,18 @@ void Time::unpack_time(drizzled::Time &temporal)
   temporal.from_int32_t(tmp);
 }
 
-void Time::unpack_time(int32_t &destination, const unsigned char *source)
+void Time::unpack_time(int32_t &destination, const unsigned char *source) const
 {
   memcpy(&destination, source, sizeof(int32_t));
   destination= htonl(destination);
 }
 
-double Time::val_real(void)
+double Time::val_real(void) const
 {
   return (double) Time::val_int();
 }
 
-int64_t Time::val_int(void)
+int64_t Time::val_int(void) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -195,7 +195,7 @@ int64_t Time::val_int(void)
   return result;
 }
 
-String *Time::val_str(String *val_buffer, String *)
+String *Time::val_str(String *val_buffer, String *) const
 {
   char *to;
   int to_len= field_length + 1;
@@ -216,7 +216,7 @@ String *Time::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Time::get_date(type::Time &ltime, uint32_t)
+bool Time::get_date(type::Time &ltime, uint32_t) const
 {
   ltime.reset();
 

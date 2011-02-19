@@ -70,10 +70,10 @@ public:
   int  store(int64_t nr, bool unsigned_val);
   int store_time(type::Time &ltime, type::timestamp_t t_type);
   int  store_decimal(const type::Decimal *);
-  double val_real(void);
-  int64_t val_int(void);
-  type::Decimal *val_decimal(type::Decimal *);
-  String *val_str(String*, String *);
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  type::Decimal *val_decimal(type::Decimal *) const;
+  String *val_str(String*, String *) const;
   int cmp(const unsigned char *, const unsigned char *);
   void sort_string(unsigned char *buff, uint32_t length);
   bool zero_pack() const { return 0; }

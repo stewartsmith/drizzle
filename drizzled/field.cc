@@ -943,7 +943,7 @@ const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
   return(result);
 }
 
-type::Decimal *Field::val_decimal(type::Decimal *)
+type::Decimal *Field::val_decimal(type::Decimal *) const
 {
   /* This never have to be called */
   assert(0);
@@ -1012,14 +1012,14 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(type::Time &ltime, uint32_t fuzzydate)
+bool Field::get_date(type::Time &ltime, uint32_t fuzzydate) const
 {
   char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
   assert(getTable() and getTable()->getSession());
 
-  if (not (res=val_str_internal(&tmp)) or
+  if (not (res= val_str_internal(&tmp)) or
       str_to_datetime_with_warn(getTable()->getSession(),
                                 res->ptr(), res->length(),
                                 &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)

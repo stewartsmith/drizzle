@@ -236,12 +236,12 @@ int Epoch::store(int64_t from, bool)
   return 0;
 }
 
-double Epoch::val_real(void)
+double Epoch::val_real(void) const
 {
   return (double) Epoch::val_int();
 }
 
-int64_t Epoch::val_int(void)
+int64_t Epoch::val_int(void) const
 {
   uint64_t temp;
 
@@ -258,7 +258,7 @@ int64_t Epoch::val_int(void)
   return result;
 }
 
-String *Epoch::val_str(String *val_buffer, String *)
+String *Epoch::val_str(String *val_buffer, String *) const
 {
   uint64_t temp= 0;
   char *to;
@@ -282,7 +282,7 @@ String *Epoch::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Epoch::get_date(type::Time &ltime, uint32_t)
+bool Epoch::get_date(type::Time &ltime, uint32_t) const
 {
   uint64_t temp;
   type::Time::epoch_t time_temp;

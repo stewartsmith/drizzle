@@ -217,10 +217,10 @@ public:
       Needs to be changed if/when we want to support different time formats.
   */
   virtual int store_time(type::Time &ltime, type::timestamp_t t_type);
-  virtual double val_real()=0;
-  virtual int64_t val_int()=0;
-  virtual type::Decimal *val_decimal(type::Decimal *);
-  String *val_str_internal(String *str)
+  virtual double val_real() const=0;
+  virtual int64_t val_int() const =0;
+  virtual type::Decimal *val_decimal(type::Decimal *) const;
+  String *val_str_internal(String *str) const
   {
     return val_str(str, str);
   }
@@ -237,7 +237,7 @@ public:
      an unnecessary free (and later, may be an alloc).
      This trickery is used to decrease a number of malloc calls.
   */
-  virtual String *val_str(String*, String *)=0;
+  virtual String *val_str(String*, String *) const =0;
 
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
@@ -596,7 +596,7 @@ public:
   }
   void copy_from_tmp(int offset);
   uint32_t fill_cache_field(CacheField *copy);
-  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate);
+  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
   virtual bool get_time(type::Time &ltime);
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }

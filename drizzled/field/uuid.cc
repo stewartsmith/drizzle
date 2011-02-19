@@ -103,14 +103,14 @@ void Uuid::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("uuid"));
 }
 
-double Uuid::val_real()
+double Uuid::val_real() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   my_error(ER_INVALID_UUID_VALUE, MYF(ME_FATALERROR));
   return 0;
 }
 
-int64_t Uuid::val_int()
+int64_t Uuid::val_int() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   my_error(ER_INVALID_UUID_VALUE, MYF(ME_FATALERROR));
@@ -133,7 +133,7 @@ void Uuid::set(const unsigned char *arg)
 }
 #endif
 
-String *Uuid::val_str(String *val_buffer, String *)
+String *Uuid::val_str(String *val_buffer, String *) const
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t mlength= (type::Uuid::DISPLAY_BUFFER_LENGTH) * cs->mbmaxlen;
@@ -158,7 +158,7 @@ void Uuid::sort_string(unsigned char *to, uint32_t length_arg)
   memcpy(to, ptr, length_arg);
 }
 
-bool Uuid::get_date(type::Time &ltime, uint32_t )
+bool Uuid::get_date(type::Time &ltime, uint32_t ) const
 {
   type::Uuid uu;
 

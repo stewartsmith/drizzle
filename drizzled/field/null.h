@@ -79,19 +79,19 @@ public:
   {
     return 0;
   }
-  double val_real(void)
+  double val_real(void) const
   {
     return 0.0;
   }
-  int64_t val_int(void)
+  int64_t val_int(void) const
   {
     return 0;
   }
-  type::Decimal *val_decimal(type::Decimal *)
+  type::Decimal *val_decimal(type::Decimal *) const
   {
     return 0;
   }
-  String *val_str(String *, String *value2)
+  String *val_str(String *, String *value2) const
   {
     value2->length(0);
     return value2;
