@@ -308,8 +308,6 @@ fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
 
-DRIZZLED_API char glob_hostname[FN_REFLEN];
-
 char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
@@ -371,12 +369,12 @@ void close_connections(void);
 
 fs::path base_plugin_dir(PKGPLUGINDIR);
 
-po::options_description config_options("Config File Options");
-po::options_description long_options("Kernel Options");
-po::options_description plugin_load_options("Plugin Loading Options");
-po::options_description plugin_options("Plugin Options");
-po::options_description initial_options("Config and Plugin Loading");
-po::options_description full_options("Kernel and Plugin Loading and Plugin");
+po::options_description config_options(_("Config File Options"));
+po::options_description long_options(_("Kernel Options"));
+po::options_description plugin_load_options(_("Plugin Loading Options"));
+po::options_description plugin_options(_("Plugin Options"));
+po::options_description initial_options(_("Config and Plugin Loading"));
+po::options_description full_options(_("Kernel and Plugin Loading and Plugin"));
 vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
@@ -386,6 +384,25 @@ po::variables_map &getVariablesMap()
   return vm;
 }
 
+namespace
+{
+
+std::string &getGlobHostname()
+{
+  static std::string glob_hostname("localhost");
+  return glob_hostname;
+}
+
+void setServerHostname(const std::string &hostname)
+{
+  getGlobHostname()= hostname;
+}
+}
+
+const std::string &getServerHostname()
+{
+  return getGlobHostname();
+}
 
 /****************************************************************************
 ** Code to end drizzled
@@ -651,38 +668,18 @@ const char *load_default_groups[]=
 
 static void find_plugin_dir(string progname)
 {
-  if (progname[0] != FN_LIBCHAR)
+  fs::path full_progname(fs::system_complete(progname));
+
+  fs::path progdir(full_progname.parent_path());
+  if (progdir.filename() == ".libs")
   {
-    /* We have a relative path and need to find the absolute */
-    char working_dir[FN_REFLEN];
-    char *working_dir_ptr= working_dir;
-    working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
-    string new_path(working_dir);
-    if (*(new_path.end()-1) != '/')
-      new_path.push_back('/');
-    if (progname[0] == '.' && progname[1] == '/')
-      new_path.append(progname.substr(2));
-    else
-      new_path.append(progname);
-    progname.swap(new_path);
+    progdir= progdir.parent_path();
   }
 
-  /* Now, trim off the exe name */
-  string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
-  if (progdir.rfind(".libs/") != string::npos)
-  {
-    progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
-  }
-  string testlofile(progdir);
-  testlofile.append("drizzled.lo");
-  string testofile(progdir);
-  testofile.append("drizzled.o");
-  struct stat testfile_stat;
-  if (not (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat)))
+  if (fs::exists(progdir / "drizzled.lo") || fs::exists(progdir / "drizzled.o"))
   {
     /* We are in a source dir! Plugin dir is ../plugin/.libs */
-    size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
-    base_plugin_dir= progdir.substr(0,last_libchar_pos);
+    base_plugin_dir= progdir.parent_path();
     base_plugin_dir /= "plugin";
     base_plugin_dir /= ".libs";
   }
@@ -1106,16 +1103,18 @@ int init_basic_variables(int argc, char **argv)
   */
   global_system_variables.time_zone= my_tz_SYSTEM;
 
-  if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
+  char ret_hostname[FN_REFLEN];
+  if (gethostname(ret_hostname,sizeof(ret_hostname)) < 0)
   {
-    strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-    errmsg_printf(error::WARN, _("gethostname failed, using '%s' as hostname"),
-                  glob_hostname);
+    errmsg_printf(error::WARN,
+                  _("gethostname failed, using '%s' as hostname"),
+                  getServerHostname().c_str());
     pid_file= "drizzle";
   }
   else
   {
-    pid_file= glob_hostname;
+    setServerHostname(ret_hostname);
+    pid_file= getServerHostname();
   }
   pid_file.replace_extension(".pid");
 

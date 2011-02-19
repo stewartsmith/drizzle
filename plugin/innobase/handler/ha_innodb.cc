@@ -1181,7 +1181,7 @@ innobase_mysql_print_thd(
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
           static_cast<uint64_t>(in_session->getSessionId()),
           static_cast<uint64_t>(in_session->getQueryId()),
-          glob_hostname,
+          getServerHostname().c_str(),
           user_identifier->address().c_str(),
           user_identifier->username().c_str()
   );
