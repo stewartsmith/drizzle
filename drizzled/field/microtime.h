@@ -70,11 +70,11 @@ public:
   void set_time();
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Microtime */
-  long get_timestamp(bool *null_value);
+  long get_timestamp(bool *null_value) const;
 
 private:
   bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
-  bool get_time(type::Time &ltime);
+  bool get_time(type::Time &ltime) const;
 
 public:
   static size_t max_string_length()

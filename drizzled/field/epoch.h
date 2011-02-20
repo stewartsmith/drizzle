@@ -71,7 +71,7 @@ public:
   virtual void set_default();
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Epoch */
-  virtual long get_timestamp(bool *null_value);
+  virtual long get_timestamp(bool *null_value) const;
 
   virtual bool is_timestamp() const
   {
@@ -80,7 +80,7 @@ public:
 
 private:
   bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
-  bool get_time(type::Time &ltime);
+  bool get_time(type::Time &ltime) const;
 
 public:
   virtual timestamp_auto_set_type get_auto_set_type() const;

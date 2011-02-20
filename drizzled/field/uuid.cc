@@ -181,7 +181,7 @@ bool Uuid::get_date(type::Time &ltime, uint32_t ) const
   return true;
 }
 
-bool Uuid::get_time(type::Time &ltime)
+bool Uuid::get_time(type::Time &ltime) const
 {
   return get_date(ltime, 0);
 }

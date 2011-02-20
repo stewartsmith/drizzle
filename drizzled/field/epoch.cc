@@ -297,7 +297,7 @@ bool Epoch::get_date(type::Time &ltime, uint32_t) const
   return 0;
 }
 
-bool Epoch::get_time(type::Time &ltime)
+bool Epoch::get_time(type::Time &ltime) const
 {
   return Epoch::get_date(ltime, 0);
 }
@@ -368,7 +368,7 @@ void Epoch::set_default()
   }
 }
 
-long Epoch::get_timestamp(bool *null_value)
+long Epoch::get_timestamp(bool *null_value) const
 {
   if ((*null_value= is_null()))
     return 0;

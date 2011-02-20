@@ -239,7 +239,7 @@ bool Microtime::get_date(type::Time &ltime, uint32_t) const
   return false;
 }
 
-bool Microtime::get_time(type::Time &ltime)
+bool Microtime::get_time(type::Time &ltime) const
 {
   return Microtime::get_date(ltime, 0);
 }
@@ -294,7 +294,7 @@ void Microtime::set_time()
   pack_num(fractional_seconds, ptr +8);
 }
 
-long Microtime::get_timestamp(bool *null_value)
+long Microtime::get_timestamp(bool *null_value) const
 {
   if ((*null_value= is_null()))
     return 0;

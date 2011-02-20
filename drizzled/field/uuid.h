@@ -67,7 +67,7 @@ public:
   uint32_t size_of() const { return sizeof(*this); }
 
   bool get_date(type::Time &ltime, uint32_t) const;
-  bool get_time(type::Time &ltime);
+  bool get_time(type::Time &ltime) const;
 
 #ifdef NOT_YET
   void generate();

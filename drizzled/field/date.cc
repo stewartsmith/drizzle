@@ -230,7 +230,7 @@ bool Field_date::get_date(type::Time &ltime, uint32_t fuzzydate) const
           1 : 0);
 }
 
-bool Field_date::get_time(type::Time &ltime)
+bool Field_date::get_time(type::Time &ltime) const
 {
   return Field_date::get_date(ltime ,0);
 }

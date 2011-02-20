@@ -234,7 +234,7 @@ bool Time::get_date(type::Time &ltime, uint32_t) const
   return 0;
 }
 
-bool Time::get_time(type::Time &ltime)
+bool Time::get_time(type::Time &ltime) const
 {
   return Time::get_date(ltime, 0);
 }
@@ -275,7 +275,7 @@ void Time::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("timestamp"));
 }
 
-long Time::get_timestamp(bool *null_value)
+long Time::get_timestamp(bool *null_value) const
 {
   if ((*null_value= is_null()))
     return 0;

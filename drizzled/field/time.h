@@ -64,10 +64,10 @@ public:
   bool zero_pack() const { return 0; }
 
   /* Get TIME field value as seconds since begging of Unix Epoch */
-  long get_timestamp(bool *null_value);
+  long get_timestamp(bool *null_value) const;
 private:
-  bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
-  bool get_time(type::Time &ltime);
+  bool get_date(type::Time &ltime, uint32_t fuzzydate) const;
+  bool get_time(type::Time &ltime) const;
 
 public:
   timestamp_auto_set_type get_auto_set_type() const;

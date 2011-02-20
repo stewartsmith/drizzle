@@ -746,7 +746,7 @@ uint32_t Field::decimals() const
   return 0;
 }
 
-bool Field::is_null(ptrdiff_t row_offset)
+bool Field::is_null(ptrdiff_t row_offset) const
 {
   return null_ptr ?
     (null_ptr[row_offset] & null_bit ? true : false) :
@@ -1030,7 +1030,7 @@ bool Field::get_date(type::Time &ltime, uint32_t fuzzydate) const
   return false;
 }
 
-bool Field::get_time(type::Time &ltime)
+bool Field::get_time(type::Time &ltime) const
 {
   char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;

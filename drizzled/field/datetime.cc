@@ -236,7 +236,7 @@ bool Field_datetime::get_date(type::Time &ltime, uint32_t fuzzydate) const
   return (!(fuzzydate & TIME_FUZZY_DATE) && (!ltime.month || !ltime.day)) ? 1 : 0;
 }
 
-bool Field_datetime::get_time(type::Time &ltime)
+bool Field_datetime::get_time(type::Time &ltime) const
 {
   return Field_datetime::get_date(ltime,0);
 }
