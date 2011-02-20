@@ -150,13 +150,13 @@ int optimizer::QuickGroupMinMaxSelect::init()
 
     if (have_min)
     {
-      if (! (min_functions_it= new List_iterator<Item_sum>(*min_functions)))
+      if (! (min_functions_it= new List<Item_sum>::iterator(*min_functions)))
         return 1;
     }
 
     if (have_max)
     {
-      if (! (max_functions_it= new List_iterator<Item_sum>(*max_functions)))
+      if (! (max_functions_it= new List<Item_sum>::iterator(*max_functions)))
         return 1;
     }
   }
@@ -719,20 +719,16 @@ int optimizer::QuickGroupMinMaxSelect::next_max_in_range()
 
 void optimizer::QuickGroupMinMaxSelect::update_min_result()
 {
-  Item_sum *min_func= NULL;
-
-  min_functions_it->rewind();
-  while ((min_func= (*min_functions_it)++))
+  *min_functions_it= *min_functions;
+  for (Item_sum *min_func; (min_func= (*min_functions_it)++); )
     min_func->reset();
 }
 
 
 void optimizer::QuickGroupMinMaxSelect::update_max_result()
 {
-  Item_sum *max_func= NULL;
-
-  max_functions_it->rewind();
-  while ((max_func= (*max_functions_it)++))
+  *max_functions_it= *max_functions;
+  for (Item_sum *max_func; (max_func= (*max_functions_it)++); )
     max_func->reset();
 }
 

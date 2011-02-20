@@ -42,12 +42,9 @@ struct st_symbol
   unsigned int  tok;
 };
 %%
-<, LT
 <=, LE
 <>, NE
 !=, NE
-=, EQ
->, GT_SYM
 >=, GE
 <=>, EQUAL_SYM
 # Access likes this

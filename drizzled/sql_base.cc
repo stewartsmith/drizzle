@@ -148,8 +148,7 @@ void Table::free_io_cache()
   if (sort.io_cache)
   {
     sort.io_cache->close_cached_file();
-    delete sort.io_cache;
-    sort.io_cache= 0;
+    safe_delete(sort.io_cache);
   }
 }
 
@@ -808,7 +807,7 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::iden
 
   if (not table::Cache::singleton().insert(table))
   {
-    delete table;
+    safe_delete(table);
 
     return NULL;
   }
@@ -2146,7 +2145,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
     */
     if (table_name && table_name[0])
     {
-      List_iterator<TableList> it(table_list->getNestedJoin()->join_list);
+      List<TableList>::iterator it(table_list->getNestedJoin()->join_list);
       TableList *table;
       while ((table= it++))
       {
@@ -2445,7 +2444,7 @@ find_item_in_list(Session *session,
                   find_item_error_report_type report_error,
                   enum_resolution_type *resolution)
 {
-  List_iterator<Item> li(items);
+  List<Item>::iterator li(items);
   Item **found=0, **found_unaliased= 0, *item;
   const char *db_name=0;
   const char *field_name=0;
@@ -2648,7 +2647,7 @@ find_item_in_list(Session *session,
 static bool
 test_if_string_in_list(const char *find, List<String> *str_list)
 {
-  List_iterator<String> str_list_it(*str_list);
+  List<String>::iterator str_list_it(*str_list);
   String *curr_str;
   size_t find_length= strlen(find);
   while ((curr_str= str_list_it++))
@@ -3273,7 +3272,7 @@ int setup_wild(Session *session, List<Item> &fields,
     return 0;
 
   Item *item;
-  List_iterator<Item> it(fields);
+  List<Item>::iterator it(fields);
 
   session->lex->current_select->cur_pos_in_select_list= 0;
   while (wild_num && (item= it++))
@@ -3334,7 +3333,7 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
   register Item *item;
   enum_mark_columns save_mark_used_columns= session->mark_used_columns;
   nesting_map save_allow_sum_func= session->lex->allow_sum_func;
-  List_iterator<Item> it(fields);
+  List<Item>::iterator it(fields);
   bool save_is_item_list_lookup;
 
   session->mark_used_columns= mark_used_columns;
@@ -3550,7 +3549,7 @@ bool setup_tables_and_check_access(Session *session,
 
 bool
 insert_fields(Session *session, Name_resolution_context *context, const char *db_name,
-              const char *table_name, List_iterator<Item> *it,
+              const char *table_name, List<Item>::iterator *it,
               bool )
 {
   Field_iterator_table_ref field_iterator;
@@ -3824,7 +3823,7 @@ fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignor
     field= static_cast<Item_field *>(f++);
     table= field->field->getTable();
     table->auto_increment_field_not_null= false;
-    f.rewind();
+    f= fields;
   }
 
   while ((field= static_cast<Item_field *>(f++)))

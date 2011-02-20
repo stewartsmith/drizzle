@@ -1608,10 +1608,6 @@ public:
     Item_field *item= (*(List_iterator_fast<Item_field> *) this)++;
     return  item;
   }
-  inline void rewind(void)
-  {
-    List_iterator_fast<Item_field>::rewind();
-  }
 };
 
 class Item_cond_and :public Item_cond

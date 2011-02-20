@@ -1,0 +1,2 @@
+SELECT '' LIKE '1' ESCAPE COUNT(1);
+ERROR HY000: Incorrect arguments to ESCAPE

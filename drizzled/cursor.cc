@@ -267,14 +267,14 @@ int Cursor::ha_open(const identifier::Table &identifier,
 */
 int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
 {
-  register int error;
+  int error;
 
   ha_statistic_increment(&system_status_var::ha_read_first_count);
 
   /*
     If there is very few deleted rows in the table, find the first row by
     scanning the table.
-    TODO remove the test for HA_READ_ORDER
+    @todo remove the test for HA_READ_ORDER
   */
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
       !(getTable()->index_flags(primary_key) & HA_READ_ORDER))

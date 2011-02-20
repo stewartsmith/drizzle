@@ -307,7 +307,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       */
       assert(!empty_table);
       empty_table= (Table*) session->calloc(sizeof(Table));
-      types.empty();
+      types.clear();
       List_iterator_fast<Item> it(sl->item_list);
       Item *item_tmp;
       while ((item_tmp= it++))
@@ -531,7 +531,7 @@ bool Select_Lex_Unit::exec()
 	if (!(fake_select_lex->join= new Join(session, item_list,
 					      fake_select_lex->options, result)))
 	{
-	  fake_select_lex->table_list.empty();
+	  fake_select_lex->table_list.clear();
 	  return(true);
 	}
         fake_select_lex->join->no_const_tables= true;
@@ -581,7 +581,7 @@ bool Select_Lex_Unit::exec()
         }
       }
 
-      fake_select_lex->table_list.empty();
+      fake_select_lex->table_list.clear();
       if (!saved_error)
       {
 	session->limit_found_rows = (uint64_t)table->cursor->stats.records + add_rows;
@@ -610,8 +610,7 @@ bool Select_Lex_Unit::cleanup()
 
   if (union_result)
   {
-    delete union_result;
-    union_result=0; // Safety
+    safe_delete(union_result);
     table= 0; // Safety
   }
 
@@ -713,16 +712,15 @@ bool Select_Lex::cleanup()
   {
     assert((Select_Lex*)join->select_lex == this);
     error= join->destroy();
-    delete join;
-    join= 0;
+    safe_delete(join);
   }
   for (Select_Lex_Unit *lex_unit= first_inner_unit(); lex_unit ;
        lex_unit= lex_unit->next_unit())
   {
     error= (bool) ((uint32_t) error | (uint32_t) lex_unit->cleanup());
   }
-  non_agg_fields.empty();
-  inner_refs_list.empty();
+  non_agg_fields.clear();
+  inner_refs_list.clear();
   return(error);
 }
 

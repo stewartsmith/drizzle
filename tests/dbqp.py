@@ -83,7 +83,7 @@ finally:
 # At the moment, runaway servers are our biggest concern
     if server_manager and not variables['startandexit']:
         if variables['gdb']:
-            server_manager.cleanup_all_servers)
+            server_manager.cleanup_all_servers()
         else:
             server_manager.cleanup()
     if not variables['startandexit']:

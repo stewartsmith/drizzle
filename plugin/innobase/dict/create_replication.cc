@@ -128,6 +128,7 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
   drizzled::message::Table::TableOptions *options= table_message->mutable_options();
   options->set_collation_id(drizzled::my_charset_bin.number);
   options->set_collation(drizzled::my_charset_bin.name);
+  options->set_dont_replicate(true);
 
   drizzled::message::Table::Field *field= table_message->add_field();
   field->set_name("ID");

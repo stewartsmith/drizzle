@@ -338,7 +338,7 @@ bool insert_query(Session *session,TableList *table_list,
       return true;
     }
   }
-  its.rewind ();
+  its= values_list;
 
   /* Restore the current context. */
   ctx_state.restore_state(context, table_list);
@@ -1154,7 +1154,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
         order to get correct values from those fields when the select
         employs a temporary table.
       */
-      List_iterator<Item> li(*info.update_values);
+      List<Item>::iterator li(*info.update_values);
       Item *item;
 
       while ((item= li++))
