@@ -187,7 +187,7 @@ public:
 
   virtual bool sendFields(List<Item> *list)
   {
-    List_iterator_fast<Item> it(*list);
+    List<Item>::iterator it(*list);
     Item *item;
 
     column= 0;

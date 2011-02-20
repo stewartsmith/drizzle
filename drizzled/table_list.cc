@@ -94,7 +94,7 @@ TableList *TableList::last_leaf_for_name_resolution()
     */
     if ((cur_table_ref->outer_join & JOIN_TYPE_RIGHT))
     {
-      List_iterator_fast<TableList> it(cur_nested_join->join_list);
+      List<TableList>::iterator it(cur_nested_join->join_list);
       TableList *next;
       cur_table_ref= it++;
       while ((next= it++))
@@ -124,7 +124,7 @@ TableList *TableList::first_leaf_for_name_resolution()
        cur_nested_join;
        cur_nested_join= cur_table_ref->nested_join)
   {
-    List_iterator_fast<TableList> it(cur_nested_join->join_list);
+    List<TableList>::iterator it(cur_nested_join->join_list);
     cur_table_ref= it++;
     /*
       If the current nested join is a RIGHT JOIN, the operands in

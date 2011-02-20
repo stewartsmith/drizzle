@@ -245,7 +245,7 @@ bool insert_query(Session *session,TableList *table_list,
   uint64_t id;
   CopyInfo info;
   Table *table= 0;
-  List_iterator_fast<List_item> its(values_list);
+  List<List_item>::iterator its(values_list);
   List_item *values;
   Name_resolution_context *context;
   Name_resolution_context_state ctx_state;
@@ -1494,7 +1494,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   TableShare share(message::Table::INTERNAL);
   uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
-  List_iterator_fast<Item> it(*items);
+  List<Item>::iterator it(*items);
   Item *item;
   Field *tmp_field;
 

@@ -425,7 +425,7 @@ void optimizer::add_key_fields(Join *join,
 {
   if (cond->type() == Item_func::COND_ITEM)
   {
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     optimizer::KeyField *org_key_fields= *key_fields;
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)

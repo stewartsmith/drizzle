@@ -24,7 +24,7 @@ EXTRA_DIST+= \
 # Makefile for Sphinx documentation
 #
 
-SPHINXOPTS    = -W -D release=${PANDORA_RELEASE_VERSION}
+SPHINXOPTS    = ${SPHINX_WARNINGS} -D release=${PANDORA_RELEASE_VERSION}
 PAPER         =
 SPHINX_BUILDDIR      = ${top_builddir}/docs
 

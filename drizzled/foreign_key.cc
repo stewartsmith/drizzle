@@ -170,7 +170,7 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
   List<CreateField>::iterator it(table_fields);
   while ((column= cols++))
   {
-    it= table_fields;
+    it= table_fields.begin();
     while ((sql_field= it++) &&
            my_strcasecmp(system_charset_info,
                          column->field_name.str,

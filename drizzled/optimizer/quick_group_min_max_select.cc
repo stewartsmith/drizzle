@@ -719,7 +719,7 @@ int optimizer::QuickGroupMinMaxSelect::next_max_in_range()
 
 void optimizer::QuickGroupMinMaxSelect::update_min_result()
 {
-  *min_functions_it= *min_functions;
+  *min_functions_it= min_functions->begin();
   for (Item_sum *min_func; (min_func= (*min_functions_it)++); )
     min_func->reset();
 }
@@ -727,7 +727,7 @@ void optimizer::QuickGroupMinMaxSelect::update_min_result()
 
 void optimizer::QuickGroupMinMaxSelect::update_max_result()
 {
-  *max_functions_it= *max_functions;
+  *max_functions_it= max_functions->begin();
   for (Item_sum *max_func; (max_func= (*max_functions_it)++); )
     max_func->reset();
 }

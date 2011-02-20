@@ -114,7 +114,7 @@ static uint64_t get_exact_record_count(TableList *tables)
 
 int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
 {
-  List_iterator_fast<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   int const_result= 1;
   bool recalc_const_item= false;
   uint64_t count= 1;
@@ -689,7 +689,7 @@ static bool matching_cond(bool max_fl,
     }
 
     /* AND */
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item *item;
     while ((item= li++))
     {
@@ -1071,7 +1071,7 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond)
   /* If AND/OR condition */
   if (cond->type() == Item::COND_ITEM)
   {
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item *item;
     while ((item= li++))
     {
