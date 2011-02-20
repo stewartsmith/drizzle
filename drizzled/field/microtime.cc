@@ -158,7 +158,7 @@ int Microtime::store(int64_t from, bool)
   return 0;
 }
 
-double Microtime::val_real(void)
+double Microtime::val_real(void) const
 {
   uint64_t temp;
   type::Time::usec_t micro_temp;
@@ -180,7 +180,7 @@ double Microtime::val_real(void)
   return result;
 }
 
-type::Decimal *Microtime::val_decimal(type::Decimal *decimal_value)
+type::Decimal *Microtime::val_decimal(type::Decimal *decimal_value) const
 {
   type::Time ltime;
 
@@ -189,7 +189,7 @@ type::Decimal *Microtime::val_decimal(type::Decimal *decimal_value)
   return date2_class_decimal(&ltime, decimal_value);
 }
 
-int64_t Microtime::val_int(void)
+int64_t Microtime::val_int(void) const
 {
   uint64_t temp;
 
@@ -207,7 +207,7 @@ int64_t Microtime::val_int(void)
   return result;
 }
 
-String *Microtime::val_str(String *val_buffer, String *)
+String *Microtime::val_str(String *val_buffer, String *) const
 {
   uint64_t temp= 0;
   type::Time::usec_t micro_temp= 0;
@@ -224,7 +224,7 @@ String *Microtime::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Microtime::get_date(type::Time &ltime, uint32_t)
+bool Microtime::get_date(type::Time &ltime, uint32_t) const
 {
   uint64_t temp;
   uint32_t micro_temp= 0;
@@ -239,7 +239,7 @@ bool Microtime::get_date(type::Time &ltime, uint32_t)
   return false;
 }
 
-bool Microtime::get_time(type::Time &ltime)
+bool Microtime::get_time(type::Time &ltime) const
 {
   return Microtime::get_date(ltime, 0);
 }
@@ -294,7 +294,7 @@ void Microtime::set_time()
   pack_num(fractional_seconds, ptr +8);
 }
 
-long Microtime::get_timestamp(bool *null_value)
+long Microtime::get_timestamp(bool *null_value) const
 {
   if ((*null_value= is_null()))
     return 0;

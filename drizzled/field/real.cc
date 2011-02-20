@@ -136,7 +136,7 @@ int Field_real::store_decimal(const type::Decimal *dm)
   return store(dbl);
 }
 
-type::Decimal *Field_real::val_decimal(type::Decimal *decimal_value)
+type::Decimal *Field_real::val_decimal(type::Decimal *decimal_value) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
