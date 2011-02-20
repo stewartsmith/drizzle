@@ -840,7 +840,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         optimizer::SEL_IMERGE *imerge= NULL;
         optimizer::TableReadPlan *best_conj_trp= NULL;
         optimizer::TableReadPlan *new_conj_trp= NULL;
-        List_iterator_fast<optimizer::SEL_IMERGE> it(tree->merges);
+        List<optimizer::SEL_IMERGE>::iterator it(tree->merges);
         while ((imerge= it++))
         {
           new_conj_trp= get_best_disjunct_quick(session, &param, imerge, best_read_time);
@@ -5036,7 +5036,7 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
   Item::Type cond_type= cond->type();
   if (cond_type == Item::COND_ITEM) /* 'AND' or 'OR' */
   {
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item *and_or_arg= NULL;
     while ((and_or_arg= li++))
     {

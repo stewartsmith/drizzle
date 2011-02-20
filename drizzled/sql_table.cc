@@ -1881,7 +1881,7 @@ send_result:
     lex->cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List_iterator_fast<DRIZZLE_ERROR> it(session->warn_list);
+      List<DRIZZLE_ERROR>::iterator it(session->warn_list);
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
