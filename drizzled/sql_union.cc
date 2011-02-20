@@ -308,7 +308,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       assert(!empty_table);
       empty_table= (Table*) session->calloc(sizeof(Table));
       types.clear();
-      List_iterator_fast<Item> it(sl->item_list);
+      List<Item>::iterator it(sl->item_list);
       Item *item_tmp;
       while ((item_tmp= it++))
       {
@@ -327,8 +327,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 		   ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT),MYF(0));
 	goto err;
       }
-      List_iterator_fast<Item> it(sl->item_list);
-      List_iterator_fast<Item> tp(types);
+      List<Item>::iterator it(sl->item_list);
+      List<Item>::iterator tp(types);
       Item *type, *item_tmp;
       while ((type= tp++, item_tmp= it++))
       {
@@ -344,7 +344,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       Check that it was possible to aggregate
       all collations together for UNION.
     */
-    List_iterator_fast<Item> tp(types);
+    List<Item>::iterator tp(types);
     Item *type;
     uint64_t create_options;
 
@@ -610,8 +610,7 @@ bool Select_Lex_Unit::cleanup()
 
   if (union_result)
   {
-    delete union_result;
-    union_result=0; // Safety
+    safe_delete(union_result);
     table= 0; // Safety
   }
 
@@ -713,8 +712,7 @@ bool Select_Lex::cleanup()
   {
     assert((Select_Lex*)join->select_lex == this);
     error= join->destroy();
-    delete join;
-    join= 0;
+    safe_delete(join);
   }
   for (Select_Lex_Unit *lex_unit= first_inner_unit(); lex_unit ;
        lex_unit= lex_unit->next_unit())

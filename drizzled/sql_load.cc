@@ -225,7 +225,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
 
   size_t tot_length=0;
   bool use_blobs= 0, use_vars= 0;
-  List_iterator_fast<Item> it(fields_vars);
+  List<Item>::iterator it(fields_vars);
   Item *item;
 
   while ((item= it++))
@@ -431,7 +431,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                   List<Item> &set_values, READ_INFO &read_info,
                   uint32_t skip_lines, bool ignore_check_option_errors)
 {
-  List_iterator_fast<Item> it(fields_vars);
+  List<Item>::iterator it(fields_vars);
   Item_field *sql_field;
   Table *table= table_list->table;
   uint64_t id;
@@ -552,7 +552,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
 	       String &enclosed, uint32_t skip_lines,
 	       bool ignore_check_option_errors)
 {
-  List_iterator_fast<Item> it(fields_vars);
+  List<Item>::iterator it(fields_vars);
   Item *item;
   Table *table= table_list->table;
   uint32_t enclosed_length;

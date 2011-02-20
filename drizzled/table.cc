@@ -91,8 +91,7 @@ int Table::delete_table(bool free_share)
     }
     field= 0;
   }
-  delete cursor;
-  cursor= 0;				/* For easier errorchecking */
+  safe_delete(cursor);
 
   if (free_share)
   {
@@ -875,7 +874,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   blob_count= string_count= null_count= hidden_null_count= group_null_items= 0;
   param->using_indirect_summary_function= 0;
 
-  List_iterator_fast<Item> li(fields);
+  List<Item>::iterator li(fields);
   Item *item;
   Field **tmp_from_field=from_field;
   while ((item=li++))

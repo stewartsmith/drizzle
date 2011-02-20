@@ -724,7 +724,7 @@ Works like strncmp, other than 1.) considers '-' and '_' the same.
 2.) Returns -1 if strings differ, 0 if they are equal
    */
 
-  bool getopt_compare_strings(register const char *s, register const char *t,
+  bool getopt_compare_strings(const char *s, const char *t,
       uint32_t length)
   {
     char const *end= s + length;

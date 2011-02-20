@@ -782,14 +782,14 @@ static int prepare_create_table(Session *session,
       (*db_options)|= HA_OPTION_PACK_RECORD;
     }
 
-    it2= alter_info->create_list;
+    it2= alter_info->create_list.begin();
   }
 
   /* record_offset will be increased with 'length-of-null-bits' later */
   record_offset= 0;
   null_fields+= total_uneven_bit_length;
 
-  it= alter_info->create_list;
+  it= alter_info->create_list.begin();
   while ((sql_field=it++))
   {
     assert(sql_field->charset != 0);
@@ -880,7 +880,7 @@ static int prepare_create_table(Session *session,
     }
     if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
       return(true);
-    key_iterator2= alter_info->key_list;
+    key_iterator2= alter_info->key_list.begin();
     if (key->type != Key::FOREIGN_KEY)
     {
       while ((key2 = key_iterator2++) != key)
@@ -933,7 +933,7 @@ static int prepare_create_table(Session *session,
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 
-  key_iterator= alter_info->key_list;
+  key_iterator= alter_info->key_list.begin();
   key_number=0;
   for (; (key=key_iterator++) ; key_number++)
   {
@@ -1000,7 +1000,7 @@ static int prepare_create_table(Session *session,
       Key_part_spec *dup_column;
       int proto_field_nr= 0;
 
-      it= alter_info->create_list;
+      it= alter_info->create_list.begin();
       field=0;
       while ((sql_field=it++) && ++proto_field_nr &&
 	     my_strcasecmp(system_charset_info,
@@ -1027,7 +1027,7 @@ static int prepare_create_table(Session *session,
 	  return(true);
 	}
       }
-      cols2= key->columns;
+      cols2= key->columns.begin();
 
       if (create_proto.field_size() > 0)
         protofield= create_proto.mutable_field(proto_field_nr - 1);
@@ -1240,7 +1240,7 @@ static int prepare_create_table(Session *session,
 	             (qsort_cmp) sort_keys);
 
   /* Check fields. */
-  it= alter_info->create_list;
+  it= alter_info->create_list.begin();
   while ((sql_field=it++))
   {
     Field::utype type= (Field::utype) MTYP_TYPENR(sql_field->unireg_check);
@@ -1881,7 +1881,7 @@ send_result:
     lex->cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List_iterator_fast<DRIZZLE_ERROR> it(session->warn_list);
+      List<DRIZZLE_ERROR>::iterator it(session->warn_list);
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {

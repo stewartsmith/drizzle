@@ -2096,7 +2096,7 @@ bool subselect_single_select_engine::no_rows()
 void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
 {
   Item *sel_item;
-  List_iterator_fast<Item> li(item_list);
+  List<Item>::iterator li(item_list);
   res_type= STRING_RESULT;
   res_field_type= DRIZZLE_TYPE_VARCHAR;
   for (uint32_t i= 0; (sel_item= li++); i++)

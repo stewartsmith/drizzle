@@ -422,15 +422,14 @@ public:
   inline T** ref(void)	    { return (T**) base_list_iterator::ref(); }
 };
 
-
 template <class T> class List_iterator_fast :public base_list_iterator
 {
-protected:
-  inline T *replace(T *)   { return (T*) 0; }
-  inline T *replace(List<T> &) { return (T*) 0; }
-  inline void remove(void)  { }
-  inline void after(T *)   { }
-  inline T** ref(void)	    { return (T**) 0; }
+private:
+  inline T *replace(T *);
+  inline T *replace(List<T> &);
+  inline void remove(void);
+  inline void after(T *);
+  inline T** ref(void);
 
 public:
   inline List_iterator_fast(List<T> &a) : base_list_iterator(a) {}
@@ -442,7 +441,6 @@ public:
     base_list_iterator::sublist(list_arg, el_arg);
   }
 };
-
 
 /**
   Make a deep copy of each list element.

@@ -92,6 +92,12 @@ extern char *opt_drizzle_tmpdir;
 
 extern TYPELIB tx_isolation_typelib;
 
+namespace
+{
+static size_t revno= DRIZZLE7_VC_REVNO;
+static size_t release_id= DRIZZLE7_RELEASE_ID;
+}
+
 const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=
 {
@@ -308,7 +314,12 @@ sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len",
                                                   &drizzle_system_variables::group_concat_max_len);
 
 /* Global read-only variable containing hostname */
-static sys_var_const_str        sys_hostname("hostname", glob_hostname);
+static sys_var_const_string sys_hostname("hostname", getServerHostname());
+
+static sys_var_const_str sys_revid("vc_revid", DRIZZLE7_VC_REVID);
+static sys_var_const_str sys_branch("vc_branch", DRIZZLE7_VC_BRANCH);
+static sys_var_size_t_ptr_readonly sys_revno("vc_revno", &revno);
+static sys_var_size_t_ptr_readonly sys_release_id("vc_release_id", &release_id);
 
 bool sys_var::check(Session *session, set_var *var)
 {
@@ -1487,6 +1498,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_back_log, my_long_options);
     add_sys_var_to_list(&sys_basedir, my_long_options);
     add_sys_var_to_list(&sys_big_selects, my_long_options);
+    add_sys_var_to_list(&sys_branch, my_long_options);
     add_sys_var_to_list(&sys_buffer_results, my_long_options);
     add_sys_var_to_list(&sys_bulk_insert_buff_size, my_long_options);
     add_sys_var_to_list(&sys_collation_server, my_long_options);
@@ -1521,7 +1533,10 @@ int sys_var_init()
     add_sys_var_to_list(&sys_range_alloc_block_size, my_long_options);
     add_sys_var_to_list(&sys_read_buff_size, my_long_options);
     add_sys_var_to_list(&sys_read_rnd_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_release_id, my_long_options);
     add_sys_var_to_list(&sys_replicate_query, my_long_options);
+    add_sys_var_to_list(&sys_revid, my_long_options);
+    add_sys_var_to_list(&sys_revno, my_long_options);
     add_sys_var_to_list(&sys_scheduler, my_long_options);
     add_sys_var_to_list(&sys_secure_file_priv, my_long_options);
     add_sys_var_to_list(&sys_select_limit, my_long_options);
