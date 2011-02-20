@@ -322,13 +322,6 @@ public:
     el= &current->next;
     return current->info;
   }
-  inline void *next_fast(void)
-  {
-    list_node *tmp;
-    tmp= *el;
-    el= &tmp->next;
-    return tmp->info;
-  }
   inline void *replace(void *element)
   {						// Return old element
     void *tmp=current->info;
@@ -420,22 +413,6 @@ public:
   inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
   inline T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
   inline T** ref(void)	    { return (T**) base_list_iterator::ref(); }
-};
-
-template <class T> class List_iterator_fast :public base_list_iterator
-{
-private:
-  inline T *replace(T *);
-  inline T *replace(List<T> &);
-  inline void remove(void);
-  inline void after(T *);
-  inline T** ref(void);
-
-public:
-  inline List_iterator_fast(List<T> &a) : base_list_iterator(a) {}
-  inline List_iterator_fast() : base_list_iterator() {}
-  inline void init(List<T> &a) { base_list_iterator::init(a); }
-  inline T* operator++(int) { return (T*) base_list_iterator::next_fast(); }
 };
 
 /**
