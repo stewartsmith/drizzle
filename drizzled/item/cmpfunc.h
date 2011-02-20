@@ -1597,15 +1597,15 @@ public:
 };
 
 
-class Item_equal_iterator : public List_iterator_fast<Item_field>
+class Item_equal_iterator : public List<Item_field>::iterator
 {
 public:
   inline Item_equal_iterator(Item_equal &item_equal)
-    :List_iterator_fast<Item_field> (item_equal.fields)
+    :List<Item_field>::iterator (item_equal.fields)
   {}
   inline Item_field* operator++(int)
   {
-    Item_field *item= (*(List_iterator_fast<Item_field> *) this)++;
+    Item_field *item= (*(List<Item_field>::iterator *) this)++;
     return  item;
   }
 };

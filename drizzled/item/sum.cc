@@ -387,7 +387,7 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   if ((args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     uint32_t i=0;
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list);
     Item *item;
 
     while ((item=li++))
@@ -2998,7 +2998,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
   order= (Order**)(args + arg_count);
 
   /* fill args items of show and sort */
-  List_iterator_fast<Item> li(*select_list);
+  List<Item>::iterator li(*select_list);
 
   for (arg_ptr=args ; (item_select= li++) ; arg_ptr++)
     *arg_ptr= item_select;
