@@ -4697,8 +4697,22 @@ static void append_result(string *ds, drizzle_result_st *res)
     for (i = 0; i < num_fields; i++)
     {
       column= drizzle_column_next(res);
-      append_field(ds, i, column,
-                   (const char*)row[i], lengths[i], !row[i]);
+      if (row[i] && (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY))
+      {
+        if (boost::lexical_cast<uint32_t>(row[i]))
+        {
+          append_field(ds, i, column, "YES", 3, false);
+        }
+        else
+        {
+          append_field(ds, i, column, "NO", 2, false);
+        }
+      }
+      else
+      {
+        append_field(ds, i, column,
+                     (const char*)row[i], lengths[i], !row[i]);
+      }
     }
     if (!display_result_vertically)
       ds->append("\n");
