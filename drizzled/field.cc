@@ -753,19 +753,19 @@ bool Field::is_null(ptrdiff_t row_offset) const
     table->null_row;
 }
 
-bool Field::is_real_null(ptrdiff_t row_offset)
+bool Field::is_real_null(ptrdiff_t row_offset) const
 {
   return null_ptr ? (null_ptr[row_offset] & null_bit ? true : false) : false;
 }
 
-bool Field::is_null_in_record(const unsigned char *record)
+bool Field::is_null_in_record(const unsigned char *record) const
 {
   if (! null_ptr)
     return false;
   return test(record[(uint32_t) (null_ptr -table->getInsertRecord())] & null_bit);
 }
 
-bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset)
+bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset) const
 {
   if (! null_ptr)
     return false;
@@ -784,12 +784,12 @@ void Field::set_notnull(ptrdiff_t row_offset)
     null_ptr[row_offset]&= (unsigned char) ~null_bit;
 }
 
-bool Field::maybe_null(void)
+bool Field::maybe_null(void) const
 {
   return null_ptr != 0 || table->maybe_null;
 }
 
-bool Field::real_maybe_null(void)
+bool Field::real_maybe_null(void) const
 {
   return null_ptr != 0;
 }
@@ -851,7 +851,7 @@ Field::Field(unsigned char *ptr_arg,
 {
 }
 
-void Field::hash(uint32_t *nr, uint32_t *nr2)
+void Field::hash(uint32_t *nr, uint32_t *nr2) const
 {
   if (is_null())
   {

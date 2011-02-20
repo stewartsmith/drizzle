@@ -364,13 +364,13 @@ public:
   virtual uint32_t size_of() const =0;
 
   bool is_null(ptrdiff_t row_offset= 0) const;
-  bool is_real_null(ptrdiff_t row_offset= 0);
-  bool is_null_in_record(const unsigned char *record);
-  bool is_null_in_record_with_offset(ptrdiff_t offset);
+  bool is_real_null(ptrdiff_t row_offset= 0) const;
+  bool is_null_in_record(const unsigned char *record) const;
+  bool is_null_in_record_with_offset(ptrdiff_t offset) const;
   void set_null(ptrdiff_t row_offset= 0);
   void set_notnull(ptrdiff_t row_offset= 0);
-  bool maybe_null(void);
-  bool real_maybe_null(void);
+  bool maybe_null(void) const;
+  bool real_maybe_null(void) const;
 
   virtual void make_field(SendField *);
   virtual void sort_string(unsigned char *buff,uint32_t length)=0;
@@ -738,7 +738,7 @@ public:
   }
 
   /* Hash value */
-  virtual void hash(uint32_t *nr, uint32_t *nr2);
+  virtual void hash(uint32_t *nr, uint32_t *nr2) const;
   friend bool reopen_table(Session *,Table *,bool);
 
   friend class CopyField;
