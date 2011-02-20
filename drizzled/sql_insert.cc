@@ -338,7 +338,7 @@ bool insert_query(Session *session,TableList *table_list,
       return true;
     }
   }
-  its= values_list;
+  its= values_list.begin();
 
   /* Restore the current context. */
   ctx_state.restore_state(context, table_list);

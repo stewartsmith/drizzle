@@ -230,8 +230,6 @@ public:
   inline bool is_empty() { return first == &end_of_list ; }
   inline list_node *last_ref() { return &end_of_list; }
   friend class base_list_iterator;
-  friend class error_list;
-  friend class error_list_iterator;
 
 #ifdef LIST_EXTRA_DEBUG
   /*
@@ -363,7 +361,6 @@ public:
   {
     return el == &list->last_ref()->next;
   }
-  friend class error_list_iterator;
 };
 
 template <class T> class List_iterator;
@@ -407,7 +404,7 @@ public:
 template <class T> class List_iterator :public base_list_iterator
 {
 public:
-  List_iterator(List<T> &a) : base_list_iterator(a) {}
+  explicit List_iterator(List<T> &a) : base_list_iterator(a) {}
   List_iterator() : base_list_iterator() {}
   inline T* operator++(int) { return (T*) base_list_iterator::next(); }
   inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }

@@ -2414,7 +2414,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     for (i= 0, start_group= group_list ;i++ < pos ;start_group= start_group->next)
     {}
 
-    it= fields_arg;
+    it= fields_arg.begin();
     while ((item= it++))
     {
       if (item == first_field)
