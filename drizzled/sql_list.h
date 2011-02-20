@@ -293,13 +293,13 @@ class base_list_iterator
 protected:
   base_list *list;
   list_node **el,**prev,*current;
+public:
   void sublist(base_list &ls, uint32_t elm)
   {
     ls.first= *el;
     ls.last= list->last;
     ls.elements= elm;
   }
-public:
   base_list_iterator()
     :list(0), el(0), prev(0), current(0)
   {}
@@ -436,10 +436,6 @@ public:
   inline List_iterator_fast() : base_list_iterator() {}
   inline void init(List<T> &a) { base_list_iterator::init(a); }
   inline T* operator++(int) { return (T*) base_list_iterator::next_fast(); }
-  void sublist(List<T> &list_arg, uint32_t el_arg)
-  {
-    base_list_iterator::sublist(list_arg, el_arg);
-  }
 };
 
 /**
