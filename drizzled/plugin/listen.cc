@@ -17,9 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <drizzled/gettext.h>
+#include <config.h>
+
+#include <drizzled/errmsg_print.h>
 #include <drizzled/error.h>
+#include <drizzled/gettext.h>
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/null_client.h>

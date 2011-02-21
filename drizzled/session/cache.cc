@@ -17,14 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <vector>
 
-#include "drizzled/session/cache.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/plugin/authorization.h"
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/current_session.h>
+#include <drizzled/plugin/authorization.h>
 
 #include <boost/foreach.hpp>
 
@@ -34,7 +34,7 @@ namespace drizzled
 namespace session
 {
 
-Session::shared_ptr Cache::find(const session_id_t &id)
+Cache::session_shared_ptr Cache::find(const session_id_t &id)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 
@@ -46,7 +46,7 @@ Session::shared_ptr Cache::find(const session_id_t &id)
     }
   }
 
-  return Session::shared_ptr();
+  return session_shared_ptr();
 }
 
 void Cache::shutdownFirst()
@@ -76,13 +76,13 @@ size_t Cache::count()
   return cache.size();
 }
 
-void Cache::insert(Session::shared_ptr &arg)
+void Cache::insert(session_shared_ptr &arg)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   cache.push_back(arg);
 }
 
-void Cache::erase(Session::shared_ptr &arg)
+void Cache::erase(session_shared_ptr &arg)
 {
   list::iterator iter= std::find(cache.begin(), cache.end(), arg);
   assert(iter != cache.end());

@@ -25,7 +25,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -47,17 +47,32 @@ public:
 
   enum PasswordType
   {
+    NONE,
     PLAIN_TEXT,
     MYSQL_HASH
   };
 
   User():
-    password_type(PLAIN_TEXT),
+    password_type(NONE),
     _user(""),
     _address("")
   { }
 
   virtual void getSQLPath(std::string &arg) const;
+
+  bool hasPassword() const
+  {
+    switch (password_type)
+    {
+    case NONE:
+      return false;
+    case PLAIN_TEXT:
+    case MYSQL_HASH:
+      break;
+    }
+
+    return true;
+  }
 
   const std::string& address() const
   {

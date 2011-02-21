@@ -23,7 +23,7 @@
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/atomics.h>
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/plugin/table_function.h>
 
 #include "net_serv.h"
 

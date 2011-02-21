@@ -1,7 +1,7 @@
 CREATE TABLE
 ============
 
-A CREATE statement in SQL creates an object inside of Drizzle. One of the most common CREATE command is the CREATE TABLE command.
+A CREATE statement in SQL creates an object inside of Drizzle. One of the most common CREATE commands is the CREATE TABLE command.
 
 CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
     (create_definition, ...)

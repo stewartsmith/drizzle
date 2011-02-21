@@ -24,11 +24,11 @@
 
 #include <string>
 
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/identifier.h"
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/identifier.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -56,7 +56,7 @@ public:
 
   static bool addPlugin(plugin::Authentication *auth);
   static void removePlugin(plugin::Authentication *auth);
-  static bool isAuthenticated(drizzled::identifier::User::const_shared_ptr sctx,
+  static bool isAuthenticated(drizzled::identifier::User::const_reference sctx,
                               const std::string &password);
 };
 

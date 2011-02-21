@@ -64,6 +64,7 @@ SQL Language:
    getting_information 
    transactional 
    administrative
+   resources/index
 
 User Level Topics:
 ------------------

@@ -20,40 +20,19 @@
 
 
 /* Function with list databases, tables or fields */
-#include "config.h"
-#include <drizzled/sql_select.h>
-#include <drizzled/show.h>
-#include <drizzled/gettext.h>
-#include <drizzled/util/convert.h>
-#include <drizzled/error.h>
-#include <drizzled/tztime.h>
-#include <drizzled/data_home.h>
-#include <drizzled/item/blob.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/return_int.h>
-#include <drizzled/item/empty_string.h>
-#include <drizzled/item/return_date_time.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/db.h>
-#include <drizzled/field/epoch.h>
-#include <drizzled/field/decimal.h>
-#include <drizzled/lock.h>
-#include <drizzled/item/return_date_time.h>
-#include <drizzled/item/empty_string.h>
-#include "drizzled/session/cache.h"
-#include <drizzled/message/schema.pb.h>
-#include <drizzled/plugin/client.h>
-#include <drizzled/cached_directory.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/message/statement_transform.h"
+#include <config.h>
 
-#include "drizzled/statement/show.h"
-#include "drizzled/statement/show_errors.h"
-#include "drizzled/statement/show_warnings.h"
+#include <drizzled/data_home.h>
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/session.h>
+#include <drizzled/show.h>
+#include <drizzled/sql_select.h>
+
+#include <drizzled/statement/show.h>
+#include <drizzled/statement/show_errors.h>
+#include <drizzled/statement/show_warnings.h>
 
 
 #include <sys/stat.h>
@@ -75,7 +54,7 @@ str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
+int wild_case_compare(const charset_info_st * const cs, const char *str, const char *wildstr)
 {
   register int flag;
 
@@ -85,11 +64,14 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char
     {
       if (*wildstr == internal::wild_prefix && wildstr[1])
         wildstr++;
+
       if (my_toupper(cs, *wildstr++) != my_toupper(cs, *str++))
         return (1);
     }
+
     if (! *wildstr )
       return (*str != 0);
+
     if (*wildstr++ == internal::wild_one)
     {
       if (! *str++)
@@ -99,6 +81,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char
     {						/* Found '*' */
       if (! *wildstr)
         return (0);		/* '*' as last char: OK */
+
       flag=(*wildstr != internal::wild_many && *wildstr != internal::wild_one);
       do
       {
@@ -107,15 +90,21 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char
           char cmp;
           if ((cmp= *wildstr) == internal::wild_prefix && wildstr[1])
             cmp= wildstr[1];
+
           cmp= my_toupper(cs, cmp);
+
           while (*str && my_toupper(cs, *str) != cmp)
             str++;
+
           if (! *str)
             return (1);
         }
+
         if (wild_case_compare(cs, str, wildstr) == 0)
           return (0);
+
       } while (*str++);
+
       return (1);
     }
   }
@@ -204,7 +193,7 @@ bool buildTables(Session *session, const char *ident)
     session->getLex()->select_lex.db= const_cast<char *>(ident);
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
-      my_error(ER_BAD_DB_ERROR, MYF(0), ident);
+      my_error(ER_BAD_DB_ERROR, identifier);
     }
     select->setShowPredicate(ident, "");
   }
@@ -277,7 +266,7 @@ bool buildTableStatus(Session *session, const char *ident)
     identifier::Schema identifier(ident);
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
-      my_error(ER_BAD_DB_ERROR, MYF(0), ident);
+      my_error(ER_BAD_DB_ERROR, identifier);
     }
 
     select->setShowPredicate(ident, "");

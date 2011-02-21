@@ -6,12 +6,16 @@ Dynamic SQL enables you to build SQL statements dynamically at runtime. It can b
 Dynamic SQL allows you to execute DDL statements (and other SQL statements) that are not supported in purely static SQL programs.
 
 In Drizzle you can use the EXECUTE command along with :doc:'user defined variables <variables>'
-to create SQL in a dynamic manner on the server. An exmaple of this is: ::
+to create SQL in a dynamic manner on the server. An exmaple of this is:
+
+.. code-block:: mysql
 
 	SET @var= "SELECT 1";
 	EXECUTE @var;
 
-You can also omit the variable and just insert the SQL directly: ::
+You can also omit the variable and just insert the SQL directly:
+
+.. code-block:: mysql
 
 	EXECUTE "SELECT 1";
 
@@ -19,7 +23,9 @@ By adding WITH NO RETURN you can have EXECUTE and no errors will be
 generated and no data will be returned by the execution of the statement.
 
 If you want to launch the query in a separate session, you can do that with
-the following: ::
+the following:
+
+.. code-block:: mysql
 
 	EXECUTE "SELECT 1" CONCURRENT;
 
@@ -27,4 +33,6 @@ The query will run in a new session and will execute as the user that
 launched it. It can be killed via KILL and the system limit on total number
 of sessions will be enforced.
 
-FIXME: EXECUTE executes the statements inside an explicit transaction.
+.. todo::
+
+   EXECUTE executes the statements inside an explicit transaction.

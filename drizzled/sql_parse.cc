@@ -13,62 +13,63 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #define DRIZZLE_LEX 1
 
-#include "drizzled/item/num.h"
-#include "drizzled/abort_exception.h"
+#include <drizzled/item/num.h>
+#include <drizzled/abort_exception.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
-#include "drizzled/transaction_services.h"
+#include <drizzled/transaction_services.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
-#include <drizzled/db.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/null.h>
 #include <drizzled/session.h>
+#include <drizzled/session/cache.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
-#include "drizzled/probes.h"
-#include "drizzled/session/cache.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/probes.h>
+#include <drizzled/global_charset_info.h>
 
-#include "drizzled/plugin/logging.h"
-#include "drizzled/plugin/query_rewrite.h"
-#include "drizzled/plugin/query_cache.h"
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/optimizer/explain_plan.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/plugin/event_observer.h"
-#include "drizzled/visibility.h"
+#include <drizzled/plugin/logging.h>
+#include <drizzled/plugin/query_rewrite.h>
+#include <drizzled/plugin/query_cache.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/optimizer/explain_plan.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/plugin/event_observer.h>
+#include <drizzled/visibility.h>
+
+#include <drizzled/schema.h>
 
 #include <limits.h>
 
 #include <bitset>
 #include <algorithm>
 #include <boost/date_time.hpp>
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 using namespace std;
 
-extern int DRIZZLEparse(void *session); // from sql_yacc.cc
+extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
 
 namespace drizzled
 {
 
 /* Prototypes */
-bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
 void parse(Session *session, const char *inBuf, uint32_t length);
 
@@ -223,7 +224,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     identifier::Schema identifier(tmp);
 
-    if (not change_db(session, identifier))
+    if (not schema::change(*session, identifier))
     {
       session->my_ok();
     }
@@ -569,6 +570,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         result->abort();
       else
         result->send_eof();
+
       delete result;
     }
     else
@@ -593,7 +595,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
 #define MY_YACC_INIT 1000			// Start with big alloc
 #define MY_YACC_MAX  32000			// Because of 'short'
 
-bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
+bool my_yyoverflow(short **yyss, ParserType **yyvs, ulong *yystacksize)
 {
   LEX	*lex= current_session->lex;
   ulong old_info=0;
@@ -618,7 +620,7 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
     memcpy(lex->yacc_yyvs, *yyvs, old_info*sizeof(**yyvs));
   }
   *yyss=(short*) lex->yacc_yyss;
-  *yyvs=(YYSTYPE*) lex->yacc_yyvs;
+  *yyvs=(ParserType*) lex->yacc_yyvs;
   return 0;
 }
 
@@ -844,7 +846,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
                       &default_key_create_info,
                       0, lex->col_list);
     statement->alter_info.key_list.push_back(key);
-    lex->col_list.empty();
+    lex->col_list.clear();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
   {
@@ -854,7 +856,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
                  &default_key_create_info, 0,
                  lex->col_list);
     statement->alter_info.key_list.push_back(key);
-    lex->col_list.empty();
+    lex->col_list.clear();
   }
 
   if (default_value)
@@ -955,7 +957,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     my_casedn_str(files_charset_info, table->db.str);
 
     identifier::Schema schema_identifier(string(table->db.str));
-    if (not check_db_name(session, schema_identifier))
+    if (not schema::check(*session, schema_identifier))
     {
 
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
@@ -971,7 +973,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                  ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    if (!(alias_str= (char*) session->memdup(alias_str,table->table.length+1)))
+    if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
       return NULL;
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
@@ -1085,7 +1087,7 @@ bool Select_Lex::init_nested_join(Session *session)
   ptr->alias= (char*) "(nested_join)";
   embedding= ptr;
   join_list= &nested_join->join_list;
-  join_list->empty();
+  join_list->clear();
   return false;
 }
 
@@ -1160,7 +1162,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
   embedded_list= &nested_join->join_list;
-  embedded_list->empty();
+  embedded_list->clear();
 
   for (uint32_t i=0; i < 2; i++)
   {
@@ -1705,7 +1707,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 
   /* Parse the query. */
 
-  bool parse_status= DRIZZLEparse(session) != 0;
+  bool parse_status= base_sql_parse(session) != 0;
 
   /* Check that if DRIZZLEparse() failed, session->is_error() is set. */
 

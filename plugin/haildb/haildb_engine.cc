@@ -71,10 +71,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ***********************************************************************/
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/internal/my_pthread.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/plugin/error_message.h>
 
@@ -88,9 +88,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
-#include "drizzled/global_charset_info.h"
+#include <drizzled/global_charset_info.h>
 
 #include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"
@@ -101,15 +101,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "haildb_engine.h"
 
 #include <drizzled/field.h>
-#include "drizzled/field/blob.h"
-#include "drizzled/field/enum.h"
+#include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
 #include <drizzled/session.h>
-#include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include <iostream>
 #include <drizzled/charset.h>
+#include <drizzled/current_session.h>
+
+#include <iostream>
 
 namespace po= boost::program_options;
+#include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
@@ -275,6 +277,7 @@ static int ib_err_t_to_drizzle_error(Session* session, ib_err_t err)
     return HA_ERR_LOCK_DEADLOCK;
 
   case DB_LOCK_WAIT_TIMEOUT:
+    session->markTransactionForRollback(false);
     return HA_ERR_LOCK_WAIT_TIMEOUT;
 
   case DB_NO_REFERENCED_ROW:

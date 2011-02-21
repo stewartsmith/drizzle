@@ -17,18 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/string.h"
-#include "drizzled/optimizer/explain_plan.h"
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/join.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+
+#include <drizzled/session.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/string.h>
+#include <drizzled/optimizer/explain_plan.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/join.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/select_result.h>
 
 #include <cstdio>
 #include <string>
@@ -73,7 +75,6 @@ static const string select_type_str[]=
 
 void optimizer::ExplainPlan::printPlan()
 {
-  List<Item> field_list;
   List<Item> item_list;
   Session *session= join->session;
   select_result *result= join->result;
@@ -115,7 +116,7 @@ void optimizer::ExplainPlan::printPlan()
        appreciated :)
      */
     char table_name_buffer[NAME_LEN];
-    item_list.empty();
+    item_list.clear();
     /* id */
     item_list.push_back(new Item_null);
     /* select_type */
@@ -180,21 +181,15 @@ void optimizer::ExplainPlan::printPlan()
     {
       JoinTable *tab= join->join_tab + i;
       Table *table= tab->table;
-      char buff[512];
-      char buff1[512], buff2[512], buff3[512];
       char keylen_str_buf[64];
-      String extra(buff, sizeof(buff),cs);
+      string extra;
       char table_name_buffer[NAME_LEN];
-      String tmp1(buff1,sizeof(buff1),cs);
-      String tmp2(buff2,sizeof(buff2),cs);
-      String tmp3(buff3,sizeof(buff3),cs);
-      extra.length(0);
-      tmp1.length(0);
-      tmp2.length(0);
-      tmp3.length(0);
+      string tmp1;
+      string tmp2;
+      string tmp3;
 
       quick_type= -1;
-      item_list.empty();
+      item_list.clear();
       /* id */
       item_list.push_back(new Item_uint((uint32_t)
             join->select_lex->select_number));
@@ -241,15 +236,14 @@ void optimizer::ExplainPlan::printPlan()
           if (tab->keys.test(j))
           {
             if (tmp1.length())
-              tmp1.append(',');
+              tmp1.append(",");
             tmp1.append(table->key_info[j].name,
-                        strlen(table->key_info[j].name),
-                        system_charset_info);
+                        strlen(table->key_info[j].name));
           }
         }
       }
       if (tmp1.length())
-        item_list.push_back(new Item_string(tmp1.ptr(),tmp1.length(),cs));
+        item_list.push_back(new Item_string(tmp1.c_str(),tmp1.length(),cs));
       else
         item_list.push_back(item_null);
 
@@ -268,12 +262,11 @@ void optimizer::ExplainPlan::printPlan()
         for (StoredKey **ref= tab->ref.key_copy; *ref; ref++)
         {
           if (tmp2.length())
-            tmp2.append(',');
-          tmp2.append((*ref)->name(), 
-                       strlen((*ref)->name()),
-                       system_charset_info);
+            tmp2.append(",");
+          tmp2.append((*ref)->name(),
+                      strlen((*ref)->name()));
         }
-        item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
+        item_list.push_back(new Item_string(tmp2.c_str(),tmp2.length(),cs));
       }
       else if (tab->type == AM_NEXT)
       {
@@ -290,8 +283,8 @@ void optimizer::ExplainPlan::printPlan()
       else if (tab->select && tab->select->quick)
       {
         tab->select->quick->add_keys_and_lengths(&tmp2, &tmp3);
-        item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
-        item_list.push_back(new Item_string(tmp3.ptr(),tmp3.length(),cs));
+        item_list.push_back(new Item_string(tmp2.c_str(),tmp2.length(),cs));
+        item_list.push_back(new Item_string(tmp3.c_str(),tmp3.length(),cs));
         item_list.push_back(item_null);
       }
       else
@@ -305,12 +298,11 @@ void optimizer::ExplainPlan::printPlan()
       double examined_rows;
       if (tab->select && tab->select->quick)
       {
-        examined_rows= rows2double(tab->select->quick->records);
+        examined_rows= tab->select->quick->records;
       }
       else if (tab->type == AM_NEXT || tab->type == AM_ALL)
       {
-        examined_rows= rows2double(tab->limit ? tab->limit :
-                                                tab->table->cursor->records());
+        examined_rows= tab->limit ? tab->limit : tab->table->cursor->records();
       }
       else
       {
@@ -347,20 +339,14 @@ void optimizer::ExplainPlan::printPlan()
       else if (tab->packed_info & TAB_INFO_HAVE_VALUE)
       {
         if (tab->packed_info & TAB_INFO_USING_INDEX)
-          extra.append(STRING_WITH_LEN("; Using index"));
+          extra.append("; Using index");
         if (tab->packed_info & TAB_INFO_USING_WHERE)
-          extra.append(STRING_WITH_LEN("; Using where"));
+          extra.append("; Using where");
         if (tab->packed_info & TAB_INFO_FULL_SCAN_ON_NULL)
-          extra.append(STRING_WITH_LEN("; Full scan on NULL key"));
-        /* Skip initial "; "*/
-        const char *str= extra.ptr();
-        uint32_t len= extra.length();
-        if (len)
-        {
-          str += 2;
-          len -= 2;
-        }
-        item_list.push_back(new Item_string(str, len, cs));
+          extra.append("; Full scan on NULL key");
+        if (extra.length())
+          extra.erase(0, 2);        /* Skip initial "; "*/
+        item_list.push_back(new Item_string(extra.c_str(), extra.length(), cs));
       }
       else
       {
@@ -374,7 +360,7 @@ void optimizer::ExplainPlan::printPlan()
             quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT ||
             quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE)
         {
-          extra.append(STRING_WITH_LEN("; Using "));
+          extra.append("; Using ");
           tab->select->quick->add_info_string(&extra);
         }
         if (tab->select)
@@ -399,65 +385,58 @@ void optimizer::ExplainPlan::printPlan()
               if (tmp.any())
                 s << uppercase << hex << tmp.to_ulong();
             }
-            extra.append(STRING_WITH_LEN("; Range checked for each "
-                  "record (index map: 0x"));
+            extra.append("; Range checked for each record (index map: 0x");
             extra.append(s.str().c_str());
-            extra.append(')');
+            extra.append(")");
           }
           else if (tab->select->cond)
           {
-            extra.append(STRING_WITH_LEN("; Using where"));
+            extra.append("; Using where");
           }
         }
         if (key_read)
         {
           if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX)
-            extra.append(STRING_WITH_LEN("; Using index for group-by"));
+            extra.append("; Using index for group-by");
           else
-            extra.append(STRING_WITH_LEN("; Using index"));
+            extra.append("; Using index");
         }
         if (table->reginfo.not_exists_optimize)
-          extra.append(STRING_WITH_LEN("; Not exists"));
+          extra.append("; Not exists");
 
         if (need_tmp_table)
         {
           need_tmp_table=0;
-          extra.append(STRING_WITH_LEN("; Using temporary"));
+          extra.append("; Using temporary");
         }
         if (need_order)
         {
           need_order=0;
-          extra.append(STRING_WITH_LEN("; Using filesort"));
+          extra.append("; Using filesort");
         }
         if (distinct & test_all_bits(used_tables,session->used_tables))
-          extra.append(STRING_WITH_LEN("; Distinct"));
+          extra.append("; Distinct");
 
         if (tab->insideout_match_tab)
         {
-          extra.append(STRING_WITH_LEN("; LooseScan"));
+          extra.append("; LooseScan");
         }
 
         for (uint32_t part= 0; part < tab->ref.key_parts; part++)
         {
           if (tab->ref.cond_guards[part])
           {
-            extra.append(STRING_WITH_LEN("; Full scan on NULL key"));
+            extra.append("; Full scan on NULL key");
             break;
           }
         }
 
         if (i > 0 && tab[-1].next_select == sub_select_cache)
-          extra.append(STRING_WITH_LEN("; Using join buffer"));
+          extra.append("; Using join buffer");
 
-        /* Skip initial "; "*/
-        const char *str= extra.ptr();
-        uint32_t len= extra.length();
-        if (len)
-        {
-          str += 2;
-          len -= 2;
-        }
-        item_list.push_back(new Item_string(str, len, cs));
+        if (extra.length())
+          extra.erase(0, 2);
+        item_list.push_back(new Item_string(extra.c_str(), extra.length(), cs));
       }
       // For next iteration
       used_tables|=table->map;

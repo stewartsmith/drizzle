@@ -17,8 +17,8 @@
 #define DRIZZLED_TYPE_DECIMAL_H
 #include <assert.h>
 #include <drizzled/sql_string.h>
-#include "drizzled/definitions.h"
-#include "drizzled/type/time.h"
+#include <drizzled/definitions.h>
+#include <drizzled/type/time.h>
 namespace drizzled
 {
 
@@ -122,8 +122,6 @@ inline int decimal_string_size(const decimal_t *dec)
 
 
 #define DECIMAL_LONGLONG_DIGITS 22
-#define DECIMAL_LONG_DIGITS 10
-#define DECIMAL_LONG3_DIGITS 8
 
 /** maximum length of buffer in our big digits (uint32_t). */
 #define DECIMAL_BUFF_LENGTH 9
@@ -147,11 +145,6 @@ inline int decimal_string_size(const decimal_t *dec)
   digits + 1 position for sign + 1 position for decimal point)
 */
 #define DECIMAL_MAX_STR_LENGTH (DECIMAL_MAX_POSSIBLE_PRECISION + 2)
-
-/**
-  maximum size of packet length.
-*/
-#define DECIMAL_MAX_FIELD_SIZE DECIMAL_MAX_PRECISION
 
 namespace type {
 class Decimal;
@@ -455,6 +448,10 @@ inline type::Decimal &decimal_zero_const()
   static type::Decimal _decimal_zero;
   return _decimal_zero;
 }
+
+double my_double_round(double value, int64_t dec, bool dec_unsigned,
+                       bool truncate);
+
 
 #define decimal_zero decimal_zero_const()
 

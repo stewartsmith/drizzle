@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
@@ -38,7 +38,7 @@ Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
       getSession()->getLex()->type= ONLY_KILL_QUERY;
     }
 
-    getSession()->getLex()->value_list.empty();
+    getSession()->getLex()->value_list.clear();
     getSession()->getLex()->value_list.push_front(item);
     getSession()->getLex()->sql_command= SQLCOM_KILL;
   }

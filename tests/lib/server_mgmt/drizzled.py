@@ -40,8 +40,13 @@ class drizzleServer():
 
     """
 
-    def __init__(self, name, server_manager, server_options
-                , requester, workdir_root):
+    def __init__( self
+                , name
+                , server_manager
+                , default_storage_engine
+                , server_options
+                , requester
+                , workdir_root):
         self.skip_keys = [ 'server_manager'
                          , 'system_manager'
                          , 'dirset'
@@ -55,12 +60,14 @@ class drizzleServer():
         self.initial_run = 1
         self.owner = requester
         self.server_options = server_options
+        self.default_storage_engine = default_storage_engine
         self.server_manager = server_manager
         # We register with server_manager asap
         self.server_manager.log_server(self, requester)
 
         self.system_manager = self.server_manager.system_manager
         self.valgrind = self.system_manager.valgrind
+        self.gdb = self.system_manager.gdb
         if self.valgrind:
             self.valgrind_time_buffer = 10
         else:
@@ -157,20 +164,32 @@ class drizzleServer():
             as desired / intended
  
         """
-      
-        return "%s %s %s --mysql-protocol.port=%d --mysql-protocol.connect-timeout=60 --mysql-unix-socket-protocol.path=%s --pid-file=%s --drizzle-protocol.port=%d --datadir=%s --tmpdir=%s --innodb.data-file-path=ibdata1:20M:autoextend --sort-buffer-size=256K --max-heap-table-size=1M %s %s > %s 2>&1 & " % ( self.cmd_prefix
-                                               , self.server_path
-                                               , self.process_server_options()
-                                               , self.master_port
-                                               , self.socket_file
-                                               , self.pid_file
-                                               , self.drizzle_tcp_port
-                                               , self.datadir
-                                               , self.tmpdir
-                                               , self.secure_file_string
-                                               , self.user_string 
-                                               , self.error_log
-                                               )
+
+        server_args = [ self.process_server_options()
+                      , "--mysql-protocol.port=%d" %(self.master_port)
+                      , "--mysql-protocol.connect-timeout=60"
+                      , "--innodb.data-file-path=ibdata1:20M:autoextend"
+                      , "--sort-buffer-size=256K"
+                      , "--max-heap-table-size=1M"
+                      , "--mysql-unix-socket-protocol.path=%s" %(self.socket_file)
+                      , "--pid-file=%s" %(self.pid_file)
+                      , "--drizzle-protocol.port=%d" %(self.drizzle_tcp_port)
+                      , "--default-storage-engine=%s" %(self.default_storage_engine)
+                      , "--datadir=%s" %(self.datadir)
+                      , "--tmpdir=%s" %(self.tmpdir)
+                      , self.secure_file_string
+                      , self.user_string
+                      ]
+
+        if self.gdb:
+            server_args.append('--gdb')
+            return self.system_manager.handle_gdb_reqs(self, server_args)
+        else:
+            return "%s %s %s & " % ( self.cmd_prefix
+                                   , self.server_path
+                                   , " ".join(server_args)
+                                   )
+
 
     def get_stop_cmd(self):
         """ Return the command that will shut us down """

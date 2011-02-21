@@ -21,9 +21,12 @@
 #define DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H
 
 #include <drizzled/function/func.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {
+
+class sys_var;
 
 Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
                      LEX_STRING component);
@@ -35,6 +38,7 @@ class Item_func_get_system_var :public Item_func
   sys_var *var;
   sql_var_t var_type;
   LEX_STRING component;
+
 public:
   Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
                            LEX_STRING *component_arg, const char *name_arg,

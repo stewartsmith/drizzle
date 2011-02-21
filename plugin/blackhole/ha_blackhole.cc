@@ -13,23 +13,27 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
-#include <drizzled/table.h>
+#include <config.h>
+
 #include <drizzled/error.h>
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/global_charset_info.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_pthread.h>
+#include <drizzled/message/table.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/table.h>
+
 
 #include "ha_blackhole.h"
 
 #include <fcntl.h>
 
-#include <string>
-#include <map>
 #include <fstream>
-#include <drizzled/message/table.pb.h>
-#include "drizzled/internal/m_string.h"
+#include <map>
+#include <string>
+
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-#include "drizzled/global_charset_info.h"
 
 
 using namespace std;

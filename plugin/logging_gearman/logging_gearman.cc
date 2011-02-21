@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <boost/scoped_array.hpp>
 
@@ -262,7 +262,7 @@ public:
                session->tmp_table,
                session->total_warn_count,
                session->getServerId(),
-               drizzled::glob_hostname
+               drizzled::getServerHostname().c_str()
                );
   
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];

@@ -22,10 +22,13 @@
 #ifndef DRIZZLED_OPTIMIZER_RANGE_H
 #define DRIZZLED_OPTIMIZER_RANGE_H
 
-#include "drizzled/field.h"
-#include "drizzled/item/sum.h"
+#include <drizzled/field.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/table_reference.h>
 
 #include <queue>
+
+#include <boost/dynamic_bitset.hpp>
 
 namespace drizzled
 {
@@ -238,7 +241,8 @@ public:
    * 
    * @note This is used by during explain plan.
    */
-  virtual void add_keys_and_lengths(String *key_names, String *used_lengths)=0;
+  virtual void add_keys_and_lengths(std::string *key_names,
+                                    std::string *used_lengths)=0;
 
   /**
    * Append text representation of quick select structure (what and how is
@@ -249,9 +253,9 @@ public:
    * This function is implemented only by quick selects that merge other quick
    * selects output and/or can produce output suitable for merging.
    */
-  virtual void add_info_string(String *) 
+  virtual void add_info_string(std::string *)
   {}
-  
+
   /**
    * Returns true if any index used by this quick select
    * uses field which is marked in passed bitmap.
@@ -312,9 +316,9 @@ class SqlSelect : public memory::SqlAlloc
 };
 
 QuickRangeSelect *get_quick_select_for_ref(Session *session, 
-                                             Table *table,
-                                             struct table_reference_st *ref,
-                                             ha_rows records);
+                                           Table *table,
+                                           table_reference_st *ref,
+                                           ha_rows records);
 
 /*
   Create a QuickRangeSelect from given key and SEL_ARG tree for that key.

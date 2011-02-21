@@ -18,13 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
 #include <drizzled/message.h>
 #include <drizzled/identifier.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/select_create.h>
 
 #include <iostream>
 
@@ -291,7 +294,8 @@ bool statement::CreateTable::check(const identifier::Table &identifier)
   // See if any storage engine objects to the name of the file
   if (not plugin::StorageEngine::canCreateTable(identifier))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
+    identifier::Schema schema_identifier= identifier;
+    error::access(*getSession()->user(), schema_identifier);
 
     return false;
   }
@@ -300,7 +304,8 @@ bool statement::CreateTable::check(const identifier::Table &identifier)
   // create for the table.
   if (not plugin::StorageEngine::doesSchemaExist(identifier))
   {
-    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
+    identifier::Schema schema_identifier= identifier;
+    my_error(ER_BAD_DB_ERROR, schema_identifier);
 
     return false;
   }

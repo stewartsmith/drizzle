@@ -17,7 +17,7 @@
 
 #include "heap_priv.h"
 
-#include "drizzled/charset_info.h"
+#include <drizzled/charset_info.h>
 #include <drizzled/util/test.h>
 
 #include <math.h>

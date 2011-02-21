@@ -23,7 +23,7 @@
 
 #include <cstdlib>
 
-#include "drizzled/definitions.h"
+#include <drizzled/definitions.h>
 
 namespace drizzled
 {

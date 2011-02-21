@@ -28,7 +28,7 @@
  */
 
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 #include <drizzled/common.h>
 #include <drizzled/session.h>
 #include <drizzled/table.h>
@@ -36,7 +36,7 @@
 #include <drizzled/field/blob.h>
 
 #include <drizzled/message/table.pb.h>
-#include "drizzled/charset_info.h"
+#include <drizzled/charset_info.h>
 #include <drizzled/table_proto.h>
 #endif
 

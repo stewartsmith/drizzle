@@ -19,12 +19,12 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/field/str.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {
@@ -110,7 +110,7 @@ int Field_str::store_decimal(const type::Decimal *d)
   return store(str.ptr(), str.length(), str.charset());
 }
 
-type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value)
+type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value) const
 {
   int64_t nr= val_int();
   int2_class_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);

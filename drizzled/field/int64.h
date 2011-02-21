@@ -80,15 +80,15 @@ public:
     ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0;
     return 0;
   }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  String *val_str(String*,String *) const;
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 8; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
-  uint32_t max_display_length() { return 20; }
+  uint32_t max_display_length() { return MY_INT64_NUM_DECIMAL_DIGITS; }
   virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
                               uint32_t max_length,
                               bool low_byte_first);

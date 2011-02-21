@@ -18,7 +18,7 @@
 #ifndef PLUGIN_MYISAM_MY_HANDLER_H
 #define PLUGIN_MYISAM_MY_HANDLER_H
 
-#include "drizzled/charset_info.h"
+#include <drizzled/charset_info.h>
 #include <plugin/myisam/myisampack.h>
 
 /*

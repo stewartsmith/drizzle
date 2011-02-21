@@ -18,19 +18,19 @@
 #ifndef PLUGIN_MYISAM_MYISAM_H
 #define PLUGIN_MYISAM_MYISAM_H
 
-#include "drizzled/identifier.h"
+#include <drizzled/identifier.h>
 
 #include <drizzled/key_map.h>
 
 #include <drizzled/base.h>
 #ifndef _m_ctype_h
-#include "drizzled/charset_info.h"
+#include <drizzled/charset_info.h>
 #endif
 #ifndef _keycache_h
 #include "keycache.h"
 #endif
 #include <plugin/myisam/my_handler.h>
-#include "drizzled/internal/iocache.h"
+#include <drizzled/internal/iocache.h>
 
 /*
   Limit max keys according to HA_MAX_POSSIBLE_KEY

@@ -28,10 +28,10 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include "drizzled/gettext.h"
-#include "drizzled/unireg.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/plugin/plugin.h"
+#include <drizzled/gettext.h>
+#include <drizzled/unireg.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/plugin/plugin.h>
 
 
 namespace drizzled

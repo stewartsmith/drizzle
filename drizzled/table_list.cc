@@ -13,18 +13,18 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 
-#include "drizzled/error.h"
-#include "drizzled/table_list.h"
-#include "drizzled/item.h"
-#include "drizzled/item/field.h"
-#include "drizzled/nested_join.h"
-#include "drizzled/sql_lex.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/strfunc.h"
+#include <drizzled/error.h>
+#include <drizzled/table_list.h>
+#include <drizzled/item.h>
+#include <drizzled/item/field.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/strfunc.h>
 
 using namespace std;
 
@@ -94,7 +94,7 @@ TableList *TableList::last_leaf_for_name_resolution()
     */
     if ((cur_table_ref->outer_join & JOIN_TYPE_RIGHT))
     {
-      List_iterator_fast<TableList> it(cur_nested_join->join_list);
+      List<TableList>::iterator it(cur_nested_join->join_list);
       TableList *next;
       cur_table_ref= it++;
       while ((next= it++))
@@ -124,7 +124,7 @@ TableList *TableList::first_leaf_for_name_resolution()
        cur_nested_join;
        cur_nested_join= cur_table_ref->nested_join)
   {
-    List_iterator_fast<TableList> it(cur_nested_join->join_list);
+    List<TableList>::iterator it(cur_nested_join->join_list);
     cur_table_ref= it++;
     /*
       If the current nested join is a RIGHT JOIN, the operands in
@@ -309,7 +309,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
 
     if (index_hints)
     {
-      List_iterator<Index_hint> it(*index_hints);
+      List<Index_hint>::iterator it(*index_hints);
       Index_hint *hint;
 
       while ((hint= it++))

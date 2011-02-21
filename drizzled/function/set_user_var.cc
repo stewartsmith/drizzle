@@ -17,12 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/field/num.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/user_var_entry.h>
 
 namespace drizzled
 {

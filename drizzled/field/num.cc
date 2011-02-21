@@ -19,12 +19,12 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/field/num.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 namespace drizzled
 {
@@ -189,7 +189,7 @@ int Field_num::store_decimal(const type::Decimal *val)
     pointer to decimal buffer with value of field
 */
 
-type::Decimal* Field_num::val_decimal(type::Decimal *decimal_value)
+type::Decimal* Field_num::val_decimal(type::Decimal *decimal_value) const
 {
   assert(result_type() == INT_RESULT);
 

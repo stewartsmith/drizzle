@@ -5,4 +5,6 @@ In Dizzle you can make use of DELETE in order to delete a single record (or mult
 
 A typical query might be:
 
-DELETE FROM TABLE_1;
+.. code-block:: mysql
+
+   DELETE FROM TABLE_1;

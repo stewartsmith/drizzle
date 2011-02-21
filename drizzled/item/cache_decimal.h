@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_ITEM_CACHE_DECIMAL_H
 #define DRIZZLED_ITEM_CACHE_DECIMAL_H
 
+#include <drizzled/type/decimal.h>
 #include <drizzled/item/cache.h>
 
 namespace drizzled

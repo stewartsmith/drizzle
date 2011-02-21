@@ -21,7 +21,7 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H
 
-#include "drizzled/message.h"
+#include <drizzled/message.h>
 
 class ShowCreateSchema : public show_dictionary::Show
 {
@@ -30,7 +30,6 @@ public:
 
   class Generator : public show_dictionary::Show::Generator 
   {
-    bool is_primed;
     bool if_not_exists;
     std::string schema_name;
     drizzled::message::schema::shared_ptr schema_message;

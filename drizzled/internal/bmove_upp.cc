@@ -22,9 +22,9 @@
     "src-len" to the destination "dst-len" counting downwards.
 */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {

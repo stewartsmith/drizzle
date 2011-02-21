@@ -18,13 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/join_table.h"
-#include "drizzled/table.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/optimizer/access_method/scan.h"
+#include <config.h>
+#include <drizzled/session.h>
+#include <drizzled/join_table.h>
+#include <drizzled/table.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/optimizer/access_method/scan.h>
 
 using namespace drizzled;
 

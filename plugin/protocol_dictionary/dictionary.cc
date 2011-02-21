@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/protocol_dictionary/dictionary.h"
-#include "drizzled/plugin/listen.h"
+#include <config.h>
+#include <plugin/protocol_dictionary/dictionary.h>
+#include <drizzled/plugin/listen.h>
 
 using namespace drizzled;
 

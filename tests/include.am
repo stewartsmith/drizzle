@@ -20,7 +20,7 @@
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
-GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
+GENSCRIPTS =		tests/dtr tests/mtr tests/test-run tests/dbqp
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
 NORMAL_TESTS =		main,bool_type,cast,ddl_transactions,execute,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type,microtime_type,$(PLUGIN_TESTS)
@@ -59,6 +59,7 @@ TEST_RUN_DBQP= $(PYTHON) ../$(top_srcdir)/tests/dbqp.py \
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/dbqp.py \
 	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
@@ -95,6 +96,10 @@ tests/mtr:
 tests/test-run: tests/var
 	$(RM) -f tests/test-run
 	$(LN_S) test-run.pl tests/test-run
+
+tests/dbqp:  
+	$(RM) -f tests/dbqp
+	$(LN_S) dbqp.py tests/dbqp
 
 
 .PHONY: test \
@@ -147,7 +152,7 @@ test-jp:
 test-plugins: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
-test-dbqp: check
+test-dbqp: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) )
 
 

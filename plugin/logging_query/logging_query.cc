@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
@@ -277,7 +277,7 @@ public:
               % session->tmp_table
               % session->total_warn_count
               % session->getServerId()
-              % glob_hostname;
+              % getServerHostname();
 
     string msgbuf= formatter.str();
 

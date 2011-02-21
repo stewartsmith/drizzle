@@ -22,7 +22,7 @@
 #define PLUGIN_CATALOG_FILESYSTEM_H
 
 #include <drizzled/plugin/catalog.h>
-#include "plugin/catalog/engine.h"
+#include <plugin/catalog/engine.h>
 
 namespace plugin {
 namespace catalog {

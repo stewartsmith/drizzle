@@ -24,7 +24,7 @@
 
 #include <netinet/in.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

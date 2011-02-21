@@ -22,13 +22,13 @@
  * Errors a drizzled can give you
  */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/definitions.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/definitions.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
-#include "drizzled/identifier.h"
+#include <drizzled/identifier.h>
 
 #include <boost/unordered_map.hpp>
 #include <exception>
@@ -78,6 +78,41 @@ const char * error_message(drizzled::error_t code)
 }
 
 error_handler_func error_handler_hook= NULL;
+
+namespace error {
+
+void access(drizzled::identifier::User::const_reference user)
+{
+  std::string user_string;
+  user.getSQLPath(user_string);
+
+  my_error(ER_ACCESS_DENIED_ERROR, MYF(0), user_string.c_str(),
+           user.hasPassword() ? ER(ER_YES) : ER(ER_NO));
+} 
+
+void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Schema::const_reference schema)
+{
+  std::string user_string;
+  user.getSQLPath(user_string);
+
+  std::string schema_string;
+  schema.getSQLPath(schema_string);
+
+  my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), user_string.c_str(), schema_string.c_str());
+} 
+
+void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Table::const_reference table)
+{
+  std::string user_string;
+  user.getSQLPath(user_string);
+
+  std::string table_string;
+  table.getSQLPath(table_string);
+
+  my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user_string.c_str(), table_string.c_str());
+} 
+
+} // namespace error
 
 /*
   WARNING!
@@ -246,8 +281,12 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_OUT_OF_RESOURCES, N_("Out of memory; check if drizzled or some other process uses all available memory; if not, you may have to use 'ulimit' to allow drizzled to use more memory or you can add more swap space"));
   ADD_ERROR_MESSAGE(ER_BAD_HOST_ERROR, N_("Can't get hostname for your address"));
   ADD_ERROR_MESSAGE(ER_HANDSHAKE_ERROR, N_("Bad handshake"));
-  ADD_ERROR_MESSAGE(ER_DBACCESS_DENIED_ERROR, N_("Access denied for user '%-.48s'@'%-.64s' to schema '%-.192s'"));
-  ADD_ERROR_MESSAGE(ER_ACCESS_DENIED_ERROR, N_("Access denied for user '%-.48s'@'%-.64s' (using password: %s)"));
+
+  // Access error messages
+  ADD_ERROR_MESSAGE(ER_DBACCESS_DENIED_ERROR, N_("Access denied for user '%s' to schema '%s'"));
+  ADD_ERROR_MESSAGE(ER_TABLEACCESS_DENIED_ERROR, N_("Access denied for user '%s' to table '%s'"));
+  ADD_ERROR_MESSAGE(ER_ACCESS_DENIED_ERROR, N_("Access denied for user '%s' (using password: %s)"));
+
   ADD_ERROR_MESSAGE(ER_NO_DB_ERROR, N_("No schema selected"));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_COM_ERROR, N_("Unknown command"));
   ADD_ERROR_MESSAGE(ER_BAD_NULL_ERROR, N_("Column '%-.192s' cannot be null"));

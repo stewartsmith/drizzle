@@ -21,14 +21,17 @@
 #define DRIZZLED_PLUGIN_FUNCTION_H
 
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/item/func.h"
+#include <drizzled/item/func.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
 
 #include <string>
 #include <vector>
 #include <functional>
 
-#include "drizzled/visibility.h"
+#include <boost/unordered_map.hpp>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -38,6 +41,12 @@ class Item_func;
 namespace memory
 {
   class Root;
+}
+
+namespace util
+{
+struct insensitive_hash;
+struct insensitive_equal_to;
 }
 
 namespace plugin

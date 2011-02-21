@@ -27,37 +27,40 @@
  * @{
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <float.h>
 #include <math.h>
 
-#include "drizzled/item/cache.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/item/copy_string.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/sql_select.h" /* include join.h */
-#include "drizzled/lock.h"
-#include "drizzled/nested_join.h"
-#include "drizzled/join.h"
-#include "drizzled/join_cache.h"
-#include "drizzled/show.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/sargable_param.h"
-#include "drizzled/optimizer/key_use.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/sum.h"
-#include "drizzled/optimizer/explain_plan.h"
-#include "drizzled/optimizer/access_method_factory.h"
-#include "drizzled/optimizer/access_method.h"
-#include "drizzled/records.h"
-#include "drizzled/probes.h"
-#include "drizzled/internal/my_bit.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
+#include <drizzled/item/cache.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/copy_string.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_select.h> /* include join.h */
+#include <drizzled/lock.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/join.h>
+#include <drizzled/join_cache.h>
+#include <drizzled/show.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/sum.h>
+#include <drizzled/optimizer/explain_plan.h>
+#include <drizzled/optimizer/access_method_factory.h>
+#include <drizzled/optimizer/access_method.h>
+#include <drizzled/records.h>
+#include <drizzled/probes.h>
+#include <drizzled/internal/my_bit.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/session.h>
+#include <drizzled/select_result.h>
 
 #include <drizzled/debug.h>
 
@@ -132,6 +135,184 @@ static bool test_if_subpart(Order *a,Order *b);
 static void restore_prev_nj_state(JoinTable *last);
 static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab);
 static void free_blobs(Field **ptr); /* Rename this method...conflicts with another in global namespace... */
+
+Join::Join(Session *session_arg, 
+           List<Item> &fields_arg, 
+           uint64_t select_options_arg,
+           select_result *result_arg) :
+  join_tab(NULL),
+  best_ref(NULL),
+  map2table(NULL),
+  join_tab_save(NULL),
+  table(NULL),
+  all_tables(NULL),
+  sort_by_table(NULL),
+  tables(0),
+  outer_tables(0),
+  const_tables(0),
+  send_group_parts(0),
+  sort_and_group(false),
+  first_record(false),
+  full_join(false),
+  group(false),
+  no_field_update(false),
+  do_send_rows(true),
+  resume_nested_loop(false),
+  no_const_tables(false),
+  select_distinct(false),
+  group_optimized_away(false),
+  simple_order(false),
+  simple_group(false),
+  no_order(false),
+  skip_sort_order(false),
+  union_part(false),
+  optimized(false),
+  need_tmp(false),
+  hidden_group_fields(false),
+  const_table_map(0),
+  found_const_table_map(0),
+  outer_join(0),
+  send_records(0),
+  found_records(0),
+  examined_rows(0),
+  row_limit(0),
+  select_limit(0),
+  fetch_limit(HA_POS_ERROR),
+  session(session_arg),
+  fields_list(fields_arg), 
+  join_list(NULL),
+  unit(NULL),
+  select_lex(NULL),
+  select(NULL),
+  exec_tmp_table1(NULL),
+  exec_tmp_table2(NULL),
+  sum_funcs(NULL),
+  sum_funcs2(NULL),
+  having(NULL),
+  tmp_having(NULL),
+  having_history(NULL),
+  select_options(select_options_arg),
+  result(result_arg),
+  lock(session_arg->lock),
+  tmp_join(NULL),
+  all_fields(fields_arg),
+  error(0),
+  cond_equal(NULL),
+  return_tab(NULL),
+  ref_pointer_array(NULL),
+  items0(NULL),
+  items1(NULL),
+  items2(NULL),
+  items3(NULL),
+  ref_pointer_array_size(0),
+  zero_result_cause(NULL),
+  sortorder(NULL),
+  table_reexec(NULL),
+  join_tab_reexec(NULL)
+{
+  select_distinct= test(select_options & SELECT_DISTINCT);
+  if (&fields_list != &fields_arg) /* only copy if not same*/
+    fields_list= fields_arg;
+  memset(&keyuse, 0, sizeof(keyuse));
+  tmp_table_param.init();
+  tmp_table_param.end_write_records= HA_POS_ERROR;
+  rollup.setState(Rollup::STATE_NONE);
+}
+
+  /** 
+   * This method is currently only used when a subselect EXPLAIN is performed.
+   * I pulled out the init() method and have simply reset the values to what
+   * was previously in the init() method.  See the note about the hack in 
+   * sql_union.cc...
+   */
+void Join::reset(Session *session_arg, 
+                 List<Item> &fields_arg, 
+                 uint64_t select_options_arg,
+                 select_result *result_arg)
+{
+  join_tab= NULL;
+  best_ref= NULL;
+  map2table= NULL;
+  join_tab_save= NULL;
+  table= NULL;
+  all_tables= NULL;
+  sort_by_table= NULL;
+  tables= 0;
+  outer_tables= 0;
+  const_tables= 0;
+  send_group_parts= 0;
+  sort_and_group= false;
+  first_record= false;
+  full_join= false;
+  group= false;
+  no_field_update= false;
+  do_send_rows= true;
+  resume_nested_loop= false;
+  no_const_tables= false;
+  select_distinct= false;
+  group_optimized_away= false;
+  simple_order= false;
+  simple_group= false;
+  no_order= false;
+  skip_sort_order= false;
+  union_part= false;
+  optimized= false;
+  need_tmp= false;
+  hidden_group_fields= false;
+  const_table_map= 0;
+  found_const_table_map= 0;
+  outer_join= 0;
+  send_records= 0;
+  found_records= 0;
+  examined_rows= 0;
+  row_limit= 0;
+  select_limit= 0;
+  fetch_limit= HA_POS_ERROR;
+  session= session_arg;
+  fields_list= fields_arg; 
+  join_list= NULL;
+  unit= NULL;
+  select_lex= NULL;
+  select= NULL;
+  exec_tmp_table1= NULL;
+  exec_tmp_table2= NULL;
+  sum_funcs= NULL;
+  sum_funcs2= NULL;
+  having= NULL;
+  tmp_having= NULL;
+  having_history= NULL;
+  select_options= select_options_arg;
+  result= result_arg;
+  lock= session_arg->lock;
+  tmp_join= NULL;
+  all_fields= fields_arg;
+  error= 0;
+  cond_equal= NULL;
+  return_tab= NULL;
+  ref_pointer_array= NULL;
+  items0= NULL;
+  items1= NULL;
+  items2= NULL;
+  items3= NULL;
+  ref_pointer_array_size= 0;
+  zero_result_cause= NULL;
+  sortorder= NULL;
+  table_reexec= NULL;
+  join_tab_reexec= NULL;
+  select_distinct= test(select_options & SELECT_DISTINCT);
+  if (&fields_list != &fields_arg) /* only copy if not same*/
+    fields_list= fields_arg;
+  memset(&keyuse, 0, sizeof(keyuse));
+  tmp_table_param.init();
+  tmp_table_param.end_write_records= HA_POS_ERROR;
+  rollup.setState(Rollup::STATE_NONE);
+}
+
+bool Join::is_top_level_join() const
+{
+  return (unit == &session->lex->unit && (unit->fake_select_lex == 0 ||
+                                          select_lex == unit->fake_select_lex));
+}
 
 /**
   Prepare of whole select (including sub queries in future).
@@ -1171,7 +1352,7 @@ int Join::reinit()
 */
 bool Join::init_save_join_tab()
 {
-  if (!(tmp_join= (Join*)session->alloc(sizeof(Join))))
+  if (!(tmp_join= (Join*)session->getMemRoot()->allocate(sizeof(Join))))
     return 1;
 
   error= 0;              // Ensure that tmp_join.error= 0
@@ -1184,7 +1365,7 @@ bool Join::save_join_tab()
 {
   if (! join_tab_save && select_lex->master_unit()->uncacheable.any())
   {
-    if (!(join_tab_save= (JoinTable*)session->memdup((unsigned char*) join_tab,
+    if (!(join_tab_save= (JoinTable*)session->getMemRoot()->duplicate((unsigned char*) join_tab,
             sizeof(JoinTable) * tables)))
       return 1;
   }
@@ -1931,7 +2112,7 @@ void Join::cleanup(bool full)
       We can't call delete_elements() on copy_funcs as this will cause
       problems in free_elements() as some of the elements are then deleted.
     */
-    tmp_table_param.copy_funcs.empty();
+    tmp_table_param.copy_funcs.clear();
     /*
       If we have tmp_join and 'this' Join is not tmp_join and
       tmp_table_param.copy_field's  of them are equal then we have to remove
@@ -2032,7 +2213,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
                               bool before_group_by, 
                               bool recompute)
 {
-  List_iterator_fast<Item> it(field_list);
+  List<Item>::iterator it(field_list);
   Item_sum **func;
   Item *item;
 
@@ -2078,7 +2259,7 @@ bool Join::rollup_init()
   */
   tmp_table_param.group_parts= send_group_parts;
 
-  rollup.setNullItems((Item_null_result**) session->alloc((sizeof(Item*) +
+  rollup.setNullItems((Item_null_result**) session->getMemRoot()->allocate((sizeof(Item*) +
                                                                 sizeof(Item**) +
                                                                 sizeof(List<Item>) +
                                                                 ref_pointer_array_size)
@@ -2100,7 +2281,7 @@ bool Join::rollup_init()
   {
     rollup.getNullItems()[i]= new (session->mem_root) Item_null_result();
     List<Item> *rollup_fields= &rollup.getFields()[i];
-    rollup_fields->empty();
+    rollup_fields->clear();
     rollup.getRefPointerArrays()[i]= ref_array;
     ref_array+= all_fields.elements;
   }
@@ -2113,7 +2294,7 @@ bool Join::rollup_init()
     }
   }
 
-  List_iterator<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   Item *item;
   while ((item= it++))
   {
@@ -2188,7 +2369,7 @@ bool Join::rollup_init()
 */
 bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, Item_sum ***func)
 {
-  List_iterator_fast<Item> it(fields_arg);
+  List<Item>::iterator it(fields_arg);
   Item *first_field= sel_fields.head();
   uint32_t level;
 
@@ -2219,7 +2400,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     uint32_t pos= send_group_parts - level -1;
     bool real_fields= 0;
     Item *item;
-    List_iterator<Item> new_it(rollup.getFields()[pos]);
+    List<Item>::iterator new_it(rollup.getFields()[pos]);
     Item **ref_array_start= rollup.getRefPointerArrays()[pos];
     Order *start_group;
 
@@ -2233,7 +2414,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     for (i= 0, start_group= group_list ;i++ < pos ;start_group= start_group->next)
     {}
 
-    it.rewind();
+    it= fields_arg;
     while ((item= it++))
     {
       if (item == first_field)
@@ -2368,7 +2549,7 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
     {
       int write_error;
       Item *item;
-      List_iterator_fast<Item> it(rollup.getFields()[i]);
+      List<Item>::iterator it(rollup.getFields()[i]);
       while ((item= it++))
       {
         if (item->type() == Item::NULL_ITEM && item->is_result_field())
@@ -3050,11 +3231,7 @@ static void calc_group_buffer(Join *join, Order *group)
             have STRING_RESULT result type, we increase the length
             by 8 as maximum pack length of such fields.
           */
-          if (type == DRIZZLE_TYPE_DATE ||
-              type == DRIZZLE_TYPE_TIME ||
-              type == DRIZZLE_TYPE_DATETIME ||
-              type == DRIZZLE_TYPE_MICROTIME ||
-              type == DRIZZLE_TYPE_TIMESTAMP)
+          if (field::isDateTime(type))
           {
             key_length+= 8;
           }
@@ -3226,7 +3403,7 @@ static bool get_best_combination(Join *join)
 
   table_count=join->tables;
   if (!(join->join_tab=join_tab=
-  (JoinTable*) session->alloc(sizeof(JoinTable)*table_count)))
+  (JoinTable*) session->getMemRoot()->allocate(sizeof(JoinTable)*table_count)))
     return(true);
 
   for (i= 0; i < table_count; i++)
@@ -3863,7 +4040,7 @@ static void best_access_path(Join *join,
         will ensure that this will be used
       */
       best= tmp;
-      records= rows2double(rnd_records);
+      records= rnd_records;
       best_key= 0;
       /* range/index_merge/ALL/index access method are "independent", so: */
       best_ref_depends_map= 0;
@@ -4384,7 +4561,7 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   */
   if (!join->table_reexec)
   {
-    if (!(join->table_reexec= (Table**) join->session->alloc(sizeof(Table*))))
+    if (!(join->table_reexec= (Table**) join->session->getMemRoot()->allocate(sizeof(Table*))))
       return(true);
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
@@ -4392,7 +4569,7 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   if (!join->join_tab_reexec)
   {
     if (!(join->join_tab_reexec=
-          (JoinTable*) join->session->alloc(sizeof(JoinTable))))
+          (JoinTable*) join->session->getMemRoot()->allocate(sizeof(JoinTable))))
       return(true);
     new (join->join_tab_reexec) JoinTable();
     if (join->tmp_join)
@@ -4614,7 +4791,7 @@ static bool make_join_select(Join *join,
         tab->ref.key= -1;
         tab->ref.key_parts= 0;		// Don't use ref key.
         cur_pos= join->getPosFromOptimalPlan(i);
-        cur_pos.setFanout(rows2double(tab->quick->records));
+        cur_pos.setFanout(tab->quick->records);
         /*
            We will use join cache here : prevent sorting of the first
            table only and sort at the end.
@@ -4659,7 +4836,7 @@ static bool make_join_select(Join *join,
           tab->type == AM_EQ_REF)
       {
         optimizer::SqlSelect *sel= tab->select= ((optimizer::SqlSelect*)
-            session->memdup((unsigned char*) select,
+            session->getMemRoot()->duplicate((unsigned char*) select,
               sizeof(*select)));
         if (! sel)
           return 1;			// End of memory
@@ -4797,7 +4974,7 @@ static bool make_join_select(Join *join,
                                          current_map, 0)))
             {
               tab->cache.select= (optimizer::SqlSelect*)
-                session->memdup((unsigned char*) sel, sizeof(optimizer::SqlSelect));
+                session->getMemRoot()->duplicate((unsigned char*) sel, sizeof(optimizer::SqlSelect));
               tab->cache.select->cond= tmp;
               tab->cache.select->read_tables= join->const_table_map;
             }
@@ -4933,7 +5110,7 @@ static bool make_join_readinfo(Join *join)
 
     if (tab->insideout_match_tab)
     {
-      if (! (tab->insideout_buf= (unsigned char*) join->session->alloc(tab->table->key_info
+      if (! (tab->insideout_buf= (unsigned char*) join->session->getMemRoot()->allocate(tab->table->key_info
                                                                        [tab->index].
                                                                        key_length)))
         return true;
@@ -5115,7 +5292,7 @@ static int return_zero_rows(Join *join,
   {
     if (send_row)
     {
-      List_iterator_fast<Item> it(fields);
+      List<Item>::iterator it(fields);
       Item *item;
       while ((item= it++))
         item->no_rows_in_result();
@@ -5253,7 +5430,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
   TableList *table;
   NestedJoin *nested_join;
   TableList *prev_table= 0;
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
 
   /*
     Try to simplify join operations from join_list.
@@ -5389,14 +5566,14 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     Flatten nested joins that can be flattened.
     no ON expression and not a semi-join => can be flattened.
   */
-  li.rewind();
+  li= join_list->begin();
   while ((table= li++))
   {
     nested_join= table->getNestedJoin();
     if (nested_join && !table->on_expr)
     {
       TableList *tbl;
-      List_iterator<TableList> it(nested_join->join_list);
+      List<TableList>::iterator it(nested_join->join_list);
       while ((tbl= it++))
       {
         tbl->setEmbedding(table->getEmbedding());
@@ -5419,7 +5596,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
 
   /* Calculate how many saved fields there is in list */
   field_count=0;
-  List_iterator<Item> it(fields);
+  List<Item>::iterator it(fields);
   Item *item;
   while ((item=it++))
   {
@@ -5524,8 +5701,8 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 
   table_count= join->tables;
   stat= (JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
-  stat_ref= (JoinTable**) join->session->alloc(sizeof(JoinTable*)*MAX_TABLES);
-  table_vector= (Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
+  stat_ref= (JoinTable**) join->session->getMemRoot()->allocate(sizeof(JoinTable*)*MAX_TABLES);
+  table_vector= (Table**) join->session->getMemRoot()->allocate(sizeof(Table*)*(table_count*2));
   if (! stat || ! stat_ref || ! table_vector)
     return 1;
 
@@ -5961,7 +6138,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 */
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused)
 {
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
   TableList *table;
   while ((table= li++))
   {
@@ -6032,7 +6209,7 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 */
 static void reset_nj_counters(List<TableList> *join_list)
 {
-  List_iterator<TableList> li(*join_list);
+  List<TableList>::iterator li(*join_list);
   TableList *table;
   while ((table= li++))
   {

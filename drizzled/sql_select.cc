@@ -22,47 +22,52 @@
   @defgroup Query_Optimizer  Query Optimizer
   @{
 */
-#include "config.h"
+#include <config.h>
 
 #include <string>
 #include <iostream>
 #include <algorithm>
 #include <vector>
 
-#include "drizzled/sql_select.h" /* include join.h */
+#include <drizzled/sql_select.h> /* include join.h */
 
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/util/test.h"
-#include "drizzled/name_resolution_context_state.h"
-#include "drizzled/nested_join.h"
-#include "drizzled/probes.h"
-#include "drizzled/show.h"
-#include "drizzled/item/cache.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/item/copy_string.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/outer_ref.h"
-#include "drizzled/index_hint.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/drizzled.h"
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/util/test.h>
+#include <drizzled/name_resolution_context_state.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/probes.h>
+#include <drizzled/show.h>
+#include <drizzled/item/cache.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/copy_string.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/outer_ref.h>
+#include <drizzled/index_hint.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/plugin/storage_engine.h>
 
-#include "drizzled/sql_union.h"
-#include "drizzled/optimizer/key_field.h"
-#include "drizzled/optimizer/position.h"
-#include "drizzled/optimizer/sargable_param.h"
-#include "drizzled/optimizer/key_use.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
+#include <drizzled/sql_union.h>
+#include <drizzled/optimizer/key_field.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
 
-#include "drizzled/filesort.h"
+#include <drizzled/filesort.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
+#include <drizzled/sort_field.h>
+#include <drizzled/select_result.h>
 
 using namespace std;
 
@@ -207,7 +212,7 @@ bool fix_inner_refs(Session *session,
   bool res= false;
   bool direct_ref= false;
 
-  List_iterator<Item_outer_ref> ref_it(select->inner_refs_list);
+  List<Item_outer_ref>::iterator ref_it(select->inner_refs_list);
   while ((ref= ref_it++))
   {
     Item *item= ref->outer_ref;
@@ -572,7 +577,7 @@ bool update_ref_and_keys(Session *session,
   sz= sizeof(optimizer::KeyField) *
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
-  if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
+  if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
     return true;
   and_level= 0;
   field= end= key_fields;
@@ -613,7 +618,7 @@ bool update_ref_and_keys(Session *session,
 
   /* Process ON conditions for the nested joins */
   {
-    List_iterator<TableList> li(*join_tab->join->join_list);
+    List<TableList>::iterator li(*join_tab->join->join_list);
     TableList *table;
     while ((table= li++))
     {
@@ -747,7 +752,7 @@ void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
 void add_group_and_distinct_keys(Join *join, JoinTable *join_tab)
 {
   List<Item_field> indexed_fields;
-  List_iterator<Item_field> indexed_fields_it(indexed_fields);
+  List<Item_field>::iterator indexed_fields_it(indexed_fields);
   Order      *cur_group;
   Item_field *cur_item;
   key_map possible_keys(0);
@@ -761,7 +766,7 @@ void add_group_and_distinct_keys(Join *join, JoinTable *join_tab)
   else if (join->select_distinct)
   { /* Collect all query fields referenced in the SELECT clause. */
     List<Item> &select_items= join->fields_list;
-    List_iterator<Item> select_items_it(select_items);
+    List<Item>::iterator select_items_it(select_items);
     Item *item;
     while ((item= select_items_it++))
       item->walk(&Item::collect_item_field_processor, 0,
@@ -1004,10 +1009,10 @@ bool create_ref_for_key(Join *join,
   j->ref.key_length=length;
   j->ref.key=(int) key;
   if (!(j->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(length)*2)) ||
-      !(j->ref.key_copy= (StoredKey**) session->alloc((sizeof(StoredKey*) *
+      !(j->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
                (keyparts+1)))) ||
-      !(j->ref.items=    (Item**) session->alloc(sizeof(Item*)*keyparts)) ||
-      !(j->ref.cond_guards= (bool**) session->alloc(sizeof(uint*)*keyparts)))
+      !(j->ref.items=    (Item**) session->getMemRoot()->allocate(sizeof(Item*)*keyparts)) ||
+      !(j->ref.cond_guards= (bool**) session->getMemRoot()->allocate(sizeof(uint*)*keyparts)))
   {
     return(true);
   }
@@ -1216,10 +1221,9 @@ COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab)
 */
 void JoinTable::cleanup()
 {
-  delete select;
-  select= 0;
-  delete quick;
-  quick= 0;
+  safe_delete(select);
+  safe_delete(quick);
+
   if (cache.buff)
   {
     size_t size= cache.end - cache.buff;
@@ -1348,7 +1352,7 @@ static Item_equal *find_item_equal(COND_EQUAL *cond_equal, Field *field, bool *i
   bool in_upper_level= false;
   while (cond_equal)
   {
-    List_iterator_fast<Item_equal> li(cond_equal->current_level);
+    List<Item_equal>::iterator li(cond_equal->current_level);
     while ((item= li++))
     {
       if (item->contains(field))
@@ -1513,7 +1517,7 @@ static bool check_simple_equality(Item *left_item,
         /* Merge two multiple equalities forming a new one */
         left_item_equal->merge(right_item_equal);
         /* Remove the merged multiple equality from the list */
-        List_iterator<Item_equal> li(cond_equal->current_level);
+        List<Item_equal>::iterator li(cond_equal->current_level);
         while ((li++) != right_item_equal) {};
         li.remove();
       }
@@ -1802,7 +1806,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
       Item_func::COND_AND_FUNC;
     List<Item> *args= ((Item_cond*) cond)->argument_list();
 
-    List_iterator<Item> li(*args);
+    List<Item>::iterator li(*args);
     Item *item;
 
     if (and_level)
@@ -1824,7 +1828,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
           li.remove();
       }
 
-      List_iterator_fast<Item_equal> it(cond_equal.current_level);
+      List<Item_equal>::iterator it(cond_equal.current_level);
       while ((item_equal= it++))
       {
         item_equal->fix_length_and_dec();
@@ -1840,7 +1844,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
        Make replacement of equality predicates for lower levels
        of the condition expression.
     */
-    li.rewind();
+    li= args->begin();
     while ((item= li++))
     {
       Item *new_item;
@@ -1901,7 +1905,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
         Item_cond_and *and_cond= new Item_cond_and(eq_list);
         and_cond->quick_fix_field();
         List<Item> *args= and_cond->argument_list();
-        List_iterator_fast<Item_equal> it(cond_equal.current_level);
+        List<Item_equal>::iterator it(cond_equal.current_level);
         while ((item_equal= it++))
         {
           item_equal->fix_length_and_dec();
@@ -2027,7 +2031,7 @@ static COND *build_equal_items(Session *session, COND *cond,
   if (join_list)
   {
     TableList *table;
-    List_iterator<TableList> li(*join_list);
+    List<TableList>::iterator li(*join_list);
 
     while ((table= li++))
     {
@@ -2242,14 +2246,14 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
       cond_equal= &((Item_cond_and *) cond)->cond_equal;
       cond_list->disjoin((List<Item> *) &cond_equal->current_level);
 
-      List_iterator_fast<Item_equal> it(cond_equal->current_level);
+      List<Item_equal>::iterator it(cond_equal->current_level);
       while ((item_equal= it++))
       {
         item_equal->sort(&compare_fields_by_table_order, table_join_idx);
       }
     }
 
-    List_iterator<Item> li(*cond_list);
+    List<Item>::iterator li(*cond_list);
     Item *item;
     while ((item= li++))
     {
@@ -2265,7 +2269,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
 
     if (and_level)
     {
-      List_iterator_fast<Item_equal> it(cond_equal->current_level);
+      List<Item_equal>::iterator it(cond_equal->current_level);
       while ((item_equal= it++))
       {
         cond= eliminate_item_equal(cond, cond_equal->upper_levels, item_equal);
@@ -2315,7 +2319,7 @@ void update_const_equal_items(COND *cond, JoinTable *tab)
   if (cond->type() == Item::COND_ITEM)
   {
     List<Item> *cond_list= ((Item_cond*) cond)->argument_list();
-    List_iterator_fast<Item> li(*cond_list);
+    List<Item>::iterator li(*cond_list);
     Item *item;
     while ((item= li++))
       update_const_equal_items(item, tab);
@@ -2373,7 +2377,7 @@ static void change_cond_ref_to_const(Session *session,
   if (cond->type() == Item::COND_ITEM)
   {
     bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
-    List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item *item;
     while ((item=li++))
       change_cond_ref_to_const(session, save_list, and_level ? cond : item, item, field, value);
@@ -2453,7 +2457,7 @@ Item *remove_additional_cond(Item* conds)
   if (conds->type() == Item::COND_ITEM)
   {
     Item_cond *cnd= (Item_cond*) conds;
-    List_iterator<Item> li(*(cnd->argument_list()));
+    List<Item>::iterator li(*(cnd->argument_list()));
     Item *item;
     while ((item= li++))
     {
@@ -2477,7 +2481,7 @@ static void propagate_cond_constants(Session *session,
   if (cond->type() == Item::COND_ITEM)
   {
     bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item *item;
     list<COND_CMP> save;
     while ((item=li++))
@@ -2711,7 +2715,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
   {
     bool and_level= (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC);
 
-    List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item::cond_result tmp_cond_value;
     bool should_fix_fields= false;
 
@@ -2765,7 +2769,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     {						
       /* Argument list contains only one element, so reduce it so a single item, then remove list */
       item= ((Item_cond*) cond)->argument_list()->head();
-      ((Item_cond*) cond)->argument_list()->empty();
+      ((Item_cond*) cond)->argument_list()->clear();
       return item;
     }
   }
@@ -2915,7 +2919,7 @@ bool const_expression_in_where(COND *cond, Item *comp_item, Item **const_item)
   {
     bool and_level= (((Item_cond*) cond)->functype()
 		     == Item_func::COND_AND_FUNC);
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     Item *item;
     while ((item=li++))
     {
@@ -3636,8 +3640,8 @@ int init_read_record_seq(JoinTable *tab)
 
 int test_if_quick_select(JoinTable *tab)
 {
-  delete tab->select->quick;
-  tab->select->quick= 0;
+  safe_delete(tab->select->quick);
+
   return tab->select->test_quick_select(tab->join->session, tab->keys,
 					(table_map) 0, HA_POS_ERROR, 0, false);
 }
@@ -3815,7 +3819,7 @@ enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_recor
         {
           if (!join->first_record)
           {
-                  List_iterator_fast<Item> it(*join->fields);
+                  List<Item>::iterator it(*join->fields);
                   Item *item;
             /* No matching rows for group function */
             join->clear();
@@ -4054,7 +4058,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
       Item_cond_and *new_cond=new Item_cond_and;
       if (!new_cond)
         return (COND*) 0;
-      List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
+      List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
       Item *item;
       while ((item=li++))
       {
@@ -4084,7 +4088,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
       Item_cond_or *new_cond=new Item_cond_or;
       if (!new_cond)
         return (COND*) 0;
-      List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
+      List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
       Item *item;
       while ((item=li++))
       {
@@ -4436,7 +4440,7 @@ bool find_field_in_item_list (Field *field, void *data)
 {
   List<Item> *fields= (List<Item> *) data;
   bool part_found= 0;
-  List_iterator<Item> li(*fields);
+  List<Item>::iterator li(*fields);
   Item *item;
 
   while ((item= li++))
@@ -4796,8 +4800,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
           tab->type= AM_NEXT;           // Read with index_first(), index_next()
           if (select && select->quick)
           {
-            delete select->quick;
-            select->quick= 0;
+            safe_delete(select->quick);
           }
           if (table->covering_keys.test(best_key))
           {
@@ -4870,7 +4873,7 @@ check_reverse_order:
           tab->limit= 0;
           return 0; // Reverse sort not supported
         }
-        select->quick=tmp;
+        select->quick= tmp;
       }
     }
     else if (tab->type != AM_NEXT &&
@@ -5566,8 +5569,8 @@ int setup_group(Session *session,
     Item *item;
     Item_field *field;
     int cur_pos_in_select_list= 0;
-    List_iterator<Item> li(fields);
-    List_iterator<Item_field> naf_it(session->lex->current_select->non_agg_fields);
+    List<Item>::iterator li(fields);
+    List<Item_field>::iterator naf_it(session->lex->current_select->non_agg_fields);
 
     field= naf_it++;
     while (field && (item=li++))
@@ -5623,7 +5626,7 @@ Order *create_distinct_group(Session *session,
                                 List<Item> &,
                                 bool *all_order_by_fields_used)
 {
-  List_iterator<Item> li(fields);
+  List<Item>::iterator li(fields);
   Item *item;
   Order *order,*group,**prev;
 
@@ -5636,7 +5639,7 @@ Order *create_distinct_group(Session *session,
   {
     if (order->in_field_list)
     {
-      Order *ord=(Order*) session->memdup((char*) order,sizeof(Order));
+      Order *ord=(Order*) session->getMemRoot()->duplicate((char*) order,sizeof(Order));
       if (!ord)
         return 0;
       *prev=ord;
@@ -5647,7 +5650,7 @@ Order *create_distinct_group(Session *session,
       *all_order_by_fields_used= 0;
   }
 
-  li.rewind();
+  li= fields.begin();
   while ((item=li++))
   {
     if (!item->const_item() && !item->with_sum_func && !item->marker)
@@ -5687,7 +5690,7 @@ next_item:
 */
 void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param, List<Item> &fields, bool reset_with_sum_func)
 {
-  List_iterator<Item> li(fields);
+  List<Item>::iterator li(fields);
   Item *field;
 
   param->field_count=param->sum_func_count=param->func_count=
@@ -5744,7 +5747,7 @@ void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param, List<Item
 */
 int test_if_item_cache_changed(List<Cached_item> &list)
 {
-  List_iterator<Cached_item> li(list);
+  List<Cached_item>::iterator li(list);
   int idx= -1,i;
   Cached_item *buff;
 
@@ -5793,10 +5796,10 @@ bool setup_copy_fields(Session *session,
                        List<Item> &all_fields)
 {
   Item *pos;
-  List_iterator_fast<Item> li(all_fields);
+  List<Item>::iterator li(all_fields);
   CopyField *copy= NULL;
-  res_selected_fields.empty();
-  res_all_fields.empty();
+  res_selected_fields.clear();
+  res_all_fields.clear();
   List_iterator_fast<Item> itr(res_all_fields);
   List<Item> extra_funcs;
   uint32_t i, border= all_fields.elements - elements;
@@ -5805,7 +5808,7 @@ bool setup_copy_fields(Session *session,
       !(copy=param->copy_field= new CopyField[param->field_count]))
     goto err2;
 
-  param->copy_funcs.empty();
+  param->copy_funcs.clear();
   for (i= 0; (pos= li++); i++)
   {
     Field *field;
@@ -5929,7 +5932,7 @@ void copy_fields(Tmp_Table_Param *param)
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);
 
-  List_iterator_fast<Item> it(param->copy_funcs);
+  List<Item>::iterator it(param->copy_funcs);
   Item_copy_string *item;
   while ((item = (Item_copy_string*) it++))
     item->copy();
@@ -5958,11 +5961,11 @@ bool change_to_use_tmp_fields(Session *session,
 			                        uint32_t elements,
                               List<Item> &all_fields)
 {
-  List_iterator_fast<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   Item *item_field,*item;
 
-  res_selected_fields.empty();
-  res_all_fields.empty();
+  res_selected_fields.clear();
+  res_all_fields.clear();
 
   uint32_t i, border= all_fields.elements - elements;
   for (i= 0; (item= it++); i++)
@@ -6037,10 +6040,10 @@ bool change_refs_to_tmp_fields(Session *session,
                                uint32_t elements,
 			                         List<Item> &all_fields)
 {
-  List_iterator_fast<Item> it(all_fields);
+  List<Item>::iterator it(all_fields);
   Item *item, *new_item;
-  res_selected_fields.empty();
-  res_all_fields.empty();
+  res_selected_fields.clear();
+  res_all_fields.clear();
 
   uint32_t i, border= all_fields.elements - elements;
   for (i= 0; (item= it++); i++)
@@ -6290,8 +6293,8 @@ void print_join(Session *session, String *str,
                 List<TableList> *tables, enum_query_type)
 {
   /* List is reversed => we should reverse it before using */
-  List_iterator_fast<TableList> ti(*tables);
-  TableList **table= (TableList **)session->alloc(sizeof(TableList*) *
+  List<TableList>::iterator ti(*tables);
+  TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
     return;  // out of memory
@@ -6327,7 +6330,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
 
   //Item List
   bool first= 1;
-  List_iterator_fast<Item> it(item_list);
+  List<Item>::iterator it(item_list);
   Item *item;
   while ((item= it++))
   {

@@ -19,7 +19,7 @@
   we are working on.  In this case we should just return read errors from
   the file descriptior.
 */
-#include "config.h"
+#include <config.h>
 #include "vio.h"
 #include <string.h>
 #include <drizzled/util/test.h>

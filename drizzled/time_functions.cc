@@ -20,12 +20,12 @@
 
 /* Functions to handle date and time */
 
-#include "config.h"
-#include "drizzled/error.h"
-#include "drizzled/util/test.h"
-#include "drizzled/tztime.h"
-#include "drizzled/session.h"
-#include "drizzled/time_functions.h"
+#include <config.h>
+#include <drizzled/error.h>
+#include <drizzled/util/test.h>
+#include <drizzled/tztime.h>
+#include <drizzled/session.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {

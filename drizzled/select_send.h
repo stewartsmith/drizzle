@@ -24,6 +24,7 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/query_cache.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/select_result.h>
 
 namespace drizzled
 {
@@ -99,7 +100,7 @@ public:
     */
     plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
-    List_iterator_fast<Item> li(items);
+    List<Item>::iterator li(items);
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);
 

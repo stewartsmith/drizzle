@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <dlfcn.h>
 
@@ -26,11 +26,11 @@
 
 #include <boost/filesystem.hpp>
 
-#include "drizzled/plugin.h"
-#include "drizzled/definitions.h"
-#include "drizzled/error.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/module/library.h"
+#include <drizzled/plugin.h>
+#include <drizzled/definitions.h>
+#include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/module/library.h>
 
 using namespace std;
 namespace fs=boost::filesystem;

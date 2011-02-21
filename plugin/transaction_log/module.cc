@@ -30,7 +30,7 @@
  * registration.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "transaction_log.h"
 #include "transaction_log_applier.h"

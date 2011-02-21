@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_OPTIMIZER_ACCESS_METHOD_UNIQUE_INDEX_H
 #define DRIZZLED_OPTIMIZER_ACCESS_METHOD_UNIQUE_INDEX_H
 
-#include "drizzled/optimizer/access_method.h"
+#include <drizzled/optimizer/access_method.h>
 
 class Session;
 

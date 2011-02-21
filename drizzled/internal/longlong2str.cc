@@ -37,7 +37,7 @@
 	itoa assumes that 10 -base numbers are allways signed and other arn't.
 */
 
-#include "config.h"
+#include <config.h>
 
 #include "m_string.h"
 

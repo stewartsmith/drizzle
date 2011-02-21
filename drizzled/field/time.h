@@ -40,11 +40,11 @@ public:
                   uint32_t len_arg,
                   unsigned char *null_ptr_arg,
                   unsigned char null_bit_arg,
-                  const char *field_name_arg,
-                  const CHARSET_INFO * const cs);
+                  const char *field_name_arg);
+
   Time(bool maybe_null_arg,
-                  const char *field_name_arg,
-                  const CHARSET_INFO * const cs);
+                  const char *field_name_arg);
+
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_LONG_INT; }
   enum Item_result cmp_type () const { return INT_RESULT; }
@@ -53,9 +53,9 @@ public:
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int  reset(void) { ptr[0]= ptr[1]= ptr[2]= ptr[3]= 0; return 0; }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  String *val_str(String*,String *) const;
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 4; }
@@ -64,17 +64,17 @@ public:
   bool zero_pack() const { return 0; }
 
   /* Get TIME field value as seconds since begging of Unix Epoch */
-  long get_timestamp(bool *null_value);
+  long get_timestamp(bool *null_value) const;
 private:
-  bool get_date(type::Time &ltime,uint32_t fuzzydate);
-  bool get_time(type::Time &ltime);
+  bool get_date(type::Time &ltime, uint32_t fuzzydate) const;
+  bool get_time(type::Time &ltime) const;
 
 public:
   timestamp_auto_set_type get_auto_set_type() const;
   static size_t max_string_length();
   void pack_time(drizzled::Time &arg);
-  void unpack_time(drizzled::Time &arg);
-  void unpack_time(int32_t &destination, const unsigned char *source);
+  void unpack_time(drizzled::Time &arg) const;
+  void unpack_time(int32_t &destination, const unsigned char *source) const;
 };
 
 } /* namespace field */

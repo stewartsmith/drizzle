@@ -20,26 +20,22 @@
 #ifndef DRIZZLED_SQL_LIST_H
 #define DRIZZLED_SQL_LIST_H
 
-
 #include <cstdlib>
 #include <cassert>
 #include <utility>
 #include <algorithm>
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/visibility.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/visibility.h>
 
+namespace drizzled {
 
-namespace drizzled
+typedef struct st_sql_list 
 {
-
-/** Struct to handle simple linked lists. */
-typedef struct st_sql_list {
   uint32_t elements;
   unsigned char *first;
   unsigned char **next;
 
-  st_sql_list() {}                              /* Remove gcc warning */
-  inline void empty()
+  inline void clear()
   {
     elements=0;
     first=0;
@@ -55,7 +51,7 @@ typedef struct st_sql_list {
   inline void save_and_clear(struct st_sql_list *save)
   {
     *save= *this;
-    empty();
+    clear();
   }
   inline void push_front(struct st_sql_list *save)
   {
@@ -115,8 +111,8 @@ protected:
 public:
   uint32_t elements;
 
-  inline void empty() { elements=0; first= &end_of_list; last=&first;}
-  inline base_list() { empty(); }
+  inline void clear() { elements=0; first= &end_of_list; last=&first;}
+  inline base_list() { clear(); }
   /**
     This is a shallow copy constructor that implicitly passes the ownership
     from the source list to the new instance. The old instance is not
@@ -333,10 +329,6 @@ public:
     el= &tmp->next;
     return tmp->info;
   }
-  inline void rewind(void)
-  {
-    el= &list->first;
-  }
   inline void *replace(void *element)
   {						// Return old element
     void *tmp=current->info;
@@ -381,9 +373,13 @@ public:
   friend class error_list_iterator;
 };
 
+template <class T> class List_iterator;
+
 template <class T> class List :public base_list
 {
 public:
+  typedef List_iterator<T> iterator;
+
   inline List() :base_list() {}
   inline List(const List<T> &tmp) :base_list(tmp) {}
   inline List(const List<T> &tmp, memory::Root *mem_root) :
@@ -392,9 +388,8 @@ public:
   inline bool push_back(T *a, memory::Root *mem_root)
   { return base_list::push_back(a, mem_root); }
   inline bool push_front(T *a) { return base_list::push_front(a); }
-  inline T* head() {return (T*) base_list::head(); }
-  inline T** head_ref() {return (T**) base_list::head_ref(); }
-  inline T* pop()  {return (T*) base_list::pop(); }
+  inline T* head() {return static_cast<T*>(base_list::head()); }
+  inline T* pop()  {return static_cast<T*>(base_list::pop()); }
   inline void concat(List<T> *list) { base_list::concat(list); }
   inline void disjoin(List<T> *list) { base_list::disjoin(list); }
   inline void prepand(List<T> *list) { base_list::prepand(list); }
@@ -406,7 +401,12 @@ public:
       next=element->next;
       delete (T*) element->info;
     }
-    empty();
+    clear();
+  }
+
+  iterator begin()
+  {
+    return iterator(*this);
   }
 };
 
@@ -416,38 +416,31 @@ template <class T> class List_iterator :public base_list_iterator
 public:
   List_iterator(List<T> &a) : base_list_iterator(a) {}
   List_iterator() : base_list_iterator() {}
-  inline void init(List<T> &a) { base_list_iterator::init(a); }
   inline T* operator++(int) { return (T*) base_list_iterator::next(); }
   inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
   inline T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
-  inline void rewind(void)  { base_list_iterator::rewind(); }
-  inline void remove()      { base_list_iterator::remove(); }
-  inline void after(T *a)   { base_list_iterator::after(a); }
   inline T** ref(void)	    { return (T**) base_list_iterator::ref(); }
 };
 
-
 template <class T> class List_iterator_fast :public base_list_iterator
 {
-protected:
-  inline T *replace(T *)   { return (T*) 0; }
-  inline T *replace(List<T> &) { return (T*) 0; }
-  inline void remove(void)  { }
-  inline void after(T *)   { }
-  inline T** ref(void)	    { return (T**) 0; }
+private:
+  inline T *replace(T *);
+  inline T *replace(List<T> &);
+  inline void remove(void);
+  inline void after(T *);
+  inline T** ref(void);
 
 public:
   inline List_iterator_fast(List<T> &a) : base_list_iterator(a) {}
   inline List_iterator_fast() : base_list_iterator() {}
   inline void init(List<T> &a) { base_list_iterator::init(a); }
   inline T* operator++(int) { return (T*) base_list_iterator::next_fast(); }
-  inline void rewind(void)  { base_list_iterator::rewind(); }
   void sublist(List<T> &list_arg, uint32_t el_arg)
   {
     base_list_iterator::sublist(list_arg, el_arg);
   }
 };
-
 
 /**
   Make a deep copy of each list element.
@@ -470,7 +463,7 @@ void
 list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
 {
   /* Make a deep copy of each element */
-  List_iterator<T> it(list);
+  typename List<T>::iterator it(list);
   T *el;
   while ((el= it++))
     it.replace(el->clone(mem_root));

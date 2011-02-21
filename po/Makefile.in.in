@@ -49,6 +49,7 @@ MSGFMT = @MSGFMT@
 XGETTEXT = @XGETTEXT@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
+INTLTOOL_WARNINGS = @INTLTOOL_WARNINGS@
 MSGMERGE = INTLTOOL_EXTRACT=$(INTLTOOL_EXTRACT) XGETTEXT=$(XGETTEXT) srcdir=$(srcdir) $(INTLTOOL_UPDATE) --gettext-package $(GETTEXT_PACKAGE) --dist
 GENPOT   = INTLTOOL_EXTRACT=$(INTLTOOL_EXTRACT) XGETTEXT=$(XGETTEXT) srcdir=$(srcdir) $(INTLTOOL_UPDATE) --gettext-package $(GETTEXT_PACKAGE) --pot
 
@@ -144,7 +145,7 @@ uninstall:
 check: all $(GETTEXT_PACKAGE).pot
 	rm -f missing notexist
 	srcdir=$(srcdir) $(INTLTOOL_UPDATE) -m
-	if [ -r missing -o -r notexist ]; then \
+	if [ -r missing -o -r notexist -a "x${INTLTOOL_WARNINGS}" = "xyes"]; then \
 	  exit 1; \
 	fi
 

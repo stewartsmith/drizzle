@@ -18,11 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/function/cast/boolean.h"
-#include "drizzled/type/boolean.h"
-#include "drizzled/error.h"
+#include <drizzled/error.h>
+#include <drizzled/function/cast/boolean.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/type/boolean.h>
 
 namespace drizzled {
 namespace function {

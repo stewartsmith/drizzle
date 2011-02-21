@@ -17,15 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 
-#include "drizzled/foreign_key.h"
-#include "drizzled/error.h"
-#include "drizzled/create_field.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/table_ident.h"
+#include <drizzled/foreign_key.h>
+#include <drizzled/error.h>
+#include <drizzled/create_field.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/table_ident.h>
 
 namespace drizzled
 {
@@ -64,13 +64,13 @@ void add_foreign_key_to_table_message(
   pfkey->set_references_table_name(table->table.str);
 
   Key_part_spec *keypart;
-  List_iterator<Key_part_spec> col_it(cols);
+  List<Key_part_spec>::iterator col_it(cols);
   while ((keypart= col_it++))
   {
     pfkey->add_column_names(keypart->field_name.str);
   }
 
-  List_iterator<Key_part_spec> ref_it(ref_cols);
+  List<Key_part_spec>::iterator ref_it(ref_cols);
   while ((keypart= ref_it++))
   {
     pfkey->add_references_columns(keypart->field_name.str);
@@ -122,15 +122,15 @@ bool foreign_key_prefix(Key *a, Key *b)
   if (a->columns.elements > b->columns.elements)
     return true;                                // Can't be prefix
 
-  List_iterator<Key_part_spec> col_it1(a->columns);
-  List_iterator<Key_part_spec> col_it2(b->columns);
+  List<Key_part_spec>::iterator col_it1(a->columns);
+  List<Key_part_spec>::iterator col_it2(b->columns);
   const Key_part_spec *col1, *col2;
 
 #ifdef ENABLE_WHEN_INNODB_CAN_HANDLE_SWAPED_FOREIGN_KEY_COLUMNS
   while ((col1= col_it1++))
   {
     bool found= 0;
-    col_it2.rewind();
+    col_it2=b->columns.begin();
     while ((col2= col_it2++))
     {
       if (*col1 == *col2)
@@ -166,11 +166,11 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
 {
   CreateField  *sql_field;
   Key_part_spec *column;
-  List_iterator<Key_part_spec> cols(columns);
-  List_iterator<CreateField> it(table_fields);
+  List<Key_part_spec>::iterator cols(columns);
+  List<CreateField>::iterator it(table_fields);
   while ((column= cols++))
   {
-    it.rewind();
+    it= table_fields.begin();
     while ((sql_field= it++) &&
            my_strcasecmp(system_charset_info,
                          column->field_name.str,

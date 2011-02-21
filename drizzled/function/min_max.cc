@@ -17,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/min_max.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/session.h>
 
 namespace drizzled
 {

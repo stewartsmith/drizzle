@@ -18,12 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/sql_select.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/item/cmpfunc.h>
-#include "drizzled/optimizer/key_field.h"
-#include "drizzled/optimizer/key_use.h"
+#include <drizzled/table.h>
+#include <drizzled/optimizer/key_field.h>
+#include <drizzled/optimizer/key_use.h>
+#include <drizzled/sql_lex.h>
 
 #include <vector>
 
@@ -74,8 +77,8 @@ void optimizer::add_key_fields_for_nj(Join *join,
                                       uint32_t *and_level,
                                       vector<optimizer::SargableParam> &sargables)
 {
-  List_iterator<TableList> li(nested_join_table->getNestedJoin()->join_list);
-  List_iterator<TableList> li2(nested_join_table->getNestedJoin()->join_list);
+  List<TableList>::iterator li(nested_join_table->getNestedJoin()->join_list);
+  List<TableList>::iterator li2(nested_join_table->getNestedJoin()->join_list);
   bool have_another= false;
   table_map tables= 0;
   TableList *table;
@@ -91,7 +94,7 @@ void optimizer::add_key_fields_for_nj(Join *join,
         /* It's a semi-join nest. Walk into it as if it wasn't a nest */
         have_another= true;
         li2= li;
-        li= List_iterator<TableList>(table->getNestedJoin()->join_list);
+        li= List<TableList>::iterator(table->getNestedJoin()->join_list);
       }
       else
         add_key_fields_for_nj(join, table, end, and_level, sargables);
@@ -422,7 +425,7 @@ void optimizer::add_key_fields(Join *join,
 {
   if (cond->type() == Item_func::COND_ITEM)
   {
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
     optimizer::KeyField *org_key_fields= *key_fields;
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
@@ -623,7 +626,7 @@ void optimizer::add_key_fields(Join *join,
                           sargables);
           }
         }
-        it.rewind();
+        it= *item_equal;
       }
     }
     break;

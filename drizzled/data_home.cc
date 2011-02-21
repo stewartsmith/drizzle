@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/configmake.h"
+#include <config.h>
+#include <drizzled/configmake.h>
 
 #include <boost/filesystem.hpp>
 
-#include "drizzled/data_home.h"
+#include <drizzled/data_home.h>
 
 namespace drizzled {
 

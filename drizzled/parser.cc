@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/parser.h>
 
@@ -248,10 +248,8 @@ bool check_reserved_words(LEX_STRING *name)
   push an error into the error stack and DRIZZLE_YYABORT
   to abort from the parser.
 */
-void errorOn(const char *s)
+void errorOn(drizzled::Session *session, const char *s)
 {
-  Session *session= current_session;
-
   /* "parse error" changed into "syntax error" between bison 1.75 and 1.875 */
   if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
   {
@@ -430,7 +428,7 @@ void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
   Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0,
                     lex->col_list);
   statement->alter_info.key_list.push_back(key);
-  lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+  lex->col_list.clear(); /* Alloced by memory::sql_alloc */
 }
 
 void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table)
@@ -448,7 +446,7 @@ void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ide
                &default_key_create_info, 1,
                lex->col_list);
   statement->alter_info.key_list.push_back(key);
-  lex->col_list.empty(); /* Alloced by memory::sql_alloc */
+  lex->col_list.clear(); /* Alloced by memory::sql_alloc */
   /* Only used for ALTER TABLE. Ignored otherwise. */
   statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
 }
@@ -644,6 +642,29 @@ void buildPrimaryOnColumn(LEX *lex)
   if (lex->field())
   {
     lex->field()->mutable_constraints()->set_is_notnull(true);
+  }
+}
+
+void buildReplicationOption(LEX *lex, bool arg)
+{
+  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  message::ReplicationOptions *options= statement->schema_message.mutable_replication_options();
+  options->set_dont_replicate(arg);
+}
+
+void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key)
+{
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
+
+  statement->alter_info.flags.set(ALTER_DROP_INDEX);
+  if (is_foreign_key)
+  {
+    statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
+    statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY, name));
+  }
+  else
+  {
+    statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY, name));
   }
 }
 

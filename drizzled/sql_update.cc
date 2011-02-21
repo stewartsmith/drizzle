@@ -16,21 +16,23 @@
 
 /*
   Single table and multi table updates of tables.
-  Multi-table updates were introduced by Sinisa & Monty
 */
-#include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/probes.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/filesort.h"
+
+#include <config.h>
+
+#include <drizzled/sql_select.h>
+#include <drizzled/error.h>
+#include <drizzled/probes.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/filesort.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -328,8 +330,7 @@ int update_query(Session *session, TableList *table_list,
 	Filesort has already found and selected the rows we want to update,
 	so we don't need the where clause
       */
-      delete select;
-      select= 0;
+      safe_delete(select);
     }
     else
     {
@@ -407,10 +408,9 @@ int update_query(Session *session, TableList *table_list,
       /* Change select to use tempfile */
       if (select)
       {
-	delete select->quick;
+	safe_delete(select->quick);
 	if (select->free_cond)
 	  delete select->cond;
-	select->quick=0;
 	select->cond=0;
       }
       else

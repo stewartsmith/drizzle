@@ -21,13 +21,13 @@
 #ifndef DRIZZLED_MESSAGE_H
 #define DRIZZLED_MESSAGE_H
 
-#include "drizzled/message/table.h"
-#include "drizzled/message/schema.h"
+#include <drizzled/message/table.h>
+#include <drizzled/message/schema.h>
 #if 0
-#include "drizzled/message/transaction.pb.h"
+#include <drizzled/message/transaction.pb.h>
 #include <google/protobuf/text_format.h>
 #endif
-#include "drizzled/identifier.h"
+#include <drizzled/identifier.h>
 
 #include <boost/shared_ptr.hpp>
 

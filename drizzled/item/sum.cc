@@ -20,7 +20,7 @@
   @brief
   Sum functions (COUNT, MIN...)
 */
-#include "config.h"
+#include <config.h>
 #include <cstdio>
 #include <math.h>
 #include <drizzled/sql_select.h>
@@ -29,6 +29,7 @@
 #include <drizzled/hybrid_type_traits_integer.h>
 #include <drizzled/hybrid_type_traits_decimal.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/session.h>
 
 #include <drizzled/item/sum.h>
 #include <drizzled/field/decimal.h>
@@ -36,10 +37,11 @@
 #include <drizzled/field/int64.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
+#include <drizzled/unique.h>
 
 #include <drizzled/type/decimal.h>
 
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 #include <algorithm>
 
@@ -90,7 +92,7 @@ bool Item_sum::init_sum_func_check(Session *session)
   aggr_sel= NULL;
   max_arg_level= -1;
   max_sum_func_level= -1;
-  outer_fields.empty();
+  outer_fields.clear();
   return false;
 }
 
@@ -254,7 +256,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
         select the field belongs to. If there are some then an error is
         raised.
     */
-    List_iterator<Item_field> of(outer_fields);
+    List<Item_field>::iterator of(outer_fields);
     while ((field= of++))
     {
       Select_Lex *sel= field->cached_table->select_lex;
@@ -385,7 +387,7 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   if ((args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     uint32_t i=0;
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list);
     Item *item;
 
     while ((item=li++))
@@ -394,7 +396,7 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
     }
   }
   mark_as_sum_func();
-  list.empty();					// Fields are used
+  list.clear();					// Fields are used
 }
 
 
@@ -412,7 +414,7 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
   if (arg_count <= 2)
     args=tmp_args;
   else
-    if (!(args= (Item**) session->alloc(sizeof(Item*)*arg_count)))
+    if (!(args= (Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
       return;
   memcpy(args, item->args, sizeof(Item*)*arg_count);
 }
@@ -736,11 +738,11 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   */
   switch (args[0]->field_type()) {
   case DRIZZLE_TYPE_DATE:
-    field= new Field_date(maybe_null, name, collation.collation);
+    field= new Field_date(maybe_null, name);
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
-    field= new Field_datetime(maybe_null, name, collation.collation);
+    field= new Field_datetime(maybe_null, name);
     break;
   default:
     return Item_sum::create_tmp_field(group, table, convert_blob_length);
@@ -2667,7 +2669,7 @@ bool Item_sum_count_distinct::setup(Session *session)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
+        field_lengths= (uint32_t*) session->getMemRoot()->allocate(table->getShare()->sizeFields() * sizeof(uint32_t));
         for (tree_key_length= 0, length= field_lengths, field= table->getFields();
              field < field_end; ++field, ++length)
         {
@@ -2996,7 +2998,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
   order= (Order**)(args + arg_count);
 
   /* fill args items of show and sort */
-  List_iterator_fast<Item> li(*select_list);
+  List<Item>::iterator li(*select_list);
 
   for (arg_ptr=args ; (item_select= li++) ; arg_ptr++)
     *arg_ptr= item_select;

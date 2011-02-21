@@ -25,13 +25,13 @@
 #ifndef DRIZZLED_MODULE_OPTION_CONTEXT_H
 #define DRIZZLED_MODULE_OPTION_CONTEXT_H
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 #include <boost/program_options.hpp>
 
 #include <string>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

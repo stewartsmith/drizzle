@@ -56,10 +56,10 @@ public:
   int store(int64_t nr, bool unsigned_val);
   int store_time(type::Time &ltime, type::timestamp_t t_type);
 
-  String *val_str(String*,String *);
-  double val_real(void);
-  int64_t val_int(void);
-  type::Decimal *val_decimal(type::Decimal *decimal_value);
+  String *val_str(String*,String *) const;
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  type::Decimal *val_decimal(type::Decimal *decimal_value) const;
 
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
@@ -70,11 +70,11 @@ public:
   void set_time();
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Microtime */
-  long get_timestamp(bool *null_value);
+  long get_timestamp(bool *null_value) const;
 
 private:
-  bool get_date(type::Time &ltime,uint32_t fuzzydate);
-  bool get_time(type::Time &ltime);
+  bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
+  bool get_time(type::Time &ltime) const;
 
 public:
   static size_t max_string_length()

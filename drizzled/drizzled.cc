@@ -17,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/configmake.h"
-#include "drizzled/atomics.h"
-#include "drizzled/data_home.h"
+#include <config.h>
+
+#include <drizzled/configmake.h>
+#include <drizzled/atomics.h>
+#include <drizzled/data_home.h>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -31,7 +32,7 @@
 #include <stdexcept>
 
 #include <boost/program_options.hpp>
-#include "drizzled/program_options/config_file.h"
+#include <drizzled/program_options/config_file.h>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -39,49 +40,48 @@
 #include <boost/filesystem.hpp>
 #include <boost/detail/atomic_count.hpp>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/my_bit.h"
-#include <drizzled/my_hash.h>
-#include <drizzled/error.h>
+#include <drizzled/cached_directory.h>
+#include <drizzled/charset.h>
+#include <drizzled/data_home.h>
+#include <drizzled/debug.h>
+#include <drizzled/definition/cache.h>
+#include <drizzled/drizzled.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/tztime.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/show.h>
-#include <drizzled/sql_parse.h>
+#include <drizzled/error.h>
+#include <drizzled/global_buffer.h>
+#include <drizzled/internal/my_bit.h>
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/session.h>
 #include <drizzled/item/create.h>
+#include <drizzled/message/cache.h>
+#include <drizzled/module/load_list.h>
+#include <drizzled/module/registry.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/error_message.h>
+#include <drizzled/plugin/event_observer.h>
+#include <drizzled/plugin/listen.h>
+#include <drizzled/plugin/monitored_in_transaction.h>
+#include <drizzled/plugin/scheduler.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/plugin/xa_resource_manager.h>
+#include <drizzled/probes.h>
+#include <drizzled/replication_services.h> /* For ReplicationServices::evaluateRegisteredPlugins() */
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/show.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/temporal_format.h> /* For init_temporal_formats() */
+#include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
-#include "drizzled/temporal_format.h" /* For init_temporal_formats() */
-#include "drizzled/plugin/listen.h"
-#include "drizzled/plugin/error_message.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/plugin/scheduler.h"
-#include "drizzled/plugin/xa_resource_manager.h"
-#include "drizzled/plugin/monitored_in_transaction.h"
-#include "drizzled/replication_services.h" /* For ReplicationServices::evaluateRegisteredPlugins() */
-#include "drizzled/probes.h"
-#include "drizzled/session/cache.h"
-#include "drizzled/charset.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/drizzled.h"
-#include "drizzled/module/registry.h"
-#include "drizzled/module/load_list.h"
-#include "drizzled/global_buffer.h"
-
-#include "drizzled/debug.h"
-
-#include "drizzled/definition/cache.h"
-
-#include "drizzled/plugin/event_observer.h"
-
-#include "drizzled/data_home.h"
-
-#include "drizzled/message/cache.h"
-
-#include "drizzled/visibility.h"
+#include <plugin/myisam/myisam.h>
+#include <drizzled/typelib.h>
+#include <drizzled/visibility.h>
 
 #include <google/protobuf/stubs/common.h>
+
+#include <drizzled/refresh_version.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -102,7 +102,7 @@
 
 #include <errno.h>
 #include <sys/stat.h>
-#include "drizzled/option.h"
+#include <drizzled/option.h>
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
 #endif
@@ -136,8 +136,8 @@
 #include <sys/fpu.h>
 #endif
 
-#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
-#include "drizzled/constrained_value.h"
+#include <drizzled/internal/my_pthread.h>			// For thr_setconcurency()
+#include <drizzled/constrained_value.h>
 
 #include <drizzled/gettext.h>
 
@@ -308,10 +308,6 @@ fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
 
-char system_time_zone[30];
-char *default_tz_name;
-DRIZZLED_API char glob_hostname[FN_REFLEN];
-
 char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
@@ -359,10 +355,7 @@ global_buffer_constraint<uint64_t> global_join_buffer(0);
 global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
 global_buffer_constraint<uint64_t> global_read_buffer(0);
 
-/** 
-  Refresh value. We use to test this to find out if a refresh even has happened recently.
-*/
-uint64_t refresh_version;  /* Increments on each reload */
+DRIZZLED_API size_t transaction_message_threshold;
 
 /* Function declarations */
 bool drizzle_rm_tmp_tables();
@@ -376,12 +369,12 @@ void close_connections(void);
 
 fs::path base_plugin_dir(PKGPLUGINDIR);
 
-po::options_description config_options("Config File Options");
-po::options_description long_options("Kernel Options");
-po::options_description plugin_load_options("Plugin Loading Options");
-po::options_description plugin_options("Plugin Options");
-po::options_description initial_options("Config and Plugin Loading");
-po::options_description full_options("Kernel and Plugin Loading and Plugin");
+po::options_description config_options(_("Config File Options"));
+po::options_description long_options(_("Kernel Options"));
+po::options_description plugin_load_options(_("Plugin Loading Options"));
+po::options_description plugin_options(_("Plugin Options"));
+po::options_description initial_options(_("Config and Plugin Loading"));
+po::options_description full_options(_("Kernel and Plugin Loading and Plugin"));
 vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
@@ -391,6 +384,25 @@ po::variables_map &getVariablesMap()
   return vm;
 }
 
+namespace
+{
+
+std::string &getGlobHostname()
+{
+  static std::string glob_hostname("localhost");
+  return glob_hostname;
+}
+
+void setServerHostname(const std::string &hostname)
+{
+  getGlobHostname()= hostname;
+}
+}
+
+const std::string &getServerHostname()
+{
+  return getGlobHostname();
+}
 
 /****************************************************************************
 ** Code to end drizzled
@@ -656,38 +668,18 @@ const char *load_default_groups[]=
 
 static void find_plugin_dir(string progname)
 {
-  if (progname[0] != FN_LIBCHAR)
+  fs::path full_progname(fs::system_complete(progname));
+
+  fs::path progdir(full_progname.parent_path());
+  if (progdir.filename() == ".libs")
   {
-    /* We have a relative path and need to find the absolute */
-    char working_dir[FN_REFLEN];
-    char *working_dir_ptr= working_dir;
-    working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
-    string new_path(working_dir);
-    if (*(new_path.end()-1) != '/')
-      new_path.push_back('/');
-    if (progname[0] == '.' && progname[1] == '/')
-      new_path.append(progname.substr(2));
-    else
-      new_path.append(progname);
-    progname.swap(new_path);
+    progdir= progdir.parent_path();
   }
 
-  /* Now, trim off the exe name */
-  string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
-  if (progdir.rfind(".libs/") != string::npos)
-  {
-    progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
-  }
-  string testlofile(progdir);
-  testlofile.append("drizzled.lo");
-  string testofile(progdir);
-  testofile.append("drizzled.o");
-  struct stat testfile_stat;
-  if (not (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat)))
+  if (fs::exists(progdir / "drizzled.lo") || fs::exists(progdir / "drizzled.o"))
   {
     /* We are in a source dir! Plugin dir is ../plugin/.libs */
-    size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
-    base_plugin_dir= progdir.substr(0,last_libchar_pos);
+    base_plugin_dir= progdir.parent_path();
     base_plugin_dir /= "plugin";
     base_plugin_dir /= ".libs";
   }
@@ -1017,13 +1009,13 @@ static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
 
 static void check_limits_transaction_message_threshold(size_t in_transaction_message_threshold)
 {
-  global_system_variables.transaction_message_threshold= 1024*1024;
+  transaction_message_threshold= 1024*1024;
   if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
   {
     cout << _("Error: Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
     exit(-1);
   }
-  global_system_variables.transaction_message_threshold= in_transaction_message_threshold;
+  transaction_message_threshold= in_transaction_message_threshold;
 }
 
 static void process_defaults_files()
@@ -1102,13 +1094,7 @@ int init_basic_variables(int argc, char **argv)
   drizzle_init_variables();
 
   find_plugin_dir(argv[0]);
-  {
-    struct tm tm_tmp;
-    localtime_r(&server_start_time,&tm_tmp);
-    strncpy(system_time_zone, tzname[tm_tmp.tm_isdst != 0 ? 1 : 0],
-            sizeof(system_time_zone)-1);
 
-  }
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.
@@ -1117,16 +1103,18 @@ int init_basic_variables(int argc, char **argv)
   */
   global_system_variables.time_zone= my_tz_SYSTEM;
 
-  if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
+  char ret_hostname[FN_REFLEN];
+  if (gethostname(ret_hostname,sizeof(ret_hostname)) < 0)
   {
-    strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-    errmsg_printf(error::WARN, _("gethostname failed, using '%s' as hostname"),
-                  glob_hostname);
+    errmsg_printf(error::WARN,
+                  _("gethostname failed, using '%s' as hostname"),
+                  getServerHostname().c_str());
     pid_file= "drizzle";
   }
   else
   {
-    pid_file= glob_hostname;
+    setServerHostname(ret_hostname);
+    pid_file= getServerHostname();
   }
   pid_file.replace_extension(".pid");
 
@@ -1214,7 +1202,7 @@ int init_basic_variables(int argc, char **argv)
   _("Path for temporary files."))
   ("transaction-isolation", po::value<string>(),
   _("Default transaction isolation level."))
-  ("transaction-message-threshold", po::value<size_t>(&global_system_variables.transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
+  ("transaction-message-threshold", po::value<size_t>(&transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
   _("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
   ("user,u", po::value<string>(),
   _("Run drizzled daemon as user."))  

@@ -21,9 +21,9 @@
 #define DRIZZLED_CHARSET_H
 
 #include <cstddef>
-#include "drizzled/definitions.h"
+#include <drizzled/definitions.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -32,9 +32,6 @@ typedef struct charset_info_st CHARSET_INFO;
 
 extern DRIZZLED_API CHARSET_INFO *all_charsets[256];
 extern CHARSET_INFO compiled_charsets[];
-
-/* character sets */
-void *cs_alloc(size_t size);
 
 extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
 extern uint32_t get_collation_number(const char *name);

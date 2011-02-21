@@ -34,21 +34,12 @@
  *
  **/
 
-#include "config.h"
+#include <config.h>
 #include <libdrizzle/drizzle_client.h>
 
-#include "client/get_password.h"
+#include <client/get_password.h>
 
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <cerrno>
 #include <string>
@@ -62,11 +53,11 @@
 #include <stdarg.h>
 #include <math.h>
 #include <memory>
-#include "client/linebuffer.h"
+#include <client/linebuffer.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
-#include "drizzled/utf8/utf8.h"
+#include <drizzled/utf8/utf8.h>
 #include <cstdlib>
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
@@ -160,7 +151,7 @@ typedef Function drizzle_compentry_func_t;
 #endif
 #include <boost/program_options.hpp>
 #include <boost/scoped_ptr.hpp>
-#include "drizzled/program_options/config_file.h"
+#include <drizzled/program_options/config_file.h>
 
 using namespace std;
 namespace po=boost::program_options;
@@ -325,10 +316,63 @@ std::string current_db,
   current_password,
   opt_password,
   opt_protocol;
-// TODO: Need to i18n these
-static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
-                                  "Aug","Sep","Oct","Nov","Dec"};
+
+static const char* get_day_name(int day_of_week)
+{
+  switch(day_of_week)
+  {
+  case 0:
+    return _("Sun");
+  case 1:
+    return _("Mon");
+  case 2:
+    return _("Tue");
+  case 3:
+    return _("Wed");
+  case 4:
+    return _("Thu");
+  case 5:
+    return _("Fri");
+  case 6:
+    return _("Sat");
+  }
+
+  return NULL;
+}
+
+static const char* get_month_name(int month)
+{
+  switch(month)
+  {
+  case 0:
+    return _("Jan");
+  case 1:
+    return _("Feb");
+  case 2:
+    return _("Mar");
+  case 3:
+    return _("Apr");
+  case 4:
+    return _("May");
+  case 5:
+    return _("Jun");
+  case 6:
+    return _("Jul");
+  case 7:
+    return _("Aug");
+  case 8:
+    return _("Sep");
+  case 9:
+    return _("Oct");
+  case 10:
+    return _("Nov");
+  case 11:
+    return _("Dec");
+  }
+
+  return NULL;
+}
+
 /* @TODO: Remove this */
 #define FN_REFLEN 512
 
@@ -1121,10 +1165,10 @@ static void print_table_data(drizzle_result_st *result);
 static void print_tab_data(drizzle_result_st *result);
 static void print_table_data_vertically(drizzle_result_st *result);
 static void print_warnings(uint32_t error_code);
-static uint32_t start_timer(void);
-static void end_timer(uint32_t start_time,char *buff);
-static void drizzle_end_timer(uint32_t start_time,char *buff);
-static void nice_time(double sec,char *buff,bool part_second);
+static boost::posix_time::ptime start_timer(void);
+static void end_timer(boost::posix_time::ptime, string &buff);
+static void drizzle_end_timer(boost::posix_time::ptime, string &buff);
+static void nice_time(boost::posix_time::time_duration duration, string &buff);
 extern "C" void drizzle_end(int sig);
 extern "C" void handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
@@ -1464,7 +1508,10 @@ try
                       "prompt. Aborting.\n"));
     exit(ENOMEM);
   }
-  current_prompt= strdup(default_prompt);
+
+  if (current_prompt.empty())
+    current_prompt= strdup(default_prompt);
+
   if (current_prompt.empty())
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -2762,10 +2809,10 @@ static int
 com_go(string *buffer, const char *)
 {
   char          buff[200]; /* about 110 chars used so far */
-  char          time_buff[52+3+1]; /* time max + space&parens + NUL */
   drizzle_result_st result;
   drizzle_return_t ret;
-  uint32_t      timer, warnings= 0;
+  uint32_t      warnings= 0;
+  boost::posix_time::ptime timer;
   uint32_t      error= 0;
   uint32_t      error_code= 0;
   int           err= 0;
@@ -2834,10 +2881,9 @@ com_go(string *buffer, const char *)
         goto end;
     }
 
+    string time_buff("");
     if (verbose >= 3 || !opt_silent)
       drizzle_end_timer(timer,time_buff);
-    else
-      time_buff[0]= '\0';
 
     /* Every branch must truncate  buff . */
     if (drizzle_result_column_count(&result) > 0)
@@ -2888,7 +2934,7 @@ com_go(string *buffer, const char *)
       if (warnings != 1)
         *pos++= 's';
     }
-    strcpy(pos, time_buff);
+    strcpy(pos, time_buff.c_str());
     put_info(buff,INFO_RESULT,0,0);
     if (strcmp(drizzle_result_info(&result), ""))
       put_info(drizzle_result_info(&result),INFO_RESULT,0,0);
@@ -4342,80 +4388,55 @@ void tee_putc(int c, FILE *file)
 }
 
 #include <sys/times.h>
-#ifdef _SC_CLK_TCK        // For mit-pthreads
-#undef CLOCKS_PER_SEC
-#define CLOCKS_PER_SEC (sysconf(_SC_CLK_TCK))
-#endif
 
-static uint32_t start_timer(void)
+static boost::posix_time::ptime start_timer(void)
 {
-  struct tms tms_tmp;
-  return times(&tms_tmp);
+  return boost::posix_time::microsec_clock::universal_time();
 }
 
-
-/**
-   Write as many as 52+1 bytes to buff, in the form of a legible
-   duration of time.
-
-   len("4294967296 days, 23 hours, 59 minutes, 60.00 seconds")  ->  52
-*/
-static void nice_time(double sec,char *buff,bool part_second)
+static void nice_time(boost::posix_time::time_duration duration, string &buff)
 {
-  uint32_t tmp;
   ostringstream tmp_buff_str;
 
-  if (sec >= 3600.0*24)
+  if (duration.hours() > 0)
   {
-    tmp=(uint32_t) floor(sec/(3600.0*24));
-    sec-= 3600.0*24*tmp;
-    tmp_buff_str << tmp;
-
-    if (tmp > 1)
-      tmp_buff_str << " days ";
-    else
-      tmp_buff_str << " day ";
-
-  }
-  if (sec >= 3600.0)
-  {
-    tmp=(uint32_t) floor(sec/3600.0);
-    sec-=3600.0*tmp;
-    tmp_buff_str << tmp;
-
-    if (tmp > 1)
+    tmp_buff_str << duration.hours();
+    if (duration.hours() > 1)
       tmp_buff_str << _(" hours ");
     else
       tmp_buff_str << _(" hour ");
   }
-  if (sec >= 60.0)
+  if (duration.hours() > 0 || duration.minutes() > 0)
   {
-    tmp=(uint32_t) floor(sec/60.0);
-    sec-=60.0*tmp;
-    tmp_buff_str << tmp << _(" min ");
+    tmp_buff_str << duration.minutes() << _(" min ");
   }
-  if (part_second)
-    tmp_buff_str.precision(2);
-  else
-    tmp_buff_str.precision(0);
-  tmp_buff_str << sec << _(" sec");
-  strcpy(buff, tmp_buff_str.str().c_str());
+
+  tmp_buff_str.precision(duration.num_fractional_digits());
+
+  double seconds= duration.fractional_seconds();
+
+  seconds/= pow(10.0,duration.num_fractional_digits());
+
+  seconds+= duration.seconds();
+  tmp_buff_str << seconds << _(" sec");
+
+  buff.append(tmp_buff_str.str());
+}
+
+static void end_timer(boost::posix_time::ptime start_time, string &buff)
+{
+  boost::posix_time::ptime end_time= start_timer();
+  boost::posix_time::time_period duration(start_time, end_time);
+
+  nice_time(duration.length(), buff);
 }
 
 
-static void end_timer(uint32_t start_time,char *buff)
+static void drizzle_end_timer(boost::posix_time::ptime start_time, string &buff)
 {
-  nice_time((double) (start_timer() - start_time) /
-            CLOCKS_PER_SEC,buff,1);
-}
-
-
-static void drizzle_end_timer(uint32_t start_time,char *buff)
-{
-  buff[0]=' ';
-  buff[1]='(';
-  end_timer(start_time,buff+2);
-  strcpy(strchr(buff, '\0'),")");
+  buff.append(" (");
+  end_timer(start_time,buff);
+  buff.append(")");
 }
 
 static const char * construct_prompt()
@@ -4554,7 +4575,7 @@ static const char * construct_prompt()
         add_int_to_prompt(t->tm_sec);
         break;
       case 'w':
-        processed_prompt->append(day_names[t->tm_wday]);
+        processed_prompt->append(get_day_name(t->tm_wday));
         break;
       case 'P':
         processed_prompt->append(t->tm_hour < 12 ? "am" : "pm");
@@ -4563,7 +4584,7 @@ static const char * construct_prompt()
         add_int_to_prompt(t->tm_mon+1);
         break;
       case 'O':
-        processed_prompt->append(month_names[t->tm_mon]);
+        processed_prompt->append(get_month_name(t->tm_mon));
         break;
       case '\'':
         processed_prompt->append("'");

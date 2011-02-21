@@ -18,12 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/show.h"
-#include "drizzled/session.h"
-#include "drizzled/statement/drop_index.h"
-#include "drizzled/statement/alter_table.h"
-#include "drizzled/db.h"
+#include <config.h>
+
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/drop_index.h>
+#include <drizzled/statement/alter_table.h>
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled
 {
@@ -37,7 +38,7 @@ bool statement::DropIndex::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (plugin::StorageEngine::getTableDefinition(*getSession(), identifier, original_table_message) != EEXIST)
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;

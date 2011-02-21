@@ -5,7 +5,11 @@ In Dizzle you can make use of INSERT in order to insert data into a table.
 
 A type query:
 
-INSERT INTO A VALUES ("1");
+.. code-block:: mysql
+
+   INSERT INTO A VALUES ("1");
 
 
-FIXME: multi row inserts, performance thereof.
+.. todo::
+
+   multi row inserts, performance thereof.

@@ -34,23 +34,20 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "drizzled/typelib.h"
-#include "drizzled/memory/root.h"
-#include "drizzled/message.h"
-#include "drizzled/util/string.h"
+#include <drizzled/memory/root.h>
+#include <drizzled/message.h>
+#include <drizzled/util/string.h>
 
-#include "drizzled/lex_string.h"
-#include "drizzled/key_map.h"
+#include <drizzled/lex_string.h>
+#include <drizzled/key_map.h>
  
-#include "drizzled/table/cache.h"
+#include <drizzled/table/cache.h>
  
 #include <drizzled/field.h>
 
 
 namespace drizzled
 {
-
-extern uint64_t refresh_version;
 
 const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
 
@@ -366,10 +363,7 @@ public:
     return version;
   }
 
-  void refreshVersion()
-  {
-   version= refresh_version;
-  }
+  void refreshVersion();
 
   void resetVersion()
   {
@@ -726,6 +720,11 @@ private:
                               bool &error_reported);
 public:
   bool parse_table_proto(Session& session, message::Table &table);
+
+  virtual bool replicate() const
+  {
+    return false;
+  }
 };
 
 } /* namespace drizzled */

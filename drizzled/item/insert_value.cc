@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/table.h>
@@ -83,7 +83,7 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
   {
     Field *tmp_field= field_arg->field;
     /* charset doesn't matter here, it's to avoid sigsegv only */
-    tmp_field= new Field_null(0, 0, field_arg->field->field_name, &my_charset_bin);
+    tmp_field= new Field_null(0, 0, field_arg->field->field_name);
     if (tmp_field)
     {
       tmp_field->init(field_arg->field->getTable());

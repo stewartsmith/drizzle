@@ -33,10 +33,10 @@
  * call.
  */
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/plugin/replication.h"
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/plugin/replication.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

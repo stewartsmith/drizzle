@@ -22,14 +22,14 @@
 #ifndef DRIZZLED_PLUGIN_ERROR_MESSAGE_H
 #define DRIZZLED_PLUGIN_ERROR_MESSAGE_H
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/error/level_t.h"
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/error/level_t.h>
 
 #include <stdarg.h>
 
 #include <string>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

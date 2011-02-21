@@ -15,9 +15,9 @@
 
 /* readline for batch mode */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
-#include "client/linebuffer.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
+#include <client/linebuffer.h>
 #include <boost/version.hpp>
 
 #include <vector>

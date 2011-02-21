@@ -362,9 +362,9 @@ Options for debugging the product
 Options for coverage, profiling etc
 -----------------------------------
 
-.. option:: --gcov                  
-
-   FIXME
+.. todo::
+   
+   .. option:: --gcov                  
 
 .. option:: --gprof                 
 

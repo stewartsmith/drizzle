@@ -41,7 +41,7 @@ This file contains the implementation of error and warnings related
 
 ***********************************************************************/
 
-#include "config.h"
+#include <config.h>
 
 #include <cstdio>
 #include <stdarg.h>
@@ -91,7 +91,7 @@ void drizzle_reset_errors(Session *session, bool force)
     memset(session->warn_count, 0, sizeof(session->warn_count));
     if (force)
       session->total_warn_count= 0;
-    session->warn_list.empty();
+    session->warn_list.clear();
     session->row_count= 1; // by default point to row 1
   }
   return;
@@ -227,7 +227,7 @@ bool show_warnings(Session *session,
 
   unit->set_limit(sel);
 
-  List_iterator_fast<DRIZZLE_ERROR> it(session->warn_list);
+  List<DRIZZLE_ERROR>::iterator it(session->warn_list);
   while ((err= it++))
   {
     /* Skip levels that the user is not interested in */

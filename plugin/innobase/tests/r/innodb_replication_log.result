@@ -1,0 +1,19 @@
+drop table if exists t1;
+set global transaction_message_threshold=2000000;
+ERROR HY000: Variable 'transaction_message_threshold' is a read only variable
+create table t1 (a int primary key);
+insert into t1 values (1),(2),(3);
+show create table data_dictionary.INNODB_REPLICATION_LOG;
+Table	Create Table
+INNODB_REPLICATION_LOG	CREATE TABLE `INNODB_REPLICATION_LOG` (
+  `TRANSACTION_ID` BIGINT NOT NULL,
+  `TRANSACTION_SEGMENT_ID` BIGINT NOT NULL,
+  `COMMIT_ID` BIGINT NOT NULL,
+  `END_TIMESTAMP` BIGINT NOT NULL,
+  `TRANSACTION_MESSAGE_STRING` TEXT COLLATE utf8_general_ci NOT NULL,
+  `TRANSACTION_LENGTH` BIGINT NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATION = FALSE
+select count(*) >= 3 from data_dictionary.INNODB_REPLICATION_LOG;
+count(*) >= 3
+1
+drop table t1;

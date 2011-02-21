@@ -26,8 +26,8 @@
  * A module::Manifest is the struct contained in every Plugin Library.
  */
 
-#include "drizzled/module/context.h"
-#include "drizzled/module/option_context.h"
+#include <drizzled/module/context.h>
+#include <drizzled/module/option_context.h>
 
 namespace drizzled
 {

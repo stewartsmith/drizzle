@@ -23,11 +23,12 @@
     - add function from select_query that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
-#include "config.h"
+#include <config.h>
 
 #include <cstdio>
 #include <limits.h>
 
+#include <drizzled/session.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/cache.h>
@@ -39,6 +40,11 @@
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
 #include <drizzled/join.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/select_singlerow_subselect.h>
+#include <drizzled/select_max_min_finder_subselect.h>
+#include <drizzled/select_exists_subselect.h>
+#include <drizzled/select_union.h>
 
 namespace drizzled
 {
@@ -267,7 +273,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
   {
     for (Select_Lex *lex= unit->first_select(); lex; lex= lex->next_select())
     {
-      List_iterator<Item> li(lex->item_list);
+      List<Item>::iterator li(lex->item_list);
       Item *item;
       Order *order;
 
@@ -1051,7 +1057,7 @@ Item_in_subselect::single_value_transformer(Join *join,
         upper_item->set_sum_test(item);
       *select_lex->ref_pointer_array= item;
       {
-	List_iterator<Item> it(select_lex->item_list);
+	List<Item>::iterator it(select_lex->item_list);
 	it++;
 	it.replace(item);
       }
@@ -1115,7 +1121,7 @@ Item_in_subselect::single_value_transformer(Join *join,
 
   if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
   {
-    if (!(pushed_cond_guards= (bool*)join->session->alloc(sizeof(bool))))
+    if (!(pushed_cond_guards= (bool*)join->session->getMemRoot()->allocate(sizeof(bool))))
       return(RES_ERROR);
     pushed_cond_guards[0]= true;
   }
@@ -1220,7 +1226,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
     {
       bool tmp;
       Item *having= item, *orig_item= item;
-      select_lex->item_list.empty();
+      select_lex->item_list.clear();
       select_lex->item_list.push_back(new Item_int("Not_used",
                                                    (int64_t) 1,
                                                    MY_INT64_NUM_DECIMAL_DIGITS));
@@ -1383,7 +1389,7 @@ Item_in_subselect::row_value_transformer(Join *join)
 
     if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
     {
-      if (!(pushed_cond_guards= (bool*)join->session->alloc(sizeof(bool) *
+      if (!(pushed_cond_guards= (bool*)join->session->getMemRoot()->allocate(sizeof(bool) *
                                                         left_expr->cols())))
         return(RES_ERROR);
       for (uint32_t i= 0; i < cols_num; i++)
@@ -2090,7 +2096,7 @@ bool subselect_single_select_engine::no_rows()
 void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
 {
   Item *sel_item;
-  List_iterator_fast<Item> li(item_list);
+  List<Item>::iterator li(item_list);
   res_type= STRING_RESULT;
   res_field_type= DRIZZLE_TYPE_VARCHAR;
   for (uint32_t i= 0; (sel_item= li++); i++)
@@ -2773,7 +2779,7 @@ void subselect_union_engine::print(String *str, enum_query_type query_type)
 void subselect_uniquesubquery_engine::print(String *str,
                                             enum_query_type query_type)
 {
-  char *table_name= const_cast<char *>(tab->table->getShare()->getTableName());
+  const char *table_name= tab->table->getShare()->getTableName();
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
@@ -3067,7 +3073,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     - here we initialize only those members that are used by
       subselect_uniquesubquery_engine, so these objects are incomplete.
   */
-  if (!(tab= (JoinTable*) session->alloc(sizeof(JoinTable))))
+  if (!(tab= (JoinTable*) session->getMemRoot()->allocate(sizeof(JoinTable))))
     return(true);
   new (tab) JoinTable();
   tab->table= tmp_table;
@@ -3076,10 +3082,10 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   if (!(tab->ref.key_buff=
         (unsigned char*) session->calloc(ALIGN_SIZE(tmp_key->key_length) * 2)) ||
       !(tab->ref.key_copy=
-        (StoredKey**) session->alloc((sizeof(StoredKey*) *
+        (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
                                   (tmp_key_parts + 1)))) ||
       !(tab->ref.items=
-        (Item**) session->alloc(sizeof(Item*) * tmp_key_parts)))
+        (Item**) session->getMemRoot()->allocate(sizeof(Item*) * tmp_key_parts)))
     return(true);
 
   KeyPartInfo *cur_key_part= tmp_key->key_part;

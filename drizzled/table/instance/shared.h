@@ -87,6 +87,14 @@ public:
     event_observers= observers;
   }
 
+  virtual bool replicate() const
+  {
+    if (getTableMessage()->options().has_dont_replicate() and getTableMessage()->options().dont_replicate())
+      return false;
+
+    return true;
+  }
+
 private:
   boost::mutex mutex;                /* For locking the share  */
 

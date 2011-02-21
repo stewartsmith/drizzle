@@ -18,19 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "drizzled/session.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
+#include <drizzled/session.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
 
 #include <drizzled/table/instance.h>
 
-#include "drizzled/table.h"
+#include <drizzled/table.h>
 
 namespace drizzled
 {

@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_ITEM_ROW_H
 #define DRIZZLED_ITEM_ROW_H
 
-#include "drizzled/item.h"
+#include <drizzled/item.h>
 
 namespace drizzled
 {

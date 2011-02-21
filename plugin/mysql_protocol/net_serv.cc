@@ -18,9 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <drizzled/session.h>
+#include <config.h>
+
+#include <drizzled/current_session.h>
 #include <drizzled/error.h>
+#include <drizzled/session.h>
 
 #include <assert.h>
 #include <stdio.h>

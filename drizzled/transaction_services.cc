@@ -47,30 +47,31 @@
  * plugins can understand.
  */
 
-#include "config.h"
-#include "drizzled/my_hash.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/probes.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/replication_services.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/transaction_context.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/message/statement_transform.h"
-#include "drizzled/resource_context.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/int.h"
-#include "drizzled/item/empty_string.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/plugin/monitored_in_transaction.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/plugin/xa_resource_manager.h"
-#include "drizzled/plugin/xa_storage_engine.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+#include <drizzled/current_session.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/probes.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/replication_services.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/transaction_context.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/statement_transform.h>
+#include <drizzled/resource_context.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/empty_string.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/monitored_in_transaction.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/plugin/xa_resource_manager.h>
+#include <drizzled/plugin/xa_storage_engine.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <vector>
 #include <algorithm>
@@ -1268,7 +1269,7 @@ message::Statement &TransactionServices::getInsertStatement(Session::reference s
     transaction= getActiveTransactionMessage(session);
 
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       transaction= segmentTransactionMessage(session, transaction);
     }
@@ -1287,7 +1288,7 @@ message::Statement &TransactionServices::getInsertStatement(Session::reference s
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1384,6 +1385,9 @@ bool TransactionServices::insertRecord(Session::reference session,
   if (! replication_services.isActive())
     return false;
 
+  if (not table.getShare()->replicate())
+    return false;
+
   /**
    * We do this check here because we don't want to even create a 
    * statement if there isn't a primary key on the table...
@@ -1454,7 +1458,7 @@ message::Statement &TransactionServices::getUpdateStatement(Session::reference s
     transaction= getActiveTransactionMessage(session);
     
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       transaction= segmentTransactionMessage(session, transaction);
     }
@@ -1473,7 +1477,7 @@ message::Statement &TransactionServices::getUpdateStatement(Session::reference s
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1579,6 +1583,7 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
     }
   }
 }
+
 void TransactionServices::updateRecord(Session::reference session,
                                        Table &table, 
                                        const unsigned char *old_record, 
@@ -1586,6 +1591,9 @@ void TransactionServices::updateRecord(Session::reference session,
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
+    return;
+
+  if (not table.getShare()->replicate())
     return;
 
   uint32_t next_segment_id= 1;
@@ -1726,7 +1734,7 @@ message::Statement &TransactionServices::getDeleteStatement(Session::reference s
     transaction= getActiveTransactionMessage(session);
     
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       transaction= segmentTransactionMessage(session, transaction);
     }
@@ -1745,7 +1753,7 @@ message::Statement &TransactionServices::getDeleteStatement(Session::reference s
      * the Transaction will keep it from getting huge).
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= 
-        session.variables.transaction_message_threshold)
+        transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1847,6 +1855,9 @@ void TransactionServices::deleteRecord(Session::reference session,
   if (! replication_services.isActive())
     return;
 
+  if (not table.getShare()->replicate())
+    return;
+
   uint32_t next_segment_id= 1;
   message::Statement &statement= getDeleteStatement(session, table, &next_segment_id);
 
@@ -1902,7 +1913,10 @@ void TransactionServices::createTable(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (table.has_options() and table.options().has_dont_replicate() and table.options().dont_replicate())
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -1932,7 +1946,10 @@ void TransactionServices::createSchema(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (schema.has_replication_options() and schema.replication_options().has_dont_replicate() and schema.replication_options().dont_replicate())
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -1957,12 +1974,16 @@ void TransactionServices::createSchema(Session::reference session,
 }
 
 void TransactionServices::dropSchema(Session::reference session,
-                                     identifier::Schema::const_reference identifier)
+                                     identifier::Schema::const_reference identifier,
+                                     message::schema::const_reference schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (schema.has_replication_options() and schema.replication_options().has_dont_replicate() and schema.replication_options().dont_replicate())
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -1986,13 +2007,16 @@ void TransactionServices::dropSchema(Session::reference session,
 }
 
 void TransactionServices::alterSchema(Session::reference session,
-                                      const message::schema::shared_ptr &old_schema,
+                                      const message::Schema &old_schema,
                                       const message::Schema &new_schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (old_schema.has_replication_options() and old_schema.replication_options().has_dont_replicate() and old_schema.replication_options().dont_replicate())
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -2007,7 +2031,7 @@ void TransactionServices::alterSchema(Session::reference session,
   message::Schema *before= alter_schema_statement->mutable_before();
   message::Schema *after= alter_schema_statement->mutable_after();
 
-  *before= *old_schema;
+  *before= old_schema;
   *after= new_schema;
 
   finalizeStatementMessage(*statement, session);
@@ -2020,13 +2044,17 @@ void TransactionServices::alterSchema(Session::reference session,
 }
 
 void TransactionServices::dropTable(Session::reference session,
-                                    const identifier::Table &table,
+                                    identifier::Table::const_reference identifier,
+                                    message::table::const_reference table,
                                     bool if_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (table.has_options() and table.options().has_dont_replicate() and table.options().dont_replicate())
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -2042,8 +2070,8 @@ void TransactionServices::dropTable(Session::reference session,
 
   message::TableMetadata *table_metadata= drop_table_statement->mutable_table_metadata();
 
-  table_metadata->set_schema_name(table.getSchemaName());
-  table_metadata->set_table_name(table.getTableName());
+  table_metadata->set_schema_name(identifier.getSchemaName());
+  table_metadata->set_table_name(identifier.getTableName());
 
   finalizeStatementMessage(*statement, session);
 
@@ -2060,7 +2088,10 @@ void TransactionServices::truncateTable(Session::reference session,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+
+  if (not table.getShare()->replicate())
+    return;
+
   message::Transaction *transaction= getActiveTransactionMessage(session);
   message::Statement *statement= transaction->add_statement();
 
@@ -2075,6 +2106,7 @@ void TransactionServices::truncateTable(Session::reference session,
 
   string schema_name;
   (void) table.getShare()->getSchemaName(schema_name);
+
   string table_name;
   (void) table.getShare()->getTableName(table_name);
 

@@ -23,27 +23,28 @@
   Handler-calling-functions
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 
-#include "drizzled/my_hash.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/probes.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/optimizer/cost_vector.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/int.h"
-#include "drizzled/item/empty_string.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/message/table.pb.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/plugin/event_observer.h"
+#include <drizzled/error.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/gettext.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/item/empty_string.h>
+#include <drizzled/item/int.h>
+#include <drizzled/lock.h>
+#include <drizzled/message/table.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/optimizer/cost_vector.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/event_observer.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/probes.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/transaction_services.h>
 
 using namespace std;
 
@@ -266,14 +267,14 @@ int Cursor::ha_open(const identifier::Table &identifier,
 */
 int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
 {
-  register int error;
+  int error;
 
   ha_statistic_increment(&system_status_var::ha_read_first_count);
 
   /*
     If there is very few deleted rows in the table, find the first row by
     scanning the table.
-    TODO remove the test for HA_READ_ORDER
+    @todo remove the test for HA_READ_ORDER
   */
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
       !(getTable()->index_flags(primary_key) & HA_READ_ORDER))

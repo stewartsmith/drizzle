@@ -17,12 +17,16 @@
   UNION  of select's
   UNION's  were introduced by Monty and Sinisa <sinisa@mysql.com>
 */
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_union.h>
+#include <drizzled/select_union.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
 
 namespace drizzled
 {
@@ -303,8 +307,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       */
       assert(!empty_table);
       empty_table= (Table*) session->calloc(sizeof(Table));
-      types.empty();
-      List_iterator_fast<Item> it(sl->item_list);
+      types.clear();
+      List<Item>::iterator it(sl->item_list);
       Item *item_tmp;
       while ((item_tmp= it++))
       {
@@ -323,8 +327,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 		   ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT),MYF(0));
 	goto err;
       }
-      List_iterator_fast<Item> it(sl->item_list);
-      List_iterator_fast<Item> tp(types);
+      List<Item>::iterator it(sl->item_list);
+      List<Item>::iterator tp(types);
       Item *type, *item_tmp;
       while ((type= tp++, item_tmp= it++))
       {
@@ -340,7 +344,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       Check that it was possible to aggregate
       all collations together for UNION.
     */
-    List_iterator_fast<Item> tp(types);
+    List<Item>::iterator tp(types);
     Item *type;
     uint64_t create_options;
 
@@ -527,7 +531,7 @@ bool Select_Lex_Unit::exec()
 	if (!(fake_select_lex->join= new Join(session, item_list,
 					      fake_select_lex->options, result)))
 	{
-	  fake_select_lex->table_list.empty();
+	  fake_select_lex->table_list.clear();
 	  return(true);
 	}
         fake_select_lex->join->no_const_tables= true;
@@ -577,7 +581,7 @@ bool Select_Lex_Unit::exec()
         }
       }
 
-      fake_select_lex->table_list.empty();
+      fake_select_lex->table_list.clear();
       if (!saved_error)
       {
 	session->limit_found_rows = (uint64_t)table->cursor->stats.records + add_rows;
@@ -606,8 +610,7 @@ bool Select_Lex_Unit::cleanup()
 
   if (union_result)
   {
-    delete union_result;
-    union_result=0; // Safety
+    safe_delete(union_result);
     table= 0; // Safety
   }
 
@@ -709,16 +712,15 @@ bool Select_Lex::cleanup()
   {
     assert((Select_Lex*)join->select_lex == this);
     error= join->destroy();
-    delete join;
-    join= 0;
+    safe_delete(join);
   }
   for (Select_Lex_Unit *lex_unit= first_inner_unit(); lex_unit ;
        lex_unit= lex_unit->next_unit())
   {
     error= (bool) ((uint32_t) error | (uint32_t) lex_unit->cleanup());
   }
-  non_agg_fields.empty();
-  inner_refs_list.empty();
+  non_agg_fields.clear();
+  inner_refs_list.clear();
   return(error);
 }
 

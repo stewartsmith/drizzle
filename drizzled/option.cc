@@ -13,15 +13,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/gettext.h>
 
-#include "drizzled/internal/m_string.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/error.h"
-#include "drizzled/option.h"
-#include "drizzled/typelib.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/error.h>
+#include <drizzled/option.h>
+#include <drizzled/typelib.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -724,7 +724,7 @@ Works like strncmp, other than 1.) considers '-' and '_' the same.
 2.) Returns -1 if strings differ, 0 if they are equal
    */
 
-  bool getopt_compare_strings(register const char *s, register const char *t,
+  bool getopt_compare_strings(const char *s, const char *t,
       uint32_t length)
   {
     char const *end= s + length;

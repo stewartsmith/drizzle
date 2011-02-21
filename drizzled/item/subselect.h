@@ -23,11 +23,11 @@
 /* subselect Item */
 
 
-#include "drizzled/comp_creator.h"
-#include "drizzled/item/ref.h"
-#include "drizzled/item/field.h"
-#include "drizzled/item/bin_string.h"
-#include "drizzled/util/test.h"
+#include <drizzled/comp_creator.h>
+#include <drizzled/item/ref.h>
+#include <drizzled/item/field.h>
+#include <drizzled/item/bin_string.h>
+#include <drizzled/util/test.h>
 
 namespace drizzled
 {
@@ -214,7 +214,6 @@ public:
 };
 
 /* used in static ALL/ANY optimization */
-class select_max_min_finder_subselect;
 class Item_maxmin_subselect :public Item_singlerow_subselect
 {
 protected:

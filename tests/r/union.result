@@ -539,10 +539,11 @@ create table t1 SELECT "a" as a UNION select "aa" as a;
 select * from t1;
 a
 a
+aa
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` VARCHAR(1) COLLATE utf8_general_ci NOT NULL DEFAULT ''
+  `a` VARCHAR(2) COLLATE utf8_general_ci NOT NULL DEFAULT ''
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT 12 as a UNION select "aa" as a;
@@ -553,7 +554,7 @@ aa
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` VARBINARY(4) NOT NULL DEFAULT ''
+  `a` VARBINARY(8) NOT NULL DEFAULT ''
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT 12 as a UNION select 12.2 as a;
@@ -665,7 +666,7 @@ testc
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `dt` VARBINARY(19) DEFAULT NULL
+  `dt` VARBINARY(40) DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT dt from t2 UNION select sv from t2;
@@ -765,7 +766,7 @@ create table t1 select "test" union select "testt" ;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` VARCHAR(4) COLLATE utf8_general_ci NOT NULL DEFAULT ''
+  `test` VARCHAR(5) COLLATE utf8_general_ci NOT NULL DEFAULT ''
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (s char(200));
@@ -1195,7 +1196,7 @@ create table t2 select * from t1 union select 'abcdefghijkl';
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` VARCHAR(5) COLLATE utf8_general_ci DEFAULT NULL
+  `a` VARCHAR(12) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select row_format from data_dictionary.TABLES where table_schema="test" and table_name="t2";
 row_format
@@ -1203,7 +1204,7 @@ DEFAULT
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` VARCHAR(5) COLLATE utf8_general_ci DEFAULT NULL
+  `a` VARCHAR(12) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1,t2;
 CREATE TABLE t1 (a mediumtext);
@@ -1358,6 +1359,7 @@ avg(1)
 select '12' union select '12345';
 12
 12
+12345
 CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (3),(1),(2),(4),(1);
 SELECT a FROM (SELECT a FROM t1 UNION SELECT a FROM t1 ORDER BY a) AS test;

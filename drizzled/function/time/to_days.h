@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_TO_DAYS_H
 #define DRIZZLED_FUNCTION_TIME_TO_DAYS_H
 
-#include "drizzled/function/math/int.h"
+#include <drizzled/function/math/int.h>
 
 namespace drizzled
 {

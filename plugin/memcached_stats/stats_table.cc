@@ -27,11 +27,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "stats_table.h"
 
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 #include <libmemcached/server.h>
 
 #if !defined(HAVE_MEMCACHED_SERVER_FN)

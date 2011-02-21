@@ -16,9 +16,12 @@
 #ifndef DRIZZLED_PARSER_H
 #define DRIZZLED_PARSER_H
 
+#include <drizzled/charset.h>
+#include <drizzled/error.h>
 #include <drizzled/foreign_key.h>
-#include <drizzled/lex_symbol.h>
+#include <drizzled/function/get_system_var.h>
 #include <drizzled/function/locate.h>
+#include <drizzled/function/set_user_var.h>
 #include <drizzled/function/str/char.h>
 #include <drizzled/function/str/collation.h>
 #include <drizzled/function/str/insert.h>
@@ -43,25 +46,29 @@
 #include <drizzled/function/time/timestamp_diff.h>
 #include <drizzled/function/time/typecast.h>
 #include <drizzled/function/time/year.h>
-
-#include <drizzled/error.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/item/copy_string.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/item/boolean.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/uint.h>
-#include <drizzled/item/null.h>
-#include <drizzled/session.h>
-#include <drizzled/item/func.h>
-#include <drizzled/sql_base.h>
+#include <drizzled/item/copy_string.h>
 #include <drizzled/item/create.h>
 #include <drizzled/item/default_value.h>
+#include <drizzled/item/func.h>
 #include <drizzled/item/insert_value.h>
+#include <drizzled/item/null.h>
+#include <drizzled/item/uint.h>
 #include <drizzled/lex_string.h>
-#include <drizzled/function/get_system_var.h>
-#include <drizzled/thr_lock.h>
-#include <drizzled/message/table.pb.h>
+#include <drizzled/lex_symbol.h>
 #include <drizzled/message/schema.pb.h>
+#include <drizzled/message/table.pb.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/select_dump.h>
+#include <drizzled/select_dumpvar.h>
+#include <drizzled/select_export.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_parse.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/statement/alter_table.h>
@@ -94,21 +101,14 @@
 #include <drizzled/statement/rollback_to_savepoint.h>
 #include <drizzled/statement/savepoint.h>
 #include <drizzled/statement/select.h>
-#include <drizzled/statement/show.h>
 #include <drizzled/statement/set_option.h>
+#include <drizzled/statement/show.h>
 #include <drizzled/statement/show_errors.h>
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/statement/start_transaction.h>
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
-#include <drizzled/db.h>
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-
-#include "drizzled/item/boolean.h"
 
 namespace drizzled {
 
@@ -133,7 +133,7 @@ Item* reserved_keyword_function(Session *session, const std::string &name, List<
 void my_parse_error(Lex_input_stream *lip);
 void my_parse_error(const char *message);
 bool check_reserved_words(LEX_STRING *name);
-void errorOn(const char *s);
+void errorOn(drizzled::Session *session, const char *s);
 
 
 bool buildOrderBy(LEX *lex);
@@ -168,6 +168,8 @@ drizzled::enum_field_types buildDecimalColumn(LEX *lex);
 void buildKeyOnColumn(LEX *lex);
 void buildAutoOnColumn(LEX *lex);
 void buildPrimaryOnColumn(LEX *lex);
+void buildReplicationOption(LEX *lex, bool arg);
+void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key= false);
 
 } // namespace parser
 } // namespace drizzled

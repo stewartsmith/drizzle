@@ -24,10 +24,10 @@
 #ifndef DRIZZLED_PLUGIN_TRANSACTION_READER_H
 #define DRIZZLED_PLUGIN_TRANSACTION_READER_H
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/replication_services.h" /* For global transaction ID typedef */
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/replication_services.h> /* For global transaction ID typedef */
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 /**
  * @file Defines the API for a TransactionReader

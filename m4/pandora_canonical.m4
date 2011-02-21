@@ -115,7 +115,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     vc_changelog=yes
   ])
   m4_if(PCT_VERSION_FROM_VC,yes,[
-    PANDORA_VC_VERSION
+    PANDORA_VC_INFO_HEADER
   ],[
     PANDORA_TEST_VC_DIR
 
@@ -328,7 +328,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 #error "You should include config.h as your first include file"
 #endif
 
-#include "config/top.h"
+#include <config/top.h>
 ])
   mkdir -p config
   cat > config/top.h.stamp <<EOF_CONFIG_TOP

@@ -18,15 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <boost/lexical_cast.hpp>
 
-#include "drizzled/field/date.h"
-#include "drizzled/error.h"
-#include "drizzled/table.h"
-#include "drizzled/temporal.h"
-#include "drizzled/session.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/field/date.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/temporal.h>
+#include <drizzled/session.h>
+#include <drizzled/time_functions.h>
+#include <drizzled/current_session.h>
 
 #include <math.h>
 
@@ -172,12 +173,12 @@ int Field_date::store_time(type::Time &ltime,
   return error;
 }
 
-double Field_date::val_real(void)
+double Field_date::val_real(void) const
 {
   return (double) Field_date::val_int();
 }
 
-int64_t Field_date::val_int(void)
+int64_t Field_date::val_int(void) const
 {
   uint32_t j;
 
@@ -188,7 +189,7 @@ int64_t Field_date::val_int(void)
   return (int64_t) j;
 }
 
-String *Field_date::val_str(String *val_buffer, String *)
+String *Field_date::val_str(String *val_buffer, String *) const
 {
   val_buffer->alloc(field_length);
   val_buffer->length(field_length);
@@ -216,7 +217,7 @@ String *Field_date::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Field_date::get_date(type::Time &ltime, uint32_t fuzzydate)
+bool Field_date::get_date(type::Time &ltime, uint32_t fuzzydate) const
 {
   uint32_t tmp=(uint32_t) uint4korr(ptr);
   ltime.day=		(int) (tmp%100);
@@ -229,7 +230,7 @@ bool Field_date::get_date(type::Time &ltime, uint32_t fuzzydate)
           1 : 0);
 }
 
-bool Field_date::get_time(type::Time &ltime)
+bool Field_date::get_time(type::Time &ltime) const
 {
   return Field_date::get_date(ltime ,0);
 }

@@ -18,17 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/session_dictionary/dictionary.h"
+#include <plugin/session_dictionary/dictionary.h>
 
 #include <netdb.h>
 
-#include "drizzled/pthread_globals.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/thread_var.h"
+#include <drizzled/pthread_globals.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/thread_var.h>
 
 #include <set>
 
@@ -65,7 +65,7 @@ bool ProcesslistTool::Generator::populate()
 
   while ((tmp= session_generator))
   {
-    drizzled::Session::State::const_shared_ptr state(tmp->state());
+    drizzled::session::State::const_shared_ptr state(tmp->state());
     identifier::User::const_shared_ptr tmp_sctx= tmp->user();
 
     /* ID */

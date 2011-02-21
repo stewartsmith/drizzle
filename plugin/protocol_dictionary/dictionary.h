@@ -21,8 +21,8 @@
 #ifndef PLUGIN_PROTOCOL_DICTIONARY_DICTIONARY_H
 #define PLUGIN_PROTOCOL_DICTIONARY_DICTIONARY_H
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/plugin/listen.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/plugin/listen.h>
 
 class ProtocolTool : public drizzled::plugin::TableFunction
 {

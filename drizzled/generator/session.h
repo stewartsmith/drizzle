@@ -22,8 +22,9 @@
 #define DRIZZLED_GENERATOR_SESSION_H
 
 #include <boost/thread/mutex.hpp>
-#include "drizzled/session/cache.h"
-#include "drizzled/identifier/user.h"
+
+#include <drizzled/identifier/user.h>
+#include <drizzled/session/cache.h>
 
 namespace drizzled {
 namespace generator {

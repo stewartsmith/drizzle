@@ -23,7 +23,7 @@
  * System backup info table for repository backups.
  */
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 #include <drizzled/common.h>
 #include <drizzled/session.h>
 #endif

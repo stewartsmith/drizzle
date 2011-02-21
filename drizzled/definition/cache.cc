@@ -18,17 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <boost/bind.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
-#include "drizzled/session.h"
-#include "drizzled/identifier/table.h"
-#include "drizzled/definition/cache.h"
+#include <drizzled/session.h>
+#include <drizzled/identifier/table.h>
+#include <drizzled/definition/cache.h>
 
-#include "drizzled/table/instance.h"
+#include <drizzled/table/instance.h>
 
 namespace drizzled {
 

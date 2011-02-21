@@ -18,12 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/show.h"
-#include "drizzled/session.h"
-#include "drizzled/statement/create_index.h"
-#include "drizzled/statement/alter_table.h"
-#include "drizzled/db.h"
+#include <config.h>
+
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/create_index.h>
+#include <drizzled/statement/alter_table.h>
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled
 {
@@ -37,7 +38,7 @@ CreateIndex::CreateIndex(Session *in_session, const drizzled::ha_build_method me
     getSession()->getLex()->sql_command= SQLCOM_CREATE_INDEX;
     alter_info.flags.set(ALTER_ADD_INDEX);
     alter_info.build_method= method_arg;
-    getSession()->getLex()->col_list.empty();
+    getSession()->getLex()->col_list.clear();
   }
 
 bool statement::CreateIndex::execute()
@@ -49,7 +50,7 @@ bool statement::CreateIndex::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (plugin::StorageEngine::getTableDefinition(*getSession(), identifier, original_table_message) != EEXIST)
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
