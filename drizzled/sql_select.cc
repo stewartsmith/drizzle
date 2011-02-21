@@ -5800,7 +5800,7 @@ bool setup_copy_fields(Session *session,
   CopyField *copy= NULL;
   res_selected_fields.clear();
   res_all_fields.clear();
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields);
   List<Item> extra_funcs;
   uint32_t i, border= all_fields.elements - elements;
 
@@ -6010,7 +6010,7 @@ bool change_to_use_tmp_fields(Session *session,
       item_field;
   }
 
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields);
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
@@ -6053,7 +6053,7 @@ bool change_refs_to_tmp_fields(Session *session,
       new_item;
   }
 
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields);
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
