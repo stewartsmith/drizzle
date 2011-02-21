@@ -110,7 +110,7 @@ int Field_str::store_decimal(const type::Decimal *d)
   return store(str.ptr(), str.length(), str.charset());
 }
 
-type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value)
+type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value) const
 {
   int64_t nr= val_int();
   int2_class_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);

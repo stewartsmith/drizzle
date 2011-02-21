@@ -123,19 +123,19 @@ void Boolean::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("boolean"));
 }
 
-double Boolean::val_real()
+double Boolean::val_real() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   return isTrue();
 }
 
-int64_t Boolean::val_int()
+int64_t Boolean::val_int() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   return isTrue();
 }
 
-String *Boolean::val_str(String *val_buffer, String *)
+String *Boolean::val_str(String *val_buffer, String *) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -144,7 +144,7 @@ String *Boolean::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-type::Decimal *Boolean::val_decimal(type::Decimal *dec)
+type::Decimal *Boolean::val_decimal(type::Decimal *dec) const
 {
   if (isTrue())
   {

@@ -260,7 +260,7 @@ int Field_decimal::store_time(type::Time &ltime,
 }
 
 
-double Field_decimal::val_real(void)
+double Field_decimal::val_real(void) const
 {
   double dbl;
   type::Decimal decimal_value;
@@ -273,7 +273,7 @@ double Field_decimal::val_real(void)
 }
 
 
-int64_t Field_decimal::val_int(void)
+int64_t Field_decimal::val_int(void) const
 {
   int64_t i;
   type::Decimal decimal_value;
@@ -286,7 +286,7 @@ int64_t Field_decimal::val_int(void)
 }
 
 
-type::Decimal* Field_decimal::val_decimal(type::Decimal *decimal_value)
+type::Decimal* Field_decimal::val_decimal(type::Decimal *decimal_value) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -296,8 +296,7 @@ type::Decimal* Field_decimal::val_decimal(type::Decimal *decimal_value)
 }
 
 
-String *Field_decimal::val_str(String *val_buffer,
-                               String *)
+String *Field_decimal::val_str(String *val_buffer, String *) const
 {
   type::Decimal decimal_value;
 

@@ -52,10 +52,10 @@ public:
   int store(int64_t nr, bool unsigned_val);
   int store_decimal(const drizzled::type::Decimal*);
 
-  String *val_str(String*,String *);
-  double val_real();
-  int64_t val_int();
-  type::Decimal *val_decimal(type::Decimal *);
+  String *val_str(String*,String *) const;
+  double val_real() const;
+  int64_t val_int() const;
+  type::Decimal *val_decimal(type::Decimal *) const;
 
   void sql_type(drizzled::String&) const;
 
