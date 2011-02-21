@@ -43,7 +43,7 @@ QueueProducer::~QueueProducer()
 bool QueueProducer::init()
 {
   setIOState("", true);
-  return openConnection();
+  return reconnect(true);
 }
 
 bool QueueProducer::process()
@@ -54,7 +54,7 @@ bool QueueProducer::process()
     {
       if (_last_return == DRIZZLE_RETURN_LOST_CONNECTION)
       {
-        if (reconnect())
+        if (reconnect(false))
         {
           return true;    /* reconnect successful, try again */
         }
@@ -75,7 +75,7 @@ bool QueueProducer::process()
   {
     if (_last_return == DRIZZLE_RETURN_LOST_CONNECTION)
     {
-      if (reconnect())
+      if (reconnect(false))
       {
         return true;    /* reconnect successful, try again */
       }
@@ -101,9 +101,12 @@ void QueueProducer::shutdown()
     closeConnection();
 }
 
-bool QueueProducer::reconnect()
+bool QueueProducer::reconnect(bool initialConnection)
 {
-  errmsg_printf(error::ERROR, _("Lost connection to master. Reconnecting."));
+  if (not initialConnection)
+  {
+    errmsg_printf(error::ERROR, _("Lost connection to master. Reconnecting."));
+  }
 
   _is_connected= false;
   _last_return= DRIZZLE_RETURN_OK;

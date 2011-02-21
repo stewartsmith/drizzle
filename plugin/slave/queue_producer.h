@@ -130,7 +130,7 @@ private:
    * @retval true Reconnect succeeded
    * @retval false Reconnect failed
    */
-  bool reconnect();
+  bool reconnect(bool initialConnection);
 
   bool queryForMaxCommitId(uint32_t *max_commit_id);
   bool queryForReplicationEvents(uint32_t max_commit_id);
