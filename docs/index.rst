@@ -74,6 +74,7 @@ User Level Topics:
    storage_engines
    using_replication
    logging
+   authentication
 
 Configuration:
 --------------

@@ -14,17 +14,17 @@ An example: ::
 	START TRANSACTION;
 
 	INSERT INTO popular_sites (url, id)
-   		VALUES ('flickr.com', 101);
+   		VALUES ('flickr.com', 07);
 
 	INSERT INTO popular_sites (url, id)
-   		VALUES ('twitter.com', 110);
+   		VALUES ('twitter.com', 10);
 
 	SELECT * FROM popular_sites;
 
 +-----+---------------+-------+---------------------+
 | id  | url           | notes | accessed            |
 +=====+===============+=======+=====================+
-| 01  | flickr.com    | NULL  | 2011-02-03 08:33:31 |
+| 07  | flickr.com    | NULL  | 2011-02-03 08:33:31 |
 +-----+---------------+-------+---------------------+
 | 10  | twitter.com   | NULL  | 2011-02-03 08:39:16 |
 +-----+---------------+-------+---------------------+

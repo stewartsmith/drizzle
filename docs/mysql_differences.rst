@@ -124,7 +124,7 @@ Authentication, Authorization and Access
 Authentication lies in Drizzle plugins. Currently there are PAM and HTTP AUTH plugins for authentication.
 Through the PAM plugin, you can use any PAM module (such as LDAP).
 
-For more information, see our authentication doc.
+For more information, see our :doc:`authentication` doc.
 
 Command line clients
 --------------------
