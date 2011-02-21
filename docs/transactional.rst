@@ -25,7 +25,7 @@ If you set AUTOCOMMIT=1 during a transaction, that transaction will be committed
 
 Transactional DDL is currently not supported, although it may be in the future. This means that although currently you will get a ER_TRANSACTION_DDL_NOT_SUPPORTED error message if you try and execute DDL statements within a transaction, in future versions of Drizzle they may succeed.
 
-Currently DDL operations are performed as a single transaction, this limitation will be lifted in the future.
+Currently DDL operations are performed as a single transaction, but this limitation will be lifted in the future.
 
 For various reasons, Drizzle may have to ROLLBACK a statement or transaction
 without having been asked to do so. Examples include lock wait timeout or
