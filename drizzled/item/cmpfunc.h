@@ -1601,7 +1601,7 @@ class Item_equal_iterator : public List<Item_field>::iterator
 {
 public:
   inline Item_equal_iterator(Item_equal &item_equal)
-    :List<Item_field>::iterator (item_equal.fields)
+    :List<Item_field>::iterator (item_equal.fields.begin() )
   {}
   inline Item_field* operator++(int)
   {
