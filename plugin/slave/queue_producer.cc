@@ -311,19 +311,29 @@ bool QueueProducer::queueInsert(const char *trx_id,
   google::protobuf::TextFormat::PrintToString(message, &message_text);  
 
   /*
-   * Escape embedded quotes. client->pushSQL() will remove double quotes
-   * if we don't escape them.
+   * Execution using drizzled::Execute requires some special escaping.
    */
   string::iterator it= message_text.begin();
   for (; it != message_text.end(); ++it)
   {
-    if (*it == '\'')
+    if (*it == '\"')
     {
-      it= message_text.insert(it, '\'');
+      it= message_text.insert(it, '\\');
       ++it;
     }
-    else if (*it == '\"')
+    else if (*it == '\'')
     {
+      it= message_text.insert(it, '\\');
+      ++it;
+      it= message_text.insert(it, '\\');
+      ++it;
+    }
+    else if (*it == '\\')
+    {
+      it= message_text.insert(it, '\\');
+      ++it;
+      it= message_text.insert(it, '\\');
+      ++it;
       it= message_text.insert(it, '\\');
       ++it;
     }

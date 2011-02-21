@@ -80,6 +80,36 @@ bool QueueConsumer::process()
     assert((not commit_id.empty()) && (commit_id != "0"));
     assert(segmented_sql.empty());
 
+    if (not aggregate_sql.empty())
+    {
+      /*
+       * Execution using drizzled::Execute requires some special escaping.
+       */
+      vector<string>::iterator agg_iter;
+      for (agg_iter= aggregate_sql.begin(); agg_iter != aggregate_sql.end(); ++agg_iter)
+      {
+        string &sql= *agg_iter;
+        string::iterator si= sql.begin();
+        for (; si != sql.end(); ++si)
+        {
+          if (*si == '\"')
+          {
+            si= sql.insert(si, '\\');
+            ++si;
+          }
+          else if (*si == '\\')
+          {
+            si= sql.insert(si, '\\');
+            ++si;
+            si= sql.insert(si, '\\');
+            ++si;
+            si= sql.insert(si, '\\');
+            ++si;
+          }
+        }
+      }
+    }
+
     if (not executeSQLWithCommitId(aggregate_sql, commit_id))
     {
       return false;
@@ -232,20 +262,6 @@ bool QueueConsumer::convertToSQL(const message::Transaction &transaction,
       return false;
     }
 
-    /* Replace any embedded NULLs in the SQL */
-    vector<string>::iterator iter;
-    for (iter= segmented_sql.begin(); iter != segmented_sql.end(); ++iter)
-    {
-      string &sql= *iter;
-      string::size_type found= sql.find_first_of('\0');
-      while (found != string::npos)
-      {
-        sql[found]= '\\';
-        sql.insert(found + 1, 1, '0');
-        found= sql.find_first_of('\0', found);
-      }      
-    }
-    
     if (isEndStatement(statement))
     {
       aggregate_sql.insert(aggregate_sql.end(),
