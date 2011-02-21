@@ -115,6 +115,8 @@ XOR
 * evaluates to 1 for non-NULL operands (if an odd number of operands is nonzero)
 * otherwise 0 is returned
 
+::
+
 	SELECT 1 XOR NULL;
         	-> NULL
 	SELECT 1 XOR 0;
@@ -124,7 +126,7 @@ XOR
 	SELECT 1 XOR 1;
         	-> 0
 
-Note that "a XOR b" is mathematically equal to "(a AND (NOT b)) OR ((NOT a) and b)". 
+Note that "a XOR b" is the mathematical equivalent of (a AND (NOT b)) OR ((NOT a) and b). 
 
 
 .. _not:
@@ -170,4 +172,49 @@ The result set would be something like:
 +---------------+------------------+--------------+
 |681     	|MD                |Consultant    |
 +---------------+------------------+--------------+  
+
+
+.. _less_than:
+
+LESS THAN
+----------
+
+blah
+
+
+.. _greater_than:
+
+GREATER THAN
+-------------
+
+blah
+
+.. _less_or_equal:
+
+LESS THAN OR EQUAL
+-------------------
+
+blah
+
+.. _greater_or_equal:
+
+GREATER THAN OR EQUAL
+----------------------
+
+blah
+
+.. _equal:
+
+EQUAL
+-----
+
+blah
+
+.. _not_equal:
+
+NOT EQUAL
+----------
+
+blah
+
 
