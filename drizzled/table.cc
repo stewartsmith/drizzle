@@ -197,7 +197,7 @@ void Table::resetTable(Session *session,
 
 /* Deallocate temporary blob storage */
 
-void free_blobs(register Table *table)
+void free_blobs(Table *table)
 {
   uint32_t *ptr, *end;
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
@@ -239,7 +239,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 
 	/* Check that the integer is in the internal */
 
-int set_zone(register int nr, int min_zone, int max_zone)
+int set_zone(int nr, int min_zone, int max_zone)
 {
   if (nr<=min_zone)
     return (min_zone);

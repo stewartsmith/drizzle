@@ -428,7 +428,7 @@ static void init_username(void);
 static void add_int_to_prompt(int toadd);
 static int get_result_width(drizzle_result_st *res);
 static int get_field_disp_length(drizzle_column_st * field);
-static const char * strcont(register const char *str, register const char *set);
+static const char * strcont(const char *str, const char *set);
 
 /* A class which contains information on the commands this program
    can understand. */
@@ -2760,7 +2760,7 @@ int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
 static int
 com_help(string *buffer, const char *)
 {
-  register int i, j;
+  int i, j;
   char buff[32], *end;
   std::vector<char> output_buff;
   output_buff.resize(512);
@@ -4661,9 +4661,9 @@ static int com_prompt(string *, const char *line)
     if there isn't anything found.
 */
 
-static const char * strcont(register const char *str, register const char *set)
+static const char * strcont(const char *str, const char *set)
 {
-  register const char * start = (const char *) set;
+  const char * start = (const char *) set;
 
   while (*str)
   {
