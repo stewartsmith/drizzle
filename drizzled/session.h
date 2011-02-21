@@ -213,8 +213,10 @@ public:
    * @todo should be const
    */
   uint32_t id;
+private:
   LEX *lex; /**< parse tree descriptor */
 
+public:
   LEX *getLex() 
   {
     return lex;

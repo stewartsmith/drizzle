@@ -87,8 +87,8 @@ static bool rm_table(Session *session, TableList *tables, bool if_exists, bool d
 
 bool statement::DropTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   assert(first_table == all_tables && first_table != 0);
 
   if (not drop_temporary)

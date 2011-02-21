@@ -43,7 +43,7 @@ const char *Natural_join_column::name()
 
 Item *Natural_join_column::create_item(Session *session)
 {
-  return new Item_field(session, &session->lex->current_select->context, table_field);
+  return new Item_field(session, &session->getLex()->current_select->context, table_field);
 }
 
 
