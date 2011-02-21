@@ -439,6 +439,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  REPEATABLE_SYM                /* SQL-2003-N */
 %token  REPEAT_SYM                    /* MYSQL-FUNC */
 %token  REPLACE                       /* MYSQL-FUNC */
+%token  REPLICATE
 %token  REPLICATION
 %token  RESTRICT
 %token  RETURNS_SYM                   /* SQL-2003-R */
@@ -970,11 +971,11 @@ custom_database_option:
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
             statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
           }
-        | REPLICATION opt_equal TRUE_SYM
+        | REPLICATE opt_equal TRUE_SYM
           {
             parser::buildReplicationOption(Lex, true);
           }
-        | REPLICATION opt_equal FALSE_SYM
+        | REPLICATE opt_equal FALSE_SYM
           {
             parser::buildReplicationOption(Lex, false);
           }
@@ -1029,11 +1030,11 @@ custom_engine_option:
           {
             Lex->table()->mutable_options()->set_auto_increment_value($3);
           }
-        | REPLICATION opt_equal TRUE_SYM
+        | REPLICATE opt_equal TRUE_SYM
           {
             Lex->table()->mutable_options()->set_dont_replicate(false);
           }
-        | REPLICATION opt_equal FALSE_SYM
+        | REPLICATE opt_equal FALSE_SYM
           {
             Lex->table()->mutable_options()->set_dont_replicate(true);
           }

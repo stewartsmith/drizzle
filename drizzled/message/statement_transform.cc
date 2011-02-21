@@ -1147,7 +1147,7 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_dont_replicate() and options.dont_replicate())
   {
-    destination.append(" REPLICATION = FALSE");
+    destination.append(" REPLICATE = FALSE");
   }
 
   return NONE;
