@@ -60,6 +60,7 @@ Boolean::Boolean(unsigned char *ptr_arg,
         field_name_arg),
   ansi_display(ansi_display_arg)
   {
+    flags|= UNSIGNED_FLAG;
   }
 
 int Boolean::cmp(const unsigned char *a, const unsigned char *b)
