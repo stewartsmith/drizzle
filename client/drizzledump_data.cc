@@ -561,19 +561,10 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
     throw std::exception();
   }
 
-  boost::match_flag_type flags = boost::match_default; 
+  ServerDetect server_detect= ServerDetect(&connection);
 
-  boost::regex mysql_regex("(5\\.[0-9]+\\.[0-9]+)");
-  boost::regex drizzle_regex("(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
-
-  std::string version(getServerVersion());
-
-  if (regex_search(version, mysql_regex, flags))
-    serverType= SERVER_MYSQL_FOUND;
-  else if (regex_search(version, drizzle_regex, flags))
-    serverType= SERVER_DRIZZLE_FOUND;
-  else
-    serverType= SERVER_UNKNOWN_FOUND;
+  serverType= server_detect.getServerType();
+  serverVersion= server_detect.getServerVersion();
 }
 
 drizzle_result_st* DrizzleDumpConnection::query(std::string &str_query)

@@ -37,7 +37,7 @@
 #include <config.h>
 #include <libdrizzle/drizzle_client.h>
 
-#include <client/get_password.h>
+#include "server_detect.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -307,6 +307,7 @@ static Status status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static uint32_t opt_connect_timeout= 0;
+static ServerDetect::server_type server_type= ServerDetect::SERVER_UNKNOWN_FOUND;
 std::string current_db,
   delimiter_str,  
   current_host,
@@ -3128,11 +3129,13 @@ print_table_data(drizzle_result_st *result)
   drizzle_return_t ret;
   drizzle_column_st *field;
   std::vector<bool> num_flag;
+  std::vector<bool> boolean_flag;
   string separator;
 
   separator.reserve(256);
 
   num_flag.resize(drizzle_result_column_count(result));
+  boolean_flag.resize(drizzle_result_column_count(result));
   if (column_types_flag)
   {
     print_field_types(result);
@@ -3175,6 +3178,13 @@ print_table_data(drizzle_result_st *result)
       // Room for "NULL"
       length=4;
     }
+    if ((length < 5) and 
+      (server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+      (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
+    {
+      // Room for "FALSE"
+      length= 5;
+    }
     drizzle_column_set_max_size(field, length);
 
     for (x=0; x< (length+2); x++)
@@ -3198,6 +3208,16 @@ print_table_data(drizzle_result_st *result)
                   drizzle_column_name(field));
       num_flag[off]= ((drizzle_column_type(field) <= DRIZZLE_COLUMN_TYPE_LONGLONG) ||
                       (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_NEWDECIMAL));
+      if ((server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+        (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
+      {
+        boolean_flag[off]= true;
+        num_flag[off]= false;
+      }
+      else
+      {
+        boolean_flag[off]= false;
+      }
     }
     (void) tee_fputs("\n", PAGER);
     tee_puts((char*) separator.c_str(), PAGER);
@@ -3235,6 +3255,19 @@ print_table_data(drizzle_result_st *result)
       {
         buffer= "NULL";
         data_length= 4;
+      }
+      else if (boolean_flag[off])
+      {
+        if (strncmp(cur[off],"1", 1) == 0)
+        {
+          buffer= "TRUE";
+          data_length= 4;
+        }
+        else
+        {
+          buffer= "FALSE";
+          data_length= 5;
+        }
       }
       else
       {
@@ -4107,6 +4140,9 @@ sql_connect(const string &host, const string &database, const string &user, cons
     return -1;          // Retryable
   }
   connected=1;
+
+  ServerDetect server_detect(&con);
+  server_type= server_detect.getServerType();
 
   build_completion_hash(opt_rehash, 1);
   return 0;
