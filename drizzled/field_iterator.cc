@@ -57,7 +57,7 @@ Item *Field_iterator_table::create_item(Session *session)
 void Field_iterator_natural_join::set(TableList *table_ref)
 {
   assert(table_ref->join_columns);
-  column_ref_it.init(*(table_ref->join_columns));
+  column_ref_it= table_ref->join_columns->begin();
   cur_column_ref= column_ref_it++;
 }
 

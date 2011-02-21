@@ -476,7 +476,7 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
 */
 bool ClientMySQLProtocol::sendFields(List<Item> *list)
 {
-  List<Item>::iterator it(*list);
+  List<Item>::iterator it(list->begin());
   Item *item;
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
