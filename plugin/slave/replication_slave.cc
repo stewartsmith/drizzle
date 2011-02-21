@@ -84,7 +84,7 @@ bool ReplicationSlave::initWithConfig()
     _producer.setMaxReconnectAttempts(vm["max-reconnects"].as<uint32_t>());
 
   if (vm.count("seconds-between-reconnects"))
-    _producer.setMaxReconnectAttempts(vm["seconds-between-reconnects"].as<uint32_t>());
+    _producer.setSecondsBetweenReconnects(vm["seconds-between-reconnects"].as<uint32_t>());
 
   /* setup schema and tables */
   ReplicationSchema rs;
