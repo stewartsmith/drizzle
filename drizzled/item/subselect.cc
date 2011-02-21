@@ -273,7 +273,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
   {
     for (Select_Lex *lex= unit->first_select(); lex; lex= lex->next_select())
     {
-      List<Item>::iterator li(lex->item_list);
+      List<Item>::iterator li(lex->item_list.begin());
       Item *item;
       Order *order;
 
@@ -1057,7 +1057,7 @@ Item_in_subselect::single_value_transformer(Join *join,
         upper_item->set_sum_test(item);
       *select_lex->ref_pointer_array= item;
       {
-	List<Item>::iterator it(select_lex->item_list);
+	List<Item>::iterator it(select_lex->item_list.begin());
 	it++;
 	it.replace(item);
       }
@@ -2096,7 +2096,7 @@ bool subselect_single_select_engine::no_rows()
 void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
 {
   Item *sel_item;
-  List<Item>::iterator li(item_list);
+  List<Item>::iterator li(item_list.begin());
   res_type= STRING_RESULT;
   res_field_type= DRIZZLE_TYPE_VARCHAR;
   for (uint32_t i= 0; (sel_item= li++); i++)

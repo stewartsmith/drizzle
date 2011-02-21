@@ -256,7 +256,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
         select the field belongs to. If there are some then an error is
         raised.
     */
-    List<Item_field>::iterator of(outer_fields);
+    List<Item_field>::iterator of(outer_fields.begin());
     while ((field= of++))
     {
       Select_Lex *sel= field->cached_table->select_lex;
@@ -387,7 +387,7 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   if ((args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     uint32_t i=0;
-    List<Item>::iterator li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
 
     while ((item=li++))
@@ -2998,7 +2998,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
   order= (Order**)(args + arg_count);
 
   /* fill args items of show and sort */
-  List<Item>::iterator li(*select_list);
+  List<Item>::iterator li(select_list->begin());
 
   for (arg_ptr=args ; (item_select= li++) ; arg_ptr++)
     *arg_ptr= item_select;
