@@ -103,11 +103,11 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       return;
 
     /*
-      session->lex->current_select == 0 if lex structure is not inited
+      session->getLex()->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (! (session->lex->current_select &&
-           session->lex->current_select->no_error && !session->is_fatal_error))
+    if (! (session->getLex()->current_select &&
+           session->getLex()->current_select->no_error && !session->is_fatal_error))
     {
       if (! session->main_da.is_error())            // Return only first message
       {

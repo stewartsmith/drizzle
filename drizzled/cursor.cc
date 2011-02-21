@@ -1300,7 +1300,7 @@ static bool log_row_for_replication(Table* table,
 
   bool result= false;
 
-  switch (session->lex->sql_command)
+  switch (session->getLex()->sql_command)
   {
   case SQLCOM_CREATE_TABLE:
     /*

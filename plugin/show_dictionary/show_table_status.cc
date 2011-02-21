@@ -50,7 +50,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
 
   schema_predicate.append(select->getShowSchema());
 

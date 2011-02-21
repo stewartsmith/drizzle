@@ -221,8 +221,8 @@ bool show_warnings(Session *session,
     return true;
 
   DRIZZLE_ERROR *err;
-  Select_Lex *sel= &session->lex->select_lex;
-  Select_Lex_Unit *unit= &session->lex->unit;
+  Select_Lex *sel= &session->getLex()->select_lex;
+  Select_Lex_Unit *unit= &session->getLex()->unit;
   ha_rows idx= 0;
 
   unit->set_limit(sel);

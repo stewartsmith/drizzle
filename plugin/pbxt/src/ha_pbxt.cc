@@ -4665,7 +4665,7 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 						 * when a record is deleted we add an xlog record which we cannot "rollback" later
 						 * when we find that an FK-constraint has failed. 
 						 */
-						thd->lex->ignore = false;
+						thd->getLex()->ignore = false;
 					case SQLCOM_UPDATE:
 #ifndef DRIZZLED
 					case SQLCOM_UPDATE_MULTI:

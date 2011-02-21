@@ -29,17 +29,17 @@ namespace drizzled
 
 bool statement::Load::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   assert(first_table == all_tables && first_table != 0);
   bool res= load(getSession(),
-                 getSession()->lex->exchange,
+                 getSession()->getLex()->exchange,
                  first_table,
-                 getSession()->lex->field_list,
-                 getSession()->lex->update_list,
-                 getSession()->lex->value_list,
-                 getSession()->lex->duplicates,
-                 getSession()->lex->ignore);
+                 getSession()->getLex()->field_list,
+                 getSession()->getLex()->update_list,
+                 getSession()->getLex()->value_list,
+                 getSession()->getLex()->duplicates,
+                 getSession()->getLex()->ignore);
 
   return res;
 }

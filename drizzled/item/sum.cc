@@ -76,17 +76,17 @@ extern plugin::StorageEngine *heap_engine;
 
 bool Item_sum::init_sum_func_check(Session *session)
 {
-  if (!session->lex->allow_sum_func)
+  if (!session->getLex()->allow_sum_func)
   {
     my_message(ER_INVALID_GROUP_FUNC_USE, ER(ER_INVALID_GROUP_FUNC_USE),
                MYF(0));
     return true;
   }
   /* Set a reference to the nesting set function if there is  any */
-  in_sum_func= session->lex->in_sum_func;
+  in_sum_func= session->getLex()->in_sum_func;
   /* Save a pointer to object to be used in items for nested set functions */
-  session->lex->in_sum_func= this;
-  nest_level= session->lex->current_select->nest_level;
+  session->getLex()->in_sum_func= this;
+  nest_level= session->getLex()->current_select->nest_level;
   ref_by= 0;
   aggr_level= -1;
   aggr_sel= NULL;
@@ -148,7 +148,7 @@ bool Item_sum::init_sum_func_check(Session *session)
 bool Item_sum::check_sum_func(Session *session, Item **ref)
 {
   bool invalid= false;
-  nesting_map allow_sum_func= session->lex->allow_sum_func;
+  nesting_map allow_sum_func= session->getLex()->allow_sum_func;
   /*
     The value of max_arg_level is updated if an argument of the set function
     contains a column reference resolved  against a subquery whose level is
@@ -181,7 +181,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
   if (!invalid && aggr_level < 0)
   {
     aggr_level= nest_level;
-    aggr_sel= session->lex->current_select;
+    aggr_sel= session->getLex()->current_select;
   }
   /*
     By this moment we either found a subquery where the set function is
@@ -287,7 +287,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
   }
   aggr_sel->full_group_by_flag.set(SUM_FUNC_USED);
   update_used_tables();
-  session->lex->in_sum_func= in_sum_func;
+  session->getLex()->in_sum_func= in_sum_func;
   return false;
 }
 
@@ -319,8 +319,8 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
 bool Item_sum::register_sum_func(Session *session, Item **ref)
 {
   Select_Lex *sl;
-  nesting_map allow_sum_func= session->lex->allow_sum_func;
-  for (sl= session->lex->current_select->master_unit()->outer_select() ;
+  nesting_map allow_sum_func= session->getLex()->allow_sum_func;
+  for (sl= session->getLex()->current_select->master_unit()->outer_select() ;
        sl && sl->nest_level > max_arg_level;
        sl= sl->master_unit()->outer_select() )
   {
@@ -371,12 +371,12 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
       with_sum_func being set for an Select_Lex means that this Select_Lex
       has aggregate functions directly referenced (i.e. not through a sub-select).
     */
-    for (sl= session->lex->current_select;
+    for (sl= session->getLex()->current_select;
          sl && sl != aggr_sel && sl->master_unit()->item;
          sl= sl->master_unit()->outer_select() )
       sl->master_unit()->item->with_sum_func= 1;
   }
-  session->lex->current_select->mark_as_dependent(aggr_sel);
+  session->getLex()->current_select->mark_as_dependent(aggr_sel);
   return false;
 }
 
@@ -2584,7 +2584,7 @@ Item_sum_count_distinct::~Item_sum_count_distinct()
 bool Item_sum_count_distinct::setup(Session *session)
 {
   List<Item> list;
-  Select_Lex *select_lex= session->lex->current_select;
+  Select_Lex *select_lex= session->getLex()->current_select;
 
   /*
     Setup can be called twice for ROLLUP items. This is a bug.
@@ -3208,7 +3208,7 @@ Item_func_group_concat::fix_fields(Session *session, Item **ref)
 bool Item_func_group_concat::setup(Session *session)
 {
   List<Item> list;
-  Select_Lex *select_lex= session->lex->current_select;
+  Select_Lex *select_lex= session->getLex()->current_select;
 
   /*
     Currently setup() can be called twice. Please add
