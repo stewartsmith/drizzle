@@ -1540,19 +1540,20 @@ public:
 
 class Item_equal: public item::function::Boolean
 {
-  List<Item_field> fields; /* list of equal field items                    */
-  Item *const_item;        /* optional constant item equal to fields items */
-  cmp_item *eval_item;
-  bool cond_false;
-
 public:
-  inline Item_equal() :
-    item::function::Boolean(),
+  typedef List<Item_field> fields_t;
+
+  Item_equal() :
     const_item(0),
     eval_item(0),
     cond_false(0)
   {
     const_item_cache=0;
+  }
+
+  fields_t::iterator begin()
+  {
+    return fields.begin();
   }
 
   Item_equal(Item_field *f1, Item_field *f2);
@@ -1580,6 +1581,12 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   const CHARSET_INFO *compare_collation()
   { return fields.head()->collation.collation; }
+private:
+  fields_t fields; /* list of equal field items                    */
+  Item *const_item;        /* optional constant item equal to fields items */
+  cmp_item *eval_item;
+  bool cond_false;
+
 };
 
 class COND_EQUAL: public memory::SqlAlloc

@@ -1930,7 +1930,7 @@ find_field_in_natural_join(Session *session, TableList *table_ref,
                            bool, TableList **actual_table)
 {
   List<Natural_join_column>::iterator
-    field_it(*(table_ref->join_columns));
+    field_it(table_ref->join_columns->begin());
   Natural_join_column *nj_col, *curr_nj_col;
   Field *found_field;
 
@@ -2145,7 +2145,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
     */
     if (table_name && table_name[0])
     {
-      List<TableList>::iterator it(table_list->getNestedJoin()->join_list);
+      List<TableList>::iterator it(table_list->getNestedJoin()->join_list.begin());
       TableList *table;
       while ((table= it++))
       {
@@ -2444,7 +2444,7 @@ find_item_in_list(Session *session,
                   find_item_error_report_type report_error,
                   enum_resolution_type *resolution)
 {
-  List<Item>::iterator li(items);
+  List<Item>::iterator li(items.begin());
   Item **found=0, **found_unaliased= 0, *item;
   const char *db_name=0;
   const char *field_name=0;
@@ -2647,7 +2647,7 @@ find_item_in_list(Session *session,
 static bool
 test_if_string_in_list(const char *find, List<String> *str_list)
 {
-  List<String>::iterator str_list_it(*str_list);
+  List<String>::iterator str_list_it(str_list->begin());
   String *curr_str;
   size_t find_length= strlen(find);
   while ((curr_str= str_list_it++))
@@ -2981,12 +2981,12 @@ store_natural_using_join_columns(Session *session,
   if (using_fields && found_using_fields < using_fields->elements)
   {
     String *using_field_name;
-    List<String>::iterator using_fields_it(*using_fields);
+    List<String>::iterator using_fields_it(using_fields->begin());
     while ((using_field_name= using_fields_it++))
     {
       const char *using_field_name_ptr= using_field_name->c_ptr();
       List<Natural_join_column>::iterator
-        it(*(natural_using_join->join_columns));
+        it(natural_using_join->join_columns->begin());
       Natural_join_column *common_field;
 
       for (;;)
@@ -3068,7 +3068,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
   /* Call the procedure recursively for each nested table reference. */
   if (table_ref->getNestedJoin())
   {
-    List<TableList>::iterator nested_it(table_ref->getNestedJoin()->join_list);
+    List<TableList>::iterator nested_it(table_ref->getNestedJoin()->join_list.begin());
     TableList *same_level_left_neighbor= nested_it++;
     TableList *same_level_right_neighbor= NULL;
     /* Left/right-most neighbors, possibly at higher levels in the join tree. */
@@ -3122,7 +3122,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
   {
     assert(table_ref->getNestedJoin() &&
            table_ref->getNestedJoin()->join_list.elements == 2);
-    List<TableList>::iterator operand_it(table_ref->getNestedJoin()->join_list);
+    List<TableList>::iterator operand_it(table_ref->getNestedJoin()->join_list.begin());
     /*
       Notice that the order of join operands depends on whether table_ref
       represents a LEFT or a RIGHT join. In a RIGHT join, the operands are
@@ -3222,7 +3222,7 @@ static bool setup_natural_join_row_types(Session *session,
   if (from_clause->elements == 0)
     return false; /* We come here in the case of UNIONs. */
 
-  List<TableList>::iterator table_ref_it(*from_clause);
+  List<TableList>::iterator table_ref_it(from_clause->begin());
   TableList *table_ref; /* Current table reference. */
   /* Table reference to the left of the current. */
   TableList *left_neighbor;
@@ -3272,7 +3272,7 @@ int setup_wild(Session *session, List<Item> &fields,
     return 0;
 
   Item *item;
-  List<Item>::iterator it(fields);
+  List<Item>::iterator it(fields.begin());
 
   session->lex->current_select->cur_pos_in_select_list= 0;
   while (wild_num && (item= it++))
@@ -3333,7 +3333,7 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
   register Item *item;
   enum_mark_columns save_mark_used_columns= session->mark_used_columns;
   nesting_map save_allow_sum_func= session->lex->allow_sum_func;
-  List<Item>::iterator it(fields);
+  List<Item>::iterator it(fields.begin());
   bool save_is_item_list_lookup;
 
   session->mark_used_columns= mark_used_columns;
@@ -3805,7 +3805,8 @@ err_no_arena:
 bool
 fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignore_errors)
 {
-  List<Item>::iterator f(fields),v(values);
+  List<Item>::iterator f(fields.begin());
+  List<Item>::iterator v(values.begin());
   Item *value;
   Item_field *field;
   Table *table;
@@ -3870,7 +3871,7 @@ fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignor
 
 bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
 {
-  List<Item>::iterator v(values);
+  List<Item>::iterator v(values.begin());
   Item *value;
   Table *table= 0;
   Field *field;

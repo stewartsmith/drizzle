@@ -77,8 +77,8 @@ void optimizer::add_key_fields_for_nj(Join *join,
                                       uint32_t *and_level,
                                       vector<optimizer::SargableParam> &sargables)
 {
-  List<TableList>::iterator li(nested_join_table->getNestedJoin()->join_list);
-  List<TableList>::iterator li2(nested_join_table->getNestedJoin()->join_list);
+  List<TableList>::iterator li(nested_join_table->getNestedJoin()->join_list.begin());
+  List<TableList>::iterator li2(nested_join_table->getNestedJoin()->join_list.begin());
   bool have_another= false;
   table_map tables= 0;
   TableList *table;
@@ -94,7 +94,7 @@ void optimizer::add_key_fields_for_nj(Join *join,
         /* It's a semi-join nest. Walk into it as if it wasn't a nest */
         have_another= true;
         li2= li;
-        li= List<TableList>::iterator(table->getNestedJoin()->join_list);
+        li= List<TableList>::iterator(table->getNestedJoin()->join_list.begin());
       }
       else
         add_key_fields_for_nj(join, table, end, and_level, sargables);
@@ -425,7 +425,7 @@ void optimizer::add_key_fields(Join *join,
 {
   if (cond->type() == Item_func::COND_ITEM)
   {
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     optimizer::KeyField *org_key_fields= *key_fields;
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
