@@ -3130,12 +3130,14 @@ print_table_data(drizzle_result_st *result)
   drizzle_column_st *field;
   std::vector<bool> num_flag;
   std::vector<bool> boolean_flag;
+  std::vector<bool> ansi_boolean_flag;
   string separator;
 
   separator.reserve(256);
 
   num_flag.resize(drizzle_result_column_count(result));
   boolean_flag.resize(drizzle_result_column_count(result));
+  ansi_boolean_flag.resize(drizzle_result_column_count(result));
   if (column_types_flag)
   {
     print_field_types(result);
@@ -3180,7 +3182,8 @@ print_table_data(drizzle_result_st *result)
     }
     if ((length < 5) and 
       (server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
-      (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
+      (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY) and
+      (drizzle_column_type(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
     {
       // Room for "FALSE"
       length= 5;
@@ -3211,6 +3214,14 @@ print_table_data(drizzle_result_st *result)
       if ((server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
         (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
       {
+        if ((drizzle_column_flags(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+        {
+          ansi_boolean_flag[off]= true;
+        }
+        else
+        {
+          ansi_boolean_flag[off]= false;
+        }
         boolean_flag[off]= true;
         num_flag[off]= false;
       }
@@ -3260,13 +3271,29 @@ print_table_data(drizzle_result_st *result)
       {
         if (strncmp(cur[off],"1", 1) == 0)
         {
-          buffer= "TRUE";
-          data_length= 4;
+          if (ansi_boolean_flag[off])
+          {
+            buffer= "YES";
+            data_length= 3;
+          }
+          else
+          {
+            buffer= "TRUE";
+            data_length= 4;
+          }
         }
         else
         {
-          buffer= "FALSE";
-          data_length= 5;
+          if (ansi_boolean_flag[off])
+          {
+            buffer= "NO";
+            data_length= 2;
+          }
+          else
+          {
+            buffer= "FALSE";
+            data_length= 5;
+          }
         }
       }
       else
@@ -3543,8 +3570,10 @@ print_tab_data(drizzle_result_st *result)
   drizzle_column_st *field;
   size_t *lengths;
   std::vector<bool> boolean_flag;
+  std::vector<bool> ansi_boolean_flag;
 
   boolean_flag.resize(drizzle_result_column_count(result));
+  ansi_boolean_flag.resize(drizzle_result_column_count(result));
 
   int first=0;
   for (uint32_t off= 0; (field = drizzle_column_next(result)); off++)
@@ -3558,6 +3587,14 @@ print_tab_data(drizzle_result_st *result)
     if ((server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
       (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
     {
+      if ((drizzle_column_flags(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+      {
+        ansi_boolean_flag[off]= true;
+      }
+      else
+      {
+        ansi_boolean_flag[off]= false;
+      }
       boolean_flag[off]= true;
     }
     else
@@ -3595,9 +3632,27 @@ print_tab_data(drizzle_result_st *result)
       if (boolean_flag[off])
       {
         if (strncmp(cur[off],"1", 1) == 0)
-          safe_put_field("TRUE", 4);
+        {
+          if (ansi_boolean_flag[off])
+          {
+            safe_put_field("YES", 3);
+          }
+          else
+          {
+            safe_put_field("TRUE", 4);
+          }
+        }
         else
-          safe_put_field("FALSE", 5);
+        {
+          if (ansi_boolean_flag[off])
+          {
+            safe_put_field("NO", 2);
+          }
+          else
+          {
+            safe_put_field("FALSE", 5);
+          }
+        }
       }
       else
       {

@@ -27,7 +27,7 @@ test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def	data_dictionary	show_indexes	SHOW_INDEXES	Table	Table	8	1024	2	N	4097	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	13	1	1	N	36865	0	63
+def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	13	1	1	N	36897	0	63
 def	data_dictionary	show_indexes	SHOW_INDEXES	Key_name	Key_name	8	1024	7	N	4097	0	45
 def	data_dictionary	show_indexes	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	21	1	N	36865	0	63
 def	data_dictionary	show_indexes	SHOW_INDEXES	Column_name	Column_name	8	1024	1	N	4097	0	45
@@ -447,7 +447,7 @@ PRIMARY KEY(field1(180))
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def	data_dictionary	show_indexes	SHOW_INDEXES	Table	Table	8	1024	2	N	4097	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	13	1	1	N	36865	0	63
+def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	13	1	1	N	36897	0	63
 def	data_dictionary	show_indexes	SHOW_INDEXES	Key_name	Key_name	8	1024	7	N	4097	0	45
 def	data_dictionary	show_indexes	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	21	1	N	36865	0	63
 def	data_dictionary	show_indexes	SHOW_INDEXES	Column_name	Column_name	8	1024	6	N	4097	0	45
