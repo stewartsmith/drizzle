@@ -156,10 +156,10 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (session->openTablesLock(table_list))
     return(true);
 
-  if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
-                                    &session->lex->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
+                                    &session->getLex()->select_lex.top_join_list,
                                     table_list,
-                                    &session->lex->select_lex.leaf_tables, true))
+                                    &session->getLex()->select_lex.leaf_tables, true))
      return(-1);
 
   /*
@@ -457,7 +457,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
       skip_lines--;
       continue;
     }
-    it= fields_vars;
+    it= fields_vars.begin();
     unsigned char *pos=read_info.row_start;
 #ifdef HAVE_VALGRIND
     read_info.row_end[0]=0;
@@ -562,7 +562,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
   enclosed_length=enclosed.length();
   id= 0;
 
-  for (;;it= fields_vars)
+  for (;;it= fields_vars.begin())
   {
     if (session->getKilled())
     {

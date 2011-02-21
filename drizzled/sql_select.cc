@@ -425,7 +425,7 @@ bool select_query(Session *session,
     goto err; // 1
   }
 
-  if (session->lex->describe & DESCRIBE_EXTENDED)
+  if (session->getLex()->describe & DESCRIBE_EXTENDED)
   {
     join->conds_history= join->conds;
     join->having_history= (join->having?join->having:join->tmp_having);
@@ -436,7 +436,7 @@ bool select_query(Session *session,
 
   join->exec();
 
-  if (session->lex->describe & DESCRIBE_EXTENDED)
+  if (session->getLex()->describe & DESCRIBE_EXTENDED)
   {
     select_lex->where= join->conds_history;
     select_lex->having= join->having_history;
@@ -575,8 +575,8 @@ bool update_ref_and_keys(Session *session,
     substitutions.
   */
   sz= sizeof(optimizer::KeyField) *
-      (((session->lex->current_select->cond_count+1)*2 +
-	session->lex->current_select->between_count)*m+1);
+      (((session->getLex()->current_select->cond_count+1)*2 +
+	session->getLex()->current_select->between_count)*m+1);
   if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
     return true;
   and_level= 0;
@@ -1657,12 +1657,12 @@ static bool check_row_equality(Session *session,
                                        (Item_row *) right_item,
 			               cond_equal, eq_list);
       if (!is_converted)
-        session->lex->current_select->cond_count++;
+        session->getLex()->current_select->cond_count++;
     }
     else
     {
       is_converted= check_simple_equality(left_item, right_item, 0, cond_equal);
-      session->lex->current_select->cond_count++;
+      session->getLex()->current_select->cond_count++;
     }
 
     if (!is_converted)
@@ -1718,7 +1718,7 @@ static bool check_equality(Session *session, Item *item, COND_EQUAL *cond_equal,
     if (left_item->type() == Item::ROW_ITEM &&
         right_item->type() == Item::ROW_ITEM)
     {
-      session->lex->current_select->cond_count--;
+      session->getLex()->current_select->cond_count--;
       return check_row_equality(session,
                                 (Item_row *) left_item,
                                 (Item_row *) right_item,
@@ -1749,7 +1749,7 @@ static bool check_equality(Session *session, Item *item, COND_EQUAL *cond_equal,
     just an argument of a comparison predicate.
     The function also determines the maximum number of members in
     equality lists of each Item_cond_and object assigning it to
-    session->lex->current_select->max_equal_elems.
+    session->getLex()->current_select->max_equal_elems.
 
   @note
     Multiple equality predicate =(f1,..fn) is equivalent to the conjuction of
@@ -1833,7 +1833,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
       {
         item_equal->fix_length_and_dec();
         item_equal->update_used_tables();
-        set_if_bigger(session->lex->current_select->max_equal_elems,
+        set_if_bigger(session->getLex()->current_select->max_equal_elems,
                       item_equal->members());
       }
 
@@ -1892,7 +1892,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
         }
         else
           item_equal= (Item_equal *) eq_list.pop();
-        set_if_bigger(session->lex->current_select->max_equal_elems,
+        set_if_bigger(session->getLex()->current_select->max_equal_elems,
                       item_equal->members());
         return item_equal;
       }
@@ -1910,7 +1910,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
         {
           item_equal->fix_length_and_dec();
           item_equal->update_used_tables();
-          set_if_bigger(session->lex->current_select->max_equal_elems,
+          set_if_bigger(session->getLex()->current_select->max_equal_elems,
                         item_equal->members());
         }
         and_cond->cond_equal= cond_equal;
@@ -5570,7 +5570,7 @@ int setup_group(Session *session,
     Item_field *field;
     int cur_pos_in_select_list= 0;
     List<Item>::iterator li(fields);
-    List<Item_field>::iterator naf_it(session->lex->current_select->non_agg_fields);
+    List<Item_field>::iterator naf_it(session->getLex()->current_select->non_agg_fields);
 
     field= naf_it++;
     while (field && (item=li++))
@@ -5800,7 +5800,7 @@ bool setup_copy_fields(Session *session,
   CopyField *copy= NULL;
   res_selected_fields.clear();
   res_all_fields.clear();
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields);
   List<Item> extra_funcs;
   uint32_t i, border= all_fields.elements - elements;
 
@@ -6010,7 +6010,7 @@ bool change_to_use_tmp_fields(Session *session,
       item_field;
   }
 
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields);
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
@@ -6053,7 +6053,7 @@ bool change_refs_to_tmp_fields(Session *session,
       new_item;
   }
 
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields);
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
@@ -6215,7 +6215,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
 {
   if (expr->arg_count)
   {
-    Name_resolution_context *context= &session->lex->current_select->context;
+    Name_resolution_context *context= &session->getLex()->current_select->context;
     Item **arg,**arg_end;
     bool arg_changed= false;
     for (arg= expr->arguments(),

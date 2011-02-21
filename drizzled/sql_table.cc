@@ -1768,16 +1768,16 @@ static bool admin_table(Session* session, TableList* tables,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
-  Select_Lex *select= &session->lex->select_lex;
+  Select_Lex *select= &session->getLex()->select_lex;
   List<Item> field_list;
   Item *item;
-  LEX *lex= session->lex;
   int result_code= 0;
   TransactionServices &transaction_services= TransactionServices::singleton();
   const CHARSET_INFO * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
     return 1;
+
   field_list.push_back(item = new Item_empty_string("Table",
                                                     NAME_CHAR_LEN * 2,
                                                     cs));
@@ -1793,10 +1793,12 @@ static bool admin_table(Session* session, TableList* tables,
 
   for (table= tables; table; table= table->next_local)
   {
-    char table_name[NAME_LEN*2+2];
+    identifier::Table table_identifier(table->getSchemaName(), table->getTableName());
+    std::string table_name;
     bool fatal_error=0;
 
-    snprintf(table_name, sizeof(table_name), "%s.%s", table->getSchemaName(), table->getTableName());
+    table_identifier.getSQLPath(table_name);
+
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {
@@ -1811,9 +1813,9 @@ static bool admin_table(Session* session, TableList* tables,
         so it have to be prepared.
         @todo Investigate if we can put extra tables into argument instead of using lex->query_tables
       */
-      lex->query_tables= table;
-      lex->query_tables_last= &table->next_global;
-      lex->query_tables_own_last= 0;
+      session->getLex()->query_tables= table;
+      session->getLex()->query_tables_last= &table->next_global;
+      session->getLex()->query_tables_own_last= 0;
       session->no_warnings_for_error= 0;
 
       session->openTablesLock(table);
@@ -1843,16 +1845,16 @@ static bool admin_table(Session* session, TableList* tables,
     {
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
-      session->getClient()->store(table_name);
+      session->getClient()->store(table_name.c_str());
       session->getClient()->store(operator_name);
       session->getClient()->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
-                       table_name);
+                       table_name.c_str());
       session->getClient()->store(buff, length);
       transaction_services.autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
-      lex->reset_query_tables_list(false);
+      session->getLex()->reset_query_tables_list(false);
       table->table=0;				// For query cache
       if (session->getClient()->flush())
 	goto err;
@@ -1878,14 +1880,14 @@ static bool admin_table(Session* session, TableList* tables,
 
 send_result:
 
-    lex->cleanup_after_one_table_open();
+    session->getLex()->cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
       List<DRIZZLE_ERROR>::iterator it(session->warn_list);
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
-        session->getClient()->store(table_name);
+        session->getClient()->store(table_name.c_str());
         session->getClient()->store(operator_name);
         session->getClient()->store(warning_level_names[err->level].str,
                                warning_level_names[err->level].length);
@@ -1895,7 +1897,7 @@ send_result:
       }
       drizzle_reset_errors(session, true);
     }
-    session->getClient()->store(table_name);
+    session->getClient()->store(table_name.c_str());
     session->getClient()->store(operator_name);
 
     switch (result_code) {

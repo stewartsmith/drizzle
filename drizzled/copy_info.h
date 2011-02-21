@@ -21,8 +21,13 @@
 #ifndef DRIZZLED_COPY_INFO_H
 #define DRIZZLED_COPY_INFO_H
 
+#include <drizzled/base.h>
+#include <drizzled/sql_list.h>
+
 namespace drizzled
 {
+
+class Item;
 
 /**
   The COPY_INFO structure is used by INSERT/REPLACE code.
