@@ -3542,16 +3542,31 @@ print_tab_data(drizzle_result_st *result)
   drizzle_return_t ret;
   drizzle_column_st *field;
   size_t *lengths;
+  std::vector<bool> boolean_flag;
 
-  if (opt_silent < 2 && column_names)
+  boolean_flag.resize(drizzle_result_column_count(result));
+
+  int first=0;
+  for (uint32_t off= 0; (field = drizzle_column_next(result)); off++)
   {
-    int first=0;
-    while ((field = drizzle_column_next(result)))
+    if (opt_silent < 2 && column_names)
     {
       if (first++)
         (void) tee_fputs("\t", PAGER);
       (void) tee_fputs(drizzle_column_name(field), PAGER);
     }
+    if ((server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+      (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
+    {
+      boolean_flag[off]= true;
+    }
+    else
+    {
+      boolean_flag[off]= false;
+    }
+  }
+  if (opt_silent < 2 && column_names)
+  {
     (void) tee_fputs("\n", PAGER);
   }
   while (1)
@@ -3572,11 +3587,22 @@ print_tab_data(drizzle_result_st *result)
       break;
 
     lengths= drizzle_row_field_sizes(result);
-    safe_put_field(cur[0],lengths[0]);
-    for (uint32_t off=1 ; off < drizzle_result_column_count(result); off++)
+    drizzle_column_seek(result, 0);
+    for (uint32_t off=0 ; off < drizzle_result_column_count(result); off++)
     {
-      (void) tee_fputs("\t", PAGER);
-      safe_put_field(cur[off], lengths[off]);
+      if (off != 0)
+        (void) tee_fputs("\t", PAGER);
+      if (boolean_flag[off])
+      {
+        if (strncmp(cur[off],"1", 1) == 0)
+          safe_put_field("TRUE", 4);
+        else
+          safe_put_field("FALSE", 5);
+      }
+      else
+      {
+        safe_put_field(cur[off], lengths[off]);
+      }
     }
     (void) tee_fputs("\n", PAGER);
     if (quick)
