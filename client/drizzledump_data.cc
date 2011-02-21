@@ -373,6 +373,13 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
           {
             os << "NULL";
           }
+          else if (obj.table->fields[i]->type.compare("BOOLEAN") == 0)
+          {
+            if (strncmp(row[i], "1", 1) == 0)
+              os << "TRUE";
+            else
+              os << "FALSE";
+          }
           else
             os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
           byte_counter+= 3;
