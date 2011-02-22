@@ -22,7 +22,9 @@ SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='user2' ORDER B
 TABLE_NAME
 select * from user2.t1;
 ERROR 42000: Access denied for user 'user1' to schema 'user2'
+SHOW CREATE TABLE user2.doesnt_exist;
+ERROR HY000: Access denied for user 'user1' to table 'user2.doesnt_exist'
 SHOW CREATE TABLE user2.t1;
-ERROR 42000: Access denied for user 'user1' to schema 'user2'
+ERROR HY000: Access denied for user 'user1' to table 'user2.t1'
 drop schema user1;
 drop schema user2;
