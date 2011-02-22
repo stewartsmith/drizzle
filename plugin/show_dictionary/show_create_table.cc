@@ -57,11 +57,11 @@ ShowCreateTable::Generator::Generator(Field **arg) :
       return;
     }
 
-      table_message= plugin::StorageEngine::getTableMessage(getSession(),
-                                                            identifier);
+    table_message= plugin::StorageEngine::getTableMessage(getSession(),
+                                                          identifier);
 
-      if (table_message)
-        is_primed= true;
+    if (table_message)
+      is_primed= true;
   }
 }
 
