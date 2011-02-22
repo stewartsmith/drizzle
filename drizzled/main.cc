@@ -71,7 +71,6 @@
 
 using namespace drizzled;
 using namespace std;
-namespace fs=boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
@@ -301,9 +300,9 @@ int main(int argc, char **argv)
       unireg_abort(1);
     }
 
-    fs::path &full_data_home= getFullDataHome();
-    full_data_home= fs::system_complete(getDataHome());
-    std::cerr << "home " << full_data_home << std::endl;
+    boost::filesystem::path &full_data_home= getFullDataHome();
+    full_data_home= boost::filesystem::system_complete(getDataHome());
+    errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
   }
 
 
