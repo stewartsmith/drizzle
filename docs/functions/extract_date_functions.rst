@@ -1,5 +1,5 @@
-Extract Functions
-=================
+EXTRACT DATE FUNCTION
+======================
 
 **Syntax** ::
 
