@@ -403,7 +403,7 @@ Session::~Session()
   currentSession().release();
 
   plugin::Logging::postEndDo(this);
-  plugin::EventObserver::deregisterSessionEvents(*this); 
+  plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
 }
 
 void Session::setClient(plugin::Client *client_arg)
