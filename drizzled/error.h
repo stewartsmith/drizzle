@@ -24,10 +24,10 @@
 #include <string>
 #include <boost/unordered_map.hpp>
 
-#include <drizzled/error_t.h>
 #include <drizzled/definitions.h>
+#include <drizzled/error/level_t.h>
+#include <drizzled/error_t.h>
 #include <drizzled/identifier.h>
-
 #include <drizzled/visibility.h>
 
 namespace drizzled
@@ -66,7 +66,6 @@ private:
   ErrorMessageMap mapping_;
 };
 
-
 typedef void (*error_handler_func)(drizzled::error_t my_err,
                                    const char *str,
                                    myf MyFlags);
@@ -86,6 +85,10 @@ namespace error {
 void access(drizzled::identifier::User::const_reference user);
 void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Schema::const_reference schema);
 void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Table::const_reference table);
+
+const std::string &verbose_string();
+error::level_t &verbosity();
+void check_verbosity(const std::string &arg);
 
 } // namespace error
 

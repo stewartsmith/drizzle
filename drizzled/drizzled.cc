@@ -1308,6 +1308,8 @@ int init_basic_variables(int argc, char **argv)
   po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
   _("If an internal in-memory temporary table exceeds this size, Drizzle will"
      " automatically convert it to an on-disk MyISAM table."))
+  ("verbose", po::value<std::string>()->default_value(error::verbose_string())->notifier(&error::check_verbosity),
+  _("The stack size for each thread."))
   ;
 
   full_options.add(long_options);
