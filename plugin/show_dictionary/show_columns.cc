@@ -67,6 +67,13 @@ ShowColumns::Generator::Generator(Field **arg) :
     table_name.append(select->getShowTable().c_str());
     identifier::Table identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
 
+    if (not plugin::Authorization::isAuthorized(*getSession().user(),
+                                            identifier, false))
+    {
+      drizzled::error::access(*getSession().user(), identifier);
+      return;
+    }
+
     table_proto= plugin::StorageEngine::getTableMessage(getSession(), identifier);
 
     if (table_proto)
