@@ -223,7 +223,7 @@ void LEX::start(Session *arg)
 
 void lex_start(Session *session)
 {
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
 
   lex->session= lex->unit.session= session;
 
@@ -670,7 +670,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   unsigned int length;
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
   const CHARSET_INFO * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
@@ -2068,11 +2068,11 @@ void LEX::link_first_table_back(TableList *first, bool link_to_local)
 void LEX::cleanup_after_one_table_open()
 {
   /*
-    session->lex->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear session->lex->derived_tables flag
+    session->getLex()->derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->getLex()->derived_tables flag
     to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to session->lex->select_lex, because we
+    NOTE: all units will be connected to session->getLex()->select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)

@@ -33,7 +33,7 @@
 
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
-#define Lex (YYSession->lex)
+#define Lex (session->getLex())
 
 #include <config.h>
 #include <cstdio>
@@ -776,14 +776,14 @@ rule: <-- starts at col 1
 query:
           END_OF_INPUT
           {
-            if (!(YYSession->lex->select_lex.options & OPTION_FOUND_COMMENT))
+            if (!(YYSession->getLex()->select_lex.options & OPTION_FOUND_COMMENT))
             {
               my_message(ER_EMPTY_QUERY, ER(ER_EMPTY_QUERY), MYF(0));
               DRIZZLE_YYABORT;
             }
             else
             {
-              YYSession->lex->statement= new statement::EmptyQuery(YYSession);
+              YYSession->getLex()->statement= new statement::EmptyQuery(YYSession);
             }
           }
         | verb_clause END_OF_INPUT {}
@@ -2161,11 +2161,10 @@ select_item_list:
         | select_item
         | '*'
           {
-            if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
-                                                          context,
-                                                          NULL, NULL, "*")))
+            if (YYSession->add_item_to_list( new Item_field(&YYSession->getLex()->current_select->context, NULL, NULL, "*")))
               DRIZZLE_YYABORT;
-            (YYSession->lex->current_select->with_wild)++;
+
+            (YYSession->getLex()->current_select->with_wild)++;
           }
         ;
 
@@ -5403,7 +5402,7 @@ union_order_or_limit:
           }
           order_or_limit
           {
-            YYSession->lex->current_select->no_table_names_allowed= 0;
+            YYSession->getLex()->current_select->no_table_names_allowed= 0;
             YYSession->setWhere("");
           }
         ;

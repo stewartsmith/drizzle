@@ -128,7 +128,7 @@ LoggingStats::~LoggingStats()
 void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
                                            Session *session)
 {
-  enum_sql_command sql_command= session->lex->sql_command;
+  enum_sql_command sql_command= session->getLex()->sql_command;
 
   scoreboard_slot->getUserCommands()->logCommand(sql_command);
 

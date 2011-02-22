@@ -31,10 +31,10 @@ namespace drizzled
 bool statement::Delete::execute()
 {
   DRIZZLE_DELETE_START(getSession()->getQueryString()->c_str());
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
-  Select_Lex *select_lex= &getSession()->lex->select_lex;
-  Select_Lex_Unit *unit= &getSession()->lex->unit;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
+  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
+  Select_Lex_Unit *unit= &getSession()->getLex()->unit;
   assert(first_table == all_tables && first_table != 0);
   assert(select_lex->offset_limit == 0);
   unit->set_limit(select_lex);

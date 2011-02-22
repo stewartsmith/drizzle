@@ -496,7 +496,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
   */
   Name_resolution_context *last_checked_context= context;
   Item **ref= (Item **) not_found_item;
-  Select_Lex *current_sel= (Select_Lex *) session->lex->current_select;
+  Select_Lex *current_sel= (Select_Lex *) session->getLex()->current_select;
   Name_resolution_context *outer_context= 0;
   Select_Lex *select= 0;
   /* Currently derived tables cannot be correlated */
@@ -562,18 +562,18 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
               return -1;
             session->change_item_tree(reference, rf);
             select->inner_refs_list.push_back(rf);
-            rf->in_sum_func= session->lex->in_sum_func;
+            rf->in_sum_func= session->getLex()->in_sum_func;
           }
           /*
             A reference is resolved to a nest level that's outer or the same as
             the nest level of the enclosing set function : adjust the value of
             max_arg_level for the function if it's needed.
           */
-          if (session->lex->in_sum_func &&
-              session->lex->in_sum_func->nest_level >= select->nest_level)
+          if (session->getLex()->in_sum_func &&
+              session->getLex()->in_sum_func->nest_level >= select->nest_level)
           {
             Item::Type ref_type= (*reference)->type();
-            set_if_bigger(session->lex->in_sum_func->max_arg_level,
+            set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
                           select->nest_level);
             set_field(*from_field);
             fixed= 1;
@@ -682,7 +682,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     if (place != IN_HAVING && select->group_list.elements)
     {
       outer_context->select_lex->inner_refs_list.push_back((Item_outer_ref*)rf);
-      ((Item_outer_ref*)rf)->in_sum_func= session->lex->in_sum_func;
+      ((Item_outer_ref*)rf)->in_sum_func= session->getLex()->in_sum_func;
     }
     session->change_item_tree(reference, rf);
     /*
@@ -788,19 +788,19 @@ bool Item_field::fix_fields(Session *session, Item **reference)
                                           context->first_name_resolution_table,
                                           context->last_name_resolution_table,
                                           reference,
-                                          session->lex->use_only_table_context ?
+                                          session->getLex()->use_only_table_context ?
                                             REPORT_ALL_ERRORS :
                                             IGNORE_EXCEPT_NON_UNIQUE, true)) ==
         not_found_field)
     {
       int ret;
       /* Look up in current select's item_list to find aliased fields */
-      if (session->lex->current_select->is_item_list_lookup)
+      if (session->getLex()->current_select->is_item_list_lookup)
       {
         uint32_t counter;
         enum_resolution_type resolution;
         Item** res= find_item_in_list(session,
-                                      this, session->lex->current_select->item_list,
+                                      this, session->getLex()->current_select->item_list,
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution);
         if (!res)
@@ -888,12 +888,12 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       return false;
 
     set_field(from_field);
-    if (session->lex->in_sum_func &&
-        session->lex->in_sum_func->nest_level ==
-        session->lex->current_select->nest_level)
+    if (session->getLex()->in_sum_func &&
+        session->getLex()->in_sum_func->nest_level ==
+        session->getLex()->current_select->nest_level)
     {
-      set_if_bigger(session->lex->in_sum_func->max_arg_level,
-                    session->lex->current_select->nest_level);
+      set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
+                    session->getLex()->current_select->nest_level);
     }
   }
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
