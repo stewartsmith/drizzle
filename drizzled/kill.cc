@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,28 +18,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_KILL_H
-#define DRIZZLED_STATEMENT_KILL_H
+#include <config.h>
 
-#include <drizzled/statement.h>
+#include <drizzled/identifier.h>
+#include <drizzled/kill.h>
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
 
-namespace drizzled
+namespace drizzled {
+
+bool kill(identifier::User::const_reference user, session_id_t id_to_kill, bool only_kill_query)
 {
-class Session;
+  drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id_to_kill);
 
-namespace statement
-{
+  if (session_param and session_param->isViewable(user))
+  {
+    session_param->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+    return true;
+  }
 
-class Kill : public Statement
-{
-public:
-  Kill(Session *in_session, Item *item, bool is_query_kill);
+  return false;
+}
 
-  bool execute();
-};
-
-} /* namespace statement */
-
-} /* namespace drizzled */
-
-#endif /* DRIZZLED_STATEMENT_KILL_H */
+} // namespace drizzled

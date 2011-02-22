@@ -451,6 +451,16 @@ drizzle_result_st *drizzle_shutdown(drizzle_con_st *con,
   return drizzle_con_shutdown(con, result, ret_ptr);
 }
 
+drizzle_result_st *drizzle_kill(drizzle_con_st *con,
+                                drizzle_result_st *result,
+                                uint32_t query_id,
+                                drizzle_return_t *ret_ptr)
+{
+  uint32_t sent= htonl(query_id);
+  return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_PROCESS_KILL,
+                                   &sent, sizeof(uint32_t), sizeof(uint32_t), ret_ptr);
+}
+
 drizzle_result_st *drizzle_con_ping(drizzle_con_st *con,
                                     drizzle_result_st *result,
                                     drizzle_return_t *ret_ptr)

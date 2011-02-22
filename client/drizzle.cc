@@ -291,6 +291,7 @@ static bool ignore_errors= false, quick= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
   use_drizzle_protocol= false, opt_local_infile;
+static uint32_t opt_kill= 0;
 static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
@@ -1223,6 +1224,42 @@ static bool server_shutdown(void)
   return true;
 }
 
+static bool kill_query(uint32_t query_id)
+{
+  drizzle_result_st result;
+  drizzle_return_t ret;
+
+  if (verbose)
+  {
+    printf(_("killing query %u"), query_id);
+    printf("... ");
+  }
+
+  if (drizzle_kill(&con, &result, query_id,
+                   &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      fprintf(stderr, _("kill failed; error: '%s'"),
+              drizzle_result_error(&result));
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      fprintf(stderr, _("kill failed; error: '%s'"),
+              drizzle_con_error(&con));
+    }
+    return false;
+  }
+
+  drizzle_result_free(&result);
+
+  if (verbose)
+    printf(_("done\n"));
+
+  return true;
+}
+
 /**
   Ping the server that we are currently connected to.
 
@@ -1292,6 +1329,16 @@ static bool execute_commands(int *error)
       *error= 1;
     executed= true;
   }
+
+  if (opt_kill)
+  {
+    if (kill_query(opt_kill) == false)
+    {
+      *error= 1;
+    }
+    executed= true;
+  }
+
   return executed;
 }
 
@@ -1409,6 +1456,8 @@ try
   ("shutdown", po::value<bool>()->zero_tokens(),
   _("Shutdown the server"))
   ("silent,s", _("Be more silent. Print results with a tab as separator, each row on new line."))
+  ("kill", po::value<uint32_t>(&opt_kill)->default_value(0),
+  _("Kill a running query."))
   ("tee", po::value<string>(),
   _("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
