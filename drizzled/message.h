@@ -47,6 +47,31 @@ const std::string &type(drizzled::message::Table::Index::IndexType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyMatchOption type);
 const std::string &type(drizzled::message::Table::TableType type);
 
+template<class T> inline bool is_replicated(const T& reference)
+{
+  if (reference.has_replication_options() and
+      reference.replication_options().has_dont_replicate() and 
+      reference.replication_options().dont_replicate())
+  {
+    return false;
+  }
+
+  return true;
+}
+
+template<class T> inline bool is_replicated(const T*& ptr)
+{
+  if (ptr and
+      ptr->has_replication_options() and 
+      ptr->replication_options().has_dont_replicate() and 
+      ptr->replication_options().dont_replicate())
+  {
+    return false;
+  }
+
+  return true;
+}
+
 #if 0
 std::ostream& operator<<(std::ostream& output, const message::Transaction &message);
 std::ostream& operator<<(std::ostream& output, const message::Table &message);
