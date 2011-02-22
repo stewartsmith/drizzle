@@ -219,7 +219,7 @@ bool fix_inner_refs(Session *session,
     Item **item_ref= ref->ref;
     Item_ref *new_ref;
     /*
-      TODO: this field item already might be present in the select list.
+      @todo this field item already might be present in the select list.
       In this case instead of adding new field item we could use an
       existing one. The change will lead to less operations for copying fields,
       smaller temporary tables and less data passed through filesort.
@@ -2847,7 +2847,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
   }
   else if (cond->const_item() && !cond->is_expensive())
   /*
-    TODO:
+    @todo
     Excluding all expensive functions is too restritive we should exclude only
     materialized IN subquery predicates because they can't yet be evaluated
     here (they need additional initialization that is done later on).
@@ -3449,7 +3449,7 @@ int join_read_key(JoinTable *tab)
     }
   }
 
-  /* TODO: Why don't we do "Late NULLs Filtering" here? */
+  /* @todo Why don't we do "Late NULLs Filtering" here? */
   if (cmp_buffer_with_ref(tab) ||
       (table->status & (STATUS_GARBAGE | STATUS_NO_PARENT | STATUS_NULL_ROW)))
   {
@@ -4525,7 +4525,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
     save_quick= select->quick;
     /*
       assume results are not ordered when index merge is used
-      TODO: sergeyp: Results of all index merge selects actually are ordered
+      @todo sergeyp: Results of all index merge selects actually are ordered
       by clustered PK values.
     */
 
@@ -5570,7 +5570,7 @@ int setup_group(Session *session,
     Item_field *field;
     int cur_pos_in_select_list= 0;
     List<Item>::iterator li(fields.begin());
-    List<Item_field>::iterator naf_it(session->getLex()->current_select->non_agg_fields);
+    List<Item_field>::iterator naf_it(session->getLex()->current_select->non_agg_fields.begin());
 
     field= naf_it++;
     while (field && (item=li++))
@@ -5596,8 +5596,7 @@ int setup_group(Session *session,
             if ((*ord->item)->eq((Item*)field, 0))
               goto next_field;
           /*
-            TODO: change ER_WRONG_FIELD_WITH_GROUP to more detailed
-            ER_NON_GROUPING_FIELD_USED
+            @todo change ER_WRONG_FIELD_WITH_GROUP to more detailed ER_NON_GROUPING_FIELD_USED
           */
           my_error(ER_WRONG_FIELD_WITH_GROUP, MYF(0), field->full_name());
           return 1;
@@ -5877,8 +5876,8 @@ bool setup_copy_fields(Session *session,
 	     !real_pos->with_sum_func)
     {						// Save for send fields
       pos= real_pos;
-      /* TODO:
-        In most cases this result will be sent to the user.
+      /* 
+        @todo In most cases this result will be sent to the user.
         This should be changed to use copy_int or copy_real depending
         on how the value is to be used: In some cases this may be an
         argument in a group function, like: IF(ISNULL(col),0,COUNT(*))
@@ -6145,7 +6144,7 @@ bool copy_funcs(Item **func_ptr, const Session *session)
     /*
       Need to check the THD error state because Item::val_xxx() don't
       return error code, but can generate errors
-      TODO: change it for a real status check when Item::val_xxx()
+      @todo change it for a real status check when Item::val_xxx()
       are extended to return status code.
     */
     if (session->is_error())
@@ -6203,7 +6202,7 @@ void free_underlaid_joins(Session *, Select_Lex *select)
   @param changed        out:  returns 1 if item contains a replaced field item
 
   @todo
-    - TODO: Some functions are not null-preserving. For those functions
+    - @todo Some functions are not null-preserving. For those functions
     updating of the maybe_null attribute is an overkill.
 
   @retval
@@ -6343,7 +6342,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
 
   /*
     from clause
-    TODO: support USING/FORCE/IGNORE index
+    @todo support USING/FORCE/IGNORE index
   */
   if (table_list.elements)
   {

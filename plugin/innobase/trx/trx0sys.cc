@@ -52,6 +52,8 @@ struct file_format_struct {
 					fields */
 };
 
+#include <drizzled/errmsg_print.h>
+
 /** The file format tag */
 typedef struct file_format_struct	file_format_t;
 
@@ -1027,19 +1029,16 @@ trx_sys_file_format_max_check(
 		format_id = DICT_TF_FORMAT_MIN;
 	}
 
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		"  InnoDB: highest supported file format is %s.\n",
-		trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
+        drizzled::errmsg_printf(drizzled::error::INFO, "InnoDB: highest supported file format is %s",
+                                trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
 
 	if (format_id > DICT_TF_FORMAT_MAX) {
 
 		ut_a(format_id < FILE_FORMAT_NAME_N);
 
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: %s: the system tablespace is in a file "
-			"format that this version doesn't support - %s\n",
+                drizzled::errmsg_printf(drizzled::error::ERROR,
+			"InnoDB: %s: the system tablespace is in a file "
+			"format that this version doesn't support - %s",
 			((max_format_id <= DICT_TF_FORMAT_MAX)
 				? "Error" : "Warning"),
 			trx_sys_file_format_id_to_name(format_id));

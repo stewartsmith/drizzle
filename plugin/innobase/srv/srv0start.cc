@@ -1063,10 +1063,10 @@ innobase_start_or_create_for_mysql(void)
 
 	if (UNIV_LIKELY(srv_use_sys_malloc))
         {
-          drizzled::errmsg_printf(drizzled::error::ERROR, _("InnoDB: The InnoDB memory heap is disabled\n"));
+          drizzled::errmsg_printf(drizzled::error::INFO, _("InnoDB: The InnoDB memory heap is disabled\n"));
 	}
 
-	fputs("InnoDB: " IB_ATOMICS_STARTUP_MSG
+        drizzled::errmsg_printf(drizzled::error::INFO, "InnoDB: " IB_ATOMICS_STARTUP_MSG
                 "\nInnoDB: Compressed tables use zlib " ZLIB_VERSION
 #ifdef UNIV_ZIP_DEBUG
 	      " with validation"
@@ -1074,7 +1074,7 @@ innobase_start_or_create_for_mysql(void)
 #ifdef UNIV_ZIP_COPY
 	      " and extra copying"
 #endif /* UNIV_ZIP_COPY */
-	      "\n" , stderr);
+	      " ");
 
 
 	/* Since InnoDB does not currently clean up all its internal data
@@ -1760,7 +1760,7 @@ innobase_start_or_create_for_mysql(void)
 	os_fast_mutex_free(&srv_os_test_mutex);
 
 	if (srv_print_verbose_log) {
-                drizzled::errmsg_printf(drizzled::error::ERROR,
+                drizzled::errmsg_printf(drizzled::error::INFO,
                                         "InnoDB %s started; log sequence number %"PRIu64"\n",
                                         INNODB_VERSION_STR, srv_start_lsn);
 	}

@@ -241,9 +241,9 @@ static void write_header(char *db_name)
     cout << "-- Host: " << current_host << "    Database: " << db_name << endl;
     cout << "-- ------------------------------------------------------" << endl;
     cout << "-- Server version\t" << db_connection->getServerVersion();
-    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
       cout << " (MySQL server)";
-    else if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_DRIZZLE_FOUND)
+    else if (db_connection->getServerType() == ServerDetect::SERVER_DRIZZLE_FOUND)
       cout << " (Drizzle server)";
     cout << endl << endl;
   }
@@ -351,7 +351,7 @@ static int dump_all_databases()
     std::cerr << _("-- Retrieving database structures...") << std::endl;
 
   /* Blocking the MySQL privilege tables too because we can't import them due to bug#646187 */
-  if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+  if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
     query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql')";
   else
     query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM DATA_DICTIONARY.SCHEMAS WHERE SCHEMA_NAME NOT IN ('information_schema','data_dictionary')";
@@ -360,7 +360,7 @@ static int dump_all_databases()
   while ((row= drizzle_row_next(tableres)))
   {
     std::string database_name(row[0]);
-    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
       database= new DrizzleDumpDatabaseMySQL(database_name, db_connection);
     else
       database= new DrizzleDumpDatabaseDrizzle(database_name, db_connection);
@@ -383,7 +383,7 @@ static int dump_databases(const vector<string> &db_names)
   for (vector<string>::const_iterator it= db_names.begin(); it != db_names.end(); ++it)
   {
     temp= *it;
-    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
       database= new DrizzleDumpDatabaseMySQL(temp, db_connection);
     else
       database= new DrizzleDumpDatabaseDrizzle(temp, db_connection);
@@ -396,7 +396,7 @@ static int dump_selected_tables(const string &db, const vector<string> &table_na
 {
   DrizzleDumpDatabase *database;
 
-  if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+  if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
     database= new DrizzleDumpDatabaseMySQL(db, db_connection);
   else
     database= new DrizzleDumpDatabaseDrizzle(db, db_connection);
@@ -742,7 +742,7 @@ try
     maybe_exit(EX_DRIZZLEERR);
   }
 
-  if ((db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND) and (not opt_data_is_mangled))
+  if ((db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND) and (not opt_data_is_mangled))
     db_connection->queryNoResult("SET NAMES 'utf8'");
 
   if (vm.count("destination-type"))

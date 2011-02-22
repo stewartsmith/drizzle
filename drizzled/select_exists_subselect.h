@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_EXISTS_SUBSELECT_H
 #define DRIZZLED_SELECT_EXISTS_SUBSELECT_H
 
+#include <drizzled/select_subselect.h>
+
 namespace drizzled
 {
 

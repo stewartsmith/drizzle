@@ -20,22 +20,18 @@
 #ifndef DRIZZLED_CURSOR_H
 #define DRIZZLED_CURSOR_H
 
-#include <drizzled/xid.h>
-#include <drizzled/discrete_interval.h>
-#include <drizzled/identifier.h>
-#include <drizzled/definitions.h>
-#include <drizzled/key_map.h>
-#include <drizzled/error_t.h>
-
-/* Definitions for parameters to do with Cursor-routines */
-
-#include <drizzled/thr_lock.h>
-#include <drizzled/sql_list.h>
-#include <drizzled/handler_structs.h>
-#include <drizzled/ha_statistics.h>
 #include <drizzled/atomics.h>
-
+#include <drizzled/definitions.h>
+#include <drizzled/discrete_interval.h>
+#include <drizzled/error_t.h>
+#include <drizzled/ha_statistics.h>
+#include <drizzled/handler_structs.h>
+#include <drizzled/identifier.h>
+#include <drizzled/key_map.h>
 #include <drizzled/message/table.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/thr_lock.h>
+#include <drizzled/xid.h>
 
 #include <bitset>
 #include <algorithm>

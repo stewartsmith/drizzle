@@ -145,7 +145,7 @@ uninstall:
 check: all $(GETTEXT_PACKAGE).pot
 	rm -f missing notexist
 	srcdir=$(srcdir) $(INTLTOOL_UPDATE) -m
-	if [ -r missing -o -r notexist -a "x${INTLTOOL_WARNINGS}" = "xyes"]; then \
+	if [ -r missing -o -r notexist -a "x${INTLTOOL_WARNINGS}" = "xyes" ]; then \
 	  exit 1; \
 	fi
 

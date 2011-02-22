@@ -38,7 +38,6 @@
 #include "data_dictionary_schema.h"
 #include "print_transaction_message.h"
 #include "hexdump_transaction_message.h"
-#include "background_worker.h"
 
 #include <errno.h>
 
@@ -230,13 +229,6 @@ static int init(drizzled::module::Context &context)
     hexdump_transaction_message_func_factory=
       new plugin::Create_function<HexdumpTransactionMessageFunction>("hexdump_transaction_message");
     context.add(hexdump_transaction_message_func_factory);
-
-    /* 
-     * Setup the background worker thread which maintains
-     * summary information about the transaction log.
-     */
-    if (initTransactionLogBackgroundWorker())
-      return 1; /* Error message output handled in function above */
   }
   return 0;
 }
