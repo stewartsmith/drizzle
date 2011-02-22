@@ -31,6 +31,7 @@ namespace drizzled {
 namespace message {
 namespace schema {
 
+typedef message::Schema value_type;
 typedef boost::shared_ptr <message::Schema> shared_ptr;
 typedef const message::Schema const_reference;
 
