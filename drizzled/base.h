@@ -25,7 +25,7 @@
  * @TODO Convert HA_XXX defines into enums and/or bitmaps
  */
 
-#include "definitions.h"
+#include <drizzled/definitions.h>
 
 #ifndef DRIZZLED_BASE_H
 #define DRIZZLED_BASE_H

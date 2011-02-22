@@ -255,12 +255,12 @@ static bool prepare_alter_table(Session *session,
   List<CreateField> new_create_list;
   /* New key definitions are added here */
   List<Key> new_key_list;
-  List<AlterDrop>::iterator drop_it(alter_info->drop_list);
-  List<CreateField>::iterator def_it(alter_info->create_list);
-  List<AlterColumn>::iterator alter_it(alter_info->alter_list);
-  List<Key>::iterator key_it(alter_info->key_list);
-  List<CreateField>::iterator find_it(new_create_list);
-  List<CreateField>::iterator field_it(new_create_list);
+  List<AlterDrop>::iterator drop_it(alter_info->drop_list.begin());
+  List<CreateField>::iterator def_it(alter_info->create_list.begin());
+  List<AlterColumn>::iterator alter_it(alter_info->alter_list.begin());
+  List<Key>::iterator key_it(alter_info->key_list.begin());
+  List<CreateField>::iterator find_it(new_create_list.begin());
+  List<CreateField>::iterator field_it(new_create_list.begin());
   List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
   KeyInfo *key_info= table->key_info;
@@ -1487,7 +1487,7 @@ copy_data_between_tables(Session *session,
   from->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
   to->cursor->ha_start_bulk_insert(from->cursor->stats.records);
 
-  List<CreateField>::iterator it(create);
+  List<CreateField>::iterator it(create.begin());
   CreateField *def;
   copy_end= copy;
   for (Field **ptr= to->getFields(); *ptr ; ptr++)

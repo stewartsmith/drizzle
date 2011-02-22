@@ -68,7 +68,6 @@ int init_remaining_variables(module::Registry &modules);
 passwd *check_user(const char *user);
 void set_user(const char *user, passwd *user_info_arg);
 void clean_up(bool print_message);
-bool drizzle_rm_tmp_tables();
 
 } /* namespace drizzled */
 

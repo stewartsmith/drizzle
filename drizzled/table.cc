@@ -197,7 +197,7 @@ void Table::resetTable(Session *session,
 
 /* Deallocate temporary blob storage */
 
-void free_blobs(register Table *table)
+void free_blobs(Table *table)
 {
   uint32_t *ptr, *end;
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
@@ -223,7 +223,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  List<String>::iterator it(strings);
+  List<String>::iterator it(strings.begin());
   String *tmp;
   for (uint32_t i= 0; (tmp= it++); i++)
   {
@@ -239,7 +239,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 
 	/* Check that the integer is in the internal */
 
-int set_zone(register int nr, int min_zone, int max_zone)
+int set_zone(int nr, int min_zone, int max_zone)
 {
   if (nr<=min_zone)
     return (min_zone);
@@ -874,7 +874,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   blob_count= string_count= null_count= hidden_null_count= group_null_items= 0;
   param->using_indirect_summary_function= 0;
 
-  List<Item>::iterator li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *item;
   Field **tmp_from_field=from_field;
   while ((item=li++))

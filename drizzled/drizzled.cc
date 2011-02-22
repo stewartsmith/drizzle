@@ -357,9 +357,6 @@ global_buffer_constraint<uint64_t> global_read_buffer(0);
 
 DRIZZLED_API size_t transaction_message_threshold;
 
-/* Function declarations */
-bool drizzle_rm_tmp_tables();
-
 static void drizzle_init_variables(void);
 static void get_options();
 static void fix_paths();

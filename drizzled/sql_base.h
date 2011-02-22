@@ -155,6 +155,8 @@ inline TableList *find_table_in_global_list(TableList *table,
                             db_name, table_name);
 }
 
+bool drizzle_rm_tmp_tables();
+
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_BASE_H */

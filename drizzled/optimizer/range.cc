@@ -840,7 +840,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         optimizer::SEL_IMERGE *imerge= NULL;
         optimizer::TableReadPlan *best_conj_trp= NULL;
         optimizer::TableReadPlan *new_conj_trp= NULL;
-        List<optimizer::SEL_IMERGE>::iterator it(tree->merges);
+        List<optimizer::SEL_IMERGE>::iterator it(tree->merges.begin());
         while ((imerge= it++))
         {
           new_conj_trp= get_best_disjunct_quick(session, &param, imerge, best_read_time);
@@ -2565,7 +2565,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
 
   if (cond->type() == Item::COND_ITEM)
   {
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
     {
@@ -4599,7 +4599,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     return NULL;
 
   /* Analyze the query in more detail. */
-  List<Item>::iterator select_items_it(join->fields_list);
+  List<Item>::iterator select_items_it(join->fields_list.begin());
 
   /* Check (SA1,SA4) and store the only MIN/MAX argument - the C attribute.*/
   if (join->make_sum_func_list(join->all_fields, join->fields_list, 1))
@@ -5036,7 +5036,7 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
   Item::Type cond_type= cond->type();
   if (cond_type == Item::COND_ITEM) /* 'AND' or 'OR' */
   {
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *and_or_arg= NULL;
     while ((and_or_arg= li++))
     {
