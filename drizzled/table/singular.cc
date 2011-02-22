@@ -59,7 +59,7 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   in_use= session;           /* field_arg->reset() may access in_use */
 
   /* Create all fields and calculate the total length of record */
-  List<CreateField>::iterator it(field_list);
+  List<CreateField>::iterator it(field_list.begin());
   message::Table::Field null_field;
   while ((cdef= it++))
   {

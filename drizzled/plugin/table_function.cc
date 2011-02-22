@@ -224,12 +224,12 @@ void plugin::TableFunction::Generator::push(bool arg)
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  if (not getSession().lex->wild)
+  if (not getSession().getLex()->wild)
     return false;
 
   bool match= wild_case_compare(system_charset_info,
                                 predicate.c_str(),
-                                getSession().lex->wild->ptr());
+                                getSession().getLex()->wild->ptr());
 
   return match;
 }

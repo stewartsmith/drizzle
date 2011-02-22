@@ -112,6 +112,63 @@ void access(drizzled::identifier::User::const_reference user, drizzled::identifi
   my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user_string.c_str(), table_string.c_str());
 } 
 
+static error::level_t _verbosity= error::ERROR;
+static std::string _verbosity_strint;
+
+const std::string &verbose_string()
+{
+  switch (_verbosity)
+  {
+  case error::INSPECT:
+    {
+      static std::string _arg= "INSPECT";
+      return _arg;
+    }
+  case error::INFO:
+    {
+      static std::string _arg= "INFO";
+      return _arg;
+    }
+  case error::WARN:
+    {
+      static std::string _arg= "WARN";
+      return _arg;
+    }
+  case error::ERROR:
+    {
+      static std::string _arg= "ERROR";
+      return _arg;
+    }
+  }
+
+  abort();
+}
+
+error::level_t &verbosity()
+{
+  return _verbosity;
+}
+
+void check_verbosity(const std::string &arg)
+{
+  if (not arg.compare("INSPECT"))
+  {
+    _verbosity= error::INSPECT;
+  }
+  else if (not arg.compare("INFO"))
+  {
+    _verbosity= error::INFO;
+  }
+  else if (not arg.compare("WARN"))
+  {
+    _verbosity= error::WARN;
+  }
+  else if (not arg.compare("ERROR"))
+  {
+    _verbosity= error::ERROR;
+  }
+}
+
 } // namespace error
 
 /*

@@ -60,6 +60,9 @@ Created 10/8/1995 Heikki Tuuri
 /* Dummy comment */
 #include "srv0srv.h"
 
+#include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
+
 #include "ut0mem.h"
 #include "ut0ut.h"
 #include "os0proc.h"
@@ -2395,14 +2398,10 @@ loop:
 	new_lsn = log_get_lsn();
 
 	if (new_lsn < old_lsn) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: Error: old log sequence number %"PRIu64""
-			" was greater\n"
-			"InnoDB: than the new log sequence number %"PRIu64"!\n"
-			"InnoDB: Please submit a bug report"
-			" to http://bugs.mysql.com\n",
-			old_lsn, new_lsn);
+          drizzled::errmsg_printf(drizzled::error::INFO,
+                                  "InnoDB: Error: old log sequence number %"PRIu64" was greater than the new log sequence number %"PRIu64"!"
+                                  "InnoDB: Please submit a bug report to http://bugs.launchpad.net/drizzle",
+                                  old_lsn, new_lsn);
 	}
 
 	old_lsn = new_lsn;

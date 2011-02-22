@@ -51,7 +51,7 @@ public:
 public:
   message::Table &createTableMessage()
   {
-    return *getSession()->lex->table();
+    return *getSession()->getLex()->table();
   };
 
 private:

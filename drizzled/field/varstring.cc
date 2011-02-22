@@ -124,7 +124,7 @@ int Field_varstring::store(int64_t nr, bool unsigned_val)
 }
 
 
-double Field_varstring::val_real(void)
+double Field_varstring::val_real(void) const
 {
   int not_used;
   char *end_not_used;
@@ -138,7 +138,7 @@ double Field_varstring::val_real(void)
 }
 
 
-int64_t Field_varstring::val_int(void)
+int64_t Field_varstring::val_int(void) const
 {
   int not_used;
   char *end_not_used;
@@ -152,8 +152,7 @@ int64_t Field_varstring::val_int(void)
                      &end_not_used, &not_used);
 }
 
-String *Field_varstring::val_str(String *,
-				 String *val_ptr)
+String *Field_varstring::val_str(String *, String *val_ptr) const
 {
   uint32_t length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
 
@@ -165,7 +164,7 @@ String *Field_varstring::val_str(String *,
 }
 
 
-type::Decimal *Field_varstring::val_decimal(type::Decimal *decimal_value)
+type::Decimal *Field_varstring::val_decimal(type::Decimal *decimal_value) const
 {
   uint32_t length;
 

@@ -62,9 +62,9 @@ public:
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  String *val_str(String*,String *) const;
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 4; }

@@ -36,10 +36,19 @@ namespace drizzled
 
 void sql_perror(const char *message)
 {
+  char *errmsg_ptr;
   char errmsg[STRERROR_MAX];
   errmsg[0]= 0;
+
+#ifdef STRERROR_R_CHAR_P
+  errmsg_ptr= strerror_r(errno, errmsg, sizeof(errmsg));
+#else
   strerror_r(errno, errmsg, sizeof(errmsg));
+  errmsg_ptr= errmsg;
+#endif
+
   errmsg_printf(error::ERROR, "%s: %s\n", message, errmsg);
+
 }
 
 // @todo Cap the size of message.
@@ -52,9 +61,16 @@ void sql_perror(const std::string &message)
 // @todo Cap the size of message/extra.
 void sql_perror(std::string message, const std::string &extra)
 {
+  char *errmsg_ptr;
   char errmsg[STRERROR_MAX];
   errmsg[0]= 0;
+
+#ifdef STRERROR_R_CHAR_P
+  errmsg_ptr= strerror_r(errno, errmsg, sizeof(errmsg));
+#else
   strerror_r(errno, errmsg, sizeof(errmsg));
+  errmsg_ptr= errmsg;
+#endif
 
   if (not extra.empty())
   {

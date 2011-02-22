@@ -126,7 +126,7 @@ void Item_func::set_arguments(List<Item> &list)
   args= tmp_arg;                                // If 2 arguments
   if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
-    List<Item>::iterator li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
     Item **save_args= args;
 

@@ -85,7 +85,7 @@ void QueryCacheService::setResultsetHeader(message::Resultset &resultset,
   /* Extract the returned fields 
    * and add the field data to the SelectHeader
    */
-  List<Item>::iterator it(in_session->lex->select_lex.item_list);
+  List<Item>::iterator it(in_session->getLex()->select_lex.item_list);
   Item *item;
   while ((item=it++))
   {

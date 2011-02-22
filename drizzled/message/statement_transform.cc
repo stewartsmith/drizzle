@@ -884,6 +884,11 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
     destination.append(schema.collation());
   }
 
+  if (schema.has_replication_options() and schema.replication_options().has_dont_replicate() and schema.replication_options().dont_replicate())
+  {
+    destination.append(" REPLICATION = FALSE");
+  }
+
   return NONE;
 }
 
