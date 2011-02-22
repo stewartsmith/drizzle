@@ -58,6 +58,7 @@ TablesTool::TablesTool() :
   add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER, 0, false);
   add_field("TABLE_UUID", plugin::TableFunction::STRING, 36, true);
   add_field("TABLE_VERSION", plugin::TableFunction::NUMBER, 0, true);
+  add_field("IS_REPLICATED", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 TablesTool::Generator::Generator(Field **arg) :
@@ -188,4 +189,7 @@ void TablesTool::Generator::fill()
 
   /* TABLE_VERSION */
   push(getTableMessage().version());
+
+  /* IS_REPLICATED */
+  push(message::is_replicated(getTableMessage()));
 }

@@ -50,10 +50,9 @@ const std::string &type(drizzled::message::Table::TableType type);
 template<class T> inline bool is_replicated(const T& reference)
 {
   if (reference.has_replication_options() and
-      reference.replication_options().has_dont_replicate() and 
-      reference.replication_options().dont_replicate())
+      reference.replication_options().has_is_replicated())
   {
-    return false;
+    return reference.replication_options().is_replicated();
   }
 
   return true;
@@ -63,13 +62,18 @@ template<class T> inline bool is_replicated(const T*& ptr)
 {
   if (ptr and
       ptr->has_replication_options() and 
-      ptr->replication_options().has_dont_replicate() and 
-      ptr->replication_options().dont_replicate())
+      ptr->replication_options().has_is_replicated())
   {
-    return false;
+    return ptr->replication_options().is_replicated();
   }
 
   return true;
+}
+
+template<class T> inline void set_is_replicated(T& reference, bool arg)
+{
+  message::ReplicationOptions *options= reference.mutable_replication_options();
+  options->set_is_replicated(arg);
 }
 
 #if 0

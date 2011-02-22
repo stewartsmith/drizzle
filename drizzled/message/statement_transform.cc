@@ -32,12 +32,13 @@
 #include <config.h>
 
 #include <boost/lexical_cast.hpp>
-#include <drizzled/message/statement_transform.h>
-#include <drizzled/message/transaction.pb.h>
-#include <drizzled/message/table.pb.h>
+
 #include <drizzled/charset.h>
 #include <drizzled/charset_info.h>
 #include <drizzled/global_charset_info.h>
+#include <drizzled/message.h>
+#include <drizzled/message/statement_transform.h>
+#include <drizzled/message/transaction.pb.h>
 
 #include <string>
 #include <vector>
@@ -884,6 +885,11 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
     destination.append(schema.collation());
   }
 
+  if (not message::is_replicated(schema))
+  {
+    destination.append(" REPLICATE = FALSE");
+  }
+
   return NONE;
 }
 
@@ -1077,6 +1083,11 @@ transformTableDefinitionToSql(const Table &table,
   if (table.has_options())
     (void) transformTableOptionsToSql(table.options(), destination, sql_variant);
 
+  if (not message::is_replicated(table))
+  {
+    destination.append(" REPLICATE = FALSE");
+  }
+
   return NONE;
 }
 
@@ -1144,11 +1155,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_page_checksum() && options.page_checksum())
     destination.append("\nPAGE_CHECKSUM = TRUE");
-
-  if (options.has_dont_replicate() and options.dont_replicate())
-  {
-    destination.append(" REPLICATE = FALSE");
-  }
 
   return NONE;
 }
