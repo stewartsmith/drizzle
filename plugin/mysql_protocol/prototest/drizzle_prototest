@@ -344,7 +344,7 @@ class TestCommand(unittest.TestCase):
                         result.error_code == BAD_DB)
 
   def testRangeQuery(self):
-    for x in common_range + range(1024*1024*2-20, 1024*1024*2+20):
+    for x in common_range:
       data = QueryCommand(query="SELECT '" + 'x' * x + "'").pack()
       self.s.send(Packet(size=len(data), sequence=0).pack())
       try:
@@ -395,7 +395,7 @@ class TestCommand(unittest.TestCase):
         return
 
   def testRangeResult(self):
-    for x in common_range + range(1024*1024*2-20, 1024*1024*2+20):
+    for x in common_range:
       data = QueryCommand(query="SELECT REPEAT('x', %s)" % x).pack()
       self.s.send(Packet(size=len(data), sequence=0).pack())
       self.s.send(data)
