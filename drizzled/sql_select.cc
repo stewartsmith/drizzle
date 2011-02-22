@@ -2715,7 +2715,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
   {
     bool and_level= (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC);
 
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item::cond_result tmp_cond_value;
     bool should_fix_fields= false;
 
@@ -2919,7 +2919,7 @@ bool const_expression_in_where(COND *cond, Item *comp_item, Item **const_item)
   {
     bool and_level= (((Item_cond*) cond)->functype()
 		     == Item_func::COND_AND_FUNC);
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *item;
     while ((item=li++))
     {
@@ -3819,7 +3819,7 @@ enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_recor
         {
           if (!join->first_record)
           {
-                  List<Item>::iterator it(*join->fields);
+                  List<Item>::iterator it(join->fields->begin());
                   Item *item;
             /* No matching rows for group function */
             join->clear();
@@ -4058,7 +4058,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
       Item_cond_and *new_cond=new Item_cond_and;
       if (!new_cond)
         return (COND*) 0;
-      List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+      List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
       Item *item;
       while ((item=li++))
       {
@@ -4088,7 +4088,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
       Item_cond_or *new_cond=new Item_cond_or;
       if (!new_cond)
         return (COND*) 0;
-      List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+      List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
       Item *item;
       while ((item=li++))
       {
@@ -4440,7 +4440,7 @@ bool find_field_in_item_list (Field *field, void *data)
 {
   List<Item> *fields= (List<Item> *) data;
   bool part_found= 0;
-  List<Item>::iterator li(*fields);
+  List<Item>::iterator li(fields->begin());
   Item *item;
 
   while ((item= li++))
@@ -5569,8 +5569,8 @@ int setup_group(Session *session,
     Item *item;
     Item_field *field;
     int cur_pos_in_select_list= 0;
-    List<Item>::iterator li(fields);
-    List<Item_field>::iterator naf_it(session->lex->current_select->non_agg_fields);
+    List<Item>::iterator li(fields.begin());
+    List<Item_field>::iterator naf_it(session->lex->current_select->non_agg_fields.begin());
 
     field= naf_it++;
     while (field && (item=li++))
@@ -5626,7 +5626,7 @@ Order *create_distinct_group(Session *session,
                                 List<Item> &,
                                 bool *all_order_by_fields_used)
 {
-  List<Item>::iterator li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *item;
   Order *order,*group,**prev;
 
@@ -5690,7 +5690,7 @@ next_item:
 */
 void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param, List<Item> &fields, bool reset_with_sum_func)
 {
-  List<Item>::iterator li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *field;
 
   param->field_count=param->sum_func_count=param->func_count=
@@ -5747,7 +5747,7 @@ void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param, List<Item
 */
 int test_if_item_cache_changed(List<Cached_item> &list)
 {
-  List<Cached_item>::iterator li(list);
+  List<Cached_item>::iterator li(list.begin());
   int idx= -1,i;
   Cached_item *buff;
 
@@ -5796,11 +5796,11 @@ bool setup_copy_fields(Session *session,
                        List<Item> &all_fields)
 {
   Item *pos;
-  List<Item>::iterator li(all_fields);
+  List<Item>::iterator li(all_fields.begin());
   CopyField *copy= NULL;
   res_selected_fields.clear();
   res_all_fields.clear();
-  List<Item>::iterator itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields.begin());
   List<Item> extra_funcs;
   uint32_t i, border= all_fields.elements - elements;
 
@@ -5932,7 +5932,7 @@ void copy_fields(Tmp_Table_Param *param)
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);
 
-  List<Item>::iterator it(param->copy_funcs);
+  List<Item>::iterator it(param->copy_funcs.begin());
   Item_copy_string *item;
   while ((item = (Item_copy_string*) it++))
     item->copy();
@@ -5961,7 +5961,7 @@ bool change_to_use_tmp_fields(Session *session,
 			                        uint32_t elements,
                               List<Item> &all_fields)
 {
-  List<Item>::iterator it(all_fields);
+  List<Item>::iterator it(all_fields.begin());
   Item *item_field,*item;
 
   res_selected_fields.clear();
@@ -6010,7 +6010,7 @@ bool change_to_use_tmp_fields(Session *session,
       item_field;
   }
 
-  List<Item>::iterator itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields.begin());
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
@@ -6040,7 +6040,7 @@ bool change_refs_to_tmp_fields(Session *session,
                                uint32_t elements,
 			                         List<Item> &all_fields)
 {
-  List<Item>::iterator it(all_fields);
+  List<Item>::iterator it(all_fields.begin());
   Item *item, *new_item;
   res_selected_fields.clear();
   res_all_fields.clear();
@@ -6053,7 +6053,7 @@ bool change_refs_to_tmp_fields(Session *session,
       new_item;
   }
 
-  List<Item>::iterator itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields.begin());
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
@@ -6293,7 +6293,7 @@ void print_join(Session *session, String *str,
                 List<TableList> *tables, enum_query_type)
 {
   /* List is reversed => we should reverse it before using */
-  List<TableList>::iterator ti(*tables);
+  List<TableList>::iterator ti(tables->begin());
   TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
@@ -6330,7 +6330,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
 
   //Item List
   bool first= 1;
-  List<Item>::iterator it(item_list);
+  List<Item>::iterator it(item_list.begin());
   Item *item;
   while ((item= it++))
   {

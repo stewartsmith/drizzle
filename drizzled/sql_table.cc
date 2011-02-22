@@ -557,8 +557,8 @@ static int prepare_create_table(Session *session,
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		dup_no;
   int		select_field_pos,auto_increment=0;
-  List<CreateField>::iterator it(alter_info->create_list);
-  List<CreateField>::iterator it2(alter_info->create_list);
+  List<CreateField>::iterator it(alter_info->create_list.begin());
+  List<CreateField>::iterator it2(alter_info->create_list.begin());
   uint32_t total_uneven_bit_length= 0;
 
   plugin::StorageEngine *engine= plugin::StorageEngine::findByName(create_proto.engine().name());
@@ -652,7 +652,7 @@ static int prepare_create_table(Session *session,
         interval= sql_field->interval= typelib(session->mem_root,
                                                sql_field->interval_list);
 
-        List<String>::iterator int_it(sql_field->interval_list);
+        List<String>::iterator int_it(sql_field->interval_list.begin());
         String conv, *tmp;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
@@ -829,8 +829,8 @@ static int prepare_create_table(Session *session,
 
   /* Create keys */
 
-  List<Key>::iterator key_iterator(alter_info->key_list);
-  List<Key>::iterator key_iterator2(alter_info->key_list);
+  List<Key>::iterator key_iterator(alter_info->key_list.begin());
+  List<Key>::iterator key_iterator2(alter_info->key_list.begin());
   uint32_t key_parts=0, fk_key_count=0;
   bool primary_key=0,unique_key=0;
   Key *key, *key2;
@@ -992,8 +992,8 @@ static int prepare_create_table(Session *session,
 
     message::Table::Field *protofield= NULL;
 
-    List<Key_part_spec>::iterator cols(key->columns);
-    List<Key_part_spec>::iterator cols2(key->columns);
+    List<Key_part_spec>::iterator cols(key->columns.begin());
+    List<Key_part_spec>::iterator cols2(key->columns.begin());
     for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint32_t length;
@@ -1881,7 +1881,7 @@ send_result:
     lex->cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List<DRIZZLE_ERROR>::iterator it(session->warn_list);
+      List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {

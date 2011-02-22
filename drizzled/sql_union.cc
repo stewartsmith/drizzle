@@ -308,7 +308,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       assert(!empty_table);
       empty_table= (Table*) session->calloc(sizeof(Table));
       types.clear();
-      List<Item>::iterator it(sl->item_list);
+      List<Item>::iterator it(sl->item_list.begin());
       Item *item_tmp;
       while ((item_tmp= it++))
       {
@@ -327,8 +327,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 		   ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT),MYF(0));
 	goto err;
       }
-      List<Item>::iterator it(sl->item_list);
-      List<Item>::iterator tp(types);
+      List<Item>::iterator it(sl->item_list.begin());
+      List<Item>::iterator tp(types.begin());
       Item *type, *item_tmp;
       while ((type= tp++, item_tmp= it++))
       {
@@ -344,7 +344,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       Check that it was possible to aggregate
       all collations together for UNION.
     */
-    List<Item>::iterator tp(types);
+    List<Item>::iterator tp(types.begin());
     Item *type;
     uint64_t create_options;
 
