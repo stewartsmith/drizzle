@@ -24,6 +24,7 @@
 #include <drizzled/message.h>
 #include <drizzled/message/statement_transform.h>
 #include <google/protobuf/text_format.h>
+#include <drizzled/plugin/authorization.h>
 #include <string>
 
 using namespace std;
@@ -49,10 +50,18 @@ ShowCreateTable::Generator::Generator(Field **arg) :
   {
     identifier::Table identifier(select->getShowSchema(), select->getShowTable());
 
-    table_message= plugin::StorageEngine::getTableMessage(getSession(), identifier);
+    if (not plugin::Authorization::isAuthorized(*getSession().user(),
+                                            identifier, false))
+    {
+      drizzled::error::access(*getSession().user(), identifier);
+      return;
+    }
 
-    if (table_message)
-      is_primed= true;
+      table_message= plugin::StorageEngine::getTableMessage(getSession(),
+                                                            identifier);
+
+      if (table_message)
+        is_primed= true;
   }
 }
 
