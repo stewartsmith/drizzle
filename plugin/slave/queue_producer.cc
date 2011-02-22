@@ -101,9 +101,9 @@ void QueueProducer::shutdown()
     closeConnection();
 }
 
-bool QueueProducer::reconnect(bool initialConnection)
+bool QueueProducer::reconnect(bool initial_connection)
 {
-  if (not initialConnection)
+  if (not initial_connection)
   {
     errmsg_printf(error::ERROR, _("Lost connection to master. Reconnecting."));
   }
