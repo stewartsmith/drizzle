@@ -38,6 +38,7 @@
 #include <libdrizzle/drizzle_client.h>
 
 #include "server_detect.h"
+#include "get_password.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
