@@ -1,0 +1,33 @@
+# Check for error if no parameter provided
+create schema user1;
+create schema user2;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+
+# Set up a table to be able to test not being able to kill other people
+use user2;
+create table t1 (kill_id int);
+insert into t1 values(connection_id());
+
+# Test that we get a normal don't exist error for things that don't exist
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist;
+
+# Connect as user1 - should only see information_schema, user1 and
+# data_dictionary
+# Also tests that we are able to read data_dictionary, without which fail
+# would happen
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (should_succeed,localhost,user1,,user1,,);
+connection should_succeed;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='user2' ORDER BY TABLE_NAME;
+--error ER_DBACCESS_DENIED_ERROR
+select * from user2.t1;
+--error ER_TABLEACCESS_DENIED_ERROR
+SHOW INDEXES FROM user2.t1;
+
+# Clean up after ourselves
+connection default;
+drop schema user1;
+drop schema user2;
+disconnect should_succeed;
