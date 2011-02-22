@@ -302,15 +302,9 @@ public:
     :list(0), el(0), prev(0), current(0)
   {}
 
-  base_list_iterator(base_list &list_par)
-  { init(list_par); }
-
-  inline void init(base_list &list_par)
+  base_list_iterator(base_list &list_par, list_node** el0)
+    :list(&list_par), el(el0), prev(0), current(0)
   {
-    list= &list_par;
-    el= &list_par.first;
-    prev= 0;
-    current= 0;
   }
 
   inline void *next(void)
@@ -370,6 +364,8 @@ template <class T> class List :public base_list
 public:
   typedef List_iterator<T> iterator;
 
+  friend class List_iterator<T>;
+
   inline List() :base_list() {}
   inline List(const List<T> &tmp) :base_list(tmp) {}
   inline List(const List<T> &tmp, memory::Root *mem_root) :
@@ -396,7 +392,7 @@ public:
 
   iterator begin()
   {
-    return iterator(*this);
+    return iterator(*this, &first);
   }
 };
 
@@ -404,8 +400,8 @@ public:
 template <class T> class List_iterator :public base_list_iterator
 {
 public:
-  explicit List_iterator(List<T> &a) : base_list_iterator(a) {}
-  List_iterator() : base_list_iterator() {}
+  List_iterator(List<T>& a, list_node** b) : base_list_iterator(a, b) {};
+  List_iterator() {};
   inline T* operator++(int) { return (T*) base_list_iterator::next(); }
   inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
   inline T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
@@ -428,12 +424,10 @@ public:
 */
 
 template <typename T>
-inline
-void
-list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
+void list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
 {
   /* Make a deep copy of each element */
-  typename List<T>::iterator it(list);
+  typename List<T>::iterator it(list.begin());
   T *el;
   while ((el= it++))
     it.replace(el->clone(mem_root));

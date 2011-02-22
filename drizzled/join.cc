@@ -2213,7 +2213,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
                               bool before_group_by, 
                               bool recompute)
 {
-  List<Item>::iterator it(field_list);
+  List<Item>::iterator it(field_list.begin());
   Item_sum **func;
   Item *item;
 
@@ -2294,7 +2294,7 @@ bool Join::rollup_init()
     }
   }
 
-  List<Item>::iterator it(all_fields);
+  List<Item>::iterator it(all_fields.begin());
   Item *item;
   while ((item= it++))
   {
@@ -2369,7 +2369,7 @@ bool Join::rollup_init()
 */
 bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, Item_sum ***func)
 {
-  List<Item>::iterator it(fields_arg);
+  List<Item>::iterator it(fields_arg.begin());
   Item *first_field= sel_fields.head();
   uint32_t level;
 
@@ -2400,7 +2400,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     uint32_t pos= send_group_parts - level -1;
     bool real_fields= 0;
     Item *item;
-    List<Item>::iterator new_it(rollup.getFields()[pos]);
+    List<Item>::iterator new_it(rollup.getFields()[pos].begin());
     Item **ref_array_start= rollup.getRefPointerArrays()[pos];
     Order *start_group;
 
@@ -2549,7 +2549,7 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
     {
       int write_error;
       Item *item;
-      List<Item>::iterator it(rollup.getFields()[i]);
+      List<Item>::iterator it(rollup.getFields()[i].begin());
       while ((item= it++))
       {
         if (item->type() == Item::NULL_ITEM && item->is_result_field())
@@ -5292,7 +5292,7 @@ static int return_zero_rows(Join *join,
   {
     if (send_row)
     {
-      List<Item>::iterator it(fields);
+      List<Item>::iterator it(fields.begin());
       Item *item;
       while ((item= it++))
         item->no_rows_in_result();
@@ -5430,7 +5430,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
   TableList *table;
   NestedJoin *nested_join;
   TableList *prev_table= 0;
-  List<TableList>::iterator li(*join_list);
+  List<TableList>::iterator li(join_list->begin());
 
   /*
     Try to simplify join operations from join_list.
@@ -5573,7 +5573,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     if (nested_join && !table->on_expr)
     {
       TableList *tbl;
-      List<TableList>::iterator it(nested_join->join_list);
+      List<TableList>::iterator it(nested_join->join_list.begin());
       while ((tbl= it++))
       {
         tbl->setEmbedding(table->getEmbedding());
@@ -5596,7 +5596,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
 
   /* Calculate how many saved fields there is in list */
   field_count=0;
-  List<Item>::iterator it(fields);
+  List<Item>::iterator it(fields.begin());
   Item *item;
   while ((item=it++))
   {
@@ -6138,7 +6138,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 */
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused)
 {
-  List<TableList>::iterator li(*join_list);
+  List<TableList>::iterator li(join_list->begin());
   TableList *table;
   while ((table= li++))
   {
@@ -6209,7 +6209,7 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 */
 static void reset_nj_counters(List<TableList> *join_list)
 {
-  List<TableList>::iterator li(*join_list);
+  List<TableList>::iterator li(join_list->begin());
   TableList *table;
   while ((table= li++))
   {

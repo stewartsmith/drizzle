@@ -1090,7 +1090,7 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
 
   /* Check if there is any blobs in data */
   {
-    List<Item>::iterator li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
     while ((item=li++))
     {
@@ -1155,7 +1155,7 @@ bool select_export::send_data(List<Item> &items)
   row_count++;
   Item *item;
   uint32_t used_length=0,items_left=items.elements;
-  List<Item>::iterator li(items);
+  List<Item>::iterator li(items.begin());
 
   if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),
                  exchange->line_start->length()))
@@ -1344,7 +1344,7 @@ select_dump::prepare(List<Item> &, Select_Lex_Unit *u)
 
 bool select_dump::send_data(List<Item> &items)
 {
-  List<Item>::iterator li(items);
+  List<Item>::iterator li(items.begin());
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   tmp.length(0);
@@ -1397,7 +1397,7 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
     unit->offset_limit_cnt--;
     return(0);
   }
-  List<Item>::iterator li(items);
+  List<Item>::iterator li(items.begin());
   Item *val_item;
   for (uint32_t i= 0; (val_item= li++); i++)
     it->store(i, val_item);
@@ -1415,7 +1415,7 @@ void select_max_min_finder_subselect::cleanup()
 bool select_max_min_finder_subselect::send_data(List<Item> &items)
 {
   Item_maxmin_subselect *it= (Item_maxmin_subselect *)item;
-  List<Item>::iterator li(items);
+  List<Item>::iterator li(items.begin());
   Item *val_item= li++;
   it->register_value();
   if (it->assigned())

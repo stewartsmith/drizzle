@@ -223,7 +223,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  List<String>::iterator it(strings);
+  List<String>::iterator it(strings.begin());
   String *tmp;
   for (uint32_t i= 0; (tmp= it++); i++)
   {
@@ -874,7 +874,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   blob_count= string_count= null_count= hidden_null_count= group_null_items= 0;
   param->using_indirect_summary_function= 0;
 
-  List<Item>::iterator li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *item;
   Field **tmp_from_field=from_field;
   while ((item=li++))

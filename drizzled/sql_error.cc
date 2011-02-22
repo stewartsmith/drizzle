@@ -227,7 +227,7 @@ bool show_warnings(Session *session,
 
   unit->set_limit(sel);
 
-  List<DRIZZLE_ERROR>::iterator it(session->warn_list);
+  List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
   while ((err= it++))
   {
     /* Skip levels that the user is not interested in */
