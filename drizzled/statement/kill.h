@@ -36,9 +36,6 @@ public:
   Kill(Session *in_session, Item *item, bool is_query_kill);
 
   bool execute();
-
-private:
-  bool kill(session_id_t id, bool only_kill_query);
 };
 
 } /* namespace statement */

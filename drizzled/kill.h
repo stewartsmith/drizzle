@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,13 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
+#ifndef DRIZZLED_KILL_H
+#define DRIZZLED_KILL_H
 
-#include <drizzled/plugin/table_function.h>
-#include <plugin/session_dictionary/processlist.h>
-#include <plugin/session_dictionary/savepoints.h>
-#include <plugin/session_dictionary/sessions.h>
-#include <plugin/session_dictionary/variables.h>
+#include <drizzled/identifier.h>
+#include <drizzled/visibility.h>
 
-#endif /* PLUGIN_SESSION_DICTIONARY_DICTIONARY_H */
+namespace drizzled {
+
+bool kill(identifier::User::const_reference user, session_id_t id_to_kill, bool only_kill_query);
+
+} // namespace drizzled
+
+#endif /* DRIZZLED_KILL_H */
