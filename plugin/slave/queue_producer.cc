@@ -228,7 +228,7 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
   string sql("SELECT `id` FROM `data_dictionary`.`sys_replication_log`"
              " WHERE `commit_id` > ");
   sql.append(boost::lexical_cast<string>(max_commit_id));
-  sql.append(" LIMIT 25", 9);
+  sql.append(" ORDER BY `commit_id` LIMIT 25");
 
   drizzle_return_t ret;
   drizzle_result_st result;
@@ -351,7 +351,10 @@ bool QueueProducer::queueInsert(const char *trx_id,
     return false;
   }
 
-  _saved_max_commit_id= boost::lexical_cast<uint64_t>(commit_id);
+  uint64_t tmp_commit_id= boost::lexical_cast<uint64_t>(commit_id);
+  if (tmp_commit_id > _saved_max_commit_id)
+    _saved_max_commit_id= tmp_commit_id;
+
   return true;
 }
 
