@@ -327,6 +327,7 @@ tests/test-run
 tests/test-run@
 tests/total_warning_count
 tests/var
+tests/workdir
 thr_malloc.gcno
 time.gcno
 tmp_table.gcno
@@ -345,6 +346,3 @@ drizzled/message/catalog.pb.cc
 drizzled/message/catalog.pb.h
 drizzled/message/catalog_reader
 drizzled/message/catalog_writer
-drizzled/message/replication_options.pb.cc
-drizzled/message/replication_options.pb.h
-libdrizzle/mysql_password_hash
