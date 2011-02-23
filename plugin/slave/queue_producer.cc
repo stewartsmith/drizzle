@@ -179,7 +179,7 @@ bool QueueProducer::closeConnection()
   return true;
 }
 
-bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
+bool QueueProducer::queryForMaxCommitId(uint64_t *max_commit_id)
 {
   /*
    * This SQL will get the maximum commit_id value we have pulled over from
@@ -208,7 +208,7 @@ bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
       break;
 
     assert(result_set.isNull(0) == false);
-    *max_commit_id= boost::lexical_cast<uint32_t>(value);
+    *max_commit_id= boost::lexical_cast<uint64_t>(value);
     found_rows++;
   }
 
@@ -221,12 +221,12 @@ bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
   return true;
 }
 
-bool QueueProducer::queryForTrxIdList(uint32_t max_commit_id,
+bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
                                       vector<uint64_t> &list)
 {
   (void)list;
   string sql("SELECT `id` FROM `data_dictionary`.`sys_replication_log`"
-             " WHERE commit_id > ");
+             " WHERE `commit_id` > ");
   sql.append(boost::lexical_cast<string>(max_commit_id));
   sql.append(" LIMIT 25", 9);
 
@@ -351,12 +351,12 @@ bool QueueProducer::queueInsert(const char *trx_id,
     return false;
   }
 
-  _saved_max_commit_id= boost::lexical_cast<uint32_t>(commit_id);
+  _saved_max_commit_id= boost::lexical_cast<uint64_t>(commit_id);
   return true;
 }
 
 
-bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
+bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
 {
   vector<uint64_t> trx_id_list;
 

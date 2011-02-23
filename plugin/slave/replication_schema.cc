@@ -121,7 +121,8 @@ bool ReplicationSchema::create()
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS `replication`.`queue`"
                 " (`trx_id` BIGINT NOT NULL, `seg_id` INT NOT NULL,"
-                " `commit_order` INT, `msg` BLOB, PRIMARY KEY(`trx_id`, `seg_id`))"
+                " `commit_order` BIGINT, `msg` BLOB,"
+                " PRIMARY KEY(`trx_id`, `seg_id`))"
                 " COMMENT = 'VERSION 1.0'");
   if (not executeSQL(sql))
     return false;
