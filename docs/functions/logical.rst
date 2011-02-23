@@ -179,7 +179,10 @@ The result set would be something like:
 LESS THAN
 ----------
 
-blah
+Less than: ::
+
+	SELECT 2 < 2;
+        	-> 0
 
 
 .. _greater_than:
@@ -187,34 +190,62 @@ blah
 GREATER THAN
 -------------
 
-blah
+Greater than: ::
+
+	SELECT 2 > 2;
+        	-> 0
 
 .. _less_or_equal:
 
 LESS THAN OR EQUAL
 -------------------
 
-blah
+Less than or equal: ::
+
+	SELECT 0.1 <= 2;
+        	-> 1
+
 
 .. _greater_or_equal:
 
 GREATER THAN OR EQUAL
 ----------------------
 
-blah
+Greater than or equal: ::
+
+	SELECT 2 >= 2;
+        	-> 1
 
 .. _equal:
 
 EQUAL
 -----
 
-blah
+Equal: ::
+
+	SELECT 1 = 0;
+        	-> 0
+	SELECT '0' = 0;
+        	-> 1
+	SELECT '0.0' = 0;
+       		-> 1
+	SELECT '0.01' = 0;
+        	-> 0
+	SELECT '.01' = 0.01;
+        	-> 1
+
 
 .. _not_equal:
 
 NOT EQUAL
 ----------
 
-blah
+Not equal: ::
 
+	SELECT '.01' <> '0.01';
+        	-> 1
+	SELECT .01 <> '0.01';
+        	-> 0
+	SELECT 'zapp' <> 'zappp';
+        	-> 1
 
