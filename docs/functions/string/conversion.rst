@@ -86,7 +86,6 @@ The characters in the argument string must be legal hexadecimal digits: '0' .. '
 Returns NULL
 
 
-
 LOWER() 	          
 Return the argument in lowercase
 
