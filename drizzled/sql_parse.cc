@@ -1019,7 +1019,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     }
   }
   /* Store the table reference preceding the current one. */
-  if (table_list.elements > 0)
+  if (table_list.size() > 0)
   {
     /*
       table_list.next points to the last inserted TableList->next_local'
@@ -1117,7 +1117,7 @@ TableList *Select_Lex::end_nested_join(Session *)
   join_list= ptr->getJoinList();
   embedding= ptr->getEmbedding();
   nested_join= ptr->getNestedJoin();
-  if (nested_join->join_list.elements == 1)
+  if (nested_join->join_list.size() == 1)
   {
     TableList *embedded= nested_join->join_list.head();
     join_list->pop();
@@ -1126,7 +1126,7 @@ TableList *Select_Lex::end_nested_join(Session *)
     join_list->push_front(embedded);
     ptr= embedded;
   }
-  else if (nested_join->join_list.elements == 0)
+  else if (nested_join->join_list.size() == 0)
   {
     join_list->pop();
     ptr= NULL;                                     // return value
@@ -1521,15 +1521,15 @@ bool update_precheck(Session *session, TableList *)
   const char *msg= 0;
   Select_Lex *select_lex= &session->getLex()->select_lex;
 
-  if (session->getLex()->select_lex.item_list.elements != session->getLex()->value_list.elements)
+  if (session->getLex()->select_lex.item_list.size() != session->getLex()->value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
     return(true);
   }
 
-  if (session->getLex()->select_lex.table_list.elements > 1)
+  if (session->getLex()->select_lex.table_list.size() > 1)
   {
-    if (select_lex->order_list.elements)
+    if (select_lex->order_list.size())
       msg= "ORDER BY";
     else if (select_lex->select_limit)
       msg= "LIMIT";
@@ -1561,7 +1561,7 @@ bool insert_precheck(Session *session, TableList *)
     Check that we have modify privileges for the first table and
     select privileges for the rest
   */
-  if (session->getLex()->update_list.elements != session->getLex()->value_list.elements)
+  if (session->getLex()->update_list.size() != session->getLex()->value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
     return(true);

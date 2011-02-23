@@ -41,6 +41,12 @@ typedef struct st_sql_list
     first=0;
     next= &first;
   }
+
+  size_t size() const
+  {
+    return elements;
+  }
+
   inline void link_in_list(unsigned char *element,unsigned char **next_ptr)
   {
     elements++;
@@ -99,7 +105,6 @@ struct list_node : public memory::SqlAlloc
     next= this;
   }
 };
-
 
 extern DRIZZLED_API list_node end_of_list;
 

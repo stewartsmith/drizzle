@@ -496,7 +496,7 @@ int Join::prepare(Item ***rref_pointer_array,
     } while (item_sum != end);
   }
 
-  if (select_lex->inner_refs_list.elements &&
+  if (select_lex->inner_refs_list.size() &&
       fix_inner_refs(session, all_fields, select_lex, ref_pointer_array))
     return(-1);
 
@@ -535,7 +535,7 @@ int Join::prepare(Item ***rref_pointer_array,
 
   /* Init join struct */
   count_field_types(select_lex, &tmp_table_param, all_fields, 0);
-  ref_pointer_array_size= all_fields.elements*sizeof(Item*);
+  ref_pointer_array_size= all_fields.size() * sizeof(Item*);
   this->group= group_list != 0;
   unit= unit_arg;
 
@@ -1163,9 +1163,8 @@ int Join::optimize()
 
     init_items_ref_array();
 
-    tmp_table_param.hidden_field_count= (all_fields.elements -
-           fields_list.elements);
-    Order *tmp_group= (((not simple_group) or not (getDebug().test(debug::NO_KEY_GROUP))) ? group_list : (Order*) 0);
+    tmp_table_param.hidden_field_count= all_fields.size() - fields_list.size();
+    Order *tmp_group= (((not simple_group) or not (getDebug().test(debug::NO_KEY_GROUP))) ? group_list : NULL);
 
     /*
       Pushing LIMIT to the temporary table creation is not applicable
@@ -1528,19 +1527,19 @@ void Join::exec()
     curr_join->all_fields= *curr_all_fields;
     if (!items1)
     {
-      items1= items0 + all_fields.elements;
+      items1= items0 + all_fields.size();
       if (sort_and_group || curr_tmp_table->group)
       {
         if (change_to_use_tmp_fields(session, items1,
                   tmp_fields_list1, tmp_all_fields1,
-                  fields_list.elements, all_fields))
+                  fields_list.size(), all_fields))
           return;
       }
       else
       {
         if (change_refs_to_tmp_fields(session, items1,
                     tmp_fields_list1, tmp_all_fields1,
-                    fields_list.elements, all_fields))
+                    fields_list.size(), all_fields))
           return;
       }
       curr_join->tmp_all_fields1= tmp_all_fields1;
@@ -1590,8 +1589,8 @@ void Join::exec()
       count_field_types(select_lex, &curr_join->tmp_table_param,
       curr_join->tmp_all_fields1,
       curr_join->select_distinct && !curr_join->group_list);
-      curr_join->tmp_table_param.hidden_field_count= curr_join->tmp_all_fields1.elements
-                                                   - curr_join->tmp_fields_list1.elements;
+      curr_join->tmp_table_param.hidden_field_count= curr_join->tmp_all_fields1.size()
+                                                   - curr_join->tmp_fields_list1.size();
 
       if (exec_tmp_table2)
       {
@@ -1677,10 +1676,10 @@ void Join::exec()
       // No sum funcs anymore
       if (!items2)
       {
-        items2= items1 + all_fields.elements;
+        items2= items1 + all_fields.size();
         if (change_to_use_tmp_fields(session, items2,
                   tmp_fields_list2, tmp_all_fields2,
-                  fields_list.elements, tmp_all_fields1))
+                  fields_list.size(), tmp_all_fields1))
           return;
         curr_join->tmp_fields_list2= tmp_fields_list2;
         curr_join->tmp_all_fields2= tmp_all_fields2;
@@ -1725,10 +1724,10 @@ void Join::exec()
     {
       if (! items0)
         init_items_ref_array();
-      items3= ref_pointer_array + (all_fields.elements*4);
+      items3= ref_pointer_array + (all_fields.size() * 4);
       setup_copy_fields(session, &curr_join->tmp_table_param,
       items3, tmp_fields_list3, tmp_all_fields3,
-      curr_fields_list->elements, *curr_all_fields);
+      curr_fields_list->size(), *curr_all_fields);
       tmp_table_param.save_copy_funcs= curr_join->tmp_table_param.copy_funcs;
       tmp_table_param.save_copy_field= curr_join->tmp_table_param.copy_field;
       tmp_table_param.save_copy_field_end= curr_join->tmp_table_param.copy_field_end;
@@ -2175,7 +2174,7 @@ bool Join::alloc_func_list()
   */
   if (select_distinct)
   {
-    group_parts+= fields_list.elements;
+    group_parts+= fields_list.size();
     /*
       If the order_st clause is specified then it's possible that
       it also will be optimized, so reserve space for it too
@@ -2283,12 +2282,12 @@ bool Join::rollup_init()
     List<Item> *rollup_fields= &rollup.getFields()[i];
     rollup_fields->clear();
     rollup.getRefPointerArrays()[i]= ref_array;
-    ref_array+= all_fields.elements;
+    ref_array+= all_fields.size();
   }
 
   for (uint32_t i= 0 ; i < send_group_parts; i++)
   {
-    for (uint32_t j= 0 ; j < fields_list.elements ; j++)
+    for (uint32_t j= 0 ; j < fields_list.size() ; j++)
     {
       rollup.getFields()[i].push_back(rollup.getNullItems()[i]);
     }
@@ -2405,7 +2404,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     Order *start_group;
 
     /* Point to first hidden field */
-    Item **ref_array= ref_array_start + fields_arg.elements-1;
+    Item **ref_array= ref_array_start + fields_arg.size()-1;
 
     /* Remember where the sum functions ends for the previous level */
     sum_funcs_end[pos+1]= *func;
@@ -3169,7 +3168,7 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
 */
 static bool make_group_fields(Join *main_join, Join *curr_join)
 {
-  if (main_join->group_fields_cache.elements)
+  if (main_join->group_fields_cache.size())
   {
     curr_join->group_fields= main_join->group_fields_cache;
     curr_join->sort_and_group= 1;
@@ -4697,7 +4696,7 @@ static void make_outerjoin_info(Join *join)
       }
       if (!tab->first_inner)
         tab->first_inner= nested_join->first_nested;
-      if (++nested_join->counter_ < nested_join->join_list.elements)
+      if (++nested_join->counter_ < nested_join->join_list.size())
         break;
       /* Table tab is the last inner table for nested join. */
       nested_join->first_nested->last_inner= tab;
@@ -6156,7 +6155,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
             with anything)
         2. we could run out of bits in the nested join bitset otherwise.
       */
-      if (nested_join->join_list.elements != 1)
+      if (nested_join->join_list.size() != 1)
       {
         /* Don't assign bits to sj-nests */
         if (table->on_expr)

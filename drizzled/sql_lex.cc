@@ -1712,7 +1712,7 @@ bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 
   return (ref_pointer_array=
           (Item **)session->getMemRoot()->allocate(sizeof(Item*) * (n_child_sum_items +
-                                                 item_list.elements +
+                                                 item_list.size() +
                                                  select_n_having_items +
                                                  select_n_where_fields +
                                                  order_group_num)*5)) == 0;

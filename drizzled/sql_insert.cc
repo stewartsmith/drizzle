@@ -70,9 +70,9 @@ static int check_insert_fields(Session *session, TableList *table_list,
 {
   Table *table= table_list->table;
 
-  if (fields.elements == 0 && values.elements != 0)
+  if (fields.size() == 0 && values.size() != 0)
   {
-    if (values.elements != table->getShare()->sizeFields())
+    if (values.size() != table->getShare()->sizeFields())
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1L);
       return -1;
@@ -92,7 +92,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
     Name_resolution_context_state ctx_state;
     int res;
 
-    if (fields.elements != values.elements)
+    if (fields.size() != values.size())
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1L);
       return -1;
@@ -258,7 +258,7 @@ bool insert_query(Session *session,TableList *table_list,
     the current connection mode or table operation.
   */
   upgrade_lock_type(session, &table_list->lock_type, duplic,
-                    values_list.elements > 1);
+                    values_list.size() > 1);
 
   if (session->openTablesLock(table_list))
   {
@@ -271,12 +271,12 @@ bool insert_query(Session *session,TableList *table_list,
   session->set_proc_info("init");
   session->used_tables=0;
   values= its++;
-  value_count= values->elements;
+  value_count= values->size();
 
   if (prepare_insert(session, table_list, table, fields, values,
 			   update_fields, update_values, duplic, &unused_conds,
                            false,
-                           (fields.elements || !value_count ||
+                           (fields.size() || !value_count ||
                             (0) != 0), !ignore))
   {
     if (table != NULL)
@@ -314,7 +314,7 @@ bool insert_query(Session *session,TableList *table_list,
   while ((values= its++))
   {
     counter++;
-    if (values->elements != value_count)
+    if (values->size() != value_count)
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), counter);
 
@@ -370,7 +370,7 @@ bool insert_query(Session *session,TableList *table_list,
   {
     if (duplic != DUP_ERROR || ignore)
       table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
-    table->cursor->ha_start_bulk_insert(values_list.elements);
+    table->cursor->ha_start_bulk_insert(values_list.size());
   }
 
 
@@ -380,12 +380,12 @@ bool insert_query(Session *session,TableList *table_list,
 
   while ((values= its++))
   {
-    if (fields.elements || !value_count)
+    if (fields.size() || !value_count)
     {
       table->restoreRecordAsDefault();	// Get empty record
       if (fill_record(session, fields, *values))
       {
-	if (values_list.elements != 1 && ! session->is_error())
+	if (values_list.size() != 1 && ! session->is_error())
 	{
 	  info.records++;
 	  continue;
@@ -405,7 +405,7 @@ bool insert_query(Session *session,TableList *table_list,
 
       if (fill_record(session, table->getFields(), *values))
       {
-	if (values_list.elements != 1 && ! session->is_error())
+	if (values_list.size() != 1 && ! session->is_error())
 	{
 	  info.records++;
 	  continue;
@@ -490,7 +490,7 @@ bool insert_query(Session *session,TableList *table_list,
     return true;
   }
 
-  if (values_list.elements == 1 && (!(session->options & OPTION_WARNINGS) ||
+  if (values_list.size() == 1 && (!(session->options & OPTION_WARNINGS) ||
 				    !session->cuted_fields))
   {
     session->row_count_func= info.copied + info.deleted + info.updated;
@@ -838,8 +838,8 @@ int write_record(Session *session, Table *table,CopyInfo *info)
 	assert(table->insert_values.size());
         table->storeRecordAsInsert();
         table->restoreRecord();
-        assert(info->update_fields->elements ==
-                    info->update_values->elements);
+        assert(info->update_fields->size() ==
+                    info->update_values->size());
         if (fill_record(session, *info->update_fields,
                                                  *info->update_values,
                                                  info->ignore))
@@ -1104,7 +1104,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
                            !insert_into_view, &map) ||
        setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0);
 
-  if (!res && fields->elements)
+  if (!res && fields->size())
   {
     bool saved_abort_on_warning= session->abortOnWarning();
     session->setAbortOnWarning(not info.ignore);
@@ -1326,7 +1326,7 @@ bool select_insert::send_data(List<Item> &values)
 
 void select_insert::store_values(List<Item> &values)
 {
-  if (fields->elements)
+  if (fields->size())
     fill_record(session, *fields, values, true);
   else
     fill_record(session, table->getFields(), values, true);
@@ -1491,7 +1491,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				      identifier::Table::const_reference identifier)
 {
   TableShare share(message::Table::INTERNAL);
-  uint32_t select_field_count= items->elements;
+  uint32_t select_field_count= items->size();
   /* Add selected items to field list */
   List<Item>::iterator it(items->begin());
   Item *item;
@@ -1689,14 +1689,14 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
     *m_plock= extra_lock;
   }
 
-  if (table->getShare()->sizeFields() < values.elements)
+  if (table->getShare()->sizeFields() < values.size())
   {
     my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1);
     return(-1);
   }
 
  /* First field to copy */
-  field= table->getFields() + table->getShare()->sizeFields() - values.elements;
+  field= table->getFields() + table->getShare()->sizeFields() - values.size();
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
