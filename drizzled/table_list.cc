@@ -24,7 +24,6 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/sql_select.h>
-#include <drizzled/strfunc.h>
 
 using namespace std;
 
