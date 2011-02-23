@@ -129,9 +129,7 @@ int table::Concurrent::open_unireg_entry(Session *session,
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
 retry:
-  if (not (share= table::instance::Shared::make_shared(session,
-                                                       identifier,
-                                                       error)))
+  if (not (share= table::instance::Shared::make_shared(session, identifier, error)))
   {
     return 1;
   }
