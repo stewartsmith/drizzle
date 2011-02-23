@@ -4,11 +4,11 @@ Drizzledump Backup Tool
 Synopsis
 --------
 
-**drizzledump** [*OPTIONS*] *database* [*tables*]
+:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] *database* [*tables*]
 
-**drizzledump** [*OPTIONS*] *--databases* [*OPTIONS*] *DB1* [*DB2* *DB3*...]
+:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--databases` *DB1* [*DB2* *DB3*...]
 
-**drizzledump** [*OPTIONS*] *--all-databases* [*OPTIONS*]
+:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--all-databases`
 
 Description
 -----------
@@ -24,26 +24,28 @@ will convert the tables and data into a Drizzle compatible format.
 Any binary data in tables will be converted into hexadecimal output so that it
 does not corrupt the dump file.
 
+.. _drizzledump-options-label:
+
 Drizzledump options
 -------------------
 
 The :program:`drizzledump` tool has several available options:
 
-.. option:: -A, --all-databases
+.. option:: --all-databases, -A
 
-Dumps all databases found on the server apart from *information_schema* and
-*data_dictionary* in Drizzle and *information_schema*, *performance_schema*
-and *mysql* in MySQL.
+Dumps all databases found on the server apart from ``information_schema`` and
+``data_dictionary`` in Drizzle and ``information_schema``,
+``performance_schema`` and ``mysql`` in MySQL.
 
-.. option:: -f, --force
+.. option:: --force, -f
 
 Continue even if we get an sql-error.
 
-.. option:: -?, --help
+.. option:: --help, -?
 
 Show a message with all the available options.
 
-.. option:: -x, --lock-all-tables
+.. option:: --lock-all-tables, -x
 
 Locks all the tables for all databases with a global read lock.  The lock is
 released automatically when :program:`drizzledump` ends.
@@ -54,7 +56,9 @@ Turns on :option:`--single-transaction` and :option:`--lock-tables`.
 Creates a consistent snapshot by dumping the tables in a single transaction.
 During the snapshot no other connected client should use any of the
 following as this will implicitly commit the transaction and prevent the
-consistency::
+consistency:
+
+.. code-block:: mysql
 
 	ALTER TABLE
 	DROP TABLE
@@ -77,17 +81,15 @@ Dump a list of tables.
 Show progress of the dump every *rows* of the dump.  Requires
 :option:`--verbose`
 
-.. option:: -v, --verbose
+.. option:: --verbose, -v
 
 Sends various verbose information to stderr as the dump progresses.
 
-.. option:: --skip-create
-
-Do not dump the CREATE TABLE / CREATE DATABASE statements.
-
 .. option:: --skip-extended-insert
 
-Dump every row on an individual line.  For example::
+Dump every row on an individual line.  For example:
+
+.. code-block:: mysql
 
 	INSERT INTO `t1` VALUES (1,'hello');
 	INSERT INTO `t1` VALUES (2,'world');
@@ -102,7 +104,7 @@ Do not attempt to read configuration from configuration files.
 
 .. option:: --add-drop-database
 
-Add `DROP DATABASE` statements before `CREATE DATABASE`.
+Add ``DROP DATABASE`` statements before ``CREATE DATABASE``.
 
 .. option:: --compact
 
@@ -110,46 +112,46 @@ Gives a more compact output by disabling header/footer comments and enabling
 :option:`--skip-add-drop-table`, :option:`--skip-disable-keys` 
 and :option:`--skip-add-locks`.
 
-.. option:: -B, --databases
+.. option:: --databases, -B
 
 Dump several databases.  The databases do not need to follow on after this
 option, they can be anywhere in the command line.
 
-.. option:: -K, --skip-disable-keys
+.. option:: --skip-disable-keys, -K
 
-Do not dump the statements `ALTER TABLE ... DISABLE KEYS` and
-`ALTER TABLE ... ENABLE KEYS`
+Do not dump the statements ``ALTER TABLE ... DISABLE KEYS`` and
+``ALTER TABLE ... ENABLE KEYS``
 
 .. option:: --ignore-table table
 
-Do not dump specified table, needs to be in the format `database.table`.
+Do not dump specified table, needs to be in the format ``database.table``.
 Can be specified multiple times for multiple tables.
 
 .. option:: --insert-ignore
 
-Add the `IGNORE` keyword into every `INSERT` statement.
+Add the ``IGNORE`` keyword into every ``INSERT`` statement.
 
 .. option:: --no-autocommit
 
-Make the dump of each table a single transaction by wrapping it in `COMMIT`
+Make the dump of each table a single transaction by wrapping it in ``COMMIT``
 statements.
 
-.. option:: -n, --no-create-db
+.. option:: --no-create-db, -n
 
-Do not dump the `CREATE DATABASE` statements when using
+Do not dump the ``CREATE DATABASE`` statements when using
 :option:`--all-databases` or :option:`--databases`.
 
-.. option:: -t, --skip-create
+.. option:: --skip-create, -t
 
-Do not dump the `CREATE TABLE` statements.
+Do not dump the ``CREATE TABLE`` statements.
 
-.. option:: -d, --no-data
+.. option:: --no-data, -d
 
 Do not dump the data itself, used to dump the schemas only.
 
 .. option:: --replace
 
-Use `REPLACE INTO` statements instead of `INSERT INTO`
+Use ``REPLACE INTO`` statements instead of ``INSERT INTO``
 
 .. option:: --destination-type type (=stdout)
 
@@ -206,29 +208,28 @@ connection then corruption is likely and drizzledump by default will retrieve
 mangled data.  This is because MySQL will convert the data to UTF8 on the way
 out to drizzledump and you effectively get a double-conversion to UTF8.
 
-This typically happens with PHP apps that do not use 'SET NAMES'.
+This typically happens with PHP apps that do not use ``SET NAMES``.
 
 In these cases setting this option will retrieve the data as you see it in your
 application.
 
 .. versionadded:: 2011-01-31
 
-.. option:: -h, --host hostname (=localhost)
+.. option:: --host, -h hostname (=localhost)
 
 The hostname of the database server.
 
-.. option:: -u, --user username
+.. option:: --user, -u username
 
 The username for the database server.
 
-.. option:: -P, --password password
+.. option:: --password, -P password
 
 The password for the database server.
 
-.. option:: -p, --port port (=3306,4427)
+.. option:: --port, -p port (=4427)
 
-The port number of the database server.  Defaults to 3306 for MySQL protocol
-and 4427 for Drizzle protocol.
+The port number of the database server.
 
 .. option:: --protocol protocol (=mysql)
 
@@ -243,13 +244,17 @@ The Drizzle protocol.
 Backups using Drizzledump
 -------------------------
 
-Backups of a database can be made very simply by running the following::
+Backups of a database can be made very simply by running the following:
 
-$ drizzledump --all-databases > dumpfile.sql
+.. code-block:: bash
 
-This can then be re-imported into drizzle at a later date using::
+  $ drizzledump --all-databases > dumpfile.sql
 
-$ drizzle < dumpfile.sql
+This can then be re-imported into drizzle at a later date using:
+
+.. code-block:: bash
+
+  $ drizzle < dumpfile.sql
 
 MySQL Migration using Drizzledump
 ---------------------------------
@@ -264,18 +269,22 @@ format.
 
 .. warning::
 
-   :program:`drizzledump` will by default try to connect via port 4427. To
-   connect to a MySQL server, a port (such as 3306) must be specified.
+   :program:`drizzledump` will by default try to connect via. port 4427 so to
+   connect to a MySQL server a port (such as 3306) must be specified.
 
 So, simply connecting to a MySQL server with :program:`drizzledump` as follows
-will give you a Drizzle compatible output::
+will give you a Drizzle compatible output:
 
-$ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password > dumpfile.sql
+.. code-block:: bash
+
+  $ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password > dumpfile.sql
 
 Additionally :program:`drizzledump` can now dump from MySQL and import directly
-into a Drizzle server as follows::
+into a Drizzle server as follows:
 
-$ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
+.. code-block:: bash
+
+  $ drizzledump --all-databases --host=mysql-host --port=3306 --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
 
 .. note::
 
@@ -302,15 +311,24 @@ When you migrate from MySQL to Drizzle, the following conversions are required:
  * mediumblob -> blob
  * longblob -> blob
  * year -> int
- * set -> text
- * date/datetime default 0000-00-00 -> default NULL (Currently, ALL date columns have their DEFAULT set to NULL on migration)
- * date/datetime NOT NULL columns -> NULL
- * any date data containing 0000-00-00 -> NULL
- * time -> int of the number of seconds [1]_
- * enum-> DEFAULT NULL
+ * set -> text [1]_
+ * date/datetime default 0000-00-00 -> default NULL [2]_
+ * date/datetime NOT NULL columns -> NULL [2]_
+ * any date data containing 0000-00-00 -> NULL [2]_
+ * time -> int of the number of seconds [3]_
+ * enum-> DEFAULT NULL [4]_
 
 .. rubric:: Footnotes
 
-.. [1] This prevents data loss since MySQL's TIME data type has a range of
+.. [1] There is currently no good alternative to SET, this is simply to preserve
+       the data in the column.  There is a new alternative to SET to be included
+       at a later date.
+
+.. [2] Currently, ALL date columns have their DEFAULT set to NULL on migration.
+       This is so that any rows with 0000-00-00 dates can convert to NULL.
+
+.. [3] This prevents data loss since MySQL's TIME data type has a range of
        -838:59:59 - 838:59:59, and Drizzle's TIME type has a range of
-       00:00:00 - 23:59:61.999999.
+       00:00:00 - 23:59:59.
+
+.. [4] This is so that empty entries such as '' will convert to NULL.
