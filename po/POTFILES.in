@@ -96,7 +96,6 @@ plugin/syslog/errmsg.cc
 plugin/syslog/function.cc
 plugin/syslog/logging.cc
 plugin/syslog/module.cc
-plugin/transaction_log/background_worker.cc
 plugin/transaction_log/hexdump_transaction_message.cc
 plugin/transaction_log/module.cc
 plugin/transaction_log/print_transaction_message.cc

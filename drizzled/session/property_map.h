@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_SESSION_PROPERTY_MAP_H
 #define DRIZZLED_SESSION_PROPERTY_MAP_H
 
+#include <drizzled/util/storable.h>
 #include <drizzled/util/string.h>
 #include <boost/unordered_map.hpp>
 

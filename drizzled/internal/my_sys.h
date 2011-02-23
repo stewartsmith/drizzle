@@ -269,12 +269,7 @@ typedef uint32_t ha_checksum;
 typedef int (*Process_option_func)(void *ctx, const char *group_name,
                                    const char *option);
 
-int handle_default_option(void *in_ctx, const char *group_name,
-                          const char *option);
-
-
-
-	/* Prototypes for mysys and my_func functions */
+/* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
 DRIZZLED_API int my_delete(const char *name,myf MyFlags);

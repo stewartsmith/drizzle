@@ -33,7 +33,7 @@
 
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
-#define Lex (YYSession->lex)
+#define Lex (session->getLex())
 
 #include <config.h>
 #include <cstdio>
@@ -439,6 +439,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  REPEATABLE_SYM                /* SQL-2003-N */
 %token  REPEAT_SYM                    /* MYSQL-FUNC */
 %token  REPLACE                       /* MYSQL-FUNC */
+%token  REPLICATE
 %token  REPLICATION
 %token  RESTRICT
 %token  RETURNS_SYM                   /* SQL-2003-R */
@@ -776,14 +777,14 @@ rule: <-- starts at col 1
 query:
           END_OF_INPUT
           {
-            if (!(YYSession->lex->select_lex.options & OPTION_FOUND_COMMENT))
+            if (!(YYSession->getLex()->select_lex.options & OPTION_FOUND_COMMENT))
             {
               my_message(ER_EMPTY_QUERY, ER(ER_EMPTY_QUERY), MYF(0));
               DRIZZLE_YYABORT;
             }
             else
             {
-              YYSession->lex->statement= new statement::EmptyQuery(YYSession);
+              YYSession->getLex()->statement= new statement::EmptyQuery(YYSession);
             }
           }
         | verb_clause END_OF_INPUT {}
@@ -970,11 +971,11 @@ custom_database_option:
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
             statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
           }
-        | REPLICATION opt_equal TRUE_SYM
+        | REPLICATE opt_equal TRUE_SYM
           {
             parser::buildReplicationOption(Lex, true);
           }
-        | REPLICATION opt_equal FALSE_SYM
+        | REPLICATE opt_equal FALSE_SYM
           {
             parser::buildReplicationOption(Lex, false);
           }
@@ -1029,11 +1030,11 @@ custom_engine_option:
           {
             Lex->table()->mutable_options()->set_auto_increment_value($3);
           }
-        | REPLICATION opt_equal TRUE_SYM
+        | REPLICATE opt_equal TRUE_SYM
           {
             Lex->table()->mutable_options()->set_dont_replicate(false);
           }
-        | REPLICATION opt_equal FALSE_SYM
+        | REPLICATE opt_equal FALSE_SYM
           {
             Lex->table()->mutable_options()->set_dont_replicate(true);
           }
@@ -2161,11 +2162,10 @@ select_item_list:
         | select_item
         | '*'
           {
-            if (YYSession->add_item_to_list( new Item_field(&YYSession->lex->current_select->
-                                                          context,
-                                                          NULL, NULL, "*")))
+            if (YYSession->add_item_to_list( new Item_field(&YYSession->getLex()->current_select->context, NULL, NULL, "*")))
               DRIZZLE_YYABORT;
-            (YYSession->lex->current_select->with_wild)++;
+
+            (YYSession->getLex()->current_select->with_wild)++;
           }
         ;
 
@@ -5403,7 +5403,7 @@ union_order_or_limit:
           }
           order_or_limit
           {
-            YYSession->lex->current_select->no_table_names_allowed= 0;
+            YYSession->getLex()->current_select->no_table_names_allowed= 0;
             YYSession->setWhere("");
           }
         ;

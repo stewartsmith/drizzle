@@ -30,8 +30,8 @@
 #include <string>
 #include <fstream>
 #include <fcntl.h>
-#include <drizzled/message/schema.pb.h>
-#include <drizzled/message/table.pb.h>
+#include <drizzled/message/schema.h>
+#include <drizzled/message/table.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/message.h>
@@ -45,14 +45,15 @@ using namespace std;
 
 namespace drizzled {
 
-bool fill_table_proto(message::Table &table_proto,
+bool fill_table_proto(identifier::Table::const_reference identifier,
+                      message::Table &table_proto,
                       List<CreateField> &create_fields,
                       HA_CREATE_INFO *create_info,
                       uint32_t keys,
                       KeyInfo *key_info)
 {
   CreateField *field_arg;
-  List<CreateField>::iterator it(create_fields);
+  List<CreateField>::iterator it(create_fields.begin());
   message::Table::TableOptions *table_options= table_proto.mutable_options();
 
   if (create_fields.elements > MAX_FIELDS)
@@ -63,6 +64,13 @@ bool fill_table_proto(message::Table &table_proto,
 
   assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
+
+  message::schema::shared_ptr schema_message= plugin::StorageEngine::getSchemaDefinition(identifier);
+
+  if (schema_message and not message::is_replicated(*schema_message))
+  {
+    message::set_is_replicated(table_proto, false);
+  }
 
   int field_number= 0;
   bool use_existing_fields= table_proto.field_size() > 0;
@@ -583,7 +591,9 @@ bool rea_create_table(Session *session,
                       uint32_t keys, KeyInfo *key_info)
 {
   assert(table_proto.has_name());
-  if (fill_table_proto(table_proto, create_fields, create_info,
+
+  if (fill_table_proto(identifier,
+                       table_proto, create_fields, create_info,
                        keys, key_info))
   {
     return false;

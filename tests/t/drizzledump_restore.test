@@ -114,9 +114,9 @@ DROP DATABASE test;
 DROP DATABASE drizzledump_test;
 
 --echo Ensure we don't have those tables (verify we restored something)
---ERROR ER_TABLE_UNKNOWN
+--ERROR ER_TABLE_UNKNOWN,ER_SCHEMA_DOES_NOT_EXIST
 SELECT * FROM test.t1;
---ERROR ER_TABLE_UNKNOWN
+--ERROR ER_TABLE_UNKNOWN,ER_SCHEMA_DOES_NOT_EXIST
 SELECT * FROM drizzledump_test.t1;
 
 --echo Restoring from dumpfile

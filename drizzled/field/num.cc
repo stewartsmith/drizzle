@@ -189,7 +189,7 @@ int Field_num::store_decimal(const type::Decimal *val)
     pointer to decimal buffer with value of field
 */
 
-type::Decimal* Field_num::val_decimal(type::Decimal *decimal_value)
+type::Decimal* Field_num::val_decimal(type::Decimal *decimal_value) const
 {
   assert(result_type() == INT_RESULT);
 

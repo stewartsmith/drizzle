@@ -60,9 +60,9 @@ bool statement::Kill::kill(session_id_t id, bool only_kill_query)
 
 bool statement::Kill::execute()
 {
-  Item *it= (Item *) getSession()->lex->value_list.head();
+  Item *it= (Item *) getSession()->getLex()->value_list.head();
 
-  if ((not it->fixed && it->fix_fields(getSession()->lex->session, &it)) || it->check_cols(1))
+  if ((not it->fixed && it->fix_fields(getSession()->getLex()->session, &it)) || it->check_cols(1))
   {
     my_message(ER_SET_CONSTANTS_ONLY, 
                ER(ER_SET_CONSTANTS_ONLY),
@@ -70,7 +70,7 @@ bool statement::Kill::execute()
     return true;
   }
 
-  if (kill(static_cast<session_id_t>(it->val_int()), getSession()->lex->type & ONLY_KILL_QUERY))
+  if (kill(static_cast<session_id_t>(it->val_int()), getSession()->getLex()->type & ONLY_KILL_QUERY))
   {
     getSession()->my_ok();
   }

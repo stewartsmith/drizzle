@@ -84,7 +84,7 @@ int Field_double::store(int64_t nr, bool unsigned_val)
                              (double) nr);
 }
 
-double Field_double::val_real(void)
+double Field_double::val_real(void) const
 {
   double j;
 
@@ -101,7 +101,7 @@ double Field_double::val_real(void)
   return j;
 }
 
-int64_t Field_double::val_int(void)
+int64_t Field_double::val_int(void) const
 {
   double j;
   int64_t res;
@@ -144,8 +144,7 @@ warn:
 }
 
 
-String *Field_double::val_str(String *val_buffer,
-			      String *)
+String *Field_double::val_str(String *val_buffer, String *) const
 {
   double nr;
 

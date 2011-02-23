@@ -121,7 +121,7 @@ namespace field
   }
 
 
-  double Int32::val_real(void)
+  double Int32::val_real(void) const
   {
     int32_t j;
 
@@ -132,7 +132,7 @@ namespace field
     return (double) j;
   }
 
-  int64_t Int32::val_int(void)
+  int64_t Int32::val_int(void) const
   {
     int32_t j;
 
@@ -143,7 +143,7 @@ namespace field
     return (int64_t) j;
   }
 
-  String *Int32::val_str(String *val_buffer, String *)
+  String *Int32::val_str(String *val_buffer, String *) const
   {
     const CHARSET_INFO * const cs= &my_charset_bin;
     uint32_t length;

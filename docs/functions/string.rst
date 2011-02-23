@@ -1,6 +1,8 @@
 String Functions and Operators
 ===============================
 
+**(See tables with each function listed with a brief description below.)**
+
 .. toctree::
    :maxdepth: 2
 

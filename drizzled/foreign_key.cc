@@ -64,13 +64,13 @@ void add_foreign_key_to_table_message(
   pfkey->set_references_table_name(table->table.str);
 
   Key_part_spec *keypart;
-  List<Key_part_spec>::iterator col_it(cols);
+  List<Key_part_spec>::iterator col_it(cols.begin());
   while ((keypart= col_it++))
   {
     pfkey->add_column_names(keypart->field_name.str);
   }
 
-  List<Key_part_spec>::iterator ref_it(ref_cols);
+  List<Key_part_spec>::iterator ref_it(ref_cols.begin());
   while ((keypart= ref_it++))
   {
     pfkey->add_references_columns(keypart->field_name.str);
@@ -122,8 +122,8 @@ bool foreign_key_prefix(Key *a, Key *b)
   if (a->columns.elements > b->columns.elements)
     return true;                                // Can't be prefix
 
-  List<Key_part_spec>::iterator col_it1(a->columns);
-  List<Key_part_spec>::iterator col_it2(b->columns);
+  List<Key_part_spec>::iterator col_it1(a->columns.begin());
+  List<Key_part_spec>::iterator col_it2(b->columns.begin());
   const Key_part_spec *col1, *col2;
 
 #ifdef ENABLE_WHEN_INNODB_CAN_HANDLE_SWAPED_FOREIGN_KEY_COLUMNS
@@ -166,8 +166,8 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
 {
   CreateField  *sql_field;
   Key_part_spec *column;
-  List<Key_part_spec>::iterator cols(columns);
-  List<CreateField>::iterator it(table_fields);
+  List<Key_part_spec>::iterator cols(columns.begin());
+  List<CreateField>::iterator it(table_fields.begin());
   while ((column= cols++))
   {
     it= table_fields.begin();

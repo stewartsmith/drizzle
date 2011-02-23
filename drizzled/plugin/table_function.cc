@@ -40,8 +40,7 @@ void plugin::TableFunction::init()
   proto.set_type(drizzled::message::Table::FUNCTION);
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
-
-  proto.mutable_options()->set_dont_replicate(true);
+  message::set_is_replicated(proto, false);
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
@@ -224,12 +223,12 @@ void plugin::TableFunction::Generator::push(bool arg)
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  if (not getSession().lex->wild)
+  if (not getSession().getLex()->wild)
     return false;
 
   bool match= wild_case_compare(system_charset_info,
                                 predicate.c_str(),
-                                getSession().lex->wild->ptr());
+                                getSession().getLex()->wild->ptr());
 
   return match;
 }

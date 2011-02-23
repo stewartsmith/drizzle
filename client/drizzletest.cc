@@ -4697,8 +4697,36 @@ static void append_result(string *ds, drizzle_result_st *res)
     for (i = 0; i < num_fields; i++)
     {
       column= drizzle_column_next(res);
-      append_field(ds, i, column,
-                   (const char*)row[i], lengths[i], !row[i]);
+      if (row[i] && (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY))
+      {
+        if (boost::lexical_cast<uint32_t>(row[i]))
+        {
+          if ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+          {
+            append_field(ds, i, column, "YES", 3, false);
+          }
+          else
+          {
+            append_field(ds, i, column, "TRUE", 4, false);
+          }
+        }
+        else
+        {
+          if ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+          {
+            append_field(ds, i, column, "NO", 2, false);
+          }
+          else
+          {
+            append_field(ds, i, column, "FALSE", 5, false);
+          }
+        }
+      }
+      else
+      {
+        append_field(ds, i, column,
+                     (const char*)row[i], lengths[i], !row[i]);
+      }
     }
     if (!display_result_vertically)
       ds->append("\n");
@@ -4742,7 +4770,14 @@ static void append_metadata(string *ds, drizzle_result_st *res)
     ds->append("\t", 1);
     replace_append_uint(ds, drizzle_column_size(column));
     ds->append("\t", 1);
-    replace_append_uint(ds, drizzle_column_max_size(column));
+    if (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY)
+    {
+      replace_append_uint(ds, 1);
+    }
+    else
+    {
+      replace_append_uint(ds, drizzle_column_max_size(column));
+    }
     ds->append("\t", 1);
     ds->append((char*) ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y"), 1);
     ds->append("\t", 1);

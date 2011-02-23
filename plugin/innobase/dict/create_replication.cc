@@ -162,7 +162,7 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
   index->set_is_primary(true);
   index->set_is_unique(true);
   index->set_type(drizzled::message::Table::Index::BTREE);
-  index->set_key_length(8);
+  index->set_key_length(12);
   drizzled::message::Table::Index::IndexPart *part= index->add_index_part();
   part->set_fieldnr(0);
   part->set_compare_length(8);
@@ -175,7 +175,7 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
   index->set_is_primary(false);
   index->set_is_unique(false);
   index->set_type(drizzled::message::Table::Index::BTREE);
-  index->set_key_length(8);
+  index->set_key_length(16);
   part= index->add_index_part();
   part->set_fieldnr(2);
   part->set_compare_length(8);

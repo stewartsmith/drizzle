@@ -43,7 +43,7 @@ String *Item_func_replace::val_str(String *str)
   uint32_t from_length,to_length;
   bool alloced=0;
   const char *ptr,*end,*strend,*search,*search_end;
-  register uint32_t l;
+  uint32_t l;
   bool binary_cmp;
 
   null_value=0;
@@ -80,7 +80,7 @@ redo:
     {
         if (*ptr == *search)
         {
-          register char *i,*j;
+          char *i,*j;
           i=(char*) ptr+1; j=(char*) search+1;
           while (j != search_end)
             if (*i++ != *j++) goto skip;

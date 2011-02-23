@@ -112,7 +112,7 @@ static int imerge_list_or_tree(optimizer::RangeParameter *param,
                                optimizer::SEL_TREE *tree)
 {
   optimizer::SEL_IMERGE *imerge= NULL;
-  List_iterator<optimizer::SEL_IMERGE> it(*im1);
+  List_iterator<optimizer::SEL_IMERGE> it(im1->begin());
   while ((imerge= it++))
   {
     if (imerge->or_sel_tree_with_checks(param, tree))

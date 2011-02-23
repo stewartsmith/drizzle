@@ -86,7 +86,8 @@ public:
 */
 message::schema::shared_ptr StorageEngine::getSchemaDefinition(const drizzled::identifier::Table &identifier)
 {
-  return StorageEngine::getSchemaDefinition(identifier);
+  identifier::Schema schema_identifier= identifier;
+  return StorageEngine::getSchemaDefinition(schema_identifier);
 }
 
 message::schema::shared_ptr StorageEngine::getSchemaDefinition(const identifier::Schema &identifier)
