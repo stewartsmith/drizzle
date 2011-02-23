@@ -288,11 +288,11 @@ static bool prepare_alter_table(Session *session,
   for (Field **f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
-    AlterInfo::drop_list_t::iterator drop_it(alter_info->drop_list.begin());
-    for (; drop_it != alter_info->drop_list.end(); drop_it++)
+    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
+    for (; drop != alter_info->drop_list.end(); drop++)
     {
-      if (drop_it->type == AlterDrop::COLUMN &&
-          ! my_strcasecmp(system_charset_info, field->field_name, drop_it->name))
+      if (drop->type == AlterDrop::COLUMN &&
+          ! my_strcasecmp(system_charset_info, field->field_name, drop->name))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
@@ -305,9 +305,9 @@ static bool prepare_alter_table(Session *session,
       }
     }
 
-    if (drop_it != alter_info->drop_list.end())
+    if (drop != alter_info->drop_list.end())
     {
-      alter_info->drop_list.erase(drop_it);
+      alter_info->drop_list.erase(drop);
       continue;
     }
     
@@ -341,15 +341,15 @@ static bool prepare_alter_table(Session *session,
       */
       def= new CreateField(field, field);
       new_create_list.push_back(def);
-      AlterInfo::alter_list_t::iterator alter_it(alter_info->alter_list.begin());
+      AlterInfo::alter_list_t::iterator alter(alter_info->alter_list.begin());
 
-      for (; alter_it != alter_info->alter_list.end(); alter_it++)
+      for (; alter != alter_info->alter_list.end(); alter++)
       {
-        if (not my_strcasecmp(system_charset_info,field->field_name, alter_it->name))
+        if (not my_strcasecmp(system_charset_info,field->field_name, alter->name))
           break;
       }
 
-      if (alter_it != alter_info->alter_list.end())
+      if (alter != alter_info->alter_list.end())
       {
         if (def->sql_type == DRIZZLE_TYPE_BLOB)
         {
@@ -357,7 +357,7 @@ static bool prepare_alter_table(Session *session,
           return true;
         }
 
-        if ((def->def= alter_it->def))
+        if ((def->def= alter->def))
         {
           /* Use new default */
           def->flags&= ~NO_DEFAULT_VALUE_FLAG;
@@ -366,7 +366,7 @@ static bool prepare_alter_table(Session *session,
         {
           def->flags|= NO_DEFAULT_VALUE_FLAG;
         }
-        alter_info->alter_list.erase(alter_it);
+        alter_info->alter_list.erase(alter);
       }
     }
   }
@@ -457,17 +457,17 @@ static bool prepare_alter_table(Session *session,
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
     char *key_name= key_info->name;
-    AlterInfo::drop_list_t::iterator drop_it(alter_info->drop_list.begin());
-    for (; drop_it != alter_info->drop_list.end(); drop_it++)
+    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
+    for (; drop != alter_info->drop_list.end(); drop++)
     {
-      if (drop_it->type == AlterDrop::KEY &&
-          not my_strcasecmp(system_charset_info, key_name, drop_it->name))
+      if (drop->type == AlterDrop::KEY &&
+          not my_strcasecmp(system_charset_info, key_name, drop->name))
         break;
     }
 
-    if (drop_it != alter_info->drop_list.end())
+    if (drop != alter_info->drop_list.end())
     {
-      alter_info->drop_list.erase(drop_it);
+      alter_info->drop_list.erase(drop);
       continue;
     }
 
@@ -561,18 +561,18 @@ static bool prepare_alter_table(Session *session,
   /* Copy over existing foreign keys */
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
-    AlterInfo::drop_list_t::iterator drop_it(alter_info->drop_list.begin());
-    for (; drop_it != alter_info->drop_list.end(); drop_it++)
+    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
+    for (; drop != alter_info->drop_list.end(); drop++)
     {
-      if (drop_it->type == AlterDrop::FOREIGN_KEY &&
-          not my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop_it->name))
+      if (drop->type == AlterDrop::FOREIGN_KEY &&
+          not my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop->name))
       {
         break;
       }
     }
-    if (drop_it != alter_info->drop_list.end())
+    if (drop != alter_info->drop_list.end())
     {
-      alter_info->drop_list.erase(drop_it);
+      alter_info->drop_list.erase(drop);
       continue;
     }
 
