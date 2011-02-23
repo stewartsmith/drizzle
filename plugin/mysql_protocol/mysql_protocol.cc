@@ -516,47 +516,47 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
       switch (field.type)
       {
       case DRIZZLE_TYPE_LONG:
-        pos[6]= 3;
+        pos[6]= DRIZZLE_COLUMN_TYPE_LONG;
         break;
 
       case DRIZZLE_TYPE_DOUBLE:
-        pos[6]= 5;
+        pos[6]= DRIZZLE_COLUMN_TYPE_DOUBLE;
         break;
 
       case DRIZZLE_TYPE_NULL:
-        pos[6]= 6;
+        pos[6]= DRIZZLE_COLUMN_TYPE_NULL;
         break;
 
       case DRIZZLE_TYPE_TIMESTAMP:
-        pos[6]= 7;
+        pos[6]= DRIZZLE_COLUMN_TYPE_TIMESTAMP;
         break;
 
       case DRIZZLE_TYPE_LONGLONG:
-        pos[6]= 8;
+        pos[6]= DRIZZLE_COLUMN_TYPE_LONGLONG;
         break;
 
       case DRIZZLE_TYPE_DATETIME:
-        pos[6]= 12;
+        pos[6]= DRIZZLE_COLUMN_TYPE_DATETIME;
         break;
 
       case DRIZZLE_TYPE_TIME:
-        pos[6]= 13;
+        pos[6]= DRIZZLE_COLUMN_TYPE_TIME;
         break;
 
       case DRIZZLE_TYPE_DATE:
-        pos[6]= 14;
+        pos[6]= DRIZZLE_COLUMN_TYPE_DATE;
         break;
 
       case DRIZZLE_TYPE_VARCHAR:
-        pos[6]= 15;
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 
       case DRIZZLE_TYPE_MICROTIME:
-        pos[6]= 15;
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 
       case DRIZZLE_TYPE_UUID:
-        pos[6]= 15;
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 
       case DRIZZLE_TYPE_BOOLEAN:
@@ -564,15 +564,15 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
         break;
 
       case DRIZZLE_TYPE_DECIMAL:
-        pos[6]= (char)246;
+        pos[6]= (char)DRIZZLE_COLUMN_TYPE_NEWDECIMAL;
         break;
 
       case DRIZZLE_TYPE_ENUM:
-        pos[6]= (char)247;
+        pos[6]= (char)DRIZZLE_COLUMN_TYPE_ENUM;
         break;
 
       case DRIZZLE_TYPE_BLOB:
-        pos[6]= (char)252;
+        pos[6]= (char)DRIZZLE_COLUMN_TYPE_BLOB;
         break;
       }
     }
