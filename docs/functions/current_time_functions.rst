@@ -87,13 +87,6 @@ Returns:
 When using replication, the binary log will include SET TIMESTAMP entries so that a database can be restored from the binary log. In doing this, values from NOW will be adjusted to the same times as when the original SQL statements were executed. SYSDATE entries will be unaffected by SET TIMESTAMP entries.
 
 
-statement_timestamp()	           
-----------------------
-
-See :ref:`now`
-
-STATEMENT_TIMESTAMP() is a synonym for NOW(). 
-
 
 
 

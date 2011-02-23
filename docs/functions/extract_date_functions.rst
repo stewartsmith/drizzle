@@ -17,7 +17,7 @@ The following field names are available:
 
 .. code-block:: mysql
 	
-	SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');
+	SELECT EXTRACT(DAY FROM TIMESTAMP '2011-02-16 20:38:40');
 
 Day of the month.
 
