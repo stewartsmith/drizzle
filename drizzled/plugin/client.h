@@ -109,12 +109,17 @@ public:
    */
   virtual bool authenticate(void)= 0;
 
-  virtual bool isConsole()
+  virtual bool isConsole() const
   {
     return false;
   }
 
-  virtual bool isInteractive()
+  virtual bool isInteractive() const
+  {
+    return false;
+  }
+
+  virtual bool isAdmin() const
   {
     return false;
   }

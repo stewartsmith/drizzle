@@ -4222,9 +4222,9 @@ sql_connect(const string &host, const string &database, const string &user, cons
   drizzle_create(&drizzle);
 
 #ifdef DRIZZLE_ADMIN_TOOL
-  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | DRIZZLE_CON_INTERACTIVE | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL));
+  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE));
 #else
-  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_INTERACTIVE | use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
 #endif
 
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),

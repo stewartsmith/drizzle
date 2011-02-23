@@ -92,9 +92,14 @@ public:
   ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters *set_counters);
   virtual ~ClientMySQLProtocol();
 
-  bool isInteractive()
+  bool isInteractive() const
   {
     return _is_interactive;
+  }
+
+  bool isAdmin() const
+  {
+    return is_admin_connection;
   }
 
   ProtocolCounters *counters;

@@ -43,15 +43,15 @@ Sessions::Sessions() :
 {
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("SESION_USERNAME", 16);
-  add_field("HOST", NI_MAXHOST);
-  add_field("CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
-  add_field("SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("SESSION_HOST", NI_MAXHOST);
+  add_field("SESSION_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("SESSION_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
   add_field("COMMAND", 16);
-  add_field("TIME", plugin::TableFunction::SIZE, 0, false);
   add_field("STATE", plugin::TableFunction::STRING, 256, true);
   add_field("QUERY", plugin::TableFunction::STRING, PROCESS_LIST_WIDTH, true);
   add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_INTERACTIVE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_ADMIN", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_CONSOLE", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
@@ -111,11 +111,6 @@ bool Sessions::Generator::populate()
       push(getCommandName(tmp->command));
     }
 
-    /* type::Time */
-    boost::posix_time::time_duration duration_result;
-    getSession().getTimeDifference(duration_result, getSession().start_timer());
-    duration_result.is_negative() ? push(static_cast<uint64_t>(0)) : push(static_cast<uint64_t>(duration_result.total_seconds()));
-
     /* STATE */
     const char *step= tmp->get_proc_info();
     step ? push(step): push();
@@ -138,6 +133,9 @@ bool Sessions::Generator::populate()
 
     /* IS_INTERACTIVE */
     push(tmp->getClient()->isInteractive());
+
+    /* IS_ADMIN */
+    push(tmp->getClient()->isAdmin());
 
     /* IS_CONSOLE */
     push(tmp->getClient()->isConsole());

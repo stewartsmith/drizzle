@@ -237,7 +237,6 @@ typedef enum
                                 DRIZZLE_CAPABILITIES_CONNECT_WITH_DB |
                                 DRIZZLE_CAPABILITIES_TRANSACTIONS |
                                 DRIZZLE_CAPABILITIES_PROTOCOL_41 |
-                                DRIZZLE_CAPABILITIES_INTERACTIVE |
                                 DRIZZLE_CAPABILITIES_SECURE_CONNECTION |
                                 DRIZZLE_CAPABILITIES_ADMIN)
 } drizzle_capabilities_t;
@@ -294,6 +293,7 @@ typedef enum
   DRIZZLE_COMMAND_DRIZZLE_SHUTDOWN,
   DRIZZLE_COMMAND_DRIZZLE_CONNECT,
   DRIZZLE_COMMAND_DRIZZLE_PING,
+  DRIZZLE_COMMAND_DRIZZLE_KILL,
   DRIZZLE_COMMAND_DRIZZLE_END
 } drizzle_command_drizzle_t;
 

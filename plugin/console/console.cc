@@ -292,12 +292,12 @@ public:
     return false;
   }
 
-  bool isConsole()
+  bool isConsole() const
   {
     return true;
   }
 
-  bool isInteractive()
+  bool isInteractive() const
   {
     return true;
   }
