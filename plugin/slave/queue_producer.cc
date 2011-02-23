@@ -189,9 +189,9 @@ bool QueueProducer::queryForMaxCommitId(uint64_t *max_commit_id)
    * the queue.
    */
   string sql("SELECT MAX(x.cid) FROM"
-             " (SELECT MAX(`commit_order`) AS cid FROM `replication`.`queue`"
+             " (SELECT MAX(`commit_order`) AS cid FROM `sys_replication`.`queue`"
              "  UNION ALL SELECT `last_applied_commit_id` AS cid"
-             "  FROM `replication`.`applier_state`) AS x");
+             "  FROM `sys_replication`.`applier_state`) AS x");
 
   sql::ResultSet result_set(1);
   Execute execute(*(_session.get()), true);
@@ -292,7 +292,7 @@ bool QueueProducer::queueInsert(const char *trx_id,
   /*
    * The SQL to insert our results into the local queue.
    */
-  string sql= "INSERT INTO `replication`.`queue`"
+  string sql= "INSERT INTO `sys_replication`.`queue`"
               " (`trx_id`, `seg_id`, `commit_order`, `msg`) VALUES (";
   sql.append(trx_id);
   sql.append(", ", 2);
@@ -440,11 +440,11 @@ void QueueProducer::setIOState(const string &err_msg, bool status)
 
   if (not status)
   {
-    sql= "UPDATE `replication`.`io_state` SET `status` = 'STOPPED'";
+    sql= "UPDATE `sys_replication`.`io_state` SET `status` = 'STOPPED'";
   }
   else
   {
-    sql= "UPDATE `replication`.`io_state` SET `status` = 'RUNNING'";
+    sql= "UPDATE `sys_replication`.`io_state` SET `status` = 'RUNNING'";
   }
   
   sql.append(", `error_msg` = '", 17);
