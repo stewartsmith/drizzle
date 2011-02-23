@@ -2534,7 +2534,7 @@ static optimizer::SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *par
   Item_equal *item_equal= field_item->item_equal;
   if (item_equal)
   {
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     Item_field *item;
     while ((item= it++))
     {
@@ -2689,7 +2689,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
     Item_equal *item_equal= (Item_equal *) cond;
     if (!(value= item_equal->get_const()))
       return 0;
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     ref_tables= value->used_tables();
     while ((field_item= it++))
     {

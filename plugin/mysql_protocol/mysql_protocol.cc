@@ -483,7 +483,7 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
 
-  unsigned char *row_pos= storeLength(buff, list->elements);
+  unsigned char *row_pos= storeLength(buff, list->size());
   (void) drizzleclient_net_write(&net, buff, (size_t) (row_pos-buff));
 
   while ((item=it++))
