@@ -242,6 +242,11 @@ public:
       return false;
 
     Session::QueryString query_string(session->getQueryString());
+    if (query_string == NULL)
+    {
+      return false;
+    }
+
     if (re)
     {
       int this_pcre_rc;
