@@ -1152,15 +1152,15 @@ public:
     :Item_func(), first_expr_num(-1), else_expr_num(-1),
     cached_result_type(INT_RESULT), left_result_type(INT_RESULT), case_item(0)
   {
-    ncases= list.elements;
+    ncases= list.size();
     if (first_expr_arg)
     {
-      first_expr_num= list.elements;
+      first_expr_num= list.size();
       list.push_back(first_expr_arg);
     }
     if (else_expr_arg)
     {
-      else_expr_num= list.elements;
+      else_expr_num= list.size();
       list.push_back(else_expr_arg);
     }
     set_arguments(list);

@@ -522,7 +522,7 @@ Item_singlerow_subselect::select_transformer(Join *join)
 
   if (!select_lex->master_unit()->is_union() &&
       !select_lex->table_list.elements &&
-      select_lex->item_list.elements == 1 &&
+      select_lex->item_list.size() == 1 &&
       !select_lex->item_list.head()->with_sum_func &&
       /*
 	We cant change name of Item_field or Item_ref, because it will
@@ -1002,7 +1002,7 @@ Item_in_subselect::single_value_transformer(Join *join,
     Check that the right part of the subselect contains no more than one
     column. E.g. in SELECT 1 IN (SELECT * ..) the right part is (SELECT * ...)
   */
-  if (select_lex->item_list.elements > 1)
+  if (select_lex->item_list.size() > 1)
   {
     my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
     return(RES_ERROR);
@@ -1356,7 +1356,7 @@ Item_in_subselect::row_value_transformer(Join *join)
   Select_Lex *select_lex= join->select_lex;
   uint32_t cols_num= left_expr->cols();
 
-  if (select_lex->item_list.elements != left_expr->cols())
+  if (select_lex->item_list.size() != left_expr->cols())
   {
     my_error(ER_OPERAND_COLUMNS, MYF(0), left_expr->cols());
     return(RES_ERROR);
@@ -2111,13 +2111,13 @@ void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
       return;
     row[i]->setup(sel_item);
   }
-  if (item_list.elements > 1)
+  if (item_list.size() > 1)
     res_type= ROW_RESULT;
 }
 
 void subselect_single_select_engine::fix_length_and_dec(Item_cache **row)
 {
-  assert(row || select_lex->item_list.elements==1);
+  assert(row || select_lex->item_list.size() == 1);
   set_row(select_lex->item_list, row);
   item->collation.set(row[0]->collation);
   if (cols() != 1)
@@ -2126,9 +2126,9 @@ void subselect_single_select_engine::fix_length_and_dec(Item_cache **row)
 
 void subselect_union_engine::fix_length_and_dec(Item_cache **row)
 {
-  assert(row || unit->first_select()->item_list.elements==1);
+  assert(row || unit->first_select()->item_list.size() == 1);
 
-  if (unit->first_select()->item_list.elements == 1)
+  if (unit->first_select()->item_list.size() == 1)
   {
     set_row(unit->types, row);
     item->collation.set(row[0]->collation);
@@ -2685,13 +2685,13 @@ int subselect_indexsubquery_engine::exec()
 
 uint32_t subselect_single_select_engine::cols()
 {
-  return select_lex->item_list.elements;
+  return select_lex->item_list.size();
 }
 
 
 uint32_t subselect_union_engine::cols()
 {
-  return unit->types.elements;
+  return unit->types.size();
 }
 
 
@@ -3061,7 +3061,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     Make sure there is only one index on the temp table, and it doesn't have
     the extra key part created when s->uniques > 0.
   */
-  assert(tmp_table->getShare()->sizeKeys() == 1 && tmp_columns->elements == tmp_key_parts);
+  assert(tmp_table->getShare()->sizeKeys() == 1 && tmp_columns->size() == tmp_key_parts);
 
 
   /* 2. Create/initialize execution related objects. */

@@ -55,7 +55,7 @@ bool fill_table_proto(message::Table &table_proto,
   List<CreateField>::iterator it(create_fields.begin());
   message::Table::TableOptions *table_options= table_proto.mutable_options();
 
-  if (create_fields.elements > MAX_FIELDS)
+  if (create_fields.size() > MAX_FIELDS)
   {
     my_error(ER_TOO_MANY_FIELDS, MYF(0), ER(ER_TOO_MANY_FIELDS));
     return true;
