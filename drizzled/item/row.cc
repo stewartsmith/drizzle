@@ -45,7 +45,7 @@ Item_row::Item_row(List<Item> &arg):
     items= (Item**) memory::sql_alloc(sizeof(Item*)*arg_count);
   else
     items= 0;
-  List_iterator<Item> li(arg);
+  List<Item>::iterator li(arg.begin());
   uint32_t i= 0;
   Item *item;
   while ((item= li++))

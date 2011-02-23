@@ -46,11 +46,11 @@ bool statement::CreateSchema::execute()
     return true;
   }
 
-  identifier::Schema schema_identifier(string(getSession()->lex->name.str, getSession()->lex->name.length));
+  identifier::Schema schema_identifier(string(getSession()->getLex()->name.str, getSession()->getLex()->name.length));
   if (not check(schema_identifier))
     return false;
 
-  drizzled::message::schema::init(schema_message, getSession()->lex->name.str);
+  drizzled::message::schema::init(schema_message, getSession()->getLex()->name.str);
 
   bool res = false;
   std::string path;

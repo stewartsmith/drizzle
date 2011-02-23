@@ -262,7 +262,7 @@ public:
                session->tmp_table,
                session->total_warn_count,
                session->getServerId(),
-               drizzled::glob_hostname
+               drizzled::getServerHostname().c_str()
                );
   
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];

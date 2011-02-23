@@ -100,7 +100,7 @@ public:
     */
     plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
-    List_iterator_fast<Item> li(items);
+    List<Item>::iterator li(items.begin());
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);
 

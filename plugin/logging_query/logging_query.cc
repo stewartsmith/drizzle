@@ -277,7 +277,7 @@ public:
               % session->tmp_table
               % session->total_warn_count
               % session->getServerId()
-              % glob_hostname;
+              % getServerHostname();
 
     string msgbuf= formatter.str();
 

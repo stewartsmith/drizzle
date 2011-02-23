@@ -1181,7 +1181,7 @@ innobase_mysql_print_thd(
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
           static_cast<uint64_t>(in_session->getSessionId()),
           static_cast<uint64_t>(in_session->getQueryId()),
-          glob_hostname,
+          getServerHostname().c_str(),
           user_identifier->address().c_str(),
           user_identifier->username().c_str()
   );
@@ -8787,16 +8787,6 @@ characters for prefix indexes using a multibyte character set. The function
 finds charset information and returns length of prefix_len characters in the
 index field in bytes.
 @return number of bytes occupied by the first n characters */
-UNIV_INTERN
-ulint
-innobase_get_at_most_n_mbchars(
-/*===========================*/
-  ulint charset_id, /*!< in: character set id */
-  ulint prefix_len, /*!< in: prefix length in bytes of the index
-        (this has to be divided by mbmaxlen to get the
-        number of CHARACTERS n in the prefix) */
-  ulint data_len,   /*!< in: length of the string in bytes */
-  const char* str); /*!< in: character string */
 
 ulint
 innobase_get_at_most_n_mbchars(

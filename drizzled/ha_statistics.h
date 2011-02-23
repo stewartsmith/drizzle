@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_HA_STATISTICS_H
 #define DRIZZLED_HA_STATISTICS_H
 
-#include <drizzled/definitions.h>
+#include <drizzled/base.h>
 #include <time.h>
 
 namespace drizzled

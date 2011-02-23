@@ -812,7 +812,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
           objects are not allowed so don't use ROR-intersection for
           table deletes.
         */
-        if ((session->lex->sql_command != SQLCOM_DELETE))
+        if ((session->getLex()->sql_command != SQLCOM_DELETE))
         {
           /*
             Get best non-covering ROR-intersection plan and prepare data for
@@ -840,7 +840,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         optimizer::SEL_IMERGE *imerge= NULL;
         optimizer::TableReadPlan *best_conj_trp= NULL;
         optimizer::TableReadPlan *new_conj_trp= NULL;
-        List_iterator_fast<optimizer::SEL_IMERGE> it(tree->merges);
+        List<optimizer::SEL_IMERGE>::iterator it(tree->merges.begin());
         while ((imerge= it++))
         {
           new_conj_trp= get_best_disjunct_quick(session, &param, imerge, best_read_time);
@@ -1045,7 +1045,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   /* Calculate cost(rowid_to_row_scan) */
   {
     optimizer::CostVector sweep_cost;
-    Join *join= param->session->lex->select_lex.join;
+    Join *join= param->session->getLex()->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, non_cpk_scan_records, is_interrupted,
                         &sweep_cost);
@@ -1088,7 +1088,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   }
 
 build_ror_index_merge:
-  if (!all_scans_ror_able || param->session->lex->sql_command == SQLCOM_DELETE)
+  if (!all_scans_ror_able || param->session->getLex()->sql_command == SQLCOM_DELETE)
     return(imerge_trp);
 
   /* Ok, it is possible to build a ROR-union, try it. */
@@ -1163,7 +1163,7 @@ skip_to_ror_scan:
   double roru_total_cost;
   {
     optimizer::CostVector sweep_cost;
-    Join *join= param->session->lex->select_lex.join;
+    Join *join= param->session->getLex()->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, roru_total_records, is_interrupted,
                         &sweep_cost);
@@ -1589,7 +1589,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   if (! info->is_covering)
   {
     optimizer::CostVector sweep_cost;
-    Join *join= info->param->session->lex->select_lex.join;
+    Join *join= info->param->session->getLex()->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(info->param->table, double2rows(info->out_rows),
                         is_interrupted, &sweep_cost);
@@ -2565,7 +2565,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
 
   if (cond->type() == Item::COND_ITEM)
   {
-    List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
     {
@@ -3314,7 +3314,7 @@ tree_and(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer
   /* dispose index_merge if there is a "range" option */
   if (result_keys.any())
   {
-    tree1->merges.empty();
+    tree1->merges.clear();
     return(tree1);
   }
 
@@ -3859,7 +3859,7 @@ ha_rows check_quick_select(Session *session,
       !(pk_is_clustered && keynr == param->table->getShare()->getPrimaryKey()))
      *mrr_flags |= HA_MRR_INDEX_ONLY;
 
-  if (session->lex->sql_command != SQLCOM_SELECT)
+  if (session->getLex()->sql_command != SQLCOM_SELECT)
     *mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   *bufsize= param->session->variables.read_rnd_buff_size;
@@ -4319,7 +4319,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
   /* Call multi_range_read_info() to get the MRR flags and buffer size */
   quick->mrr_flags= HA_MRR_NO_ASSOCIATION |
                     (table->key_read ? HA_MRR_INDEX_ONLY : 0);
-  if (session->lex->sql_command != SQLCOM_SELECT)
+  if (session->getLex()->sql_command != SQLCOM_SELECT)
     quick->mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   quick->mrr_buf_size= session->variables.read_rnd_buff_size;
@@ -4567,7 +4567,7 @@ static optimizer::GroupMinMaxReadPlan *
 get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
 {
   Session *session= param->session;
-  Join *join= session->lex->current_select->join;
+  Join *join= session->getLex()->current_select->join;
   Table *table= param->table;
   bool have_min= false;              /* true if there is a MIN function. */
   bool have_max= false;              /* true if there is a MAX function. */
@@ -4599,7 +4599,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     return NULL;
 
   /* Analyze the query in more detail. */
-  List_iterator<Item> select_items_it(join->fields_list);
+  List<Item>::iterator select_items_it(join->fields_list.begin());
 
   /* Check (SA1,SA4) and store the only MIN/MAX argument - the C attribute.*/
   if (join->make_sum_func_list(join->all_fields, join->fields_list, 1))
@@ -4755,7 +4755,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     */
     else if (join->select_distinct)
     {
-      select_items_it.rewind();
+      select_items_it= join->fields_list.begin();
       used_key_parts_map.reset();
       uint32_t max_key_part= 0;
       while ((item= select_items_it++))
@@ -5036,7 +5036,7 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
   Item::Type cond_type= cond->type();
   if (cond_type == Item::COND_ITEM) /* 'AND' or 'OR' */
   {
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *and_or_arg= NULL;
     while ((and_or_arg= li++))
     {
@@ -5471,7 +5471,7 @@ optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, me
   optimizer::QuickGroupMinMaxSelect *quick= NULL;
 
   quick= new optimizer::QuickGroupMinMaxSelect(param->table,
-                                               param->session->lex->current_select->join,
+                                               param->session->getLex()->current_select->join,
                                                have_min,
                                                have_max,
                                                min_max_arg_part,

@@ -126,7 +126,7 @@ void Item_func::set_arguments(List<Item> &list)
   args= tmp_arg;                                // If 2 arguments
   if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
     Item **save_args= args;
 
@@ -136,7 +136,7 @@ void Item_func::set_arguments(List<Item> &list)
       with_sum_func|=item->with_sum_func;
     }
   }
-  list.empty();          // Fields are used
+  list.clear();          // Fields are used
 }
 
 Item_func::Item_func(List<Item> &list) :

@@ -168,7 +168,7 @@ void init_update_queries(void)
                          can be zero.
 
   @todo
-    set session->lex->sql_command to SQLCOM_END here.
+    set session->getLex()->sql_command to SQLCOM_END here.
   @todo
     The following has to be changed to an 8 byte integer
 
@@ -187,7 +187,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   DRIZZLE_COMMAND_START(session->thread_id, command);
 
   session->command= command;
-  session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
+  session->getLex()->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
   session->setQueryId(query_id.value());
 
@@ -201,7 +201,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     query_id.next();
   }
 
-  /* @todo set session->lex->sql_command to SQLCOM_END here */
+  /* @todo set session->getLex()->sql_command to SQLCOM_END here */
 
   plugin::Logging::preDo(session);
   if (unlikely(plugin::EventObserver::beforeStatement(*session)))
@@ -446,9 +446,10 @@ int prepare_new_schema_table(Session *session, LEX *lex,
 static int execute_command(Session *session)
 {
   bool res= false;
-  LEX  *lex= session->lex;
+
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
-  Select_Lex *select_lex= &lex->select_lex;
+  Select_Lex *select_lex= &session->getLex()->select_lex;
+
   /* list of all tables in query */
   TableList *all_tables;
 
@@ -467,13 +468,13 @@ static int execute_command(Session *session)
     assert(first_table == all_tables);
     assert(first_table == all_tables && first_table != 0);
   */
-  lex->first_lists_tables_same();
+  session->getLex()->first_lists_tables_same();
+
   /* should be assigned after making first tables same */
-  all_tables= lex->query_tables;
+  all_tables= session->getLex()->query_tables;
+
   /* set context for commands which do not use setup_tables */
-  select_lex->
-    context.resolve_in_table_list_only((TableList*)select_lex->
-                                       table_list.first);
+  select_lex->context.resolve_in_table_list_only((TableList*)select_lex->table_list.first);
 
   /*
     Reset warning count for each query that uses tables
@@ -482,7 +483,7 @@ static int execute_command(Session *session)
     variables, but for now this is probably good enough.
     Don't reset warnings when executing a stored routine.
   */
-  if (all_tables || ! lex->is_single_level_stmt())
+  if (all_tables || ! session->getLex()->is_single_level_stmt())
   {
     drizzle_reset_errors(session, 0);
   }
@@ -491,7 +492,7 @@ static int execute_command(Session *session)
 
   if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
       && ! session->inTransaction()
-      && lex->statement->isTransactional())
+      && session->getLex()->statement->isTransactional())
   {
     if (session->startTransaction() == false)
     {
@@ -501,7 +502,7 @@ static int execute_command(Session *session)
   }
 
   /* now we are ready to execute the statement */
-  res= lex->statement->execute();
+  res= session->getLex()->statement->execute();
   session->set_proc_info("query end");
   /*
     The return value for ROW_COUNT() is "implementation dependent" if the
@@ -509,7 +510,7 @@ static int execute_command(Session *session)
     wants. We also keep the last value in case of SQLCOM_CALL or
     SQLCOM_EXECUTE.
   */
-  if (! (sql_command_flags[lex->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
+  if (! (sql_command_flags[session->getLex()->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
   {
     session->row_count_func= -1;
   }
@@ -518,7 +519,7 @@ static int execute_command(Session *session)
 }
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
-  LEX	*lex= session->lex;
+  LEX	*lex= session->getLex();
   select_result *result=lex->result;
   bool res= false;
   /* assign global limit variable if limit is not given */
@@ -555,13 +556,13 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         return true;
       session->send_explain_fields(result);
       optimizer::ExplainPlan planner;
-      res= planner.explainUnion(session, &session->lex->unit, result);
+      res= planner.explainUnion(session, &session->getLex()->unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
       {
         char buff[1024];
         String str(buff,(uint32_t) sizeof(buff), system_charset_info);
         str.length(0);
-        session->lex->unit.print(&str, QT_ORDINARY);
+        session->getLex()->unit.print(&str, QT_ORDINARY);
         str.append('\0');
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                      ER_YES, str.ptr());
@@ -570,6 +571,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         result->abort();
       else
         result->send_eof();
+
       delete result;
     }
     else
@@ -596,7 +598,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
 
 bool my_yyoverflow(short **yyss, ParserType **yyvs, ulong *yystacksize)
 {
-  LEX	*lex= current_session->lex;
+  LEX	*lex= current_session->getLex();
   ulong old_info=0;
   if ((uint32_t) *yystacksize >= MY_YACC_MAX)
     return 1;
@@ -729,7 +731,7 @@ void create_select_for_variable(Session *session, const char *var_name)
   char buff[MAX_SYS_VAR_LENGTH*2+4+8];
   char *end= buff;
 
-  lex= session->lex;
+  lex= session->getLex();
   init_select(lex);
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
@@ -758,7 +760,7 @@ void create_select_for_variable(Session *session, const char *var_name)
 
 void parse(Session *session, const char *inBuf, uint32_t length)
 {
-  session->lex->start(session);
+  session->getLex()->start(session);
 
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
@@ -774,7 +776,7 @@ void parse(Session *session, const char *inBuf, uint32_t length)
   {
     return;
   }
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
   Lex_input_stream lip(session, inBuf, length);
   bool err= parse_sql(session, &lip);
   if (!err)
@@ -831,7 +833,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
                        List<String> *interval_list, const CHARSET_INFO * const cs)
 {
   register CreateField *new_field;
-  LEX  *lex= session->lex;
+  LEX  *lex= session->getLex();
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
@@ -845,7 +847,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
                       &default_key_create_info,
                       0, lex->col_list);
     statement->alter_info.key_list.push_back(key);
-    lex->col_list.empty();
+    lex->col_list.clear();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
   {
@@ -855,7 +857,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
                  &default_key_create_info, 0,
                  lex->col_list);
     statement->alter_info.key_list.push_back(key);
-    lex->col_list.empty();
+    lex->col_list.clear();
   }
 
   if (default_value)
@@ -939,7 +941,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
 
   if (!table)
     return NULL;				// End of memory
@@ -1086,7 +1088,7 @@ bool Select_Lex::init_nested_join(Session *session)
   ptr->alias= (char*) "(nested_join)";
   embedding= ptr;
   join_list= &nested_join->join_list;
-  join_list->empty();
+  join_list->clear();
   return false;
 }
 
@@ -1161,7 +1163,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
   embedded_list= &nested_join->join_list;
-  embedded_list->empty();
+  embedded_list->clear();
 
   for (uint32_t i=0; i < 2; i++)
   {
@@ -1309,7 +1311,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   fake_select_lex->include_standalone(this,
                                       (Select_Lex_Node**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
-  fake_select_lex->parent_lex= session_arg->lex; /* Used in init_query. */
+  fake_select_lex->parent_lex= session_arg->getLex(); /* Used in init_query. */
   fake_select_lex->make_empty_select();
   fake_select_lex->linkage= GLOBAL_OPTIONS_TYPE;
   fake_select_lex->select_limit= 0;
@@ -1329,9 +1331,9 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     */
     global_parameters= fake_select_lex;
     fake_select_lex->no_table_names_allowed= 1;
-    session_arg->lex->current_select= fake_select_lex;
+    session_arg->getLex()->current_select= fake_select_lex;
   }
-  session_arg->lex->pop_context();
+  session_arg->getLex()->pop_context();
   return(0);
 }
 
@@ -1367,7 +1369,7 @@ push_new_name_resolution_context(Session *session,
     left_op->first_leaf_for_name_resolution();
   on_context->last_name_resolution_table=
     right_op->last_leaf_for_name_resolution();
-  return session->lex->push_context(on_context);
+  return session->getLex()->push_context(on_context);
 }
 
 
@@ -1457,8 +1459,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 
 bool check_simple_select(Session::pointer session)
 {
-  LEX *lex= session->lex;
-  if (lex->current_select != &lex->select_lex)
+  if (session->getLex()->current_select != &session->getLex()->select_lex)
   {
     char command[80];
     Lex_input_stream *lip= session->m_lip;
@@ -1518,16 +1519,15 @@ Item * all_any_subquery_creator(Item *left_expr,
 bool update_precheck(Session *session, TableList *)
 {
   const char *msg= 0;
-  LEX *lex= session->lex;
-  Select_Lex *select_lex= &lex->select_lex;
+  Select_Lex *select_lex= &session->getLex()->select_lex;
 
-  if (session->lex->select_lex.item_list.elements != session->lex->value_list.elements)
+  if (session->getLex()->select_lex.item_list.elements != session->getLex()->value_list.elements)
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
     return(true);
   }
 
-  if (session->lex->select_lex.table_list.elements > 1)
+  if (session->getLex()->select_lex.table_list.elements > 1)
   {
     if (select_lex->order_list.elements)
       msg= "ORDER BY";
@@ -1557,13 +1557,11 @@ bool update_precheck(Session *session, TableList *)
 
 bool insert_precheck(Session *session, TableList *)
 {
-  LEX *lex= session->lex;
-
   /*
     Check that we have modify privileges for the first table and
     select privileges for the rest
   */
-  if (lex->update_list.elements != lex->value_list.elements)
+  if (session->getLex()->update_list.elements != session->getLex()->value_list.elements)
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
     return(true);
@@ -1590,7 +1588,7 @@ Item *negate_expression(Session *session, Item *expr)
   {
     /* it is NOT(NOT( ... )) */
     Item *arg= ((Item_func *) expr)->arguments()[0];
-    enum_parsing_place place= session->lex->current_select->parsing_place;
+    enum_parsing_place place= session->getLex()->current_select->parsing_place;
     if (arg->is_bool_func() || place == IN_WHERE || place == IN_HAVING)
       return arg;
     /*

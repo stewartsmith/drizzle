@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_HA_DATA_H
 #define DRIZZLED_HA_DATA_H
 
+#include <drizzled/resource_context.h>
+
 namespace drizzled
 {
 

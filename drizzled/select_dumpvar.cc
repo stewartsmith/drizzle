@@ -29,7 +29,7 @@ bool select_dumpvar::send_data(List<Item> &items)
 {
   std::vector<var *>::const_iterator iter= var_list.begin();
 
-  List_iterator<Item> it(items);
+  List<Item>::iterator it(items.begin());
   Item *item= NULL;
   var *current_var;
 

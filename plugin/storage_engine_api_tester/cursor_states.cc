@@ -42,6 +42,10 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("::reset()", "::doOpen()"));
   states.insert(state_pair("::doEndTableScan()", "::reset()"));
   states.insert(state_pair("locked", "::reset()"));
+  states.insert(state_pair("locked", "::scan_time()"));
+  states.insert(state_pair("::scan_time()", "locked"));
+  states.insert(state_pair("::scan_time()", "::scan_time()"));
+
 
   // we can always set a new lock
   states.insert(state_pair("::store_lock()", "::store_lock()"));
@@ -58,6 +62,7 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("locked", "::doStartTableScan()"));
   states.insert(state_pair("::doStartTableScan()", "::rnd_next()"));
   states.insert(state_pair("::doStartTableScan()", "::rnd_pos()"));
+
   states.insert(state_pair("::rnd_pos()", "::rnd_pos()"));
   states.insert(state_pair("::rnd_pos()", "::doUpdateRecord()"));
 
@@ -66,6 +71,7 @@ void load_cursor_state_transitions(state_multimap &states)
 
   states.insert(state_pair("::rnd_next()", "::doEndTableScan()"));
   states.insert(state_pair("::rnd_next()", "::rnd_next()"));
+
   states.insert(state_pair("::doEndTableScan()", "::close()"));
   states.insert(state_pair("::doEndTableScan()", "::doStartTableScan()"));
 
@@ -86,4 +92,25 @@ void load_cursor_state_transitions(state_multimap &states)
 
   states.insert(state_pair("::doUpdateRecord()", "::doEndTableScan()"));
   states.insert(state_pair("::doUpdateRecord()", "::rnd_next()"));
+
+  states.insert(state_pair("locked", "::doStartIndexScan()"));
+  states.insert(state_pair("::doStartIndexScan()", "::doEndIndexScan()"));
+  states.insert(state_pair("::doEndIndexScan()", "locked"));
+
+  states.insert(state_pair("::doStartIndexScan()", "::index_first()"));
+  states.insert(state_pair("::doStartIndexScan()", "::index_last()"));
+  states.insert(state_pair("::doStartIndexScan()", "::index_next()"));
+  states.insert(state_pair("::doStartIndexScan()", "::index_prev()"));
+  states.insert(state_pair("::index_first()", "::doStartIndexScan()"));
+  states.insert(state_pair("::index_last()", "::doStartIndexScan()"));
+  states.insert(state_pair("::index_next()", "::doStartIndexScan()"));
+  states.insert(state_pair("::index_prev()", "::doStartIndexScan()"));
+  states.insert(state_pair("::doStartIndexScan()", "::doStartIndexScan() ERROR"));
+  states.insert(state_pair("::doStartIndexScan() ERROR", "locked"));
+
+  states.insert(state_pair("::doStartIndexScan()", "::index_read()"));
+  states.insert(state_pair("::doStartIndexScan()", "::index_read_idx_map()"));
+  states.insert(state_pair("::index_read()", "::doStartIndexScan()"));
+  states.insert(state_pair("::index_read_idx_map()", "::doStartIndexScan()"));
+
 }

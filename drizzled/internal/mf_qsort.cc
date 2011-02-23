@@ -41,13 +41,13 @@ namespace internal
 do {							\
    if (swap_ptrs)					\
    {							\
-     register char **a = (char**) (A), **b = (char**) (B);  \
+     char **a = (char**) (A), **b = (char**) (B);  \
      char *tmp = *a; *a++ = *b; *b++ = tmp;		\
    }							\
    else							\
    {							\
-     register char *a = (A), *b = (B);			\
-     register char *end= a+size;				\
+     char *a = (A), *b = (B);			\
+     char *end= a+size;				\
      do							\
      {							\
        char tmp = *a; *a++ = *b; *b++ = tmp;		\

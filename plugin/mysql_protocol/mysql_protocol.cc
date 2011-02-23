@@ -35,6 +35,8 @@
 
 #include <drizzled/identifier.h>
 
+#include <libdrizzle/constants.h>
+
 #define PROTOCOL_VERSION 10
 
 namespace po= boost::program_options;
@@ -476,7 +478,7 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
 */
 bool ClientMySQLProtocol::sendFields(List<Item> *list)
 {
-  List_iterator_fast<Item> it(*list);
+  List<Item>::iterator it(list->begin());
   Item *item;
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
@@ -558,7 +560,7 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
         break;
 
       case DRIZZLE_TYPE_BOOLEAN:
-        pos[6]= 15;
+        pos[6]= DRIZZLE_COLUMN_TYPE_TINY;
         break;
 
       case DRIZZLE_TYPE_DECIMAL:
@@ -609,6 +611,11 @@ bool ClientMySQLProtocol::store(Field *from)
 {
   if (from->is_null())
     return store();
+  if (from->type() == DRIZZLE_TYPE_BOOLEAN)
+  {
+    return store(from->val_int());
+  }
+
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
 

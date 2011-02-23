@@ -82,7 +82,7 @@ namespace statement {
 AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_build_method build_arg) :
   CreateTable(in_session)
 { 
-  in_session->lex->sql_command= SQLCOM_ALTER_TABLE;
+  in_session->getLex()->sql_command= SQLCOM_ALTER_TABLE;
   (void)ident;
   alter_info.build_method= build_arg;
 }
@@ -91,10 +91,10 @@ AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_bui
 
 bool statement::AlterTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->lex->select_lex;
+  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
   bool need_start_waiting= false;
 
   is_engine_set= not createTableMessage().engine().name().empty();
@@ -155,7 +155,7 @@ bool statement::AlterTable::execute()
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                   getSession()->lex->name.str ? getSession()->lex->name.str : first_table->getTableName());
+                                   getSession()->getLex()->name.str ? getSession()->getLex()->name.str : first_table->getTableName());
 
     res= alter_table(getSession(), 
                      identifier,
@@ -167,7 +167,7 @@ bool statement::AlterTable::execute()
                      &alter_info,
                      select_lex->order_list.elements,
                      (Order *) select_lex->order_list.first,
-                     getSession()->lex->ignore);
+                     getSession()->getLex()->ignore);
   }
   else
   {
@@ -177,7 +177,7 @@ bool statement::AlterTable::execute()
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                       getSession()->lex->name.str ? getSession()->lex->name.str : first_table->getTableName(),
+                                       getSession()->getLex()->name.str ? getSession()->getLex()->name.str : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
       res= alter_table(getSession(), 
@@ -190,7 +190,7 @@ bool statement::AlterTable::execute()
                        &alter_info,
                        select_lex->order_list.elements,
                        (Order *) select_lex->order_list.first,
-                       getSession()->lex->ignore);
+                       getSession()->getLex()->ignore);
     }
   }
 
@@ -255,10 +255,10 @@ static bool prepare_alter_table(Session *session,
   List<CreateField> new_create_list;
   /* New key definitions are added here */
   List<Key> new_key_list;
-  List_iterator<CreateField> def_it(alter_info->create_list);
-  List_iterator<Key> key_it(alter_info->key_list);
-  List_iterator<CreateField> find_it(new_create_list);
-  List_iterator<CreateField> field_it(new_create_list);
+  List<CreateField>::iterator def_it(alter_info->create_list.begin());
+  List<Key>::iterator key_it(alter_info->key_list.begin());
+  List<CreateField>::iterator find_it(new_create_list.begin());
+  List<CreateField>::iterator field_it(new_create_list.begin());
   List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
   KeyInfo *key_info= table->key_info;
@@ -315,7 +315,7 @@ static bool prepare_alter_table(Session *session,
     field->setReadSet();
 
     /* Check if field is changed */
-    def_it.rewind();
+    def_it= alter_info->create_list.begin();
     while ((def= def_it++))
     {
       if (def->change &&
@@ -371,7 +371,7 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  def_it.rewind();
+  def_it= alter_info->create_list.begin();
   while ((def= def_it++)) /* Add new columns */
   {
     if (def->change && ! def->field)
@@ -397,7 +397,7 @@ static bool prepare_alter_table(Session *session,
     else
     {
       CreateField *find;
-      find_it.rewind();
+      find_it= new_create_list.begin();
 
       while ((find= find_it++)) /* Add new columns */
       {
@@ -472,7 +472,7 @@ static bool prepare_alter_table(Session *session,
     }
 
     KeyPartInfo *key_part= key_info->key_part;
-    key_parts.empty();
+    key_parts.clear();
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
       if (! key_part->field)
@@ -480,7 +480,7 @@ static bool prepare_alter_table(Session *session,
 
       const char *key_part_name= key_part->field->field_name;
       CreateField *cfield;
-      field_it.rewind();
+      field_it= new_create_list.begin();
       while ((cfield= field_it++))
       {
         if (cfield->change)
@@ -1480,7 +1480,7 @@ copy_data_between_tables(Session *session,
   from->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
   to->cursor->ha_start_bulk_insert(from->cursor->stats.records);
 
-  List_iterator<CreateField> it(create);
+  List<CreateField>::iterator it(create.begin());
   CreateField *def;
   copy_end= copy;
   for (Field **ptr= to->getFields(); *ptr ; ptr++)
@@ -1523,8 +1523,8 @@ copy_data_between_tables(Session *session,
         tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
         error= 1;
 
-        if (session->lex->select_lex.setup_ref_array(session, order_num) ||
-            setup_order(session, session->lex->select_lex.ref_pointer_array,
+        if (session->getLex()->select_lex.setup_ref_array(session, order_num) ||
+            setup_order(session, session->getLex()->select_lex.ref_pointer_array,
                         &tables, fields, all_fields, order) ||
             !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
             (from->sort.found_records= filesort.run(from, sortorder, length,

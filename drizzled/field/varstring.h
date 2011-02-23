@@ -74,11 +74,11 @@ public:
 
   int  store(int64_t nr, bool unsigned_val);
   int  store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  String *val_str(String*,String *) const;
   inline String *val_str(String *str) { return val_str(str, str); }
-  type::Decimal *val_decimal(type::Decimal *);
+  type::Decimal *val_decimal(type::Decimal *) const;
   int cmp_max(const unsigned char *, const unsigned char *, uint32_t max_length);
   inline  int cmp(const unsigned char *str) { return cmp(ptr,str); }
   int cmp(const unsigned char *a,const unsigned char *b)

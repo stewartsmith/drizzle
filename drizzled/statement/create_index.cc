@@ -38,13 +38,13 @@ CreateIndex::CreateIndex(Session *in_session, const drizzled::ha_build_method me
     getSession()->getLex()->sql_command= SQLCOM_CREATE_INDEX;
     alter_info.flags.set(ALTER_ADD_INDEX);
     alter_info.build_method= method_arg;
-    getSession()->getLex()->col_list.empty();
+    getSession()->getLex()->col_list.clear();
   }
 
 bool statement::CreateIndex::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
 
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::table::shared_ptr original_table_message;

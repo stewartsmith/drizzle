@@ -499,7 +499,7 @@ public:
   }
 
   /* Both of the below should go away once we can move this bit to the field objects */
-  inline bool isReadSet(uint32_t index)
+  inline bool isReadSet(uint32_t index) const
   {
     return read_set->test(index);
   }

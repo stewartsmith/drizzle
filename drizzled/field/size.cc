@@ -157,7 +157,7 @@ int Size::store(int64_t nr, bool arg)
 }
 
 
-double Size::val_real(void)
+double Size::val_real(void) const
 {
   int64_t j;
 
@@ -169,7 +169,7 @@ double Size::val_real(void)
 }
 
 
-int64_t Size::val_int(void)
+int64_t Size::val_int(void) const
 {
   int64_t j;
 
@@ -181,7 +181,7 @@ int64_t Size::val_int(void)
 }
 
 
-String *Size::val_str(String *val_buffer, String *)
+String *Size::val_str(String *val_buffer, String *) const
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;

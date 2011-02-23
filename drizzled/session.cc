@@ -24,56 +24,49 @@
 #include <config.h>
 
 #include <drizzled/copy_field.h>
-#include <drizzled/session.h>
-#include <drizzled/session/cache.h>
+#include <drizzled/data_home.h>
+#include <drizzled/display.h>
+#include <drizzled/drizzled.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/query_id.h>
-#include <drizzled/data_home.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/lock.h>
-#include <drizzled/item/cache.h>
-#include <drizzled/item/float.h>
-#include <drizzled/item/return_int.h>
-#include <drizzled/item/empty_string.h>
-#include <drizzled/show.h>
-#include <drizzled/plugin/client.h>
-#include <drizzled/plugin/scheduler.h>
-#include <drizzled/plugin/authentication.h>
-#include <drizzled/plugin/logging.h>
-#include <drizzled/plugin/transactional_storage_engine.h>
-#include <drizzled/plugin/query_rewrite.h>
-#include <drizzled/probes.h>
-#include <drizzled/table_proto.h>
-#include <drizzled/pthread_globals.h>
-#include <drizzled/transaction_services.h>
-#include <drizzled/drizzled.h>
-#include <drizzled/select_to_file.h>
-#include <drizzled/select_export.h>
-#include <drizzled/select_dump.h>
-#include <drizzled/select_subselect.h>
-#include <drizzled/select_singlerow_subselect.h>
-#include <drizzled/select_max_min_finder_subselect.h>
-#include <drizzled/select_exists_subselect.h>
-#include <drizzled/tmp_table_param.h>
-#include <drizzled/internal_error_handler.h>
-
 #include <drizzled/identifier.h>
-
-#include <drizzled/refresh_version.h>
-
-#include <drizzled/table/singular.h>
-
-#include <plugin/myisam/myisam.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/internal/thread_var.h>
+#include <drizzled/internal_error_handler.h>
+#include <drizzled/item/cache.h>
+#include <drizzled/item/empty_string.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/return_int.h>
+#include <drizzled/lock.h>
+#include <drizzled/plugin/authentication.h>
+#include <drizzled/plugin/client.h>
 #include <drizzled/plugin/event_observer.h>
-
+#include <drizzled/plugin/logging.h>
+#include <drizzled/plugin/query_rewrite.h>
+#include <drizzled/plugin/scheduler.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/probes.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/query_id.h>
+#include <drizzled/refresh_version.h>
+#include <drizzled/select_dump.h>
+#include <drizzled/select_exists_subselect.h>
+#include <drizzled/select_export.h>
+#include <drizzled/select_max_min_finder_subselect.h>
+#include <drizzled/select_singlerow_subselect.h>
+#include <drizzled/select_subselect.h>
+#include <drizzled/select_to_file.h>
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/show.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/table/singular.h>
+#include <drizzled/table_proto.h>
+#include <drizzled/tmp_table_param.h>
+#include <drizzled/transaction_services.h>
 #include <drizzled/user_var_entry.h>
-
 #include <drizzled/util/functors.h>
-
-#include <drizzled/display.h>
+#include <plugin/myisam/myisam.h>
 
 #include <algorithm>
 #include <climits>
@@ -244,7 +237,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   open_options=ha_open_options;
   update_lock_default= TL_WRITE;
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
-  warn_list.empty();
+  warn_list.clear();
   memset(warn_count, 0, sizeof(warn_count));
   memset(&status_var, 0, sizeof(status_var));
 
@@ -1097,7 +1090,7 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
 
   /* Check if there is any blobs in data */
   {
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
     while ((item=li++))
     {
@@ -1162,7 +1155,7 @@ bool select_export::send_data(List<Item> &items)
   row_count++;
   Item *item;
   uint32_t used_length=0,items_left=items.elements;
-  List_iterator_fast<Item> li(items);
+  List<Item>::iterator li(items.begin());
 
   if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),
                  exchange->line_start->length()))
@@ -1351,7 +1344,7 @@ select_dump::prepare(List<Item> &, Select_Lex_Unit *u)
 
 bool select_dump::send_data(List<Item> &items)
 {
-  List_iterator_fast<Item> li(items);
+  List<Item>::iterator li(items.begin());
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   tmp.length(0);
@@ -1404,7 +1397,7 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
     unit->offset_limit_cnt--;
     return(0);
   }
-  List_iterator_fast<Item> li(items);
+  List<Item>::iterator li(items.begin());
   Item *val_item;
   for (uint32_t i= 0; (val_item= li++); i++)
     it->store(i, val_item);
@@ -1422,7 +1415,7 @@ void select_max_min_finder_subselect::cleanup()
 bool select_max_min_finder_subselect::send_data(List<Item> &items)
 {
   Item_maxmin_subselect *it= (Item_maxmin_subselect *)item;
-  List_iterator_fast<Item> li(items);
+  List<Item>::iterator li(items.begin());
   Item *val_item= li++;
   it->register_value();
   if (it->assigned())

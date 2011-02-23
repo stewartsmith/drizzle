@@ -223,19 +223,19 @@ void LEX::start(Session *arg)
 
 void lex_start(Session *session)
 {
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
 
   lex->session= lex->unit.session= session;
 
-  lex->context_stack.empty();
+  lex->context_stack.clear();
   lex->unit.init_query();
   lex->unit.init_select();
   /* 'parent_lex' is used in init_query() so it must be before it. */
   lex->select_lex.parent_lex= lex;
   lex->select_lex.init_query();
-  lex->value_list.empty();
-  lex->update_list.empty();
-  lex->auxiliary_table_list.empty();
+  lex->value_list.clear();
+  lex->update_list.clear();
+  lex->auxiliary_table_list.clear();
   lex->unit.next= lex->unit.master=
     lex->unit.link_next= lex->unit.return_to= 0;
   lex->unit.prev= lex->unit.link_prev= 0;
@@ -247,7 +247,7 @@ void lex_start(Session *session)
   lex->select_lex.link_prev= (Select_Lex_Node**)&(lex->all_selects_list);
   lex->select_lex.options= 0;
   lex->select_lex.init_order();
-  lex->select_lex.group_list.empty();
+  lex->select_lex.group_list.clear();
   lex->describe= 0;
   lex->derived_tables= 0;
   lex->lock_option= TL_READ;
@@ -256,8 +256,8 @@ void lex_start(Session *session)
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
-  lex->select_lex.group_list.empty();
-  lex->select_lex.order_list.empty();
+  lex->select_lex.group_list.clear();
+  lex->select_lex.order_list.clear();
   lex->sql_command= SQLCOM_END;
   lex->duplicates= DUP_ERROR;
   lex->ignore= 0;
@@ -291,16 +291,15 @@ void LEX::end()
     yacc_yyvs= 0;
   }
 
-  delete result;
-  delete _create_table;
+  safe_delete(result);
+  safe_delete(_create_table);
   _create_table= NULL;
   _create_field= NULL;
 
   result= 0;
   setCacheable(true);
 
-  delete statement;
-  statement= NULL;
+  safe_delete(statement);
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
@@ -388,7 +387,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
 */
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
-  register unsigned char c,sep;
+  unsigned char c,sep;
   bool found_escape= false;
   const CHARSET_INFO * const cs= lip->m_session->charset();
 
@@ -665,13 +664,13 @@ namespace drizzled
 
 int lex_one_token(ParserType *yylval, drizzled::Session *session)
 {
-  register unsigned char c= 0; /* Just set to shutup GCC */
+  unsigned char c= 0; /* Just set to shutup GCC */
   bool comment_closed;
   int	tokval, result_state;
   unsigned int length;
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
   const CHARSET_INFO * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
@@ -1335,7 +1334,7 @@ void Select_Lex_Unit::init_query()
   table= 0;
   fake_select_lex= 0;
   cleaned= 0;
-  item_list.empty();
+  item_list.clear();
   describe= 0;
   found_rows_for_union= 0;
 }
@@ -1343,11 +1342,11 @@ void Select_Lex_Unit::init_query()
 void Select_Lex::init_query()
 {
   Select_Lex_Node::init_query();
-  table_list.empty();
-  top_join_list.empty();
+  table_list.clear();
+  top_join_list.clear();
   join_list= &top_join_list;
   embedding= leaf_tables= 0;
-  item_list.empty();
+  item_list.clear();
   join= 0;
   having= where= 0;
   olap= UNSPECIFIED_OLAP_TYPE;
@@ -1379,14 +1378,14 @@ void Select_Lex::init_query()
 
 void Select_Lex::init_select()
 {
-  sj_nests.empty();
-  group_list.empty();
+  sj_nests.clear();
+  group_list.clear();
   db= 0;
   having= 0;
   in_sum_expr= with_wild= 0;
   options= 0;
   braces= 0;
-  interval_list.empty();
+  interval_list.clear();
   inner_sum_func_list= 0;
   linkage= UNSPECIFIED_TYPE;
   order_list.elements= 0;
@@ -1399,9 +1398,9 @@ void Select_Lex::init_select()
   is_cross= false;
   is_correlated= 0;
   cur_pos_in_select_list= UNDEF_POS;
-  non_agg_fields.empty();
+  non_agg_fields.clear();
   cond_value= having_value= Item::COND_UNDEF;
-  inner_refs_list.empty();
+  inner_refs_list.clear();
   full_group_by_flag.reset();
 }
 
@@ -2069,11 +2068,11 @@ void LEX::link_first_table_back(TableList *first, bool link_to_local)
 void LEX::cleanup_after_one_table_open()
 {
   /*
-    session->lex->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear session->lex->derived_tables flag
+    session->getLex()->derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->getLex()->derived_tables flag
     to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to session->lex->select_lex, because we
+    NOTE: all units will be connected to session->getLex()->select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)
