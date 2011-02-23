@@ -1,0 +1,9 @@
+[test_info]
+name = randgen_simple
+comment = basic, basic randgen test
+
+[test_command]
+command = ./gentest.pl --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=10 --threads=1
+
+[test_servers]
+servers = [[--transaction-log.enable]]
