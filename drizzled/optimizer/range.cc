@@ -3116,6 +3116,12 @@ get_mm_leaf(optimizer::RangeParameter *param,
                (value->val_int() < 0))
         type = Item_func::GE_FUNC;
     }
+    else if (err == 1)
+    {
+      tree= new (alloc) optimizer::SEL_ARG(field, 0, 0);
+      tree->type= optimizer::SEL_ARG::IMPOSSIBLE;
+      goto end;
+    }
   }
   else if (err < 0)
   {
