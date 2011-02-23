@@ -563,7 +563,7 @@ static int prepare_create_table(Session *session,
 
   plugin::StorageEngine *engine= plugin::StorageEngine::findByName(create_proto.engine().name());
 
-  select_field_pos= alter_info->create_list.elements - select_field_count;
+  select_field_pos= alter_info->create_list.size() - select_field_count;
   null_fields=blob_columns=0;
   max_key_length= engine->max_key_length();
 
@@ -860,8 +860,8 @@ static int prepare_create_table(Session *session,
                                        fk_key->update_opt,
                                        fk_key->match_opt);
 
-      if (fk_key->ref_columns.elements &&
-	  fk_key->ref_columns.elements != fk_key->columns.elements)
+      if (fk_key->ref_columns.size() &&
+	  fk_key->ref_columns.size() != fk_key->columns.size())
       {
         my_error(ER_WRONG_FK_DEF, MYF(0),
                  (fk_key->name.str ? fk_key->name.str :
@@ -873,7 +873,7 @@ static int prepare_create_table(Session *session,
     }
     (*key_count)++;
     tmp= engine->max_key_parts();
-    if (key->columns.elements > tmp)
+    if (key->columns.size() > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
       return(true);
@@ -897,13 +897,13 @@ static int prepare_create_table(Session *session,
           /* @todo issue warning message */
           /* mark that the generated key should be ignored */
           if (!key2->generated ||
-              (key->generated && key->columns.elements <
-               key2->columns.elements))
+              (key->generated && key->columns.size() <
+               key2->columns.size()))
             key->name.str= ignore_key;
           else
           {
             key2->name.str= ignore_key;
-            key_parts-= key2->columns.elements;
+            key_parts-= key2->columns.size();
             (*key_count)--;
           }
           break;
@@ -911,7 +911,7 @@ static int prepare_create_table(Session *session,
       }
     }
     if (key->name.str != ignore_key)
-      key_parts+=key->columns.elements;
+      key_parts+=key->columns.size();
     else
       (*key_count)--;
     if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) &&
@@ -964,7 +964,7 @@ static int prepare_create_table(Session *session,
     if (key->generated)
       key_info->flags|= HA_GENERATED_KEY;
 
-    key_info->key_parts=(uint8_t) key->columns.elements;
+    key_info->key_parts=(uint8_t) key->columns.size();
     key_info->key_part=key_part_info;
     key_info->usable_key_parts= key_number;
     key_info->algorithm= key->key_create_info.algorithm;
@@ -1456,7 +1456,7 @@ bool create_table_no_lock(Session *session,
   bool		error= true;
 
   /* Check for duplicate fields and check type of table to create */
-  if (not alter_info->create_list.elements)
+  if (not alter_info->create_list.size())
   {
     my_message(ER_TABLE_MUST_HAVE_COLUMNS, ER(ER_TABLE_MUST_HAVE_COLUMNS),
                MYF(0));
@@ -1834,7 +1834,7 @@ static bool admin_table(Session* session, TableList* tables,
     */
     if (!table->table)
     {
-      if (!session->warn_list.elements)
+      if (!session->warn_list.size())
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
       result_code= HA_ADMIN_CORRUPT;

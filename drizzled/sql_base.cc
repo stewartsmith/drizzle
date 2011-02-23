@@ -3310,7 +3310,7 @@ int setup_wild(Session *session, List<Item> &fields,
           Because of this we have to update the element count also for this
           list after expanding the '*' entry.
         */
-        sum_func_list->elements+= fields.size() - elem;
+        sum_func_list->set_size(sum_func_list->size() + fields.size() - elem);
       }
       wild_num--;
     }

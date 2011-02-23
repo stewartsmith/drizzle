@@ -112,8 +112,8 @@ class base_list :public memory::SqlAlloc
 {
 protected:
   list_node *first,**last;
-public:
   uint32_t elements;
+public:
 
   inline void clear() { elements=0; first= &end_of_list; last=&first;}
   inline base_list() { clear(); }
@@ -402,6 +402,11 @@ public:
   size_t size() const
   {
     return elements;
+  }
+
+  void set_size(size_t v)
+  {
+    elements = v;
   }
 };
 
