@@ -80,6 +80,7 @@ struct st_drizzleclient_options {
 #define CLIENT_ODBC             64      /* Odbc client */
 #define CLIENT_IGNORE_SPACE     256     /* Ignore spaces before '(' */
 #define CLIENT_PROTOCOL_MYSQL41 512     /* New 4.1 protocol */
+#define CLIENT_INTERACTIVE      1024
 #define CLIENT_SSL              2048    /* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
 #define CLIENT_TRANSACTIONS     8192    /* Support transactions */
@@ -102,6 +103,7 @@ struct st_drizzleclient_options {
                            CLIENT_COMPRESS | \
                            CLIENT_ODBC | \
                            CLIENT_IGNORE_SPACE | \
+                           CLIENT_INTERACTIVE | \
                            CLIENT_SSL | \
                            CLIENT_IGNORE_SIGPIPE | \
                            CLIENT_TRANSACTIONS | \

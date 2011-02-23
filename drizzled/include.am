@@ -282,6 +282,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/key.h \
 			      drizzled/key_map.h \
 			      drizzled/key_part_spec.h \
+			      drizzled/kill.h \
 			      drizzled/korr.h \
 			      drizzled/lex_column.h \
 			      drizzled/lex_input_stream.h \
@@ -731,6 +732,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/join_table.cc \
 			   drizzled/key.cc \
 			   drizzled/key_map.cc \
+			   drizzled/kill.cc \
 			   drizzled/lock.cc \
 			   drizzled/locking/global.cc \
 			   drizzled/lookup_symbol.cc \
