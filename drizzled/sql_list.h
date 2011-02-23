@@ -366,10 +366,9 @@ public:
 
   friend class List_iterator<T>;
 
-  inline List() :base_list() {}
-  inline List(const List<T> &tmp) :base_list(tmp) {}
-  inline List(const List<T> &tmp, memory::Root *mem_root) :
-    base_list(tmp, mem_root) {}
+  inline List() {}
+  inline List(const List<T> &tmp) : base_list(tmp) {}
+  inline List(const List<T> &tmp, memory::Root *mem_root) : base_list(tmp, mem_root) {}
   inline bool push_back(T *a) { return base_list::push_back(a); }
   inline bool push_back(T *a, memory::Root *mem_root)
   { return base_list::push_back(a, mem_root); }
@@ -412,10 +411,10 @@ template <class T> class List_iterator :public base_list_iterator
 public:
   List_iterator(List<T>& a, list_node** b) : base_list_iterator(a, b) {};
   List_iterator() {};
-  inline T *operator++(int) { return (T*) base_list_iterator::next(); }
-  inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
-  inline T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
-  inline T** ref(void)	    { return (T**) base_list_iterator::ref(); }
+ T *operator++(int) { return (T*) base_list_iterator::next(); }
+ void replace(T *a)   { base_list_iterator::replace(a); }
+ T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
+ T** ref(void)	    { return (T**) base_list_iterator::ref(); }
 };
 
 /**
