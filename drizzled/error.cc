@@ -259,7 +259,7 @@ void my_printf_error(drizzled::error_t error, const char *format, myf MyFlags, .
       MyFlags	Flags
 */
 
-void my_message(drizzled::error_t error, const char *str, register myf MyFlags)
+void my_message(drizzled::error_t error, const char *str, myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }
