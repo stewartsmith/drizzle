@@ -31,6 +31,8 @@ Drizzledump options
 
 The :program:`drizzledump` tool has several available options:
 
+.. program:: drizzledump 
+
 .. option:: --all-databases, -A
 
    Dumps all databases found on the server apart from ``information_schema`` and

@@ -8,6 +8,8 @@ There are many different options one can use to configure Drizzle.
 Config File Options
 -------------------
 
+.. program:: drizzled
+
 .. option:: --help-extended
 
    Display this help and exit after initializing plugins.
@@ -39,6 +41,8 @@ Config File Options
 Plugin Loading Options
 ----------------------
 
+.. program:: drizzled
+
 .. option:: --plugin-add arg
 
    Optional comma separated list of plugins to load at startup in addition
@@ -64,6 +68,8 @@ Plugin Loading Options
 
 Kernel Options
 --------------
+
+.. program:: drizzled
 
 .. option:: --auto-increment-increment arg (=1)
   
