@@ -246,6 +246,6 @@ Not equal: ::
         	-> 1
 	SELECT .01 <> '0.01';
         	-> 0
-	SELECT 'zapp' <> 'zappp';
+	SELECT 'zing' <> 'zingg';
         	-> 1
 
