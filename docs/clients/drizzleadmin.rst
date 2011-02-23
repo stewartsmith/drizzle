@@ -10,3 +10,6 @@ mysql-protocol.admin-ip-addresses.  At the moment the :program:`drizzleadmin`
 tool is only to be used to bypass the protocol's max-connections setting to do
 tasks such as killing queries or clients.  Eventually more administrative
 features will be added.
+
+.. seealso::
+   :doc:`drizzle`

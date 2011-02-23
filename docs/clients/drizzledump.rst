@@ -256,6 +256,8 @@ This can then be re-imported into drizzle at a later date using:
 
   $ drizzle < dumpfile.sql
 
+.. _drizzledump-migration-label:
+
 MySQL Migration using Drizzledump
 ---------------------------------
 
