@@ -41,7 +41,7 @@ namespace internal
 
 char *fn_ext(const char *name)
 {
-  register const char *pos, *gpos;
+  const char *pos, *gpos;
 
 #if defined(FN_DEVCHAR)
   {
