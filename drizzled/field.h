@@ -27,19 +27,19 @@
 #ifndef DRIZZLED_FIELD_H
 #define DRIZZLED_FIELD_H
 
-#include "drizzled/sql_error.h"
-#include "drizzled/type/decimal.h"
-#include "drizzled/key_map.h"
-#include "drizzled/sql_list.h"
-#include "drizzled/structs.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/item_result.h"
-#include "drizzled/visibility.h"
+#include <drizzled/sql_error.h>
+#include <drizzled/type/decimal.h>
+#include <drizzled/key_map.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/structs.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/item_result.h>
+#include <drizzled/charset_info.h>
 
 #include <string>
 #include <vector>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -217,10 +217,10 @@ public:
       Needs to be changed if/when we want to support different time formats.
   */
   virtual int store_time(type::Time &ltime, type::timestamp_t t_type);
-  virtual double val_real()=0;
-  virtual int64_t val_int()=0;
-  virtual type::Decimal *val_decimal(type::Decimal *);
-  String *val_str_internal(String *str)
+  virtual double val_real() const=0;
+  virtual int64_t val_int() const =0;
+  virtual type::Decimal *val_decimal(type::Decimal *) const;
+  String *val_str_internal(String *str) const
   {
     return val_str(str, str);
   }
@@ -237,7 +237,7 @@ public:
      an unnecessary free (and later, may be an alloc).
      This trickery is used to decrease a number of malloc calls.
   */
-  virtual String *val_str(String*, String *)=0;
+  virtual String *val_str(String*, String *) const =0;
 
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
@@ -363,14 +363,14 @@ public:
   // For new field
   virtual uint32_t size_of() const =0;
 
-  bool is_null(ptrdiff_t row_offset= 0);
-  bool is_real_null(ptrdiff_t row_offset= 0);
-  bool is_null_in_record(const unsigned char *record);
-  bool is_null_in_record_with_offset(ptrdiff_t offset);
+  bool is_null(ptrdiff_t row_offset= 0) const;
+  bool is_real_null(ptrdiff_t row_offset= 0) const;
+  bool is_null_in_record(const unsigned char *record) const;
+  bool is_null_in_record_with_offset(ptrdiff_t offset) const;
   void set_null(ptrdiff_t row_offset= 0);
   void set_notnull(ptrdiff_t row_offset= 0);
-  bool maybe_null(void);
-  bool real_maybe_null(void);
+  bool maybe_null(void) const;
+  bool real_maybe_null(void) const;
 
   virtual void make_field(SendField *);
   virtual void sort_string(unsigned char *buff,uint32_t length)=0;
@@ -471,9 +471,8 @@ public:
   int64_t val_int_internal(const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
-    int64_t return_value;
     ptr= const_cast<unsigned char*>(new_ptr);
-    return_value= val_int();
+    int64_t return_value= val_int();
     ptr= old_ptr;
     return return_value;
   }
@@ -597,8 +596,8 @@ public:
   }
   void copy_from_tmp(int offset);
   uint32_t fill_cache_field(CacheField *copy);
-  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate);
-  virtual bool get_time(type::Time &ltime);
+  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
+  virtual bool get_time(type::Time &ltime) const;
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
@@ -739,7 +738,7 @@ public:
   }
 
   /* Hash value */
-  virtual void hash(uint32_t *nr, uint32_t *nr2);
+  virtual void hash(uint32_t *nr, uint32_t *nr2) const;
   friend bool reopen_table(Session *,Table *,bool);
 
   friend class CopyField;
@@ -755,7 +754,7 @@ public:
   friend class Item_sum_max;
   friend class Item_func_group_concat;
 
-  bool isReadSet();
+  bool isReadSet() const;
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
@@ -768,12 +767,44 @@ protected:
   uint32_t unpack_num(uint32_t &destination, const unsigned char *arg= NULL) const;
 };
 
+namespace field {
+
+inline bool isDateTime(const enum_field_types &arg)
+{
+  switch (arg)
+  {
+  case DRIZZLE_TYPE_DATE:
+  case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_MICROTIME:
+  case DRIZZLE_TYPE_TIME:
+  case DRIZZLE_TYPE_TIMESTAMP:
+    return true;
+
+  case DRIZZLE_TYPE_BLOB:
+  case DRIZZLE_TYPE_BOOLEAN:
+  case DRIZZLE_TYPE_DECIMAL:
+  case DRIZZLE_TYPE_DOUBLE:
+  case DRIZZLE_TYPE_ENUM:
+  case DRIZZLE_TYPE_LONG:
+  case DRIZZLE_TYPE_LONGLONG:
+  case DRIZZLE_TYPE_NULL:
+  case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_VARCHAR:
+    return false;
+  }
+
+  assert(0);
+  abort();
+}
+
+} // namespace field
+
 std::ostream& operator<<(std::ostream& output, const Field &field);
 
 } /* namespace drizzled */
 
 /** @TODO Why is this in the middle of the file???*/
-#include "drizzled/create_field.h"
+#include <drizzled/create_field.h>
 
 namespace drizzled
 {
@@ -800,55 +831,6 @@ public:
   uint32_t decimals;
   enum_field_types type;
   SendField() {}
-};
-
-/**
- * A class for quick copying data to fields
- */
-class CopyField :public memory::SqlAlloc
-{
-  /**
-    Convenience definition of a copy function returned by
-    get_copy_func.
-  */
-  typedef void Copy_func(CopyField*);
-  Copy_func *get_copy_func(Field *to, Field *from);
-
-public:
-  unsigned char *from_ptr;
-  unsigned char *to_ptr;
-  unsigned char *from_null_ptr;
-  unsigned char *to_null_ptr;
-  bool *null_row;
-  uint32_t from_bit;
-  uint32_t to_bit;
-  uint32_t from_length;
-  uint32_t to_length;
-  Field *from_field;
-  Field *to_field;
-  String tmp;					// For items
-
-  CopyField() :
-    from_ptr(0),
-    to_ptr(0),
-    from_null_ptr(0),
-    to_null_ptr(0),
-    null_row(0),
-    from_bit(0),
-    to_bit(0),
-    from_length(0),
-    to_length(0),
-    from_field(0),
-    to_field(0)
-  {}
-
-  ~CopyField()
-  {}
-
-  void set(Field *to,Field *from,bool save);	// Field to field
-  void set(unsigned char *to,Field *from);		// Field to string
-  void (*do_copy)(CopyField *);
-  void (*do_copy2)(CopyField *);		// Used to handle null values
 };
 
 uint32_t pack_length_to_packflag(uint32_t type);

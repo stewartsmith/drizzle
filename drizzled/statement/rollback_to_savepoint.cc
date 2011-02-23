@@ -18,13 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/show.h"
-#include "drizzled/session.h"
-#include "drizzled/statement/rollback_to_savepoint.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/named_savepoint.h"
-#include "drizzled/util/functors.h"
+#include <config.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/rollback_to_savepoint.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/named_savepoint.h>
+#include <drizzled/util/functors.h>
 
 #include <string>
 
@@ -73,7 +73,7 @@ bool statement::RollbackToSavepoint::execute()
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 
-             getSession()->lex->ident.str);
+             getSession()->getLex()->ident.str);
     return false;
   }
 
@@ -82,8 +82,8 @@ bool statement::RollbackToSavepoint::execute()
     NamedSavepoint &first_savepoint= savepoints.front();
     const string &first_savepoint_name= first_savepoint.getName();
     if (my_strnncoll(system_charset_info,
-                     (unsigned char *) getSession()->lex->ident.str, 
-                     getSession()->lex->ident.length,
+                     (unsigned char *) getSession()->getLex()->ident.str, 
+                     getSession()->getLex()->ident.length,
                      (unsigned char *) first_savepoint_name.c_str(), 
                      first_savepoint_name.size()) == 0)
     {
@@ -118,8 +118,8 @@ bool statement::RollbackToSavepoint::execute()
     const string &sv_name= sv.getName();
     if (! found && 
         my_strnncoll(system_charset_info,
-                     (unsigned char *) getSession()->lex->ident.str, 
-                     getSession()->lex->ident.length,
+                     (unsigned char *) getSession()->getLex()->ident.str, 
+                     getSession()->getLex()->ident.length,
                      (unsigned char *) sv_name.c_str(), 
                      sv_name.size()) == 0)
     {
@@ -159,7 +159,7 @@ bool statement::RollbackToSavepoint::execute()
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 
-             getSession()->lex->ident.str);
+             getSession()->getLex()->ident.str);
   }
   return false;
 }

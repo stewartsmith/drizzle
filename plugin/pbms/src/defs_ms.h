@@ -191,12 +191,12 @@
 #define thd_binlog_format					session_binlog_format
 #define thd_mark_transaction_to_rollback	session_mark_transaction_to_rollback
 #define current_thd							current_session
-#define thd_sql_command						session_sql_command
+#define thd_sql_command(x)						((x)->getSqlCommand())
 #define thd_test_options					session_test_options
 #define thd_killed							session_killed
-#define thd_tx_isolation					session_tx_isolation
+#define thd_tx_isolation(x)					((x)->getTxIsolation())
 #define thd_in_lock_tables					session_in_lock_tables
-#define thd_tablespace_op					session_tablespace_op
+#define thd_tablespace_op(x)					((x)->doingTablespaceOperation())
 #define thd_alloc							session_alloc
 #define thd_make_lex_string					session_make_lex_string
 

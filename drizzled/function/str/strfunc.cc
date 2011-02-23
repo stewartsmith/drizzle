@@ -25,14 +25,14 @@
     (This shouldn't be needed)
 */
 
-#include "config.h"
+#include <config.h>
 #include <zlib.h>
 #include <drizzled/query_id.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 
 // For soundex_map
-#include "drizzled/internal/my_static.h"
+#include <drizzled/internal/my_static.h>
 
 using namespace std;
 
@@ -84,7 +84,7 @@ int64_t Item_str_func::val_int()
 {
   assert(fixed == 1);
   int err;
-  char buff[22];
+  char buff[DECIMAL_LONGLONG_DIGITS];
   String *res, tmp(buff,sizeof(buff), &my_charset_bin);
   res= val_str(&tmp);
   return (res ?

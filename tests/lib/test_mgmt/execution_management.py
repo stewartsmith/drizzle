@@ -61,6 +61,7 @@ class executionManager:
         self.verbose = variables['verbose']
         self.force = variables['force']
         self.record_flag = variables['record']
+        self.testcase_repeat_count = variables['repeat']
         # We are currently single-threaded execution-wise
         # but in the future, we will likely need to revamp
         # how we deal with start-and-exit if we have multiple

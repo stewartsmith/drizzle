@@ -28,13 +28,13 @@
 #ifndef DRIZZLED_JOIN_TABLE_H
 #define DRIZZLED_JOIN_TABLE_H
 
-#include "drizzled/enum_nested_loop_state.h"
-#include "drizzled/table_reference.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/join_cache.h"
-#include "drizzled/optimizer/key_use.h"
+#include <drizzled/enum_nested_loop_state.h>
+#include <drizzled/table_reference.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/join_cache.h>
+#include <drizzled/optimizer/key_use.h>
 
-#include "drizzled/records.h"
+#include <drizzled/records.h>
 
 #include <bitset>
 

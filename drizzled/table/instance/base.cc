@@ -25,7 +25,7 @@
 */
 
 /* Basic functions needed by many modules */
-#include "config.h"
+#include <config.h>
 
 #include <pthread.h>
 #include <float.h>
@@ -37,51 +37,56 @@
 
 #include <cassert>
 
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/internal/my_pthread.h>
 
-#include "drizzled/table.h"
-#include "drizzled/table/shell.h"
+#include <drizzled/table.h>
+#include <drizzled/table/shell.h>
 
-#include "drizzled/session.h"
+#include <drizzled/session.h>
 
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/charset.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_sys.h>
 
-#include "drizzled/item/string.h"
-#include "drizzled/item/int.h"
-#include "drizzled/item/decimal.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/null.h"
-#include "drizzled/temporal.h"
+#include <drizzled/item/string.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/decimal.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/null.h>
+#include <drizzled/temporal.h>
 
-#include "drizzled/field.h"
-#include "drizzled/field/str.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/field/boolean.h"
-#include "drizzled/field/enum.h"
-#include "drizzled/field/null.h"
-#include "drizzled/field/date.h"
-#include "drizzled/field/decimal.h"
-#include "drizzled/field/real.h"
-#include "drizzled/field/double.h"
-#include "drizzled/field/int32.h"
-#include "drizzled/field/int64.h"
-#include "drizzled/field/size.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/time.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/field/datetime.h"
-#include "drizzled/field/microtime.h"
-#include "drizzled/field/varstring.h"
-#include "drizzled/field/uuid.h"
+#include <drizzled/field.h>
+#include <drizzled/field/str.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/boolean.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/decimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
+#include <drizzled/field/size.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/time.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/microtime.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/uuid.h>
 
-#include "drizzled/definition/cache.h"
+#include <drizzled/plugin/storage_engine.h>
+
+#include <drizzled/definition/cache.h>
+#include <drizzled/typelib.h>
+
+#include <drizzled/refresh_version.h>
 
 using namespace std;
 
@@ -1909,15 +1914,6 @@ Field *TableShare::make_field(const message::Table::Field &,
     null_bit= ((unsigned char) 1) << null_bit;
   }
 
-  switch (field_type) 
-  {
-  case DRIZZLE_TYPE_DATE:
-  case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_UUID:
-    field_charset= &my_charset_bin;
-  default: break;
-  }
-
   switch (field_type)
   {
   case DRIZZLE_TYPE_ENUM:
@@ -2018,28 +2014,29 @@ Field *TableShare::make_field(const message::Table::Field &,
                                        field_length,
                                        null_pos,
                                        null_bit,
-                                       field_name,
-                                       field_charset);
+                                       field_name);
   case DRIZZLE_TYPE_DATE:
     return new (&mem_root) Field_date(ptr,
                                  null_pos,
                                  null_bit,
-                                 field_name,
-                                 field_charset);
+                                 field_name);
   case DRIZZLE_TYPE_DATETIME:
     return new (&mem_root) Field_datetime(ptr,
                                      null_pos,
                                      null_bit,
-                                     field_name,
-                                     field_charset);
+                                     field_name);
   case DRIZZLE_TYPE_NULL:
     return new (&mem_root) Field_null(ptr,
-                                 field_length,
-                                 field_name,
-                                 field_charset);
+                                      field_length,
+                                      field_name);
   }
   assert(0);
   abort();
+}
+
+void TableShare::refreshVersion()
+{
+  version= refresh_version;
 }
 
 

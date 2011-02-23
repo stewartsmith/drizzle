@@ -21,8 +21,8 @@
 #ifndef DRIZZLED_STATEMENT_CREATE_TABLE_H
 #define DRIZZLED_STATEMENT_CREATE_TABLE_H
 
-#include "drizzled/statement.h"
-#include "drizzled/foreign_key.h"
+#include <drizzled/statement.h>
+#include <drizzled/foreign_key.h>
 
 namespace drizzled
 {
@@ -45,12 +45,13 @@ public:
   }
 
   bool execute();
+
   virtual bool executeInner(identifier::Table::const_reference);
 
 public:
   message::Table &createTableMessage()
   {
-    return *getSession()->lex->table();
+    return *getSession()->getLex()->table();
   };
 
 private:

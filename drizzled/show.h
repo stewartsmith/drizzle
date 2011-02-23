@@ -27,30 +27,20 @@
 #ifndef DRIZZLED_SHOW_H
 #define DRIZZLED_SHOW_H
 
-#include <vector>
+#include <drizzled/enum.h>
+#include <drizzled/lex_string.h>
 
-#include "drizzled/sql_list.h"
-#include "drizzled/lex_string.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/plugin.h"
-
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
 
 /* Forward declarations */
-class String;
-class Join;
 class Session;
-struct st_ha_create_information;
-typedef st_ha_create_information HA_CREATE_INFO;
-class TableList;
+class Table_ident;
+struct charset_info_st;
 
-class Table;
-typedef class Item COND;
-
-int wild_case_compare(const CHARSET_INFO * const cs, 
+int wild_case_compare(const charset_info_st * const cs, 
                       const char *str,const char *wildstr);
 
 DRIZZLED_API int get_quote_char_for_identifier();

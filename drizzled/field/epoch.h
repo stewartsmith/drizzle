@@ -58,9 +58,9 @@ public:
   int store_decimal(const type::Decimal *value);
 
   int  reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0; return 0; }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  String *val_str(String*,String *) const;
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 8; }
@@ -71,7 +71,7 @@ public:
   virtual void set_default();
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Epoch */
-  virtual long get_timestamp(bool *null_value);
+  virtual long get_timestamp(bool *null_value) const;
 
   virtual bool is_timestamp() const
   {
@@ -79,8 +79,8 @@ public:
   }
 
 private:
-  bool get_date(type::Time &ltime,uint32_t fuzzydate);
-  bool get_time(type::Time &ltime);
+  bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
+  bool get_time(type::Time &ltime) const;
 
 public:
   virtual timestamp_auto_set_type get_auto_set_type() const;

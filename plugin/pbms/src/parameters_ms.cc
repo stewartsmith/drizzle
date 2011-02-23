@@ -25,7 +25,7 @@
  */
 
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 #include <set>
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>

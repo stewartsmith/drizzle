@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #include <dlfcn.h>
 
@@ -26,26 +26,26 @@
 
 #include <boost/program_options.hpp>
 
-#include "drizzled/option.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/option.h>
+#include <drizzled/internal/m_string.h>
 
-#include "drizzled/plugin.h"
-#include "drizzled/module/load_list.h"
-#include "drizzled/module/library.h"
-#include "drizzled/module/registry.h"
-#include "drizzled/module/option_context.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/show.h"
-#include "drizzled/cursor.h"
-#include "drizzled/set_var.h"
-#include "drizzled/session.h"
-#include "drizzled/item/null.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/strfunc.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/util/tokenize.h"
+#include <drizzled/plugin.h>
+#include <drizzled/module/load_list.h>
+#include <drizzled/module/library.h>
+#include <drizzled/module/registry.h>
+#include <drizzled/module/option_context.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/show.h>
+#include <drizzled/cursor.h>
+#include <drizzled/set_var.h>
+#include <drizzled/session.h>
+#include <drizzled/item/null.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/strfunc.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/util/tokenize.h>
 
 #include <boost/foreach.hpp>
 

@@ -48,6 +48,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 PRINT_TRANSACTION_MESSAGE('transaction.log',entry_offset)
 transaction_context {

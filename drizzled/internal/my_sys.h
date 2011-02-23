@@ -31,14 +31,14 @@
 
 #include <errno.h>
 
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/internal/my_pthread.h>
 
-#include "drizzled/charset_info.h"                    /* for CHARSET_INFO */
+#include <drizzled/charset_info.h>                    /* for CHARSET_INFO */
 #include <stdarg.h>
-#include "drizzled/internal/aio_result.h"
+#include <drizzled/internal/aio_result.h>
 
-#include "drizzled/memory/root.h"
-#include "drizzled/error.h"
+#include <drizzled/memory/root.h>
+#include <drizzled/error.h>
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
@@ -54,9 +54,9 @@ extern int errno;			/* declare errno */
 #include <sys/mman.h>
 #endif
 
-#include "drizzled/qsort_cmp.h"
+#include <drizzled/qsort_cmp.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -269,12 +269,7 @@ typedef uint32_t ha_checksum;
 typedef int (*Process_option_func)(void *ctx, const char *group_name,
                                    const char *option);
 
-int handle_default_option(void *in_ctx, const char *group_name,
-                          const char *option);
-
-
-
-	/* Prototypes for mysys and my_func functions */
+/* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
 DRIZZLED_API int my_delete(const char *name,myf MyFlags);

@@ -21,55 +21,64 @@
  * @file Implementation of the Session class and API
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/session/cache.h"
-#include <sys/stat.h>
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/query_id.h"
-#include "drizzled/data_home.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/cache.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/return_int.h"
-#include "drizzled/item/empty_string.h"
-#include "drizzled/show.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/plugin/scheduler.h"
-#include "drizzled/plugin/authentication.h"
-#include "drizzled/plugin/logging.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/plugin/query_rewrite.h"
-#include "drizzled/probes.h"
-#include "drizzled/table_proto.h"
-#include "drizzled/db.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/drizzled.h"
+#include <config.h>
 
-#include "drizzled/identifier.h"
+#include <drizzled/copy_field.h>
+#include <drizzled/data_home.h>
+#include <drizzled/display.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/identifier.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/internal/thread_var.h>
+#include <drizzled/internal_error_handler.h>
+#include <drizzled/item/cache.h>
+#include <drizzled/item/empty_string.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/return_int.h>
+#include <drizzled/lock.h>
+#include <drizzled/plugin/authentication.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/event_observer.h>
+#include <drizzled/plugin/logging.h>
+#include <drizzled/plugin/query_rewrite.h>
+#include <drizzled/plugin/scheduler.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/probes.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/query_id.h>
+#include <drizzled/refresh_version.h>
+#include <drizzled/select_dump.h>
+#include <drizzled/select_exists_subselect.h>
+#include <drizzled/select_export.h>
+#include <drizzled/select_max_min_finder_subselect.h>
+#include <drizzled/select_singlerow_subselect.h>
+#include <drizzled/select_subselect.h>
+#include <drizzled/select_to_file.h>
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/show.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/table/singular.h>
+#include <drizzled/table_proto.h>
+#include <drizzled/tmp_table_param.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/user_var_entry.h>
+#include <drizzled/util/functors.h>
+#include <plugin/myisam/myisam.h>
 
-#include "drizzled/table/singular.h"
-
-#include "plugin/myisam/myisam.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/internal/thread_var.h"
-#include "drizzled/plugin/event_observer.h"
-
-#include "drizzled/util/functors.h"
-
-#include "drizzled/display.h"
-
-#include <fcntl.h>
 #include <algorithm>
 #include <climits>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/checked_delete.hpp>
 
-#include "drizzled/util/backtrace.h"
+#include <drizzled/util/backtrace.h>
+
+#include <drizzled/schema.h>
 
 using namespace std;
 
@@ -114,29 +123,6 @@ int tmpfile(const char *prefix)
   return fd;
 }
 
-int session_tablespace_op(const Session *session)
-{
-  return test(session->tablespace_op);
-}
-
-/**
-   Set the process info field of the Session structure.
-
-   This function is used by plug-ins. Internally, the
-   Session::set_proc_info() function should be used.
-
-   @see Session::set_proc_info
- */
-void set_session_proc_info(Session *session, const char *info)
-{
-  session->set_proc_info(info);
-}
-
-const char *get_session_proc_info(Session *session)
-{
-  return session->get_proc_info();
-}
-
 void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
 {
   return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
@@ -151,16 +137,6 @@ ResourceContext *Session::getResourceContext(const plugin::MonitoredInTransactio
 int64_t session_test_options(const Session *session, int64_t test_options)
 {
   return session->options & test_options;
-}
-
-int session_sql_command(const Session *session)
-{
-  return (int) session->lex->sql_command;
-}
-
-enum_tx_isolation session_tx_isolation(const Session *session)
-{
-  return (enum_tx_isolation)session->variables.tx_isolation;
 }
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
@@ -212,8 +188,8 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   is_fatal_error(false),
   transaction_rollback_request(false),
   is_fatal_sub_stmt_error(0),
-  derived_tables_processing(false),
   tablespace_op(false),
+  derived_tables_processing(false),
   m_lip(NULL),
   cached_table(0),
   transaction_message(NULL),
@@ -261,7 +237,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   open_options=ha_open_options;
   update_lock_default= TL_WRITE;
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
-  warn_list.empty();
+  warn_list.clear();
   memset(warn_count, 0, sizeof(warn_count));
   memset(&status_var, 0, sizeof(status_var));
 
@@ -335,9 +311,9 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-void Session::get_xid(DRIZZLE_XID *xid)
+void Session::get_xid(DrizzleXid *xid)
 {
-  *xid = *(DRIZZLE_XID *) &transaction.xid_state.xid;
+  *xid = *(DrizzleXid *) &transaction.xid_state.xid;
 }
 
 /* Do operations that may take a long time */
@@ -421,12 +397,6 @@ Session::~Session()
 
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(*this); 
-
-  for (PropertyMap::iterator iter= life_properties.begin(); iter != life_properties.end(); iter++)
-  {
-    boost::checked_delete((*iter).second);
-  }
-  life_properties.clear();
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -622,7 +592,7 @@ bool Session::schedule(Session::shared_ptr &arg)
 */
 bool Session::isViewable(identifier::User::const_reference user_arg) const
 {
-  return plugin::Authorization::isAuthorized(user_arg, this, false);
+  return plugin::Authorization::isAuthorized(user_arg, *this, false);
 }
 
 
@@ -665,7 +635,7 @@ bool Session::checkUser(const std::string &passwd_str,
                         const std::string &in_db)
 {
   bool is_authenticated=
-    plugin::Authentication::isAuthenticated(user(), passwd_str);
+    plugin::Authentication::isAuthenticated(*user(), passwd_str);
 
   if (is_authenticated != true)
   {
@@ -678,7 +648,7 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     identifier::Schema identifier(in_db);
-    if (change_db(this, identifier))
+    if (schema::change(*this, identifier))
     {
       /* change_db() has pushed the error message. */
       return false;
@@ -748,7 +718,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     plugin::QueryRewriter::rewriteQuery(*_schema, *new_query);
   }
   query.reset(new_query);
-  _state.reset(new State(in_packet, in_packet_length));
+  _state.reset(new session::State(in_packet, in_packet_length));
 
   return true;
 }
@@ -838,19 +808,14 @@ bool Session::startTransaction(start_transaction_option_t opt)
 {
   bool result= true;
 
-  if (! endActiveTransaction())
+  assert(! inTransaction());
+
+  options|= OPTION_BEGIN;
+  server_status|= SERVER_STATUS_IN_TRANS;
+
+  if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
   {
     result= false;
-  }
-  else
-  {
-    options|= OPTION_BEGIN;
-    server_status|= SERVER_STATUS_IN_TRANS;
-
-    if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
-    {
-      result= false;
-    }
   }
 
   return result;
@@ -911,7 +876,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    if (!(lex_str= (LEX_STRING *)alloc(sizeof(LEX_STRING))))
+    if (!(lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING))))
       return 0;
   if (!(lex_str->str= mem_root->strmake_root(str, length)))
     return 0;
@@ -1125,7 +1090,7 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
 
   /* Check if there is any blobs in data */
   {
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
     while ((item=li++))
     {
@@ -1190,7 +1155,7 @@ bool select_export::send_data(List<Item> &items)
   row_count++;
   Item *item;
   uint32_t used_length=0,items_left=items.elements;
-  List_iterator_fast<Item> li(items);
+  List<Item>::iterator li(items.begin());
 
   if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),
                  exchange->line_start->length()))
@@ -1379,7 +1344,7 @@ select_dump::prepare(List<Item> &, Select_Lex_Unit *u)
 
 bool select_dump::send_data(List<Item> &items)
 {
-  List_iterator_fast<Item> li(items);
+  List<Item>::iterator li(items.begin());
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   tmp.length(0);
@@ -1432,7 +1397,7 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
     unit->offset_limit_cnt--;
     return(0);
   }
-  List_iterator_fast<Item> li(items);
+  List<Item>::iterator li(items.begin());
   Item *val_item;
   for (uint32_t i= 0; (val_item= li++); i++)
     it->store(i, val_item);
@@ -1450,7 +1415,7 @@ void select_max_min_finder_subselect::cleanup()
 bool select_max_min_finder_subselect::send_data(List<Item> &items)
 {
   Item_maxmin_subselect *it= (Item_maxmin_subselect *)item;
-  List_iterator_fast<Item> li(items);
+  List<Item>::iterator li(items.begin());
   Item *val_item= li++;
   it->register_value();
   if (it->assigned())
@@ -1652,13 +1617,10 @@ void Session::set_db(const std::string &new_db)
   @param  session   Thread handle
   @param  all   true <=> rollback main transaction.
 */
-void mark_transaction_to_rollback(Session *session, bool all)
+void Session::markTransactionForRollback(bool all)
 {
-  if (session)
-  {
-    session->is_fatal_sub_stmt_error= true;
-    session->transaction_rollback_request= all;
-  }
+  is_fatal_sub_stmt_error= true;
+  transaction_rollback_request= all;
 }
 
 void Session::disconnect(enum error_t errcode)
@@ -2048,74 +2010,6 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
       cerr << "\tTabl;e Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
     }
   }
-}
-
-bool Session::TableMessages::storeTableMessage(const identifier::Table &identifier, message::Table &table_message)
-{
-  table_message_cache.insert(make_pair(identifier.getPath(), table_message));
-
-  return true;
-}
-
-bool Session::TableMessages::removeTableMessage(const identifier::Table &identifier)
-{
-  TableMessageCache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
-  if (iter == table_message_cache.end())
-    return false;
-
-  table_message_cache.erase(iter);
-
-  return true;
-}
-
-bool Session::TableMessages::getTableMessage(const identifier::Table &identifier, message::Table &table_message)
-{
-  TableMessageCache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
-  if (iter == table_message_cache.end())
-    return false;
-
-  table_message.CopyFrom(((*iter).second));
-
-  return true;
-}
-
-bool Session::TableMessages::doesTableMessageExist(const identifier::Table &identifier)
-{
-  TableMessageCache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
-  if (iter == table_message_cache.end())
-  {
-    return false;
-  }
-
-  return true;
-}
-
-bool Session::TableMessages::renameTableMessage(const identifier::Table &from, const identifier::Table &to)
-{
-  TableMessageCache::iterator iter;
-
-  table_message_cache[to.getPath()]= table_message_cache[from.getPath()];
-
-  iter= table_message_cache.find(to.getPath());
-
-  if (iter == table_message_cache.end())
-  {
-    return false;
-  }
-
-  (*iter).second.set_schema(to.getSchemaName());
-  (*iter).second.set_name(to.getTableName());
-
-  return true;
 }
 
 table::Singular *Session::getInstanceTable()

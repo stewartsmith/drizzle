@@ -14,7 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 #include <cerrno>
 #include <unistd.h>
 

@@ -18,35 +18,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 
 #include <sstream>
 
-#include "drizzled/show.h"
-#include "drizzled/lock.h"
-#include "drizzled/session.h"
-#include "drizzled/statement/alter_table.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/show.h>
+#include <drizzled/lock.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/alter_table.h>
+#include <drizzled/global_charset_info.h>
 
 
-#include "drizzled/gettext.h"
-#include "drizzled/data_home.h"
-#include "drizzled/sql_table.h"
-#include "drizzled/table_proto.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/time_functions.h"
-#include "drizzled/records.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
+#include <drizzled/gettext.h>
+#include <drizzled/data_home.h>
+#include <drizzled/sql_table.h>
+#include <drizzled/table_proto.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/time_functions.h>
+#include <drizzled/records.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/copy_field.h>
 
-#include "drizzled/transaction_services.h"
+#include <drizzled/transaction_services.h>
 
-#include "drizzled/filesort.h"
+#include <drizzled/filesort.h>
 
-#include "drizzled/message.h"
+#include <drizzled/message.h>
 
 using namespace std;
 
@@ -80,7 +82,7 @@ namespace statement {
 AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_build_method build_arg) :
   CreateTable(in_session)
 { 
-  in_session->lex->sql_command= SQLCOM_ALTER_TABLE;
+  in_session->getLex()->sql_command= SQLCOM_ALTER_TABLE;
   (void)ident;
   alter_info.build_method= build_arg;
 }
@@ -89,10 +91,10 @@ AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_bui
 
 bool statement::AlterTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->lex->select_lex;
+  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
   bool need_start_waiting= false;
 
   is_engine_set= not createTableMessage().engine().name().empty();
@@ -117,7 +119,7 @@ bool statement::AlterTable::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (plugin::StorageEngine::getTableDefinition(*getSession(), identifier, original_table_message) != EEXIST)
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
@@ -153,7 +155,7 @@ bool statement::AlterTable::execute()
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                   getSession()->lex->name.str ? getSession()->lex->name.str : first_table->getTableName());
+                                   getSession()->getLex()->name.str ? getSession()->getLex()->name.str : first_table->getTableName());
 
     res= alter_table(getSession(), 
                      identifier,
@@ -165,7 +167,7 @@ bool statement::AlterTable::execute()
                      &alter_info,
                      select_lex->order_list.elements,
                      (Order *) select_lex->order_list.first,
-                     getSession()->lex->ignore);
+                     getSession()->getLex()->ignore);
   }
   else
   {
@@ -175,7 +177,7 @@ bool statement::AlterTable::execute()
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                       getSession()->lex->name.str ? getSession()->lex->name.str : first_table->getTableName(),
+                                       getSession()->getLex()->name.str ? getSession()->getLex()->name.str : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
       res= alter_table(getSession(), 
@@ -188,7 +190,7 @@ bool statement::AlterTable::execute()
                        &alter_info,
                        select_lex->order_list.elements,
                        (Order *) select_lex->order_list.first,
-                       getSession()->lex->ignore);
+                       getSession()->getLex()->ignore);
     }
   }
 
@@ -253,12 +255,12 @@ static bool prepare_alter_table(Session *session,
   List<CreateField> new_create_list;
   /* New key definitions are added here */
   List<Key> new_key_list;
-  List_iterator<AlterDrop> drop_it(alter_info->drop_list);
-  List_iterator<CreateField> def_it(alter_info->create_list);
-  List_iterator<AlterColumn> alter_it(alter_info->alter_list);
-  List_iterator<Key> key_it(alter_info->key_list);
-  List_iterator<CreateField> find_it(new_create_list);
-  List_iterator<CreateField> field_it(new_create_list);
+  List<AlterDrop>::iterator drop_it(alter_info->drop_list.begin());
+  List<CreateField>::iterator def_it(alter_info->create_list.begin());
+  List<AlterColumn>::iterator alter_it(alter_info->alter_list.begin());
+  List<Key>::iterator key_it(alter_info->key_list.begin());
+  List<CreateField>::iterator find_it(new_create_list.begin());
+  List<CreateField>::iterator field_it(new_create_list.begin());
   List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
   KeyInfo *key_info= table->key_info;
@@ -289,7 +291,7 @@ static bool prepare_alter_table(Session *session,
   {
     /* Check if field should be dropped */
     AlterDrop *drop;
-    drop_it.rewind();
+    drop_it= alter_info->drop_list.begin();
     while ((drop= drop_it++))
     {
       if (drop->type == AlterDrop::COLUMN &&
@@ -316,7 +318,7 @@ static bool prepare_alter_table(Session *session,
     field->setReadSet();
 
     /* Check if field is changed */
-    def_it.rewind();
+    def_it= alter_info->create_list.begin();
     while ((def= def_it++))
     {
       if (def->change &&
@@ -342,7 +344,7 @@ static bool prepare_alter_table(Session *session,
       */
       def= new CreateField(field, field);
       new_create_list.push_back(def);
-      alter_it.rewind(); /* Change default if ALTER */
+      alter_it= alter_info->alter_list.begin(); /* Change default if ALTER */
       AlterColumn *alter;
 
       while ((alter= alter_it++))
@@ -373,7 +375,7 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  def_it.rewind();
+  def_it= alter_info->create_list.begin();
   while ((def= def_it++)) /* Add new columns */
   {
     if (def->change && ! def->field)
@@ -399,7 +401,7 @@ static bool prepare_alter_table(Session *session,
     else
     {
       CreateField *find;
-      find_it.rewind();
+      find_it= new_create_list.begin();
 
       while ((find= find_it++)) /* Add new columns */
       {
@@ -461,7 +463,7 @@ static bool prepare_alter_table(Session *session,
     char *key_name= key_info->name;
     AlterDrop *drop;
 
-    drop_it.rewind();
+    drop_it= alter_info->drop_list.begin();
     while ((drop= drop_it++))
     {
       if (drop->type == AlterDrop::KEY &&
@@ -476,7 +478,7 @@ static bool prepare_alter_table(Session *session,
     }
 
     KeyPartInfo *key_part= key_info->key_part;
-    key_parts.empty();
+    key_parts.clear();
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
       if (! key_part->field)
@@ -484,7 +486,7 @@ static bool prepare_alter_table(Session *session,
 
       const char *key_part_name= key_part->field->field_name;
       CreateField *cfield;
-      field_it.rewind();
+      field_it= new_create_list.begin();
       while ((cfield= field_it++))
       {
         if (cfield->change)
@@ -566,7 +568,7 @@ static bool prepare_alter_table(Session *session,
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
     AlterDrop *drop;
-    drop_it.rewind();
+    drop_it= alter_info->drop_list.begin();
     while ((drop= drop_it++))
     {
       if (drop->type == AlterDrop::FOREIGN_KEY &&
@@ -721,10 +723,10 @@ static int discard_or_import_tablespace(Session *session,
    We set this flag so that ha_innobase::open and ::external_lock() do
    not complain when we lock the table
  */
-  session->tablespace_op= true;
+  session->setDoingTablespaceOperation(true);
   if (not (table= session->openTableLock(table_list, TL_WRITE)))
   {
-    session->tablespace_op= false;
+    session->setDoingTablespaceOperation(false);
     return -1;
   }
 
@@ -750,7 +752,7 @@ static int discard_or_import_tablespace(Session *session,
   } while(0);
 
   (void) transaction_services.autocommitOrRollback(*session, error);
-  session->tablespace_op=false;
+  session->setDoingTablespaceOperation(false);
 
   if (error == 0)
   {
@@ -1485,7 +1487,7 @@ copy_data_between_tables(Session *session,
   from->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
   to->cursor->ha_start_bulk_insert(from->cursor->stats.records);
 
-  List_iterator<CreateField> it(create);
+  List<CreateField>::iterator it(create.begin());
   CreateField *def;
   copy_end= copy;
   for (Field **ptr= to->getFields(); *ptr ; ptr++)
@@ -1523,13 +1525,13 @@ copy_data_between_tables(Session *session,
         from->sort.io_cache= new internal::IO_CACHE;
 
         tables.table= from;
-        tables.setTableName(const_cast<char *>(from->getMutableShare()->getTableName()));
-        tables.alias= const_cast<char *>(tables.getTableName());
+        tables.setTableName(from->getMutableShare()->getTableName());
+        tables.alias= tables.getTableName();
         tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
         error= 1;
 
-        if (session->lex->select_lex.setup_ref_array(session, order_num) ||
-            setup_order(session, session->lex->select_lex.ref_pointer_array,
+        if (session->getLex()->select_lex.setup_ref_array(session, order_num) ||
+            setup_order(session, session->getLex()->select_lex.ref_pointer_array,
                         &tables, fields, all_fields, order) ||
             !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
             (from->sort.found_records= filesort.run(from, sortorder, length,

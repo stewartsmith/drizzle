@@ -254,6 +254,11 @@ Options for controlling which tests are executed
    sort the testcases so that they are executed optimally
    for the given mode [False]
 
+.. option:: --repeat=REPEAT     
+    Run each test case the specified number of times.  For
+    a given sequence, the first test will be run n times,
+    then the second, etc [1]
+
 Options for defining the code that will be under test
 -----------------------------------------------------
 
@@ -314,13 +319,21 @@ Options for defining the testing environment
    Turn off the use of --secure-file-priv=vardir for
    started servers
 
+Options to pass options on to the server
+-----------------------------------------
+.. option:: --drizzled=DRIZZLEDOPTIONS
+           
+    Pass additional options to the server.  Will be passed
+    to all servers for all tests (mostly for --start-and-
+    exit)
+
+
 Options for defining the tools we use for code analysis (valgrind, gprof, gcov, etc)
 ---------------------------------------------------------------------------------------
 .. option:: --valgrind          
 
    Run drizzletest and drizzled executables using
    valgrind with default options [False]
-   (CURRENTLY INOP)
 
 .. option:: --valgrind-option=VALGRINDARGLIST
                        
@@ -332,8 +345,13 @@ Options for controlling the use of debuggers with test execution
 .. option:: --gdb
 
     Start the drizzled server(s) in gdb
-    (CURRENTLY INOP)
 
+.. option:: --manual-gdb
+
+    Allows you to start the drizzled server(s) in gdb
+    manually (in another window, etc
+
+    
 
 
 

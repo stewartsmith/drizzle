@@ -3,7 +3,9 @@ Group By
 
 The GROUP BY clause is used to extract only those records that fulfill a specified criterion.
 
-SQL GROUP BY Syntax ::
+SQL GROUP BY Syntax
+
+.. code-block:: mysql
 
 	SELECT column_name, aggregate_function(column_name)
 	FROM table_name
@@ -30,7 +32,9 @@ The "Activities" table:
 | 6       |2011-01-03    | Food         |20           |175       |
 +---------+--------------+--------------+-------------+----------+
 
-Running the following simple query::
+Running the following simple query
+
+.. code-block:: mysql
 
 	SELECT userID
 	FROM activities
@@ -54,7 +58,9 @@ Returns:
 
 However, GROUP BY is much more powerful when used with an aggregate function. Let's say you want to find the total amount spent by each unique User.
 
-You could use the following SQL statement: ::
+You could use the following SQL statement:
+
+.. code-block:: mysql
 
 	SELECT userID,SUM(ActivityCost) AS "Activity Total"
 	FROM Activities
@@ -73,7 +79,9 @@ userID    Activity Total
 
 With the aggregate SUM() function, SQL can calculate how much each unique user has spent on activities over time.
 
-We can also use the GROUP BY statement on more than one column, like this: ::
+We can also use the GROUP BY statement on more than one column, like this:
+
+.. code-block:: mysql
 
 	SELECT userID,ActivityDate,SUM(ActivityCost)
 	FROM Activities

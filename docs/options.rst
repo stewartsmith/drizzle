@@ -1,3 +1,5 @@
+.. _options:
+
 Drizzled Options
 ================
 

@@ -15,7 +15,7 @@
 
 /* drop and alter of tables */
 
-#include "config.h"
+#include <config.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
@@ -26,27 +26,27 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include "drizzled/strfunc.h"
-#include <drizzled/db.h>
+#include <drizzled/strfunc.h>
 #include <drizzled/lock.h>
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
-#include "drizzled/transaction_services.h"
+#include <drizzled/transaction_services.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/identifier.h>
-#include "drizzled/internal/m_string.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 
-#include "drizzled/definition/cache.h"
+#include <drizzled/definition/cache.h>
 
-
-#include "drizzled/statement/alter_table.h"
-#include "drizzled/sql_table.h"
-#include "drizzled/pthread_globals.h"
+#include <drizzled/statement/alter_table.h>
+#include <drizzled/sql_table.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/typelib.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <algorithm>
 #include <sstream>
@@ -57,8 +57,6 @@ using namespace std;
 
 namespace drizzled
 {
-
-extern pid_t current_pid;
 
 bool is_primary_key(KeyInfo *key_info)
 {
@@ -144,7 +142,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                    bool drop_temporary)
 {
   TableList *table;
-  String wrong_tables;
+  util::string::vector wrong_tables;
   int error= 0;
   bool foreign_key_error= false;
 
@@ -200,13 +198,17 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
       }
       identifier::Table identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
+      message::table::shared_ptr message= plugin::StorageEngine::getTableMessage(*session, identifier, true);
+
       if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
       {
         // Table was not found on disk and table can't be created from engine
         if (if_exists)
+        {
           push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                               ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
                               table->getTableName());
+        }
         else
         {
           error= 1;
@@ -219,8 +221,11 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         /* Generate transaction event ONLY when we successfully drop */ 
         if (plugin::StorageEngine::dropTable(*session, identifier, local_error))
         {
-          TransactionServices &transaction_services= TransactionServices::singleton();
-          transaction_services.dropTable(*session, identifier, if_exists);
+          if (message) // If we have no definition, we don't know if the table should have been replicated
+          {
+            TransactionServices &transaction_services= TransactionServices::singleton();
+            transaction_services.dropTable(*session, identifier, *message, if_exists);
+          }
         }
         else
         {
@@ -241,9 +246,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
       if (error)
       {
-        if (wrong_tables.length())
-          wrong_tables.append(',');
-        wrong_tables.append(String(table->getTableName(), system_charset_info));
+        wrong_tables.push_back(table->getTableName());
       }
     }
 
@@ -251,12 +254,23 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   } while (0);
 
-  if (wrong_tables.length())
+  if (wrong_tables.size())
   {
     if (not foreign_key_error)
     {
+      std::string table_error;
+
+      for (util::string::vector::iterator iter= wrong_tables.begin();
+           iter != wrong_tables.end();
+           iter++)
+      {
+        table_error+= *iter;
+        table_error+= ',';
+      }
+      table_error.resize(table_error.size() -1);
+
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
-                      wrong_tables.c_ptr());
+                      table_error.c_str());
     }
     else
     {
@@ -543,8 +557,8 @@ static int prepare_create_table(Session *session,
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		dup_no;
   int		select_field_pos,auto_increment=0;
-  List_iterator<CreateField> it(alter_info->create_list);
-  List_iterator<CreateField> it2(alter_info->create_list);
+  List<CreateField>::iterator it(alter_info->create_list.begin());
+  List<CreateField>::iterator it2(alter_info->create_list.begin());
   uint32_t total_uneven_bit_length= 0;
 
   plugin::StorageEngine *engine= plugin::StorageEngine::findByName(create_proto.engine().name());
@@ -638,7 +652,7 @@ static int prepare_create_table(Session *session,
         interval= sql_field->interval= typelib(session->mem_root,
                                                sql_field->interval_list);
 
-        List_iterator<String> int_it(sql_field->interval_list);
+        List<String>::iterator int_it(sql_field->interval_list.begin());
         String conv, *tmp;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
@@ -664,7 +678,7 @@ static int prepare_create_table(Session *session,
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
-        sql_field->interval_list.empty(); // Don't need interval_list anymore
+        sql_field->interval_list.clear(); // Don't need interval_list anymore
       }
 
       /* DRIZZLE_TYPE_ENUM */
@@ -687,7 +701,7 @@ static int prepare_create_table(Session *session,
           else /* not NULL */
           {
             def->length(cs->cset->lengthsp(cs, def->ptr(), def->length()));
-            if (find_type2(interval, def->ptr(), def->length(), cs) == 0) /* not found */
+            if (interval->find_type2(def->ptr(), def->length(), cs) == 0) /* not found */
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
               return(true);
@@ -768,14 +782,14 @@ static int prepare_create_table(Session *session,
       (*db_options)|= HA_OPTION_PACK_RECORD;
     }
 
-    it2.rewind();
+    it2= alter_info->create_list.begin();
   }
 
   /* record_offset will be increased with 'length-of-null-bits' later */
   record_offset= 0;
   null_fields+= total_uneven_bit_length;
 
-  it.rewind();
+  it= alter_info->create_list.begin();
   while ((sql_field=it++))
   {
     assert(sql_field->charset != 0);
@@ -815,8 +829,8 @@ static int prepare_create_table(Session *session,
 
   /* Create keys */
 
-  List_iterator<Key> key_iterator(alter_info->key_list);
-  List_iterator<Key> key_iterator2(alter_info->key_list);
+  List<Key>::iterator key_iterator(alter_info->key_list.begin());
+  List<Key>::iterator key_iterator2(alter_info->key_list.begin());
   uint32_t key_parts=0, fk_key_count=0;
   bool primary_key=0,unique_key=0;
   Key *key, *key2;
@@ -866,7 +880,7 @@ static int prepare_create_table(Session *session,
     }
     if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
       return(true);
-    key_iterator2.rewind ();
+    key_iterator2= alter_info->key_list.begin();
     if (key->type != Key::FOREIGN_KEY)
     {
       while ((key2 = key_iterator2++) != key)
@@ -919,7 +933,7 @@ static int prepare_create_table(Session *session,
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 
-  key_iterator.rewind();
+  key_iterator= alter_info->key_list.begin();
   key_number=0;
   for (; (key=key_iterator++) ; key_number++)
   {
@@ -978,14 +992,15 @@ static int prepare_create_table(Session *session,
 
     message::Table::Field *protofield= NULL;
 
-    List_iterator<Key_part_spec> cols(key->columns), cols2(key->columns);
+    List<Key_part_spec>::iterator cols(key->columns.begin());
+    List<Key_part_spec>::iterator cols2(key->columns.begin());
     for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint32_t length;
       Key_part_spec *dup_column;
       int proto_field_nr= 0;
 
-      it.rewind();
+      it= alter_info->create_list.begin();
       field=0;
       while ((sql_field=it++) && ++proto_field_nr &&
 	     my_strcasecmp(system_charset_info,
@@ -1012,7 +1027,7 @@ static int prepare_create_table(Session *session,
 	  return(true);
 	}
       }
-      cols2.rewind();
+      cols2= key->columns.begin();
 
       if (create_proto.field_size() > 0)
         protofield= create_proto.mutable_field(proto_field_nr - 1);
@@ -1225,14 +1240,14 @@ static int prepare_create_table(Session *session,
 	             (qsort_cmp) sort_keys);
 
   /* Check fields. */
-  it.rewind();
+  it= alter_info->create_list.begin();
   while ((sql_field=it++))
   {
     Field::utype type= (Field::utype) MTYP_TYPENR(sql_field->unireg_check);
 
     if (session->variables.sql_mode & MODE_NO_ZERO_DATE &&
         !sql_field->def &&
-        sql_field->sql_type == DRIZZLE_TYPE_TIMESTAMP &&
+        (sql_field->sql_type == DRIZZLE_TYPE_TIMESTAMP  or sql_field->sql_type == DRIZZLE_TYPE_MICROTIME) &&
         (sql_field->flags & NOT_NULL_FLAG) &&
         (type == Field::NONE || type == Field::TIMESTAMP_UN_FIELD))
     {
@@ -1753,16 +1768,16 @@ static bool admin_table(Session* session, TableList* tables,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
-  Select_Lex *select= &session->lex->select_lex;
+  Select_Lex *select= &session->getLex()->select_lex;
   List<Item> field_list;
   Item *item;
-  LEX *lex= session->lex;
   int result_code= 0;
   TransactionServices &transaction_services= TransactionServices::singleton();
   const CHARSET_INFO * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
     return 1;
+
   field_list.push_back(item = new Item_empty_string("Table",
                                                     NAME_CHAR_LEN * 2,
                                                     cs));
@@ -1778,10 +1793,12 @@ static bool admin_table(Session* session, TableList* tables,
 
   for (table= tables; table; table= table->next_local)
   {
-    char table_name[NAME_LEN*2+2];
+    identifier::Table table_identifier(table->getSchemaName(), table->getTableName());
+    std::string table_name;
     bool fatal_error=0;
 
-    snprintf(table_name, sizeof(table_name), "%s.%s", table->getSchemaName(), table->getTableName());
+    table_identifier.getSQLPath(table_name);
+
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {
@@ -1796,9 +1813,9 @@ static bool admin_table(Session* session, TableList* tables,
         so it have to be prepared.
         @todo Investigate if we can put extra tables into argument instead of using lex->query_tables
       */
-      lex->query_tables= table;
-      lex->query_tables_last= &table->next_global;
-      lex->query_tables_own_last= 0;
+      session->getLex()->query_tables= table;
+      session->getLex()->query_tables_last= &table->next_global;
+      session->getLex()->query_tables_own_last= 0;
       session->no_warnings_for_error= 0;
 
       session->openTablesLock(table);
@@ -1828,16 +1845,16 @@ static bool admin_table(Session* session, TableList* tables,
     {
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
-      session->getClient()->store(table_name);
+      session->getClient()->store(table_name.c_str());
       session->getClient()->store(operator_name);
       session->getClient()->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
-                       table_name);
+                       table_name.c_str());
       session->getClient()->store(buff, length);
       transaction_services.autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
-      lex->reset_query_tables_list(false);
+      session->getLex()->reset_query_tables_list(false);
       table->table=0;				// For query cache
       if (session->getClient()->flush())
 	goto err;
@@ -1863,14 +1880,14 @@ static bool admin_table(Session* session, TableList* tables,
 
 send_result:
 
-    lex->cleanup_after_one_table_open();
+    session->getLex()->cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List_iterator_fast<DRIZZLE_ERROR> it(session->warn_list);
+      List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
-        session->getClient()->store(table_name);
+        session->getClient()->store(table_name.c_str());
         session->getClient()->store(operator_name);
         session->getClient()->store(warning_level_names[err->level].str,
                                warning_level_names[err->level].length);
@@ -1880,7 +1897,7 @@ send_result:
       }
       drizzle_reset_errors(session, true);
     }
-    session->getClient()->store(table_name);
+    session->getClient()->store(table_name.c_str());
     session->getClient()->store(operator_name);
 
     switch (result_code) {
@@ -2003,9 +2020,8 @@ static bool create_table_wrapper(Session &session,
   // a "new" message and it will not have all of the information that the
   // source table message would have.
   message::Table new_table_message;
-  drizzled::error_t error;
 
-  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier, error);
+  message::table::shared_ptr source_table_message= plugin::StorageEngine::getTableMessage(session, source_identifier);
 
   if (not source_table_message)
   {

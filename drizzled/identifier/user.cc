@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/identifier.h"
-#include "drizzled/identifier/user.h"
+#include <drizzled/identifier.h>
+#include <drizzled/identifier/user.h>
 
 namespace drizzled
 {
@@ -36,12 +36,19 @@ void User::getSQLPath(std::string &arg) const
 {
   if (_user.empty())
   {
-    arg.append("no user");
+    arg+= "<no user>";
   }
   else
   {
-    arg.append(_user);
+    arg+= _user;
   }
+  // We should fix the below, to do so we need to match on localhost when we
+  // create the object.
+#if 0
+  arg+= "@";
+  arg+= _address;
+#endif
+
 }
 
 } /* namespace identifier */

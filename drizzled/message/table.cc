@@ -19,11 +19,11 @@
  */
 
 
-#include "config.h"
-#include "drizzled/message/table.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/catalog/local.h"
+#include <config.h>
+#include <drizzled/message/table.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/catalog/local.h>
 
 namespace drizzled {
 namespace message {

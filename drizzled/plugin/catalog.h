@@ -27,7 +27,7 @@
 #include <drizzled/catalog/instance.h>
 #include <drizzled/catalog/engine.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {

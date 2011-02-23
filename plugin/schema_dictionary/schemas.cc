@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/schema_dictionary/dictionary.h"
+#include <config.h>
+#include <plugin/schema_dictionary/dictionary.h>
 
 using namespace std;
 using namespace drizzled;
@@ -34,6 +34,7 @@ SchemasTool::SchemasTool() :
   add_field("SCHEMA_UUID", plugin::TableFunction::STRING, 36, true);
   add_field("SCHEMA_VERSION", plugin::TableFunction::NUMBER, 0, true);
   add_field("SCHEMA_USE_COUNT", plugin::TableFunction::NUMBER, 0, true);
+  add_field("IS_REPLICATED", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 SchemasTool::Generator::Generator(drizzled::Field **arg) :
@@ -76,6 +77,10 @@ bool SchemasTool::Generator::populate()
 
     /* SCHEMA_USE_COUNT */
     push(schema_ptr->version());
+
+    /* IS_REPLICATED */
+    push(message::is_replicated(*schema_ptr));
+
     return true;
   }
 

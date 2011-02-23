@@ -32,8 +32,8 @@
 #include <vector>
 #include <boost/program_options.hpp>
 
-#include "drizzled/module/manifest.h"
-#include "drizzled/module/registry.h"
+#include <drizzled/module/manifest.h>
+#include <drizzled/module/registry.h>
 
 
 namespace drizzled

@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/release_savepoint.h>
-#include "drizzled/transaction_services.h"
-#include "drizzled/named_savepoint.h"
+#include <drizzled/transaction_services.h>
+#include <drizzled/named_savepoint.h>
 
 #include <string>
 
@@ -50,8 +50,8 @@ bool statement::ReleaseSavepoint::execute()
     NamedSavepoint &sv= *iter;
     const string &sv_name= sv.getName();
     if (my_strnncoll(system_charset_info,
-                     (unsigned char *) getSession()->lex->ident.str,
-                     getSession()->lex->ident.length,
+                     (unsigned char *) getSession()->getLex()->ident.str,
+                     getSession()->getLex()->ident.length,
                      (unsigned char *) sv_name.c_str(),
                      sv_name.size()) == 0)
       break;
@@ -68,7 +68,7 @@ bool statement::ReleaseSavepoint::execute()
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 
-             getSession()->lex->ident.str);
+             getSession()->getLex()->ident.str);
   }
   return false;
 }

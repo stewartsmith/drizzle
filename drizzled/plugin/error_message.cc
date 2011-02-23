@@ -17,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/plugin/error_message.h"
+#include <config.h>
 
-#include "drizzled/gettext.h"
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/plugin/error_message.h>
 
 #include <cstdio>
 #include <algorithm>
@@ -85,6 +86,8 @@ public:
 
 bool plugin::ErrorMessage::vprintf(error::level_t priority, char const *format, va_list ap)
 {
+  if (not (priority >= error::verbosity()))
+    return false;
 
   /* 
     Check to see if any errmsg plugin has been loaded
@@ -96,8 +99,8 @@ bool plugin::ErrorMessage::vprintf(error::level_t priority, char const *format, 
        (single writes are atomic), then this needs to be rewritten to
        vsprintf into a char buffer, and then write() that char buffer
        to stderr */
-    vfprintf(stderr, format, ap);
-    fputc('\n', stderr);
+      vfprintf(stderr, format, ap);
+      fputc('\n', stderr);
     return false;
   }
 

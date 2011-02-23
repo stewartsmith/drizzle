@@ -1,10 +1,7 @@
 SHOW
 =====
 
-All SHOW commands are shorthand forms of queries on the INFORMATION_SCHEMA
-and/or DATA_DICTIONARY. More data can be
-gained by exeucting queries directly on the tables found either the
-DATA_DICTIONARY or the INFORMATION_SCHEMA.
+All SHOW commands are shorthand forms of queries on the INFORMATION_SCHEMA and/or DATA_DICTIONARY. More data can be gained by executing queries directly on the tables found either the DATA_DICTIONARY or the INFORMATION_SCHEMA.
 
 SHOW SCHEMAS
 ------------

@@ -33,6 +33,7 @@ namespace message {
 namespace table {
 
 typedef boost::shared_ptr <message::Table> shared_ptr;
+typedef const message::Table& const_reference;
 
 shared_ptr make_shared(identifier::Table::const_reference identifier, const std::string &engine_arg);
 shared_ptr make_shared(const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg);

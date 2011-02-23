@@ -23,7 +23,7 @@ The database buffer replacement algorithm
 Created 11/5/1995 Heikki Tuuri
 *******************************************************/
 
-#include "config.h"
+#include <config.h>
 #include "buf0lru.h"
 
 #ifdef UNIV_NONINL

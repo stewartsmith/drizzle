@@ -17,8 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
+#include <drizzled/charset_info.h>
 #include <drizzled/function/find_in_set.h>
 
 /* Search after a string in a string of strings separated by ',' */

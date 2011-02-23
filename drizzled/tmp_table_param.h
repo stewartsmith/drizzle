@@ -21,8 +21,12 @@
 #ifndef DRIZZLED_TMP_TABLE_PARAM_H
 #define DRIZZLED_TMP_TABLE_PARAM_H
 
+#include <plugin/myisam/myisam.h>
+
 namespace drizzled
 {
+
+class CopyField;
 
 /*
   Param to create temporary tables when doing SELECT:s

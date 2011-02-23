@@ -18,8 +18,8 @@
  */
 
 
-#include "config.h"
-#include "drizzled/file_exchange.h"
+#include <config.h>
+#include <drizzled/file_exchange.h>
 
 namespace drizzled
 {

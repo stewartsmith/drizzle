@@ -22,12 +22,12 @@
 
 /* classes for sum functions */
 
-
-#include "drizzled/tree.h"
+#include <drizzled/tree.h>
 #include <drizzled/hybrid_type.h>
 #include <drizzled/item.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
+#include <drizzled/charset_info.h>
 
 namespace drizzled
 {
@@ -366,6 +366,7 @@ public:
     forced_const= true;
   }
   virtual bool const_item() const { return forced_const; }
+  virtual bool const_during_execution() const { return false; }
   void make_field(SendField *field);
   virtual void print(String *str, enum_query_type query_type);
   void fix_num_length_and_dec();

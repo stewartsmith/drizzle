@@ -19,7 +19,7 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
 #include <float.h>
 #include <math.h>
@@ -30,7 +30,8 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/current_session.h>
+#include <drizzled/internal/m_string.h>
 
 using namespace std;
 
@@ -83,7 +84,7 @@ int Field_double::store(int64_t nr, bool unsigned_val)
                              (double) nr);
 }
 
-double Field_double::val_real(void)
+double Field_double::val_real(void) const
 {
   double j;
 
@@ -100,7 +101,7 @@ double Field_double::val_real(void)
   return j;
 }
 
-int64_t Field_double::val_int(void)
+int64_t Field_double::val_int(void) const
 {
   double j;
   int64_t res;
@@ -133,7 +134,8 @@ warn:
     char buf[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), &my_charset_utf8_general_ci), *str;
     str= val_str(&tmp, &tmp);
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    Session *session= getTable() ? getTable()->in_use : current_session;
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "INTEGER",
                         str->c_ptr());
@@ -142,8 +144,7 @@ warn:
 }
 
 
-String *Field_double::val_str(String *val_buffer,
-			      String *)
+String *Field_double::val_str(String *val_buffer, String *) const
 {
   double nr;
 

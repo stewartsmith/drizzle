@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/generator.h"
-#include "drizzled/function_container.h"
-#include "drizzled/plugin/function.h"
-#include "drizzled/session.h"
+#include <drizzled/generator.h>
+#include <drizzled/function_container.h>
+#include <drizzled/plugin/function.h>
+#include <drizzled/session.h>
 
 using namespace std;
 

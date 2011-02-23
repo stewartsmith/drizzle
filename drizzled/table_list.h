@@ -150,7 +150,7 @@ public:
   const char *alias;
 
 private:
-  char *table_name;
+  const char *table_name;
 
 public:
   const char *getTableName()
@@ -158,12 +158,7 @@ public:
     return table_name;
   }
 
-  char **getTableNamePtr()
-  {
-    return &table_name;
-  }
-
-  void setTableName(char *arg)
+  void setTableName(const char *arg)
   {
     table_name= arg;
   }

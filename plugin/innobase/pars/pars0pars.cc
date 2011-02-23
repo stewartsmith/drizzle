@@ -1133,9 +1133,12 @@ pars_set_dfield_type(
 	}
 
 	if (type == &pars_int_token) {
-		ut_a(len == 0);
-
-		dtype_set(dfield_get_type(dfield), DATA_INT, flags, 4);
+		ut_a((len == 0) || (len == 8));
+		if (len == 8) {
+			dtype_set(dfield_get_type(dfield), DATA_INT, flags, 8);
+		} else {
+			dtype_set(dfield_get_type(dfield), DATA_INT, flags, 4);
+		}
 
 	} else if (type == &pars_char_token) {
 		ut_a(len == 0);

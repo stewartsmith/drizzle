@@ -36,9 +36,13 @@
 #ifndef DRIZZLED_UTIL_STRING_H
 #define DRIZZLED_UTIL_STRING_H
 
+#include <utility>
 #include <string>
+#include <vector>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace drizzled
 {
@@ -50,6 +54,7 @@ namespace util
 namespace string {
 typedef boost::shared_ptr<std::string> shared_ptr;
 typedef boost::shared_ptr<const std::string> const_shared_ptr;
+typedef std::vector< std::string > vector;
 }
 
 struct insensitive_equal_to : std::binary_function<std::string, std::string, bool>

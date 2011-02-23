@@ -22,18 +22,6 @@
 
 namespace drizzled
 {
-
-typedef struct charset_info_st CHARSET_INFO;
-typedef struct st_typelib TYPELIB;
-
-uint64_t find_set(TYPELIB *lib, const char *x, uint32_t length,
-                  const CHARSET_INFO * const cs,
-                  char **err_pos, uint32_t *err_len, bool *set_warning);
-uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
-                   bool part_match);
-uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
-                    const CHARSET_INFO *cs);
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_STRFUNC_H */

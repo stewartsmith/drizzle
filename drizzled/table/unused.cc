@@ -18,21 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 
-#include "drizzled/identifier.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/set_var.h"
+#include <drizzled/identifier.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/set_var.h>
 
-#include "drizzled/table/unused.h"
+#include <drizzled/table/unused.h>
 
 namespace drizzled
 {
+
+extern uint64_t table_cache_size;
 
 namespace table
 {

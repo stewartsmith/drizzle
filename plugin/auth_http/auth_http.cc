@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <curl/curl.h>
 
@@ -25,9 +25,9 @@
 #include <cassert>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include "drizzled/identifier.h"
-#include "drizzled/plugin/authentication.h"
-#include "drizzled/gettext.h"
+#include <drizzled/identifier.h>
+#include <drizzled/plugin/authentication.h>
+#include <drizzled/gettext.h>
 namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;

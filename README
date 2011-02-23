@@ -1,3 +1,27 @@
+Drizzle
+-------
+
+A Lightweight SQL Database for Cloud and Web
+
+http://www.drizzle.org
+#drizzle on FreeNode
+
+Drizzle is a community-driven open source project that is forked from the popular MySQL database.  
+
+The Drizzle team has removed non-essential code, re-factored the remaining code and modernized the code base moving to C++.
+
+Charter
+ * A database optimized for Cloud infrastructure and Web applications
+ * Design for massive concurrency on modern multi-cpu architecture
+ * Optimize memory for increased performance and parallelism
+ * Open source, open community, open design
+
+Scope
+ * Re-designed modular architecture providing plugins with defined APIs
+ * Simple design for ease of use and administration
+ * Reliable, ACID transactional
+
+
 The most current information is on the wiki, but are some essential links
 and notes for getting started.
 

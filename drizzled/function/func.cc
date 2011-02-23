@@ -17,20 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <drizzled/sql_string.h>
-#include <drizzled/sql_list.h>
-
-#include <drizzled/function/math/int.h>
-#include <drizzled/field/int32.h>
-#include <drizzled/field/int64.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/field/double.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/size.h>
+#include <drizzled/function/math/int.h>
 #include <drizzled/session.h>
-#include <drizzled/error.h>
-#include <drizzled/check_stack_overrun.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/sql_string.h>
+
 #include <limits>
 #include <algorithm>
 
@@ -40,6 +41,84 @@ namespace drizzled
 {
 
 
+Item_func::Item_func(void):
+  _session(*current_session),
+  allowed_arg_cols(1), arg_count(0),
+  const_item_cache(false)
+  {
+    with_sum_func= 0;
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a):
+  _session(*current_session),
+  allowed_arg_cols(1), arg_count(1),
+  const_item_cache(false)
+  {
+    args= tmp_arg;
+    args[0]= a;
+    with_sum_func= a->with_sum_func;
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a,Item *b):
+  _session(*current_session),
+  allowed_arg_cols(1), arg_count(2),
+  const_item_cache(false)
+  {
+    args= tmp_arg;
+    args[0]= a; args[1]= b;
+    with_sum_func= a->with_sum_func || b->with_sum_func;
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a,Item *b,Item *c):
+  _session(*current_session),
+  allowed_arg_cols(1),
+  const_item_cache(false)
+  {
+    arg_count= 0;
+    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*3)))
+    {
+      arg_count= 3;
+      args[0]= a; args[1]= b; args[2]= c;
+      with_sum_func= a->with_sum_func || b->with_sum_func || c->with_sum_func;
+    }
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a,Item *b,Item *c,Item *d):
+  _session(*current_session),
+  allowed_arg_cols(1),
+  const_item_cache(false)
+  {
+    arg_count= 0;
+    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*4)))
+    {
+      arg_count= 4;
+      args[0]= a; args[1]= b; args[2]= c; args[3]= d;
+      with_sum_func= a->with_sum_func || b->with_sum_func ||
+        c->with_sum_func || d->with_sum_func;
+    }
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
+  _session(*current_session),
+  allowed_arg_cols(1),
+  const_item_cache(false)
+  {
+    arg_count= 5;
+    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*5)))
+    {
+      args[0]= a; args[1]= b; args[2]= c; args[3]= d; args[4]= e;
+      with_sum_func= a->with_sum_func || b->with_sum_func ||
+        c->with_sum_func || d->with_sum_func || e->with_sum_func ;
+    }
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+
 void Item_func::set_arguments(List<Item> &list)
 {
   allowed_arg_cols= 1;
@@ -47,7 +126,7 @@ void Item_func::set_arguments(List<Item> &list)
   args= tmp_arg;                                // If 2 arguments
   if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
     Item **save_args= args;
 
@@ -57,7 +136,7 @@ void Item_func::set_arguments(List<Item> &list)
       with_sum_func|=item->with_sum_func;
     }
   }
-  list.empty();          // Fields are used
+  list.clear();          // Fields are used
 }
 
 Item_func::Item_func(List<Item> &list) :
@@ -84,7 +163,7 @@ Item_func::Item_func(Session *session, Item_func *item) :
       args= tmp_arg;
     else
     {
-      if (!(args=(Item**) session->alloc(sizeof(Item*)*arg_count)))
+      if (!(args=(Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
         return;
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);

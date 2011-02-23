@@ -18,13 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/plugin/logging.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/plugin/logging.h>
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled
 {
@@ -53,7 +55,7 @@ bool statement::Flush::execute()
 bool statement::Flush::reloadCache()
 {
   bool result= false;
-  TableList *tables= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *tables= (TableList *) getSession()->getLex()->select_lex.table_list.first;
 
   if (flush_log)
   {

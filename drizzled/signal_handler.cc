@@ -17,20 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <signal.h>
 
-#include "drizzled/signal_handler.h"
-#include "drizzled/drizzled.h"
-#include "drizzled/session.h"
-#include "drizzled/session/cache.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/probes.h"
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/scheduler.h"
+#include <drizzled/signal_handler.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/probes.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/scheduler.h>
+#include <drizzled/current_session.h>
 
-#include "drizzled/util/backtrace.h"
+#include <drizzled/util/backtrace.h>
 
 using namespace drizzled;
 

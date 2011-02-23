@@ -43,6 +43,7 @@
 #define DRIZZLED_TEMPORAL_H
 
 #define DRIZZLE_MAX_SECONDS 59
+#define DRIZZLE_MAX_SECONDS_WITH_LEAP 61
 #define DRIZZLE_MAX_MINUTES 59
 #define DRIZZLE_MAX_HOURS 23
 #define DRIZZLE_MAX_DAYS 31
@@ -66,7 +67,7 @@
 
 #define DRIZZLE_YY_PART_YEAR  70
 
-#include "drizzled/calendar.h"
+#include <drizzled/calendar.h>
 
 #include <cassert>
 #include <ostream>

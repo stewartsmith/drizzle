@@ -20,7 +20,7 @@
 #ifndef PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_DEFINITION_CACHE_H
 #define PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_DEFINITION_CACHE_H
 
-#include "drizzled/generator.h"
+#include <drizzled/generator.h>
 
 namespace table_cache_dictionary {
 

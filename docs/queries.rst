@@ -6,7 +6,9 @@ are performed with the declarative SELECT statement, which has no
 persistent effects on the database. SELECT simply retrieves data from
 one or more tables, or expressions.
 
-A query includes a list of columns to be included in a result set; an example of this would be:  ::
+A query includes a list of columns to be included in a result set; an example of this would be:
+
+.. code-block:: mysql
 
 	SELECT * FROM table_name;
 
@@ -24,7 +26,9 @@ Keywords and clauses include:
    orderby
    join
 
-For example, ::
+For example:
+
+.. code-block:: mysql
 
 	SELECT first_column_name, second_column_name
 	FROM table_name

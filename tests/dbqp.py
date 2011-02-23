@@ -82,5 +82,16 @@ finally:
 # TODO - make a more robust cleanup
 # At the moment, runaway servers are our biggest concern
     if server_manager and not variables['startandexit']:
-        server_manager.cleanup()
+        if variables['gdb']:
+            server_manager.cleanup_all_servers()
+        else:
+            server_manager.cleanup()
+    if not variables['startandexit']:
+        if test_manager:
+            fail_count = test_manager.has_failing_tests()
+            sys.exit(test_manager.has_failing_tests())
+        else:
+            # return 1 as we likely have a problem if we don't have a
+            # test_manager
+            sys.exit(1)
 

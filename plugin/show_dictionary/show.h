@@ -42,7 +42,7 @@ public:
 
     bool isShowQuery()
     {
-      if (getSession().lex->statement->isShow())
+      if (getSession().getLex()->statement->isShow())
        return true;
 
       return false;

@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_INTERNAL_IOCACHE_H
 #define DRIZZLED_INTERNAL_IOCACHE_H
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 namespace drizzled
 {

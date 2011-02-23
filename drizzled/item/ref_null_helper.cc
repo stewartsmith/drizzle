@@ -17,10 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/item/ref.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {

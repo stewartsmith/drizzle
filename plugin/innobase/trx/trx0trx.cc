@@ -186,6 +186,8 @@ trx_create(
 	trx->autoinc_locks = ib_vector_create(
 		mem_heap_create(sizeof(ib_vector_t) + sizeof(void*) * 4), 4);
 
+	trx->log_commit_id= FALSE;
+
 	return(trx);
 }
 
@@ -772,17 +774,14 @@ trx_commit_off_kernel(
 
 		mutex_exit(&(rseg->mutex));
 
-		/* Update the latest MySQL binlog name and offset info
-		in trx sys header if MySQL binlogging is on or the database
-		server is a MySQL replication slave */
-
-		if (trx->mysql_log_file_name
-		    && trx->mysql_log_file_name[0] != '\0') {
-			trx_sys_update_mysql_binlog_offset(
-				trx->mysql_log_file_name,
-				trx->mysql_log_offset,
-				TRX_SYS_MYSQL_LOG_INFO, &mtr);
-			trx->mysql_log_file_name = NULL;
+		/* Update the highest commit id currently in the system */
+		if (trx_log_commit_id(trx))
+ 		{
+			mutex_enter(&commit_id_mutex);
+			trx_sys_flush_commit_id(trx_sys_commit_id,
+						TRX_SYS_DRIZZLE_LOG_INFO,
+						&mtr);
+			mutex_exit(&commit_id_mutex);
 		}
 
 		/* The following call commits the mini-transaction, making the

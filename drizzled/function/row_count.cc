@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/row_count.h>
 #include <drizzled/session.h>
@@ -28,9 +28,7 @@ namespace drizzled
 int64_t Item_func_row_count::val_int()
 {
   assert(fixed == 1);
-  Session *session= current_session;
-
-  return session->row_count_func;
+  return getSession().rowCount();
 }
 
 

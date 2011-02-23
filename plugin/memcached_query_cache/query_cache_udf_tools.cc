@@ -33,13 +33,13 @@
  * Implements the PRINT_QUERY_CACHE_META(key) and QUERY_CACHE_FLUSH(expiry_time) UDFs.
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/error.h>
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/charset.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/charset.h>
 
 #include <fcntl.h>
 

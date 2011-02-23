@@ -7,7 +7,6 @@ client/drizzleimport.cc
 client/drizzleslap.cc
 client/drizzletest.cc
 drizzled/cursor.cc
-drizzled/db.cc
 drizzled/drizzled.cc
 drizzled/error.cc
 drizzled/gettext.h
@@ -41,6 +40,7 @@ drizzled/plugin/table_function.cc
 drizzled/plugin/xa_resource_manager.cc
 drizzled/plugin/xa_storage_engine.cc
 drizzled/replication_services.cc
+drizzled/schema.cc
 drizzled/session.cc
 drizzled/set_var.cc
 drizzled/show.cc
@@ -96,7 +96,6 @@ plugin/syslog/errmsg.cc
 plugin/syslog/function.cc
 plugin/syslog/logging.cc
 plugin/syslog/module.cc
-plugin/transaction_log/background_worker.cc
 plugin/transaction_log/hexdump_transaction_message.cc
 plugin/transaction_log/module.cc
 plugin/transaction_log/print_transaction_message.cc

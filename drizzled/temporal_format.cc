@@ -28,10 +28,10 @@
  * Implementation of the server's date and time string matching utility.
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/temporal_format.h"
-#include "drizzled/temporal.h"
+#include <drizzled/temporal_format.h>
+#include <drizzled/temporal.h>
 
 #include <string.h>
 #include PCRE_HEADER

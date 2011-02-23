@@ -9,4 +9,6 @@ If you wish to write portable tools you should make use of the INFORMATION_SCHEM
 
 That table contains the name and value of the :doc:`/variables` that the user has created during the current session.
 
-FIXME: the above is specific to the VARIABLES table.
+.. todo::
+   
+   the above is specific to the VARIABLES table.

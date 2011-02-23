@@ -26,7 +26,7 @@
 #ifndef PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_MANAGER_H
 #define PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_MANAGER_H
 
-#include "drizzled/message/transaction.pb.h"
+#include <drizzled/message/transaction.pb.h>
 #include <string>
 #include <vector>
 #include <boost/unordered_map.hpp>

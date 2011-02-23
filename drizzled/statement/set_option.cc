@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/set_option.h>
@@ -41,13 +41,13 @@ SetOption::SetOption(Session *in_session) :
 
 bool statement::SetOption::execute()
 {
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *all_tables= getSession()->getLex()->query_tables;
 
   if (getSession()->openTablesLock(all_tables))
   {
     return true;
   }
-  bool res= sql_set_variables(getSession(), getSession()->lex->var_list);
+  bool res= sql_set_variables(getSession(), getSession()->getLex()->var_list);
   if (res)
   {
     /*

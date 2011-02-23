@@ -36,7 +36,7 @@
 // in other headers. So the only safe thing I can think of is to include it in all source code
 // files.
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 #include <drizzled/common.h>
 #else
 #include "my_global.h"
@@ -48,7 +48,7 @@
 #if defined(WIN32) ||  defined(WIN64) 
 #include "win_config.h"
 #else
-#include "config.h"
+#include <config.h>
 #endif
 
 #endif // defined(MYSQL_SERVER) ||  defined(DRIZZLED)

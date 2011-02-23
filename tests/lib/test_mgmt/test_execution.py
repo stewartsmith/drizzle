@@ -51,6 +51,7 @@ class testExecutor():
         self.status = 0 # not running
         self.execution_manager = execution_manager
         self.system_manager = self.execution_manager.system_manager
+        self.testcase_repeat_count = self.execution_manager.testcase_repeat_count
         self.cmd_prefix = self.system_manager.cmd_prefix
         self.logging = self.system_manager.logging
         self.test_manager = self.execution_manager.test_manager
@@ -83,9 +84,7 @@ class testExecutor():
         #self.test_manager.mutex.acquire()
         self.current_testcase = self.test_manager.get_testCase(self.name)
         #self.test_manager.mutex.release()
-        if self.debug:
-            self.logging.debug("Executor: %s, assigned test: %s" %(self.name
-                                            , self.current_testcase.fullname))
+        
 
     def handle_server_reqs(self, start_and_exit):
         """ Get the servers required to execute the testCase 
@@ -151,11 +150,12 @@ class testExecutor():
             self.get_testCase()
             self.handle_system_reqs()
             self.handle_server_reqs(start_and_exit)
-            self.execute_testCase()
-            self.record_test_result()
-            if self.current_test_status == 'fail' and not self.execution_manager.force:
-                self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
-                keep_running = 0
+            for i in range(self.testcase_repeat_count):
+                self.execute_testCase()
+                self.record_test_result()
+                if self.current_test_status == 'fail' and not self.execution_manager.force:
+                    self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
+                    keep_running = 0
         self.status = 0
 
     def execute_testCase(self):

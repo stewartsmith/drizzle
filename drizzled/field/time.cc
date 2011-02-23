@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/time.h>
 #include <drizzled/error.h>
@@ -30,7 +30,7 @@
 
 #include <sstream>
 
-#include "drizzled/temporal.h"
+#include <drizzled/temporal.h>
 
 namespace drizzled
 {
@@ -49,26 +49,24 @@ namespace field
              uint32_t,
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
-             const char *field_name_arg,
-             const CHARSET_INFO * const cs) :
+             const char *field_name_arg) :
     Field_str(ptr_arg,
               DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
               null_ptr_arg,
               null_bit_arg,
               field_name_arg,
-              cs)
+              &my_charset_bin)
 {
 }
 
 Time::Time(bool maybe_null_arg,
-           const char *field_name_arg,
-           const CHARSET_INFO * const cs) :
+           const char *field_name_arg) :
   Field_str((unsigned char*) NULL,
             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
             maybe_null_arg ? (unsigned char*) "": 0,
             0,
             field_name_arg,
-            cs)
+            &my_charset_bin)
 {
 }
 
@@ -163,7 +161,7 @@ void Time::pack_time(drizzled::Time &temporal)
   memcpy(ptr, &tmp, sizeof(int32_t));
 }
 
-void Time::unpack_time(drizzled::Time &temporal)
+void Time::unpack_time(drizzled::Time &temporal) const
 {
   int32_t tmp;
 
@@ -173,18 +171,18 @@ void Time::unpack_time(drizzled::Time &temporal)
   temporal.from_int32_t(tmp);
 }
 
-void Time::unpack_time(int32_t &destination, const unsigned char *source)
+void Time::unpack_time(int32_t &destination, const unsigned char *source) const
 {
   memcpy(&destination, source, sizeof(int32_t));
   destination= htonl(destination);
 }
 
-double Time::val_real(void)
+double Time::val_real(void) const
 {
   return (double) Time::val_int();
 }
 
-int64_t Time::val_int(void)
+int64_t Time::val_int(void) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -197,7 +195,7 @@ int64_t Time::val_int(void)
   return result;
 }
 
-String *Time::val_str(String *val_buffer, String *)
+String *Time::val_str(String *val_buffer, String *) const
 {
   char *to;
   int to_len= field_length + 1;
@@ -218,7 +216,7 @@ String *Time::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Time::get_date(type::Time &ltime, uint32_t)
+bool Time::get_date(type::Time &ltime, uint32_t) const
 {
   ltime.reset();
 
@@ -236,7 +234,7 @@ bool Time::get_date(type::Time &ltime, uint32_t)
   return 0;
 }
 
-bool Time::get_time(type::Time &ltime)
+bool Time::get_time(type::Time &ltime) const
 {
   return Time::get_date(ltime, 0);
 }
@@ -277,7 +275,7 @@ void Time::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("timestamp"));
 }
 
-long Time::get_timestamp(bool *null_value)
+long Time::get_timestamp(bool *null_value) const
 {
   if ((*null_value= is_null()))
     return 0;

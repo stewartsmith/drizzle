@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/plugin/storage_engine.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 #include <drizzled/message.h>
 
 #include <string>
@@ -35,7 +35,7 @@ namespace drizzled
 
 bool statement::AlterSchema::execute()
 {
-  LEX_STRING *db= &getSession()->lex->name;
+  LEX_STRING *db= &getSession()->getLex()->name;
   message::schema::shared_ptr old_definition;
 
   if (not validateSchemaOptions())
@@ -43,7 +43,7 @@ bool statement::AlterSchema::execute()
 
   identifier::Schema schema_identifier(string(db->str, db->length));
 
-  if (not check_db_name(getSession(), schema_identifier))
+  if (not schema::check(*getSession(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
@@ -51,7 +51,7 @@ bool statement::AlterSchema::execute()
   }
 
   identifier::Schema identifier(db->str);
-  if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
+  if (not (old_definition= plugin::StorageEngine::getSchemaDefinition(identifier)))
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 
     return true;
@@ -83,7 +83,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= alter_db(getSession(), schema_message, old_definition);
+  bool res= schema::alter(*getSession(), schema_message, *old_definition);
 
   return not res;
 }

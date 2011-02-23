@@ -32,7 +32,7 @@
 #include <sys/mman.h>
 #endif
 #include <drizzled/util/test.h>
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 
 #include <cassert>
 #include <algorithm>

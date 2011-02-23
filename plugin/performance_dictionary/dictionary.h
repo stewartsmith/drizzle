@@ -25,8 +25,8 @@
 #include <drizzled/plugin/logging.h>
 
 // Prototypes
-#include "plugin/performance_dictionary/query_usage.h"
-#include "plugin/performance_dictionary/session_usage_logger.h"
-#include "plugin/performance_dictionary/session_usage.h"
+#include <plugin/performance_dictionary/query_usage.h>
+#include <plugin/performance_dictionary/session_usage_logger.h>
+#include <plugin/performance_dictionary/session_usage.h>
 
 #endif /* PLUGIN_PERFORMANCE_DICTIONARY_DICTIONARY_H */

@@ -22,8 +22,7 @@
 
 #include <list>
 
-#include "drizzled/session.h"
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -35,8 +34,9 @@ namespace session
 
 class DRIZZLED_API Cache 
 {
+  typedef boost::shared_ptr<drizzled::Session> session_shared_ptr;
 public:
-  typedef std::list<Session::shared_ptr> list;
+  typedef std::list<session_shared_ptr> list;
 
   Cache() :
     _ready_to_exit(false)
@@ -68,11 +68,11 @@ public:
   void shutdownFirst();
   void shutdownSecond();
 
-  void erase(Session::shared_ptr&);
+  void erase(session_shared_ptr&);
   size_t count();
-  void insert(Session::shared_ptr &arg);
+  void insert(session_shared_ptr &arg);
 
-  Session::shared_ptr find(const session_id_t &id);
+  session_shared_ptr find(const session_id_t &id);
 
 private:
   bool volatile _ready_to_exit;

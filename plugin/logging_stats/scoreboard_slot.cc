@@ -28,7 +28,7 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/session.h>

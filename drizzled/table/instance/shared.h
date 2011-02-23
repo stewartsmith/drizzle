@@ -56,6 +56,8 @@ public:
          const identifier::Table &identifier,
          char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
+  Shared(const identifier::Table &identifier, message::schema::shared_ptr schema_message);
+
   Shared(const identifier::Table &identifier); // Used by placeholder
 
   ~Shared();
@@ -87,8 +89,11 @@ public:
     event_observers= observers;
   }
 
+  virtual bool is_replicated() const;
+
 private:
   boost::mutex mutex;                /* For locking the share  */
+  drizzled::message::schema::shared_ptr _schema;
 
   /* 
     event_observers is a class containing all the event plugins that have 

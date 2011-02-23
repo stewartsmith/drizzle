@@ -22,7 +22,7 @@
 #define DRIZZLED_IDENTIFIER_CATALOG_H
 
 #include <drizzled/enum.h>
-#include "drizzled/definitions.h"
+#include <drizzled/definitions.h>
 #include <string.h>
 
 #include <assert.h>

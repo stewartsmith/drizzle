@@ -19,12 +19,12 @@
   The bytes are compare as unsigned chars.
   */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <assert.h>
 
-#include "plugin/myisam/myisampack.h"
+#include <plugin/myisam/myisampack.h>
 
 namespace drizzled
 {
@@ -62,8 +62,8 @@ qsort2_cmp get_ptr_compare (size_t size)
 
 static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char **b)
 {
-  register int length= *compare_length;
-  register unsigned char *first,*last;
+  int length= *compare_length;
+  unsigned char *first,*last;
 
   first= *a; last= *b;
   while (--length)
@@ -77,8 +77,8 @@ static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char 
 
 static int ptr_compare_0(size_t *compare_length,unsigned char **a, unsigned char **b)
 {
-  register int length= *compare_length;
-  register unsigned char *first,*last;
+  int length= *compare_length;
+  unsigned char *first,*last;
 
   first= *a; last= *b;
  loop:
@@ -98,8 +98,8 @@ static int ptr_compare_0(size_t *compare_length,unsigned char **a, unsigned char
 
 static int ptr_compare_1(size_t *compare_length,unsigned char **a, unsigned char **b)
 {
-  register int length= *compare_length-1;
-  register unsigned char *first,*last;
+  int length= *compare_length-1;
+  unsigned char *first,*last;
 
   first= *a+1; last= *b+1;
   cmp(-1);
@@ -119,8 +119,8 @@ static int ptr_compare_1(size_t *compare_length,unsigned char **a, unsigned char
 
 static int ptr_compare_2(size_t *compare_length,unsigned char **a, unsigned char **b)
 {
-  register int length= *compare_length-2;
-  register unsigned char *first,*last;
+  int length= *compare_length-2;
+  unsigned char *first,*last;
 
   first= *a +2 ; last= *b +2;
   cmp(-2);
@@ -141,8 +141,8 @@ static int ptr_compare_2(size_t *compare_length,unsigned char **a, unsigned char
 
 static int ptr_compare_3(size_t *compare_length,unsigned char **a, unsigned char **b)
 {
-  register int length= *compare_length-3;
-  register unsigned char *first,*last;
+  int length= *compare_length-3;
+  unsigned char *first,*last;
 
   first= *a +3 ; last= *b +3;
   cmp(-3);

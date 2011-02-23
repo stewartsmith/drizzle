@@ -23,12 +23,12 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 
-#include "drizzled/charset_info.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/util/test.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset.h"
-#include "drizzled/memory/multi_malloc.h"
+#include <drizzled/charset_info.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/util/test.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
+#include <drizzled/memory/multi_malloc.h>
 
 
 using namespace std;

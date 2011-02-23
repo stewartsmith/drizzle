@@ -1,4 +1,6 @@
-/* Copyright (C) 2006 MySQL AB
+/* 
+   Copyright (C) 2011 Brian Aker
+   Copyright (C) 2006 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,23 +15,26 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/unireg.h>
 #include <drizzled/plugin/storage_engine.h>
-#include <drizzled/cursor.h> /* for refresh_version */
-#include "drizzled/pthread_globals.h"
-#include "drizzled/internal/my_pthread.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/plugin/daemon.h"
-#include "drizzled/signal_handler.h"
+#include <drizzled/pthread_globals.h>
+#include <drizzled/internal/my_pthread.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/plugin/daemon.h>
+#include <drizzled/signal_handler.h>
 
-#include "drizzled/session/cache.h"
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
 
-#include "drizzled/debug.h"
+#include <drizzled/debug.h>
 
-#include "drizzled/drizzled.h"
+#include <drizzled/drizzled.h>
+
+#include <drizzled/refresh_version.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem.hpp>

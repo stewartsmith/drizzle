@@ -17,17 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/join.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_group_min_max_select.h"
-#include "drizzled/optimizer/quick_range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/sel_arg.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/util/functors.h"
+#include <config.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/join.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/quick_group_min_max_select.h>
+#include <drizzled/optimizer/quick_range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/sel_arg.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/util/functors.h>
 
 #include <vector>
 
@@ -150,13 +150,13 @@ int optimizer::QuickGroupMinMaxSelect::init()
 
     if (have_min)
     {
-      if (! (min_functions_it= new List_iterator<Item_sum>(*min_functions)))
+      if (! (min_functions_it= new List<Item_sum>::iterator(min_functions->begin())))
         return 1;
     }
 
     if (have_max)
     {
-      if (! (max_functions_it= new List_iterator<Item_sum>(*max_functions)))
+      if (! (max_functions_it= new List<Item_sum>::iterator(max_functions->begin())))
         return 1;
     }
   }
@@ -719,26 +719,22 @@ int optimizer::QuickGroupMinMaxSelect::next_max_in_range()
 
 void optimizer::QuickGroupMinMaxSelect::update_min_result()
 {
-  Item_sum *min_func= NULL;
-
-  min_functions_it->rewind();
-  while ((min_func= (*min_functions_it)++))
+  *min_functions_it= min_functions->begin();
+  for (Item_sum *min_func; (min_func= (*min_functions_it)++); )
     min_func->reset();
 }
 
 
 void optimizer::QuickGroupMinMaxSelect::update_max_result()
 {
-  Item_sum *max_func= NULL;
-
-  max_functions_it->rewind();
-  while ((max_func= (*max_functions_it)++))
+  *max_functions_it= max_functions->begin();
+  for (Item_sum *max_func; (max_func= (*max_functions_it)++); )
     max_func->reset();
 }
 
 
-void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(String *key_names,
-                                                             String *used_lengths)
+void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(string *key_names,
+                                                             string *used_lengths)
 {
   char buf[64];
   key_names->append(index_info->name);

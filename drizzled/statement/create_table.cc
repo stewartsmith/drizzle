@@ -18,13 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
 #include <drizzled/message.h>
 #include <drizzled/identifier.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/select_create.h>
 
 #include <iostream>
 
@@ -78,8 +81,8 @@ CreateTable::CreateTable(Session *in_session) :
 
 bool statement::CreateTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   assert(first_table == all_tables && first_table != 0);
   bool need_start_waiting= false;
   lex_identified_temp_table= createTableMessage().type() == message::Table::TEMPORARY;
@@ -118,7 +121,7 @@ bool statement::CreateTable::execute()
     }
   }
   /* Skip first table, which is the table we are creating */
-  create_table_list= getSession()->lex->unlink_first_table(&link_to_local);
+  create_table_list= getSession()->getLex()->unlink_first_table(&link_to_local);
 
   drizzled::message::table::init(createTableMessage(), createTableMessage().name(), create_table_list->getSchemaName(), create_info().db_type->getName());
 
@@ -129,7 +132,7 @@ bool statement::CreateTable::execute()
   if (not check(new_table_identifier))
   {
     /* put tables back for PS rexecuting */
-    getSession()->lex->link_first_table_back(create_table_list, link_to_local);
+    getSession()->getLex()->link_first_table_back(create_table_list, link_to_local);
     return true;
   }
 
@@ -152,7 +155,7 @@ bool statement::CreateTable::execute()
   if (! (need_start_waiting= not getSession()->wait_if_global_read_lock(0, 1)))
   {
     /* put tables back for PS rexecuting */
-    getSession()->lex->link_first_table_back(create_table_list, link_to_local);
+    getSession()->getLex()->link_first_table_back(create_table_list, link_to_local);
     return true;
   }
 
@@ -170,14 +173,14 @@ bool statement::CreateTable::execute()
 bool statement::CreateTable::executeInner(identifier::Table::const_reference new_table_identifier)
 {
   bool res= false;
-  Select_Lex *select_lex= &getSession()->lex->select_lex;
-  TableList *select_tables= getSession()->lex->query_tables;
+  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
+  TableList *select_tables= getSession()->getLex()->query_tables;
 
   do 
   {
     if (select_lex->item_list.elements)		// With select
     {
-      Select_Lex_Unit *unit= &getSession()->lex->unit;
+      Select_Lex_Unit *unit= &getSession()->getLex()->unit;
       select_result *result;
 
       select_lex->options|= SELECT_NO_UNLOCK;
@@ -185,11 +188,11 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
 
       if (not lex_identified_temp_table)
       {
-        getSession()->lex->link_first_table_back(create_table_list, link_to_local);
+        getSession()->getLex()->link_first_table_back(create_table_list, link_to_local);
         create_table_list->setCreate(true);
       }
 
-      if (not (res= getSession()->openTablesLock(getSession()->lex->query_tables)))
+      if (not (res= getSession()->openTablesLock(getSession()->getLex()->query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -198,13 +201,13 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
         if (not lex_identified_temp_table)
         {
           TableList *duplicate= NULL;
-          create_table_list= getSession()->lex->unlink_first_table(&link_to_local);
+          create_table_list= getSession()->getLex()->unlink_first_table(&link_to_local);
 
           if ((duplicate= unique_table(create_table_list, select_tables)))
           {
             my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table_list->alias);
             /* put tables back for PS rexecuting */
-            getSession()->lex->link_first_table_back(create_table_list, link_to_local);
+            getSession()->getLex()->link_first_table_back(create_table_list, link_to_local);
 
             res= true;
             break;
@@ -221,8 +224,8 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
                                        createTableMessage(),
                                        &alter_info,
                                        select_lex->item_list,
-                                       getSession()->lex->duplicates,
-                                       getSession()->lex->ignore,
+                                       getSession()->getLex()->duplicates,
+                                       getSession()->getLex()->ignore,
                                        select_tables,
                                        new_table_identifier)))
         {
@@ -230,13 +233,13 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
             CREATE from SELECT give its Select_Lex for SELECT,
             and item_list belong to SELECT
           */
-          res= handle_select(getSession(), getSession()->lex, result, 0);
+          res= handle_select(getSession(), getSession()->getLex(), result, 0);
           delete result;
         }
       }
       else if (not lex_identified_temp_table)
       {
-        create_table_list= getSession()->lex->unlink_first_table(&link_to_local);
+        create_table_list= getSession()->getLex()->unlink_first_table(&link_to_local);
       }
     }
     else
@@ -291,7 +294,8 @@ bool statement::CreateTable::check(const identifier::Table &identifier)
   // See if any storage engine objects to the name of the file
   if (not plugin::StorageEngine::canCreateTable(identifier))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
+    identifier::Schema schema_identifier= identifier;
+    error::access(*getSession()->user(), schema_identifier);
 
     return false;
   }
@@ -300,7 +304,8 @@ bool statement::CreateTable::check(const identifier::Table &identifier)
   // create for the table.
   if (not plugin::StorageEngine::doesSchemaExist(identifier))
   {
-    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
+    identifier::Schema schema_identifier= identifier;
+    my_error(ER_BAD_DB_ERROR, schema_identifier);
 
     return false;
   }

@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 
@@ -45,7 +45,7 @@ Item_row::Item_row(List<Item> &arg):
     items= (Item**) memory::sql_alloc(sizeof(Item*)*arg_count);
   else
     items= 0;
-  List_iterator<Item> li(arg);
+  List<Item>::iterator li(arg.begin());
   uint32_t i= 0;
   Item *item;
   while ((item= li++))

@@ -17,14 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <drizzled/plugin/table_function.h>
-#include <drizzled/table_function_container.h>
+#include <drizzled/current_session.h>
 #include <drizzled/gettext.h>
-#include "drizzled/global_charset_info.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
+#include <drizzled/global_charset_info.h>
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/session.h>
+#include <drizzled/show.h>
+#include <drizzled/table_function_container.h>
 
 #include <vector>
 
@@ -39,6 +40,7 @@ void plugin::TableFunction::init()
   proto.set_type(drizzled::message::Table::FUNCTION);
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
+  message::set_is_replicated(proto, false);
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
@@ -221,12 +223,12 @@ void plugin::TableFunction::Generator::push(bool arg)
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  if (not getSession().lex->wild)
+  if (not getSession().getLex()->wild)
     return false;
 
   bool match= wild_case_compare(system_charset_info,
                                 predicate.c_str(),
-                                getSession().lex->wild->ptr());
+                                getSession().getLex()->wild->ptr());
 
   return match;
 }

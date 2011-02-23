@@ -18,19 +18,19 @@
 
   Multi-table deletes were introduced by Monty and Sinisa
 */
-#include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/probes.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/lock.h"
-#include "drizzled/probes.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/filesort.h"
+#include <config.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/error.h>
+#include <drizzled/probes.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/lock.h>
+#include <drizzled/probes.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/filesort.h>
 
 namespace drizzled
 {
@@ -56,7 +56,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
   bool          const_cond_result;
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
-  Select_Lex   *select_lex= &session->lex->select_lex;
+  Select_Lex   *select_lex= &session->getLex()->select_lex;
   Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   if (session->openTablesLock(table_list))
@@ -92,7 +92,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
                     fields, all_fields, (Order*) order->first))
       {
         delete select;
-        free_underlaid_joins(session, &session->lex->select_lex);
+        free_underlaid_joins(session, &session->getLex()->select_lex);
         DRIZZLE_DELETE_DONE(1, 0);
 
         return true;
@@ -101,7 +101,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
 
   const_cond= (!conds || conds->const_item());
 
-  select_lex->no_error= session->lex->ignore;
+  select_lex->no_error= session->getLex()->ignore;
 
   const_cond_result= const_cond && (!conds || conds->val_int());
   if (session->is_error())
@@ -181,7 +181,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();
-    session->my_ok((ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->rowCount());
     /*
       We don't need to call reset_auto_increment in this case, because
       mysql_truncate always gives a NULL conds argument, hence we never
@@ -217,7 +217,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
 						    examined_rows)) == HA_POS_ERROR)
       {
         delete select;
-        free_underlaid_joins(session, &session->lex->select_lex);
+        free_underlaid_joins(session, &session->getLex()->select_lex);
 
         DRIZZLE_DELETE_DONE(1, 0);
         return true;
@@ -339,7 +339,7 @@ cleanup:
   free_underlaid_joins(session, select_lex);
 
   DRIZZLE_DELETE_DONE((error >= 0 || session->is_error()), deleted);
-  if (error < 0 || (session->lex->ignore && !session->is_fatal_error))
+  if (error < 0 || (session->getLex()->ignore && !session->is_fatal_error))
   {
     session->row_count_func= deleted;
     /**
@@ -347,7 +347,7 @@ cleanup:
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();    
-    session->my_ok((ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->rowCount());
   }
   session->status_var.deleted_row_count+= deleted;
 
@@ -370,13 +370,13 @@ cleanup:
 */
 int prepare_delete(Session *session, TableList *table_list, Item **conds)
 {
-  Select_Lex *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->getLex()->select_lex;
 
   List<Item> all_fields;
 
-  session->lex->allow_sum_func= 0;
-  if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
-                                    &session->lex->select_lex.top_join_list,
+  session->getLex()->allow_sum_func= 0;
+  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
+                                    &session->getLex()->select_lex.top_join_list,
                                     table_list,
                                     &select_lex->leaf_tables, false) ||
       session->setup_conds(table_list, conds))
@@ -415,7 +415,7 @@ bool truncate(Session& session, TableList *table_list)
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  init_select(session.lex);
+  init_select(session.getLex());
   error= delete_query(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
   /*

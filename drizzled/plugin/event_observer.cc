@@ -21,16 +21,16 @@
  * 2010-05-12
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 #include <vector>
 
-#include "drizzled/session.h"
-#include "drizzled/table_list.h"
-#include "drizzled/table/instance.h"
-#include "drizzled/module/registry.h"
-#include "drizzled/plugin/event_observer.h"
+#include <drizzled/session.h>
+#include <drizzled/table_list.h>
+#include <drizzled/table/instance.h>
+#include <drizzled/module/registry.h>
+#include <drizzled/plugin/event_observer.h>
 #include <drizzled/util/functors.h>
 #include <algorithm>
 
@@ -430,6 +430,11 @@ namespace plugin
     return EventData::callEventObservers();
   }
 
+  bool SessionEventData::hasEvents(Session &in_session)
+  {
+    return (in_session.getSessionObservers() != NULL);
+  }
+
   //--------
   bool SchemaEventData::callEventObservers()
   {
@@ -449,6 +454,11 @@ namespace plugin
     observerList= table.getMutableShare()->getTableObservers();
 
     return EventData::callEventObservers();
+  }
+
+  bool TableEventData::hasEvents(Table &in_table)
+  {
+    return (in_table.getMutableShare()->getTableObservers() != NULL);
   }
 
   /*==========================================================*/

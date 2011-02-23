@@ -5,9 +5,13 @@ CREATE [UNIQUE] INDEX index_name [USING {BTREE | HASH}] ON table_name (column_na
 
 An example:
 
-CREATE INDEX table_1_index ON table_1 (a,b);
+.. code-block:: mysql
+
+   CREATE INDEX table_1_index ON table_1 (a,b);
 
 This would create an index on table_t named  table_1_index that convered
 columns a and b.
 
-FIXME: how this is implemented currently. i.e. no fast add index
+.. todo::
+   
+   how this is implemented currently. i.e. no fast add index

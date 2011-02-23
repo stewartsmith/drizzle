@@ -22,7 +22,7 @@
 #define DRIZZLED_FUNCTION_CAST_TIME_H
 
 #include <drizzled/function/str/strfunc.h>
-#include "drizzled/function/time/typecast.h"
+#include <drizzled/function/time/typecast.h>
 #include <drizzled/temporal.h>
 
 namespace drizzled {

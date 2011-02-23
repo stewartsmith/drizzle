@@ -17,10 +17,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/error.h>
+#include <drizzled/internal/m_string.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/m_string.h"
 
 using namespace std;
 using namespace drizzled;
@@ -58,7 +59,6 @@ int64_t BenchmarkFunction::val_int()
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff), &my_charset_bin);
   type::Decimal tmp_decimal;
-  Session *session= current_session;
   uint64_t loop_count;
 
   loop_count= (uint64_t) args[0]->val_int();
@@ -69,7 +69,7 @@ int64_t BenchmarkFunction::val_int()
     if (args[0]->null_value == false)
     {
       internal::int64_t10_to_str((int64_t)loop_count, buff, -10);
-      push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(&getSession(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                           "count", buff, "benchmark");
     }
@@ -81,7 +81,7 @@ int64_t BenchmarkFunction::val_int()
   null_value= false;
 
   uint64_t loop;
-  for (loop= 0 ; loop < loop_count && not session->getKilled(); loop++)
+  for (loop= 0 ; loop < loop_count && not getSession().getKilled(); loop++)
   {
     switch (args[1]->result_type()) 
     {

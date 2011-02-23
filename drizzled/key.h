@@ -24,12 +24,12 @@
 #include <string>
 #include <boost/dynamic_bitset.hpp>
 
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/key_part_spec.h"
-#include "drizzled/sql_list.h"
-#include "drizzled/lex_string.h"
-#include "drizzled/sql_string.h"
-#include "drizzled/handler_structs.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/key_part_spec.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/sql_string.h>
+#include <drizzled/handler_structs.h>
 
 namespace drizzled
 {
@@ -103,7 +103,7 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key
                  uint16_t key_length);
 void key_zero_nulls(unsigned char *tuple, KeyInfo *key_info);
 bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_t key_length);
-void key_unpack(String *to,Table *form,uint32_t index);
+void key_unpack(String *to, const Table *form,uint32_t index);
 bool is_key_used(Table *table, uint32_t idx, const boost::dynamic_bitset<>& fields);
 int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length);
 

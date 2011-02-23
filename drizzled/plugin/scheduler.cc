@@ -17,14 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <algorithm>
 
-#include "drizzled/plugin/scheduler.h"
-
-#include "drizzled/gettext.h"
-#include "drizzled/errmsg_print.h"
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
+#include <drizzled/plugin/scheduler.h>
 
 namespace drizzled
 {

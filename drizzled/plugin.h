@@ -23,17 +23,17 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
-#include "drizzled/module/manifest.h"
-#include "drizzled/module/module.h"
-#include "drizzled/plugin/version.h"
-#include "drizzled/module/context.h"
-#include "drizzled/definitions.h"
+#include <drizzled/module/manifest.h>
+#include <drizzled/module/module.h>
+#include <drizzled/plugin/version.h>
+#include <drizzled/module/context.h>
+#include <drizzled/definitions.h>
 
-#include "drizzled/lex_string.h"
-#include "drizzled/sys_var.h"
-#include "drizzled/xid.h"
+#include <drizzled/lex_string.h>
+#include <drizzled/sys_var.h>
+#include <drizzled/xid.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -181,13 +181,7 @@ extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 
 int session_in_lock_tables(const Session *session);
-DRIZZLED_API int session_tablespace_op(const Session *session);
-DRIZZLED_API void set_session_proc_info(Session *session, const char *info);
-DRIZZLED_API const char *get_session_proc_info(Session *session);
 DRIZZLED_API int64_t session_test_options(const Session *session, int64_t test_options);
-DRIZZLED_API int session_sql_command(const Session *session);
-DRIZZLED_API enum_tx_isolation session_tx_isolation(const Session *session);
-
 void compose_plugin_add(std::vector<std::string> options);
 void compose_plugin_remove(std::vector<std::string> options);
 void notify_plugin_load(std::string in_plugin_load);

@@ -54,13 +54,17 @@ Obtaining The Source
 --------------------
 The latest source release can always be found on our `LaunchPad site
 <https://launchpad.net/drizzle>`_, alternatively the bzr source from our stable
-trunk can be obtained by doing::
+trunk can be obtained by doing:
+
+.. code-block:: bash
 
    bzr branch lp:drizzle
 
 Compiling The Source
 --------------------
-Compiling is as simple as doing the following inside the source::
+Compiling is as simple as doing the following inside the source:
+
+.. code-block:: bash
 
    ./config/autorun.sh
    ./configure

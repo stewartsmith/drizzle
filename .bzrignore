@@ -300,6 +300,7 @@ strings/Makefile.in
 strings/tests/Makefile.in
 support-files/Makefile.in
 support-files/drizzle-log-rotate
+support-files/drizzle7.pc
 support-files/drizzle.server
 support-files/drizzle.spec
 support-files/libdrizzle.pc
@@ -315,6 +316,7 @@ temporal_format.gcno
 tests/Makefile.in
 tests/dtr
 tests/dtr@
+tests/dbqp_data/uuid
 tests/dbqp_work
 tests/install_test_db
 tests/mtr
@@ -343,3 +345,6 @@ drizzled/message/catalog.pb.cc
 drizzled/message/catalog.pb.h
 drizzled/message/catalog_reader
 drizzled/message/catalog_writer
+drizzled/message/replication_options.pb.cc
+drizzled/message/replication_options.pb.h
+libdrizzle/mysql_password_hash

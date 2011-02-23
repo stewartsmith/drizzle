@@ -23,7 +23,7 @@
 
 #include <set>
 #include <boost/unordered_map.hpp>
-#include "drizzled/util/string.h"
+#include <drizzled/util/string.h>
 
 namespace drizzled {
 

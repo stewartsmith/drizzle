@@ -3,7 +3,9 @@ Order By
 
 The ORDER BY keyword is used to sort the result-set by column; by default, it sorts the records in ascending order.
 
-SQL ORDER BY Syntax: ::
+SQL ORDER BY Syntax:
+
+.. code-block:: mysql
 
 	SELECT column_name(s)
 	FROM table_name
@@ -23,7 +25,9 @@ The "Persons" table:
 | 3 	  | Peterson   | Kari 	  |30 Mell   | Reno   |
 +---------+------------+----------+----------+--------+
 
-To select all the persons from the table above, and also sort them by their last name, use the following SELECT statement: ::
+To select all the persons from the table above, and also sort them by their last name, use the following SELECT statement:
+
+.. code-block:: mysql
 
 	SELECT * FROM Persons
 	ORDER BY LastName;
@@ -40,11 +44,17 @@ The result-set will look like this:
 | 2 	  | Roberts    | Teri 	  |21 Brown  | Chicago|
 +---------+------------+----------+----------+--------+
 
-ORDER BY DESC can be used to reverse the order of the result set. ::
+ORDER BY DESC can be used to reverse the order of the result set.
+
+.. code-block:: mysql
 
 	SELECT * FROM Persons
 	ORDER BY LastName DESC;
 
-FIXME: add something about SELECT * without ORDER BY being non-deterministic
+.. todo::
 
-FIXME: add something about how ORDER BY is executed. index scan vs filesort
+   add something about SELECT * without ORDER BY being non-deterministic
+
+.. todo::
+
+   add something about how ORDER BY is executed. index scan vs filesort

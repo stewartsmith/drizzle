@@ -21,10 +21,10 @@
 #ifndef PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H
 #define PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H
 
-#include "drizzled/plugin/table_function.h"
-#include "plugin/utility_dictionary/counter.h"
-#include "plugin/utility_dictionary/environmental.h"
-#include "plugin/utility_dictionary/random_number.h"
-#include "plugin/utility_dictionary/random_string.h"
+#include <drizzled/plugin/table_function.h>
+#include <plugin/utility_dictionary/counter.h>
+#include <plugin/utility_dictionary/environmental.h>
+#include <plugin/utility_dictionary/random_number.h>
+#include <plugin/utility_dictionary/random_string.h>
 
 #endif /* PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H */

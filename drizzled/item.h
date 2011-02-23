@@ -23,33 +23,31 @@
 #define DRIZZLED_ITEM_H
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/type/time.h>
-#include <drizzled/type/decimal.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/item_result.h>
+#include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
-#include "drizzled/memory/sql_alloc.h"
-#include <drizzled/table.h>
-#include "drizzled/item_result.h"
+#include <drizzled/sql_string.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
 
-class TableList;
-class Item_field;
-class Name_resolution_context;
-class Select_Lex;
-class Item_equal;
-class user_var_entry;
-class Item_sum;
-class Item_in_subselect;
-class SendField;
 class Field;
+class Item_equal;
+class Item_field;
+class Item_ident;
+class Item_in_subselect;
+class Item_sum;
+class Select_Lex;
+class SendField;
+class Table;
+class user_var_entry;
 
-namespace plugin
-{
-class Client;
-}
+namespace plugin { class Client; }
+namespace type { class Time; }
+namespace type { class Decimal; }
 
 /**
   Dummy error processor used by default by Name_resolution_context.
@@ -793,44 +791,13 @@ public:
     return (tmp > UINT32_MAX) ? (uint32_t) UINT32_MAX : (uint32_t) tmp;
   } 
 
-  uint32_t max_char_length() const
-  {
-    return max_length / collation.collation->mbmaxlen;
-  }
+  uint32_t max_char_length() const;
 
-  void fix_length_and_charset(uint32_t max_char_length_arg, CHARSET_INFO *cs)
-  { 
-    max_length= char_to_byte_length_safe(max_char_length_arg, cs->mbmaxlen);
-    collation.collation= cs;
-  }
+  void fix_length_and_charset(uint32_t max_char_length_arg, CHARSET_INFO *cs);
+  void fix_char_length(uint32_t max_char_length_arg);
+  void fix_char_length_uint64_t(uint64_t max_char_length_arg);
+  void fix_length_and_charset_datetime(uint32_t max_char_length_arg);
 
-  void fix_char_length(uint32_t max_char_length_arg)
-  { 
-    max_length= char_to_byte_length_safe(max_char_length_arg,
-                                         collation.collation->mbmaxlen);
-  }
-
-  void fix_char_length_uint64_t(uint64_t max_char_length_arg)
-  { 
-    uint64_t max_result_length= max_char_length_arg *
-      collation.collation->mbmaxlen;
-
-    if (max_result_length >= MAX_BLOB_WIDTH)
-    { 
-      max_length= MAX_BLOB_WIDTH;
-      maybe_null= false;
-    }
-    else
-    {
-      max_length= max_result_length;
-    }
-  }
-
-  void fix_length_and_charset_datetime(uint32_t max_char_length_arg)
-  { 
-    collation.set(&my_charset_bin);
-    fix_char_length(max_char_length_arg);
-  }
 protected:
   Session &getSession()
   {

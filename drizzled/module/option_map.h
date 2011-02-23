@@ -25,8 +25,8 @@
 #ifndef DRIZZLED_MODULE_OPTION_MAP_H
 #define DRIZZLED_MODULE_OPTION_MAP_H
 
-#include "drizzled/visibility.h"
-#include "drizzled/module/option_context.h"
+#include <drizzled/visibility.h>
+#include <drizzled/module/option_context.h>
 
 #include <boost/program_options.hpp>
 

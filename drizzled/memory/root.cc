@@ -18,10 +18,10 @@
  * Routines to handle mallocing of results which will be freed the same time 
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 
 #include <algorithm>
 

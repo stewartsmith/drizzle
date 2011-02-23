@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/str/trim.h>
 
@@ -95,7 +95,7 @@ String *Item_func_rtrim::val_str(String *str)
   ptr= (char*) res->ptr();
   end= ptr+res->length();
   char *p=ptr;
-  register uint32_t l;
+  uint32_t l;
   if (remove_length == 1)
   {
     char chr=(*remove_str)[0];
@@ -175,7 +175,7 @@ String *Item_func_trim::val_str(String *str)
   if (use_mb(res->charset()))
   {
     char *p=ptr;
-    register uint32_t l;
+    uint32_t l;
  loop:
     while (ptr + remove_length < end)
     {

@@ -34,14 +34,15 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <signal.h>
 
-#include <drizzled/util/backtrace.h>
 #include <drizzled/function/func.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/function/boolean.h>
+#include <drizzled/plugin/function.h>
+#include <drizzled/util/backtrace.h>
 
 using namespace drizzled;
 

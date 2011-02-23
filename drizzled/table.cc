@@ -16,7 +16,7 @@
 
 /* Some general useful functions */
 
-#include "config.h"
+#include <config.h>
 
 #include <float.h>
 #include <fcntl.h>
@@ -28,8 +28,8 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/plugin/authorization.h"
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/plugin/authorization.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -42,10 +42,11 @@
 #include <drizzled/field/double.h>
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-#include "plugin/myisam/myisam.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/charset.h>
+#include <drizzled/internal/m_string.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
@@ -54,16 +55,18 @@
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
 
-#include "drizzled/table/singular.h"
+#include <drizzled/refresh_version.h>
 
-#include "drizzled/table_proto.h"
+#include <drizzled/table/singular.h>
+
+#include <drizzled/table_proto.h>
+#include <drizzled/typelib.h>
 
 using namespace std;
 
 namespace drizzled
 {
 
-extern pid_t current_pid;
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
 
@@ -88,8 +91,7 @@ int Table::delete_table(bool free_share)
     }
     field= 0;
   }
-  delete cursor;
-  cursor= 0;				/* For easier errorchecking */
+  safe_delete(cursor);
 
   if (free_share)
   {
@@ -195,7 +197,7 @@ void Table::resetTable(Session *session,
 
 /* Deallocate temporary blob storage */
 
-void free_blobs(register Table *table)
+void free_blobs(Table *table)
 {
   uint32_t *ptr, *end;
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
@@ -221,7 +223,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  List_iterator<String> it(strings);
+  List<String>::iterator it(strings.begin());
   String *tmp;
   for (uint32_t i= 0; (tmp= it++); i++)
   {
@@ -237,7 +239,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 
 	/* Check that the integer is in the internal */
 
-int set_zone(register int nr, int min_zone, int max_zone)
+int set_zone(int nr, int min_zone, int max_zone)
 {
   if (nr<=min_zone)
     return (min_zone);
@@ -318,28 +320,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
   to_s.append(to);
   to_s.append(ext);
   return (internal::my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
-}
-
-/*
-  Check if database name is valid
-
-  SYNPOSIS
-    check_db_name()
-    org_name		Name of database and length
-
-  RETURN
-    false error
-    true ok
-*/
-
-bool check_db_name(Session *session, identifier::Schema &schema_identifier)
-{
-  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
-  {
-    return false;
-  }
-
-  return schema_identifier.isValid();
 }
 
 /*
@@ -660,7 +640,7 @@ size_t Table::max_row_length(const unsigned char *data)
 void Table::setVariableWidth(void)
 {
   assert(in_use);
-  if (in_use && in_use->lex->sql_command == SQLCOM_CREATE_TABLE)
+  if (in_use && in_use->getLex()->sql_command == SQLCOM_CREATE_TABLE)
   {
     getMutableShare()->setVariableWidth();
     return;
@@ -894,7 +874,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   blob_count= string_count= null_count= hidden_null_count= group_null_items= 0;
   param->using_indirect_summary_function= 0;
 
-  List_iterator_fast<Item> li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *item;
   Field **tmp_from_field=from_field;
   while ((item=li++))
@@ -1038,8 +1018,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
   if (blob_count || using_unique_constraint || 
-      (session->lex->select_lex.options & SELECT_BIG_RESULT) ||
-      (session->lex->current_select->olap == ROLLUP_TYPE) ||
+      (session->getLex()->select_lex.options & SELECT_BIG_RESULT) ||
+      (session->getLex()->current_select->olap == ROLLUP_TYPE) ||
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     table->getMutableShare()->storage_engine= myisam_engine;
@@ -1750,6 +1730,24 @@ void Table::filesort_free_buffers(bool full)
     sort.addon_buf=0;
     sort.addon_field=0;
   }
+}
+
+/*
+  Is this instance of the table should be reopen or represents a name-lock?
+*/
+bool Table::needs_reopen_or_name_lock() const
+{ 
+  return getShare()->getVersion() != refresh_version;
+}
+
+uint32_t Table::index_flags(uint32_t idx) const
+{
+  return getShare()->getEngine()->index_flags(getShare()->getKeyInfo(idx).algorithm);
+}
+
+void Table::print_error(int error, myf errflag) const
+{
+  getShare()->getEngine()->print_error(error, errflag, *this);
 }
 
 } /* namespace drizzled */

@@ -18,19 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "drizzled/session.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
+#include <drizzled/session.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
 
 #include <drizzled/table/instance.h>
 
-#include "drizzled/table.h"
+#include <drizzled/table.h>
 
 namespace drizzled
 {
@@ -129,9 +129,7 @@ int table::Concurrent::open_unireg_entry(Session *session,
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
 retry:
-  if (not (share= table::instance::Shared::make_shared(session,
-                                                       identifier,
-                                                       error)))
+  if (not (share= table::instance::Shared::make_shared(session, identifier, error)))
   {
     return 1;
   }

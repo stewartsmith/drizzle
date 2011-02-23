@@ -21,7 +21,7 @@
 #ifndef PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H
 #define PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H
 
-#include "drizzled/session.h"
+#include <drizzled/session.h>
 
 namespace performance_dictionary {
 

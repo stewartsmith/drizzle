@@ -21,7 +21,7 @@
 #ifndef PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H
 #define PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H
 
-#include "drizzled/plugin/table_function.h"
-#include "plugin/function_dictionary/functions.h"
+#include <drizzled/plugin/table_function.h>
+#include <plugin/function_dictionary/functions.h>
 
 #endif /* PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H */

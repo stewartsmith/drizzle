@@ -24,24 +24,21 @@
 #define DRIZZLED_PLUGIN_TABLE_FUNCTION_H
 
 #include <drizzled/definitions.h>
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/identifier.h"
-#include "drizzled/message/table.pb.h"
-#include "drizzled/charset.h"
-#include "drizzled/field.h"
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/identifier.h>
+#include <drizzled/message/table.pb.h>
+#include <drizzled/charset.h>
+#include <drizzled/field.h>
 
 #include <string>
 #include <set>
 #include <algorithm>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
-
-extern int wild_case_compare(const CHARSET_INFO * const cs, 
-                             const char *str,const char *wildstr);
 
 namespace plugin
 {

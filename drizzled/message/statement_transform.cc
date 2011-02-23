@@ -29,15 +29,16 @@
  * Statement messages to other formats, including SQL strings.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <boost/lexical_cast.hpp>
-#include "drizzled/message/statement_transform.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/message/table.pb.h"
-#include "drizzled/charset.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/global_charset_info.h"
+
+#include <drizzled/charset.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/message.h>
+#include <drizzled/message/statement_transform.h>
+#include <drizzled/message/transaction.pb.h>
 
 #include <string>
 #include <vector>
@@ -152,12 +153,11 @@ transformStatementToSql(const Statement &source,
       const InsertHeader &insert_header= source.insert_header();
       const InsertData &insert_data= source.insert_data();
       size_t num_keys= insert_data.record_size();
-      size_t x;
 
       if (num_keys > 1 && ! already_in_transaction)
         sql_strings.push_back("START TRANSACTION");
 
-      for (x= 0; x < num_keys; ++x)
+      for (size_t x= 0; x < num_keys; ++x)
       {
         string destination;
 
@@ -885,6 +885,11 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
     destination.append(schema.collation());
   }
 
+  if (not message::is_replicated(schema))
+  {
+    destination.append(" REPLICATE = FALSE");
+  }
+
   return NONE;
 }
 
@@ -1078,6 +1083,11 @@ transformTableDefinitionToSql(const Table &table,
   if (table.has_options())
     (void) transformTableOptionsToSql(table.options(), destination, sql_variant);
 
+  if (not message::is_replicated(table))
+  {
+    destination.append(" REPLICATE = FALSE");
+  }
+
   return NONE;
 }
 
@@ -1140,11 +1150,10 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     destination.append(boost::lexical_cast<string>(options.avg_row_length()));
   }
 
-  if (options.has_checksum() &&
-      options.checksum())
+  if (options.has_checksum() && options.checksum())
     destination.append("\nCHECKSUM = TRUE");
-  if (options.has_page_checksum() &&
-      options.page_checksum())
+
+  if (options.has_page_checksum() && options.page_checksum())
     destination.append("\nPAGE_CHECKSUM = TRUE");
 
   return NONE;

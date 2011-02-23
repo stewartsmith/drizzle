@@ -468,17 +468,6 @@
    fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEy
 }
 
-# https://bugs.launchpad.net/drizzle/+bug/582526
-{
-   Possibly lack of deallocation of a thread
-   Memcheck:Leak
-   fun:calloc
-   ...
-   fun:pthread_create*
-   fun:_Z34initTransactionLogBackgroundWorkerv
-   ...
-}
-
 # Issues with boost::thread
 {
   Boost::thread issues. Not a problem - static init issues.

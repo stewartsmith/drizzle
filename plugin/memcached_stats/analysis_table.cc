@@ -27,12 +27,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "analysis_table.h"
 #include "sysvar_holder.h"
 
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 
 #include <libmemcached/memcached.h>
 #include <libmemcached/server.h>

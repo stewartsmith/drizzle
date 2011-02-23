@@ -17,14 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
+#include <drizzled/field.h>
 #include <drizzled/item/cache.h>
-#include <drizzled/item/cache_row.h>
+#include <drizzled/item/cache_decimal.h>
 #include <drizzled/item/cache_int.h>
 #include <drizzled/item/cache_real.h>
-#include <drizzled/item/cache_decimal.h>
+#include <drizzled/item/cache_row.h>
 #include <drizzled/item/cache_str.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {

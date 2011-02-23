@@ -116,7 +116,7 @@ class dtrTestExecutor(test_execution.testExecutor):
 
         drizzletest_output.close()
         drizzletest_file = open(drizzletest_outfile,'r')
-        output = str(drizzletest_file.readlines())
+        output = ''.join(drizzletest_file.readlines())
         drizzletest_file.close()
 
         if self.debug:

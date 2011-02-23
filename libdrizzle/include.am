@@ -40,6 +40,11 @@ SQLITE_PROGS= examples/sqlite_server
 endif
 
 noinst_PROGRAMS+= \
+		  libdrizzle/mysql_password_hash
+libdrizzle_mysql_password_hash_LDADD= libdrizzle/libdrizzle.la
+libdrizzle_mysql_password_hash_SOURCES= libdrizzle/mysql_password_hash.cc
+
+noinst_PROGRAMS+= \
 	examples/client \
 	examples/simple \
 	examples/simple_multi \

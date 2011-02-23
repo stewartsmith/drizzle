@@ -44,7 +44,7 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin.h>
 #include "scoreboard.h"
 

@@ -18,13 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_schema.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/message.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <string>
 
@@ -44,11 +46,11 @@ bool statement::CreateSchema::execute()
     return true;
   }
 
-  identifier::Schema schema_identifier(string(getSession()->lex->name.str, getSession()->lex->name.length));
+  identifier::Schema schema_identifier(string(getSession()->getLex()->name.str, getSession()->getLex()->name.length));
   if (not check(schema_identifier))
     return false;
 
-  drizzled::message::schema::init(schema_message, getSession()->lex->name.str);
+  drizzled::message::schema::init(schema_message, getSession()->getLex()->name.str);
 
   bool res = false;
   std::string path;
@@ -60,7 +62,7 @@ bool statement::CreateSchema::execute()
   }
   else
   {
-    res= create_db(getSession(), schema_message, getSession()->getLex()->exists());
+    res= schema::create(*getSession(), schema_message, getSession()->getLex()->exists());
     if (unlikely(plugin::EventObserver::afterCreateDatabase(*getSession(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
@@ -77,7 +79,7 @@ bool statement::CreateSchema::check(const identifier::Schema &identifier)
   if (not identifier.isValid())
     return false;
 
-  if (not plugin::Authorization::isAuthorized(getSession()->user(), identifier))
+  if (not plugin::Authorization::isAuthorized(*getSession()->user(), identifier))
     return false;
 
   if (not getSession()->getLex()->exists())

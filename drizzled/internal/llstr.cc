@@ -23,8 +23,8 @@
   variables with printf() as there is no usable printf() standard one can use.
 */
 
-#include "config.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {
