@@ -12,17 +12,23 @@ INSERT INTO A VALUES ("1");
 
    multi row inserts, performance thereof.
 
-INSERT statements that use VALUES syntax can insert multiple rows. To do this, use the multirow VALUES syntax (include multiple lists of column values, each enclosed within parentheses and separated by commas): ::
+INSERT statements that use VALUES syntax can insert multiple rows. To do this, use the multirow VALUES syntax (include multiple lists of column values, each enclosed within parentheses and separated by commas):
+
+.. code-block:: mysql
 
 	INSERT INTO music (artist, album, date_prod, genre) VALUES
     	('Beatles', 'Abbey Road', '1969-09-26', 'rock'),
    	('The Velvet Underground', 'The Velvet Underground', '1969-03-05', 'rock');
 
-or ::
+or:
+
+.. code-block:: mysql
 	
 	INSERT INTO table_1 (a,b,c) VALUES(1,2,3),(4,5,6),(7,8,9);
 
-The following statement is incorrect since the number of values in the list does not match the number of column names: ::
+The following statement is incorrect since the number of values in the list does not match the number of column names:
+
+.. code-block:: mysql
 
 	INSERT INTO table_1 (a,b,c) VALUES(1,2,3,4,5,6,7,8,9);
 
