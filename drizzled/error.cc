@@ -28,7 +28,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/identifier.h>
-#include <drizzled/find_ptr.h>
+#include <drizzled/util/find_ptr.h>
 
 #include <boost/unordered_map.hpp>
 #include <exception>

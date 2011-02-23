@@ -66,7 +66,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/util/functors.h>
-#include <drizzled/find_ptr.h>
+#include <drizzled/util/find_ptr.h>
 #include <plugin/myisam/myisam.h>
 
 #include <algorithm>
