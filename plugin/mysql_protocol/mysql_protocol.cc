@@ -732,8 +732,6 @@ bool ClientMySQLProtocol::checkConnection(void)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    server_capabilites|= CLIENT_INTERACTIVE;
-
     end= buff + strlen(PANDORA_RELEASE_VERSION);
     if ((end - buff) >= SERVER_VERSION_LENGTH)
       end= buff + (SERVER_VERSION_LENGTH - 1);

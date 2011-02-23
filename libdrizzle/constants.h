@@ -237,6 +237,7 @@ typedef enum
                                 DRIZZLE_CAPABILITIES_CONNECT_WITH_DB |
                                 DRIZZLE_CAPABILITIES_TRANSACTIONS |
                                 DRIZZLE_CAPABILITIES_PROTOCOL_41 |
+                                DRIZZLE_CAPABILITIES_INTERACTIVE |
                                 DRIZZLE_CAPABILITIES_SECURE_CONNECTION |
                                 DRIZZLE_CAPABILITIES_ADMIN)
 } drizzle_capabilities_t;

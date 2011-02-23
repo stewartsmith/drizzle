@@ -195,7 +195,9 @@ void drizzle_con_add_options(drizzle_con_st *con,
 
   /* If asking for the experimental Drizzle protocol, clean the MySQL flag. */
   if (con->options & DRIZZLE_CON_EXPERIMENTAL)
+  {
     con->options&= (drizzle_con_options_t)~DRIZZLE_CON_MYSQL;
+  }
 }
 
 void drizzle_con_remove_options(drizzle_con_st *con,
