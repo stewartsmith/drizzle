@@ -107,7 +107,6 @@ class base_list :public memory::SqlAlloc
 {
 protected:
   list_node *first,**last;
-
 public:
   uint32_t elements;
 
@@ -394,6 +393,11 @@ public:
   {
     return iterator(*this, &first);
   }
+
+  size_t size() const
+  {
+    return elements;
+  }
 };
 
 
@@ -402,7 +406,7 @@ template <class T> class List_iterator :public base_list_iterator
 public:
   List_iterator(List<T>& a, list_node** b) : base_list_iterator(a, b) {};
   List_iterator() {};
-  inline T* operator++(int) { return (T*) base_list_iterator::next(); }
+  inline T *operator++(int) { return (T*) base_list_iterator::next(); }
   inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
   inline T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
   inline T** ref(void)	    { return (T**) base_list_iterator::ref(); }
