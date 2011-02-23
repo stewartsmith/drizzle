@@ -276,7 +276,7 @@ public:
   }
   inline void init_items_ref_array()
   {
-    items0= ref_pointer_array + all_fields.elements;
+    items0= ref_pointer_array + all_fields.size();
     memcpy(items0, ref_pointer_array, ref_pointer_array_size);
     current_ref_pointer_array= items0;
   }

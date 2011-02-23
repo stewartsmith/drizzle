@@ -77,9 +77,9 @@ class portManager:
             This is a bit bobo, but will work for now...
 
         """
-        
         searching_for_port = 1
-        attempts_remain = 100
+        attempt_count = 100
+        attempts_remain = attempt_count
         max_port_value = 32767
         min_port_value = 5001
         while searching_for_port and attempts_remain:
@@ -93,7 +93,7 @@ class portManager:
                 if desired_port >= max_port_value:
                     desired_port = min_port_value
                 attempts_remain = attempts_remain - 1
-        self.logging.error("Failed to assign a port in %d attempts")
+        self.logging.error("Failed to assign a port in %d attempts" %attempt_count)
         sys.exit(1)
 
     def check_port_status(self, port):

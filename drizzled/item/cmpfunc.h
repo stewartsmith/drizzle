@@ -1152,15 +1152,15 @@ public:
     :Item_func(), first_expr_num(-1), else_expr_num(-1),
     cached_result_type(INT_RESULT), left_result_type(INT_RESULT), case_item(0)
   {
-    ncases= list.elements;
+    ncases= list.size();
     if (first_expr_arg)
     {
-      first_expr_num= list.elements;
+      first_expr_num= list.size();
       list.push_back(first_expr_arg);
     }
     if (else_expr_arg)
     {
-      else_expr_num= list.elements;
+      else_expr_num= list.size();
       list.push_back(else_expr_arg);
     }
     set_arguments(list);
@@ -1572,7 +1572,6 @@ public:
   const char *func_name() const { return "multiple equal"; }
   optimize_type select_optimize() const { return OPTIMIZE_EQUAL; }
   void sort(Item_field_cmpfunc cmp, void *arg);
-  friend class Item_equal_iterator;
   void fix_length_and_dec();
   bool fix_fields(Session *session, Item **ref);
   void update_used_tables();
@@ -1603,19 +1602,7 @@ public:
   }
 };
 
-
-class Item_equal_iterator : public List<Item_field>::iterator
-{
-public:
-  inline Item_equal_iterator(Item_equal &item_equal)
-    :List<Item_field>::iterator (item_equal.fields.begin() )
-  {}
-  inline Item_field* operator++(int)
-  {
-    Item_field *item= (*(List<Item_field>::iterator *) this)++;
-    return  item;
-  }
-};
+typedef List<Item_field>::iterator Item_equal_iterator;
 
 class Item_cond_and :public Item_cond
 {

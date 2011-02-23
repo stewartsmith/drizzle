@@ -43,7 +43,6 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/strfunc.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/util/tokenize.h>
 

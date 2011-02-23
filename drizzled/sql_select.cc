@@ -121,7 +121,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
                    uint64_t setup_tables_done_option)
 {
   bool res;
-  register Select_Lex *select_lex= &lex->select_lex;
+  Select_Lex *select_lex= &lex->select_lex;
   DRIZZLE_SELECT_START(session->getQueryString()->c_str());
 
   if (select_lex->master_unit()->is_union() ||
@@ -2141,7 +2141,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels, Item_equ
   if (((Item *) item_equal)->const_item() && !item_equal->val_int())
     return new Item_int((int64_t) 0,1);
   Item *item_const= item_equal->get_const();
-  Item_equal_iterator it(*item_equal);
+  Item_equal_iterator it(item_equal->begin());
   Item *head;
   if (item_const)
     head= item_const;
@@ -2161,7 +2161,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels, Item_equ
         item= 0;
       else
       {
-        Item_equal_iterator li(*item_equal);
+        Item_equal_iterator li(item_equal->begin());
         while ((item= li++) != item_field)
         {
           if (item->find_item_equal(upper_levels) == upper)
@@ -2333,7 +2333,7 @@ void update_const_equal_items(COND *cond, JoinTable *tab)
     if (!contained_const && item_equal->get_const())
     {
       /* Update keys for range analysis */
-      Item_equal_iterator it(*item_equal);
+      Item_equal_iterator it(item_equal->begin());
       Item_field *item_field;
       while ((item_field= it++))
       {

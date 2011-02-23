@@ -13,11 +13,7 @@ Description
 :program:`dbqp.py` is BETA software.  It is intended to provide a standardized
 platform to facilitate Drizzle testing.  
 
-Currently, it only serves as a partial substitute for test-run.pl.
-One can execute the test suite, record test cases, and use certain other options.
-Other test-run.pl option such as gdb and valgrind are still in-development.
-
-The current mode is 'dtr' and is used to execute tests from the Drizzle 
+The default mode is 'dtr' and is used to execute tests from the Drizzle 
 test suite.  These tests are included with Drizzle distributions and 
 provide a way for users to verify that the system will operate according
 to expectations.
@@ -27,6 +23,14 @@ a test and then compares the results received with pre-recorded expected
 results.  In the event of a test failure, the program will provide output
 highlighting the differences found between expected and actual results; this
 can be useful for troubleshooting and in bug reports.
+
+The program is also integrated with the random query generator testing tool
+and a 'rangden' mode is available - it will execute randgen tests when
+provided a path to a randgen installation.  Tests are organized similar to dtr
+tests, but are .cnf file based.
+
+A 'cleanup' mode is also available as a convenience - it will simply shutdown
+any servers that may have been started via start-and-exit.
 
 While most users are concerned with ensuring general functionality, the 
 program also allows a user to quickly spin up a server for ad-hoc testing
@@ -150,10 +154,69 @@ an already-populated datadir for testing.
 
 NOTE: This feature is still being tested, use caution with your data!!!
 
+Randgen mode / Executing randgen tests
+---------------------------------------
+
+Using :option:`--mode` =randgen and :option:`--randgen-path` =/path/to/randgen
+will cause the randgen tests to execute.  This are simple .cnf file-based
+tests that define various randgen command lines that are useful in testing
+the server.  Test organization is similar to the dtr tests.  Tests live in 
+suites, the default suite is 'main' and they all live in
+drizzle/tests/randgen_tests::
+
+	./dbqp.py --mode=randgen --randgen-path=/path/to/randgen
+
+A user may specify suites and individual tests to run, just as with dtr-based
+testing.  Test output is the same as well::
+
+    ./dbqp --mode=randgen --randgen-path=/home/username/repos/randgen
+    Setting --no-secure-file-priv=True for randgen mode...
+    <snip>
+    23 Feb 2011 11:42:43 INFO: Using testing mode: randgen
+    <snip>
+    23 Feb 2011 11:44:58 : ================================================================================
+    23 Feb 2011 11:44:58 : TEST NAME                                               [ RESULT ]    TIME (ms)
+    23 Feb 2011 11:44:58 : ================================================================================
+    23 Feb 2011 11:44:58 : main.optimizer_subquery                                 [ pass ]       134153
+    23 Feb 2011 11:45:03 : main.outer_join                                         [ pass ]         5136
+    23 Feb 2011 11:45:06 : main.simple                                             [ pass ]         2246
+    23 Feb 2011 11:45:06 : ================================================================================
+    23 Feb 2011 11:45:06 INFO: Test execution complete in 142 seconds
+    23 Feb 2011 11:45:06 INFO: Summary report:
+    23 Feb 2011 11:45:06 INFO: Executed 3/3 test cases, 100.00 percent
+    23 Feb 2011 11:45:06 INFO: STATUS: PASS, 3/3 test cases, 100.00 percent executed
+    23 Feb 2011 11:45:06 INFO: Spent 141 / 142 seconds on: TEST(s)
+    23 Feb 2011 11:45:06 INFO: Test execution complete
+    23 Feb 2011 11:45:06 INFO: Stopping all running servers...
+
+Cleanup mode
+-------------
+A cleanup mode is provided for user convenience.  This simply shuts down
+any servers whose pid files are detected in the dbqp workdir.  It is mainly
+intended as a quick cleanup for post-testing with :option:`--start-and-exit`::
+
+	./dbqp.py --mode=cleanup
+
+    Setting --start-dirty=True for cleanup mode...
+    23 Feb 2011 11:35:59 INFO: Using Drizzle source tree:
+    23 Feb 2011 11:35:59 INFO: basedir: drizzle
+    23 Feb 2011 11:35:59 INFO: clientbindir: drizzle/client
+    23 Feb 2011 11:35:59 INFO: testdir: drizzle/tests
+    23 Feb 2011 11:35:59 INFO: server_version: 2011.02.2188
+    23 Feb 2011 11:35:59 INFO: server_compile_os: unknown-linux-gnu
+    23 Feb 2011 11:35:59 INFO: server_platform: x86_64
+    23 Feb 2011 11:35:59 INFO: server_comment: (Source distribution (dbqp_randgen))
+    23 Feb 2011 11:35:59 INFO: Using --start-dirty, not attempting to touch directories
+    23 Feb 2011 11:35:59 INFO: Using default-storage-engine: innodb
+    23 Feb 2011 11:35:59 INFO: Using testing mode: cleanup
+    23 Feb 2011 11:35:59 INFO: Killing pid 10484 from drizzle/tests/workdir/testbot0/server0/var/run/server0.pid
+    23 Feb 2011 11:35:59 INFO: Stopping all running servers...
+
 Program architecture
 ====================
 
-:program:`dbqp.py` uses a simple diff-based mechanism for testing.  
+:program:`dbqp.py`'s 'dtr' mode uses a simple diff-based mechanism for testing.
+This is the default mode and where the majority of Drizzle testing occurs.  
 It will execute the statements contained in a test and compare the results 
 to pre-recorded expected results.  In the event of a test failure, you
 will be presented with a diff::
@@ -231,6 +294,12 @@ Options for the test-runner itself
    Don't try to cleanup from earlier runs 
    (currently just a placeholder) [False]
 
+.. option:: --randgen-path=RANDGENPATH
+
+    The path to a randgen installation that can be used to
+    execute randgen-based tests
+
+
 Options for controlling which tests are executed
 ------------------------------------------------
 
@@ -264,6 +333,7 @@ Options for controlling which tests are executed
    for the given mode [False]
 
 .. option:: --repeat=REPEAT     
+
     Run each test case the specified number of times.  For
     a given sequence, the first test will be run n times,
     then the second, etc [1]
@@ -346,7 +416,7 @@ Options to pass options on to the server
 
 
 Options for defining the tools we use for code analysis (valgrind, gprof, gcov, etc)
----------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 
 .. program:: dbqp.py
 
@@ -361,7 +431,7 @@ Options for defining the tools we use for code analysis (valgrind, gprof, gcov, 
    valgrind options)
 
 Options for controlling the use of debuggers with test execution
-------------------------------------------------------------------
+----------------------------------------------------------------
 
 .. program:: dbqp.py
 
@@ -373,3 +443,15 @@ Options for controlling the use of debuggers with test execution
 
     Allows you to start the drizzled server(s) in gdb
     manually (in another window, etc
+
+Options to call additional utilities such as datagen
+------------------------------------------------------
+
+.. program:: dbqp.py
+
+.. option:: --gendata=GENDATAFILE
+            
+    Call the randgen's gendata utility to use the
+    specified configuration file.  This will populate the
+    server prior to any test execution
+
