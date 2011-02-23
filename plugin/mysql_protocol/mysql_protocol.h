@@ -80,6 +80,7 @@ protected:
   uint32_t client_capabilities;
   bool is_admin_connection;
   bool _using_mysql41_protocol;
+  bool _is_interactive;
 
   bool checkConnection(void);
   bool netStoreData(const unsigned char *from, size_t length);
@@ -90,6 +91,11 @@ protected:
 public:
   ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters *set_counters);
   virtual ~ClientMySQLProtocol();
+
+  bool isInteractive()
+  {
+    return _is_interactive;
+  }
 
   ProtocolCounters *counters;
 

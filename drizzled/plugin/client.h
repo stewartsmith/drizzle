@@ -114,6 +114,11 @@ public:
     return false;
   }
 
+  virtual bool isInteractive()
+  {
+    return false;
+  }
+
   virtual catalog::Instance::shared_ptr catalog()
   {
     return catalog::local();

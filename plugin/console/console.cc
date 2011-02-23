@@ -296,6 +296,11 @@ public:
   {
     return true;
   }
+
+  bool isInteractive()
+  {
+    return true;
+  }
 };
 
 class ListenConsole: public plugin::Listen

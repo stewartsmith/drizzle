@@ -97,6 +97,7 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
 ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters *set_counters):
   is_admin_connection(false),
   _using_mysql41_protocol(using_mysql41_protocol),
+  _is_interactive(false),
   counters(set_counters)
 {
   
@@ -156,9 +157,13 @@ void ClientMySQLProtocol::close(void)
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
     if (is_admin_connection)
+    {
       counters->adminConnected.decrement();
+    }
     else
+    {
       counters->connected.decrement();
+    }
   }
 }
 
@@ -727,6 +732,8 @@ bool ClientMySQLProtocol::checkConnection(void)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
+    server_capabilites|= CLIENT_INTERACTIVE;
+
     end= buff + strlen(PANDORA_RELEASE_VERSION);
     if ((end - buff) >= SERVER_VERSION_LENGTH)
       end= buff + (SERVER_VERSION_LENGTH - 1);
@@ -861,6 +868,11 @@ bool ClientMySQLProtocol::checkConnection(void)
       my_error(ER_ADMIN_ACCESS, MYF(0));
       return false;
     }
+  }
+
+  if (client_capabilities & CLIENT_INTERACTIVE)
+  {
+    _is_interactive= true;
   }
 
   user_identifier->setUser(user);
