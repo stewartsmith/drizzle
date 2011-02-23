@@ -227,11 +227,8 @@ public:
     std::swap(last, rhs.last);
     std::swap(elements, rhs.elements);
   }
-  inline list_node* last_node() { return *last; }
-  inline list_node* first_node() { return first;}
   inline void **head_ref() { return first != &end_of_list ? &first->info : 0; }
   inline bool is_empty() { return first == &end_of_list ; }
-  inline list_node *last_ref() { return &end_of_list; }
   friend class base_list_iterator;
 
 #ifdef LIST_EXTRA_DEBUG
@@ -356,7 +353,7 @@ public:
   }
   inline bool is_last(void)
   {
-    return el == &list->last_ref()->next;
+    return el == &end_of_list.next;
   }
 };
 
@@ -378,7 +375,6 @@ public:
   { return base_list::push_back(a, mem_root); }
   inline bool push_front(T *a) { return base_list::push_front(a); }
   inline T& front() {return *static_cast<T*>(first->info); }
-  inline T* head() {return &front(); }
   inline T* pop()  {return static_cast<T*>(base_list::pop()); }
   inline void concat(List<T> *list) { base_list::concat(list); }
   inline void disjoin(List<T> *list) { base_list::disjoin(list); }
