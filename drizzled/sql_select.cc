@@ -146,8 +146,8 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 		      select_lex->with_wild,
                       select_lex->item_list,
 		      select_lex->where,
-		      select_lex->order_list.elements +
-		      select_lex->group_list.elements,
+		      select_lex->order_list.size() +
+		      select_lex->group_list.size(),
 		      (Order*) select_lex->order_list.first,
 		      (Order*) select_lex->group_list.first,
 		      select_lex->having,
@@ -226,7 +226,7 @@ bool fix_inner_refs(Session *session,
     */
     if (ref_pointer_array && !ref->found_in_select_list)
     {
-      int el= all_fields.elements;
+      int el= all_fields.size();
       ref_pointer_array[el]= item;
       /* Add the field item to the select list of the current select. */
       all_fields.push_front(item);
@@ -641,11 +641,11 @@ bool update_ref_and_keys(Session *session,
       (e.g. if there is a key(a,b,c) but only b < 5 (or a=2 and c < 3) is
       used in the query, we drop the partial key parts from consideration).
   */
-  if (keyuse->elements)
+  if (keyuse->size())
   {
     optimizer::KeyUse key_end,*prev,*save_pos,*use;
 
-    internal::my_qsort(keyuse->buffer,keyuse->elements,sizeof(optimizer::KeyUse),
+    internal::my_qsort(keyuse->buffer,keyuse->size(),sizeof(optimizer::KeyUse),
                        (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
@@ -657,7 +657,7 @@ bool update_ref_and_keys(Session *session,
     {
       uint32_t i;
 
-      for (i= 0; i < keyuse->elements-1; i++, use++)
+      for (i= 0; i < keyuse->size()-1; i++, use++)
       {
         if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
           use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
@@ -700,7 +700,7 @@ void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
                                                   0, 
                                                   optimizer::KeyUse*);
 
-  for (end= keyuse+ keyuse_array->elements ; keyuse < end ; keyuse++)
+  for (end= keyuse+ keyuse_array->size() ; keyuse < end ; keyuse++)
   {
     table_map map;
     /*
@@ -775,7 +775,7 @@ void add_group_and_distinct_keys(Join *join, JoinTable *join_tab)
   else
     return;
 
-  if (indexed_fields.elements == 0)
+  if (indexed_fields.size() == 0)
     return;
 
   /* Intersect the keys of all group fields. */
@@ -1880,7 +1880,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
      */
     if (check_equality(session, cond, &cond_equal, &eq_list))
     {
-      int n= cond_equal.current_level.elements + eq_list.elements;
+      int n= cond_equal.current_level.size() + eq_list.size();
       if (n == 0)
         return new Item_int((int64_t) 1,1);
       else if (n == 1)
@@ -2281,7 +2281,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
       }
     }
     if (cond->type() == Item::COND_ITEM &&
-        !((Item_cond*)cond)->argument_list()->elements)
+        !((Item_cond*)cond)->argument_list()->size())
       cond= new Item_int((int32_t)cond->val_bool());
 
   }
@@ -2464,7 +2464,7 @@ Item *remove_additional_cond(Item* conds)
       if (item->name == in_additional_cond)
       {
 	li.remove();
-	if (cnd->argument_list()->elements == 1)
+	if (cnd->argument_list()->size() == 1)
 	  return cnd->argument_list()->head();
 	return conds;
       }
@@ -2655,7 +2655,7 @@ bool check_interleaving_with_nj(JoinTable *next_tab)
       join->cur_embedding_map |= next_emb->getNestedJoin()->nj_map;
     }
 
-    if (next_emb->getNestedJoin()->join_list.elements !=
+    if (next_emb->getNestedJoin()->join_list.size() !=
         next_emb->getNestedJoin()->counter_)
       break;
 
@@ -2762,10 +2762,10 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     if (should_fix_fields)
       cond->update_used_tables();
 
-    if (! ((Item_cond*) cond)->argument_list()->elements || *cond_value != Item::COND_OK)
+    if (! ((Item_cond*) cond)->argument_list()->size() || *cond_value != Item::COND_OK)
       return (COND*) NULL;
 
-    if (((Item_cond*) cond)->argument_list()->elements == 1)
+    if (((Item_cond*) cond)->argument_list()->size() == 1)
     {						
       /* Argument list contains only one element, so reduce it so a single item, then remove list */
       item= ((Item_cond*) cond)->argument_list()->head();
@@ -4067,7 +4067,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
         if (fix)
           new_cond->argument_list()->push_back(fix);
       }
-      switch (new_cond->argument_list()->elements) 
+      switch (new_cond->argument_list()->size()) 
       {
         case 0:
           return (COND*) 0;			// Always true
@@ -5363,7 +5363,7 @@ static bool find_order_in_list(Session *session,
   if (order_item->type() == Item::INT_ITEM && order_item->basic_const_item())
   {						/* Order by position */
     uint32_t count= (uint32_t) order_item->val_int();
-    if (!count || count > fields.elements)
+    if (!count || count > fields.size())
     {
       my_error(ER_BAD_FIELD_ERROR, MYF(0),
                order_item->full_name(), session->where());
@@ -5465,7 +5465,7 @@ static bool find_order_in_list(Session *session,
        session->is_fatal_error))
     return true; /* Wrong field. */
 
-  uint32_t el= all_fields.elements;
+  uint32_t el= all_fields.size();
   all_fields.push_front(order_item); /* Add new field to field list. */
   ref_pointer_array[el]= order_item;
   order->item= ref_pointer_array + el;
@@ -5534,7 +5534,7 @@ int setup_group(Session *session,
   if (!order)
     return 0;				/* Everything is ok */
 
-  uint32_t org_fields=all_fields.elements;
+  uint32_t org_fields=all_fields.size();
 
   session->setWhere("group statement");
   for (ord= order; ord; ord= ord->next)
@@ -5607,7 +5607,7 @@ next_field:
       cur_pos_in_select_list++;
     }
   }
-  if (org_fields != all_fields.elements)
+  if (org_fields != all_fields.size())
     *hidden_group_fields=1;			// group fields is not used
   return 0;
 }
@@ -5750,7 +5750,7 @@ int test_if_item_cache_changed(List<Cached_item> &list)
   int idx= -1,i;
   Cached_item *buff;
 
-  for (i=(int) list.elements-1 ; (buff=li++) ; i--)
+  for (i=(int) list.size()-1 ; (buff=li++) ; i--)
   {
     if (buff->cmp())
       idx=i;
@@ -5801,7 +5801,7 @@ bool setup_copy_fields(Session *session,
   res_all_fields.clear();
   List<Item>::iterator itr(res_all_fields.begin());
   List<Item> extra_funcs;
-  uint32_t i, border= all_fields.elements - elements;
+  uint32_t i, border= all_fields.size() - elements;
 
   if (param->field_count &&
       !(copy=param->copy_field= new CopyField[param->field_count]))
@@ -5893,7 +5893,7 @@ bool setup_copy_fields(Session *session,
         goto err;
     }
     res_all_fields.push_back(pos);
-    ref_pointer_array[((i < border)? all_fields.elements-i-1 : i-border)]=
+    ref_pointer_array[((i < border)? all_fields.size()-i-1 : i-border)]=
       pos;
   }
   param->copy_field_end= copy;
@@ -5966,7 +5966,7 @@ bool change_to_use_tmp_fields(Session *session,
   res_selected_fields.clear();
   res_all_fields.clear();
 
-  uint32_t i, border= all_fields.elements - elements;
+  uint32_t i, border= all_fields.size() - elements;
   for (i= 0; (item= it++); i++)
   {
     Field *field;
@@ -6005,7 +6005,7 @@ bool change_to_use_tmp_fields(Session *session,
         item_field= item;
     }
     res_all_fields.push_back(item_field);
-    ref_pointer_array[((i < border)? all_fields.elements-i-1 : i-border)]=
+    ref_pointer_array[((i < border)? all_fields.size()-i-1 : i-border)]=
       item_field;
   }
 
@@ -6044,11 +6044,11 @@ bool change_refs_to_tmp_fields(Session *session,
   res_selected_fields.clear();
   res_all_fields.clear();
 
-  uint32_t i, border= all_fields.elements - elements;
+  uint32_t i, border= all_fields.size() - elements;
   for (i= 0; (item= it++); i++)
   {
     res_all_fields.push_back(new_item= item->get_tmp_table_item(session));
-    ref_pointer_array[((i < border)? all_fields.elements-i-1 : i-border)]=
+    ref_pointer_array[((i < border)? all_fields.size()-i-1 : i-border)]=
       new_item;
   }
 
@@ -6294,14 +6294,14 @@ void print_join(Session *session, String *str,
   /* List is reversed => we should reverse it before using */
   List<TableList>::iterator ti(tables->begin());
   TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
-                                                tables->elements);
+                                                tables->size());
   if (table == 0)
     return;  // out of memory
 
-  for (TableList **t= table + (tables->elements - 1); t >= table; t--)
+  for (TableList **t= table + (tables->size() - 1); t >= table; t--)
     *t= ti++;
-  assert(tables->elements >= 1);
-  print_table_array(session, str, table, table + tables->elements);
+  assert(tables->size() >= 1);
+  print_table_array(session, str, table, table + tables->size());
 }
 
 void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
@@ -6344,7 +6344,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
     from clause
     @todo support USING/FORCE/IGNORE index
   */
-  if (table_list.elements)
+  if (table_list.size())
   {
     str->append(STRING_WITH_LEN(" from "));
     /* go through join tree */
@@ -6373,7 +6373,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   }
 
   // group by & olap
-  if (group_list.elements)
+  if (group_list.size())
   {
     str->append(STRING_WITH_LEN(" group by "));
     print_order(str, (Order *) group_list.first, query_type);
@@ -6404,7 +6404,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
       str->append(having_value != Item::COND_FALSE ? "1" : "0");
   }
 
-  if (order_list.elements)
+  if (order_list.size())
   {
     str->append(STRING_WITH_LEN(" order by "));
     print_order(str, (Order *) order_list.first, query_type);

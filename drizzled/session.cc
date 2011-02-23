@@ -1154,7 +1154,7 @@ bool select_export::send_data(List<Item> &items)
   }
   row_count++;
   Item *item;
-  uint32_t used_length=0,items_left=items.elements;
+  uint32_t used_length=0,items_left=items.size();
   List<Item>::iterator li(items.begin());
 
   if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),

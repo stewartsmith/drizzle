@@ -4775,7 +4775,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
         */
         if (used_key_parts_map.test(key_part_nr))
           continue;
-        if (key_part_nr < 1 || key_part_nr > join->fields_list.elements)
+        if (key_part_nr < 1 || key_part_nr > join->fields_list.size())
           goto next_index;
         cur_part= cur_index_info->key_part + key_part_nr - 1;
         cur_group_prefix_len+= cur_part->store_length;
