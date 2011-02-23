@@ -1,7 +1,10 @@
 EXTRACT DATE FUNCTION
 ======================
 
-**Syntax** ::
+Syntax
+------
+
+.. code-block:: mysql
 
 	EXTRACT(field FROM source)
 
@@ -9,11 +12,13 @@ The EXTRACT function retrieves subfields such as day or hour from date/time valu
 
 *Field* is an identifier or string that identifies the field to extract from the source value. The extract function returns values of type *double precision*. 
 
-**Examples:**
+Examples
+--------
 
 The following field names are available:
 
-**day**
+day
+^^^
 
 .. code-block:: mysql
 	
@@ -23,7 +28,8 @@ Day of the month.
 
 *Result: 16*
 
-**decade**
+decade
+^^^^^^
 
 .. code-block:: mysql
 	
@@ -33,7 +39,8 @@ The year, divided by 10.
 
 *Result: 200*
 
-**dow**
+dow
+^^^
 
 .. code-block:: mysql
 	
@@ -43,7 +50,8 @@ The day of the week (Sunday is 0, Saturday is 6)
 
 *Result: 5*
 
-**doy**
+doy
+^^^
 
 .. code-block:: mysql
 
@@ -53,7 +61,8 @@ The day of the year (1 - 365/366)
 
 *Result: 47*
 
-**hour**
+hour
+^^^^
 
 .. code-block:: mysql
 
@@ -63,7 +72,8 @@ The hour field (0 - 23)
 
 *Result: 20*
 
-**microseconds**
+microseconds
+^^^^^^^^^^^^
 
 .. code-block:: mysql
 
@@ -73,7 +83,8 @@ The seconds field, including fractional parts, multiplied by 1 000 000; note tha
 
 *Result: 28500000*
 
-**minute**
+minute
+^^^^^^
 
 .. code-block:: mysql
 
@@ -83,7 +94,8 @@ The minutes field (0 - 59)
 
 *Result: 38*
 
-**month**
+month
+^^^^^
 
 For timestamp values, the number of the month within the year (1 - 12). 
 For interval values, the number of months (0 - 11).
@@ -106,7 +118,8 @@ For interval values, the number of months (0 - 11).
 
 *Result: 1*
 
-**quarter**
+quarter
+^^^^^^^
 
 .. code-block:: mysql
 
@@ -116,7 +129,8 @@ The quarter of the year (1 - 4) containing the date.
 	
 *Result: 4*
 
-**second**
+second
+^^^^^^
 
 .. code-block:: mysql
 
@@ -132,11 +146,13 @@ The seconds field, including fractional parts (0 - 59)
 
 *Result: 22.5*
 
-**timezone**
+timezone
+^^^^^^^^
 
 The time zone offset from UTC, measured in seconds.
 
-**week**
+week
+^^^^
 
 Returns the week number that a day is in. Weeks are numbered according to ISO 8601:1988.
 
@@ -150,13 +166,17 @@ It's possible for early January dates to be part of the 52nd or 53rd week of the
 
 *Result: 4*
 
-**year**
+year
+^^^^
 
 .. code-block:: mysql
 
 	SELECT EXTRACT(YEAR FROM TIMESTAMP '2009-02-16 20:38:40');
 
 *Result: 2009*
+
+date_part
+^^^^^^^^^
 
 The valid field names for date_part are the same as for extract.
 

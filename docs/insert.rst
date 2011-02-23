@@ -5,8 +5,9 @@ In Drizzle you can make use of INSERT in order to insert data into a table.
 
 A type query:
 
-INSERT INTO A VALUES ("1");
+.. code-block:: mysql
 
+   INSERT INTO A VALUES ("1");
 
 .. todo::
 
@@ -34,6 +35,7 @@ The following statement is incorrect since the number of values in the list does
 
 VALUE is a synonym for VALUES where performing a single or multirow INSERT.
 
-**Performance**:
+Performance
+-----------
 
 A multi-row INSERT involving three rows will require roughly one third of the time required to execute the three single-row statements. This performance improvement can become quite significant over a large number of statements. 
