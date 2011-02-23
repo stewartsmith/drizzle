@@ -86,7 +86,7 @@ TableList *TableList::last_leaf_for_name_resolution()
        cur_nested_join;
        cur_nested_join= cur_table_ref->nested_join)
   {
-    cur_table_ref= cur_nested_join->join_list.head();
+    cur_table_ref= &cur_nested_join->join_list.front();
     /*
       If the current nested is a RIGHT JOIN, the operands in
       'join_list' are in reverse order, thus the last operand is in the

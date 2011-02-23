@@ -229,7 +229,6 @@ public:
   }
   inline list_node* last_node() { return *last; }
   inline list_node* first_node() { return first;}
-  inline void *head() { return first->info; }
   inline void **head_ref() { return first != &end_of_list ? &first->info : 0; }
   inline bool is_empty() { return first == &end_of_list ; }
   inline list_node *last_ref() { return &end_of_list; }
@@ -378,7 +377,8 @@ public:
   inline bool push_back(T *a, memory::Root *mem_root)
   { return base_list::push_back(a, mem_root); }
   inline bool push_front(T *a) { return base_list::push_front(a); }
-  inline T* head() {return static_cast<T*>(base_list::head()); }
+  inline T& front() {return *static_cast<T*>(first->info); }
+  inline T* head() {return &front(); }
   inline T* pop()  {return static_cast<T*>(base_list::pop()); }
   inline void concat(List<T> *list) { base_list::concat(list); }
   inline void disjoin(List<T> *list) { base_list::disjoin(list); }

@@ -660,7 +660,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
     if (item)
     {
       /* Have not read any field, thus input cursor is simply ended */
-      if (item == fields_vars.head())
+      if (item == &fields_vars.front())
 	break;
       for (; item ; item= it++)
       {

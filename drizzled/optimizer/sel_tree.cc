@@ -91,11 +91,11 @@ static int imerge_list_or_list(optimizer::RangeParameter *param,
                                List<optimizer::SEL_IMERGE> *im1,
                                List<optimizer::SEL_IMERGE> *im2)
 {
-  optimizer::SEL_IMERGE *imerge= im1->head();
+  optimizer::SEL_IMERGE *imerge= &im1->front();
   im1->clear();
   im1->push_back(imerge);
 
-  return imerge->or_sel_imerge_with_checks(param, im2->head());
+  return imerge->or_sel_imerge_with_checks(param, &im2->front());
 }
 
 
