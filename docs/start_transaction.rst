@@ -8,7 +8,7 @@ A transaction can be started with either the BEGIN or START TRANSACTION statemen
 
 .. warning::
 
-   If you are currently already in a transaction Drizzle will give a warning
+   If you are currently already in a transaction, Drizzle will give a warning
    stating that you are in a transaction in a similar way to PostgreSQL.
    This is instead of implicitly committing the transaction in the way MySQL
    does.
