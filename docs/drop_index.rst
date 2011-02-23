@@ -1,7 +1,9 @@
 DROP INDEX
 ============
 
-This drops a given index on the named table. ::
+This drops a given index on the named table.
+
+.. code-block:: mysql
 
 	DROP INDEX table_1_index ON table_1;
 

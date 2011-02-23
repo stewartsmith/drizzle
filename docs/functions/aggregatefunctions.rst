@@ -135,4 +135,7 @@ MAX and MIN return NULL if there are no matching rows.
 		FROM inventory
 		GROUP BY product_id;
 
-** Question: For MAX(), does Drizzle compare ENUM and SET columns by their string value rather than by the string's relative position in the set? **
+.. note::
+
+   For ``ENUM`` columns :program:`Drizzle` uses the highest and lowest string
+   values for ``MIN`` and ``MAX`` rather than relative position.

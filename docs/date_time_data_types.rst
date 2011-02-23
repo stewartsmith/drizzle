@@ -63,7 +63,8 @@ This brings Drizzle closer to the SQL standard. Negative time is not meant to be
 
 To prevent data loss to this type when converting from MySQL -> Drizzle, the conversion process changes TIME to an INT of the number of seconds. For example, 00:00:00 becomes 0, 01:00:00 becomes 3600, and -01:00:00 becomes -3600.
 
-More information on this can be found in the "MySQL Migration Using Drizzledump" section of the :doc:`clients/drizzledump` chapter.
+More information on this can be found in the :ref:`drizzledump-migration-label`
+section of this documentation.
 
 DATETIME
 --------

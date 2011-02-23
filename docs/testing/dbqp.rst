@@ -246,13 +246,19 @@ The :program:`dbqp.py` tool has several available options:
 
 Options
 -------
+
+.. program:: dbqp.py
+
 .. option:: -h, --help
  
    show this help message and exit
 
 Options for the test-runner itself
 ----------------------------------
-.. option:: --force             
+
+.. program:: dbqp.py
+
+.. option:: --force
 
     Set this to continue test execution beyond the first failed test
 
@@ -296,6 +302,9 @@ Options for the test-runner itself
 
 Options for controlling which tests are executed
 ------------------------------------------------
+
+.. program:: dbqp.py
+
 .. option:: --suite=SUITELIST
 
    The name of the suite containing tests we want. 
@@ -332,6 +341,8 @@ Options for controlling which tests are executed
 Options for defining the code that will be under test
 -----------------------------------------------------
 
+.. program:: dbqp.py
+
 .. option:: --basedir=BASEDIR   
 
    Pass this argument to signal to the test-runner 
@@ -355,6 +366,9 @@ Options for defining the code that will be under test
 
 Options for defining the testing environment
 --------------------------------------------
+
+.. program:: dbqp.py
+
 .. option:: --testdir=TESTDIR   
 
     Path to the test dir, containing additional files for
@@ -391,6 +405,9 @@ Options for defining the testing environment
 
 Options to pass options on to the server
 -----------------------------------------
+
+.. program:: dbqp.py
+
 .. option:: --drizzled=DRIZZLEDOPTIONS
            
     Pass additional options to the server.  Will be passed
@@ -400,6 +417,9 @@ Options to pass options on to the server
 
 Options for defining the tools we use for code analysis (valgrind, gprof, gcov, etc)
 ------------------------------------------------------------------------------------
+
+.. program:: dbqp.py
+
 .. option:: --valgrind          
 
    Run drizzletest and drizzled executables using
@@ -412,6 +432,9 @@ Options for defining the tools we use for code analysis (valgrind, gprof, gcov, 
 
 Options for controlling the use of debuggers with test execution
 ----------------------------------------------------------------
+
+.. program:: dbqp.py
+
 .. option:: --gdb
 
     Start the drizzled server(s) in gdb
@@ -423,16 +446,12 @@ Options for controlling the use of debuggers with test execution
 
 Options to call additional utilities such as datagen
 ------------------------------------------------------
+
+.. program:: dbqp.py
+
 .. option:: --gendata=GENDATAFILE
             
     Call the randgen's gendata utility to use the
     specified configuration file.  This will populate the
     server prior to any test execution
-
-
-    
-
-
-
-
 
