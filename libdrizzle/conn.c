@@ -86,7 +86,7 @@ void drizzle_con_close(drizzle_con_st *con)
   if (con->fd == -1)
     return;
 
-  (void)close(con->fd);
+  (void)closesocket(con->fd);
   con->fd= -1;
 
   con->options&= (drizzle_con_options_t)~DRIZZLE_CON_READY;
