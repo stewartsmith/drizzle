@@ -1,0 +1,30 @@
+create schema user1;
+create schema user2;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SCHEMA_NAME
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+mysql
+test
+user1
+user2
+use user2;
+create table t1 (kill_id int);
+insert into t1 values(connection_id());
+SELECT * from user1.dont_exist;
+ERROR 42S02: Unknown table 'user1.dont_exist'
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SCHEMA_NAME
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+user1
+SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='user2' ORDER BY TABLE_NAME;
+TABLE_NAME
+select * from user2.t1;
+ERROR 42000: Access denied for user 'user1' to schema 'user2'
+SHOW CREATE TABLE user2.doesnt_exist;
+ERROR HY000: Access denied for user 'user1' to table 'user2.doesnt_exist'
+SHOW CREATE TABLE user2.t1;
+ERROR HY000: Access denied for user 'user1' to table 'user2.t1'
+drop schema user1;
+drop schema user2;
