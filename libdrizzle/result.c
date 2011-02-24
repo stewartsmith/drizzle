@@ -118,13 +118,16 @@ void drizzle_result_free(drizzle_result_st *result)
     free(result->field_sizes_list);
   }
 
-  if (result->con->result_list == result)
-    result->con->result_list= result->next;
+  if (result->con)
+  {
+    result->con->result_count--;
+    if (result->con->result_list == result)
+      result->con->result_list= result->next;
+  }
   if (result->prev)
     result->prev->next= result->next;
   if (result->next)
     result->next->prev= result->prev;
-  result->con->result_count--;
 
   if (result->options & DRIZZLE_RESULT_ALLOCATED)
     free(result);
