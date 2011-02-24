@@ -78,6 +78,31 @@ void add_foreign_key_to_table_message(
 
 }
 
+/**
+  Make a deep copy of each list element.
+
+  @note A template function and not a template method of class List
+  is employed because of explicit template instantiation:
+  in server code there are explicit instantiations of List<T> and
+  an explicit instantiation of a template requires that any method
+  of the instantiated class used in the template can be resolved.
+  Evidently not all template arguments have clone() method with
+  the right signature.
+
+  @return You must query the error state in Session for out-of-memory
+  situation after calling this function.
+*/
+
+template <typename T>
+void list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
+{
+  /* Make a deep copy of each element */
+  typename List<T>::iterator it(list.begin());
+  T *el;
+  while ((el= it++))
+    it.replace(el->clone(mem_root));
+}
+
 Foreign_key::Foreign_key(const Foreign_key &rhs, memory::Root *mem_root)
   :Key(rhs),
   ref_table(rhs.ref_table),

@@ -3762,7 +3762,7 @@ int Session::setup_conds(TableList *leaves, COND **conds)
       embedding= embedded->getEmbedding();
     }
     while (embedding &&
-           embedding->getNestedJoin()->join_list.head() == embedded);
+           &embedding->getNestedJoin()->join_list.front() == embedded);
 
   }
   session->session_marker= save_session_marker;

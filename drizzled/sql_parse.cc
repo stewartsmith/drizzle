@@ -1139,7 +1139,7 @@ TableList *Select_Lex::end_nested_join(Session *)
   nested_join= ptr->getNestedJoin();
   if (nested_join->join_list.size() == 1)
   {
-    TableList *embedded= nested_join->join_list.head();
+    TableList *embedded= &nested_join->join_list.front();
     join_list->pop();
     embedded->setJoinList(join_list);
     embedded->setEmbedding(embedding);

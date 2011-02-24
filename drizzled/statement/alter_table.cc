@@ -439,7 +439,7 @@ static bool prepare_alter_table(Session *session,
   {
     my_error(ER_BAD_FIELD_ERROR,
              MYF(0),
-             alter_info->alter_list.head()->name,
+             alter_info->alter_list.front().name,
              table->getMutableShare()->getTableName());
     return true;
   }
@@ -641,7 +641,7 @@ static bool prepare_alter_table(Session *session,
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
-             alter_info->drop_list.head()->name);
+             alter_info->drop_list.front().name);
     return true;
   }
 
@@ -649,7 +649,7 @@ static bool prepare_alter_table(Session *session,
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
-             alter_info->alter_list.head()->name);
+             alter_info->alter_list.front().name);
     return true;
   }
 

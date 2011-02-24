@@ -3937,7 +3937,7 @@ Item_cond::fix_fields(Session *session, Item **)
     {						// Identical function
       li.replace(((Item_cond*) item)->list);
       ((Item_cond*) item)->list.clear();
-      item= *li.ref();				// new current item
+      item= &*li;				// new current item
     }
     if (abort_on_null)
       item->top_level_item();
@@ -3945,7 +3945,7 @@ Item_cond::fix_fields(Session *session, Item **)
     // item can be substituted in fix_fields
     if ((!item->fixed &&
 	 item->fix_fields(session, li.ref())) ||
-	(item= *li.ref())->check_cols(1))
+	(item= &*li)->check_cols(1))
       return true;
     used_tables_cache|=     item->used_tables();
     if (item->const_item())
@@ -3985,7 +3985,7 @@ void Item_cond::fix_after_pullout(Select_Lex *new_parent, Item **)
   {
     table_map tmp_table_map;
     item->fix_after_pullout(new_parent, li.ref());
-    item= *li.ref();
+    item= &*li;
     used_tables_cache|= item->used_tables();
     const_item_cache&= item->const_item();
 
@@ -4141,14 +4141,12 @@ void Item_cond::traverse_cond(Cond_traverser traverser,
     that have or refer (HAVING) to a SUM expression.
 */
 
-void Item_cond::split_sum_func(Session *session, Item **ref_pointer_array,
-                               List<Item> &fields)
+void Item_cond::split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields)
 {
   List<Item>::iterator li(list.begin());
   Item *item;
   while ((item= li++))
-    item->split_sum_func(session, ref_pointer_array,
-                         fields, li.ref(), true);
+    item->split_sum_func(session, ref_pointer_array, fields, li.ref(), true);
 }
 
 

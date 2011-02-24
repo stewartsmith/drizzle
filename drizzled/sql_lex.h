@@ -955,7 +955,7 @@ public:
 
   Name_resolution_context *current_context()
   {
-    return context_stack.head();
+    return &context_stack.front();
   }
 
   /**
