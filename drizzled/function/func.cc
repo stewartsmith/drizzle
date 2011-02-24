@@ -364,7 +364,7 @@ Item *Item_func::transform(Item_transformer transformer, unsigned char *argument
         change records at each execution.
       */
       if (*arg != new_item)
-        getSession().change_item_tree(arg, new_item);
+        *arg= new_item;
     }
   }
   return (this->*transformer)(argument);
@@ -412,7 +412,7 @@ Item *Item_func::compile(Item_analyzer analyzer, unsigned char **arg_p,
       unsigned char *arg_v= *arg_p;
       Item *new_item= (*arg)->compile(analyzer, &arg_v, transformer, arg_t);
       if (new_item && *arg != new_item)
-        current_session->change_item_tree(arg, new_item);
+        *arg= new_item;
     }
   }
   return (this->*transformer)(arg_t);

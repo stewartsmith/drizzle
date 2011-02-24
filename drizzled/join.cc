@@ -2325,11 +2325,11 @@ bool Join::rollup_init()
           if (!new_item)
             return 1;
           new_item->fix_fields(session, (Item **) 0);
-          session->change_item_tree(it.ref(), new_item);
+          *it.ref()= new_item;
           for (Order *tmp= group_tmp; tmp; tmp= tmp->next)
           {
             if (*tmp->item == item)
-              session->change_item_tree(tmp->item, new_item);
+              *tmp->item= new_item;
           }
         }
       }

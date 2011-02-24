@@ -124,7 +124,7 @@ Item *Item_func_make_set::transform(Item_transformer transformer, unsigned char 
     change records at each execution.
   */
   if (item != new_item)
-    session.change_item_tree(&item, new_item);
+    *&item= new_item;
 
   return Item_str_func::transform(transformer, arg);
 }
