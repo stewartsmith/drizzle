@@ -6202,8 +6202,13 @@ void free_replace_column()
 class POINTER_ARRAY
 {    /* when using array-strings */
 public:
-  void clear();
+  ~POINTER_ARRAY();
   int insert(char* name);
+
+  POINTER_ARRAY()
+  {
+    memset(this, 0, sizeof(*this));
+  }
 
   TYPELIB typelib;        /* Pointer to strings */
   unsigned char *str;          /* Strings is here */
@@ -6232,7 +6237,7 @@ st_replace *glob_replace= NULL;
   variable is replaced.
 */
 
-void POINTER_ARRAY::clear()
+POINTER_ARRAY::~POINTER_ARRAY()
 {
   if (!typelib.count)
     return;
@@ -6242,42 +6247,37 @@ void POINTER_ARRAY::clear()
   free(str);
 }
 
-void do_get_replace(struct st_command *command)
+void do_get_replace(st_command *command)
 {
-  uint32_t i;
   char *from= command->first_argument;
-  char *buff, *start;
-  char word_end_chars[256], *pos;
-  POINTER_ARRAY to_array, from_array;
-  free_replace();
-
-  memset(&to_array, 0, sizeof(to_array));
-  memset(&from_array, 0, sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
-  start= buff= (char *)malloc(strlen(from)+1);
+  free_replace();
+  POINTER_ARRAY to_array, from_array;
+  char* start= (char*)malloc(strlen(from) + 1);
+  char* buff= start;
   while (*from)
   {
-    char *to= buff;
-    to= get_string(&buff, &from, command);
+    char *to= get_string(&buff, &from, command);
     if (!*from)
-      die("Wrong number of arguments to replace_result in '%s'",
-          command->query);
+      die("Wrong number of arguments to replace_result in '%s'", command->query);
     from_array.insert(to);
     to= get_string(&buff, &from, command);
     to_array.insert(to);
   }
-  for (i= 1,pos= word_end_chars ; i < 256 ; i++)
-    if (my_isspace(charset_info,i))
+  char word_end_chars[256];
+  char* pos= word_end_chars;
+  for (int i= 1; i < 256; i++)
+  {
+    if (my_isspace(charset_info, i))
       *pos++= i;
+  }
   *pos=0;          /* End pointer */
   if (!(glob_replace= init_replace(from_array.typelib.type_names,
                                    to_array.typelib.type_names,
                                    from_array.typelib.count,
                                    word_end_chars)))
     die("Can't initialize replace from '%s'", command->query);
-  from_array.clear();
-  to_array.clear();
   free(start);
   command->last_argument= command->end;
   return;
