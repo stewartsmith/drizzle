@@ -63,7 +63,7 @@ bool TableMessages::getTableMessage(const identifier::Table &identifier, message
   if (iter == table_message_cache.end())
     return false;
 
-  table_message.CopyFrom(((*iter).second));
+  table_message.CopyFrom((iter->second));
 
   return true;
 }
@@ -95,8 +95,8 @@ bool TableMessages::renameTableMessage(const identifier::Table &from, const iden
     return false;
   }
 
-  (*iter).second.set_schema(to.getSchemaName());
-  (*iter).second.set_name(to.getTableName());
+  iter->second.set_schema(to.getSchemaName());
+  iter->second.set_name(to.getTableName());
 
   return true;
 }

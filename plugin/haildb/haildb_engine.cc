@@ -787,7 +787,7 @@ static const char* table_path_to_haildb_name(const char* name)
     std::transform(find_name.begin(), find_name.end(), find_name.begin(), ::toupper);
     boost::unordered_set<string>::iterator iter= haildb_system_table_names.find(find_name);
     if (iter != haildb_system_table_names.end())
-      return (*iter).c_str()+sys_table_prefix.length();
+      return iter->c_str()+sys_table_prefix.length();
   }
 
   int slashes= 2;

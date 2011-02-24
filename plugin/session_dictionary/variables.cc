@@ -54,11 +54,11 @@ bool Variables::Generator::populate()
 
     bool null_value;
     uint32_t decimals= 4; // arbitrary
-    (*iter).second->val_str(&null_value, &tmp, decimals);
+    iter->second->val_str(&null_value, &tmp, decimals);
 
 
     // VARIABLE_NAME
-    push((*iter).first);
+    push(iter->first);
     
     // VARIABLE_VALUE 
     if (null_value)

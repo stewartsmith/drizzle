@@ -68,7 +68,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
          iter != open_cache.end();
          iter++)
     {
-      table_list.push_back((*iter).second);
+      table_list.push_back(iter->second);
     }
 
     for (drizzled::Table *tmp_table= getSession().getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
