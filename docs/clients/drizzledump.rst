@@ -6,9 +6,9 @@ Synopsis
 
 :program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] *database* [*tables*]
 
-:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--databases` *DB1* [*DB2* *DB3*...]
+:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--databases <drizzledump --databases>` *DB1* [*DB2* *DB3*...]
 
-:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--all-databases`
+:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--all-databases <drizzledump --all-databases>`
 
 Description
 -----------
