@@ -271,7 +271,7 @@ void ErrorMap::add(drizzled::error_t error_num,
                    const std::string &error_name,
                    const std::string &message)
 {
-  if (mapping_.find(error_num) == mapping_.end())
+  if (not mapping_.count(error_num))
   {
     // Log the error.
     mapping_[error_num]= ErrorMap::value_type(error_name, message);

@@ -399,7 +399,7 @@ static bool check_duplicates_in_interval(const char *set_or_name,
     tmp.type_names++;
     tmp.type_lengths++;
     tmp.count--;
-    if (interval_set.find(typelib_set_member(*cur_value, *cur_length, cs)) != interval_set.end())
+    if (interval_set.count(typelib_set_member(*cur_value, *cur_length, cs)))
     {
       my_error(ER_DUPLICATED_VALUE_IN_TYPE, MYF(0),
                name,*cur_value,set_or_name);
