@@ -30,12 +30,16 @@ class FunctionCursor: public drizzled::Cursor
 {
   drizzled::plugin::TableFunction *tool;
   drizzled::plugin::TableFunction::Generator *generator;
-  size_t record_id;
-  std::vector<unsigned char *> row_cache;
+  size_t row_cache_position;
+  std::vector<unsigned char> row_cache;
   drizzled::ha_rows estimate_of_rows;
   drizzled::ha_rows rows_returned;
 
   void wipeCache();
+
+  std::vector <unsigned char> record_buffer; // for pack_row
+  uint32_t max_row_length();
+  unsigned int pack_row(const unsigned char *record);
 
 public:
   FunctionCursor(drizzled::plugin::StorageEngine &engine,

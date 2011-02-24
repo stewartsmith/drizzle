@@ -65,13 +65,16 @@ class serverManager:
         if self.debug:
             self.logging.debug_class(self)
 
-    def request_servers( self, requester, workdir, master_count
-                   , slave_count, server_options, working_environ
-                   , expect_fail = 0):
+    def request_servers( self, requester, workdir, server_requirements
+                       , working_environ, expect_fail = 0):
         """ We produce the server objects / start the server processes
             as requested.  We report errors and whatnot if we can't
             That is, unless we expect the server to not start, then
-            we just return a value / message
+            we just return a value / message.
+
+            server_requirements is a list of lists.  Each list
+            is a set of server options - we create one server
+            for each set of options requested
     
         """
 
@@ -80,11 +83,11 @@ class serverManager:
         self.check_server_status(requester)
         
         # Make sure we have the proper number of servers for this requester
-        self.process_server_count( requester, master_count+slave_count
-                                 , workdir, server_options)
+        self.process_server_count( requester, len(server_requirements)
+                                 , workdir, server_requirements)
 
         # Make sure we are running with the correct options 
-        self.evaluate_existing_servers(requester, server_options)
+        self.evaluate_existing_servers(requester, server_requirements)
 
         # Fire our servers up
         bad_start = self.start_servers( requester, working_environ
@@ -113,7 +116,6 @@ class serverManager:
                                 , server_options
                                 , requester
                                 , workdir )
-        self.add_server(requester, new_server)
         return new_server
 
     def start_servers(self, requester, working_environ, expect_fail):
@@ -188,11 +190,9 @@ class serverManager:
         #if server_retcode: # We know we have an error, no need to wait
         #    timer = timeout
 
-        # We experiment with waiting for a pid file to be created vs. pinging
-        # This is what test-run.pl does and it helps us pass logging_stats tests
-        # while not self.ping_server(server, quiet=True) and timer != timeout:
-        while not self.system_manager.find_path( [server.pid_file]
-                                               , required=0) and timer != timeout:
+        
+
+        while not server.is_started() and timer != timeout:
             time.sleep(self.timer_increment)
             # If manual-gdb, this == None and we want to give the 
             # user all the time they need
@@ -307,14 +307,17 @@ class serverManager:
     def log_server(self, new_server, requester):
         self.servers[requester].append(new_server)
 
-    def evaluate_existing_servers( self, requester, server_options):
+    def evaluate_existing_servers( self, requester, server_requirements):
         """ See if the requester has any servers and if they
             are suitable for the current test
 
+            We should have the proper number of servers at this point
+
         """
         current_servers = self.servers[requester]
-        
-        for server in current_servers:
+
+        for index,server in enumerate(current_servers):
+            server_options = server_requirements[index]
             # We add in any user-supplied options here
             server_options = server_options + self.user_server_opts
             if self.compare_options( server.server_options
@@ -326,6 +329,9 @@ class serverManager:
                 server_options = self.filter_server_options(server_options)
                 self.reset_server(server)
                 self.update_server_options(server, server_options)
+
+
+       
 
     def filter_server_options(self, server_options):
         """ Remove a list of options we don't want passed to the server
@@ -361,7 +367,7 @@ class serverManager:
             self.reset_server(server)
 
 
-    def process_server_count(self, requester, desired_count, workdir, server_options):
+    def process_server_count(self, requester, desired_count, workdir, server_reqs):
         """ We see how many servers we have.  We shrink / grow
             the requesters set of servers as needed.
 
@@ -369,11 +375,14 @@ class serverManager:
             (naturally)
  
         """
-        server_options = self.filter_server_options(server_options)
+        if desired_count < 0:  desired_count = 1
+
         current_count = self.has_servers(requester)
         if desired_count > current_count:
             for i in range(desired_count - current_count):
-                self.allocate_server(requester, server_options, workdir)
+                # We pass an empty options list when allocating
+                # We'll update the options to what is needed elsewhere
+                self.allocate_server(requester,[] , workdir)
         elif desired_count < current_count:
             good_servers = self.get_server_list(requester)[:desired_count]
             retired_servers = self.get_server_list(requester)[desired_count - current_count:]

@@ -42,21 +42,35 @@ Next, we have the "Persons" table:
 
 The "userID" column is the primary key in the "Persons" table; in the "Persons" table, it can be used to identify users without using their names. Therefore, the relationship between the two tables above is the "userId" column.
 
-**Different kinds of SQL JOINs**
+Different kinds of SQL JOINs
+----------------------------
 
-Here are the types of JOIN you can use, and the differences between them. Click for detailed syntax and examples:
+Here are the types of JOIN you can use, and the differences between them:
 
-    * JOIN: Return rows when there is at least one match in both tables
-    * LEFT JOIN: Return all rows from the left table, even if there are no matches in the right table
-    * RIGHT JOIN: Return all rows from the right table, even if there are no matches in the left table
-    * CROSS JOIN: Return rows when there is a match in one of the tables
+	**JOIN:** Return rows when there is at least one match in both tables
+
+	**LEFT JOIN:** Return all rows from the left table, even if there are no matches in the right table
+
+	**RIGHT JOIN:** Return all rows from the right table, even if there are no matches in the left table
+
+	**CROSS JOIN:** Return rows when there is a match in one of the tables
+
 
 .. note::
+   Implicit cartesian products of the form ``SELECT * FROM t1, t2`` without a ``WHERE`` or ``ON`` condition will error. If such behavior is intended please use ``SELECT * FROM t1 CROSS JOIN t2``.
 
-   Implicit cartesian products of the form ``SELECT * FROM t1, t2`` without a 
-   ``WHERE`` or ``ON`` condition will error.  If such behaviour is intended
-   please use ``SELECT * FROM t1 CROSS JOIN t2``.
 
-.. todo::
+How joins are executed
+----------------------
 
-   how joins are executed. i.e. nested loop join.
+In its simplest form, a nested loop join works like this: It compares each row from one table (which can be considered the outer table) to each row from the other table (which can be considered the inner table), looking for rows that satisfy the join predicate. ('Inner table' and 'outer table' simply correlate to the inputs of the join, while 'inner join' and 'outer join' refer to the logical operations.)
+
+The total number of rows compared is proportional to the size of the outer table multiplied by the size of the inner table. To minimize the cost of the operation, reduce or minimize the number of inner rows that we must compared to each outer row.
+
+Nested loops support:
+
+    * Inner join
+    * Left outer join
+    * Cross join
+    * Cross apply and outer apply
+    * Left semi-join and left anti-semi-join

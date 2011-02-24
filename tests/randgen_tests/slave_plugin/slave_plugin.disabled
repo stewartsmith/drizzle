@@ -1,0 +1,9 @@
+[test_info]
+name = randgen_slave_plugin
+comment = basic, basic randgen test
+
+[test_command]
+command = ./gentest.pl --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=10 --threads=1
+
+[test_servers]
+servers = [[--innodb.replication-log=true],[--plugin-add=slave --slave.config-file=$MASTER_SERVER_SLAVE_CONFIG]]

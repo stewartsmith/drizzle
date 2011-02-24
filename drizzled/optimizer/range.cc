@@ -2534,7 +2534,7 @@ static optimizer::SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *par
   Item_equal *item_equal= field_item->item_equal;
   if (item_equal)
   {
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     Item_field *item;
     while ((item= it++))
     {
@@ -2689,7 +2689,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
     Item_equal *item_equal= (Item_equal *) cond;
     if (!(value= item_equal->get_const()))
       return 0;
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     ref_tables= value->used_tables();
     while ((field_item= it++))
     {
@@ -3115,6 +3115,12 @@ get_mm_leaf(optimizer::RangeParameter *param,
                !((Item_int*)value)->unsigned_flag &&
                (value->val_int() < 0))
         type = Item_func::GE_FUNC;
+    }
+    else if (err == 1)
+    {
+      tree= new (alloc) optimizer::SEL_ARG(field, 0, 0);
+      tree->type= optimizer::SEL_ARG::IMPOSSIBLE;
+      goto end;
     }
   }
   else if (err < 0)
@@ -4769,7 +4775,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
         */
         if (used_key_parts_map.test(key_part_nr))
           continue;
-        if (key_part_nr < 1 || key_part_nr > join->fields_list.elements)
+        if (key_part_nr < 1 || key_part_nr > join->fields_list.size())
           goto next_index;
         cur_part= cur_index_info->key_part + key_part_nr - 1;
         cur_group_prefix_len+= cur_part->store_length;

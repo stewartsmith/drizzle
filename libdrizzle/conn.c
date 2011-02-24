@@ -195,7 +195,9 @@ void drizzle_con_add_options(drizzle_con_st *con,
 
   /* If asking for the experimental Drizzle protocol, clean the MySQL flag. */
   if (con->options & DRIZZLE_CON_EXPERIMENTAL)
+  {
     con->options&= (drizzle_con_options_t)~DRIZZLE_CON_MYSQL;
+  }
 }
 
 void drizzle_con_remove_options(drizzle_con_st *con,
@@ -451,6 +453,16 @@ drizzle_result_st *drizzle_shutdown(drizzle_con_st *con,
   return drizzle_con_shutdown(con, result, ret_ptr);
 }
 
+drizzle_result_st *drizzle_kill(drizzle_con_st *con,
+                                drizzle_result_st *result,
+                                uint32_t query_id,
+                                drizzle_return_t *ret_ptr)
+{
+  uint32_t sent= htonl(query_id);
+  return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_PROCESS_KILL,
+                                   &sent, sizeof(uint32_t), sizeof(uint32_t), ret_ptr);
+}
+
 drizzle_result_st *drizzle_con_ping(drizzle_con_st *con,
                                     drizzle_result_st *result,
                                     drizzle_return_t *ret_ptr)
@@ -666,8 +678,7 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
   size_t offset= 0;
   size_t size= 0;
 
-  command_data= drizzle_con_command_read(con, command, &offset, &size, total,
-                                         ret_ptr);
+  command_data= drizzle_con_command_read(con, command, &offset, &size, total, ret_ptr);
   if (*ret_ptr != DRIZZLE_RETURN_OK)
     return NULL;
 

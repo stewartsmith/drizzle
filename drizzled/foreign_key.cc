@@ -108,7 +108,7 @@ bool foreign_key_prefix(Key *a, Key *b)
   /* Ensure that 'a' is the generated key */
   if (a->generated)
   {
-    if (b->generated && a->columns.elements > b->columns.elements)
+    if (b->generated && a->columns.size() > b->columns.size())
       std::swap(a, b);                       // Put shorter key in 'a'
   }
   else
@@ -119,7 +119,7 @@ bool foreign_key_prefix(Key *a, Key *b)
   }
 
   /* Test if 'a' is a prefix of 'b' */
-  if (a->columns.elements > b->columns.elements)
+  if (a->columns.size() > b->columns.size())
     return true;                                // Can't be prefix
 
   List<Key_part_spec>::iterator col_it1(a->columns.begin());

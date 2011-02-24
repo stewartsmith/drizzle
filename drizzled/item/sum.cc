@@ -227,7 +227,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
     Check that non-aggregated fields and sum functions aren't mixed in the
     same select in the ONLY_FULL_GROUP_BY mode.
   */
-  if (outer_fields.elements)
+  if (outer_fields.size())
   {
     Item_field *field;
     /*
@@ -381,7 +381,7 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
 }
 
 
-Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
+Item_sum::Item_sum(List<Item> &list) :arg_count(list.size()),
   forced_const(false)
 {
   if ((args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
@@ -2973,7 +2973,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
    separator(separator_arg), tree(NULL), unique_filter(NULL), table(0),
    order(0), context(context_arg),
    arg_count_order(order_list ? order_list->elements : 0),
-   arg_count_field(select_list->elements),
+   arg_count_field(select_list->size()),
    count_cut_values(0),
    distinct(distinct_arg),
    warning_for_row(false),

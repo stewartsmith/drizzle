@@ -1,0 +1,68 @@
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (
+`col_int` int,
+pk integer auto_increment,
+`col_char_10` char(10),
+`col_enum_not_null` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') not null,
+`col_char_1024` char(1024),
+`col_char_1024_key` char(1024),
+`col_bigint_not_null_key` bigint not null,
+`col_text_key` text,
+`col_char_1024_not_null` char(1024) not null,
+`col_enum_key` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+`col_int_not_null` int not null,
+`col_bigint_not_null` bigint not null,
+`col_text` text,
+`col_enum` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+`col_char_10_not_null` char(10) not null,
+`col_enum_not_null_key` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') not null,
+`col_text_not_null_key` text not null,
+`col_char_1024_not_null_key` char(1024) not null,
+`col_text_not_null` text not null,
+`col_int_key` int,
+`col_char_10_key` char(10),
+`col_int_not_null_key` int not null,
+`col_bigint_key` bigint,
+`col_bigint` bigint,
+`col_char_10_not_null_key` char(10) not null,
+/*Indices*/
+primary key (pk),
+key (`col_char_1024_key` ),
+key (`col_bigint_not_null_key` ),
+key (`col_text_key` (255)),
+key (`col_enum_key` ),
+key (`col_enum_not_null_key` ),
+key (`col_text_not_null_key` (255)),
+key (`col_char_1024_not_null_key` ),
+key (`col_int_key` ),
+key (`col_char_10_key` ),
+key (`col_int_not_null_key` ),
+key (`col_bigint_key` ),
+key (`col_char_10_not_null_key` )) ;
+
+START TRANSACTION;
+--error ER_INVALID_ENUM_VALUE
+DELETE FROM t1
+WHERE `col_enum_key` = 923074560
+ ORDER BY `col_bigint`,`col_bigint_key`,`col_bigint_not_null`,
+`col_bigint_not_null_key`,`col_char_10`,`col_char_1024`,
+`col_char_1024_key`,`col_char_1024_not_null`,`col_char_1024_not_null_key`,
+`col_char_10_key`,`col_char_10_not_null`,`col_char_10_not_null_key`,`col_enum`,
+`col_enum_key`,`col_enum_not_null`,`col_enum_not_null_key`,`col_int`,`col_int_key`,
+`col_int_not_null`,`col_int_not_null_key`,`col_text`,`col_text_key`,`col_text_not_null`,
+`col_text_not_null_key`,`pk` LIMIT 1;
+
+--replace_result $DRIZZLETEST_VARDIR DTR_VARDIR
+--system cat $DRIZZLETEST_VARDIR/log/master.err |awk 'BEGIN {x=0}; /^CURRENT_TEST: regression.676770/{x=1;}; /Sort aborted/{ if (x==1) print}; /^CURRENT_TEST: (^regression.676770)/{x=0;}' > $DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp
+
+--replace_result $DRIZZLETEST_VARDIR DTR_VARDIR
+eval SELECT LOAD_FILE('$DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp');
+
+--echo
+--echo
+COMMIT;
+DROP TABLE t1;
+--remove_file $DRIZZLETEST_VARDIR/tmp/enum_errlog.tmp

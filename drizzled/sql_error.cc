@@ -146,7 +146,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   if (session->handle_error(code, msg, level))
     return NULL;
 
-  if (session->warn_list.elements < session->variables.max_error_count)
+  if (session->warn_list.size() < session->variables.max_error_count)
   {
     /* We have to use warn_root, as mem_root is freed after each query */
     if ((err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg)))
