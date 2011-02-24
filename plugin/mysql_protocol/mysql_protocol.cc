@@ -32,9 +32,8 @@
 #include "mysql_protocol.h"
 #include "mysql_password.h"
 #include "options.h"
-
 #include <drizzled/identifier.h>
-
+#include <drizzled/plugin/function.h>
 #include <libdrizzle/constants.h>
 
 #define PROTOCOL_VERSION 10

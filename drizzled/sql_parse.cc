@@ -53,6 +53,7 @@
 #include <drizzled/visibility.h>
 #include <drizzled/kill.h>
 #include <drizzled/schema.h>
+#include <drizzled/item/subselect.h>
 
 #include <limits.h>
 

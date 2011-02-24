@@ -58,6 +58,7 @@
 #include <drizzled/table/unused.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
+#include <drizzled/item/subselect.h>
 
 #include <drizzled/refresh_version.h>
 
