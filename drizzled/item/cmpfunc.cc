@@ -1677,14 +1677,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, unsigned char *
   new_item= (*args)->transform(transformer, argument);
   if (!new_item)
     return 0;
-  /*
-    Session::change_item_tree() should be called only if the tree was
-    really transformed, i.e. when a new item has been created.
-    Otherwise we'll be allocating a lot of unnecessary memory for
-    change records at each execution.
-  */
-  if ((*args) != new_item)
-    *args= new_item;
+  *args= new_item;
 
   /*
     Transform the right IN operand which should be an Item_in_subselect or a
@@ -4040,15 +4033,7 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
     Item *new_item= item->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (new_item != item)
-      *li.ref()= new_item;
+    *li.ref()= new_item;
   }
   return Item_func::transform(transformer, arg);
 }
@@ -5178,15 +5163,7 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
     Item *new_item= item->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (new_item != item)
-      *(Item **)it.ref()= new_item;
+    *(Item **)it.ref()= new_item;
   }
   return Item_func::transform(transformer, arg);
 }

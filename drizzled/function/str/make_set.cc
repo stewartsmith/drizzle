@@ -116,16 +116,7 @@ Item *Item_func_make_set::transform(Item_transformer transformer, unsigned char 
   Item *new_item= item->transform(transformer, arg);
   if (!new_item)
     return 0;
-
-  /*
-    Session::change_item_tree() should be called only if the tree was
-    really transformed, i.e. when a new item has been created.
-    Otherwise we'll be allocating a lot of unnecessary memory for
-    change records at each execution.
-  */
-  if (item != new_item)
-    *&item= new_item;
-
+  item= new_item;
   return Item_str_func::transform(transformer, arg);
 }
 
