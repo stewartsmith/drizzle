@@ -108,6 +108,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/charset.h>
 #include <drizzled/current_session.h>
 
+#include <drizzled/key.h>
+
 #include <iostream>
 
 namespace po= boost::program_options;
