@@ -1,0 +1,6 @@
+create table t1 (a int);
+create table t2 (a int);
+flush tables with read lock;
+UNLOCK TABLES;
+unlock tables;
+drop table t1,t2;
