@@ -26,8 +26,7 @@
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/plugin/storage_engine.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::DropIndex::execute()
 {
