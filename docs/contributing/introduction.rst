@@ -14,15 +14,13 @@ general community).
 
 There are many ways to contribute to Drizzle, for example:
 
- #. `File a bug <https://bugs.launchpad.net/drizzle/+filebug>`_
- #. `Write translations <https://translations.launchpad.net/drizzle>`_
- #. :ref:`Write documentation <documentation-label>`
- #. :ref:`Write code <code-label>`
+ * `File a bug <https://bugs.launchpad.net/drizzle/+filebug>`_
+ * `Write translations <https://translations.launchpad.net/drizzle>`_
+ * :ref:`Write documentation <documentation-label>`
+ * :ref:`Write code <code-label>`
 
-If you have any questions please contact us at 
-`#drizzle <irc://irc.freenode.net/drizzle>`_
-`Freenode <http://freenode.net/>`_ IRC channel or via. the
-`Drizzle Discuss <https://launchpad.net/~drizzle-discuss>`_ mailing list.
+We recommend anyone new to Drizzle who wants to learn the code see the `Low
+hanging fruit <https://bugs.launchpad.net/drizzle/+bugs?field.tag=low-hanging-fruit>`_ list of bugs on Launchpad for possible tasks to take on.
 
 Bazaar
 ------
@@ -30,3 +28,12 @@ Bazaar
 Launchpad uses `Bazaar <https://launchpad.net/bazaar>`_ for revision control of
 the source repositories, you will need this insalled before contributing
 documentation or code.
+
+Finding Help
+------------
+
+If you have any questions please contact us at
+`#drizzle <irc://irc.freenode.net/drizzle>`_
+`Freenode <http://freenode.net/>`_ IRC channel or via. the
+`Drizzle Discuss <https://launchpad.net/~drizzle-discuss>`_ mailing list.
+
