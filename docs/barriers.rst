@@ -1,15 +1,17 @@
 User Defined Barriers
 =====================
 
-SELECT create_barrier();
+.. code-block:: mysql
 
-SELECT release_barrier();
+  SELECT create_barrier();
 
-SELECT wait();
+  SELECT release_barrier();
 
-SELECT wait_until();
+  SELECT wait();
 
-SELECT signal();
+  SELECT wait_until();
+
+  SELECT signal();
 
 A barrier is a synchronization object which can be used to synchronize a group of sessions to a specific rendezvous by calling wait(). When wait() is called, any session of the user may call signal(), allowing all sessions being held by wait() to proceed.
 

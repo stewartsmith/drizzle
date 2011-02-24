@@ -40,7 +40,7 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   _share(message::Table::INTERNAL),
   _has_variable_width(false)
 {
-  uint32_t field_count= field_list.elements;
+  uint32_t field_count= field_list.size();
   uint32_t blob_count= 0;
   Field **field_arg;
   CreateField *cdef;                           /* column definition */

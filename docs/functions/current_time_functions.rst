@@ -5,7 +5,9 @@ CURRENT TIME FUNCTIONS
 current_date
 -------------
 
-Returns the current date as a value in 'YYYY-MM-DD' or YYYYMMDD format, depending on whether the function is used in a string or numeric context. ::
+Returns the current date as a value in 'YYYY-MM-DD' or YYYYMMDD format, depending on whether the function is used in a string or numeric context.
+
+.. code-block:: mysql
 
 	SELECT CURDATE();
         	-> '2011-02-13'
@@ -15,7 +17,9 @@ Returns the current date as a value in 'YYYY-MM-DD' or YYYYMMDD format, dependin
 current_time
 --------------
 
-Returns the current time as a value in 'HH:MM:SS' or HHMMSS.uuuuuu format, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone. ::
+Returns the current time as a value in 'HH:MM:SS' or HHMMSS.uuuuuu format, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone.
+
+.. code-block:: mysql
 
 	SELECT CURTIME();
         	-> '10:30:09'
@@ -49,7 +53,9 @@ LOCALTIMESTAMP() is a synonym for NOW().
 now()	                            
 ------
 
-NOW returns the current date and time. The return value will be expressed as 'YYYY-MM-DD HH:MM:SS' or YYYYMMDDHHMMSS.uuuuuu, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone. ::
+NOW returns the current date and time. The return value will be expressed as 'YYYY-MM-DD HH:MM:SS' or YYYYMMDDHHMMSS.uuuuuu, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone.
+
+.. code-block:: mysql
 
 	SELECT NOW();
         	-> '2011-02-15 13:40:06'
@@ -66,7 +72,7 @@ Returns:
 
 +---------------------+----------+---------------------+
 | NOW()               | SLEEP(2) | NOW()               |
-+---------------------+----------+---------------------+
++=====================+==========+=====================+
 | 2011-02-20 20:15:09 |        0 | 2011-02-20 20:15:09 |
 +---------------------+----------+---------------------+
 
@@ -80,13 +86,9 @@ Returns:
 
 +---------------------+----------+---------------------+
 | SYSDATE()           | SLEEP(2) | SYSDATE()           |
-+---------------------+----------+---------------------+
++=====================+==========+=====================+
 | 2011-02-20 20:15:09 |        0 | 2011-02-20 20:15:11 |
 +---------------------+----------+---------------------+
 
 When using replication, the binary log will include SET TIMESTAMP entries so that a database can be restored from the binary log. In doing this, values from NOW will be adjusted to the same times as when the original SQL statements were executed. SYSDATE entries will be unaffected by SET TIMESTAMP entries.
-
-
-
-
 

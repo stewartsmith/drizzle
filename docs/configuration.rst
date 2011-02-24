@@ -42,13 +42,17 @@ per line. Due to a bug in Boost.Program_options Boolean values require an argume
 
 Config files support section headers such as `[innodb]` with all options
 occuring subsequently being prefixed by the section header. For instance, if
-one were do give::
+one were do give:
+
+.. code-block:: ini
 
   [innodb]
   buffer_pool_size=10M
   log_file_size=5M
 
-It would be the same as::
+It would be the same as:
+
+.. code-block:: ini
 
   innodb.buffer_pool_size=10M
   innodb.log_file_size

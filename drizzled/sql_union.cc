@@ -126,7 +126,7 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
 {
   assert(table == NULL);
   tmp_table_param.init();
-  tmp_table_param.field_count= column_types->elements;
+  tmp_table_param.field_count= column_types->size();
 
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
                                  (Order*) NULL, is_union_distinct, 1,
@@ -279,8 +279,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                sl->with_wild,
                                sl->where,
                                (can_skip_order_by ? 0 :
-                                sl->order_list.elements) +
-                               sl->group_list.elements,
+                                sl->order_list.size()) +
+                               sl->group_list.size(),
                                can_skip_order_by ?
                                (Order*) NULL : (Order *)sl->order_list.first,
                                (Order*) sl->group_list.first,
@@ -321,7 +321,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
     }
     else
     {
-      if (types.elements != sl->item_list.elements)
+      if (types.size() != sl->item_list.size())
       {
 	my_message(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT,
 		   ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT),MYF(0));
@@ -371,7 +371,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
     result_table_list.table= table= union_result->table;
 
     session_arg->getLex()->current_select= lex_select_save;
-    if (!item_list.elements)
+    if (!item_list.size())
     {
       saved_error= table->fill_item_list(&item_list);
       if (saved_error)
@@ -544,7 +544,7 @@ bool Select_Lex_Unit::exec()
         saved_error= select_query(session, &fake_select_lex->ref_pointer_array,
                               &result_table_list,
                               0, item_list, NULL,
-                              global_parameters->order_list.elements,
+                              global_parameters->order_list.size(),
                               (Order*)global_parameters->order_list.first,
                               (Order*) NULL, NULL,
                               fake_select_lex->options | SELECT_NO_UNLOCK,
@@ -567,7 +567,7 @@ bool Select_Lex_Unit::exec()
           saved_error= select_query(session, &fake_select_lex->ref_pointer_array,
                                 &result_table_list,
                                 0, item_list, NULL,
-                                global_parameters->order_list.elements,
+                                global_parameters->order_list.size(),
                                 (Order*)global_parameters->order_list.first,
                                 (Order*) NULL, NULL,
                                 fake_select_lex->options | SELECT_NO_UNLOCK,
@@ -626,7 +626,7 @@ bool Select_Lex_Unit::cleanup()
       join->tables= 0;
     }
     error|= fake_select_lex->cleanup();
-    if (fake_select_lex->order_list.elements)
+    if (fake_select_lex->order_list.size())
     {
       Order *ord;
       for (ord= (Order*)fake_select_lex->order_list.first; ord; ord= ord->next)

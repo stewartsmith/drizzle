@@ -291,13 +291,13 @@ static bool ignore_errors= false, quick= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
   use_drizzle_protocol= false, opt_local_infile;
+static uint32_t opt_kill= 0;
 static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line;
 static uint32_t opt_drizzle_port= 0;
 static int  opt_silent, verbose= 0;
-static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
@@ -1223,6 +1223,42 @@ static bool server_shutdown(void)
   return true;
 }
 
+static bool kill_query(uint32_t query_id)
+{
+  drizzle_result_st result;
+  drizzle_return_t ret;
+
+  if (verbose)
+  {
+    printf(_("killing query %u"), query_id);
+    printf("... ");
+  }
+
+  if (drizzle_kill(&con, &result, query_id,
+                   &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      fprintf(stderr, _("kill failed; error: '%s'"),
+              drizzle_result_error(&result));
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      fprintf(stderr, _("kill failed; error: '%s'"),
+              drizzle_con_error(&con));
+    }
+    return false;
+  }
+
+  drizzle_result_free(&result);
+
+  if (verbose)
+    printf(_("done\n"));
+
+  return true;
+}
+
 /**
   Ping the server that we are currently connected to.
 
@@ -1292,6 +1328,16 @@ static bool execute_commands(int *error)
       *error= 1;
     executed= true;
   }
+
+  if (opt_kill)
+  {
+    if (kill_query(opt_kill) == false)
+    {
+      *error= 1;
+    }
+    executed= true;
+  }
+
   return executed;
 }
 
@@ -1409,6 +1455,8 @@ try
   ("shutdown", po::value<bool>()->zero_tokens(),
   _("Shutdown the server"))
   ("silent,s", _("Be more silent. Print results with a tab as separator, each row on new line."))
+  ("kill", po::value<uint32_t>(&opt_kill)->default_value(0),
+  _("Kill a running query."))
   ("tee", po::value<string>(),
   _("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
@@ -1973,7 +2021,6 @@ static int process_options(void)
     default_pager_set= 0;
     opt_outfile= 0;
     opt_reconnect= 0;
-    connect_flag= DRIZZLE_CAPABILITIES_NONE; /* Not in interactive mode */
   }
 
   if (tty_password)
@@ -4175,41 +4222,21 @@ sql_connect(const string &host, const string &database, const string &user, cons
   drizzle_create(&drizzle);
 
 #ifdef DRIZZLE_ADMIN_TOOL
-  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL));
+  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE));
 #else
-  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
 #endif
 
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
-    opt_drizzle_port, (char *)user.c_str(),
-    (char *)password.c_str(), (char *)database.c_str(),
-    options) == NULL)
+                          opt_drizzle_port, (char *)user.c_str(),
+                          (char *)password.c_str(), (char *)database.c_str(),
+                          options) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
     return 1;
   }
 
-/* XXX add this back in
-  if (opt_connect_timeout)
-  {
-    uint32_t timeout=opt_connect_timeout;
-    drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT,
-                  (char*) &timeout);
-  }
-*/
-
-/* XXX Do we need this?
-  if (safe_updates)
-  {
-    char init_command[100];
-    sprintf(init_command,
-            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
-            ",MAX_JOIN_SIZE=%"PRIu32,
-            select_limit, max_join_size);
-    drizzleclient_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
-  }
-*/
   if ((ret= drizzle_con_connect(&con)) != DRIZZLE_RETURN_OK)
   {
 
@@ -4221,7 +4248,7 @@ sql_connect(const string &host, const string &database, const string &user, cons
     }
     return -1;          // Retryable
   }
-  connected=1;
+  connected= 1;
 
   ServerDetect server_detect(&con);
   server_type= server_detect.getServerType();

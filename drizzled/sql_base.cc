@@ -2978,7 +2978,7 @@ store_natural_using_join_columns(Session *session,
     columns. If this is not the case, report the first one that was
     not found in an error.
   */
-  if (using_fields && found_using_fields < using_fields->elements)
+  if (using_fields && found_using_fields < using_fields->size())
   {
     String *using_field_name;
     List<String>::iterator using_fields_it(using_fields->begin());
@@ -3018,7 +3018,7 @@ store_natural_using_join_columns(Session *session,
     }
   }
 
-  if (non_join_columns->elements > 0)
+  if (non_join_columns->size() > 0)
     natural_using_join->join_columns->concat(non_join_columns);
   natural_using_join->is_join_columns_complete= true;
 
@@ -3093,7 +3093,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
           cur_table_ref->outer_join & JOIN_TYPE_RIGHT)
       {
         /* This can happen only for JOIN ... ON. */
-        assert(table_ref->getNestedJoin()->join_list.elements == 2);
+        assert(table_ref->getNestedJoin()->join_list.size() == 2);
         std::swap(same_level_left_neighbor, cur_table_ref);
       }
 
@@ -3121,7 +3121,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
   if (table_ref->is_natural_join)
   {
     assert(table_ref->getNestedJoin() &&
-           table_ref->getNestedJoin()->join_list.elements == 2);
+           table_ref->getNestedJoin()->join_list.size() == 2);
     List<TableList>::iterator operand_it(table_ref->getNestedJoin()->join_list.begin());
     /*
       Notice that the order of join operands depends on whether table_ref
@@ -3219,7 +3219,7 @@ static bool setup_natural_join_row_types(Session *session,
                                          Name_resolution_context *context)
 {
   session->setWhere("from clause");
-  if (from_clause->elements == 0)
+  if (from_clause->size() == 0)
     return false; /* We come here in the case of UNIONs. */
 
   List<TableList>::iterator table_ref_it(from_clause->begin());
@@ -3282,7 +3282,7 @@ int setup_wild(Session *session, List<Item> &fields,
         ((Item_field*) item)->field_name[0] == '*' &&
         !((Item_field*) item)->field)
     {
-      uint32_t elem= fields.elements;
+      uint32_t elem= fields.size();
       bool any_privileges= ((Item_field *) item)->any_privileges;
       Item_subselect *subsel= session->getLex()->current_select->master_unit()->item;
       if (subsel &&
@@ -3310,7 +3310,7 @@ int setup_wild(Session *session, List<Item> &fields,
           Because of this we have to update the element count also for this
           list after expanding the '*' entry.
         */
-        sum_func_list->elements+= fields.elements - elem;
+        sum_func_list->set_size(sum_func_list->size() + fields.size() - elem);
       }
       wild_num--;
     }
@@ -3355,7 +3355,7 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
   */
   if (ref_pointer_array)
   {
-    memset(ref_pointer_array, 0, sizeof(Item *) * fields.elements);
+    memset(ref_pointer_array, 0, sizeof(Item *) * fields.size());
   }
 
   Item **ref= ref_pointer_array;
@@ -3815,7 +3815,7 @@ fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignor
     Reset the table->auto_increment_field_not_null as it is valid for
     only one row.
   */
-  if (fields.elements)
+  if (fields.size())
   {
     /*
       On INSERT or UPDATE fields are checked to be from the same table,
