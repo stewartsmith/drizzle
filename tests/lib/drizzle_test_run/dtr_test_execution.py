@@ -37,7 +37,7 @@ import commands
 
 import lib.test_mgmt.test_execution as test_execution
 
-class dtrTestExecutor(test_execution.testExecutor):
+class testExecutor(test_execution.testExecutor):
     """ dtr-specific testExecutor 
         We currently execute by sending test-case
         data to client/drizzletest...for now
@@ -172,6 +172,7 @@ class dtrTestExecutor(test_execution.testExecutor):
                    ,  'RABBITMQ_NODE_PORT': str(self.master_server.rabbitmq_node_port)
                    ,  'DRIZZLE_TCP_PORT': str(self.master_server.drizzle_tcp_port)
                    ,  'EXE_DRIZZLE': self.master_server.drizzle_client
+                   ,  'MASTER_SERVER_SLAVE_CONFIG' : self.master_server.slave_config_file
                    ,  'DRIZZLE_DUMP': "%s --no-defaults -uroot -p%d" %( self.master_server.drizzledump
                                                         , self.master_server.master_port)
                    ,  'DRIZZLE_SLAP': "%s -uroot -p%d" %( self.master_server.drizzleslap

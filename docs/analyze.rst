@@ -1,7 +1,9 @@
 ANALYZE
 =======
 
-Syntax: ::
+Syntax:
+
+.. code-block:: mysql
 
 	ANALYZE TABLE table_name [, table_name] ...
 

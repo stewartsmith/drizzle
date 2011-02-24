@@ -121,7 +121,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
                    uint64_t setup_tables_done_option)
 {
   bool res;
-  register Select_Lex *select_lex= &lex->select_lex;
+  Select_Lex *select_lex= &lex->select_lex;
   DRIZZLE_SELECT_START(session->getQueryString()->c_str());
 
   if (select_lex->master_unit()->is_union() ||

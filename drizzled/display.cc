@@ -134,6 +134,11 @@ const std::string &type(drizzled::enum_server_command type)
   {
   case drizzled::COM_SLEEP : 
     return COM_SLEEP;
+  case drizzled::COM_KILL : 
+    {
+      static std::string COM_KILL("COM_KILL");
+      return COM_KILL;
+    }
   case drizzled::COM_QUIT : 
     return COM_QUIT;
   case drizzled::COM_INIT_DB : 

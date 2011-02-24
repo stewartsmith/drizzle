@@ -4,7 +4,7 @@ Position Functions
 FIELD
 -----
 
-The FIELD function returns the index (position) of string arguments (str1, str2, str3, ….) 
+The FIELD function returns the index (position) of string arguments (str1, str2, str3, ...) 
 
 It returns 0 if the str value is not found.
 
@@ -12,11 +12,15 @@ If each argument is a string, all arguments will be compared as strings, whereas
 
 Otherwise, the arguments are compared as double.
 
-If str is NULL, the return value is 0 because NULL fails equality comparison with any value. FIELD() is the complement of ELT(). ::
+If str is NULL, the return value is 0 because NULL fails equality comparison with any value. FIELD() is the complement of ELT().
+
+.. code-block:: mysql
 
 	SELECT FIELD('ej', 'Hej', 'ej', 'Heja', 'hej', 'foo');
 
-Returns 2 ::
+Returns 2
+
+.. code-block:: mysql
 	
 	SELECT FIELD('fo', 'Hej', 'ej', 'Heja', 'hej', 'foo');
 
@@ -30,7 +34,9 @@ Return the index position of the first argument within the second argument
 INSTR
 -----
 
-INSTR(str, substr) returns the index of the first occurrence of substring str in string substr. Note that this works like LOCATE except the order of the arguments is reversed: ::
+INSTR(str, substr) returns the index of the first occurrence of substring str in string substr. Note that this works like LOCATE except the order of the arguments is reversed:
+
+.. code-block:: mysql
 
 	SELECT INSTR('tacosalad', 'salad');
         	-> 4
