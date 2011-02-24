@@ -402,7 +402,7 @@ void optimizer::add_key_equal_fields(optimizer::KeyField **key_fields,
       Add to the set of possible key values every substitution of
       the field for an equal field included into item_equal
     */
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     Item_field *item;
     while ((item= it++))
     {
@@ -590,7 +590,7 @@ void optimizer::add_key_fields(Join *join,
   case Item_func::OPTIMIZE_EQUAL:
     Item_equal *item_equal= (Item_equal *) cond;
     Item *const_item= item_equal->get_const();
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     Item_field *item;
     if (const_item)
     {
@@ -613,7 +613,7 @@ void optimizer::add_key_fields(Join *join,
         field1=field2 as a condition allowing an index access of the table
         with field1 by the keys value of field2.
       */
-      Item_equal_iterator fi(*item_equal);
+      Item_equal_iterator fi(item_equal->begin());
       while ((item= fi++))
       {
         Field *field= item->field;
@@ -626,7 +626,7 @@ void optimizer::add_key_fields(Join *join,
                           sargables);
           }
         }
-        it= *item_equal;
+        it= item_equal->begin();
       }
     }
     break;

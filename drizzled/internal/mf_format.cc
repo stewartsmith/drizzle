@@ -47,7 +47,7 @@ char * fn_format(char * to, const char *name, const char *dir,
   char dev[FN_REFLEN], buff[FN_REFLEN], *pos;
   const char *startpos = name;
   const char *ext;
-  register size_t length;
+  size_t length;
   size_t dev_length;
 
   /* Copy and skip directory */
@@ -144,10 +144,8 @@ char * fn_format(char * to, const char *name, const char *dir,
 
 size_t strlength(const char *str)
 {
-  register const char * pos;
-  register const char * found;
-
-  pos= found= str;
+  const char* found= str;
+  const char* pos= str;
 
   while (*pos)
   {

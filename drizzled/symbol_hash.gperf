@@ -47,6 +47,10 @@ struct st_symbol
 !=, NE
 >=, GE
 <=>, EQUAL_SYM
+<, LESS_THAN
+>, GREATER_THAN
+<<, SHIFT_LEFT
+>>, SHIFT_RIGHT
 # Access likes this
 ACTION, ACTION
 ADD, ADD_SYM

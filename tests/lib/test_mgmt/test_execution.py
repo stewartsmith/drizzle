@@ -78,68 +78,6 @@ class testExecutor():
         if self.debug:
             self.logging.debug_class(self)
 
-    def get_testCase(self):
-        """ Ask our execution_manager for a testCase to work on """
-        
-        #self.test_manager.mutex.acquire()
-        self.current_testcase = self.test_manager.get_testCase(self.name)
-        #self.test_manager.mutex.release()
-        
-
-    def handle_server_reqs(self, start_and_exit):
-        """ Get the servers required to execute the testCase 
-            and ensure that we have servers and they were started
-            as expected.  We take necessary steps if not
-            We also handle --start-and-exit here
- 
-        """
-       
-        master_count, slave_count, server_options = self.process_server_reqs()
-        (self.current_servers,bad_start) = self.server_manager.request_servers( self.name
-                                                              , self.workdir
-                                                              , master_count
-                                                              , slave_count
-                                                              , server_options
-                                                              , self.working_environment)
-        if self.current_servers == 0 or bad_start:
-            # error allocating servers, test is a failure
-            self.logging.warning("Problem starting server(s) for test...failing test case")
-            self.current_test_status = 'fail'
-            self.set_server_status(self.current_test_status)
-            output = ''           
-        else:
-            if start_and_exit:
-                # TODO:  Report out all started servers via server_manager/server objects?
-                self.current_servers[0].report()
-                self.logging.info("User specified --start-and-exit.  dbqp.py exiting and leaving servers running...") 
-                # We blow away any port_management files for our ports
-                # Technically this won't let us 'lock' any ports that 
-                # we aren't explicitly using (visible to netstat scan)
-                # However one could argue that if we aren't using it, 
-                # We shouldn't hog it ; )
-                # We might need to do this better later
-                for server in self.current_servers:
-                    server.cleanup() # this only removes any port files
-                sys.exit(0)
-        if self.initial_run:
-            self.initial_run = 0
-            self.current_servers[0].report()
-        self.master_server = self.current_servers[0]
-        return 
-
-    def process_server_reqs(self):
-        """ Check out our current_testcase to see what kinds of servers 
-            we need up and running.  The executionManager sees to 
-            serving the reqs
-
-        """
-     
-        master_count = self.current_testcase.master_count
-        slave_count = self.current_testcase.slave_count
-        server_options = self.current_testcase.server_options
-
-        return(master_count, slave_count, server_options)
-
     def execute(self, start_and_exit):
         """ Execute a test case.  The details are *very* mode specific """
         self.status = 1 # we are running
@@ -148,15 +86,100 @@ class testExecutor():
             self.logging.verbose("Executor: %s beginning test execution..." %(self.name))
         while self.test_manager.has_tests() and keep_running == 1:
             self.get_testCase()
-            self.handle_system_reqs()
-            self.handle_server_reqs(start_and_exit)
             for i in range(self.testcase_repeat_count):
-                self.execute_testCase()
+                self.handle_system_reqs()
+                self.handle_server_reqs()
+                self.handle_utility_reqs()
+                self.handle_start_and_exit(start_and_exit)
+                if self.current_test_status != 'fail':
+                    self.execute_testCase()
                 self.record_test_result()
                 if self.current_test_status == 'fail' and not self.execution_manager.force:
                     self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
                     keep_running = 0
         self.status = 0
+
+    def get_testCase(self):
+        """ Ask our execution_manager for a testCase to work on """
+        
+        #self.test_manager.mutex.acquire()
+        self.current_testcase = self.test_manager.get_testCase(self.name)
+        #self.test_manager.mutex.release()
+        
+
+    def handle_server_reqs(self):
+        """ Get the servers required to execute the testCase 
+            and ensure that we have servers and they were started
+            as expected.  We take necessary steps if not
+            We also handle --start-and-exit here
+ 
+        """
+
+        server_requirements = self.current_testcase.server_requirements
+        (self.current_servers,bad_start) = self.server_manager.request_servers( self.name
+                                                              , self.workdir
+                                                              , server_requirements
+                                                              , self.working_environment)
+        if self.current_servers == 0 or bad_start:
+            # error allocating servers, test is a failure
+            self.logging.warning("Problem starting server(s) for test...failing test case")
+            self.current_test_status = 'fail'
+            self.set_server_status(self.current_test_status)
+            output = ''           
+        if self.initial_run:
+            self.initial_run = 0
+            self.current_servers[0].report()
+        self.master_server = self.current_servers[0]
+        return 
+
+    def handle_start_and_exit(self, start_and_exit):
+        """ Do what needs to be done if we have the
+            --start-and-exit flag
+
+        """
+        if start_and_exit:
+                # We blow away any port_management files for our ports
+                # Technically this won't let us 'lock' any ports that 
+                # we aren't explicitly using (visible to netstat scan)
+                # However one could argue that if we aren't using it, 
+                # We shouldn't hog it ; )
+                # We might need to do this better later
+                for server in self.current_servers:
+                    if server != self.master_server:
+                        server.report()
+                    server.cleanup() # this only removes any port files
+                self.logging.info("User specified --start-and-exit.  dbqp.py exiting and leaving servers running...") 
+                sys.exit(0)
+
+    def handle_utility_reqs(self):
+        """ Call any utilities we want to use before starting a test
+            At present this is envisioned for use with datagen
+            but there may be other things we wish to use
+            At that point, we may need to explore other ways of
+            defining our testing environment, such as with
+            nice config files / modules
+
+        """
+
+        # We call gendata against the server(s) with the
+        # specified file
+        if self.execution_manager.gendata_file:
+            dsn = "--dsn=dbi:drizzle:host=localhost:port=%d:user=root:password="":database=test" %(self.master_server.master_port)
+            gendata_cmd = "./gendata.pl %s --spec=%s" %( dsn 
+                                                       , self.execution_manager.gendata_file
+                                                       )
+            #self.system_manager.execute_cmd(gendata_cmd)
+            gendata_subproc = subprocess.Popen( gendata_cmd
+                                              , shell=True
+                                              , cwd=self.system_manager.randgen_path
+                                              , stdout = None
+                                              , stderr = None
+                                              )
+            gendata_subproc.wait()
+            gendata_retcode = gendata_subproc.returncode
+            if gendata_retcode:
+                self.logging.error("gendata command: %s failed with retcode: %d" %(gendata_cmd
+                                                                             , gendata_retcode))
 
     def execute_testCase(self):
         """ Do whatever evil voodoo we must do to execute a testCase """

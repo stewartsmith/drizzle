@@ -5,7 +5,7 @@ CONCAT
 ------
 
 The SQL standard defines a concatenation operator ( || ), which joins two or more strings into one string value.
- The CONCAT(str1, str2….) function can have one or more arguments. It returns a string that is the result of concatenating the arguments. 
+The CONCAT(str1, str2...) function can have one or more arguments. It returns a string that is the result of concatenating the arguments.
 
 * If arguments are non-binary strings, the result is also a non-binary string.
 * If any argument is a binary string, then the result will also be a binary string. 
@@ -14,33 +14,44 @@ The SQL standard defines a concatenation operator ( || ), which joins two or mor
 
 Syntax:
 
-CONCAT(str1, str2, [,...n]) 
-For example: ::       
+CONCAT(str1, str2, [,...n])
+For example:
+
+.. code-block:: mysql
+
 	SELECT CONCAT('Dr', 'izzl', 'ed');
 
-Returns: 'Drizzled' ::
+Returns: 'Drizzled'
+
+.. code-block:: mysql
 
 	SELECT CONCAT('micro', NULL, 'nel');
 
-Returns: NULL ::
+Returns: NULL
+
+.. code-block:: mysql
 
 	SELECT CONCAT(14.8);
 
 Returns: '14.8'
 
 CONCAT_WS
---------- 
-CONCAT WS (With Separator) allows you to specify that the first argument is treated as a separator for the rest of the arguments. This argument is added between the strings to be concatenated. 
+---------
+CONCAT WS (With Separator) [1]_ allows you to specify that the first argument is treated as a separator for the rest of the arguments. This argument is added between the strings to be concatenated.
 
-* If the separator is NULL then the result is NULL. 
 Syntax:
 
-CONCAT_WS(separator str1, str2,....) 
+CONCAT_WS(separator str1, str2,....)
 
-For example:       
+For example:
+
+.. code-block:: mysql
+
 	SELECT CONCAT_WS(',', ' Occupation', 'First name', 'Last Name');
 
 Returns: 'Occupation, First name, Last Name'
+
+.. code-block:: mysql
 
 	SELECT CONCAT_WS(',', 'First name', NULL, 'Last Name');
 
@@ -48,7 +59,7 @@ Returns: 'First name, Last Name'
 
 
 TRIM()
-------         
+------
 
 The TRIM function remove specified prefixes or suffixes from a string (typically leading and trailing spaces), and returns the resulting string. If none of the specifiers BOTH, LEADING, or TRAILING is given, BOTH is assumed.
 
@@ -69,3 +80,6 @@ RTRIM()
 
 This version of the TRIM function removes trailing spaces from the end of a function. 
 
+.. rubric:: Footnotes
+
+.. [1] If the separator is NULL then the result is NULL.

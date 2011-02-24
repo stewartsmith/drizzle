@@ -784,7 +784,7 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
       Item_ref to allow fields from view being stored in tmp table.
     */
     Item_aggregate_ref *item_ref;
-    uint32_t el= fields.elements;
+    uint32_t el= fields.size();
     Item *real_itm= real_item();
 
     ref_pointer_array[el]= real_itm;

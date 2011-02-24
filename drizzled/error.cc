@@ -27,8 +27,8 @@
 #include <drizzled/definitions.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-
 #include <drizzled/identifier.h>
+#include <drizzled/util/find_ptr.h>
 
 #include <boost/unordered_map.hpp>
 #include <exception>
@@ -259,7 +259,7 @@ void my_printf_error(drizzled::error_t error, const char *format, myf MyFlags, .
       MyFlags	Flags
 */
 
-void my_message(drizzled::error_t error, const char *str, register myf MyFlags)
+void my_message(drizzled::error_t error, const char *str, myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }
@@ -284,12 +284,12 @@ void ErrorMap::add(drizzled::error_t error_num,
 
 const std::string &ErrorMap::find(drizzled::error_t error_num) const
 {
-  ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
-  if (pos == mapping_.end())
+  const ErrorMessageMap::mapped_type* pos= find_ptr(mapping_, error_num);
+  if (!pos)
   {
     throw ErrorStringNotFound();
   }
-  return pos->second.second;
+  return pos->second;
 }
 
 #define ADD_ERROR_MESSAGE(code, msg) add(code, STRINGIFY_ARG(code), msg)

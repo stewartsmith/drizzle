@@ -74,8 +74,10 @@ struct sockaddr_un
 #if defined(__GNUC__)
 # include <stdbool.h>
 #else
+# if !defined(__cplusplus)
 typedef enum { false = 0, true = 1 } _Bool;
 typedef _Bool bool;
+#endif 
 #endif
 
 #else

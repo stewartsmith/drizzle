@@ -9,7 +9,9 @@ A COMMIT statement ends a transaction within Drizzle and makes all changes visib
 
 For example, DML statements do not implicitly commit the current transaction. If a user's DML statements have been used to update some data objects, and the updates need to be permanently recorded in the database, you can use the COMMIT command.
 
-An example: ::
+An example:
+
+.. code-block:: mysql
 
 	START TRANSACTION;
 
@@ -29,6 +31,8 @@ An example: ::
 | 10  | twitter.com   | NULL  | 2011-02-03 08:39:16 |
 +-----+---------------+-------+---------------------+
 
-Then to save the information just inserted, simply issue the COMMIT command: ::
+Then to save the information just inserted, simply issue the COMMIT command:
+
+.. code-block:: mysql
 
 	COMMIT;

@@ -390,7 +390,7 @@ int prepare_delete(Session *session, TableList *table_list, Item **conds)
     }
   }
 
-  if (select_lex->inner_refs_list.elements &&
+  if (select_lex->inner_refs_list.size() &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
     return(true);
 

@@ -66,6 +66,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/util/functors.h>
+#include <drizzled/util/find_ptr.h>
 #include <plugin/myisam/myisam.h>
 
 #include <algorithm>
@@ -1154,7 +1155,7 @@ bool select_export::send_data(List<Item> &items)
   }
   row_count++;
   Item *item;
-  uint32_t used_length=0,items_left=items.elements;
+  uint32_t used_length=0,items_left=items.size();
   List<Item>::iterator li(items.begin());
 
   if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),
@@ -1779,9 +1780,8 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
   if (cleanup_done)
     return NULL;
 
-  UserVars::iterator iter= user_vars.find(name);
-  if (iter != user_vars.end())
-    return (*iter).second;
+  if (UserVars::mapped_type* iter= find_ptr(user_vars, name))
+    return *iter;
 
   if (not create_if_not_exists)
     return NULL;

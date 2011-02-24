@@ -76,7 +76,7 @@ public:
 
      2. All child join nest nodes are fully covered.
    */
-  bool is_fully_covered() const { return join_list.elements == counter_; }
+  bool is_fully_covered() const { return join_list.size() == counter_; }
 };
 
 } /* namespace drizzled */

@@ -31,7 +31,7 @@ namespace internal
 
 size_t dirname_length(const char *name)
 {
-  register const char *pos, *gpos;
+  const char *pos, *gpos;
 #ifdef FN_DEVCHAR
   if ((pos=(char*)strrchr(name,FN_DEVCHAR)) == 0)
 #endif

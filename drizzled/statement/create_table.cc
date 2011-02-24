@@ -178,7 +178,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
 
   do 
   {
-    if (select_lex->item_list.elements)		// With select
+    if (select_lex->item_list.size())		// With select
     {
       Select_Lex_Unit *unit= &getSession()->getLex()->unit;
       select_result *result;
