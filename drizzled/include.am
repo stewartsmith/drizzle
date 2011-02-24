@@ -114,6 +114,8 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/filesort_info.h \
 			      drizzled/foreign_key.h \
 			      drizzled/function/additive_op.h \
+			      drizzled/function/bit.h \
+			      drizzled/function/bit/functions.h \
 			      drizzled/function/cast/boolean.h \
 			      drizzled/function/cast/signed.h \
 			      drizzled/function/cast/time.h \
@@ -588,6 +590,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/filesort.cc \
 			   drizzled/foreign_key.cc \
 			   drizzled/function/additive_op.cc \
+			   drizzled/function/bit/functions.cc \
 			   drizzled/function/cast/boolean.cc \
 			   drizzled/function/cast/signed.cc \
 			   drizzled/function/cast/time.cc \
