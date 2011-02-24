@@ -7,7 +7,7 @@ flush tables with read lock;
 connect (con1,localhost,root,,);
 connection con1;
 
---error ER_NO
+--error ER_NO_LOCK_HELD
 UNLOCK TABLES;
 
 connection default;
