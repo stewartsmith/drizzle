@@ -1252,7 +1252,7 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
   {
     List<Item> *all_fields= &select->join->all_fields;
     Item **ref_pointer_array= select->ref_pointer_array;
-    int el= all_fields->elements;
+    int el= all_fields->size();
     Item_ref *ref;
 
     ref_pointer_array[el]= (Item*)this;

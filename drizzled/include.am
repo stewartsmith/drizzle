@@ -4,7 +4,7 @@
 
 #  Copyright (C) 2008 Sun Microsystems, Inc.
 #  Copyright (C) 2010 Monty Taylor
-# 
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; version 2 of the License.
@@ -18,7 +18,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-drizzled/sql_yacc.cc: drizzled/sql_yacc.yy 
+drizzled/sql_yacc.cc: drizzled/sql_yacc.yy
 	$(AM_V_YACC)$(am__skipyacc) $(YACC) $(YLFLAGS) $(AM_YFLAGS) -o $@ $<
 	mv drizzled/sql_yacc.hh drizzled/sql_yacc.h
 
@@ -114,6 +114,8 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/filesort_info.h \
 			      drizzled/foreign_key.h \
 			      drizzled/function/additive_op.h \
+			      drizzled/function/bit.h \
+			      drizzled/function/bit/functions.h \
 			      drizzled/function/cast/boolean.h \
 			      drizzled/function/cast/signed.h \
 			      drizzled/function/cast/time.h \
@@ -282,6 +284,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/key.h \
 			      drizzled/key_map.h \
 			      drizzled/key_part_spec.h \
+			      drizzled/kill.h \
 			      drizzled/korr.h \
 			      drizzled/lex_column.h \
 			      drizzled/lex_input_stream.h \
@@ -465,7 +468,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/statistics_variables.h \
 			      drizzled/status_helper.h \
 			      drizzled/stored_key.h \
-			      drizzled/strfunc.h \
 			      drizzled/structs.h \
 			      drizzled/symbol_hash.h \
 			      drizzled/sys_var.h \
@@ -533,7 +535,7 @@ drizzled_drizzled_LDADD= \
 				$(LIBTBB) \
 				$(BOOST_LIBS) \
                                 $(LTLIBAIO) \
-				$(GCOV_LIBS) 
+				$(GCOV_LIBS)
 
 drizzled_drizzled_DEPENDENCIES= \
                                       drizzled/message/libdrizzledmessage.la \
@@ -588,6 +590,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/filesort.cc \
 			   drizzled/foreign_key.cc \
 			   drizzled/function/additive_op.cc \
+			   drizzled/function/bit/functions.cc \
 			   drizzled/function/cast/boolean.cc \
 			   drizzled/function/cast/signed.cc \
 			   drizzled/function/cast/time.cc \
@@ -732,6 +735,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/join_table.cc \
 			   drizzled/key.cc \
 			   drizzled/key_map.cc \
+			   drizzled/kill.cc \
 			   drizzled/lock.cc \
 			   drizzled/locking/global.cc \
 			   drizzled/lookup_symbol.cc \
@@ -948,7 +952,7 @@ PCHHEADERS= \
 	    drizzled/sql_base.h.gch \
 	    drizzled/sql_parse.h.gch
 else
-PCHHEADERS = 
+PCHHEADERS =
 endif
 
 BUILT_MAINT_SRC+= \
@@ -960,7 +964,7 @@ BUILT_SOURCES+= \
 		drizzled/function_hash.h \
 		drizzled/sql_reserved_words.h \
 		drizzled/symbol_hash.h \
-		$(PCHHEADERS) 
+		$(PCHHEADERS)
 
 EXTRA_DIST+= \
 	     $(BUILT_MAINT_SRC) \

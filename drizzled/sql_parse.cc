@@ -50,7 +50,10 @@
 #include <drizzled/optimizer/explain_plan.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/plugin/event_observer.h>
+#include <drizzled/display.h>
 #include <drizzled/visibility.h>
+
+#include <drizzled/kill.h>
 
 #include <drizzled/schema.h>
 
@@ -92,6 +95,7 @@ static const std::string command_name[COM_END+1]={
   "Shutdown",
   "Connect",
   "Ping",
+  "Kill",
   "Error"  // Last command number
 };
 
@@ -178,7 +182,7 @@ void init_update_queries(void)
     1   request of thread shutdown, i. e. if command is
         COM_QUIT/COM_SHUTDOWN
 */
-bool dispatch_command(enum enum_server_command command, Session *session,
+bool dispatch_command(enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length)
 {
   bool error= 0;
@@ -211,6 +215,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
+
   switch (command) {
   case COM_INIT_DB:
   {
@@ -245,15 +250,33 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   case COM_QUIT:
     /* We don't calculate statistics for this command */
     session->main_da.disable_status();              // Don't send anything back
-    error=true;					// End server
+    error= true;					// End server
     break;
+  case COM_KILL:
+    {
+      if (packet_length != 4)
+      {
+        my_error(ER_NO_SUCH_THREAD, MYF(0), 0);
+        break;
+      }
+      else
+      {
+        uint32_t kill_id;
+        memcpy(&kill_id, packet, sizeof(uint32_t));
+        
+        kill_id= ntohl(kill_id);
+        (void)drizzled::kill(*session->user(), kill_id, true);
+      }
+      session->my_ok();
+      break;
+    }
   case COM_SHUTDOWN:
   {
     session->status_var.com_other++;
     session->my_eof();
     session->close_thread_tables();			// Free before kill
     kill_drizzle();
-    error=true;
+    error= true;
     break;
   }
   case COM_PING:
@@ -1019,7 +1042,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     }
   }
   /* Store the table reference preceding the current one. */
-  if (table_list.elements > 0)
+  if (table_list.size() > 0)
   {
     /*
       table_list.next points to the last inserted TableList->next_local'
@@ -1117,7 +1140,7 @@ TableList *Select_Lex::end_nested_join(Session *)
   join_list= ptr->getJoinList();
   embedding= ptr->getEmbedding();
   nested_join= ptr->getNestedJoin();
-  if (nested_join->join_list.elements == 1)
+  if (nested_join->join_list.size() == 1)
   {
     TableList *embedded= nested_join->join_list.head();
     join_list->pop();
@@ -1126,7 +1149,7 @@ TableList *Select_Lex::end_nested_join(Session *)
     join_list->push_front(embedded);
     ptr= embedded;
   }
-  else if (nested_join->join_list.elements == 0)
+  else if (nested_join->join_list.size() == 0)
   {
     join_list->pop();
     ptr= NULL;                                     // return value
@@ -1521,15 +1544,15 @@ bool update_precheck(Session *session, TableList *)
   const char *msg= 0;
   Select_Lex *select_lex= &session->getLex()->select_lex;
 
-  if (session->getLex()->select_lex.item_list.elements != session->getLex()->value_list.elements)
+  if (session->getLex()->select_lex.item_list.size() != session->getLex()->value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
     return(true);
   }
 
-  if (session->getLex()->select_lex.table_list.elements > 1)
+  if (session->getLex()->select_lex.table_list.size() > 1)
   {
-    if (select_lex->order_list.elements)
+    if (select_lex->order_list.size())
       msg= "ORDER BY";
     else if (select_lex->select_limit)
       msg= "LIMIT";
@@ -1561,7 +1584,7 @@ bool insert_precheck(Session *session, TableList *)
     Check that we have modify privileges for the first table and
     select privileges for the rest
   */
-  if (session->getLex()->update_list.elements != session->getLex()->value_list.elements)
+  if (session->getLex()->update_list.size() != session->getLex()->value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
     return(true);

@@ -555,7 +555,7 @@ bool optimizer::simple_pred(Item_func *func_item, Item **args, bool &inv_order)
     /* MULT_EQUAL_FUNC */
     {
       Item_equal *item_equal= (Item_equal *) func_item;
-      Item_equal_iterator it(*item_equal);
+      Item_equal_iterator it(item_equal->begin());
       args[0]= it++;
       if (it++)
       {

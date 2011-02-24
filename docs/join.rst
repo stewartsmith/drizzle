@@ -42,7 +42,8 @@ Next, we have the "Persons" table:
 
 The "userID" column is the primary key in the "Persons" table; in the "Persons" table, it can be used to identify users without using their names. Therefore, the relationship between the two tables above is the "userId" column.
 
-**Different kinds of SQL JOINs**
+Different kinds of SQL JOINs
+----------------------------
 
 Here are the types of JOIN you can use, and the differences between them:
 
@@ -55,10 +56,12 @@ Here are the types of JOIN you can use, and the differences between them:
 	**CROSS JOIN:** Return rows when there is a match in one of the tables
 
 
-*Note:** Implicit cartesian products of the form ``SELECT * FROM t1, t2`` without a ``WHERE`` or ``ON`` condition will error. If such behavior is intended please use ``SELECT * FROM t1 CROSS JOIN t2``.
+.. note::
+   Implicit cartesian products of the form ``SELECT * FROM t1, t2`` without a ``WHERE`` or ``ON`` condition will error. If such behavior is intended please use ``SELECT * FROM t1 CROSS JOIN t2``.
 
 
-**How joins are executed**:
+How joins are executed
+----------------------
 
 In its simplest form, a nested loop join works like this: It compares each row from one table (which can be considered the outer table) to each row from the other table (which can be considered the inner table), looking for rows that satisfy the join predicate. ('Inner table' and 'outer table' simply correlate to the inputs of the join, while 'inner join' and 'outer join' refer to the logical operations.)
 

@@ -42,9 +42,9 @@ namespace internal
 */
 
 
-void get_date(register char * to, int flag, time_t date)
+void get_date(char * to, int flag, time_t date)
 {
-   register struct tm *start_time;
+   tm *start_time;
    time_t skr;
    struct tm tm_tmp;
 

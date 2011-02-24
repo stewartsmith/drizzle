@@ -165,7 +165,7 @@ bool statement::AlterTable::execute()
                      createTableMessage(),
                      first_table,
                      &alter_info,
-                     select_lex->order_list.elements,
+                     select_lex->order_list.size(),
                      (Order *) select_lex->order_list.first,
                      getSession()->getLex()->ignore);
   }
@@ -188,7 +188,7 @@ bool statement::AlterTable::execute()
                        createTableMessage(),
                        first_table,
                        &alter_info,
-                       select_lex->order_list.elements,
+                       select_lex->order_list.size(),
                        (Order *) select_lex->order_list.first,
                        getSession()->getLex()->ignore);
     }
@@ -442,7 +442,7 @@ static bool prepare_alter_table(Session *session,
     return true;
   }
 
-  if (not new_create_list.elements)
+  if (not new_create_list.size())
   {
     my_message(ER_CANT_REMOVE_ALL_FIELDS,
                ER(ER_CANT_REMOVE_ALL_FIELDS),
@@ -522,7 +522,7 @@ static bool prepare_alter_table(Session *session,
                                             strlen(cfield->field_name),
                                             key_part_length));
     }
-    if (key_parts.elements)
+    if (key_parts.size())
     {
       key_create_information_st key_create_info= default_key_create_info;
       Key *key;

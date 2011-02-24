@@ -214,7 +214,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
   TYPELIB *result= (TYPELIB*) mem_root->alloc_root(sizeof(TYPELIB));
   if (!result)
     return 0;
-  result->count= strings.elements;
+  result->count= strings.size();
   result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   

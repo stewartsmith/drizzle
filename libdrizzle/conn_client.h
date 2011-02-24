@@ -126,6 +126,12 @@ drizzle_result_st *drizzle_con_shutdown(drizzle_con_st *con,
                                         drizzle_result_st *result,
                                         drizzle_return_t *ret_ptr);
 
+DRIZZLE_API
+drizzle_result_st *drizzle_kill(drizzle_con_st *con,
+                                drizzle_result_st *result,
+                                uint32_t query_id,
+                                drizzle_return_t *ret_ptr);
+
 /**
  * @todo Remove this with next major API change.
  */

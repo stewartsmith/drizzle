@@ -56,7 +56,7 @@ str_or_nil(const char *str)
 
 int wild_case_compare(const charset_info_st * const cs, const char *str, const char *wildstr)
 {
-  register int flag;
+  int flag;
 
   while (*wildstr)
   {

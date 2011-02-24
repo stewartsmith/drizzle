@@ -1,9 +1,13 @@
 CREATE INDEX
 ============
 
-CREATE [UNIQUE] INDEX index_name [USING {BTREE | HASH}] ON table_name (column_name [length] [ASC | DESC], ...);
+.. code-block:: mysql
 
-An example: ::
+   CREATE [UNIQUE] INDEX index_name [USING {BTREE | HASH}] ON table_name (column_name [length] [ASC | DESC], ...);
+
+An example:
+
+.. code-block:: mysql
 
 	CREATE INDEX table_1_index ON table_1 (a,b);
 

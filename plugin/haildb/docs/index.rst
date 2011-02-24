@@ -42,7 +42,9 @@ UNCOMMITTED isolation levels.
 Row formats
 -----------
 
-HailDB can store the rows for a table in one of a few ways. This can be specified as an option to CREATE TABLE (example below).::
+HailDB can store the rows for a table in one of a few ways. This can be specified as an option to CREATE TABLE (example below).
+
+.. code-block:: mysql
 
   CREATE TABLE t1 (
   	 pk bigint auto_increment primary key,
