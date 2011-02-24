@@ -137,9 +137,8 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/table_reference.h>
 #include <drizzled/session.h>
-
+#include <drizzled/key.h>
 #include <drizzled/unique.h>
-
 #include <drizzled/temporal.h> /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
 using namespace std;
