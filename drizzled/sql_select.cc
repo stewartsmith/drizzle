@@ -53,7 +53,6 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/drizzled.h>
 #include <drizzled/plugin/storage_engine.h>
-
 #include <drizzled/sql_union.h>
 #include <drizzled/optimizer/key_field.h>
 #include <drizzled/optimizer/position.h>
@@ -62,17 +61,16 @@
 #include <drizzled/optimizer/range.h>
 #include <drizzled/optimizer/quick_range_select.h>
 #include <drizzled/optimizer/quick_ror_intersect_select.h>
-
 #include <drizzled/filesort.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sort_field.h>
 #include <drizzled/select_result.h>
+#include <drizzled/key.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b);
 static COND *build_equal_items(Session *session, COND *cond,

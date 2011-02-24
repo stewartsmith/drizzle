@@ -30,9 +30,6 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/table_list.h>
 #include <drizzled/function/math/real.h>
-#include <drizzled/alter_drop.h>
-#include <drizzled/alter_column.h>
-#include <drizzled/alter_info.h>
 #include <drizzled/key_part_spec.h>
 #include <drizzled/index_hint.h>
 #include <drizzled/statement.h>

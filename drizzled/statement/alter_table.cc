@@ -29,8 +29,6 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/global_charset_info.h>
-
-
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_table.h>
@@ -43,12 +41,12 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/copy_field.h>
-
 #include <drizzled/transaction_services.h>
-
 #include <drizzled/filesort.h>
-
 #include <drizzled/message.h>
+#include <drizzled/alter_column.h>
+#include <drizzled/alter_drop.h>
+#include <drizzled/alter_info.h>
 
 using namespace std;
 

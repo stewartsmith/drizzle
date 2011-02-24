@@ -25,6 +25,7 @@
 #include <drizzled/optimizer/quick_index_merge_select.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/unique.h>
+#include <drizzled/key.h>
 
 #include <vector>
 

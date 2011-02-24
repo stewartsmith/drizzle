@@ -38,6 +38,9 @@
 #include <config.h>
 #include <cstdio>
 #include <drizzled/parser.h>
+#include <drizzled/alter_column.h>
+#include <drizzled/alter_drop.h>
+#include <drizzled/alter_info.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 

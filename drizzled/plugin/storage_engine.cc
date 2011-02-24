@@ -33,7 +33,6 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include <drizzled/cached_directory.h>
-
 #include <drizzled/definitions.h>
 #include <drizzled/base.h>
 #include <drizzled/cursor.h>
@@ -49,14 +48,12 @@
 #include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
-
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/internal_error_handler.h>
-
 #include <drizzled/table/shell.h>
-
 #include <drizzled/message/cache.h>
+#include <drizzled/key.h>
 
 #include <boost/algorithm/string/compare.hpp>
 
