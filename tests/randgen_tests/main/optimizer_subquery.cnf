@@ -2,7 +2,7 @@
 comment = optimizer subquery test 
 
 [test_command]
-command = ./gentest.pl --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=500 --threads=5
+command = ./gentest.pl --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=250 --threads=3
 
 [test_servers]
 servers = [[]]
