@@ -22,6 +22,7 @@
 
 #include <drizzled/pthread_globals.h>
 #include <drizzled/message/cache.h>
+#include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
 
@@ -30,13 +31,8 @@ namespace message {
 table::shared_ptr Cache::find(const identifier::Table &identifier)
 {
   boost_unique_lock_t scoped_lock(_access);
-
-  Map::iterator iter= cache.find(identifier.getKey());
-  if (iter != cache.end())
-  {
-    return (*iter).second;
-  }
-
+  if (Map::mapped_type* i= find_ptr(cache, identifier.getKey()))
+    return *i;
   return table::shared_ptr();
 }
 
@@ -51,23 +47,14 @@ bool Cache::insert(const identifier::Table &identifier, table::shared_ptr share)
 {
   boost_unique_lock_t scoped_lock(_access);
 
-  std::pair<Map::iterator, bool> ret=
-    cache.insert(std::make_pair(identifier.getKey(), share));
+  std::pair<Map::iterator, bool> ret= cache.insert(std::make_pair(identifier.getKey(), share));
 
   return ret.second;
 }
 
 bool Cache::insert(const identifier::Table &identifier, drizzled::message::Table &message)
 {
-  boost_unique_lock_t scoped_lock(_access);
-
-  table::shared_ptr share;
-  share.reset(new message::Table(message));
-
-  std::pair<Map::iterator, bool> ret=
-    cache.insert(std::make_pair(identifier.getKey(), share));
-
-  return ret.second;
+  return insert(identifier, table::shared_ptr(new message::Table(message)));
 }
 
 } /* namespace definition */
