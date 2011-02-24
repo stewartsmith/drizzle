@@ -47,7 +47,7 @@ const std::string &type(drizzled::message::Table::Index::IndexType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyMatchOption type);
 const std::string &type(drizzled::message::Table::TableType type);
 
-template<class T> inline bool is_replicated(const T& reference)
+template<class T> bool is_replicated(const T& reference)
 {
   if (reference.has_replication_options() and
       reference.replication_options().has_is_replicated())
@@ -58,19 +58,7 @@ template<class T> inline bool is_replicated(const T& reference)
   return true;
 }
 
-template<class T> inline bool is_replicated(const T*& ptr)
-{
-  if (ptr and
-      ptr->has_replication_options() and 
-      ptr->replication_options().has_is_replicated())
-  {
-    return ptr->replication_options().is_replicated();
-  }
-
-  return true;
-}
-
-template<class T> inline void set_is_replicated(T& reference, bool arg)
+template<class T> void set_is_replicated(T& reference, bool arg)
 {
   message::ReplicationOptions *options= reference.mutable_replication_options();
   options->set_is_replicated(arg);

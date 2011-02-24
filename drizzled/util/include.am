@@ -19,6 +19,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/util/string.h \
                               drizzled/util/backtrace.h \
                               drizzled/util/convert.h \
+			      drizzled/util/find_ptr.h \
                               drizzled/util/functors.h \
                               drizzled/util/gmtime.h \
                               drizzled/util/tablename_to_filename.h \

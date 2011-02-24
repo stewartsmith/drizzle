@@ -56,15 +56,10 @@ enum destinations {
 
 extern int opt_destination;
 
-/* returns true on keep, false on ignore */
+// returns true on keep, false on ignore Olaf: sounds backwards/wrong, shouldn't it be the other way around?
 bool DrizzleDumpDatabase::ignoreTable(std::string tableName)
 {
-  std::string dbTable(databaseName);
-  dbTable.append(".");
-  dbTable.append(tableName);
-
-  boost::unordered_set<std::string>::iterator iter= ignore_table.find(dbTable);
-  return (iter == ignore_table.end());
+  return ignore_table.find(databaseName + "." + tableName) == ignore_table.end();
 }
 
 void DrizzleDumpDatabase::cleanTableName(std::string &tableName)
