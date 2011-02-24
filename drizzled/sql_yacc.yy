@@ -173,7 +173,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
   Currently there are 70 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 75
+%expect 79
 
 /*
    Comments for TOKENS.
@@ -569,6 +569,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %nonassoc IN_SYM
 %nonassoc IS NULL_SYM TRUE_SYM FALSE_SYM
 
+%nonassoc CONCAT
 %nonassoc '|'
 %nonassoc '&'
 %nonassoc SHIFT_LEFT SHIFT_RIGHT
@@ -2516,6 +2517,10 @@ simple_expr:
         | sum_expr
           {
             Lex->setSumExprUsed();
+          }
+        | simple_expr CONCAT simple_expr
+          {
+            $$= new (YYSession->mem_root) Item_func_concat(*YYSession, $1, $3);
           }
         | '+' simple_expr %prec UMINUS { $$= $2; }
         | '-' simple_expr %prec UMINUS
