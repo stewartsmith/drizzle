@@ -19,13 +19,11 @@
  */
 
 #include <config.h>
-
 #include <drizzled/pthread_globals.h>
 #include <drizzled/message/cache.h>
 #include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
-
 namespace message {
 
 table::shared_ptr Cache::find(const identifier::Table &identifier)
@@ -39,17 +37,13 @@ table::shared_ptr Cache::find(const identifier::Table &identifier)
 void Cache::erase(const identifier::Table &identifier)
 {
   boost_unique_lock_t scoped_lock(_access);
-  
   cache.erase(identifier.getKey());
 }
 
 bool Cache::insert(const identifier::Table &identifier, table::shared_ptr share)
 {
   boost_unique_lock_t scoped_lock(_access);
-
-  std::pair<Map::iterator, bool> ret= cache.insert(std::make_pair(identifier.getKey(), share));
-
-  return ret.second;
+  return cache.insert(std::make_pair(identifier.getKey(), share)).second;
 }
 
 bool Cache::insert(const identifier::Table &identifier, drizzled::message::Table &message)
@@ -57,5 +51,5 @@ bool Cache::insert(const identifier::Table &identifier, drizzled::message::Table
   return insert(identifier, table::shared_ptr(new message::Table(message)));
 }
 
-} /* namespace definition */
-} /* namespace drizzled */
+} // namespace message
+} // namespace drizzled
