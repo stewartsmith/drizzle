@@ -660,7 +660,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         predicate bit_expr
         table_wild simple_expr udf_expr
         expr_or_default set_expr_or_default
-        signed_literal now_or_signed_literal opt_escape
+        signed_literal opt_escape
         simple_ident_q
         field_or_var limit_option
         function_call_keyword
@@ -1408,7 +1408,14 @@ attribute:
               Lex->field()->mutable_constraints()->set_is_notnull(true);
             }
           }
-        | DEFAULT now_or_signed_literal
+        | DEFAULT NOW_SYM optional_braces
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value= new Item_func_now_local();
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | DEFAULT signed_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -1460,13 +1467,6 @@ attribute:
               Lex->charset=$2;
             }
           }
-        ;
-
-now_or_signed_literal:
-          NOW_SYM optional_braces
-          { $$= new Item_func_now_local(); }
-        | signed_literal
-          { $$=$1; }
         ;
 
 collation_name:
