@@ -1004,7 +1004,7 @@ opt_table_options:
 
 opt_if_not_exists:
           /* empty */ { $$= false; }
-        | IF not EXISTS { $$= true; YYSession->getLex()->setExists(); }
+        | IF NOT_SYM EXISTS { $$= true; YYSession->getLex()->setExists(); }
         ;
 
 opt_create_table_options:
@@ -1399,7 +1399,7 @@ attribute:
           {
             Lex->type&= ~ NOT_NULL_FLAG;
           }
-        | not NULL_SYM
+        | NOT_SYM NULL_SYM
           {
             Lex->type|= NOT_NULL_FLAG;
 
@@ -2231,7 +2231,7 @@ optional_braces:
 
 /* all possible expressions */
 expr:
-          expr or expr %prec OR_SYM
+          expr OR_SYM expr %prec OR_SYM
           {
             /*
               Design notes:
@@ -2285,7 +2285,7 @@ expr:
             /* XOR is a proprietary extension */
             $$ = new (YYSession->mem_root) Item_cond_xor($1, $3);
           }
-        | expr and expr %prec AND_SYM
+        | expr AND_SYM expr %prec AND_SYM
           {
             /* See comments in rule expr: expr or expr */
             Item_cond_and *item1;
@@ -2329,31 +2329,53 @@ expr:
         | NOT_SYM expr %prec NOT_SYM
           { $$= negate_expression(YYSession, $2); }
         | bool_pri IS TRUE_SYM %prec IS
-          { $$= new (YYSession->mem_root) Item_func_istrue($1); }
-        | bool_pri IS not TRUE_SYM %prec IS
-          { $$= new (YYSession->mem_root) Item_func_isnottrue($1); }
+          { 
+            $$= new (YYSession->mem_root) Item_func_istrue($1);
+          }
+        | bool_pri IS NOT_SYM TRUE_SYM %prec IS
+          {
+            $$= new (YYSession->mem_root) Item_func_isnottrue($1);
+          }
         | bool_pri IS FALSE_SYM %prec IS
-          { $$= new (YYSession->mem_root) Item_func_isfalse($1); }
-        | bool_pri IS not FALSE_SYM %prec IS
-          { $$= new (YYSession->mem_root) Item_func_isnotfalse($1); }
+          {
+            $$= new (YYSession->mem_root) Item_func_isfalse($1);
+          }
+        | bool_pri IS NOT_SYM FALSE_SYM %prec IS
+          {
+            $$= new (YYSession->mem_root) Item_func_isnotfalse($1);
+          }
         | bool_pri IS UNKNOWN_SYM %prec IS
-          { $$= new Item_func_isnull($1); }
-        | bool_pri IS not UNKNOWN_SYM %prec IS
-          { $$= new Item_func_isnotnull($1); }
+          {
+            $$= new Item_func_isnull($1);
+          }
+        | bool_pri IS NOT_SYM UNKNOWN_SYM %prec IS
+          {
+            $$= new Item_func_isnotnull($1);
+          }
         | bool_pri
         ;
 
 bool_pri:
           bool_pri IS NULL_SYM %prec IS
-          { $$= new Item_func_isnull($1); }
-        | bool_pri IS not NULL_SYM %prec IS
-          { $$= new Item_func_isnotnull($1); }
+          {
+            $$= new Item_func_isnull($1);
+          }
+        | bool_pri IS NOT_SYM NULL_SYM %prec IS
+          {
+            $$= new Item_func_isnotnull($1);
+          }
         | bool_pri EQUAL_SYM predicate %prec EQUAL_SYM
-          { $$= new Item_func_equal($1,$3); }
+          {
+            $$= new Item_func_equal($1,$3);
+          }
         | bool_pri comp_op predicate %prec '='
-          { $$= (*$2)(0)->create($1,$3); }
+          {
+            $$= (*$2)(0)->create($1,$3);
+          }
         | bool_pri comp_op all_or_any '(' subselect ')' %prec '='
-          { $$= all_any_subquery_creator($1, $2, $3, $5); }
+          {
+            $$= all_any_subquery_creator($1, $2, $3, $5);
+          }
         | predicate
         ;
 
@@ -2362,7 +2384,7 @@ predicate:
           {
             $$= new (YYSession->mem_root) Item_in_subselect($1, $4);
           }
-        | bit_expr not IN_SYM '(' subselect ')'
+        | bit_expr NOT_SYM IN_SYM '(' subselect ')'
           {
             Item *item= new (YYSession->mem_root) Item_in_subselect($1, $5);
             $$= negate_expression(YYSession, item);
@@ -2377,11 +2399,11 @@ predicate:
             $6->push_front($1);
             $$= new (YYSession->mem_root) Item_func_in(*$6);
           }
-        | bit_expr not IN_SYM '(' expr ')'
+        | bit_expr NOT_SYM IN_SYM '(' expr ')'
           {
             $$= parser::handle_sql2003_note184_exception(YYSession, $1, false, $5);
           }
-        | bit_expr not IN_SYM '(' expr ',' expr_list ')'
+        | bit_expr NOT_SYM IN_SYM '(' expr ',' expr_list ')'
           {
             $7->push_front($5);
             $7->push_front($1);
@@ -2393,7 +2415,7 @@ predicate:
           {
             $$= new Item_func_between($1,$3,$5);
           }
-        | bit_expr not BETWEEN_SYM bit_expr AND_SYM predicate
+        | bit_expr NOT_SYM BETWEEN_SYM bit_expr AND_SYM predicate
           {
             Item_func_between *item= new Item_func_between($1,$4,$6);
             item->negate();
@@ -2403,7 +2425,7 @@ predicate:
           { 
             $$= new Item_func_like($1,$3,$4,Lex->escape_used);
           }
-        | bit_expr not LIKE simple_expr opt_escape
+        | bit_expr NOT_SYM LIKE simple_expr opt_escape
           { 
             $$= new Item_func_not(new Item_func_like($1,$4,$5, Lex->escape_used));
           }
@@ -2417,7 +2439,7 @@ predicate:
               DRIZZLE_YYABORT;
             }
           }
-        | bit_expr not REGEXP_SYM bit_expr
+        | bit_expr NOT_SYM REGEXP_SYM bit_expr
           { 
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($1);
@@ -2449,40 +2471,46 @@ bit_expr:
             $$= new function::bit::ShiftLeft($1, $3);
           }
         | bit_expr '+' bit_expr %prec '+'
-          { $$= new Item_func_plus($1,$3); }
+          {
+            $$= new Item_func_plus($1,$3);
+          }
         | bit_expr '-' bit_expr %prec '-'
-          { $$= new Item_func_minus($1,$3); }
+          { 
+            $$= new Item_func_minus($1,$3);
+          }
         | bit_expr '+' INTERVAL_SYM expr interval %prec '+'
-          { $$= new Item_date_add_interval($1,$4,$5,0); }
+          {
+            $$= new Item_date_add_interval($1,$4,$5,0);
+          }
         | bit_expr '-' INTERVAL_SYM expr interval %prec '-'
-          { $$= new Item_date_add_interval($1,$4,$5,1); }
+          {
+            $$= new Item_date_add_interval($1,$4,$5,1);
+          }
         | bit_expr '*' bit_expr %prec '*'
-          { $$= new Item_func_mul($1,$3); }
+          {
+            $$= new Item_func_mul($1,$3);
+          }
         | bit_expr '/' bit_expr %prec '/'
-          { $$= new Item_func_div(YYSession,$1,$3); }
+          {
+            $$= new Item_func_div(YYSession,$1,$3);
+          }
         | bit_expr '%' bit_expr %prec '%'
-          { $$= new Item_func_mod($1,$3); }
+          {
+            $$= new Item_func_mod($1,$3);
+          }
         | bit_expr DIV_SYM bit_expr %prec DIV_SYM
-          { $$= new Item_func_int_div($1,$3); }
+          {
+            $$= new Item_func_int_div($1,$3);
+          }
         | bit_expr MOD_SYM bit_expr %prec MOD_SYM
-          { $$= new Item_func_mod($1,$3); }
+          {
+            $$= new Item_func_mod($1,$3);
+          }
         | bit_expr '^' bit_expr
           {
             $$= new (YYSession->mem_root) function::bit::Xor($1, $3);
           }
         | simple_expr
-        ;
-
-or:
-          OR_SYM
-       ;
-
-and:
-          AND_SYM
-       ;
-
-not:
-          NOT_SYM
         ;
 
 comp_op:
