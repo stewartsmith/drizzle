@@ -29,6 +29,7 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/item/subselect.h>
 
 #include <boost/dynamic_bitset.hpp>
 

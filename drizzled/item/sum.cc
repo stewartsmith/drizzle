@@ -30,7 +30,6 @@
 #include <drizzled/hybrid_type_traits_decimal.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/session.h>
-
 #include <drizzled/item/sum.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/field/double.h>
@@ -38,10 +37,9 @@
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 #include <drizzled/unique.h>
-
 #include <drizzled/type/decimal.h>
-
 #include <drizzled/internal/m_string.h>
+#include <drizzled/item/subselect.h>
 
 #include <algorithm>
 

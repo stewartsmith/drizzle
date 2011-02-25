@@ -46,6 +46,7 @@
 #include <drizzled/gettext.h>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
+#include <drizzled/plugin/function.h>
 
 namespace po= boost::program_options;
 using namespace std;
