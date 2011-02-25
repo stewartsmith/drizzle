@@ -1208,9 +1208,9 @@ field_def:
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::DATETIME);
           } 
-        | int_type ignored_field_number_length opt_field_number_signed opt_zerofill opt_attribute_number
+        | int_type opt_attribute_number
           { 
-            $$= parser::buildIntegerColumn(Lex, $1, ($3 or $4));
+            $$= $1;
           }
         | char '(' NUM ')' opt_attribute_string
           {
@@ -1247,7 +1247,7 @@ field_def:
           {
             $$= parser::buildVarbinaryColumn(Lex, $3.str);
           }
-        | real_type opt_precision opt_attribute_number
+        | real_type opt_attribute_number
           {
             assert ($1 == DRIZZLE_TYPE_DOUBLE);
             $$= parser::buildDoubleColumn(Lex);
@@ -1306,30 +1306,26 @@ varchar:
         ;
 
 int_type:
-          INT_SYM 
+          INT_SYM  ignored_field_number_length opt_field_number_signed opt_zerofill 
           {
-            $$= DRIZZLE_TYPE_LONG;
+            $$= parser::buildIntegerColumn(Lex, DRIZZLE_TYPE_LONG, ($3 or $4));
           }
-        | BOOL_SYM
+        | BIGINT_SYM ignored_field_number_length opt_field_number_signed opt_zerofill 
           {
-            $$= DRIZZLE_TYPE_LONG;
-          }
-        | BIGINT_SYM
-          {
-            $$= DRIZZLE_TYPE_LONGLONG;
+            $$= parser::buildIntegerColumn(Lex, DRIZZLE_TYPE_LONGLONG, ($3 or $4));
           }
         ;
 
 real_type:
-          REAL
+          REAL opt_precision
           {
             $$= DRIZZLE_TYPE_DOUBLE;
           }
-        | DOUBLE_SYM
+        | DOUBLE_SYM opt_precision
           {
             $$= DRIZZLE_TYPE_DOUBLE;
           }
-        | DOUBLE_SYM PRECISION
+        | DOUBLE_SYM PRECISION opt_precision
           {
             $$= DRIZZLE_TYPE_DOUBLE;
           }
