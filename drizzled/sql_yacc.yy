@@ -660,6 +660,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         table_wild simple_expr udf_expr
         expr_or_default set_expr_or_default
         signed_literal opt_escape
+        date_literal
         simple_ident_q
         field_or_var limit_option
         function_call_keyword
@@ -1518,7 +1519,7 @@ attribute_timestamp:
             statement->default_value= new Item_func_now_local();
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
-        | DEFAULT signed_literal
+        | DEFAULT date_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -4920,6 +4921,18 @@ literal:
         | TRUE_SYM { $$= new drizzled::item::True(); }
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
+        | DATE_SYM text_literal { $$ = $2; }
+        | TIMESTAMP_SYM text_literal { $$ = $2; }
+        ;
+
+date_literal:
+          text_literal { $$ = $1; }
+        | NULL_SYM
+          {
+            $$ = new Item_null();
+            YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
+          }
+        | NUM_literal { $$ = $1; }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP_SYM text_literal { $$ = $2; }
         ;
