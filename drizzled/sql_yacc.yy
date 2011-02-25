@@ -173,7 +173,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
   Currently there are 70 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 82
+%expect 79
 
 /*
    Comments for TOKENS.
@@ -1374,17 +1374,7 @@ opt_precision:
           {}
         ;
 
-opt_attribute:
-          /* empty */ {}
-        | opt_attribute_list {}
-        ;
-
-opt_attribute_list:
-          opt_attribute_list attribute {}
-        | attribute
-        ;
-
-attribute:
+opt_attribute_not_null:
           NULL_SYM
           {
             Lex->type&= ~ NOT_NULL_FLAG;
@@ -1398,14 +1388,10 @@ attribute:
               Lex->field()->mutable_constraints()->set_is_notnull(true);
             }
           }
-        | DEFAULT signed_literal
-          {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+        ;
 
-            statement->default_value=$2;
-            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
-          }
-        | opt_primary KEY_SYM
+opt_attribute_index:
+          opt_primary KEY_SYM
           {
             parser::buildPrimaryOnColumn(Lex);
           }
@@ -1417,6 +1403,30 @@ attribute:
           {
             parser::buildKeyOnColumn(Lex);
           }
+        ;
+
+opt_attribute:
+          /* empty */ {}
+        | opt_attribute_list {}
+        ;
+
+opt_attribute_list:
+          opt_attribute_list attribute {}
+        | attribute
+        ;
+
+attribute:
+          opt_attribute_not_null
+          { }
+        | DEFAULT signed_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value=$2;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | opt_attribute_index
+          { }
         ;
 
 opt_attribute_string:
@@ -1430,37 +1440,14 @@ opt_attribute_list_string:
         ;
 
 attribute_string:
-          NULL_SYM
-          {
-            Lex->type&= ~ NOT_NULL_FLAG;
-          }
-        | NOT_SYM NULL_SYM
-          {
-            Lex->type|= NOT_NULL_FLAG;
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-            }
-          }
+          opt_attribute_not_null
+          { }
         | DEFAULT signed_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
-          }
-        | opt_primary KEY_SYM
-          {
-            parser::buildPrimaryOnColumn(Lex);
-          }
-        | UNIQUE_SYM
-          {
-            parser::buildKeyOnColumn(Lex);
-          }
-        | UNIQUE_SYM KEY_SYM
-          {
-            parser::buildKeyOnColumn(Lex);
           }
         | COLLATE_SYM collation_name
           {
@@ -1475,6 +1462,8 @@ attribute_string:
               Lex->charset=$2;
             }
           }
+        | opt_attribute_index
+          { }
         ;
 
 opt_attribute_number:
@@ -1488,19 +1477,8 @@ opt_attribute_list_integer:
         ;
 
 attribute_integer:
-          NULL_SYM
-          {
-            Lex->type&= ~ NOT_NULL_FLAG;
-          }
-        | NOT_SYM NULL_SYM
-          {
-            Lex->type|= NOT_NULL_FLAG;
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-            }
-          }
+          opt_attribute_not_null
+          { }
         | AUTO_INC
           {
             parser::buildAutoOnColumn(Lex);
@@ -1516,18 +1494,8 @@ attribute_integer:
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
-        | opt_primary KEY_SYM
-          {
-            parser::buildPrimaryOnColumn(Lex);
-          }
-        | UNIQUE_SYM
-          {
-            parser::buildKeyOnColumn(Lex);
-          }
-        | UNIQUE_SYM KEY_SYM
-          {
-            parser::buildKeyOnColumn(Lex);
-          }
+        | opt_attribute_index
+          { }
         ;
 
 opt_attribute_timestamp:
@@ -1541,19 +1509,8 @@ opt_attribute_list_timestamp:
         ;
 
 attribute_timestamp:
-          NULL_SYM
-          {
-            Lex->type&= ~ NOT_NULL_FLAG;
-          }
-        | NOT_SYM NULL_SYM
-          {
-            Lex->type|= NOT_NULL_FLAG;
-
-            if (Lex->field())
-            {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
-            }
-          }
+          opt_attribute_not_null
+          { }
         | DEFAULT NOW_SYM optional_braces
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
@@ -1572,18 +1529,8 @@ attribute_timestamp:
           {
             ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
           }
-        | opt_primary KEY_SYM
-          {
-            parser::buildPrimaryOnColumn(Lex);
-          }
-        | UNIQUE_SYM
-          {
-            parser::buildKeyOnColumn(Lex);
-          }
-        | UNIQUE_SYM KEY_SYM
-          {
-            parser::buildKeyOnColumn(Lex);
-          }
+        | opt_attribute_index
+          { }
         ;
 
 opt_attribute_comment:
