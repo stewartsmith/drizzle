@@ -1171,7 +1171,7 @@ field_spec:
           {
             parser::buildCreateFieldIdent(Lex);
           }
-          field_def
+          field_def opt_attribute_comment
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
@@ -1290,7 +1290,7 @@ field_def:
           {
             $$= parser::buildBooleanColumn(Lex);
           }
-        | SERIAL_SYM opt_attribute_comment
+        | SERIAL_SYM
           {
             $$= parser::buildSerialColumn(Lex);
           }
@@ -1425,8 +1425,6 @@ attribute:
           {
             parser::buildKeyOnColumn(Lex);
           }
-        | attribute_comment
-          { }
         ;
 
 opt_attribute_string:
@@ -1485,8 +1483,6 @@ attribute_string:
               Lex->charset=$2;
             }
           }
-        | attribute_comment
-          { }
         ;
 
 opt_attribute_number:
@@ -1540,8 +1536,6 @@ attribute_integer:
           {
             parser::buildKeyOnColumn(Lex);
           }
-        | attribute_comment
-          { }
         ;
 
 opt_attribute_timestamp:
@@ -1598,18 +1592,11 @@ attribute_timestamp:
           {
             parser::buildKeyOnColumn(Lex);
           }
-        | attribute_comment
-          { }
         ;
 
 opt_attribute_comment:
           /* empty */ { }
-        | attribute_comment
-          { }
-        ;
-
-attribute_comment:
-          COMMENT_SYM TEXT_STRING_sys
+        | COMMENT_SYM TEXT_STRING_sys
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
             statement->comment= $2;
@@ -1936,7 +1923,7 @@ alter_list_item:
 
             Lex->setField(NULL);
           }
-          field_def
+          field_def opt_attribute_comment
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
