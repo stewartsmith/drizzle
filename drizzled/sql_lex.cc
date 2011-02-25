@@ -30,6 +30,7 @@
 #include <drizzled/lookup_symbol.h>
 #include <drizzled/index_hint.h>
 #include <drizzled/select_result.h>
+#include <drizzled/item/subselect.h>
 
 #include <cstdio>
 #include <ctype.h>

@@ -41,6 +41,7 @@
 #include <drizzled/alter_column.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/item/subselect.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 

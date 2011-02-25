@@ -31,10 +31,8 @@
 #include <drizzled/util/convert.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/time_functions.h>
-
 #include <drizzled/field/str.h>
 #include <drizzled/field/num.h>
-
 #include <drizzled/field/blob.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
@@ -50,11 +48,11 @@
 #include <drizzled/field/size.h>
 #include <drizzled/field/time.h>
 #include <drizzled/field/varstring.h>
-
 #include <drizzled/current_session.h>
 #include <drizzled/session.h>
-
 #include <drizzled/internal/m_string.h>
+#include <drizzled/item/ref.h>
+#include <drizzled/item/subselect.h>
 
 #include <cstdio>
 #include <math.h>
