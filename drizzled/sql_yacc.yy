@@ -173,7 +173,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
   Currently there are 70 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 80
+%expect 82
 
 /*
    Comments for TOKENS.
@@ -617,8 +617,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         text_string opt_gconcat_separator
 
 %type <field_val>
-      field_definition
-      field_definition_timestamp
+      field_def
       int_type
       real_type
 
@@ -634,7 +633,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 
 %type <num>
         order_dir
-        field_def
         opt_table_options
         all_or_any opt_distinct
         union_option
@@ -742,6 +740,9 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         opt_outer table_list table_name
         opt_option opt_place
         opt_attribute opt_attribute_list attribute
+        opt_attribute_timestamp
+        opt_attribute_number
+        opt_attribute_string
         flush_options flush_option
         equal optional_braces
         normal_join
@@ -1192,112 +1193,104 @@ field_spec:
         ;
 
 field_def:
-           field_definition opt_attribute {}
-        |  field_definition_timestamp opt_attribute_timestamp {}
-        ;
-
-field_definition_timestamp:
-          TIMESTAMP_SYM
+          TIMESTAMP_SYM opt_attribute_timestamp
           {
             $$=parser::buildTimestampColumn(Lex, NULL);
           }
-        | TIMESTAMP_SYM '(' NUM ')'
+        | TIMESTAMP_SYM '(' NUM ')' opt_attribute_timestamp
           {
             $$=parser::buildTimestampColumn(Lex, $3.str);
-          }
-        | DATETIME_SYM
+          } 
+        | DATETIME_SYM opt_attribute_timestamp
           {
             $$=DRIZZLE_TYPE_DATETIME;
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::DATETIME);
-          }
-        ;
-
-field_definition:
-          int_type ignored_field_number_length opt_field_number_signed opt_zerofill
+          } 
+        | int_type ignored_field_number_length opt_field_number_signed opt_zerofill opt_attribute_number
           { 
             $$= parser::buildIntegerColumn(Lex, $1, ($3 or $4));
           }
-        | real_type opt_precision
-          {
-            assert ($1 == DRIZZLE_TYPE_DOUBLE);
-            $$= parser::buildDoubleColumn(Lex);
-          }
-        | char '(' NUM ')'
+        | char '(' NUM ')' opt_attribute_string
           {
             $$= parser::buildVarcharColumn(Lex, $3.str);
           }
-        | char
+        | char opt_attribute_string
           {
             $$= parser::buildVarcharColumn(Lex, "1");
           }
-        | varchar '(' NUM ')'
+        | varchar '(' NUM ')' opt_attribute_string
           {
             $$= parser::buildVarcharColumn(Lex, $3.str);
           }
-        | VARBINARY '(' NUM ')'
-          {
-            $$= parser::buildVarbinaryColumn(Lex, $3.str);
-          }
-        | DATE_SYM
-          {
-            $$=DRIZZLE_TYPE_DATE;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DATE);
-          }
-        | TIME_SYM
-          {
-            $$=DRIZZLE_TYPE_TIME;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::TIME);
-          }
-        | BLOB_SYM
-          {
-            $$= parser::buildBlobColumn(Lex);
-          }
-        | TEXT_SYM
+        | TEXT_SYM opt_attribute_string
           {
             $$=DRIZZLE_TYPE_BLOB;
             Lex->length=(char*) 0; /* use default length */
 
-          if (Lex->field())
-            Lex->field()->set_type(message::Table::Field::BLOB);
-          }
-        | DECIMAL_SYM float_options
-          {
-            $$= parser::buildDecimalColumn(Lex);
-          }
-        | NUMERIC_SYM float_options
-          {
-            $$= parser::buildDecimalColumn(Lex);
-          }
-        | FIXED_SYM float_options
-          {
-            $$= parser::buildDecimalColumn(Lex);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::BLOB);
           }
         | ENUM_SYM
           {
             Lex->interval_list.clear();
           }
-          '(' string_list ')'
+          '(' string_list ')' opt_attribute_string
           {
             $$=DRIZZLE_TYPE_ENUM;
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::ENUM);
           }
-        | UUID_SYM
+        | VARBINARY '(' NUM ')' opt_attribute
+          {
+            $$= parser::buildVarbinaryColumn(Lex, $3.str);
+          }
+        | real_type opt_precision opt_attribute_number
+          {
+            assert ($1 == DRIZZLE_TYPE_DOUBLE);
+            $$= parser::buildDoubleColumn(Lex);
+          } 
+        | DATE_SYM opt_attribute
+          {
+            $$=DRIZZLE_TYPE_DATE;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DATE);
+          }
+        | TIME_SYM opt_attribute
+          {
+            $$=DRIZZLE_TYPE_TIME;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::TIME);
+          }
+        | BLOB_SYM opt_attribute
+          {
+            $$= parser::buildBlobColumn(Lex);
+          }
+        | DECIMAL_SYM float_options opt_attribute_number
+          {
+            $$= parser::buildDecimalColumn(Lex);
+          }
+        | NUMERIC_SYM float_options opt_attribute_number
+          {
+            $$= parser::buildDecimalColumn(Lex);
+          }
+        | FIXED_SYM float_options opt_attribute_number
+          {
+            $$= parser::buildDecimalColumn(Lex);
+          }
+        | UUID_SYM opt_attribute
           {
             $$= parser::buildUuidColumn(Lex);
           }
-        | BOOLEAN_SYM
+        | BOOLEAN_SYM opt_attribute
           {
             $$= parser::buildBooleanColumn(Lex);
           }
-        | SERIAL_SYM
+        | SERIAL_SYM opt_attribute_comment
           {
             $$= parser::buildSerialColumn(Lex);
           }
@@ -1420,14 +1413,6 @@ attribute:
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
-        | AUTO_INC
-          {
-            parser::buildAutoOnColumn(Lex);
-          }
-        | SERIAL_SYM DEFAULT VALUE_SYM
-          {
-            (void)parser::buildSerialColumn(Lex);
-          }
         | opt_primary KEY_SYM
           {
             parser::buildPrimaryOnColumn(Lex);
@@ -1440,13 +1425,52 @@ attribute:
           {
             parser::buildKeyOnColumn(Lex);
           }
-        | COMMENT_SYM TEXT_STRING_sys
+        | attribute_comment
+          { }
+        ;
+
+opt_attribute_string:
+          /* empty */ {}
+        | opt_attribute_list_string {}
+        ;
+
+opt_attribute_list_string:
+          opt_attribute_list_string attribute_string {}
+        | attribute_string
+        ;
+
+attribute_string:
+          NULL_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            statement->comment= $2;
+            Lex->type&= ~ NOT_NULL_FLAG;
+          }
+        | NOT_SYM NULL_SYM
+          {
+            Lex->type|= NOT_NULL_FLAG;
 
             if (Lex->field())
-              Lex->field()->set_comment($2.str);
+            {
+              Lex->field()->mutable_constraints()->set_is_notnull(true);
+            }
+          }
+        | DEFAULT signed_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value=$2;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | opt_primary KEY_SYM
+          {
+            parser::buildPrimaryOnColumn(Lex);
+          }
+        | UNIQUE_SYM
+          {
+            parser::buildKeyOnColumn(Lex);
+          }
+        | UNIQUE_SYM KEY_SYM
+          {
+            parser::buildKeyOnColumn(Lex);
           }
         | COLLATE_SYM collation_name
           {
@@ -1461,6 +1485,63 @@ attribute:
               Lex->charset=$2;
             }
           }
+        | attribute_comment
+          { }
+        ;
+
+opt_attribute_number:
+          /* empty */ {}
+        | opt_attribute_list_integer {}
+        ;
+
+opt_attribute_list_integer:
+          opt_attribute_list_integer attribute_integer {}
+        | attribute_integer
+        ;
+
+attribute_integer:
+          NULL_SYM
+          {
+            Lex->type&= ~ NOT_NULL_FLAG;
+          }
+        | NOT_SYM NULL_SYM
+          {
+            Lex->type|= NOT_NULL_FLAG;
+
+            if (Lex->field())
+            {
+              Lex->field()->mutable_constraints()->set_is_notnull(true);
+            }
+          }
+        | AUTO_INC
+          {
+            parser::buildAutoOnColumn(Lex);
+          }
+        | SERIAL_SYM DEFAULT VALUE_SYM
+          {
+            (void)parser::buildSerialColumn(Lex);
+          }
+        | DEFAULT signed_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value=$2;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | opt_primary KEY_SYM
+          {
+            parser::buildPrimaryOnColumn(Lex);
+          }
+        | UNIQUE_SYM
+          {
+            parser::buildKeyOnColumn(Lex);
+          }
+        | UNIQUE_SYM KEY_SYM
+          {
+            parser::buildKeyOnColumn(Lex);
+          }
+        | attribute_comment
+          { }
         ;
 
 opt_attribute_timestamp:
@@ -1517,7 +1598,18 @@ attribute_timestamp:
           {
             parser::buildKeyOnColumn(Lex);
           }
-        | COMMENT_SYM TEXT_STRING_sys
+        | attribute_comment
+          { }
+        ;
+
+opt_attribute_comment:
+          /* empty */ { }
+        | attribute_comment
+          { }
+        ;
+
+attribute_comment:
+          COMMENT_SYM TEXT_STRING_sys
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
             statement->comment= $2;
