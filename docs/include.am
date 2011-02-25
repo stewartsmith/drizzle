@@ -14,6 +14,7 @@ EXTRA_DIST+= \
 	     docs/plugins/innobase/index.rst \
 	     docs/plugins/mysql_protocol/index.rst \
 	     docs/plugins/transaction_log/index.rst \
+	     docs/plugins/slave/index.rst \
 	     docs/_static/drizzle.ico \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst \
