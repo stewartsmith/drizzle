@@ -25,6 +25,7 @@ create table t2 (c1 int);
 flush tables with read lock;
 insert into t2 values(1);
 unlock tables;
+ERROR HY000: No lock is held by this connection.
 drop table t1, t2;
 select benchmark(200, (select sin(1))) > 1000;
 End of 5.0 tests
