@@ -1212,11 +1212,7 @@ field_def:
           { 
             $$= $1;
           }
-        | char '(' NUM ')' opt_attribute_string
-          {
-            $$= parser::buildVarcharColumn(Lex, $3.str);
-          }
-        | char opt_attribute_string
+        | CHAR_SYM opt_attribute_string
           {
             $$= parser::buildVarcharColumn(Lex, "1");
           }
@@ -1296,13 +1292,13 @@ field_def:
           }
         ;
 
-char:
-          CHAR_SYM {}
-        ;
-
 varchar:
-          char VARYING {}
-        | VARCHAR_SYM {}
+          CHAR_SYM VARYING
+          { }
+        | CHAR_SYM
+          { }
+        | VARCHAR_SYM
+          { }
         ;
 
 int_type:
