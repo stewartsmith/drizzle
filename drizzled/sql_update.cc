@@ -204,7 +204,7 @@ int update_query(Session *session, TableList *table_list,
     return 1;
   }
 
-  if (select_lex->inner_refs_list.elements &&
+  if (select_lex->inner_refs_list.size() &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);

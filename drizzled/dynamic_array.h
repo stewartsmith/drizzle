@@ -29,9 +29,15 @@ namespace drizzled
 typedef struct st_dynamic_array
 {
   unsigned char *buffer;
-  size_t elements,max_element;
+  size_t elements;
+  size_t max_element;
   uint32_t alloc_increment;
   uint32_t size_of_element;
+
+  size_t size() const
+  {
+    return elements;
+  }
 } DYNAMIC_ARRAY;
 
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)

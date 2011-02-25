@@ -648,8 +648,7 @@ void buildPrimaryOnColumn(LEX *lex)
 void buildReplicationOption(LEX *lex, bool arg)
 {
   statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
-  message::ReplicationOptions *options= statement->schema_message.mutable_replication_options();
-  options->set_dont_replicate(arg);
+  message::set_is_replicated(statement->schema_message, arg);
 }
 
 void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key)

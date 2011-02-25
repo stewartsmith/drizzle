@@ -242,7 +242,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
       must take care to mark when all fields are created/added.
     */
     if (!parent_table_ref &&
-        add_table_ref->join_columns->elements == field_count)
+        add_table_ref->join_columns->size() == field_count)
       add_table_ref->is_join_columns_complete= true;
   }
 

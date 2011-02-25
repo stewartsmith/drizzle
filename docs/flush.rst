@@ -3,10 +3,12 @@ FLUSH
 
 The FLUSH statement clears or reloads different internal caches. One variant acquires a lock.
 
-FLUSH 
-    flush_option [, flush_option] ...
+.. code-block:: mysql
 
-flush_option:
+   FLUSH flush_option [, flush_option] ...
+
+flush_option
+------------
 
 * TABLES table_name [, table_name]
 	

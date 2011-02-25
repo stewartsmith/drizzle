@@ -173,7 +173,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
   Currently there are 70 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 70
+%expect 75
 
 /*
    Comments for TOKENS.
@@ -439,6 +439,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  REPEATABLE_SYM                /* SQL-2003-N */
 %token  REPEAT_SYM                    /* MYSQL-FUNC */
 %token  REPLACE                       /* MYSQL-FUNC */
+%token  REPLICATE
 %token  REPLICATION
 %token  RESTRICT
 %token  RETURNS_SYM                   /* SQL-2003-R */
@@ -562,13 +563,20 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %left  AND_SYM
 %right NOT_SYM
 %right '='
-%nonassoc EQUAL_SYM GE '>' LE '<' NE
+%nonassoc EQUAL_SYM GE GREATER_THAN LE LESS_THAN NE
 %nonassoc LIKE REGEXP_SYM
 %nonassoc BETWEEN_SYM
 %nonassoc IN_SYM
 %nonassoc IS NULL_SYM TRUE_SYM FALSE_SYM
+
+%nonassoc '|'
+%nonassoc '&'
+%nonassoc SHIFT_LEFT SHIFT_RIGHT
+
 %left   '-' '+'
 %left   '*' '/' '%' DIV_SYM MOD_SYM
+%nonassoc   '^'
+%nonassoc   '~'
 %right  BINARY COLLATE_SYM
 %left  INTERVAL_SYM
 %right UMINUS
@@ -970,11 +978,11 @@ custom_database_option:
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
             statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
           }
-        | REPLICATION opt_equal TRUE_SYM
+        | REPLICATE opt_equal TRUE_SYM
           {
             parser::buildReplicationOption(Lex, true);
           }
-        | REPLICATION opt_equal FALSE_SYM
+        | REPLICATE opt_equal FALSE_SYM
           {
             parser::buildReplicationOption(Lex, false);
           }
@@ -1029,11 +1037,11 @@ custom_engine_option:
           {
             Lex->table()->mutable_options()->set_auto_increment_value($3);
           }
-        | REPLICATION opt_equal TRUE_SYM
+        | REPLICATE opt_equal TRUE_SYM
           {
             Lex->table()->mutable_options()->set_dont_replicate(false);
           }
-        | REPLICATION opt_equal FALSE_SYM
+        | REPLICATE opt_equal FALSE_SYM
           {
             Lex->table()->mutable_options()->set_dont_replicate(true);
           }
@@ -2423,7 +2431,23 @@ predicate:
         ;
 
 bit_expr:
-          bit_expr '+' bit_expr %prec '+'
+          bit_expr '|' bit_expr %prec '|'
+          {
+            $$= new function::bit::Or($1, $3);
+          }
+        | bit_expr '&' bit_expr %prec '&'
+          {
+            $$= new function::bit::And($1, $3);
+          }
+        | bit_expr SHIFT_RIGHT bit_expr %prec SHIFT_RIGHT
+          {
+            $$= new function::bit::ShiftRight($1, $3);
+          }
+        | bit_expr SHIFT_LEFT bit_expr %prec SHIFT_LEFT
+          {
+            $$= new function::bit::ShiftLeft($1, $3);
+          }
+        | bit_expr '+' bit_expr %prec '+'
           { $$= new Item_func_plus($1,$3); }
         | bit_expr '-' bit_expr %prec '-'
           { $$= new Item_func_minus($1,$3); }
@@ -2441,6 +2465,10 @@ bit_expr:
           { $$= new Item_func_int_div($1,$3); }
         | bit_expr MOD_SYM bit_expr %prec MOD_SYM
           { $$= new Item_func_mod($1,$3); }
+        | bit_expr '^' bit_expr
+          {
+            $$= new (YYSession->mem_root) function::bit::Xor($1, $3);
+          }
         | simple_expr
         ;
 
@@ -2459,9 +2487,9 @@ not:
 comp_op:
           '='     { $$ = &comp_eq_creator; }
         | GE     { $$ = &comp_ge_creator; }
-        | '>' { $$ = &comp_gt_creator; }
+        | GREATER_THAN { $$ = &comp_gt_creator; }
         | LE     { $$ = &comp_le_creator; }
-        | '<'     { $$ = &comp_lt_creator; }
+        | LESS_THAN     { $$ = &comp_lt_creator; }
         | NE     { $$ = &comp_ne_creator; }
         ;
 
@@ -2491,7 +2519,13 @@ simple_expr:
           }
         | '+' simple_expr %prec UMINUS { $$= $2; }
         | '-' simple_expr %prec UMINUS
-          { $$= new (YYSession->mem_root) Item_func_neg($2); }
+          {
+	    $$= new (YYSession->mem_root) Item_func_neg($2);
+	  }
+        | '~' simple_expr %prec UMINUS
+          {
+            $$= new (YYSession->mem_root) function::bit::Neg($2);
+          }
         | '(' subselect ')'
           {
             $$= new (YYSession->mem_root) Item_singlerow_subselect($2);
@@ -3386,7 +3420,7 @@ table_factor:
             /* Use $2 instead of Lex->current_select as derived table will
                alter value of Lex->current_select. */
             if (!($3 || $5) && $2->embedding &&
-                !$2->embedding->getNestedJoin()->join_list.elements)
+                !$2->embedding->getNestedJoin()->join_list.size())
             {
               /* we have a derived table ($3 == NULL) but no alias,
                  Since we are nested in further parentheses so we
@@ -3536,7 +3570,7 @@ select_derived_init:
             }
             embedding= Lex->current_select->embedding;
             $$= embedding &&
-                !embedding->getNestedJoin()->join_list.elements;
+                !embedding->getNestedJoin()->join_list.size();
             /* return true if we are deeply nested */
           }
         ;

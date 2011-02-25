@@ -25,6 +25,7 @@
 #include <drizzled/plugin/function.h>
 
 #include <plugin/utility_functions/assert.h>
+#include <plugin/utility_functions/bit_count.h>
 #include <plugin/utility_functions/catalog.h>
 #include <plugin/utility_functions/execute.h>
 #include <plugin/utility_functions/global_read_lock.h>

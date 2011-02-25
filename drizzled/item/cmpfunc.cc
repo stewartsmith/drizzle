@@ -3962,7 +3962,7 @@ Item_cond::fix_fields(Session *session, Item **)
     if (item->maybe_null)
       maybe_null=1;
   }
-  session->getLex()->current_select->cond_count+= list.elements;
+  session->getLex()->current_select->cond_count+= list.size();
   session->session_marker= orig_session_marker;
   fix_length_and_dec();
   fixed= 1;
@@ -4962,7 +4962,7 @@ void Item_equal::add(Item_field *f)
 
 uint32_t Item_equal::members()
 {
-  return fields.elements;
+  return fields.size();
 }
 
 

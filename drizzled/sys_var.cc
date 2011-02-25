@@ -54,7 +54,6 @@
 #include <drizzled/item/string.h>
 #include <drizzled/plugin.h>
 #include <drizzled/version.h>
-#include <drizzled/strfunc.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/charset.h>

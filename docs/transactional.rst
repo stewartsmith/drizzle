@@ -17,7 +17,9 @@ Transactions are a group of operations that form tasks and stores them as a sing
 
 A COMMIT statement ends a transaction within Drizzle and makes all changes visible to other users.  The order of events is typically to issue a START TRANSACTION statement, execute one or more SQL statements, and then issue a COMMIT statement. Alternatively, a ROLLBACK statement can be issued, which undoes all the work performed since START TRANSACTION was issued. A COMMIT statement will also release any existing savepoints that may be in use.
 
-Drizzle can operate in an autocommit mode, where each statement is committed at the end of statement, via: ::
+Drizzle can operate in an autocommit mode, where each statement is committed at the end of statement, via:
+
+.. code-block:: mysql
 
 	SET AUTOCOMMIT= 1
 

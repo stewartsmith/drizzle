@@ -54,7 +54,7 @@ TEST_RUN_DBQP= $(PYTHON) ../$(top_srcdir)/tests/dbqp.py \
 		--reorder \
 		--basedir=../${top_srcdir} \
 		--testdir=../${top_srcdir}/tests \
-                --workdir=../${top_srcdir}/tests/dbqp_work
+                --workdir=../${top_srcdir}/tests/workdir
 
 
 EXTRA_DIST += \
@@ -160,7 +160,7 @@ distclean-local: nukevar
 
 nukevar:
 	rm -rf tests/var \
-        rm -rf tests/dbqp_work \
+        rm -rf tests/workdir \
         rm tests/dbqp_data/*
  
 

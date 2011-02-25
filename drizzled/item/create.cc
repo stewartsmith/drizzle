@@ -1084,7 +1084,7 @@ Create_udf_func::create(Session *session, const plugin::Function *udf,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   func= (*udf)(session->mem_root);
 
@@ -1120,7 +1120,7 @@ Create_func_arg0::create(Session *session, LEX_STRING name, List<Item> *item_lis
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count != 0)
   {
@@ -1138,7 +1138,7 @@ Create_func_arg1::create(Session *session, LEX_STRING name, List<Item> *item_lis
   int arg_count= 0;
 
   if (item_list)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count != 1)
   {
@@ -1164,7 +1164,7 @@ Create_func_arg2::create(Session *session, LEX_STRING name, List<Item> *item_lis
   int arg_count= 0;
 
   if (item_list)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count != 2)
   {
@@ -1192,7 +1192,7 @@ Create_func_arg3::create(Session *session, LEX_STRING name, List<Item> *item_lis
   int arg_count= 0;
 
   if (item_list)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count != 3)
   {
@@ -1234,7 +1234,7 @@ Create_func_concat::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count < 1)
   {
@@ -1255,7 +1255,7 @@ Create_func_concat_ws::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   /* "WS" stands for "With Separator": this function takes 2+ arguments */
   if (arg_count < 2)
@@ -1362,7 +1362,7 @@ Create_func_export_set::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   switch (arg_count) {
   case 3:
@@ -1414,7 +1414,7 @@ Create_func_field::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count < 2)
   {
@@ -1462,7 +1462,7 @@ Create_func_from_unixtime::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   switch (arg_count) {
   case 1:
@@ -1499,7 +1499,7 @@ Create_func_greatest::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count < 2)
   {
@@ -1556,7 +1556,7 @@ Create_func_last_insert_id::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   switch (arg_count) {
   case 0:
@@ -1599,7 +1599,7 @@ Create_func_least::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count < 2)
   {
@@ -1629,7 +1629,7 @@ Create_func_locate::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   switch (arg_count) {
   case 2:
@@ -1695,7 +1695,7 @@ Create_func_make_set::create_native(Session *session_arg, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   if (arg_count < 2)
   {
@@ -1781,7 +1781,7 @@ Create_func_round::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   switch (arg_count) {
   case 1:
@@ -1924,7 +1924,7 @@ Create_func_unix_timestamp::create_native(Session *session, LEX_STRING name,
   int arg_count= 0;
 
   if (item_list != NULL)
-    arg_count= item_list->elements;
+    arg_count= item_list->size();
 
   switch (arg_count) {
   case 0:

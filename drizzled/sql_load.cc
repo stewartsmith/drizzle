@@ -179,7 +179,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   table= table_list->table;
   transactional_table= table->cursor->has_transactions();
 
-  if (!fields_vars.elements)
+  if (!fields_vars.size())
   {
     Field **field;
     for (field= table->getFields(); *field ; field++)

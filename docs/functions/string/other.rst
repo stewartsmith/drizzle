@@ -70,7 +70,9 @@ Syntax:
 
 REPLACE(str,from_str,to_str)
 
-For example: ::
+For example:
+
+.. code-block:: mysql
 	
 	SELECT REPLACE('wwww.google.com', 'w', 'v');
 
@@ -79,7 +81,9 @@ Returns: vvv.google.com
 REVERSE()
 ---------
 
-This function returns a string argument with the characters in reverse order. ::
+This function returns a string argument with the characters in reverse order.
+
+.. code-block:: mysql
 
 	SELECT REVERSE('abcd');
 
@@ -108,7 +112,9 @@ Returns the substring as specified
 
 Examples that use SUBSTRING() in the SELECT clause:
 
-The SUBSTRING() function is used to extract a character string (using a given starting position and a given length). ::
+The SUBSTRING() function is used to extract a character string (using a given starting position and a given length).
+
+.. code-block:: mysql
 
 	SELECT  
         SUBSTRING(course_designater,6,3) as 'Course number'                   
@@ -116,7 +122,9 @@ The SUBSTRING() function is used to extract a character string (using a given st
 	WHERE course_designater LIKE 'Excel%' 
 	LIMIT 10;    
 
-You can also format a column using SUBSTRING() in combination with functions like LOWER() and UPPER(). ::
+You can also format a column using SUBSTRING() in combination with functions like LOWER() and UPPER().
+
+.. code-block:: mysql
 
 	SELECT 
 	CONCAT(UPPER(SUBSTRING(lastname,1,1)),

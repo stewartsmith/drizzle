@@ -28,7 +28,7 @@ This logical operator AND:
 * evaluates to 0 if one or more operands are 0 
 * otherwise returns NULL 
 
-::
+.. code-block:: mysql
 
 	SELECT 1 && 1;
 	        -> 1
@@ -41,7 +41,9 @@ This logical operator AND:
 	SELECT NULL && 0;
         	-> 0
 
-AND can be used to select rows that satisfy all the conditions given in a statement. For Example, to find the names of the students between the age 20 to 25 years, the query would be like: ::
+AND can be used to select rows that satisfy all the conditions given in a statement. For Example, to find the names of the students between the age 20 to 25 years, the query would be like:
+
+.. code-block:: mysql
 
 	SELECT first_name, last_name, age
 	FROM user_details
@@ -72,7 +74,7 @@ This logical operator OR:
 * returns 1 with a NULL operand if the other operand is nonzero, and retunes NULL otherwise
 * returns NULL if both operands are NULL
 
-::
+.. code-block:: mysql
 
 	SELECT 1 || 1;
         	-> 1
@@ -87,7 +89,9 @@ This logical operator OR:
 
 In other words, OR is used to select rows that satisfy at least one of the given conditions.
 
-For example, the following query could be used to find the user_id for people that live in either California or Texas: ::
+For example, the following query could be used to find the user_id for people that live in either California or Texas:
+
+.. code-block:: mysql
 
 	SELECT user_id, state
 	FROM user_location
@@ -115,7 +119,7 @@ XOR
 * evaluates to 1 for non-NULL operands (if an odd number of operands is nonzero)
 * otherwise 0 is returned
 
-::
+.. code-block:: mysql
 
 	SELECT 1 XOR NULL;
         	-> NULL
@@ -140,7 +144,7 @@ This logical operator NOT:
 * evaluates to 0 if the operand is nonzero
 * NOT NULL returns NULL
 
-::
+.. code-block:: mysql
 
 	SELECT NOT 10;
         	-> 0
@@ -155,7 +159,9 @@ This logical operator NOT:
 
 If you want to find rows that do not satisfy a condition, you can use the logical operator, NOT. NOT results in the reverse of a condition. That is, if a condition is satisfied, then the row is not returned.
 
-For example: If you want to find out the user_id for people who do not practice medicine as their profession, the query would be like: ::
+For example: If you want to find out the user_id for people who do not practice medicine as their profession, the query would be like:
+
+.. code-block:: mysql
 
 	SELECT user_id, title, occupation
 	FROM user_occupations
@@ -179,7 +185,9 @@ The result set would be something like:
 LESS THAN
 ----------
 
-Less than: ::
+Less than:
+
+.. code-block:: mysql
 
 	SELECT 2 < 2;
         	-> 0
@@ -190,7 +198,9 @@ Less than: ::
 GREATER THAN
 -------------
 
-Greater than: ::
+Greater than:
+
+.. code-block:: mysql
 
 	SELECT 2 > 2;
         	-> 0
@@ -200,7 +210,9 @@ Greater than: ::
 LESS THAN OR EQUAL
 -------------------
 
-Less than or equal: ::
+Less than or equal:
+
+.. code-block:: mysql
 
 	SELECT 0.1 <= 2;
         	-> 1
@@ -211,7 +223,9 @@ Less than or equal: ::
 GREATER THAN OR EQUAL
 ----------------------
 
-Greater than or equal: ::
+Greater than or equal:
+
+.. code-block:: mysql
 
 	SELECT 2 >= 2;
         	-> 1
@@ -221,7 +235,9 @@ Greater than or equal: ::
 EQUAL
 -----
 
-Equal: ::
+Equal:
+
+.. code-block:: mysql
 
 	SELECT 1 = 0;
         	-> 0
@@ -240,7 +256,9 @@ Equal: ::
 NOT EQUAL
 ----------
 
-Not equal: ::
+Not equal:
+
+.. code-block:: mysql
 
 	SELECT '.01' <> '0.01';
         	-> 1
