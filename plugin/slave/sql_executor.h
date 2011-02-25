@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 David Shrewsbury
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,45 +18,56 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_EXECUTE_H
-#define DRIZZLED_EXECUTE_H
+#ifndef PLUGIN_SLAVE_SQL_EXECUTOR_H
+#define PLUGIN_SLAVE_SQL_EXECUTOR_H
 
-#include <drizzled/visibility.h>
+#include <string>
+#include <vector>
+#include <drizzled/session.h>
 
-namespace drizzled
+namespace slave
 {
 
-namespace sql
+class SQLExecutor
 {
-  class ResultSet;
-}
-
-class DRIZZLED_API Execute
-{
-  bool wait;
-  Session &_session;
-
 public:
-  Execute(Session&, bool wait_arg);
-  ~Execute();
 
-  void run(std::string &to_execute);
-  void run(const char *arg, size_t length);
-  void run(std::string &execution_string, sql::ResultSet &result_set);
+  SQLExecutor(const std::string &user, const std::string &schema);
 
-  Session &session()
+  void markInErrorState()
   {
-    return _session;
+    _in_error_state= true;
   }
 
-  void setWait(bool arg= true)
+  void clearErrorState()
   {
-    wait= arg;
+    _in_error_state= false;
   }
+
+  const std::string &getErrorMessage()
+  {
+    return _error_message;
+  }
+
+  /**
+   * Execute a batch of SQL statements.
+   *
+   * @param sql Batch of SQL statements to execute.
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool executeSQL(std::vector<std::string> &sql);
+
+protected:
+  drizzled::Session::shared_ptr _session;
 
 private:
+  bool _in_error_state;
+  std::string _error_message;
+
 };
 
-} /* namespace drizzled */
+} /* namespace slave */
 
-#endif /* DRIZZLED_EXECUTE_H */
+#endif /* PLUGIN_SLAVE_SQL_EXECUTOR_H */

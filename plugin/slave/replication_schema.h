@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 David Shrewsbury
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,45 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_EXECUTE_H
-#define DRIZZLED_EXECUTE_H
+#ifndef PLUGIN_SLAVE_REPLICATION_SCHEMA_H
+#define PLUGIN_SLAVE_REPLICATION_SCHEMA_H
 
-#include <drizzled/visibility.h>
+#include <plugin/slave/sql_executor.h>
 
-namespace drizzled
+namespace slave
 {
 
-namespace sql
+class ReplicationSchema : public SQLExecutor
 {
-  class ResultSet;
-}
-
-class DRIZZLED_API Execute
-{
-  bool wait;
-  Session &_session;
-
 public:
-  Execute(Session&, bool wait_arg);
-  ~Execute();
+  ReplicationSchema() : SQLExecutor("slave", "replication")
+  { }
 
-  void run(std::string &to_execute);
-  void run(const char *arg, size_t length);
-  void run(std::string &execution_string, sql::ResultSet &result_set);
-
-  Session &session()
-  {
-    return _session;
-  }
-
-  void setWait(bool arg= true)
-  {
-    wait= arg;
-  }
-
-private:
+  bool create();
 };
 
-} /* namespace drizzled */
+} /* namespace slave */
 
-#endif /* DRIZZLED_EXECUTE_H */
+#endif /* PLUGIN_SLAVE_REPLICATION_SCHEMA_H */
