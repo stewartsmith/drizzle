@@ -19,13 +19,12 @@
  */
 
 #include <config.h>
-
 #include <drizzled/parser.h>
+#include <drizzled/alter_info.h>
+#include <drizzled/alter_drop.h>
 
-namespace drizzled
-{
-namespace parser
-{
+namespace drizzled {
+namespace parser {
 
 /**
   Helper to resolve the SQL:2003 Syntax exception 1) in <in predicate>.

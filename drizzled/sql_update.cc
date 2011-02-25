@@ -33,6 +33,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/filesort.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/key.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>

@@ -42,7 +42,6 @@
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/probes.h>
 #include <drizzled/global_charset_info.h>
-
 #include <drizzled/plugin/logging.h>
 #include <drizzled/plugin/query_rewrite.h>
 #include <drizzled/plugin/query_cache.h>
@@ -52,9 +51,7 @@
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/display.h>
 #include <drizzled/visibility.h>
-
 #include <drizzled/kill.h>
-
 #include <drizzled/schema.h>
 
 #include <limits.h>
@@ -1142,7 +1139,7 @@ TableList *Select_Lex::end_nested_join(Session *)
   nested_join= ptr->getNestedJoin();
   if (nested_join->join_list.size() == 1)
   {
-    TableList *embedded= nested_join->join_list.head();
+    TableList *embedded= &nested_join->join_list.front();
     join_list->pop();
     embedded->setJoinList(join_list);
     embedded->setEmbedding(embedding);
