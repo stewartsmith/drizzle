@@ -76,7 +76,7 @@ extern size_t transaction_message_threshold;
 
 uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 
-const std::string &getServerHostname();
+DRIZZLED_API const std::string &getServerHostname();
 int sys_var_init();
 
 /**
