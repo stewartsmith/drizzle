@@ -1,0 +1,7 @@
+create table t1 (a int);
+create table t2 (a int);
+flush tables with read lock;
+UNLOCK TABLES;
+ERROR HY000: No lock is held by this connection.
+unlock tables;
+drop table t1,t2;
