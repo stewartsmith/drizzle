@@ -173,7 +173,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
   Currently there are 70 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 79
+%expect 80
 
 /*
    Comments for TOKENS.
@@ -618,6 +618,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 
 %type <field_val>
       field_definition
+      field_definition_timestamp
       int_type
       real_type
 
@@ -1191,7 +1192,26 @@ field_spec:
         ;
 
 field_def:
-          field_definition opt_attribute {}
+           field_definition opt_attribute {}
+        |  field_definition_timestamp opt_attribute_timestamp {}
+        ;
+
+field_definition_timestamp:
+          TIMESTAMP_SYM
+          {
+            $$=parser::buildTimestampColumn(Lex, NULL);
+          }
+        | TIMESTAMP_SYM '(' NUM ')'
+          {
+            $$=parser::buildTimestampColumn(Lex, $3.str);
+          }
+        | DATETIME_SYM
+          {
+            $$=DRIZZLE_TYPE_DATETIME;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DATETIME);
+          }
         ;
 
 field_definition:
@@ -1233,21 +1253,6 @@ field_definition:
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::TIME);
-          }
-        | TIMESTAMP_SYM
-          {
-            $$=parser::buildTimestampColumn(Lex, NULL);
-          }
-        | TIMESTAMP_SYM '(' NUM ')'
-          {
-            $$=parser::buildTimestampColumn(Lex, $3.str);
-          }
-        | DATETIME_SYM
-          {
-            $$=DRIZZLE_TYPE_DATETIME;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DATETIME);
           }
         | BLOB_SYM
           {
@@ -1408,23 +1413,12 @@ attribute:
               Lex->field()->mutable_constraints()->set_is_notnull(true);
             }
           }
-        | DEFAULT NOW_SYM optional_braces
-          {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
-            statement->default_value= new Item_func_now_local();
-            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
-          }
         | DEFAULT signed_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
-          }
-        | ON UPDATE_SYM NOW_SYM optional_braces
-          {
-            ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
           }
         | AUTO_INC
           {
@@ -1466,6 +1460,70 @@ attribute:
             {
               Lex->charset=$2;
             }
+          }
+        ;
+
+opt_attribute_timestamp:
+          /* empty */ {}
+        | opt_attribute_list_timestamp {}
+        ;
+
+opt_attribute_list_timestamp:
+          opt_attribute_list_timestamp attribute_timestamp {}
+        | attribute_timestamp
+        ;
+
+attribute_timestamp:
+          NULL_SYM
+          {
+            Lex->type&= ~ NOT_NULL_FLAG;
+          }
+        | NOT_SYM NULL_SYM
+          {
+            Lex->type|= NOT_NULL_FLAG;
+
+            if (Lex->field())
+            {
+              Lex->field()->mutable_constraints()->set_is_notnull(true);
+            }
+          }
+        | DEFAULT NOW_SYM optional_braces
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value= new Item_func_now_local();
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | DEFAULT signed_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value=$2;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | ON UPDATE_SYM NOW_SYM optional_braces
+          {
+            ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
+          }
+        | opt_primary KEY_SYM
+          {
+            parser::buildPrimaryOnColumn(Lex);
+          }
+        | UNIQUE_SYM
+          {
+            parser::buildKeyOnColumn(Lex);
+          }
+        | UNIQUE_SYM KEY_SYM
+          {
+            parser::buildKeyOnColumn(Lex);
+          }
+        | COMMENT_SYM TEXT_STRING_sys
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement->comment= $2;
+
+            if (Lex->field())
+              Lex->field()->set_comment($2.str);
           }
         ;
 
