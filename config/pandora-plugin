@@ -201,15 +201,18 @@ def write_plugin(plugin, plugin_ini_list):
 
   write_plugin_ac(plugin, plugin_ac_file)
   write_plugin_am(plugin, plugin_am_file)
-  write_plugin_docs(plugin, plugin_doc_index)
+  write_plugin_docs(plugin, plugin_doc_index, plugin_am_file)
   plugin['writing_status'] = 'done'
 
-def write_plugin_docs(plugin, doc_index):
+def write_plugin_docs(plugin, doc_index, plugin_am):
   if plugin['docs'] is not None and os.path.isdir("docs/plugins"):
     if not os.path.exists(os.path.join("docs/plugins",plugin["name"])):
       os.symlink(os.path.abspath(plugin["docs"]), os.path.join("docs/plugins",plugin["name"]))
     doc_index.write("""
    %(name)s/index""" % plugin)
+    plugin_am.write("""
+EXTRA_DIST+=docs/plugins/%(name)s/*.rst
+""" % plugin)
 
 def write_plugin_ac(plugin, plugin_ac):
   #
