@@ -15,6 +15,8 @@ EXTRA_DIST+= \
 	     docs/plugins/mysql_protocol/index.rst \
 	     docs/plugins/transaction_log/index.rst \
 	     docs/plugins/slave/index.rst \
+	     docs/pyext/__init__.py \
+	     docs/pyext/options.py \
 	     docs/_static/drizzle.ico \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst \
@@ -70,12 +72,12 @@ sphinx-help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 html-local:
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/html
+	PYTHONPATH=${top_srcdir}/docs $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(SPHINX_BUILDDIR)/html."
 
 dirhtml:
-	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/dirhtml
+	PYTHONPATH=${top_srcdir}/docs $(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(SPHINX_BUILDDIR)/dirhtml."
 
