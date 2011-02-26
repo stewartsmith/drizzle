@@ -37,8 +37,8 @@ namespace definition {
 table::instance::Shared::shared_ptr Cache::find(const identifier::Table::Key &key)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-  if (Map::mapped_type* i= find_ptr(cache, key))
-    return *i;
+  if (Map::mapped_type* ptr= find_ptr(cache, key))
+    return *ptr;
   return table::instance::Shared::shared_ptr();
 }
 

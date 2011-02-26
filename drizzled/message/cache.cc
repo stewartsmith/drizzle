@@ -29,8 +29,8 @@ namespace message {
 table::shared_ptr Cache::find(const identifier::Table &identifier)
 {
   boost_unique_lock_t scoped_lock(_access);
-  if (Map::mapped_type* i= find_ptr(cache, identifier.getKey()))
-    return *i;
+  if (Map::mapped_type* ptr= find_ptr(cache, identifier.getKey()))
+    return *ptr;
   return table::shared_ptr();
 }
 

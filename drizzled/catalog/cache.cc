@@ -29,10 +29,10 @@ namespace catalog {
 Instance::shared_ptr Cache::find(const identifier::Catalog &identifier, drizzled::error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-  if (const unordered_map::mapped_type* i= find_ptr(cache, identifier))
+  if (const unordered_map::mapped_type* ptr= find_ptr(cache, identifier))
   {
-    error= *i ? EE_OK : ER_CATALOG_NO_LOCK;
-    return *i;
+    error= *ptr ? EE_OK : ER_CATALOG_NO_LOCK;
+    return *ptr;
   }
   error= ER_CATALOG_DOES_NOT_EXIST;
   return catalog::Instance::shared_ptr();
@@ -60,9 +60,9 @@ bool Cache::erase(const identifier::Catalog &identifier, drizzled::error_t &erro
 bool Cache::unlock(const identifier::Catalog &identifier, drizzled::error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-  if (const unordered_map::mapped_type* i= find_ptr(cache, identifier))
+  if (const unordered_map::mapped_type* ptr= find_ptr(cache, identifier))
   {
-    if (not *i)
+    if (not *ptr)
     {
       if (cache.erase(identifier))
         return true;
