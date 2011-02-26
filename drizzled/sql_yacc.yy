@@ -659,7 +659,9 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         predicate bit_expr
         table_wild simple_expr udf_expr
         expr_or_default set_expr_or_default
-        signed_literal opt_escape
+        opt_escape
+        signed_literal
+        integer_literal
         date_literal
         boolean_literal
         simple_ident_q
@@ -1496,7 +1498,7 @@ attribute_integer:
           {
             (void)parser::buildSerialColumn(Lex);
           }
-        | DEFAULT signed_literal
+        | DEFAULT integer_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -4931,6 +4933,24 @@ literal:
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP_SYM text_literal { $$ = $2; }
+        ;
+
+integer_literal:
+          text_literal { $$ = $1; }
+        | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
+        | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
+        | NUM_literal { $$ = $1; }
+        | NULL_SYM
+          {
+            $$ = new Item_null();
+            YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
+          }
+        | '+' NUM_literal { $$ = $2; }
+        | '-' NUM_literal
+          {
+            $2->max_length++;
+            $$= $2->neg();
+          }
         ;
 
 boolean_literal:
