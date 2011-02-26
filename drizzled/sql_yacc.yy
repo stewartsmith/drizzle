@@ -741,7 +741,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         opt_delete_option varchar
         opt_outer table_list table_name
         opt_option opt_place
-        opt_attribute opt_attribute_list attribute
+        opt_attribute
         opt_attribute_boolean
         opt_attribute_timestamp
         opt_attribute_number
@@ -1410,25 +1410,16 @@ opt_attribute_index:
 
 opt_attribute:
           /* empty */ {}
-        | opt_attribute_list {}
-        ;
-
-opt_attribute_list:
-          opt_attribute_list attribute {}
-        | attribute
-        ;
-
-attribute:
-          opt_attribute_not_null
+        | opt_attribute opt_attribute_not_null
           { }
-        | DEFAULT signed_literal
+        | opt_attribute DEFAULT signed_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            statement->default_value=$2;
+            statement->default_value= $3;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
-        | opt_attribute_index
+        | opt_attribute opt_attribute_index
           { }
         ;
 
