@@ -46,6 +46,7 @@
 #include <drizzled/function/time/timestamp_diff.h>
 #include <drizzled/function/time/typecast.h>
 #include <drizzled/function/time/year.h>
+#include <drizzled/function/bit/functions.h>
 #include <drizzled/global_charset_info.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/boolean.h>

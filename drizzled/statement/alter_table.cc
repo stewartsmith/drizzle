@@ -29,8 +29,6 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/global_charset_info.h>
-
-
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_table.h>
@@ -43,12 +41,12 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/copy_field.h>
-
 #include <drizzled/transaction_services.h>
-
 #include <drizzled/filesort.h>
-
 #include <drizzled/message.h>
+#include <drizzled/alter_column.h>
+#include <drizzled/alter_drop.h>
+#include <drizzled/alter_info.h>
 
 using namespace std;
 
@@ -441,7 +439,7 @@ static bool prepare_alter_table(Session *session,
   {
     my_error(ER_BAD_FIELD_ERROR,
              MYF(0),
-             alter_info->alter_list.head()->name,
+             alter_info->alter_list.front().name,
              table->getMutableShare()->getTableName());
     return true;
   }
@@ -643,7 +641,7 @@ static bool prepare_alter_table(Session *session,
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
-             alter_info->drop_list.head()->name);
+             alter_info->drop_list.front().name);
     return true;
   }
 
@@ -651,7 +649,7 @@ static bool prepare_alter_table(Session *session,
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
-             alter_info->alter_list.head()->name);
+             alter_info->alter_list.front().name);
     return true;
   }
 

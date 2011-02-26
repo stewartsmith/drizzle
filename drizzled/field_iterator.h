@@ -24,9 +24,9 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/natural_join_column.h>
+#include <drizzled/item/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Table;
 class TableList;

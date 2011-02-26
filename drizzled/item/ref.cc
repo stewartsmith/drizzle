@@ -25,6 +25,7 @@
 #include <drizzled/item/ref.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/item/sum.h>
+#include <drizzled/item/subselect.h>
 
 namespace drizzled
 {

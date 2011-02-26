@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_IDENTIFIER_CATALOG_H
-#define DRIZZLED_IDENTIFIER_CATALOG_H
+#pragma once
 
 #include <drizzled/enum.h>
 #include <drizzled/definitions.h>
@@ -112,5 +111,3 @@ std::size_t hash_value(Catalog const& b);
 
 } /* namespace identifier */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_IDENTIFIER_CATALOG_H */

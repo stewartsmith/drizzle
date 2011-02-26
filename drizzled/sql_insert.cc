@@ -33,8 +33,8 @@
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/select_insert.h>
 #include <drizzled/select_create.h>
-
 #include <drizzled/table/shell.h>
+#include <drizzled/alter_info.h>
 
 namespace drizzled
 {

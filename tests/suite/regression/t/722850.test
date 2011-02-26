@@ -1,0 +1,5 @@
+# Crashme test fails when running select (1 << 4) >> 2
+# expected '4' but got '0'
+# result should be 4
+
+SELECT (1 << 4) >> 2;

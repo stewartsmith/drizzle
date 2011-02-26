@@ -30,8 +30,7 @@
   This will replace Table_ident.
   */
 
-#ifndef DRIZZLED_IDENTIFIER_TABLE_H
-#define DRIZZLED_IDENTIFIER_TABLE_H
+#pragma once
 
 #include <drizzled/enum.h>
 #include <drizzled/definitions.h>
@@ -264,5 +263,3 @@ std::size_t hash_value(Table::Key const& b);
 
 } /* namespace identifier */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_IDENTIFIER_TABLE_H */

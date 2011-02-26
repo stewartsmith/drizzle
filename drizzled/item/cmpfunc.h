@@ -1564,7 +1564,7 @@ public:
   void add(Item_field *f);
   uint32_t members();
   bool contains(Field *field);
-  Item_field* get_first() { return fields.head(); }
+  Item_field* get_first() { return &fields.front(); }
   void merge(Item_equal *item);
   void update_const();
   enum Functype functype() const { return MULT_EQUAL_FUNC; }
@@ -1579,7 +1579,7 @@ public:
   Item *transform(Item_transformer transformer, unsigned char *arg);
   virtual void print(String *str, enum_query_type query_type);
   const CHARSET_INFO *compare_collation()
-  { return fields.head()->collation.collation; }
+  { return fields.front().collation.collation; }
 private:
   fields_t fields; /* list of equal field items                    */
   Item *const_item;        /* optional constant item equal to fields items */

@@ -104,4 +104,8 @@ plugin/transaction_log/transaction_log_reader.cc
 plugin/transaction_log/utilities/transaction_file_reader.cc
 plugin/transaction_log/utilities/transaction_reader.cc
 plugin/transaction_log/write_buffer.cc
+plugin/slave/module.cc
+plugin/slave/queue_producer.cc
+plugin/slave/replication_slave.cc
+plugin/slave/sql_executor.cc
 plugin/session_dictionary/sessions.cc

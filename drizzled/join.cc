@@ -61,8 +61,8 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/select_result.h>
-
 #include <drizzled/debug.h>
+#include <drizzled/item/subselect.h>
 
 #include <algorithm>
 
@@ -2369,7 +2369,7 @@ bool Join::rollup_init()
 bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, Item_sum ***func)
 {
   List<Item>::iterator it(fields_arg.begin());
-  Item *first_field= sel_fields.head();
+  Item *first_field= &sel_fields.front();
   uint32_t level;
 
   /*

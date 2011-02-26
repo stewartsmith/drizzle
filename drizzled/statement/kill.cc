@@ -47,7 +47,7 @@ Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
 
 bool statement::Kill::execute()
 {
-  Item *it= (Item *) getSession()->getLex()->value_list.head();
+  Item *it= &getSession()->getLex()->value_list.front();
 
   if ((not it->fixed && it->fix_fields(getSession()->getLex()->session, &it)) || it->check_cols(1))
   {
