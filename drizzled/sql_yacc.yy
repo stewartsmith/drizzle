@@ -661,6 +661,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         expr_or_default set_expr_or_default
         signed_literal opt_escape
         date_literal
+        boolean_literal
         simple_ident_q
         field_or_var limit_option
         function_call_keyword
@@ -741,6 +742,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         opt_outer table_list table_name
         opt_option opt_place
         opt_attribute opt_attribute_list attribute
+        opt_attribute_boolean
         opt_attribute_timestamp
         opt_attribute_number
         opt_attribute_string
@@ -1283,7 +1285,7 @@ field_def:
           {
             $$= parser::buildUuidColumn(Lex);
           }
-        | BOOLEAN_SYM opt_attribute
+        | BOOLEAN_SYM opt_attribute_boolean
           {
             $$= parser::buildBooleanColumn(Lex);
           }
@@ -1427,6 +1429,21 @@ attribute:
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | opt_attribute_index
+          { }
+        ;
+
+opt_attribute_boolean:
+          /* empty */ { }
+        | opt_attribute_boolean opt_attribute_not_null
+          { }
+        | opt_attribute_boolean DEFAULT boolean_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value= $3;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | opt_attribute_boolean opt_attribute_index
           { }
         ;
 
@@ -4923,6 +4940,22 @@ literal:
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP_SYM text_literal { $$ = $2; }
+        ;
+
+boolean_literal:
+          NULL_SYM
+          {
+            $$ = new Item_null();
+            YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
+          }
+        | FALSE_SYM
+          {
+            $$= new drizzled::item::False();
+          }
+        | TRUE_SYM
+          {
+            $$= new drizzled::item::True();
+          }
         ;
 
 date_literal:
