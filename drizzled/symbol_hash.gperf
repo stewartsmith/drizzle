@@ -42,6 +42,7 @@ struct st_symbol
   unsigned int  tok;
 };
 %%
+||, CONCAT
 <=, LE
 <>, NE
 !=, NE

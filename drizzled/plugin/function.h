@@ -80,7 +80,7 @@ public:
    */
   static void removePlugin(const plugin::Function *function_obj);
 
-  static const plugin::Function *get(const char *name, size_t len=0);
+  static const plugin::Function *get(const std::string &name);
 
   typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> UdfMap;
   typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> Map;

@@ -1062,6 +1062,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       lip->yyUnget();                   // Safety against eof
       state = MY_LEX_START;		// Try again
       break;
+
     case MY_LEX_LONG_COMMENT:		/* Long C comment? */
       if (lip->yyPeek() != '*')
       {
@@ -1159,6 +1160,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       lip->in_comment= NO_COMMENT;
       lip->set_echo(true);
       break;
+
     case MY_LEX_END_LONG_COMMENT:
       if ((lip->in_comment != NO_COMMENT) && lip->yyPeek() == '/')
       {
@@ -1175,6 +1177,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       else
         state=MY_LEX_CHAR;		// Return '*'
       break;
+
     case MY_LEX_SET_VAR:		// Check if ':='
       if (lip->yyPeek() != '=')
       {
@@ -1183,6 +1186,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       lip->yySkip();
       return (SET_VAR);
+
     case MY_LEX_SEMICOLON:			// optional line terminator
       if (lip->yyPeek())
       {
@@ -1191,6 +1195,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       lip->next_state=MY_LEX_END;       // Mark for next loop
       return(END_OF_INPUT);
+
     case MY_LEX_EOL:
       if (lip->eof())
       {
@@ -1206,11 +1211,13 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       state=MY_LEX_CHAR;
       break;
+
     case MY_LEX_END:
       lip->next_state=MY_LEX_END;
       return false;			// We found end of input last time
 
       /* Actually real shouldn't start with . but allow them anyhow */
+
     case MY_LEX_REAL_OR_POINT:
       if (my_isdigit(cs,lip->yyPeek()))
         state= MY_LEX_REAL;		// Real
@@ -1220,6 +1227,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         lip->yyUnget();                 // Put back '.'
       }
       break;
+
     case MY_LEX_USER_END:		// end '@' of user@hostname
       switch (state_map[(uint8_t)lip->yyPeek()]) {
       case MY_LEX_STRING:
@@ -1236,12 +1244,14 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str.str=(char*) lip->get_ptr();
       yylval->lex_str.length=1;
       return((int) '@');
+
     case MY_LEX_HOSTNAME:		// end '@' of user@hostname
       for (c=lip->yyGet() ;
            my_isalnum(cs,c) || c == '.' || c == '_' ||  c == '$';
            c= lip->yyGet()) ;
       yylval->lex_str=get_token(lip, 0, lip->yyLength());
       return(LEX_HOSTNAME);
+
     case MY_LEX_SYSTEM_VAR:
       yylval->lex_str.str=(char*) lip->get_ptr();
       yylval->lex_str.length=1;
@@ -1251,6 +1261,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 			MY_LEX_OPERATOR_OR_IDENT :
 			MY_LEX_IDENT_OR_KEYWORD);
       return((int) '@');
+
     case MY_LEX_IDENT_OR_KEYWORD:
       /*
         We come here when we have found two '@' in a row.
@@ -1264,9 +1275,11 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 
       if (c == '.')
         lip->next_state=MY_LEX_IDENT_SEP;
+
       length= lip->yyLength();
       if (length == 0)
         return(ABORT_SYM);              // Names must be nonempty.
+
       if ((tokval= find_keyword(lip, length,0)))
       {
         lip->yyUnget();                         // Put back 'c'
