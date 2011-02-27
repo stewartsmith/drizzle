@@ -179,17 +179,16 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
 
 Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list)
 {
-  const plugin::Function *udf= plugin::Function::get(name.c_str(), name.length());
-  Item *item= NULL;
+  const plugin::Function *udf= plugin::Function::get(name);
 
   if (udf)
   {
-    item= Create_udf_func::s_singleton.create(session, udf, item_list);
-  } else {
-    my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
+    return Create_udf_func::s_singleton.create(session, udf, item_list);
   }
 
-  return item;
+  my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
+
+  return NULL;
 }
 
 /**

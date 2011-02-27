@@ -3009,7 +3009,7 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            const plugin::Function *udf= plugin::Function::get($1.str, $1.length);
+            const plugin::Function *udf= plugin::Function::get(std::string($1.str, $1.length));
 
             /* Temporary placing the result of getFunction in $3 */
             $<udf>$= udf;

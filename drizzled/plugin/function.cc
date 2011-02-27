@@ -59,6 +59,7 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
 
   std::pair<UdfMap::iterator, bool> ret=
     udf_registry.insert(make_pair(udf->getName(), udf));
+
   if (ret.second == false)
   {
     errmsg_printf(error::ERROR,
@@ -75,9 +76,9 @@ void plugin::Function::removePlugin(const plugin::Function *udf)
   udf_registry.erase(udf->getName());
 }
 
-const plugin::Function *plugin::Function::get(const char *name, size_t length)
+const plugin::Function *plugin::Function::get(const std::string &name)
 {
-  UdfMap::iterator iter= udf_registry.find(std::string(name, length));
+  UdfMap::iterator iter= udf_registry.find(name);
   if (iter == udf_registry.end())
   {
     return NULL;
