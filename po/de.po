@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-11-11 13:48+0000\n"
-"Last-Translator: bpola <Unknown>\n"
+"PO-Revision-Date: 2011-02-27 01:21+0000\n"
+"Last-Translator: Gumbo Krakataua <Unknown>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-11-12 04:44+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-02-27 04:38+0000\n"
+"X-Generator: Launchpad (build 12351)\n"
 
 msgid "Synonym for `help'."
 msgstr "Hilfe"
@@ -4543,13 +4543,13 @@ msgid "Invalid value for read_timeout\n"
 msgstr ""
 
 msgid "Invalid value for write_timeout\n"
-msgstr ""
+msgstr "Unzulässiger Wert für write_timeout\n"
 
 msgid "Invalid value for retry_count\n"
-msgstr ""
+msgstr "Unzulässiger Wert für retry_count\n"
 
 msgid "Invalid value for buffer_length\n"
-msgstr ""
+msgstr "Unzulässiger Wert für buffer_length\n"
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -4835,7 +4835,7 @@ msgid "fail open() fn=%s er=%s\n"
 msgstr "Fehler in Funktion open() fn=%s er=%s\n"
 
 msgid "Invalid value for threshold-slow"
-msgstr ""
+msgstr "Unzulässiger Wert für threshold-slow"
 
 msgid "Invalid value for threshold-big-resultset"
 msgstr ""
@@ -5664,3 +5664,187 @@ msgstr "PUFFER: %s\n"
 #~ "\n"
 #~ "benötigt wird. Im Zweifel kann der Betriebssystem-Hersteller Auskunft über \n"
 #~ "'mlockall'-Bugs geben.\n"
+
+#, c-format
+#~ msgid ""
+#~ "\n"
+#~ "You are running a statically-linked LinuxThreads binary on an NPTL system.\n"
+#~ "This can result in crashes on some distributions due to LT/NPTL conflicts.\n"
+#~ "You should either build a dynamically-linked binary, or force LinuxThreads\n"
+#~ "to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n"
+#~ "the documentation for your distribution on how to do that.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Sie verwenden eine statisch gelinkte LinuxThreads Binary auf einem NPTL "
+#~ "System.\n"
+#~ "Das kann zu Abstürtzen wegen LT/NPTL Konflikten führen.\n"
+#~ "Sie sollten entweder die dynamisch gelinkte Binary benutzen oder mit der "
+#~ "LD_ASSUME_KERNEL \n"
+#~ "Umgebungsvariable die Benutztung von LinuxThreads erzwingen. Bitte lesen Sie "
+#~ "das \n"
+#~ "Handbuch ihrer Distribution für die Benutzung der Umgebungsvariable.\n"
+
+#~ msgid ""
+#~ "Non-integer value supplied for port.  If you are trying to enter a password "
+#~ "please use --password instead."
+#~ msgstr ""
+#~ "Der angegebene Port ist keine Ganzzahl. Wenn Sie ein Passwort eingeben "
+#~ "möchten, benutzen Sie bitte --password stattdessen."
+
+#~ msgid "Value supplied for port is not valid."
+#~ msgstr "Der angegebene Port ist nicht gültig."
+
+#, c-format
+#~ msgid ""
+#~ "Non-integer value supplied for port.  If you are trying to enter a password "
+#~ "please use --password instead.\n"
+#~ msgstr ""
+#~ "Der angegebene Port ist keine Ganzzahl. Wenn Sie ein Passwort eingeben "
+#~ "möchten, benutzen Sie bitte --password stattdessen.\n"
+
+#~ msgid "Shutdown the server."
+#~ msgstr "Server herunterfahren"
+
+#~ msgid "By Igor Romanenko, Monty, Jani & Sinisa"
+#~ msgstr "Von Igor Romanenko, Monty, Jani & Sinisa"
+
+#, c-format
+#~ msgid "Memory allocation error while copying password. Aborting.\n"
+#~ msgstr "Speicher allocationsfehler während des kopieren vom Passwort\n"
+
+#, c-format
+#~ msgid "For more options, use %s --help\n"
+#~ msgstr "Für mehr optionen bitte %s --help benutzen\n"
+
+#, c-format
+#~ msgid "%s  Ver %s Distrib %s, for %s (%s)\n"
+#~ msgstr "%s  Ver %s Distrib %s, für %s (%s)\n"
+
+#, c-format
+#~ msgid "bind() failed with errno: %d"
+#~ msgstr "bind() fehlgeschlagen mit Fehlernummer %d"
+
+#~ msgid "Do you already have another drizzled running?"
+#~ msgstr "Läuft bereits ein anderer drizzled?"
+
+#, c-format
+#~ msgid "listen() failed with errno %d"
+#~ msgstr "listen() fehlgeschlagen mit Fehlernummer %d"
+
+#, c-format
+#~ msgid "realloc() failed with errno %d"
+#~ msgstr "realloc() fehlgeschlagen mit Fehlernummer %d"
+
+#, c-format
+#~ msgid "Couldn't repair table: %s.%s"
+#~ msgstr "Tabelle %s.%s konnte nicht repariert werden"
+
+#~ msgid ""
+#~ "Optional comma separated list of plugins to load at starup.[for example: --"
+#~ "plugin_load=crc32,logger_gearman]"
+#~ msgstr ""
+#~ "Optionale kommaseparierte Liste der beim Start zu ladenden Plugins. [z.B. --"
+#~ "plugin_load=crc32,logger_gearman]"
+
+#~ msgid "Maximum number of user threads available."
+#~ msgstr "Maximale Anzahl der verfügbaren Benutzerthreads"
+
+#~ msgid "Syslog Priority"
+#~ msgstr "Syslog Priorität"
+
+#~ msgid "Log to syslog"
+#~ msgstr "Protokolliere ins Syslog"
+
+#~ msgid "Enable logging to syslog"
+#~ msgstr "Aktiviere Protokollierung im Syslog"
+
+#, c-format
+#~ msgid ""
+#~ "It is possible that drizzled could use up to \n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+#~ "bytes of memory\n"
+#~ "Hope that's ok; if not, decrease some variables in the equation.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Ist es möglich das drizzled kann bis zu \n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+#~ "bytes of memory\n"
+#~ "Hoffe das ist ok: Wenn nicht verändere einige variablen in der Gleichung\n"
+#~ "\n"
+
+#, c-format
+#~ msgid "Fatal signal %d while backtracing\n"
+#~ msgstr "Schwerwigendes Signal %d während zurückverfolgung\n"
+
+#, c-format
+#~ msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
+#~ msgstr "%s Version %s Distribution %s, für %s-%s (%s) verwendet %s %s\n"
+
+#, c-format
+#~ msgid ""
+#~ "\n"
+#~ "This crash occurred while the server was calling initgroups(). This is\n"
+#~ "often due to the use of a drizzled that is statically linked against glibc\n"
+#~ "and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n"
+#~ "upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
+#~ "later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
+#~ "drizzled that is not statically linked.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Dieser Absturz ereignete sich während der Server initgroups() aufrief. Sie "
+#~ "müsses entweder glibc auf die Version 2.3.4 (oder höher) aktualisieren, LDAp "
+#~ "in der nsswitch.conf deaktivieren oder ein Drizzle verwenden, welches nicht "
+#~ "statisch mit der glibc verlinkt ist.\n"
+
+#, c-format
+#~ msgid ""
+#~ "Failed to allocate enough memory to buffer header, transaction message, and "
+#~ "trailing checksum bytes. Tried to allocate %<PRId64> bytes.  Error: %s\n"
+#~ msgstr ""
+#~ "Konnte nicht genug Speicher zuweisen um Kopfzeile, Transaktionsnachricht und "
+#~ "Prüfsumme puffern. Versuchte %<PRId64>  bytes anzufordern. Fehler: %s\n"
+
+#~ msgid "Syslog Ident"
+#~ msgstr "Syslog Ident"
+
+#~ msgid "Syslog Facility"
+#~ msgstr "Syslog Facility"
+
+#~ msgid "Filtered Replicator"
+#~ msgstr "Gefilterter Replikator"
+
+#~ msgid "Enable filtered replicator"
+#~ msgstr "Aktiviere gefilterte Replikation"
+
+#~ msgid "Enable default replicator"
+#~ msgstr "Aktiviere Standard-Replikator"
+
+#~ msgid "Default Replicator"
+#~ msgstr "Standard-Replikator"
+
+#~ msgid ""
+#~ "                              Reading table information for completion of "
+#~ "table and column names\n"
+#~ "                                  You can turn off this feature to get a "
+#~ "quicker startup with -A\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                              Lese Tabelleninformationen für "
+#~ "Autovervollständigung\n"
+#~ "                              Diese Funktion kann zum schnelleren Start mit -"
+#~ "A abgeschaltet werden\n"
+#~ "\n"
+
+#, c-format
+#~ msgid ""
+#~ "'%s' had no or invalid character set, and default character set is multi-"
+#~ "byte, so character column sizes may have changed"
+#~ msgstr ""
+#~ "'%s' hat keinen oder einen ungültigen Zeichensatz, der Standard Zeichensatz "
+#~ "ist Multi-Byte, daher könnte sich die Feldgröße geändert haben"
+
+#~ msgid "Server version: "
+#~ msgstr "Server Version: "
+
+#~ msgid "Your Drizzle connection id is "
+#~ msgstr "Die Drizzle Verbindungs-ID ist "
