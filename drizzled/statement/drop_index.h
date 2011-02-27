@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_DROP_INDEX_H
 #define DRIZZLED_STATEMENT_DROP_INDEX_H
 
+#include <drizzled/alter_info.h>
 #include <drizzled/statement.h>
 
 namespace drizzled

@@ -18,9 +18,9 @@
  */
 
 #include <config.h>
-
 #include <drizzled/error.h>
 #include <drizzled/internal/m_string.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/session.h>
 
 using namespace std;

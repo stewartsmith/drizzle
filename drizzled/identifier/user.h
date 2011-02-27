@@ -18,9 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-#ifndef DRIZZLED_IDENTIFIER_USER_H
-#define DRIZZLED_IDENTIFIER_USER_H
+#pragma once
 
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -123,5 +121,3 @@ private:
 
 } /* namespace identifier */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_IDENTIFIER_USER_H */

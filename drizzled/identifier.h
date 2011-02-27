@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_IDENTIFIER_H
-#define DRIZZLED_IDENTIFIER_H
+#pragma once
 
 #include <string>
 
@@ -48,6 +47,3 @@ public:
 // Constant identifiers user internally
 #include <drizzled/identifier/constants/schema.h>
 #include <drizzled/identifier/constants/table.h>
-
-
-#endif /* DRIZZLED_IDENTIFIER_H */

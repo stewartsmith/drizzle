@@ -82,7 +82,6 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-extern "C"
 unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
 
 int get_one_option(int optid, const struct option *, char *argument);
@@ -6200,17 +6199,30 @@ void free_replace_column()
 
 /* Definitions for replace result */
 
-typedef struct st_pointer_array {    /* when using array-strings */
+class POINTER_ARRAY
+{    /* when using array-strings */
+public:
+  ~POINTER_ARRAY();
+  int insert(char* name);
+
+  POINTER_ARRAY()
+  {
+    memset(this, 0, sizeof(*this));
+  }
+
   TYPELIB typelib;        /* Pointer to strings */
-  unsigned char  *str;          /* Strings is here */
-  uint8_t *flag;          /* Flag about each var. */
-  uint32_t  array_allocs,max_count,length,max_length;
-} POINTER_ARRAY;
+  unsigned char *str;          /* Strings is here */
+  uint8_t* flag;          /* Flag about each var. */
+  uint32_t array_allocs;
+  uint32_t max_count;
+  uint32_t length;
+  uint32_t max_length;
+};
 
 struct st_replace;
 struct st_replace *init_replace(const char **from, const char **to, uint32_t count,
                                 char *word_end_chars);
-int insert_pointer_name(POINTER_ARRAY *pa,char * name);
+
 void replace_strings_append(struct st_replace *rep, string* ds,
                             const char *from, int len);
 
@@ -6225,54 +6237,47 @@ st_replace *glob_replace= NULL;
   variable is replaced.
 */
 
-static void free_pointer_array(POINTER_ARRAY *pa)
+POINTER_ARRAY::~POINTER_ARRAY()
 {
-  if (!pa->typelib.count)
+  if (!typelib.count)
     return;
-  pa->typelib.count=0;
-  free((char*) pa->typelib.type_names);
-  pa->typelib.type_names=0;
-  free(pa->str);
+  typelib.count= 0;
+  free((char*) typelib.type_names);
+  typelib.type_names=0;
+  free(str);
 }
 
-void do_get_replace(struct st_command *command)
+void do_get_replace(st_command *command)
 {
-  uint32_t i;
   char *from= command->first_argument;
-  char *buff, *start;
-  char word_end_chars[256], *pos;
-  POINTER_ARRAY to_array, from_array;
-
-
-  free_replace();
-
-  memset(&to_array, 0, sizeof(to_array));
-  memset(&from_array, 0, sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
-  start= buff= (char *)malloc(strlen(from)+1);
+  free_replace();
+  POINTER_ARRAY to_array, from_array;
+  char* start= (char*)malloc(strlen(from) + 1);
+  char* buff= start;
   while (*from)
   {
-    char *to= buff;
-    to= get_string(&buff, &from, command);
+    char *to= get_string(&buff, &from, command);
     if (!*from)
-      die("Wrong number of arguments to replace_result in '%s'",
-          command->query);
-    insert_pointer_name(&from_array,to);
+      die("Wrong number of arguments to replace_result in '%s'", command->query);
+    from_array.insert(to);
     to= get_string(&buff, &from, command);
-    insert_pointer_name(&to_array,to);
+    to_array.insert(to);
   }
-  for (i= 1,pos= word_end_chars ; i < 256 ; i++)
-    if (my_isspace(charset_info,i))
+  char word_end_chars[256];
+  char* pos= word_end_chars;
+  for (int i= 1; i < 256; i++)
+  {
+    if (my_isspace(charset_info, i))
       *pos++= i;
+  }
   *pos=0;          /* End pointer */
   if (!(glob_replace= init_replace(from_array.typelib.type_names,
                                    to_array.typelib.type_names,
                                    from_array.typelib.count,
                                    word_end_chars)))
     die("Can't initialize replace from '%s'", command->query);
-  free_pointer_array(&from_array);
-  free_pointer_array(&to_array);
   free(start);
   command->last_argument= command->end;
   return;
@@ -7182,7 +7187,7 @@ int find_found(FOUND_SET *found_set, uint32_t table_offset, int found_offset)
 #define PC_MALLOC    256  /* Bytes for pointers */
 #define PS_MALLOC    512  /* Bytes for data */
 
-int insert_pointer_name(POINTER_ARRAY *pa,char * name)
+static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
 {
   uint32_t i,length,old_count;
   unsigned char *new_pos;
@@ -7249,6 +7254,11 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   pa->length+=length;
   return(0);
 } /* insert_pointer_name */
+
+int POINTER_ARRAY::insert(char* name)
+{
+  return insert_pointer_name(this, name);
+}
 
 
 /* Functions that uses replace and replace_regex */

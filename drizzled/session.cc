@@ -68,6 +68,7 @@
 #include <drizzled/util/functors.h>
 #include <drizzled/util/find_ptr.h>
 #include <plugin/myisam/myisam.h>
+#include <drizzled/item/subselect.h>
 
 #include <algorithm>
 #include <climits>
