@@ -183,7 +183,7 @@ public:
     if (iter == name_hash.end())
         return 0;
 
-    return (*iter).second;
+    return iter->second;
   }
 
 private:

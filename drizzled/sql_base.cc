@@ -226,7 +226,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
              iter != table::getCache().end();
              iter++)
         {
-          Table *table= (*iter).second;
+          Table *table= iter->second;
           if (table->in_use)
             table->in_use->some_tables_deleted= false;
         }
@@ -269,7 +269,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
              iter != table::getCache().end();
              iter++)
         {
-          Table *table= (*iter).second;
+          Table *table= iter->second;
           /* Avoid a self-deadlock. */
           if (table->in_use == session)
             continue;
@@ -1023,7 +1023,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       for (table::CacheMap::const_iterator iter= ppp.first;
            iter != ppp.second; ++iter, table= NULL)
       {
-        table= (*iter).second;
+        table= iter->second;
 
         if (not table->in_use)
           break;

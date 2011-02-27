@@ -632,7 +632,7 @@ int Session::lock_table_name(TableList *table_list)
     for (table::CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
-      Table *table= (*iter).second;
+      Table *table= iter->second;
       if (table->reginfo.lock_type < TL_WRITE)
       {
         continue;
