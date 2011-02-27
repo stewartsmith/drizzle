@@ -226,14 +226,21 @@ uint8_t *drizzle_pack_auth(drizzle_con_st *con, uint8_t *ptr,
     ptr[0]= DRIZZLE_MAX_SCRAMBLE_SIZE;
     ptr++;
 
-    if (con->options & DRIZZLE_CON_MYSQL)
+    if (con->options & DRIZZLE_CON_MYSQL && con->options & DRIZZLE_CON_AUTH_PLUGIN)
+    {
+      memset((char *)ptr, 0, DRIZZLE_MAX_SCRAMBLE_SIZE);
+      snprintf((char *)ptr, DRIZZLE_MAX_SCRAMBLE_SIZE, "%s", con->password);
+    }
+    else if (con->options & DRIZZLE_CON_MYSQL)
     {
       *ret_ptr= _pack_scramble_hash(con, ptr);
       if (*ret_ptr != DRIZZLE_RETURN_OK)
         return ptr;
     }
-    else
+    else // We assume Drizzle
+    {
       snprintf((char *)ptr, DRIZZLE_MAX_SCRAMBLE_SIZE, "%s", con->password);
+    }
 
     ptr+= DRIZZLE_MAX_SCRAMBLE_SIZE;
   }
@@ -261,7 +268,6 @@ static drizzle_return_t _pack_scramble_hash(drizzle_con_st *con,
   SHA1_CTX ctx;
   uint8_t hash_tmp1[SHA1_DIGEST_LENGTH];
   uint8_t hash_tmp2[SHA1_DIGEST_LENGTH];
-  uint32_t x;
 
   if (SHA1_DIGEST_LENGTH != DRIZZLE_MAX_SCRAMBLE_SIZE)
   {
@@ -295,7 +301,7 @@ static drizzle_return_t _pack_scramble_hash(drizzle_con_st *con,
   SHA1Final(buffer, &ctx);
 
   /* Fourth, xor the last hash against the first password hash. */
-  for (x= 0; x < SHA1_DIGEST_LENGTH; x++)
+  for (uint32_t x= 0; x < SHA1_DIGEST_LENGTH; x++)
     buffer[x]= buffer[x] ^ hash_tmp1[x];
 
   return DRIZZLE_RETURN_OK;

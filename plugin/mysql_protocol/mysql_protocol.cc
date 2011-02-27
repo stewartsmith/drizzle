@@ -725,7 +725,9 @@ bool ClientMySQLProtocol::checkConnection(void)
     server_capabilites= CLIENT_BASIC_FLAGS;
 
     if (_using_mysql41_protocol)
+    {
       server_capabilites|= CLIENT_PROTOCOL_MYSQL41;
+    }
 
 #ifdef HAVE_COMPRESS
     server_capabilites|= CLIENT_COMPRESS;
@@ -816,7 +818,11 @@ bool ClientMySQLProtocol::checkConnection(void)
       passwd < (char *) net.read_pos + pkt_len)
   {
     passwd_len= (unsigned char)(*passwd++);
-    if (passwd_len > 0)
+    if (passwd_len > 0 and client_capabilities & CLIENT_INTERACTIVE)
+    {
+      user_identifier->setPasswordType(identifier::User::PLAIN_TEXT);
+    }
+    else
     {
       user_identifier->setPasswordType(identifier::User::MYSQL_HASH);
       user_identifier->setPasswordContext(scramble, SCRAMBLE_LENGTH);
@@ -870,6 +876,11 @@ bool ClientMySQLProtocol::checkConnection(void)
   if (client_capabilities & CLIENT_INTERACTIVE)
   {
     _is_interactive= true;
+  }
+
+  if (client_capabilities & CLIENT_CAPABILITIES_PLUGIN_AUTH)
+  {
+    passwd_len= strlen(passwd); // @todo verify this
   }
 
   user_identifier->setUser(user);
