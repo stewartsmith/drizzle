@@ -61,9 +61,9 @@ public:
   int  store(const char *to, uint32_t length, const CHARSET_INFO * const);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*, String *);
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  String *val_str(String*, String *) const;
   int cmp(const unsigned char *, const unsigned char *);
   void sort_string(unsigned char *buff, uint32_t length);
   void store_type(uint64_t value);

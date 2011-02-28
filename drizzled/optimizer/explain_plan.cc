@@ -99,7 +99,7 @@ void optimizer::ExplainPlan::printPlan()
     for (uint32_t i= 0; i < 7; i++)
       item_list.push_back(item_null);
 
-    if (join->session->lex->describe & DESCRIBE_EXTENDED)
+    if (join->session->getLex()->describe & DESCRIBE_EXTENDED)
       item_list.push_back(item_null);
 
     item_list.push_back(new Item_string(message,strlen(message),cs));
@@ -159,7 +159,7 @@ void optimizer::ExplainPlan::printPlan()
     /* ref */
     item_list.push_back(item_null);
     /* in_rows */
-    if (join->session->lex->describe & DESCRIBE_EXTENDED)
+    if (join->session->getLex()->describe & DESCRIBE_EXTENDED)
       item_list.push_back(item_null);
     /* rows */
     item_list.push_back(item_null);
@@ -314,7 +314,7 @@ void optimizer::ExplainPlan::printPlan()
                                        MY_INT64_NUM_DECIMAL_DIGITS));
 
       /* Add "filtered" field to item_list. */
-      if (join->session->lex->describe & DESCRIBE_EXTENDED)
+      if (join->session->getLex()->describe & DESCRIBE_EXTENDED)
       {
         float f= 0.0;
         if (examined_rows)
@@ -467,7 +467,7 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   {
     // drop UNCACHEABLE_EXPLAIN, because it is for internal usage only
     sl->uncacheable.reset(UNCACHEABLE_EXPLAIN);
-    if (&session->lex->select_lex == sl)
+    if (&session->getLex()->select_lex == sl)
     {
       if (sl->first_inner_unit() || sl->next_select())
       {
@@ -540,7 +540,7 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   }
   else
   {
-    session->lex->current_select= first;
+    session->getLex()->current_select= first;
     unit->set_limit(unit->global_parameters);
     res= select_query(session, 
                       &first->ref_pointer_array,

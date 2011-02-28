@@ -217,10 +217,10 @@ public:
       Needs to be changed if/when we want to support different time formats.
   */
   virtual int store_time(type::Time &ltime, type::timestamp_t t_type);
-  virtual double val_real()=0;
-  virtual int64_t val_int()=0;
-  virtual type::Decimal *val_decimal(type::Decimal *);
-  String *val_str_internal(String *str)
+  virtual double val_real() const=0;
+  virtual int64_t val_int() const =0;
+  virtual type::Decimal *val_decimal(type::Decimal *) const;
+  String *val_str_internal(String *str) const
   {
     return val_str(str, str);
   }
@@ -237,7 +237,7 @@ public:
      an unnecessary free (and later, may be an alloc).
      This trickery is used to decrease a number of malloc calls.
   */
-  virtual String *val_str(String*, String *)=0;
+  virtual String *val_str(String*, String *) const =0;
 
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
@@ -363,14 +363,14 @@ public:
   // For new field
   virtual uint32_t size_of() const =0;
 
-  bool is_null(ptrdiff_t row_offset= 0);
-  bool is_real_null(ptrdiff_t row_offset= 0);
-  bool is_null_in_record(const unsigned char *record);
-  bool is_null_in_record_with_offset(ptrdiff_t offset);
+  bool is_null(ptrdiff_t row_offset= 0) const;
+  bool is_real_null(ptrdiff_t row_offset= 0) const;
+  bool is_null_in_record(const unsigned char *record) const;
+  bool is_null_in_record_with_offset(ptrdiff_t offset) const;
   void set_null(ptrdiff_t row_offset= 0);
   void set_notnull(ptrdiff_t row_offset= 0);
-  bool maybe_null(void);
-  bool real_maybe_null(void);
+  bool maybe_null(void) const;
+  bool real_maybe_null(void) const;
 
   virtual void make_field(SendField *);
   virtual void sort_string(unsigned char *buff,uint32_t length)=0;
@@ -596,8 +596,8 @@ public:
   }
   void copy_from_tmp(int offset);
   uint32_t fill_cache_field(CacheField *copy);
-  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate);
-  virtual bool get_time(type::Time &ltime);
+  virtual bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
+  virtual bool get_time(type::Time &ltime) const;
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
@@ -738,7 +738,7 @@ public:
   }
 
   /* Hash value */
-  virtual void hash(uint32_t *nr, uint32_t *nr2);
+  virtual void hash(uint32_t *nr, uint32_t *nr2) const;
   friend bool reopen_table(Session *,Table *,bool);
 
   friend class CopyField;
@@ -754,7 +754,7 @@ public:
   friend class Item_sum_max;
   friend class Item_func_group_concat;
 
-  bool isReadSet();
+  bool isReadSet() const;
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);

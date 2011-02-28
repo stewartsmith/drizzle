@@ -70,15 +70,15 @@ namespace drizzled
 namespace internal
 {
 
-static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t Count);
-static int _my_b_write(register st_io_cache *info, const unsigned char *Buffer, size_t Count);
+static int _my_b_read(st_io_cache *info, unsigned char *Buffer, size_t Count);
+static int _my_b_write(st_io_cache *info, const unsigned char *Buffer, size_t Count);
 
 /**
  * @brief
  *   Lock appends for the st_io_cache if required (need_append_buffer_lock)   
  */
 inline
-static void lock_append_buffer(register st_io_cache *, int )
+static void lock_append_buffer(st_io_cache *, int )
 {
 }
 
@@ -87,7 +87,7 @@ static void lock_append_buffer(register st_io_cache *, int )
  *   Unlock appends for the st_io_cache if required (need_append_buffer_lock)   
  */
 inline
-static void unlock_append_buffer(register st_io_cache *, int )
+static void unlock_append_buffer(st_io_cache *, int )
 {
 }
 
@@ -441,7 +441,7 @@ bool st_io_cache::reinit_io_cache(enum cache_type type_arg,
  * @retval 0 We succeeded in reading all data
  * @retval 1 Error: can't read requested characters
  */
-static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t Count)
+static int _my_b_read(st_io_cache *info, unsigned char *Buffer, size_t Count)
 {
   size_t length_local,diff_length,left_length, max_length;
   my_off_t pos_in_file_local;
@@ -552,7 +552,7 @@ static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t 
  * @retval 0 Success
  * @retval 1 An error has occurred; st_io_cache to error state.
  */
-int _my_b_async_read(register st_io_cache *info, unsigned char *Buffer, size_t Count)
+int _my_b_async_read(st_io_cache *info, unsigned char *Buffer, size_t Count)
 {
   size_t length_local,read_length,diff_length,left_length,use_length,org_Count;
   size_t max_length;
@@ -740,7 +740,7 @@ int _my_b_get(st_io_cache *info)
  * @retval 0 On success
  * @retval 1 On error on write
  */
-int _my_b_write(register st_io_cache *info, const unsigned char *Buffer, size_t Count)
+int _my_b_write(st_io_cache *info, const unsigned char *Buffer, size_t Count)
 {
   size_t rest_length,length_local;
 
@@ -794,7 +794,7 @@ int _my_b_write(register st_io_cache *info, const unsigned char *Buffer, size_t 
  *   As all write calls to the data goes through the cache,
  *   we will never get a seek over the end of the buffer.
  */
-int my_block_write(register st_io_cache *info, const unsigned char *Buffer, size_t Count,
+int my_block_write(st_io_cache *info, const unsigned char *Buffer, size_t Count,
 		   my_off_t pos)
 {
   size_t length_local;

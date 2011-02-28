@@ -122,11 +122,11 @@ Item_func::Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
 void Item_func::set_arguments(List<Item> &list)
 {
   allowed_arg_cols= 1;
-  arg_count=list.elements;
+  arg_count=list.size();
   args= tmp_arg;                                // If 2 arguments
   if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
     Item **save_args= args;
 

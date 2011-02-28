@@ -46,6 +46,15 @@ Compiling and Installing:
    installing/ubuntu
    installing/redhat
 
+Contributing:
+-------------
+.. toctree::
+   :maxdepth: 2
+
+   contributing/introduction
+   contributing/code
+   contributing/documentation
+
 SQL Language:
 -------------
 .. toctree::
@@ -74,6 +83,7 @@ User Level Topics:
    storage_engines
    using_replication
    logging
+   authentication
 
 Configuration:
 --------------
@@ -123,6 +133,7 @@ Testing:
  
    testing/test-run.rst
    testing/dbqp.rst
+   testing/randgen.rst
 
 Indices and tables
 ==================

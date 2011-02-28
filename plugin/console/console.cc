@@ -187,7 +187,7 @@ public:
 
   virtual bool sendFields(List<Item> *list)
   {
-    List_iterator_fast<Item> it(*list);
+    List<Item>::iterator it(list->begin());
     Item *item;
 
     column= 0;
@@ -292,7 +292,12 @@ public:
     return false;
   }
 
-  bool isConsole()
+  bool isConsole() const
+  {
+    return true;
+  }
+
+  bool isInteractive() const
   {
     return true;
   }

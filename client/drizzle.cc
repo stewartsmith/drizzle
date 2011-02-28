@@ -37,7 +37,8 @@
 #include <config.h>
 #include <libdrizzle/drizzle_client.h>
 
-#include <client/get_password.h>
+#include "server_detect.h"
+#include "get_password.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -290,13 +291,13 @@ static bool ignore_errors= false, quick= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
   use_drizzle_protocol= false, opt_local_infile;
+static uint32_t opt_kill= 0;
 static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line;
 static uint32_t opt_drizzle_port= 0;
 static int  opt_silent, verbose= 0;
-static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
@@ -307,6 +308,7 @@ static Status status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static uint32_t opt_connect_timeout= 0;
+static ServerDetect::server_type server_type= ServerDetect::SERVER_UNKNOWN_FOUND;
 std::string current_db,
   delimiter_str,  
   current_host,
@@ -428,7 +430,7 @@ static void init_username(void);
 static void add_int_to_prompt(int toadd);
 static int get_result_width(drizzle_result_st *res);
 static int get_field_disp_length(drizzle_column_st * field);
-static const char * strcont(register const char *str, register const char *set);
+static const char * strcont(const char *str, const char *set);
 
 /* A class which contains information on the commands this program
    can understand. */
@@ -1221,6 +1223,42 @@ static bool server_shutdown(void)
   return true;
 }
 
+static bool kill_query(uint32_t query_id)
+{
+  drizzle_result_st result;
+  drizzle_return_t ret;
+
+  if (verbose)
+  {
+    printf(_("killing query %u"), query_id);
+    printf("... ");
+  }
+
+  if (drizzle_kill(&con, &result, query_id,
+                   &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      fprintf(stderr, _("kill failed; error: '%s'"),
+              drizzle_result_error(&result));
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      fprintf(stderr, _("kill failed; error: '%s'"),
+              drizzle_con_error(&con));
+    }
+    return false;
+  }
+
+  drizzle_result_free(&result);
+
+  if (verbose)
+    printf(_("done\n"));
+
+  return true;
+}
+
 /**
   Ping the server that we are currently connected to.
 
@@ -1290,6 +1328,16 @@ static bool execute_commands(int *error)
       *error= 1;
     executed= true;
   }
+
+  if (opt_kill)
+  {
+    if (kill_query(opt_kill) == false)
+    {
+      *error= 1;
+    }
+    executed= true;
+  }
+
   return executed;
 }
 
@@ -1407,6 +1455,8 @@ try
   ("shutdown", po::value<bool>()->zero_tokens(),
   _("Shutdown the server"))
   ("silent,s", _("Be more silent. Print results with a tab as separator, each row on new line."))
+  ("kill", po::value<uint32_t>(&opt_kill)->default_value(0),
+  _("Kill a running query."))
   ("tee", po::value<string>(),
   _("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
@@ -1971,7 +2021,6 @@ static int process_options(void)
     default_pager_set= 0;
     opt_outfile= 0;
     opt_reconnect= 0;
-    connect_flag= DRIZZLE_CAPABILITIES_NONE; /* Not in interactive mode */
   }
 
   if (tty_password)
@@ -2760,7 +2809,7 @@ int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
 static int
 com_help(string *buffer, const char *)
 {
-  register int i, j;
+  int i, j;
   char buff[32], *end;
   std::vector<char> output_buff;
   output_buff.resize(512);
@@ -3128,11 +3177,15 @@ print_table_data(drizzle_result_st *result)
   drizzle_return_t ret;
   drizzle_column_st *field;
   std::vector<bool> num_flag;
+  std::vector<bool> boolean_flag;
+  std::vector<bool> ansi_boolean_flag;
   string separator;
 
   separator.reserve(256);
 
   num_flag.resize(drizzle_result_column_count(result));
+  boolean_flag.resize(drizzle_result_column_count(result));
+  ansi_boolean_flag.resize(drizzle_result_column_count(result));
   if (column_types_flag)
   {
     print_field_types(result);
@@ -3175,6 +3228,14 @@ print_table_data(drizzle_result_st *result)
       // Room for "NULL"
       length=4;
     }
+    if ((length < 5) and 
+      (server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+      (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY) and
+      (drizzle_column_type(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+    {
+      // Room for "FALSE"
+      length= 5;
+    }
     drizzle_column_set_max_size(field, length);
 
     for (x=0; x< (length+2); x++)
@@ -3198,6 +3259,24 @@ print_table_data(drizzle_result_st *result)
                   drizzle_column_name(field));
       num_flag[off]= ((drizzle_column_type(field) <= DRIZZLE_COLUMN_TYPE_LONGLONG) ||
                       (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_NEWDECIMAL));
+      if ((server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+        (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
+      {
+        if ((drizzle_column_flags(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+        {
+          ansi_boolean_flag[off]= true;
+        }
+        else
+        {
+          ansi_boolean_flag[off]= false;
+        }
+        boolean_flag[off]= true;
+        num_flag[off]= false;
+      }
+      else
+      {
+        boolean_flag[off]= false;
+      }
     }
     (void) tee_fputs("\n", PAGER);
     tee_puts((char*) separator.c_str(), PAGER);
@@ -3235,6 +3314,35 @@ print_table_data(drizzle_result_st *result)
       {
         buffer= "NULL";
         data_length= 4;
+      }
+      else if (boolean_flag[off])
+      {
+        if (strncmp(cur[off],"1", 1) == 0)
+        {
+          if (ansi_boolean_flag[off])
+          {
+            buffer= "YES";
+            data_length= 3;
+          }
+          else
+          {
+            buffer= "TRUE";
+            data_length= 4;
+          }
+        }
+        else
+        {
+          if (ansi_boolean_flag[off])
+          {
+            buffer= "NO";
+            data_length= 2;
+          }
+          else
+          {
+            buffer= "FALSE";
+            data_length= 5;
+          }
+        }
       }
       else
       {
@@ -3509,16 +3617,41 @@ print_tab_data(drizzle_result_st *result)
   drizzle_return_t ret;
   drizzle_column_st *field;
   size_t *lengths;
+  std::vector<bool> boolean_flag;
+  std::vector<bool> ansi_boolean_flag;
 
-  if (opt_silent < 2 && column_names)
+  boolean_flag.resize(drizzle_result_column_count(result));
+  ansi_boolean_flag.resize(drizzle_result_column_count(result));
+
+  int first=0;
+  for (uint32_t off= 0; (field = drizzle_column_next(result)); off++)
   {
-    int first=0;
-    while ((field = drizzle_column_next(result)))
+    if (opt_silent < 2 && column_names)
     {
       if (first++)
         (void) tee_fputs("\t", PAGER);
       (void) tee_fputs(drizzle_column_name(field), PAGER);
     }
+    if ((server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+      (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
+    {
+      if ((drizzle_column_flags(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+      {
+        ansi_boolean_flag[off]= true;
+      }
+      else
+      {
+        ansi_boolean_flag[off]= false;
+      }
+      boolean_flag[off]= true;
+    }
+    else
+    {
+      boolean_flag[off]= false;
+    }
+  }
+  if (opt_silent < 2 && column_names)
+  {
     (void) tee_fputs("\n", PAGER);
   }
   while (1)
@@ -3539,11 +3672,40 @@ print_tab_data(drizzle_result_st *result)
       break;
 
     lengths= drizzle_row_field_sizes(result);
-    safe_put_field(cur[0],lengths[0]);
-    for (uint32_t off=1 ; off < drizzle_result_column_count(result); off++)
+    drizzle_column_seek(result, 0);
+    for (uint32_t off=0 ; off < drizzle_result_column_count(result); off++)
     {
-      (void) tee_fputs("\t", PAGER);
-      safe_put_field(cur[off], lengths[off]);
+      if (off != 0)
+        (void) tee_fputs("\t", PAGER);
+      if (boolean_flag[off])
+      {
+        if (strncmp(cur[off],"1", 1) == 0)
+        {
+          if (ansi_boolean_flag[off])
+          {
+            safe_put_field("YES", 3);
+          }
+          else
+          {
+            safe_put_field("TRUE", 4);
+          }
+        }
+        else
+        {
+          if (ansi_boolean_flag[off])
+          {
+            safe_put_field("NO", 2);
+          }
+          else
+          {
+            safe_put_field("FALSE", 5);
+          }
+        }
+      }
+      else
+      {
+        safe_put_field(cur[off], lengths[off]);
+      }
     }
     (void) tee_fputs("\n", PAGER);
     if (quick)
@@ -4060,41 +4222,21 @@ sql_connect(const string &host, const string &database, const string &user, cons
   drizzle_create(&drizzle);
 
 #ifdef DRIZZLE_ADMIN_TOOL
-  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL));
+  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE));
 #else
-  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
 #endif
 
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
-    opt_drizzle_port, (char *)user.c_str(),
-    (char *)password.c_str(), (char *)database.c_str(),
-    options) == NULL)
+                          opt_drizzle_port, (char *)user.c_str(),
+                          (char *)password.c_str(), (char *)database.c_str(),
+                          options) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
     return 1;
   }
 
-/* XXX add this back in
-  if (opt_connect_timeout)
-  {
-    uint32_t timeout=opt_connect_timeout;
-    drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT,
-                  (char*) &timeout);
-  }
-*/
-
-/* XXX Do we need this?
-  if (safe_updates)
-  {
-    char init_command[100];
-    sprintf(init_command,
-            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
-            ",MAX_JOIN_SIZE=%"PRIu32,
-            select_limit, max_join_size);
-    drizzleclient_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
-  }
-*/
   if ((ret= drizzle_con_connect(&con)) != DRIZZLE_RETURN_OK)
   {
 
@@ -4106,7 +4248,10 @@ sql_connect(const string &host, const string &database, const string &user, cons
     }
     return -1;          // Retryable
   }
-  connected=1;
+  connected= 1;
+
+  ServerDetect server_detect(&con);
+  server_type= server_detect.getServerType();
 
   build_completion_hash(opt_rehash, 1);
   return 0;
@@ -4661,9 +4806,9 @@ static int com_prompt(string *, const char *line)
     if there isn't anything found.
 */
 
-static const char * strcont(register const char *str, register const char *set)
+static const char * strcont(const char *str, const char *set)
 {
-  register const char * start = (const char *) set;
+  const char * start = (const char *) set;
 
   while (*str)
   {

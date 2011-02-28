@@ -1,0 +1,16 @@
+
+create table t1 (a int);
+create table t2 (a int);
+
+flush tables with read lock;
+
+connect (con1,localhost,root,,);
+connection con1;
+
+--error ER_NO_LOCK_HELD
+UNLOCK TABLES;
+
+connection default;
+disconnect con1;
+unlock tables;
+drop table t1,t2;

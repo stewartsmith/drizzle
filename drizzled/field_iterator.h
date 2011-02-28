@@ -24,9 +24,9 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/natural_join_column.h>
+#include <drizzled/item/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Table;
 class TableList;
@@ -78,7 +78,7 @@ public:
 
 class Field_iterator_natural_join: public Field_iterator
 {
-  List_iterator_fast<Natural_join_column> column_ref_it;
+  List<Natural_join_column>::iterator column_ref_it;
   Natural_join_column *cur_column_ref;
 public:
   Field_iterator_natural_join() :cur_column_ref(NULL) {}

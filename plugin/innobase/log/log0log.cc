@@ -49,6 +49,8 @@ Created 12/9/1995 Heikki Tuuri
 #include "trx0sys.h"
 #include "trx0trx.h"
 
+#include <drizzled/errmsg_print.h>
+
 /*
 General philosophy of InnoDB redo-logs:
 
@@ -3234,11 +3236,9 @@ loop:
 	ut_a(lsn == log_sys->lsn);
 
 	if (lsn < srv_start_lsn) {
-		fprintf(stderr,
-			"InnoDB: Error: log sequence number"
-			" at shutdown %"PRIu64"\n"
-			"InnoDB: is lower than at startup %"PRIu64"!\n",
-			lsn, srv_start_lsn);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Error: log sequence number at shutdown %"PRIu64" is lower than at startup %"PRIu64"!",
+                                  lsn, srv_start_lsn);
 	}
 
 	srv_shutdown_lsn = lsn;

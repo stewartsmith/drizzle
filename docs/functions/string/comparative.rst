@@ -6,13 +6,17 @@ LIKE
 
 The LIKE operator is used to check if field values match a specified pattern, and searches for less-than-exact but similar values.
 
-An initial example is: ::
+An initial example is:
+
+.. code-block:: mysql
 
 	SELECT 'ä' LIKE 'ae' COLLATE latin1_german2_ci;
 
 Returns 0
 
-Whereas ::
+Whereas:
+
+.. code-block:: mysql
 
 	SELECT 'ä' = 'ae' COLLATE latin1_german2_ci;
 
@@ -27,7 +31,9 @@ In accordance the SQL standard, LIKE performs matching on a per-character basis.
 
 The following SELECT statement includes a WHERE clause in order to search for job titles that start with "DIRECTOR", by using the percentage wildcard after the lookup value.
 
-For example: ::
+For example:
+
+.. code-block:: mysql
 
 	SELECT title, field
 	FROM job_detail
@@ -38,25 +44,29 @@ For example: ::
 REGEXP
 ------
 
-Returns values that match a regular expression pattern; they are commonly used for creating complex searches. Here is an example of using a REGEXP (Regular Expression) match: ::
+Returns values that match a regular expression pattern; they are commonly used for creating complex searches. Here is an example of using a REGEXP (Regular Expression) match:
+
+.. code-block:: mysql
 
 	SELECT title, category_name
 	FROM film_detail
 	WHERE title REGEXP '^AIRP[LO]'
 	ORDER BY title;
 
-Other REGEXP examples: :;
+Other REGEXP examples:
+
+.. code-block:: mysql
 
 	SELECT 'abcabc' REGEXP 'abc',    
 	'abcabc' REGEXP 'cb';
 
-The search pattern may describe only a part of string. To match entire string, use ^ and $ in the search: ::
+The search pattern may describe only a part of string. To match entire string, use ^ and $ in the search:
+
+.. code-block:: mysql
 
 	SELECT 'abc' REGEXP '^abc$', 'abcabc' REGEXP '^abc$';
 
-
 	SELECT 'cde' REGEXP '[a-c]+', 'efg' REGEXP '[a-c]+';
-
 
 	SELECT 'abcabc' REGEXP 'ABC', 'abcabc' REGEXP BINARY 'ABC';
 

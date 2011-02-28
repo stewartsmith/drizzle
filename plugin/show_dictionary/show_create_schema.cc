@@ -42,12 +42,19 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
 
   if (not select->getShowSchema().empty())
   {
     schema_name.append(select->getShowTable());
     identifier::Schema identifier(select->getShowSchema());
+
+    if (not plugin::Authorization::isAuthorized(*getSession().user(),
+                                                identifier, false))
+    {
+      drizzled::error::access(*getSession().user(), identifier);
+      return;
+    }
 
     schema_message= plugin::StorageEngine::getSchemaDefinition(identifier);
 
@@ -79,13 +86,9 @@ bool ShowCreateSchema::Generator::populate()
       buffer.append(schema_message->collation());
     }
 
-    if (schema_message->has_replication_options())
+    if (not message::is_replicated(*schema_message))
     {
-      if (schema_message->replication_options().has_dont_replicate() and
-          schema_message->replication_options().dont_replicate())
-      {
-        buffer.append(" REPLICATE = FALSE");
-      }
+      buffer.append(" REPLICATE = FALSE");
     }
   }
 

@@ -746,26 +746,26 @@ uint32_t Field::decimals() const
   return 0;
 }
 
-bool Field::is_null(ptrdiff_t row_offset)
+bool Field::is_null(ptrdiff_t row_offset) const
 {
   return null_ptr ?
     (null_ptr[row_offset] & null_bit ? true : false) :
     table->null_row;
 }
 
-bool Field::is_real_null(ptrdiff_t row_offset)
+bool Field::is_real_null(ptrdiff_t row_offset) const
 {
   return null_ptr ? (null_ptr[row_offset] & null_bit ? true : false) : false;
 }
 
-bool Field::is_null_in_record(const unsigned char *record)
+bool Field::is_null_in_record(const unsigned char *record) const
 {
   if (! null_ptr)
     return false;
   return test(record[(uint32_t) (null_ptr -table->getInsertRecord())] & null_bit);
 }
 
-bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset)
+bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset) const
 {
   if (! null_ptr)
     return false;
@@ -784,12 +784,12 @@ void Field::set_notnull(ptrdiff_t row_offset)
     null_ptr[row_offset]&= (unsigned char) ~null_bit;
 }
 
-bool Field::maybe_null(void)
+bool Field::maybe_null(void) const
 {
   return null_ptr != 0 || table->maybe_null;
 }
 
-bool Field::real_maybe_null(void)
+bool Field::real_maybe_null(void) const
 {
   return null_ptr != 0;
 }
@@ -851,7 +851,7 @@ Field::Field(unsigned char *ptr_arg,
 {
 }
 
-void Field::hash(uint32_t *nr, uint32_t *nr2)
+void Field::hash(uint32_t *nr, uint32_t *nr2) const
 {
   if (is_null())
   {
@@ -943,7 +943,7 @@ const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
   return(result);
 }
 
-type::Decimal *Field::val_decimal(type::Decimal *)
+type::Decimal *Field::val_decimal(type::Decimal *) const
 {
   /* This never have to be called */
   assert(0);
@@ -1012,14 +1012,14 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(type::Time &ltime, uint32_t fuzzydate)
+bool Field::get_date(type::Time &ltime, uint32_t fuzzydate) const
 {
   char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
   assert(getTable() and getTable()->getSession());
 
-  if (not (res=val_str_internal(&tmp)) or
+  if (not (res= val_str_internal(&tmp)) or
       str_to_datetime_with_warn(getTable()->getSession(),
                                 res->ptr(), res->length(),
                                 &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
@@ -1030,7 +1030,7 @@ bool Field::get_date(type::Time &ltime, uint32_t fuzzydate)
   return false;
 }
 
-bool Field::get_time(type::Time &ltime)
+bool Field::get_time(type::Time &ltime) const
 {
   char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -1253,7 +1253,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   }
 }
 
-bool Field::isReadSet() 
+bool Field::isReadSet() const 
 { 
   return table->isReadSet(field_index); 
 }

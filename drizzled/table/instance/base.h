@@ -183,7 +183,7 @@ public:
     if (iter == name_hash.end())
         return 0;
 
-    return (*iter).second;
+    return iter->second;
   }
 
 private:
@@ -721,7 +721,7 @@ private:
 public:
   bool parse_table_proto(Session& session, message::Table &table);
 
-  virtual bool replicate() const
+  virtual bool is_replicated() const
   {
     return false;
   }

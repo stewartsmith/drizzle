@@ -80,6 +80,36 @@ bool QueueConsumer::process()
     assert((not commit_id.empty()) && (commit_id != "0"));
     assert(segmented_sql.empty());
 
+    if (not aggregate_sql.empty())
+    {
+      /*
+       * Execution using drizzled::Execute requires some special escaping.
+       */
+      vector<string>::iterator agg_iter;
+      for (agg_iter= aggregate_sql.begin(); agg_iter != aggregate_sql.end(); ++agg_iter)
+      {
+        string &sql= *agg_iter;
+        string::iterator si= sql.begin();
+        for (; si != sql.end(); ++si)
+        {
+          if (*si == '\"')
+          {
+            si= sql.insert(si, '\\');
+            ++si;
+          }
+          else if (*si == '\\')
+          {
+            si= sql.insert(si, '\\');
+            ++si;
+            si= sql.insert(si, '\\');
+            ++si;
+            si= sql.insert(si, '\\');
+            ++si;
+          }
+        }
+      }
+    }
+
     if (not executeSQLWithCommitId(aggregate_sql, commit_id))
     {
       return false;
@@ -100,7 +130,7 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
                               uint64_t trx_id,
                               uint32_t segment_id)
 {
-  string sql("SELECT `msg`, `commit_order` FROM `replication`.`queue`"
+  string sql("SELECT `msg`, `commit_order` FROM `sys_replication`.`queue`"
              " WHERE `trx_id` = ");
   sql.append(boost::lexical_cast<string>(trx_id));
   sql.append(" AND `seg_id` = ", 16);
@@ -143,7 +173,7 @@ bool QueueConsumer::getListOfCompletedTransactions(TrxIdList &list)
 {
   Execute execute(*(_session.get()), true);
   
-  string sql("SELECT `trx_id` FROM `replication`.`queue`"
+  string sql("SELECT `trx_id` FROM `sys_replication`.`queue`"
              " WHERE `commit_order` IS NOT NULL ORDER BY `commit_order` ASC");
   
   /* ResultSet size must match column count */
@@ -232,20 +262,6 @@ bool QueueConsumer::convertToSQL(const message::Transaction &transaction,
       return false;
     }
 
-    /* Replace any embedded NULLs in the SQL */
-    vector<string>::iterator iter;
-    for (iter= segmented_sql.begin(); iter != segmented_sql.end(); ++iter)
-    {
-      string &sql= *iter;
-      string::size_type found= sql.find_first_of('\0');
-      while (found != string::npos)
-      {
-        sql[found]= '\\';
-        sql.insert(found + 1, 1, '0');
-        found= sql.find_first_of('\0', found);
-      }      
-    }
-    
     if (isEndStatement(statement))
     {
       aggregate_sql.insert(aggregate_sql.end(),
@@ -299,11 +315,11 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
 
   if (not status)
   {
-    sql= "UPDATE `replication`.`applier_state` SET `status` = 'STOPPED'";
+    sql= "UPDATE `sys_replication`.`applier_state` SET `status` = 'STOPPED'";
   }
   else
   {
-    sql= "UPDATE `replication`.`applier_state` SET `status` = 'RUNNING'";
+    sql= "UPDATE `sys_replication`.`applier_state` SET `status` = 'RUNNING'";
   }
   
   sql.append(", `error_msg` = '", 17);
@@ -335,7 +351,7 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
 bool QueueConsumer::executeSQLWithCommitId(vector<string> &sql,
                                            const string &commit_id)
 {
-  string tmp("UPDATE `replication`.`applier_state`"
+  string tmp("UPDATE `sys_replication`.`applier_state`"
              " SET `last_applied_commit_id` = ");
   tmp.append(commit_id);
   sql.push_back(tmp);
@@ -346,7 +362,7 @@ bool QueueConsumer::executeSQLWithCommitId(vector<string> &sql,
 
 bool QueueConsumer::deleteFromQueue(uint64_t trx_id)
 {
-  string sql("DELETE FROM `replication`.`queue` WHERE `trx_id` = ");
+  string sql("DELETE FROM `sys_replication`.`queue` WHERE `trx_id` = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
 
   vector<string> sql_vect;

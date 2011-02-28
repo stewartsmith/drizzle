@@ -186,7 +186,14 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
 
     if (ret < 0)
     {
-      sql_perror(_("bind() Do you already have another drizzled running?"));
+      std::string error_message;
+
+      error_message+= host_buf;
+      error_message+= ":";
+      error_message+= port_buf;
+      error_message+= _(" failed to bind");
+      sql_perror(error_message);
+
       return true;
     }
 
@@ -198,8 +205,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
 
     fds.push_back(fd);
 
-    errmsg_printf(error::INFO, _("Listening on %s:%s"), host_buf,
-                  port_buf);
+    errmsg_printf(error::INFO, _("Listening on %s:%s"), host_buf, port_buf);
   }
 
   freeaddrinfo(ai_list);

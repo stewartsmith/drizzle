@@ -64,18 +64,43 @@ void add_foreign_key_to_table_message(
   pfkey->set_references_table_name(table->table.str);
 
   Key_part_spec *keypart;
-  List<Key_part_spec>::iterator col_it(cols);
+  List<Key_part_spec>::iterator col_it(cols.begin());
   while ((keypart= col_it++))
   {
     pfkey->add_column_names(keypart->field_name.str);
   }
 
-  List<Key_part_spec>::iterator ref_it(ref_cols);
+  List<Key_part_spec>::iterator ref_it(ref_cols.begin());
   while ((keypart= ref_it++))
   {
     pfkey->add_references_columns(keypart->field_name.str);
   }
 
+}
+
+/**
+  Make a deep copy of each list element.
+
+  @note A template function and not a template method of class List
+  is employed because of explicit template instantiation:
+  in server code there are explicit instantiations of List<T> and
+  an explicit instantiation of a template requires that any method
+  of the instantiated class used in the template can be resolved.
+  Evidently not all template arguments have clone() method with
+  the right signature.
+
+  @return You must query the error state in Session for out-of-memory
+  situation after calling this function.
+*/
+
+template <typename T>
+void list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
+{
+  /* Make a deep copy of each element */
+  typename List<T>::iterator it(list.begin());
+  T *el;
+  while ((el= it++))
+    it.replace(el->clone(mem_root));
 }
 
 Foreign_key::Foreign_key(const Foreign_key &rhs, memory::Root *mem_root)
@@ -108,7 +133,7 @@ bool foreign_key_prefix(Key *a, Key *b)
   /* Ensure that 'a' is the generated key */
   if (a->generated)
   {
-    if (b->generated && a->columns.elements > b->columns.elements)
+    if (b->generated && a->columns.size() > b->columns.size())
       std::swap(a, b);                       // Put shorter key in 'a'
   }
   else
@@ -119,11 +144,11 @@ bool foreign_key_prefix(Key *a, Key *b)
   }
 
   /* Test if 'a' is a prefix of 'b' */
-  if (a->columns.elements > b->columns.elements)
+  if (a->columns.size() > b->columns.size())
     return true;                                // Can't be prefix
 
-  List<Key_part_spec>::iterator col_it1(a->columns);
-  List<Key_part_spec>::iterator col_it2(b->columns);
+  List<Key_part_spec>::iterator col_it1(a->columns.begin());
+  List<Key_part_spec>::iterator col_it2(b->columns.begin());
   const Key_part_spec *col1, *col2;
 
 #ifdef ENABLE_WHEN_INNODB_CAN_HANDLE_SWAPED_FOREIGN_KEY_COLUMNS
@@ -166,11 +191,11 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
 {
   CreateField  *sql_field;
   Key_part_spec *column;
-  List<Key_part_spec>::iterator cols(columns);
-  List<CreateField>::iterator it(table_fields);
+  List<Key_part_spec>::iterator cols(columns.begin());
+  List<CreateField>::iterator it(table_fields.begin());
   while ((column= cols++))
   {
-    it= table_fields;
+    it= table_fields.begin();
     while ((sql_field= it++) &&
            my_strcasecmp(system_charset_info,
                          column->field_name.str,

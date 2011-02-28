@@ -510,6 +510,11 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
   if (con->options & DRIZZLE_CON_ADMIN)
     capabilities|= DRIZZLE_CAPABILITIES_ADMIN;
 
+  if (con->options & DRIZZLE_CON_INTERACTIVE)
+  {
+    capabilities|= DRIZZLE_CAPABILITIES_INTERACTIVE;
+  }
+
   capabilities&= ~(DRIZZLE_CAPABILITIES_COMPRESS | DRIZZLE_CAPABILITIES_SSL);
   if (con->db[0] == 0)
     capabilities&= ~DRIZZLE_CAPABILITIES_CONNECT_WITH_DB;

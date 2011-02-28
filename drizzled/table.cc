@@ -91,8 +91,7 @@ int Table::delete_table(bool free_share)
     }
     field= 0;
   }
-  delete cursor;
-  cursor= 0;				/* For easier errorchecking */
+  safe_delete(cursor);
 
   if (free_share)
   {
@@ -198,7 +197,7 @@ void Table::resetTable(Session *session,
 
 /* Deallocate temporary blob storage */
 
-void free_blobs(register Table *table)
+void free_blobs(Table *table)
 {
   uint32_t *ptr, *end;
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
@@ -215,7 +214,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
   TYPELIB *result= (TYPELIB*) mem_root->alloc_root(sizeof(TYPELIB));
   if (!result)
     return 0;
-  result->count= strings.elements;
+  result->count= strings.size();
   result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   
@@ -224,7 +223,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  List<String>::iterator it(strings);
+  List<String>::iterator it(strings.begin());
   String *tmp;
   for (uint32_t i= 0; (tmp= it++); i++)
   {
@@ -240,7 +239,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 
 	/* Check that the integer is in the internal */
 
-int set_zone(register int nr, int min_zone, int max_zone)
+int set_zone(int nr, int min_zone, int max_zone)
 {
   if (nr<=min_zone)
     return (min_zone);
@@ -641,7 +640,7 @@ size_t Table::max_row_length(const unsigned char *data)
 void Table::setVariableWidth(void)
 {
   assert(in_use);
-  if (in_use && in_use->lex->sql_command == SQLCOM_CREATE_TABLE)
+  if (in_use && in_use->getLex()->sql_command == SQLCOM_CREATE_TABLE)
   {
     getMutableShare()->setVariableWidth();
     return;
@@ -875,7 +874,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   blob_count= string_count= null_count= hidden_null_count= group_null_items= 0;
   param->using_indirect_summary_function= 0;
 
-  List_iterator_fast<Item> li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *item;
   Field **tmp_from_field=from_field;
   while ((item=li++))
@@ -1019,8 +1018,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
   if (blob_count || using_unique_constraint || 
-      (session->lex->select_lex.options & SELECT_BIG_RESULT) ||
-      (session->lex->current_select->olap == ROLLUP_TYPE) ||
+      (session->getLex()->select_lex.options & SELECT_BIG_RESULT) ||
+      (session->getLex()->current_select->olap == ROLLUP_TYPE) ||
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     table->getMutableShare()->storage_engine= myisam_engine;

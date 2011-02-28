@@ -8,13 +8,17 @@ EXTRA_DIST+= \
 	     docs/conf.py \
 	     docs/Doxyfile \
 	     docs/drizzled_header.html \
+	     docs/logo.png \
 	     docs/plugins/list.rst \
 	     docs/plugins/haildb/index.rst \
 	     docs/plugins/innobase/index.rst \
 	     docs/plugins/mysql_protocol/index.rst \
 	     docs/plugins/transaction_log/index.rst \
+	     docs/plugins/slave/index.rst \
+	     docs/_static/drizzle.ico \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst \
+	     ${top_srcdir}/docs/contributing/*.rst \
 	     ${top_srcdir}/docs/libdrizzle/*.rst \
 	     ${top_srcdir}/docs/installing/*.rst \
              ${top_srcdir}/docs/testing/*.rst

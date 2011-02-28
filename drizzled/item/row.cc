@@ -41,11 +41,11 @@ Item_row::Item_row(List<Item> &arg):
 {
 
   //TODO: think placing 2-3 component items in item (as it done for function)
-  if ((arg_count= arg.elements))
+  if ((arg_count= arg.size()))
     items= (Item**) memory::sql_alloc(sizeof(Item*)*arg_count);
   else
     items= 0;
-  List<Item>::iterator li(arg);
+  List<Item>::iterator li(arg.begin());
   uint32_t i= 0;
   Item *item;
   while ((item= li++))

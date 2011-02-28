@@ -182,7 +182,7 @@ bool QueueProducer::closeConnection()
   return true;
 }
 
-bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
+bool QueueProducer::queryForMaxCommitId(uint64_t *max_commit_id)
 {
   /*
    * This SQL will get the maximum commit_id value we have pulled over from
@@ -192,9 +192,9 @@ bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
    * the queue.
    */
   string sql("SELECT MAX(x.cid) FROM"
-             " (SELECT MAX(`commit_order`) AS cid FROM `replication`.`queue`"
+             " (SELECT MAX(`commit_order`) AS cid FROM `sys_replication`.`queue`"
              "  UNION ALL SELECT `last_applied_commit_id` AS cid"
-             "  FROM `replication`.`applier_state`) AS x");
+             "  FROM `sys_replication`.`applier_state`) AS x");
 
   sql::ResultSet result_set(1);
   Execute execute(*(_session.get()), true);
@@ -211,7 +211,7 @@ bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
       break;
 
     assert(result_set.isNull(0) == false);
-    *max_commit_id= boost::lexical_cast<uint32_t>(value);
+    *max_commit_id= boost::lexical_cast<uint64_t>(value);
     found_rows++;
   }
 
@@ -224,14 +224,14 @@ bool QueueProducer::queryForMaxCommitId(uint32_t *max_commit_id)
   return true;
 }
 
-bool QueueProducer::queryForTrxIdList(uint32_t max_commit_id,
+bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
                                       vector<uint64_t> &list)
 {
   (void)list;
   string sql("SELECT `id` FROM `data_dictionary`.`sys_replication_log`"
-             " WHERE commit_id > ");
+             " WHERE `commit_id` > ");
   sql.append(boost::lexical_cast<string>(max_commit_id));
-  sql.append(" LIMIT 25", 9);
+  sql.append(" ORDER BY `commit_id` LIMIT 25");
 
   drizzle_return_t ret;
   drizzle_result_st result;
@@ -295,7 +295,7 @@ bool QueueProducer::queueInsert(const char *trx_id,
   /*
    * The SQL to insert our results into the local queue.
    */
-  string sql= "INSERT INTO `replication`.`queue`"
+  string sql= "INSERT INTO `sys_replication`.`queue`"
               " (`trx_id`, `seg_id`, `commit_order`, `msg`) VALUES (";
   sql.append(trx_id);
   sql.append(", ", 2);
@@ -314,19 +314,29 @@ bool QueueProducer::queueInsert(const char *trx_id,
   google::protobuf::TextFormat::PrintToString(message, &message_text);  
 
   /*
-   * Escape embedded quotes. client->pushSQL() will remove double quotes
-   * if we don't escape them.
+   * Execution using drizzled::Execute requires some special escaping.
    */
   string::iterator it= message_text.begin();
   for (; it != message_text.end(); ++it)
   {
-    if (*it == '\'')
+    if (*it == '\"')
     {
-      it= message_text.insert(it, '\'');
+      it= message_text.insert(it, '\\');
       ++it;
     }
-    else if (*it == '\"')
+    else if (*it == '\'')
     {
+      it= message_text.insert(it, '\\');
+      ++it;
+      it= message_text.insert(it, '\\');
+      ++it;
+    }
+    else if (*it == '\\')
+    {
+      it= message_text.insert(it, '\\');
+      ++it;
+      it= message_text.insert(it, '\\');
+      ++it;
       it= message_text.insert(it, '\\');
       ++it;
     }
@@ -344,12 +354,15 @@ bool QueueProducer::queueInsert(const char *trx_id,
     return false;
   }
 
-  _saved_max_commit_id= boost::lexical_cast<uint32_t>(commit_id);
+  uint64_t tmp_commit_id= boost::lexical_cast<uint64_t>(commit_id);
+  if (tmp_commit_id > _saved_max_commit_id)
+    _saved_max_commit_id= tmp_commit_id;
+
   return true;
 }
 
 
-bool QueueProducer::queryForReplicationEvents(uint32_t max_commit_id)
+bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
 {
   vector<uint64_t> trx_id_list;
 
@@ -430,11 +443,11 @@ void QueueProducer::setIOState(const string &err_msg, bool status)
 
   if (not status)
   {
-    sql= "UPDATE `replication`.`io_state` SET `status` = 'STOPPED'";
+    sql= "UPDATE `sys_replication`.`io_state` SET `status` = 'STOPPED'";
   }
   else
   {
-    sql= "UPDATE `replication`.`io_state` SET `status` = 'RUNNING'";
+    sql= "UPDATE `sys_replication`.`io_state` SET `status` = 'RUNNING'";
   }
   
   sql.append(", `error_msg` = '", 17);

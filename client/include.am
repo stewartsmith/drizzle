@@ -54,6 +54,7 @@ noinst_HEADERS+= \
                  client/drizzledump_drizzle.h \
                  client/drizzledump_mysql.h \
                  client/option_string.h \
+                 client/server_detect.h \
                  client/statement.h \
                  client/stats.h \
                  client/thread_context.h \

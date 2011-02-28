@@ -45,6 +45,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/transaction_services.h>
+#include <drizzled/key.h>
 
 using namespace std;
 
@@ -274,7 +275,7 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
   /*
     If there is very few deleted rows in the table, find the first row by
     scanning the table.
-    TODO remove the test for HA_READ_ORDER
+    @todo remove the test for HA_READ_ORDER
   */
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
       !(getTable()->index_flags(primary_key) & HA_READ_ORDER))
@@ -1300,7 +1301,7 @@ static bool log_row_for_replication(Table* table,
 
   bool result= false;
 
-  switch (session->lex->sql_command)
+  switch (session->getLex()->sql_command)
   {
   case SQLCOM_CREATE_TABLE:
     /*

@@ -29,10 +29,7 @@
   This will replace Table_ident.
   */
 
-
-
-#ifndef DRIZZLED_IDENTIFIER_SCHEMA_H
-#define DRIZZLED_IDENTIFIER_SCHEMA_H
+#pragma once
 
 #include <drizzled/enum.h>
 #include <drizzled/definitions.h>
@@ -107,5 +104,3 @@ std::ostream& operator<<(std::ostream& output, const Schema&identifier);
 
 } /* namespace identifier */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_IDENTIFIER_SCHEMA_H */

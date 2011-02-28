@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_CREATE_TABLE_H
 #define DRIZZLED_STATEMENT_CREATE_TABLE_H
 
+#include <drizzled/alter_info.h>
 #include <drizzled/statement.h>
 #include <drizzled/foreign_key.h>
 
@@ -51,7 +52,7 @@ public:
 public:
   message::Table &createTableMessage()
   {
-    return *getSession()->lex->table();
+    return *getSession()->getLex()->table();
   };
 
 private:

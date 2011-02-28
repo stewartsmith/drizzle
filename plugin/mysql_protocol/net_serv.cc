@@ -97,7 +97,9 @@ bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length)
 {
   Vio *vio_tmp= new Vio(sock);
   if (vio_tmp == NULL)
+  {
     return true;
+  }
   else
     if (drizzleclient_net_init(net, vio_tmp, buffer_length))
     {
@@ -105,7 +107,9 @@ bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length)
        * NET object.
        */
       if (vio_tmp && (net->vio != vio_tmp))
+      {
         delete vio_tmp;
+      }
       else
       {
         (void) shutdown(sock, SHUT_RDWR);
@@ -126,11 +130,7 @@ void drizzleclient_net_end(NET *net)
 
 void drizzleclient_net_close(NET *net)
 {
-  if (net->vio != NULL)
-  {
-    delete net->vio;
-    net->vio= 0;
-  }
+  drizzled::safe_delete(net->vio);
 }
 
 bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
@@ -857,7 +857,9 @@ drizzleclient_net_read(NET *net)
         }
       }
       else
+      {
         complen= packet_len;
+      }
 
     }
     buf_length+= complen;

@@ -30,8 +30,8 @@ namespace drizzled
 
 bool statement::Insert::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   assert(first_table == all_tables && first_table != 0);
   bool need_start_waiting= false;
 
@@ -49,12 +49,12 @@ bool statement::Insert::execute()
 
   bool res= insert_query(getSession(),
                          all_tables,
-                         getSession()->lex->field_list,
-                         getSession()->lex->many_values,
-                         getSession()->lex->update_list,
-                         getSession()->lex->value_list,
-                         getSession()->lex->duplicates,
-                         getSession()->lex->ignore);
+                         getSession()->getLex()->field_list,
+                         getSession()->getLex()->many_values,
+                         getSession()->getLex()->update_list,
+                         getSession()->getLex()->value_list,
+                         getSession()->getLex()->duplicates,
+                         getSession()->getLex()->ignore);
   /*
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.

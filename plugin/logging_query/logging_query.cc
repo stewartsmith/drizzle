@@ -242,6 +242,11 @@ public:
       return false;
 
     Session::QueryString query_string(session->getQueryString());
+    if (query_string == NULL)
+    {
+      return false;
+    }
+
     if (re)
     {
       int this_pcre_rc;
@@ -277,7 +282,7 @@ public:
               % session->tmp_table
               % session->total_warn_count
               % session->getServerId()
-              % glob_hostname;
+              % getServerHostname();
 
     string msgbuf= formatter.str();
 

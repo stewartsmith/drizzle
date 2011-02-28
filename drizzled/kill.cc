@@ -1,11 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems, Inc.
- *
- *  Authors:
- *
- *  Jay Pipes <joinfu@sun.com>
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,30 +18,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/**
- * @file
- *
- * Defines the methods used by the background worker thread which
- * maintains summary information about the transaction log.
- */
+#include <config.h>
 
-#ifndef PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H
-#define PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H
+#include <drizzled/identifier.h>
+#include <drizzled/kill.h>
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
 
-#include <pthread.h>
+namespace drizzled {
 
-/**
- * Initializes the background worker thread
- *
- * @return false on success; true on failure
- */
-bool initTransactionLogBackgroundWorker();
+bool kill(identifier::User::const_reference user, session_id_t id_to_kill, bool only_kill_query)
+{
+  drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id_to_kill);
 
-/**
- * The routine which the background worker executes
- */
-extern "C" {
-  void *collectTransactionLogStats(void *arg);
+  if (session_param and session_param->isViewable(user))
+  {
+    session_param->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+    return true;
+  }
+
+  return false;
 }
 
-#endif /* PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H */
+} // namespace drizzled

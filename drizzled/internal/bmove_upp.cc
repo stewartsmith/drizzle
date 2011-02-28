@@ -31,8 +31,7 @@ namespace drizzled
 namespace internal
 {
 
-void bmove_upp(register unsigned char *dst, register const unsigned char *src,
-               register size_t len)
+void bmove_upp(unsigned char *dst, const unsigned char *src, size_t len)
 {
   while (len-- != 0) *--dst = *--src;
 }

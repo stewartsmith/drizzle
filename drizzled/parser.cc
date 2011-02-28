@@ -19,13 +19,13 @@
  */
 
 #include <config.h>
-
 #include <drizzled/parser.h>
+#include <drizzled/alter_info.h>
+#include <drizzled/alter_drop.h>
+#include <drizzled/item/subselect.h>
 
-namespace drizzled
-{
-namespace parser
-{
+namespace drizzled {
+namespace parser {
 
 /**
   Helper to resolve the SQL:2003 Syntax exception 1) in <in predicate>.
@@ -179,17 +179,16 @@ bool setup_select_in_parentheses(Session *session, LEX *lex)
 
 Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list)
 {
-  const plugin::Function *udf= plugin::Function::get(name.c_str(), name.length());
-  Item *item= NULL;
+  const plugin::Function *udf= plugin::Function::get(name);
 
   if (udf)
   {
-    item= Create_udf_func::s_singleton.create(session, udf, item_list);
-  } else {
-    my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
+    return Create_udf_func::s_singleton.create(session, udf, item_list);
   }
 
-  return item;
+  my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
+
+  return NULL;
 }
 
 /**
@@ -648,8 +647,7 @@ void buildPrimaryOnColumn(LEX *lex)
 void buildReplicationOption(LEX *lex, bool arg)
 {
   statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
-  message::ReplicationOptions *options= statement->schema_message.mutable_replication_options();
-  options->set_dont_replicate(arg);
+  message::set_is_replicated(statement->schema_message, arg);
 }
 
 void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key)

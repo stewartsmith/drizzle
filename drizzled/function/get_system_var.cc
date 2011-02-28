@@ -81,7 +81,7 @@ Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
     my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->str);
     return 0;
   }
-  session->lex->setCacheable(false);
+  session->getLex()->setCacheable(false);
 
   set_if_smaller(component_name->length, (size_t)MAX_SYS_VAR_LENGTH);
 

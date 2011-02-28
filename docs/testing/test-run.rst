@@ -1,3 +1,5 @@
+.. _test-run-label:
+
 **********************************
 test-run.pl - Drizzle testing tool
 **********************************
@@ -172,6 +174,8 @@ The :program:`test-run.pl` tool has several available options:
 Options to control what engine/variation to run
 -----------------------------------------------
 
+.. program:: test-run
+
 .. option:: --compress
    
    Use the compressed protocol between client and server
@@ -186,6 +190,8 @@ Options to control what engine/variation to run
 
 Options to control directories to use
 -------------------------------------
+
+.. program:: test-run
 
 .. option:: --benchdir=DIR          
 
@@ -214,6 +220,8 @@ Options to control directories to use
 
 Options to control what test suites or cases to run
 ---------------------------------------------------
+
+.. program:: test-run
 
 .. option:: --force                 
    
@@ -253,6 +261,8 @@ Options to control what test suites or cases to run
 Options that specify ports
 --------------------------
 
+.. program:: test-run
+
 .. option:: --master_port=PORT      
 
    Specify the port number used by the first master
@@ -269,6 +279,8 @@ Options that specify ports
 Options for test case authoring
 -------------------------------
 
+.. program:: test-run
+
 .. option:: --record TESTNAME       
 
    (Re)genereate the result file for TESTNAME
@@ -284,12 +296,16 @@ Options for test case authoring
 Options that pass on options
 ----------------------------
 
+.. program:: test-run
+
 .. option:: --drizzled=ARGS           
  
    Specify additional arguments to "drizzled"
 
 Options to run test on running server
 -------------------------------------
+
+.. program:: test-run
 
 .. option:: --extern                
 
@@ -301,6 +317,8 @@ Options to run test on running server
 
 Options for debugging the product
 ---------------------------------
+
+.. program:: test-run
 
 .. option:: --client-ddd            
 
@@ -366,6 +384,8 @@ Options for coverage, profiling etc
    
    .. option:: --gcov                  
 
+.. program:: test-run
+
 .. option:: --gprof                 
 
    See online documentation on how to use it.
@@ -414,6 +434,8 @@ Options for coverage, profiling etc
 
 Misc options
 ------------
+
+.. program:: test-run
 
 .. option:: --comment=STR           
 

@@ -105,7 +105,7 @@ private:
   drizzle_return_t _last_return;
 
   bool _is_connected;
-  uint32_t _saved_max_commit_id;
+  uint64_t _saved_max_commit_id;
   uint32_t _max_reconnects;
   uint32_t _seconds_between_reconnects;
 
@@ -132,9 +132,9 @@ private:
    */
   bool reconnect(bool initial_connection);
 
-  bool queryForMaxCommitId(uint32_t *max_commit_id);
-  bool queryForReplicationEvents(uint32_t max_commit_id);
-  bool queryForTrxIdList(uint32_t max_commit_id, std::vector<uint64_t> &list);
+  bool queryForMaxCommitId(uint64_t *max_commit_id);
+  bool queryForReplicationEvents(uint64_t max_commit_id);
+  bool queryForTrxIdList(uint64_t max_commit_id, std::vector<uint64_t> &list);
   bool queueInsert(const char *trx_id,
                    const char *seg_id,
                    const char *commit_id,

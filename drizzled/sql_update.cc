@@ -33,6 +33,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/filesort.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/key.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -146,7 +147,7 @@ int update_query(Session *session, TableList *table_list,
   Table		*table;
   optimizer::SqlSelect *select= NULL;
   ReadRecord	info;
-  Select_Lex    *select_lex= &session->lex->select_lex;
+  Select_Lex    *select_lex= &session->getLex()->select_lex;
   uint64_t     id;
   List<Item> all_fields;
   Session::killed_state_t killed_status= Session::NOT_KILLED;
@@ -204,7 +205,7 @@ int update_query(Session *session, TableList *table_list,
     return 1;
   }
 
-  if (select_lex->inner_refs_list.elements &&
+  if (select_lex->inner_refs_list.size() &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);
@@ -330,8 +331,7 @@ int update_query(Session *session, TableList *table_list,
 	Filesort has already found and selected the rows we want to update,
 	so we don't need the where clause
       */
-      delete select;
-      select= 0;
+      safe_delete(select);
     }
     else
     {
@@ -409,10 +409,9 @@ int update_query(Session *session, TableList *table_list,
       /* Change select to use tempfile */
       if (select)
       {
-	delete select->quick;
+	safe_delete(select->quick);
 	if (select->free_cond)
 	  delete select->cond;
-	select->quick=0;
 	select->cond=0;
       }
       else
@@ -622,9 +621,9 @@ bool prepare_update(Session *session, TableList *table_list,
 			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;
-  Select_Lex *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->getLex()->select_lex;
 
-  session->lex->allow_sum_func= 0;
+  session->getLex()->allow_sum_func= 0;
 
   if (setup_tables_and_check_access(session, &select_lex->context,
                                     &select_lex->top_join_list,

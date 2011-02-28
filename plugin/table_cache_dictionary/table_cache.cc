@@ -51,7 +51,7 @@ table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) 
        iter != table::getCache().end();
        iter++)
    {
-    table_list.push_back((*iter).second);
+    table_list.push_back(iter->second);
   }
   std::sort(table_list.begin(), table_list.end(), Table::compare);
 }

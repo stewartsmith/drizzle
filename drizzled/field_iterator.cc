@@ -46,7 +46,7 @@ void Field_iterator_table::set_table(Table *table)
 
 Item *Field_iterator_table::create_item(Session *session)
 {
-  Select_Lex *select= session->lex->current_select;
+  Select_Lex *select= session->getLex()->current_select;
 
   Item_field *item= new Item_field(session, &select->context, *ptr);
 
@@ -57,7 +57,7 @@ Item *Field_iterator_table::create_item(Session *session)
 void Field_iterator_natural_join::set(TableList *table_ref)
 {
   assert(table_ref->join_columns);
-  column_ref_it.init(*(table_ref->join_columns));
+  column_ref_it= table_ref->join_columns->begin();
   cur_column_ref= column_ref_it++;
 }
 
@@ -242,7 +242,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
       must take care to mark when all fields are created/added.
     */
     if (!parent_table_ref &&
-        add_table_ref->join_columns->elements == field_count)
+        add_table_ref->join_columns->size() == field_count)
       add_table_ref->is_join_columns_complete= true;
   }
 

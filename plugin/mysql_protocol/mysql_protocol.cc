@@ -32,8 +32,9 @@
 #include "mysql_protocol.h"
 #include "mysql_password.h"
 #include "options.h"
-
 #include <drizzled/identifier.h>
+#include <drizzled/plugin/function.h>
+#include <libdrizzle/constants.h>
 
 #define PROTOCOL_VERSION 10
 
@@ -95,6 +96,7 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
 ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters *set_counters):
   is_admin_connection(false),
   _using_mysql41_protocol(using_mysql41_protocol),
+  _is_interactive(false),
   counters(set_counters)
 {
   
@@ -154,9 +156,13 @@ void ClientMySQLProtocol::close(void)
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
     if (is_admin_connection)
+    {
       counters->adminConnected.decrement();
+    }
     else
+    {
       counters->connected.decrement();
+    }
   }
 }
 
@@ -271,6 +277,10 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
 
     case 8: /* SHUTDOWN */
       (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      break;
+
+    case 12: /* KILL */
+      (*l_packet)[0]= (unsigned char) COM_KILL;
       break;
 
     case 14: /* PING */
@@ -476,12 +486,12 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
 */
 bool ClientMySQLProtocol::sendFields(List<Item> *list)
 {
-  List_iterator_fast<Item> it(*list);
+  List<Item>::iterator it(list->begin());
   Item *item;
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
 
-  unsigned char *row_pos= storeLength(buff, list->elements);
+  unsigned char *row_pos= storeLength(buff, list->size());
   (void) drizzleclient_net_write(&net, buff, (size_t) (row_pos-buff));
 
   while ((item=it++))
@@ -514,63 +524,63 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
       switch (field.type)
       {
       case DRIZZLE_TYPE_LONG:
-        pos[6]= 3;
+        pos[6]= DRIZZLE_COLUMN_TYPE_LONG;
         break;
 
       case DRIZZLE_TYPE_DOUBLE:
-        pos[6]= 5;
+        pos[6]= DRIZZLE_COLUMN_TYPE_DOUBLE;
         break;
 
       case DRIZZLE_TYPE_NULL:
-        pos[6]= 6;
+        pos[6]= DRIZZLE_COLUMN_TYPE_NULL;
         break;
 
       case DRIZZLE_TYPE_TIMESTAMP:
-        pos[6]= 7;
+        pos[6]= DRIZZLE_COLUMN_TYPE_TIMESTAMP;
         break;
 
       case DRIZZLE_TYPE_LONGLONG:
-        pos[6]= 8;
+        pos[6]= DRIZZLE_COLUMN_TYPE_LONGLONG;
         break;
 
       case DRIZZLE_TYPE_DATETIME:
-        pos[6]= 12;
+        pos[6]= DRIZZLE_COLUMN_TYPE_DATETIME;
         break;
 
       case DRIZZLE_TYPE_TIME:
-        pos[6]= 13;
+        pos[6]= DRIZZLE_COLUMN_TYPE_TIME;
         break;
 
       case DRIZZLE_TYPE_DATE:
-        pos[6]= 14;
+        pos[6]= DRIZZLE_COLUMN_TYPE_DATE;
         break;
 
       case DRIZZLE_TYPE_VARCHAR:
-        pos[6]= 15;
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 
       case DRIZZLE_TYPE_MICROTIME:
-        pos[6]= 15;
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 
       case DRIZZLE_TYPE_UUID:
-        pos[6]= 15;
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 
       case DRIZZLE_TYPE_BOOLEAN:
-        pos[6]= 15;
+        pos[6]= DRIZZLE_COLUMN_TYPE_TINY;
         break;
 
       case DRIZZLE_TYPE_DECIMAL:
-        pos[6]= (char)246;
+        pos[6]= (char)DRIZZLE_COLUMN_TYPE_NEWDECIMAL;
         break;
 
       case DRIZZLE_TYPE_ENUM:
-        pos[6]= (char)247;
+        pos[6]= (char)DRIZZLE_COLUMN_TYPE_ENUM;
         break;
 
       case DRIZZLE_TYPE_BLOB:
-        pos[6]= (char)252;
+        pos[6]= (char)DRIZZLE_COLUMN_TYPE_BLOB;
         break;
       }
     }
@@ -609,6 +619,11 @@ bool ClientMySQLProtocol::store(Field *from)
 {
   if (from->is_null())
     return store();
+  if (from->type() == DRIZZLE_TYPE_BOOLEAN)
+  {
+    return store(from->val_int());
+  }
+
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
 
@@ -850,6 +865,11 @@ bool ClientMySQLProtocol::checkConnection(void)
       my_error(ER_ADMIN_ACCESS, MYF(0));
       return false;
     }
+  }
+
+  if (client_capabilities & CLIENT_INTERACTIVE)
+  {
+    _is_interactive= true;
   }
 
   user_identifier->setUser(user);

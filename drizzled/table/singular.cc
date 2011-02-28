@@ -40,7 +40,7 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   _share(message::Table::INTERNAL),
   _has_variable_width(false)
 {
-  uint32_t field_count= field_list.elements;
+  uint32_t field_count= field_list.size();
   uint32_t blob_count= 0;
   Field **field_arg;
   CreateField *cdef;                           /* column definition */
@@ -59,7 +59,7 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   in_use= session;           /* field_arg->reset() may access in_use */
 
   /* Create all fields and calculate the total length of record */
-  List_iterator_fast<CreateField> it(field_list);
+  List<CreateField>::iterator it(field_list.begin());
   message::Table::Field null_field;
   while ((cdef= it++))
   {

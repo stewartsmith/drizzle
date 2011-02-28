@@ -27,8 +27,8 @@
 #include <drizzled/definitions.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-
 #include <drizzled/identifier.h>
+#include <drizzled/util/find_ptr.h>
 
 #include <boost/unordered_map.hpp>
 #include <exception>
@@ -111,6 +111,63 @@ void access(drizzled::identifier::User::const_reference user, drizzled::identifi
 
   my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user_string.c_str(), table_string.c_str());
 } 
+
+static error::level_t _verbosity= error::ERROR;
+static std::string _verbosity_strint;
+
+const std::string &verbose_string()
+{
+  switch (_verbosity)
+  {
+  case error::INSPECT:
+    {
+      static std::string _arg= "INSPECT";
+      return _arg;
+    }
+  case error::INFO:
+    {
+      static std::string _arg= "INFO";
+      return _arg;
+    }
+  case error::WARN:
+    {
+      static std::string _arg= "WARN";
+      return _arg;
+    }
+  case error::ERROR:
+    {
+      static std::string _arg= "ERROR";
+      return _arg;
+    }
+  }
+
+  abort();
+}
+
+error::level_t &verbosity()
+{
+  return _verbosity;
+}
+
+void check_verbosity(const std::string &arg)
+{
+  if (not arg.compare("INSPECT"))
+  {
+    _verbosity= error::INSPECT;
+  }
+  else if (not arg.compare("INFO"))
+  {
+    _verbosity= error::INFO;
+  }
+  else if (not arg.compare("WARN"))
+  {
+    _verbosity= error::WARN;
+  }
+  else if (not arg.compare("ERROR"))
+  {
+    _verbosity= error::ERROR;
+  }
+}
 
 } // namespace error
 
@@ -202,7 +259,7 @@ void my_printf_error(drizzled::error_t error, const char *format, myf MyFlags, .
       MyFlags	Flags
 */
 
-void my_message(drizzled::error_t error, const char *str, register myf MyFlags)
+void my_message(drizzled::error_t error, const char *str, myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }
@@ -227,12 +284,12 @@ void ErrorMap::add(drizzled::error_t error_num,
 
 const std::string &ErrorMap::find(drizzled::error_t error_num) const
 {
-  ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
-  if (pos == mapping_.end())
+  const ErrorMessageMap::mapped_type* pos= find_ptr(mapping_, error_num);
+  if (!pos)
   {
     throw ErrorStringNotFound();
   }
-  return pos->second.second;
+  return pos->second;
 }
 
 #define ADD_ERROR_MESSAGE(code, msg) add(code, STRINGIFY_ARG(code), msg)
@@ -620,7 +677,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name."));
   ADD_ERROR_MESSAGE(ER_USE_DATA_DICTIONARY, N_("Engine status is now stored in the data_dictionary tables, please use these instead."));
   ADD_ERROR_MESSAGE(ER_TRANSACTION_ALREADY_STARTED, N_("There is already a transaction in progress"));
-
+  ADD_ERROR_MESSAGE(ER_NO_LOCK_HELD, N_("No lock is held by this connection."));
 }
 
 } /* namespace drizzled */

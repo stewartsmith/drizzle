@@ -35,31 +35,37 @@ typedef struct st_sql_list
   unsigned char *first;
   unsigned char **next;
 
-  inline void clear()
+  void clear()
   {
     elements=0;
     first=0;
     next= &first;
   }
-  inline void link_in_list(unsigned char *element,unsigned char **next_ptr)
+
+  size_t size() const
+  {
+    return elements;
+  }
+
+  void link_in_list(unsigned char *element,unsigned char **next_ptr)
   {
     elements++;
     (*next)=element;
     next= next_ptr;
     *next=0;
   }
-  inline void save_and_clear(struct st_sql_list *save)
+  void save_and_clear(struct st_sql_list *save)
   {
     *save= *this;
     clear();
   }
-  inline void push_front(struct st_sql_list *save)
+  void push_front(struct st_sql_list *save)
   {
     *save->next= first;				/* link current list last */
     first= save->first;
     elements+= save->elements;
   }
-  inline void push_back(struct st_sql_list *save)
+  void push_back(struct st_sql_list *save)
   {
     if (save->first)
     {
@@ -100,19 +106,17 @@ struct list_node : public memory::SqlAlloc
   }
 };
 
-
 extern DRIZZLED_API list_node end_of_list;
 
 class base_list :public memory::SqlAlloc
 {
 protected:
   list_node *first,**last;
-
-public:
   uint32_t elements;
+public:
 
-  inline void clear() { elements=0; first= &end_of_list; last=&first;}
-  inline base_list() { clear(); }
+  void clear() { elements=0; first= &end_of_list; last=&first;}
+  base_list() { clear(); }
   /**
     This is a shallow copy constructor that implicitly passes the ownership
     from the source list to the new instance. The old instance is not
@@ -122,14 +126,14 @@ public:
     relies on this behaviour. This logic is quite tricky: please do not use
     it in any new code.
   */
-  inline base_list(const base_list &tmp) :memory::SqlAlloc()
+  base_list(const base_list &tmp) :memory::SqlAlloc()
   {
     elements= tmp.elements;
     first= tmp.first;
     last= elements ? tmp.last : &first;
   }
-  inline base_list(bool) { }
-  inline bool push_back(void *info)
+  base_list(bool) { }
+  bool push_back(void *info)
   {
     if (((*last)=new list_node(info, &end_of_list)))
     {
@@ -139,7 +143,7 @@ public:
     }
     return 1;
   }
-  inline bool push_back(void *info, memory::Root *mem_root)
+  bool push_back(void *info, memory::Root *mem_root)
   {
     if (((*last)=new (mem_root) list_node(info, &end_of_list)))
     {
@@ -149,7 +153,7 @@ public:
     }
     return 1;
   }
-  inline bool push_front(void *info)
+  bool push_front(void *info)
   {
     list_node *node=new list_node(info,first);
     if (node)
@@ -172,7 +176,7 @@ public:
     delete *prev;
     *prev=node;
   }
-  inline void concat(base_list *list)
+  void concat(base_list *list)
   {
     if (!list->is_empty())
     {
@@ -181,7 +185,7 @@ public:
       elements+= list->elements;
     }
   }
-  inline void *pop(void)
+  void *pop()
   {
     if (first == &end_of_list) return 0;
     list_node *tmp=first;
@@ -190,7 +194,7 @@ public:
       last= &first;
     return tmp->info;
   }
-  inline void disjoin(base_list *list)
+  void disjoin(base_list *list)
   {
     list_node **prev= &first;
     list_node *node= first;
@@ -205,7 +209,7 @@ public:
     *prev= *last;
     last= prev;
   }
-  inline void prepand(base_list *list)
+  void prepand(base_list *list)
   {
     if (!list->is_empty())
     {
@@ -217,21 +221,14 @@ public:
   /**
     Swap two lists.
   */
-  inline void swap(base_list &rhs)
+  void swap(base_list &rhs)
   {
     std::swap(first, rhs.first);
     std::swap(last, rhs.last);
     std::swap(elements, rhs.elements);
   }
-  inline list_node* last_node() { return *last; }
-  inline list_node* first_node() { return first;}
-  inline void *head() { return first->info; }
-  inline void **head_ref() { return first != &end_of_list ? &first->info : 0; }
-  inline bool is_empty() { return first == &end_of_list ; }
-  inline list_node *last_ref() { return &end_of_list; }
+  bool is_empty() { return first == &end_of_list ; }
   friend class base_list_iterator;
-  friend class error_list;
-  friend class error_list_iterator;
 
 #ifdef LIST_EXTRA_DEBUG
   /*
@@ -293,48 +290,28 @@ class base_list_iterator
 protected:
   base_list *list;
   list_node **el,**prev,*current;
+public:
   void sublist(base_list &ls, uint32_t elm)
   {
     ls.first= *el;
     ls.last= list->last;
     ls.elements= elm;
   }
-public:
   base_list_iterator()
     :list(0), el(0), prev(0), current(0)
   {}
 
-  base_list_iterator(base_list &list_par)
-  { init(list_par); }
-
-  inline void init(base_list &list_par)
+  base_list_iterator(base_list &list_par, list_node** el0)
+    :list(&list_par), el(el0), prev(0), current(0)
   {
-    list= &list_par;
-    el= &list_par.first;
-    prev= 0;
-    current= 0;
   }
 
-  inline void *next(void)
+  void *next()
   {
     prev=el;
     current= *el;
     el= &current->next;
     return current->info;
-  }
-  inline void *next_fast(void)
-  {
-    list_node *tmp;
-    tmp= *el;
-    el= &tmp->next;
-    return tmp->info;
-  }
-  inline void *replace(void *element)
-  {						// Return old element
-    void *tmp=current->info;
-    assert(current->info != 0);
-    current->info=element;
-    return tmp;
   }
   void *replace(base_list &new_list)
   {
@@ -344,13 +321,13 @@ public:
       *new_list.last=current->next;
       current->info=new_list.first->info;
       current->next=new_list.first->next;
-      if ((list->last == &current->next) && (new_list.elements > 1))
-	list->last= new_list.last;
+      if (list->last == &current->next && new_list.elements > 1)
+        list->last= new_list.last;
       list->elements+=new_list.elements-1;
     }
     return ret_value;				// return old element
   }
-  inline void remove(void)			// Remove current
+  void remove()			// Remove current
   {
     list->remove(prev);
     el=prev;
@@ -362,38 +339,29 @@ public:
     current=current->next;
     el= &current->next;
   }
-  inline void **ref(void)			// Get reference pointer
-  {
-    return &current->info;
-  }
-  inline bool is_last(void)
-  {
-    return el == &list->last_ref()->next;
-  }
-  friend class error_list_iterator;
 };
 
 template <class T> class List_iterator;
 
-template <class T> class List :public base_list
+template <class T> class List : public base_list
 {
 public:
   typedef List_iterator<T> iterator;
 
-  inline List() :base_list() {}
-  inline List(const List<T> &tmp) :base_list(tmp) {}
-  inline List(const List<T> &tmp, memory::Root *mem_root) :
-    base_list(tmp, mem_root) {}
-  inline bool push_back(T *a) { return base_list::push_back(a); }
-  inline bool push_back(T *a, memory::Root *mem_root)
-  { return base_list::push_back(a, mem_root); }
-  inline bool push_front(T *a) { return base_list::push_front(a); }
-  inline T* head() {return static_cast<T*>(base_list::head()); }
-  inline T* pop()  {return static_cast<T*>(base_list::pop()); }
-  inline void concat(List<T> *list) { base_list::concat(list); }
-  inline void disjoin(List<T> *list) { base_list::disjoin(list); }
-  inline void prepand(List<T> *list) { base_list::prepand(list); }
-  void delete_elements(void)
+  friend class List_iterator<T>;
+
+  List() {}
+  List(const List<T> &tmp) : base_list(tmp) {}
+  List(const List<T> &tmp, memory::Root *mem_root) : base_list(tmp, mem_root) {}
+  bool push_back(T *a) { return base_list::push_back(a); }
+  bool push_back(T *a, memory::Root *mem_root) { return base_list::push_back(a, mem_root); }
+  bool push_front(T *a) { return base_list::push_front(a); }
+  T& front() {return *static_cast<T*>(first->info); }
+  T* pop()  {return static_cast<T*>(base_list::pop()); }
+  void concat(List<T> *list) { base_list::concat(list); }
+  void disjoin(List<T> *list) { base_list::disjoin(list); }
+  void prepand(List<T> *list) { base_list::prepand(list); }
+  void delete_elements()
   {
     list_node *element,*next;
     for (element=first; element != &end_of_list; element=next)
@@ -406,70 +374,35 @@ public:
 
   iterator begin()
   {
-    return iterator(*this);
+    return iterator(*this, &first);
   }
-};
 
-
-template <class T> class List_iterator :public base_list_iterator
-{
-public:
-  List_iterator(List<T> &a) : base_list_iterator(a) {}
-  List_iterator() : base_list_iterator() {}
-  inline T* operator++(int) { return (T*) base_list_iterator::next(); }
-  inline T *replace(T *a)   { return (T*) base_list_iterator::replace(a); }
-  inline T *replace(List<T> &a) { return (T*) base_list_iterator::replace(a); }
-  inline T** ref(void)	    { return (T**) base_list_iterator::ref(); }
-};
-
-
-template <class T> class List_iterator_fast :public base_list_iterator
-{
-protected:
-  inline T *replace(T *)   { return (T*) 0; }
-  inline T *replace(List<T> &) { return (T*) 0; }
-  inline void remove(void)  { }
-  inline void after(T *)   { }
-  inline T** ref(void)	    { return (T**) 0; }
-
-public:
-  inline List_iterator_fast(List<T> &a) : base_list_iterator(a) {}
-  inline List_iterator_fast() : base_list_iterator() {}
-  inline void init(List<T> &a) { base_list_iterator::init(a); }
-  inline T* operator++(int) { return (T*) base_list_iterator::next_fast(); }
-  void sublist(List<T> &list_arg, uint32_t el_arg)
+  size_t size() const
   {
-    base_list_iterator::sublist(list_arg, el_arg);
+    return elements;
+  }
+
+  void set_size(size_t v)
+  {
+    elements = v;
   }
 };
 
-
-/**
-  Make a deep copy of each list element.
-
-  @note A template function and not a template method of class List
-  is employed because of explicit template instantiation:
-  in server code there are explicit instantiations of List<T> and
-  an explicit instantiation of a template requires that any method
-  of the instantiated class used in the template can be resolved.
-  Evidently not all template arguments have clone() method with
-  the right signature.
-
-  @return You must query the error state in Session for out-of-memory
-  situation after calling this function.
-*/
-
-template <typename T>
-inline
-void
-list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
+template <class T> class List_iterator : public base_list_iterator
 {
-  /* Make a deep copy of each element */
-  typename List<T>::iterator it(list);
-  T *el;
-  while ((el= it++))
-    it.replace(el->clone(mem_root));
-}
+public:
+  List_iterator(List<T>& a, list_node** b) : base_list_iterator(a, b) {};
+  List_iterator() {};
+  T *operator++(int) { return (T*) base_list_iterator::next(); }
+  T *replace(T *a)   { T* old = (T*) current->info; current->info= a; return old; }
+  void replace(List<T> &a) { base_list_iterator::replace(a); }
+  T** ref() { return (T**) &current->info; }
+
+  T& operator*()
+  {
+    return *(T*)current->info;
+  }
+};
 
 } /* namespace drizzled */
 
