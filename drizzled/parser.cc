@@ -390,8 +390,8 @@ void buildCreateFieldIdent(LEX *lex)
   lex->charset= NULL;
   statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
 
-  message::AlterTable &alter_proto= ((statement::CreateTable *)lex->statement)->alter_info.alter_proto;
-  lex->setField(alter_proto.add_added_field());
+  message::AddedFields &added_fields_proto= ((statement::CreateTable *)lex->statement)->alter_info.added_fields_proto;
+  lex->setField(added_fields_proto.add_added_field());
 }
 
 void storeAlterColumnPosition(LEX *lex, const char *position)
