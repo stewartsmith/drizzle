@@ -24,6 +24,8 @@ message AlterTable {
 
    message AlterTableOperation {
      enum Operation {
+       /* Currently, the only valid DISCARD_TABLESPACE or IMPORT_TABLESPACE
+          ALTER TABLE operation is as the first and only operation */
        DISCARD_TABLESPACE = 0;
        IMPORT_TABLESPACE = 1;
      }
