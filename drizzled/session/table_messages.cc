@@ -47,10 +47,10 @@ bool TableMessages::removeTableMessage(const identifier::Table &identifier)
 
 bool TableMessages::getTableMessage(const identifier::Table &identifier, message::Table &table_message)
 {
-  Cache::mapped_type* i= find_ptr(table_message_cache, identifier.getPath());
-  if (!i)
+  Cache::mapped_type* ptr= find_ptr(table_message_cache, identifier.getPath());
+  if (!ptr)
     return false;
-  table_message.CopyFrom(*i);
+  table_message.CopyFrom(*ptr);
   return true;
 }
 
@@ -62,11 +62,11 @@ bool TableMessages::doesTableMessageExist(const identifier::Table &identifier)
 bool TableMessages::renameTableMessage(const identifier::Table &from, const identifier::Table &to)
 {
   table_message_cache[to.getPath()]= table_message_cache[from.getPath()];
-  Cache::mapped_type* i= find_ptr(table_message_cache, to.getPath());
-  if (!i)
+  Cache::mapped_type* ptr= find_ptr(table_message_cache, to.getPath());
+  if (!ptr)
     return false;
-  i->set_schema(to.getSchemaName());
-  i->set_name(to.getTableName());
+  ptr->set_schema(to.getSchemaName());
+  ptr->set_name(to.getTableName());
   return true;
 }
 

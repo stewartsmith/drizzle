@@ -1664,8 +1664,8 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    if (var_hash_t::mapped_type* i= find_ptr(var_hash, save_var_name_str))
-      v= *i;
+    if (var_hash_t::mapped_type* ptr= find_ptr(var_hash, save_var_name_str))
+      v= *ptr;
     else
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
@@ -1698,8 +1698,8 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  if (var_hash_t::mapped_type* i= find_ptr(var_hash, var_name))
-    return *i;
+  if (var_hash_t::mapped_type* ptr= find_ptr(var_hash, var_name))
+    return *ptr;
   return var_hash[var_name] = var_init(0, name, len, "", 0);
 }
 
@@ -3376,8 +3376,8 @@ static uint32_t get_errcode_from_name(const char *error_name, const char *error_
 {
   string error_name_s(error_name, error_end);
 
-  if (ErrorCodes::mapped_type* i= find_ptr(global_error_names, error_name_s))
-    return *i;
+  if (ErrorCodes::mapped_type* ptr= find_ptr(global_error_names, error_name_s))
+    return *ptr;
 
   die("Unknown SQL error name '%s'", error_name_s.c_str());
   return 0;

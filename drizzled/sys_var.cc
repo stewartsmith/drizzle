@@ -1590,8 +1590,8 @@ sys_var *find_sys_var(const std::string &name)
 
   sys_var *result= NULL;
 
-  if (SystemVariableMap::mapped_type* i= find_ptr(system_variable_map, lower_name))
-    result= *i;
+  if (SystemVariableMap::mapped_type* ptr= find_ptr(system_variable_map, lower_name))
+    result= *ptr;
 
   if (result == NULL)
   {

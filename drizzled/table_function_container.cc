@@ -30,8 +30,8 @@ namespace drizzled {
 
 plugin::TableFunction *TableFunctionContainer::getFunction(const std::string &path)
 {
-  ToolMap::mapped_type* i= find_ptr(table_map, path);
-  return i ? *i : NULL;
+  ToolMap::mapped_type* ptr= find_ptr(table_map, path);
+  return ptr ? *ptr : NULL;
 }
 
 void TableFunctionContainer::getNames(const string &predicate, std::set<std::string> &set_of_names)
