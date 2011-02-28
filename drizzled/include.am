@@ -352,6 +352,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/plugin/authorization.h \
 			      drizzled/plugin/catalog.h \
 			      drizzled/plugin/client.h \
+			      drizzled/plugin/client/cached.h \
 			      drizzled/plugin/client/concurrent.h \
 			      drizzled/plugin/daemon.h \
 			      drizzled/plugin/error_message.h \
@@ -410,6 +411,9 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/show.h \
 			      drizzled/show_type.h \
 			      drizzled/signal_handler.h \
+			      drizzled/sql/exception.h \
+			      drizzled/sql/result_set.h \
+			      drizzled/sql/result_set_meta_data.h \
 			      drizzled/sort_field.h \
 			      drizzled/sql_base.h \
 			      drizzled/sql_error.h \
@@ -813,6 +817,8 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/set_var.cc \
 			   drizzled/show.cc \
 			   drizzled/signal_handler.cc \
+			   drizzled/sql/exception.cc \
+			   drizzled/sql/result_set.cc \
 			   drizzled/sql_base.cc \
 			   drizzled/sql_delete.cc \
 			   drizzled/sql_derived.cc \

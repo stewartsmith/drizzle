@@ -1,6 +1,6 @@
 [test_info]
 name = randgen_slave_plugin
-comment = basic, basic randgen test
+comment = does NOT actually test the master-slave replication yet, but it will.
 
 [test_command]
 command = ./gentest.pl --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=10 --threads=1

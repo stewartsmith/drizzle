@@ -41,6 +41,7 @@
 #include <drizzled/alter_column.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/item/subselect.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
@@ -176,7 +177,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
   Currently there are 70 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 75
+%expect 79
 
 /*
    Comments for TOKENS.
@@ -572,6 +573,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %nonassoc IN_SYM
 %nonassoc IS NULL_SYM TRUE_SYM FALSE_SYM
 
+%nonassoc CONCAT
 %nonassoc '|'
 %nonassoc '&'
 %nonassoc SHIFT_LEFT SHIFT_RIGHT
@@ -619,7 +621,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         text_string opt_gconcat_separator
 
 %type <field_val>
-      field_definition
+      field_def
       int_type
       real_type
 
@@ -635,7 +637,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 
 %type <num>
         order_dir
-        field_def
         opt_table_options
         all_or_any opt_distinct
         union_option
@@ -662,7 +663,11 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         predicate bit_expr
         table_wild simple_expr udf_expr
         expr_or_default set_expr_or_default
-        signed_literal now_or_signed_literal opt_escape
+        opt_escape
+        signed_literal
+        integer_literal
+        date_literal
+        boolean_literal
         simple_ident_q
         field_or_var limit_option
         function_call_keyword
@@ -742,7 +747,11 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         opt_delete_option varchar
         opt_outer table_list table_name
         opt_option opt_place
-        opt_attribute opt_attribute_list attribute
+        opt_attribute
+        opt_attribute_boolean
+        opt_attribute_timestamp
+        opt_attribute_number
+        opt_attribute_string
         flush_options flush_option
         equal optional_braces
         normal_join
@@ -1006,7 +1015,7 @@ opt_table_options:
 
 opt_if_not_exists:
           /* empty */ { $$= false; }
-        | IF not EXISTS { $$= true; YYSession->getLex()->setExists(); }
+        | IF NOT_SYM EXISTS { $$= true; YYSession->getLex()->setExists(); }
         ;
 
 opt_create_table_options:
@@ -1171,7 +1180,7 @@ field_spec:
           {
             parser::buildCreateFieldIdent(Lex);
           }
-          field_def
+          field_def opt_attribute_comment
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
@@ -1193,104 +1202,96 @@ field_spec:
         ;
 
 field_def:
-          field_definition opt_attribute {}
-        ;
-
-field_definition:
-          int_type ignored_field_number_length opt_field_number_signed opt_zerofill
-          { 
-            $$= parser::buildIntegerColumn(Lex, $1, ($3 or $4));
-          }
-        | real_type opt_precision
-          {
-            assert ($1 == DRIZZLE_TYPE_DOUBLE);
-            $$= parser::buildDoubleColumn(Lex);
-          }
-        | char '(' NUM ')'
-          {
-            $$= parser::buildVarcharColumn(Lex, $3.str);
-          }
-        | char
-          {
-            $$= parser::buildVarcharColumn(Lex, "1");
-          }
-        | varchar '(' NUM ')'
-          {
-            $$= parser::buildVarcharColumn(Lex, $3.str);
-          }
-        | VARBINARY '(' NUM ')'
-          {
-            $$= parser::buildVarbinaryColumn(Lex, $3.str);
-          }
-        | DATE_SYM
-          {
-            $$=DRIZZLE_TYPE_DATE;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DATE);
-          }
-        | TIME_SYM
-          {
-            $$=DRIZZLE_TYPE_TIME;
-
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::TIME);
-          }
-        | TIMESTAMP_SYM
+          TIMESTAMP_SYM opt_attribute_timestamp
           {
             $$=parser::buildTimestampColumn(Lex, NULL);
           }
-        | TIMESTAMP_SYM '(' NUM ')'
+        | TIMESTAMP_SYM '(' NUM ')' opt_attribute_timestamp
           {
             $$=parser::buildTimestampColumn(Lex, $3.str);
-          }
-        | DATETIME_SYM
+          } 
+        | DATETIME_SYM opt_attribute_timestamp
           {
             $$=DRIZZLE_TYPE_DATETIME;
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::DATETIME);
+          } 
+        | int_type opt_attribute_number
+          { 
+            $$= $1;
           }
-        | BLOB_SYM
+        | CHAR_SYM opt_attribute_string
           {
-            $$= parser::buildBlobColumn(Lex);
+            $$= parser::buildVarcharColumn(Lex, "1");
           }
-        | TEXT_SYM
+        | varchar '(' NUM ')' opt_attribute_string
+          {
+            $$= parser::buildVarcharColumn(Lex, $3.str);
+          }
+        | TEXT_SYM opt_attribute_string
           {
             $$=DRIZZLE_TYPE_BLOB;
             Lex->length=(char*) 0; /* use default length */
 
-          if (Lex->field())
-            Lex->field()->set_type(message::Table::Field::BLOB);
-          }
-        | DECIMAL_SYM float_options
-          {
-            $$= parser::buildDecimalColumn(Lex);
-          }
-        | NUMERIC_SYM float_options
-          {
-            $$= parser::buildDecimalColumn(Lex);
-          }
-        | FIXED_SYM float_options
-          {
-            $$= parser::buildDecimalColumn(Lex);
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::BLOB);
           }
         | ENUM_SYM
           {
             Lex->interval_list.clear();
           }
-          '(' string_list ')'
+          '(' string_list ')' opt_attribute_string
           {
             $$=DRIZZLE_TYPE_ENUM;
 
             if (Lex->field())
               Lex->field()->set_type(message::Table::Field::ENUM);
           }
-        | UUID_SYM
+        | VARBINARY '(' NUM ')' opt_attribute
+          {
+            $$= parser::buildVarbinaryColumn(Lex, $3.str);
+          }
+        | real_type opt_attribute_number
+          {
+            assert ($1 == DRIZZLE_TYPE_DOUBLE);
+            $$= parser::buildDoubleColumn(Lex);
+          } 
+        | DATE_SYM opt_attribute
+          {
+            $$=DRIZZLE_TYPE_DATE;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::DATE);
+          }
+        | TIME_SYM opt_attribute
+          {
+            $$=DRIZZLE_TYPE_TIME;
+
+            if (Lex->field())
+              Lex->field()->set_type(message::Table::Field::TIME);
+          }
+        | BLOB_SYM opt_attribute
+          {
+            $$= parser::buildBlobColumn(Lex);
+          }
+        | DECIMAL_SYM float_options opt_attribute_number
+          {
+            $$= parser::buildDecimalColumn(Lex);
+          }
+        | NUMERIC_SYM float_options opt_attribute_number
+          {
+            $$= parser::buildDecimalColumn(Lex);
+          }
+        | FIXED_SYM float_options opt_attribute_number
+          {
+            $$= parser::buildDecimalColumn(Lex);
+          }
+        | UUID_SYM opt_attribute
           {
             $$= parser::buildUuidColumn(Lex);
           }
-        | BOOLEAN_SYM
+        | BOOLEAN_SYM opt_attribute_boolean
           {
             $$= parser::buildBooleanColumn(Lex);
           }
@@ -1300,40 +1301,36 @@ field_definition:
           }
         ;
 
-char:
-          CHAR_SYM {}
-        ;
-
 varchar:
-          char VARYING {}
-        | VARCHAR_SYM {}
+          CHAR_SYM VARYING
+          { }
+        | CHAR_SYM
+          { }
+        | VARCHAR_SYM
+          { }
         ;
 
 int_type:
-          INT_SYM 
+          INT_SYM  ignored_field_number_length opt_field_number_signed opt_zerofill 
           {
-            $$= DRIZZLE_TYPE_LONG;
+            $$= parser::buildIntegerColumn(Lex, DRIZZLE_TYPE_LONG, ($3 or $4));
           }
-        | BOOL_SYM
+        | BIGINT_SYM ignored_field_number_length opt_field_number_signed opt_zerofill 
           {
-            $$= DRIZZLE_TYPE_LONG;
-          }
-        | BIGINT_SYM
-          {
-            $$= DRIZZLE_TYPE_LONGLONG;
+            $$= parser::buildIntegerColumn(Lex, DRIZZLE_TYPE_LONGLONG, ($3 or $4));
           }
         ;
 
 real_type:
-          REAL
+          REAL opt_precision
           {
             $$= DRIZZLE_TYPE_DOUBLE;
           }
-        | DOUBLE_SYM
+        | DOUBLE_SYM opt_precision
           {
             $$= DRIZZLE_TYPE_DOUBLE;
           }
-        | DOUBLE_SYM PRECISION
+        | DOUBLE_SYM PRECISION opt_precision
           {
             $$= DRIZZLE_TYPE_DOUBLE;
           }
@@ -1386,22 +1383,12 @@ opt_precision:
           {}
         ;
 
-opt_attribute:
-          /* empty */ {}
-        | opt_attribute_list {}
-        ;
-
-opt_attribute_list:
-          opt_attribute_list attribute {}
-        | attribute
-        ;
-
-attribute:
+opt_attribute_not_null:
           NULL_SYM
           {
             Lex->type&= ~ NOT_NULL_FLAG;
           }
-        | not NULL_SYM
+        | NOT_SYM NULL_SYM
           {
             Lex->type|= NOT_NULL_FLAG;
 
@@ -1410,26 +1397,10 @@ attribute:
               Lex->field()->mutable_constraints()->set_is_notnull(true);
             }
           }
-        | DEFAULT now_or_signed_literal
-          {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+        ;
 
-            statement->default_value=$2;
-            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
-          }
-        | ON UPDATE_SYM NOW_SYM optional_braces
-          {
-            ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
-          }
-        | AUTO_INC
-          {
-            parser::buildAutoOnColumn(Lex);
-          }
-        | SERIAL_SYM DEFAULT VALUE_SYM
-          {
-            (void)parser::buildSerialColumn(Lex);
-          }
-        | opt_primary KEY_SYM
+opt_attribute_index:
+          opt_primary KEY_SYM
           {
             parser::buildPrimaryOnColumn(Lex);
           }
@@ -1441,13 +1412,57 @@ attribute:
           {
             parser::buildKeyOnColumn(Lex);
           }
-        | COMMENT_SYM TEXT_STRING_sys
+        ;
+
+opt_attribute:
+          /* empty */ {}
+        | opt_attribute opt_attribute_not_null
+          { }
+        | opt_attribute DEFAULT signed_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            statement->comment= $2;
 
-            if (Lex->field())
-              Lex->field()->set_comment($2.str);
+            statement->default_value= $3;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | opt_attribute opt_attribute_index
+          { }
+        ;
+
+opt_attribute_boolean:
+          /* empty */ { }
+        | opt_attribute_boolean opt_attribute_not_null
+          { }
+        | opt_attribute_boolean DEFAULT boolean_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value= $3;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | opt_attribute_boolean opt_attribute_index
+          { }
+        ;
+
+opt_attribute_string:
+          /* empty */ {}
+        | opt_attribute_list_string {}
+        ;
+
+opt_attribute_list_string:
+          opt_attribute_list_string attribute_string {}
+        | attribute_string
+        ;
+
+attribute_string:
+          opt_attribute_not_null
+          { }
+        | DEFAULT signed_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value=$2;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | COLLATE_SYM collation_name
           {
@@ -1462,13 +1477,87 @@ attribute:
               Lex->charset=$2;
             }
           }
+        | opt_attribute_index
+          { }
         ;
 
-now_or_signed_literal:
-          NOW_SYM optional_braces
-          { $$= new Item_func_now_local(); }
-        | signed_literal
-          { $$=$1; }
+opt_attribute_number:
+          /* empty */ {}
+        | opt_attribute_list_integer {}
+        ;
+
+opt_attribute_list_integer:
+          opt_attribute_list_integer attribute_integer {}
+        | attribute_integer
+        ;
+
+attribute_integer:
+          opt_attribute_not_null
+          { }
+        | AUTO_INC
+          {
+            parser::buildAutoOnColumn(Lex);
+          }
+        | SERIAL_SYM DEFAULT VALUE_SYM
+          {
+            (void)parser::buildSerialColumn(Lex);
+          }
+        | DEFAULT integer_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value=$2;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | opt_attribute_index
+          { }
+        ;
+
+opt_attribute_timestamp:
+          /* empty */ {}
+        | opt_attribute_list_timestamp {}
+        ;
+
+opt_attribute_list_timestamp:
+          opt_attribute_list_timestamp attribute_timestamp {}
+        | attribute_timestamp
+        ;
+
+attribute_timestamp:
+          opt_attribute_not_null
+          { }
+        | DEFAULT NOW_SYM optional_braces
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value= new Item_func_now_local();
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | DEFAULT date_literal
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->default_value=$2;
+            statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
+          }
+        | ON UPDATE_SYM NOW_SYM optional_braces
+          {
+            ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
+          }
+        | opt_attribute_index
+          { }
+        ;
+
+opt_attribute_comment:
+          /* empty */ { }
+        | COMMENT_SYM TEXT_STRING_sys
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement->comment= $2;
+
+            if (Lex->field())
+              Lex->field()->set_comment($2.str);
+          }
         ;
 
 collation_name:
@@ -1788,7 +1877,7 @@ alter_list_item:
 
             Lex->setField(NULL);
           }
-          field_def
+          field_def opt_attribute_comment
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -2233,7 +2322,7 @@ optional_braces:
 
 /* all possible expressions */
 expr:
-          expr or expr %prec OR_SYM
+          expr OR_SYM expr %prec OR_SYM
           {
             /*
               Design notes:
@@ -2287,7 +2376,7 @@ expr:
             /* XOR is a proprietary extension */
             $$ = new (YYSession->mem_root) Item_cond_xor($1, $3);
           }
-        | expr and expr %prec AND_SYM
+        | expr AND_SYM expr %prec AND_SYM
           {
             /* See comments in rule expr: expr or expr */
             Item_cond_and *item1;
@@ -2331,31 +2420,53 @@ expr:
         | NOT_SYM expr %prec NOT_SYM
           { $$= negate_expression(YYSession, $2); }
         | bool_pri IS TRUE_SYM %prec IS
-          { $$= new (YYSession->mem_root) Item_func_istrue($1); }
-        | bool_pri IS not TRUE_SYM %prec IS
-          { $$= new (YYSession->mem_root) Item_func_isnottrue($1); }
+          { 
+            $$= new (YYSession->mem_root) Item_func_istrue($1);
+          }
+        | bool_pri IS NOT_SYM TRUE_SYM %prec IS
+          {
+            $$= new (YYSession->mem_root) Item_func_isnottrue($1);
+          }
         | bool_pri IS FALSE_SYM %prec IS
-          { $$= new (YYSession->mem_root) Item_func_isfalse($1); }
-        | bool_pri IS not FALSE_SYM %prec IS
-          { $$= new (YYSession->mem_root) Item_func_isnotfalse($1); }
+          {
+            $$= new (YYSession->mem_root) Item_func_isfalse($1);
+          }
+        | bool_pri IS NOT_SYM FALSE_SYM %prec IS
+          {
+            $$= new (YYSession->mem_root) Item_func_isnotfalse($1);
+          }
         | bool_pri IS UNKNOWN_SYM %prec IS
-          { $$= new Item_func_isnull($1); }
-        | bool_pri IS not UNKNOWN_SYM %prec IS
-          { $$= new Item_func_isnotnull($1); }
+          {
+            $$= new Item_func_isnull($1);
+          }
+        | bool_pri IS NOT_SYM UNKNOWN_SYM %prec IS
+          {
+            $$= new Item_func_isnotnull($1);
+          }
         | bool_pri
         ;
 
 bool_pri:
           bool_pri IS NULL_SYM %prec IS
-          { $$= new Item_func_isnull($1); }
-        | bool_pri IS not NULL_SYM %prec IS
-          { $$= new Item_func_isnotnull($1); }
+          {
+            $$= new Item_func_isnull($1);
+          }
+        | bool_pri IS NOT_SYM NULL_SYM %prec IS
+          {
+            $$= new Item_func_isnotnull($1);
+          }
         | bool_pri EQUAL_SYM predicate %prec EQUAL_SYM
-          { $$= new Item_func_equal($1,$3); }
+          {
+            $$= new Item_func_equal($1,$3);
+          }
         | bool_pri comp_op predicate %prec '='
-          { $$= (*$2)(0)->create($1,$3); }
+          {
+            $$= (*$2)(0)->create($1,$3);
+          }
         | bool_pri comp_op all_or_any '(' subselect ')' %prec '='
-          { $$= all_any_subquery_creator($1, $2, $3, $5); }
+          {
+            $$= all_any_subquery_creator($1, $2, $3, $5);
+          }
         | predicate
         ;
 
@@ -2364,7 +2475,7 @@ predicate:
           {
             $$= new (YYSession->mem_root) Item_in_subselect($1, $4);
           }
-        | bit_expr not IN_SYM '(' subselect ')'
+        | bit_expr NOT_SYM IN_SYM '(' subselect ')'
           {
             Item *item= new (YYSession->mem_root) Item_in_subselect($1, $5);
             $$= negate_expression(YYSession, item);
@@ -2379,11 +2490,11 @@ predicate:
             $6->push_front($1);
             $$= new (YYSession->mem_root) Item_func_in(*$6);
           }
-        | bit_expr not IN_SYM '(' expr ')'
+        | bit_expr NOT_SYM IN_SYM '(' expr ')'
           {
             $$= parser::handle_sql2003_note184_exception(YYSession, $1, false, $5);
           }
-        | bit_expr not IN_SYM '(' expr ',' expr_list ')'
+        | bit_expr NOT_SYM IN_SYM '(' expr ',' expr_list ')'
           {
             $7->push_front($5);
             $7->push_front($1);
@@ -2395,7 +2506,7 @@ predicate:
           {
             $$= new Item_func_between($1,$3,$5);
           }
-        | bit_expr not BETWEEN_SYM bit_expr AND_SYM predicate
+        | bit_expr NOT_SYM BETWEEN_SYM bit_expr AND_SYM predicate
           {
             Item_func_between *item= new Item_func_between($1,$4,$6);
             item->negate();
@@ -2405,7 +2516,7 @@ predicate:
           { 
             $$= new Item_func_like($1,$3,$4,Lex->escape_used);
           }
-        | bit_expr not LIKE simple_expr opt_escape
+        | bit_expr NOT_SYM LIKE simple_expr opt_escape
           { 
             $$= new Item_func_not(new Item_func_like($1,$4,$5, Lex->escape_used));
           }
@@ -2419,7 +2530,7 @@ predicate:
               DRIZZLE_YYABORT;
             }
           }
-        | bit_expr not REGEXP_SYM bit_expr
+        | bit_expr NOT_SYM REGEXP_SYM bit_expr
           { 
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($1);
@@ -2451,40 +2562,46 @@ bit_expr:
             $$= new function::bit::ShiftLeft($1, $3);
           }
         | bit_expr '+' bit_expr %prec '+'
-          { $$= new Item_func_plus($1,$3); }
+          {
+            $$= new Item_func_plus($1,$3);
+          }
         | bit_expr '-' bit_expr %prec '-'
-          { $$= new Item_func_minus($1,$3); }
+          { 
+            $$= new Item_func_minus($1,$3);
+          }
         | bit_expr '+' INTERVAL_SYM expr interval %prec '+'
-          { $$= new Item_date_add_interval($1,$4,$5,0); }
+          {
+            $$= new Item_date_add_interval($1,$4,$5,0);
+          }
         | bit_expr '-' INTERVAL_SYM expr interval %prec '-'
-          { $$= new Item_date_add_interval($1,$4,$5,1); }
+          {
+            $$= new Item_date_add_interval($1,$4,$5,1);
+          }
         | bit_expr '*' bit_expr %prec '*'
-          { $$= new Item_func_mul($1,$3); }
+          {
+            $$= new Item_func_mul($1,$3);
+          }
         | bit_expr '/' bit_expr %prec '/'
-          { $$= new Item_func_div(YYSession,$1,$3); }
+          {
+            $$= new Item_func_div(YYSession,$1,$3);
+          }
         | bit_expr '%' bit_expr %prec '%'
-          { $$= new Item_func_mod($1,$3); }
+          {
+            $$= new Item_func_mod($1,$3);
+          }
         | bit_expr DIV_SYM bit_expr %prec DIV_SYM
-          { $$= new Item_func_int_div($1,$3); }
+          {
+            $$= new Item_func_int_div($1,$3);
+          }
         | bit_expr MOD_SYM bit_expr %prec MOD_SYM
-          { $$= new Item_func_mod($1,$3); }
+          {
+            $$= new Item_func_mod($1,$3);
+          }
         | bit_expr '^' bit_expr
           {
             $$= new (YYSession->mem_root) function::bit::Xor($1, $3);
           }
         | simple_expr
-        ;
-
-or:
-          OR_SYM
-       ;
-
-and:
-          AND_SYM
-       ;
-
-not:
-          NOT_SYM
         ;
 
 comp_op:
@@ -2519,6 +2636,10 @@ simple_expr:
         | sum_expr
           {
             Lex->setSumExprUsed();
+          }
+        | simple_expr CONCAT simple_expr
+          {
+            $$= new (YYSession->mem_root) Item_func_concat(*YYSession, $1, $3);
           }
         | '+' simple_expr %prec UMINUS { $$= $2; }
         | '-' simple_expr %prec UMINUS
@@ -2892,7 +3013,7 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            const plugin::Function *udf= plugin::Function::get($1.str, $1.length);
+            const plugin::Function *udf= plugin::Function::get(std::string($1.str, $1.length));
 
             /* Temporary placing the result of getFunction in $3 */
             $<udf>$= udf;
@@ -4814,6 +4935,52 @@ literal:
         | TRUE_SYM { $$= new drizzled::item::True(); }
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
+        | DATE_SYM text_literal { $$ = $2; }
+        | TIMESTAMP_SYM text_literal { $$ = $2; }
+        ;
+
+integer_literal:
+          text_literal { $$ = $1; }
+        | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
+        | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
+        | NUM_literal { $$ = $1; }
+        | NULL_SYM
+          {
+            $$ = new Item_null();
+            YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
+          }
+        | '+' NUM_literal { $$ = $2; }
+        | '-' NUM_literal
+          {
+            $2->max_length++;
+            $$= $2->neg();
+          }
+        ;
+
+boolean_literal:
+          NULL_SYM
+          {
+            $$ = new Item_null();
+            YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
+          }
+        | FALSE_SYM
+          {
+            $$= new drizzled::item::False();
+          }
+        | TRUE_SYM
+          {
+            $$= new drizzled::item::True();
+          }
+        ;
+
+date_literal:
+          text_literal { $$ = $1; }
+        | NULL_SYM
+          {
+            $$ = new Item_null();
+            YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
+          }
+        | NUM_literal { $$ = $1; }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP_SYM text_literal { $$ = $2; }
         ;

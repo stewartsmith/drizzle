@@ -1,0 +1,41 @@
+CREATE TABLE t1 (A BOOLEAN DEFAULT TRUE);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `A` BOOLEAN DEFAULT 'TRUE'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+INSERT INTO t1 VALUES ();
+SELECT A FROM t1;
+A
+TRUE
+DROP TABLE t1;
+CREATE TABLE t1 (A BOOLEAN DEFAULT FALSE);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `A` BOOLEAN DEFAULT 'FALSE'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+INSERT INTO t1 VALUES ();
+SELECT A FROM t1;
+A
+FALSE
+DROP TABLE t1;
+CREATE TABLE t1 (A BOOLEAN DEFAULT NULL);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `A` BOOLEAN DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+INSERT INTO t1 VALUES ();
+SELECT A FROM t1;
+A
+NULL
+DROP TABLE t1;
+CREATE TABLE t1 (A BOOLEAN DEFAULT "");
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '"")' at line 1
+CREATE TABLE t1 (A BOOLEAN DEFAULT "false");
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '"false")' at line 1
+CREATE TABLE t1 (A BOOLEAN DEFAULT 0);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '0)' at line 1
+CREATE TABLE t1 (A BOOLEAN DEFAULT 1);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '1)' at line 1

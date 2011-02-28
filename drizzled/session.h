@@ -55,7 +55,6 @@
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/sql_error.h>
-#include <drizzled/sql_lex.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
@@ -66,6 +65,8 @@
 #include <drizzled/var.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
+#include <drizzled/type/time.h>
+#include <drizzled/sql_lex.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 

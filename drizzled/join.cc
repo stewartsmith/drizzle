@@ -61,8 +61,8 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/select_result.h>
-
 #include <drizzled/debug.h>
+#include <drizzled/item/subselect.h>
 
 #include <algorithm>
 
