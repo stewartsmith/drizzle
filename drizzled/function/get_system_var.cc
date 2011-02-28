@@ -52,7 +52,7 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
     return(1);                             // Impossible
 
   item->set_name(name, 0, system_charset_info); // don't allocate a new name
-  session->change_item_tree(ref, item);
+  *ref= item;
 
   return(0);
 }

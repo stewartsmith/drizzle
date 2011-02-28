@@ -130,16 +130,7 @@ Item *Item_default_value::transform(Item_transformer transformer, unsigned char 
   Item *new_item= arg->transform(transformer, args);
   if (!new_item)
     return NULL;
-
-  /*
-    Session::change_item_tree() should be called only if the tree was
-    really transformed, i.e. when a new item has been created.
-    Otherwise we'll be allocating a lot of unnecessary memory for
-    change records at each execution.
-  */
-  if (arg != new_item)
-    getSession().change_item_tree(&arg, new_item);
-
+  arg= new_item;
   return (this->*transformer)(args);
 }
 

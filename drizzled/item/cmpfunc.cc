@@ -477,7 +477,7 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
       Item *tmp= new Item_int_with_ref(field->val_int(), *item,
                                        test(field->flags & UNSIGNED_FLAG));
       if (tmp)
-        session->change_item_tree(item, tmp);
+        *item= tmp;
       result= 1;					// Item was replaced
     }
 
@@ -1677,14 +1677,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, unsigned char *
   new_item= (*args)->transform(transformer, argument);
   if (!new_item)
     return 0;
-  /*
-    Session::change_item_tree() should be called only if the tree was
-    really transformed, i.e. when a new item has been created.
-    Otherwise we'll be allocating a lot of unnecessary memory for
-    change records at each execution.
-  */
-  if ((*args) != new_item)
-    getSession().change_item_tree(args, new_item);
+  *args= new_item;
 
   /*
     Transform the right IN operand which should be an Item_in_subselect or a
@@ -4040,15 +4033,7 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
     Item *new_item= item->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (new_item != item)
-      getSession().change_item_tree(li.ref(), new_item);
+    *li.ref()= new_item;
   }
   return Item_func::transform(transformer, arg);
 }
@@ -5176,15 +5161,7 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
     Item *new_item= item->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (new_item != item)
-      getSession().change_item_tree((Item **) it.ref(), new_item);
+    *(Item **)it.ref()= new_item;
   }
   return Item_func::transform(transformer, arg);
 }
