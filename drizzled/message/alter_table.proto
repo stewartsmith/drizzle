@@ -1,0 +1,36 @@
+/*
+  Message format for ALTER TABLE commands.
+*/
+package drizzled.message;
+option optimize_for = SPEED;
+
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "AlterTableMessage";
+
+message AlterTable {
+  optional string catalog = 1;
+  required string schema = 2;
+  required string name = 3;
+
+  enum BuildMethod {
+    BUILD_DEFAULT = 0;
+    BUILD_ONLINE  = 1;
+    BUILD_OFFLINE = 2;
+  }
+      
+   required BuildMethod build_method = 4 [default = BUILD_DEFAULT];
+
+   required bool ignore = 5 [ default = false ];
+
+   message AlterTableOperation {
+     enum Operation {
+       DISCARD_TABLESPACE = 0;
+       IMPORT_TABLESPACE = 1;
+     }
+
+     required Operation operation = 1;
+     
+   }
+
+  repeated AlterTableOperation operations = 6; 
+}

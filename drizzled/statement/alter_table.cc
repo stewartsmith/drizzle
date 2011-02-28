@@ -83,6 +83,7 @@ AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_bui
   in_session->getLex()->sql_command= SQLCOM_ALTER_TABLE;
   (void)ident;
   alter_info.build_method= build_arg;
+  assert((int)alter_info.build_method == (int)in_session->getLex()->alter_table()->build_method());
 }
 
 } // namespace statement

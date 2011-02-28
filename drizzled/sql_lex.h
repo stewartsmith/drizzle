@@ -24,6 +24,7 @@
   @defgroup Semantic_Analysis Semantic Analysis
 */
 #include <drizzled/message/table.pb.h>
+#include <drizzled/message/alter_table.pb.h>
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/name_resolution_context.h>
@@ -1016,6 +1017,14 @@ public:
     return _create_table;
   }
 
+  message::AlterTable *alter_table()
+  {
+    if (not _alter_table)
+      _alter_table= new message::AlterTable;
+
+    return _alter_table;
+  }
+
   message::Table::Field *field()
   {
     return _create_field;
@@ -1040,6 +1049,7 @@ private:
   bool cacheable;
   bool sum_expr_used;
   message::Table *_create_table;
+  message::AlterTable *_alter_table;
   message::Table::Field *_create_field;
   bool _exists;
 };

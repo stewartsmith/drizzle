@@ -1726,14 +1726,17 @@ alter_commands:
 build_method:
         /* empty */
           {
+            Lex->alter_table()->set_build_method(message::AlterTable::BUILD_DEFAULT);
             $$= HA_BUILD_DEFAULT;
           }
         | ONLINE_SYM
           {
+            Lex->alter_table()->set_build_method(message::AlterTable::BUILD_ONLINE);
             $$= HA_BUILD_ONLINE;
           }
         | OFFLINE_SYM
           {
+            Lex->alter_table()->set_build_method(message::AlterTable::BUILD_OFFLINE);
             $$= HA_BUILD_OFFLINE;
           }
         ;
