@@ -211,7 +211,7 @@ def write_plugin_docs(plugin, doc_index, plugin_am):
     doc_index.write("""
    %(name)s/index""" % plugin)
     plugin_am.write("""
-EXTRA_DIST+=docs/plugins/%(name)s/*.rst
+EXTRA_DIST+=${top_srcdir}/docs/plugins/%(name)s/*.rst
 """ % plugin)
 
 def write_plugin_ac(plugin, plugin_ac):
