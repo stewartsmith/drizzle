@@ -10,11 +10,8 @@ EXTRA_DIST+= \
 	     docs/drizzled_header.html \
 	     docs/logo.png \
 	     docs/plugins/list.rst \
-	     docs/plugins/haildb/index.rst \
-	     docs/plugins/innobase/index.rst \
-	     docs/plugins/mysql_protocol/index.rst \
-	     docs/plugins/transaction_log/index.rst \
-	     docs/plugins/slave/index.rst \
+	     docs/pyext/__init__.py \
+	     docs/pyext/options.py \
 	     docs/_static/drizzle.ico \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst \
@@ -70,38 +67,38 @@ sphinx-help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 html-local:
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/html
+	PYTHONPATH=${top_srcdir}/docs $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(SPHINX_BUILDDIR)/html."
 
 dirhtml:
-	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/dirhtml
+	PYTHONPATH=${top_srcdir}/docs $(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(SPHINX_BUILDDIR)/dirhtml."
 
 singlehtml:
-	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/singlehtml
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML page is in $(SPHINX_BUILDDIR)/singlehtml."
 
 pickle:
-	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/pickle
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/pickle
 	@echo
 	@echo "Build finished; now you can process the pickle files."
 
 json:
-	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/json
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/json
 	@echo
 	@echo "Build finished; now you can process the JSON files."
 
 htmlhelp:
-	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/htmlhelp
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/htmlhelp
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
 	      ".hhp project file in $(SPHINX_BUILDDIR)/htmlhelp."
 
 qthelp:
-	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/qthelp
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/qthelp
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(SPHINX_BUILDDIR)/qthelp, like this:"
@@ -110,7 +107,7 @@ qthelp:
 	@echo "# assistant -collectionFile $(SPHINX_BUILDDIR)/qthelp/Drizzle.qhc"
 
 devhelp:
-	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/devhelp
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
@@ -119,46 +116,46 @@ devhelp:
 	@echo "# devhelp"
 
 epub:
-	$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/epub
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/epub
 	@echo
 	@echo "Build finished. The epub file is in $(SPHINX_BUILDDIR)/epub."
 
 latex:
-	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/latex
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/latex
 	@echo
 	@echo "Build finished; the LaTeX files are in $(SPHINX_BUILDDIR)/latex."
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
 	      "(use \`make latexpdf' here to do that automatically)."
 
 latexpdf: latex
-	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/latex
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/latex
 	@echo "Running LaTeX files through pdflatex..."
 	make -C $(SPHINX_BUILDDIR)/latex all-pdf
 	@echo "pdflatex finished; the PDF files are in $(SPHINX_BUILDDIR)/latex."
 
 text:
-	$(SPHINXBUILD) -b text $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/text
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b text $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/text
 	@echo
 	@echo "Build finished. The text files are in $(SPHINX_BUILDDIR)/text."
 
 man:
-	$(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/man
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/man
 	@echo
 	@echo "Build finished. The manual pages are in $(SPHINX_BUILDDIR)/man."
 
 changes:
-	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/changes
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/changes
 	@echo
 	@echo "The overview file is in $(SPHINX_BUILDDIR)/changes."
 
 linkcheck:
-	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/linkcheck
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/linkcheck
 	@echo
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in $(SPHINX_BUILDDIR)/linkcheck/output.txt."
 
 doctest:
-	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/doctest
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(SPHINX_BUILDDIR)/doctest/output.txt."
 endif
