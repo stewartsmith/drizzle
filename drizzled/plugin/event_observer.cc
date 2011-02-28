@@ -97,7 +97,7 @@ namespace plugin
     {
       std::for_each(event_observer_lists.begin(),
                     event_observer_lists.end(),
-                    SafeDeletePtr());
+                    DeletePtr());
       event_observer_lists.clear();
     }
 
