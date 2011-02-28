@@ -5,4 +5,7 @@ show create table t2;
 ALTER TABLE t2 ADD COLUMN c int, rename t3;
 show tables;
 show create table t3;
-DROP TABLE t3;
+ALTER TABLE t3 DISABLE KEYS, RENAME t4;
+show tables;
+show create table t4;
+DROP TABLE t4;
