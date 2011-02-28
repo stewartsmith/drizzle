@@ -1383,6 +1383,17 @@ bool alter_table(Session *session,
 
   if (alter_info->tablespace_op != NO_TABLESPACE_OP)
   {
+    message::AlterTable *alter= session->getLex()->alter_table();
+
+    if (alter_info->tablespace_op == DISCARD_TABLESPACE)
+    {
+      assert(alter->operations(0).operation() == message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE);
+    }
+    else if (alter_info->tablespace_op == IMPORT_TABLESPACE)
+    {
+      assert(alter->operations(0).operation() == message::AlterTable::AlterTableOperation::IMPORT_TABLESPACE);
+    }
+
     /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
     return discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
   }
