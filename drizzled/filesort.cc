@@ -46,14 +46,12 @@
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/atomics.h>
 #include <drizzled/global_buffer.h>
-
 #include <drizzled/sort_field.h>
-
+#include <drizzled/item/subselect.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Defines used by filesort and uniques */
 #define MERGEBUFF		7

@@ -27,6 +27,7 @@
 #include <drizzled/select_union.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
+#include <drizzled/item/subselect.h>
 
 namespace drizzled
 {

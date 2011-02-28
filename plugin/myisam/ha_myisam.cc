@@ -35,6 +35,7 @@
 #include <drizzled/plugin/daemon.h>
 
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/key.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>

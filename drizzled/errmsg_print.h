@@ -38,9 +38,9 @@ namespace drizzled
 DRIZZLED_API bool errmsg_printf(error::level_t priority, char const *format, ...)
   __attribute__((format(printf, 2, 3)));
 
-void sql_perror(const char *message);
-void sql_perror(const std::string &message);
-void sql_perror(std::string message, const std::string &extra);
+DRIZZLED_API void sql_perror(const char *message);
+DRIZZLED_API void sql_perror(const std::string &message);
+DRIZZLED_API void sql_perror(std::string message, const std::string &extra);
 
 } /* namespace drizzled */
 

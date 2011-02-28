@@ -28,6 +28,7 @@
 #include <drizzled/optimizer/sel_arg.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/util/functors.h>
+#include <drizzled/key.h>
 
 #include <vector>
 
