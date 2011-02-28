@@ -65,13 +65,6 @@ enum enum_alter_info_flags
   ALTER_FOREIGN_KEY
 };
 
-enum tablespace_op_type
-{
-  NO_TABLESPACE_OP,
-  DISCARD_TABLESPACE,
-  IMPORT_TABLESPACE
-};
-
 /**
  * Contains information about the parsed CREATE or ALTER TABLE statement.
  *
@@ -88,7 +81,6 @@ public:
   message::AddedFields added_fields_proto;
   std::bitset<32> flags;
   enum enum_enable_or_disable keys_onoff;
-  enum tablespace_op_type tablespace_op;
   uint32_t no_parts;
   enum ha_build_method build_method;
   bool error_if_not_empty;

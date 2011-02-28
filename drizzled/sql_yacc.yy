@@ -1712,18 +1712,12 @@ alter_commands:
           /* empty */
         | DISCARD TABLESPACE
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            statement->alter_info.tablespace_op= DISCARD_TABLESPACE;
-
             message::AlterTable::AlterTableOperation *alter_operation;
             alter_operation= Lex->alter_table()->add_operations();
             alter_operation->set_operation(message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE);
           }
         | IMPORT TABLESPACE
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            statement->alter_info.tablespace_op= IMPORT_TABLESPACE;
-
             message::AlterTable::AlterTableOperation *alter_operation;
             alter_operation= Lex->alter_table()->add_operations();
             alter_operation->set_operation(message::AlterTable::AlterTableOperation::IMPORT_TABLESPACE);

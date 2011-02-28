@@ -703,11 +703,10 @@ static bool prepare_alter_table(Session *session,
 
 /* table_list should contain just one table */
 static int discard_or_import_tablespace(Session *session,
-                                              TableList *table_list,
-                                              enum tablespace_op_type tablespace_op)
+                                        TableList *table_list,
+                                        bool discard)
 {
   Table *table;
-  bool discard;
 
   /*
     Note that DISCARD/IMPORT TABLESPACE always is the only operation in an
@@ -715,8 +714,6 @@ static int discard_or_import_tablespace(Session *session,
   */
   TransactionServices &transaction_services= TransactionServices::singleton();
   session->set_proc_info("discard_or_import_tablespace");
-
-  discard= test(tablespace_op == DISCARD_TABLESPACE);
 
  /*
    We set this flag so that ha_innobase::open and ::external_lock() do
@@ -1380,22 +1377,18 @@ bool alter_table(Session *session,
 {
   bool error;
   Table *table;
+  message::AlterTable *alter_table_message= session->getLex()->alter_table();
 
-  if (alter_info->tablespace_op != NO_TABLESPACE_OP)
+  if (alter_table_message->operations_size()
+      && (alter_table_message->operations(0).operation()
+          == message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE
+          || alter_table_message->operations(0).operation()
+          == message::AlterTable::AlterTableOperation::IMPORT_TABLESPACE))
   {
-    message::AlterTable *alter= session->getLex()->alter_table();
-
-    if (alter_info->tablespace_op == DISCARD_TABLESPACE)
-    {
-      assert(alter->operations(0).operation() == message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE);
-    }
-    else if (alter_info->tablespace_op == IMPORT_TABLESPACE)
-    {
-      assert(alter->operations(0).operation() == message::AlterTable::AlterTableOperation::IMPORT_TABLESPACE);
-    }
-
+    bool discard= (alter_table_message->operations(0).operation() ==
+                   message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE);
     /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
-    return discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
+    return discard_or_import_tablespace(session, table_list, discard);
   }
 
   session->set_proc_info("init");
