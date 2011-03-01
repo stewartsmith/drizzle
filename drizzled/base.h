@@ -87,14 +87,6 @@ enum ha_key_alg {
   HA_KEY_ALG_HASH=	3		/* HASH keys (HEAP tables) */
 };
 
-	/* Index and table build methods */
-
-enum ha_build_method {
-  HA_BUILD_DEFAULT,
-  HA_BUILD_ONLINE,
-  HA_BUILD_OFFLINE
-};
-
 	/* The following is parameter to ha_extra() */
 
 enum ha_extra_function {

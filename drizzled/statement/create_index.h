@@ -33,7 +33,7 @@ namespace statement
 class CreateIndex : public CreateTable
 {
 public:
-  CreateIndex(Session *in_session, const drizzled::ha_build_method);
+  CreateIndex(Session *in_session);
 
   bool execute();
 };

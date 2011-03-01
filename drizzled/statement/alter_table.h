@@ -39,7 +39,7 @@ namespace statement
 class AlterTable : public CreateTable
 {
 public:
-  AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_build_method build_arg);
+  AlterTable(Session *in_session, Table_ident *ident);
 
   virtual bool is_alter() const
   {

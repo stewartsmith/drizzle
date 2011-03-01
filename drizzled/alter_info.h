@@ -82,7 +82,6 @@ public:
   std::bitset<32> flags;
   enum enum_enable_or_disable keys_onoff;
   uint32_t no_parts;
-  enum ha_build_method build_method;
   bool error_if_not_empty;
 
   AlterInfo();

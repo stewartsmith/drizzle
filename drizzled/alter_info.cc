@@ -36,7 +36,6 @@ AlterInfo::AlterInfo() :
   flags(),
   keys_onoff(LEAVE_AS_IS),
   no_parts(0),
-  build_method(HA_BUILD_DEFAULT),
   error_if_not_empty(false)
 {}
 

@@ -68,11 +68,12 @@ static int copy_data_between_tables(Session *session,
                                     bool error_if_not_empty);
 
 static bool prepare_alter_table(Session *session,
-                                      Table *table,
-                                      HA_CREATE_INFO *create_info,
-                                      const message::Table &original_proto,
-                                      message::Table &table_message,
-                                      AlterInfo *alter_info);
+                                Table *table,
+                                HA_CREATE_INFO *create_info,
+                                const message::Table &original_proto,
+                                message::Table &table_message,
+                                message::AlterTable &alter_table_message,
+                                AlterInfo *alter_info);
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier);
 
@@ -89,13 +90,11 @@ static int apply_online_rename_table(Session *session,
 
 namespace statement {
 
-AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_build_method build_arg) :
+AlterTable::AlterTable(Session *in_session, Table_ident *ident) :
   CreateTable(in_session)
-{ 
+{
   in_session->getLex()->sql_command= SQLCOM_ALTER_TABLE;
   (void)ident;
-  alter_info.build_method= build_arg;
-  assert((int)alter_info.build_method == (int)in_session->getLex()->alter_table()->build_method());
 }
 
 } // namespace statement
@@ -260,6 +259,7 @@ static bool prepare_alter_table(Session *session,
                                 HA_CREATE_INFO *create_info,
                                 const message::Table &original_proto,
                                 message::Table &table_message,
+                                message::AlterTable &alter_table_message,
                                 AlterInfo *alter_info)
 {
   /* New column definitions are added here */
@@ -438,13 +438,11 @@ static bool prepare_alter_table(Session *session,
         TODO: detect the situation in compare_tables, behave based
         on engine capabilities.
       */
-      if (alter_info->build_method == HA_BUILD_ONLINE)
+      if (alter_table_message.build_method() == message::AlterTable::BUILD_ONLINE)
       {
         my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
         return true;
       }
-
-      alter_info->build_method= HA_BUILD_OFFLINE;
     }
   }
 
@@ -1049,8 +1047,7 @@ static bool internal_alter_table(Session *session,
     }
   }
 
-  // ONLINE
-  if (alter_info->build_method == HA_BUILD_ONLINE)
+  if (alter_table_message.build_method() == message::AlterTable::BUILD_ONLINE)
   {
     my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
     return true;
@@ -1059,14 +1056,12 @@ static bool internal_alter_table(Session *session,
   /* We have to do full alter table. */
   new_engine= create_info->db_type;
 
-  if (prepare_alter_table(session, table, create_info, original_proto, create_proto, alter_info))
+  if (prepare_alter_table(session, table, create_info, original_proto, create_proto, alter_table_message, alter_info))
   {
     return true;
   }
 
   set_table_default_charset(create_info, new_table_identifier.getSchemaName().c_str());
-
-  alter_info->build_method= HA_BUILD_OFFLINE;
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
 

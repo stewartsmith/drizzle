@@ -32,12 +32,11 @@ namespace drizzled
 namespace statement
 {
 
-CreateIndex::CreateIndex(Session *in_session, const drizzled::ha_build_method method_arg) :
+CreateIndex::CreateIndex(Session *in_session) :
   CreateTable(in_session)
   {
     getSession()->getLex()->sql_command= SQLCOM_CREATE_INDEX;
     alter_info.flags.set(ALTER_ADD_INDEX);
-    alter_info.build_method= method_arg;
     getSession()->getLex()->col_list.clear();
   }
 

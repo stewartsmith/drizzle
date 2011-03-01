@@ -152,7 +152,6 @@ using namespace drizzled;
   drizzled::st_lex *lex;
   drizzled::index_hint_type index_hint;
   drizzled::enum_filetype filetype;
-  drizzled::ha_build_method build_method;
   drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;
   drizzled::execute_string_t execute_string;
 }
@@ -726,8 +725,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 
 %type <boolfunc2creator> comp_op
 
-%type <build_method> build_method
-
 %type <NONE>
         query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
@@ -859,7 +856,7 @@ create:
           }
         | CREATE build_method
           {
-            Lex->statement= new statement::CreateIndex(YYSession, $2);
+            Lex->statement= new statement::CreateIndex(YYSession);
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
@@ -1683,7 +1680,7 @@ string_list:
 alter:
           ALTER_SYM build_method opt_ignore TABLE_SYM table_ident
           {
-            statement::AlterTable *statement= new statement::AlterTable(YYSession, $5, $2);
+            statement::AlterTable *statement= new statement::AlterTable(YYSession, $5);
             Lex->statement= statement;
             Lex->duplicates= DUP_ERROR;
             if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL, TL_OPTION_UPDATING))
@@ -1730,17 +1727,14 @@ build_method:
         /* empty */
           {
             Lex->alter_table()->set_build_method(message::AlterTable::BUILD_DEFAULT);
-            $$= HA_BUILD_DEFAULT;
           }
         | ONLINE_SYM
           {
             Lex->alter_table()->set_build_method(message::AlterTable::BUILD_ONLINE);
-            $$= HA_BUILD_ONLINE;
           }
         | OFFLINE_SYM
           {
             Lex->alter_table()->set_build_method(message::AlterTable::BUILD_OFFLINE);
-            $$= HA_BUILD_OFFLINE;
           }
         ;
 
@@ -4046,7 +4040,6 @@ drop:
             statement::DropIndex *statement= new statement::DropIndex(YYSession);
             Lex->statement= statement;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
-            statement->alter_info.build_method= $2;
             statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY, $4.str));
             if (not Lex->current_select->add_table_to_list(Lex->session, $6, NULL,
                                                           TL_OPTION_UPDATING))
