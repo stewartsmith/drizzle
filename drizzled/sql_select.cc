@@ -694,11 +694,8 @@ bool update_ref_and_keys(Session *session,
 */
 void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
 {
-  optimizer::KeyUse *end,*keyuse= dynamic_element(keyuse_array, 
-                                                  0, 
-                                                  optimizer::KeyUse*);
-
-  for (end= keyuse+ keyuse_array->size() ; keyuse < end ; keyuse++)
+  optimizer::KeyUse* keyuse= &keyuse_array->get<optimizer::KeyUse>(0);
+  for (optimizer::KeyUse* end= keyuse+ keyuse_array->size() ; keyuse < end ; keyuse++)
   {
     table_map map;
     /*

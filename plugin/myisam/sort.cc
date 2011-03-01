@@ -199,8 +199,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     {
       if (!no_messages)
 	printf("  - Merging %u keys\n", (uint32_t) records);
-      if (merge_many_buff(info,keys,sort_keys,
-                  dynamic_element(&buffpek,0,BUFFPEK *),&maxbuffer,&tempfile))
+      if (merge_many_buff(info,keys,sort_keys, &buffpek.get<BUFFPEK>(0), &maxbuffer, &tempfile))
 	goto err;
     }
     if (internal::flush_io_cache(&tempfile) ||
@@ -208,8 +207,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       goto err;
     if (!no_messages)
       printf("  - Last merge and dumping keys\n");
-    if (merge_index(info,keys,sort_keys,dynamic_element(&buffpek,0,BUFFPEK *),
-                    maxbuffer,&tempfile))
+    if (merge_index(info,keys,sort_keys,&buffpek.get<BUFFPEK>(0) maxbuffer, &tempfile))
       goto err;
   }
 
@@ -400,8 +398,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       {
         if (param->testflag & T_VERBOSE)
           printf("Key %d  - Merging %u keys\n",sinfo->key+1, sinfo->keys);
-        if (merge_many_buff(sinfo, keys, (unsigned char **)mergebuf,
-			    dynamic_element(&sinfo->buffpek, 0, BUFFPEK *),
+        if (merge_many_buff(sinfo, keys, (unsigned char **)mergebuf, &sinfo->buffpek.get<BUFFPEK>(0)),
 			    &maxbuffer, &sinfo->tempfile))
         {
           got_error=1;
@@ -415,8 +412,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       }
       if (param->testflag & T_VERBOSE)
         printf("Key %d  - Last merge and dumping keys\n", sinfo->key+1);
-      if (merge_index(sinfo, keys, (unsigned char **)mergebuf,
-                      dynamic_element(&sinfo->buffpek,0,BUFFPEK *),
+      if (merge_index(sinfo, keys, (unsigned char **)mergebuf, &sinfo->buffpek.get<BUFFPEK>(0),
                       maxbuffer,&sinfo->tempfile) ||
 	  flush_pending_blocks(sinfo))
       {
