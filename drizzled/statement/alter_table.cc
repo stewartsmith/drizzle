@@ -249,24 +249,10 @@ static bool prepare_alter_table(Session *session,
                                 message::Table &table_message,
                                 AlterInfo *alter_info)
 {
-  /* New column definitions are added here */
-  List<CreateField> new_create_list;
-  /* New key definitions are added here */
-  List<Key> new_key_list;
-  List<AlterDrop>::iterator drop_it(alter_info->drop_list.begin());
-  List<CreateField>::iterator def_it(alter_info->create_list.begin());
-  List<AlterColumn>::iterator alter_it(alter_info->alter_list.begin());
-  List<Key>::iterator key_it(alter_info->key_list.begin());
-  List<CreateField>::iterator find_it(new_create_list.begin());
-  List<CreateField>::iterator field_it(new_create_list.begin());
-  List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
-  KeyInfo *key_info= table->key_info;
-  bool rc= true;
 
   /* Let new create options override the old ones */
-  message::Table::TableOptions *table_options;
-  table_options= table_message.mutable_options();
+  message::Table::TableOptions *table_options= table_message.mutable_options();
 
   if (not (used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
     create_info->default_table_charset= table->getShare()->table_charset;
@@ -281,23 +267,23 @@ static bool prepare_alter_table(Session *session,
   }
 
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
-  CreateField *def;
 
+  List<CreateField> new_create_list;
+  List<Key> new_key_list;
   /* First collect all fields from table which isn't in drop_list */
   Field *field;
   for (Field **f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
-    AlterDrop *drop;
-    drop_it= alter_info->drop_list.begin();
-    while ((drop= drop_it++))
+    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
+    for (; drop != alter_info->drop_list.end(); drop++)
     {
       if (drop->type == AlterDrop::COLUMN &&
           ! my_strcasecmp(system_charset_info, field->field_name, drop->name))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
-            ! (used_fields & HA_CREATE_USED_AUTO))
+            not (used_fields & HA_CREATE_USED_AUTO))
         {
           create_info->auto_increment_value= 0;
           create_info->used_fields|= HA_CREATE_USED_AUTO;
@@ -306,17 +292,18 @@ static bool prepare_alter_table(Session *session,
       }
     }
 
-    if (drop)
+    if (drop != alter_info->drop_list.end())
     {
-      drop_it.remove();
+      alter_info->drop_list.erase(drop);
       continue;
     }
     
     /* Mark that we will read the field */
     field->setReadSet();
 
+    CreateField *def;
     /* Check if field is changed */
-    def_it= alter_info->create_list.begin();
+    List<CreateField>::iterator def_it= alter_info->create_list.begin();
     while ((def= def_it++))
     {
       if (def->change &&
@@ -342,16 +329,15 @@ static bool prepare_alter_table(Session *session,
       */
       def= new CreateField(field, field);
       new_create_list.push_back(def);
-      alter_it= alter_info->alter_list.begin(); /* Change default if ALTER */
-      AlterColumn *alter;
+      AlterInfo::alter_list_t::iterator alter(alter_info->alter_list.begin());
 
-      while ((alter= alter_it++))
+      for (; alter != alter_info->alter_list.end(); alter++)
       {
-        if (! my_strcasecmp(system_charset_info,field->field_name, alter->name))
+        if (not my_strcasecmp(system_charset_info,field->field_name, alter->name))
           break;
       }
 
-      if (alter)
+      if (alter != alter_info->alter_list.end())
       {
         if (def->sql_type == DRIZZLE_TYPE_BLOB)
         {
@@ -368,12 +354,13 @@ static bool prepare_alter_table(Session *session,
         {
           def->flags|= NO_DEFAULT_VALUE_FLAG;
         }
-        alter_it.remove();
+        alter_info->alter_list.erase(alter);
       }
     }
   }
 
-  def_it= alter_info->create_list.begin();
+  CreateField *def;
+  List<CreateField>::iterator def_it= alter_info->create_list.begin();
   while ((def= def_it++)) /* Add new columns */
   {
     if (def->change && ! def->field)
@@ -399,7 +386,7 @@ static bool prepare_alter_table(Session *session,
     else
     {
       CreateField *find;
-      find_it= new_create_list.begin();
+      List<CreateField>::iterator find_it= new_create_list.begin();
 
       while ((find= find_it++)) /* Add new columns */
       {
@@ -430,25 +417,19 @@ static bool prepare_alter_table(Session *session,
         my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
         return true;
       }
-
       alter_info->build_method= HA_BUILD_OFFLINE;
     }
   }
 
-  if (alter_info->alter_list.size())
+  if (not alter_info->alter_list.empty())
   {
-    my_error(ER_BAD_FIELD_ERROR,
-             MYF(0),
-             alter_info->alter_list.front().name,
-             table->getMutableShare()->getTableName());
+    my_error(ER_BAD_FIELD_ERROR, MYF(0), alter_info->alter_list.front().name, table->getMutableShare()->getTableName());
     return true;
   }
 
-  if (not new_create_list.size())
+  if (new_create_list.is_empty())
   {
-    my_message(ER_CANT_REMOVE_ALL_FIELDS,
-               ER(ER_CANT_REMOVE_ALL_FIELDS),
-               MYF(0));
+    my_message(ER_CANT_REMOVE_ALL_FIELDS, ER(ER_CANT_REMOVE_ALL_FIELDS), MYF(0));
     return true;
   }
 
@@ -456,27 +437,26 @@ static bool prepare_alter_table(Session *session,
     Collect all keys which isn't in drop list. Add only those
     for which some fields exists.
   */
+  KeyInfo *key_info= table->key_info;
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
     char *key_name= key_info->name;
-    AlterDrop *drop;
-
-    drop_it= alter_info->drop_list.begin();
-    while ((drop= drop_it++))
+    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
+    for (; drop != alter_info->drop_list.end(); drop++)
     {
       if (drop->type == AlterDrop::KEY &&
-          ! my_strcasecmp(system_charset_info, key_name, drop->name))
+          not my_strcasecmp(system_charset_info, key_name, drop->name))
         break;
     }
 
-    if (drop)
+    if (drop != alter_info->drop_list.end())
     {
-      drop_it.remove();
+      alter_info->drop_list.erase(drop);
       continue;
     }
 
     KeyPartInfo *key_part= key_info->key_part;
-    key_parts.clear();
+    List<Key_part_spec> key_parts;
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
       if (! key_part->field)
@@ -484,7 +464,7 @@ static bool prepare_alter_table(Session *session,
 
       const char *key_part_name= key_part->field->field_name;
       CreateField *cfield;
-      field_it= new_create_list.begin();
+      List<CreateField>::iterator field_it= new_create_list.begin();
       while ((cfield= field_it++))
       {
         if (cfield->change)
@@ -565,19 +545,18 @@ static bool prepare_alter_table(Session *session,
   /* Copy over existing foreign keys */
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
-    AlterDrop *drop;
-    drop_it= alter_info->drop_list.begin();
-    while ((drop= drop_it++))
+    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
+    for (; drop != alter_info->drop_list.end(); drop++)
     {
       if (drop->type == AlterDrop::FOREIGN_KEY &&
-          ! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop->name))
+          not my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop->name))
       {
         break;
       }
     }
-    if (drop)
+    if (drop != alter_info->drop_list.end())
     {
-      drop_it.remove();
+      alter_info->drop_list.erase(drop);
       continue;
     }
 
@@ -587,6 +566,7 @@ static bool prepare_alter_table(Session *session,
 
   {
     Key *key;
+    List<Key>::iterator key_it(alter_info->key_list.begin());
     while ((key= key_it++)) /* Add new keys */
     {
       if (key->type == Key::FOREIGN_KEY)
@@ -637,7 +617,7 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  if (alter_info->drop_list.size())
+  if (not alter_info->drop_list.empty())
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
@@ -645,7 +625,7 @@ static bool prepare_alter_table(Session *session,
     return true;
   }
 
-  if (alter_info->alter_list.size())
+  if (not alter_info->alter_list.empty())
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
@@ -668,7 +648,6 @@ static bool prepare_alter_table(Session *session,
   table_message.set_version(table->getShare()->getTableMessage()->version());
   table_message.set_uuid(table->getShare()->getTableMessage()->uuid());
 
-  rc= false;
   alter_info->create_list.swap(new_create_list);
   alter_info->key_list.swap(new_key_list);
 
@@ -701,13 +680,8 @@ static bool prepare_alter_table(Session *session,
 }
 
 /* table_list should contain just one table */
-static int discard_or_import_tablespace(Session *session,
-                                              TableList *table_list,
-                                              enum tablespace_op_type tablespace_op)
+static int discard_or_import_tablespace(Session *session, TableList *table_list, tablespace_op_type tablespace_op)
 {
-  Table *table;
-  bool discard;
-
   /*
     Note that DISCARD/IMPORT TABLESPACE always is the only operation in an
     ALTER Table
@@ -715,14 +689,13 @@ static int discard_or_import_tablespace(Session *session,
   TransactionServices &transaction_services= TransactionServices::singleton();
   session->set_proc_info("discard_or_import_tablespace");
 
-  discard= test(tablespace_op == DISCARD_TABLESPACE);
-
  /*
    We set this flag so that ha_innobase::open and ::external_lock() do
    not complain when we lock the table
  */
   session->setDoingTablespaceOperation(true);
-  if (not (table= session->openTableLock(table_list, TL_WRITE)))
+  Table* table= session->openTableLock(table_list, TL_WRITE);
+  if (not table)
   {
     session->setDoingTablespaceOperation(false);
     return -1;
@@ -730,7 +703,7 @@ static int discard_or_import_tablespace(Session *session,
 
   int error;
   do {
-    error= table->cursor->ha_discard_or_import_tablespace(discard);
+    error= table->cursor->ha_discard_or_import_tablespace(tablespace_op == DISCARD_TABLESPACE);
 
     session->set_proc_info("end");
 
@@ -1486,11 +1459,10 @@ copy_data_between_tables(Session *session,
   to->cursor->ha_start_bulk_insert(from->cursor->stats.records);
 
   List<CreateField>::iterator it(create.begin());
-  CreateField *def;
   copy_end= copy;
   for (Field **ptr= to->getFields(); *ptr ; ptr++)
   {
-    def=it++;
+    CreateField* def=it++;
     if (def->field)
     {
       if (*ptr == to->next_number_field)
@@ -1660,8 +1632,6 @@ copy_data_between_tables(Session *session,
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier)
 {
-  Table *new_table;
-
   /* Open the table so we need to copy the data to it. */
   if (table->getShare()->getType())
   {
@@ -1671,15 +1641,13 @@ static Table *open_alter_table(Session *session, Table *table, identifier::Table
     tbl.setTableName(const_cast<char *>(identifier.getTableName().c_str()));
 
     /* Table is in session->temporary_tables */
-    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    return session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {
     /* Open our intermediate table */
-    new_table= session->open_temporary_table(identifier, false);
+    return session->open_temporary_table(identifier, false);
   }
-
-  return new_table;
 }
 
 } /* namespace drizzled */
