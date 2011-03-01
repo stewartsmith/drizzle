@@ -249,18 +249,10 @@ static bool prepare_alter_table(Session *session,
                                 message::Table &table_message,
                                 AlterInfo *alter_info)
 {
-  /* New column definitions are added here */
-  /* New key definitions are added here */
-  List<Key> new_key_list;
-  List<CreateField>::iterator def_it(alter_info->create_list.begin());
-  List<Key>::iterator key_it(alter_info->key_list.begin());
-  List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
-  KeyInfo *key_info= table->key_info;
 
   /* Let new create options override the old ones */
-  message::Table::TableOptions *table_options;
-  table_options= table_message.mutable_options();
+  message::Table::TableOptions *table_options= table_message.mutable_options();
 
   if (not (used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
     create_info->default_table_charset= table->getShare()->table_charset;
@@ -277,6 +269,7 @@ static bool prepare_alter_table(Session *session,
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
 
   List<CreateField> new_create_list;
+  List<Key> new_key_list;
   /* First collect all fields from table which isn't in drop_list */
   Field *field;
   for (Field **f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
@@ -310,7 +303,7 @@ static bool prepare_alter_table(Session *session,
 
     CreateField *def;
     /* Check if field is changed */
-    def_it= alter_info->create_list.begin();
+    List<CreateField>::iterator def_it= alter_info->create_list.begin();
     while ((def= def_it++))
     {
       if (def->change &&
@@ -367,7 +360,7 @@ static bool prepare_alter_table(Session *session,
   }
 
   CreateField *def;
-  def_it= alter_info->create_list.begin();
+  List<CreateField>::iterator def_it= alter_info->create_list.begin();
   while ((def= def_it++)) /* Add new columns */
   {
     if (def->change && ! def->field)
@@ -424,25 +417,19 @@ static bool prepare_alter_table(Session *session,
         my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
         return true;
       }
-
       alter_info->build_method= HA_BUILD_OFFLINE;
     }
   }
 
   if (not alter_info->alter_list.empty())
   {
-    my_error(ER_BAD_FIELD_ERROR,
-             MYF(0),
-             alter_info->alter_list.front().name,
-             table->getMutableShare()->getTableName());
+    my_error(ER_BAD_FIELD_ERROR, MYF(0), alter_info->alter_list.front().name, table->getMutableShare()->getTableName());
     return true;
   }
 
-  if (not new_create_list.size())
+  if (new_create_list.empty())
   {
-    my_message(ER_CANT_REMOVE_ALL_FIELDS,
-               ER(ER_CANT_REMOVE_ALL_FIELDS),
-               MYF(0));
+    my_message(ER_CANT_REMOVE_ALL_FIELDS, ER(ER_CANT_REMOVE_ALL_FIELDS), MYF(0));
     return true;
   }
 
@@ -450,6 +437,7 @@ static bool prepare_alter_table(Session *session,
     Collect all keys which isn't in drop list. Add only those
     for which some fields exists.
   */
+  KeyInfo *key_info= table->key_info;
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
     char *key_name= key_info->name;
@@ -468,7 +456,7 @@ static bool prepare_alter_table(Session *session,
     }
 
     KeyPartInfo *key_part= key_info->key_part;
-    key_parts.clear();
+    List<Key_part_spec> key_parts;
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
       if (! key_part->field)
@@ -578,6 +566,7 @@ static bool prepare_alter_table(Session *session,
 
   {
     Key *key;
+    List<Key>::iterator key_it(alter_info->key_list.begin());
     while ((key= key_it++)) /* Add new keys */
     {
       if (key->type == Key::FOREIGN_KEY)
