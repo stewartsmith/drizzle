@@ -34,11 +34,7 @@ public:
   uint32_t alloc_increment;
   uint32_t size_of_element;
 
-  template<class T>
-  T& get(size_t i)
-  {
-    return reinterpret_cast<T*>(buffer)[i];
-  }
+  void push_back(void*);
 
   size_t size() const
   {
@@ -49,21 +45,21 @@ public:
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 #define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 
-extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
+bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
                                    void *init_buffer, uint32_t init_alloc,
                                    uint32_t alloc_increment);
 /* init_dynamic_array() function is deprecated */
-extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,
+bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,
                                   uint32_t init_alloc,uint32_t alloc_increment);
-extern bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
-extern unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
-extern unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
-extern bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
-extern void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
-extern void delete_dynamic(DYNAMIC_ARRAY *array);
-extern void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);
-extern void freeze_size(DYNAMIC_ARRAY *array);
-extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
+bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
+unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
+unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
+bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
+void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
+void delete_dynamic(DYNAMIC_ARRAY *array);
+void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);
+void freeze_size(DYNAMIC_ARRAY *array);
+int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
 #define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
 #define push_dynamic(A,B) insert_dynamic((A),(B))
 #define reset_dynamic(array) ((array)->elements= 0)

@@ -110,6 +110,11 @@ bool insert_dynamic(DYNAMIC_ARRAY *array, unsigned char* element)
   return false;
 }
 
+void DYNAMIC_ARRAY::push_back(void* v)
+{
+  insert_dynamic(this, (unsigned char*)v);
+}
+
 
 /*
   Alloc space for next element(s)
