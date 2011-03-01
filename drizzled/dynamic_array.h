@@ -56,7 +56,6 @@ unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
 bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
 void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
 void delete_dynamic(DYNAMIC_ARRAY *array);
-void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);
 
 } /* namespace drizzled */
 
