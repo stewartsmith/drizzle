@@ -1049,6 +1049,13 @@ static bool internal_alter_table(Session *session,
     }
   }
 
+  // ONLINE
+  if (alter_info->build_method == HA_BUILD_ONLINE)
+  {
+    my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
+    return true;
+  }
+
   /* We have to do full alter table. */
   new_engine= create_info->db_type;
 
