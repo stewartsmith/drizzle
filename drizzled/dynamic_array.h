@@ -57,9 +57,6 @@ bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_ind
 void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
 void delete_dynamic(DYNAMIC_ARRAY *array);
 void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);
-void freeze_size(DYNAMIC_ARRAY *array);
-int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
-#define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 
 } /* namespace drizzled */
 
