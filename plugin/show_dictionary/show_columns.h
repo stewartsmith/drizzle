@@ -26,7 +26,7 @@ class ShowColumns : public show_dictionary::Show
 public:
   ShowColumns();
 
-  bool visable() { return false; }
+  bool visible() const { return false; }
 
   class Generator : public show_dictionary::Show::Generator 
   {
