@@ -649,7 +649,7 @@ bool update_ref_and_keys(Session *session,
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
     insert_dynamic(keyuse,(unsigned char*) &key_end);
 
-    use= save_pos= dynamic_element(keyuse, 0, optimizer::KeyUse*);
+    use= save_pos= &keyuse->get<optimizer::KeyUse>(0);
     prev= &key_end;
     found_eq_constant= 0;
     {
