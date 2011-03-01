@@ -93,26 +93,22 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
     false	Ok
 */
 
-bool insert_dynamic(DYNAMIC_ARRAY *array, unsigned char* element)
+static void insert_dynamic(DYNAMIC_ARRAY *array, void* element)
 {
   unsigned char* buffer;
   if (array->elements == array->max_element)
-  {						/* Call only when nessesary */
-    if (!(buffer=alloc_dynamic(array)))
-      return true;
-  }
+    buffer= alloc_dynamic(array);
   else
   {
-    buffer=array->buffer+(array->elements * array->size_of_element);
+    buffer= array->buffer+(array->elements * array->size_of_element);
     array->elements++;
   }
-  memcpy(buffer,element,(size_t) array->size_of_element);
-  return false;
+  memcpy(buffer,element, array->size_of_element);
 }
 
 void DYNAMIC_ARRAY::push_back(void* v)
 {
-  insert_dynamic(this, (unsigned char*)v);
+  insert_dynamic(this, v);
 }
 
 

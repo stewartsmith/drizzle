@@ -51,7 +51,6 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
 /* init_dynamic_array() function is deprecated */
 bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,
                                   uint32_t init_alloc,uint32_t alloc_increment);
-bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
 unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
 unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
 bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
@@ -60,9 +59,6 @@ void delete_dynamic(DYNAMIC_ARRAY *array);
 void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);
 void freeze_size(DYNAMIC_ARRAY *array);
 int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
-#define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
-#define push_dynamic(A,B) insert_dynamic((A),(B))
-#define reset_dynamic(array) ((array)->elements= 0)
 #define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 
 } /* namespace drizzled */

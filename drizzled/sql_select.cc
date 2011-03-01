@@ -647,7 +647,7 @@ bool update_ref_and_keys(Session *session,
                        (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
-    insert_dynamic(keyuse,(unsigned char*) &key_end);
+    keyuse->push_back(&key_end);
 
     use= save_pos= (optimizer::KeyUse*)keyuse->buffer;
     prev= &key_end;

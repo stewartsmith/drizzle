@@ -4169,10 +4169,7 @@ optimizer::get_quick_keys(optimizer::Parameter *param,
   set_if_bigger(quick->max_used_key_length, (uint32_t)range->min_length);
   set_if_bigger(quick->max_used_key_length, (uint32_t)range->max_length);
   set_if_bigger(quick->used_key_parts, (uint32_t) key_tree->part+1);
-  if (insert_dynamic(&quick->ranges, (unsigned char*) &range))
-  {
-    return 1;
-  }
+  quick->ranges.push_back(&range);
 
  end:
   if (key_tree->right != &optimizer::null_element)
@@ -4296,8 +4293,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     key_part->null_bit=     key_info->key_part[part].null_bit;
     key_part->flag=         (uint8_t) key_info->key_part[part].key_part_flag;
   }
-  if (insert_dynamic(&quick->ranges,(unsigned char*)&range))
-    goto err;
+  quick->ranges.push_back(&range);
 
   /*
      Add a NULL range if REF_OR_NULL optimization is used.
@@ -4317,8 +4313,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
                                  make_prev_keypart_map(ref->key_parts), EQ_RANGE)))
       goto err;
     *ref->null_ref_key= 0;		// Clear null byte
-    if (insert_dynamic(&quick->ranges,(unsigned char*)&null_range))
-      goto err;
+    quick->ranges.push_back(&null_range);
   }
 
   /* Call multi_range_read_info() to get the MRR flags and buffer size */
