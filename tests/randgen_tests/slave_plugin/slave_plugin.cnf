@@ -1,0 +1,9 @@
+[test_info]
+name = randgen_slave_plugin
+comment = does NOT actually test the master-slave replication yet, but it will.
+
+[test_command]
+command = ./gentest.pl --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=200 --threads=5 --Reporter=DrizzleSlavePlugin
+
+[test_servers]
+servers = [[--innodb.replication-log=true],[--plugin-add=slave --slave.config-file=$MASTER_SERVER_SLAVE_CONFIG]]

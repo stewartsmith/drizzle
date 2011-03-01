@@ -31,6 +31,7 @@
 #include <drizzled/item/func.h>
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/plugin/function.h>
 
 #include <string>
 

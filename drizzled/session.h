@@ -55,7 +55,6 @@
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/sql_error.h>
-#include <drizzled/sql_lex.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
@@ -65,6 +64,9 @@
 #include <drizzled/util/storable.h>
 #include <drizzled/var.h>
 #include <drizzled/visibility.h>
+#include <drizzled/util/find_ptr.h>
+#include <drizzled/type/time.h>
+#include <drizzled/sql_lex.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -1190,10 +1192,6 @@ public:
   inline bool is_error() const { return main_da.is_error(); }
   inline const CHARSET_INFO *charset() { return default_charset_info; }
 
-  void change_item_tree(Item **place, Item *new_value)
-  {
-    *place= new_value;
-  }
   /**
     Cleanup statement parse state (parse tree, lex) and execution
     state after execution of a non-prepared SQL statement.
@@ -1402,7 +1400,8 @@ private:
   plugin::EventObserverList *session_event_observers;
   
   /* Schema observers are mapped to databases. */
-  std::map<std::string, plugin::EventObserverList *> schema_event_observers;
+  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
+  schema_event_observers_t schema_event_observers;
 
  
 public:
@@ -1419,23 +1418,14 @@ public:
   /* For schema event observers there is one set of observers per database. */
   plugin::EventObserverList *getSchemaObservers(const std::string &db_name) 
   { 
-    std::map<std::string, plugin::EventObserverList *>::iterator it;
-    
-    it= schema_event_observers.find(db_name);
-    if (it == schema_event_observers.end())
-      return NULL;
-      
-    return it->second;
+    if (schema_event_observers_t::mapped_type* i= find_ptr(schema_event_observers, db_name))
+      return *i;
+    return NULL;
   }
   
   void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers) 
   { 
-    std::map<std::string, plugin::EventObserverList *>::iterator it;
-
-    it= schema_event_observers.find(db_name);
-    if (it != schema_event_observers.end())
-      schema_event_observers.erase(it);;
-
+    schema_event_observers.erase(db_name);
     if (observers)
       schema_event_observers[db_name] = observers;
   }

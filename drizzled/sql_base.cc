@@ -58,6 +58,7 @@
 #include <drizzled/table/unused.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
+#include <drizzled/item/subselect.h>
 
 #include <drizzled/refresh_version.h>
 
@@ -225,7 +226,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
              iter != table::getCache().end();
              iter++)
         {
-          Table *table= (*iter).second;
+          Table *table= iter->second;
           if (table->in_use)
             table->in_use->some_tables_deleted= false;
         }
@@ -268,7 +269,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
              iter != table::getCache().end();
              iter++)
         {
-          Table *table= (*iter).second;
+          Table *table= iter->second;
           /* Avoid a self-deadlock. */
           if (table->in_use == session)
             continue;
@@ -843,11 +844,7 @@ bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier,
 
   boost_unique_lock_t scope_lock(table::Cache::singleton().mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
-  table::CacheMap::iterator iter;
-
-  iter= table::getCache().find(key);
-
-  if (iter != table::getCache().end())
+  if (find_ptr(table::getCache(), key))
   {
     *table= 0;
     return false;
@@ -1022,7 +1019,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       for (table::CacheMap::const_iterator iter= ppp.first;
            iter != ppp.second; ++iter, table= NULL)
       {
-        table= (*iter).second;
+        table= iter->second;
 
         if (not table->in_use)
           break;
@@ -3762,7 +3759,7 @@ int Session::setup_conds(TableList *leaves, COND **conds)
       embedding= embedded->getEmbedding();
     }
     while (embedding &&
-           embedding->getNestedJoin()->join_list.head() == embedded);
+           &embedding->getNestedJoin()->join_list.front() == embedded);
 
   }
   session->session_marker= save_session_marker;

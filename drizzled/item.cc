@@ -31,10 +31,8 @@
 #include <drizzled/util/convert.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/time_functions.h>
-
 #include <drizzled/field/str.h>
 #include <drizzled/field/num.h>
-
 #include <drizzled/field/blob.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
@@ -50,11 +48,11 @@
 #include <drizzled/field/size.h>
 #include <drizzled/field/time.h>
 #include <drizzled/field/varstring.h>
-
 #include <drizzled/current_session.h>
 #include <drizzled/session.h>
-
 #include <drizzled/internal/m_string.h>
+#include <drizzled/item/ref.h>
+#include <drizzled/item/subselect.h>
 
 #include <cstdio>
 #include <math.h>
@@ -794,7 +792,7 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
     if (type() == SUM_FUNC_ITEM)
       item_ref->depended_from= ((Item_sum *) this)->depended_from();
     fields.push_front(real_itm);
-    session->change_item_tree(ref, item_ref);
+    *ref= item_ref;
   }
 }
 
@@ -1571,7 +1569,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
   }
 
   if (new_item)
-    session->change_item_tree(ref, new_item);
+    *ref= new_item;
 }
 
 bool field_is_equal_to_item(Field *field,Item *item)

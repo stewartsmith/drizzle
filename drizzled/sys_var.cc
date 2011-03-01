@@ -1430,7 +1430,7 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
     SystemVariableMap::const_iterator iter= system_variable_map.begin();
     while (iter != system_variable_map.end())
     {
-      sys_var *var= (*iter).second;
+      sys_var *var= iter->second;
       show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
@@ -1453,7 +1453,7 @@ void add_sys_var_to_list(sys_var *var)
             lower_name.begin(), ::tolower);
 
   /* this fails if there is a conflicting variable name. */
-  if (system_variable_map.find(lower_name) != system_variable_map.end())
+  if (system_variable_map.count(lower_name))
   {
     errmsg_printf(error::ERROR, _("Variable named %s already exists!\n"),
                   var->getName().c_str());
@@ -1590,11 +1590,8 @@ sys_var *find_sys_var(const std::string &name)
 
   sys_var *result= NULL;
 
-  SystemVariableMap::iterator iter= system_variable_map.find(lower_name);
-  if (iter != system_variable_map.end())
-  {
-    result= (*iter).second;
-  } 
+  if (SystemVariableMap::mapped_type* ptr= find_ptr(system_variable_map, lower_name))
+    result= *ptr;
 
   if (result == NULL)
   {

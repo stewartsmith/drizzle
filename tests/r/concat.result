@@ -1,0 +1,9 @@
+SELECT "foo" || "dog";
+"foo" || "dog"
+foodog
+SELECT "1" || "2";
+"1" || "2"
+12
+SELECT 1 || 2;
+1 || 2
+12

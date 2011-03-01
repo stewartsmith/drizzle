@@ -29,6 +29,7 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/item/subselect.h>
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -560,7 +561,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
             ;
             if (!(rf= new Item_outer_ref(context, this)))
               return -1;
-            session->change_item_tree(reference, rf);
+            *reference= rf;
             select->inner_refs_list.push_back(rf);
             rf->in_sum_func= session->getLex()->in_sum_func;
           }
@@ -684,7 +685,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       outer_context->select_lex->inner_refs_list.push_back((Item_outer_ref*)rf);
       ((Item_outer_ref*)rf)->in_sum_func= session->getLex()->in_sum_func;
     }
-    session->change_item_tree(reference, rf);
+    *reference= rf;
     /*
       rf is Item_ref => never substitute other items (in this case)
       during fix_fields() => we can use rf after fix_fields()
@@ -711,7 +712,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
                        (char*) cached_table->alias, (char*) field_name);
       if (!rf)
         return -1;
-      session->change_item_tree(reference, rf);
+      *reference= rf;
       /*
         rf is Item_ref => never substitute other items (in this case)
         during fix_fields() => we can use rf after fix_fields()
@@ -841,7 +842,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
             Item_ref *rf= new Item_ref(context, db_name,table_name,field_name);
             if (!rf)
               return 1;
-            session->change_item_tree(reference, rf);
+            *reference= rf;
             /*
               Because Item_ref never substitutes itself with other items
               in Item_ref::fix_fields(), we can safely use the original

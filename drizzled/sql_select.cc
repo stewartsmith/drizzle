@@ -53,7 +53,6 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/drizzled.h>
 #include <drizzled/plugin/storage_engine.h>
-
 #include <drizzled/sql_union.h>
 #include <drizzled/optimizer/key_field.h>
 #include <drizzled/optimizer/position.h>
@@ -62,17 +61,16 @@
 #include <drizzled/optimizer/range.h>
 #include <drizzled/optimizer/quick_range_select.h>
 #include <drizzled/optimizer/quick_ror_intersect_select.h>
-
 #include <drizzled/filesort.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sort_field.h>
 #include <drizzled/select_result.h>
+#include <drizzled/key.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b);
 static COND *build_equal_items(Session *session, COND *cond,
@@ -2181,7 +2179,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels, Item_equ
    }
   }
 
-  if (!cond && !eq_list.head())
+  if (!cond && !&eq_list.front())
   {
     if (!eq_item)
       return new Item_int((int64_t) 1,1);
@@ -2290,7 +2288,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
   {
     item_equal= (Item_equal *) cond;
     item_equal->sort(&compare_fields_by_table_order, table_join_idx);
-    if (cond_equal && cond_equal->current_level.head() == item_equal)
+    if (cond_equal && &cond_equal->current_level.front() == item_equal)
       cond_equal= 0;
     return eliminate_item_equal(0, cond_equal, item_equal);
   }
@@ -2403,7 +2401,7 @@ static void change_cond_ref_to_const(Session *session,
     if (tmp)
     {
       tmp->collation.set(right_item->collation);
-      session->change_item_tree(args + 1, tmp);
+      args[1]= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
 	        and_father != cond && 
@@ -2425,7 +2423,7 @@ static void change_cond_ref_to_const(Session *session,
     if (tmp)
     {
       tmp->collation.set(left_item->collation);
-      session->change_item_tree(args, tmp);
+      *args= tmp;
       value= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
@@ -2433,7 +2431,7 @@ static void change_cond_ref_to_const(Session *session,
           ! right_item->const_item())
       {
         args[0]= args[1];                       // For easy check
-        session->change_item_tree(args + 1, value);
+        args[1]= value;
         cond->marker=1;
         save_list.push_back( COND_CMP(and_father, func) );
       }
@@ -2465,7 +2463,7 @@ Item *remove_additional_cond(Item* conds)
       {
 	li.remove();
 	if (cnd->argument_list()->size() == 1)
-	  return cnd->argument_list()->head();
+	  return &cnd->argument_list()->front();
 	return conds;
       }
     }
@@ -2768,7 +2766,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     if (((Item_cond*) cond)->argument_list()->size() == 1)
     {						
       /* Argument list contains only one element, so reduce it so a single item, then remove list */
-      item= ((Item_cond*) cond)->argument_list()->head();
+      item= &((Item_cond*) cond)->argument_list()->front();
       ((Item_cond*) cond)->argument_list()->clear();
       return item;
     }
@@ -4072,7 +4070,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
         case 0:
           return (COND*) 0;			// Always true
         case 1:
-          return new_cond->argument_list()->head();
+          return &new_cond->argument_list()->front();
         default:
           /*
             Item_cond_and do not need fix_fields for execution, its parameters
@@ -6233,7 +6231,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
             if (!(new_item= new Item_ref(context, group_tmp->item, 0,
                                         item->name)))
               return 1;                                 // fatal_error is set
-            session->change_item_tree(arg, new_item);
+            *arg= new_item;
             arg_changed= true;
           }
         }

@@ -46,6 +46,15 @@ Compiling and Installing:
    installing/ubuntu
    installing/redhat
 
+Contributing:
+-------------
+.. toctree::
+   :maxdepth: 2
+
+   contributing/introduction
+   contributing/code
+   contributing/documentation
+
 SQL Language:
 -------------
 .. toctree::
@@ -124,6 +133,7 @@ Testing:
  
    testing/test-run.rst
    testing/dbqp.rst
+   testing/randgen.rst
 
 Indices and tables
 ==================

@@ -127,7 +127,7 @@ namespace plugin
       /* If positioned then check if the position is already taken. */
       if (position) 
       {
-        if (observers->find(event_pos) != observers->end())
+        if (observers->count(event_pos))
         {
           errmsg_printf(error::WARN,
                         _("EventObserverList::addEventObserver() Duplicate event position %d for event '%s' from EventObserver plugin '%s'"),

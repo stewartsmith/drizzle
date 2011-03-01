@@ -1,9 +1,10 @@
 **********************************
-dbqp.py - Drizzle testing tool 
+dbqp
 **********************************
 
 Synopsis
 ========
+Drizzle testing tool
 
 **./dbqp** [ *OPTIONS* ] [ TESTCASE ]
 

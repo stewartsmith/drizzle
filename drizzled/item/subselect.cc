@@ -523,7 +523,7 @@ Item_singlerow_subselect::select_transformer(Join *join)
   if (!select_lex->master_unit()->is_union() &&
       !select_lex->table_list.elements &&
       select_lex->item_list.size() == 1 &&
-      !select_lex->item_list.head()->with_sum_func &&
+      !select_lex->item_list.front().with_sum_func &&
       /*
 	We cant change name of Item_field or Item_ref, because it will
 	prevent it's correct resolving, but we should save name of
@@ -531,8 +531,8 @@ Item_singlerow_subselect::select_transformer(Join *join)
 	list is field or reference.
 	TODO: solve above problem
       */
-      !(select_lex->item_list.head()->type() == FIELD_ITEM ||
-	select_lex->item_list.head()->type() == REF_ITEM) &&
+      !(select_lex->item_list.front().type() == FIELD_ITEM ||
+	select_lex->item_list.front().type() == REF_ITEM) &&
       !join->conds && !join->having
       )
   {
@@ -545,7 +545,7 @@ Item_singlerow_subselect::select_transformer(Join *join)
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		   ER_SELECT_REDUCED, warn_buff);
     }
-    substitution= select_lex->item_list.head();
+    substitution= &select_lex->item_list.front();
     /*
       as far as we moved content to upper level, field which depend of
       'upper' select is not really dependent => we remove this dependence
@@ -1220,7 +1220,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
   }
   else
   {
-    Item *item= (Item*) select_lex->item_list.head();
+    Item *item= &select_lex->item_list.front();
 
     if (select_lex->table_list.elements)
     {
@@ -1230,7 +1230,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
       select_lex->item_list.push_back(new Item_int("Not_used",
                                                    (int64_t) 1,
                                                    MY_INT64_NUM_DECIMAL_DIGITS));
-      select_lex->ref_pointer_array[0]= select_lex->item_list.head();
+      select_lex->ref_pointer_array[0]= &select_lex->item_list.front();
 
       item= func->create(expr, item);
       if (!abort_on_null && orig_item->maybe_null)

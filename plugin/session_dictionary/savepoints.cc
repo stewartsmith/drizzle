@@ -48,7 +48,7 @@ bool Savepoints::Generator::populate()
   while (iter != savepoints.end())
   {
     // SAVEPOINT_NAME
-    push((*iter).getName());
+    push(iter->getName());
 
     iter++;
 

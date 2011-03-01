@@ -173,8 +173,8 @@ plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(Sessio
        iter != replication_streams.end();
        ++iter)
   {
-    plugin::TransactionReplicator *cur_repl= (*iter).first;
-    plugin::TransactionApplier *cur_appl= (*iter).second;
+    plugin::TransactionReplicator *cur_repl= iter->first;
+    plugin::TransactionApplier *cur_appl= iter->second;
 
     result= cur_repl->replicate(cur_appl, in_session, to_push);
 
