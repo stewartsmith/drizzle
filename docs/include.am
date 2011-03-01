@@ -12,6 +12,7 @@ EXTRA_DIST+= \
 	     docs/plugins/list.rst \
 	     docs/pyext/__init__.py \
 	     docs/pyext/options.py \
+	     docs/pyext/confval.py \
 	     docs/_static/drizzle.ico \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst \
