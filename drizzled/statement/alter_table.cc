@@ -250,17 +250,13 @@ static bool prepare_alter_table(Session *session,
                                 AlterInfo *alter_info)
 {
   /* New column definitions are added here */
-  List<CreateField> new_create_list;
   /* New key definitions are added here */
   List<Key> new_key_list;
   List<CreateField>::iterator def_it(alter_info->create_list.begin());
   List<Key>::iterator key_it(alter_info->key_list.begin());
-  List<CreateField>::iterator find_it(new_create_list.begin());
-  List<CreateField>::iterator field_it(new_create_list.begin());
   List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
   KeyInfo *key_info= table->key_info;
-  bool rc= true;
 
   /* Let new create options override the old ones */
   message::Table::TableOptions *table_options;
@@ -279,8 +275,8 @@ static bool prepare_alter_table(Session *session,
   }
 
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
-  CreateField *def;
 
+  List<CreateField> new_create_list;
   /* First collect all fields from table which isn't in drop_list */
   Field *field;
   for (Field **f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
@@ -312,6 +308,7 @@ static bool prepare_alter_table(Session *session,
     /* Mark that we will read the field */
     field->setReadSet();
 
+    CreateField *def;
     /* Check if field is changed */
     def_it= alter_info->create_list.begin();
     while ((def= def_it++))
@@ -369,6 +366,7 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
+  CreateField *def;
   def_it= alter_info->create_list.begin();
   while ((def= def_it++)) /* Add new columns */
   {
@@ -395,7 +393,7 @@ static bool prepare_alter_table(Session *session,
     else
     {
       CreateField *find;
-      find_it= new_create_list.begin();
+      List<CreateField>::iterator find_it= new_create_list.begin();
 
       while ((find= find_it++)) /* Add new columns */
       {
@@ -478,7 +476,7 @@ static bool prepare_alter_table(Session *session,
 
       const char *key_part_name= key_part->field->field_name;
       CreateField *cfield;
-      field_it= new_create_list.begin();
+      List<CreateField>::iterator field_it= new_create_list.begin();
       while ((cfield= field_it++))
       {
         if (cfield->change)
@@ -661,7 +659,6 @@ static bool prepare_alter_table(Session *session,
   table_message.set_version(table->getShare()->getTableMessage()->version());
   table_message.set_uuid(table->getShare()->getTableMessage()->uuid());
 
-  rc= false;
   alter_info->create_list.swap(new_create_list);
   alter_info->key_list.swap(new_key_list);
 
