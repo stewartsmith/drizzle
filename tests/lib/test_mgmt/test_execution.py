@@ -131,6 +131,16 @@ class testExecutor():
             self.initial_run = 0
             self.current_servers[0].report()
         self.master_server = self.current_servers[0]
+        if len(self.current_servers) > 1:
+            # We have a validation server or something we need to communicate with
+            # We export some env vars with EXECUTOR_SERVER and expect the randge
+            # code to know enough to look for this marker
+            extra_reqs = {}
+            for server in self.current_servers:
+                variable_name = "%s_%s" %(self.name.upper(), server.name.upper())
+                variable_value = str(server.master_port)
+                extra_reqs[variable_name] = variable_value
+            self.working_environment = dict(self.working_environment, **extra_reqs)
         return 
 
     def handle_start_and_exit(self, start_and_exit):
