@@ -25,6 +25,8 @@
 #ifndef DRIZZLED_ALTER_INFO_H
 #define DRIZZLED_ALTER_INFO_H
 
+#include <drizzled/alter_column.h>
+#include <drizzled/alter_drop.h>
 #include <drizzled/base.h>
 #include <drizzled/enum.h>
 #include <drizzled/key.h>
@@ -33,13 +35,9 @@
 #include <bitset>
 #include <list>
 
-namespace drizzled
-{
+namespace drizzled {
 
-/* Some forward declarations needed */
 class CreateField;
-class AlterDrop;
-class AlterColumn;
 
 enum enum_alter_info_flags
 {
