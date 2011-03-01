@@ -2135,7 +2135,8 @@ void TransactionServices::rawStatement(Session::reference session,
 
   initStatementMessage(*statement, message::Statement::RAW_SQL, session);
   statement->set_sql(query);
-  statement->set_raw_sql_schema(schema);
+  if (not schema.empty())
+    statement->set_raw_sql_schema(schema);
   finalizeStatementMessage(*statement, session);
 
   finalizeTransactionMessage(*transaction, session);
