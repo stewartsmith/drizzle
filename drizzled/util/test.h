@@ -21,28 +21,20 @@
 #ifndef DRIZZLED_UTIL_TEST_H
 #define DRIZZLED_UTIL_TEST_H
 
-#if defined(__cplusplus)
-
-namespace drizzled
-{
+namespace drizzled {
 
 template <class T>
-inline bool test(const T a)
+bool test(const T a)
 {
-  return a ? true : false;
+  return a;
 }
 
 template <class T, class U>
-inline bool test_all_bits(const T a, const U b)
+bool test_all_bits(const T a, const U b)
 {
-  return ((a & b) == b);
+  return (a & b) == b;
 }
 
 } /* namespace drizzled */
-
-#else
-# define test(a)    ((a) ? 1 : 0)
-# define test_all_bits(a,b) (((a) & (b)) == (b))
-#endif
 
 #endif /* DRIZZLED_UTIL_TEST_H */

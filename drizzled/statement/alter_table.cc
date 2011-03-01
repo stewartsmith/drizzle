@@ -427,7 +427,7 @@ static bool prepare_alter_table(Session *session,
     return true;
   }
 
-  if (new_create_list.empty())
+  if (new_create_list.is_empty())
   {
     my_message(ER_CANT_REMOVE_ALL_FIELDS, ER(ER_CANT_REMOVE_ALL_FIELDS), MYF(0));
     return true;
@@ -680,13 +680,8 @@ static bool prepare_alter_table(Session *session,
 }
 
 /* table_list should contain just one table */
-static int discard_or_import_tablespace(Session *session,
-                                              TableList *table_list,
-                                              enum tablespace_op_type tablespace_op)
+static int discard_or_import_tablespace(Session *session, TableList *table_list, tablespace_op_type tablespace_op)
 {
-  Table *table;
-  bool discard;
-
   /*
     Note that DISCARD/IMPORT TABLESPACE always is the only operation in an
     ALTER Table
@@ -694,14 +689,13 @@ static int discard_or_import_tablespace(Session *session,
   TransactionServices &transaction_services= TransactionServices::singleton();
   session->set_proc_info("discard_or_import_tablespace");
 
-  discard= test(tablespace_op == DISCARD_TABLESPACE);
-
  /*
    We set this flag so that ha_innobase::open and ::external_lock() do
    not complain when we lock the table
  */
   session->setDoingTablespaceOperation(true);
-  if (not (table= session->openTableLock(table_list, TL_WRITE)))
+  Table* table= session->openTableLock(table_list, TL_WRITE);
+  if (not table)
   {
     session->setDoingTablespaceOperation(false);
     return -1;
@@ -709,7 +703,7 @@ static int discard_or_import_tablespace(Session *session,
 
   int error;
   do {
-    error= table->cursor->ha_discard_or_import_tablespace(discard);
+    error= table->cursor->ha_discard_or_import_tablespace(tablespace_op == DISCARD_TABLESPACE);
 
     session->set_proc_info("end");
 
@@ -1465,11 +1459,10 @@ copy_data_between_tables(Session *session,
   to->cursor->ha_start_bulk_insert(from->cursor->stats.records);
 
   List<CreateField>::iterator it(create.begin());
-  CreateField *def;
   copy_end= copy;
   for (Field **ptr= to->getFields(); *ptr ; ptr++)
   {
-    def=it++;
+    CreateField* def=it++;
     if (def->field)
     {
       if (*ptr == to->next_number_field)
@@ -1639,8 +1632,6 @@ copy_data_between_tables(Session *session,
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier)
 {
-  Table *new_table;
-
   /* Open the table so we need to copy the data to it. */
   if (table->getShare()->getType())
   {
@@ -1650,15 +1641,13 @@ static Table *open_alter_table(Session *session, Table *table, identifier::Table
     tbl.setTableName(const_cast<char *>(identifier.getTableName().c_str()));
 
     /* Table is in session->temporary_tables */
-    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    return session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {
     /* Open our intermediate table */
-    new_table= session->open_temporary_table(identifier, false);
+    return session->open_temporary_table(identifier, false);
   }
-
-  return new_table;
 }
 
 } /* namespace drizzled */
