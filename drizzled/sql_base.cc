@@ -844,11 +844,7 @@ bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier,
 
   boost_unique_lock_t scope_lock(table::Cache::singleton().mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
-  table::CacheMap::iterator iter;
-
-  iter= table::getCache().find(key);
-
-  if (iter != table::getCache().end())
+  if (find_ptr(table::getCache(), key))
   {
     *table= 0;
     return false;
