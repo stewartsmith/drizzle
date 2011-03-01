@@ -34,6 +34,12 @@ typedef struct st_dynamic_array
   uint32_t alloc_increment;
   uint32_t size_of_element;
 
+  template<class T>
+  T& operator[](size_t i)
+  {
+    return reinterpret_cast<T*>(buffer)[i];
+  }
+
   size_t size() const
   {
     return elements;
