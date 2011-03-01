@@ -41,6 +41,7 @@
 #include <drizzled/alter_column.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/message/alter_table.pb.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
@@ -1833,6 +1834,10 @@ alter_list_item:
 
             statement->alter_info.keys_onoff= DISABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
+
+            message::AlterTable::AlterKeysOnOff *alter_keys_operation;
+            alter_keys_operation= Lex->alter_table()->mutable_alter_keys_onoff();
+            alter_keys_operation->set_enable(false);
           }
         | ENABLE_SYM KEYS
           {
@@ -1840,6 +1845,9 @@ alter_list_item:
 
             statement->alter_info.keys_onoff= ENABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
+            message::AlterTable::AlterKeysOnOff *alter_keys_operation;
+            alter_keys_operation= Lex->alter_table()->mutable_alter_keys_onoff();
+            alter_keys_operation->set_enable(true);
           }
         | ALTER_SYM opt_column field_ident SET_SYM DEFAULT signed_literal
           {
@@ -1875,6 +1883,11 @@ alter_list_item:
 
             Lex->name= $3->table;
             statement->alter_info.flags.set(ALTER_RENAME);
+
+            message::AlterTable::RenameTable *rename_operation;
+            rename_operation= Lex->alter_table()->mutable_rename();
+            rename_operation->set_to_schema(Lex->select_lex.db);
+            rename_operation->set_to_name(Lex->name.str);
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
