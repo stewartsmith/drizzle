@@ -110,7 +110,7 @@ void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
          iter != schema_cache.end();
          iter++)
     {
-      set_of_names.push_back(identifier::Schema((*iter).second->name()));
+      set_of_names.push_back(identifier::Schema(iter->second->name()));
     }
   }
   mutex.unlock_shared();
@@ -124,7 +124,7 @@ drizzled::message::schema::shared_ptr Schema::doGetSchemaDefinition(const identi
   if (iter != schema_cache.end())
   {
     drizzled::message::schema::shared_ptr schema_message;
-    schema_message= (*iter).second;
+    schema_message= iter->second;
     mutex.unlock_shared();
 
     return schema_message;

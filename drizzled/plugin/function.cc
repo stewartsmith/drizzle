@@ -83,7 +83,7 @@ const plugin::Function *plugin::Function::get(const std::string &name)
   {
     return NULL;
   }
-  return (*iter).second;
+  return iter->second;
 }
 
 } /* namespace drizzled */

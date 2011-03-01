@@ -341,7 +341,7 @@ void Session::cleanup(void)
        iter != user_vars.end();
        iter++)
   {
-    user_var_entry *entry= (*iter).second;
+    user_var_entry *entry= iter->second;
     boost::checked_delete(entry);
   }
   user_vars.clear();

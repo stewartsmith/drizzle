@@ -37,7 +37,7 @@ plugin::TableFunction *TableFunctionContainer::getFunction(const std::string &pa
   {
     return NULL;
   }
-  return (*iter).second;
+  return iter->second;
 }
 
 void TableFunctionContainer::getNames(const string &predicate,

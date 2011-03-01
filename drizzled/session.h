@@ -1192,10 +1192,6 @@ public:
   inline bool is_error() const { return main_da.is_error(); }
   inline const CHARSET_INFO *charset() { return default_charset_info; }
 
-  void change_item_tree(Item **place, Item *new_value)
-  {
-    *place= new_value;
-  }
   /**
     Cleanup statement parse state (parse tree, lex) and execution
     state after execution of a non-prepared SQL statement.

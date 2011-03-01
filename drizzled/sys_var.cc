@@ -1430,7 +1430,7 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
     SystemVariableMap::const_iterator iter= system_variable_map.begin();
     while (iter != system_variable_map.end())
     {
-      sys_var *var= (*iter).second;
+      sys_var *var= iter->second;
       show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
@@ -1593,7 +1593,7 @@ sys_var *find_sys_var(const std::string &name)
   SystemVariableMap::iterator iter= system_variable_map.find(lower_name);
   if (iter != system_variable_map.end())
   {
-    result= (*iter).second;
+    result= iter->second;
   } 
 
   if (result == NULL)

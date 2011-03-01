@@ -97,6 +97,7 @@ class testExecutor():
                 if self.current_test_status == 'fail' and not self.execution_manager.force:
                     self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
                     keep_running = 0
+                self.current_test_status = None # reset ourselves
         self.status = 0
 
     def get_testCase(self):
