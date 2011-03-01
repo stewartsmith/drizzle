@@ -44,6 +44,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/filesort.h>
 #include <drizzled/message.h>
+#include <drizzled/message/alter_table.pb.h>
 #include <drizzled/alter_column.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
@@ -74,6 +75,17 @@ static bool prepare_alter_table(Session *session,
                                       AlterInfo *alter_info);
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier);
+
+static int apply_online_alter_keys_onoff(Session *session,
+                                         Table* table,
+                                         const message::AlterTable::AlterKeysOnOff &op);
+
+static int apply_online_rename_table(Session *session,
+                                     Table *table,
+                                     plugin::StorageEngine *original_engine,
+                                     identifier::Table &original_table_identifier,
+                                     identifier::Table &new_table_identifier,
+                                     const message::AlterTable::RenameTable &alter_operation);
 
 namespace statement {
 
@@ -904,6 +916,7 @@ static bool internal_alter_table(Session *session,
                                  HA_CREATE_INFO *create_info,
                                  const message::Table &original_proto,
                                  message::Table &create_proto,
+                                 message::AlterTable &alter_table_message,
                                  TableList *table_list,
                                  AlterInfo *alter_info,
                                  uint32_t order_num,
@@ -964,10 +977,19 @@ static bool internal_alter_table(Session *session,
 
   session->set_proc_info("setup");
 
-  /*
-   * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
- */
+  /* First we try for operations that do not require a copying
+     ALTER TABLE.
+
+     In future there should be more operations, currently it's just a couple.
+  */
+
+  if ((alter_table_message.has_rename()
+       || alter_table_message.has_alter_keys_onoff())
+      && alter_table_message.operations_size() == 0)
   {
+    /*
+     * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
+     */
     bitset<32> tmp;
 
     tmp.set();
@@ -975,97 +997,38 @@ static bool internal_alter_table(Session *session,
     tmp.reset(ALTER_KEYS_ONOFF);
     tmp&= alter_info->flags;
 
-    if (not (tmp.any()) && not table->getShare()->getType()) // no need to touch frm
+    if((not (tmp.any()) && not table->getShare()->getType())) // no need to touch frm
     {
-      switch (alter_info->keys_onoff)
+      if (alter_table_message.has_alter_keys_onoff())
       {
-      case LEAVE_AS_IS:
-        break;
+        error= apply_online_alter_keys_onoff(session, table,
+                                       alter_table_message.alter_keys_onoff());
 
-      case ENABLE:
-        /*
-          wait_while_table_is_used() ensures that table being altered is
-          opened only by this thread and that Table::TableShare::version
-          of Table object corresponding to this table is 0.
-          The latter guarantees that no DML statement will open this table
-          until ALTER Table finishes (i.e. until close_thread_tables())
-          while the fact that the table is still open gives us protection
-          from concurrent DDL statements.
-        */
+        if (error == HA_ERR_WRONG_COMMAND)
         {
-          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
-          wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        }
-        error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-
-        /* COND_refresh will be signaled in close_thread_tables() */
-        break;
-
-      case DISABLE:
-        {
-          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
-          wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        }
-        error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-
-        /* COND_refresh will be signaled in close_thread_tables() */
-        break;
-      }
-
-      if (error == HA_ERR_WRONG_COMMAND)
-      {
-        error= EE_OK;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->getAlias());
-      }
-
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Lock to remove all instances of table from table cache before ALTER */
-      /*
-        Unlike to the above case close_cached_table() below will remove ALL
-        instances of Table from table cache (it will also remove table lock
-        held by this thread). So to make actual table renaming and writing
-        to binlog atomic we have to put them into the same critical section
-        protected by table::Cache::singleton().mutex() mutex. This also removes gap for races between
-        access() and rename_table() calls.
-      */
-
-      if (not error &&  not (original_table_identifier == new_table_identifier))
-      {
-        session->set_proc_info("rename");
-        /*
-          Then do a 'simple' rename of the table. First we need to close all
-          instances of 'source' table.
-        */
-        session->close_cached_table(table);
-        /*
-          Then, we want check once again that target table does not exist.
-          Actually the order of these two steps does not matter since
-          earlier we took name-lock on the target table, so we do them
-          in this particular order only to be consistent with 5.0, in which
-          we don't take this name-lock and where this order really matters.
-          @todo Investigate if we need this access() check at all.
-        */
-        if (plugin::StorageEngine::doesTableExist(*session, new_table_identifier))
-        {
-          my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
-          error= -1;
-        }
-        else
-        {
-          if (rename_table(*session, original_engine, original_table_identifier, new_table_identifier))
-          {
-            error= -1;
-          }
+          error= EE_OK;
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                              ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
+                              table->getAlias());
         }
       }
 
-      if (error == HA_ERR_WRONG_COMMAND)
+      if (alter_table_message.has_rename())
       {
-        error= EE_OK;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->getAlias());
+        error= apply_online_rename_table(session,
+                                         table,
+                                         original_engine,
+                                         original_table_identifier,
+                                         new_table_identifier,
+                                         alter_table_message.rename());
+
+        if (error == HA_ERR_WRONG_COMMAND)
+        {
+          error= EE_OK;
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                              ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
+                              table->getAlias());
+        }
       }
 
       if (not error)
@@ -1363,6 +1326,99 @@ static bool internal_alter_table(Session *session,
   return false;
 }
 
+static int apply_online_alter_keys_onoff(Session *session,
+                                         Table* table,
+                                         const message::AlterTable::AlterKeysOnOff &op)
+{
+  int error= 0;
+
+  if (op.enable())
+  {
+    /*
+      wait_while_table_is_used() ensures that table being altered is
+      opened only by this thread and that Table::TableShare::version
+      of Table object corresponding to this table is 0.
+      The latter guarantees that no DML statement will open this table
+      until ALTER Table finishes (i.e. until close_thread_tables())
+      while the fact that the table is still open gives us protection
+      from concurrent DDL statements.
+    */
+    {
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+      wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+    }
+    error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+
+    /* COND_refresh will be signaled in close_thread_tables() */
+  }
+  else
+  {
+    {
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+      wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+    }
+    error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+
+    /* COND_refresh will be signaled in close_thread_tables() */
+  }
+
+  return error;
+}
+
+static int apply_online_rename_table(Session *session,
+                                     Table *table,
+                                     plugin::StorageEngine *original_engine,
+                                     identifier::Table &original_table_identifier,
+                                     identifier::Table &new_table_identifier,
+                                     const message::AlterTable::RenameTable &alter_operation)
+{
+  int error= 0;
+
+  boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Lock to remove all instances of table from table cache before ALTER */
+  /*
+    Unlike to the above case close_cached_table() below will remove ALL
+    instances of Table from table cache (it will also remove table lock
+    held by this thread). So to make actual table renaming and writing
+    to binlog atomic we have to put them into the same critical section
+    protected by table::Cache::singleton().mutex() mutex. This also removes gap for races between
+    access() and rename_table() calls.
+  */
+
+  if (not (original_table_identifier == new_table_identifier))
+  {
+    assert(alter_operation.to_name() == new_table_identifier.getTableName());
+    assert(alter_operation.to_schema() == new_table_identifier.getSchemaName());
+
+    session->set_proc_info("rename");
+    /*
+      Then do a 'simple' rename of the table. First we need to close all
+      instances of 'source' table.
+    */
+    session->close_cached_table(table);
+    /*
+      Then, we want check once again that target table does not exist.
+      Actually the order of these two steps does not matter since
+      earlier we took name-lock on the target table, so we do them
+      in this particular order only to be consistent with 5.0, in which
+      we don't take this name-lock and where this order really matters.
+      @todo Investigate if we need this access() check at all.
+    */
+    if (plugin::StorageEngine::doesTableExist(*session, new_table_identifier))
+    {
+      my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
+      error= -1;
+    }
+    else
+    {
+      if (rename_table(*session, original_engine, original_table_identifier, new_table_identifier))
+      {
+        error= -1;
+      }
+    }
+  }
+  return error;
+}
+
 bool alter_table(Session *session,
                  identifier::Table &original_table_identifier,
                  identifier::Table &new_table_identifier,
@@ -1378,6 +1434,10 @@ bool alter_table(Session *session,
   bool error;
   Table *table;
   message::AlterTable *alter_table_message= session->getLex()->alter_table();
+
+  alter_table_message->set_catalog(original_table_identifier.getCatalogName());
+  alter_table_message->set_schema(original_table_identifier.getSchemaName());
+  alter_table_message->set_name(original_table_identifier.getTableName());
 
   if (alter_table_message->operations_size()
       && (alter_table_message->operations(0).operation()
@@ -1417,6 +1477,7 @@ bool alter_table(Session *session,
                                 create_info,
                                 original_proto,
                                 create_proto,
+                                *alter_table_message,
                                 table_list,
                                 alter_info,
                                 order_num,
