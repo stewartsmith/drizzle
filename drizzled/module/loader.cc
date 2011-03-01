@@ -226,46 +226,16 @@ static bool plugin_initialize(module::Registry &registry,
     }
   }
   module->isInited= true;
-
-
   return false;
-}
-
-
-inline static void dashes_to_underscores(std::string &name_in,
-                                         char from= '-', char to= '_')
-{
-  for (string::iterator p= name_in.begin();
-       p != name_in.end();
-       ++p)
-  {
-    if (*p == from)
-    {
-      *p= to;
-    }
-  }
-}
-
-inline static void underscores_to_dashes(std::string &name_in)
-{
-  return dashes_to_underscores(name_in, '_', '-');
 }
 
 static void compose_plugin_options(vector<string> &target,
                                    vector<string> options)
 {
-  for (vector<string>::iterator it= options.begin();
-       it != options.end();
-       ++it)
-  {
-    tokenize(*it, target, ",", true);
-  }
-  for (vector<string>::iterator it= target.begin();
-       it != target.end();
-       ++it)
-  {
-    dashes_to_underscores(*it);
-  }
+  BOOST_FOREACH(vector<string>::reference it, options)
+    tokenize(it, target, ",", true);
+  BOOST_FOREACH(vector<string>::reference it, target)
+    std::replace(it.begin(), it.end(), '-', '_');
 }
 
 void compose_plugin_add(vector<string> options)
@@ -298,7 +268,7 @@ bool plugin_init(module::Registry &registry,
   if (initialized)
     return false;
 
-  initialized= 1;
+  initialized= true;
 
   PluginOptions builtin_load_list;
   tokenize(builtin_load_plugins, builtin_load_list, ",", true);
@@ -369,30 +339,19 @@ bool plugin_finalize(module::Registry &registry)
   /*
     Now we initialize all remaining plugins
   */
-  module::Registry::ModuleList module_list= registry.getList();
-  module::Registry::ModuleList::iterator modules= module_list.begin();
-    
-  while (modules != module_list.end())
+  BOOST_FOREACH(module::Registry::ModuleList::const_reference module, registry.getList())
   {
-    module::Module *module= *modules;
-    ++modules;
-    if (module->isInited == false)
+    if (not module->isInited && plugin_initialize(registry, module))
     {
-      if (plugin_initialize(registry, module))
-      {
-        registry.remove(module);
-        delete module;
-        return true;
-      }
+      registry.remove(module);
+      delete module;
+      return true;
     }
   }
-
-
   BOOST_FOREACH(plugin::Plugin::map::value_type value, registry.getPluginsMap())
   {
     value.second->prime();
   }
-
   return false;
 }
 
