@@ -31,8 +31,28 @@ message AlterTable {
      }
 
      required Operation operation = 1;
-     
    }
 
   repeated AlterTableOperation operations = 6; 
+
+  message RenameTable {
+    required string to_schema = 1;
+    required string to_name = 2;
+  }
+
+  message AlterKeysOnOff {
+    required bool enable = 1;
+  }
+
+  /* RenameTable and AlterKeysOnOff are weird as they can only exist once,
+     and only exist as what the last one in a ALTER TABLE statement does.
+     i.e. from SQL the following is valid:
+     CREATE TABLE t1 (a int);
+     CREATE TABLE t2 (a int);
+     ALTER TABLE t1 RENAME t2, RENAME t3;
+     (t1 is renamed to t3 without error or warning).
+     We can argue if this is insanity or not, but that's current behaviour.
+  */
+  optional RenameTable rename = 7;
+  optional AlterKeysOnOff alter_keys_onoff = 8;
 }
