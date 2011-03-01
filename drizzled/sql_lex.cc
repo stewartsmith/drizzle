@@ -34,6 +34,8 @@
 #include <cstdio>
 #include <ctype.h>
 
+#include <drizzled/message/alter_table.pb.h>
+
 union ParserType;
 
 using namespace std;
@@ -2176,5 +2178,12 @@ bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
   return false;
 }
 
+message::AlterTable *LEX::alter_table()
+{
+  if (not _alter_table)
+    _alter_table= new message::AlterTable;
+
+  return _alter_table;
+}
 
 } /* namespace drizzled */

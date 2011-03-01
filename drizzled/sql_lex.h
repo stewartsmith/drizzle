@@ -24,7 +24,6 @@
   @defgroup Semantic_Analysis Semantic Analysis
 */
 #include <drizzled/message/table.pb.h>
-#include <drizzled/message/alter_table.pb.h>
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/name_resolution_context.h>
@@ -41,6 +40,11 @@
 
 namespace drizzled
 {
+
+  namespace message
+  {
+    class AlterTable;
+  }
 
 class st_lex_symbol;
 class select_result_interceptor;
@@ -1017,13 +1021,7 @@ public:
     return _create_table;
   }
 
-  message::AlterTable *alter_table()
-  {
-    if (not _alter_table)
-      _alter_table= new message::AlterTable;
-
-    return _alter_table;
-  }
+  message::AlterTable *alter_table();
 
   message::Table::Field *field()
   {
