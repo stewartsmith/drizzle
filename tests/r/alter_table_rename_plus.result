@@ -36,4 +36,18 @@ t4	CREATE TABLE `t4` (
   `c` INT DEFAULT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
-DROP TABLE t4;
+ALTER TABLE t4 ENABLE KEYS, RENAME t5, DISABLE KEYS, RENAME t6, ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 't4' doesn't have this option
+show tables;
+Tables_in_test
+t6
+show create table t6;
+Table	Create Table
+t6	CREATE TABLE `t6` (
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
+  `c` INT DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE t6;
