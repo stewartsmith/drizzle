@@ -663,12 +663,10 @@ void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key)
   if (is_foreign_key)
   {
     statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
-    statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY, name));
     operation->set_operation(message::AlterTable::AlterTableOperation::DROP_FOREIGN_KEY);
   }
   else
   {
-    statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY, name));
     operation->set_operation(message::AlterTable::AlterTableOperation::DROP_KEY);
   }
 }

@@ -1807,7 +1807,6 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::COLUMN, $3.str));
             statement->alter_info.flags.set(ALTER_DROP_COLUMN);
             message::AlterTable::AlterTableOperation *operation;
             operation= Lex->alter_table()->add_operations();
@@ -4042,7 +4041,7 @@ drop:
             statement::DropIndex *statement= new statement::DropIndex(YYSession);
             Lex->statement= statement;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY, $4.str));
+
             if (not Lex->current_select->add_table_to_list(Lex->session, $6, NULL,
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;

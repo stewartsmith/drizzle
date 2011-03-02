@@ -74,7 +74,6 @@ enum enum_alter_info_flags
 class AlterInfo
 {
 public:
-  List<AlterDrop> drop_list;
   List<AlterColumn> alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
