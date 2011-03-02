@@ -718,7 +718,9 @@ static int discard_or_import_tablespace(Session *session, TableList *table_list,
     if (error)
       break;
 
-    write_bin_log(session, *session->getQueryString());
+    transaction_services.rawStatement(*session,
+                                      *session->getQueryString(),
+                                      *session->schema());
 
   } while(0);
 
@@ -1047,7 +1049,9 @@ static bool internal_alter_table(Session *session,
       {
         TransactionServices &transaction_services= TransactionServices::singleton();
         transaction_services.allocateNewTransactionId();
-        write_bin_log(session, *session->getQueryString());
+        transaction_services.rawStatement(*session,
+                                          *session->getQueryString(),
+                                          *session->schema());        
         session->my_ok();
       }
       else if (error > EE_OK) // If we have already set the error, we pass along -1
@@ -1314,7 +1318,10 @@ static bool internal_alter_table(Session *session,
 
     session->set_proc_info("end");
 
-    write_bin_log(session, *session->getQueryString());
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.rawStatement(*session,
+                                      *session->getQueryString(),
+                                      *session->schema());        
     table_list->table= NULL;
   }
 
