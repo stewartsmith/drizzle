@@ -266,7 +266,6 @@ static bool prepare_alter_table(Session *session,
   List<CreateField> new_create_list;
   /* New key definitions are added here */
   List<Key> new_key_list;
-  List<AlterDrop>::iterator drop_it(alter_info->drop_list.begin());
   List<CreateField>::iterator def_it(alter_info->create_list.begin());
   List<AlterColumn>::iterator alter_it(alter_info->alter_list.begin());
   List<Key>::iterator key_it(alter_info->key_list.begin());
@@ -276,6 +275,33 @@ static bool prepare_alter_table(Session *session,
   uint32_t used_fields= create_info->used_fields;
   KeyInfo *key_info= table->key_info;
   bool rc= true;
+  vector<string> drop_keys;
+  vector<string> drop_columns;
+  vector<string> drop_fkeys;
+
+  /* we use drop_(keys|columns|fkey) below to check that we can do all
+     operations we've been asked to do */
+  for (int operationnr= 0; operationnr < alter_table_message.operations_size();
+       operationnr++)
+  {
+    const message::AlterTable::AlterTableOperation &operation=
+      alter_table_message.operations(operationnr);
+
+    switch (operation.operation())
+    {
+    case message::AlterTable::AlterTableOperation::DROP_KEY:
+      drop_keys.push_back(operation.drop_name());
+      break;
+    case message::AlterTable::AlterTableOperation::DROP_COLUMN:
+      drop_columns.push_back(operation.drop_name());
+      break;
+    case message::AlterTable::AlterTableOperation::DROP_FOREIGN_KEY:
+      drop_fkeys.push_back(operation.drop_name());
+      break;
+    default:
+      break;
+    }
+  }
 
   /* Let new create options override the old ones */
   message::Table::TableOptions *table_options;
@@ -301,12 +327,10 @@ static bool prepare_alter_table(Session *session,
   for (Field **f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
-    AlterDrop *drop;
-    drop_it= alter_info->drop_list.begin();
-    while ((drop= drop_it++))
+    vector<string>::iterator it= drop_columns.begin();
+    while ((it != drop_columns.end()))
     {
-      if (drop->type == AlterDrop::COLUMN &&
-          ! my_strcasecmp(system_charset_info, field->field_name, drop->name))
+      if (! my_strcasecmp(system_charset_info, field->field_name, (*it).c_str()))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
@@ -317,14 +341,15 @@ static bool prepare_alter_table(Session *session,
         }
         break;
       }
+      it++;
     }
 
-    if (drop)
+    if (it != drop_columns.end())
     {
-      drop_it.remove();
+      drop_columns.erase(it);
       continue;
     }
-    
+
     /* Mark that we will read the field */
     field->setReadSet();
 
@@ -470,19 +495,18 @@ static bool prepare_alter_table(Session *session,
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
     char *key_name= key_info->name;
-    AlterDrop *drop;
 
-    drop_it= alter_info->drop_list.begin();
-    while ((drop= drop_it++))
+    vector<string>::iterator it= drop_keys.begin();
+    while ((it != drop_keys.end()))
     {
-      if (drop->type == AlterDrop::KEY &&
-          ! my_strcasecmp(system_charset_info, key_name, drop->name))
+      if (! my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
         break;
+      it++;
     }
 
-    if (drop)
+    if (it != drop_keys.end())
     {
-      drop_it.remove();
+      drop_keys.erase(it);
       continue;
     }
 
@@ -576,19 +600,19 @@ static bool prepare_alter_table(Session *session,
   /* Copy over existing foreign keys */
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
-    AlterDrop *drop;
-    drop_it= alter_info->drop_list.begin();
-    while ((drop= drop_it++))
+    vector<string>::iterator it= drop_fkeys.begin();
+    while ((it != drop_fkeys.end()))
     {
-      if (drop->type == AlterDrop::FOREIGN_KEY &&
-          ! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop->name))
+      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), (*it).c_str()))
       {
         break;
       }
+      it++;
     }
-    if (drop)
+
+    if (it != drop_fkeys.end())
     {
-      drop_it.remove();
+      drop_fkeys.erase(it);
       continue;
     }
 
@@ -648,11 +672,27 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  if (alter_info->drop_list.size())
+  if (drop_keys.size())
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
-             alter_info->drop_list.front().name);
+             drop_keys.front().c_str());
+    return true;
+  }
+
+  if (drop_columns.size())
+  {
+    my_error(ER_CANT_DROP_FIELD_OR_KEY,
+             MYF(0),
+             drop_columns.front().c_str());
+    return true;
+  }
+
+  if (drop_fkeys.size())
+  {
+    my_error(ER_CANT_DROP_FIELD_OR_KEY,
+             MYF(0),
+             drop_fkeys.front().c_str());
     return true;
   }
 
