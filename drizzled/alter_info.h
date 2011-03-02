@@ -80,7 +80,6 @@ public:
   List<CreateField> create_list;
   message::AddedFields added_fields_proto;
   std::bitset<32> flags;
-  enum enum_enable_or_disable keys_onoff;
   uint32_t no_parts;
   bool error_if_not_empty;
 

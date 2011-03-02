@@ -64,7 +64,7 @@ static int copy_data_between_tables(Session *session,
                                     Order *order,
                                     ha_rows *copied,
                                     ha_rows *deleted,
-                                    enum enum_enable_or_disable keys_onoff,
+                                    message::AlterTable &alter_table_message,
                                     bool error_if_not_empty);
 
 static bool prepare_alter_table(Session *session,
@@ -787,18 +787,19 @@ static int discard_or_import_tablespace(Session *session,
 */
 static bool alter_table_manage_keys(Session *session,
                                     Table *table, int indexes_were_disabled,
-                                    enum enum_enable_or_disable keys_onoff)
+                                    const message::AlterTable &alter_table_message)
 {
   int error= 0;
-  switch (keys_onoff) {
-  case ENABLE:
+  if (alter_table_message.has_alter_keys_onoff()
+      && alter_table_message.alter_keys_onoff().enable())
+  {
     error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-    break;
-  case LEAVE_AS_IS:
-    if (not indexes_were_disabled)
-      break;
-    /* fall-through: disabled indexes */
-  case DISABLE:
+  }
+
+  if ((! alter_table_message.has_alter_keys_onoff() && indexes_were_disabled)
+      || (alter_table_message.has_alter_keys_onoff()
+          && ! alter_table_message.alter_keys_onoff().enable()))
+  {
     error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
   }
 
@@ -1122,7 +1123,7 @@ static bool internal_alter_table(Session *session,
                                     order,
                                     &copied,
                                     &deleted,
-                                    alter_info->keys_onoff,
+                                    alter_table_message,
                                     alter_info->error_if_not_empty);
 
     /* We must not ignore bad input! */
@@ -1505,7 +1506,7 @@ copy_data_between_tables(Session *session,
                          uint32_t order_num, Order *order,
                          ha_rows *copied,
                          ha_rows *deleted,
-                         enum enum_enable_or_disable keys_onoff,
+                         message::AlterTable &alter_table_message,
                          bool error_if_not_empty)
 {
   int error= 0;
@@ -1545,7 +1546,8 @@ copy_data_between_tables(Session *session,
     return -1;
 
   /* We need external lock before we can disable/enable keys */
-  alter_table_manage_keys(session, to, from->cursor->indexes_are_disabled(), keys_onoff);
+  alter_table_manage_keys(session, to, from->cursor->indexes_are_disabled(),
+                          alter_table_message);
 
   /* We can abort alter table for any table type */
   session->setAbortOnWarning(not ignore);

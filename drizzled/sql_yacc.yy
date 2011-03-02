@@ -1826,7 +1826,6 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            statement->alter_info.keys_onoff= DISABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
 
             message::AlterTable::AlterKeysOnOff *alter_keys_operation;
@@ -1837,7 +1836,6 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            statement->alter_info.keys_onoff= ENABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
             message::AlterTable::AlterKeysOnOff *alter_keys_operation;
             alter_keys_operation= Lex->alter_table()->mutable_alter_keys_onoff();
