@@ -9257,7 +9257,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&strict_mode)->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");
   context("replication-log",
-          po::value<bool>(&innobase_use_replication_log)->default_value(false),
+          po::value<bool>(&innobase_use_replication_log)->default_value(false)->zero_tokens(),
           _("Enable internal replication log."));
   context("lock-wait-timeout",
           po::value<lock_wait_constraint>(&lock_wait_timeout)->default_value(50),
