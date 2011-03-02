@@ -28,9 +28,14 @@ message AlterTable {
           ALTER TABLE operation is as the first and only operation */
        DISCARD_TABLESPACE = 0;
        IMPORT_TABLESPACE = 1;
+       DROP_KEY = 2; /* uses drop_name */
+       DROP_COLUMN = 3; /* uses drop_name */
+       DROP_FOREIGN_KEY = 4; /* uses drop_name */
      }
 
      required Operation operation = 1;
+
+     optional string drop_name = 2;;
    }
 
   repeated AlterTableOperation operations = 6; 
