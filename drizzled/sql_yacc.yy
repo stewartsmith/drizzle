@@ -1809,6 +1809,10 @@ alter_list_item:
 
             statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::COLUMN, $3.str));
             statement->alter_info.flags.set(ALTER_DROP_COLUMN);
+            message::AlterTable::AlterTableOperation *operation;
+            operation= Lex->alter_table()->add_operations();
+            operation->set_operation(message::AlterTable::AlterTableOperation::DROP_COLUMN);
+            operation->set_drop_name($3.str);
           }
         | DROP FOREIGN KEY_SYM opt_ident
           {
@@ -4042,6 +4046,12 @@ drop:
             if (not Lex->current_select->add_table_to_list(Lex->session, $6, NULL,
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
+
+            message::AlterTable::AlterTableOperation *operation;
+            operation= Lex->alter_table()->add_operations();
+            operation->set_operation(message::AlterTable::AlterTableOperation::DROP_KEY);
+            operation->set_drop_name($4.str);
+
           }
         | DROP DATABASE if_exists schema_name
           {

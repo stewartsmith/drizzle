@@ -22,6 +22,7 @@
 #include <drizzled/parser.h>
 #include <drizzled/alter_info.h>
 #include <drizzled/alter_drop.h>
+#include <drizzled/message/alter_table.pb.h>
 
 namespace drizzled {
 namespace parser {
@@ -654,15 +655,21 @@ void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
+  message::AlterTable::AlterTableOperation *operation;
+  operation= lex->alter_table()->add_operations();
+  operation->set_drop_name(name);
+
   statement->alter_info.flags.set(ALTER_DROP_INDEX);
   if (is_foreign_key)
   {
     statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
     statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY, name));
+    operation->set_operation(message::AlterTable::AlterTableOperation::DROP_FOREIGN_KEY);
   }
   else
   {
     statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY, name));
+    operation->set_operation(message::AlterTable::AlterTableOperation::DROP_KEY);
   }
 }
 
