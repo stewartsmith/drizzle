@@ -2123,7 +2123,8 @@ void TransactionServices::truncateTable(Session::reference session,
 }
 
 void TransactionServices::rawStatement(Session::reference session,
-                                       const string &query)
+                                       const string &query,
+                                       const string &schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -2134,6 +2135,8 @@ void TransactionServices::rawStatement(Session::reference session,
 
   initStatementMessage(*statement, message::Statement::RAW_SQL, session);
   statement->set_sql(query);
+  if (not schema.empty())
+    statement->set_raw_sql_schema(schema);
   finalizeStatementMessage(*statement, session);
 
   finalizeTransactionMessage(*transaction, session);

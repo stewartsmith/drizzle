@@ -65,7 +65,7 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
                                    0,
                                    key_field->rejectNullValues(),
                                    key_field->getConditionalGuard());
-          insert_dynamic(keyuse_array, (unsigned char*) &keyuse);
+          keyuse_array->push_back(&keyuse);
         }
       }
     }
