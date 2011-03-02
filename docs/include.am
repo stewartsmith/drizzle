@@ -45,7 +45,7 @@ man_MANS+= \
 	   docs/man/drizzledump.1
 	   docs/man/drizzleadmin.1
 DISTCLEANFILES+= \
-       docs/man/drizzledump.1
+           docs/man/drizzledump.1
 	   docs/man/drizzleadmin.1
 	   
 docs/man/drizzledump.1: man
