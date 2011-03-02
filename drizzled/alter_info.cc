@@ -24,7 +24,6 @@
 
 #include <config.h>
 #include <drizzled/alter_info.h>
-#include <drizzled/alter_drop.h>
 #include <drizzled/alter_column.h>
 #include <drizzled/key.h>
 #include <drizzled/create_field.h>

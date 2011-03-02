@@ -21,7 +21,6 @@
 #include <config.h>
 #include <drizzled/parser.h>
 #include <drizzled/alter_info.h>
-#include <drizzled/alter_drop.h>
 #include <drizzled/message/alter_table.pb.h>
 
 namespace drizzled {

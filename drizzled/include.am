@@ -43,7 +43,6 @@ DTRACEFILES= \
 nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/abort_exception.h \
 			      drizzled/alter_column.h \
-			      drizzled/alter_drop.h \
 			      drizzled/alter_info.h \
 			      drizzled/atomic/gcc_traits.h \
 			      drizzled/atomic/pthread_traits.h \

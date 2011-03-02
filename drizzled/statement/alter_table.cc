@@ -46,7 +46,6 @@
 #include <drizzled/message.h>
 #include <drizzled/message/alter_table.pb.h>
 #include <drizzled/alter_column.h>
-#include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
 
 using namespace std;

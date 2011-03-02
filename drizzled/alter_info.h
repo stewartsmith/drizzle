@@ -38,7 +38,6 @@ namespace drizzled
 
 /* Some forward declarations needed */
 class CreateField;
-class AlterDrop;
 class AlterColumn;
 
 enum enum_alter_info_flags
