@@ -292,8 +292,7 @@ int handle_default_option(void *in_ctx, const char *group_name,
   {
     if (!(tmp= (char *)ctx->alloc->alloc_root(strlen(option) + 1)))
       return 1;
-    if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
-      return 1;
+    ctx->args->push_back(&tmp);
     strcpy(tmp, option);
   }
 

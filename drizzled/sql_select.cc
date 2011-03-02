@@ -647,9 +647,9 @@ bool update_ref_and_keys(Session *session,
                        (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
-    insert_dynamic(keyuse,(unsigned char*) &key_end);
+    keyuse->push_back(&key_end);
 
-    use= save_pos= dynamic_element(keyuse, 0, optimizer::KeyUse*);
+    use= save_pos= (optimizer::KeyUse*)keyuse->buffer;
     prev= &key_end;
     found_eq_constant= 0;
     {
@@ -694,11 +694,8 @@ bool update_ref_and_keys(Session *session,
 */
 void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
 {
-  optimizer::KeyUse *end,*keyuse= dynamic_element(keyuse_array, 
-                                                  0, 
-                                                  optimizer::KeyUse*);
-
-  for (end= keyuse+ keyuse_array->size() ; keyuse < end ; keyuse++)
+  optimizer::KeyUse* keyuse= (optimizer::KeyUse*)keyuse_array->buffer;
+  for (optimizer::KeyUse* end= keyuse+ keyuse_array->size() ; keyuse < end ; keyuse++)
   {
     table_map map;
     /*

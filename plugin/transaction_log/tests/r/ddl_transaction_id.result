@@ -204,6 +204,7 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 CHANGE COLUMN padding less_padding VARCHAR(180) NOT NULL"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
