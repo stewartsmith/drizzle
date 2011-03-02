@@ -21,25 +21,16 @@
 
 #include "option_map.h"
 
-
-namespace drizzled
-{
-namespace module
-{
+namespace drizzled {
+namespace module {
 
 namespace po= boost::program_options;
 
 option_map::option_map(const std::string &module_name_in,
                        const po::variables_map &vm_in) :
-  module_name(module_name_in),
-  vm(vm_in)
+  vm(vm_in),
+  module_name(module_name_in)
 { }
-
-option_map::option_map(const option_map &old) :
-  module_name(old.module_name),
-  vm(old.vm)
-{ }
-
 
 } /* namespace module */
 } /* namespace drizzled */

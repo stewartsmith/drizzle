@@ -132,7 +132,7 @@ class randgenTestExecutor(test_execution.testExecutor):
             and then ask systemManager to do so
 
         """
-        env_reqs = { 'randgen_VARDIR': self.master_server.vardir
+        env_reqs = {  'DRIZZLETEST_VARDIR': self.master_server.vardir
                    ,  'DRIZZLE_TMP_DIR': self.master_server.tmpdir
                    ,  'MASTER_MYSOCK': self.master_server.socket_file
                    ,  'MASTER_MYPORT': str(self.master_server.master_port)
@@ -152,9 +152,12 @@ class randgenTestExecutor(test_execution.testExecutor):
                                                    , self.master_server.master_port)
                    ,  'DRIZZLE_ADMIN' : "%s -uroot -p%d" %( self.master_server.drizzleadmin
                                                          , self.master_server.master_port)
+                   ,  'DRIZZLE_BASEDIR' : "%s" %(self.system_manager.code_tree.basedir)
                    }     
 
+
         self.working_environment = self.system_manager.create_working_environment(env_reqs)
+
 
     def process_symlink_reqs(self):
         """ Create any symlinks we may need """
