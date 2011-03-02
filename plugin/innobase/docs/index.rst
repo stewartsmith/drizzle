@@ -58,6 +58,6 @@ To enable this transaction log, you must start the server with:
 
 .. program:: drizzled
 
-.. option::  --innodb.replication-log=true
+.. option::  --innodb.replication-log
 
 It is not enabled by default.
