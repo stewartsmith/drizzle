@@ -66,6 +66,14 @@ bool ReplicationSlave::initWithConfig()
     ("applier-thread-sleep", po::value<uint32_t>()->default_value(5));
 
   ifstream cf_stream(_config_file.c_str());
+
+  if (not cf_stream.is_open())
+  {
+    _error= "Unable to open file ";
+    _error.append(_config_file);
+    return false;
+  }
+
   po::store(drizzled::program_options::parse_config_file(cf_stream, slave_options), vm);
 
   po::notify(vm);

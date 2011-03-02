@@ -22,7 +22,12 @@ file.
 
 .. option:: --slave.config-file=arg
 
-   Path to the replication slave configuration file.
+   Path to the replication slave configuration file. By default, the
+   plugin will look for a file named `slave.cfg` in the `etc` directory
+   of the Drizzle installation. If you want to specify a different path or
+   configuration file name, it is best to specify a full path to the
+   file. The relative path used by plugins is within the :option:`--datadir`
+   directory, so a full path is recommended.
 
 The options below are read from the configuration file.
 
@@ -51,6 +56,16 @@ The options below are read from the configuration file.
 
    The number of seconds to wait between reconnect attempts when the master
    server becomes unreachable. Default is 30.
+
+.. confval:: io-thread-sleep
+
+   The number of seconds the IO (producer) thread sleeps between queries to the
+   master for more replication events. Default is 5.
+
+.. confval:: applier-thread-sleep
+
+   The number of seconds the applier (consumer) thread sleeps between applying
+   replication events from the local queue. Default is 5.
 
 Implementation Details
 ----------------------
