@@ -51,32 +51,35 @@ test_executor = None
 execution_manager = None
 
 try:
-    # Some system-level work is constant regardless
-    # of the test to be run
-    system_manager = systemManager(variables)
+    # We do this nested try to accomodate red hat
+    # running python 2.4...seriously?  2.4?
+    try:
+        # Some system-level work is constant regardless
+        # of the test to be run
+        system_manager = systemManager(variables)
 
-    # Create our server_manager
-    server_manager = serverManager(system_manager, variables)
+        # Create our server_manager
+        server_manager = serverManager(system_manager, variables)
 
-    # Get our mode-specific test_manager and test_executor
-    (test_manager,test_executor) = handle_mode(variables, system_manager)
+        # Get our mode-specific test_manager and test_executor
+        (test_manager,test_executor) = handle_mode(variables, system_manager)
 
-    # Gather our tests for execution
-    test_manager.gather_tests()
+        # Gather our tests for execution
+        test_manager.gather_tests()
 
-    # Initialize test execution manager
-    execution_manager = executionManager(server_manager, system_manager
-                                    , test_manager, test_executor
-                                    , variables)
+        # Initialize test execution manager
+        execution_manager = executionManager(server_manager, system_manager
+                                        , test_manager, test_executor
+                                        , variables)
 
-    # Execute our tests!
-    execution_manager.execute_tests()
+        # Execute our tests!
+        execution_manager.execute_tests()
+    
+    except Exception, e:
+       print Exception, e
 
-except Exception, e:
-   print Exception, e
-
-except KeyboardInterrupt:
-  print "\n\nDetected <Ctrl>+c, shutting down and cleaning up..."
+    except KeyboardInterrupt:
+      print "\n\nDetected <Ctrl>+c, shutting down and cleaning up..."
 
 finally:
 # TODO - make a more robust cleanup
