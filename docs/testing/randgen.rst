@@ -70,7 +70,7 @@ Using an empty sub-list will create a server with the default options::
     command = ./gentest.pl --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=10 --threads=1
 
     [test_servers]
-    servers = [[--innodb.replication-log=true],[--plugin-add=slave --slave.config-file=$MASTER_SERVER_SLAVE_CONFIG]]
+    servers = [[--innodb.replication-log],[--plugin-add=slave --slave.config-file=$MASTER_SERVER_SLAVE_CONFIG]]
 
 Running tests
 =========================
