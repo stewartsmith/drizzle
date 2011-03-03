@@ -1,5 +1,5 @@
 Installing in RedHat and Fedora
-===============================
+================================
 
 Using RPMs
 ----------
@@ -59,7 +59,7 @@ You can then use the following shell command:
 
 .. code-block:: bash
 
-   yum install drizzle7
+   yum install drizzle7-server drizzle7-client
 
 Compiling From Source
 ---------------------

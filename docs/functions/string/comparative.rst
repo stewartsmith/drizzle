@@ -6,22 +6,6 @@ LIKE
 
 The LIKE operator is used to check if field values match a specified pattern, and searches for less-than-exact but similar values.
 
-An initial example is:
-
-.. code-block:: mysql
-
-	SELECT 'ä' LIKE 'ae' COLLATE latin1_german2_ci;
-
-Returns 0
-
-Whereas:
-
-.. code-block:: mysql
-
-	SELECT 'ä' = 'ae' COLLATE latin1_german2_ci;
-
-Returns 1
-
 The LIKE operator supports the use of two wildcards. (Wildcards provide more flexibility by allowing any character or group of characters in a string to be acceptable as a match for another string):
 
     * Percentage (%): Represents zero or more values.
