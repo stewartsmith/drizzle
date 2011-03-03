@@ -253,7 +253,7 @@ public:
    * 
    * @param str   string where table should be printed
    */
-  void print(Session *session, String *str, enum_query_type query_type);
+  void print(Session *session, String *str);
   /**
    * Sets insert_values buffer
    *

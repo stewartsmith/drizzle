@@ -261,12 +261,12 @@ bool TableList::process_index_hints(Table *tbl)
   return 0;
 }
 
-void TableList::print(Session *session, String *str, enum_query_type query_type)
+void TableList::print(Session *session, String *str)
 {
   if (nested_join)
   {
     str->append('(');
-    print_join(session, str, &nested_join->join_list, query_type);
+    print_join(session, str, &nested_join->join_list);
     str->append(')');
   }
   else
@@ -276,7 +276,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     {
       // A derived table
       str->append('(');
-      derived->print(str, query_type);
+      derived->print(str);
       str->append(')');
       cmp_name= "";                               // Force printing of alias
     }

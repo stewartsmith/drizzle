@@ -362,14 +362,14 @@ int Item::decimal_int_part() const
   return class_decimal_int_part(decimal_precision(), decimals);
 }
 
-void Item::print(String *str, enum_query_type)
+void Item::print(String *str)
 {
   str->append(full_name());
 }
 
-void Item::print_item_w_name(String *str, enum_query_type query_type)
+void Item::print_item_w_name(String *str)
 {
-  print(str, query_type);
+  print(str);
 
   if (name)
   {
@@ -740,12 +740,12 @@ public:
                   const char *table_name_arg, const char *field_name_arg)
     :Item_ref(context_arg, item, table_name_arg, field_name_arg) {}
 
-  virtual inline void print (String *str, enum_query_type query_type)
+  virtual inline void print (String *str)
   {
     if (ref)
-      (*ref)->print(str, query_type);
+      (*ref)->print(str);
     else
-      Item_ident::print(str, query_type);
+      Item_ident::print(str);
   }
 };
 

@@ -94,10 +94,10 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
 }
 
 
-void Item_insert_value::print(String *str, enum_query_type query_type)
+void Item_insert_value::print(String *str)
 {
   str->append(STRING_WITH_LEN("values("));
-  arg->print(str, query_type);
+  arg->print(str);
   str->append(')');
 }
 

@@ -59,7 +59,7 @@ type::Decimal *Item_null::val_decimal(type::Decimal *)
 }
 
 
-void Item_null::print(String *str, enum_query_type)
+void Item_null::print(String *str)
 {
   str->append(STRING_WITH_LEN("NULL"));
 }

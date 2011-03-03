@@ -57,7 +57,7 @@ String *Item_int::val_str(String *str)
   return str;
 }
 
-void Item_int::print(String *str, enum_query_type)
+void Item_int::print(String *str)
 {
   // my_charset_bin is good enough for numbers
   str_value.set(value, &my_charset_bin);

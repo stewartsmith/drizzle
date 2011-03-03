@@ -56,7 +56,7 @@ public:
       Item_str_func::walk(processor, walk_subquery, arg);
   }
   Item *transform(Item_transformer transformer, unsigned char *arg);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 } /* namespace drizzled */

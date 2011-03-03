@@ -115,7 +115,7 @@ warn:
   return 1;
 }
 
-void Item_hex_string::print(String *str, enum_query_type)
+void Item_hex_string::print(String *str)
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
        *ptr= end - min(str_value.length(), sizeof(int64_t));

@@ -48,20 +48,20 @@ bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
   return 1;
 }
 
-void Item_typecast::print(String *str, enum_query_type query_type)
+void Item_typecast::print(String *str)
 {
   str->append(STRING_WITH_LEN("cast("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" as "));
   str->append(cast_type());
   str->append(')');
 }
 
 
-void Item_char_typecast::print(String *str, enum_query_type query_type)
+void Item_char_typecast::print(String *str)
 {
   str->append(STRING_WITH_LEN("cast("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" as char"));
   if (cast_length >= 0)
   {

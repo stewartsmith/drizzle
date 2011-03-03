@@ -38,7 +38,7 @@ public:
     decimals=0;
     maybe_null=1;
   }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 } /* namespace drizzled */
