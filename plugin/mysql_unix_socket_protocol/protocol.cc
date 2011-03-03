@@ -144,7 +144,6 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   {
     std::cerr << "Listening on " << _unix_socket_path << "\n";
   }
-  (void) unlink(_unix_socket_path.file_string().c_str());
 
   fds.push_back(unix_sock);
 
