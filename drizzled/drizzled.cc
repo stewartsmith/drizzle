@@ -1306,7 +1306,7 @@ int init_basic_variables(int argc, char **argv)
   _("If an internal in-memory temporary table exceeds this size, Drizzle will"
      " automatically convert it to an on-disk MyISAM table."))
   ("verbose", po::value<std::string>()->default_value(error::verbose_string())->notifier(&error::check_verbosity),
-  _("The stack size for each thread."))
+  _("The verbosity of messages from drizzled.  Possible values are INSPECT, INFO, WARN or ERROR"))
   ;
 
   full_options.add(long_options);
