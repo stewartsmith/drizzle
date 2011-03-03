@@ -142,7 +142,7 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   }
   else
   {
-    std::cerr << "Listening on " << _unix_socket_path << "\n";
+    errmsg_printf(error::INFO, _("Listening on %s"), _unix_socket_path.file_string().c_str());
   }
 
   fds.push_back(unix_sock);
