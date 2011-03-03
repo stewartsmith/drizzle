@@ -25,20 +25,18 @@
 #ifndef DRIZZLED_ALTER_INFO_H
 #define DRIZZLED_ALTER_INFO_H
 
+#include <drizzled/alter_column.h>
 #include <drizzled/base.h>
 #include <drizzled/enum.h>
-#include <drizzled/sql_list.h> /** @TODO use STL vectors! */
 #include <drizzled/key.h>
 #include <drizzled/message/table.pb.h>
 
 #include <bitset>
+#include <list>
 
-namespace drizzled
-{
+namespace drizzled {
 
-/* Some forward declarations needed */
 class CreateField;
-class AlterColumn;
 
 enum enum_alter_info_flags
 {
@@ -73,7 +71,9 @@ enum enum_alter_info_flags
 class AlterInfo
 {
 public:
-  List<AlterColumn> alter_list;
+  typedef std::list<AlterColumn> alter_list_t;
+
+  alter_list_t alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
   message::AddedFields added_fields_proto;

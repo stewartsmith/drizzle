@@ -14,30 +14,32 @@ Configuration
 
 Several server variables control the transaction log.
 
-**transaction-log.enable**
+.. program:: drizzled
+
+.. option:: --transaction-log.enable
 
    Enable transaction log.
 
-**transaction-log.enable-checksum**
+.. option:: --transaction-log.enable-checksum
 
    Enable CRC32 Checksumming of each written transaction log entry
 
-**transaction-log.file**
+.. option:: --transaction-log.file=arg
 
   Path to the file to use for transaction log. The default will be
   :file:`transaction.log`.
 
-**transaction-log.use-replicator**
+.. option:: --transaction-log.use-replicator
 
    Name of the replicator plugin to use (default='default_replicator')
 
-**transaction-log.flush-frequency**
+.. option:: --transaction-log.flush-frequency=arg
 
    * 0 : rely on operating system to sync log file (default)
    * 1 : sync file at each transaction write
    * 2 : sync log file once per second
 
-**transaction-log.num-write-buffers**
+.. option:: --transaction-log.num-write-buffers=arg
 
    Number of slots for in-memory write buffers (default=8).
 

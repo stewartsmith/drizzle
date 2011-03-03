@@ -271,7 +271,7 @@ void ErrorMap::add(drizzled::error_t error_num,
                    const std::string &error_name,
                    const std::string &message)
 {
-  if (mapping_.find(error_num) == mapping_.end())
+  if (not mapping_.count(error_num))
   {
     // Log the error.
     mapping_[error_num]= ErrorMap::value_type(error_name, message);
@@ -677,7 +677,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name."));
   ADD_ERROR_MESSAGE(ER_USE_DATA_DICTIONARY, N_("Engine status is now stored in the data_dictionary tables, please use these instead."));
   ADD_ERROR_MESSAGE(ER_TRANSACTION_ALREADY_STARTED, N_("There is already a transaction in progress"));
-
+  ADD_ERROR_MESSAGE(ER_NO_LOCK_HELD, N_("No lock is held by this connection."));
 }
 
 } /* namespace drizzled */

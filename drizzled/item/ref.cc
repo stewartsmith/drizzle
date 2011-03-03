@@ -25,6 +25,7 @@
 #include <drizzled/item/ref.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/item/sum.h>
+#include <drizzled/item/subselect.h>
 
 namespace drizzled
 {
@@ -266,7 +267,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
         Item_field* fld;
         if (!(fld= new Item_field(from_field)))
           goto error;
-        session->change_item_tree(reference, fld);
+        *reference= fld;
         mark_as_dependent(session, last_checked_context->select_lex,
                           session->getLex()->current_select, this, fld);
         /*

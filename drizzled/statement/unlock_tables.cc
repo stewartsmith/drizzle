@@ -38,8 +38,12 @@ bool statement::UnlockTables::execute()
   if (getSession()->isGlobalReadLock())
   {
     getSession()->unlockGlobalReadLock();
+    getSession()->my_ok();
   }
-  getSession()->my_ok();
+  else
+  {
+    my_error(ER_NO_LOCK_HELD, MYF(0));
+  }
 
   return false;
 }

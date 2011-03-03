@@ -78,7 +78,7 @@ void remove_table(table::Concurrent *arg)
   for (CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
   {
-    table::Concurrent *found_table= (*iter).second;
+    table::Concurrent *found_table= iter->second;
 
     if (found_table == arg)
     {
@@ -105,7 +105,7 @@ bool Cache::areTablesUsed(Table *table, bool wait_for_name_lock)
 
     for (table::CacheMap::const_iterator iter= ppp.first; iter != ppp.second; ++iter)
     {
-      Table *search= (*iter).second;
+      Table *search= iter->second;
       if (search->in_use == table->in_use)
         continue;                               // Name locked by this thread
       /*
@@ -144,7 +144,7 @@ void Cache::removeSchema(const identifier::Schema &schema_identifier)
        iter != table::getCache().end();
        iter++)
   {
-    table::Concurrent *table= (*iter).second;
+    table::Concurrent *table= iter->second;
 
     if (not schema_identifier.getPath().compare(table->getShare()->getSchemaName()))
     {
@@ -188,7 +188,7 @@ bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_
     for (table::CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
-      table::Concurrent *table= (*iter).second;
+      table::Concurrent *table= iter->second;
       Session *in_use;
 
       table->getMutableShare()->resetVersion();		/* Free when thread is ready */

@@ -78,7 +78,7 @@ public:
   {
     for (iterator iter= _properties.begin(); iter != _properties.end(); iter++)
     {
-      boost::checked_delete((*iter).second);
+      boost::checked_delete(iter->second);
     }
     _properties.clear();
   }

@@ -24,10 +24,7 @@
   @defgroup Semantic_Analysis Semantic Analysis
 */
 #include <drizzled/message/table.pb.h>
-
-#include <drizzled/plugin/function.h>
 #include <drizzled/name_resolution_context.h>
-#include <drizzled/item/subselect.h>
 #include <drizzled/table_list.h>
 #include <drizzled/function/math/real.h>
 #include <drizzled/key_part_spec.h>
@@ -38,8 +35,9 @@
 #include <bitset>
 #include <string>
 
-namespace drizzled
-{
+namespace drizzled {
+
+namespace plugin { class Function; }
 
   namespace message
   {
@@ -396,7 +394,6 @@ public:
   inline bool is_union ();
 
   friend void lex_start(Session *session);
-  friend int subselect_union_engine::exec();
 
   List<Item> *get_unit_column_types();
 };

@@ -647,9 +647,9 @@ bool update_ref_and_keys(Session *session,
                        (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
-    insert_dynamic(keyuse,(unsigned char*) &key_end);
+    keyuse->push_back(&key_end);
 
-    use= save_pos= dynamic_element(keyuse, 0, optimizer::KeyUse*);
+    use= save_pos= (optimizer::KeyUse*)keyuse->buffer;
     prev= &key_end;
     found_eq_constant= 0;
     {
@@ -694,11 +694,8 @@ bool update_ref_and_keys(Session *session,
 */
 void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
 {
-  optimizer::KeyUse *end,*keyuse= dynamic_element(keyuse_array, 
-                                                  0, 
-                                                  optimizer::KeyUse*);
-
-  for (end= keyuse+ keyuse_array->size() ; keyuse < end ; keyuse++)
+  optimizer::KeyUse* keyuse= (optimizer::KeyUse*)keyuse_array->buffer;
+  for (optimizer::KeyUse* end= keyuse+ keyuse_array->size() ; keyuse < end ; keyuse++)
   {
     table_map map;
     /*
@@ -2401,7 +2398,7 @@ static void change_cond_ref_to_const(Session *session,
     if (tmp)
     {
       tmp->collation.set(right_item->collation);
-      session->change_item_tree(args + 1, tmp);
+      args[1]= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
 	        and_father != cond && 
@@ -2423,7 +2420,7 @@ static void change_cond_ref_to_const(Session *session,
     if (tmp)
     {
       tmp->collation.set(left_item->collation);
-      session->change_item_tree(args, tmp);
+      *args= tmp;
       value= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
@@ -2431,7 +2428,7 @@ static void change_cond_ref_to_const(Session *session,
           ! right_item->const_item())
       {
         args[0]= args[1];                       // For easy check
-        session->change_item_tree(args + 1, value);
+        args[1]= value;
         cond->marker=1;
         save_list.push_back( COND_CMP(and_father, func) );
       }
@@ -6231,7 +6228,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
             if (!(new_item= new Item_ref(context, group_tmp->item, 0,
                                         item->name)))
               return 1;                                 // fatal_error is set
-            session->change_item_tree(arg, new_item);
+            *arg= new_item;
             arg_changed= true;
           }
         }

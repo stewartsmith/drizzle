@@ -61,8 +61,8 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/select_result.h>
-
 #include <drizzled/debug.h>
+#include <drizzled/item/subselect.h>
 
 #include <algorithm>
 
@@ -2325,11 +2325,11 @@ bool Join::rollup_init()
           if (!new_item)
             return 1;
           new_item->fix_fields(session, (Item **) 0);
-          session->change_item_tree(it.ref(), new_item);
+          *it.ref()= new_item;
           for (Order *tmp= group_tmp; tmp; tmp= tmp->next)
           {
             if (*tmp->item == item)
-              session->change_item_tree(tmp->item, new_item);
+              *tmp->item= new_item;
           }
         }
       }
@@ -6004,13 +6004,13 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     vector<optimizer::SargableParam>::iterator iter= sargables.begin();
     while (iter != sargables.end())
     {
-      Field *field= (*iter).getField();
+      Field *field= iter->getField();
       JoinTable *join_tab= field->getTable()->reginfo.join_tab;
       key_map possible_keys= field->key_start;
       possible_keys&= field->getTable()->keys_in_use_for_query;
       bool is_const= true;
-      for (uint32_t j= 0; j < (*iter).getNumValues(); j++)
-        is_const&= (*iter).isConstItem(j);
+      for (uint32_t j= 0; j < iter->getNumValues(); j++)
+        is_const&= iter->isConstItem(j);
       if (is_const)
         join_tab[0].const_keys|= possible_keys;
       ++iter;

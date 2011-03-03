@@ -25,30 +25,22 @@
 #ifndef DRIZZLED_MODULE_OPTION_CONTEXT_H
 #define DRIZZLED_MODULE_OPTION_CONTEXT_H
 
-#include <drizzled/visibility.h>
-
+#include <boost/noncopyable.hpp>
 #include <boost/program_options.hpp>
-
+#include <drizzled/visibility.h>
 #include <string>
 
-#include <drizzled/visibility.h>
+namespace drizzled {
+namespace module {
 
-namespace drizzled
-{
-namespace module
-{
-
-namespace po=boost::program_options;
+namespace po= boost::program_options;
 
 /**
  * Options proxy wrapper. Provides pre-pending of module name to each option
  * which is added.
  */
-class DRIZZLED_API option_context
+class DRIZZLED_API option_context : boost::noncopyable
 {
-  const std::string &module_name;
-  po::options_description_easy_init po_options;
-
 public:
 
   option_context(const std::string &module_name_in,
@@ -68,21 +60,8 @@ public:
                                   const char *name);
 
 private:
-  
-  /**
-   * Don't allow default construction.
-   */
-  option_context();
-
-  /**
-   * Don't allow copying of objects.
-   */
-  option_context(const option_context &);
-
-  /**
-   * Don't allow assignment of objects.
-   */
-  option_context& operator=(const option_context &);
+  const std::string &module_name;
+  po::options_description_easy_init po_options;
 };
 
 } /* namespace module */

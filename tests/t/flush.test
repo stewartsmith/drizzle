@@ -83,6 +83,7 @@ connection con3;
 send insert into t2 values(1);
 
 connection con1;
+--error ER_NO_LOCK_HELD
 unlock tables;
 disconnect con1;
 

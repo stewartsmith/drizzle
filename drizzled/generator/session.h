@@ -53,7 +53,7 @@ public:
   {
     while (iter != local_list.end())
     {
-      drizzled::Session::pointer ret= (*iter).get();
+      drizzled::Session::pointer ret= iter->get();
       iter++;
 
       if (not ret->isViewable(user))

@@ -115,9 +115,9 @@ public:
 
     for (Tokenizer::iterator iter= tok.begin(); iter != tok.end(); ++iter)
     {
-      byte.resize((*iter).size() +1); // +1 for the COM_QUERY
+      byte.resize(iter->size() +1); // +1 for the COM_QUERY
       byte[0]= COM_QUERY;
-      memcpy(&byte[1], (*iter).c_str(), (*iter).size());
+      memcpy(&byte[1], iter->c_str(), iter->size());
       to_execute.push(byte);
     }
   }

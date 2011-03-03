@@ -185,7 +185,7 @@ public:
                  uint32_t field_length,
                  bool is_default_null= false);
 
-  virtual bool visable() { return true; }
+  virtual bool visible() const { return true; }
 };
 
 } /* namespace plugin */

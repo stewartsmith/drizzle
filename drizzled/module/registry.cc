@@ -256,7 +256,7 @@ void module::Registry::removeLibrary(const std::string &plugin_name)
   if (iter != library_registry_.end())
   {
     library_registry_.erase(iter);
-    delete (*iter).second;
+    delete iter->second;
   }
 }
 
@@ -264,7 +264,7 @@ module::Library *module::Registry::findLibrary(const std::string &plugin_name) c
 {
   LibraryMap::const_iterator iter= library_registry_.find(plugin_name);
   if (iter != library_registry_.end())
-    return (*iter).second;
+    return iter->second;
   return NULL;
 }
 

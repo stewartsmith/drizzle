@@ -932,7 +932,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
             string_total_length+= new_field->pack_length();
           }
           session->mem_root= mem_root_save;
-          session->change_item_tree(argp, new Item_field(new_field));
+          *argp= new Item_field(new_field);
           session->mem_root= table->getMemRoot();
 	  if (!(new_field->flags & NOT_NULL_FLAG))
           {
