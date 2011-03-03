@@ -130,8 +130,7 @@ enum Item_result Item_func_get_user_var::result_type() const
 }
 
 
-void Item_func_get_user_var::print(String *str,
-                                   enum_query_type )
+void Item_func_get_user_var::print(String *str)
 {
   str->append(STRING_WITH_LEN("(@"));
   str->append(name.str,name.length);

@@ -44,7 +44,7 @@ public:
     unsigned_flag= false;
   }
 
-  void print(String *str, enum_query_type query_type);
+  void print(String *str);
 
   uint32_t decimal_precision() const
   {
