@@ -130,12 +130,12 @@ String *Item_func_format::val_str(String *str)
 }
 
 
-void Item_func_format::print(String *str, enum_query_type query_type)
+void Item_func_format::print(String *str)
 {
   str->append(STRING_WITH_LEN("format("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(',');
-  args[1]->print(str, query_type);
+  args[1]->print(str);
   str->append(')');
 }
 

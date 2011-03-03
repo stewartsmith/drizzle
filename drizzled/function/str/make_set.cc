@@ -121,14 +121,14 @@ Item *Item_func_make_set::transform(Item_transformer transformer, unsigned char 
 }
 
 
-void Item_func_make_set::print(String *str, enum_query_type query_type)
+void Item_func_make_set::print(String *str)
 {
   str->append(STRING_WITH_LEN("make_set("));
-  item->print(str, query_type);
+  item->print(str);
   if (arg_count)
   {
     str->append(',');
-    print_args(str, 0, query_type);
+    print_args(str, 0);
   }
   str->append(')');
 }

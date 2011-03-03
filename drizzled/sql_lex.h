@@ -378,7 +378,7 @@ public:
   inline void unclean() { cleaned= 0; }
   void reinit_exec_mechanism();
 
-  void print(String *str, enum_query_type query_type);
+  void print(String *str);
 
   bool add_fake_select_lex(Session *session);
   void init_prepare_fake_select_lex(Session *session);
@@ -646,11 +646,10 @@ public:
     init_select();
   }
   bool setup_ref_array(Session *session, uint32_t order_group_num);
-  void print(Session *session, String *str, enum_query_type query_type);
-  static void print_order(String *str,
-                          Order *order,
-                          enum_query_type query_type);
-  void print_limit(Session *session, String *str, enum_query_type query_type);
+  void print(Session *session, String *str);
+  static void print_order(String *str, Order *order);
+
+  void print_limit(Session *session, String *str);
   void fix_prepare_information(Session *session, Item **conds, Item **having_conds);
   /*
     Destroy the used execution plan (JOIN) of this subtree (this

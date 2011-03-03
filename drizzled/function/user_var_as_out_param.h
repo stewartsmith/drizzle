@@ -48,7 +48,7 @@ public:
   type::Decimal *val_decimal(type::Decimal *decimal_buffer);
   /* fix_fields() binds variable name with its entry structure */
   bool fix_fields(Session *session, Item **ref);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   void set_null_value(const CHARSET_INFO * const cs);
   void set_value(const char *str, uint32_t length, const CHARSET_INFO * const cs);
 };

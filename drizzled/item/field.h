@@ -109,7 +109,7 @@ public:
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   int fix_outer_field(Session *session, Field **field, Item **reference);
   virtual Item *update_value_transformer(unsigned char *select_arg);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 
   friend class Item_default_value;
   friend class Item_insert_value;

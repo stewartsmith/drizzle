@@ -33,9 +33,9 @@ class Item_num_op :public Item_func_numhybrid
   Item_num_op(Item *a,Item *b) :Item_func_numhybrid(a, b) {}
   virtual void result_precision()= 0;
 
-  virtual inline void print(String *str, enum_query_type query_type)
+  virtual inline void print(String *str)
   {
-    print_op(str, query_type);
+    print_op(str);
   }
 
   void find_num_type();

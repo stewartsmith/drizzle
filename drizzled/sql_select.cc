@@ -6252,7 +6252,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
 static void print_table_array(Session *session, String *str, TableList **table,
                               TableList **end)
 {
-  (*table)->print(session, str, QT_ORDINARY);
+  (*table)->print(session, str);
 
   for (TableList **tbl= table + 1; tbl < end; tbl++)
   {
@@ -6266,11 +6266,11 @@ static void print_table_array(Session *session, String *str, TableList **table,
       str->append(STRING_WITH_LEN(" straight_join "));
     else
       str->append(STRING_WITH_LEN(" join "));
-    curr->print(session, str, QT_ORDINARY);
+    curr->print(session, str);
     if (curr->on_expr)
     {
       str->append(STRING_WITH_LEN(" on("));
-      curr->on_expr->print(str, QT_ORDINARY);
+      curr->on_expr->print(str);
       str->append(')');
     }
   }
@@ -6281,10 +6281,9 @@ static void print_table_array(Session *session, String *str, TableList **table,
   @param session     thread Cursor
   @param str     string where table should be printed
   @param tables  list of tables in join
-  @query_type    type of the query is being generated
 */
 void print_join(Session *session, String *str,
-                List<TableList> *tables, enum_query_type)
+                List<TableList> *tables)
 {
   /* List is reversed => we should reverse it before using */
   List<TableList>::iterator ti(tables->begin());
@@ -6299,7 +6298,7 @@ void print_join(Session *session, String *str,
   print_table_array(session, str, table, table + tables->size());
 }
 
-void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
+void Select_Lex::print(Session *session, String *str)
 {
   /* QQ: session may not be set for sub queries, but this should be fixed */
   if(not session)
@@ -6332,7 +6331,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
       first= 0;
     else
       str->append(',');
-    item->print_item_w_name(str, query_type);
+    item->print_item_w_name(str);
   }
 
   /*
@@ -6343,7 +6342,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   {
     str->append(STRING_WITH_LEN(" from "));
     /* go through join tree */
-    print_join(session, str, &top_join_list, query_type);
+    print_join(session, str, &top_join_list);
   }
   else if (where)
   {
@@ -6362,7 +6361,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   {
     str->append(STRING_WITH_LEN(" where "));
     if (cur_where)
-      cur_where->print(str, query_type);
+      cur_where->print(str);
     else
       str->append(cond_value != Item::COND_FALSE ? "1" : "0");
   }
@@ -6371,7 +6370,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   if (group_list.size())
   {
     str->append(STRING_WITH_LEN(" group by "));
-    print_order(str, (Order *) group_list.first, query_type);
+    print_order(str, (Order *) group_list.first);
     switch (olap)
     {
       case CUBE_TYPE:
@@ -6394,7 +6393,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   {
     str->append(STRING_WITH_LEN(" having "));
     if (cur_having)
-      cur_having->print(str, query_type);
+      cur_having->print(str);
     else
       str->append(having_value != Item::COND_FALSE ? "1" : "0");
   }
@@ -6402,11 +6401,11 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   if (order_list.size())
   {
     str->append(STRING_WITH_LEN(" order by "));
-    print_order(str, (Order *) order_list.first, query_type);
+    print_order(str, (Order *) order_list.first);
   }
 
   // limit
-  print_limit(session, str, query_type);
+  print_limit(session, str);
 
   // PROCEDURE unsupported here
 }
