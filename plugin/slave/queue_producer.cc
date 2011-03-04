@@ -340,6 +340,11 @@ bool QueueProducer::queueInsert(const char *trx_id,
       it= message_text.insert(it, '\\');
       ++it;
     }
+    else if (*it == ';')
+    {
+      it= message_text.insert(it, '\\');
+      ++it;  /* advance back to the semicolon */
+    }
   }
 
   sql.append(message_text);
