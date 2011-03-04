@@ -174,6 +174,7 @@ bool QueueProducer::closeConnection()
   if (drizzle_quit(&_connection, &result, &ret) == NULL)
   {
     _last_return= ret;
+    drizzle_result_free(&result);
     return false;
   }
 
@@ -235,7 +236,6 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
 
   drizzle_return_t ret;
   drizzle_result_st result;
-  drizzle_result_create(&_connection, &result);
   drizzle_query_str(&_connection, &result, sql.c_str(), &ret);
   
   if (ret != DRIZZLE_RETURN_OK)
@@ -244,6 +244,7 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
     _last_error_message= "Replication slave: ";
     _last_error_message.append(drizzle_error(&_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
+    drizzle_result_free(&result);
     return false;
   }
 
@@ -391,7 +392,6 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
 
   drizzle_return_t ret;
   drizzle_result_st result;
-  drizzle_result_create(&_connection, &result);
   drizzle_query_str(&_connection, &result, sql.c_str(), &ret);
   
   if (ret != DRIZZLE_RETURN_OK)
@@ -400,6 +400,7 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
     _last_error_message= "Replication slave: ";
     _last_error_message.append(drizzle_error(&_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
+    drizzle_result_free(&result);
     return false;
   }
 
@@ -425,6 +426,7 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
     {
       errmsg_printf(error::ERROR,
                     _("Replication slave: Unable to insert into queue."));
+      drizzle_result_free(&result);
       return false;
     }
   }
