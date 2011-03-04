@@ -68,43 +68,22 @@ static void init_options(drizzled::module::option_context &context)
 bool Policy::loadFile()
 {
   ifstream file(policy_file.string().c_str());
-  boost::regex *comment_re= NULL;
-  boost::regex *empty_re= NULL;
-  boost::regex *table_matches_re= NULL;
-  boost::regex *process_matches_re= NULL;
-  boost::regex *schema_matches_re= NULL;
-  bool ret= false;
+  boost::regex comment_re;
+  boost::regex empty_re;
+  boost::regex table_matches_re;
+  boost::regex process_matches_re;
+  boost::regex schema_matches_re;
 
   try
   {
-    comment_re= new boost::regex(comment_regex);
-    empty_re= new boost::regex(empty_regex);
-    table_matches_re= new boost::regex(table_match_regex);
-    process_matches_re= new boost::regex(process_match_regex);
-    schema_matches_re= new boost::regex(schema_match_regex);
-  } 
+    comment_re= comment_regex;
+    empty_re= empty_regex;
+    table_matches_re= table_match_regex;
+    process_matches_re= process_match_regex;
+    schema_matches_re= schema_match_regex;
+  }   
   catch (const std::exception &e)
   {
-    if (comment_re)
-    {
-      delete comment_re;
-    }
-    if (empty_re)
-    {
-      delete empty_re;
-    }
-    if (table_matches_re)
-    {
-      delete table_matches_re;
-    }
-    if (process_matches_re)
-    {
-      delete process_matches_re;
-    }
-    if (schema_matches_re)
-    {
-      delete schema_matches_re;
-    }
     error << e.what();
     return false;
   }
@@ -123,25 +102,25 @@ bool Policy::loadFile()
       ++lines;
       string line;
       getline(file, line);
-      if (boost::regex_match(line, *comment_re))
+      if (boost::regex_match(line, comment_re))
       {
         continue;
       }
-      if (boost::regex_match(line, *empty_re))
+      if (boost::regex_match(line, empty_re))
       {
         continue;
       }
       boost::smatch matches;
       PolicyItemList *policies;
-      if (boost::regex_match(line, matches, *table_matches_re, boost::match_extra))
+      if (boost::regex_match(line, matches, table_matches_re, boost::match_extra))
       {
         policies= &table_policies;
       }
-      else if (boost::regex_match(line, matches, *process_matches_re, boost::match_extra))
+      else if (boost::regex_match(line, matches, process_matches_re, boost::match_extra))
       {
         policies= &process_policies;
       }
-      else if (boost::regex_match(line, matches, *schema_matches_re, boost::match_extra))
+      else if (boost::regex_match(line, matches, schema_matches_re, boost::match_extra))
       {
         policies= &schema_policies;
       }
@@ -167,20 +146,14 @@ bool Policy::loadFile()
       }
       policies->push_back(i);
     }
-    ret= true;
+    return true;
   }
   catch (const std::exception &e)
   {
     /* On any non-EOF break, unparseable line */
     error << "Unable to parse line " << lines << " of policy file " << policy_file.string() << ":" << e.what();
-    ret= false;
+    return false;
   }
-  delete comment_re;
-  delete empty_re;
-  delete table_matches_re;
-  delete process_matches_re;
-  delete schema_matches_re;
-  return ret;
 }
 
 bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
