@@ -106,6 +106,11 @@ bool QueueConsumer::process()
             si= sql.insert(si, '\\');
             ++si;
           }
+          else if (*si == ';')
+          {
+            si= sql.insert(si, '\\');
+            ++si;  /* advance back to the semicolon */
+          }
         }
       }
     }
