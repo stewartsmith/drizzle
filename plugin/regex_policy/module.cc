@@ -73,6 +73,7 @@ bool Policy::loadFile()
   boost::regex *table_matches_re= NULL;
   boost::regex *process_matches_re= NULL;
   boost::regex *schema_matches_re= NULL;
+  bool ret= false;
 
   try
   {
@@ -166,14 +167,20 @@ bool Policy::loadFile()
       }
       policies->push_back(i);
     }
-    return true;
+    ret= true;
   }
   catch (const std::exception &e)
   {
     /* On any non-EOF break, unparseable line */
     error << "Unable to parse line " << lines << " of policy file " << policy_file.string() << ":" << e.what();
-    return false;
+    ret= false;
   }
+  delete comment_re;
+  delete empty_re;
+  delete table_matches_re;
+  delete process_matches_re;
+  delete schema_matches_re;
+  return ret;
 }
 
 bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
@@ -268,6 +275,7 @@ void CheckItem::setCachedResult(bool result)
   {
     new_cache= new CheckMap();
   }
+
   // Update it
   (*new_cache)[key]= result;
   // Replace old
