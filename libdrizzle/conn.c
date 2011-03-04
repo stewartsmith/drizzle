@@ -485,7 +485,9 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
                                              size_t total,
                                              drizzle_return_t *ret_ptr)
 {
-  for (drizzle_result_st *old_result= con->result_list; old_result != NULL; old_result= old_result->next)
+  drizzle_result_st *old_result;
+
+  for (old_result= con->result_list; old_result != NULL; old_result= old_result->next)
   {
     if (result == old_result)
     {
