@@ -53,7 +53,7 @@ public:
   Item *clone_item() { return new Item_null(name); }
   bool is_null() { return true; }
 
-  virtual void print(String *str, enum_query_type);
+  virtual void print(String *str);
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 };

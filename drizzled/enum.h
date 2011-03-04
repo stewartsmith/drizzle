@@ -25,34 +25,6 @@ namespace drizzled
 {
 
 /**
-  Query type constants.
-
-  QT_ORDINARY -- ordinary SQL query.
-  QT_IS -- SQL query to be shown in INFORMATION_SCHEMA (in utf8 and without
-  character set introducers).
-
-  @TODO
-
-  Move this out of here once Stew's done with UDF breakout.  The following headers need it:
-
-    sql_lex.h --> included by session.h
-    item.h
-    table.h
-    item_func.h
-    item_subselect.h
-    item_timefunc.h
-    item_sum.h
-    item_cmpfunc.h
-    item_strfunc.h
-*/
-enum enum_query_type
-{
-  QT_ORDINARY,
-  QT_IS
-};
-
-
-/**
  * @TODO Move to a separate header?
  *
  * It's needed by item.h and field.h, which are both inter-dependent

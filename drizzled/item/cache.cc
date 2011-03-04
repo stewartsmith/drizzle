@@ -55,13 +55,13 @@ Item_cache* Item_cache::get_cache(const Item *item)
 }
 
 
-void Item_cache::print(String *str, enum_query_type query_type)
+void Item_cache::print(String *str)
 {
   str->append(STRING_WITH_LEN("<cache>("));
   if (example)
-    example->print(str, query_type);
+    example->print(str);
   else
-    Item::print(str, query_type);
+    Item::print(str);
   str->append(')');
 }
 

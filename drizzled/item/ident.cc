@@ -107,8 +107,7 @@ const char *Item_ident::full_name() const
 }
 
 
-void Item_ident::print(String *str,
-                       enum_query_type)
+void Item_ident::print(String *str)
 {
   string d_name, t_name;
 

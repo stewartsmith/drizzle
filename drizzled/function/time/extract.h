@@ -38,7 +38,7 @@ class Item_extract :public Item_int_func
   const char *func_name() const { return "extract"; }
   void fix_length_and_dec();
   bool eq(const Item *item, bool binary_cmp) const;
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 } /* namespace drizzled */

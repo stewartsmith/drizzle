@@ -1266,7 +1266,7 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
 }
 
 
-void Item_field::print(String *str, enum_query_type query_type)
+void Item_field::print(String *str)
 {
   if (field && field->getTable()->const_table)
   {
@@ -1283,7 +1283,7 @@ void Item_field::print(String *str, enum_query_type query_type)
     }
     return;
   }
-  Item_ident::print(str, query_type);
+  Item_ident::print(str);
 }
 
 

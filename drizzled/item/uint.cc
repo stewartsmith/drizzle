@@ -47,7 +47,7 @@ String *Item_uint::val_str(String *str)
   return str;
 }
 
-void Item_uint::print(String *str, enum_query_type)
+void Item_uint::print(String *str)
 {
   // latin1 is good enough for numbers
   str_value.set((uint64_t) value, default_charset());

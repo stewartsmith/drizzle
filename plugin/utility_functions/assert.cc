@@ -34,7 +34,7 @@ bool Assert::val_bool()
   if (not args[0]->val_bool())
   {
     drizzled::String res;
-    args[0]->print(&res, QT_ORDINARY);
+    args[0]->print(&res);
 
     assert(res.c_ptr());
 

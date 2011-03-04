@@ -1736,7 +1736,7 @@ bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
                                                  order_group_num)*5)) == 0;
 }
 
-void Select_Lex_Unit::print(String *str, enum_query_type query_type)
+void Select_Lex_Unit::print(String *str)
 {
   bool union_all= !union_distinct;
   for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
@@ -1751,7 +1751,7 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
     }
     if (sl->braces)
       str->append('(');
-    sl->print(session, str, query_type);
+    sl->print(session, str);
     if (sl->braces)
       str->append(')');
   }
@@ -1762,16 +1762,14 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
       str->append(STRING_WITH_LEN(" order by "));
       fake_select_lex->print_order(
         str,
-        (Order *) fake_select_lex->order_list.first,
-        query_type);
+        (Order *) fake_select_lex->order_list.first);
     }
-    fake_select_lex->print_limit(session, str, query_type);
+    fake_select_lex->print_limit(session, str);
   }
 }
 
 void Select_Lex::print_order(String *str,
-                                Order *order,
-                                enum_query_type query_type)
+                             Order *order)
 {
   for (; order; order= order->next)
   {
@@ -1782,7 +1780,7 @@ void Select_Lex::print_order(String *str,
       str->append(buffer, length);
     }
     else
-      (*order->item)->print(str, query_type);
+      (*order->item)->print(str);
     if (!order->asc)
       str->append(STRING_WITH_LEN(" desc"));
     if (order->next)
@@ -1790,8 +1788,7 @@ void Select_Lex::print_order(String *str,
   }
 }
 
-void Select_Lex::print_limit(Session *, String *str,
-                                enum_query_type query_type)
+void Select_Lex::print_limit(Session *, String *str)
 {
   Select_Lex_Unit *unit= master_unit();
   Item_subselect *item= unit->item;
@@ -1822,10 +1819,10 @@ void Select_Lex::print_limit(Session *, String *str,
     str->append(STRING_WITH_LEN(" limit "));
     if (offset_limit)
     {
-      offset_limit->print(str, query_type);
+      offset_limit->print(str);
       str->append(',');
     }
-    select_limit->print(str, query_type);
+    select_limit->print(str);
   }
 }
 

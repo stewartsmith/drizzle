@@ -56,7 +56,7 @@ public:
   Item *clone_item()
   { return new Item_float(name, value, decimals, max_length); }
   Item_num *neg() { value= -value; return this; }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   bool eq(const Item *, bool binary_cmp) const;
 };
 
@@ -69,7 +69,7 @@ public:
     :Item_float(NULL, val_arg, decimal_par, length), func_name(str)
   {}
 
-  virtual inline void print(String *str, enum_query_type)
+  virtual inline void print(String *str)
   {
     str->append(func_name);
   }

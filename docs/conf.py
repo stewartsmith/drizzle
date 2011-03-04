@@ -212,6 +212,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('clients/drizzledump', 'drizzledump', u'a database backup program',
+     [u'Andrew Hutchings'], 1),
+    ('clients/drizzleadmin', 'drizzleadmin', u'a database backup program',
      [u'Andrew Hutchings'], 1)
 ]
 

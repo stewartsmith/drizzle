@@ -42,10 +42,14 @@ doxygen:
 
 if HAVE_RECENT_SPHINX
 man_MANS+= \
-	   docs/man/drizzledump.1
-DISTCLEANFILES+= docs/man/drizzledump.1
-
+	   docs/man/drizzledump.1 \
+	   docs/man/drizzleadmin.1
+DISTCLEANFILES+= \
+           docs/man/drizzledump.1 \
+	   docs/man/drizzleadmin.1
+	   
 docs/man/drizzledump.1: man
+docs/man/drizzleadmin.1: man
 endif
 
 if HAVE_SPHINX

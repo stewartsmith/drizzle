@@ -78,7 +78,7 @@ error:
 }
 
 
-void Item_default_value::print(String *str, enum_query_type query_type)
+void Item_default_value::print(String *str)
 {
   if (!arg)
   {
@@ -86,7 +86,7 @@ void Item_default_value::print(String *str, enum_query_type query_type)
     return;
   }
   str->append(STRING_WITH_LEN("default("));
-  arg->print(str, query_type);
+  arg->print(str);
   str->append(')');
 }
 

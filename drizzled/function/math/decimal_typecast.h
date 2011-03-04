@@ -43,7 +43,7 @@ public:
   enum_field_types field_type() const { return DRIZZLE_TYPE_DECIMAL; }
   void fix_length_and_dec() {};
   const char *func_name() const { return "decimal_typecast"; }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 } /* namespace drizzled */
