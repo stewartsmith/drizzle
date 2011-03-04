@@ -67,10 +67,6 @@ public:
 bool plugin::Authentication::isAuthenticated(drizzled::identifier::User::const_reference sctx,
                                              const std::string &password)
 {
-  /* If we never loaded any auth plugins, just return true */
-  if (all_authentication.empty())
-    return true;
-
   /* Use find_if instead of foreach so that we can collect return codes */
   std::vector<plugin::Authentication *>::iterator iter=
     std::find_if(all_authentication.begin(), all_authentication.end(),
