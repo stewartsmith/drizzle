@@ -65,7 +65,7 @@ static drizzle_column_type_t _column_type_drizzle_map_to[]=
 static drizzle_column_type_drizzle_t _column_type_drizzle_map_from[]=
 {
  DRIZZLE_COLUMN_TYPE_DRIZZLE_MAX, /* 0 */
- DRIZZLE_COLUMN_TYPE_DRIZZLE_TINY,
+ DRIZZLE_COLUMN_TYPE_DRIZZLE_BOOLEAN,
  DRIZZLE_COLUMN_TYPE_DRIZZLE_MAX,
  DRIZZLE_COLUMN_TYPE_DRIZZLE_LONG,
  DRIZZLE_COLUMN_TYPE_DRIZZLE_MAX,

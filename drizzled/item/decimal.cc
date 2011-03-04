@@ -108,7 +108,7 @@ String *Item_decimal::val_str(String *result)
   return result;
 }
 
-void Item_decimal::print(String *str, enum_query_type)
+void Item_decimal::print(String *str)
 {
   class_decimal2string(&decimal_value, 0, &str_value);
   str->append(str_value);

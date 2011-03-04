@@ -35,9 +35,9 @@ public:
   const char *func_name() const { return "DIV"; }
   void fix_length_and_dec();
 
-  virtual inline void print(String *str, enum_query_type query_type)
+  virtual inline void print(String *str)
   {
-    print_op(str, query_type);
+    print_op(str);
   }
 
 };

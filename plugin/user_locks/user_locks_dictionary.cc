@@ -49,13 +49,13 @@ bool user_locks::UserLocks::Generator::populate()
   while (iter != lock_map.end())
   {
     // USER_LOCK_NAME
-    push((*iter).first.getLockName());
+    push(iter->first.getLockName());
 
     // SESSION_ID
-    push((*iter).second->id);
+    push(iter->second->id);
     //
     // USERNAME
-    push((*iter).first.getUser());
+    push(iter->first.getUser());
 
     iter++;
     return true;

@@ -19,11 +19,13 @@
 #include <drizzled/charset.h>
 #include <drizzled/error.h>
 #include <drizzled/foreign_key.h>
+#include <drizzled/function/bit/functions.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/function/locate.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/function/str/char.h>
 #include <drizzled/function/str/collation.h>
+#include <drizzled/function/str/concat.h>
 #include <drizzled/function/str/insert.h>
 #include <drizzled/function/str/left.h>
 #include <drizzled/function/str/repeat.h>

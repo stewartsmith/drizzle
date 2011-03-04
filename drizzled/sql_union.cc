@@ -27,6 +27,7 @@
 #include <drizzled/select_union.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
+#include <drizzled/item/subselect.h>
 
 namespace drizzled
 {
@@ -126,7 +127,7 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
 {
   assert(table == NULL);
   tmp_table_param.init();
-  tmp_table_param.field_count= column_types->elements;
+  tmp_table_param.field_count= column_types->size();
 
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
                                  (Order*) NULL, is_union_distinct, 1,
@@ -172,7 +173,7 @@ void select_union::cleanup()
 void
 Select_Lex_Unit::init_prepare_fake_select_lex(Session *session_arg)
 {
-  session_arg->lex->current_select= fake_select_lex;
+  session_arg->getLex()->current_select= fake_select_lex;
   fake_select_lex->table_list.link_in_list((unsigned char *)&result_table_list,
 					   (unsigned char **)
 					   &result_table_list.next_local);
@@ -198,7 +199,7 @@ Select_Lex_Unit::init_prepare_fake_select_lex(Session *session_arg)
 bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                               uint64_t additional_options)
 {
-  Select_Lex *lex_select_save= session_arg->lex->current_select;
+  Select_Lex *lex_select_save= session_arg->getLex()->current_select;
   Select_Lex *sl, *first_sl= first_select();
   select_result *tmp_result;
   bool is_union_select;
@@ -235,7 +236,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
   prepared= 1;
   saved_error= false;
 
-  session_arg->lex->current_select= sl= first_sl;
+  session_arg->getLex()->current_select= sl= first_sl;
   found_rows_for_union= first_sl->options & OPTION_FOUND_ROWS;
   is_union_select= is_union() || fake_select_lex;
 
@@ -270,7 +271,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
     if (!join)
       goto err;
 
-    session_arg->lex->current_select= sl;
+    session_arg->getLex()->current_select= sl;
 
     can_skip_order_by= is_union_select && !(sl->braces && sl->explicit_limit);
 
@@ -279,8 +280,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                sl->with_wild,
                                sl->where,
                                (can_skip_order_by ? 0 :
-                                sl->order_list.elements) +
-                               sl->group_list.elements,
+                                sl->order_list.size()) +
+                               sl->group_list.size(),
                                can_skip_order_by ?
                                (Order*) NULL : (Order *)sl->order_list.first,
                                (Order*) sl->group_list.first,
@@ -308,7 +309,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       assert(!empty_table);
       empty_table= (Table*) session->calloc(sizeof(Table));
       types.clear();
-      List<Item>::iterator it(sl->item_list);
+      List<Item>::iterator it(sl->item_list.begin());
       Item *item_tmp;
       while ((item_tmp= it++))
       {
@@ -321,14 +322,14 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
     }
     else
     {
-      if (types.elements != sl->item_list.elements)
+      if (types.size() != sl->item_list.size())
       {
 	my_message(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT,
 		   ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT),MYF(0));
 	goto err;
       }
-      List<Item>::iterator it(sl->item_list);
-      List<Item>::iterator tp(types);
+      List<Item>::iterator it(sl->item_list.begin());
+      List<Item>::iterator tp(types.begin());
       Item *type, *item_tmp;
       while ((type= tp++, item_tmp= it++))
       {
@@ -344,7 +345,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       Check that it was possible to aggregate
       all collations together for UNION.
     */
-    List<Item>::iterator tp(types);
+    List<Item>::iterator tp(types.begin());
     Item *type;
     uint64_t create_options;
 
@@ -370,8 +371,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
     result_table_list.setTableName((char *) "union");
     result_table_list.table= table= union_result->table;
 
-    session_arg->lex->current_select= lex_select_save;
-    if (!item_list.elements)
+    session_arg->getLex()->current_select= lex_select_save;
+    if (!item_list.size())
     {
       saved_error= table->fill_item_list(&item_list);
       if (saved_error)
@@ -387,19 +388,19 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
     }
   }
 
-  session_arg->lex->current_select= lex_select_save;
+  session_arg->getLex()->current_select= lex_select_save;
 
   return(saved_error || session_arg->is_fatal_error);
 
 err:
-  session_arg->lex->current_select= lex_select_save;
+  session_arg->getLex()->current_select= lex_select_save;
   return(true);
 }
 
 
 bool Select_Lex_Unit::exec()
 {
-  Select_Lex *lex_select_save= session->lex->current_select;
+  Select_Lex *lex_select_save= session->getLex()->current_select;
   Select_Lex *select_cursor=first_select();
   uint64_t add_rows=0;
   ha_rows examined_rows= 0;
@@ -429,7 +430,7 @@ bool Select_Lex_Unit::exec()
     for (Select_Lex *sl= select_cursor; sl; sl= sl->next_select())
     {
       ha_rows records_at_start= 0;
-      session->lex->current_select= sl;
+      session->getLex()->current_select= sl;
 
       if (optimized)
 	saved_error= sl->join->reinit();
@@ -477,14 +478,14 @@ bool Select_Lex_Unit::exec()
 	  examined_rows+= session->examined_row_count;
 	  if (union_result->flush())
 	  {
-	    session->lex->current_select= lex_select_save;
+	    session->getLex()->current_select= lex_select_save;
 	    return(1);
 	  }
 	}
       }
       if (saved_error)
       {
-	session->lex->current_select= lex_select_save;
+	session->getLex()->current_select= lex_select_save;
 	return(saved_error);
       }
       /* Needed for the following test and for records_at_start in next loop */
@@ -544,7 +545,7 @@ bool Select_Lex_Unit::exec()
         saved_error= select_query(session, &fake_select_lex->ref_pointer_array,
                               &result_table_list,
                               0, item_list, NULL,
-                              global_parameters->order_list.elements,
+                              global_parameters->order_list.size(),
                               (Order*)global_parameters->order_list.first,
                               (Order*) NULL, NULL,
                               fake_select_lex->options | SELECT_NO_UNLOCK,
@@ -567,7 +568,7 @@ bool Select_Lex_Unit::exec()
           saved_error= select_query(session, &fake_select_lex->ref_pointer_array,
                                 &result_table_list,
                                 0, item_list, NULL,
-                                global_parameters->order_list.elements,
+                                global_parameters->order_list.size(),
                                 (Order*)global_parameters->order_list.first,
                                 (Order*) NULL, NULL,
                                 fake_select_lex->options | SELECT_NO_UNLOCK,
@@ -593,7 +594,7 @@ bool Select_Lex_Unit::exec()
       */
     }
   }
-  session->lex->current_select= lex_select_save;
+  session->getLex()->current_select= lex_select_save;
   return(saved_error);
 }
 
@@ -626,7 +627,7 @@ bool Select_Lex_Unit::cleanup()
       join->tables= 0;
     }
     error|= fake_select_lex->cleanup();
-    if (fake_select_lex->order_list.elements)
+    if (fake_select_lex->order_list.size())
     {
       Order *ord;
       for (ord= (Order*)fake_select_lex->order_list.first; ord; ord= ord->next)

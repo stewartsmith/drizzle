@@ -24,15 +24,9 @@
   @defgroup Semantic_Analysis Semantic Analysis
 */
 #include <drizzled/message/table.pb.h>
-
-#include <drizzled/plugin/function.h>
 #include <drizzled/name_resolution_context.h>
-#include <drizzled/item/subselect.h>
 #include <drizzled/table_list.h>
 #include <drizzled/function/math/real.h>
-#include <drizzled/alter_drop.h>
-#include <drizzled/alter_column.h>
-#include <drizzled/alter_info.h>
 #include <drizzled/key_part_spec.h>
 #include <drizzled/index_hint.h>
 #include <drizzled/statement.h>
@@ -41,8 +35,9 @@
 #include <bitset>
 #include <string>
 
-namespace drizzled
-{
+namespace drizzled {
+
+namespace plugin { class Function; }
 
 class st_lex_symbol;
 class select_result_interceptor;
@@ -383,7 +378,7 @@ public:
   inline void unclean() { cleaned= 0; }
   void reinit_exec_mechanism();
 
-  void print(String *str, enum_query_type query_type);
+  void print(String *str);
 
   bool add_fake_select_lex(Session *session);
   void init_prepare_fake_select_lex(Session *session);
@@ -394,7 +389,6 @@ public:
   inline bool is_union ();
 
   friend void lex_start(Session *session);
-  friend int subselect_union_engine::exec();
 
   List<Item> *get_unit_column_types();
 };
@@ -652,11 +646,10 @@ public:
     init_select();
   }
   bool setup_ref_array(Session *session, uint32_t order_group_num);
-  void print(Session *session, String *str, enum_query_type query_type);
-  static void print_order(String *str,
-                          Order *order,
-                          enum_query_type query_type);
-  void print_limit(Session *session, String *str, enum_query_type query_type);
+  void print(Session *session, String *str);
+  static void print_order(String *str, Order *order);
+
+  void print_limit(Session *session, String *str);
   void fix_prepare_information(Session *session, Item **conds, Item **having_conds);
   /*
     Destroy the used execution plan (JOIN) of this subtree (this
@@ -958,7 +951,7 @@ public:
 
   Name_resolution_context *current_context()
   {
-    return context_stack.head();
+    return &context_stack.front();
   }
 
   /**

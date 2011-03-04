@@ -22,12 +22,12 @@
 #ifndef DRIZZLED_ITEM_H
 #define DRIZZLED_ITEM_H
 
-#include <drizzled/global_charset_info.h>
 #include <drizzled/dtcollation.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/item_result.h>
+#include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_string.h>
-#include <drizzled/memory/sql_alloc.h>
-#include <drizzled/item_result.h>
 
 #include <drizzled/visibility.h>
 
@@ -551,9 +551,9 @@ public:
     query and why they should be generated from the Item-tree, @see
     register_view().
   */
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 
-  void print_item_w_name(String *, enum_query_type query_type);
+  void print_item_w_name(String *);
   virtual void update_used_tables() {}
   virtual void split_sum_func(Session *session, 
                               Item **ref_pointer_array,

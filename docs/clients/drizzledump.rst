@@ -6,9 +6,9 @@ Synopsis
 
 :program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] *database* [*tables*]
 
-:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--databases` *DB1* [*DB2* *DB3*...]
+:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--databases <drizzledump --databases>` *DB1* [*DB2* *DB3*...]
 
-:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--all-databases`
+:program:`drizzledump` [:ref:`OPTIONS <drizzledump-options-label>`] :option:`--all-databases <drizzledump --all-databases>`
 
 Description
 -----------
@@ -31,63 +31,65 @@ Drizzledump options
 
 The :program:`drizzledump` tool has several available options:
 
+.. program:: drizzledump 
+
 .. option:: --all-databases, -A
 
-Dumps all databases found on the server apart from ``information_schema`` and
-``data_dictionary`` in Drizzle and ``information_schema``,
-``performance_schema`` and ``mysql`` in MySQL.
+   Dumps all databases found on the server apart from ``information_schema`` and
+   ``data_dictionary`` in Drizzle and ``information_schema``,
+   ``performance_schema`` and ``mysql`` in MySQL.
 
 .. option:: --force, -f
 
-Continue even if we get an sql-error.
+   Continue even if we get an sql-error.
 
 .. option:: --help, -?
 
-Show a message with all the available options.
+   Show a message with all the available options.
 
 .. option:: --lock-all-tables, -x
 
-Locks all the tables for all databases with a global read lock.  The lock is
-released automatically when :program:`drizzledump` ends.
-Turns on :option:`--single-transaction` and :option:`--lock-tables`.
+   Locks all the tables for all databases with a global read lock.  The lock is
+   released automatically when :program:`drizzledump` ends.
+   Turns on :option:`--single-transaction` and :option:`--lock-tables`.
 
 .. option:: --single-transaction
 
-Creates a consistent snapshot by dumping the tables in a single transaction.
-During the snapshot no other connected client should use any of the
-following as this will implicitly commit the transaction and prevent the
-consistency:
+   Creates a consistent snapshot by dumping the tables in a single transaction.
+   During the snapshot no other connected client should use any of the
+   following as this will implicitly commit the transaction and prevent the
+   consistency:
 
-.. code-block:: mysql
+   .. code-block:: mysql
 
 	ALTER TABLE
 	DROP TABLE
 	RENAME TABLE
 	TRUNCATE TABLE
 
-Only works with InnoDB.
+   Only works with InnoDB.
 
 .. option:: --skip-opt
 
-A shortcut for :option:`--skip-drop-table`, :option:`--skip-create`, 
-:option:`--skip-extended-insert` and :option:`--skip-disable-keys`
+   A shortcut for :option:`--skip-drop-table`, :option:`--skip-create`, 
+   :option:`--skip-extended-insert` and :option:`--skip-disable-keys`
 
 .. option:: --tables t1 t2 ...
 
-Dump a list of tables.
+   Dump a list of tables.
 
 .. option:: --show-progress-size rows (=10000)
 
-Show progress of the dump every *rows* of the dump.  Requires
-:option:`--verbose`
+   Show progress of the dump every *rows* of the dump.  Requires
+   :option:`--verbose`
 
 .. option:: --verbose, -v
 
-Sends various verbose information to stderr as the dump progresses.
+   Sends various verbose information to stderr as the dump progresses.
 
 .. option:: --skip-extended-insert
 
-Dump every row on an individual line.  For example:
+   Dump every row on an individual line.  For example:
 
 .. code-block:: mysql
 
@@ -96,150 +98,150 @@ Dump every row on an individual line.  For example:
 
 .. option:: --skip-dump-date
 
-Do not display the date/time at the end of the dump.
+   Do not display the date/time at the end of the dump.
 
 .. option:: --no-defaults
 
-Do not attempt to read configuration from configuration files.
+   Do not attempt to read configuration from configuration files.
 
 .. option:: --add-drop-database
 
-Add ``DROP DATABASE`` statements before ``CREATE DATABASE``.
+   Add ``DROP DATABASE`` statements before ``CREATE DATABASE``.
 
 .. option:: --compact
 
-Gives a more compact output by disabling header/footer comments and enabling
-:option:`--skip-add-drop-table`, :option:`--skip-disable-keys` 
-and :option:`--skip-add-locks`.
+   Gives a more compact output by disabling header/footer comments and enabling
+   :option:`--skip-add-drop-table`, :option:`--skip-disable-keys` 
+   and :option:`--skip-add-locks`.
 
 .. option:: --databases, -B
 
-Dump several databases.  The databases do not need to follow on after this
-option, they can be anywhere in the command line.
+   Dump several databases.  The databases do not need to follow on after this
+   option, they can be anywhere in the command line.
 
 .. option:: --skip-disable-keys, -K
 
-Do not dump the statements ``ALTER TABLE ... DISABLE KEYS`` and
-``ALTER TABLE ... ENABLE KEYS``
+   Do not dump the statements ``ALTER TABLE ... DISABLE KEYS`` and
+   ``ALTER TABLE ... ENABLE KEYS``
 
 .. option:: --ignore-table table
 
-Do not dump specified table, needs to be in the format ``database.table``.
-Can be specified multiple times for multiple tables.
+   Do not dump specified table, needs to be in the format ``database.table``.
+   Can be specified multiple times for multiple tables.
 
 .. option:: --insert-ignore
 
-Add the ``IGNORE`` keyword into every ``INSERT`` statement.
+   Add the ``IGNORE`` keyword into every ``INSERT`` statement.
 
 .. option:: --no-autocommit
 
-Make the dump of each table a single transaction by wrapping it in ``COMMIT``
-statements.
+   Make the dump of each table a single transaction by wrapping it in ``COMMIT``
+   statements.
 
 .. option:: --no-create-db, -n
 
-Do not dump the ``CREATE DATABASE`` statements when using
-:option:`--all-databases` or :option:`--databases`.
+   Do not dump the ``CREATE DATABASE`` statements when using
+   :option:`--all-databases` or :option:`--databases`.
 
 .. option:: --skip-create, -t
 
-Do not dump the ``CREATE TABLE`` statements.
+   Do not dump the ``CREATE TABLE`` statements.
 
 .. option:: --no-data, -d
 
-Do not dump the data itself, used to dump the schemas only.
+   Do not dump the data itself, used to dump the schemas only.
 
 .. option:: --replace
 
-Use ``REPLACE INTO`` statements instead of ``INSERT INTO``
+   Use ``REPLACE INTO`` statements instead of ``INSERT INTO``
 
 .. option:: --destination-type type (=stdout)
 
-Destination of the data.
+   Destination of the data.
 
-**stdout**
-The default.  Output to the command line
+   **stdout**
+   The default.  Output to the command line
 
-**database**
-Connect to another database and pipe data to that.
+   **database**
+   Connect to another database and pipe data to that.
 
-.. versionadded:: 2010-09-27
+   .. versionadded:: Drizzle7 2010-09-27
 
 .. option:: --destination-host hostname (=localhost)
 
-The hostname for the destination database.  Requires
-:option:`--destination-type` `= database`
+   The hostname for the destination database.  Requires
+   :option:`--destination-type` `= database`
 
-.. versionadded:: 2010-09-27
+   .. versionadded:: Drizzle7 2010-09-27
 
 .. option:: --destination-port port (=3306)
 
-The port number for the destination database.  Requires
-:option:`--destination-type` `= database`
+   The port number for the destination database.  Requires
+   :option:`--destination-type` `= database`
 
-.. versionadded:: 2010-09-27
+   .. versionadded:: Drizzle7 2010-09-27
 
 .. option:: --destination-user username
 
-The username for the destinations database.  Requires
-:option:`--destination-type` `= database`
+   The username for the destinations database.  Requires
+   :option:`--destination-type` `= database`
 
-.. versionadded:: 2010-09-27
+   .. versionadded:: Drizzle7 2010-09-27
 
 .. option:: --destination-password password
 
-The password for the destination database.  Requires
-:option:`--destination-type` `= database`
+   The password for the destination database.  Requires
+   :option:`--destination-type` `= database`
 
-.. versionadded:: 2010-09-27
+   .. versionadded:: Drizzle7 2010-09-27
 
 .. option:: --destination-database database
 
-The database for the destination database, for use when only dumping a
-single database.  Requires
-:option:`--destination-type` `= database`
+   The database for the destination database, for use when only dumping a
+   single database.  Requires
+   :option:`--destination-type` `= database`
 
-.. versionadded:: 2010-09-27
+   .. versionadded:: Drizzle7 2010-09-27
 
 .. option:: --my-data-is-mangled
 
-If your data is UTF8 but has been stored in a latin1 table using a latin1
-connection then corruption is likely and drizzledump by default will retrieve
-mangled data.  This is because MySQL will convert the data to UTF8 on the way
-out to drizzledump and you effectively get a double-conversion to UTF8.
+   If your data is UTF8 but has been stored in a latin1 table using a latin1
+   connection then corruption is likely and drizzledump by default will retrieve
+   mangled data.  This is because MySQL will convert the data to UTF8 on the way
+   out to drizzledump and you effectively get a double-conversion to UTF8.
 
-This typically happens with PHP apps that do not use ``SET NAMES``.
+   This typically happens with PHP apps that do not use ``SET NAMES``.
 
-In these cases setting this option will retrieve the data as you see it in your
-application.
+   In these cases setting this option will retrieve the data as you see it in
+   your application.
 
-.. versionadded:: 2011-01-31
+   .. versionadded:: Drizzle7 2011-01-31
 
 .. option:: --host, -h hostname (=localhost)
 
-The hostname of the database server.
+   The hostname of the database server.
 
 .. option:: --user, -u username
 
-The username for the database server.
+   The username for the database server.
 
 .. option:: --password, -P password
 
-The password for the database server.
+   The password for the database server.
 
 .. option:: --port, -p port (=4427)
 
-The port number of the database server.
+   The port number of the database server.
 
 .. option:: --protocol protocol (=mysql)
 
-The protocol to use when connecting to the database server.  Options are:
+   The protocol to use when connecting to the database server.  Options are:
 
-**mysql**
-The standard MySQL protocol.
+   **mysql**
+   The standard MySQL protocol.
 
-**drizzle**
-The Drizzle protocol.
+   **drizzle**
+   The Drizzle protocol.
 
 Backups using Drizzledump
 -------------------------
@@ -255,6 +257,8 @@ This can then be re-imported into drizzle at a later date using:
 .. code-block:: bash
 
   $ drizzle < dumpfile.sql
+
+.. _drizzledump-migration-label:
 
 MySQL Migration using Drizzledump
 ---------------------------------

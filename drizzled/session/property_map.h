@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_SESSION_PROPERTY_MAP_H
 #define DRIZZLED_SESSION_PROPERTY_MAP_H
 
+#include <drizzled/util/storable.h>
 #include <drizzled/util/string.h>
 #include <boost/unordered_map.hpp>
 
@@ -77,7 +78,7 @@ public:
   {
     for (iterator iter= _properties.begin(); iter != _properties.end(); iter++)
     {
-      boost::checked_delete((*iter).second);
+      boost::checked_delete(iter->second);
     }
     _properties.clear();
   }

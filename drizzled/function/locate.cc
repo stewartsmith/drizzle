@@ -74,16 +74,16 @@ int64_t Item_func_locate::val_int()
 }
 
 
-void Item_func_locate::print(String *str, enum_query_type query_type)
+void Item_func_locate::print(String *str)
 {
   str->append(STRING_WITH_LEN("locate("));
-  args[1]->print(str, query_type);
+  args[1]->print(str);
   str->append(',');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   if (arg_count == 3)
   {
     str->append(',');
-    args[2]->print(str, query_type);
+    args[2]->print(str);
   }
   str->append(')');
 }

@@ -53,7 +53,6 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/drizzled.h>
 #include <drizzled/plugin/storage_engine.h>
-
 #include <drizzled/sql_union.h>
 #include <drizzled/optimizer/key_field.h>
 #include <drizzled/optimizer/position.h>
@@ -62,17 +61,16 @@
 #include <drizzled/optimizer/range.h>
 #include <drizzled/optimizer/quick_range_select.h>
 #include <drizzled/optimizer/quick_ror_intersect_select.h>
-
 #include <drizzled/filesort.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sort_field.h>
 #include <drizzled/select_result.h>
+#include <drizzled/key.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b);
 static COND *build_equal_items(Session *session, COND *cond,
@@ -121,7 +119,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
                    uint64_t setup_tables_done_option)
 {
   bool res;
-  register Select_Lex *select_lex= &lex->select_lex;
+  Select_Lex *select_lex= &lex->select_lex;
   DRIZZLE_SELECT_START(session->getQueryString()->c_str());
 
   if (select_lex->master_unit()->is_union() ||
@@ -146,8 +144,8 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 		      select_lex->with_wild,
                       select_lex->item_list,
 		      select_lex->where,
-		      select_lex->order_list.elements +
-		      select_lex->group_list.elements,
+		      select_lex->order_list.size() +
+		      select_lex->group_list.size(),
 		      (Order*) select_lex->order_list.first,
 		      (Order*) select_lex->group_list.first,
 		      select_lex->having,
@@ -212,21 +210,21 @@ bool fix_inner_refs(Session *session,
   bool res= false;
   bool direct_ref= false;
 
-  List<Item_outer_ref>::iterator ref_it(select->inner_refs_list);
+  List<Item_outer_ref>::iterator ref_it(select->inner_refs_list.begin());
   while ((ref= ref_it++))
   {
     Item *item= ref->outer_ref;
     Item **item_ref= ref->ref;
     Item_ref *new_ref;
     /*
-      TODO: this field item already might be present in the select list.
+      @todo this field item already might be present in the select list.
       In this case instead of adding new field item we could use an
       existing one. The change will lead to less operations for copying fields,
       smaller temporary tables and less data passed through filesort.
     */
     if (ref_pointer_array && !ref->found_in_select_list)
     {
-      int el= all_fields.elements;
+      int el= all_fields.size();
       ref_pointer_array[el]= item;
       /* Add the field item to the select list of the current select. */
       all_fields.push_front(item);
@@ -425,7 +423,7 @@ bool select_query(Session *session,
     goto err; // 1
   }
 
-  if (session->lex->describe & DESCRIBE_EXTENDED)
+  if (session->getLex()->describe & DESCRIBE_EXTENDED)
   {
     join->conds_history= join->conds;
     join->having_history= (join->having?join->having:join->tmp_having);
@@ -436,7 +434,7 @@ bool select_query(Session *session,
 
   join->exec();
 
-  if (session->lex->describe & DESCRIBE_EXTENDED)
+  if (session->getLex()->describe & DESCRIBE_EXTENDED)
   {
     select_lex->where= join->conds_history;
     select_lex->having= join->having_history;
@@ -575,8 +573,8 @@ bool update_ref_and_keys(Session *session,
     substitutions.
   */
   sz= sizeof(optimizer::KeyField) *
-      (((session->lex->current_select->cond_count+1)*2 +
-	session->lex->current_select->between_count)*m+1);
+      (((session->getLex()->current_select->cond_count+1)*2 +
+	session->getLex()->current_select->between_count)*m+1);
   if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
     return true;
   and_level= 0;
@@ -618,7 +616,7 @@ bool update_ref_and_keys(Session *session,
 
   /* Process ON conditions for the nested joins */
   {
-    List<TableList>::iterator li(*join_tab->join->join_list);
+    List<TableList>::iterator li(join_tab->join->join_list->begin());
     TableList *table;
     while ((table= li++))
     {
@@ -641,23 +639,23 @@ bool update_ref_and_keys(Session *session,
       (e.g. if there is a key(a,b,c) but only b < 5 (or a=2 and c < 3) is
       used in the query, we drop the partial key parts from consideration).
   */
-  if (keyuse->elements)
+  if (keyuse->size())
   {
     optimizer::KeyUse key_end,*prev,*save_pos,*use;
 
-    internal::my_qsort(keyuse->buffer,keyuse->elements,sizeof(optimizer::KeyUse),
+    internal::my_qsort(keyuse->buffer,keyuse->size(),sizeof(optimizer::KeyUse),
                        (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
-    insert_dynamic(keyuse,(unsigned char*) &key_end);
+    keyuse->push_back(&key_end);
 
-    use= save_pos= dynamic_element(keyuse, 0, optimizer::KeyUse*);
+    use= save_pos= (optimizer::KeyUse*)keyuse->buffer;
     prev= &key_end;
     found_eq_constant= 0;
     {
       uint32_t i;
 
-      for (i= 0; i < keyuse->elements-1; i++, use++)
+      for (i= 0; i < keyuse->size()-1; i++, use++)
       {
         if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
           use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
@@ -696,11 +694,8 @@ bool update_ref_and_keys(Session *session,
 */
 void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
 {
-  optimizer::KeyUse *end,*keyuse= dynamic_element(keyuse_array, 
-                                                  0, 
-                                                  optimizer::KeyUse*);
-
-  for (end= keyuse+ keyuse_array->elements ; keyuse < end ; keyuse++)
+  optimizer::KeyUse* keyuse= (optimizer::KeyUse*)keyuse_array->buffer;
+  for (optimizer::KeyUse* end= keyuse+ keyuse_array->size() ; keyuse < end ; keyuse++)
   {
     table_map map;
     /*
@@ -752,7 +747,7 @@ void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
 void add_group_and_distinct_keys(Join *join, JoinTable *join_tab)
 {
   List<Item_field> indexed_fields;
-  List<Item_field>::iterator indexed_fields_it(indexed_fields);
+  List<Item_field>::iterator indexed_fields_it(indexed_fields.begin());
   Order      *cur_group;
   Item_field *cur_item;
   key_map possible_keys(0);
@@ -766,7 +761,7 @@ void add_group_and_distinct_keys(Join *join, JoinTable *join_tab)
   else if (join->select_distinct)
   { /* Collect all query fields referenced in the SELECT clause. */
     List<Item> &select_items= join->fields_list;
-    List<Item>::iterator select_items_it(select_items);
+    List<Item>::iterator select_items_it(select_items.begin());
     Item *item;
     while ((item= select_items_it++))
       item->walk(&Item::collect_item_field_processor, 0,
@@ -775,7 +770,7 @@ void add_group_and_distinct_keys(Join *join, JoinTable *join_tab)
   else
     return;
 
-  if (indexed_fields.elements == 0)
+  if (indexed_fields.size() == 0)
     return;
 
   /* Intersect the keys of all group fields. */
@@ -1352,7 +1347,7 @@ static Item_equal *find_item_equal(COND_EQUAL *cond_equal, Field *field, bool *i
   bool in_upper_level= false;
   while (cond_equal)
   {
-    List<Item_equal>::iterator li(cond_equal->current_level);
+    List<Item_equal>::iterator li(cond_equal->current_level.begin());
     while ((item= li++))
     {
       if (item->contains(field))
@@ -1517,7 +1512,7 @@ static bool check_simple_equality(Item *left_item,
         /* Merge two multiple equalities forming a new one */
         left_item_equal->merge(right_item_equal);
         /* Remove the merged multiple equality from the list */
-        List<Item_equal>::iterator li(cond_equal->current_level);
+        List<Item_equal>::iterator li(cond_equal->current_level.begin());
         while ((li++) != right_item_equal) {};
         li.remove();
       }
@@ -1657,12 +1652,12 @@ static bool check_row_equality(Session *session,
                                        (Item_row *) right_item,
 			               cond_equal, eq_list);
       if (!is_converted)
-        session->lex->current_select->cond_count++;
+        session->getLex()->current_select->cond_count++;
     }
     else
     {
       is_converted= check_simple_equality(left_item, right_item, 0, cond_equal);
-      session->lex->current_select->cond_count++;
+      session->getLex()->current_select->cond_count++;
     }
 
     if (!is_converted)
@@ -1718,7 +1713,7 @@ static bool check_equality(Session *session, Item *item, COND_EQUAL *cond_equal,
     if (left_item->type() == Item::ROW_ITEM &&
         right_item->type() == Item::ROW_ITEM)
     {
-      session->lex->current_select->cond_count--;
+      session->getLex()->current_select->cond_count--;
       return check_row_equality(session,
                                 (Item_row *) left_item,
                                 (Item_row *) right_item,
@@ -1749,7 +1744,7 @@ static bool check_equality(Session *session, Item *item, COND_EQUAL *cond_equal,
     just an argument of a comparison predicate.
     The function also determines the maximum number of members in
     equality lists of each Item_cond_and object assigning it to
-    session->lex->current_select->max_equal_elems.
+    session->getLex()->current_select->max_equal_elems.
 
   @note
     Multiple equality predicate =(f1,..fn) is equivalent to the conjuction of
@@ -1806,7 +1801,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
       Item_func::COND_AND_FUNC;
     List<Item> *args= ((Item_cond*) cond)->argument_list();
 
-    List<Item>::iterator li(*args);
+    List<Item>::iterator li(args->begin());
     Item *item;
 
     if (and_level)
@@ -1828,12 +1823,12 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
           li.remove();
       }
 
-      List<Item_equal>::iterator it(cond_equal.current_level);
+      List<Item_equal>::iterator it(cond_equal.current_level.begin());
       while ((item_equal= it++))
       {
         item_equal->fix_length_and_dec();
         item_equal->update_used_tables();
-        set_if_bigger(session->lex->current_select->max_equal_elems,
+        set_if_bigger(session->getLex()->current_select->max_equal_elems,
                       item_equal->members());
       }
 
@@ -1880,7 +1875,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
      */
     if (check_equality(session, cond, &cond_equal, &eq_list))
     {
-      int n= cond_equal.current_level.elements + eq_list.elements;
+      int n= cond_equal.current_level.size() + eq_list.size();
       if (n == 0)
         return new Item_int((int64_t) 1,1);
       else if (n == 1)
@@ -1892,7 +1887,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
         }
         else
           item_equal= (Item_equal *) eq_list.pop();
-        set_if_bigger(session->lex->current_select->max_equal_elems,
+        set_if_bigger(session->getLex()->current_select->max_equal_elems,
                       item_equal->members());
         return item_equal;
       }
@@ -1905,12 +1900,12 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
         Item_cond_and *and_cond= new Item_cond_and(eq_list);
         and_cond->quick_fix_field();
         List<Item> *args= and_cond->argument_list();
-        List<Item_equal>::iterator it(cond_equal.current_level);
+        List<Item_equal>::iterator it(cond_equal.current_level.begin());
         while ((item_equal= it++))
         {
           item_equal->fix_length_and_dec();
           item_equal->update_used_tables();
-          set_if_bigger(session->lex->current_select->max_equal_elems,
+          set_if_bigger(session->getLex()->current_select->max_equal_elems,
                         item_equal->members());
         }
         and_cond->cond_equal= cond_equal;
@@ -2031,7 +2026,7 @@ static COND *build_equal_items(Session *session, COND *cond,
   if (join_list)
   {
     TableList *table;
-    List<TableList>::iterator li(*join_list);
+    List<TableList>::iterator li(join_list->begin());
 
     while ((table= li++))
     {
@@ -2141,7 +2136,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels, Item_equ
   if (((Item *) item_equal)->const_item() && !item_equal->val_int())
     return new Item_int((int64_t) 0,1);
   Item *item_const= item_equal->get_const();
-  Item_equal_iterator it(*item_equal);
+  Item_equal_iterator it(item_equal->begin());
   Item *head;
   if (item_const)
     head= item_const;
@@ -2161,7 +2156,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels, Item_equ
         item= 0;
       else
       {
-        Item_equal_iterator li(*item_equal);
+        Item_equal_iterator li(item_equal->begin());
         while ((item= li++) != item_field)
         {
           if (item->find_item_equal(upper_levels) == upper)
@@ -2181,7 +2176,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels, Item_equ
    }
   }
 
-  if (!cond && !eq_list.head())
+  if (!cond && !&eq_list.front())
   {
     if (!eq_item)
       return new Item_int((int64_t) 1,1);
@@ -2246,14 +2241,14 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
       cond_equal= &((Item_cond_and *) cond)->cond_equal;
       cond_list->disjoin((List<Item> *) &cond_equal->current_level);
 
-      List<Item_equal>::iterator it(cond_equal->current_level);
+      List<Item_equal>::iterator it(cond_equal->current_level.begin());
       while ((item_equal= it++))
       {
         item_equal->sort(&compare_fields_by_table_order, table_join_idx);
       }
     }
 
-    List<Item>::iterator li(*cond_list);
+    List<Item>::iterator li(cond_list->begin());
     Item *item;
     while ((item= li++))
     {
@@ -2269,7 +2264,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
 
     if (and_level)
     {
-      List<Item_equal>::iterator it(cond_equal->current_level);
+      List<Item_equal>::iterator it(cond_equal->current_level.begin());
       while ((item_equal= it++))
       {
         cond= eliminate_item_equal(cond, cond_equal->upper_levels, item_equal);
@@ -2281,7 +2276,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
       }
     }
     if (cond->type() == Item::COND_ITEM &&
-        !((Item_cond*)cond)->argument_list()->elements)
+        !((Item_cond*)cond)->argument_list()->size())
       cond= new Item_int((int32_t)cond->val_bool());
 
   }
@@ -2290,7 +2285,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
   {
     item_equal= (Item_equal *) cond;
     item_equal->sort(&compare_fields_by_table_order, table_join_idx);
-    if (cond_equal && cond_equal->current_level.head() == item_equal)
+    if (cond_equal && &cond_equal->current_level.front() == item_equal)
       cond_equal= 0;
     return eliminate_item_equal(0, cond_equal, item_equal);
   }
@@ -2319,7 +2314,7 @@ void update_const_equal_items(COND *cond, JoinTable *tab)
   if (cond->type() == Item::COND_ITEM)
   {
     List<Item> *cond_list= ((Item_cond*) cond)->argument_list();
-    List<Item>::iterator li(*cond_list);
+    List<Item>::iterator li(cond_list->begin());
     Item *item;
     while ((item= li++))
       update_const_equal_items(item, tab);
@@ -2333,7 +2328,7 @@ void update_const_equal_items(COND *cond, JoinTable *tab)
     if (!contained_const && item_equal->get_const())
     {
       /* Update keys for range analysis */
-      Item_equal_iterator it(*item_equal);
+      Item_equal_iterator it(item_equal->begin());
       Item_field *item_field;
       while ((item_field= it++))
       {
@@ -2377,7 +2372,7 @@ static void change_cond_ref_to_const(Session *session,
   if (cond->type() == Item::COND_ITEM)
   {
     bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *item;
     while ((item=li++))
       change_cond_ref_to_const(session, save_list, and_level ? cond : item, item, field, value);
@@ -2403,7 +2398,7 @@ static void change_cond_ref_to_const(Session *session,
     if (tmp)
     {
       tmp->collation.set(right_item->collation);
-      session->change_item_tree(args + 1, tmp);
+      args[1]= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
 	        and_father != cond && 
@@ -2425,7 +2420,7 @@ static void change_cond_ref_to_const(Session *session,
     if (tmp)
     {
       tmp->collation.set(left_item->collation);
-      session->change_item_tree(args, tmp);
+      *args= tmp;
       value= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
@@ -2433,7 +2428,7 @@ static void change_cond_ref_to_const(Session *session,
           ! right_item->const_item())
       {
         args[0]= args[1];                       // For easy check
-        session->change_item_tree(args + 1, value);
+        args[1]= value;
         cond->marker=1;
         save_list.push_back( COND_CMP(and_father, func) );
       }
@@ -2457,15 +2452,15 @@ Item *remove_additional_cond(Item* conds)
   if (conds->type() == Item::COND_ITEM)
   {
     Item_cond *cnd= (Item_cond*) conds;
-    List<Item>::iterator li(*(cnd->argument_list()));
+    List<Item>::iterator li(cnd->argument_list()->begin());
     Item *item;
     while ((item= li++))
     {
       if (item->name == in_additional_cond)
       {
 	li.remove();
-	if (cnd->argument_list()->elements == 1)
-	  return cnd->argument_list()->head();
+	if (cnd->argument_list()->size() == 1)
+	  return &cnd->argument_list()->front();
 	return conds;
       }
     }
@@ -2481,7 +2476,7 @@ static void propagate_cond_constants(Session *session,
   if (cond->type() == Item::COND_ITEM)
   {
     bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *item;
     list<COND_CMP> save;
     while ((item=li++))
@@ -2655,7 +2650,7 @@ bool check_interleaving_with_nj(JoinTable *next_tab)
       join->cur_embedding_map |= next_emb->getNestedJoin()->nj_map;
     }
 
-    if (next_emb->getNestedJoin()->join_list.elements !=
+    if (next_emb->getNestedJoin()->join_list.size() !=
         next_emb->getNestedJoin()->counter_)
       break;
 
@@ -2715,7 +2710,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
   {
     bool and_level= (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC);
 
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item::cond_result tmp_cond_value;
     bool should_fix_fields= false;
 
@@ -2762,13 +2757,13 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     if (should_fix_fields)
       cond->update_used_tables();
 
-    if (! ((Item_cond*) cond)->argument_list()->elements || *cond_value != Item::COND_OK)
+    if (! ((Item_cond*) cond)->argument_list()->size() || *cond_value != Item::COND_OK)
       return (COND*) NULL;
 
-    if (((Item_cond*) cond)->argument_list()->elements == 1)
+    if (((Item_cond*) cond)->argument_list()->size() == 1)
     {						
       /* Argument list contains only one element, so reduce it so a single item, then remove list */
-      item= ((Item_cond*) cond)->argument_list()->head();
+      item= &((Item_cond*) cond)->argument_list()->front();
       ((Item_cond*) cond)->argument_list()->clear();
       return item;
     }
@@ -2847,7 +2842,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
   }
   else if (cond->const_item() && !cond->is_expensive())
   /*
-    TODO:
+    @todo
     Excluding all expensive functions is too restritive we should exclude only
     materialized IN subquery predicates because they can't yet be evaluated
     here (they need additional initialization that is done later on).
@@ -2919,7 +2914,7 @@ bool const_expression_in_where(COND *cond, Item *comp_item, Item **const_item)
   {
     bool and_level= (((Item_cond*) cond)->functype()
 		     == Item_func::COND_AND_FUNC);
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *item;
     while ((item=li++))
     {
@@ -3449,7 +3444,7 @@ int join_read_key(JoinTable *tab)
     }
   }
 
-  /* TODO: Why don't we do "Late NULLs Filtering" here? */
+  /* @todo Why don't we do "Late NULLs Filtering" here? */
   if (cmp_buffer_with_ref(tab) ||
       (table->status & (STATUS_GARBAGE | STATUS_NO_PARENT | STATUS_NULL_ROW)))
   {
@@ -3819,7 +3814,7 @@ enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_recor
         {
           if (!join->first_record)
           {
-                  List<Item>::iterator it(*join->fields);
+                  List<Item>::iterator it(join->fields->begin());
                   Item *item;
             /* No matching rows for group function */
             join->clear();
@@ -4058,7 +4053,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
       Item_cond_and *new_cond=new Item_cond_and;
       if (!new_cond)
         return (COND*) 0;
-      List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+      List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
       Item *item;
       while ((item=li++))
       {
@@ -4067,12 +4062,12 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
         if (fix)
           new_cond->argument_list()->push_back(fix);
       }
-      switch (new_cond->argument_list()->elements) 
+      switch (new_cond->argument_list()->size()) 
       {
         case 0:
           return (COND*) 0;			// Always true
         case 1:
-          return new_cond->argument_list()->head();
+          return &new_cond->argument_list()->front();
         default:
           /*
             Item_cond_and do not need fix_fields for execution, its parameters
@@ -4088,7 +4083,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
       Item_cond_or *new_cond=new Item_cond_or;
       if (!new_cond)
         return (COND*) 0;
-      List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+      List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
       Item *item;
       while ((item=li++))
       {
@@ -4440,7 +4435,7 @@ bool find_field_in_item_list (Field *field, void *data)
 {
   List<Item> *fields= (List<Item> *) data;
   bool part_found= 0;
-  List<Item>::iterator li(*fields);
+  List<Item>::iterator li(fields->begin());
   Item *item;
 
   while ((item= li++))
@@ -4525,7 +4520,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
     save_quick= select->quick;
     /*
       assume results are not ordered when index merge is used
-      TODO: sergeyp: Results of all index merge selects actually are ordered
+      @todo sergeyp: Results of all index merge selects actually are ordered
       by clustered PK values.
     */
 
@@ -5363,7 +5358,7 @@ static bool find_order_in_list(Session *session,
   if (order_item->type() == Item::INT_ITEM && order_item->basic_const_item())
   {						/* Order by position */
     uint32_t count= (uint32_t) order_item->val_int();
-    if (!count || count > fields.elements)
+    if (!count || count > fields.size())
     {
       my_error(ER_BAD_FIELD_ERROR, MYF(0),
                order_item->full_name(), session->where());
@@ -5465,7 +5460,7 @@ static bool find_order_in_list(Session *session,
        session->is_fatal_error))
     return true; /* Wrong field. */
 
-  uint32_t el= all_fields.elements;
+  uint32_t el= all_fields.size();
   all_fields.push_front(order_item); /* Add new field to field list. */
   ref_pointer_array[el]= order_item;
   order->item= ref_pointer_array + el;
@@ -5534,7 +5529,7 @@ int setup_group(Session *session,
   if (!order)
     return 0;				/* Everything is ok */
 
-  uint32_t org_fields=all_fields.elements;
+  uint32_t org_fields=all_fields.size();
 
   session->setWhere("group statement");
   for (ord= order; ord; ord= ord->next)
@@ -5569,8 +5564,8 @@ int setup_group(Session *session,
     Item *item;
     Item_field *field;
     int cur_pos_in_select_list= 0;
-    List<Item>::iterator li(fields);
-    List<Item_field>::iterator naf_it(session->lex->current_select->non_agg_fields);
+    List<Item>::iterator li(fields.begin());
+    List<Item_field>::iterator naf_it(session->getLex()->current_select->non_agg_fields.begin());
 
     field= naf_it++;
     while (field && (item=li++))
@@ -5596,8 +5591,7 @@ int setup_group(Session *session,
             if ((*ord->item)->eq((Item*)field, 0))
               goto next_field;
           /*
-            TODO: change ER_WRONG_FIELD_WITH_GROUP to more detailed
-            ER_NON_GROUPING_FIELD_USED
+            @todo change ER_WRONG_FIELD_WITH_GROUP to more detailed ER_NON_GROUPING_FIELD_USED
           */
           my_error(ER_WRONG_FIELD_WITH_GROUP, MYF(0), field->full_name());
           return 1;
@@ -5608,7 +5602,7 @@ next_field:
       cur_pos_in_select_list++;
     }
   }
-  if (org_fields != all_fields.elements)
+  if (org_fields != all_fields.size())
     *hidden_group_fields=1;			// group fields is not used
   return 0;
 }
@@ -5626,7 +5620,7 @@ Order *create_distinct_group(Session *session,
                                 List<Item> &,
                                 bool *all_order_by_fields_used)
 {
-  List<Item>::iterator li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *item;
   Order *order,*group,**prev;
 
@@ -5690,7 +5684,7 @@ next_item:
 */
 void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param, List<Item> &fields, bool reset_with_sum_func)
 {
-  List<Item>::iterator li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *field;
 
   param->field_count=param->sum_func_count=param->func_count=
@@ -5747,11 +5741,11 @@ void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param, List<Item
 */
 int test_if_item_cache_changed(List<Cached_item> &list)
 {
-  List<Cached_item>::iterator li(list);
+  List<Cached_item>::iterator li(list.begin());
   int idx= -1,i;
   Cached_item *buff;
 
-  for (i=(int) list.elements-1 ; (buff=li++) ; i--)
+  for (i=(int) list.size()-1 ; (buff=li++) ; i--)
   {
     if (buff->cmp())
       idx=i;
@@ -5796,13 +5790,13 @@ bool setup_copy_fields(Session *session,
                        List<Item> &all_fields)
 {
   Item *pos;
-  List<Item>::iterator li(all_fields);
+  List<Item>::iterator li(all_fields.begin());
   CopyField *copy= NULL;
   res_selected_fields.clear();
   res_all_fields.clear();
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields.begin());
   List<Item> extra_funcs;
-  uint32_t i, border= all_fields.elements - elements;
+  uint32_t i, border= all_fields.size() - elements;
 
   if (param->field_count &&
       !(copy=param->copy_field= new CopyField[param->field_count]))
@@ -5877,8 +5871,8 @@ bool setup_copy_fields(Session *session,
 	     !real_pos->with_sum_func)
     {						// Save for send fields
       pos= real_pos;
-      /* TODO:
-        In most cases this result will be sent to the user.
+      /* 
+        @todo In most cases this result will be sent to the user.
         This should be changed to use copy_int or copy_real depending
         on how the value is to be used: In some cases this may be an
         argument in a group function, like: IF(ISNULL(col),0,COUNT(*))
@@ -5894,7 +5888,7 @@ bool setup_copy_fields(Session *session,
         goto err;
     }
     res_all_fields.push_back(pos);
-    ref_pointer_array[((i < border)? all_fields.elements-i-1 : i-border)]=
+    ref_pointer_array[((i < border)? all_fields.size()-i-1 : i-border)]=
       pos;
   }
   param->copy_field_end= copy;
@@ -5932,7 +5926,7 @@ void copy_fields(Tmp_Table_Param *param)
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);
 
-  List<Item>::iterator it(param->copy_funcs);
+  List<Item>::iterator it(param->copy_funcs.begin());
   Item_copy_string *item;
   while ((item = (Item_copy_string*) it++))
     item->copy();
@@ -5961,13 +5955,13 @@ bool change_to_use_tmp_fields(Session *session,
 			                        uint32_t elements,
                               List<Item> &all_fields)
 {
-  List<Item>::iterator it(all_fields);
+  List<Item>::iterator it(all_fields.begin());
   Item *item_field,*item;
 
   res_selected_fields.clear();
   res_all_fields.clear();
 
-  uint32_t i, border= all_fields.elements - elements;
+  uint32_t i, border= all_fields.size() - elements;
   for (i= 0; (item= it++); i++)
   {
     Field *field;
@@ -6006,11 +6000,11 @@ bool change_to_use_tmp_fields(Session *session,
         item_field= item;
     }
     res_all_fields.push_back(item_field);
-    ref_pointer_array[((i < border)? all_fields.elements-i-1 : i-border)]=
+    ref_pointer_array[((i < border)? all_fields.size()-i-1 : i-border)]=
       item_field;
   }
 
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields.begin());
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
@@ -6040,20 +6034,20 @@ bool change_refs_to_tmp_fields(Session *session,
                                uint32_t elements,
 			                         List<Item> &all_fields)
 {
-  List<Item>::iterator it(all_fields);
+  List<Item>::iterator it(all_fields.begin());
   Item *item, *new_item;
   res_selected_fields.clear();
   res_all_fields.clear();
 
-  uint32_t i, border= all_fields.elements - elements;
+  uint32_t i, border= all_fields.size() - elements;
   for (i= 0; (item= it++); i++)
   {
     res_all_fields.push_back(new_item= item->get_tmp_table_item(session));
-    ref_pointer_array[((i < border)? all_fields.elements-i-1 : i-border)]=
+    ref_pointer_array[((i < border)? all_fields.size()-i-1 : i-border)]=
       new_item;
   }
 
-  List_iterator_fast<Item> itr(res_all_fields);
+  List<Item>::iterator itr(res_all_fields.begin());
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
@@ -6145,7 +6139,7 @@ bool copy_funcs(Item **func_ptr, const Session *session)
     /*
       Need to check the THD error state because Item::val_xxx() don't
       return error code, but can generate errors
-      TODO: change it for a real status check when Item::val_xxx()
+      @todo change it for a real status check when Item::val_xxx()
       are extended to return status code.
     */
     if (session->is_error())
@@ -6203,7 +6197,7 @@ void free_underlaid_joins(Session *, Select_Lex *select)
   @param changed        out:  returns 1 if item contains a replaced field item
 
   @todo
-    - TODO: Some functions are not null-preserving. For those functions
+    - @todo Some functions are not null-preserving. For those functions
     updating of the maybe_null attribute is an overkill.
 
   @retval
@@ -6215,7 +6209,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
 {
   if (expr->arg_count)
   {
-    Name_resolution_context *context= &session->lex->current_select->context;
+    Name_resolution_context *context= &session->getLex()->current_select->context;
     Item **arg,**arg_end;
     bool arg_changed= false;
     for (arg= expr->arguments(),
@@ -6234,7 +6228,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
             if (!(new_item= new Item_ref(context, group_tmp->item, 0,
                                         item->name)))
               return 1;                                 // fatal_error is set
-            session->change_item_tree(arg, new_item);
+            *arg= new_item;
             arg_changed= true;
           }
         }
@@ -6258,7 +6252,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
 static void print_table_array(Session *session, String *str, TableList **table,
                               TableList **end)
 {
-  (*table)->print(session, str, QT_ORDINARY);
+  (*table)->print(session, str);
 
   for (TableList **tbl= table + 1; tbl < end; tbl++)
   {
@@ -6272,11 +6266,11 @@ static void print_table_array(Session *session, String *str, TableList **table,
       str->append(STRING_WITH_LEN(" straight_join "));
     else
       str->append(STRING_WITH_LEN(" join "));
-    curr->print(session, str, QT_ORDINARY);
+    curr->print(session, str);
     if (curr->on_expr)
     {
       str->append(STRING_WITH_LEN(" on("));
-      curr->on_expr->print(str, QT_ORDINARY);
+      curr->on_expr->print(str);
       str->append(')');
     }
   }
@@ -6287,25 +6281,24 @@ static void print_table_array(Session *session, String *str, TableList **table,
   @param session     thread Cursor
   @param str     string where table should be printed
   @param tables  list of tables in join
-  @query_type    type of the query is being generated
 */
 void print_join(Session *session, String *str,
-                List<TableList> *tables, enum_query_type)
+                List<TableList> *tables)
 {
   /* List is reversed => we should reverse it before using */
-  List<TableList>::iterator ti(*tables);
+  List<TableList>::iterator ti(tables->begin());
   TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
-                                                tables->elements);
+                                                tables->size());
   if (table == 0)
     return;  // out of memory
 
-  for (TableList **t= table + (tables->elements - 1); t >= table; t--)
+  for (TableList **t= table + (tables->size() - 1); t >= table; t--)
     *t= ti++;
-  assert(tables->elements >= 1);
-  print_table_array(session, str, table, table + tables->elements);
+  assert(tables->size() >= 1);
+  print_table_array(session, str, table, table + tables->size());
 }
 
-void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
+void Select_Lex::print(Session *session, String *str)
 {
   /* QQ: session may not be set for sub queries, but this should be fixed */
   if(not session)
@@ -6330,7 +6323,7 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
 
   //Item List
   bool first= 1;
-  List<Item>::iterator it(item_list);
+  List<Item>::iterator it(item_list.begin());
   Item *item;
   while ((item= it++))
   {
@@ -6338,18 +6331,18 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
       first= 0;
     else
       str->append(',');
-    item->print_item_w_name(str, query_type);
+    item->print_item_w_name(str);
   }
 
   /*
     from clause
-    TODO: support USING/FORCE/IGNORE index
+    @todo support USING/FORCE/IGNORE index
   */
-  if (table_list.elements)
+  if (table_list.size())
   {
     str->append(STRING_WITH_LEN(" from "));
     /* go through join tree */
-    print_join(session, str, &top_join_list, query_type);
+    print_join(session, str, &top_join_list);
   }
   else if (where)
   {
@@ -6368,16 +6361,16 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   {
     str->append(STRING_WITH_LEN(" where "));
     if (cur_where)
-      cur_where->print(str, query_type);
+      cur_where->print(str);
     else
       str->append(cond_value != Item::COND_FALSE ? "1" : "0");
   }
 
   // group by & olap
-  if (group_list.elements)
+  if (group_list.size())
   {
     str->append(STRING_WITH_LEN(" group by "));
-    print_order(str, (Order *) group_list.first, query_type);
+    print_order(str, (Order *) group_list.first);
     switch (olap)
     {
       case CUBE_TYPE:
@@ -6400,19 +6393,19 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   {
     str->append(STRING_WITH_LEN(" having "));
     if (cur_having)
-      cur_having->print(str, query_type);
+      cur_having->print(str);
     else
       str->append(having_value != Item::COND_FALSE ? "1" : "0");
   }
 
-  if (order_list.elements)
+  if (order_list.size())
   {
     str->append(STRING_WITH_LEN(" order by "));
-    print_order(str, (Order *) order_list.first, query_type);
+    print_order(str, (Order *) order_list.first);
   }
 
   // limit
-  print_limit(session, str, query_type);
+  print_limit(session, str);
 
   // PROCEDURE unsupported here
 }

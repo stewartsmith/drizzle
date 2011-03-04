@@ -273,7 +273,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
   {
     for (Select_Lex *lex= unit->first_select(); lex; lex= lex->next_select())
     {
-      List<Item>::iterator li(lex->item_list);
+      List<Item>::iterator li(lex->item_list.begin());
       Item *item;
       Order *order;
 
@@ -406,10 +406,10 @@ void Item_subselect::update_used_tables()
 }
 
 
-void Item_subselect::print(String *str, enum_query_type query_type)
+void Item_subselect::print(String *str)
 {
   str->append('(');
-  engine->print(str, query_type);
+  engine->print(str);
   str->append(')');
 }
 
@@ -487,10 +487,10 @@ void Item_maxmin_subselect::cleanup()
 }
 
 
-void Item_maxmin_subselect::print(String *str, enum_query_type query_type)
+void Item_maxmin_subselect::print(String *str)
 {
   str->append(max?"<max>":"<min>", 5);
-  Item_singlerow_subselect::print(str, query_type);
+  Item_singlerow_subselect::print(str);
 }
 
 
@@ -522,8 +522,8 @@ Item_singlerow_subselect::select_transformer(Join *join)
 
   if (!select_lex->master_unit()->is_union() &&
       !select_lex->table_list.elements &&
-      select_lex->item_list.elements == 1 &&
-      !select_lex->item_list.head()->with_sum_func &&
+      select_lex->item_list.size() == 1 &&
+      !select_lex->item_list.front().with_sum_func &&
       /*
 	We cant change name of Item_field or Item_ref, because it will
 	prevent it's correct resolving, but we should save name of
@@ -531,21 +531,21 @@ Item_singlerow_subselect::select_transformer(Join *join)
 	list is field or reference.
 	TODO: solve above problem
       */
-      !(select_lex->item_list.head()->type() == FIELD_ITEM ||
-	select_lex->item_list.head()->type() == REF_ITEM) &&
+      !(select_lex->item_list.front().type() == FIELD_ITEM ||
+	select_lex->item_list.front().type() == REF_ITEM) &&
       !join->conds && !join->having
       )
   {
 
     have_to_be_excluded= 1;
-    if (session->lex->describe)
+    if (session->getLex()->describe)
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff), ER(ER_SELECT_REDUCED), select_lex->select_number);
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		   ER_SELECT_REDUCED, warn_buff);
     }
-    substitution= select_lex->item_list.head();
+    substitution= &select_lex->item_list.front();
     /*
       as far as we moved content to upper level, field which depend of
       'upper' select is not really dependent => we remove this dependence
@@ -718,10 +718,10 @@ Item_exists_subselect::Item_exists_subselect(Select_Lex *select_lex):
 }
 
 
-void Item_exists_subselect::print(String *str, enum_query_type query_type)
+void Item_exists_subselect::print(String *str)
 {
   str->append(STRING_WITH_LEN("exists"));
-  Item_subselect::print(str, query_type);
+  Item_subselect::print(str);
 }
 
 
@@ -1002,7 +1002,7 @@ Item_in_subselect::single_value_transformer(Join *join,
     Check that the right part of the subselect contains no more than one
     column. E.g. in SELECT 1 IN (SELECT * ..) the right part is (SELECT * ...)
   */
-  if (select_lex->item_list.elements > 1)
+  if (select_lex->item_list.size() > 1)
   {
     my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
     return(RES_ERROR);
@@ -1057,13 +1057,13 @@ Item_in_subselect::single_value_transformer(Join *join,
         upper_item->set_sum_test(item);
       *select_lex->ref_pointer_array= item;
       {
-	List<Item>::iterator it(select_lex->item_list);
+	List<Item>::iterator it(select_lex->item_list.begin());
 	it++;
 	it.replace(item);
       }
 
-      save_allow_sum_func= session->lex->allow_sum_func;
-      session->lex->allow_sum_func|= 1 << session->lex->current_select->nest_level;
+      save_allow_sum_func= session->getLex()->allow_sum_func;
+      session->getLex()->allow_sum_func|= 1 << session->getLex()->current_select->nest_level;
       /*
 	Item_sum_(max|min) can't substitute other item => we can use 0 as
         reference, also Item_sum_(max|min) can't be fixed after creation, so
@@ -1071,7 +1071,7 @@ Item_in_subselect::single_value_transformer(Join *join,
       */
       if (item->fix_fields(session, 0))
 	return(RES_ERROR);
-      session->lex->allow_sum_func= save_allow_sum_func;
+      session->getLex()->allow_sum_func= save_allow_sum_func;
       /* we added aggregate function => we have to change statistic */
       count_field_types(select_lex, &join->tmp_table_param, join->all_fields,
                         0);
@@ -1096,16 +1096,16 @@ Item_in_subselect::single_value_transformer(Join *join,
     Select_Lex_Unit *master_unit= select_lex->master_unit();
     substitution= optimizer;
 
-    Select_Lex *current= session->lex->current_select, *up;
+    Select_Lex *current= session->getLex()->current_select, *up;
 
-    session->lex->current_select= up= current->return_after_parsing();
+    session->getLex()->current_select= up= current->return_after_parsing();
     //optimizer never use Item **ref => we can pass 0 as parameter
     if (!optimizer || optimizer->fix_left(session, 0))
     {
-      session->lex->current_select= current;
+      session->getLex()->current_select= current;
       return(RES_ERROR);
     }
-    session->lex->current_select= current;
+    session->getLex()->current_select= current;
 
     /*
       As far as  Item_ref_in_optimizer do not substitute itself on fix_fields
@@ -1220,7 +1220,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
   }
   else
   {
-    Item *item= (Item*) select_lex->item_list.head();
+    Item *item= &select_lex->item_list.front();
 
     if (select_lex->table_list.elements)
     {
@@ -1230,7 +1230,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
       select_lex->item_list.push_back(new Item_int("Not_used",
                                                    (int64_t) 1,
                                                    MY_INT64_NUM_DECIMAL_DIGITS));
-      select_lex->ref_pointer_array[0]= select_lex->item_list.head();
+      select_lex->ref_pointer_array[0]= &select_lex->item_list.front();
 
       item= func->create(expr, item);
       if (!abort_on_null && orig_item->maybe_null)
@@ -1334,7 +1334,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
 	// fix_field of item will be done in time of substituting
 	substitution= item;
 	have_to_be_excluded= 1;
-	if (session->lex->describe)
+	if (session->getLex()->describe)
 	{
 	  char warn_buff[DRIZZLE_ERRMSG_SIZE];
 	  snprintf(warn_buff, sizeof(warn_buff), ER(ER_SELECT_REDUCED), select_lex->select_number);
@@ -1356,7 +1356,7 @@ Item_in_subselect::row_value_transformer(Join *join)
   Select_Lex *select_lex= join->select_lex;
   uint32_t cols_num= left_expr->cols();
 
-  if (select_lex->item_list.elements != left_expr->cols())
+  if (select_lex->item_list.size() != left_expr->cols())
   {
     my_error(ER_OPERAND_COLUMNS, MYF(0), left_expr->cols());
     return(RES_ERROR);
@@ -1372,19 +1372,19 @@ Item_in_subselect::row_value_transformer(Join *join)
     Select_Lex_Unit *master_unit= select_lex->master_unit();
     substitution= optimizer;
 
-    Select_Lex *current= session->lex->current_select, *up;
-    session->lex->current_select= up= current->return_after_parsing();
+    Select_Lex *current= session->getLex()->current_select, *up;
+    session->getLex()->current_select= up= current->return_after_parsing();
     //optimizer never use Item **ref => we can pass 0 as parameter
     if (!optimizer || optimizer->fix_left(session, 0))
     {
-      session->lex->current_select= current;
+      session->getLex()->current_select= current;
       return(RES_ERROR);
     }
 
     // we will refer to upper level cache array => we have to save it in PS
     optimizer->keep_top_level_cache();
 
-    session->lex->current_select= current;
+    session->getLex()->current_select= current;
     master_unit->uncacheable.set(UNCACHEABLE_DEPENDENT);
 
     if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
@@ -1656,7 +1656,7 @@ Item_in_subselect::select_transformer(Join *join)
 Item_subselect::trans_res
 Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *func)
 {
-  Select_Lex *current= session->lex->current_select, *up;
+  Select_Lex *current= session->getLex()->current_select, *up;
   const char *save_where= session->where();
   Item_subselect::trans_res res= RES_ERROR;
   bool result;
@@ -1691,13 +1691,13 @@ Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *fu
       goto err;
   }
 
-  session->lex->current_select= up= current->return_after_parsing();
+  session->getLex()->current_select= up= current->return_after_parsing();
   result= (!left_expr->fixed &&
            left_expr->fix_fields(session, optimizer->arguments()));
   /* fix_fields can change reference to left_expr, we need reassign it */
   left_expr= optimizer->arguments()[0];
 
-  session->lex->current_select= current;
+  session->getLex()->current_select= current;
   if (result)
     goto err;
 
@@ -1733,16 +1733,16 @@ err:
 }
 
 
-void Item_in_subselect::print(String *str, enum_query_type query_type)
+void Item_in_subselect::print(String *str)
 {
   if (exec_method == IN_TO_EXISTS)
     str->append(STRING_WITH_LEN("<exists>"));
   else
   {
-    left_expr->print(str, query_type);
+    left_expr->print(str);
     str->append(STRING_WITH_LEN(" in "));
   }
-  Item_subselect::print(str, query_type);
+  Item_subselect::print(str);
 }
 
 
@@ -1905,18 +1905,18 @@ Item_allany_subselect::select_transformer(Join *join)
 }
 
 
-void Item_allany_subselect::print(String *str, enum_query_type query_type)
+void Item_allany_subselect::print(String *str)
 {
   if (exec_method == IN_TO_EXISTS)
     str->append(STRING_WITH_LEN("<exists>"));
   else
   {
-    left_expr->print(str, query_type);
+    left_expr->print(str);
     str->append(' ');
     str->append(func->symbol(all));
     str->append(all ? " all " : " any ", 5);
   }
-  Item_subselect::print(str, query_type);
+  Item_subselect::print(str);
 }
 
 
@@ -2038,8 +2038,8 @@ int subselect_single_select_engine::prepare()
   if (!join || !result)
     return 1; /* Fatal error is set already. */
   prepared= 1;
-  Select_Lex *save_select= session->lex->current_select;
-  session->lex->current_select= select_lex;
+  Select_Lex *save_select= session->getLex()->current_select;
+  session->getLex()->current_select= select_lex;
   if (join->prepare(&select_lex->ref_pointer_array,
 		    (TableList*) select_lex->table_list.first,
 		    select_lex->with_wild,
@@ -2051,7 +2051,7 @@ int subselect_single_select_engine::prepare()
 		    select_lex->having,
 		    select_lex, select_lex->master_unit()))
     return 1;
-  session->lex->current_select= save_select;
+  session->getLex()->current_select= save_select;
   return 0;
 }
 
@@ -2096,7 +2096,7 @@ bool subselect_single_select_engine::no_rows()
 void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
 {
   Item *sel_item;
-  List<Item>::iterator li(item_list);
+  List<Item>::iterator li(item_list.begin());
   res_type= STRING_RESULT;
   res_field_type= DRIZZLE_TYPE_VARCHAR;
   for (uint32_t i= 0; (sel_item= li++); i++)
@@ -2111,13 +2111,13 @@ void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
       return;
     row[i]->setup(sel_item);
   }
-  if (item_list.elements > 1)
+  if (item_list.size() > 1)
     res_type= ROW_RESULT;
 }
 
 void subselect_single_select_engine::fix_length_and_dec(Item_cache **row)
 {
-  assert(row || select_lex->item_list.elements==1);
+  assert(row || select_lex->item_list.size() == 1);
   set_row(select_lex->item_list, row);
   item->collation.set(row[0]->collation);
   if (cols() != 1)
@@ -2126,9 +2126,9 @@ void subselect_single_select_engine::fix_length_and_dec(Item_cache **row)
 
 void subselect_union_engine::fix_length_and_dec(Item_cache **row)
 {
-  assert(row || unit->first_select()->item_list.elements==1);
+  assert(row || unit->first_select()->item_list.size() == 1);
 
-  if (unit->first_select()->item_list.elements == 1)
+  if (unit->first_select()->item_list.size() == 1)
   {
     set_row(unit->types, row);
     item->collation.set(row[0]->collation);
@@ -2150,8 +2150,8 @@ void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **)
 int subselect_single_select_engine::exec()
 {
   char const *save_where= session->where();
-  Select_Lex *save_select= session->lex->current_select;
-  session->lex->current_select= select_lex;
+  Select_Lex *save_select= session->getLex()->current_select;
+  session->getLex()->current_select= select_lex;
   if (!join->optimized)
   {
     Select_Lex_Unit *unit= select_lex->master_unit();
@@ -2161,7 +2161,7 @@ int subselect_single_select_engine::exec()
     {
       session->setWhere(save_where);
       executed= 1;
-      session->lex->current_select= save_select;
+      session->getLex()->current_select= save_select;
       return(join->error ? join->error : 1);
     }
     if (save_join_if_explain())
@@ -2179,7 +2179,7 @@ int subselect_single_select_engine::exec()
     if (join->reinit())
     {
       session->setWhere(save_where);
-      session->lex->current_select= save_select;
+      session->getLex()->current_select= save_select;
       return 1;
     }
     item->reset();
@@ -2238,11 +2238,11 @@ int subselect_single_select_engine::exec()
     }
     executed= 1;
     session->setWhere(save_where);
-    session->lex->current_select= save_select;
+    session->getLex()->current_select= save_select;
     return(join->error||session->is_fatal_error);
   }
   session->setWhere(save_where);
-  session->lex->current_select= save_select;
+  session->getLex()->current_select= save_select;
   return(0);
 }
 
@@ -2262,7 +2262,7 @@ subselect_single_select_engine::save_join_if_explain()
         make a replacement JOIN by calling make_simple_join(). 
      5) The Item_subselect is cacheable
   */
-  if (session->lex->describe &&                          // 1
+  if (session->getLex()->describe &&                          // 1
       select_lex->uncacheable.none() &&                  // 2
       !(join->select_options & SELECT_DESCRIBE) &&       // 3
       join->need_tmp &&                                  // 4
@@ -2685,13 +2685,13 @@ int subselect_indexsubquery_engine::exec()
 
 uint32_t subselect_single_select_engine::cols()
 {
-  return select_lex->item_list.elements;
+  return select_lex->item_list.size();
 }
 
 
 uint32_t subselect_union_engine::cols()
 {
-  return unit->types.elements;
+  return unit->types.size();
 }
 
 
@@ -2763,25 +2763,23 @@ table_map subselect_union_engine::upper_select_const_tables()
 }
 
 
-void subselect_single_select_engine::print(String *str,
-                                           enum_query_type query_type)
+void subselect_single_select_engine::print(String *str)
 {
-  select_lex->print(session, str, query_type);
+  select_lex->print(session, str);
 }
 
 
-void subselect_union_engine::print(String *str, enum_query_type query_type)
+void subselect_union_engine::print(String *str)
 {
-  unit->print(str, query_type);
+  unit->print(str);
 }
 
 
-void subselect_uniquesubquery_engine::print(String *str,
-                                            enum_query_type query_type)
+void subselect_uniquesubquery_engine::print(String *str)
 {
   const char *table_name= tab->table->getShare()->getTableName();
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
-  tab->ref.items[0]->print(str, query_type);
+  tab->ref.items[0]->print(str);
   str->append(STRING_WITH_LEN(" in "));
   if (tab->table->getShare()->isTemporaryCategory())
   {
@@ -2799,7 +2797,7 @@ void subselect_uniquesubquery_engine::print(String *str,
   if (cond)
   {
     str->append(STRING_WITH_LEN(" where "));
-    cond->print(str, query_type);
+    cond->print(str);
   }
   str->append(')');
 }
@@ -2828,11 +2826,10 @@ void subselect_uniquesubquery_engine::print(String *str)
 }
 */
 
-void subselect_indexsubquery_engine::print(String *str,
-                                           enum_query_type query_type)
+void subselect_indexsubquery_engine::print(String *str)
 {
   str->append(STRING_WITH_LEN("<index_lookup>("));
-  tab->ref.items[0]->print(str, query_type);
+  tab->ref.items[0]->print(str);
   str->append(STRING_WITH_LEN(" in "));
   str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
   KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
@@ -2843,12 +2840,12 @@ void subselect_indexsubquery_engine::print(String *str,
   if (cond)
   {
     str->append(STRING_WITH_LEN(" where "));
-    cond->print(str, query_type);
+    cond->print(str);
   }
   if (having)
   {
     str->append(STRING_WITH_LEN(" having "));
-    having->print(str, query_type);
+    having->print(str);
   }
   str->append(')');
 }
@@ -3061,7 +3058,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     Make sure there is only one index on the temp table, and it doesn't have
     the extra key part created when s->uniques > 0.
   */
-  assert(tmp_table->getShare()->sizeKeys() == 1 && tmp_columns->elements == tmp_key_parts);
+  assert(tmp_table->getShare()->sizeKeys() == 1 && tmp_columns->size() == tmp_key_parts);
 
 
   /* 2. Create/initialize execution related objects. */
@@ -3186,8 +3183,8 @@ int subselect_hash_sj_engine::exec()
   if (!is_materialized)
   {
     int res= 0;
-    Select_Lex *save_select= session->lex->current_select;
-    session->lex->current_select= materialize_engine->select_lex;
+    Select_Lex *save_select= session->getLex()->current_select;
+    session->getLex()->current_select= materialize_engine->select_lex;
     if ((res= materialize_join->optimize()))
       goto err;
 
@@ -3228,7 +3225,7 @@ int subselect_hash_sj_engine::exec()
       tmp_param= NULL;
 
 err:
-    session->lex->current_select= save_select;
+    session->getLex()->current_select= save_select;
     if (res)
       return(res);
   }
@@ -3244,13 +3241,13 @@ err:
   Print the state of this engine into a string for debugging and views.
 */
 
-void subselect_hash_sj_engine::print(String *str, enum_query_type query_type)
+void subselect_hash_sj_engine::print(String *str)
 {
   str->append(STRING_WITH_LEN(" <materialize> ("));
-  materialize_engine->print(str, query_type);
+  materialize_engine->print(str);
   str->append(STRING_WITH_LEN(" ), "));
   if (tab)
-    subselect_uniquesubquery_engine::print(str, query_type);
+    subselect_uniquesubquery_engine::print(str);
   else
     str->append(STRING_WITH_LEN(
            "<the access method for lookups is not yet created>"

@@ -30,7 +30,9 @@ libaio development files installed (typically a package called libaio-dev or
 libaio-devel).  For more information on the advantages of this please see
 http://blogs.innodb.com/wp/2010/04/innodb-performance-aio-linux/
 
-To confirm that Linux native AIO is enabled execute this command::
+To confirm that Linux native AIO is enabled execute this command:
+
+.. code-block:: mysql
 
   show global variables like 'innodb_use_native_aio';
 
@@ -43,3 +45,19 @@ length for the four byte UTF-8 that Drizzle supports) and the table definitions
 (FRM for MySQL, .dfe for Drizzle) are completely different. This means that you
 cannot directly share InnoDB tablespaces between MySQL and Drizzle. Use the
 drizzledump tool to migrate data from MySQL to Drizzle.
+
+InnoDB Transaction Log
+----------------------
+
+The Innobase plugin provides a mechanism to store replication events in an
+InnoDB table. When enabled, this transaction log can be accessed through
+the SYS_REPLICATION_LOG and INNODB_REPLICATION_LOG tables in the DATA_DICTIONARY
+schema.
+
+To enable this transaction log, you must start the server with:
+
+.. program:: drizzled
+
+.. option::  --innodb.replication-log
+
+It is not enabled by default.

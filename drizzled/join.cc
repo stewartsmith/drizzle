@@ -61,8 +61,8 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/select_result.h>
-
 #include <drizzled/debug.h>
+#include <drizzled/item/subselect.h>
 
 #include <algorithm>
 
@@ -310,7 +310,7 @@ void Join::reset(Session *session_arg,
 
 bool Join::is_top_level_join() const
 {
-  return (unit == &session->lex->unit && (unit->fake_select_lex == 0 ||
+  return (unit == &session->getLex()->unit && (unit->fake_select_lex == 0 ||
                                           select_lex == unit->fake_select_lex));
 }
 
@@ -351,7 +351,7 @@ int Join::prepare(Item ***rref_pointer_array,
   join_list= &select_lex->top_join_list;
   union_part= unit_arg->is_union();
 
-  session->lex->current_select->is_item_list_lookup= 1;
+  session->getLex()->current_select->is_item_list_lookup= 1;
   /*
     If we have already executed SELECT, then it have not sense to prevent
     its table from update (see unique_table())
@@ -392,9 +392,9 @@ int Join::prepare(Item ***rref_pointer_array,
 
   if (having)
   {
-    nesting_map save_allow_sum_func= session->lex->allow_sum_func;
+    nesting_map save_allow_sum_func= session->getLex()->allow_sum_func;
     session->setWhere("having clause");
-    session->lex->allow_sum_func|= 1 << select_lex_arg->nest_level;
+    session->getLex()->allow_sum_func|= 1 << select_lex_arg->nest_level;
     select_lex->having_fix_field= 1;
     bool having_fix_rc= (!having->fixed &&
        (having->fix_fields(session, &having) ||
@@ -402,7 +402,7 @@ int Join::prepare(Item ***rref_pointer_array,
     select_lex->having_fix_field= 0;
     if (having_fix_rc || session->is_error())
       return(-1);
-    session->lex->allow_sum_func= save_allow_sum_func;
+    session->getLex()->allow_sum_func= save_allow_sum_func;
   }
 
   {
@@ -452,7 +452,7 @@ int Join::prepare(Item ***rref_pointer_array,
             in_subs  &&                                                   // 1
             !select_lex->master_unit()->first_select()->next_select() &&  // 2
             select_lex->master_unit()->first_select()->leaf_tables &&     // 3
-            session->lex->sql_command == SQLCOM_SELECT)                       // *
+            session->getLex()->sql_command == SQLCOM_SELECT)                       // *
         {
           if (in_subs->is_top_level_item() &&                             // 4
               !in_subs->is_correlated &&                                  // 5
@@ -496,7 +496,7 @@ int Join::prepare(Item ***rref_pointer_array,
     } while (item_sum != end);
   }
 
-  if (select_lex->inner_refs_list.elements &&
+  if (select_lex->inner_refs_list.size() &&
       fix_inner_refs(session, all_fields, select_lex, ref_pointer_array))
     return(-1);
 
@@ -535,7 +535,7 @@ int Join::prepare(Item ***rref_pointer_array,
 
   /* Init join struct */
   count_field_types(select_lex, &tmp_table_param, all_fields, 0);
-  ref_pointer_array_size= all_fields.elements*sizeof(Item*);
+  ref_pointer_array_size= all_fields.size() * sizeof(Item*);
   this->group= group_list != 0;
   unit= unit_arg;
 
@@ -625,8 +625,8 @@ int Join::optimize()
     select_limit= HA_POS_ERROR;
   do_send_rows = (unit->select_limit_cnt) ? 1 : 0;
   // Ignore errors of execution if option IGNORE present
-  if (session->lex->ignore)
-    session->lex->current_select->no_error= 1;
+  if (session->getLex()->ignore)
+    session->getLex()->current_select->no_error= 1;
 
 #ifdef HAVE_REF_TO_FIELDS     // Not done yet
   /* Add HAVING to WHERE if possible */
@@ -726,7 +726,7 @@ int Join::optimize()
         conjunctions.
         Preserve conditions for EXPLAIN.
       */
-      if (conds && !(session->lex->describe & DESCRIBE_EXTENDED))
+      if (conds && !(session->getLex()->describe & DESCRIBE_EXTENDED))
       {
         COND *table_independent_conds= make_cond_for_table(conds, PSEUDO_TABLE_BITS, 0, 0);
         conds= table_independent_conds;
@@ -761,7 +761,7 @@ int Join::optimize()
       !(select_options & SELECT_DESCRIBE) &&
       (!conds ||
        !(conds->used_tables() & RAND_TABLE_BIT) ||
-       select_lex->master_unit() == &session->lex->unit)) // upper level SELECT
+       select_lex->master_unit() == &session->getLex()->unit)) // upper level SELECT
   {
     zero_result_cause= "no matching row in const table";
     goto setup_subq_exit;
@@ -821,7 +821,7 @@ int Join::optimize()
 
   if (conds &&!outer_join && const_table_map != found_const_table_map &&
       (select_options & SELECT_DESCRIBE) &&
-      select_lex->master_unit() == &session->lex->unit) // upper level SELECT
+      select_lex->master_unit() == &session->getLex()->unit) // upper level SELECT
   {
     conds=new Item_int((int64_t) 0,1);  // Always false
   }
@@ -1163,9 +1163,8 @@ int Join::optimize()
 
     init_items_ref_array();
 
-    tmp_table_param.hidden_field_count= (all_fields.elements -
-           fields_list.elements);
-    Order *tmp_group= (((not simple_group) or not (getDebug().test(debug::NO_KEY_GROUP))) ? group_list : (Order*) 0);
+    tmp_table_param.hidden_field_count= all_fields.size() - fields_list.size();
+    Order *tmp_group= (((not simple_group) or not (getDebug().test(debug::NO_KEY_GROUP))) ? group_list : NULL);
 
     /*
       Pushing LIMIT to the temporary table creation is not applicable
@@ -1175,7 +1174,7 @@ int Join::optimize()
     */
     ha_rows tmp_rows_limit= ((order == 0 || skip_sort_order) &&
                              !tmp_group &&
-                             !session->lex->current_select->with_sum_func) ?
+                             !session->getLex()->current_select->with_sum_func) ?
                             select_limit : HA_POS_ERROR;
 
     if (!(exec_tmp_table1=
@@ -1528,19 +1527,19 @@ void Join::exec()
     curr_join->all_fields= *curr_all_fields;
     if (!items1)
     {
-      items1= items0 + all_fields.elements;
+      items1= items0 + all_fields.size();
       if (sort_and_group || curr_tmp_table->group)
       {
         if (change_to_use_tmp_fields(session, items1,
                   tmp_fields_list1, tmp_all_fields1,
-                  fields_list.elements, all_fields))
+                  fields_list.size(), all_fields))
           return;
       }
       else
       {
         if (change_refs_to_tmp_fields(session, items1,
                     tmp_fields_list1, tmp_all_fields1,
-                    fields_list.elements, all_fields))
+                    fields_list.size(), all_fields))
           return;
       }
       curr_join->tmp_all_fields1= tmp_all_fields1;
@@ -1590,8 +1589,8 @@ void Join::exec()
       count_field_types(select_lex, &curr_join->tmp_table_param,
       curr_join->tmp_all_fields1,
       curr_join->select_distinct && !curr_join->group_list);
-      curr_join->tmp_table_param.hidden_field_count= curr_join->tmp_all_fields1.elements
-                                                   - curr_join->tmp_fields_list1.elements;
+      curr_join->tmp_table_param.hidden_field_count= curr_join->tmp_all_fields1.size()
+                                                   - curr_join->tmp_fields_list1.size();
 
       if (exec_tmp_table2)
       {
@@ -1677,10 +1676,10 @@ void Join::exec()
       // No sum funcs anymore
       if (!items2)
       {
-        items2= items1 + all_fields.elements;
+        items2= items1 + all_fields.size();
         if (change_to_use_tmp_fields(session, items2,
                   tmp_fields_list2, tmp_all_fields2,
-                  fields_list.elements, tmp_all_fields1))
+                  fields_list.size(), tmp_all_fields1))
           return;
         curr_join->tmp_fields_list2= tmp_fields_list2;
         curr_join->tmp_all_fields2= tmp_all_fields2;
@@ -1725,10 +1724,10 @@ void Join::exec()
     {
       if (! items0)
         init_items_ref_array();
-      items3= ref_pointer_array + (all_fields.elements*4);
+      items3= ref_pointer_array + (all_fields.size() * 4);
       setup_copy_fields(session, &curr_join->tmp_table_param,
       items3, tmp_fields_list3, tmp_all_fields3,
-      curr_fields_list->elements, *curr_all_fields);
+      curr_fields_list->size(), *curr_all_fields);
       tmp_table_param.save_copy_funcs= curr_join->tmp_table_param.copy_funcs;
       tmp_table_param.save_copy_field= curr_join->tmp_table_param.copy_field;
       tmp_table_param.save_copy_field_end= curr_join->tmp_table_param.copy_field_end;
@@ -1871,7 +1870,7 @@ void Join::exec()
     for a derived table which is always materialized.
     Otherwise we would not be able to print the query  correctly.
   */
-  if (items0 && (session->lex->describe & DESCRIBE_EXTENDED) && select_lex->linkage == DERIVED_TABLE_TYPE)
+  if (items0 && (session->getLex()->describe & DESCRIBE_EXTENDED) && select_lex->linkage == DERIVED_TABLE_TYPE)
     set_items_ref_array(items0);
 
   return;
@@ -2003,7 +2002,7 @@ void Join::join_free()
     Optimization: if not EXPLAIN and we are done with the Join,
     free all tables.
   */
-  bool full= (select_lex->uncacheable.none() && ! session->lex->describe);
+  bool full= (select_lex->uncacheable.none() && ! session->getLex()->describe);
   bool can_unlock= full;
 
   cleanup(full);
@@ -2038,8 +2037,8 @@ void Join::join_free()
   if (can_unlock && lock && session->lock &&
       !(select_options & SELECT_NO_UNLOCK) &&
       !select_lex->subquery_in_having &&
-      (select_lex == (session->lex->unit.fake_select_lex ?
-                      session->lex->unit.fake_select_lex : &session->lex->select_lex)))
+      (select_lex == (session->getLex()->unit.fake_select_lex ?
+                      session->getLex()->unit.fake_select_lex : &session->getLex()->select_lex)))
   {
     /*
       TODO: unlock tables even if the join isn't top level select in the
@@ -2175,7 +2174,7 @@ bool Join::alloc_func_list()
   */
   if (select_distinct)
   {
-    group_parts+= fields_list.elements;
+    group_parts+= fields_list.size();
     /*
       If the order_st clause is specified then it's possible that
       it also will be optimized, so reserve space for it too
@@ -2213,7 +2212,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
                               bool before_group_by, 
                               bool recompute)
 {
-  List<Item>::iterator it(field_list);
+  List<Item>::iterator it(field_list.begin());
   Item_sum **func;
   Item *item;
 
@@ -2283,18 +2282,18 @@ bool Join::rollup_init()
     List<Item> *rollup_fields= &rollup.getFields()[i];
     rollup_fields->clear();
     rollup.getRefPointerArrays()[i]= ref_array;
-    ref_array+= all_fields.elements;
+    ref_array+= all_fields.size();
   }
 
   for (uint32_t i= 0 ; i < send_group_parts; i++)
   {
-    for (uint32_t j= 0 ; j < fields_list.elements ; j++)
+    for (uint32_t j= 0 ; j < fields_list.size() ; j++)
     {
       rollup.getFields()[i].push_back(rollup.getNullItems()[i]);
     }
   }
 
-  List<Item>::iterator it(all_fields);
+  List<Item>::iterator it(all_fields.begin());
   Item *item;
   while ((item= it++))
   {
@@ -2326,11 +2325,11 @@ bool Join::rollup_init()
           if (!new_item)
             return 1;
           new_item->fix_fields(session, (Item **) 0);
-          session->change_item_tree(it.ref(), new_item);
+          *it.ref()= new_item;
           for (Order *tmp= group_tmp; tmp; tmp= tmp->next)
           {
             if (*tmp->item == item)
-              session->change_item_tree(tmp->item, new_item);
+              *tmp->item= new_item;
           }
         }
       }
@@ -2369,8 +2368,8 @@ bool Join::rollup_init()
 */
 bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, Item_sum ***func)
 {
-  List<Item>::iterator it(fields_arg);
-  Item *first_field= sel_fields.head();
+  List<Item>::iterator it(fields_arg.begin());
+  Item *first_field= &sel_fields.front();
   uint32_t level;
 
   /*
@@ -2400,12 +2399,12 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     uint32_t pos= send_group_parts - level -1;
     bool real_fields= 0;
     Item *item;
-    List<Item>::iterator new_it(rollup.getFields()[pos]);
+    List<Item>::iterator new_it(rollup.getFields()[pos].begin());
     Item **ref_array_start= rollup.getRefPointerArrays()[pos];
     Order *start_group;
 
     /* Point to first hidden field */
-    Item **ref_array= ref_array_start + fields_arg.elements-1;
+    Item **ref_array= ref_array_start + fields_arg.size()-1;
 
     /* Remember where the sum functions ends for the previous level */
     sum_funcs_end[pos+1]= *func;
@@ -2414,7 +2413,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     for (i= 0, start_group= group_list ;i++ < pos ;start_group= start_group->next)
     {}
 
-    it= fields_arg;
+    it= fields_arg.begin();
     while ((item= it++))
     {
       if (item == first_field)
@@ -2549,7 +2548,7 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
     {
       int write_error;
       Item *item;
-      List<Item>::iterator it(rollup.getFields()[i]);
+      List<Item>::iterator it(rollup.getFields()[i].begin());
       while ((item= it++))
       {
         if (item->type() == Item::NULL_ITEM && item->is_result_field())
@@ -3169,7 +3168,7 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
 */
 static bool make_group_fields(Join *main_join, Join *curr_join)
 {
-  if (main_join->group_fields_cache.elements)
+  if (main_join->group_fields_cache.size())
   {
     curr_join->group_fields= main_join->group_fields_cache;
     curr_join->sort_and_group= 1;
@@ -3527,7 +3526,7 @@ static bool choose_plan(Join *join, table_map join_tables)
     i.e. they have subqueries, unions or call stored procedures.
     TODO: calculate a correct cost for a query with subqueries and UNIONs.
   */
-  if (join->session->lex->is_single_level_stmt())
+  if (join->session->getLex()->is_single_level_stmt())
     join->session->status_var.last_query_cost= join->best_read;
   return(false);
 }
@@ -4697,7 +4696,7 @@ static void make_outerjoin_info(Join *join)
       }
       if (!tab->first_inner)
         tab->first_inner= nested_join->first_nested;
-      if (++nested_join->counter_ < nested_join->join_list.elements)
+      if (++nested_join->counter_ < nested_join->join_list.size())
         break;
       /* Table tab is the last inner table for nested join. */
       nested_join->first_nested->last_inner= tab;
@@ -4721,8 +4720,8 @@ static bool make_join_select(Join *join,
       if (join->tables > 1)
         cond->update_used_tables();		// Tablenr may have changed
       if (join->const_tables == join->tables &&
-          session->lex->current_select->master_unit() ==
-          &session->lex->unit)		// not upper level SELECT
+          session->getLex()->current_select->master_unit() ==
+          &session->getLex()->unit)		// not upper level SELECT
         join->const_table_map|=RAND_TABLE_BIT;
       {						// Check const tables
         COND *const_cond=
@@ -4800,7 +4799,7 @@ static bool make_join_select(Join *join,
           join->full_join= 1;
       }
 
-      if (join->full_join and not session->lex->current_select->is_cross and not cond)
+      if (join->full_join and not session->getLex()->current_select->is_cross and not cond)
       {
         my_error(ER_CARTESIAN_JOIN_ATTEMPTED, MYF(0));
         return 1;
@@ -5292,7 +5291,7 @@ static int return_zero_rows(Join *join,
   {
     if (send_row)
     {
-      List<Item>::iterator it(fields);
+      List<Item>::iterator it(fields.begin());
       Item *item;
       while ((item= it++))
         item->no_rows_in_result();
@@ -5430,7 +5429,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
   TableList *table;
   NestedJoin *nested_join;
   TableList *prev_table= 0;
-  List<TableList>::iterator li(*join_list);
+  List<TableList>::iterator li(join_list->begin());
 
   /*
     Try to simplify join operations from join_list.
@@ -5573,7 +5572,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     if (nested_join && !table->on_expr)
     {
       TableList *tbl;
-      List<TableList>::iterator it(nested_join->join_list);
+      List<TableList>::iterator it(nested_join->join_list.begin());
       while ((tbl= it++))
       {
         tbl->setEmbedding(table->getEmbedding());
@@ -5596,7 +5595,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
 
   /* Calculate how many saved fields there is in list */
   field_count=0;
-  List<Item>::iterator it(fields);
+  List<Item>::iterator it(fields.begin());
   Item *item;
   while ((item=it++))
   {
@@ -5650,18 +5649,18 @@ static int setup_without_group(Session *session,
                                bool *hidden_group_fields)
 {
   int res;
-  nesting_map save_allow_sum_func=session->lex->allow_sum_func ;
+  nesting_map save_allow_sum_func=session->getLex()->allow_sum_func ;
 
-  session->lex->allow_sum_func&= ~(1 << session->lex->current_select->nest_level);
+  session->getLex()->allow_sum_func&= ~(1 << session->getLex()->current_select->nest_level);
   res= session->setup_conds(tables, conds);
 
-  session->lex->allow_sum_func|= 1 << session->lex->current_select->nest_level;
+  session->getLex()->allow_sum_func|= 1 << session->getLex()->current_select->nest_level;
   res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields,
                           order);
-  session->lex->allow_sum_func&= ~(1 << session->lex->current_select->nest_level);
+  session->getLex()->allow_sum_func&= ~(1 << session->getLex()->current_select->nest_level);
   res= res || setup_group(session, ref_pointer_array, tables, fields, all_fields,
                           group, hidden_group_fields);
-  session->lex->allow_sum_func= save_allow_sum_func;
+  session->getLex()->allow_sum_func= save_allow_sum_func;
   return(res);
 }
 
@@ -6005,13 +6004,13 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     vector<optimizer::SargableParam>::iterator iter= sargables.begin();
     while (iter != sargables.end())
     {
-      Field *field= (*iter).getField();
+      Field *field= iter->getField();
       JoinTable *join_tab= field->getTable()->reginfo.join_tab;
       key_map possible_keys= field->key_start;
       possible_keys&= field->getTable()->keys_in_use_for_query;
       bool is_const= true;
-      for (uint32_t j= 0; j < (*iter).getNumValues(); j++)
-        is_const&= (*iter).isConstItem(j);
+      for (uint32_t j= 0; j < iter->getNumValues(); j++)
+        is_const&= iter->isConstItem(j);
       if (is_const)
         join_tab[0].const_keys|= possible_keys;
       ++iter;
@@ -6138,7 +6137,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 */
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused)
 {
-  List<TableList>::iterator li(*join_list);
+  List<TableList>::iterator li(join_list->begin());
   TableList *table;
   while ((table= li++))
   {
@@ -6156,7 +6155,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
             with anything)
         2. we could run out of bits in the nested join bitset otherwise.
       */
-      if (nested_join->join_list.elements != 1)
+      if (nested_join->join_list.size() != 1)
       {
         /* Don't assign bits to sj-nests */
         if (table->on_expr)
@@ -6209,7 +6208,7 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 */
 static void reset_nj_counters(List<TableList> *join_list)
 {
-  List<TableList>::iterator li(*join_list);
+  List<TableList>::iterator li(join_list->begin());
   TableList *table;
   while ((table= li++))
   {

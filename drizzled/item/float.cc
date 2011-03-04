@@ -121,7 +121,7 @@ int Item_float::save_in_field(Field *field, bool)
 }
 
 
-void Item_float::print(String *str, enum_query_type)
+void Item_float::print(String *str)
 {
   if (presentation)
   {

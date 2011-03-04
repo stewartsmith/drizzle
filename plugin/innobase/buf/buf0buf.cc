@@ -52,6 +52,8 @@ Created 11/5/1995 Heikki Tuuri
 #include "log0recv.h"
 #include "page0zip.h"
 
+#include <drizzled/errmsg_print.h>
+
 /*
 		IMPLEMENTATION OF THE BUFFER POOL
 		=================================
@@ -527,21 +529,15 @@ buf_page_is_corrupted(
 		     < mach_read_from_8(read_buf + FIL_PAGE_LSN))) {
 			ut_print_timestamp(stderr);
 
-			fprintf(stderr,
-				"  InnoDB: Error: page %lu log sequence number"
-				" %"PRIu64"\n"
-				"InnoDB: is in the future! Current system "
-				"log sequence number %"PRIu64".\n"
-				"InnoDB: Your database may be corrupt or "
-				"you may have copied the InnoDB\n"
-				"InnoDB: tablespace but not the InnoDB "
-				"log files. See\n"
-				"InnoDB: " REFMAN "forcing-recovery.html\n"
-				"InnoDB: for more information.\n",
-				(ulong) mach_read_from_4(read_buf
-							 + FIL_PAGE_OFFSET),
-				mach_read_from_8(read_buf + FIL_PAGE_LSN),
-				current_lsn);
+                        drizzled::errmsg_printf(drizzled::error::INFO,
+                                                "InnoDB: Error: page %lu log sequence number %"PRIu64". "
+                                                "InnoDB: is in the future! Current system log sequence number %"PRIu64". "
+                                                "Your database may be corrupt or you may have copied the InnoDB tablespace but not the InnoDB log files. See "
+                                                " " REFMAN "forcing-recovery.html for more information. ",
+                                                (ulong) mach_read_from_4(read_buf
+                                                                         + FIL_PAGE_OFFSET),
+                                                mach_read_from_8(read_buf + FIL_PAGE_LSN),
+                                                current_lsn);
 		}
 	}
 #endif

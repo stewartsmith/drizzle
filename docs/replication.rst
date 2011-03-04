@@ -1,5 +1,6 @@
+*******************
 Drizzle Replication
-===================
+*******************
 
 Replication events are recorded using messages in the `Google Protocol Buffer
 <http://code.google.com/p/protobuf/>`_ (GPB) format. GPB messages can contain
@@ -7,7 +8,7 @@ sub-messages. There is a single main "envelope" message, Transaction, that
 is passed to plugins that subscribe to the replication stream.
 
 Configuration Options
----------------------
+#####################
 
 **transaction_message_threshold**
 
@@ -32,7 +33,7 @@ Configuration Options
     on a slave to perform replication as this will lead to incorrect results.
 
 Message Definitions
--------------------
+###################
 
 The GPB messages are defined in .proto files in the drizzled/message
 directory of the Drizzle source code. The primary definition file is
@@ -97,7 +98,7 @@ with each Statement message looking like so::
   ------------------------------------------------------------------
 
 The Transaction Message
-^^^^^^^^^^^^^^^^^^^^^^^
+#######################
 
 The main "envelope" message which represents an atomic transaction
 which changed the state of a server is the Transaction message class.
@@ -106,16 +107,16 @@ The Transaction message contains two pieces:
 
 #. A TransactionContext message containing information about the
    transaction as a whole, such as the ID of the executing server,
-   the start and end timestamp of the transaction, and a globally-
-   unique identifier for the transaction.
+   the start and end timestamp of the transaction, segmenting
+   metadata and a unique identifier for the transaction.
 #. A vector of Statement messages representing the distinct SQL
    statements which modified the state of the server.  The Statement
    message is, itself, a generic envelope message containing a
    sub-message which describes the specific data modification which
-   occurred on the server (such as, for instance, an INSERT statement.
+   occurred on the server (such as, for instance, an INSERT statement).
 
 The Statement Message
-^^^^^^^^^^^^^^^^^^^^^
+#####################
 
 The generic "envelope" message containing information common to each
 SQL statement executed against a server (such as a start and end timestamp
@@ -126,14 +127,14 @@ Each Statement message contains a type member which indicates how readers
 of the Statement should construct the inner Statement subclass representing
 a data change.
 
-Statements are recorded seperatley as sometimes individual statements
+Statements are recorded separately as sometimes individual statements
 have to be rolled back.
 
 
 .. _bulk-operations:
 
 How Bulk Operations Work
-------------------------
+########################
 
 Certain operations which change large volumes of data on a server
 present a specific set of problems for a transaction coordinator or
@@ -152,6 +153,28 @@ transactional unit:
 In order to prevent the problems inherent in (1) and (2) above, Drizzle's
 replication system uses a mechanism which provides bulk change
 operations.
+
+A single transaction in the database can possibly be represented with
+multiple protobuf Transaction messages if the message grows too large.
+This can happen if you have a bulk transaction, or a single statement
+affecting a very large number of rows, or just a large transaction with
+many statements/changes.
+
+For the first two examples, it is likely that the Statement sub-message
+itself will get segmented, causing another Transaction message to be
+created to hold the rest of the Statement's row changes. In these cases,
+it is enough to look at the segment information stored in the Statement
+message (see example below).
+
+For the last example, the Statement sub-messages may or may not be
+segmented, but we could still need to split the individual Statements up into
+multiple Transaction messages to keep the Transaction message size from
+growing too large. In this case, the segment information in the Statement
+submessages is not helpful if the Statement isn't segmented. We need this
+information in the Transaction message itself.
+
+Segmenting a Single SQL Statement
+*********************************
 
 When a regular SQL statement modifies or inserts more rows than a
 certain threshold, Drizzle's replication services component will begin
@@ -200,27 +223,40 @@ will do the following:
 #. Construct an UpdateHeader message with information about the tables
    and fields involved in the UPDATE statement.  Push this UpdateHeader
    message onto the Transaction message's statement vector.
-#. Construct an UpdateData message.  Set the segment_id member to 1.
-   Set the end_segment member to true.
+#. Construct an UpdateData message.  Set the *segment_id* member to 1.
+   Set the *end_segment* member to true.
 #. For every record updated in a storage engine, the ReplicationServices
    component builds a new UpdateRecord message and appends this message
    to the aforementioned UpdateData message's record vector.
 #. After a certain threshold of records is reached, the
    ReplicationServices component sets the current UpdateData message's
-   end_segment member to false, and proceeds to send the Transaction
+   *end_segment* member to false, and proceeds to send the Transaction
    message to replicators.
 #. The ReplicationServices component then constructs a new Transaction
    message and constructs a transaction context with the same
    transaction ID and server information.
-#. A new UpdateData message is created.  The message's segment_id is
+#. A new UpdateData message is created.  The message's *segment_id* is
    set to N+1 and as new records are updated, new UpdateRecord messages
    are appended to the UpdateData message's record vector.
 #. While records are being updated, we repeat steps 5 through 7, with
-   only the final UpdateData message having its end_segment member set
+   only the final UpdateData message having its *end_segment* member set
    to true.
 
+Segmenting a Transaction
+************************
+
+The Transaction protobuf message also contains *segment_id* member and a
+*end_segment* member. These values are also set appropriately when a
+Statement sub-message is segmented, as described above.
+
+These values are also set when a Transaction must be segmented along
+individual Statement boundaries (i.e., the Statement message itself
+is **not** segmented). In either case, it is enough to check the
+*end_segment* and *segment_id* values of the Transaction message
+to determine if this is a multi-message transaction.
+
 Handling ROLLBACKs
-------------------
+##################
 
 Both transactions and individual statements may be rolled back.
 
@@ -235,4 +271,12 @@ load).
 * For a transaction which is made up of multiple messages, and at least
   one message has already been sent through the replication stream, then
   the Transaction message will contain a Statement message with type =
-  ROLLBACK.
+  ROLLBACK. This signifies to rollback the entire transaction.
+
+A special Statement message type, ROLLBACK_STATEMENT, is used when
+we have a segmented Statement message (see above) and we need to tell the
+receiver to undo any changes made for this single statement, but not
+for the entire transaction. If the receiver cannot handle rolling back
+a single statement, then a message buffering strategy should be employed 
+to guarantee that a statement was indeed applied successfully before
+executing on the receiver.

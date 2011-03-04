@@ -27,6 +27,7 @@
 #include <drizzled/optimizer/key_field.h>
 #include <drizzled/optimizer/key_use.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/item/subselect.h>
 
 #include <vector>
 
@@ -64,7 +65,7 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
                                    0,
                                    key_field->rejectNullValues(),
                                    key_field->getConditionalGuard());
-          insert_dynamic(keyuse_array, (unsigned char*) &keyuse);
+          keyuse_array->push_back(&keyuse);
         }
       }
     }
@@ -77,8 +78,8 @@ void optimizer::add_key_fields_for_nj(Join *join,
                                       uint32_t *and_level,
                                       vector<optimizer::SargableParam> &sargables)
 {
-  List<TableList>::iterator li(nested_join_table->getNestedJoin()->join_list);
-  List<TableList>::iterator li2(nested_join_table->getNestedJoin()->join_list);
+  List<TableList>::iterator li(nested_join_table->getNestedJoin()->join_list.begin());
+  List<TableList>::iterator li2(nested_join_table->getNestedJoin()->join_list.begin());
   bool have_another= false;
   table_map tables= 0;
   TableList *table;
@@ -94,7 +95,7 @@ void optimizer::add_key_fields_for_nj(Join *join,
         /* It's a semi-join nest. Walk into it as if it wasn't a nest */
         have_another= true;
         li2= li;
-        li= List<TableList>::iterator(table->getNestedJoin()->join_list);
+        li= List<TableList>::iterator(table->getNestedJoin()->join_list.begin());
       }
       else
         add_key_fields_for_nj(join, table, end, and_level, sargables);
@@ -402,7 +403,7 @@ void optimizer::add_key_equal_fields(optimizer::KeyField **key_fields,
       Add to the set of possible key values every substitution of
       the field for an equal field included into item_equal
     */
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     Item_field *item;
     while ((item= it++))
     {
@@ -425,7 +426,7 @@ void optimizer::add_key_fields(Join *join,
 {
   if (cond->type() == Item_func::COND_ITEM)
   {
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     optimizer::KeyField *org_key_fields= *key_fields;
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
@@ -590,7 +591,7 @@ void optimizer::add_key_fields(Join *join,
   case Item_func::OPTIMIZE_EQUAL:
     Item_equal *item_equal= (Item_equal *) cond;
     Item *const_item= item_equal->get_const();
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     Item_field *item;
     if (const_item)
     {
@@ -613,7 +614,7 @@ void optimizer::add_key_fields(Join *join,
         field1=field2 as a condition allowing an index access of the table
         with field1 by the keys value of field2.
       */
-      Item_equal_iterator fi(*item_equal);
+      Item_equal_iterator fi(item_equal->begin());
       while ((item= fi++))
       {
         Field *field= item->field;
@@ -626,7 +627,7 @@ void optimizer::add_key_fields(Join *join,
                           sargables);
           }
         }
-        it= *item_equal;
+        it= item_equal->begin();
       }
     }
     break;

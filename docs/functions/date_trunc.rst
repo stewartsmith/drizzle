@@ -1,2 +1,2 @@
-date_trunc
-==========
+DATE TRUNC
+===========

@@ -71,7 +71,6 @@
 
 using namespace drizzled;
 using namespace std;
-namespace fs=boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
@@ -103,11 +102,11 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       return;
 
     /*
-      session->lex->current_select == 0 if lex structure is not inited
+      session->getLex()->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (! (session->lex->current_select &&
-           session->lex->current_select->no_error && !session->is_fatal_error))
+    if (! (session->getLex()->current_select &&
+           session->getLex()->current_select->no_error && !session->is_fatal_error))
     {
       if (! session->main_da.is_error())            // Return only first message
       {
@@ -301,9 +300,9 @@ int main(int argc, char **argv)
       unireg_abort(1);
     }
 
-    fs::path &full_data_home= getFullDataHome();
-    full_data_home= fs::system_complete(getDataHome());
-    std::cerr << "home " << full_data_home << std::endl;
+    boost::filesystem::path &full_data_home= getFullDataHome();
+    full_data_home= boost::filesystem::system_complete(getDataHome());
+    errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
   }
 
 

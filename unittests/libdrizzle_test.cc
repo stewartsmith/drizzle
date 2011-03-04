@@ -39,6 +39,19 @@ BOOST_AUTO_TEST_CASE(drizzleEscapeString)
   BOOST_REQUIRE_EQUAL("hello \\\"world\\\"\\n", out);
 }
 
+BOOST_AUTO_TEST_CASE(drizzleEscapeStringBinary)
+{
+  const char orig[6]= {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+  char out[255];
+  size_t out_len;
+
+  out_len= drizzle_escape_string(out, orig, 6);
+
+  BOOST_REQUIRE_EQUAL(7, out_len);
+  BOOST_REQUIRE_EQUAL("\\0\1\2\3\4\5", out);
+}
+
+
 BOOST_AUTO_TEST_CASE(drizzleHexString)
 {
   const unsigned char orig[5]= {0x34, 0x26, 0x80, 0x99, 0xFF};

@@ -26,7 +26,6 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include <drizzled/strfunc.h>
 #include <drizzled/lock.h>
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
@@ -88,27 +87,6 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
   identifier::Schema identifier(db);
   if (create_info->default_table_charset == NULL)
     create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
-}
-
-/*
-  SYNOPSIS
-    write_bin_log()
-    session                           Thread object
-    query                         Query to log
-    query_length                  Length of query
-
-  RETURN VALUES
-    NONE
-
-  DESCRIPTION
-    Write the binlog if open, routine used in multiple places in this
-    cursor
-*/
-
-void write_bin_log(Session *session, const std::string &query)
-{
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.rawStatement(*session, query);
 }
 
 /*
@@ -400,7 +378,7 @@ static bool check_duplicates_in_interval(const char *set_or_name,
     tmp.type_names++;
     tmp.type_lengths++;
     tmp.count--;
-    if (interval_set.find(typelib_set_member(*cur_value, *cur_length, cs)) != interval_set.end())
+    if (interval_set.count(typelib_set_member(*cur_value, *cur_length, cs)))
     {
       my_error(ER_DUPLICATED_VALUE_IN_TYPE, MYF(0),
                name,*cur_value,set_or_name);
@@ -557,13 +535,13 @@ static int prepare_create_table(Session *session,
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		dup_no;
   int		select_field_pos,auto_increment=0;
-  List<CreateField>::iterator it(alter_info->create_list);
-  List<CreateField>::iterator it2(alter_info->create_list);
+  List<CreateField>::iterator it(alter_info->create_list.begin());
+  List<CreateField>::iterator it2(alter_info->create_list.begin());
   uint32_t total_uneven_bit_length= 0;
 
   plugin::StorageEngine *engine= plugin::StorageEngine::findByName(create_proto.engine().name());
 
-  select_field_pos= alter_info->create_list.elements - select_field_count;
+  select_field_pos= alter_info->create_list.size() - select_field_count;
   null_fields=blob_columns=0;
   max_key_length= engine->max_key_length();
 
@@ -652,7 +630,7 @@ static int prepare_create_table(Session *session,
         interval= sql_field->interval= typelib(session->mem_root,
                                                sql_field->interval_list);
 
-        List<String>::iterator int_it(sql_field->interval_list);
+        List<String>::iterator int_it(sql_field->interval_list.begin());
         String conv, *tmp;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
@@ -829,8 +807,8 @@ static int prepare_create_table(Session *session,
 
   /* Create keys */
 
-  List<Key>::iterator key_iterator(alter_info->key_list);
-  List<Key>::iterator key_iterator2(alter_info->key_list);
+  List<Key>::iterator key_iterator(alter_info->key_list.begin());
+  List<Key>::iterator key_iterator2(alter_info->key_list.begin());
   uint32_t key_parts=0, fk_key_count=0;
   bool primary_key=0,unique_key=0;
   Key *key, *key2;
@@ -860,8 +838,8 @@ static int prepare_create_table(Session *session,
                                        fk_key->update_opt,
                                        fk_key->match_opt);
 
-      if (fk_key->ref_columns.elements &&
-	  fk_key->ref_columns.elements != fk_key->columns.elements)
+      if (fk_key->ref_columns.size() &&
+	  fk_key->ref_columns.size() != fk_key->columns.size())
       {
         my_error(ER_WRONG_FK_DEF, MYF(0),
                  (fk_key->name.str ? fk_key->name.str :
@@ -873,7 +851,7 @@ static int prepare_create_table(Session *session,
     }
     (*key_count)++;
     tmp= engine->max_key_parts();
-    if (key->columns.elements > tmp)
+    if (key->columns.size() > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
       return(true);
@@ -897,13 +875,13 @@ static int prepare_create_table(Session *session,
           /* @todo issue warning message */
           /* mark that the generated key should be ignored */
           if (!key2->generated ||
-              (key->generated && key->columns.elements <
-               key2->columns.elements))
+              (key->generated && key->columns.size() <
+               key2->columns.size()))
             key->name.str= ignore_key;
           else
           {
             key2->name.str= ignore_key;
-            key_parts-= key2->columns.elements;
+            key_parts-= key2->columns.size();
             (*key_count)--;
           }
           break;
@@ -911,7 +889,7 @@ static int prepare_create_table(Session *session,
       }
     }
     if (key->name.str != ignore_key)
-      key_parts+=key->columns.elements;
+      key_parts+=key->columns.size();
     else
       (*key_count)--;
     if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) &&
@@ -964,7 +942,7 @@ static int prepare_create_table(Session *session,
     if (key->generated)
       key_info->flags|= HA_GENERATED_KEY;
 
-    key_info->key_parts=(uint8_t) key->columns.elements;
+    key_info->key_parts=(uint8_t) key->columns.size();
     key_info->key_part=key_part_info;
     key_info->usable_key_parts= key_number;
     key_info->algorithm= key->key_create_info.algorithm;
@@ -992,8 +970,8 @@ static int prepare_create_table(Session *session,
 
     message::Table::Field *protofield= NULL;
 
-    List<Key_part_spec>::iterator cols(key->columns);
-    List<Key_part_spec>::iterator cols2(key->columns);
+    List<Key_part_spec>::iterator cols(key->columns.begin());
+    List<Key_part_spec>::iterator cols2(key->columns.begin());
     for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint32_t length;
@@ -1456,7 +1434,7 @@ bool create_table_no_lock(Session *session,
   bool		error= true;
 
   /* Check for duplicate fields and check type of table to create */
-  if (not alter_info->create_list.elements)
+  if (not alter_info->create_list.size())
   {
     my_message(ER_TABLE_MUST_HAVE_COLUMNS, ER(ER_TABLE_MUST_HAVE_COLUMNS),
                MYF(0));
@@ -1768,16 +1746,16 @@ static bool admin_table(Session* session, TableList* tables,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
-  Select_Lex *select= &session->lex->select_lex;
+  Select_Lex *select= &session->getLex()->select_lex;
   List<Item> field_list;
   Item *item;
-  LEX *lex= session->lex;
   int result_code= 0;
   TransactionServices &transaction_services= TransactionServices::singleton();
   const CHARSET_INFO * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
     return 1;
+
   field_list.push_back(item = new Item_empty_string("Table",
                                                     NAME_CHAR_LEN * 2,
                                                     cs));
@@ -1793,10 +1771,12 @@ static bool admin_table(Session* session, TableList* tables,
 
   for (table= tables; table; table= table->next_local)
   {
-    char table_name[NAME_LEN*2+2];
+    identifier::Table table_identifier(table->getSchemaName(), table->getTableName());
+    std::string table_name;
     bool fatal_error=0;
 
-    snprintf(table_name, sizeof(table_name), "%s.%s", table->getSchemaName(), table->getTableName());
+    table_identifier.getSQLPath(table_name);
+
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {
@@ -1811,9 +1791,9 @@ static bool admin_table(Session* session, TableList* tables,
         so it have to be prepared.
         @todo Investigate if we can put extra tables into argument instead of using lex->query_tables
       */
-      lex->query_tables= table;
-      lex->query_tables_last= &table->next_global;
-      lex->query_tables_own_last= 0;
+      session->getLex()->query_tables= table;
+      session->getLex()->query_tables_last= &table->next_global;
+      session->getLex()->query_tables_own_last= 0;
       session->no_warnings_for_error= 0;
 
       session->openTablesLock(table);
@@ -1832,7 +1812,7 @@ static bool admin_table(Session* session, TableList* tables,
     */
     if (!table->table)
     {
-      if (!session->warn_list.elements)
+      if (!session->warn_list.size())
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
       result_code= HA_ADMIN_CORRUPT;
@@ -1843,16 +1823,16 @@ static bool admin_table(Session* session, TableList* tables,
     {
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
-      session->getClient()->store(table_name);
+      session->getClient()->store(table_name.c_str());
       session->getClient()->store(operator_name);
       session->getClient()->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
-                       table_name);
+                       table_name.c_str());
       session->getClient()->store(buff, length);
       transaction_services.autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
-      lex->reset_query_tables_list(false);
+      session->getLex()->reset_query_tables_list(false);
       table->table=0;				// For query cache
       if (session->getClient()->flush())
 	goto err;
@@ -1878,14 +1858,14 @@ static bool admin_table(Session* session, TableList* tables,
 
 send_result:
 
-    lex->cleanup_after_one_table_open();
+    session->getLex()->cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List<DRIZZLE_ERROR>::iterator it(session->warn_list);
+      List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
-        session->getClient()->store(table_name);
+        session->getClient()->store(table_name.c_str());
         session->getClient()->store(operator_name);
         session->getClient()->store(warning_level_names[err->level].str,
                                warning_level_names[err->level].length);
@@ -1895,7 +1875,7 @@ send_result:
       }
       drizzle_reset_errors(session, true);
     }
-    session->getClient()->store(table_name);
+    session->getClient()->store(table_name.c_str());
     session->getClient()->store(operator_name);
 
     switch (result_code) {

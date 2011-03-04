@@ -28,6 +28,7 @@
 #include <drizzled/optimizer/sel_arg.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/util/functors.h>
+#include <drizzled/key.h>
 
 #include <vector>
 
@@ -150,13 +151,13 @@ int optimizer::QuickGroupMinMaxSelect::init()
 
     if (have_min)
     {
-      if (! (min_functions_it= new List<Item_sum>::iterator(*min_functions)))
+      if (! (min_functions_it= new List<Item_sum>::iterator(min_functions->begin())))
         return 1;
     }
 
     if (have_max)
     {
-      if (! (max_functions_it= new List<Item_sum>::iterator(*max_functions)))
+      if (! (max_functions_it= new List<Item_sum>::iterator(max_functions->begin())))
         return 1;
     }
   }

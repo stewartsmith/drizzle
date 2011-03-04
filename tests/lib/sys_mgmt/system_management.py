@@ -34,11 +34,11 @@
 import os
 import sys
 import copy
-from uuid import uuid4
 import shutil
 import getpass
 import commands
 
+from lib.uuid import uuid4
 from lib.sys_mgmt.port_management import portManager
 from lib.sys_mgmt.logging_management import loggingManager
 from lib.sys_mgmt.time_management import timeManager
@@ -69,6 +69,7 @@ class systemManager:
         self.cur_os = os.uname()[0]
         self.cur_user = getpass.getuser()
         self.workdir = os.path.abspath(variables['workdir'])
+        self.testdir = os.path.abspath(variables['testdir'])
         self.datadir = os.path.abspath(os.path.join(variables['testdir'],'dbqp_data'))
         self.top_srcdir = os.path.abspath(variables['topsrcdir'])
         self.top_builddir = os.path.abspath(variables['topbuilddir'])
@@ -76,6 +77,7 @@ class systemManager:
         self.valgrind = variables['valgrind']
         self.gdb = variables['gdb']
         self.manual_gdb = variables['manualgdb']
+        self.randgen_path = variables['randgenpath']
 
         # we use this to preface commands in order to run valgrind and such
         self.cmd_prefix = '' 
@@ -232,6 +234,7 @@ class systemManager:
                 self.logging.info("Using --start-dirty, not attempting to touch directories")
                 return
             else:
+                self.cleanup() # We crawl / try to kill any server pids we find
                 self.remove_dir(self.workdir)
         self.allocate_workdir()
     
@@ -550,6 +553,36 @@ class systemManager:
         if os.path.exists(debug_path):
             self.append_env_var("LD_LIBRARY_PATH", debug_path, suffix=1)
             self.append_env_var("DYLD_LIBRARY_PATH", debug_path, suffix=1)
+
+
+    def cleanup(self, exit=False):
+        """ We try to kill any servers whose pid files
+            we detect lurking about
+
+        """
+        
+        self.pid_hunt_and_kill(exit)
+
+    def pid_hunt_and_kill(self, exit):
+        """ Crawl our workdir and look for server.pid files
+            We read 'em and kill 'em if we find 'em
+
+        """
+
+        for root, dirs, files in os.walk(self.workdir):
+            #print root, dirs, files
+            for found_file in files:
+                if found_file.endswith('.pid'):
+                    file_path = os.path.join(root, found_file)
+                    pid_file = open(file_path,'r')
+                    pid = pid_file.readline().strip()
+                    pid_file.close()
+                    self.logging.info("Killing pid %s from %s" %( pid
+                                                                , file_path
+                                                                ))
+                    self.execute_cmd("kill -9 %s" %pid, must_pass=0)
+        if exit:
+            sys.exit(0)
 
    
     

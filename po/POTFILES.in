@@ -96,7 +96,6 @@ plugin/syslog/errmsg.cc
 plugin/syslog/function.cc
 plugin/syslog/logging.cc
 plugin/syslog/module.cc
-plugin/transaction_log/background_worker.cc
 plugin/transaction_log/hexdump_transaction_message.cc
 plugin/transaction_log/module.cc
 plugin/transaction_log/print_transaction_message.cc
@@ -105,3 +104,8 @@ plugin/transaction_log/transaction_log_reader.cc
 plugin/transaction_log/utilities/transaction_file_reader.cc
 plugin/transaction_log/utilities/transaction_reader.cc
 plugin/transaction_log/write_buffer.cc
+plugin/slave/module.cc
+plugin/slave/queue_producer.cc
+plugin/slave/replication_slave.cc
+plugin/slave/sql_executor.cc
+plugin/session_dictionary/sessions.cc

@@ -23,17 +23,17 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/rename_table.h>
-#include <drizzled/sql_table.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/transaction_services.h>
 
 namespace drizzled
 {
 
 bool statement::RenameTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   assert(first_table == all_tables && first_table != 0);
   TableList *table;
 
@@ -116,7 +116,10 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   /* Lets hope this doesn't fail as the result will be messy */
   if (not error)
   {
-    write_bin_log(getSession(), *getSession()->getQueryString());
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.rawStatement(*getSession(),
+                                      *getSession()->getQueryString(),
+                                      *getSession()->schema());        
     getSession()->my_ok();
   }
 

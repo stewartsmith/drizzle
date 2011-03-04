@@ -30,7 +30,6 @@
 #include <drizzled/hybrid_type_traits_decimal.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/session.h>
-
 #include <drizzled/item/sum.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/field/double.h>
@@ -38,10 +37,9 @@
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 #include <drizzled/unique.h>
-
 #include <drizzled/type/decimal.h>
-
 #include <drizzled/internal/m_string.h>
+#include <drizzled/item/subselect.h>
 
 #include <algorithm>
 
@@ -76,17 +74,17 @@ extern plugin::StorageEngine *heap_engine;
 
 bool Item_sum::init_sum_func_check(Session *session)
 {
-  if (!session->lex->allow_sum_func)
+  if (!session->getLex()->allow_sum_func)
   {
     my_message(ER_INVALID_GROUP_FUNC_USE, ER(ER_INVALID_GROUP_FUNC_USE),
                MYF(0));
     return true;
   }
   /* Set a reference to the nesting set function if there is  any */
-  in_sum_func= session->lex->in_sum_func;
+  in_sum_func= session->getLex()->in_sum_func;
   /* Save a pointer to object to be used in items for nested set functions */
-  session->lex->in_sum_func= this;
-  nest_level= session->lex->current_select->nest_level;
+  session->getLex()->in_sum_func= this;
+  nest_level= session->getLex()->current_select->nest_level;
   ref_by= 0;
   aggr_level= -1;
   aggr_sel= NULL;
@@ -148,7 +146,7 @@ bool Item_sum::init_sum_func_check(Session *session)
 bool Item_sum::check_sum_func(Session *session, Item **ref)
 {
   bool invalid= false;
-  nesting_map allow_sum_func= session->lex->allow_sum_func;
+  nesting_map allow_sum_func= session->getLex()->allow_sum_func;
   /*
     The value of max_arg_level is updated if an argument of the set function
     contains a column reference resolved  against a subquery whose level is
@@ -181,7 +179,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
   if (!invalid && aggr_level < 0)
   {
     aggr_level= nest_level;
-    aggr_sel= session->lex->current_select;
+    aggr_sel= session->getLex()->current_select;
   }
   /*
     By this moment we either found a subquery where the set function is
@@ -227,7 +225,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
     Check that non-aggregated fields and sum functions aren't mixed in the
     same select in the ONLY_FULL_GROUP_BY mode.
   */
-  if (outer_fields.elements)
+  if (outer_fields.size())
   {
     Item_field *field;
     /*
@@ -256,7 +254,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
         select the field belongs to. If there are some then an error is
         raised.
     */
-    List<Item_field>::iterator of(outer_fields);
+    List<Item_field>::iterator of(outer_fields.begin());
     while ((field= of++))
     {
       Select_Lex *sel= field->cached_table->select_lex;
@@ -287,7 +285,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
   }
   aggr_sel->full_group_by_flag.set(SUM_FUNC_USED);
   update_used_tables();
-  session->lex->in_sum_func= in_sum_func;
+  session->getLex()->in_sum_func= in_sum_func;
   return false;
 }
 
@@ -319,8 +317,8 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
 bool Item_sum::register_sum_func(Session *session, Item **ref)
 {
   Select_Lex *sl;
-  nesting_map allow_sum_func= session->lex->allow_sum_func;
-  for (sl= session->lex->current_select->master_unit()->outer_select() ;
+  nesting_map allow_sum_func= session->getLex()->allow_sum_func;
+  for (sl= session->getLex()->current_select->master_unit()->outer_select() ;
        sl && sl->nest_level > max_arg_level;
        sl= sl->master_unit()->outer_select() )
   {
@@ -371,23 +369,23 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
       with_sum_func being set for an Select_Lex means that this Select_Lex
       has aggregate functions directly referenced (i.e. not through a sub-select).
     */
-    for (sl= session->lex->current_select;
+    for (sl= session->getLex()->current_select;
          sl && sl != aggr_sel && sl->master_unit()->item;
          sl= sl->master_unit()->outer_select() )
       sl->master_unit()->item->with_sum_func= 1;
   }
-  session->lex->current_select->mark_as_dependent(aggr_sel);
+  session->getLex()->current_select->mark_as_dependent(aggr_sel);
   return false;
 }
 
 
-Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
+Item_sum::Item_sum(List<Item> &list) :arg_count(list.size()),
   forced_const(false)
 {
   if ((args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     uint32_t i=0;
-    List<Item>::iterator li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
 
     while ((item=li++))
@@ -449,14 +447,14 @@ void Item_sum::make_field(SendField *tmp_field)
 }
 
 
-void Item_sum::print(String *str, enum_query_type query_type)
+void Item_sum::print(String *str)
 {
   str->append(func_name());
   for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (i)
       str->append(',');
-    args[i]->print(str, query_type);
+    args[i]->print(str);
   }
   str->append(')');
 }
@@ -2584,7 +2582,7 @@ Item_sum_count_distinct::~Item_sum_count_distinct()
 bool Item_sum_count_distinct::setup(Session *session)
 {
   List<Item> list;
-  Select_Lex *select_lex= session->lex->current_select;
+  Select_Lex *select_lex= session->getLex()->current_select;
 
   /*
     Setup can be called twice for ROLLUP items. This is a bug.
@@ -2973,7 +2971,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
    separator(separator_arg), tree(NULL), unique_filter(NULL), table(0),
    order(0), context(context_arg),
    arg_count_order(order_list ? order_list->elements : 0),
-   arg_count_field(select_list->elements),
+   arg_count_field(select_list->size()),
    count_cut_values(0),
    distinct(distinct_arg),
    warning_for_row(false),
@@ -2998,7 +2996,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
   order= (Order**)(args + arg_count);
 
   /* fill args items of show and sort */
-  List<Item>::iterator li(*select_list);
+  List<Item>::iterator li(select_list->begin());
 
   for (arg_ptr=args ; (item_select= li++) ; arg_ptr++)
     *arg_ptr= item_select;
@@ -3208,7 +3206,7 @@ Item_func_group_concat::fix_fields(Session *session, Item **ref)
 bool Item_func_group_concat::setup(Session *session)
 {
   List<Item> list;
-  Select_Lex *select_lex= session->lex->current_select;
+  Select_Lex *select_lex= session->getLex()->current_select;
 
   /*
     Currently setup() can be called twice. Please add
@@ -3368,7 +3366,7 @@ String* Item_func_group_concat::val_str(String* )
 }
 
 
-void Item_func_group_concat::print(String *str, enum_query_type query_type)
+void Item_func_group_concat::print(String *str)
 {
   str->append(STRING_WITH_LEN("group_concat("));
   if (distinct)
@@ -3377,7 +3375,7 @@ void Item_func_group_concat::print(String *str, enum_query_type query_type)
   {
     if (i)
       str->append(',');
-    args[i]->print(str, query_type);
+    args[i]->print(str);
   }
   if (arg_count_order)
   {
@@ -3386,7 +3384,7 @@ void Item_func_group_concat::print(String *str, enum_query_type query_type)
     {
       if (i)
         str->append(',');
-      (*order[i]->item)->print(str, query_type);
+      (*order[i]->item)->print(str);
       if (order[i]->asc)
         str->append(STRING_WITH_LEN(" ASC"));
       else

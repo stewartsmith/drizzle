@@ -114,7 +114,7 @@ static uint64_t get_exact_record_count(TableList *tables)
 
 int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
 {
-  List<Item>::iterator it(all_fields);
+  List<Item>::iterator it(all_fields.begin());
   int const_result= 1;
   bool recalc_const_item= false;
   uint64_t count= 1;
@@ -555,7 +555,7 @@ bool optimizer::simple_pred(Item_func *func_item, Item **args, bool &inv_order)
     /* MULT_EQUAL_FUNC */
     {
       Item_equal *item_equal= (Item_equal *) func_item;
-      Item_equal_iterator it(*item_equal);
+      Item_equal_iterator it(item_equal->begin());
       args[0]= it++;
       if (it++)
       {
@@ -689,7 +689,7 @@ static bool matching_cond(bool max_fl,
     }
 
     /* AND */
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *item;
     while ((item= li++))
     {
@@ -1071,7 +1071,7 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond)
   /* If AND/OR condition */
   if (cond->type() == Item::COND_ITEM)
   {
-    List<Item>::iterator li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *item;
     while ((item= li++))
     {

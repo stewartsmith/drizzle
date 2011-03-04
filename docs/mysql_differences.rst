@@ -8,11 +8,8 @@ This section of documentation aims to explore some of the notable differences be
 
 Usage
 -----
- * There is no embedded server. The Drizzle Server is not loadable as a shared
-   library.
- * Drizzle is optimized for massively concurrent environments. If we have the
-   choice of improving performance for 1024 simultaneous connections to the
-   detriment of performance with only 64 connections, we will take that choice.
+ * There is no embedded server. The Drizzle Server is not loadable as a shared library.
+ * Drizzle is optimized for massively concurrent environments. If we have the choice of improving performance for 1024 simultaneous connections to the detriment of performance with only 64 connections, we will take that choice.
  * It is designed for modern POSIX systems
  * Microsoft Windows is not a supported platform (neither is HP-UX or IRIX).
  * Drizzle doesn't use timezones. Everything is UTC.
@@ -22,8 +19,7 @@ Installation
 
  * No scripts/mysql_install_db or similar. Drizzle aims for a "just works" installation, without administrative overhead.
  * No system database that needs upgrading between versions.
- * Drizzle can listen on the Drizzle port (4427) and/or MySQL port (3306)
-   and speak the respective protocols.
+ * Drizzle can listen on the Drizzle port (4427) and/or MySQL port (3306) and speak the respective protocols.
 
 Architecture
 ------------
@@ -31,7 +27,7 @@ Architecture
 Drizzle is designed around the concept of being a microkernel. There should
 be a small core of the server with most functionality being provided through
 small, efficient and hard to misuse plugin interfaces. The goal is a small,
-light weight kernel that is easy to maintain, understand and extend.
+light-weight kernel that is easy to maintain, understand and extend.
 
 Drizzle is written in C++ and makes use of the Standard Template Library (STL)
 and Boost. Only where performance or correctness proves to be inadequate will
@@ -43,15 +39,15 @@ Network protocol
 
 Pluggable network protocols allow Drizzle to speak one (or more) of several
 protocols. Currently we support the MySQL protocol (compatible with existing
-MySQL client libraries) and the Drizzle protocol which is still under
+MySQL client libraries) and the Drizzle protocol, which is still under
 development.
 
 The Drizzle protocol embodies several important differences from MySQL:
 
- * Client sends first packet instead of server
+ * Client sends first packet (rather than the server)
  * Built in sharding
- * Multi statement support (without using a semicolon to separate them)
- * Room for expansion to include NoSQL type commands inline with SQL.
+ * Multi statement support (without requiring a semicolon to separate them)
+ * Room for expansion to include NoSQL-type commands inline with SQL commands.
 
 There is also a console plugin -- instead of providing access over a network
 socket, this plugin allows access from the current tty.
@@ -63,36 +59,32 @@ The existing plugin APIs that Drizzle inherited from MySQL have been reworked.
 
  * User Defined Functions (UDFs) now follow the same API as a given
    server instead of a different C API. This means that UDFs are on the
-   exact same level as built-in functions.
- * Storage Engine API has had some parts extensively reworked, especially
-   around transactions and DDL.
+   exact same level as built-in functions
+ * Some parts of the storage Engine API have been extensively reworked, especially
+   around transactions and DDL
  * Logging is now pluggable
  * Authentication is pluggable
  * Replication is pluggable
  * INFORMATION_SCHEMA plugins have been replaced by the function_engine, which
-   is a lot more space and time efficient.
+   is a lot more space and time efficient
  * Network protocols are pluggable
- * Scheduler is pluggable (multi_thread, pool_of_threads etc)
- * Plugin points for manipulating rows before/after operations: used for
-   replication and the PBMS Blob Streaming plugin.
+ * Scheduler is pluggable (multi_thread, pool_of_threads, etc)
+ * Plugin points for manipulating rows before/after operations: these can be used for
+   replication and the PBMS Blob Streaming plugin
 
 Stored Procedures
 -----------------
 
 Drizzle does not currently have any plugins that implement stored procedures. We
-viewed the implementation in MySQL to be non-optimal, bloating the parser
-and only supporting one language (SQL2003 stored procedures), which was not
+viewed the implementation in MySQL to be non-optimal. They bloat the parser
+and only support one language (SQL2003 stored procedures), which was not
 well known.
 
 Fundamentally, stored procedures usually are not the correct architectural
 decision for applications that need to scale. Pushing more computation down
 into the database (which is the trickiest layer to scale) isn't a good idea.
 
-We do recognize that the ability to reduce the time row locks are held
-by using stored procedures is valuable, but think we can achieve the same 
-advantage by improved batching of commands over the wire instead of adding and
-administering stored procedures to the list of things that can go wrong in
-administering the database.
+We do recognize the value of using stored procedures to reduce the time row locks are held, but think we can achieve the same advantage by improved batching of commands over the wire. This removes adding and administering stored procedures from the list of things that can go wrong in administering the database.
 
 Triggers
 --------
@@ -105,7 +97,9 @@ Views
 -----
 
 SQL Views are not currently supported in Drizzle. We believe they should be
-implemented via a query rewrite plugin. See the `Query Rewrite Blueprint <https://blueprints.launchpad.net/Drizzle/+spec/query-rewrite>`_ on launchpad.
+implemented via a query rewrite plugin. 
+
+See the `Query Rewrite Blueprint <https://blueprints.launchpad.net/Drizzle/+spec/query-rewrite>`_ on launchpad.
 
 Partitioning
 ------------
@@ -129,6 +123,8 @@ Authentication, Authorization and Access
 
 Authentication lies in Drizzle plugins. Currently there are PAM and HTTP AUTH plugins for authentication.
 Through the PAM plugin, you can use any PAM module (such as LDAP).
+
+For more information, see our :doc:`authentication` doc.
 
 Command line clients
 --------------------

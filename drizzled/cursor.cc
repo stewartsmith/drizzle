@@ -45,6 +45,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/transaction_services.h>
+#include <drizzled/key.h>
 
 using namespace std;
 
@@ -1300,7 +1301,7 @@ static bool log_row_for_replication(Table* table,
 
   bool result= false;
 
-  switch (session->lex->sql_command)
+  switch (session->getLex()->sql_command)
   {
   case SQLCOM_CREATE_TABLE:
     /*

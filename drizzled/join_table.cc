@@ -102,7 +102,7 @@ int JoinTable::joinReadConstTable(optimizer::Position *pos)
       embedding= embedded->getEmbedding();
     }
     while (embedding &&
-           embedding->getNestedJoin()->join_list.head() == embedded);
+           &embedding->getNestedJoin()->join_list.front() == embedded);
   }
 
   return(0);

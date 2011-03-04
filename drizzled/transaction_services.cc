@@ -1385,7 +1385,7 @@ bool TransactionServices::insertRecord(Session::reference session,
   if (! replication_services.isActive())
     return false;
 
-  if (not table.getShare()->replicate())
+  if (not table.getShare()->is_replicated())
     return false;
 
   /**
@@ -1593,7 +1593,7 @@ void TransactionServices::updateRecord(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (not table.getShare()->replicate())
+  if (not table.getShare()->is_replicated())
     return;
 
   uint32_t next_segment_id= 1;
@@ -1855,7 +1855,7 @@ void TransactionServices::deleteRecord(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (not table.getShare()->replicate())
+  if (not table.getShare()->is_replicated())
     return;
 
   uint32_t next_segment_id= 1;
@@ -1911,10 +1911,10 @@ void TransactionServices::createTable(Session::reference session,
                                       const message::Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (not replication_services.isActive())
     return;
 
-  if (table.has_options() and table.options().has_dont_replicate() and table.options().dont_replicate())
+  if (not message::is_replicated(table))
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -1947,7 +1947,7 @@ void TransactionServices::createSchema(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (schema.has_replication_options() and schema.replication_options().has_dont_replicate() and schema.replication_options().dont_replicate())
+  if (not message::is_replicated(schema))
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -1978,10 +1978,10 @@ void TransactionServices::dropSchema(Session::reference session,
                                      message::schema::const_reference schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (not replication_services.isActive())
     return;
 
-  if (schema.has_replication_options() and schema.replication_options().has_dont_replicate() and schema.replication_options().dont_replicate())
+  if (not message::is_replicated(schema))
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -2014,7 +2014,7 @@ void TransactionServices::alterSchema(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (old_schema.has_replication_options() and old_schema.replication_options().has_dont_replicate() and old_schema.replication_options().dont_replicate())
+  if (not message::is_replicated(old_schema))
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -2052,7 +2052,7 @@ void TransactionServices::dropTable(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (table.has_options() and table.options().has_dont_replicate() and table.options().dont_replicate())
+  if (not message::is_replicated(table))
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -2089,7 +2089,7 @@ void TransactionServices::truncateTable(Session::reference session,
   if (! replication_services.isActive())
     return;
 
-  if (not table.getShare()->replicate())
+  if (not table.getShare()->is_replicated())
     return;
 
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -2123,7 +2123,8 @@ void TransactionServices::truncateTable(Session::reference session,
 }
 
 void TransactionServices::rawStatement(Session::reference session,
-                                       const string &query)
+                                       const string &query,
+                                       const string &schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -2134,6 +2135,8 @@ void TransactionServices::rawStatement(Session::reference session,
 
   initStatementMessage(*statement, message::Statement::RAW_SQL, session);
   statement->set_sql(query);
+  if (not schema.empty())
+    statement->set_raw_sql_schema(schema);
   finalizeStatementMessage(*statement, session);
 
   finalizeTransactionMessage(*transaction, session);

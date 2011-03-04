@@ -19,58 +19,34 @@
  */
 
 #include <config.h>
+#include <boost/foreach.hpp>
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/table_function_container.h>
-
-#include <iostream>
+#include <drizzled/util/find_ptr.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 plugin::TableFunction *TableFunctionContainer::getFunction(const std::string &path)
 {
-  ToolMap::iterator iter= table_map.find(path);
-
-  if (iter == table_map.end())
-  {
-    return NULL;
-  }
-  return (*iter).second;
+  ToolMap::mapped_type* ptr= find_ptr(table_map, path);
+  return ptr ? *ptr : NULL;
 }
 
-void TableFunctionContainer::getNames(const string &predicate,
-                                      std::set<std::string> &set_of_names)
+void TableFunctionContainer::getNames(const string &predicate, std::set<std::string> &set_of_names)
 {
-  for (ToolMap::iterator it= table_map.begin();
-       it != table_map.end();
-       it++)
+  BOOST_FOREACH(ToolMap::reference i, table_map)
   {
-    plugin::TableFunction *tool= (*it).second;
-
-    if (tool->visable())
-    {
-      if (predicate.length())
-      {
-        if (boost::iequals(predicate, tool->getSchemaHome()))
-        {
-          set_of_names.insert(tool->getTableLabel());
-        }
-      }
-      else
-      {
-        set_of_names.insert(tool->getTableLabel());
-      }
-    }
+    if (i.second->visible() && (predicate.empty() || boost::iequals(predicate, i.second->getSchemaHome())))
+      set_of_names.insert(i.second->getTableLabel());
   }
 }
 
 void TableFunctionContainer::addFunction(plugin::TableFunction *tool)
 {
-  std::pair<ToolMap::iterator, bool> ret=
-    table_map.insert(std::make_pair(tool->getPath(), tool));
-  assert(ret.second == true);
+  std::pair<ToolMap::iterator, bool> ret= table_map.insert(std::make_pair(tool->getPath(), tool));
+  assert(ret.second);
 }
 
 } /* namespace drizzled */

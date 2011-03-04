@@ -24,6 +24,7 @@
 #include <drizzled/optimizer/quick_range_select.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/current_session.h>
+#include <drizzled/key.h>
 
 #include <fcntl.h>
 
@@ -355,7 +356,7 @@ bool optimizer::QuickRangeSelect::row_in_ranges()
 
   while (min != max)
   {
-    if (cmp_next(*(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid)))
+    if (cmp_next(reinterpret_cast<optimizer::QuickRange**>(ranges.buffer)[mid]))
     {
       /* current row value > mid->max */
       min= mid + 1;
@@ -364,8 +365,8 @@ bool optimizer::QuickRangeSelect::row_in_ranges()
       max= mid;
     mid= (min + max) / 2;
   }
-  res= *(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid);
-  return (! cmp_next(res) && ! cmp_prev(res));
+  res= reinterpret_cast<optimizer::QuickRange**>(ranges.buffer)[mid];
+  return not cmp_next(res) && not cmp_prev(res);
 }
 
 

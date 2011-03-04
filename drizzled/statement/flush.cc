@@ -39,13 +39,6 @@ bool statement::Flush::execute()
    */
   if (not reloadCache())
   {
-    /*
-     * We WANT to write and we CAN write.
-     * ! we write after unlocking the table.
-     *
-     * Presumably, RESET and binlog writing doesn't require synchronization
-     */
-    write_bin_log(getSession(), *getSession()->getQueryString());
     getSession()->my_ok();
   }
 
@@ -55,7 +48,7 @@ bool statement::Flush::execute()
 bool statement::Flush::reloadCache()
 {
   bool result= false;
-  TableList *tables= (TableList *) getSession()->lex->select_lex.table_list.first;
+  TableList *tables= (TableList *) getSession()->getLex()->select_lex.table_list.first;
 
   if (flush_log)
   {

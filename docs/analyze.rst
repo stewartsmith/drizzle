@@ -1,17 +1,17 @@
 ANALYZE
 =======
 
-ANALYZE TABLE table_name [, table_name] ...
+Syntax:
 
-ANALYZE TABLE read locks a table, and then analyzes and stores the key distribution for a table.
+.. code-block:: mysql
 
-.. todo::
+	ANALYZE TABLE table_name [, table_name] ...
 
-   is read lock always true?
+ANALYZE TABLE usually read locks a table, and then analyzes and stores the key distribution for a table.
 
-.. todo::
-   
-   some engines don't perform an explicit gathering of statistics when
-   you type ANALYZE. e.g. innobase (which only copies it's current estimate).
-   Only recently did I add this to HailDB so that it does go and do the index
-   dives on ANALYZE.
+ANALYZE functionality differs depending on the storage engine.
+
+On InnoDB tables, using ANALYZE will result in a WRITE LOCK on the table. It also will not perform an explicit gathering of statistics when
+you issue an ANALYZE command. To update the index cardinality, there will be 10 random dives into each index, retrieving an estimated cardinality. Therefore, several ANALYZE TABLEs in a row are likely to produce different results each time.
+
+Statistics-gathering with ANALYZE has recently been added to HailDB so that index dives are performed.

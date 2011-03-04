@@ -72,6 +72,7 @@
 #include <drizzled/charset.h>
 #include <drizzled/typelib.h>
 #include <drizzled/configmake.h>
+#include <drizzled/util/find_ptr.h>
 
 #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
 
@@ -82,7 +83,6 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-extern "C"
 unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
 
 int get_one_option(int optid, const struct option *, char *argument);
@@ -1664,17 +1664,14 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    var_hash_t::iterator iter= var_hash.find(save_var_name_str);
-    if (iter == var_hash.end())
+    if (var_hash_t::mapped_type* ptr= find_ptr(var_hash, save_var_name_str))
+      v= *ptr;
+    else
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
       strncpy(buff, save_var_name, length);
       buff[length]= '\0';
       v= var_from_env(buff, "");
-    }
-    else
-    {
-      v= iter->second;
     }
     var_name--;  /* Point at last character */
   }
@@ -1701,9 +1698,8 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  var_hash_t::iterator iter= var_hash.find(var_name);
-  if (iter != var_hash.end())
-    return iter->second;
+  if (var_hash_t::mapped_type* ptr= find_ptr(var_hash, var_name))
+    return *ptr;
   return var_hash[var_name] = var_init(0, name, len, "", 0);
 }
 
@@ -3376,14 +3372,12 @@ static void fill_global_error_names()
   drizzle_result_free(&res);
 }
 
-static uint32_t get_errcode_from_name(char *error_name, char *error_end)
+static uint32_t get_errcode_from_name(const char *error_name, const char *error_end)
 {
-  size_t err_name_len= error_end - error_name;
-  string error_name_s(error_name, err_name_len);
+  string error_name_s(error_name, error_end);
 
-  ErrorCodes::iterator it= global_error_names.find(error_name_s);
-  if (it != global_error_names.end())
-    return it->second;
+  if (ErrorCodes::mapped_type* ptr= find_ptr(global_error_names, error_name_s))
+    return *ptr;
 
   die("Unknown SQL error name '%s'", error_name_s.c_str());
   return 0;
@@ -4697,8 +4691,36 @@ static void append_result(string *ds, drizzle_result_st *res)
     for (i = 0; i < num_fields; i++)
     {
       column= drizzle_column_next(res);
-      append_field(ds, i, column,
-                   (const char*)row[i], lengths[i], !row[i]);
+      if (row[i] && (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY))
+      {
+        if (boost::lexical_cast<uint32_t>(row[i]))
+        {
+          if ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+          {
+            append_field(ds, i, column, "YES", 3, false);
+          }
+          else
+          {
+            append_field(ds, i, column, "TRUE", 4, false);
+          }
+        }
+        else
+        {
+          if ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+          {
+            append_field(ds, i, column, "NO", 2, false);
+          }
+          else
+          {
+            append_field(ds, i, column, "FALSE", 5, false);
+          }
+        }
+      }
+      else
+      {
+        append_field(ds, i, column,
+                     (const char*)row[i], lengths[i], !row[i]);
+      }
     }
     if (!display_result_vertically)
       ds->append("\n");
@@ -4742,7 +4764,14 @@ static void append_metadata(string *ds, drizzle_result_st *res)
     ds->append("\t", 1);
     replace_append_uint(ds, drizzle_column_size(column));
     ds->append("\t", 1);
-    replace_append_uint(ds, drizzle_column_max_size(column));
+    if (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY)
+    {
+      replace_append_uint(ds, 1);
+    }
+    else
+    {
+      replace_append_uint(ds, drizzle_column_max_size(column));
+    }
     ds->append("\t", 1);
     ds->append((char*) ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y"), 1);
     ds->append("\t", 1);
@@ -6165,17 +6194,30 @@ void free_replace_column()
 
 /* Definitions for replace result */
 
-typedef struct st_pointer_array {    /* when using array-strings */
+class POINTER_ARRAY
+{    /* when using array-strings */
+public:
+  ~POINTER_ARRAY();
+  int insert(char* name);
+
+  POINTER_ARRAY()
+  {
+    memset(this, 0, sizeof(*this));
+  }
+
   TYPELIB typelib;        /* Pointer to strings */
-  unsigned char  *str;          /* Strings is here */
-  uint8_t *flag;          /* Flag about each var. */
-  uint32_t  array_allocs,max_count,length,max_length;
-} POINTER_ARRAY;
+  unsigned char *str;          /* Strings is here */
+  uint8_t* flag;          /* Flag about each var. */
+  uint32_t array_allocs;
+  uint32_t max_count;
+  uint32_t length;
+  uint32_t max_length;
+};
 
 struct st_replace;
 struct st_replace *init_replace(const char **from, const char **to, uint32_t count,
                                 char *word_end_chars);
-int insert_pointer_name(POINTER_ARRAY *pa,char * name);
+
 void replace_strings_append(struct st_replace *rep, string* ds,
                             const char *from, int len);
 
@@ -6190,54 +6232,47 @@ st_replace *glob_replace= NULL;
   variable is replaced.
 */
 
-static void free_pointer_array(POINTER_ARRAY *pa)
+POINTER_ARRAY::~POINTER_ARRAY()
 {
-  if (!pa->typelib.count)
+  if (!typelib.count)
     return;
-  pa->typelib.count=0;
-  free((char*) pa->typelib.type_names);
-  pa->typelib.type_names=0;
-  free(pa->str);
+  typelib.count= 0;
+  free((char*) typelib.type_names);
+  typelib.type_names=0;
+  free(str);
 }
 
-void do_get_replace(struct st_command *command)
+void do_get_replace(st_command *command)
 {
-  uint32_t i;
   char *from= command->first_argument;
-  char *buff, *start;
-  char word_end_chars[256], *pos;
-  POINTER_ARRAY to_array, from_array;
-
-
-  free_replace();
-
-  memset(&to_array, 0, sizeof(to_array));
-  memset(&from_array, 0, sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
-  start= buff= (char *)malloc(strlen(from)+1);
+  free_replace();
+  POINTER_ARRAY to_array, from_array;
+  char* start= (char*)malloc(strlen(from) + 1);
+  char* buff= start;
   while (*from)
   {
-    char *to= buff;
-    to= get_string(&buff, &from, command);
+    char *to= get_string(&buff, &from, command);
     if (!*from)
-      die("Wrong number of arguments to replace_result in '%s'",
-          command->query);
-    insert_pointer_name(&from_array,to);
+      die("Wrong number of arguments to replace_result in '%s'", command->query);
+    from_array.insert(to);
     to= get_string(&buff, &from, command);
-    insert_pointer_name(&to_array,to);
+    to_array.insert(to);
   }
-  for (i= 1,pos= word_end_chars ; i < 256 ; i++)
-    if (my_isspace(charset_info,i))
+  char word_end_chars[256];
+  char* pos= word_end_chars;
+  for (int i= 1; i < 256; i++)
+  {
+    if (my_isspace(charset_info, i))
       *pos++= i;
+  }
   *pos=0;          /* End pointer */
   if (!(glob_replace= init_replace(from_array.typelib.type_names,
                                    to_array.typelib.type_names,
                                    from_array.typelib.count,
                                    word_end_chars)))
     die("Can't initialize replace from '%s'", command->query);
-  free_pointer_array(&from_array);
-  free_pointer_array(&to_array);
   free(start);
   command->last_argument= command->end;
   return;
@@ -7147,7 +7182,7 @@ int find_found(FOUND_SET *found_set, uint32_t table_offset, int found_offset)
 #define PC_MALLOC    256  /* Bytes for pointers */
 #define PS_MALLOC    512  /* Bytes for data */
 
-int insert_pointer_name(POINTER_ARRAY *pa,char * name)
+static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
 {
   uint32_t i,length,old_count;
   unsigned char *new_pos;
@@ -7214,6 +7249,11 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   pa->length+=length;
   return(0);
 } /* insert_pointer_name */
+
+int POINTER_ARRAY::insert(char* name)
+{
+  return insert_pointer_name(this, name);
+}
 
 
 /* Functions that uses replace and replace_regex */

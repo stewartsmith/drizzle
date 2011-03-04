@@ -30,6 +30,7 @@
 #include <drizzled/lookup_symbol.h>
 #include <drizzled/index_hint.h>
 #include <drizzled/select_result.h>
+#include <drizzled/item/subselect.h>
 
 #include <cstdio>
 #include <ctype.h>
@@ -223,7 +224,7 @@ void LEX::start(Session *arg)
 
 void lex_start(Session *session)
 {
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
 
   lex->session= lex->unit.session= session;
 
@@ -670,7 +671,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   unsigned int length;
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
   const CHARSET_INFO * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
@@ -1061,6 +1062,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       lip->yyUnget();                   // Safety against eof
       state = MY_LEX_START;		// Try again
       break;
+
     case MY_LEX_LONG_COMMENT:		/* Long C comment? */
       if (lip->yyPeek() != '*')
       {
@@ -1158,6 +1160,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       lip->in_comment= NO_COMMENT;
       lip->set_echo(true);
       break;
+
     case MY_LEX_END_LONG_COMMENT:
       if ((lip->in_comment != NO_COMMENT) && lip->yyPeek() == '/')
       {
@@ -1174,6 +1177,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       else
         state=MY_LEX_CHAR;		// Return '*'
       break;
+
     case MY_LEX_SET_VAR:		// Check if ':='
       if (lip->yyPeek() != '=')
       {
@@ -1182,6 +1186,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       lip->yySkip();
       return (SET_VAR);
+
     case MY_LEX_SEMICOLON:			// optional line terminator
       if (lip->yyPeek())
       {
@@ -1190,6 +1195,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       lip->next_state=MY_LEX_END;       // Mark for next loop
       return(END_OF_INPUT);
+
     case MY_LEX_EOL:
       if (lip->eof())
       {
@@ -1205,11 +1211,13 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       state=MY_LEX_CHAR;
       break;
+
     case MY_LEX_END:
       lip->next_state=MY_LEX_END;
       return false;			// We found end of input last time
 
       /* Actually real shouldn't start with . but allow them anyhow */
+
     case MY_LEX_REAL_OR_POINT:
       if (my_isdigit(cs,lip->yyPeek()))
         state= MY_LEX_REAL;		// Real
@@ -1219,6 +1227,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         lip->yyUnget();                 // Put back '.'
       }
       break;
+
     case MY_LEX_USER_END:		// end '@' of user@hostname
       switch (state_map[(uint8_t)lip->yyPeek()]) {
       case MY_LEX_STRING:
@@ -1235,12 +1244,14 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str.str=(char*) lip->get_ptr();
       yylval->lex_str.length=1;
       return((int) '@');
+
     case MY_LEX_HOSTNAME:		// end '@' of user@hostname
       for (c=lip->yyGet() ;
            my_isalnum(cs,c) || c == '.' || c == '_' ||  c == '$';
            c= lip->yyGet()) ;
       yylval->lex_str=get_token(lip, 0, lip->yyLength());
       return(LEX_HOSTNAME);
+
     case MY_LEX_SYSTEM_VAR:
       yylval->lex_str.str=(char*) lip->get_ptr();
       yylval->lex_str.length=1;
@@ -1250,6 +1261,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 			MY_LEX_OPERATOR_OR_IDENT :
 			MY_LEX_IDENT_OR_KEYWORD);
       return((int) '@');
+
     case MY_LEX_IDENT_OR_KEYWORD:
       /*
         We come here when we have found two '@' in a row.
@@ -1263,9 +1275,11 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 
       if (c == '.')
         lip->next_state=MY_LEX_IDENT_SEP;
+
       length= lip->yyLength();
       if (length == 0)
         return(ABORT_SYM);              // Names must be nonempty.
+
       if ((tokval= find_keyword(lip, length,0)))
       {
         lip->yyUnget();                         // Put back 'c'
@@ -1712,13 +1726,13 @@ bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 
   return (ref_pointer_array=
           (Item **)session->getMemRoot()->allocate(sizeof(Item*) * (n_child_sum_items +
-                                                 item_list.elements +
+                                                 item_list.size() +
                                                  select_n_having_items +
                                                  select_n_where_fields +
                                                  order_group_num)*5)) == 0;
 }
 
-void Select_Lex_Unit::print(String *str, enum_query_type query_type)
+void Select_Lex_Unit::print(String *str)
 {
   bool union_all= !union_distinct;
   for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
@@ -1733,7 +1747,7 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
     }
     if (sl->braces)
       str->append('(');
-    sl->print(session, str, query_type);
+    sl->print(session, str);
     if (sl->braces)
       str->append(')');
   }
@@ -1744,16 +1758,14 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
       str->append(STRING_WITH_LEN(" order by "));
       fake_select_lex->print_order(
         str,
-        (Order *) fake_select_lex->order_list.first,
-        query_type);
+        (Order *) fake_select_lex->order_list.first);
     }
-    fake_select_lex->print_limit(session, str, query_type);
+    fake_select_lex->print_limit(session, str);
   }
 }
 
 void Select_Lex::print_order(String *str,
-                                Order *order,
-                                enum_query_type query_type)
+                             Order *order)
 {
   for (; order; order= order->next)
   {
@@ -1764,7 +1776,7 @@ void Select_Lex::print_order(String *str,
       str->append(buffer, length);
     }
     else
-      (*order->item)->print(str, query_type);
+      (*order->item)->print(str);
     if (!order->asc)
       str->append(STRING_WITH_LEN(" desc"));
     if (order->next)
@@ -1772,8 +1784,7 @@ void Select_Lex::print_order(String *str,
   }
 }
 
-void Select_Lex::print_limit(Session *, String *str,
-                                enum_query_type query_type)
+void Select_Lex::print_limit(Session *, String *str)
 {
   Select_Lex_Unit *unit= master_unit();
   Item_subselect *item= unit->item;
@@ -1804,10 +1815,10 @@ void Select_Lex::print_limit(Session *, String *str,
     str->append(STRING_WITH_LEN(" limit "));
     if (offset_limit)
     {
-      offset_limit->print(str, query_type);
+      offset_limit->print(str);
       str->append(',');
     }
-    select_limit->print(str, query_type);
+    select_limit->print(str);
   }
 }
 
@@ -2068,11 +2079,11 @@ void LEX::link_first_table_back(TableList *first, bool link_to_local)
 void LEX::cleanup_after_one_table_open()
 {
   /*
-    session->lex->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear session->lex->derived_tables flag
+    session->getLex()->derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->getLex()->derived_tables flag
     to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to session->lex->select_lex, because we
+    NOTE: all units will be connected to session->getLex()->select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)

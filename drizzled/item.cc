@@ -31,10 +31,8 @@
 #include <drizzled/util/convert.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/time_functions.h>
-
 #include <drizzled/field/str.h>
 #include <drizzled/field/num.h>
-
 #include <drizzled/field/blob.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
@@ -50,11 +48,11 @@
 #include <drizzled/field/size.h>
 #include <drizzled/field/time.h>
 #include <drizzled/field/varstring.h>
-
 #include <drizzled/current_session.h>
 #include <drizzled/session.h>
-
 #include <drizzled/internal/m_string.h>
+#include <drizzled/item/ref.h>
+#include <drizzled/item/subselect.h>
 
 #include <cstdio>
 #include <math.h>
@@ -308,10 +306,10 @@ Item::Item():
 
   /*
     Item constructor can be called during execution other then SQL_COM
-    command => we should check session->lex->current_select on zero (session->lex
+    command => we should check session->getLex()->current_select on zero (session->lex
     can be uninitialised)
   */
-  if (getSession().lex->current_select)
+  if (getSession().getLex()->current_select)
   {
     enum_parsing_place place= getSession().getLex()->current_select->parsing_place;
     if (place == SELECT_LIST || place == IN_HAVING)
@@ -364,14 +362,14 @@ int Item::decimal_int_part() const
   return class_decimal_int_part(decimal_precision(), decimals);
 }
 
-void Item::print(String *str, enum_query_type)
+void Item::print(String *str)
 {
   str->append(full_name());
 }
 
-void Item::print_item_w_name(String *str, enum_query_type query_type)
+void Item::print_item_w_name(String *str)
 {
-  print(str, query_type);
+  print(str);
 
   if (name)
   {
@@ -742,12 +740,12 @@ public:
                   const char *table_name_arg, const char *field_name_arg)
     :Item_ref(context_arg, item, table_name_arg, field_name_arg) {}
 
-  virtual inline void print (String *str, enum_query_type query_type)
+  virtual inline void print (String *str)
   {
     if (ref)
-      (*ref)->print(str, query_type);
+      (*ref)->print(str);
     else
-      Item_ident::print(str, query_type);
+      Item_ident::print(str);
   }
 };
 
@@ -784,17 +782,17 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
       Item_ref to allow fields from view being stored in tmp table.
     */
     Item_aggregate_ref *item_ref;
-    uint32_t el= fields.elements;
+    uint32_t el= fields.size();
     Item *real_itm= real_item();
 
     ref_pointer_array[el]= real_itm;
-    if (!(item_ref= new Item_aggregate_ref(&session->lex->current_select->context,
+    if (!(item_ref= new Item_aggregate_ref(&session->getLex()->current_select->context,
                                            ref_pointer_array + el, 0, name)))
       return; /* fatal_error is set */
     if (type() == SUM_FUNC_ITEM)
       item_ref->depended_from= ((Item_sum *) this)->depended_from();
     fields.push_front(real_itm);
-    session->change_item_tree(ref, item_ref);
+    *ref= item_ref;
   }
 }
 
@@ -821,7 +819,7 @@ void mark_as_dependent(Session *session, Select_Lex *last, Select_Lex *current,
   if (mark_item)
     mark_item->depended_from= last;
   current->mark_as_dependent(last);
-  if (session->lex->describe & DESCRIBE_EXTENDED)
+  if (session->getLex()->describe & DESCRIBE_EXTENDED)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
     snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_FIELD_RESOLVED),
@@ -1571,7 +1569,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
   }
 
   if (new_item)
-    session->change_item_tree(ref, new_item);
+    *ref= new_item;
 }
 
 bool field_is_equal_to_item(Field *field,Item *item)

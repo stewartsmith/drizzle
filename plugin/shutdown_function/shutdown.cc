@@ -39,18 +39,17 @@
 #include <signal.h>
 #include <drizzled/session.h>
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/plugin/function.h>
 
 using namespace drizzled;
 
 #define SHUTDOWN_MESSAGE "Beginning shutdown"
 
-class Shutdown :public Item_str_func
+class Shutdown : public Item_str_func
 {
 public:
-  Shutdown() :
-    Item_str_func()
+  Shutdown()
   { }
-
 
   void fix_length_and_dec()
   {

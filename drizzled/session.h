@@ -20,9 +20,26 @@
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
+#include <algorithm>
+#include <bitset>
+#include <boost/make_shared.hpp>
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/thread.hpp>
+#include <map>
+#include <netdb.h>
+#include <string>
+#include <sys/resource.h>
+#include <sys/time.h>
+
+#include <drizzled/catalog/instance.h>
+#include <drizzled/catalog/local.h>
+#include <drizzled/copy_info.h>
 #include <drizzled/cursor.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/file_exchange.h>
+#include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
 #include <drizzled/lex_column.h>
 #include <drizzled/my_hash.h>
@@ -33,44 +50,23 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
 #include <drizzled/resource_context.h>
-#include <drizzled/sql_error.h>
-#include <drizzled/sql_lex.h>
-#include <drizzled/sql_locale.h>
-#include <drizzled/statistics_variables.h>
-#include <drizzled/table_ident.h>
-#include <drizzled/transaction_context.h>
-#include <drizzled/util/storable.h>
-#include <drizzled/var.h>
-
-
-#include <netdb.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-
-#include <algorithm>
-#include <bitset>
-#include <map>
-#include <string>
-
-#include <drizzled/catalog/instance.h>
-#include <drizzled/catalog/local.h>
-
-#include <drizzled/copy_info.h>
-#include <drizzled/ha_data.h>
 #include <drizzled/session/property_map.h>
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/sql_error.h>
+#include <drizzled/sql_locale.h>
+#include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/system_variables.h>
-
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/shared_mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
-#include <boost/make_shared.hpp>
-
+#include <drizzled/table_ident.h>
+#include <drizzled/transaction_context.h>
+#include <drizzled/util/storable.h>
+#include <drizzled/var.h>
 #include <drizzled/visibility.h>
+#include <drizzled/util/find_ptr.h>
+#include <drizzled/type/time.h>
+#include <drizzled/sql_lex.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -219,8 +215,10 @@ public:
    * @todo should be const
    */
   uint32_t id;
+private:
   LEX *lex; /**< parse tree descriptor */
 
+public:
   LEX *getLex() 
   {
     return lex;
@@ -1194,10 +1192,6 @@ public:
   inline bool is_error() const { return main_da.is_error(); }
   inline const CHARSET_INFO *charset() { return default_charset_info; }
 
-  void change_item_tree(Item **place, Item *new_value)
-  {
-    *place= new_value;
-  }
   /**
     Cleanup statement parse state (parse tree, lex) and execution
     state after execution of a non-prepared SQL statement.
@@ -1406,7 +1400,8 @@ private:
   plugin::EventObserverList *session_event_observers;
   
   /* Schema observers are mapped to databases. */
-  std::map<std::string, plugin::EventObserverList *> schema_event_observers;
+  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
+  schema_event_observers_t schema_event_observers;
 
  
 public:
@@ -1423,23 +1418,14 @@ public:
   /* For schema event observers there is one set of observers per database. */
   plugin::EventObserverList *getSchemaObservers(const std::string &db_name) 
   { 
-    std::map<std::string, plugin::EventObserverList *>::iterator it;
-    
-    it= schema_event_observers.find(db_name);
-    if (it == schema_event_observers.end())
-      return NULL;
-      
-    return it->second;
+    if (schema_event_observers_t::mapped_type* i= find_ptr(schema_event_observers, db_name))
+      return *i;
+    return NULL;
   }
   
   void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers) 
   { 
-    std::map<std::string, plugin::EventObserverList *>::iterator it;
-
-    it= schema_event_observers.find(db_name);
-    if (it != schema_event_observers.end())
-      schema_event_observers.erase(it);;
-
+    schema_event_observers.erase(db_name);
     if (observers)
       schema_event_observers[db_name] = observers;
   }

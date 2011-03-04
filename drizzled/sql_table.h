@@ -56,8 +56,6 @@ bool analyze_table(Session* session, TableList* table_list,
 bool optimize_table(Session* session, TableList* table_list,
                     HA_CHECK_OPT* check_opt);
 
-void write_bin_log(Session *session, const std::string &query);
-
 bool is_primary_key(KeyInfo *key_info);
 const char* is_primary_key_name(const char* key_name);
 bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);

@@ -29,7 +29,7 @@ bool select_dumpvar::send_data(List<Item> &items)
 {
   std::vector<var *>::const_iterator iter= var_list.begin();
 
-  List<Item>::iterator it(items);
+  List<Item>::iterator it(items.begin());
   Item *item= NULL;
   var *current_var;
 
@@ -76,7 +76,7 @@ int select_dumpvar::prepare(List<Item> &list, Select_Lex_Unit *u)
 {
   unit= u;
 
-  if (var_list.size() != list.elements)
+  if (var_list.size() != list.size())
   {
     my_message(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT,
 	       ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT), MYF(0));

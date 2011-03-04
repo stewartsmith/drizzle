@@ -68,7 +68,7 @@ public:
   const char *full_name() const;
   void cleanup();
   bool remove_dependence_processor(unsigned char * arg);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
   friend bool insert_fields(Session *session, Name_resolution_context *context,
