@@ -22,7 +22,6 @@
 #define PLUGIN_FUNCTION_ENGINE_FUNCTION_H
 
 #include <assert.h>
-#include <drizzled/session.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/identifier/schema.h>

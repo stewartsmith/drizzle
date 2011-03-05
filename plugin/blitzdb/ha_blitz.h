@@ -20,7 +20,6 @@
 #ifndef PLUGIN_BLITZDB_HA_BLITZ_H
 #define PLUGIN_BLITZDB_HA_BLITZ_H
 
-#include <drizzled/session.h>
 #include <drizzled/cursor.h>
 #include <drizzled/table.h>
 #include <drizzled/field.h>

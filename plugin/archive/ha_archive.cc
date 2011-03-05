@@ -17,6 +17,7 @@
 
 #include <config.h>
 
+#include <drizzled/session.h>
 #include <plugin/archive/archive_engine.h>
 #include <memory>
 #include <boost/scoped_ptr.hpp>
