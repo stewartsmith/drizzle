@@ -818,7 +818,7 @@ bool ClientMySQLProtocol::checkConnection(void)
       passwd < (char *) net.read_pos + pkt_len)
   {
     passwd_len= (unsigned char)(*passwd++);
-    if (passwd_len > 0 and client_capabilities & CLIENT_INTERACTIVE)
+    if (passwd_len > 0 and client_capabilities & CLIENT_CAPABILITIES_PLUGIN_AUTH)
     {
       user_identifier->setPasswordType(identifier::User::PLAIN_TEXT);
     }
