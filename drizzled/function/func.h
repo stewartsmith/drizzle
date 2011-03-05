@@ -124,9 +124,9 @@ public:
   virtual void split_sum_func(Session *session, Item **ref_pointer_array,
                               List<Item> &fields);
 
-  virtual void print(String *str, enum_query_type query_type);
-  void print_op(String *str, enum_query_type query_type);
-  void print_args(String *str, uint32_t from, enum_query_type query_type);
+  virtual void print(String *str);
+  void print_op(String *str);
+  void print_args(String *str, uint32_t from);
   virtual void fix_num_length_and_dec();
   void count_only_length();
   void count_real_length();

@@ -551,9 +551,9 @@ public:
     query and why they should be generated from the Item-tree, @see
     register_view().
   */
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 
-  void print_item_w_name(String *, enum_query_type query_type);
+  void print_item_w_name(String *);
   virtual void update_used_tables() {}
   virtual void split_sum_func(Session *session, 
                               Item **ref_pointer_array,

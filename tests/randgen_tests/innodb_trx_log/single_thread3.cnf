@@ -5,4 +5,4 @@ comment = single threaded test
 command = ./gentest.pl --gendata=conf/drizzle/translog_drizzle.zz --grammar=conf/drizzle/translog_concurrent3.yy --Reporter=DrizzleInnoTrxLog  --queries=100 --threads=1
 
 [test_servers]
-servers = [[--transaction-log.enable]]
+servers = [[--innodb.replication-log],[]]

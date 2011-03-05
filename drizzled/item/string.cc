@@ -95,9 +95,9 @@ bool Item_string::eq(const Item *item, bool binary_cmp) const
   return 0;
 }
 
-void Item_string::print(String *str, enum_query_type query_type)
+void Item_string::print(String *str)
 {
-  if (query_type == QT_ORDINARY && is_cs_specified())
+  if (is_cs_specified())
   {
     str->append('_');
     str->append(collation.collation->csname);

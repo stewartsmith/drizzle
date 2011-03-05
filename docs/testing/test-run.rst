@@ -216,7 +216,7 @@ Options to control directories to use
    using a builtin list of standard locations
    for tmpfs (/dev/shm)
    The option can also be set using environment
-   variable DTR_MEM=[DIR]
+   variable :envvar:`DTR_MEM` =[DIR]
 
 Options to control what test suites or cases to run
 ---------------------------------------------------
@@ -274,7 +274,7 @@ Options that specify ports
 .. option:: --dtr-build-thread=#    
 
    Specify unique collection of ports. Can also be set by
-   setting the environment variable DTR_BUILD_THREAD.
+   setting the environment variable :envvar:`DTR_BUILD_THREAD`.
 
 Options for test case authoring
 -------------------------------

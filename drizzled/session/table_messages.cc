@@ -24,80 +24,49 @@
 #include <drizzled/session/table_messages.h>
 #include <drizzled/identifier.h>
 #include <drizzled/message/table.h>
-
+#include <drizzled/util/find_ptr.h>
 #include <string>
 
-namespace drizzled
-{
-
-namespace session
-{
+namespace drizzled {
+namespace session {
 
 bool TableMessages::storeTableMessage(const identifier::Table &identifier, message::Table &table_message)
 {
   table_message_cache.insert(make_pair(identifier.getPath(), table_message));
-
   return true;
 }
 
 bool TableMessages::removeTableMessage(const identifier::Table &identifier)
 {
-  Cache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
+  Cache::iterator iter= table_message_cache.find(identifier.getPath());
   if (iter == table_message_cache.end())
     return false;
-
   table_message_cache.erase(iter);
-
   return true;
 }
 
 bool TableMessages::getTableMessage(const identifier::Table &identifier, message::Table &table_message)
 {
-  Cache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
-  if (iter == table_message_cache.end())
+  Cache::mapped_type* ptr= find_ptr(table_message_cache, identifier.getPath());
+  if (!ptr)
     return false;
-
-  table_message.CopyFrom((iter->second));
-
+  table_message.CopyFrom(*ptr);
   return true;
 }
 
 bool TableMessages::doesTableMessageExist(const identifier::Table &identifier)
 {
-  Cache::iterator iter;
-
-  iter= table_message_cache.find(identifier.getPath());
-
-  if (iter == table_message_cache.end())
-  {
-    return false;
-  }
-
-  return true;
+  return find_ptr(table_message_cache, identifier.getPath());
 }
 
 bool TableMessages::renameTableMessage(const identifier::Table &from, const identifier::Table &to)
 {
-  Cache::iterator iter;
-
   table_message_cache[to.getPath()]= table_message_cache[from.getPath()];
-
-  iter= table_message_cache.find(to.getPath());
-
-  if (iter == table_message_cache.end())
-  {
+  Cache::mapped_type* ptr= find_ptr(table_message_cache, to.getPath());
+  if (!ptr)
     return false;
-  }
-
-  iter->second.set_schema(to.getSchemaName());
-  iter->second.set_name(to.getTableName());
-
+  ptr->set_schema(to.getSchemaName());
+  ptr->set_name(to.getTableName());
   return true;
 }
 

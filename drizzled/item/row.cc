@@ -149,14 +149,14 @@ bool Item_row::check_cols(uint32_t c)
   return 0;
 }
 
-void Item_row::print(String *str, enum_query_type query_type)
+void Item_row::print(String *str)
 {
   str->append('(');
   for (uint32_t i= 0; i < arg_count; i++)
   {
     if (i)
       str->append(',');
-    items[i]->print(str, query_type);
+    items[i]->print(str);
   }
   str->append(')');
 }
@@ -180,15 +180,7 @@ Item *Item_row::transform(Item_transformer transformer, unsigned char *arg)
     Item *new_item= items[i]->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (items[i] != new_item)
-      getSession().change_item_tree(&items[i], new_item);
+      items[i]= new_item;
   }
   return (this->*transformer)(arg);
 }

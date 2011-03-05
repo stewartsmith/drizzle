@@ -32,6 +32,7 @@ namespace plugin
   class StorageEngine;
 }
 
+class Session;
 class sys_var;
 class Item;
 class Item_func_set_user_var;

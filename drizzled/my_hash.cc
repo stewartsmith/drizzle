@@ -58,6 +58,8 @@ static uint32_t calc_hash(const HASH *hash, const unsigned char *key,
   return nr1;
 }
 
+#define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
+
 bool
 _hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
            uint32_t size, size_t key_offset, size_t key_length,

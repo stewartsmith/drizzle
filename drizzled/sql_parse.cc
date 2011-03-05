@@ -583,7 +583,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         char buff[1024];
         String str(buff,(uint32_t) sizeof(buff), system_charset_info);
         str.length(0);
-        session->getLex()->unit.print(&str, QT_ORDINARY);
+        session->getLex()->unit.print(&str);
         str.append('\0');
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                      ER_YES, str.ptr());

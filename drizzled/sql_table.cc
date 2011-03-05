@@ -90,27 +90,6 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
 }
 
 /*
-  SYNOPSIS
-    write_bin_log()
-    session                           Thread object
-    query                         Query to log
-    query_length                  Length of query
-
-  RETURN VALUES
-    NONE
-
-  DESCRIPTION
-    Write the binlog if open, routine used in multiple places in this
-    cursor
-*/
-
-void write_bin_log(Session *session, const std::string &query)
-{
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.rawStatement(*session, query);
-}
-
-/*
   Execute the drop of a normal or temporary table
 
   SYNOPSIS
@@ -399,7 +378,7 @@ static bool check_duplicates_in_interval(const char *set_or_name,
     tmp.type_names++;
     tmp.type_lengths++;
     tmp.count--;
-    if (interval_set.find(typelib_set_member(*cur_value, *cur_length, cs)) != interval_set.end())
+    if (interval_set.count(typelib_set_member(*cur_value, *cur_length, cs)))
     {
       my_error(ER_DUPLICATED_VALUE_IN_TYPE, MYF(0),
                name,*cur_value,set_or_name);

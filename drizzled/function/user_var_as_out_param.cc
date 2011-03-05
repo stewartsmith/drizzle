@@ -86,8 +86,7 @@ type::Decimal* Item_user_var_as_out_param::val_decimal(type::Decimal *)
 }
 
 
-void Item_user_var_as_out_param::print(String *str,
-                                       enum_query_type )
+void Item_user_var_as_out_param::print(String *str)
 {
   str->append('@');
   str->append(name.str,name.length);

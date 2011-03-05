@@ -31,7 +31,7 @@ public:
   {
   }
 
-  bool visable() { return false; }
+  bool visible() const { return false; }
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {

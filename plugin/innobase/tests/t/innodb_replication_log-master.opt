@@ -1,1 +1,1 @@
---innodb.replication-log=1 --transaction-message-threshold=131072
+--innodb.replication-log --transaction-message-threshold=131072

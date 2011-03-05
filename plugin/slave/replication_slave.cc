@@ -61,9 +61,19 @@ bool ReplicationSlave::initWithConfig()
     ("master-user", po::value<string>()->default_value(""))
     ("master-pass", po::value<string>()->default_value(""))
     ("max-reconnects", po::value<uint32_t>()->default_value(10))
-    ("seconds-between-reconnects", po::value<uint32_t>()->default_value(30));
+    ("seconds-between-reconnects", po::value<uint32_t>()->default_value(30))
+    ("io-thread-sleep", po::value<uint32_t>()->default_value(5))
+    ("applier-thread-sleep", po::value<uint32_t>()->default_value(5));
 
   ifstream cf_stream(_config_file.c_str());
+
+  if (not cf_stream.is_open())
+  {
+    _error= "Unable to open file ";
+    _error.append(_config_file);
+    return false;
+  }
+
   po::store(drizzled::program_options::parse_config_file(cf_stream, slave_options), vm);
 
   po::notify(vm);
@@ -85,6 +95,12 @@ bool ReplicationSlave::initWithConfig()
 
   if (vm.count("seconds-between-reconnects"))
     _producer.setSecondsBetweenReconnects(vm["seconds-between-reconnects"].as<uint32_t>());
+
+  if (vm.count("io-thread-sleep"))
+    _producer.setSleepInterval(vm["io-thread-sleep"].as<uint32_t>());
+
+  if (vm.count("applier-thread-sleep"))
+    _consumer.setSleepInterval(vm["applier-thread-sleep"].as<uint32_t>());
 
   /* setup schema and tables */
   ReplicationSchema rs;

@@ -71,9 +71,9 @@ public:
   int64_t val_int();
   const char *func_name() const { return "~"; }
 
-  virtual inline void print(String *str, enum_query_type query_type)
+  virtual inline void print(String *str)
   {
-    Item_func::print(str, query_type);
+    Item_func::print(str);
   }
 };
 

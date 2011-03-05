@@ -205,8 +205,16 @@ public:
    *
    * @param session Session object which issued the statement
    * @param query Query string
+   * @param schema Schema for the table affected by the raw SQL.
    */
-  void rawStatement(Session::reference session, const std::string &query);
+  void rawStatement(Session::reference session,
+                    const std::string &query,
+                    const std::string &schema);
+
+  void rawStatement(Session::reference session, const std::string &query)
+  {
+    rawStatement(session, query, "");
+  }
 
   /* transactions: interface to plugin::StorageEngine functions */
   int rollbackTransaction(Session::reference session, bool all);

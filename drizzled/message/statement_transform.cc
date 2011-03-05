@@ -339,6 +339,16 @@ transformStatementToSql(const Statement &source,
     }
     break;
   case Statement::RAW_SQL:
+    {
+      if (source.has_raw_sql_schema())
+      {
+        string destination("USE ");
+        destination.append(source.raw_sql_schema());
+        sql_strings.push_back(destination);
+      }
+      sql_strings.push_back(source.sql());
+    }
+    break;
   default:
     sql_strings.push_back(source.sql());
     break;

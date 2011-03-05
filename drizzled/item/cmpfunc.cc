@@ -347,10 +347,10 @@ int64_t Item_func_not::val_int()
   higher than the precedence of NOT.
 */
 
-void Item_func_not::print(String *str, enum_query_type query_type)
+void Item_func_not::print(String *str)
 {
   str->append('(');
-  Item_func::print(str, query_type);
+  Item_func::print(str);
   str->append(')');
 }
 
@@ -382,12 +382,12 @@ bool Item_func_not_all::empty_underlying_subquery()
           (test_sub_item && !test_sub_item->any_value()));
 }
 
-void Item_func_not_all::print(String *str, enum_query_type query_type)
+void Item_func_not_all::print(String *str)
 {
   if (show)
-    Item_func::print(str, query_type);
+    Item_func::print(str);
   else
-    args[0]->print(str, query_type);
+    args[0]->print(str);
 }
 
 
@@ -477,7 +477,7 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
       Item *tmp= new Item_int_with_ref(field->val_int(), *item,
                                        test(field->flags & UNSIGNED_FLAG));
       if (tmp)
-        session->change_item_tree(item, tmp);
+        *item= tmp;
       result= 1;					// Item was replaced
     }
 
@@ -1445,10 +1445,10 @@ void Item_func_truth::fix_length_and_dec()
 }
 
 
-void Item_func_truth::print(String *str, enum_query_type query_type)
+void Item_func_truth::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" is "));
   if (! affirmative)
     str->append(STRING_WITH_LEN("not "));
@@ -1677,14 +1677,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, unsigned char *
   new_item= (*args)->transform(transformer, argument);
   if (!new_item)
     return 0;
-  /*
-    Session::change_item_tree() should be called only if the tree was
-    really transformed, i.e. when a new item has been created.
-    Otherwise we'll be allocating a lot of unnecessary memory for
-    change records at each execution.
-  */
-  if ((*args) != new_item)
-    getSession().change_item_tree(args, new_item);
+  *args= new_item;
 
   /*
     Transform the right IN operand which should be an Item_in_subselect or a
@@ -2183,16 +2176,16 @@ int64_t Item_func_between::val_int()
 }
 
 
-void Item_func_between::print(String *str, enum_query_type query_type)
+void Item_func_between::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   if (negated)
     str->append(STRING_WITH_LEN(" not"));
   str->append(STRING_WITH_LEN(" between "));
-  args[1]->print(str, query_type);
+  args[1]->print(str);
   str->append(STRING_WITH_LEN(" and "));
-  args[2]->print(str, query_type);
+  args[2]->print(str);
   str->append(')');
 }
 
@@ -2841,26 +2834,26 @@ uint32_t Item_func_case::decimal_precision() const
     Fix this so that it prints the whole CASE expression
 */
 
-void Item_func_case::print(String *str, enum_query_type query_type)
+void Item_func_case::print(String *str)
 {
   str->append(STRING_WITH_LEN("(case "));
   if (first_expr_num != -1)
   {
-    args[first_expr_num]->print(str, query_type);
+    args[first_expr_num]->print(str);
     str->append(' ');
   }
   for (uint32_t i=0 ; i < ncases ; i+=2)
   {
     str->append(STRING_WITH_LEN("when "));
-    args[i]->print(str, query_type);
+    args[i]->print(str);
     str->append(STRING_WITH_LEN(" then "));
-    args[i+1]->print(str, query_type);
+    args[i+1]->print(str);
     str->append(' ');
   }
   if (else_expr_num != -1)
   {
     str->append(STRING_WITH_LEN("else "));
-    args[else_expr_num]->print(str, query_type);
+    args[else_expr_num]->print(str);
     str->append(' ');
   }
   str->append(STRING_WITH_LEN("end)"));
@@ -3801,14 +3794,14 @@ void Item_func_in::fix_length_and_dec()
 }
 
 
-void Item_func_in::print(String *str, enum_query_type query_type)
+void Item_func_in::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   if (negated)
     str->append(STRING_WITH_LEN(" not"));
   str->append(STRING_WITH_LEN(" in ("));
-  print_args(str, 1, query_type);
+  print_args(str, 1);
   str->append(STRING_WITH_LEN("))"));
 }
 
@@ -4040,15 +4033,7 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
     Item *new_item= item->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (new_item != item)
-      getSession().change_item_tree(li.ref(), new_item);
+    *li.ref()= new_item;
   }
   return Item_func::transform(transformer, arg);
 }
@@ -4173,19 +4158,19 @@ void Item_cond::update_used_tables()
 }
 
 
-void Item_cond::print(String *str, enum_query_type query_type)
+void Item_cond::print(String *str)
 {
   str->append('(');
   List<Item>::iterator li(list.begin());
   Item *item;
   if ((item=li++))
-    item->print(str, query_type);
+    item->print(str);
   while ((item=li++))
   {
     str->append(' ');
     str->append(func_name());
     str->append(' ');
-    item->print(str, query_type);
+    item->print(str);
   }
   str->append(')');
 }
@@ -4365,10 +4350,10 @@ int64_t Item_func_isnotnull::val_int()
 }
 
 
-void Item_func_isnotnull::print(String *str, enum_query_type query_type)
+void Item_func_isnotnull::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" is not null)"));
 }
 
@@ -5176,37 +5161,29 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
     Item *new_item= item->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (new_item != item)
-      getSession().change_item_tree((Item **) it.ref(), new_item);
+    *(Item **)it.ref()= new_item;
   }
   return Item_func::transform(transformer, arg);
 }
 
-void Item_equal::print(String *str, enum_query_type query_type)
+void Item_equal::print(String *str)
 {
   str->append(func_name());
   str->append('(');
   List<Item_field>::iterator it(fields.begin());
   Item *item;
   if (const_item)
-    const_item->print(str, query_type);
+    const_item->print(str);
   else
   {
     item= it++;
-    item->print(str, query_type);
+    item->print(str);
   }
   while ((item= it++))
   {
     str->append(',');
     str->append(' ');
-    item->print(str, query_type);
+    item->print(str);
   }
   str->append(')');
 }

@@ -106,6 +106,11 @@ bool QueueConsumer::process()
             si= sql.insert(si, '\\');
             ++si;
           }
+          else if (*si == ';')
+          {
+            si= sql.insert(si, '\\');
+            ++si;  /* advance back to the semicolon */
+          }
         }
       }
     }
@@ -238,6 +243,7 @@ bool QueueConsumer::convertToSQL(const message::Transaction &transaction,
       case message::Statement::CREATE_TABLE:
       case message::Statement::ALTER_TABLE:
       case message::Statement::DROP_TABLE:
+      case message::Statement::RAW_SQL:  /* currently ALTER TABLE or RENAME */
       {
         segmented_sql.push_back("COMMIT");
         break;

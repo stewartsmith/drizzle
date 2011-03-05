@@ -72,6 +72,7 @@
 #include <drizzled/charset.h>
 #include <drizzled/typelib.h>
 #include <drizzled/configmake.h>
+#include <drizzled/util/find_ptr.h>
 
 #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
 
@@ -1663,17 +1664,14 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    var_hash_t::iterator iter= var_hash.find(save_var_name_str);
-    if (iter == var_hash.end())
+    if (var_hash_t::mapped_type* ptr= find_ptr(var_hash, save_var_name_str))
+      v= *ptr;
+    else
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
       strncpy(buff, save_var_name, length);
       buff[length]= '\0';
       v= var_from_env(buff, "");
-    }
-    else
-    {
-      v= iter->second;
     }
     var_name--;  /* Point at last character */
   }
@@ -1700,9 +1698,8 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  var_hash_t::iterator iter= var_hash.find(var_name);
-  if (iter != var_hash.end())
-    return iter->second;
+  if (var_hash_t::mapped_type* ptr= find_ptr(var_hash, var_name))
+    return *ptr;
   return var_hash[var_name] = var_init(0, name, len, "", 0);
 }
 
@@ -3375,14 +3372,12 @@ static void fill_global_error_names()
   drizzle_result_free(&res);
 }
 
-static uint32_t get_errcode_from_name(char *error_name, char *error_end)
+static uint32_t get_errcode_from_name(const char *error_name, const char *error_end)
 {
-  size_t err_name_len= error_end - error_name;
-  string error_name_s(error_name, err_name_len);
+  string error_name_s(error_name, error_end);
 
-  ErrorCodes::iterator it= global_error_names.find(error_name_s);
-  if (it != global_error_names.end())
-    return it->second;
+  if (ErrorCodes::mapped_type* ptr= find_ptr(global_error_names, error_name_s))
+    return *ptr;
 
   die("Unknown SQL error name '%s'", error_name_s.c_str());
   return 0;

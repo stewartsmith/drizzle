@@ -47,10 +47,10 @@ void Item_func_conv_charset::fix_length_and_dec()
   max_length = args[0]->max_length*conv_charset->mbmaxlen;
 }
 
-void Item_func_conv_charset::print(String *str, enum_query_type query_type)
+void Item_func_conv_charset::print(String *str)
 {
   str->append(STRING_WITH_LEN("convert("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" using "));
   str->append(conv_charset->csname);
   str->append(')');

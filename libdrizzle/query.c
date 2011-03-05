@@ -352,8 +352,9 @@ size_t drizzle_escape_string(char *to, const char *from, size_t from_size)
 {
   size_t to_size= 0;
   char newchar;
+  const char *end;
 
-  while (from_size > 0)
+  for (end= from + from_size; from < end; from++)
   {
     newchar= 0;
     /* All multi-byte UTF8 characters have the high bit set for all bytes. */
@@ -374,23 +375,28 @@ size_t drizzle_escape_string(char *to, const char *from, size_t from_size)
         newchar= 'Z';
         break;
       case '\\':
+        newchar= '\\';
+        break;
       case '\'':
+        newchar= '\'';
+        break;
       case '"':
-        *to++= '\\';
-        to_size++;
+        newchar= '"';
+        break;
       default:
         break;
       }
     }
-    if (newchar != 0)
+    if (newchar != '\0')
     {
       *to++= '\\';
       *to++= newchar;
       to_size++;
     }
-    else 
-      *to++= *from++;
-    from_size--;
+    else
+    { 
+      *to++= *from;
+    }
     to_size++;
   }
 

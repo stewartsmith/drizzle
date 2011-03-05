@@ -49,7 +49,7 @@ public:
     max_length=args[0]->max_length;
   }
   virtual const char* cast_type() const= 0;
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 class Item_typecast_maybe_null :public Item_typecast
@@ -81,7 +81,7 @@ public:
   const char* cast_type() const { return "char"; }
   String *val_str(String *a);
   void fix_length_and_dec();
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 class Item_date_typecast :public Item_typecast_maybe_null

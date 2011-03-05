@@ -356,15 +356,7 @@ Item *Item_func::transform(Item_transformer transformer, unsigned char *argument
       Item *new_item= (*arg)->transform(transformer, argument);
       if (!new_item)
         return 0;
-
-      /*
-        Session::change_item_tree() should be called only if the tree was
-        really transformed, i.e. when a new item has been created.
-        Otherwise we'll be allocating a lot of unnecessary memory for
-        change records at each execution.
-      */
-      if (*arg != new_item)
-        getSession().change_item_tree(arg, new_item);
+      *arg= new_item;
     }
   }
   return (this->*transformer)(argument);
@@ -412,7 +404,7 @@ Item *Item_func::compile(Item_analyzer analyzer, unsigned char **arg_p,
       unsigned char *arg_v= *arg_p;
       Item *new_item= (*arg)->compile(analyzer, &arg_v, transformer, arg_t);
       if (new_item && *arg != new_item)
-        current_session->change_item_tree(arg, new_item);
+        *arg= new_item;
     }
   }
   return (this->*transformer)(arg_t);
@@ -456,37 +448,37 @@ table_map Item_func::not_null_tables() const
 }
 
 
-void Item_func::print(String *str, enum_query_type query_type)
+void Item_func::print(String *str)
 {
   str->append(func_name());
   str->append('(');
-  print_args(str, 0, query_type);
+  print_args(str, 0);
   str->append(')');
 }
 
 
-void Item_func::print_args(String *str, uint32_t from, enum_query_type query_type)
+void Item_func::print_args(String *str, uint32_t from)
 {
   for (uint32_t i=from ; i < arg_count ; i++)
   {
     if (i != from)
       str->append(',');
-    args[i]->print(str, query_type);
+    args[i]->print(str);
   }
 }
 
 
-void Item_func::print_op(String *str, enum_query_type query_type)
+void Item_func::print_op(String *str)
 {
   str->append('(');
   for (uint32_t i=0 ; i < arg_count-1 ; i++)
   {
-    args[i]->print(str, query_type);
+    args[i]->print(str);
     str->append(' ');
     str->append(func_name());
     str->append(' ');
   }
-  args[arg_count-1]->print(str, query_type);
+  args[arg_count-1]->print(str);
   str->append(')');
 }
 
