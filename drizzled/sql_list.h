@@ -395,6 +395,11 @@ public:
   {
     return *(T*)current->info;
   }
+
+  T* operator->()
+  {
+    return (T*)current->info;
+  }
 };
 
 } /* namespace drizzled */
