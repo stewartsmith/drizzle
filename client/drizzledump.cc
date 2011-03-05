@@ -247,6 +247,7 @@ static void write_header(char *db_name)
       cout << " (Drizzle server)";
     cout << endl << endl;
   }
+
 } /* write_header */
 
 
@@ -430,16 +431,24 @@ static int do_flush_tables_read_lock()
   return 0;
 }
 
-static int do_unlock_tables()
-{
-  db_connection->queryNoResult("UNLOCK TABLES");
-  return 0;
-}
-
 static int start_transaction()
 {
   db_connection->queryNoResult("SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ");
   db_connection->queryNoResult("START TRANSACTION WITH CONSISTENT SNAPSHOT");
+
+  if (db_connection->getServerType() == ServerDetect::SERVER_DRIZZLE_FOUND)
+  {
+    drizzle_result_st *result;
+    drizzle_row_t row;
+    std::string query("SELECT COMMIT_ID, ID FROM DATA_DICTIONARY.SYS_REPLICATION_LOG WHERE COMMIT_ID=(SELECT MAX(COMMIT_ID) FROM DATA_DICTIONARY.SYS_REPLICATION_LOG)");
+    result= db_connection->query(query);
+    if ((row= drizzle_row_next(result)))
+    {
+      cout << "-- SYS_REPLICATION_LOG: COMMIT_ID = " << row[0] << ", ID = " << row[1] << endl << endl;
+    }
+    db_connection->freeResult(result);
+  }
+
   return 0;
 }
 
@@ -771,8 +780,6 @@ try
     goto err;
   if (opt_lock_all_tables)
     db_connection->queryNoResult("FLUSH LOGS");
-  if (opt_single_transaction && do_unlock_tables()) /* unlock but no commit! */
-    goto err;
 
   if (opt_alldbs)
   {
