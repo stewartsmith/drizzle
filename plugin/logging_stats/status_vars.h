@@ -30,7 +30,11 @@
 #ifndef PLUGIN_LOGGING_STATS_STATUS_VARS_H
 #define PLUGIN_LOGGING_STATS_STATUS_VARS_H
 
-#include <drizzled/session.h>
+namespace drizzled 
+{ 
+  class Session;
+  class system_status_var;
+}
 
 class StatusVars
 {
