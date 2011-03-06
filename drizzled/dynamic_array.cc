@@ -24,8 +24,6 @@ using namespace std;
 
 namespace drizzled {
 
-static bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements);
-
 /*
   Initiate dynamic array
 
@@ -177,111 +175,6 @@ unsigned char *pop_dynamic(DYNAMIC_ARRAY *array)
   array->set_size(array->size() - 1);
   return array->buffer+(array->size() * array->size_of_element);
 }
-
-/*
-  Replace element in array with given element and index
-
-  SYNOPSIS
-    set_dynamic()
-      array
-      element	Element to be inserted
-      idx	Index where element is to be inserted
-
-  DESCRIPTION
-    set_dynamic() replaces element in array.
-    If idx > max_element insert new element. Allocate memory if needed.
-
-  RETURN VALUE
-    true	Idx was out of range and allocation of new memory failed
-    false	Ok
-*/
-
-bool set_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
-{
-  if (idx >= array->size())
-  {
-    if (idx >= array->max_element && allocate_dynamic(array, idx))
-      return true;
-    memset(array->buffer+array->size()*array->size_of_element, 0,
-           (idx - array->size())*array->size_of_element);
-    array->set_size(idx+1);
-  }
-  memcpy(array->buffer+(idx * array->size_of_element),element,
-	 (size_t) array->size_of_element);
-  return false;
-}
-
-
-/*
-  Ensure that dynamic array has enough elements
-
-  SYNOPSIS
-    allocate_dynamic()
-    array
-    max_elements        Numbers of elements that is needed
-
-  NOTES
-   Any new allocated element are NOT initialized
-
-  RETURN VALUE
-    false	Ok
-    true	Allocation of new memory failed
-*/
-
-static bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
-{
-  if (max_elements >= array->max_element)
-  {
-    uint32_t size;
-    unsigned char *new_ptr;
-    size= (max_elements + array->alloc_increment)/array->alloc_increment;
-    size*= array->alloc_increment;
-    if (array->buffer == (unsigned char *)(array + 1))
-    {
-       /*
-         In this senerio, the buffer is statically preallocated,
-         so we have to create an all-new malloc since we overflowed
-       */
-       if (!(new_ptr= (unsigned char *) malloc(size *
-                                               array->size_of_element)))
-         return 0;
-       memcpy(new_ptr, array->buffer,
-              array->size() * array->size_of_element);
-     }
-     else
-
-
-    if (!(new_ptr=(unsigned char*) realloc(array->buffer,
-                                        size* array->size_of_element)))
-      return true;
-    array->buffer= new_ptr;
-    array->max_element= size;
-  }
-  return false;
-}
-
-
-/*
-  Get an element from array by given index
-
-  SYNOPSIS
-    get_dynamic()
-      array
-      unsigned char*	Element to be returned. If idx > elements contain zeroes.
-      idx	Index of element wanted.
-*/
-
-void get_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
-{
-  if (idx >= array->size())
-  {
-    memset(element, 0, array->size_of_element);
-    return;
-  }
-  memcpy(element,array->buffer+idx*array->size_of_element,
-         (size_t) array->size_of_element);
-}
-
 
 /*
   Empty array by freeing all memory

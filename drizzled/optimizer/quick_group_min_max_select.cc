@@ -219,19 +219,22 @@ bool optimizer::QuickGroupMinMaxSelect::add_range(optimizer::SEL_ARG *sel_range)
 }
 
 
+static void get_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
+{
+  memcpy(element,array->buffer+idx*array->size_of_element,
+         (size_t) array->size_of_element);
+}
+
 void optimizer::QuickGroupMinMaxSelect::adjust_prefix_ranges()
 {
   if (quick_prefix_select &&
       group_prefix_len < quick_prefix_select->max_used_key_length)
   {
-    DYNAMIC_ARRAY *arr= NULL;
-    uint32_t inx;
-
-    for (inx= 0, arr= &quick_prefix_select->ranges; inx < arr->size(); inx++)
+    DYNAMIC_ARRAY& arr= quick_prefix_select->ranges;
+    for (size_t inx= 0; inx < arr.size(); inx++)
     {
       optimizer::QuickRange *range= NULL;
-
-      get_dynamic(arr, (unsigned char*)&range, inx);
+      get_dynamic(&arr, (unsigned char*)&range, inx);
       range->flag &= ~(NEAR_MIN | NEAR_MAX);
     }
   }

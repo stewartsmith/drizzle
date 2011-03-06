@@ -54,13 +54,8 @@ private:
 bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
                                    void *init_buffer, uint32_t init_alloc,
                                    uint32_t alloc_increment);
-/* init_dynamic_array() function is deprecated */
-bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                  uint32_t init_alloc,uint32_t alloc_increment);
 unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
 unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
-bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
-void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
 void delete_dynamic(DYNAMIC_ARRAY *array);
 
 } /* namespace drizzled */
