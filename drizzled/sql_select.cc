@@ -520,56 +520,6 @@ static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b)
 }
 
 
-#if 0
-unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
-{
-  if (array->elements == array->max_element)
-  {
-    char *new_ptr;
-    if (array->buffer == (unsigned char *)(array + 1))
-    {
-      /*
-        In this senerio, the buffer is statically preallocated,
-        so we have to create an all-new malloc since we overflowed
-      */
-      if (!(new_ptr= (char *) malloc((array->max_element+
-                                     array->alloc_increment) *
-                                     array->size_of_element)))
-        return 0;
-      memcpy(new_ptr, array->buffer,
-             array->elements * array->size_of_element);
-    }
-    else if (!(new_ptr= (char*) realloc(array->buffer,
-                                        (array->max_element+
-                                         array->alloc_increment)*
-                                        array->size_of_element)))
-      return 0;
-    array->buffer= (unsigned char*) new_ptr;
-    array->max_element+=array->alloc_increment;
-  }
-  return array->buffer+(array->elements++ * array->size_of_element);
-}
-#endif
-
-static bool set_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
-{
-  if (idx >= array->size())
-  {
-    assert(idx < array->max_element);
-    /*
-    if (idx >= array->max_element && allocate_dynamic(array, idx))
-      return true;
-    */
-    memset(array->buffer+array->size()*array->size_of_element, 0,
-           (idx - array->size())*array->size_of_element);
-    array->set_size(idx+1);
-  }
-  memcpy(array->buffer+(idx * array->size_of_element),element,
-	 (size_t) array->size_of_element);
-  return false;
-}
-
-
 /**
   Update keyuse array with all possible keys we can use to fetch rows.
 
@@ -732,7 +682,7 @@ bool update_ref_and_keys(Session *session,
         save_pos++;
       }
       i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
-      set_dynamic(keyuse, (unsigned char*) &key_end, i);
+      reinterpret_cast<optimizer::KeyUse*>(keyuse->buffer)[i] = key_end;
       keyuse->set_size(i);
     }
   }
