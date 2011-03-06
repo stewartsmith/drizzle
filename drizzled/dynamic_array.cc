@@ -17,14 +17,12 @@
 
 #include <config.h>
 #include <drizzled/internal/my_sys.h>
-#include <drizzled/internal/m_string.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements);
 
@@ -66,7 +64,7 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
     init_alloc=alloc_increment;
     init_buffer= 0;
   }
-  array->elements=0;
+  array->set_size(0);
   array->max_element=init_alloc;
   array->alloc_increment=alloc_increment;
   array->size_of_element=element_size;
@@ -96,12 +94,12 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
 static void insert_dynamic(DYNAMIC_ARRAY *array, void* element)
 {
   unsigned char* buffer;
-  if (array->elements == array->max_element)
+  if (array->size() == array->max_element)
     buffer= alloc_dynamic(array);
   else
   {
-    buffer= array->buffer+(array->elements * array->size_of_element);
-    array->elements++;
+    buffer= array->buffer+(array->size() * array->size_of_element);
+    array->set_size(array->size() + 1);
   }
   memcpy(buffer,element, array->size_of_element);
 }
@@ -131,7 +129,7 @@ void DYNAMIC_ARRAY::push_back(void* v)
 
 unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
 {
-  if (array->elements == array->max_element)
+  if (array->size() == array->max_element)
   {
     char *new_ptr;
     if (array->buffer == (unsigned char *)(array + 1))
@@ -145,7 +143,7 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
                                      array->size_of_element)))
         return 0;
       memcpy(new_ptr, array->buffer,
-             array->elements * array->size_of_element);
+             array->size() * array->size_of_element);
     }
     else if (!(new_ptr= (char*) realloc(array->buffer,
                                         (array->max_element+
@@ -155,7 +153,8 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
     array->buffer= (unsigned char*) new_ptr;
     array->max_element+=array->alloc_increment;
   }
-  return array->buffer+(array->elements++ * array->size_of_element);
+  array->set_size(array->size() + 1);
+  return array->buffer + ((array->size() - 1) * array->size_of_element);
 }
 
 
@@ -173,9 +172,10 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
 
 unsigned char *pop_dynamic(DYNAMIC_ARRAY *array)
 {
-  if (array->elements)
-    return array->buffer+(--array->elements * array->size_of_element);
-  return 0;
+  if (!array->size())
+    return 0;
+  array->set_size(array->size() - 1);
+  return array->buffer+(array->size() * array->size_of_element);
 }
 
 /*
@@ -198,13 +198,13 @@ unsigned char *pop_dynamic(DYNAMIC_ARRAY *array)
 
 bool set_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
 {
-  if (idx >= array->elements)
+  if (idx >= array->size())
   {
     if (idx >= array->max_element && allocate_dynamic(array, idx))
       return true;
-    memset(array->buffer+array->elements*array->size_of_element, 0,
-           (idx - array->elements)*array->size_of_element);
-    array->elements=idx+1;
+    memset(array->buffer+array->size()*array->size_of_element, 0,
+           (idx - array->size())*array->size_of_element);
+    array->set_size(idx+1);
   }
   memcpy(array->buffer+(idx * array->size_of_element),element,
 	 (size_t) array->size_of_element);
@@ -246,7 +246,7 @@ static bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
                                                array->size_of_element)))
          return 0;
        memcpy(new_ptr, array->buffer,
-              array->elements * array->size_of_element);
+              array->size() * array->size_of_element);
      }
      else
 
@@ -273,7 +273,7 @@ static bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
 
 void get_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
 {
-  if (idx >= array->elements)
+  if (idx >= array->size())
   {
     memset(element, 0, array->size_of_element);
     return;
@@ -297,13 +297,13 @@ void delete_dynamic(DYNAMIC_ARRAY *array)
     Just mark as empty if we are using a static buffer
   */
   if (array->buffer == (unsigned char *)(array + 1))
-    array->elements= 0;
+    array->set_size(0);
   else
   if (array->buffer)
   {
     free(array->buffer);
     array->buffer=0;
-    array->elements=array->max_element=0;
+    array->set_size(array->max_element=0);
   }
 }
 

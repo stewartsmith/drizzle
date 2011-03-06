@@ -227,7 +227,7 @@ void optimizer::QuickGroupMinMaxSelect::adjust_prefix_ranges()
     DYNAMIC_ARRAY *arr= NULL;
     uint32_t inx;
 
-    for (inx= 0, arr= &quick_prefix_select->ranges; inx < arr->elements; inx++)
+    for (inx= 0, arr= &quick_prefix_select->ranges; inx < arr->size(); inx++)
     {
       optimizer::QuickRange *range= NULL;
 

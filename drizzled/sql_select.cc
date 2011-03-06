@@ -683,7 +683,7 @@ bool update_ref_and_keys(Session *session,
       }
       i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
       set_dynamic(keyuse, (unsigned char*) &key_end, i);
-      keyuse->elements= i;
+      keyuse->set_size(i);
     }
   }
   return false;

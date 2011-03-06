@@ -29,7 +29,6 @@ class DYNAMIC_ARRAY
 {
 public:
   unsigned char *buffer;
-  size_t elements;
   size_t max_element;
   uint32_t alloc_increment;
   uint32_t size_of_element;
@@ -40,6 +39,13 @@ public:
   {
     return elements;
   }
+
+  void set_size(size_t v)
+  {
+    elements = v;
+  }
+private:
+  size_t elements;
 };
 
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
