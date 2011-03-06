@@ -823,7 +823,7 @@ int Join::optimize()
       (select_options & SELECT_DESCRIBE) &&
       select_lex->master_unit() == &session->getLex()->unit) // upper level SELECT
   {
-    conds=new Item_int((int64_t) 0,1);  // Always false
+    conds=new Item_int(0, 1);  // Always false
   }
 
   if (make_join_select(this, select, conds))
@@ -1513,7 +1513,7 @@ void Join::exec()
     session->set_proc_info("Copying to tmp table");
     if (! curr_join->sort_and_group && curr_join->const_tables != curr_join->tables)
       curr_join->join_tab[curr_join->const_tables].sorted= 0;
-    if ((tmp_error= do_select(curr_join, (List<Item> *) 0, curr_tmp_table)))
+    if ((tmp_error= do_select(curr_join, NULL, curr_tmp_table)))
     {
       error= tmp_error;
       return;
@@ -1612,7 +1612,7 @@ void Join::exec()
               exec_tmp_table2= create_tmp_table(session,
                                                 &curr_join->tmp_table_param,
                                                 *curr_all_fields,
-                                                (Order*) 0,
+                                                NULL,
                                                 curr_join->select_distinct &&
                                                 !curr_join->group_list,
                                                 1, curr_join->select_options,
@@ -1664,7 +1664,7 @@ void Join::exec()
         curr_join->join_tab[curr_join->const_tables].sorted= 0;
       
       if (setup_sum_funcs(curr_join->session, curr_join->sum_funcs) 
-        || (tmp_error= do_select(curr_join, (List<Item> *) 0, curr_tmp_table)))
+        || (tmp_error= do_select(curr_join, NULL, curr_tmp_table)))
       {
         error= tmp_error;
         return;
@@ -2324,7 +2324,7 @@ bool Join::rollup_init()
           Item* new_item= new Item_func_rollup_const(item);
           if (!new_item)
             return 1;
-          new_item->fix_fields(session, (Item **) 0);
+          new_item->fix_fields(session, NULL);
           *it.ref()= new_item;
           for (Order *tmp= group_tmp; tmp; tmp= tmp->next)
           {
@@ -4727,7 +4727,7 @@ static bool make_join_select(Join *join,
         COND *const_cond=
           make_cond_for_table(cond,
               join->const_table_map,
-              (table_map) 0, 1);
+              0, 1);
         for (JoinTable *tab= join->join_tab+join->const_tables;
             tab < join->join_tab+join->tables ; tab++)
         {
@@ -5750,7 +5750,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
       if (!table->cursor->stats.records && !embedding)
       {						// Empty table
         s->dependent= 0;                        // Ignore LEFT JOIN depend.
-        set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+        set_position(join, const_count++, s, NULL);
         continue;
       }
       outer_join|= table->map;
@@ -5778,7 +5778,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 	      (table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
         !join->no_const_tables)
     {
-      set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+      set_position(join, const_count++, s, NULL);
     }
   }
   stat_vector[i]=0;
@@ -5902,7 +5902,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
             table->mark_as_null_row();
             found_const_table_map|= table->map;
             join->const_table_map|= table->map;
-            set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+            set_position(join, const_count++, s, NULL);
             goto more_const_tables_found;
            }
           keyuse++;
@@ -5921,7 +5921,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           int tmp= 0;
           s->type= AM_SYSTEM;
           join->const_table_map|=table->map;
-          set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+          set_position(join, const_count++, s, NULL);
           partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
           if ((tmp= s->joinReadConstTable(partial_pos)))
           {
@@ -6069,7 +6069,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           caller to abort with a zero row result.
         */
         join->const_table_map|= s->table->map;
-        set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+        set_position(join, const_count++, s, NULL);
         s->type= AM_CONST;
         if (*s->on_expr_ref)
         {
@@ -6175,7 +6175,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
 */
 static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 {
-  table_map map= (table_map) 0;
+  table_map map= 0;
 
   if (!a)
     a= b;					// Only one need to be given

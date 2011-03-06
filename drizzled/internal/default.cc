@@ -41,7 +41,7 @@
 #include <drizzled/typelib.h>
 #include <drizzled/configmake.h>
 #include <drizzled/gettext.h>
-
+#include <drizzled/dynamic_array.h>
 #include <drizzled/cached_directory.h>
 
 #ifdef HAVE_SYS_STAT_H

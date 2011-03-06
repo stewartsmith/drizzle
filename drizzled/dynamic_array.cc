@@ -16,9 +16,9 @@
 /* Handling of arrays that can grow dynamicly. */
 
 #include <config.h>
-#include <drizzled/internal/my_sys.h>
-
 #include <algorithm>
+#include <drizzled/dynamic_array.h>
+#include <drizzled/internal/my_sys.h>
 
 using namespace std;
 
