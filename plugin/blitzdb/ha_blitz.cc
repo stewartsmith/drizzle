@@ -21,6 +21,7 @@
 
 #include "ha_blitz.h"
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/session.h>
 
 using namespace std;
 using namespace drizzled;
