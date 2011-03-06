@@ -130,7 +130,7 @@ AC_DEFUN([PANDORA_WARNINGS],[
       
     ],[
       m4_if(PW_LESS_WARNINGS,[no],[
-        BASE_WARNINGS_FULL="${W_CONVERSION} -Wstrict-aliasing"
+        BASE_WARNINGS_FULL="${W_CONVERSION} -Wstrict-aliasing -Wswitch-enum "
         CC_WARNINGS_FULL="-Wswitch-default -Wswitch-enum -Wwrite-strings"
         CXX_WARNINGS_FULL="-Weffc++ -Wold-style-cast"
         NO_OLD_STYLE_CAST="-Wno-old-style-cast"
