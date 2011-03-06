@@ -247,6 +247,7 @@ static void write_header(char *db_name)
       cout << " (Drizzle server)";
     cout << endl << endl;
   }
+
 } /* write_header */
 
 
@@ -430,16 +431,24 @@ static int do_flush_tables_read_lock()
   return 0;
 }
 
-static int do_unlock_tables()
-{
-  db_connection->queryNoResult("UNLOCK TABLES");
-  return 0;
-}
-
 static int start_transaction()
 {
   db_connection->queryNoResult("SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ");
   db_connection->queryNoResult("START TRANSACTION WITH CONSISTENT SNAPSHOT");
+
+  if (db_connection->getServerType() == ServerDetect::SERVER_DRIZZLE_FOUND)
+  {
+    drizzle_result_st *result;
+    drizzle_row_t row;
+    std::string query("SELECT COMMIT_ID, ID FROM DATA_DICTIONARY.SYS_REPLICATION_LOG WHERE COMMIT_ID=(SELECT MAX(COMMIT_ID) FROM DATA_DICTIONARY.SYS_REPLICATION_LOG)");
+    result= db_connection->query(query);
+    if ((row= drizzle_row_next(result)))
+    {
+      cout << "-- SYS_REPLICATION_LOG: COMMIT_ID = " << row[0] << ", ID = " << row[1] << endl << endl;
+    }
+    db_connection->freeResult(result);
+  }
+
   return 0;
 }
 
@@ -524,6 +533,8 @@ try
   _("Do not make a UTF8 connection to MySQL, use if you have UTF8 data in a non-UTF8 table"))
   ;
 
+  const char* unix_user= getlogin();
+
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -532,7 +543,7 @@ try
   _("Password to use when connecting to server. If password is not given it's solicited on the tty."))
   ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
   _("Port number to use for connection."))
-  ("user,u", po::value<string>(&current_user)->default_value(""),
+  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql or drizzle)."))
@@ -769,8 +780,6 @@ try
     goto err;
   if (opt_lock_all_tables)
     db_connection->queryNoResult("FLUSH LOGS");
-  if (opt_single_transaction && do_unlock_tables()) /* unlock but no commit! */
-    goto err;
 
   if (opt_alldbs)
   {
