@@ -157,12 +157,6 @@ void xid_cache_insert(XID *xid, enum xa_states xa_state)
   my_hash_insert(&xid_cache, (unsigned char*)xs);
 }
 
-bool xid_cache_insert(XID_STATE *xid_state)
-{
-  lock_guard_t lock(LOCK_xid_cache);
-  return my_hash_insert(&xid_cache, (unsigned char*)xid_state);
-}
-
 void xid_cache_delete(XID_STATE *xid_state)
 {
   lock_guard_t lock(LOCK_xid_cache);
