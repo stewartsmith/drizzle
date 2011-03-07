@@ -394,7 +394,7 @@ bool CreateField::init(Session *,
   {
     my_error((fld_type == DRIZZLE_TYPE_VARCHAR) ?  ER_TOO_BIG_FIELDLENGTH : ER_TOO_BIG_DISPLAYWIDTH,
               MYF(0),
-              fld_name, max_field_charlength);
+             fld_name, max_field_charlength / (charset? charset->mbmaxlen : 1));
     return true;
   }
   fld_type_modifier&= AUTO_INCREMENT_FLAG;
