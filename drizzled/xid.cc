@@ -111,56 +111,21 @@ uint32_t XID::key_length() const
   return sizeof(gtrid_length)+sizeof(bqual_length)+gtrid_length+bqual_length;
 }
 
-/***************************************************************************
-  Handling of XA id cacheing
-***************************************************************************/
-typedef boost::lock_guard<boost::mutex> lock_guard_t;
-
-boost::mutex LOCK_xid_cache;
-HASH xid_cache;
-
-static unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length, bool)
-{
-  *length=((XID_STATE*)ptr)->xid.key_length();
-  return (unsigned char*)((XID_STATE*)ptr)->xid.key();
-}
-
-static void xid_free_hash(void *ptr)
-{
-  XID_STATE *state= (XID_STATE *)ptr;
-  if (state->in_session == false)
-    delete state;
-}
-
 bool xid_cache_init()
 {
-  return hash_init(&xid_cache, &my_charset_bin, 100, 0, 0, xid_get_hash_key, xid_free_hash, 0);
+  return false;
 }
 
 void xid_cache_free()
 {
-  if (hash_inited(&xid_cache))
-    hash_free(&xid_cache);
 }
 
-void xid_cache_insert(XID *xid, enum xa_states xa_state)
+void xid_cache_insert(XID*, xa_states)
 {
-  lock_guard_t lock(LOCK_xid_cache);
-  if (hash_search(&xid_cache, xid->key(), xid->key_length()))
-    return;
-  XID_STATE* xs= new XID_STATE;
-  if (not xs)
-    return;
-  xs->xa_state=xa_state;
-  xs->xid.set(xid);
-  xs->in_session=0;
-  my_hash_insert(&xid_cache, (unsigned char*)xs);
 }
 
-void xid_cache_delete(XID_STATE *xid_state)
+void xid_cache_delete(XID_STATE*)
 {
-  lock_guard_t lock(LOCK_xid_cache);
-  hash_delete(&xid_cache, (unsigned char *)xid_state);
 }
 
 } /* namespace drizzled */
