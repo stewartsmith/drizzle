@@ -144,6 +144,8 @@ inline bool PolicyItem::isRestricted()
   return action == POLICY_DENY ? true : false;
 }
 
+void clearPolicyItemList(PolicyItemList policies);
+
 class Policy :
   public drizzled::plugin::Authorization
 {
@@ -164,6 +166,7 @@ public:
 
   bool loadFile();
   std::stringstream &getError() { return error; }
+  ~Policy();
 private:
   bool restrictObject(const drizzled::identifier::User &user_ctx,
                                    const std::string &obj, const PolicyItemList &policies,

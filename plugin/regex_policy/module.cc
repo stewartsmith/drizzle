@@ -156,6 +156,25 @@ bool Policy::loadFile()
   }
 }
 
+void clearPolicyItemList(PolicyItemList policies)
+{
+  for (PolicyItemList::iterator x= policies.begin() ; x != policies.end() ; ++x)
+  {
+    delete *x;
+    *x= NULL;
+  }
+} 
+
+Policy::~Policy()
+{
+  clearPolicyItemList(table_policies);
+  clearPolicyItemList(process_policies);
+  clearPolicyItemList(schema_policies);
+  delete table_check_cache;
+  delete process_check_cache;
+  delete schema_check_cache;
+}
+
 bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
                                    const string &obj, const PolicyItemList &policies,
                                    CheckMap **check_cache)
