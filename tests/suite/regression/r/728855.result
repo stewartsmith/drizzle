@@ -1,0 +1,5 @@
+CREATE TABLE t1 (a blob default '');
+drop table t1;
+CREATE TABLE t1 (a blob);
+ALTER TABLE t1 ALTER a SET DEFAULT '';
+DROP TABLE t1;
