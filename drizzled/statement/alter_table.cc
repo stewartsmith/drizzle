@@ -339,21 +339,8 @@ static bool prepare_alter_table(Session *session,
 
       if (alter != alter_info->alter_list.end())
       {
-        if (def->sql_type == DRIZZLE_TYPE_BLOB)
-        {
-          my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
-          return true;
-        }
+        def->setDefaultValue(alter->def, NULL);
 
-        if ((def->def= alter->def))
-        {
-          /* Use new default */
-          def->flags&= ~NO_DEFAULT_VALUE_FLAG;
-        }
-        else
-        {
-          def->flags|= NO_DEFAULT_VALUE_FLAG;
-        }
         alter_info->alter_list.erase(alter);
       }
     }

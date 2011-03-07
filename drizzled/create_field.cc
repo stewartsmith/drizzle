@@ -358,6 +358,10 @@ bool CreateField::setDefaultValue(Item *default_value_item,
   {
     flags|= NO_DEFAULT_VALUE_FLAG;
   }
+  else
+  {
+    flags&= ~NO_DEFAULT_VALUE_FLAG;
+  }
 
   if (sql_type == DRIZZLE_TYPE_BLOB && default_value_item)
   {
