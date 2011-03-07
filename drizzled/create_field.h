@@ -121,14 +121,14 @@ public:
             char *length,
             char *decimals,
             uint32_t type_modifier,
-            Item *default_value,
-            Item *on_update_value,
             LEX_STRING *comment,
             char *change,
             List<String> *interval_list,
             const CHARSET_INFO * const cs,
             uint32_t uint_geom_type,
             enum column_format_type column_format);
+
+  bool setDefaultValue(Item *default_value, Item *on_update_item);
 };
 
 std::ostream& operator<<(std::ostream& output, const CreateField &field);
