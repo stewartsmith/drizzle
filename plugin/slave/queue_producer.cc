@@ -72,7 +72,7 @@ bool QueueProducer::process()
   }
 
   /* Keep getting events until caught up */
-  enum error_t err;
+  enum drizzled::error_t err;
   while ((err= (queryForReplicationEvents(_saved_max_commit_id))) == EE_OK)
   {}
 
@@ -373,7 +373,7 @@ bool QueueProducer::queueInsert(const char *trx_id,
 }
 
 
-enum error_t QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
+enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
 {
   vector<uint64_t> trx_id_list;
 
