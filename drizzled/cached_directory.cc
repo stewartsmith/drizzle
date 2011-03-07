@@ -25,9 +25,9 @@
  *   Implementation of CachedDirectory class.
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/definitions.h"
+#include <drizzled/definitions.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -36,7 +36,8 @@
 #include <strings.h>
 #include <limits.h>
 
-#include "drizzled/cached_directory.h"
+#include <drizzled/cached_directory.h>
+#include <drizzled/util/find_ptr.h>
 
 using namespace std;
 
@@ -78,10 +79,9 @@ CachedDirectory::CachedDirectory(const string& in_path, enum CachedDirectory::FI
 
 CachedDirectory::~CachedDirectory()
 {
-  for (Entries::iterator p= entries.begin(); p != entries.end(); ++p)
+  for (Entries::iterator iter= entries.begin(); iter != entries.end(); ++iter)
   {
-    if (*p)
-      delete *p;
+    delete *iter;
   }
   entries.clear();
 }
@@ -134,16 +134,9 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
     if (not allowed_exts.empty())
     {
       char *ptr= rindex(result->d_name, '.');
-
-      if (ptr)
+      if (ptr && allowed_exts.count(ptr))
       {
-        set<string>::iterator it;
-        it= allowed_exts.find(ptr);
-
-        if (it != allowed_exts.end())
-        {
-          entries.push_back(new Entry(result->d_name));
-        }
+        entries.push_back(new Entry(result->d_name));
       }
     }
     else

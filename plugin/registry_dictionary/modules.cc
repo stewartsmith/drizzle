@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/registry_dictionary/dictionary.h"
-#include "drizzled/module/library.h"
+#include <plugin/registry_dictionary/dictionary.h>
+#include <drizzled/module/library.h>
 
 using namespace std;
 using namespace drizzled;

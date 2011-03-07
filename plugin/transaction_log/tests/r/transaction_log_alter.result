@@ -25,11 +25,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 RENAME TO t1_new_name"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1_new_name;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -127,6 +129,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -224,6 +227,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1, t2;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -257,11 +261,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 RENAME to t1_new_name"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t2;
 Table	Create Table
@@ -302,11 +308,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -390,6 +398,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -421,11 +430,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL AFTER a"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -457,11 +468,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL FIRST"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -493,11 +506,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD COLUMN c CHAR(100) NOT NULL FIRST, ADD COLUMN d BLOB AFTER a"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -529,11 +544,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP COLUMN b"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -565,11 +582,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP COLUMN b, DROP COLUMN d"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -653,6 +672,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -686,11 +706,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DISABLE KEYS"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 ENABLE KEYS ;
 Warnings:
@@ -718,11 +740,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ENABLE KEYS"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -754,11 +778,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD INDEX b_key (b,a)"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 DROP INDEX b_key;
 Check transaction_log_entries
@@ -784,11 +810,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP INDEX b_key"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -820,11 +848,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ADD INDEX b_key (b(10),a)"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t1 DROP INDEX b_key;
 Check transaction_log_entries
@@ -850,11 +880,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 DROP INDEX b_key"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -951,6 +983,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1034,6 +1067,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1065,11 +1099,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ALTER COLUMN b SET DEFAULT 999"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1102,11 +1138,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 ALTER COLUMN b DROP DEFAULT"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1145,11 +1183,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 CHANGE COLUMN b new_b_name CHAR(500) DEFAULT \'I am not an int now\' FIRST"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1188,11 +1228,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 MODIFY COLUMN b CHAR(50) DEFAULT \'I am now a CHAR field\' AFTER c"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1291,6 +1333,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1330,11 +1373,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t1 MODIFY COLUMN b INT NOT NULL"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -1437,6 +1482,7 @@ segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 CREATE TABLE t2(a INT NOT NULL, b INT , PRIMARY KEY(a), KEY b_key (b));
 ALTER TABLE t2 ADD CONSTRAINT fk_constraint_t2 FOREIGN KEY(b) REFERENCES t1(b) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1463,11 +1509,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t2 ADD CONSTRAINT fk_constraint_t2 FOREIGN KEY(b) REFERENCES t1(b) ON DELETE SET NULL ON UPDATE CASCADE"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 ALTER TABLE t2 DROP FOREIGN KEY fk_constraint_t2 ;
 Check transaction_log_entries
@@ -1493,11 +1541,13 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
   sql: "ALTER TABLE t2 DROP FOREIGN KEY fk_constraint_t2"
+  raw_sql_schema: "test"
 }
 segment_id: 1
 end_segment: true
 
 
+COMMIT;
 
 DROP TABLE t2;
 DROP TABLE t1;

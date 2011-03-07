@@ -23,16 +23,15 @@
 #include <string>
 #include <boost/filesystem.hpp>
 
-#include "drizzled/constrained_value.h"
-#include "drizzled/set_var.h"
-#include "drizzled/show_type.h"
-#include "drizzled/typelib.h"
-#include "drizzled/item_result.h"
-#include "drizzled/base.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/lex_string.h"
+#include <drizzled/constrained_value.h>
+#include <drizzled/set_var.h>
+#include <drizzled/show_type.h>
+#include <drizzled/item_result.h>
+#include <drizzled/base.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/lex_string.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -40,6 +39,7 @@ namespace drizzled
 class sys_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
+typedef struct st_typelib TYPELIB;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -56,11 +56,9 @@ extern const char *first_keyword;
 extern const char *in_left_expr_name;
 extern const char *in_additional_cond;
 extern const char *in_having_cond;
-extern char glob_hostname[FN_REFLEN];
 extern boost::filesystem::path basedir;
 extern boost::filesystem::path pid_file;
 extern boost::filesystem::path secure_file_priv;
-extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
@@ -73,11 +71,12 @@ extern bool opt_endinfo;
 extern uint32_t volatile thread_running;
 extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
-extern char *default_tz_name;
 extern const char *opt_scheduler;
+extern size_t transaction_message_threshold;
 
 uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 
+DRIZZLED_API const std::string &getServerHostname();
 int sys_var_init();
 
 /**
@@ -314,6 +313,16 @@ public:
   SHOW_TYPE show_type() { return SHOW_SIZE; }
   unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
   { return (unsigned char*) value; }
+};
+
+class DRIZZLED_API sys_var_size_t_ptr_readonly :public sys_var_size_t_ptr
+{
+public:
+  sys_var_size_t_ptr_readonly(const char *name_arg,
+                            size_t *value_arg)
+    :sys_var_size_t_ptr(name_arg, value_arg)
+  {}
+  bool is_readonly() const { return 1; }
 };
 
 class DRIZZLED_API sys_var_bool_ptr :public sys_var
@@ -1070,29 +1079,6 @@ public:
   bool is_readonly(void) const { return 1; }
 };
 
-
-class DRIZZLED_API sys_var_session_time_zone :public sys_var_session
-{
-public:
-  sys_var_session_time_zone(const char *name_arg)
-    :sys_var_session(name_arg, NULL)
-  {
-    
-  }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool check_update_type(Item_result type)
-  {
-    return type != STRING_RESULT;		/* Only accept strings */
-  }
-  bool check_default(sql_var_t)
-  { return 0; }
-  bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
-  virtual void set_default(Session *session, sql_var_t type);
-};
-
-
 class DRIZZLED_API sys_var_microseconds :public sys_var_session
 {
   uint64_t drizzle_system_variables::*offset;
@@ -1149,7 +1135,6 @@ drizzle_show_var* enumerate_sys_vars(Session *session);
 void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
 sys_var *find_sys_var(const std::string &name);
-extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
 

@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/plugin/logging.h"
-#include "drizzled/gettext.h"
-#include "drizzled/errmsg_print.h"
+#include <config.h>
+#include <drizzled/plugin/logging.h>
+#include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
 
 #include <vector>
 #include <algorithm>
@@ -61,7 +61,7 @@ public:
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("logging '%s' pre() failed"),
                     handler->getName().c_str());
       return true;
@@ -86,7 +86,7 @@ public:
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("logging '%s' post() failed"),
                     handler->getName().c_str());
       return true;
@@ -110,7 +110,7 @@ public:
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("logging '%s' postEnd() failed"),
                     handler->getName().c_str());
       return true;
@@ -133,7 +133,7 @@ public:
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("logging '%s' resetCurrentScoreboard() failed"),
                     handler->getName().c_str());
       return true;

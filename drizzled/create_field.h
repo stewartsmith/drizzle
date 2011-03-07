@@ -20,11 +20,10 @@
 #ifndef DRIZZLED_CREATE_FIELD_H
 #define DRIZZLED_CREATE_FIELD_H
 
-#include "drizzled/field.h"
+#include <drizzled/field.h>
 
 namespace drizzled
 {
-
 class Item;
 typedef struct st_typelib TYPELIB;
 

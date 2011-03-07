@@ -19,15 +19,15 @@
  */
 
 /* This implements 'user defined functions' */
-#include "config.h"
+#include <config.h>
 
 #include <boost/unordered_map.hpp>
 
 #include <drizzled/gettext.h>
-#include "drizzled/plugin/function.h"
+#include <drizzled/plugin/function.h>
 #include <drizzled/function_container.h>
-
-#include "drizzled/util/string.h"
+#include <drizzled/util/find_ptr.h>
+#include <drizzled/util/string.h>
 
 namespace drizzled
 {
@@ -41,17 +41,17 @@ const plugin::Function::UdfMap &plugin::Function::getMap()
 
 bool plugin::Function::addPlugin(const plugin::Function *udf)
 {
-  if (FunctionContainer::getMap().find(udf->getName()) != FunctionContainer::getMap().end())
+  if (FunctionContainer::getMap().count(udf->getName()))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("A function named %s already exists!\n"),
                   udf->getName().c_str());
     return true;
   }
 
-  if (udf_registry.find(udf->getName()) != udf_registry.end())
+  if (udf_registry.count(udf->getName()))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("A function named %s already exists!\n"),
                   udf->getName().c_str());
     return true;
@@ -59,9 +59,10 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
 
   std::pair<UdfMap::iterator, bool> ret=
     udf_registry.insert(make_pair(udf->getName(), udf));
+
   if (ret.second == false)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Could not add Function!\n"));
     return true;
   }
@@ -75,14 +76,10 @@ void plugin::Function::removePlugin(const plugin::Function *udf)
   udf_registry.erase(udf->getName());
 }
 
-const plugin::Function *plugin::Function::get(const char *name, size_t length)
+const plugin::Function *plugin::Function::get(const std::string &name)
 {
-  UdfMap::iterator iter= udf_registry.find(std::string(name, length));
-  if (iter == udf_registry.end())
-  {
-    return NULL;
-  }
-  return (*iter).second;
+  UdfMap::mapped_type* ptr= find_ptr(udf_registry, name);
+  return ptr ? *ptr : NULL;
 }
 
 } /* namespace drizzled */

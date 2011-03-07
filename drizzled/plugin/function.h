@@ -21,14 +21,17 @@
 #define DRIZZLED_PLUGIN_FUNCTION_H
 
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/item/func.h"
+#include <drizzled/item/func.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
 
 #include <string>
 #include <vector>
 #include <functional>
 
-#include "drizzled/visibility.h"
+#include <boost/unordered_map.hpp>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -38,6 +41,12 @@ class Item_func;
 namespace memory
 {
   class Root;
+}
+
+namespace util
+{
+struct insensitive_hash;
+struct insensitive_equal_to;
 }
 
 namespace plugin
@@ -71,7 +80,7 @@ public:
    */
   static void removePlugin(const plugin::Function *function_obj);
 
-  static const plugin::Function *get(const char *name, size_t len=0);
+  static const plugin::Function *get(const std::string &name);
 
   typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> UdfMap;
   typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> Map;

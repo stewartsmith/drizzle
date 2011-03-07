@@ -195,9 +195,9 @@ bool DrizzleDumpTableDrizzle::populateFields()
     else
       field->defaultValue= "";
 
-    field->isNull= (strcmp(row[4], "YES") == 0) ? true : false;
-    field->isAutoIncrement= (strcmp(row[9], "YES") == 0) ? true : false;
-    field->defaultIsNull= (strcmp(row[3], "YES") == 0) ? true : false;
+    field->isNull= (boost::lexical_cast<uint32_t>(row[4])) ? true : false;
+    field->isAutoIncrement= (boost::lexical_cast<uint32_t>(row[9])) ? true : false;
+    field->defaultIsNull= (boost::lexical_cast<uint32_t>(row[3])) ? true : false;
     field->enumValues= (row[10]) ? row[10] : "";
     field->length= (row[5]) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
     field->decimalPrecision= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
@@ -244,7 +244,7 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
         indexes.push_back(index);
       index = new DrizzleDumpIndexDrizzle(indexName, dcon);
       index->isPrimary= (strcmp(row[0], "PRIMARY") == 0);
-      index->isUnique= (strcmp(row[3], "YES") == 0);
+      index->isUnique= boost::lexical_cast<uint32_t>(row[3]);
       index->isHash= 0;
       index->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
       lastKey= row[0];

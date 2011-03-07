@@ -17,9 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/session.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/user_var_entry.h>
 
 namespace drizzled
 {
@@ -113,7 +115,7 @@ String *user_var_entry::val_str(bool *null_value, String *str,
     break;
 
   case DECIMAL_RESULT:
-    class_decimal2string(E_DEC_FATAL_ERROR, (type::Decimal *)value, 0, 0, 0, str);
+    class_decimal2string((type::Decimal *)value, 0, str);
     break;
 
   case STRING_RESULT:

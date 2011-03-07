@@ -20,7 +20,7 @@
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
-GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
+GENSCRIPTS =		tests/dtr tests/mtr tests/test-run tests/dbqp
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
 NORMAL_TESTS =		main,bool_type,cast,ddl_transactions,execute,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type,microtime_type,$(PLUGIN_TESTS)
@@ -54,11 +54,12 @@ TEST_RUN_DBQP= $(PYTHON) ../$(top_srcdir)/tests/dbqp.py \
 		--reorder \
 		--basedir=../${top_srcdir} \
 		--testdir=../${top_srcdir}/tests \
-                --workdir=../${top_srcdir}/tests/dbqp_work
+                --workdir=../${top_srcdir}/tests/workdir
 
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/dbqp.py \
 	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
@@ -96,6 +97,10 @@ tests/test-run: tests/var
 	$(RM) -f tests/test-run
 	$(LN_S) test-run.pl tests/test-run
 
+tests/dbqp:  
+	$(RM) -f tests/dbqp
+	$(LN_S) dbqp.py tests/dbqp
+
 
 .PHONY: test \
 	test-all \
@@ -117,45 +122,46 @@ test: check
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification
 
-test-all:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
+test-all: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
 
-test-mem:
-	( cd tests && $(TEST_RUN_MEM) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
+test-mem: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN_MEM) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
-test-drizzle:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
+test-drizzle: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
-test-valgrind:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
+test-valgrind: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
-test-valgrind-suppressions:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
+test-valgrind-suppressions: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
-test-junitxml:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
+test-junitxml: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
 
-test-big:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )
+test-big: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )
 
-test-big-junitxml:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml )
+test-big-junitxml: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml )
 
-test-jp:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=jp )
+test-jp: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=jp )
 
-test-plugins:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
+test-plugins: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
-test-dbqp:
-	( cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) )
+test-dbqp: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) )
 
 
 distclean-local: nukevar
 
 nukevar:
 	rm -rf tests/var \
-        rm -rf tests/dbqp_work 
+        rm -rf tests/workdir \
+        rm tests/dbqp_data/*
  
 
 .PHONY: nukevar

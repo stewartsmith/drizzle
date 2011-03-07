@@ -17,11 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/optimizer/quick_range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+
+#include <drizzled/session.h>
+#include <drizzled/optimizer/quick_range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/current_session.h>
+#include <drizzled/key.h>
+
 #include <fcntl.h>
 
 using namespace std;
@@ -352,7 +356,7 @@ bool optimizer::QuickRangeSelect::row_in_ranges()
 
   while (min != max)
   {
-    if (cmp_next(*(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid)))
+    if (cmp_next(reinterpret_cast<optimizer::QuickRange**>(ranges.buffer)[mid]))
     {
       /* current row value > mid->max */
       min= mid + 1;
@@ -361,8 +365,8 @@ bool optimizer::QuickRangeSelect::row_in_ranges()
       max= mid;
     mid= (min + max) / 2;
   }
-  res= *(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid);
-  return (! cmp_next(res) && ! cmp_prev(res));
+  res= reinterpret_cast<optimizer::QuickRange**>(ranges.buffer)[mid];
+  return not cmp_next(res) && not cmp_prev(res);
 }
 
 
@@ -416,15 +420,15 @@ int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 }
 
 
-void optimizer::QuickRangeSelect::add_info_string(String *str)
+void optimizer::QuickRangeSelect::add_info_string(string *str)
 {
   KeyInfo *key_info= head->key_info + index;
   str->append(key_info->name);
 }
 
 
-void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
-                                                       String *used_lengths)
+void optimizer::QuickRangeSelect::add_keys_and_lengths(string *key_names,
+                                                       string *used_lengths)
 {
   char buf[64];
   uint32_t length;

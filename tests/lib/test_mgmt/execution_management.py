@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -61,6 +61,8 @@ class executionManager:
         self.verbose = variables['verbose']
         self.force = variables['force']
         self.record_flag = variables['record']
+        self.gendata_file = variables['gendatafile']
+        self.testcase_repeat_count = variables['repeat']
         # We are currently single-threaded execution-wise
         # but in the future, we will likely need to revamp
         # how we deal with start-and-exit if we have multiple
@@ -100,7 +102,6 @@ class executionManager:
                 self.logging.verbose("Starting executor: %s" %(executor_name))
                 # thread.start_new(executor.execute,()) # sigh...one day...damned drizzletest!
             executor.execute(self.start_and_exit)
-        time.sleep(3)
         while self.has_running_executors():
             pass
         self.test_manager.statistical_report()

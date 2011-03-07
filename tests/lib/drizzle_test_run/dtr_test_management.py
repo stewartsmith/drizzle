@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -64,6 +64,8 @@ class testCase:
         self.slave_count = 0
         self.master_count = 1
         self.server_options = test_server_options
+        # We will populate this in a better fashion later on
+        self.server_requirements=[self.server_options]
         self.comment = comment
         self.master_sh = master_sh
         self.disable = disable
@@ -188,12 +190,7 @@ class testManager(test_management.testManager):
             a given test
 
         """
-        """
-        (self, test_case=None, test_name=None, suite_name=None
-                 , test_server_options=[], test_path=None, result_path=None
-                 , comment=None, master_sh=None, disable=0, innodb_test=0 
-                 , need_debug=0, debug=0):
-        """
+
         test_path = os.path.join(testdir,test_case)
         result_file_name = test_name+'.result'       
         result_path = self.find_result_path(resultdir, result_file_name)

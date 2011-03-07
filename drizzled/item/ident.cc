@@ -17,10 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/table.h>
-#include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
 #include <cstdio>
@@ -108,8 +107,7 @@ const char *Item_ident::full_name() const
 }
 
 
-void Item_ident::print(String *str,
-                       enum_query_type)
+void Item_ident::print(String *str)
 {
   string d_name, t_name;
 

@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <assert.h>
 #include <boost/lexical_cast.hpp>
-#include "drizzled/identifier.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/identifier.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <drizzled/error.h>
 #include <drizzled/errmsg_print.h>
@@ -31,8 +31,8 @@
 
 #include <drizzled/table.h>
 
-#include "drizzled/util/string.h"
-#include "drizzled/util/tablename_to_filename.h"
+#include <drizzled/util/string.h>
+#include <drizzled/util/tablename_to_filename.h>
 
 #include <algorithm>
 #include <sstream>
@@ -217,7 +217,7 @@ size_t Table::build_table_filename(std::string &in_path, const std::string &in_d
   conversion_error= util::tablename_to_filename(in_db, in_path);
   if (conversion_error)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Schema name cannot be encoded and fit within filesystem "
                     "name length restrictions."));
     return 0;
@@ -234,7 +234,7 @@ size_t Table::build_table_filename(std::string &in_path, const std::string &in_d
     conversion_error= util::tablename_to_filename(in_table_name, in_path);
     if (conversion_error)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Table name cannot be encoded and fit within filesystem "
                       "name length restrictions."));
       return 0;
@@ -275,6 +275,24 @@ void Table::init()
     break;
   }
 
+  switch (type) {
+  case message::Table::FUNCTION:
+  case message::Table::STANDARD:
+  case message::Table::INTERNAL:
+    break;
+  case message::Table::TEMPORARY:
+    {
+      size_t pos;
+
+      pos= path.find("tmp/#sql");
+      if (pos != std::string::npos) 
+      {
+        key_path= path.substr(pos);
+      }
+    }
+    break;
+  }
+
   util::insensitive_hash hasher;
   hash_value= hasher(path);
 
@@ -288,6 +306,14 @@ void Table::init()
 const std::string &Table::getPath() const
 {
   return path;
+}
+
+const std::string &Table::getKeyPath() const
+{
+  if (key_path.empty())
+    return path;
+
+  return key_path;
 }
 
 void Table::getSQLPath(std::string &sql_path) const  // @todo this is just used for errors, we should find a way to optimize it
@@ -396,6 +422,24 @@ std::size_t hash_value(Table const& b)
 std::size_t hash_value(Table::Key const& b)
 {
   return b.getHashValue();
+}
+
+
+std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
+{
+  output << "Table:(";
+  output <<  identifier.getSchemaName();
+  output << ", ";
+  output << identifier.getTableName();
+  output << ", ";
+  output << message::type(identifier.getType());
+  output << ", ";
+  output << identifier.getPath();
+  output << ", ";
+  output << identifier.getHashValue();
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace identifier */

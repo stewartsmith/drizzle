@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/innobase/handler/replication_log.h"
+#include <plugin/innobase/handler/replication_log.h>
 
 #include <vector>
 
@@ -59,7 +59,6 @@
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
-#include "mysql_addons.h"
 
 using namespace std;
 using namespace drizzled;

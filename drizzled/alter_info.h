@@ -25,21 +25,19 @@
 #ifndef DRIZZLED_ALTER_INFO_H
 #define DRIZZLED_ALTER_INFO_H
 
-#include "drizzled/base.h"
-#include "drizzled/enum.h"
-#include "drizzled/sql_list.h" /** @TODO use STL vectors! */
-#include "drizzled/key.h"
-#include "drizzled/message/table.pb.h"
+#include <drizzled/alter_column.h>
+#include <drizzled/alter_drop.h>
+#include <drizzled/base.h>
+#include <drizzled/enum.h>
+#include <drizzled/key.h>
+#include <drizzled/message/table.pb.h>
 
 #include <bitset>
+#include <list>
 
-namespace drizzled
-{
+namespace drizzled {
 
-/* Some forward declarations needed */
 class CreateField;
-class AlterDrop;
-class AlterColumn;
 
 enum enum_alter_info_flags
 {
@@ -81,8 +79,11 @@ enum tablespace_op_type
 class AlterInfo
 {
 public:
-  List<AlterDrop> drop_list;
-  List<AlterColumn> alter_list;
+  typedef std::list<AlterDrop> drop_list_t;
+  typedef std::list<AlterColumn> alter_list_t;
+  
+  drop_list_t drop_list;
+  alter_list_t alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
   message::AlterTable alter_proto;

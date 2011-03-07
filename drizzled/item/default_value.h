@@ -41,7 +41,7 @@ public:
   enum Type type() const { return DEFAULT_VALUE_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const;
   bool fix_fields(Session *, Item **);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   int save_in_field(Field *field_arg, bool no_conversions);
   table_map used_tables() const { return (table_map)0L; }
 

@@ -17,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/plugin/error_message.h"
+#include <config.h>
 
-#include "drizzled/gettext.h"
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/plugin/error_message.h>
 
 #include <cstdio>
 #include <algorithm>
@@ -30,35 +31,29 @@ namespace drizzled
 {
 
 std::vector<plugin::ErrorMessage *> all_errmsg_handler;
-bool errmsg_has= false;
-
 
 bool plugin::ErrorMessage::addPlugin(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.push_back(handler);
-  errmsg_has= true;
   return false;
 }
 
-void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *handler)
+void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *)
 {
-  all_errmsg_handler.erase(std::find(all_errmsg_handler.begin(),
-                                     all_errmsg_handler.end(), handler));
+  all_errmsg_handler.clear();
 }
 
 
 class Print : public std::unary_function<plugin::ErrorMessage *, bool>
 {
-  Session *session;
-  int priority;
+  error::level_t priority;
   const char *format;
   va_list ap;
 
 public:
-  Print(Session *session_arg, int priority_arg,
+  Print(error::level_t priority_arg,
         const char *format_arg, va_list ap_arg) : 
     std::unary_function<plugin::ErrorMessage *, bool>(),
-    session(session_arg),
     priority(priority_arg), format(format_arg)
   {
     va_copy(ap, ap_arg);
@@ -70,7 +65,7 @@ public:
   {
     va_list handler_ap;
     va_copy(handler_ap, ap);
-    if (handler->errmsg(session, priority, format, handler_ap))
+    if (handler->errmsg(priority, format, handler_ap))
     {
       /* we're doing the errmsg plugin api,
          so we can't trust the errmsg api to emit our error messages
@@ -89,26 +84,30 @@ public:
 }; 
 
 
-bool plugin::ErrorMessage::vprintf(Session *session, int priority,
-                                   char const *format, va_list ap)
+bool plugin::ErrorMessage::vprintf(error::level_t priority, char const *format, va_list ap)
 {
+  if (not (priority >= error::verbosity()))
+    return false;
 
-  /* check to see if any errmsg plugin has been loaded
-     if not, just fall back to emitting the message to stderr */
-  if (!errmsg_has)
+  /* 
+    Check to see if any errmsg plugin has been loaded
+    if not, just fall back to emitting the message to stderr.
+  */
+  if (not all_errmsg_handler.size())
   {
     /* if it turns out that the vfprintf doesnt do one single write
        (single writes are atomic), then this needs to be rewritten to
        vsprintf into a char buffer, and then write() that char buffer
        to stderr */
-    vfprintf(stderr, format, ap);
+      vfprintf(stderr, format, ap);
+      fputc('\n', stderr);
     return false;
   }
 
   /* Use find_if instead of foreach so that we can collect return codes */
   std::vector<plugin::ErrorMessage *>::iterator iter=
     std::find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
-                 Print(session, priority, format, ap)); 
+                 Print(priority, format, ap)); 
 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 

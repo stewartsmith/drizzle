@@ -17,8 +17,12 @@
   Derived tables
   These were introduced by Sinisa <sinisa@mysql.com>
 */
-#include "config.h"
-#include "drizzled/sql_select.h"
+#include <config.h>
+
+#include <drizzled/sql_lex.h>
+#include <drizzled/select_union.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/session.h>
 
 namespace drizzled
 {

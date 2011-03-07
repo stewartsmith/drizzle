@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <plugin/function_engine/function.h>
 #include <plugin/function_engine/cursor.h>
@@ -39,10 +39,12 @@ Function::Function(const std::string &name_arg) :
 
 {
   information_message->set_name(INFORMATION_SCHEMA_IDENTIFIER.getSchemaName());
-  data_dictionary_message->set_collation("utf8_general_ci");
+  information_message->set_collation("utf8_general_ci");
+  message::set_is_replicated(*information_message, false);
 
   data_dictionary_message->set_name(DATA_DICTIONARY_IDENTIFIER.getSchemaName());
   data_dictionary_message->set_collation("utf8_general_ci");
+  message::set_is_replicated(*data_dictionary_message, false);
 }
 
 
@@ -73,9 +75,9 @@ void Function::doGetSchemaIdentifiers(identifier::Schema::vector& schemas)
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
 }
 
-bool Function::doGetSchemaDefinition(const identifier::Schema &schema_identifier, message::schema::shared_ptr &schema_message)
+drizzled::message::schema::shared_ptr Function::doGetSchemaDefinition(const identifier::Schema &schema_identifier)
 {
-  schema_message.reset(new message::Schema); // This should be fixed, we could just be using ones we built on startup.
+  drizzled::message::schema::shared_ptr schema_message;
 
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
   {
@@ -87,10 +89,10 @@ bool Function::doGetSchemaDefinition(const identifier::Schema &schema_identifier
   }
   else
   {
-    return false;
+    return drizzled::message::schema::shared_ptr();
   }
 
-  return true;
+  return schema_message;
 }
 
 bool Function::doCanCreateTable(const drizzled::identifier::Table &table_identifier)

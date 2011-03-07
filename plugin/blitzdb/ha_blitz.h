@@ -20,16 +20,16 @@
 #ifndef PLUGIN_BLITZDB_HA_BLITZ_H
 #define PLUGIN_BLITZDB_HA_BLITZ_H
 
-#include "drizzled/session.h"
-#include "drizzled/cursor.h"
-#include "drizzled/table.h"
-#include "drizzled/field.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/atomics.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/cached_directory.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/session.h>
+#include <drizzled/cursor.h>
+#include <drizzled/table.h>
+#include <drizzled/field.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/atomics.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/cached_directory.h>
+#include <drizzled/internal/my_sys.h>
 #include <tchdb.h>
 #include <tcbdb.h>
 

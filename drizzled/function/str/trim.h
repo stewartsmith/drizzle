@@ -36,7 +36,7 @@ public:
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "trim"; }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   virtual const char *mode_name() const { return "both"; }
 };
 

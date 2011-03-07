@@ -17,20 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <signal.h>
 
-#include "drizzled/signal_handler.h"
-#include "drizzled/drizzled.h"
-#include "drizzled/session.h"
-#include "drizzled/session/cache.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/probes.h"
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/scheduler.h"
+#include <drizzled/signal_handler.h>
+#include <drizzled/drizzled.h>
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/probes.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/scheduler.h>
+#include <drizzled/current_session.h>
 
-#include "drizzled/util/backtrace.h"
+#include <drizzled/util/backtrace.h>
 
 using namespace drizzled;
 
@@ -49,7 +50,7 @@ extern "C"
 void drizzled_print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu32),
+    errmsg_printf(error::WARN, _("Got signal %d from thread %"PRIu32),
                   sig, global_thread_id);
 #ifndef HAVE_BSD_SIGNALS
   sigset_t set;

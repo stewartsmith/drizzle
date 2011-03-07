@@ -317,7 +317,7 @@ INSERT INTO t2 VALUES (1);
 
 DELETE IGNORE FROM t1 WHERE i = 1;
 
-SELECT * FROM t1, t2;
+SELECT * FROM t1 CROSS JOIN t2;
 
 DROP TABLE t2, t1;
 
@@ -1036,7 +1036,7 @@ if ($test_foreign_keys)
 #             auto_increment keys
 #
 create table t1 (a int auto_increment primary key) engine=innodb;
---error 1105
+--error ER_UNKNOWN_ERROR
 alter table t1 order by a;
 drop table t1;
 

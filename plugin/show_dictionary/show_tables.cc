@@ -19,9 +19,9 @@
  */
 
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
 
 using namespace std;
 using namespace drizzled;
@@ -39,7 +39,7 @@ ShowTables::Generator::Generator(drizzled::Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
 
   if (not select->getShowSchema().empty())
   {

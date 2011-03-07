@@ -18,12 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
-#include "drizzled/message.h"
-#include "drizzled/message/statement_transform.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
+#include <drizzled/message.h>
+#include <drizzled/message/statement_transform.h>
 #include <google/protobuf/text_format.h>
+#include <drizzled/plugin/authorization.h>
 #include <string>
 
 using namespace std;
@@ -43,17 +44,23 @@ ShowCreateTable::Generator::Generator(Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
   {
     identifier::Table identifier(select->getShowSchema(), select->getShowTable());
 
-    int error= plugin::StorageEngine::getTableDefinition(getSession(),
-                                                         identifier,
-                                                         table_message);
+    if (not plugin::Authorization::isAuthorized(*getSession().user(),
+                                            identifier, false))
+    {
+      drizzled::error::access(*getSession().user(), identifier);
+      return;
+    }
 
-    if (error == EEXIST)
+    table_message= plugin::StorageEngine::getTableMessage(getSession(),
+                                                          identifier);
+
+    if (table_message)
       is_primed= true;
   }
 }

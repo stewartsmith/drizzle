@@ -40,6 +40,7 @@ public:
   }
 
   bool execute();
+
   HA_CHECK_OPT check_opt;			// check/repair options
 };
 

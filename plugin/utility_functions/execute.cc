@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
-#include "plugin/utility_functions/functions.h"
+#include <plugin/utility_functions/functions.h>
 
 namespace drizzled
 {

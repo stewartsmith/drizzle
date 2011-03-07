@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_GENERATOR_CATALOG_CACHE_H
 #define DRIZZLED_GENERATOR_CATALOG_CACHE_H
 
-#include "drizzled/catalog/cache.h"
+#include <drizzled/catalog/cache.h>
 
 namespace drizzled {
 namespace generator {

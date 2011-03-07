@@ -27,9 +27,9 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "drizzled/show.h"
-#include "drizzled/gettext.h"
+#include <config.h>
+#include <drizzled/show.h>
+#include <drizzled/gettext.h>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include "stats_table.h"

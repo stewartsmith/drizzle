@@ -24,7 +24,7 @@ AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
 
-PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42, version-from-vc) 
+PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
 LIBDRIZZLE_LIBRARY_VERSION=1:0:0
 #                          | | |
@@ -60,8 +60,6 @@ AS_IF([test "x$GPERF" = "x"],
 # libexecinfo provides backtrace_symbols on FreeBSD
 AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
 
-PANDORA_RUN_CPPLINT
-
 PANDORA_REQUIRE_LIBPROTOBUF
 PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
 PANDORA_REQUIRE_PROTOC
@@ -74,6 +72,7 @@ PANDORA_REQUIRE_LIBPCRE
 PANDORA_REQUIRE_LIBREADLINE
 PANDORA_REQUIRE_LIBDL
 AC_LANG_POP
+AC_FUNC_STRERROR_R
 
 DRIZZLE_STACK_DIRECTION
 
@@ -147,6 +146,8 @@ AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x${pandora_cv_boost_profile}"
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
+ support-files/drizzle7.pc dnl
+ support-files/libdrizzle.pc dnl
  support-files/smf/install.sh dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)

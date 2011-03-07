@@ -20,9 +20,9 @@
 #ifndef DRIZZLED_ITEM_OUTER_REF_H
 #define DRIZZLED_ITEM_OUTER_REF_H
 
-#include "drizzled/item/ref.h"
-#include "drizzled/item/direct_ref.h"
-#include "drizzled/item/field.h"
+#include <drizzled/item/ref.h>
+#include <drizzled/item/direct_ref.h>
+#include <drizzled/item/field.h>
 
 /*
   Class for outer fields.

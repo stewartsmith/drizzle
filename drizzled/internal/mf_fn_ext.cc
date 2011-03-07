@@ -13,10 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {
@@ -41,7 +41,7 @@ namespace internal
 
 char *fn_ext(const char *name)
 {
-  register const char *pos, *gpos;
+  const char *pos, *gpos;
 
 #if defined(FN_DEVCHAR)
   {

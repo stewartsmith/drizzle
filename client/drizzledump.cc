@@ -56,30 +56,8 @@ namespace po= boost::program_options;
 
 #define EX_USAGE 1
 #define EX_DRIZZLEERR 2
-#define EX_CONSCHECK 3
-#define EX_EOM 4
 #define EX_EOF 5 /* ferror for output file was got */
-#define EX_ILLEGAL_TABLE 6
-#define EX_TABLE_STATUS 7
 
-/* index into 'show fields from table' */
-
-#define SHOW_FIELDNAME  0
-#define SHOW_TYPE  1
-#define SHOW_NULL  2
-#define SHOW_DEFAULT  4
-#define SHOW_EXTRA  5
-
-/* Size of buffer for dump's select query */
-#define QUERY_LENGTH 1536
-
-/* ignore table flags */
-#define IGNORE_NONE 0x00 /* no ignore */
-#define IGNORE_DATA 0x01 /* don't dump data for this table */
-#define IGNORE_INSERT_DELAYED 0x02 /* table doesn't support INSERT DELAYED */
-
-bool opt_alltspcs= false;
-bool opt_complete_insert= false;
 bool  verbose= false;
 static bool use_drizzle_protocol= false;
 bool ignore_errors= false;
@@ -263,12 +241,13 @@ static void write_header(char *db_name)
     cout << "-- Host: " << current_host << "    Database: " << db_name << endl;
     cout << "-- ------------------------------------------------------" << endl;
     cout << "-- Server version\t" << db_connection->getServerVersion();
-    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
       cout << " (MySQL server)";
-    else if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_DRIZZLE_FOUND)
+    else if (db_connection->getServerType() == ServerDetect::SERVER_DRIZZLE_FOUND)
       cout << " (Drizzle server)";
     cout << endl << endl;
   }
+
 } /* write_header */
 
 
@@ -373,7 +352,7 @@ static int dump_all_databases()
     std::cerr << _("-- Retrieving database structures...") << std::endl;
 
   /* Blocking the MySQL privilege tables too because we can't import them due to bug#646187 */
-  if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+  if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
     query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql')";
   else
     query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM DATA_DICTIONARY.SCHEMAS WHERE SCHEMA_NAME NOT IN ('information_schema','data_dictionary')";
@@ -382,7 +361,7 @@ static int dump_all_databases()
   while ((row= drizzle_row_next(tableres)))
   {
     std::string database_name(row[0]);
-    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
       database= new DrizzleDumpDatabaseMySQL(database_name, db_connection);
     else
       database= new DrizzleDumpDatabaseDrizzle(database_name, db_connection);
@@ -405,7 +384,7 @@ static int dump_databases(const vector<string> &db_names)
   for (vector<string>::const_iterator it= db_names.begin(); it != db_names.end(); ++it)
   {
     temp= *it;
-    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
       database= new DrizzleDumpDatabaseMySQL(temp, db_connection);
     else
       database= new DrizzleDumpDatabaseDrizzle(temp, db_connection);
@@ -418,7 +397,7 @@ static int dump_selected_tables(const string &db, const vector<string> &table_na
 {
   DrizzleDumpDatabase *database;
 
-  if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+  if (db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND)
     database= new DrizzleDumpDatabaseMySQL(db, db_connection);
   else
     database= new DrizzleDumpDatabaseDrizzle(db, db_connection);
@@ -452,16 +431,24 @@ static int do_flush_tables_read_lock()
   return 0;
 }
 
-static int do_unlock_tables()
-{
-  db_connection->queryNoResult("UNLOCK TABLES");
-  return 0;
-}
-
 static int start_transaction()
 {
   db_connection->queryNoResult("SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ");
   db_connection->queryNoResult("START TRANSACTION WITH CONSISTENT SNAPSHOT");
+
+  if (db_connection->getServerType() == ServerDetect::SERVER_DRIZZLE_FOUND)
+  {
+    drizzle_result_st *result;
+    drizzle_row_t row;
+    std::string query("SELECT COMMIT_ID, ID FROM DATA_DICTIONARY.SYS_REPLICATION_LOG WHERE COMMIT_ID=(SELECT MAX(COMMIT_ID) FROM DATA_DICTIONARY.SYS_REPLICATION_LOG)");
+    result= db_connection->query(query);
+    if ((row= drizzle_row_next(result)))
+    {
+      cout << "-- SYS_REPLICATION_LOG: COMMIT_ID = " << row[0] << ", ID = " << row[1] << endl << endl;
+    }
+    db_connection->freeResult(result);
+  }
+
   return 0;
 }
 
@@ -483,10 +470,6 @@ try
   commandline_options.add_options()
   ("all-databases,A", po::value<bool>(&opt_alldbs)->default_value(false)->zero_tokens(),
   _("Dump all the databases. This will be same as --databases with all databases selected."))
-  ("all-tablespaces,Y", po::value<bool>(&opt_alltspcs)->default_value(false)->zero_tokens(),
-  _("Dump all the tablespaces."))
-  ("complete-insert,c", po::value<bool>(&opt_complete_insert)->default_value(false)->zero_tokens(),
-  _("Use complete insert statements."))
   ("flush-logs,F", po::value<bool>(&flush_logs)->default_value(false)->zero_tokens(),
   _("Flush logs file in server before starting dump. Note that if you dump many databases at once (using the option --databases= or --all-databases), the logs will be flushed for each database dumped. The exception is when using --lock-all-tables in this case the logs will be flushed only once, corresponding to the moment all tables are locked. So if you want your dump and the log flush to happen at the same exact moment you should use --lock-all-tables or --flush-logs"))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
@@ -550,6 +533,8 @@ try
   _("Do not make a UTF8 connection to MySQL, use if you have UTF8 data in a non-UTF8 table"))
   ;
 
+  const char* unix_user= getlogin();
+
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -558,7 +543,7 @@ try
   _("Password to use when connecting to server. If password is not given it's solicited on the tty."))
   ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
   _("Port number to use for connection."))
-  ("user,u", po::value<string>(&current_user)->default_value(""),
+  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql or drizzle)."))
@@ -768,7 +753,7 @@ try
     maybe_exit(EX_DRIZZLEERR);
   }
 
-  if ((db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND) and (not opt_data_is_mangled))
+  if ((db_connection->getServerType() == ServerDetect::SERVER_MYSQL_FOUND) and (not opt_data_is_mangled))
     db_connection->queryNoResult("SET NAMES 'utf8'");
 
   if (vm.count("destination-type"))
@@ -795,8 +780,6 @@ try
     goto err;
   if (opt_lock_all_tables)
     db_connection->queryNoResult("FLUSH LOGS");
-  if (opt_single_transaction && do_unlock_tables()) /* unlock but no commit! */
-    goto err;
 
   if (opt_alldbs)
   {

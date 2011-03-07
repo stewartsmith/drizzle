@@ -38,6 +38,8 @@ Created 3/26/1996 Heikki Tuuri
 #include "trx0xa.h"
 #include "ut0vec.h"
 
+namespace drizzled { class Session; }
+
 /** Dummy session used currently in MySQL interface */
 extern sess_t*	trx_dummy_sess;
 
@@ -69,6 +71,14 @@ trx_set_detailed_error_from_file(
 /*=============================*/
 	trx_t*	trx,	/*!< in: transaction struct */
 	FILE*	file);	/*!< in: file to read message from */
+/****************************************************************//**
+Checks if the commit id should be logged to the sys header file
+@return TRUE if the commit id should be logged */ 
+UNIV_INLINE
+ibool
+trx_log_commit_id(
+/*==============*/
+	const trx_t*    trx); 	/*!< in: trx object */
 /****************************************************************//**
 Retrieves the error_info field from a trx.
 @return	the error info */
@@ -545,7 +555,7 @@ struct trx_struct{
 	table_id_t	table_id;	/*!< Table to drop iff dict_operation
 					is TRUE, or 0. */
 	/*------------------------------*/
-	void*		mysql_thd;	/*!< MySQL thread handle corresponding
+        drizzled::Session *mysql_thd;	/*!< MySQL thread handle corresponding
 					to this trx, or NULL */
 	const char*	mysql_log_file_name;
 					/* if MySQL binlog is used, this field
@@ -705,6 +715,17 @@ struct trx_struct{
 	/*------------------------------*/
 	char detailed_error[256];	/*!< detailed error message for last
 					error, or empty. */
+
+	ibool 		log_commit_id;  /*!< log the commit id to the sys
+					file */
+        inline drizzled::Session *session()
+        {
+          return mysql_thd;
+        }
+        inline drizzled::Session *session() const
+        {
+          return mysql_thd;
+        }
 };
 
 #define TRX_MAX_N_THREADS	32	/* maximum number of

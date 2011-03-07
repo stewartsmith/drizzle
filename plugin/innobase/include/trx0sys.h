@@ -41,26 +41,10 @@ Created 3/26/1996 Heikki Tuuri
 #include "read0types.h"
 #include "page0types.h"
 
-/** In a MySQL replication slave, in crash recovery we store the master log
-file name and position here. */
-/* @{ */
-/** Master binlog file name */
-extern char		trx_sys_mysql_master_log_name[];
-/** Master binlog file position.  We have successfully got the updates
-up to this position.  -1 means that no crash recovery was needed, or
-there was no master log position info inside InnoDB.*/
-extern ib_int64_t	trx_sys_mysql_master_log_pos;
-/* @} */
+#include <drizzled/atomics.h>
 
-/** If this MySQL server uses binary logging, after InnoDB has been inited
-and if it has done a crash recovery, we store the binlog file name and position
-here. */
-/* @{ */
-/** Binlog file name */
-extern char		trx_sys_mysql_bin_log_name[];
-/** Binlog file position, or -1 if unknown */
-extern ib_int64_t	trx_sys_mysql_bin_log_pos;
-/* @} */
+/** the highest commit identifier assigned in the system */
+extern drizzled::atomic<uint64_t> trx_sys_commit_id; 
 
 /** The transaction system */
 extern trx_sys_t*	trx_sys;
@@ -285,26 +269,15 @@ trx_in_trx_list(
 /*============*/
 	trx_t*	in_trx);/*!< in: trx */
 /*****************************************************************//**
-Updates the offset information about the end of the MySQL binlog entry
-which corresponds to the transaction just being committed. In a MySQL
-replication slave updates the latest master binlog position up to which
-replication has proceeded. */
+Writes to the sys header file the latest commit_id in the system */ 
 UNIV_INTERN
 void
-trx_sys_update_mysql_binlog_offset(
-/*===============================*/
-	const char*	file_name,/*!< in: MySQL log file name */
-	ib_int64_t	offset,	/*!< in: position in that log file */
-	ulint		field,	/*!< in: offset of the MySQL log info field in
-				the trx sys header */
-	mtr_t*		mtr);	/*!< in: mtr */
+trx_sys_flush_commit_id(uint64_t commit_id, ulint field, mtr_t* mtr);
 /*****************************************************************//**
-Prints to stderr the MySQL binlog offset info in the trx system header if
-the magic number shows it valid. */
+Reads the latest commit_id into trx_sys_commit_id */
 UNIV_INTERN
 void
-trx_sys_print_mysql_binlog_offset(void);
-/*===================================*/
+trx_sys_read_commit_id(void);
 /*****************************************************************//**
 Prints to stderr the MySQL master log offset info in the trx system header if
 the magic number shows it valid. */
@@ -386,16 +359,6 @@ trx_sys_file_format_max_upgrade(
 	const char**	name,		/*!< out: max file format name */
 	ulint		format_id);	/*!< in: file format identifier */
 #else /* !UNIV_HOTBACKUP */
-/*****************************************************************//**
-Prints to stderr the MySQL binlog info in the system header if the
-magic number shows it valid. */
-UNIV_INTERN
-void
-trx_sys_print_mysql_binlog_offset_from_page(
-/*========================================*/
-	const byte*	page);	/*!< in: buffer containing the trx
-				system header page, i.e., page number
-				TRX_SYS_PAGE_NO in the tablespace */
 /*****************************************************************//**
 Reads the file format id from the first system table space file.
 Even if the call succeeds and returns TRUE, the returned format id
@@ -499,16 +462,10 @@ this contains the same fields as TRX_SYS_MYSQL_LOG_INFO below */
 #define TRX_SYS_MYSQL_MASTER_LOG_INFO	(UNIV_PAGE_SIZE - 2000)
 
 /** The offset of the MySQL binlog offset info in the trx system header */
-#define TRX_SYS_MYSQL_LOG_INFO		(UNIV_PAGE_SIZE - 1000)
-#define	TRX_SYS_MYSQL_LOG_MAGIC_N_FLD	0	/*!< magic number which is
-						TRX_SYS_MYSQL_LOG_MAGIC_N
-						if we have valid data in the
-						MySQL binlog info */
-#define TRX_SYS_MYSQL_LOG_OFFSET_HIGH	4	/*!< high 4 bytes of the offset
-						within that file */
-#define TRX_SYS_MYSQL_LOG_OFFSET_LOW	8	/*!< low 4 bytes of the offset
-						within that file */
-#define TRX_SYS_MYSQL_LOG_NAME		12	/*!< MySQL log file name */
+#define TRX_SYS_DRIZZLE_LOG_INFO	(UNIV_PAGE_SIZE - 1000)
+#define TRX_SYS_DRIZZLE_MAX_COMMIT_ID	8       /*!< the maximum commit id
+						assigned in the system */
+#define TRX_SYS_DRIZZLE_LOG_NAME	12	/*!< Unused */
 
 /** Doublewrite buffer */
 /* @{ */
@@ -606,6 +563,7 @@ struct trx_sys_struct{
 	trx_id_t	max_trx_id;	/*!< The smallest number not yet
 					assigned as a transaction id or
 					transaction number */
+
 	UT_LIST_BASE_NODE_T(trx_t) trx_list;
 					/*!< List of active and committed in
 					memory transactions, sorted on trx id,

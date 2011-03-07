@@ -17,21 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 #include <vector>
 #include <map>
 
-#include "drizzled/module/registry.h"
-#include "drizzled/module/library.h"
-#include "drizzled/module/graph.h"
-#include "drizzled/module/vertex_handle.h"
+#include <drizzled/module/registry.h>
+#include <drizzled/module/library.h>
+#include <drizzled/module/graph.h>
+#include <drizzled/module/vertex_handle.h>
 
-#include "drizzled/plugin.h"
-#include "drizzled/show.h"
-#include "drizzled/cursor.h"
-#include "drizzled/abort_exception.h"
+#include <drizzled/plugin.h>
+#include <drizzled/show.h>
+#include <drizzled/cursor.h>
+#include <drizzled/abort_exception.h>
 
 #include <boost/bind.hpp>
 
@@ -64,12 +64,27 @@ module::Registry::~Registry()
     ++plugin_iter;
   }
 
+  plugin::Plugin::vector error_plugins;
   plugin_iter= plugin_registry.begin();
   while (plugin_iter != plugin_registry.end())
   {
-    delete (*plugin_iter).second;
+    if ((*plugin_iter).second->removeLast())
+    {
+      error_plugins.push_back((*plugin_iter).second);
+    }
+    else
+    {
+      delete (*plugin_iter).second;
+    }
     ++plugin_iter;
   }
+
+  for (plugin::Plugin::vector::iterator iter= error_plugins.begin();
+       iter != error_plugins.end(); iter++)
+  {
+    delete *iter;
+  }
+
   plugin_registry.clear();
 
 #if 0
@@ -172,7 +187,7 @@ void module::Registry::buildDeps()
       }
       if (not found_dep)
       {
-        errmsg_printf(ERRMSG_LVL_ERROR,
+        errmsg_printf(error::ERROR,
                       _("Couldn't process plugin module dependencies. "
                         "%s depends on %s but %s is not to be loaded.\n"),
                       handle->getName().c_str(),
@@ -241,7 +256,7 @@ void module::Registry::removeLibrary(const std::string &plugin_name)
   if (iter != library_registry_.end())
   {
     library_registry_.erase(iter);
-    delete (*iter).second;
+    delete iter->second;
   }
 }
 
@@ -249,7 +264,7 @@ module::Library *module::Registry::findLibrary(const std::string &plugin_name) c
 {
   LibraryMap::const_iterator iter= library_registry_.find(plugin_name);
   if (iter != library_registry_.end())
-    return (*iter).second;
+    return iter->second;
   return NULL;
 }
 

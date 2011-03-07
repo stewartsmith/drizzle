@@ -42,15 +42,15 @@ public:
 
   Field_null(unsigned char *ptr_arg,
              uint32_t len_arg,
-             const char *field_name_arg,
-             const CHARSET_INFO * const cs)
-    :Field_str(ptr_arg,
-               len_arg,
-               null,
-               1,
-	             field_name_arg,
-               cs)
+             const char *field_name_arg) :
+    Field_str(ptr_arg,
+              len_arg,
+              null,
+              1,
+              field_name_arg,
+              &my_charset_bin)
   {}
+
   enum_field_types type() const
   {
     return DRIZZLE_TYPE_NULL;
@@ -79,19 +79,19 @@ public:
   {
     return 0;
   }
-  double val_real(void)
+  double val_real(void) const
   {
     return 0.0;
   }
-  int64_t val_int(void)
+  int64_t val_int(void) const
   {
     return 0;
   }
-  type::Decimal *val_decimal(type::Decimal *)
+  type::Decimal *val_decimal(type::Decimal *) const
   {
     return 0;
   }
-  String *val_str(String *, String *value2)
+  String *val_str(String *, String *value2) const
   {
     value2->length(0);
     return value2;

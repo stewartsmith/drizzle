@@ -17,47 +17,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <algorithm>
+#include <drizzled/module/module.h>
+#include <drizzled/sys_var.h>
+#include <drizzled/util/functors.h>
+#include <drizzled/util/tokenize.h>
+#include <drizzled/module/manifest.h>
+#include <drizzled/module/vertex_handle.h>
 
-#include "drizzled/module/module.h"
-#include "drizzled/sys_var.h"
-#include "drizzled/util/functors.h"
-#include "drizzled/util/tokenize.h"
-#include "drizzled/module/vertex_handle.h"
+namespace drizzled {
+namespace module {
 
-namespace drizzled
-{
-
-namespace module
-{
-
-Module::Module(const Manifest *manifest_arg,
-       Library *library_arg) :
-  name(manifest_arg->name),
-  manifest(manifest_arg),
-  vertex_(NULL),
+Module::Module(const Manifest *manifest_arg, Library *library_arg) :
   plugin_dl(library_arg),
   isInited(false),
-  system_vars(),
-  sys_vars(),
-  depends_()
+  name(manifest_arg->name),
+  manifest(*manifest_arg),
+  vertex_(NULL)
 {
-  if (manifest->depends != NULL)
+  if (manifest.depends != NULL)
   {
-    tokenize(manifest->depends, depends_, ",", true);
+    tokenize(manifest.depends, depends_, ",", true);
   }
-  assert(manifest != NULL);
 }
 
 Module::~Module()
 {
   std::for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
-  if (vertex_ != NULL)
-  {
-    delete vertex_;
-  }
+  delete vertex_;
 }
 
 } /* namespace module */

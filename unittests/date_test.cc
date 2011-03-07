@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -472,13 +472,6 @@ BOOST_FIXTURE_TEST_CASE(to_tm, DateTest)
   BOOST_REQUIRE_EQUAL(0, filled.tm_min);
   BOOST_REQUIRE_EQUAL(0, filled.tm_sec);
 
-  /* TODO: these fail, shouldn't they also be set properly? */
-  /* From Andrew: These fail because Temporal::to_tm doesn't populate them.
-     Does it need to or would we be wasting cycles doing it? */
-
-  BOOST_WARN_EQUAL(228, filled.tm_yday);
-  BOOST_WARN_EQUAL(6, filled.tm_wday);
-  BOOST_WARN_EQUAL(-1, filled.tm_isdst);
 }
 
 BOOST_FIXTURE_TEST_CASE(from_tm, DateTest)

@@ -22,13 +22,13 @@
  * Errors a drizzled can give you
  */
 
-#include "config.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/definitions.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-
-#include "drizzled/identifier.h"
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/definitions.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/identifier.h>
+#include <drizzled/util/find_ptr.h>
 
 #include <boost/unordered_map.hpp>
 #include <exception>
@@ -78,6 +78,98 @@ const char * error_message(drizzled::error_t code)
 }
 
 error_handler_func error_handler_hook= NULL;
+
+namespace error {
+
+void access(drizzled::identifier::User::const_reference user)
+{
+  std::string user_string;
+  user.getSQLPath(user_string);
+
+  my_error(ER_ACCESS_DENIED_ERROR, MYF(0), user_string.c_str(),
+           user.hasPassword() ? ER(ER_YES) : ER(ER_NO));
+} 
+
+void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Schema::const_reference schema)
+{
+  std::string user_string;
+  user.getSQLPath(user_string);
+
+  std::string schema_string;
+  schema.getSQLPath(schema_string);
+
+  my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), user_string.c_str(), schema_string.c_str());
+} 
+
+void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Table::const_reference table)
+{
+  std::string user_string;
+  user.getSQLPath(user_string);
+
+  std::string table_string;
+  table.getSQLPath(table_string);
+
+  my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user_string.c_str(), table_string.c_str());
+} 
+
+static error::level_t _verbosity= error::ERROR;
+static std::string _verbosity_strint;
+
+const std::string &verbose_string()
+{
+  switch (_verbosity)
+  {
+  case error::INSPECT:
+    {
+      static std::string _arg= "INSPECT";
+      return _arg;
+    }
+  case error::INFO:
+    {
+      static std::string _arg= "INFO";
+      return _arg;
+    }
+  case error::WARN:
+    {
+      static std::string _arg= "WARN";
+      return _arg;
+    }
+  case error::ERROR:
+    {
+      static std::string _arg= "ERROR";
+      return _arg;
+    }
+  }
+
+  abort();
+}
+
+error::level_t &verbosity()
+{
+  return _verbosity;
+}
+
+void check_verbosity(const std::string &arg)
+{
+  if (not arg.compare("INSPECT"))
+  {
+    _verbosity= error::INSPECT;
+  }
+  else if (not arg.compare("INFO"))
+  {
+    _verbosity= error::INFO;
+  }
+  else if (not arg.compare("WARN"))
+  {
+    _verbosity= error::WARN;
+  }
+  else if (not arg.compare("ERROR"))
+  {
+    _verbosity= error::ERROR;
+  }
+}
+
+} // namespace error
 
 /*
   WARNING!
@@ -167,7 +259,7 @@ void my_printf_error(drizzled::error_t error, const char *format, myf MyFlags, .
       MyFlags	Flags
 */
 
-void my_message(drizzled::error_t error, const char *str, register myf MyFlags)
+void my_message(drizzled::error_t error, const char *str, myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }
@@ -179,7 +271,7 @@ void ErrorMap::add(drizzled::error_t error_num,
                    const std::string &error_name,
                    const std::string &message)
 {
-  if (mapping_.find(error_num) == mapping_.end())
+  if (not mapping_.count(error_num))
   {
     // Log the error.
     mapping_[error_num]= ErrorMap::value_type(error_name, message);
@@ -192,12 +284,12 @@ void ErrorMap::add(drizzled::error_t error_num,
 
 const std::string &ErrorMap::find(drizzled::error_t error_num) const
 {
-  ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
-  if (pos == mapping_.end())
+  const ErrorMessageMap::mapped_type* pos= find_ptr(mapping_, error_num);
+  if (!pos)
   {
     throw ErrorStringNotFound();
   }
-  return pos->second.second;
+  return pos->second;
 }
 
 #define ADD_ERROR_MESSAGE(code, msg) add(code, STRINGIFY_ARG(code), msg)
@@ -246,8 +338,12 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_OUT_OF_RESOURCES, N_("Out of memory; check if drizzled or some other process uses all available memory; if not, you may have to use 'ulimit' to allow drizzled to use more memory or you can add more swap space"));
   ADD_ERROR_MESSAGE(ER_BAD_HOST_ERROR, N_("Can't get hostname for your address"));
   ADD_ERROR_MESSAGE(ER_HANDSHAKE_ERROR, N_("Bad handshake"));
-  ADD_ERROR_MESSAGE(ER_DBACCESS_DENIED_ERROR, N_("Access denied for user '%-.48s'@'%-.64s' to schema '%-.192s'"));
-  ADD_ERROR_MESSAGE(ER_ACCESS_DENIED_ERROR, N_("Access denied for user '%-.48s'@'%-.64s' (using password: %s)"));
+
+  // Access error messages
+  ADD_ERROR_MESSAGE(ER_DBACCESS_DENIED_ERROR, N_("Access denied for user '%s' to schema '%s'"));
+  ADD_ERROR_MESSAGE(ER_TABLEACCESS_DENIED_ERROR, N_("Access denied for user '%s' to table '%s'"));
+  ADD_ERROR_MESSAGE(ER_ACCESS_DENIED_ERROR, N_("Access denied for user '%s' (using password: %s)"));
+
   ADD_ERROR_MESSAGE(ER_NO_DB_ERROR, N_("No schema selected"));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_COM_ERROR, N_("Unknown command"));
   ADD_ERROR_MESSAGE(ER_BAD_NULL_ERROR, N_("Column '%-.192s' cannot be null"));
@@ -330,7 +426,6 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_WRONG_VALUE_COUNT_ON_ROW, N_("Column count doesn't match value count at row %ld"));
   ADD_ERROR_MESSAGE(ER_CANT_REOPEN_TABLE, N_("Can't reopen table: '%-.192s'"));
   ADD_ERROR_MESSAGE(ER_MIX_OF_GROUP_FUNC_AND_FIELDS, N_("Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is illegal if there is no GROUP BY clause"));
-  ADD_ERROR_MESSAGE(ER_NO_SUCH_TABLE, N_("Table '%-.192s.%-.192s' doesn't exist"));
   ADD_ERROR_MESSAGE(ER_SYNTAX_ERROR, N_("You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use"));
   ADD_ERROR_MESSAGE(ER_NET_PACKET_TOO_LARGE, N_("Got a packet bigger than 'max_allowed_packet' bytes"));
   ADD_ERROR_MESSAGE(ER_NET_PACKETS_OUT_OF_ORDER, N_("Got packets out of order"));
@@ -504,7 +599,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_USE_SQL_BIG_RESULT, N_("Temporary table too large, rerun with SQL_BIG_RESULT."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_ENGINE_OPTION, N_("Unknown table engine option key/pair %s = %s."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_SCHEMA_OPTION, N_("Unknown schema engine option key/pair %s = %s."));
-
+  ADD_ERROR_MESSAGE(ER_CARTESIAN_JOIN_ATTEMPTED, N_("Implicit cartesian join attempted."));
   ADD_ERROR_MESSAGE(ER_ADMIN_ACCESS, N_("Admin access not allowed from this username/IP address."));
 
   // User lock/barrier error messages
@@ -580,8 +675,9 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_CATALOG_NO_LOCK, N_("Could not gain lock on '%s'."));
   ADD_ERROR_MESSAGE(ER_CORRUPT_CATALOG_DEFINITION, N_("Corrupt or invalid catalog definition for '%s' : '%s'."));
   ADD_ERROR_MESSAGE(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name."));
-
-
+  ADD_ERROR_MESSAGE(ER_USE_DATA_DICTIONARY, N_("Engine status is now stored in the data_dictionary tables, please use these instead."));
+  ADD_ERROR_MESSAGE(ER_TRANSACTION_ALREADY_STARTED, N_("There is already a transaction in progress"));
+  ADD_ERROR_MESSAGE(ER_NO_LOCK_HELD, N_("No lock is held by this connection."));
 }
 
 } /* namespace drizzled */

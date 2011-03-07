@@ -22,15 +22,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
  
-#include "config.h"
+#include <config.h>
 
 #include <unistd.h>
 #include <time.h>
 
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/internal/my_pthread.h>
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/plugin/function.h>
 
 #include <string>
 

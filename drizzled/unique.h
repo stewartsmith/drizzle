@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_UNIQUE_H
 #define DRIZZLED_UNIQUE_H
 
-#include "drizzled/tree.h"
+#include <drizzled/tree.h>
 /*
    Unique -- class for unique (removing of duplicates).
    Puts all values to the TREE. If the tree becomes too big,

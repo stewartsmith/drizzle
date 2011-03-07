@@ -18,17 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "drizzled/session.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
+#include <drizzled/session.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
 
-#include "drizzled/table.h"
+#include <drizzled/table.h>
 
 namespace drizzled
 {
@@ -40,7 +40,7 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   _share(message::Table::INTERNAL),
   _has_variable_width(false)
 {
-  uint32_t field_count= field_list.elements;
+  uint32_t field_count= field_list.size();
   uint32_t blob_count= 0;
   Field **field_arg;
   CreateField *cdef;                           /* column definition */
@@ -59,7 +59,7 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   in_use= session;           /* field_arg->reset() may access in_use */
 
   /* Create all fields and calculate the total length of record */
-  List_iterator_fast<CreateField> it(field_list);
+  List<CreateField>::iterator it(field_list.begin());
   message::Table::Field null_field;
   while ((cdef= it++))
   {
@@ -98,7 +98,7 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   null_pack_length= (null_count + 7)/8;
   getMutableShare()->setRecordLength(record_length + null_pack_length);
   getMutableShare()->rec_buff_length= ALIGN_SIZE(getMutableShare()->getRecordLength() + 1);
-  record[0]= (unsigned char*)session->alloc(getMutableShare()->rec_buff_length);
+  record[0]= (unsigned char*)session->getMemRoot()->allocate(getMutableShare()->rec_buff_length);
   if (not getInsertRecord())
   {
     throw "Memory allocation failure";

@@ -25,17 +25,13 @@
 #ifndef DRIZZLED_MODULE_OPTION_MAP_H
 #define DRIZZLED_MODULE_OPTION_MAP_H
 
-#include "drizzled/visibility.h"
-#include "drizzled/module/option_context.h"
-
 #include <boost/program_options.hpp>
-
+#include <drizzled/module/option_context.h>
+#include <drizzled/visibility.h>
 #include <string>
 
-namespace drizzled
-{
-namespace module
-{
+namespace drizzled {
+namespace module {
 
 /**
  * Options proxy wrapper. Provides pre-pending of module name to each option
@@ -43,14 +39,11 @@ namespace module
  */
 class DRIZZLED_API option_map
 {
-  const std::string &module_name;
 public:
   const boost::program_options::variables_map &vm;
 
-
   option_map(const std::string &module_name_in,
              const boost::program_options::variables_map &vm_in);
-  option_map(const option_map &old);
 
   const boost::program_options::variable_value& operator[](const std::string &name_in) const
   {
@@ -63,16 +56,7 @@ public:
   }
 
 private:
-  
-  /**
-   * Don't allow default construction.
-   */
-  option_map();
-
-  /**
-   * Don't allow assignment of objects.
-   */
-  option_map& operator=(const option_map &);
+  const std::string &module_name;
 };
 
 } /* namespace module */

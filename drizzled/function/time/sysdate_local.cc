@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/time/sysdate_local.h>
 #include <drizzled/tztime.h>
@@ -32,8 +32,7 @@ namespace drizzled
 */
 void Item_func_sysdate_local::store_now_in_TIME(type::Time &now_time)
 {
-  Session *session= current_session;
-  session->variables.time_zone->gmt_sec_to_TIME(now_time, time(NULL));
+  getSession().variables.time_zone->gmt_sec_to_TIME(now_time, time(NULL));
 }
 
 

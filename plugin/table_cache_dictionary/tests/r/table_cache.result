@@ -10,7 +10,7 @@ TABLE_CACHE	CREATE TABLE `TABLE_CACHE` (
   `AVG_ROW_LENGTH` BIGINT NOT NULL,
   `TABLE_SIZE` BIGINT NOT NULL,
   `AUTO_INCREMENT` BIGINT NOT NULL
-) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE
 select count(*) FROM data_dictionary.TABLE_CACHE;
 count(*)
 #
@@ -20,7 +20,7 @@ SESSION_ID	TABLE_SCHEMA	TABLE_NAME	VERSION	IS_NAME_LOCKED	ROWS	AVG_ROW_LENGTH	TA
 #	data_dictionary	table_cache	#	#	#	2112	#	#
 create table a ( a int);
 create table b ( b int);
-select * FROM a,b;
+select * FROM a CROSS JOIN b;
 a	b
 select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME;
 SESSION_ID	TABLE_SCHEMA	TABLE_NAME	VERSION	IS_NAME_LOCKED	ROWS	AVG_ROW_LENGTH	TABLE_SIZE	AUTO_INCREMENT

@@ -18,19 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/epoch.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/current_session.h>
 
 #include <math.h>
 
 #include <sstream>
 
-#include "drizzled/temporal.h"
+#include <drizzled/temporal.h>
 
 namespace drizzled
 {
@@ -234,12 +236,12 @@ int Epoch::store(int64_t from, bool)
   return 0;
 }
 
-double Epoch::val_real(void)
+double Epoch::val_real(void) const
 {
   return (double) Epoch::val_int();
 }
 
-int64_t Epoch::val_int(void)
+int64_t Epoch::val_int(void) const
 {
   uint64_t temp;
 
@@ -256,7 +258,7 @@ int64_t Epoch::val_int(void)
   return result;
 }
 
-String *Epoch::val_str(String *val_buffer, String *)
+String *Epoch::val_str(String *val_buffer, String *) const
 {
   uint64_t temp= 0;
   char *to;
@@ -280,7 +282,7 @@ String *Epoch::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Epoch::get_date(type::Time &ltime, uint32_t)
+bool Epoch::get_date(type::Time &ltime, uint32_t) const
 {
   uint64_t temp;
   type::Time::epoch_t time_temp;
@@ -295,7 +297,7 @@ bool Epoch::get_date(type::Time &ltime, uint32_t)
   return 0;
 }
 
-bool Epoch::get_time(type::Time &ltime)
+bool Epoch::get_time(type::Time &ltime) const
 {
   return Epoch::get_date(ltime, 0);
 }
@@ -366,7 +368,7 @@ void Epoch::set_default()
   }
 }
 
-long Epoch::get_timestamp(bool *null_value)
+long Epoch::get_timestamp(bool *null_value) const
 {
   if ((*null_value= is_null()))
     return 0;

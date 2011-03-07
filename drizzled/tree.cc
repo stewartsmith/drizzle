@@ -53,12 +53,12 @@
     (*tree->compare)(custom_arg, key, ELEMENT_KEY(tree,element))
 */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/tree.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/memory/root.h"
+#include <drizzled/tree.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/memory/root.h>
 
 #define BLACK		1
 #define RED		0

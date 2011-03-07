@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin/error_message.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin.h>
@@ -36,7 +36,7 @@ class Error_message_stderr : public plugin::ErrorMessage
 public:
   Error_message_stderr()
    : plugin::ErrorMessage("Error_message_stderr") {}
-  virtual bool errmsg(Session *, int , const char *format, va_list ap)
+  virtual bool errmsg(error::level_t , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
     int prv, wrv;
@@ -47,8 +47,10 @@ public:
     /* a single write has a OS level thread lock
        so there is no need to have mutexes guarding this write,
     */
-    wrv= write(2, msgbuf, prv);
-    if ((wrv < 0) || (wrv != prv)) return true;
+    wrv= write(fileno(stderr), msgbuf, prv);
+    fputc('\n', stderr);
+    if ((wrv < 0) || (wrv != prv))
+      return true;
 
     return false;
   }

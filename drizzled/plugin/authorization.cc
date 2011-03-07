@@ -18,15 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <vector>
 
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/identifier.h"
-#include "drizzled/error.h"
-#include "drizzled/session.h"
-#include "drizzled/gettext.h"
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/identifier.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/gettext.h>
 
 namespace drizzled
 {
@@ -78,11 +78,11 @@ public:
 class RestrictTableFunctor :
   public std::unary_function<plugin::Authorization *, bool>
 {
-  const identifier::User &user_ctx;
-  identifier::Table &table;
+  identifier::User::const_reference user_ctx;
+  identifier::Table::const_reference table;
 public:
-  RestrictTableFunctor(const identifier::User &user_ctx_arg,
-                       identifier::Table &table_arg) :
+  RestrictTableFunctor(identifier::User::const_reference user_ctx_arg,
+                       identifier::Table::const_reference table_arg) :
     std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     table(table_arg)
@@ -116,9 +116,9 @@ public:
 class PruneSchemaFunctor :
   public std::unary_function<identifier::Schema&, bool>
 {
-  drizzled::identifier::User::const_shared_ptr user_ctx;
+  drizzled::identifier::User::const_reference user_ctx;
 public:
-  PruneSchemaFunctor(drizzled::identifier::User::const_shared_ptr user_ctx_arg) :
+  PruneSchemaFunctor(drizzled::identifier::User::const_reference user_ctx_arg) :
     std::unary_function<identifier::Schema&, bool>(),
     user_ctx(user_ctx_arg)
   { }
@@ -131,7 +131,7 @@ public:
 
 } /* namespace */
 
-bool plugin::Authorization::isAuthorized(identifier::User::const_shared_ptr user_ctx,
+bool plugin::Authorization::isAuthorized(identifier::User::const_reference user_ctx,
                                          identifier::Schema::const_reference schema_identifier,
                                          bool send_error)
 {
@@ -143,7 +143,7 @@ bool plugin::Authorization::isAuthorized(identifier::User::const_shared_ptr user
   std::vector<plugin::Authorization *>::const_iterator iter=
     std::find_if(authorization_plugins.begin(),
                  authorization_plugins.end(),
-                 RestrictDbFunctor(*user_ctx, schema_identifier));
+                 RestrictDbFunctor(user_ctx, schema_identifier));
 
 
   /*
@@ -155,21 +155,15 @@ bool plugin::Authorization::isAuthorized(identifier::User::const_shared_ptr user
   {
     if (send_error)
     {
-      std::string path;
-      schema_identifier.getSQLPath(path);
-
-      my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
-               user_ctx->username().c_str(),
-               user_ctx->address().c_str(),
-               path.c_str());
+      error::access(user_ctx, schema_identifier);
     }
     return false;
   }
   return true;
 }
 
-bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_shared_ptr user_ctx,
-                                         identifier::Table &table,
+bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+                                         identifier::Table::const_reference table_identifier,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
@@ -180,7 +174,7 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_share
   std::vector<plugin::Authorization *>::const_iterator iter=
     std::find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
-            RestrictTableFunctor(*user_ctx, table));
+            RestrictTableFunctor(user_ctx, table_identifier));
 
   /*
    * If iter is == end() here, that means that all of the plugins returned
@@ -191,35 +185,25 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_share
   {
     if (send_error)
     {
-      std::string path;
-      table.getSQLPath(path);
-
-      my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
-               user_ctx->username().c_str(),
-               user_ctx->address().c_str(),
-               path.c_str());
+      error::access(user_ctx, table_identifier);
     }
     return false;
   }
   return true;
 }
 
-bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_shared_ptr user_ctx,
-                                         const Session *session,
-                                         bool send_error)
-{
-  return isAuthorized(*user_ctx, session, send_error);
-}
-
 bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                                         const Session *session,
+                                         Session::const_reference session,
                                          bool send_error)
 {
-  drizzled::identifier::User::const_shared_ptr session_ctx= session->user();
-
   /* If we never loaded any authorization plugins, just return true */
   if (authorization_plugins.empty())
     return true;
+  
+  // To make sure we hold the user structure we need to have a shred_ptr so
+  // that we increase the count on the object.
+  drizzled::identifier::User::const_shared_ptr session_ctx= session.user();
+
 
   /* Use find_if instead of foreach so that we can collect return codes */
   std::vector<plugin::Authorization *>::const_iterator iter=
@@ -237,7 +221,7 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_refer
   {
     if (send_error)
     {
-      my_error(ER_KILL_DENIED_ERROR, MYF(0), session->thread_id);
+      my_error(ER_KILL_DENIED_ERROR, MYF(0), session.thread_id);
     }
     return false;
   }
@@ -245,7 +229,7 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_refer
   return true;
 }
 
-void plugin::Authorization::pruneSchemaNames(drizzled::identifier::User::const_shared_ptr user_ctx,
+void plugin::Authorization::pruneSchemaNames(drizzled::identifier::User::const_reference user_ctx,
                                              identifier::Schema::vector &set_of_schemas)
 {
   /* If we never loaded any authorization plugins, just return true */

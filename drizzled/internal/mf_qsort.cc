@@ -20,10 +20,10 @@
 */
 
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {
@@ -41,13 +41,13 @@ namespace internal
 do {							\
    if (swap_ptrs)					\
    {							\
-     register char **a = (char**) (A), **b = (char**) (B);  \
+     char **a = (char**) (A), **b = (char**) (B);  \
      char *tmp = *a; *a++ = *b; *b++ = tmp;		\
    }							\
    else							\
    {							\
-     register char *a = (A), *b = (B);			\
-     register char *end= a+size;				\
+     char *a = (A), *b = (B);			\
+     char *end= a+size;				\
      do							\
      {							\
        char tmp = *a; *a++ = *b; *b++ = tmp;		\

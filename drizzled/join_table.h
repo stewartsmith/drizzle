@@ -28,27 +28,30 @@
 #ifndef DRIZZLED_JOIN_TABLE_H
 #define DRIZZLED_JOIN_TABLE_H
 
-#include "drizzled/enum_nested_loop_state.h"
-#include "drizzled/table_reference.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/join_cache.h"
-#include "drizzled/optimizer/key_use.h"
+#include <drizzled/enum_nested_loop_state.h>
+#include <drizzled/table_reference.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/join_cache.h>
+#include <drizzled/optimizer/key_use.h>
 
-#include "drizzled/records.h"
+#include <drizzled/records.h>
 
 #include <bitset>
 
 namespace drizzled
 {
 
+class Table;
+
+namespace optimizer
+{
+  class Position;
+}
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
 #define TAB_INFO_USING_INDEX 2
 #define TAB_INFO_USING_WHERE 4
 #define TAB_INFO_FULL_SCAN_ON_NULL 8
-
-class Table;
-
 
 /** Description of an access method */
 enum access_method
@@ -243,6 +246,8 @@ public:
   }
 
   void readCachedRecord();
+  int joinReadConstTable(optimizer::Position *pos);
+  int joinReadSystem();
 };
 
 } /* namespace drizzled */

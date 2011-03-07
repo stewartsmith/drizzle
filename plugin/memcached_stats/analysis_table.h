@@ -30,8 +30,8 @@
 #ifndef PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H
 #define PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/field.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/field.h>
 
 namespace drizzle_plugin
 {

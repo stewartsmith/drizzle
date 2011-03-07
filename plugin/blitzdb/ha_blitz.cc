@@ -17,8 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include "ha_blitz.h"
+#include <drizzled/plugin/storage_engine.h>
 
 using namespace std;
 using namespace drizzled;
@@ -497,7 +499,7 @@ int ha_blitz::info(uint32_t flag) {
 
 int ha_blitz::doStartTableScan(bool scan) {
   /* Obtain the query type for this scan */
-  sql_command_type = session_sql_command(getTable()->getSession());
+  sql_command_type = getTable()->getSession()->getSqlCommand();
   table_scan = scan;
   table_based = true;
 
@@ -622,7 +624,7 @@ const char *ha_blitz::index_type(uint32_t /*key_num*/) {
 
 int ha_blitz::doStartIndexScan(uint32_t key_num, bool) {
   active_index = key_num;
-  sql_command_type = session_sql_command(getTable()->getSession());
+  sql_command_type = getTable()->getSession()->getSqlCommand();
 
   /* This is unlikely to happen but just for assurance, re-obtain
      the lock if this thread already has a certain lock. This makes

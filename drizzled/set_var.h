@@ -22,9 +22,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/sql_list.h"
-#include "drizzled/lex_string.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {

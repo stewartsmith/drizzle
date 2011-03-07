@@ -24,6 +24,7 @@
 
 #include <drizzled/table/instance/base.h>
 #include <drizzled/table/instance/shared.h>
+#include <drizzled/table/instance/singular.h>
 
 namespace drizzled
 {

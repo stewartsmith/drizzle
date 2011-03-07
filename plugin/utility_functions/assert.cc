@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/utility_functions/functions.h"
+#include <plugin/utility_functions/functions.h>
 #include <drizzled/error.h>
 
 namespace drizzled
@@ -34,7 +34,7 @@ bool Assert::val_bool()
   if (not args[0]->val_bool())
   {
     drizzled::String res;
-    args[0]->print(&res, QT_ORDINARY);
+    args[0]->print(&res);
 
     assert(res.c_ptr());
 

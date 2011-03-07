@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <pthread.h>
 #include <signal.h>
@@ -44,36 +44,38 @@
 
 #include <boost/filesystem.hpp>
 
-#include "drizzled/plugin.h"
-#include "drizzled/gettext.h"
-#include "drizzled/configmake.h"
-#include "drizzled/session.h"
-#include "drizzled/session/cache.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/unireg.h"
-#include "drizzled/drizzled.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/data_home.h"
-#include "drizzled/plugin/listen.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/tztime.h"
-#include "drizzled/signal_handler.h"
-#include "drizzled/replication_services.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/catalog/local.h"
-#include "drizzled/abort_exception.h"
-
+#include <drizzled/abort_exception.h>
+#include <drizzled/catalog/local.h>
+#include <drizzled/configmake.h>
+#include <drizzled/data_home.h>
 #include <drizzled/debug.h>
-
-#include "drizzled/util/backtrace.h"
+#include <drizzled/drizzled.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/listen.h>
+#include <drizzled/plugin/monitored_in_transaction.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/replication_services.h>
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include <drizzled/signal_handler.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/tztime.h>
+#include <drizzled/unireg.h>
+#include <drizzled/util/backtrace.h>
+#include <drizzled/current_session.h>
+#include <drizzled/daemon.h>
 
 using namespace drizzled;
 using namespace std;
-namespace fs=boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
+
+extern bool opt_daemon;
 
 
 /**
@@ -93,19 +95,18 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       session->is_fatal_error= 1;
 
     /*
-      TODO: There are two exceptions mechanism (Session and sp_rcontext),
+      @TODO There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
     */
-    if (session->handle_error(error, str,
-                          DRIZZLE_ERROR::WARN_LEVEL_ERROR))
-      return;;
+    if (session->handle_error(error, str, DRIZZLE_ERROR::WARN_LEVEL_ERROR))
+      return;
 
     /*
-      session->lex->current_select == 0 if lex structure is not inited
+      session->getLex()->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (! (session->lex->current_select &&
-        session->lex->current_select->no_error && !session->is_fatal_error))
+    if (! (session->getLex()->current_select &&
+           session->getLex()->current_select->no_error && !session->is_fatal_error))
     {
       if (! session->main_da.is_error())            // Return only first message
       {
@@ -128,13 +129,13 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       session->no_warnings_for_error= true;
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
       session->no_warnings_for_error= false;
-      }
     }
+  }
 
-    if (not session || MyFlags & ME_NOREFRESH)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
-    }
+  if (not session || MyFlags & ME_NOREFRESH)
+  {
+    errmsg_printf(error::ERROR, "%s: %s",internal::my_progname,str);
+  }
 }
 
 static void init_signals(void)
@@ -165,7 +166,7 @@ static void init_signals(void)
     struct rlimit rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN,
+        errmsg_printf(error::WARN,
                       _("setrlimit could not change the size of core files "
                         "to 'infinity';  We may not be able to generate a "
                         "core file on signals"));
@@ -246,9 +247,26 @@ int main(int argc, char **argv)
 
   /* Function generates error messages before abort */
   error_handler_hook= my_message_sql;
+
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
-  if (init_common_variables(argc, argv, modules))
+  if (init_basic_variables(argc, argv))
+    unireg_abort(1);				// Will do exit
+
+  if (opt_daemon)
+  {
+    if (signal(SIGHUP, SIG_IGN) == SIG_ERR)
+    {
+      perror("Failed to ignore SIGHUP");
+    }
+    if (daemonize())
+    {
+      fprintf(stderr, "failed to daemon() in order to daemonize\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if (init_remaining_variables(modules))
     unireg_abort(1);				// Will do exit
 
   /*
@@ -265,7 +283,7 @@ int main(int argc, char **argv)
   {
     if (chdir(getDataHome().file_string().c_str()))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Data directory %s does not exist\n"),
                     getDataHome().file_string().c_str());
       unireg_abort(1);
@@ -276,13 +294,15 @@ int main(int argc, char **argv)
     }
     if (chdir("local"))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Local catalog %s/local does not exist\n"),
                     getDataHome().file_string().c_str());
       unireg_abort(1);
     }
 
-    full_data_home= fs::system_complete(getDataHome());
+    boost::filesystem::path &full_data_home= getFullDataHome();
+    full_data_home= boost::filesystem::system_complete(getDataHome());
+    errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
   }
 
 
@@ -327,7 +347,7 @@ int main(int argc, char **argv)
     unireg_abort(1);
 
   assert(plugin::num_trx_monitored_objects > 0);
-  if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
+  if (drizzle_rm_tmp_tables())
   {
     abort_loop= true;
     select_thread_in_use=0;
@@ -338,7 +358,7 @@ int main(int argc, char **argv)
     unireg_abort(1);
   }
 
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
+  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname,
                 PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
 
@@ -360,6 +380,8 @@ int main(int argc, char **argv)
     }
   }
 
+  if (opt_daemon)
+    daemon_is_ready();
 
   /* 
     Listen for new connections and start new session for each connection

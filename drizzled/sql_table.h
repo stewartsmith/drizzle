@@ -26,7 +26,7 @@
 #ifndef DRIZZLED_SQL_TABLE_H
 #define DRIZZLED_SQL_TABLE_H
 
-#include "drizzled/base.h"
+#include <drizzled/base.h>
 
 namespace drizzled
 {
@@ -55,8 +55,6 @@ bool analyze_table(Session* session, TableList* table_list,
                    HA_CHECK_OPT* check_opt);
 bool optimize_table(Session* session, TableList* table_list,
                     HA_CHECK_OPT* check_opt);
-
-void write_bin_log(Session *session, const std::string &query);
 
 bool is_primary_key(KeyInfo *key_info);
 const char* is_primary_key_name(const char* key_name);

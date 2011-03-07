@@ -24,11 +24,10 @@
 #ifndef DRIZZLED_PLUGIN_QUERY_REWRITE_H
 #define DRIZZLED_PLUGIN_QUERY_REWRITE_H
 
-#include "drizzled/atomics.h"
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/session.h"
+#include <drizzled/atomics.h>
+#include <drizzled/plugin/plugin.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 /**
  * @file Defines the API for a QueryRewriter.  

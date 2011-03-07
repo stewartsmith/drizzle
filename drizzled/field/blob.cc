@@ -19,11 +19,11 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "plugin/myisam/myisam.h"
+#include <plugin/myisam/myisam.h>
 
 #include <string>
 #include <algorithm>
@@ -90,7 +90,7 @@ void Field_blob::store_length(unsigned char *i_ptr, uint32_t i_number)
 
 
 uint32_t Field_blob::get_length(const unsigned char *pos,
-                                bool low_byte_first)
+                                bool low_byte_first) const
 {
 #ifndef WORDS_BIGENDIAN
   (void)low_byte_first;
@@ -113,14 +113,14 @@ uint32_t Field_blob::get_packed_size(const unsigned char *ptr_arg,
 }
 
 
-uint32_t Field_blob::get_length(uint32_t row_offset)
+uint32_t Field_blob::get_length(uint32_t row_offset) const
 {
   return get_length(ptr+row_offset,
                     getTable()->getShare()->db_low_byte_first);
 }
 
 
-uint32_t Field_blob::get_length(const unsigned char *ptr_arg)
+uint32_t Field_blob::get_length(const unsigned char *ptr_arg) const
 {
   return get_length(ptr_arg, getTable()->getShare()->db_low_byte_first);
 }
@@ -224,7 +224,7 @@ int Field_blob::store(int64_t nr, bool unsigned_val)
 }
 
 
-double Field_blob::val_real(void)
+double Field_blob::val_real(void) const
 {
   int not_used;
   char *end_not_used, *blob;
@@ -242,7 +242,7 @@ double Field_blob::val_real(void)
 }
 
 
-int64_t Field_blob::val_int(void)
+int64_t Field_blob::val_int(void) const
 {
   int not_used;
   char *blob;
@@ -252,12 +252,11 @@ int64_t Field_blob::val_int(void)
   memcpy(&blob,ptr+sizeof(uint32_t),sizeof(char*));
   if (!blob)
     return 0;
-  uint32_t length=get_length(ptr);
+  uint32_t length= get_length(ptr);
   return my_strntoll(charset(),blob,length,10,NULL,&not_used);
 }
 
-String *Field_blob::val_str(String *,
-			    String *val_ptr)
+String *Field_blob::val_str(String *, String *val_ptr) const
 {
   char *blob;
 
@@ -272,7 +271,7 @@ String *Field_blob::val_str(String *,
 }
 
 
-type::Decimal *Field_blob::val_decimal(type::Decimal *decimal_value)
+type::Decimal *Field_blob::val_decimal(type::Decimal *decimal_value) const
 {
   const char *blob;
   size_t length;
@@ -426,7 +425,7 @@ int Field_blob::key_cmp(const unsigned char *a,const unsigned char *b)
 
 uint32_t Field_blob::sort_length() const
 {
-  return (uint32_t) (current_session->variables.max_sort_length +
+  return (uint32_t) (getTable()->getSession()->variables.max_sort_length +
                      (field_charset == &my_charset_bin ? 0 : sizeof(uint32_t)));
 }
 

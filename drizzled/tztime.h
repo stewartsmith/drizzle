@@ -21,18 +21,15 @@
 #ifndef DRIZZLED_TZTIME_H
 #define DRIZZLED_TZTIME_H
 
-#include "drizzled/memory/sql_alloc.h"
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/type/time.h>
 
-#include "drizzled/type/time.h"
+#include <drizzled/type/time.h>
 
 namespace drizzled
 {
 
 class String;
-
-namespace type {
-class Time;
-}
 
 /**
   This class represents abstract time zone and provides
@@ -73,8 +70,7 @@ public:
 };
 
 extern Time_zone * my_tz_SYSTEM;
-extern Time_zone * my_tz_find(Session *session, const String *name);
-extern bool     my_tz_init(Session *org_session, const char *default_tzname);
+bool     my_tz_init(Session *org_session, const char *default_tzname);
 
 } /* namespace drizzled */
 

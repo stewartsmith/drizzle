@@ -18,19 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/function/cast/boolean.h"
-#include "drizzled/error.h"
+#include <drizzled/error.h>
+#include <drizzled/function/cast/boolean.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/type/boolean.h>
 
 namespace drizzled {
 namespace function {
 namespace cast {
 
-void Boolean::print(String *str, enum_query_type query_type)
+void Boolean::print(String *str)
 {
   str->append(STRING_WITH_LEN("cast("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" as boolean)"));
 }
 
@@ -45,50 +47,17 @@ drizzled::String *Boolean::val_str(drizzled::String *value)
       if (not (res= args[0]->val_str(&_res)))
       { 
         null_value= true; 
-
         break;
       }
       null_value= false; 
 
-      if (res->length() == 1)
+      bool result;
+      if (not type::convert(result, *res))
       {
-        switch (res->c_ptr()[0])
-        {
-        case 'y': case 'Y':
-        case 't': case 'T': // PG compatibility
-          return evaluate(true, value);
-
-        case 'n': case 'N':
-        case 'f': case 'F': // PG compatibility
-          return evaluate(false, value);
-
-        default:
-          break;
-        }
-      }
-      else if ((res->length() == 5) and (strcasecmp(res->c_ptr(), "FALSE") == 0))
-      {
-        return evaluate(false, value);
-      }
-      if ((res->length() == 4) and (strcasecmp(res->c_ptr(), "TRUE") == 0))
-      {
-        return evaluate(true, value);
-      }
-      else if ((res->length() == 5) and (strcasecmp(res->c_ptr(), "FALSE") == 0))
-      {
-        return evaluate(false, value);
-      }
-      else if ((res->length() == 3) and (strcasecmp(res->c_ptr(), "YES") == 0))
-      {
-        return evaluate(true, value);
-      }
-      else if ((res->length() == 2) and (strcasecmp(res->c_ptr(), "NO") == 0))
-      {
-        return evaluate(false, value);
+        my_error(ER_INVALID_CAST_TO_BOOLEAN, MYF(0), res->c_ptr());
       }
 
-      my_error(ER_INVALID_CAST_TO_BOOLEAN, MYF(0), res->c_ptr());
-      return evaluate(false, value);
+      return evaluate(result, value);
     }
 
   case REAL_RESULT:

@@ -23,35 +23,39 @@
  * @file This file implements the Field class and API
  */
 
-#include "config.h"
+#include <config.h>
 #include <cstdio>
 #include <errno.h>
 #include <float.h>
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/field/str.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/field/boolean.h"
-#include "drizzled/field/enum.h"
-#include "drizzled/field/null.h"
-#include "drizzled/field/date.h"
-#include "drizzled/field/decimal.h"
-#include "drizzled/field/real.h"
-#include "drizzled/field/double.h"
-#include "drizzled/field/int32.h"
-#include "drizzled/field/int64.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/time.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/field/datetime.h"
-#include "drizzled/field/microtime.h"
-#include "drizzled/field/varstring.h"
-#include "drizzled/field/uuid.h"
-#include "drizzled/time_functions.h"
-#include "drizzled/internal/m_string.h"
-
-#include "drizzled/display.h"
+#include <drizzled/sql_select.h>
+#include <drizzled/error.h>
+#include <drizzled/field/str.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/boolean.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/decimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/time.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/microtime.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/uuid.h>
+#include <drizzled/time_functions.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/table.h>
+#include <drizzled/util/test.h>
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
+#include <drizzled/display.h>
+#include <drizzled/typelib.h>
 
 namespace drizzled
 {
@@ -742,26 +746,26 @@ uint32_t Field::decimals() const
   return 0;
 }
 
-bool Field::is_null(ptrdiff_t row_offset)
+bool Field::is_null(ptrdiff_t row_offset) const
 {
   return null_ptr ?
     (null_ptr[row_offset] & null_bit ? true : false) :
     table->null_row;
 }
 
-bool Field::is_real_null(ptrdiff_t row_offset)
+bool Field::is_real_null(ptrdiff_t row_offset) const
 {
   return null_ptr ? (null_ptr[row_offset] & null_bit ? true : false) : false;
 }
 
-bool Field::is_null_in_record(const unsigned char *record)
+bool Field::is_null_in_record(const unsigned char *record) const
 {
   if (! null_ptr)
     return false;
   return test(record[(uint32_t) (null_ptr -table->getInsertRecord())] & null_bit);
 }
 
-bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset)
+bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset) const
 {
   if (! null_ptr)
     return false;
@@ -780,12 +784,12 @@ void Field::set_notnull(ptrdiff_t row_offset)
     null_ptr[row_offset]&= (unsigned char) ~null_bit;
 }
 
-bool Field::maybe_null(void)
+bool Field::maybe_null(void) const
 {
   return null_ptr != 0 || table->maybe_null;
 }
 
-bool Field::real_maybe_null(void)
+bool Field::real_maybe_null(void) const
 {
   return null_ptr != 0;
 }
@@ -827,29 +831,27 @@ Field::Field(unsigned char *ptr_arg,
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
              utype unireg_check_arg, 
-             const char *field_name_arg)
-  :
+             const char *field_name_arg) :
     ptr(ptr_arg),
     null_ptr(null_ptr_arg),
     table(NULL),
     orig_table(NULL),
     field_name(field_name_arg),
+    comment(NULL_LEX_STRING),
     key_start(0),
     part_of_key(0),
     part_of_key_not_clustered(0),
     part_of_sortkey(0),
     unireg_check(unireg_check_arg),
     field_length(length_arg),
+    flags(null_ptr ? 0: NOT_NULL_FLAG),
+    field_index(0),
     null_bit(null_bit_arg),
     is_created_from_null_item(false)
 {
-  flags= null_ptr ? 0: NOT_NULL_FLAG;
-  comment.str= (char*) "";
-  comment.length= 0;
-  field_index= 0;
 }
 
-void Field::hash(uint32_t *nr, uint32_t *nr2)
+void Field::hash(uint32_t *nr, uint32_t *nr2) const
 {
   if (is_null())
   {
@@ -941,7 +943,7 @@ const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
   return(result);
 }
 
-type::Decimal *Field::val_decimal(type::Decimal *)
+type::Decimal *Field::val_decimal(type::Decimal *) const
 {
   /* This never have to be called */
   assert(0);
@@ -999,7 +1001,7 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   {
     copy->blob_field=(Field_blob*) this;
     copy->strip=0;
-    copy->length-= table->getShare()->blob_ptr_size;
+    copy->length-= table->getShare()->sizeBlobPtr();
     return copy->length;
   }
   else
@@ -1010,14 +1012,14 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(type::Time &ltime,uint32_t fuzzydate)
+bool Field::get_date(type::Time &ltime, uint32_t fuzzydate) const
 {
-  char buff[40];
+  char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
   assert(getTable() and getTable()->getSession());
 
-  if (not (res=val_str_internal(&tmp)) or
+  if (not (res= val_str_internal(&tmp)) or
       str_to_datetime_with_warn(getTable()->getSession(),
                                 res->ptr(), res->length(),
                                 &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
@@ -1028,12 +1030,13 @@ bool Field::get_date(type::Time &ltime,uint32_t fuzzydate)
   return false;
 }
 
-bool Field::get_time(type::Time &ltime)
+bool Field::get_time(type::Time &ltime) const
 {
-  char buff[40];
+  char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
 
-  if (!(res=val_str_internal(&tmp)) || str_to_time_with_warn(res->ptr(), res->length(), &ltime))
+  if (not (res= val_str_internal(&tmp)) or
+      str_to_time_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime))
   {
     return true;
   }
@@ -1225,7 +1228,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   if (session->abortOnWarning() or
       set_warning(level, code, cuted_increment))
   {
-    char str_nr[22];
+    char str_nr[DECIMAL_LONGLONG_DIGITS];
     char *str_end= internal::int64_t10_to_str(nr, str_nr, -10);
     make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr),
                                  ts_type, field_name);
@@ -1250,7 +1253,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   }
 }
 
-bool Field::isReadSet() 
+bool Field::isReadSet() const 
 { 
   return table->isReadSet(field_index); 
 }

@@ -24,25 +24,28 @@
     gives much more speed.
 */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/current_session.h>
 
-#include <drizzled/field/str.h>
-#include <drizzled/field/num.h>
+#include <drizzled/copy_field.h>
 #include <drizzled/field/blob.h>
-#include <drizzled/field/enum.h>
-#include <drizzled/field/null.h>
 #include <drizzled/field/date.h>
+#include <drizzled/field/datetime.h>
 #include <drizzled/field/decimal.h>
-#include <drizzled/field/real.h>
 #include <drizzled/field/double.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/field/int32.h>
 #include <drizzled/field/int64.h>
+#include <drizzled/field/null.h>
 #include <drizzled/field/num.h>
-#include <drizzled/field/epoch.h>
-#include <drizzled/field/datetime.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/str.h>
 #include <drizzled/field/varstring.h>
 
 namespace drizzled
@@ -672,8 +675,8 @@ CopyField::get_copy_func(Field *to,Field *from)
     if (from_length != to_length || !compatible_db_low_byte_first)
     {
       // Correct pointer to point at char pointer
-      to_ptr+= to_length - to->getTable()->getShare()->blob_ptr_size;
-      from_ptr+= from_length- from->getTable()->getShare()->blob_ptr_size;
+      to_ptr+= to_length - to->getTable()->getShare()->sizeBlobPtr();
+      from_ptr+= from_length- from->getTable()->getShare()->sizeBlobPtr();
       return do_copy_blob;
     }
   }

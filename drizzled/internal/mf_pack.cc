@@ -13,13 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 #include <pwd.h>
 
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 #include "my_static.h"
 
 namespace drizzled
@@ -50,12 +50,12 @@ static size_t system_filename(char * to, const char *from);
     #  length of new name
 */
 
-static size_t cleanup_dirname(register char *to, const char *from)
+static size_t cleanup_dirname(char *to, const char *from)
 {
-  register size_t length;
-  register char * pos;
-  register const char * from_ptr;
-  register char * start;
+  size_t length;
+  char * pos;
+  const char * from_ptr;
+  char * start;
   char parent[5],				/* for "FN_PARENTDIR" */
        buff[FN_REFLEN+1],*end_parentdir;
 

@@ -576,6 +576,8 @@ message Statement
   optional AlterTableStatement alter_table_statement = 16;
   optional DropTableStatement drop_table_statement = 17;  
   optional SetVariableStatement set_variable_statement = 18;
+
+  optional string raw_sql_schema = 19;
 }
 
 /*

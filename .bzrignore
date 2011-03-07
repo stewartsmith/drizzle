@@ -300,6 +300,7 @@ strings/Makefile.in
 strings/tests/Makefile.in
 support-files/Makefile.in
 support-files/drizzle-log-rotate
+support-files/drizzle7.pc
 support-files/drizzle.server
 support-files/drizzle.spec
 support-files/libdrizzle.pc
@@ -315,6 +316,7 @@ temporal_format.gcno
 tests/Makefile.in
 tests/dtr
 tests/dtr@
+tests/dbqp_data/uuid
 tests/dbqp_work
 tests/install_test_db
 tests/mtr
@@ -325,6 +327,7 @@ tests/test-run
 tests/test-run@
 tests/total_warning_count
 tests/var
+tests/workdir
 thr_malloc.gcno
 time.gcno
 tmp_table.gcno

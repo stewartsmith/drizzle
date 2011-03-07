@@ -18,13 +18,12 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <cstdio>
-#include "drizzled/tzfile.h"
-#include "drizzled/tztime.h"
-#include "drizzled/gettext.h"
-#include "drizzled/session.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/tztime.h>
+#include <drizzled/gettext.h>
+#include <drizzled/session.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {
@@ -127,67 +126,5 @@ Time_zone_system::get_name() const
 static Time_zone_system tz_SYSTEM;
 
 Time_zone *my_tz_SYSTEM= &tz_SYSTEM;
-
-
-/**
- * @brief
- * Initialize time zone support infrastructure.
- *
- * @details
- * This function will init memory structures needed for time zone support,
- * it will register mandatory SYSTEM time zone in them. It will try to open
- * mysql.time_zone* tables and load information about default time zone and
- * information which further will be shared among all time zones loaded.
- * If system tables with time zone descriptions don't exist it won't fail
- * (unless default_tzname is time zone from tables). If bootstrap parameter
- * is true then this routine assumes that we are in bootstrap mode and won't
- * load time zone descriptions unless someone specifies default time zone
- * which is supposedly stored in those tables.
- * It'll also set default time zone if it is specified.
- *
- * @param   session            current thread object
- * @param   default_tzname     default time zone or 0 if none.
- * @param   bootstrap          indicates whenever we are in bootstrap mode
- *
- * @return
- *  0 - ok
- *  1 - Error
- */
-bool
-my_tz_init(Session *session, const char *default_tzname)
-{
-  if (default_tzname)
-  {
-    String tmp_tzname2(default_tzname, &my_charset_utf8_general_ci);
-    /*
-      Time zone tables may be open here, and my_tz_find() may open
-      most of them once more, but this is OK for system tables open
-      for READ.
-    */
-    if (!(global_system_variables.time_zone= my_tz_find(session, &tmp_tzname2)))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Fatal error: Illegal or unknown default time zone '%s'"),
-                    default_tzname);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * @brief
- * Get Time_zone object for specified time zone.
- *
- * @todo
- * Not implemented yet. This needs to hook into some sort of OS system call.
- */
-Time_zone *
-my_tz_find(Session *,
-           const String *)
-{
-  return NULL;
-}
 
 } /* namespace drizzled */

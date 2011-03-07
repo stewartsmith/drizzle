@@ -16,21 +16,24 @@
 
 /*
   Single table and multi table updates of tables.
-  Multi-table updates were introduced by Sinisa & Monty
 */
-#include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/probes.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/filesort.h"
+
+#include <config.h>
+
+#include <drizzled/sql_select.h>
+#include <drizzled/error.h>
+#include <drizzled/probes.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/filesort.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/key.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -144,7 +147,7 @@ int update_query(Session *session, TableList *table_list,
   Table		*table;
   optimizer::SqlSelect *select= NULL;
   ReadRecord	info;
-  Select_Lex    *select_lex= &session->lex->select_lex;
+  Select_Lex    *select_lex= &session->getLex()->select_lex;
   uint64_t     id;
   List<Item> all_fields;
   Session::killed_state_t killed_status= Session::NOT_KILLED;
@@ -202,7 +205,7 @@ int update_query(Session *session, TableList *table_list,
     return 1;
   }
 
-  if (select_lex->inner_refs_list.elements &&
+  if (select_lex->inner_refs_list.size() &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);
@@ -328,8 +331,7 @@ int update_query(Session *session, TableList *table_list,
 	Filesort has already found and selected the rows we want to update,
 	so we don't need the where clause
       */
-      delete select;
-      select= 0;
+      safe_delete(select);
     }
     else
     {
@@ -407,10 +409,9 @@ int update_query(Session *session, TableList *table_list,
       /* Change select to use tempfile */
       if (select)
       {
-	delete select->quick;
+	safe_delete(select->quick);
 	if (select->free_cond)
 	  delete select->cond;
-	select->quick=0;
 	select->cond=0;
       }
       else
@@ -576,8 +577,8 @@ int update_query(Session *session, TableList *table_list,
      * lp bug# 439719
      */
     session->main_da.reset_diagnostics_area();
-    session->my_ok((ulong) session->row_count_func, found, id, buff);
-    session->status_var.updated_row_count+= session->row_count_func;
+    session->my_ok((ulong) session->rowCount(), found, id, buff);
+    session->status_var.updated_row_count+= session->rowCount();
   }
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;		/* calc cuted fields */
   session->setAbortOnWarning(false);
@@ -620,9 +621,9 @@ bool prepare_update(Session *session, TableList *table_list,
 			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;
-  Select_Lex *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->getLex()->select_lex;
 
-  session->lex->allow_sum_func= 0;
+  session->getLex()->allow_sum_func= 0;
 
   if (setup_tables_and_check_access(session, &select_lex->context,
                                     &select_lex->top_join_list,

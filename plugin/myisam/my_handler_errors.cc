@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/base.h"
-#include "drizzled/internal/my_sys.h"
-#include "plugin/myisam/my_handler.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
+#include <config.h>
+#include <drizzled/base.h>
+#include <drizzled/internal/my_sys.h>
+#include <plugin/myisam/my_handler.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 using namespace drizzled;
 

@@ -18,17 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <boost/bind.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
-#include "drizzled/session.h"
-#include "drizzled/identifier/table.h"
-#include "drizzled/definition/cache.h"
-
-#include "drizzled/table/instance.h"
+#include <drizzled/session.h>
+#include <drizzled/identifier/table.h>
+#include <drizzled/definition/cache.h>
+#include <drizzled/table/instance.h>
+#include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
 
@@ -37,13 +37,8 @@ namespace definition {
 table::instance::Shared::shared_ptr Cache::find(const identifier::Table::Key &key)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-
-  Map::iterator iter= cache.find(key);
-  if (iter != cache.end())
-  {
-    return (*iter).second;
-  }
-
+  if (Map::mapped_type* ptr= find_ptr(cache, key))
+    return *ptr;
   return table::instance::Shared::shared_ptr();
 }
 

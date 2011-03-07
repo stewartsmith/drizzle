@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_ITEM_REF_H
 #define DRIZZLED_ITEM_REF_H
 
-#include "drizzled/item/ident.h"
+#include <drizzled/item/ident.h>
 
 namespace drizzled
 {
@@ -114,7 +114,7 @@ public:
   }
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
   { return (*ref)->walk(processor, walk_subquery, arg); }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   bool result_as_int64_t()
   {
     return (*ref)->result_as_int64_t();

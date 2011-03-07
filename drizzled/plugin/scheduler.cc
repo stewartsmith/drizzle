@@ -17,14 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <algorithm>
 
-#include "drizzled/plugin/scheduler.h"
-
-#include "drizzled/gettext.h"
-#include "drizzled/errmsg_print.h"
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
+#include <drizzled/plugin/scheduler.h>
 
 namespace drizzled
 {
@@ -58,7 +57,7 @@ bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 
   if (iter != all_schedulers.end())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Attempted to register a scheduler %s, but a scheduler "
                     "has already been registered with that name.\n"),
                     sched->getName().c_str());
@@ -95,7 +94,7 @@ bool plugin::Scheduler::setPlugin(const std::string& name)
     return false;
   }
 
-  errmsg_printf(ERRMSG_LVL_WARN,
+  errmsg_printf(error::WARN,
                 _("Attempted to configure %s as the scheduler, which did "
                   "not exist.\n"), name.c_str());
   return true;

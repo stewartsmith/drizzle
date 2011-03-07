@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/function/str/load_file.h>
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 #include <boost/filesystem.hpp>
 

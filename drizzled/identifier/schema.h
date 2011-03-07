@@ -29,15 +29,12 @@
   This will replace Table_ident.
   */
 
-
-
-#ifndef DRIZZLED_IDENTIFIER_SCHEMA_H
-#define DRIZZLED_IDENTIFIER_SCHEMA_H
+#pragma once
 
 #include <drizzled/enum.h>
-#include "drizzled/definitions.h"
-#include "drizzled/message/table.pb.h"
-#include "drizzled/catalog/local.h"
+#include <drizzled/definitions.h>
+#include <drizzled/message/table.pb.h>
+#include <drizzled/catalog/local.h>
 #include <string.h>
 
 #include <assert.h>
@@ -50,7 +47,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled {
 namespace identifier {
@@ -107,5 +104,3 @@ std::ostream& operator<<(std::ostream& output, const Schema&identifier);
 
 } /* namespace identifier */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_IDENTIFIER_SCHEMA_H */

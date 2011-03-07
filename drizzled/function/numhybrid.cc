@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <math.h>
 #include <drizzled/function/numhybrid.h>
 
@@ -43,7 +43,7 @@ String *Item_func_numhybrid::val_str(String *str)
       if (!(val= decimal_op(&decimal_value)))
         return 0;                                 // null is set
       class_decimal_round(E_DEC_FATAL_ERROR, val, decimals, false, val);
-      class_decimal2string(E_DEC_FATAL_ERROR, val, 0, 0, 0, str);
+      class_decimal2string(val, 0, str);
       break;
     }
   case INT_RESULT:

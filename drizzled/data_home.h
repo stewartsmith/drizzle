@@ -24,12 +24,10 @@
 
 #include <boost/filesystem.hpp>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
-
-extern boost::filesystem::path full_data_home;
 
 DRIZZLED_API boost::filesystem::path& getFullDataHome();
 DRIZZLED_API boost::filesystem::path& getDataHome();

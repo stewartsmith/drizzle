@@ -18,13 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/session.h"
-#include "drizzled/user_var_entry.h"
-#include "drizzled/plugin/client/concurrent.h"
-#include "drizzled/catalog/local.h"
-#include "drizzled/execute.h"
+#include <drizzled/session.h>
+#include <drizzled/user_var_entry.h>
+#include <drizzled/plugin/client/cached.h>
+#include <drizzled/plugin/client/concurrent.h>
+#include <drizzled/catalog/local.h>
+#include <drizzled/execute.h>
 
 namespace drizzled
 {
@@ -43,6 +44,67 @@ void Execute::run(const char *arg, size_t length)
 {
   std::string execution_string(arg, length);
   run(execution_string);
+}
+
+void Execute::run(std::string &execution_string, sql::ResultSet &result_set)
+{
+  boost_thread_shared_ptr thread;
+  
+  if (_session.isConcurrentExecuteAllowed())
+  {
+    plugin::client::Cached *client= new plugin::client::Cached(result_set);
+    client->pushSQL(execution_string);
+    Session::shared_ptr new_session= Session::make_shared(client, catalog::local());
+    
+    // We set the current schema.  @todo do the same with catalog
+    util::string::const_shared_ptr schema(_session.schema());
+    if (not schema->empty())
+      new_session->set_db(*schema);
+    
+    new_session->setConcurrentExecute(false);
+    
+    // Overwrite the context in the next session, with what we have in our
+    // session. Eventually we will allow someone to change the effective
+    // user.
+    new_session->user()= _session.user();
+    
+    if (Session::schedule(new_session))
+    {
+      Session::unlink(new_session);
+    }
+    else if (wait)
+    {
+      thread= new_session->getThread();
+    }
+  }
+  else
+  {
+    my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
+    return;
+  }
+  
+  if (wait && thread && thread->joinable())
+  {
+    // We want to make sure that we can be killed
+    if (_session.getThread())
+    {
+      boost::this_thread::restore_interruption dl(_session.getThreadInterupt());
+      
+      try {
+        thread->join();
+      }
+      catch(boost::thread_interrupted const&)
+      {
+        // Just surpress and return the error
+        my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+        return;
+      }
+    }
+    else
+    {
+      thread->join();
+    }
+  }
 }
 
 void Execute::run(std::string &execution_string)

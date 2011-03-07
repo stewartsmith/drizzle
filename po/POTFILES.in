@@ -7,7 +7,6 @@ client/drizzleimport.cc
 client/drizzleslap.cc
 client/drizzletest.cc
 drizzled/cursor.cc
-drizzled/db.cc
 drizzled/drizzled.cc
 drizzled/error.cc
 drizzled/gettext.h
@@ -41,6 +40,7 @@ drizzled/plugin/table_function.cc
 drizzled/plugin/xa_resource_manager.cc
 drizzled/plugin/xa_storage_engine.cc
 drizzled/replication_services.cc
+drizzled/schema.cc
 drizzled/session.cc
 drizzled/set_var.cc
 drizzled/show.cc
@@ -63,7 +63,6 @@ plugin/blitzdb/ha_blitz.h
 plugin/console/console.cc
 plugin/default_replicator/default_replicator.cc
 plugin/drizzle_protocol/drizzle_protocol.cc
-plugin/errmsg_notify/errmsg_notify.cc
 plugin/errmsg_stderr/errmsg_stderr.cc
 plugin/filtered_replicator/filtered_replicator.cc
 plugin/haildb/haildb_engine.cc
@@ -97,7 +96,6 @@ plugin/syslog/errmsg.cc
 plugin/syslog/function.cc
 plugin/syslog/logging.cc
 plugin/syslog/module.cc
-plugin/transaction_log/background_worker.cc
 plugin/transaction_log/hexdump_transaction_message.cc
 plugin/transaction_log/module.cc
 plugin/transaction_log/print_transaction_message.cc
@@ -106,3 +104,8 @@ plugin/transaction_log/transaction_log_reader.cc
 plugin/transaction_log/utilities/transaction_file_reader.cc
 plugin/transaction_log/utilities/transaction_reader.cc
 plugin/transaction_log/write_buffer.cc
+plugin/slave/module.cc
+plugin/slave/queue_producer.cc
+plugin/slave/replication_slave.cc
+plugin/slave/sql_executor.cc
+plugin/session_dictionary/sessions.cc

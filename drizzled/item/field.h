@@ -20,11 +20,15 @@
 #ifndef DRIZZLED_ITEM_FIELD_H
 #define DRIZZLED_ITEM_FIELD_H
 
+#include <drizzled/item/ident.h>
+
 namespace drizzled
 {
 
-extern Item **not_found_item;
 class COND_EQUAL;
+class Item;
+
+extern Item **not_found_item;
 
 class Item_field :public Item_ident
 {
@@ -105,7 +109,7 @@ public:
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   int fix_outer_field(Session *session, Field **field, Item **reference);
   virtual Item *update_value_transformer(unsigned char *select_arg);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 
   friend class Item_default_value;
   friend class Item_insert_value;

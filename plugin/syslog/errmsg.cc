@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/gettext.h>
-#include <drizzled/session.h>
+#include <drizzled/errmsg_print.h>
 
 #include <stdarg.h>
 
@@ -38,7 +38,7 @@ error_message::Syslog::Syslog(const std::string& facility,
 {
   if (_facility == -1)
   {
-    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+    drizzled::errmsg_printf(drizzled::error::WARN,
                             _("syslog facility \"%s\" not known, using \"local0\""),
                             facility.c_str());
     _facility= WrapSyslog::getFacilityByName("local0");
@@ -46,15 +46,14 @@ error_message::Syslog::Syslog(const std::string& facility,
 
   if (_priority == -1)
   {
-    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+    drizzled::errmsg_printf(drizzled::error::WARN,
                             _("syslog priority \"%s\" not known, using \"warn\""),
                             priority.c_str());
     _priority= WrapSyslog::getPriorityByName("warn");
   }
 }
 
-bool error_message::Syslog::errmsg(drizzled::Session *,
-                                  int, const char *format, va_list ap)
+bool error_message::Syslog::errmsg(drizzled::error::level_t, const char *format, va_list ap)
 {
   WrapSyslog::singleton().vlog(_facility, _priority, format, ap);
   return false;

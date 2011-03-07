@@ -33,7 +33,7 @@
  * callers.  
  */
 
-#include "config.h"
+#include <config.h>
 #include "write_buffer.h"
 
 #include <drizzled/errmsg_print.h>

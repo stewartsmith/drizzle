@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -32,8 +32,7 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include "drizzled/cached_directory.h"
-
+#include <drizzled/cached_directory.h>
 #include <drizzled/definitions.h>
 #include <drizzled/base.h>
 #include <drizzled/cursor.h>
@@ -43,20 +42,18 @@
 #include <drizzled/gettext.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
-#include "drizzled/errmsg_print.h"
-#include "drizzled/xid.h"
-#include "drizzled/sql_table.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/db.h"
-
+#include <drizzled/errmsg_print.h>
+#include <drizzled/xid.h>
+#include <drizzled/sql_table.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
-
+#include <drizzled/internal_error_handler.h>
 #include <drizzled/table/shell.h>
-
-#include "drizzled/message/cache.h"
+#include <drizzled/message/cache.h>
+#include <drizzled/key.h>
 
 #include <boost/algorithm/string/compare.hpp>
 
@@ -361,55 +358,11 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::identifie
   return false;
 }
 
-/**
-  Call this function in order to give the Cursor the possiblity
-  to ask engine if there are any new tables that should be written to disk
-  or any dropped tables that need to be removed from disk
-*/
-int StorageEngine::getTableDefinition(Session& session,
-                                      const identifier::Table &identifier,
-                                      message::table::shared_ptr &table_message,
-                                      bool include_temporary_tables)
-{
-  drizzled::error_t err= static_cast<drizzled::error_t>(ENOENT);
-
-  if (include_temporary_tables)
-  {
-    Table *table= session.find_temporary_table(identifier);
-    if (table)
-    {
-      table_message.reset(new message::Table(*table->getShare()->getTableProto()));
-      return EEXIST;
-    }
-  }
-
-  drizzled::message::table::shared_ptr table_ptr;
-  if ((table_ptr= drizzled::message::Cache::singleton().find(identifier)))
-  {
-    table_message= table_ptr;
-  }
-
-  message::Table message;
-  EngineVector::iterator iter=
-    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
-                 StorageEngineGetTableDefinition(session, identifier, message, err));
-
-  if (iter == vector_of_engines.end())
-  {
-    return ENOENT;
-  }
-  table_message.reset(new message::Table(message));
-
- drizzled::message::Cache::singleton().insert(identifier, table_message);
-
-  return err;
-}
-
 message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
                                                           identifier::Table::const_reference identifier,
-                                                          drizzled::error_t &error,
                                                           bool include_temporary_tables)
 {
+  drizzled::error_t error;
   error= static_cast<drizzled::error_t>(ENOENT);
 
   if (include_temporary_tables)
@@ -417,8 +370,7 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
     Table *table= session.find_temporary_table(identifier);
     if (table)
     {
-      error= EE_OK;
-      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableProto()));
+      return message::table::shared_ptr(new message::Table(*table->getShare()->getTableMessage()));
     }
   }
 
@@ -435,7 +387,6 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
 
   if (iter == vector_of_engines.end())
   {
-    error= static_cast<drizzled::error_t>(ENOENT);
     return message::table::shared_ptr();
   }
   message::table::shared_ptr table_message(new message::Table(message));
@@ -847,7 +798,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     - table->getShare()->path
     - table->alias
 */
-void StorageEngine::print_error(int error, myf errflag, Table &table)
+void StorageEngine::print_error(int error, myf errflag, const Table &table) const
 {
   drizzled::error_t textno= ER_GET_ERRNO;
   switch (error) {
@@ -979,9 +930,11 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
     textno=ER_TABLE_DEF_CHANGED;
     break;
   case HA_ERR_NO_SUCH_TABLE:
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table.getShare()->getSchemaName(),
-             table.getShare()->getTableName());
-    return;
+    {
+      identifier::Table identifier(table.getShare()->getSchemaName(), table.getShare()->getTableName());
+      my_error(ER_TABLE_UNKNOWN, identifier);
+      return;
+    }
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
     break;
@@ -1049,13 +1002,13 @@ void StorageEngine::print_error(int error, myf errflag, Table &table)
   @return
     Returns true if this is a temporary error
 */
-bool StorageEngine::get_error_message(int , String* )
+bool StorageEngine::get_error_message(int , String* ) const
 {
   return false;
 }
 
 
-void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, Table &table)
+void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, const Table &table) const
 {
   /* Write the duplicated key in the error message */
   char key[MAX_KEY_LENGTH];

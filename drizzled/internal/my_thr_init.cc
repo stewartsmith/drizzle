@@ -18,11 +18,11 @@
   thread variables.
 */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/thread_var.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/thread_var.h>
+#include <drizzled/internal/m_string.h>
 
 #include <cstdio>
 #include <signal.h>

@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -33,27 +33,46 @@ def handle_mode(variables, system_manager):
         the appropriate code objects for the test-runner to play with
 
     """
+
+    test_mode = variables['mode']
+    system_manager.logging.info("Using testing mode: %s" %test_mode)
+
     # drizzle-test-run mode - the default
-    if variables['mode'] == 'dtr':
+    if test_mode == 'dtr':
         # DTR mode - this is what we are coding to initially
         # We are just setting the code up this way to hopefully make
         # other coolness easier in the future
 
-        system_manager.logging.info("Using testing mode: %s" %variables['mode'])
-
-        # Set up our testManager
+        # get our mode-specific testManager
         from drizzle_test_run.dtr_test_management import testManager
-        test_manager = testManager( variables['verbose'], variables['debug'] 
-                                  , variables['defaultengine'], variables['dotest']
-                                  , variables['skiptest'], variables['reorder']
-                                  , variables['suitelist'], variables['suitepaths']
-                                  , system_manager, variables['test_cases'])
-
+ 
         # get our mode-specific testExecutor
-        from drizzle_test_run.dtr_test_execution import dtrTestExecutor
-        
-        return (test_manager, dtrTestExecutor)
+        from drizzle_test_run.dtr_test_execution import testExecutor as testExecutor
 
+    elif test_mode == 'randgen':
+        # randgen mode - we run the randgen grammar against
+        # the specified server configs and report the randgen error code
+
+        # get manager and executor
+        from randgen.randgen_test_management import testManager
+        from randgen.randgen_test_execution import randgenTestExecutor as testExecutor
+
+    elif test_mode == 'cleanup':
+        # cleanup mode - we try to kill any servers whose pid's we detect
+        # in our workdir.  Might extend to other things (file cleanup, etc)
+        # at some later point
+        system_manager.cleanup(exit=True)
+ 
     else:
         system_manager.logging.error("unknown mode argument: %s" %variables['mode'])
         sys.exit(1)
+
+    test_manager = testManager( variables['verbose'], variables['debug'] 
+                              , variables['defaultengine'], variables['dotest']
+                              , variables['skiptest'], variables['reorder']
+                              , variables['suitelist'], variables['suitepaths']
+                              , system_manager, variables['test_cases']
+                              , variables['mode'] )
+
+    return (test_manager, testExecutor)
+

@@ -17,10 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/item/ref.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {
@@ -73,11 +75,11 @@ bool Item_ref_null_helper::get_date(type::Time &ltime, uint32_t fuzzydate)
   return (owner->was_null|= null_value= (*ref)->get_date(ltime, fuzzydate));
 }
 
-void Item_ref_null_helper::print(String *str, enum_query_type query_type)
+void Item_ref_null_helper::print(String *str)
 {
   str->append(STRING_WITH_LEN("<ref_null_helper>("));
   if (ref)
-    (*ref)->print(str, query_type);
+    (*ref)->print(str);
   else
     str->append('?');
   str->append(')');

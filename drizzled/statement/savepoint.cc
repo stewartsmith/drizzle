@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/show.h"
-#include "drizzled/session.h"
-#include "drizzled/statement/savepoint.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/named_savepoint.h"
+#include <config.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/savepoint.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/named_savepoint.h>
 
 #include <string>
 #include <deque>
@@ -72,8 +72,8 @@ bool statement::Savepoint::execute()
       NamedSavepoint &sv= *iter;
       const string &sv_name= sv.getName();
       if (my_strnncoll(system_charset_info,
-                       (unsigned char *) getSession()->lex->ident.str,
-                       getSession()->lex->ident.length,
+                       (unsigned char *) getSession()->getLex()->ident.str,
+                       getSession()->getLex()->ident.length,
                        (unsigned char *) sv_name.c_str(),
                        sv_name.size()) == 0)
         break;
@@ -85,7 +85,7 @@ bool statement::Savepoint::execute()
       savepoints.erase(iter);
     }
     
-    NamedSavepoint newsv(getSession()->lex->ident.str, getSession()->lex->ident.length);
+    NamedSavepoint newsv(getSession()->getLex()->ident.str, getSession()->getLex()->ident.length);
 
     if (transaction_services.setSavepoint(*getSession(), newsv))
     {

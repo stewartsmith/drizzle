@@ -21,10 +21,10 @@
 /* One of key_length or key_length_offset must be given */
 /* Key length of 0 isn't allowed */
 
-#include "config.h"
-#include "drizzled/my_hash.h"
-#include "drizzled/charset.h"
-#include "drizzled/charset_info.h"
+#include <config.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/charset.h>
+#include <drizzled/charset_info.h>
 
 namespace drizzled
 {
@@ -57,6 +57,8 @@ static uint32_t calc_hash(const HASH *hash, const unsigned char *key,
   hash->charset->coll->hash_sort(hash->charset, key,length, &nr1, &nr2);
   return nr1;
 }
+
+#define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
 
 bool
 _hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,

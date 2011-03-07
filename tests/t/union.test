@@ -316,7 +316,7 @@ insert into t1 (user_name) values ('Tester');
 insert into t2 (group_name) values ('Group A');
 insert into t2 (group_name) values ('Group B');
 insert into t3 (user_id, group_id) values (1,1);
-select 1 'is_in_group', a.user_name, c.group_name, b.id from t1 a, t3 b, t2 c where a.id = b.user_id and b.group_id = c.id UNION  select 0 'is_in_group', a.user_name, c.group_name, null from t1 a, t2 c;
+select 1 'is_in_group', a.user_name, c.group_name, b.id from t1 a, t3 b, t2 c where a.id = b.user_id and b.group_id = c.id UNION  select 0 'is_in_group', a.user_name, c.group_name, null from t1 a CROSS JOIN t2 c;
 drop table t3, t1, t2;
 
 #
@@ -436,9 +436,9 @@ select * from t1;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
--- error 1054
+--error ER_BAD_FIELD_ERROR
 create table t1 select _latin1"test" union select _latin1"testt" ;
--- error 1054
+--error ER_BAD_FIELD_ERROR
 create table t1 select _utf8"test" union select _utf8"testt" ;
 create table t1 select "test" union select "testt" ;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -748,7 +748,7 @@ select concat('value is: ', @val) union select 'some text';
 select concat('a', 'b' collate utf8_bin);
 create table t1 (foo varchar(100)) collate=utf8_bin;
 insert into t1 (foo) values ("foo");
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 select foo from t1 union select 'bar' as foo from dual;
 select foo from t1 union select 'bar' as foo;
 drop table t1;

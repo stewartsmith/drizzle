@@ -18,9 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/catalog/cache.h>
+#include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
 namespace catalog {
@@ -28,21 +29,11 @@ namespace catalog {
 Instance::shared_ptr Cache::find(const identifier::Catalog &identifier, drizzled::error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-  unordered_map::iterator iter= cache.find(identifier);
-  if (iter != cache.end())
+  if (const unordered_map::mapped_type* ptr= find_ptr(cache, identifier))
   {
-    if (not (*iter).second)
-    {
-      error= ER_CATALOG_NO_LOCK;
-    }
-    else
-    {
-      error= EE_OK;
-    }
-
-    return (*iter).second;
+    error= *ptr ? EE_OK : ER_CATALOG_NO_LOCK;
+    return *ptr;
   }
-
   error= ER_CATALOG_DOES_NOT_EXIST;
   return catalog::Instance::shared_ptr();
 }
@@ -50,49 +41,32 @@ Instance::shared_ptr Cache::find(const identifier::Catalog &identifier, drizzled
 bool Cache::exist(const identifier::Catalog &identifier)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-  unordered_map::iterator iter= cache.find(identifier);
-  if (iter != cache.end())
-  {
-    return true;
-  }
-
-  return false;
+  return find_ptr(cache, identifier);
 }
 
 bool Cache::erase(const identifier::Catalog &identifier, drizzled::error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-
-  unordered_map::iterator iter= cache.find(identifier);
-  if (iter != cache.end())
+  if (find_ptr(cache, identifier))
   {
-    unordered_map::size_type erased= cache.erase(identifier);
-
-    if (erased)
+    if (cache.erase(identifier))
       return true;
-
-    assert(0); // This should be imposssible
+    assert(false); // This should be imposssible
   }
   error= ER_CATALOG_DOES_NOT_EXIST;
-
   return false;
 }
 
 bool Cache::unlock(const identifier::Catalog &identifier, drizzled::error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-
-  unordered_map::iterator iter= cache.find(identifier);
-  if (iter != cache.end())
+  if (const unordered_map::mapped_type* ptr= find_ptr(cache, identifier))
   {
-    if (not (*iter).second)
+    if (not *ptr)
     {
-      unordered_map::size_type erased= cache.erase(identifier);
-
-      if (erased)
+      if (cache.erase(identifier))
         return true;
-
-      assert(0); // This should be imposssible
+      assert(false); // This should be imposssible
     }
     error= EE_OK;
   }
@@ -100,7 +74,6 @@ bool Cache::unlock(const identifier::Catalog &identifier, drizzled::error_t &err
   {
     error= ER_CATALOG_DOES_NOT_EXIST;
   }
-
   return false;
 }
 

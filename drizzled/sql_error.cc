@@ -41,7 +41,7 @@ This file contains the implementation of error and warnings related
 
 ***********************************************************************/
 
-#include "config.h"
+#include <config.h>
 
 #include <cstdio>
 #include <stdarg.h>
@@ -91,7 +91,7 @@ void drizzle_reset_errors(Session *session, bool force)
     memset(session->warn_count, 0, sizeof(session->warn_count));
     if (force)
       session->total_warn_count= 0;
-    session->warn_list.empty();
+    session->warn_list.clear();
     session->row_count= 1; // by default point to row 1
   }
   return;
@@ -146,7 +146,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   if (session->handle_error(code, msg, level))
     return NULL;
 
-  if (session->warn_list.elements < session->variables.max_error_count)
+  if (session->warn_list.size() < session->variables.max_error_count)
   {
     /* We have to use warn_root, as mem_root is freed after each query */
     if ((err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg)))
@@ -221,13 +221,13 @@ bool show_warnings(Session *session,
     return true;
 
   DRIZZLE_ERROR *err;
-  Select_Lex *sel= &session->lex->select_lex;
-  Select_Lex_Unit *unit= &session->lex->unit;
+  Select_Lex *sel= &session->getLex()->select_lex;
+  Select_Lex_Unit *unit= &session->getLex()->unit;
   ha_rows idx= 0;
 
   unit->set_limit(sel);
 
-  List_iterator_fast<DRIZZLE_ERROR> it(session->warn_list);
+  List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
   while ((err= it++))
   {
     /* Skip levels that the user is not interested in */

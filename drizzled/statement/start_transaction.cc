@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/start_transaction.h>
@@ -28,6 +28,14 @@ namespace drizzled
 
 bool statement::StartTransaction::execute()
 {
+  if (getSession()->inTransaction())
+  {
+    push_warning_printf(getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                        ER_TRANSACTION_ALREADY_STARTED,
+                        ER(ER_TRANSACTION_ALREADY_STARTED));
+    return false;
+  }
+
   if (getSession()->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),

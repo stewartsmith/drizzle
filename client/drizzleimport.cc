@@ -39,7 +39,7 @@ extern "C" void * worker_thread(void *arg);
 
 int exitcode= 0;
 
-const char *program_name= "drizzlesimport";
+const char *program_name= "drizzleimport";
 
 /* Global Thread counter */
 uint32_t counter;
@@ -397,6 +397,8 @@ try
   "Load files in parallel. The argument is the number of threads to use for loading data (default is 4.")
   ;
 
+  const char* unix_user= getlogin();
+
   po::options_description client_options("Options specific to the client");
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -407,7 +409,7 @@ try
   "Port number to use for connection") 
   ("protocol", po::value<string>(&opt_protocol)->default_value("mysql"),
   "The protocol of connection (mysql or drizzle).")
-  ("user,u", po::value<string>(&current_user)->default_value(""),
+  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
   "User for login if not current user.")
   ;
 

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <curl/curl.h>
 
@@ -25,9 +25,9 @@
 #include <cassert>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include "drizzled/identifier.h"
-#include "drizzled/plugin/authentication.h"
-#include "drizzled/gettext.h"
+#include <drizzled/identifier.h>
+#include <drizzled/plugin/authentication.h>
+#include <drizzled/gettext.h>
 namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
@@ -131,7 +131,7 @@ static int initialize(drizzled::module::Context &context)
   const string auth_url(vm["url"].as<string>());
   if (auth_url.size() == 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("auth_http plugin loaded but required option url not "
                     "specified. Against which URL are you intending on "
                     "authenticating?\n"));

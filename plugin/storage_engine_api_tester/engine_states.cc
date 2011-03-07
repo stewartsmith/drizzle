@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "config.h"
+#include <config.h>
 #include <string>
 #include <map>
 #include <boost/unordered_map.hpp>
@@ -45,6 +45,7 @@ void load_engine_state_transitions(state_multimap &states)
   states.insert(state_pair("::max_supported_key_part_length()", "::max_supported_key_part_length()"));
   states.insert(state_pair("::max_supported_key_part_length()", "::doCreateTable()"));
 
+  states.insert(state_pair("::max_supported_key_parts()", "::max_supported_key_parts()"));
   states.insert(state_pair("::max_supported_key_parts()", "::max_supported_keys()"));
 
   // what the
@@ -73,6 +74,13 @@ void load_engine_state_transitions(state_multimap &states)
   states.insert(state_pair("END STATEMENT", "COMMIT"));
   states.insert(state_pair("END STATEMENT", "ROLLBACK"));
   states.insert(state_pair("END STATEMENT", "ROLLBACK STATEMENT"));
+
+  states.insert(state_pair("In Transaction", "SET SAVEPOINT"));
+  states.insert(state_pair("In Transaction", "ROLLBACK TO SAVEPOINT"));
+  states.insert(state_pair("In Transaction", "RELEASE SAVEPOINT"));
+  states.insert(state_pair("SET SAVEPOINT", "In Transaction"));
+  states.insert(state_pair("ROLLBACK TO SAVEPOINT", "BEGIN"));
+  states.insert(state_pair("RELEASE SAVEPOINT", "BEGIN"));
 
   states.insert(state_pair("COMMIT", "::SEAPITester()"));
   states.insert(state_pair("ROLLBACK", "::SEAPITester()"));

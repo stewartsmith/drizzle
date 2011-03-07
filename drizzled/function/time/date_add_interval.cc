@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <cstdio>
 
-#include "drizzled/function/time/date_add_interval.h"
-#include "drizzled/temporal_interval.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/function/time/date_add_interval.h>
+#include <drizzled/temporal_interval.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {
@@ -154,12 +154,12 @@ bool Item_date_add_interval::eq(const Item *item, bool binary_cmp) const
           (date_sub_interval == other->date_sub_interval));
 }
 
-void Item_date_add_interval::print(String *str, enum_query_type query_type)
+void Item_date_add_interval::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(date_sub_interval?" - interval ":" + interval ");
-  args[1]->print(str, query_type);
+  args[1]->print(str);
   str->append(' ');
   str->append(interval_names[int_type]);
   str->append(')');

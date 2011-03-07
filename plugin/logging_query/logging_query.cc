@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
@@ -171,13 +171,10 @@ public:
     fd= open(_filename.c_str(),
              O_WRONLY | O_APPEND | O_CREAT,
              S_IRUSR|S_IWUSR);
+
     if (fd < 0)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
-                    _filename.c_str(),
-                    errmsg);
+      sql_perror( _("fail open()"), _filename);
       return;
     }
 
@@ -245,6 +242,11 @@ public:
       return false;
 
     Session::QueryString query_string(session->getQueryString());
+    if (query_string == NULL)
+    {
+      return false;
+    }
+
     if (re)
     {
       int this_pcre_rc;
@@ -280,7 +282,7 @@ public:
               % session->tmp_table
               % session->total_warn_count
               % session->getServerId()
-              % glob_hostname;
+              % getServerHostname();
 
     string msgbuf= formatter.str();
 

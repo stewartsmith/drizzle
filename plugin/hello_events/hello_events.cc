@@ -31,12 +31,12 @@ set global hello_events1_watch_tables = "x,y";
 
  */
 
-#include "config.h"
+#include <config.h>
 #include <string>
 #include <cstdio>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include "drizzled/session.h"
+#include <drizzled/session.h>
 #include "hello_events.h"
 
 namespace po= boost::program_options;

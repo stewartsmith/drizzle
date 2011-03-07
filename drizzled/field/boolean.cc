@@ -19,17 +19,18 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
 #include <algorithm>
 
-#include "drizzled/field/boolean.h"
+#include <drizzled/field/boolean.h>
+#include <drizzled/type/boolean.h>
 
-#include "drizzled/error.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/session.h"
-#include "drizzled/table.h"
-#include "drizzled/temporal.h"
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/temporal.h>
 
 union set_true_t {
   unsigned char byte;
@@ -59,6 +60,8 @@ Boolean::Boolean(unsigned char *ptr_arg,
         field_name_arg),
   ansi_display(ansi_display_arg)
   {
+    if (ansi_display)
+      flags|= UNSIGNED_FLAG;
   }
 
 int Boolean::cmp(const unsigned char *a, const unsigned char *b)
@@ -70,49 +73,20 @@ int Boolean::store(const char *from, uint32_t length, const CHARSET_INFO * const
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if (length == 1)
+  bool result;
+  if (not type::convert(result, from, length))
   {
-    switch (from[0])
-    {
-    case 'y': case 'Y':
-    case 't': case 'T': // PG compatibility
-      setTrue();
-      return 0;
-
-    case 'n': case 'N':
-    case 'f': case 'F': // PG compatibility
-      setFalse();
-      return 0;
-
-    default:
-      my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
-      return 1; // invalid
-    }
+    my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
+    return 1;
   }
-  else if ((length == 5) and (my_strcasecmp(system_charset_info, from, "FALSE") == 0))
-  {
-    setFalse();
-  }
-  if ((length == 4) and (my_strcasecmp(system_charset_info, from, "TRUE") == 0))
+
+  if (result)
   {
     setTrue();
-  }
-  else if ((length == 5) and (my_strcasecmp(system_charset_info, from, "FALSE") == 0))
-  {
-    setFalse();
-  }
-  else if ((length == 3) and (my_strcasecmp(system_charset_info, from, "YES") == 0))
-  {
-    setTrue();
-  }
-  else if ((length == 2) and (my_strcasecmp(system_charset_info, from, "NO") == 0))
-  {
-    setFalse();
   }
   else
   {
-    my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
-    return 1; // invalid
+    setFalse();
   }
 
   return 0;
@@ -135,7 +109,7 @@ int  Boolean::store(double nr)
 int Boolean::store_decimal(const drizzled::type::Decimal *dec)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  if (dec->is_zero())
+  if (dec->isZero())
   {
     setFalse();
     return 0;
@@ -151,58 +125,28 @@ void Boolean::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("boolean"));
 }
 
-double Boolean::val_real()
+double Boolean::val_real() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   return isTrue();
 }
 
-int64_t Boolean::val_int()
+int64_t Boolean::val_int() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   return isTrue();
 }
 
-String *Boolean::val_str(String *val_buffer, String *)
+String *Boolean::val_str(String *val_buffer, String *) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
-  const CHARSET_INFO * const cs= &my_charset_bin;
-  uint32_t mlength= (5) * cs->mbmaxlen;
 
-  val_buffer->alloc(mlength);
-  char *buffer=(char*) val_buffer->c_ptr();
-
-  if (isTrue())
-  {
-    if (ansi_display)
-    {
-      memcpy(buffer, "YES", 3);
-      val_buffer->length(3);
-    }
-    else
-    {
-      memcpy(buffer, "TRUE", 4);
-      val_buffer->length(4);
-    }
-  }
-  else
-  {
-    if (ansi_display)
-    {
-      memcpy(buffer, "NO", 2);
-      val_buffer->length(2);
-    }
-    else
-    {
-      memcpy(buffer, "FALSE", 5);
-      val_buffer->length(5);
-    }
-  }
+  (void)type::convert(*val_buffer, isTrue(), ansi_display);
 
   return val_buffer;
 }
 
-type::Decimal *Boolean::val_decimal(type::Decimal *dec)
+type::Decimal *Boolean::val_decimal(type::Decimal *dec) const
 {
   if (isTrue())
   {

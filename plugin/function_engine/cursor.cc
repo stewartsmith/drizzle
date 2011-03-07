@@ -18,11 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <plugin/function_engine/cursor.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/field/blob.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -48,7 +49,7 @@ int FunctionCursor::open(const char *name, int, uint32_t)
   tool= static_cast<Function *>(getEngine())->getFunction(name); 
 //  assert(tool);
 
-  record_id= 0;
+  row_cache_position= 0;
 
   if (not tool)
     return HA_ERR_NO_SUCH_TABLE;
@@ -100,15 +101,55 @@ int FunctionCursor::rnd_next(unsigned char *)
   return more_rows ? 0 : HA_ERR_END_OF_FILE;
 }
 
+uint32_t FunctionCursor::max_row_length()
+{
+  uint32_t length= (uint32_t)(getTable()->getRecordLength() + getTable()->sizeFields()*2);
+
+  uint32_t *ptr, *end;
+  for (ptr= getTable()->getBlobField(), end=ptr + getTable()->sizeBlobFields();
+       ptr != end ;
+       ptr++)
+  {
+      length += 2 + ((Field_blob*)getTable()->getField(*ptr))->get_length();
+  }
+
+  return length;
+}
+
+unsigned int FunctionCursor::pack_row(const unsigned char *record)
+{
+  unsigned char *ptr;
+
+  record_buffer.resize(max_row_length());
+
+  /* Copy null bits */
+  memcpy(&record_buffer[0], record, getTable()->getShare()->null_bytes);
+  ptr= &record_buffer[0] + getTable()->getShare()->null_bytes;
+
+  for (Field **field=getTable()->getFields() ; *field ; field++)
+  {
+    if (!((*field)->is_null()))
+      ptr= (*field)->pack(ptr, record + (*field)->offset(record));
+  }
+
+  return((unsigned int) (ptr - &record_buffer[0]));
+}
+
 void FunctionCursor::position(const unsigned char *record)
 {
-  if (row_cache.size() <= record_id * getTable()->getShare()->getRecordLength())
+  uint32_t max_length= max_row_length();
+
+  if (row_cache.size() <= row_cache_position + max_length)
   {
-    row_cache.resize(row_cache.size() + getTable()->getShare()->getRecordLength() * 100); // Hardwired at adding an additional 100 rows of storage
+    row_cache.resize(row_cache.size() +  max_length);
   }
-  memcpy(&row_cache[record_id * getTable()->getShare()->getRecordLength()], record, getTable()->getShare()->getRecordLength());
-  internal::my_store_ptr(ref, ref_length, record_id);
-  record_id++;
+
+  unsigned int r_pack_length;
+  r_pack_length= pack_row(record);
+  internal::my_store_ptr(ref, ref_length, row_cache_position);
+
+  memcpy(&row_cache[row_cache_position], &record_buffer[0], r_pack_length);
+  row_cache_position+= r_pack_length;
 }
 
 
@@ -118,7 +159,7 @@ void FunctionCursor::wipeCache()
     estimate_of_rows= rows_returned;
 
   row_cache.clear();
-  record_id= 0;
+  row_cache_position= 0;
 }
 
 int FunctionCursor::extra(enum ha_extra_function operation)
@@ -151,8 +192,20 @@ int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   size_t position_id= (size_t)internal::my_get_ptr(pos, ref_length);
 
-  assert(position_id * getTable()->getShare()->getRecordLength() < row_cache.size());
-  memcpy(buf, &row_cache[position_id * getTable()->getShare()->getRecordLength()], getTable()->getShare()->getRecordLength());
+  const unsigned char *ptr;
+  ptr= &row_cache[position_id];
+
+  /* Copy null bits */
+  memcpy(buf, ptr, getTable()->getNullBytes());
+  ptr+= getTable()->getNullBytes();
+  // and copy fields
+  for (Field **field= getTable()->getFields() ; *field ; field++)
+  {
+    if (!((*field)->is_null()))
+    {
+      ptr= (*field)->unpack(buf + (*field)->offset(getTable()->getInsertRecord()), ptr);
+    }
+  }
 
   return 0;
 }

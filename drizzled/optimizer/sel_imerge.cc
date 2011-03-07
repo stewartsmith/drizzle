@@ -17,16 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/sql_base.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/range_param.h"
-#include "drizzled/optimizer/sel_arg.h"
-#include "drizzled/optimizer/sel_tree.h"
-#include "drizzled/optimizer/sel_imerge.h"
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/range_param.h>
+#include <drizzled/optimizer/sel_arg.h>
+#include <drizzled/optimizer/sel_tree.h>
+#include <drizzled/optimizer/sel_imerge.h>
 
 using namespace std;
 using namespace drizzled;

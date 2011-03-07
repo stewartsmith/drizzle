@@ -18,13 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <boost/lexical_cast.hpp>
-#include "drizzled/field/enum.h"
-#include "drizzled/error.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
-#include "drizzled/strfunc.h"
+#include <drizzled/field/enum.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include <drizzled/typelib.h>
 
 #include <sstream>
 #include <string>
@@ -65,7 +65,7 @@ int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * co
 
   /* Remove end space */
   length= field_charset->cset->lengthsp(field_charset, from, length);
-  tmp= find_type2(typelib, from, length, field_charset);
+  tmp= typelib->find_type2(from, length, field_charset);
   if (! tmp)
   {
     if (length < 6) /* Can't be more than 99999 enums */
@@ -120,12 +120,12 @@ int Field_enum::store(int64_t from, bool)
   return 0;
 }
 
-double Field_enum::val_real(void)
+double Field_enum::val_real(void) const
 {
   return (double) Field_enum::val_int();
 }
 
-int64_t Field_enum::val_int(void)
+int64_t Field_enum::val_int(void) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -139,7 +139,7 @@ int64_t Field_enum::val_int(void)
   return ((int64_t) tmp) + 1; /* SQL is from 1, we store from 0 */
 }
 
-String *Field_enum::val_str(String *, String *val_ptr)
+String *Field_enum::val_str(String *, String *val_ptr) const
 {
   uint32_t tmp=(uint32_t) Field_enum::val_int();
 
@@ -208,7 +208,7 @@ Field *Field_enum::new_field(memory::Root *root, Table *new_table,
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
   if (res)
   {
-    res->typelib= copy_typelib(root, typelib);
+    res->typelib= typelib->copy_typelib(root);
   }
   return res;
 }

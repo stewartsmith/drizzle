@@ -21,7 +21,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 Recovery
 
 Created 9/20/1997 Heikki Tuuri
-*******************************************************/
+***+****************************************************/
 
 #include "log0recv.h"
 
@@ -56,6 +56,8 @@ ibbackup --include regexp option: then we do not want to create tables in
 directories which were not included */
 UNIV_INTERN ibool	recv_replay_file_ops	= TRUE;
 #endif /* !UNIV_HOTBACKUP */
+
+#include <drizzled/errmsg_print.h>
 
 /** Log records are stored in the hash table in chunks at most of this size;
 this must be less than UNIV_PAGE_SIZE as it is stored in the buffer pool */
@@ -358,14 +360,12 @@ recv_sys_empty_hash(void)
 	ut_ad(mutex_own(&(recv_sys->mutex)));
 
 	if (recv_sys->n_addrs != 0) {
-		fprintf(stderr,
-			"InnoDB: Error: %lu pages with log records"
-			" were left unprocessed!\n"
-			"InnoDB: Maximum page number with"
-			" log records on it %lu\n",
-			(ulong) recv_sys->n_addrs,
-			(ulong) recv_max_parsed_page_no);
-		ut_error;
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Error: %lu pages with log records were left unprocessed!\n"
+                                  "InnoDB: Maximum page number with log records on it %lu\n",
+                                  (ulong) recv_sys->n_addrs,
+                                  (ulong) recv_max_parsed_page_no);
+          ut_error;
 	}
 
 	hash_table_free(recv_sys->addr_hash);
@@ -686,14 +686,13 @@ recv_find_max_checkpoint(
 			if (!recv_check_cp_is_consistent(buf)) {
 #ifdef UNIV_DEBUG
 				if (log_debug_writes) {
-					fprintf(stderr,
-						"InnoDB: Checkpoint in group"
-						" %lu at %lu invalid, %lu\n",
-						(ulong) group->id,
-						(ulong) field,
-						(ulong) mach_read_from_4(
-							buf
-							+ LOG_CHECKPOINT_CHECKSUM_1));
+                                  drizzled::errmsg_printf(drizzled::error::INFO,
+                                                          "InnoDB: Checkpoint in group %lu at %lu invalid, %lu\n",
+                                                          (ulong) group->id,
+                                                          (ulong) field,
+                                                          (ulong) mach_read_from_4(
+                                                                                   buf
+                                                                                   + LOG_CHECKPOINT_CHECKSUM_1));
 
 				}
 #endif /* UNIV_DEBUG */
@@ -711,11 +710,10 @@ recv_find_max_checkpoint(
 
 #ifdef UNIV_DEBUG
 			if (log_debug_writes) {
-				fprintf(stderr,
-					"InnoDB: Checkpoint number %lu"
-					" found in group %lu\n",
-					(ulong) checkpoint_no,
-					(ulong) group->id);
+                          drizzled::errmsg_printf(drizzled::error::INFO,
+                                                  "InnoDB: Checkpoint number %lu found in group %lu\n",
+                                                  (ulong) checkpoint_no,
+                                                  (ulong) group->id);
 			}
 #endif /* UNIV_DEBUG */
 
@@ -734,17 +732,13 @@ not_consistent:
 
 	if (*max_group == NULL) {
 
-		fprintf(stderr,
-			"InnoDB: No valid checkpoint found.\n"
-			"InnoDB: If this error appears when you are"
-			" creating an InnoDB database,\n"
-			"InnoDB: the problem may be that during"
-			" an earlier attempt you managed\n"
-			"InnoDB: to create the InnoDB data files,"
-			" but log file creation failed.\n"
-			"InnoDB: If that is the case, please refer to\n"
-			"InnoDB: " REFMAN "error-creating-innodb.html\n");
-		return(DB_ERROR);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: No valid checkpoint found. If this error appears when you are"
+                                  " creating an InnoDB database,InnoDB: the problem may be that during"
+                                  " an earlier attempt you managed to create the InnoDB data files,"
+                                  " but log file creation failed. If that is the case, please refer to\n"
+                                  "InnoDB: " REFMAN "error-creating-innodb.html\n");
+          return(DB_ERROR);
 	}
 
 	return(DB_SUCCESS);
@@ -2746,10 +2740,9 @@ recv_scan_log_recs(
 
 		if (finished || (recv_scan_print_counter % 80 == 0)) {
 
-			fprintf(stderr,
-				"InnoDB: Doing recovery: scanned up to"
-				" log sequence number %"PRIu64"\n",
-				*group_scanned_lsn);
+                  drizzled::errmsg_printf(drizzled::error::INFO,
+                                          "InnoDB: Doing recovery: scanned up to log sequence number %"PRIu64" ",
+                                          *group_scanned_lsn);
 		}
 	}
 
@@ -2822,11 +2815,8 @@ recv_group_scan_log_recs(
 
 #ifdef UNIV_DEBUG
 	if (log_debug_writes) {
-		fprintf(stderr,
-			"InnoDB: Scanned group %lu up to"
-			" log sequence number %"PRIu64"\n",
-			(ulong) group->id,
-			*group_scanned_lsn);
+          drizzled::errmsg_printf(drizzled::error::INFO,
+                                  "InnoDB: Scanned group %lu up to log sequence number %"PRIu64" ", (ulong) group->id, *group_scanned_lsn);
 	}
 #endif /* UNIV_DEBUG */
 }
@@ -2928,10 +2918,8 @@ recv_recovery_from_checkpoint_start_func(
 	}
 
 	if (srv_force_recovery >= SRV_FORCE_NO_LOG_REDO) {
-		fprintf(stderr,
-			"InnoDB: The user has set SRV_FORCE_NO_LOG_REDO on\n");
-		fprintf(stderr,
-			"InnoDB: Skipping log redo\n");
+          drizzled::errmsg_printf(drizzled::error::INFO,
+                                  "InnoDB: The user has set SRV_FORCE_NO_LOG_REDO on Skipping log redo.");
 
 		return(DB_SUCCESS);
 	}
@@ -2975,24 +2963,21 @@ recv_recovery_from_checkpoint_start_func(
 		/* This log file was created by ibbackup --restore: print
 		a note to the user about it */
 
-		fprintf(stderr,
-			"InnoDB: The log file was created by"
-			" ibbackup --apply-log at\n"
-			"InnoDB: %s\n",
-			log_hdr_buf + LOG_FILE_WAS_CREATED_BY_HOT_BACKUP);
-		fprintf(stderr,
-			"InnoDB: NOTE: the following crash recovery"
-			" is part of a normal restore.\n");
+          drizzled::errmsg_printf(drizzled::error::INFO,
+                                  "InnoDB: The log file was created by ibbackup --apply-log at %s\n",
+                                  log_hdr_buf + LOG_FILE_WAS_CREATED_BY_HOT_BACKUP);
+          drizzled::errmsg_printf(drizzled::error::INFO,
+                                  "InnoDB: NOTE: the following crash recovery is part of a normal restore.\n");
 
-		/* Wipe over the label now */
+          /* Wipe over the label now */
 
-		memset(log_hdr_buf + LOG_FILE_WAS_CREATED_BY_HOT_BACKUP,
-		       ' ', 4);
-		/* Write to the log file to wipe over the label */
-		fil_io(OS_FILE_WRITE | OS_FILE_LOG, TRUE,
-		       max_cp_group->space_id, 0,
-		       0, 0, OS_FILE_LOG_BLOCK_SIZE,
-		       log_hdr_buf, max_cp_group);
+          memset(log_hdr_buf + LOG_FILE_WAS_CREATED_BY_HOT_BACKUP,
+                 ' ', 4);
+          /* Write to the log file to wipe over the label */
+          fil_io(OS_FILE_WRITE | OS_FILE_LOG, TRUE,
+                 max_cp_group->space_id, 0,
+                 0, 0, OS_FILE_LOG_BLOCK_SIZE,
+                 log_hdr_buf, max_cp_group);
 	}
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -3109,37 +3094,34 @@ recv_recovery_from_checkpoint_start_func(
 		    || checkpoint_lsn != min_flushed_lsn) {
 
 			if (checkpoint_lsn < max_flushed_lsn) {
-				fprintf(stderr,
-					"InnoDB: #########################"
-					"#################################\n"
-					"InnoDB:                          "
-					"WARNING!\n"
-					"InnoDB: The log sequence number"
-					" in ibdata files is higher\n"
-					"InnoDB: than the log sequence number"
-					" in the ib_logfiles! Are you sure\n"
-					"InnoDB: you are using the right"
-					" ib_logfiles to start up"
-					" the database?\n"
-					"InnoDB: Log sequence number in"
-					" ib_logfiles is %"PRIu64", log\n"
-					"InnoDB: sequence numbers stamped"
-					" to ibdata file headers are between\n"
-					"InnoDB: %"PRIu64" and %"PRIu64".\n"
-					"InnoDB: #########################"
-					"#################################\n",
-					checkpoint_lsn,
-					min_flushed_lsn,
-					max_flushed_lsn);
+                          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                                 "InnoDB: #########################"
+                                                 "#################################\n"
+                                                 "InnoDB:                          "
+                                                 "WARNING!\n"
+                                                 "InnoDB: The log sequence number"
+                                                 " in ibdata files is higher\n"
+                                                 "InnoDB: than the log sequence number"
+                                                 " in the ib_logfiles! Are you sure\n"
+                                                 "InnoDB: you are using the right"
+                                                 " ib_logfiles to start up"
+                                                 " the database?\n"
+                                                 "InnoDB: Log sequence number in"
+                                                 " ib_logfiles is %"PRIu64", log\n"
+                                                 "InnoDB: sequence numbers stamped"
+                                                 " to ibdata file headers are between\n"
+                                                 "InnoDB: %"PRIu64" and %"PRIu64".\n"
+                                                 "InnoDB: #########################"
+                                                 "#################################\n",
+                                                 checkpoint_lsn,
+                                                 min_flushed_lsn,
+                                                 max_flushed_lsn);
 			}
 
-			if (!recv_needed_recovery) {
-				fprintf(stderr,
-					"InnoDB: The log sequence number"
-					" in ibdata files does not match\n"
-					"InnoDB: the log sequence number"
-					" in the ib_logfiles!\n");
-				recv_init_crash_recovery();
+			if (not recv_needed_recovery) {
+                          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                                 "InnoDB: The log sequence number in ibdata files does not match the log sequence number in the ib_logfiles!");
+                          recv_init_crash_recovery();
 			}
 		}
 
@@ -3151,27 +3133,19 @@ recv_recovery_from_checkpoint_start_func(
 
 	/* We currently have only one log group */
 	if (group_scanned_lsn < checkpoint_lsn) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: ERROR: We were only able to scan the log"
-			" up to\n"
-			"InnoDB: %"PRIu64", but a checkpoint was at %"PRIu64".\n"
-			"InnoDB: It is possible that"
-			" the database is now corrupt!\n",
-			group_scanned_lsn,
-			checkpoint_lsn);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: ERROR: We were only able to scan the log up to %"PRIu64", but a checkpoint was at %"PRIu64". "
+                                  "It is possible that the database is now corrupt!",
+                                  group_scanned_lsn,
+                                  checkpoint_lsn);
 	}
 
 	if (group_scanned_lsn < recv_max_page_lsn) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: ERROR: We were only able to scan the log"
-			" up to %"PRIu64"\n"
-			"InnoDB: but a database page a had an lsn %"PRIu64"."
-			" It is possible that the\n"
-			"InnoDB: database is now corrupt!\n",
-			group_scanned_lsn,
-			recv_max_page_lsn);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: ERROR: We were only able to scan the log up to %"PRIu64" "
+                                  " but a database page a had an lsn %"PRIu64". It is possible that the database is now corrupt!",
+                                  group_scanned_lsn,
+                                  recv_max_page_lsn);
 	}
 
 	if (recv_sys->recovered_lsn < checkpoint_lsn) {
@@ -3262,30 +3236,17 @@ recv_recovery_from_checkpoint_finish(void)
 
 #ifdef UNIV_DEBUG
 	if (log_debug_writes) {
-		fprintf(stderr,
-			"InnoDB: Log records applied to the database\n");
+          drizzled::errmsg_printf(drizzled::error::INFO,
+			"InnoDB: Log records applied to the database.");
 	}
 #endif /* UNIV_DEBUG */
 
-	if (recv_needed_recovery) {
-		trx_sys_print_mysql_master_log_pos();
-		trx_sys_print_mysql_binlog_offset();
-	}
-
 	if (recv_sys->found_corrupt_log) {
-
-		fprintf(stderr,
-			"InnoDB: WARNING: the log file may have been"
-			" corrupt and it\n"
-			"InnoDB: is possible that the log scan or parsing"
-			" did not proceed\n"
-			"InnoDB: far enough in recovery. Please run"
-			" CHECK TABLE\n"
-			"InnoDB: on your InnoDB tables to check that"
-			" they are ok!\n"
-			"InnoDB: It may be safest to recover your"
-			" InnoDB database from\n"
-			"InnoDB: a backup!\n");
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: WARNING: the log file may have been corrupt and it\n"
+                                  "InnoDB: is possible that the log scan or parsing did not proceed\n"
+                                  "InnoDB: far enough in recovery. Please run CHECK TABLE on your InnoDB tables to check that they are ok! "
+                                  "InnoDB: It may be safest to recover your database from a backup!");
 	}
 
 	/* Free the resources of the recovery system */
@@ -3443,29 +3404,28 @@ recv_reset_log_files_for_backup(
 						 name, OS_FILE_CREATE,
 						 OS_FILE_READ_WRITE,
 						 &success);
-		if (!success) {
-			fprintf(stderr,
-				"InnoDB: Cannot create %s. Check that"
-				" the file does not exist yet.\n", name);
+		if (not success) {
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Cannot create %s. Check that the file does not exist yet.\n", name);
 
 			exit(1);
 		}
 
-		fprintf(stderr,
-			"Setting log file size to %lu %lu\n",
-			(ulong) ut_get_high32(log_file_size),
-			(ulong) log_file_size & 0xFFFFFFFFUL);
+                drizzled::errmsg_printf(drizzled::error::INFO,
+                                        "Setting log file size to %lu %lu\n",
+                                        (ulong) ut_get_high32(log_file_size),
+                                        (ulong) log_file_size & 0xFFFFFFFFUL);
 
 		success = os_file_set_size(name, log_file,
 					   log_file_size & 0xFFFFFFFFUL,
 					   ut_get_high32(log_file_size));
 
-		if (!success) {
-			fprintf(stderr,
-				"InnoDB: Cannot set %s size to %lu %lu\n",
-				name, (ulong) ut_get_high32(log_file_size),
-				(ulong) (log_file_size & 0xFFFFFFFFUL));
-			exit(1);
+		if (not success) {
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Cannot set %s size to %lu %lu\n",
+                                          name, (ulong) ut_get_high32(log_file_size),
+                                          (ulong) (log_file_size & 0xFFFFFFFFUL));
+                  exit(1);
 		}
 
 		os_file_flush(log_file);
@@ -3485,10 +3445,10 @@ recv_reset_log_files_for_backup(
 					 name, OS_FILE_OPEN,
 					 OS_FILE_READ_WRITE, &success);
 	if (!success) {
-		fprintf(stderr, "InnoDB: Cannot open %s.\n", name);
+          drizzled::errmsg_printf(drizzled::error::ERROR, "InnoDB: Cannot open %s.\n", name);
 
-		exit(1);
-	}
+          exit(1);
+        }
 
 	os_file_write(name, log_file, buf, 0, 0,
 		      LOG_FILE_HDR_SIZE + OS_FILE_LOG_BLOCK_SIZE);
@@ -3567,13 +3527,14 @@ ask_again:
 
 	ut_a(file_size_high == 0);
 
-	fprintf(stderr, "InnoDB: Opened archived log file %s\n", name);
+        drizzled::errmsg_printf(drizzled::error::INFO,
+                                "InnoDB: Opened archived log file %s\n", name);
 
 	ret = os_file_close(file_handle);
 
 	if (file_size < LOG_FILE_HDR_SIZE) {
-		fprintf(stderr,
-			"InnoDB: Archive file header incomplete %s\n", name);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Archive file header incomplete %s\n", name);
 
 		return(TRUE);
 	}
@@ -3597,14 +3558,14 @@ ask_again:
 	if (mach_read_from_4(buf + LOG_GROUP_ID) != group->id
 	    || mach_read_from_4(buf + LOG_FILE_NO)
 	    != group->archived_file_no) {
-		fprintf(stderr,
+          drizzled::errmsg_printf(drizzled::error::ERROR,
 			"InnoDB: Archive file header inconsistent %s\n", name);
 
 		return(TRUE);
 	}
 
 	if (!mach_read_from_4(buf + LOG_FILE_ARCH_COMPLETED)) {
-		fprintf(stderr,
+          drizzled::errmsg_printf(drizzled::error::ERROR,
 			"InnoDB: Archive file not completely written %s\n",
 			name);
 
@@ -3617,11 +3578,9 @@ ask_again:
 	if (!recv_sys->scanned_lsn) {
 
 		if (recv_sys->parse_start_lsn < start_lsn) {
-			fprintf(stderr,
-				"InnoDB: Archive log file %s"
-				" starts from too big a lsn\n",
-				name);
-			return(TRUE);
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Archive log file %s starts from too big a lsn\n", name);
+                  return(TRUE);
 		}
 
 		recv_sys->scanned_lsn = start_lsn;
@@ -3629,11 +3588,9 @@ ask_again:
 
 	if (recv_sys->scanned_lsn != start_lsn) {
 
-		fprintf(stderr,
-			"InnoDB: Archive log file %s starts from"
-			" a wrong lsn\n",
-			name);
-		return(TRUE);
+          drizzled::errmsg_printf(drizzled::error::ERROR,
+                                  "InnoDB: Archive log file %s starts from a wrong lsn\n", name);
+          return(TRUE);
 	}
 
 	read_offset = LOG_FILE_HDR_SIZE;
@@ -3653,11 +3610,9 @@ ask_again:
 
 #ifdef UNIV_DEBUG
 		if (log_debug_writes) {
-			fprintf(stderr,
-				"InnoDB: Archive read starting at"
-				" lsn %"PRIu64", len %lu from file %s\n",
-				start_lsn,
-				(ulong) len, name);
+                  drizzled::errmsg_printf(drizzled::error::INFO,
+                                          "InnoDB: Archive read starting at lsn %"PRIu64", len %lu from file %s\n",
+                                          start_lsn, (ulong) len, name);
 		}
 #endif /* UNIV_DEBUG */
 
@@ -3677,11 +3632,9 @@ ask_again:
 		}
 
 		if (ret) {
-			fprintf(stderr,
-				"InnoDB: Archive log file %s"
-				" does not scan right\n",
-				name);
-			return(TRUE);
+                  drizzled::errmsg_printf(drizzled::error::ERROR,
+                                          "InnoDB: Archive log file %s does not scan right.", name);
+                  return(TRUE);
 		}
 
 		read_offset += len;
@@ -3740,7 +3693,7 @@ recv_recovery_from_archive_start(
 	}
 
 	if (!group) {
-		fprintf(stderr,
+          drizzled::errmsg_printf(drizzled::error::ERROR,
 			"InnoDB: There is no log group defined with id %lu!\n",
 			(ulong) group_id);
 		return(DB_ERROR);

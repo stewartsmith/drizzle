@@ -8,29 +8,40 @@ Configuration
 
 There are several server variables to control the MySQL Protocol.
 
-**mysql-protocol.port** arg (=3306)
-  The port number to use with MySQL connections (0 is the same as 3306)
+.. program:: drizzled
 
-**mysql-protocol.connect-timeout** arg (=10)
-  Connection timeout in seconds
+.. option:: --mysql-protocol.port arg (=3306)
 
-**mysql-protocol.read-timeout** arg (=30)
-  Port read timeout in seconds
+   The port number to use with MySQL connections (0 is the same as 3306)
 
-**mysql-protocol.write-timeout** arg (=60)
-  Port write timeout in seconds
+.. option:: --mysql-protocol.connect-timeout arg (=10)
 
-**mysql-protocol.retry-count** arg (=10)
-  Retry count for the read and write timeout before killing the connection
+   Connection timeout in seconds
 
-**mysql-protocol.buffer-length** arg (=16384)
-  Buffer length
+.. option:: --mysql-protocol.read-timeout arg (=30)
 
-**mysql-protocol.bind-address** arg
-  Address to bind to
+   Port read timeout in seconds
 
-**mysql-protocol.max-connections** arg (=1000)
-  Maximum simultaneous connections
+.. option:: --mysql-protocol.write-timeout arg (=60)
 
-**mysql-protocol.admin-ip-addresses** arg
-  A comma seprated list of IP addresses for admin tools to connect from
+   Port write timeout in seconds
+
+.. option:: --mysql-protocol.retry-count arg (=10)
+
+   Retry count for the read and write timeout before killing the connection
+
+.. option:: --mysql-protocol.buffer-length arg (=16384)
+
+   Buffer length
+
+.. option:: --mysql-protocol.bind-address arg
+
+   Address to bind to
+
+.. option:: --mysql-protocol.max-connections arg (=1000)
+
+   Maximum simultaneous connections
+
+.. option:: --mysql-protocol.admin-ip-addresses arg
+
+   A comma seprated list of IP addresses for admin tools to connect from

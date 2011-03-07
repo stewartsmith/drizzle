@@ -26,7 +26,7 @@
 #include <vector>
 #include <map>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -106,6 +106,11 @@ public:
   const std::string& getTypeName() const
   {
     return _type_name;
+  }
+
+  virtual bool removeLast() const
+  {
+    return false;
   }
 
   const std::string& getModuleName() const;

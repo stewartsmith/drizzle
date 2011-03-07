@@ -16,7 +16,7 @@
 
 /* Insert of records */
 
-#include "config.h"
+#include <config.h>
 #include <cstdio>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
@@ -27,12 +27,14 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/lock.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
-
-#include "drizzled/table/shell.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/select_insert.h>
+#include <drizzled/select_create.h>
+#include <drizzled/table/shell.h>
+#include <drizzled/alter_info.h>
 
 namespace drizzled
 {
@@ -68,9 +70,9 @@ static int check_insert_fields(Session *session, TableList *table_list,
 {
   Table *table= table_list->table;
 
-  if (fields.elements == 0 && values.elements != 0)
+  if (fields.size() == 0 && values.size() != 0)
   {
-    if (values.elements != table->getShare()->sizeFields())
+    if (values.size() != table->getShare()->sizeFields())
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1L);
       return -1;
@@ -85,12 +87,12 @@ static int check_insert_fields(Session *session, TableList *table_list,
   }
   else
   {						// Part field list
-    Select_Lex *select_lex= &session->lex->select_lex;
+    Select_Lex *select_lex= &session->getLex()->select_lex;
     Name_resolution_context *context= &select_lex->context;
     Name_resolution_context_state ctx_state;
     int res;
 
-    if (fields.elements != values.elements)
+    if (fields.size() != values.size())
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1L);
       return -1;
@@ -243,7 +245,7 @@ bool insert_query(Session *session,TableList *table_list,
   uint64_t id;
   CopyInfo info;
   Table *table= 0;
-  List_iterator_fast<List_item> its(values_list);
+  List<List_item>::iterator its(values_list.begin());
   List_item *values;
   Name_resolution_context *context;
   Name_resolution_context_state ctx_state;
@@ -256,7 +258,7 @@ bool insert_query(Session *session,TableList *table_list,
     the current connection mode or table operation.
   */
   upgrade_lock_type(session, &table_list->lock_type, duplic,
-                    values_list.elements > 1);
+                    values_list.size() > 1);
 
   if (session->openTablesLock(table_list))
   {
@@ -269,18 +271,18 @@ bool insert_query(Session *session,TableList *table_list,
   session->set_proc_info("init");
   session->used_tables=0;
   values= its++;
-  value_count= values->elements;
+  value_count= values->size();
 
   if (prepare_insert(session, table_list, table, fields, values,
 			   update_fields, update_values, duplic, &unused_conds,
                            false,
-                           (fields.elements || !value_count ||
+                           (fields.size() || !value_count ||
                             (0) != 0), !ignore))
   {
     if (table != NULL)
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
-      free_underlaid_joins(session, &session->lex->select_lex);
+      free_underlaid_joins(session, &session->getLex()->select_lex);
     session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
@@ -289,7 +291,7 @@ bool insert_query(Session *session,TableList *table_list,
   /* mysql_prepare_insert set table_list->table if it was not set */
   table= table_list->table;
 
-  context= &session->lex->select_lex.context;
+  context= &session->getLex()->select_lex.context;
   /*
     These three asserts test the hypothesis that the resetting of the name
     resolution context below is not necessary at all since the list of local
@@ -312,14 +314,14 @@ bool insert_query(Session *session,TableList *table_list,
   while ((values= its++))
   {
     counter++;
-    if (values->elements != value_count)
+    if (values->size() != value_count)
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), counter);
 
       if (table != NULL)
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
-        free_underlaid_joins(session, &session->lex->select_lex);
+        free_underlaid_joins(session, &session->getLex()->select_lex);
       session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
 
@@ -330,13 +332,13 @@ bool insert_query(Session *session,TableList *table_list,
       if (table != NULL)
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
-        free_underlaid_joins(session, &session->lex->select_lex);
+        free_underlaid_joins(session, &session->getLex()->select_lex);
       session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
       return true;
     }
   }
-  its.rewind ();
+  its= values_list.begin();
 
   /* Restore the current context. */
   ctx_state.restore_state(context, table_list);
@@ -368,7 +370,7 @@ bool insert_query(Session *session,TableList *table_list,
   {
     if (duplic != DUP_ERROR || ignore)
       table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
-    table->cursor->ha_start_bulk_insert(values_list.elements);
+    table->cursor->ha_start_bulk_insert(values_list.size());
   }
 
 
@@ -378,12 +380,12 @@ bool insert_query(Session *session,TableList *table_list,
 
   while ((values= its++))
   {
-    if (fields.elements || !value_count)
+    if (fields.size() || !value_count)
     {
       table->restoreRecordAsDefault();	// Get empty record
       if (fill_record(session, fields, *values))
       {
-	if (values_list.elements != 1 && ! session->is_error())
+	if (values_list.size() != 1 && ! session->is_error())
 	{
 	  info.records++;
 	  continue;
@@ -403,7 +405,7 @@ bool insert_query(Session *session,TableList *table_list,
 
       if (fill_record(session, table->getFields(), *values))
       {
-	if (values_list.elements != 1 && ! session->is_error())
+	if (values_list.size() != 1 && ! session->is_error())
 	{
 	  info.records++;
 	  continue;
@@ -422,7 +424,7 @@ bool insert_query(Session *session,TableList *table_list,
     session->row_count++;
   }
 
-  free_underlaid_joins(session, &session->lex->select_lex);
+  free_underlaid_joins(session, &session->getLex()->select_lex);
   joins_freed= true;
 
   /*
@@ -482,17 +484,17 @@ bool insert_query(Session *session,TableList *table_list,
     if (table != NULL)
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
-      free_underlaid_joins(session, &session->lex->select_lex);
+      free_underlaid_joins(session, &session->getLex()->select_lex);
     session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
   }
 
-  if (values_list.elements == 1 && (!(session->options & OPTION_WARNINGS) ||
+  if (values_list.size() == 1 && (!(session->options & OPTION_WARNINGS) ||
 				    !session->cuted_fields))
   {
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id);
   }
   else
@@ -505,12 +507,12 @@ bool insert_query(Session *session,TableList *table_list,
       snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + info.updated;
-    session->my_ok((ulong) session->row_count_func,
+    session->my_ok((ulong) session->rowCount(),
                    info.copied + info.deleted + info.touched, id, buff);
   }
-  session->status_var.inserted_row_count+= session->row_count_func;
+  session->status_var.inserted_row_count+= session->rowCount();
   session->setAbortOnWarning(false);
-  DRIZZLE_INSERT_DONE(0, session->row_count_func);
+  DRIZZLE_INSERT_DONE(0, session->rowCount());
 
   return false;
 }
@@ -545,10 +547,10 @@ static bool prepare_insert_check_table(Session *session, TableList *table_list,
      than INSERT.
   */
 
-  if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
-                                    &session->lex->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
+                                    &session->getLex()->select_lex.top_join_list,
                                     table_list,
-                                    &session->lex->select_lex.leaf_tables,
+                                    &session->getLex()->select_lex.leaf_tables,
                                     select_insert))
     return(true);
 
@@ -595,7 +597,7 @@ bool prepare_insert(Session *session, TableList *table_list,
                           bool select_insert,
                           bool check_fields, bool abort_on_warning)
 {
-  Select_Lex *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->getLex()->select_lex;
   Name_resolution_context *context= &select_lex->context;
   Name_resolution_context_state ctx_state;
   bool insert_into_view= (0 != 0);
@@ -836,8 +838,8 @@ int write_record(Session *session, Table *table,CopyInfo *info)
 	assert(table->insert_values.size());
         table->storeRecordAsInsert();
         table->restoreRecord();
-        assert(info->update_fields->elements ==
-                    info->update_values->elements);
+        assert(info->update_fields->size() ==
+                    info->update_values->size());
         if (fill_record(session, *info->update_fields,
                                                  *info->update_values,
                                                  info->ignore))
@@ -962,8 +964,8 @@ gok_or_after_err:
 err:
   info->last_errno= error;
   /* current_select is NULL if this is a delayed insert */
-  if (session->lex->current_select)
-    session->lex->current_select->no_error= 0;        // Give error
+  if (session->getLex()->current_select)
+    session->getLex()->current_select->no_error= 0;        // Give error
   table->print_error(error,MYF(0));
 
 before_err:
@@ -1038,7 +1040,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 
 bool insert_select_prepare(Session *session)
 {
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
   Select_Lex *select_lex= &lex->select_lex;
 
   /*
@@ -1085,10 +1087,9 @@ select_insert::select_insert(TableList *table_list_par, Table *table_par,
 int
 select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
-  LEX *lex= session->lex;
   int res;
   table_map map= 0;
-  Select_Lex *lex_current_select_save= lex->current_select;
+  Select_Lex *lex_current_select_save= session->getLex()->current_select;
 
 
   unit= u;
@@ -1098,12 +1099,12 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     select, LEX::current_select should point to the first select while
     we are fixing fields from insert list.
   */
-  lex->current_select= &lex->select_lex;
+  session->getLex()->current_select= &session->getLex()->select_lex;
   res= check_insert_fields(session, table_list, *fields, values,
                            !insert_into_view, &map) ||
        setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0);
 
-  if (!res && fields->elements)
+  if (!res && fields->size())
   {
     bool saved_abort_on_warning= session->abortOnWarning();
     session->setAbortOnWarning(not info.ignore);
@@ -1114,7 +1115,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   if (info.handle_duplicates == DUP_UPDATE && !res)
   {
-    Name_resolution_context *context= &lex->select_lex.context;
+    Name_resolution_context *context= &session->getLex()->select_lex.context;
     Name_resolution_context_state ctx_state;
 
     /* Save the state of the current name resolution context. */
@@ -1132,8 +1133,8 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
       We use next_name_resolution_table descructively, so check it first (views?)
     */
     assert (!table_list->next_name_resolution_table);
-    if (lex->select_lex.group_list.elements == 0 &&
-        !lex->select_lex.with_sum_func)
+    if (session->getLex()->select_lex.group_list.elements == 0 and
+        not session->getLex()->select_lex.with_sum_func)
       /*
         We must make a single context out of the two separate name resolution contexts :
         the INSERT table and the tables in the SELECT part of INSERT ... SELECT.
@@ -1152,13 +1153,13 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
         order to get correct values from those fields when the select
         employs a temporary table.
       */
-      List_iterator<Item> li(*info.update_values);
+      List<Item>::iterator li(info.update_values->begin());
       Item *item;
 
       while ((item= li++))
       {
         item->transform(&Item::update_value_transformer,
-                        (unsigned char*)lex->current_select);
+                        (unsigned char*)session->getLex()->current_select);
       }
     }
 
@@ -1166,7 +1167,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     ctx_state.restore_state(context, table_list);
   }
 
-  lex->current_select= lex_current_select_save;
+  session->getLex()->current_select= lex_current_select_save;
   if (res)
     return(1);
   /*
@@ -1182,10 +1183,10 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
   if (unique_table(table_list, table_list->next_global))
   {
     /* Using same table for INSERT and SELECT */
-    lex->current_select->options|= OPTION_BUFFER_RESULT;
-    lex->current_select->join->select_options|= OPTION_BUFFER_RESULT;
+    session->getLex()->current_select->options|= OPTION_BUFFER_RESULT;
+    session->getLex()->current_select->join->select_options|= OPTION_BUFFER_RESULT;
   }
-  else if (!(lex->current_select->options & OPTION_BUFFER_RESULT))
+  else if (not (session->getLex()->current_select->options & OPTION_BUFFER_RESULT))
   {
     /*
       We must not yet prepare the result table if it is the same as one of the
@@ -1238,9 +1239,9 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
 int select_insert::prepare2(void)
 {
-
-  if (session->lex->current_select->options & OPTION_BUFFER_RESULT)
+  if (session->getLex()->current_select->options & OPTION_BUFFER_RESULT)
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
+
   return(0);
 }
 
@@ -1269,7 +1270,7 @@ select_insert::~select_insert()
 bool select_insert::send_data(List<Item> &values)
 {
 
-  bool error=0;
+  bool error= false;
 
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
@@ -1325,7 +1326,7 @@ bool select_insert::send_data(List<Item> &values)
 
 void select_insert::store_values(List<Item> &values)
 {
-  if (fields->elements)
+  if (fields->size())
     fill_record(session, *fields, values, true);
   else
     fill_record(session, table->getFields(), values, true);
@@ -1382,10 +1383,10 @@ bool select_insert::send_eof()
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  session->my_ok((ulong) session->row_count_func,
+  session->my_ok((ulong) session->rowCount(),
                  info.copied + info.deleted + info.touched, id, buff);
-  session->status_var.inserted_row_count+= session->row_count_func; 
-  DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
+  session->status_var.inserted_row_count+= session->rowCount(); 
+  DRIZZLE_INSERT_SELECT_DONE(0, session->rowCount());
   return 0;
 }
 
@@ -1490,9 +1491,9 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				      identifier::Table::const_reference identifier)
 {
   TableShare share(message::Table::INTERNAL);
-  uint32_t select_field_count= items->elements;
+  uint32_t select_field_count= items->size();
   /* Add selected items to field list */
-  List_iterator_fast<Item> it(*items);
+  List<Item>::iterator it(items->begin());
   Item *item;
   Field *tmp_field;
 
@@ -1514,18 +1515,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   {
     table::Shell tmp_table(share);		// Used during 'CreateField()'
-    tmp_table.timestamp_field= 0;
-
-    tmp_table.getMutableShare()->db_create_options= 0;
-    tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
 
     if (not table_proto.engine().name().compare("MyISAM"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
     else if (not table_proto.engine().name().compare("MEMORY"))
       tmp_table.getMutableShare()->db_low_byte_first= true;
-
-    tmp_table.null_row= false;
-    tmp_table.maybe_null= false;
 
     tmp_table.in_use= session;
 
@@ -1650,6 +1644,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
     if (not create_info->table_existed)
       session->drop_open_table(table, identifier);
+
     return NULL;
   }
 
@@ -1694,14 +1689,14 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
     *m_plock= extra_lock;
   }
 
-  if (table->getShare()->sizeFields() < values.elements)
+  if (table->getShare()->sizeFields() < values.size())
   {
     my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1);
     return(-1);
   }
 
  /* First field to copy */
-  field= table->getFields() + table->getShare()->sizeFields() - values.elements;
+  field= table->getFields() + table->getShare()->sizeFields() - values.size();
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)

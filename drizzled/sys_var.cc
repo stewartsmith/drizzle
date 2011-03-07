@@ -38,29 +38,30 @@
 
 */
 
-#include "config.h"
-#include "drizzled/option.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/tztime.h"
-#include "drizzled/data_home.h"
-#include "drizzled/set_var.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/item/null.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/string.h"
-#include "drizzled/plugin.h"
-#include "drizzled/version.h"
-#include "drizzled/strfunc.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/constrained_value.h"
-#include "drizzled/visibility.h"
+#include <config.h>
+#include <drizzled/option.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/tztime.h>
+#include <drizzled/data_home.h>
+#include <drizzled/set_var.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/item/null.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/string.h>
+#include <drizzled/plugin.h>
+#include <drizzled/version.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/charset.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/constrained_value.h>
+#include <drizzled/visibility.h>
+#include <drizzled/typelib.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <cstdio>
 #include <map>
@@ -89,6 +90,12 @@ static SystemVariableMap system_variable_map;
 extern char *opt_drizzle_tmpdir;
 
 extern TYPELIB tx_isolation_typelib;
+
+namespace
+{
+static size_t revno= DRIZZLE7_VC_REVNO;
+static size_t release_id= DRIZZLE7_RELEASE_ID;
+}
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=
@@ -212,13 +219,11 @@ static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
 static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
                                                 &drizzle_system_variables::sortbuff_size);
 
-static sys_var_session_size_t sys_transaction_message_threshold("transaction_message_threshold",
-                                                                &drizzle_system_variables::transaction_message_threshold);
+static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transaction_message_threshold",
+                                                                &transaction_message_threshold);
 
 static sys_var_session_storage_engine sys_storage_engine("storage_engine",
 				       &drizzle_system_variables::storage_engine);
-static sys_var_const_str	sys_system_time_zone("system_time_zone",
-                                             system_time_zone);
 static sys_var_size_t_ptr	sys_table_def_size("table_definition_cache",
                                              &table_def_size);
 static sys_var_uint64_t_ptr	sys_table_cache_size("table_open_cache",
@@ -307,10 +312,13 @@ static sys_var_readonly sys_warning_count("warning_count",
 sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len",
                                                   &drizzle_system_variables::group_concat_max_len);
 
-sys_var_session_time_zone sys_time_zone("time_zone");
-
 /* Global read-only variable containing hostname */
-static sys_var_const_str        sys_hostname("hostname", glob_hostname);
+static sys_var_const_string sys_hostname("hostname", getServerHostname());
+
+static sys_var_const_str sys_revid("vc_revid", DRIZZLE7_VC_REVID);
+static sys_var_const_str sys_branch("vc_branch", DRIZZLE7_VC_BRANCH);
+static sys_var_size_t_ptr_readonly sys_revno("vc_revno", &revno);
+static sys_var_size_t_ptr_readonly sys_release_id("vc_release_id", &release_id);
 
 bool sys_var::check(Session *session, set_var *var)
 {
@@ -431,7 +439,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
 {
   if (fixed)
   {
-    char buf[22];
+    char buf[DECIMAL_LONGLONG_DIGITS];
 
     if (unsignd)
       internal::ullstr((uint64_t) val, buf);
@@ -858,7 +866,7 @@ bool sys_var::check_enum(Session *,
       goto err;
     }
 
-    uint64_t tmp_val= find_type(enum_names, res->ptr(), res->length(),1);
+    uint64_t tmp_val= enum_names->find_type(res->ptr(), res->length(), true);
     if (tmp_val == 0)
     {
       value= res->c_ptr();
@@ -1160,82 +1168,6 @@ unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
   return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
 }
 
-
-bool sys_var_session_time_zone::update(Session *session, set_var *var)
-{
-  char buff[MAX_TIME_ZONE_NAME_LENGTH];
-  String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-  String *res= var->value->val_str(&str);
-
-  Time_zone *tmp= my_tz_find(session, res);
-  if (tmp == NULL)
-  {
-    boost::throw_exception(invalid_option_value(var->var->getName()) << invalid_value(std::string(res ? res->c_ptr() : "NULL")));
-    return 1;
-  }
-  /* We are using Time_zone object found during check() phase. */
-  if (var->type == OPT_GLOBAL)
-  {
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    global_system_variables.time_zone= tmp;
-  }
-  else
-  {
-    session->variables.time_zone= tmp;
-  }
-
-  return 0;
-}
-
-
-unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
-                                                    sql_var_t type,
-                                                    const LEX_STRING *)
-{
-  /*
-    We can use ptr() instead of c_ptr() here because String contaning
-    time zone name is guaranteed to be zero ended.
-  */
-  if (type == OPT_GLOBAL)
-    return (unsigned char *)(global_system_variables.time_zone->get_name()->ptr());
-  else
-  {
-    /*
-      This is an ugly fix for replication: we don't replicate properly queries
-      invoking system variables' values to update tables; but
-      CONVERT_TZ(,,@@session.time_zone) is so popular that we make it
-      replicable (i.e. we tell the binlog code to store the session
-      timezone). If it's the global value which was used we can't replicate
-      (binlog code stores session value only).
-    */
-    return (unsigned char *)(session->variables.time_zone->get_name()->ptr());
-  }
-}
-
-
-void sys_var_session_time_zone::set_default(Session *session, sql_var_t type)
-{
-  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-  if (type == OPT_GLOBAL)
-  {
-    if (default_tz_name)
-    {
-      String str(default_tz_name, &my_charset_utf8_general_ci);
-      /*
-        We are guaranteed to find this time zone since its existence
-        is checked during start-up.
-      */
-      global_system_variables.time_zone= my_tz_find(session, &str);
-    }
-    else
-      global_system_variables.time_zone= my_tz_SYSTEM;
-  }
-  else
-    session->variables.time_zone= global_system_variables.time_zone;
-}
-
-
-
 bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
 {
   MY_LOCALE *locale_match;
@@ -1244,7 +1176,7 @@ bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
   {
     if (!(locale_match= my_locale_by_number((uint32_t) var->value->val_int())))
     {
-      char buf[20];
+      char buf[DECIMAL_LONGLONG_DIGITS];
       internal::int10_to_str((int) var->value->val_int(), buf, -10);
       my_printf_error(ER_UNKNOWN_ERROR, "Unknown locale: '%s'", MYF(0), buf);
       return 1;
@@ -1489,7 +1421,7 @@ static struct option *find_option(struct option *opt, const char *name)
 drizzle_show_var* enumerate_sys_vars(Session *session)
 {
   int size= sizeof(drizzle_show_var) * (system_variable_map.size() + 1);
-  drizzle_show_var *result= (drizzle_show_var*) session->alloc(size);
+  drizzle_show_var *result= (drizzle_show_var*) session->getMemRoot()->allocate(size);
 
   if (result)
   {
@@ -1498,7 +1430,7 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
     SystemVariableMap::const_iterator iter= system_variable_map.begin();
     while (iter != system_variable_map.end())
     {
-      sys_var *var= (*iter).second;
+      sys_var *var= iter->second;
       show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
@@ -1521,9 +1453,9 @@ void add_sys_var_to_list(sys_var *var)
             lower_name.begin(), ::tolower);
 
   /* this fails if there is a conflicting variable name. */
-  if (system_variable_map.find(lower_name) != system_variable_map.end())
+  if (system_variable_map.count(lower_name))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Variable named %s already exists!\n"),
+    errmsg_printf(error::ERROR, _("Variable named %s already exists!\n"),
                   var->getName().c_str());
     throw exception();
   } 
@@ -1532,7 +1464,7 @@ void add_sys_var_to_list(sys_var *var)
     system_variable_map.insert(make_pair(lower_name, var));
   if (ret.second == false)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not add Variable: %s\n"),
+    errmsg_printf(error::ERROR, _("Could not add Variable: %s\n"),
                   var->getName().c_str());
     throw exception();
   }
@@ -1565,6 +1497,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_back_log, my_long_options);
     add_sys_var_to_list(&sys_basedir, my_long_options);
     add_sys_var_to_list(&sys_big_selects, my_long_options);
+    add_sys_var_to_list(&sys_branch, my_long_options);
     add_sys_var_to_list(&sys_buffer_results, my_long_options);
     add_sys_var_to_list(&sys_bulk_insert_buff_size, my_long_options);
     add_sys_var_to_list(&sys_collation_server, my_long_options);
@@ -1599,7 +1532,10 @@ int sys_var_init()
     add_sys_var_to_list(&sys_range_alloc_block_size, my_long_options);
     add_sys_var_to_list(&sys_read_buff_size, my_long_options);
     add_sys_var_to_list(&sys_read_rnd_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_release_id, my_long_options);
     add_sys_var_to_list(&sys_replicate_query, my_long_options);
+    add_sys_var_to_list(&sys_revid, my_long_options);
+    add_sys_var_to_list(&sys_revno, my_long_options);
     add_sys_var_to_list(&sys_scheduler, my_long_options);
     add_sys_var_to_list(&sys_secure_file_priv, my_long_options);
     add_sys_var_to_list(&sys_select_limit, my_long_options);
@@ -1608,12 +1544,10 @@ int sys_var_init()
     add_sys_var_to_list(&sys_sql_notes, my_long_options);
     add_sys_var_to_list(&sys_sql_warnings, my_long_options);
     add_sys_var_to_list(&sys_storage_engine, my_long_options);
-    add_sys_var_to_list(&sys_system_time_zone, my_long_options);
     add_sys_var_to_list(&sys_table_cache_size, my_long_options);
     add_sys_var_to_list(&sys_table_def_size, my_long_options);
     add_sys_var_to_list(&sys_table_lock_wait_timeout, my_long_options);
     add_sys_var_to_list(&sys_thread_stack_size, my_long_options);
-    add_sys_var_to_list(&sys_time_zone, my_long_options);
     add_sys_var_to_list(&sys_timed_mutexes, my_long_options);
     add_sys_var_to_list(&sys_timestamp, my_long_options);
     add_sys_var_to_list(&sys_tmp_table_size, my_long_options);
@@ -1630,7 +1564,7 @@ int sys_var_init()
   }
   catch (std::exception&)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
+    errmsg_printf(error::ERROR, _("Failed to initialize system variables"));
     return(1);
   }
   return(0);
@@ -1656,11 +1590,8 @@ sys_var *find_sys_var(const std::string &name)
 
   sys_var *result= NULL;
 
-  SystemVariableMap::iterator iter= system_variable_map.find(lower_name);
-  if (iter != system_variable_map.end())
-  {
-    result= (*iter).second;
-  } 
+  if (SystemVariableMap::mapped_type* ptr= find_ptr(system_variable_map, lower_name))
+    result= *ptr;
 
   if (result == NULL)
   {

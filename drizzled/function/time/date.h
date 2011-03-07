@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTION_TIME_DATE_H
 #define DRIZZLED_FUNCTION_TIME_DATE_H
 
-#include "drizzled/function/func.h"
-#include "drizzled/function/str/strfunc.h"
+#include <drizzled/function/func.h>
+#include <drizzled/function/str/strfunc.h>
 #include <drizzled/temporal.h>
 
 namespace drizzled

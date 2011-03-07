@@ -172,6 +172,7 @@ enum enum_server_command
   COM_SHUTDOWN,
   COM_CONNECT,
   COM_PING,
+  COM_KILL,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
   /* Must be last */
   COM_END

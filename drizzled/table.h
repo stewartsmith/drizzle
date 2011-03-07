@@ -28,35 +28,31 @@
 #include <string>
 #include <boost/dynamic_bitset.hpp>
 
-#include "drizzled/order.h"
-#include "drizzled/filesort_info.h"
-#include "drizzled/natural_join_column.h"
-#include "drizzled/field_iterator.h"
-#include "drizzled/cursor.h"
-#include "drizzled/lex_string.h"
-#include "drizzled/table_list.h"
-#include "drizzled/table/instance.h"
-#include "drizzled/atomics.h"
-#include "drizzled/query_id.h"
+#include <drizzled/order.h>
+#include <drizzled/filesort_info.h>
+#include <drizzled/natural_join_column.h>
+#include <drizzled/field_iterator.h>
+#include <drizzled/cursor.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/table/instance.h>
+#include <drizzled/atomics.h>
+#include <drizzled/query_id.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
 
+class COND_EQUAL;
+class Field_blob;
 class Item;
 class Item_subselect;
-class Select_Lex_Unit;
-class Select_Lex;
-class COND_EQUAL;
 class SecurityContext;
+class Select_Lex;
+class Select_Lex_Unit;
 class TableList;
-namespace field {
-class Epoch;
-}
-class Field_blob;
-
-extern uint64_t refresh_version;
+namespace field { class Epoch; }
+namespace plugin { class StorageEngine; }
 
 typedef enum enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
@@ -68,8 +64,8 @@ typedef struct st_columndef MI_COLUMNDEF;
 class DRIZZLED_API Table 
 {
   Field **field; /**< Pointer to fields collection */
-public:
 
+public:
   Field **getFields() const
   {
     return field;
@@ -91,8 +87,10 @@ public:
   }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
+
 private:
   Table *next;
+
 public:
   Table *getNext() const
   {
@@ -149,7 +147,7 @@ public:
     return in_use;
   }
 
-  unsigned char *getInsertRecord()
+  unsigned char *getInsertRecord() const
   {
     return record[0];
   }
@@ -314,8 +312,10 @@ public:
     The set is implemented as a bitmap.
   */
   key_map keys_in_use_for_query;
+
   /* Map of keys that can be used to calculate GROUP BY without sorting */
   key_map keys_in_use_for_group_by;
+
   /* Map of keys that can be used to calculate ORDER BY without sorting */
   key_map keys_in_use_for_order_by;
 
@@ -414,24 +414,21 @@ public:
 
     return NULL;
   }
-  inline uint8_t getBlobPtrSize() { return getShare()->blob_ptr_size; }
-  inline uint32_t getNullBytes() { return getShare()->null_bytes; }
-  inline uint32_t getNullFields() { return getShare()->null_fields; }
+  inline uint8_t getBlobPtrSize() const { return getShare()->sizeBlobPtr(); }
+  inline uint32_t getNullBytes() const { return getShare()->null_bytes; }
+  inline uint32_t getNullFields() const { return getShare()->null_fields; }
   inline unsigned char *getDefaultValues() { return  getMutableShare()->getDefaultValues(); }
   inline const char *getSchemaName()  const { return getShare()->getSchemaName(); }
   inline const char *getTableName()  const { return getShare()->getTableName(); }
 
-  inline bool isDatabaseLowByteFirst() { return getShare()->db_low_byte_first; } /* Portable row format */
+  inline bool isDatabaseLowByteFirst() const { return getShare()->db_low_byte_first; } /* Portable row format */
   inline bool isNameLock() const { return open_placeholder; }
 
-  uint32_t index_flags(uint32_t idx) const
-  {
-    return getShare()->storage_engine->index_flags(getShare()->getKeyInfo(idx).algorithm);
-  }
+  uint32_t index_flags(uint32_t idx) const;
 
   inline plugin::StorageEngine *getEngine() const   /* table_type for handler */
   {
-    return getShare()->storage_engine;
+    return getShare()->getEngine();
   }
 
   Cursor &getCursor() const /* table_type for handler */
@@ -502,7 +499,7 @@ public:
   }
 
   /* Both of the below should go away once we can move this bit to the field objects */
-  inline bool isReadSet(uint32_t index)
+  inline bool isReadSet(uint32_t index) const
   {
     return read_set->test(index);
   }
@@ -557,13 +554,11 @@ public:
   {
     return db_stat || open_placeholder;
   }
+
   /*
     Is this instance of the table should be reopen or represents a name-lock?
   */
-  inline bool needs_reopen_or_name_lock()
-  { 
-    return getShare()->getVersion() != refresh_version;
-  }
+  bool needs_reopen_or_name_lock() const;
 
   /**
     clean/setup table fields and map.
@@ -584,16 +579,13 @@ public:
   void filesort_free_buffers(bool full= false);
   void intern_close_table();
 
-  void print_error(int error, myf errflag)
-  {
-    getShare()->storage_engine->print_error(error, errflag, *this);
-  }
+  void print_error(int error, myf errflag) const;
 
   /**
     @return
     key if error because of duplicated keys
   */
-  uint32_t get_dup_key(int error)
+  uint32_t get_dup_key(int error) const
   {
     cursor->errkey  = (uint32_t) -1;
     if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
@@ -837,8 +829,6 @@ void change_byte(unsigned char *,uint,char,char);
 namespace optimizer { class SqlSelect; }
 
 void change_double_for_sort(double nr,unsigned char *to);
-double my_double_round(double value, int64_t dec, bool dec_unsigned,
-                       bool truncate);
 int get_quick_record(optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
@@ -849,12 +839,11 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 
 DRIZZLED_API int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
-bool check_db_name(Session *session, identifier::Schema &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
 
-#include "drizzled/table/singular.h"
-#include "drizzled/table/concurrent.h"
+#include <drizzled/table/singular.h>
+#include <drizzled/table/concurrent.h>
 
 #endif /* DRIZZLED_TABLE_H */

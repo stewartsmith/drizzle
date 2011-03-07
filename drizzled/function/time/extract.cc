@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/temporal.h"
-#include "drizzled/error.h"
-#include "drizzled/session.h"
-#include "drizzled/calendar.h"
-#include "drizzled/function/time/extract.h"
+#include <drizzled/temporal.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/calendar.h>
+#include <drizzled/function/time/extract.h>
 
 namespace drizzled
 {
@@ -35,12 +35,12 @@ namespace drizzled
 
 extern const char *interval_names[];
 
-void Item_extract::print(String *str, enum_query_type query_type)
+void Item_extract::print(String *str)
 {
   str->append(STRING_WITH_LEN("extract("));
   str->append(interval_names[int_type]);
   str->append(STRING_WITH_LEN(" from "));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(')');
 }
 

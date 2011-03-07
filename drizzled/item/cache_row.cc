@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/error.h>
 #include <drizzled/table.h>
@@ -89,9 +89,8 @@ Item **Item_cache_row::addr(uint32_t i)
 bool Item_cache_row::allocate(uint32_t num)
 {
   item_count= num;
-  Session *session= current_session;
   return (!(values=
-            (Item_cache **) session->calloc(sizeof(Item_cache *)*item_count)));
+            (Item_cache **) getSession().calloc(sizeof(Item_cache *)*item_count)));
 }
 
 

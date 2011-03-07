@@ -19,14 +19,13 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
-#include <drizzled/sql_state.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 #include <algorithm>
 #include <iostream>
 #include <boost/program_options.hpp>
@@ -35,7 +34,7 @@
 
 #include <sys/un.h>
 
-#include "plugin/mysql_unix_socket_protocol/protocol.h"
+#include <plugin/mysql_unix_socket_protocol/protocol.h>
 
 #define DRIZZLE_UNIX_SOCKET_PATH "/tmp/mysql.socket"
 
@@ -73,6 +72,7 @@ static int init(drizzled::module::Context &context)
     Protocol *listen_obj= new Protocol("mysql_unix_socket_protocol",
                              true,
                              uds_path);
+    listen_obj->addCountersToTable();
     context.add(listen_obj);
     context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
     context.registerVariable(new sys_var_bool_ptr_readonly("clobber", &clobber));
@@ -142,9 +142,8 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   }
   else
   {
-    std::cerr << "Listening on " << _unix_socket_path << "\n";
+    errmsg_printf(error::INFO, _("Listening on %s"), _unix_socket_path.file_string().c_str());
   }
-  (void) unlink(_unix_socket_path.file_string().c_str());
 
   fds.push_back(unix_sock);
 

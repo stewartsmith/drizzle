@@ -21,7 +21,8 @@
 #ifndef DRIZZLED_FUNCTION_CAST_BOOLEAN_H
 #define DRIZZLED_FUNCTION_CAST_BOOLEAN_H
 
-#include "drizzled/function/str/strfunc.h"
+#include <drizzled/charset_info.h>
+#include <drizzled/function/str/strfunc.h>
 
 namespace drizzled {
 namespace function {
@@ -41,7 +42,7 @@ public:
     collation.set(&my_charset_bin);
     max_length=args[0]->max_length;
   }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   const char *func_name() const { return "cast_as_boolean"; }
 
 private:

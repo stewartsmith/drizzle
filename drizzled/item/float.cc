@@ -17,12 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <math.h>
+
 #include <drizzled/error.h>
+#include <drizzled/field.h>
+#include <drizzled/item/float.h>
 #include <drizzled/item/num.h>
 #include <drizzled/item/string.h>
-#include <drizzled/item/float.h>
 
 namespace drizzled
 {
@@ -118,7 +121,7 @@ int Item_float::save_in_field(Field *field, bool)
 }
 
 
-void Item_float::print(String *str, enum_query_type)
+void Item_float::print(String *str)
 {
   if (presentation)
   {

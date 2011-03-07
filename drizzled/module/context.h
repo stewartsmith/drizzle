@@ -35,29 +35,21 @@
  * to force things like proper name prefixing and the like.
  */
 
-#include "drizzled/module/registry.h"
+#include <boost/noncopyable.hpp>
+#include <drizzled/module/registry.h>
+#include <drizzled/visibility.h>
 
-#include "drizzled/visibility.h"
-
-namespace drizzled
-{
+namespace drizzled {
 
 class sys_var;
 
-namespace module
-{
+namespace module {
 
 class Module;
 class option_map;
 
-class DRIZZLED_API Context
+class DRIZZLED_API Context : boost::noncopyable
 {
-private:
-  module::Registry &registry;
-  module::Module *module;
-
-  Context(const Context&);
-  Context& operator=(const Context&);
 public:
 
   Context(module::Registry &registry_arg,
@@ -85,6 +77,9 @@ public:
 
   static std::string prepend_name(std::string module_name,
                                   const std::string &var_name);
+private:
+  module::Registry &registry;
+  module::Module *module;
 };
 
 

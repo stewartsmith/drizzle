@@ -14,12 +14,11 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Some useful string utility functions used by the MySQL server */
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/strfunc.h"
-#include "drizzled/typelib.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/typelib.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/global_charset_info.h>
 
 namespace drizzled
 {
@@ -45,9 +44,9 @@ namespace drizzled
 
 static const char field_separator=',';
 
-uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
+uint64_t st_typelib::find_set(const char *str, uint32_t length,
                   const CHARSET_INFO * const cs,
-                  char **err_pos, uint32_t *err_len, bool *set_warning)
+                  char **err_pos, uint32_t *err_len, bool *set_warning) const
 {
   const CHARSET_INFO * const strip= cs ? cs : &my_charset_utf8_general_ci;
   const char *end= str + strip->cset->lengthsp(strip, str, length);
@@ -65,8 +64,7 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
       for (; pos != end && *pos != field_separator; pos++) 
       {}
       var_len= (uint32_t) (pos - start);
-      uint32_t find= cs ? find_type2(lib, start, var_len, cs) :
-                      find_type(lib, start, var_len, (bool) 0);
+      uint32_t find= cs ? find_type2(start, var_len, cs) : find_type(start, var_len, false);
       if (!find)
       {
         *err_pos= (char*) start;
@@ -100,14 +98,13 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
   > 0 position in TYPELIB->type_names +1
 */
 
-uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
-               bool part_match)
+uint32_t st_typelib::find_type(const char *find, uint32_t length, bool part_match) const
 {
   uint32_t found_count=0, found_pos=0;
   const char *end= find+length;
   const char *i;
   const char *j;
-  for (uint32_t pos=0 ; (j=lib->type_names[pos++]) ; )
+  for (uint32_t pos= 0 ; (j= type_names[pos++]) ; )
   {
     for (i=find ; i != end &&
 	   my_toupper(system_charset_info,*i) ==
@@ -141,24 +138,18 @@ uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
     >0  Offset+1 in typelib for matched string
 */
 
-uint32_t find_type2(const TYPELIB *typelib, const char *x, uint32_t length,
-                const CHARSET_INFO * const cs)
+uint32_t st_typelib::find_type2(const char *x, uint32_t length, const CHARSET_INFO *cs) const
 {
-  int pos;
+  if (!count)
+    return 0;
   const char *j;
-
-  if (!typelib->count)
-  {
-    return(0);
-  }
-
-  for (pos=0 ; (j=typelib->type_names[pos]) ; pos++)
+  for (int pos=0 ; (j= type_names[pos]) ; pos++)
   {
     if (!my_strnncoll(cs, (const unsigned char*) x, length,
-                          (const unsigned char*) j, typelib->type_lengths[pos]))
-      return(pos+1);
+                          (const unsigned char*) j, type_lengths[pos]))
+      return pos + 1;
   }
-  return(0);
+  return 0;
 } /* find_type */
 
 } /* namespace drizzled */

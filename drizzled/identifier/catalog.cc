@@ -18,17 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <assert.h>
 
-#include "drizzled/identifier.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/identifier.h>
+#include <drizzled/session.h>
+#include <drizzled/internal/my_sys.h>
 
-#include "drizzled/util/tablename_to_filename.h"
-#include "drizzled/util/backtrace.h"
+#include <drizzled/util/tablename_to_filename.h>
+#include <drizzled/util/backtrace.h>
 
 #include <algorithm>
 #include <sstream>
@@ -52,7 +51,7 @@ static void build_schema_filename(string &path, const string &name_arg)
   conversion_error= util::tablename_to_filename(name_arg, path);
   if (conversion_error)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Catalog name cannot be encoded and fit within filesystem "
                     "name length restrictions."));
   }

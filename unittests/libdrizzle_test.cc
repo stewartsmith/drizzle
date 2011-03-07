@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -38,6 +38,19 @@ BOOST_AUTO_TEST_CASE(drizzleEscapeString)
   BOOST_REQUIRE_EQUAL(17, out_len);
   BOOST_REQUIRE_EQUAL("hello \\\"world\\\"\\n", out);
 }
+
+BOOST_AUTO_TEST_CASE(drizzleEscapeStringBinary)
+{
+  const char orig[6]= {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+  char out[255];
+  size_t out_len;
+
+  out_len= drizzle_escape_string(out, orig, 6);
+
+  BOOST_REQUIRE_EQUAL(7, out_len);
+  BOOST_REQUIRE_EQUAL("\\0\1\2\3\4\5", out);
+}
+
 
 BOOST_AUTO_TEST_CASE(drizzleHexString)
 {

@@ -27,10 +27,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "drizzled/session.h"
+#include <config.h>
+#include <drizzled/session.h>
 #include "query_cache_service.h"
-#include "drizzled/table_list.h"
+#include <drizzled/table_list.h>
 
 using namespace std;
 
@@ -85,7 +85,7 @@ void QueryCacheService::setResultsetHeader(message::Resultset &resultset,
   /* Extract the returned fields 
    * and add the field data to the SelectHeader
    */
-  List_iterator_fast<Item> it(in_session->lex->select_lex.item_list);
+  List<Item>::iterator it(in_session->getLex()->select_lex.item_list);
   Item *item;
   while ((item=it++))
   {
@@ -112,7 +112,7 @@ bool QueryCacheService::addRecord(Session *in_session, List<Item> &list)
     data->set_end_segment(true);
     message::SelectRecord *record= data->add_record();
 
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list);
     
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);

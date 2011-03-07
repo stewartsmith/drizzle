@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-""" dtr_test_management:
+""" test_management:
     code related to the gathering / analysis / management of 
     the test cases
     ie - collecting the list of tests in each suite, then
@@ -33,7 +33,7 @@ import re
 import sys
 import thread
           
-class testManager:
+class testManager(object):
     """Deals with scanning test directories, gathering test cases, and 
        collecting per-test information (opt files, etc) for use by the
        test-runner
@@ -42,7 +42,7 @@ class testManager:
 
     def __init__( self, verbose, debug, default_engine, dotest, skiptest
                 , reorder, suitelist, suitepaths, system_manager
-                , test_cases):
+                , test_cases, mode):
 
         self.system_manager = system_manager
         self.time_manager = system_manager.time_manager
@@ -68,6 +68,7 @@ class testManager:
         self.skiptest = skiptest
         self.reorder = reorder
         self.suitelist = suitelist
+        self.mode = mode
         
         self.code_tree = self.system_manager.code_tree
         self.suitepaths = suitepaths + self.code_tree.suite_paths
@@ -87,7 +88,7 @@ class testManager:
         self.logging.info("Processing test suites...")
         # BEGIN terrible hack to accomodate the fact that
         # our 'main' suite is also our testdir : /
-        if self.suitelist is None:
+        if self.suitelist is None and self.mode=='dtr':
             self.suitepaths = [self.testdir]
             self.suitelist = ['main']
         # END horrible hack
@@ -137,9 +138,10 @@ class testManager:
 
         """
         # BEGIN horrible hack to accomodate bad location of main suite
-        if self.suitepaths == [self.testdir] or suitename == 'main':
-            # We treat this as the 'main' suite
-            return self.testdir
+        if self.mode == 'dtr':
+            if self.suitepaths == [self.testdir] or suitename == 'main':
+                # We treat this as the 'main' suite
+                return self.testdir
         # END horrible hack
         for suitepath in self.suitepaths:
             suite_path = self.system_manager.find_path([ os.path.join(suitepath,suitename,'tests'),
@@ -216,13 +218,15 @@ class testManager:
         # This is probably hacky, but I'll think of a better
         # location later.  When we are ready to see our
         # statistical report, we know to stop the total time timer
-        total_exec_time = self.time_manager.stop('total_time')
-        self.logging.write_thick_line()
-        self.logging.info("Test execution complete in %d seconds" %(total_exec_time))
+        if not self.first_test:
+            total_exec_time = self.time_manager.stop('total_time')
+            self.logging.write_thick_line()
+            self.logging.info("Test execution complete in %d seconds" %(total_exec_time))
         self.logging.info("Summary report:")
         self.report_executed_tests()
         self.report_test_statuses()
-        self.time_manager.summary_report()
+        if not self.first_test:
+            self.time_manager.summary_report()
 
     def report_test_statuses(self):
         """ Method to report out various test statuses we
@@ -289,4 +293,7 @@ class testManager:
         """
   
         self.logging.verbose("Reordering testcases to optimize test execution...")
+
+    def has_failing_tests(self):
+        return (self.get_count_by_status('fail') + self.get_count_by_status('timeout'))
 

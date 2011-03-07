@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
@@ -25,9 +25,9 @@
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
-#include "drizzled/global_charset_info.h"
+#include <drizzled/global_charset_info.h>
 
 #include <boost/unordered_map.hpp>
 
@@ -53,13 +53,17 @@ plugin::TransactionalStorageEngine *realEngine;
    -------------------------------
 
    IF you add a new error injection, document it here!
+   You test via error_injected variable.
 
    Conflicting error inject numbers will lead to tears
    (not Borsch, Vodka and Tears - that's quite nice).
 
+   0 - DISABLED
+
    1 - doInsertRecord(): every 2nd row, LOCK_WAIT_TIMEOUT.
    2 - doInsertRecord(): every 2nd row, DEADLOCK.
    3 - rnd_next(): every 2nd row, LOCK_WAIT_TIMEOUT
+   4 - doStartIndexScan returns an error.
  */
 static uint32_t error_injected= 0;
 
@@ -162,7 +166,7 @@ public:
 
     if (error_injected == 3 && (count++ % 2))
     {
-      mark_transaction_to_rollback(user_session, false);
+      user_session->markTransactionForRollback(false);
       return HA_ERR_LOCK_WAIT_TIMEOUT;
     }
     return realCursor->rnd_next(buf);
@@ -177,6 +181,29 @@ public:
   void get_auto_increment(uint64_t, uint64_t, uint64_t, uint64_t*, uint64_t*) {}
   int doStartTableScan(bool scan) { CURSOR_NEW_STATE("::doStartTableScan()"); return realCursor->doStartTableScan(scan); }
   int doEndTableScan() { CURSOR_NEW_STATE("::doEndTableScan()"); return realCursor->doEndTableScan(); }
+
+  const char *index_type(uint32_t key_number);
+
+  int doStartIndexScan(uint32_t, bool);
+  int index_read(unsigned char *buf, const unsigned char *key_ptr,
+                 uint32_t key_len, drizzled::ha_rkey_function find_flag);
+  int index_read_idx_map(unsigned char * buf,
+                         uint32_t index,
+                         const unsigned char * key,
+                         drizzled::key_part_map keypart_map,
+                         drizzled::ha_rkey_function find_flag);
+
+  int index_next(unsigned char * buf);
+  int doEndIndexScan();
+  int index_prev(unsigned char * buf);
+  int index_first(unsigned char * buf);
+  int index_last(unsigned char * buf);
+
+  bool primary_key_is_clustered()
+  {
+    return realCursor->primary_key_is_clustered();
+  }
+
 
   int doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked);
 
@@ -193,13 +220,13 @@ public:
 
     if (error_injected == 1 && (i++ % 2))
     {
-      mark_transaction_to_rollback(user_session, false);
+      user_session->markTransactionForRollback(false);
       return HA_ERR_LOCK_WAIT_TIMEOUT;
     }
 
     if (error_injected == 2 && (i++ % 2))
     {
-      mark_transaction_to_rollback(user_session, true);
+      user_session->markTransactionForRollback(true);
       return HA_ERR_LOCK_DEADLOCK;
     }
 
@@ -210,6 +237,18 @@ public:
   {
     CURSOR_NEW_STATE("::doUpdateRecord()");
     return realCursor->doUpdateRecord(old_row, new_row);
+  }
+
+  double scan_time()
+  {
+    CURSOR_NEW_STATE("::scan_time()");
+    CURSOR_NEW_STATE("locked");
+    return realCursor->scan_time();
+  }
+
+  int extra(enum ha_extra_function operation)
+  {
+    return realCursor->extra(operation);
   }
 
 private:
@@ -257,10 +296,106 @@ void SEAPITesterCursor::position(const unsigned char *record)
 
 int SEAPITesterCursor::info(uint32_t flag)
 {
+  int r;
   CURSOR_NEW_STATE("::info()");
   CURSOR_NEW_STATE("locked");
 
-  return realCursor->info(flag);
+  r= realCursor->info(flag);
+
+  if (flag & (HA_STATUS_VARIABLE|HA_STATUS_AUTO|HA_STATUS_CONST))
+  {
+    stats= realCursor->stats;
+  }
+
+  if (flag & HA_STATUS_ERRKEY)
+    errkey= realCursor->errkey;
+
+  return r;
+}
+
+const char * SEAPITesterCursor::index_type(uint32_t key_number)
+{
+  CURSOR_NEW_STATE("::index_type()");
+  return realCursor->index_type(key_number);
+}
+
+int SEAPITesterCursor::doStartIndexScan(uint32_t keynr, bool scan)
+{
+  int r;
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+
+  if (error_injected == 4)
+  {
+    CURSOR_NEW_STATE("::doStartIndexScan() ERROR");
+    CURSOR_NEW_STATE("locked");
+    return HA_ERR_LOCK_DEADLOCK;
+  }
+
+  r= realCursor->doStartIndexScan(keynr, scan);
+
+  active_index= realCursor->get_index();
+
+  return r;
+}
+
+int SEAPITesterCursor::index_read(unsigned char *buf,
+                                  const unsigned char *key_ptr,
+                                  uint32_t key_len,
+                                  drizzled::ha_rkey_function find_flag)
+{
+  CURSOR_NEW_STATE("::index_read()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_read(buf, key_ptr, key_len, find_flag);
+}
+
+int SEAPITesterCursor::index_read_idx_map(unsigned char * buf,
+                                          uint32_t index,
+                                          const unsigned char * key,
+                                          drizzled::key_part_map keypart_map,
+                                          drizzled::ha_rkey_function find_flag)
+{
+  CURSOR_NEW_STATE("::index_read_idx_map()");
+  CURSOR_NEW_STATE("locked");
+  return realCursor->index_read_idx_map(buf, index, key, keypart_map, find_flag);
+}
+
+int SEAPITesterCursor::index_next(unsigned char * buf)
+{
+  CURSOR_NEW_STATE("::index_next()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_next(buf);
+}
+
+int SEAPITesterCursor::doEndIndexScan()
+{
+  CURSOR_NEW_STATE("::doEndIndexScan()");
+  CURSOR_NEW_STATE("locked");
+  int r= realCursor->doEndIndexScan();
+
+  active_index= realCursor->get_index();
+
+  return r;
+}
+
+int SEAPITesterCursor::index_prev(unsigned char * buf)
+{
+  CURSOR_NEW_STATE("::index_prev()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_prev(buf);
+}
+
+int SEAPITesterCursor::index_first(unsigned char * buf)
+{
+  CURSOR_NEW_STATE("::index_first()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_first(buf);
+}
+
+int SEAPITesterCursor::index_last(unsigned char * buf)
+{
+  CURSOR_NEW_STATE("::index_last()");
+  CURSOR_NEW_STATE("::doStartIndexScan()");
+  return realCursor->index_last(buf);
 }
 
 int SEAPITesterCursor::external_lock(Session *session, int lock_type)
@@ -392,13 +527,22 @@ public:
 
   virtual int doSetSavepoint(Session*,
                              drizzled::NamedSavepoint &)
-    { return 0; }
+    {
+      ENGINE_NEW_STATE("SET SAVEPOINT");
+      ENGINE_NEW_STATE("In Transaction");
+      return 0; }
   virtual int doRollbackToSavepoint(Session*,
                                      drizzled::NamedSavepoint &)
-    { return 0; }
+    {
+      ENGINE_NEW_STATE("ROLLBACK TO SAVEPOINT");
+      ENGINE_NEW_STATE("In Transaction");
+      return 0; }
   virtual int doReleaseSavepoint(Session*,
                                  drizzled::NamedSavepoint &)
-    { return 0; }
+    {
+      ENGINE_NEW_STATE("RELEASE SAVEPOINT");
+      ENGINE_NEW_STATE("In Transaction");
+      return 0; }
   virtual int doCommit(Session*, bool);
 
   virtual int doRollback(Session*, bool);
@@ -426,6 +570,16 @@ public:
   uint32_t max_supported_key_part_length(void) const {
     ENGINE_NEW_STATE("::max_supported_key_part_length()");
     return getRealEngine()->max_supported_key_part_length();
+  }
+
+  /* just copied from innobase... */
+  uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_RANGE |
+            HA_READ_ORDER |
+            HA_KEYREAD_ONLY);
   }
 
 };

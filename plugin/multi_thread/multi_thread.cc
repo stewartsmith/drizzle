@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #include <iostream>
 
@@ -106,7 +106,7 @@ void MultiThreadScheduler::setStackSize()
 
   if (err != 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Unable to get thread stack size\n"));
+    errmsg_printf(error::ERROR, _("Unable to get thread stack size"));
     my_thread_stack_size= 524288; // At the time of the writing of this code, this was OSX's
   }
 

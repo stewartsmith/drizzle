@@ -17,14 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
+#include <drizzled/field.h>
 #include <drizzled/item/cache.h>
-#include <drizzled/item/cache_row.h>
+#include <drizzled/item/cache_decimal.h>
 #include <drizzled/item/cache_int.h>
 #include <drizzled/item/cache_real.h>
-#include <drizzled/item/cache_decimal.h>
+#include <drizzled/item/cache_row.h>
 #include <drizzled/item/cache_str.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {
@@ -53,13 +55,13 @@ Item_cache* Item_cache::get_cache(const Item *item)
 }
 
 
-void Item_cache::print(String *str, enum_query_type query_type)
+void Item_cache::print(String *str)
 {
   str->append(STRING_WITH_LEN("<cache>("));
   if (example)
-    example->print(str, query_type);
+    example->print(str);
   else
-    Item::print(str, query_type);
+    Item::print(str);
   str->append(')');
 }
 

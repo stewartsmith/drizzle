@@ -37,7 +37,7 @@
 	itoa assumes that 10 -base numbers are allways signed and other arn't.
 */
 
-#include "config.h"
+#include <config.h>
 
 #include "m_string.h"
 
@@ -58,7 +58,6 @@ char _dig_vec_upper[] =
 char *int64_t2str(int64_t val,char *dst,int radix)
 {
   char buffer[65];
-  register char *p;
   long long_val;
   uint64_t uval= (uint64_t) val;
 
@@ -82,7 +81,7 @@ char *int64_t2str(int64_t val,char *dst,int radix)
     *dst='\0';
     return dst;
   }
-  p = &buffer[sizeof(buffer)-1];
+  char* p = &buffer[sizeof(buffer)-1];
   *p = '\0';
 
   while (uval > (uint64_t) LONG_MAX)
@@ -109,7 +108,6 @@ char *int64_t2str(int64_t val,char *dst,int radix)
 char *int64_t10_to_str(int64_t val,char *dst,int radix)
 {
   char buffer[65];
-  register char *p;
   long long_val;
   uint64_t uval= (uint64_t) val;
 
@@ -129,7 +127,7 @@ char *int64_t10_to_str(int64_t val,char *dst,int radix)
     *dst='\0';
     return dst;
   }
-  p = &buffer[sizeof(buffer)-1];
+  char* p = &buffer[sizeof(buffer)-1];
   *p = '\0';
 
   while (uval > (uint64_t) LONG_MAX)

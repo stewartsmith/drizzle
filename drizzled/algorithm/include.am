@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-nobase_dist_include_HEADERS+= drizzled/algorithm/crc32.h drizzled/algorithm/sha1.h
+nobase_dist_pkginclude_HEADERS+= drizzled/algorithm/crc32.h drizzled/algorithm/sha1.h
 
 noinst_LTLIBRARIES+= drizzled/algorithm/libhash.la
 drizzled_algorithm_libhash_la_SOURCES= drizzled/algorithm/sha1.cc

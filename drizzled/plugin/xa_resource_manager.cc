@@ -18,16 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/cached_directory.h"
+#include <drizzled/cached_directory.h>
 
 #include <drizzled/definitions.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/xa_resource_manager.h>
-#include "drizzled/xid.h"
+#include <drizzled/xid.h>
 
 
 #include <string>
@@ -111,7 +111,7 @@ public:
   
     while ((got= resource_manager->xaRecover(trans_list, trans_len)) > 0 )
     {
-      errmsg_printf(ERRMSG_LVL_INFO,
+      errmsg_printf(error::INFO,
                     _("Found %d prepared transaction(s) in resource manager."),
                     got);
       for (int i=0; i < got; i ++)
@@ -174,12 +174,12 @@ int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &
   }
   if (!trans_list)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), trans_len*sizeof(XID));
+    errmsg_printf(error::ERROR, ER(ER_OUTOFMEMORY), trans_len*sizeof(XID));
     return(1);
   }
 
   if (commit_list.size())
-    errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
+    errmsg_printf(error::INFO, _("Starting crash recovery..."));
 
   XaRecover recover_func(trans_list, trans_len, commit_list, dry_run);
   std::for_each(xa_resource_managers.begin(),
@@ -188,12 +188,13 @@ int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &
   free(trans_list);
  
   if (recover_func.getForeignXIDs())
-    errmsg_printf(ERRMSG_LVL_WARN,
+    errmsg_printf(error::WARN,
                   _("Found %d prepared XA transactions"),
                   recover_func.getForeignXIDs());
+
   if (dry_run && recover_func.getMyXIDs())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Found %d prepared transactions! It means that drizzled "
                     "was not shut down properly last time and critical "
                     "recovery information (last binlog or %s file) was "
@@ -203,8 +204,10 @@ int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &
                     recover_func.getMyXIDs(), opt_tc_log_file);
     return(1);
   }
+
   if (commit_list.size())
-    errmsg_printf(ERRMSG_LVL_INFO, _("Crash recovery finished."));
+    errmsg_printf(error::INFO, _("Crash recovery finished."));
+
   return(0);
 }
 

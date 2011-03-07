@@ -28,24 +28,22 @@
  * or more plugin::Plugin objects. 
  */
 
-#include <cassert>
+#include <string>
 #include <vector>
-#include <boost/program_options.hpp>
 
-#include "drizzled/module/manifest.h"
-#include "drizzled/module/registry.h"
+namespace drizzled {
 
-
-namespace drizzled
-{
 class set_var;
+class sys_var;
 
-void module_shutdown(module::Registry &registry);
+namespace module { class Registry; }
 
-namespace module
-{
+void module_shutdown(module::Registry&);
+
+namespace module {
 
 class Library;
+class Manifest;
 class VertexHandle;
 
 /* A plugin module */
@@ -55,21 +53,13 @@ public:
   typedef std::vector<sys_var *> Variables;
   typedef std::vector<std::string> Depends;
 
-private:
-  const std::string name;
-  const Manifest *manifest;
-  VertexHandle *vertex_;
-
-public:
   Library *plugin_dl;
   bool isInited;
   Variables system_vars;         /* server variables for this plugin */
   Variables sys_vars;
   Depends depends_;
 
-  Module(const Manifest *manifest_arg,
-         Library *library_arg);
-
+  Module(const Manifest *manifest_arg, Library *library_arg);
   ~Module();
 
   const std::string& getName() const
@@ -79,7 +69,7 @@ public:
 
   const Manifest& getManifest() const
   {
-    return *manifest;
+    return manifest;
   }
 
   void addMySysVar(sys_var *var)
@@ -112,6 +102,10 @@ public:
   {
     return vertex_;
   }
+private:
+  const std::string name;
+  const Manifest &manifest;
+  VertexHandle *vertex_;
 };
 
 } /* namespace module */

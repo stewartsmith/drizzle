@@ -23,9 +23,10 @@
 #define DRIZZLED_SQL_BASE_H
 
 #include <drizzled/table.h>
+#include <drizzled/table_list.h>
 #include <drizzled/table/concurrent.h>
 
-#include "drizzled/visibility.h"
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -57,7 +58,6 @@ CreateField * new_create_field(Session *session, char *field_name, enum_field_ty
                                Item *default_value, Item *on_update_value,
                                LEX_STRING *comment, char *change,
                                List<String> *interval_list, CHARSET_INFO *cs);
-void store_position_for_column(const char *name);
 bool push_new_name_resolution_context(Session *session,
                                       TableList *left_op,
                                       TableList *right_op);
@@ -101,7 +101,7 @@ Item ** find_item_in_list(Session *session,
                           enum_resolution_type *resolution);
 bool insert_fields(Session *session, Name_resolution_context *context,
                    const char *db_name, const char *table_name,
-                   List_iterator<Item> *it, bool any_privileges);
+                   List<Item>::iterator *it, bool any_privileges);
 bool setup_tables(Session *session, Name_resolution_context *context,
                   List<TableList> *from_clause, TableList *tables,
                   TableList **leaves, bool select_insert);
@@ -154,6 +154,8 @@ inline TableList *find_table_in_global_list(TableList *table,
   return find_table_in_list(table, &TableList::next_global,
                             db_name, table_name);
 }
+
+bool drizzle_rm_tmp_tables();
 
 } /* namespace drizzled */
 

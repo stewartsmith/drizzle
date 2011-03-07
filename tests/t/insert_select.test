@@ -87,7 +87,7 @@ insert into t1 select * from t1 as t2;
 select * from t1;
 insert into t2 select * from t1 as t2;
 select * from t1;
-insert into t1 select t2.a from t1,t2;
+insert into t1 select t2.a from t1,t2 where t1.a > 0;
 select * from t1;
 --error ER_NONUNIQ_TABLE
 insert into t1 select * from t1,t1;

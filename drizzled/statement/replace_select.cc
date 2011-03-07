@@ -18,22 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/replace_select.h>
+#include <drizzled/select_insert.h>
 
 namespace drizzled
 {
 
 bool statement::ReplaceSelect::execute()
 {
-  TableList *first_table= (TableList *) getSession()->lex->select_lex.table_list.first;
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->lex->select_lex;
-  Select_Lex_Unit *unit= &getSession()->lex->unit;
+  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
+  Select_Lex_Unit *unit= &getSession()->getLex()->unit;
   select_result *sel_result= NULL;
   bool res;
 
@@ -62,14 +63,14 @@ bool statement::ReplaceSelect::execute()
     res= insert_select_prepare(getSession());
     if (! res && (sel_result= new select_insert(first_table,
                                                 first_table->table,
-                                                &getSession()->lex->field_list,
-                                                &getSession()->lex->update_list,
-                                                &getSession()->lex->value_list,
-                                                getSession()->lex->duplicates,
-                                                getSession()->lex->ignore)))
+                                                &getSession()->getLex()->field_list,
+                                                &getSession()->getLex()->update_list,
+                                                &getSession()->getLex()->value_list,
+                                                getSession()->getLex()->duplicates,
+                                                getSession()->getLex()->ignore)))
     {
       res= handle_select(getSession(),
-                         getSession()->lex,
+                         getSession()->getLex(),
                          sel_result,
                          OPTION_SETUP_TABLES_DONE);
       /*

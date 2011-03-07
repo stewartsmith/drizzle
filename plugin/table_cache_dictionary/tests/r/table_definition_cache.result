@@ -6,7 +6,7 @@ TABLE_DEFINITION_CACHE	CREATE TABLE `TABLE_DEFINITION_CACHE` (
   `VERSION` BIGINT NOT NULL,
   `TABLE_COUNT` BIGINT NOT NULL,
   `IS_NAME_LOCKED` BOOLEAN NOT NULL
-) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE
 select count(*) FROM data_dictionary.TABLE_DEFINITION_CACHE;
 count(*)
 #
@@ -16,7 +16,7 @@ TABLE_SCHEMA	TABLE_NAME	VERSION	TABLE_COUNT	IS_NAME_LOCKED
 #	table_definition_cache	#	#	#
 create table a ( a int);
 create table b ( b int);
-select * FROM a,b;
+select * FROM a CROSS JOIN b;
 a	b
 select * FROM data_dictionary.TABLE_DEFINITION_CACHE  ORDER BY TABLE_SCHEMA, TABLE_NAME;
 TABLE_SCHEMA	TABLE_NAME	VERSION	TABLE_COUNT	IS_NAME_LOCKED

@@ -13,9 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 #include <fcntl.h>
 
@@ -25,7 +25,7 @@
 
 #include <algorithm>
 
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 using namespace std;
 
@@ -47,7 +47,7 @@ char * fn_format(char * to, const char *name, const char *dir,
   char dev[FN_REFLEN], buff[FN_REFLEN], *pos;
   const char *startpos = name;
   const char *ext;
-  register size_t length;
+  size_t length;
   size_t dev_length;
 
   /* Copy and skip directory */
@@ -144,10 +144,8 @@ char * fn_format(char * to, const char *name, const char *dir,
 
 size_t strlength(const char *str)
 {
-  register const char * pos;
-  register const char * found;
-
-  pos= found= str;
+  const char* found= str;
+  const char* pos= str;
 
   while (*pos)
   {

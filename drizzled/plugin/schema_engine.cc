@@ -17,16 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/session.h"
+#include <drizzled/session.h>
 
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset.h"
-#include "drizzled/transaction_services.h"
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
+#include <drizzled/transaction_services.h>
 
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/plugin/authorization.h"
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/plugin/authorization.h>
 
 namespace drizzled
 {
@@ -58,7 +58,7 @@ void StorageEngine::getIdentifiers(Session &session, identifier::Schema::vector 
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
            AddSchemaNames(schemas));
 
-  plugin::Authorization::pruneSchemaNames(session.user(), schemas);
+  plugin::Authorization::pruneSchemaNames(*session.user(), schemas);
 }
 
 class StorageEngineGetSchemaDefinition: public std::unary_function<StorageEngine *, bool>
@@ -76,48 +76,51 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    return engine->doGetSchemaDefinition(identifier, schema_proto);
+    schema_proto= engine->doGetSchemaDefinition(identifier);
+    return schema_proto;
   }
 };
 
 /*
   Return value is "if parsed"
 */
-bool StorageEngine::getSchemaDefinition(const drizzled::identifier::Table &identifier, message::schema::shared_ptr &proto)
+message::schema::shared_ptr StorageEngine::getSchemaDefinition(const drizzled::identifier::Table &identifier)
 {
-  return StorageEngine::getSchemaDefinition(identifier, proto);
+  identifier::Schema schema_identifier= identifier;
+  return StorageEngine::getSchemaDefinition(schema_identifier);
 }
 
-bool StorageEngine::getSchemaDefinition(const identifier::Schema &identifier, message::schema::shared_ptr &proto)
+message::schema::shared_ptr StorageEngine::getSchemaDefinition(const identifier::Schema &identifier)
 {
+  message::schema::shared_ptr proto;
+
   EngineVector::iterator iter=
     std::find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
                  StorageEngineGetSchemaDefinition(identifier, proto));
 
   if (iter != StorageEngine::getSchemaEngines().end())
   {
-    return true;
+    return proto;
   }
 
-  return false;
+  return message::schema::shared_ptr();
 }
 
 bool StorageEngine::doesSchemaExist(const identifier::Schema &identifier)
 {
   message::schema::shared_ptr proto;
 
-  return StorageEngine::getSchemaDefinition(identifier, proto);
+  return StorageEngine::getSchemaDefinition(identifier);
 }
 
 
 const CHARSET_INFO *StorageEngine::getSchemaCollation(const identifier::Schema &identifier)
 {
   message::schema::shared_ptr schmema_proto;
-  bool found;
 
-  found= StorageEngine::getSchemaDefinition(identifier, schmema_proto);
+  schmema_proto= StorageEngine::getSchemaDefinition(identifier);
 
-  if (found && schmema_proto->has_collation())
+  if (schmema_proto && schmema_proto->has_collation())
   {
     const std::string buffer= schmema_proto->collation();
     const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
@@ -127,9 +130,9 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const identifier::Schema &
       std::string path;
       identifier.getSQLPath(path);
 
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Error while loading database options: '%s':"), path.c_str());
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+      errmsg_printf(error::ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
 
       return default_charset_info;
     }
@@ -226,6 +229,14 @@ static bool drop_all_tables_in_schema(Session& session,
        it++)
   {
     boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+
+    message::table::shared_ptr message= StorageEngine::getTableMessage(session, *it, false);
+    if (not message)
+    {
+      my_error(ER_TABLE_DROP, *it);
+      return false;
+    }
+
     table::Cache::singleton().removeTable(&session, *it,
                                           RTFC_WAIT_OTHER_THREAD_FLAG |
                                           RTFC_CHECK_KILLED_FLAG);
@@ -234,19 +245,20 @@ static bool drop_all_tables_in_schema(Session& session,
       my_error(ER_TABLE_DROP, *it);
       return false;
     }
-    transaction_services.dropTable(session, *it, true);
+    transaction_services.dropTable(session, *it, *message, true);
     deleted++;
   }
 
   return true;
 }
 
-bool StorageEngine::dropSchema(Session::reference session, identifier::Schema::const_reference identifier)
+bool StorageEngine::dropSchema(Session::reference session,
+                               identifier::Schema::const_reference identifier,
+                               message::schema::const_reference schema_message)
 {
   uint64_t deleted= 0;
   bool error= false;
   identifier::Table::vector dropped_tables;
-  message::Schema schema_proto;
 
   do
   {
@@ -294,7 +306,7 @@ bool StorageEngine::dropSchema(Session::reference session, identifier::Schema::c
     {
       /* We've already verified that the schema does exist, so safe to log it */
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropSchema(session, identifier);
+      transaction_services.dropSchema(session, identifier, schema_message);
     }
   } while (0);
 

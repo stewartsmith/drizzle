@@ -29,7 +29,7 @@
 #ifndef PLUGIN_MEMCACHED_QUERY_CACHE_QUERY_CACHE_SERVICE_H
 #define PLUGIN_MEMCACHED_QUERY_CACHE_QUERY_CACHE_SERVICE_H
 
-#include "drizzled/message/resultset.pb.h"
+#include <drizzled/message/resultset.pb.h>
 #include <drizzled/sql_list.h>
 #include <map>
 #include <vector>

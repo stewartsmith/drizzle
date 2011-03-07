@@ -20,11 +20,13 @@
 #ifndef DRIZZLED_ITEM_IDENT_H
 #define DRIZZLED_ITEM_IDENT_H
 
-#include "drizzled/item.h"
+#include <drizzled/item.h>
 
 namespace drizzled
 {
 
+class Name_resolution_context;
+class TableList;
 extern uint32_t lower_case_table_names;
 
 class Item_ident :public Item
@@ -66,12 +68,12 @@ public:
   const char *full_name() const;
   void cleanup();
   bool remove_dependence_processor(unsigned char * arg);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
   friend bool insert_fields(Session *session, Name_resolution_context *context,
                             const char *db_name,
-                            const char *table_name, List_iterator<Item> *it,
+                            const char *table_name, List<Item>::iterator *it,
                             bool any_privileges);
 };
 

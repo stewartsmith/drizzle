@@ -1297,9 +1297,9 @@ select t2.fld3 from t2 where fld3 LIKE 'don_t_find_me_please%';
 # The next should give an error
 #
 
-#-- error 1176
+#-- error ER_KEY_DOES_NOT_EXITS
 #explain select fld3 from t2 ignore index (fld3,not_used);
-#-- error 1176
+#-- error ER_KEY_DOES_NOT_EXITS
 #explain select fld3 from t2 use index (not_used);
 
 #
@@ -1534,7 +1534,7 @@ select SQL_SMALL_RESULT t2.companynr,companyname from t4,t2 where t2.companynr=t
 # Full join (same alias)
 #
 
-select * from t1,t1 t12;
+select * from t1 CROSS JOIN t1 t12;
 --sorted_result
 select t2.fld1,t22.fld1 from t2,t2 t22 where t2.fld1 >= 250501 and t2.fld1 <= 250505 and t22.fld1 >= 250501 and t22.fld1 <= 250505;
 
@@ -1746,7 +1746,6 @@ select max(t2nr) from t3 where price=983543950;
 # Test of alias
 #
 
-select t1.period from t3 = t1 limit 1;
 select t1.period from t1 as t1 limit 1;
 select t1.period as "Nuvarande period" from t1 as t1 limit 1;
 select period as ok_period from t1 limit 1;
@@ -2528,7 +2527,7 @@ insert into t4 values (1);
 select * from t1 join t2 join t3 on (t2.b = t3.b and t1.a = t3.a);
 # Notice that ',' has lower priority than 'join', thus we have that:
 # t1, t2 join t3 <==> t1, (t2 join t3).
--- error 1054
+--error ER_BAD_FIELD_ERROR
 select * from t1, t2 join t3 on (t2.b = t3.b and t1.a = t3.a);
 select * from t1 join t2 join t3 join t4 on (t1.a = t4.c and t2.b = t4.c);
 select * from t1 join t2 join t4 using (c);
@@ -2720,7 +2719,7 @@ DROP TABLE t1,t2;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
 create table t2 (a int, b int, c int, e int, primary key(a,b,c));
-insert into t2 select A.a, B.a, C.a, C.a from t1 A, t1 B, t1 C;
+insert into t2 select A.a, B.a, C.a, C.a from t1 A CROSS JOIN t1 B CROSS JOIN t1 C;
 analyze table t2;
 select 'In next EXPLAIN, B.rows must be exactly 10:' Z;
 
@@ -3278,7 +3277,7 @@ CREATE TABLE t3 (c31 INT NOT NULL DEFAULT 0,
                  KEY (c33, c34, c32));
 
 INSERT INTO t1 values (),(),(),(),();
-INSERT INTO t2 SELECT a.c11, b.c11 FROM t1 a, t1 b;
+INSERT INTO t2 SELECT a.c11, b.c11 FROM t1 a CROSS JOIN t1 b;
 INSERT INTO t3 VALUES (1, 1, 1, 0), 
                       (2, 2, 0, 0), 
                       (3, 3, 1, 0), 

@@ -1,0 +1,68 @@
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+CREATE TABLE t1(a int, b VARCHAR(10), c VARCHAR(10)) ENGINE=STORAGE_ENGINE_API_TESTER;
+INSERT INTO t1 (a,b,c) VALUES (1,'1','ok'), (2,'2', 'ok'), (3,'3','ok');
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_keys()
+::doCreateTable()
+::SEAPITester()
+START STATEMENT
+END STATEMENT
+COMMIT
+::SEAPITester()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+SET AUTOCOMMIT=OFF;
+SAVEPOINT A;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+BEGIN
+In Transaction
+SET SAVEPOINT
+In Transaction
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+SAVEPOINT_NAME
+A
+UPDATE t1 SET c = 'fail' WHERE a > 0;
+ROLLBACK TO SAVEPOINT A;
+COMMIT;
+SELECT * FROM t1;
+a	b	c
+1	1	ok
+2	2	ok
+3	3	ok
+COMMIT;
+DROP TABLE t1;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+ROLLBACK TO SAVEPOINT
+In Transaction
+COMMIT
+::SEAPITester()
+BEGIN
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+COMMIT
+::SEAPITester()
+BEGIN
+In Transaction
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0

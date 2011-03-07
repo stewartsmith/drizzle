@@ -23,7 +23,7 @@
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/atomics.h>
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/plugin/table_function.h>
 
 #include "net_serv.h"
 
@@ -69,6 +69,7 @@ public:
   virtual drizzled::plugin::Client *getClient(int fd);
   static ProtocolCounters *mysql_counters;
   virtual ProtocolCounters *getCounters(void) const { return mysql_counters; }
+  void addCountersToTable(void);
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
@@ -79,6 +80,7 @@ protected:
   uint32_t client_capabilities;
   bool is_admin_connection;
   bool _using_mysql41_protocol;
+  bool _is_interactive;
 
   bool checkConnection(void);
   bool netStoreData(const unsigned char *from, size_t length);
@@ -89,6 +91,16 @@ protected:
 public:
   ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters *set_counters);
   virtual ~ClientMySQLProtocol();
+
+  bool isInteractive() const
+  {
+    return _is_interactive;
+  }
+
+  bool isAdmin() const
+  {
+    return is_admin_connection;
+  }
 
   ProtocolCounters *counters;
 
@@ -104,7 +116,7 @@ public:
 
   virtual void sendOK(void);
   virtual void sendEOF(void);
-  virtual void sendError(uint32_t sql_errno, const char *err);
+  virtual void sendError(const drizzled::error_t sql_errno, const char *err);
 
   virtual bool sendFields(drizzled::List<drizzled::Item> *list);
 

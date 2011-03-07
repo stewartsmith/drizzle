@@ -23,6 +23,9 @@
 
 struct read_replication_return_st {
   unsigned long long id;
+  unsigned long long commit_id;
+  unsigned long long end_timestamp;
+  unsigned long seg_id;
   unsigned long long message_length;
   const char *message;
 };

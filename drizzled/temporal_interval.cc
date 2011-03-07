@@ -17,14 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/error.h"
-#include "drizzled/session.h"
-#include "config.h"
-#include "drizzled/function/time/date.h"
-#include "drizzled/temporal_interval.h"
-#include "drizzled/time_functions.h"
+#include <config.h>
+
+#include <drizzled/internal/m_string.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
+#include <drizzled/function/time/date.h>
+#include <drizzled/temporal_interval.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {
@@ -285,9 +286,9 @@ bool TemporalInterval::addDate(type::Time *ltime, interval_type int_type)
 
 invalid_date:
   push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-      ER_DATETIME_FUNCTION_OVERFLOW,
-      ER(ER_DATETIME_FUNCTION_OVERFLOW),
-      "datetime");
+                      ER_DATETIME_FUNCTION_OVERFLOW,
+                      ER(ER_DATETIME_FUNCTION_OVERFLOW),
+                      "datetime");
 null_date:
   return 1;
 }

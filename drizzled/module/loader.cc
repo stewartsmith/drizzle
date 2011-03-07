@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #include <dlfcn.h>
 
@@ -26,26 +26,25 @@
 
 #include <boost/program_options.hpp>
 
-#include "drizzled/option.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/option.h>
+#include <drizzled/internal/m_string.h>
 
-#include "drizzled/plugin.h"
-#include "drizzled/module/load_list.h"
-#include "drizzled/module/library.h"
-#include "drizzled/module/registry.h"
-#include "drizzled/module/option_context.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/show.h"
-#include "drizzled/cursor.h"
-#include "drizzled/set_var.h"
-#include "drizzled/session.h"
-#include "drizzled/item/null.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/strfunc.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/util/tokenize.h"
+#include <drizzled/plugin.h>
+#include <drizzled/module/load_list.h>
+#include <drizzled/module/library.h>
+#include <drizzled/module/registry.h>
+#include <drizzled/module/option_context.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/show.h>
+#include <drizzled/cursor.h>
+#include <drizzled/set_var.h>
+#include <drizzled/session.h>
+#include <drizzled/item/null.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/util/tokenize.h>
 
 #include <boost/foreach.hpp>
 
@@ -71,8 +70,7 @@ drizzled::module::Manifest *drizzled_load_builtins[]=
   PANDORA_BUILTIN_LOAD_SYMBOLS_LIST, NULL
 };
 
-namespace drizzled
-{
+namespace drizzled {
  
 
 typedef vector<string> PluginOptions;
@@ -162,18 +160,17 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
 
   if (registry.find(library->getName()))
   {
-    errmsg_printf(ERRMSG_LVL_WARN, ER(ER_PLUGIN_EXISTS),
+    errmsg_printf(error::WARN, ER(ER_PLUGIN_EXISTS),
                   library->getName().c_str());
     return false;
   }
 
-  module::Module *tmp= NULL;
   /* Find plugin by name */
   const module::Manifest *manifest= library->getManifest();
 
   if (registry.find(manifest->name))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, 
+    errmsg_printf(error::ERROR, 
                   _("Plugin '%s' contains the name '%s' in its manifest, which "
                     "has already been registered.\n"),
                   library->getName().c_str(),
@@ -181,7 +178,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
     return true;
   }
 
-  tmp= new (std::nothrow) module::Module(manifest, library);
+  module::Module* tmp= new (std::nothrow) module::Module(manifest, library);
   if (tmp == NULL)
     return true;
 
@@ -190,7 +187,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
     registry.add(tmp);
     return false;
   }
-  errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY),
+  errmsg_printf(error::ERROR, ER(ER_CANT_FIND_DL_ENTRY),
                 library->getName().c_str());
   return true;
 }
@@ -198,15 +195,8 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
 
 static void reap_plugins(module::Registry &registry)
 {
-  std::map<std::string, module::Module *>::const_iterator modules=
-    registry.getModulesMap().begin();
-
-  while (modules != registry.getModulesMap().end())
-  {
-    module::Module *module= (*modules).second;
-    delete module;
-    ++modules;
-  }
+  BOOST_FOREACH(module::Registry::ModuleMap::const_reference module, registry.getModulesMap())
+    delete module.second;
 }
 
 
@@ -220,53 +210,23 @@ static bool plugin_initialize(module::Registry &registry,
   {
     if (module->getManifest().init(loading_context))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Plugin '%s' init function returned error.\n"),
                     module->getName().c_str());
       return true;
     }
   }
   module->isInited= true;
-
-
   return false;
-}
-
-
-inline static void dashes_to_underscores(std::string &name_in,
-                                         char from= '-', char to= '_')
-{
-  for (string::iterator p= name_in.begin();
-       p != name_in.end();
-       ++p)
-  {
-    if (*p == from)
-    {
-      *p= to;
-    }
-  }
-}
-
-inline static void underscores_to_dashes(std::string &name_in)
-{
-  return dashes_to_underscores(name_in, '_', '-');
 }
 
 static void compose_plugin_options(vector<string> &target,
                                    vector<string> options)
 {
-  for (vector<string>::iterator it= options.begin();
-       it != options.end();
-       ++it)
-  {
-    tokenize(*it, target, ",", true);
-  }
-  for (vector<string>::iterator it= target.begin();
-       it != target.end();
-       ++it)
-  {
-    dashes_to_underscores(*it);
-  }
+  BOOST_FOREACH(vector<string>::reference it, options)
+    tokenize(it, target, ",", true);
+  BOOST_FOREACH(vector<string>::reference it, target)
+    std::replace(it.begin(), it.end(), '-', '_');
 }
 
 void compose_plugin_add(vector<string> options)
@@ -294,12 +254,10 @@ void notify_plugin_load(string in_plugin_load)
 bool plugin_init(module::Registry &registry,
                  po::options_description &long_options)
 {
-  memory::Root tmp_root(4096);
-
   if (initialized)
     return false;
 
-  initialized= 1;
+  initialized= true;
 
   PluginOptions builtin_load_list;
   tokenize(builtin_load_plugins, builtin_load_list, ",", true);
@@ -333,7 +291,7 @@ bool plugin_init(module::Registry &registry,
     plugin_prune_list(builtin_load_list, opt_plugin_remove);
   }
 
-
+  memory::Root tmp_root(4096);
   /*
     First we register builtin plugins
   */
@@ -370,30 +328,19 @@ bool plugin_finalize(module::Registry &registry)
   /*
     Now we initialize all remaining plugins
   */
-  module::Registry::ModuleList module_list= registry.getList();
-  module::Registry::ModuleList::iterator modules= module_list.begin();
-    
-  while (modules != module_list.end())
+  BOOST_FOREACH(module::Registry::ModuleList::const_reference module, registry.getList())
   {
-    module::Module *module= *modules;
-    ++modules;
-    if (module->isInited == false)
+    if (not module->isInited && plugin_initialize(registry, module))
     {
-      if (plugin_initialize(registry, module))
-      {
-        registry.remove(module);
-        delete module;
-        return true;
-      }
+      registry.remove(module);
+      delete module;
+      return true;
     }
   }
-
-
   BOOST_FOREACH(plugin::Plugin::map::value_type value, registry.getPluginsMap())
   {
     value.second->prime();
   }
-
   return false;
 }
 
@@ -448,18 +395,12 @@ static bool plugin_load_list(module::Registry &registry,
                              po::options_description &long_options,
                              bool builtin)
 {
-  module::Library *library= NULL;
-
-  for (set<string>::const_iterator iter= plugin_list.begin();
-       iter != plugin_list.end();
-       ++iter)
+  BOOST_FOREACH(const string& plugin_name, plugin_list)
   {
-    const string plugin_name(*iter);
-
-    library= registry.addLibrary(plugin_name, builtin);
+    module::Library* library= registry.addLibrary(plugin_name, builtin);
     if (library == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Couldn't load plugin library named '%s'.\n"),
                     plugin_name.c_str());
       return true;
@@ -469,11 +410,10 @@ static bool plugin_load_list(module::Registry &registry,
     if (plugin_add(registry, tmp_root, library, long_options))
     {
       registry.removeLibrary(plugin_name);
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Couldn't load plugin named '%s'.\n"),
                     plugin_name.c_str());
       return true;
-
     }
   }
   return false;

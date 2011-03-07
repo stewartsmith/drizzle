@@ -34,6 +34,7 @@ Introduction:
    what_is_drizzle
    brief_history_of_drizzle
    how_to_report_a_bug
+   versioning
    mysql_differences
 
 Compiling and Installing:
@@ -45,6 +46,15 @@ Compiling and Installing:
    installing/from_source
    installing/ubuntu
    installing/redhat
+
+Contributing:
+-------------
+.. toctree::
+   :maxdepth: 2
+
+   contributing/introduction
+   contributing/code
+   contributing/documentation
 
 SQL Language:
 -------------
@@ -64,6 +74,7 @@ SQL Language:
    getting_information 
    transactional 
    administrative
+   resources/index
 
 User Level Topics:
 ------------------
@@ -73,6 +84,7 @@ User Level Topics:
    storage_engines
    using_replication
    logging
+   authentication
 
 Configuration:
 --------------
@@ -122,6 +134,7 @@ Testing:
  
    testing/test-run.rst
    testing/dbqp.rst
+   testing/randgen.rst
 
 Indices and tables
 ==================

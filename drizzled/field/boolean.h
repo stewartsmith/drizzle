@@ -52,10 +52,10 @@ public:
   int store(int64_t nr, bool unsigned_val);
   int store_decimal(const drizzled::type::Decimal*);
 
-  String *val_str(String*,String *);
-  double val_real();
-  int64_t val_int();
-  type::Decimal *val_decimal(type::Decimal *);
+  String *val_str(String*,String *) const;
+  double val_real() const;
+  int64_t val_int() const;
+  type::Decimal *val_decimal(type::Decimal *) const;
 
   void sql_type(drizzled::String&) const;
 
@@ -63,6 +63,11 @@ public:
   int cmp(const unsigned char*, const unsigned char*);
   void sort_string(unsigned char*, uint32_t);
   uint32_t max_display_length() { return 5; } // longest string is "false"
+
+  bool can_be_compared_as_int64_t() const
+  {
+    return true;
+  }
 
   inline String *val_str(String *str) { return val_str(str, str); }
   uint32_t size_of() const { return sizeof(*this); }

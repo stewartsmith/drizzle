@@ -22,7 +22,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include "rabbitmq_log.h"
 #include <drizzled/message/transaction.pb.h>
 #include <google/protobuf/io/coded_stream.h>
@@ -69,7 +69,7 @@ RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
   uint8_t* buffer= new uint8_t[message_byte_length];
   if(buffer == NULL)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate enough memory to transaction message\n"));
+    errmsg_printf(error::ERROR, _("Failed to allocate enough memory to transaction message\n"));
     deactivate();
     return plugin::UNKNOWN_ERROR;
   }
@@ -84,7 +84,7 @@ RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
   }
   catch(exception& e)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _(e.what()));
+    errmsg_printf(error::ERROR, _(e.what()));
     deactivate();
     return plugin::UNKNOWN_ERROR;
   }
@@ -114,7 +114,7 @@ static int init(drizzled::module::Context &context)
   } 
   catch (exception& e) 
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the RabbitMQHandler.  Got error: %s\n"),
+    errmsg_printf(error::ERROR, _("Failed to allocate the RabbitMQHandler.  Got error: %s\n"),
                   e.what());
     return 1;
   }
@@ -127,7 +127,7 @@ static int init(drizzled::module::Context &context)
   } 
   catch (exception& e) 
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the RabbitMQLog instance.  Got error: %s\n"), 
+    errmsg_printf(error::ERROR, _("Failed to allocate the RabbitMQLog instance.  Got error: %s\n"), 
                   e.what());
     return 1;
   }

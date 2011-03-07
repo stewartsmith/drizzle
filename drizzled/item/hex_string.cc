@@ -17,11 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/error.h>
-#include <drizzled/item/string.h>
+#include <drizzled/field.h>
 #include <drizzled/item/hex_string.h>
+#include <drizzled/item/string.h>
+#include <drizzled/type/decimal.h>
 
 #include <algorithm>
 
@@ -113,7 +115,7 @@ warn:
   return 1;
 }
 
-void Item_hex_string::print(String *str, enum_query_type)
+void Item_hex_string::print(String *str)
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
        *ptr= end - min(str_value.length(), sizeof(int64_t));

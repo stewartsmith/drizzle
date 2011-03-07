@@ -213,8 +213,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		field_no,dup_no;
   int		select_field_pos,auto_increment=0;
-  List_iterator<Create_field> it(alter_info->create_list);
-  List_iterator<Create_field> it2(alter_info->create_list);
+  List<Create_field>::iterator it(alter_info->create_list);
+  List<Create_field>::iterator it2(alter_info->create_list);
   uint total_uneven_bit_length= 0;
   DBUG_ENTER("mysql_prepare_create_table");
 
@@ -308,7 +308,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         */
         interval= sql_field->interval= typelib(thd->mem_root,
                                                sql_field->interval_list);
-        List_iterator<String> int_it(sql_field->interval_list);
+        List<String>::iterator int_it(sql_field->interval_list);
         String conv, *tmp;
         char comma_buf[2];
         int comma_length= cs->cset->wc_mb(cs, ',', (uchar*) comma_buf,
@@ -539,8 +539,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 
   /* Create keys */
 
-  List_iterator<Key> key_iterator(alter_info->key_list);
-  List_iterator<Key> key_iterator2(alter_info->key_list);
+  List<Key>::iterator key_iterator(alter_info->key_list);
+  List<Key>::iterator key_iterator2(alter_info->key_list);
   uint key_parts=0, fk_key_count=0;
   bool primary_key=0,unique_key=0;
   Key *key, *key2;
@@ -752,7 +752,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
 
-    List_iterator<Key_part_spec> cols(key->columns), cols2(key->columns);
+    List<Key_part_spec>::iterator cols(key->columns), cols2(key->columns);
     CHARSET_INFO *ft_key_charset=0;  // for FULLTEXT
     for (uint column_nr=0 ; (column=cols++) ; column_nr++)
     {

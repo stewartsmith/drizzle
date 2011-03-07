@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/user_locks/module.h"
+#include <plugin/user_locks/module.h>
 
 #include <drizzled/atomics.h>
 #include <drizzled/session.h>
@@ -49,13 +49,13 @@ bool user_locks::UserLocks::Generator::populate()
   while (iter != lock_map.end())
   {
     // USER_LOCK_NAME
-    push((*iter).first.getLockName());
+    push(iter->first.getLockName());
 
     // SESSION_ID
-    push((*iter).second->id);
+    push(iter->second->id);
     //
     // USERNAME
-    push((*iter).first.getUser());
+    push(iter->first.getUser());
 
     iter++;
     return true;

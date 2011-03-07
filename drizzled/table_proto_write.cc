@@ -13,23 +13,25 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 #include <drizzled/unireg.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/message/statement_transform.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/message/statement_transform.h>
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/plugin/storage_engine.h>
 
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/typelib.h>
 
 /* For proto */
 #include <string>
 #include <fstream>
 #include <fcntl.h>
-#include <drizzled/message/schema.pb.h>
-#include <drizzled/message/table.pb.h>
+#include <drizzled/message/schema.h>
+#include <drizzled/message/table.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/message.h>
@@ -37,23 +39,24 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/charset.h>
 
-#include "drizzled/function/time/typecast.h"
+#include <drizzled/function/time/typecast.h>
 
 using namespace std;
 
 namespace drizzled {
 
-bool fill_table_proto(message::Table &table_proto,
+bool fill_table_proto(identifier::Table::const_reference identifier,
+                      message::Table &table_proto,
                       List<CreateField> &create_fields,
                       HA_CREATE_INFO *create_info,
                       uint32_t keys,
                       KeyInfo *key_info)
 {
   CreateField *field_arg;
-  List_iterator<CreateField> it(create_fields);
+  List<CreateField>::iterator it(create_fields.begin());
   message::Table::TableOptions *table_options= table_proto.mutable_options();
 
-  if (create_fields.elements > MAX_FIELDS)
+  if (create_fields.size() > MAX_FIELDS)
   {
     my_error(ER_TOO_MANY_FIELDS, MYF(0), ER(ER_TOO_MANY_FIELDS));
     return true;
@@ -61,6 +64,13 @@ bool fill_table_proto(message::Table &table_proto,
 
   assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
+
+  message::schema::shared_ptr schema_message= plugin::StorageEngine::getSchemaDefinition(identifier);
+
+  if (schema_message and not message::is_replicated(*schema_message))
+  {
+    message::set_is_replicated(table_proto, false);
+  }
 
   int field_number= 0;
   bool use_existing_fields= table_proto.field_size() > 0;
@@ -298,11 +308,7 @@ bool fill_table_proto(message::Table &table_proto,
 	  return true;
 	}
 
-        if (field_arg->sql_type == DRIZZLE_TYPE_DATE
-            || field_arg->sql_type == DRIZZLE_TYPE_TIME
-            || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
-            || field_arg->sql_type == DRIZZLE_TYPE_MICROTIME
-            || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
+        if (field::isDateTime(field_arg->sql_type))
         {
           type::Time ltime;
 
@@ -585,7 +591,9 @@ bool rea_create_table(Session *session,
                       uint32_t keys, KeyInfo *key_info)
 {
   assert(table_proto.has_name());
-  if (fill_table_proto(table_proto, create_fields, create_info,
+
+  if (fill_table_proto(identifier,
+                       table_proto, create_fields, create_info,
                        keys, key_info))
   {
     return false;

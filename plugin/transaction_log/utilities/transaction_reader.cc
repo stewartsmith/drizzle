@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
@@ -30,9 +30,9 @@
 #include <algorithm>
 #include <vector>
 #include <unistd.h>
-#include "drizzled/gettext.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/message/statement_transform.h"
+#include <drizzled/gettext.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/statement_transform.h>
 #include "transaction_manager.h"
 #include "transaction_file_reader.h"
 #include "transaction_log_connection.h"
@@ -558,6 +558,71 @@ static bool processTransactionMessage(TransactionManager &trx_mgr,
   return true;
 }
 
+static void getTrxIdList(TransactionLogConnection *connection,
+                         const string &query_string,
+                         vector<uint64_t> &ordered_trx_id_list)
+{
+  drizzle_result_st result;
+  
+  connection->query(query_string, &result);
+  
+  drizzle_row_t row;
+  while ((row= drizzle_row_next(&result)))
+  {
+    if (row[0])
+    {
+      ordered_trx_id_list.push_back(boost::lexical_cast<uint64_t>(row[0]));
+    }
+  }
+
+  drizzle_result_free(&result);
+}
+
+static int extractRowsForTrxIds(TransactionLogConnection *connection,
+                                const vector<uint64_t> &ordered_trx_id_list,
+                                bool summarize,
+                                bool ignore_events,
+                                bool print_as_raw)
+{
+  for (size_t idx= 0; idx < ordered_trx_id_list.size(); idx++)
+  {
+    uint64_t trx_id= ordered_trx_id_list[idx];
+
+    string sql("SELECT MESSAGE, MESSAGE_LEN"
+               " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+               " WHERE ID = ");
+    sql.append(boost::lexical_cast<string>(trx_id));
+    sql.append(" ORDER BY SEGID ASC");
+
+    drizzle_result_st result;
+    connection->query(sql, &result);
+    
+    drizzle_row_t row;
+    while ((row= drizzle_row_next(&result)))
+    {
+      char* data= (char*)row[0];
+      uint64_t length= (row[1]) ? boost::lexical_cast<uint64_t>(row[1]) : 0;
+      
+      message::Transaction transaction;
+      TransactionManager trx_mgr;
+      
+      transaction.ParseFromArray(data, length);
+      
+      if (not processTransactionMessage(trx_mgr, transaction, 
+                                        summarize, ignore_events,
+                                        print_as_raw))
+      {
+        drizzle_result_free(&result);
+        return -1;
+      }
+    }
+    
+    drizzle_result_free(&result);
+  }
+  
+  return 0;
+}
+
 /**
  * @retval  0 Process completed successfully.
  * @retval -1 Process encountered an error.
@@ -650,50 +715,58 @@ int main(int argc, char* argv[])
   bool print_as_raw= vm.count("raw") ? true : false;
   bool summarize= vm.count("summarize") ? true : false;
 
+  /*
+   * InnoDB transaction log processing
+   */
+
   if (use_innodb_replication_log)
   {
-    TransactionLogConnection *connection = new TransactionLogConnection(current_host, opt_drizzle_port,
-      current_user, opt_password, use_drizzle_protocol);
+    TransactionLogConnection *connection;
+    connection= new TransactionLogConnection(current_host, opt_drizzle_port,
+                                             current_user, opt_password,
+                                             use_drizzle_protocol);
 
+    /* List of transaction IDs (in proper commit order) to extract */
+    vector<uint64_t> ordered_trx_id_list;
     string query_string;
+
     if (vm.count("transaction-id"))
     {
-      query_string.append("SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE transaction_id=");
-      query_string.append(boost::lexical_cast<string>(opt_transaction_id));
+      ordered_trx_id_list.push_back(opt_transaction_id);
     }
     else if (vm.count("start-transaction-id"))
     {
-      query_string.append("SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE transaction_id >=");
+      query_string.append("SELECT ID"
+                          " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+                          " WHERE COMMIT_ID > 0"
+                          " AND ID > ");
       query_string.append(boost::lexical_cast<string>(opt_start_transaction_id));
-      query_string.append(" ORDER BY transaction_id ASC");
+      query_string.append(" ORDER BY COMMIT_ID ASC");
+      
+      getTrxIdList(connection, query_string, ordered_trx_id_list);
     }
     else
     {
-      query_string= "SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG";
+      query_string.append("SELECT ID"
+                          " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+                          " WHERE COMMIT_ID > 0"
+                          " ORDER BY COMMIT_ID ASC");
+      
+      getTrxIdList(connection, query_string, ordered_trx_id_list);
     }
 
-    drizzle_result_st *result= connection->query(query_string);
-
-    drizzle_row_t row;
-    while ((row= drizzle_row_next(result)))
+    if (extractRowsForTrxIds(connection, ordered_trx_id_list,
+                             summarize, ignore_events, print_as_raw))
     {
-      char* data= (char*)row[0];
-      uint64_t length= (row[1]) ? boost::lexical_cast<uint64_t>(row[1]) : 0;
-
-      message::Transaction transaction;
-      TransactionManager trx_mgr;
-
-      transaction.ParseFromArray(data, length);
-
-      if (not processTransactionMessage(trx_mgr, transaction, 
-                                        summarize, ignore_events,
-                                        print_as_raw))
-      {
-        return -1;
-      }
-    }    
+      return -1;
+    }
   }
-  else // file based transaction log 
+
+  /*
+   * File based transaction log processing
+   */
+
+  else 
   {
     string filename= vm["input-file"].as< vector<string> >()[0];
 

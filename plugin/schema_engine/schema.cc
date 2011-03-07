@@ -18,22 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/schema_engine/schema.h"
-#include "drizzled/db.h"
-#include "drizzled/sql_table.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/charset.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/cursor.h"
-#include "drizzled/data_home.h"
+#include <plugin/schema_engine/schema.h>
+#include <drizzled/schema.h>
+#include <drizzled/sql_table.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/cursor.h>
+#include <drizzled/data_home.h>
 
 #include <drizzled/pthread_globals.h>
 
 #include <drizzled/execute.h>
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -110,27 +110,28 @@ void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
          iter != schema_cache.end();
          iter++)
     {
-      set_of_names.push_back(identifier::Schema((*iter).second->name()));
+      set_of_names.push_back(identifier::Schema(iter->second->name()));
     }
   }
   mutex.unlock_shared();
 }
 
-bool Schema::doGetSchemaDefinition(const identifier::Schema &schema_identifier, message::schema::shared_ptr &schema_message)
+drizzled::message::schema::shared_ptr Schema::doGetSchemaDefinition(const identifier::Schema &schema_identifier)
 {
   mutex.lock_shared();
   SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
 
   if (iter != schema_cache.end())
   {
-    schema_message= (*iter).second;
+    drizzled::message::schema::shared_ptr schema_message;
+    schema_message= iter->second;
     mutex.unlock_shared();
 
-    return true;
+    return schema_message;
   }
   mutex.unlock_shared();
 
-  return false;
+  return drizzled::message::schema::shared_ptr();
 }
 
 
@@ -168,13 +169,11 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 
 bool Schema::doDropSchema(const identifier::Schema &schema_identifier)
 {
-  message::schema::shared_ptr schema_message;
-
   string schema_file(schema_identifier.getPath());
   schema_file.append(1, FN_LIBCHAR);
   schema_file.append(MY_DB_OPT_FILE);
 
-  if (not doGetSchemaDefinition(schema_identifier, schema_message))
+  if (not doGetSchemaDefinition(schema_identifier))
     return false;
 
   // No db.opt file, no love from us.

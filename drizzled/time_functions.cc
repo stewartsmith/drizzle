@@ -20,12 +20,12 @@
 
 /* Functions to handle date and time */
 
-#include "config.h"
-#include "drizzled/error.h"
-#include "drizzled/util/test.h"
-#include "drizzled/tztime.h"
-#include "drizzled/session.h"
-#include "drizzled/time_functions.h"
+#include <config.h>
+#include <drizzled/error.h>
+#include <drizzled/util/test.h>
+#include <drizzled/tztime.h>
+#include <drizzled/session.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {
@@ -147,12 +147,12 @@ type::timestamp_t str_to_datetime_with_warn(Session *session,
 
 
 bool
-str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time)
+str_to_time_with_warn(Session *session, const char *str, uint32_t length, type::Time *l_time)
 {
   int warning;
   bool ret_val= l_time->store(str, length, warning, type::DRIZZLE_TIMESTAMP_TIME);
   if (ret_val || warning)
-    make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, type::DRIZZLE_TIMESTAMP_TIME, NULL);
   return ret_val;
 }

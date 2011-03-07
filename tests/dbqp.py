@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -51,36 +51,50 @@ test_executor = None
 execution_manager = None
 
 try:
-    # Some system-level work is constant regardless
-    # of the test to be run
-    system_manager = systemManager(variables)
+    # We do this nested try to accomodate red hat
+    # running python 2.4...seriously?  2.4?
+    try:
+        # Some system-level work is constant regardless
+        # of the test to be run
+        system_manager = systemManager(variables)
 
-    # Create our server_manager
-    server_manager = serverManager(system_manager, variables)
+        # Create our server_manager
+        server_manager = serverManager(system_manager, variables)
 
-    # Get our mode-specific test_manager and test_executor
-    (test_manager,test_executor) = handle_mode(variables, system_manager)
+        # Get our mode-specific test_manager and test_executor
+        (test_manager,test_executor) = handle_mode(variables, system_manager)
 
-    # Gather our tests for execution
-    test_manager.gather_tests()
+        # Gather our tests for execution
+        test_manager.gather_tests()
 
-    # Initialize test execution manager
-    execution_manager = executionManager(server_manager, system_manager
-                                    , test_manager, test_executor
-                                    , variables)
+        # Initialize test execution manager
+        execution_manager = executionManager(server_manager, system_manager
+                                        , test_manager, test_executor
+                                        , variables)
 
-    # Execute our tests!
-    execution_manager.execute_tests()
+        # Execute our tests!
+        execution_manager.execute_tests()
+    
+    except Exception, e:
+       print Exception, e
 
-except Exception, e:
-   print Exception, e
-
-except KeyboardInterrupt:
-  print "\n\nDetected <Ctrl>+c, shutting down and cleaning up..."
+    except KeyboardInterrupt:
+      print "\n\nDetected <Ctrl>+c, shutting down and cleaning up..."
 
 finally:
 # TODO - make a more robust cleanup
 # At the moment, runaway servers are our biggest concern
     if server_manager and not variables['startandexit']:
-        server_manager.cleanup()
+        if variables['gdb']:
+            server_manager.cleanup_all_servers()
+        else:
+            server_manager.cleanup()
+    if not variables['startandexit']:
+        if test_manager:
+            fail_count = test_manager.has_failing_tests()
+            sys.exit(test_manager.has_failing_tests())
+        else:
+            # return 1 as we likely have a problem if we don't have a
+            # test_manager
+            sys.exit(1)
 

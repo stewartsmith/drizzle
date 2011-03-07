@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/lock.h>
@@ -38,8 +38,12 @@ bool statement::UnlockTables::execute()
   if (getSession()->isGlobalReadLock())
   {
     getSession()->unlockGlobalReadLock();
+    getSession()->my_ok();
   }
-  getSession()->my_ok();
+  else
+  {
+    my_error(ER_NO_LOCK_HELD, MYF(0));
+  }
 
   return false;
 }

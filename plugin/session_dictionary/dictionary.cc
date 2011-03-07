@@ -18,14 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/session_dictionary/dictionary.h"
+#include <config.h>
+#include <plugin/session_dictionary/dictionary.h>
 
 using namespace drizzled;
 
 static int init(drizzled::module::Context &context)
 {
   context.add(new ProcesslistTool);
+  context.add(new session_dictionary::Sessions);
   context.add(new session_dictionary::Variables);
   context.add(new session_dictionary::Savepoints);
   

@@ -17,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/min_max.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/session.h>
 
 namespace drizzled
 {
@@ -154,7 +155,7 @@ String *Item_func_min_max::val_str(String *str)
       type::Decimal dec_buf, *dec_val= val_decimal(&dec_buf);
       if (null_value)
         return 0;
-      class_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
+      class_decimal2string(dec_val, 0, str);
       return str;
     }
 

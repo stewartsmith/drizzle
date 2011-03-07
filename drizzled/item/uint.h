@@ -36,7 +36,7 @@ public:
   String *val_str(String*);
   Item *clone_item() { return new Item_uint(name, value, max_length); }
   int save_in_field(Field *field, bool no_conversions);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   Item_num *neg ();
   uint32_t decimal_precision() const { return max_length; }
 };

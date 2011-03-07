@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/user_locks/module.h"
+#include <config.h>
+#include <plugin/user_locks/module.h>
 
 #include <boost/thread/locks.hpp>
 
@@ -57,10 +57,10 @@ return_t Barriers::release(const user_locks::Key &arg, drizzled::session_id_t ow
   if ( iter == barrier_map.end())
     return NOT_FOUND;
 
-  if (not (*iter).second->getOwner() == owner)
+  if (not iter->second->getOwner() == owner)
     return NOT_OWNED_BY;
 
-  (*iter).second->signal(); // We tell anyone left to start running
+  iter->second->signal(); // We tell anyone left to start running
   (void)barrier_map.erase(arg);
 
   return SUCCESS;
@@ -72,7 +72,7 @@ Barrier::shared_ptr Barriers::find(const user_locks::Key &arg)
   Map::iterator iter= barrier_map.find(arg);
 
   if (iter != barrier_map.end())
-    return (*iter).second;
+    return iter->second;
 
   return Barrier::shared_ptr();
 }

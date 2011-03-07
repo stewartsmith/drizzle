@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
@@ -51,6 +51,19 @@ def organize_options(args, test_cases):
     variables = {}
     variables = vars(args)
     variables['test_cases']= test_cases
+    # This code should become a function once
+    # enough thought has been given to it
+    if variables['manualgdb']:
+        variables['gdb']=True
+    if variables['repeat'] <= 0:
+        print "Setting --repeat=1.  You chose a silly value that I will ignore :P"
+        variables['repeat'] = 1
+    if variables['mode'] == 'randgen':
+        print "Setting --no-secure-file-priv=True for randgen mode..."
+        variables['nosecurefilepriv']=True
+    if variables['mode'] == 'cleanup':
+        print "Setting --start-dirty=True for cleanup mode..."
+        variables['startdirty']=True
     return variables
 
 # Create the CLI option parser
@@ -63,7 +76,7 @@ testdir_default = os.path.abspath(os.getcwd())
 server_default = os.path.abspath(os.path.join(testdir_default,
                                        '../drizzled/drizzled'))
 
-workdir_default = os.path.join(testdir_default,'dbqp_work')
+workdir_default = os.path.join(testdir_default,'workdir')
 
 clientbindir_default = os.path.abspath(os.path.join(testdir_default,
                                        '../client'))
@@ -112,7 +125,7 @@ system_control_group.add_option(
     "--mode"
   , dest="mode"
   , default="dtr"
-  , help="Testing mode.  We only support dtr...for now >;) [%default]"
+  , help="Testing mode.  We currently support dtr, randgen, and cleanup modes.  See docs for further details about individual modes [%default]"
   )
 
 system_control_group.add_option(
@@ -129,6 +142,14 @@ system_control_group.add_option(
   , action="store_true"
   , default=False
   , help="Don't try to cleanup from earlier runs (currently just a placeholder) [%default]"
+  )
+
+system_control_group.add_option(
+    "--randgen-path"
+  , dest="randgenpath"
+  , action='store'
+  , default=None
+  , help = "The path to a randgen installation that can be used to execute randgen-based tests"
   )
 
 parser.add_option_group(system_control_group)
@@ -182,7 +203,14 @@ test_control_group.add_option(
   , help = "sort the testcases so that they are executed optimally for the given mode [%default]"
   )
 
-
+test_control_group.add_option(
+    "--repeat"
+  , dest="repeat"
+  , type='int'
+  , action="store"
+  , default=1
+  , help = "Run each test case the specified number of times.  For a given sequence, the first test will be run n times, then the second, etc [%default]"
+  )
 
 parser.add_option_group(test_control_group)
 # end test_control_group
@@ -291,9 +319,24 @@ environment_control_group.add_option(
   , help = "Turn off the use of --secure-file-priv=vardir for started servers"
   )
 
- 
 parser.add_option_group(environment_control_group)
 # end environment control group
+
+option_passing_group = optparse.OptionGroup(parser,
+                          "Options to pass options on to the server")
+
+option_passing_group.add_option(
+    "--drizzled"
+  , dest="drizzledoptions"
+  , type='string'
+  , action='append' 
+  , default = []
+  , help = "Pass additional options to the server.  Will be passed to all servers for all tests (mostly for --start-and-exit)"
+  )
+
+parser.add_option_group(option_passing_group)
+# end option passing group
+ 
 
 analysis_control_group = optparse.OptionGroup(parser, 
                             "Options for defining the tools we use for code analysis (valgrind, gprof, gcov, etc)")
@@ -326,10 +369,29 @@ debugger_control_group.add_option(
   , help="Start the drizzled server(s) in gdb"
   )
 
+debugger_control_group.add_option(
+    "--manual-gdb"
+  , dest="manualgdb"
+  , action='store_true'
+  , default=False
+  , help="Allows you to start the drizzled server(s) in gdb manually (in another window, etc)"
+  )
+
 parser.add_option_group(debugger_control_group)
 
 
+utility_group = optparse.OptionGroup(parser,
+                  "Options to call additional utilities such as datagen")
 
+utility_group.add_option(
+    "--gendata"
+  , dest="gendatafile"
+  , action='store'
+  , type='string'
+  , default=None
+  , help="Call the randgen's gendata utility to use the specified configuration file.  This will populate the server prior to any test execution")
+
+parser.add_option_group(utility_group)
 
 
 # supplied will be those arguments matching an option, 

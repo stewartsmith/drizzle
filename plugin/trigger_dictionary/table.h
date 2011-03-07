@@ -21,8 +21,8 @@
 #ifndef PLUGIN_TRIGGER_DICTIONARY_TABLE_H
 #define PLUGIN_TRIGGER_DICTIONARY_TABLE_H
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/generator.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/generator.h>
 
 namespace trigger_dictionary {
 

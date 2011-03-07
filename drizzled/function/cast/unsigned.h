@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_FUNCTION_CAST_UNSIGNED_H
 #define DRIZZLED_FUNCTION_CAST_UNSIGNED_H
 
-#include "drizzled/function/math/int.h"
+#include <drizzled/function/math/int.h>
 
 namespace drizzled {
 namespace function {
@@ -44,7 +44,7 @@ public:
     unsigned_flag= true;
   }
 
-  void print(String *str, enum_query_type query_type);
+  void print(String *str);
 
   uint32_t decimal_precision() const
   {

@@ -52,6 +52,8 @@ struct file_format_struct {
 					fields */
 };
 
+#include <drizzled/errmsg_print.h>
+
 /** The file format tag */
 typedef struct file_format_struct	file_format_t;
 
@@ -90,6 +92,9 @@ here. */
 UNIV_INTERN char	trx_sys_mysql_bin_log_name[TRX_SYS_MYSQL_LOG_NAME_LEN];
 /** Binlog file position, or -1 if unknown */
 UNIV_INTERN ib_int64_t	trx_sys_mysql_bin_log_pos	= -1;
+
+UNIV_INTERN drizzled::atomic<uint64_t> trx_sys_commit_id;
+
 /* @} */
 #endif /* !UNIV_HOTBACKUP */
 
@@ -674,168 +679,34 @@ trx_sys_flush_max_trx_id(void)
 	mtr_commit(&mtr);
 }
 
-/*****************************************************************//**
-Updates the offset information about the end of the MySQL binlog entry
-which corresponds to the transaction just being committed. In a MySQL
-replication slave updates the latest master binlog position up to which
-replication has proceeded. */
 UNIV_INTERN
 void
-trx_sys_update_mysql_binlog_offset(
-/*===============================*/
-	const char*	file_name,/*!< in: MySQL log file name */
-	ib_int64_t	offset,	/*!< in: position in that log file */
-	ulint		field,	/*!< in: offset of the MySQL log info field in
-				the trx sys header */
-	mtr_t*		mtr)	/*!< in: mtr */
+trx_sys_flush_commit_id(uint64_t commit_id, ulint field, mtr_t* mtr)
 {
-	trx_sysf_t*	sys_header;
-
-	if (ut_strlen(file_name) >= TRX_SYS_MYSQL_LOG_NAME_LEN) {
-
-		/* We cannot fit the name to the 512 bytes we have reserved */
-
-		return;
-	}
-
+	trx_sysf_t*     sys_header;
+  
 	sys_header = trx_sysf_get(mtr);
 
-	if (mach_read_from_4(sys_header + field
-			     + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD)
-	    != TRX_SYS_MYSQL_LOG_MAGIC_N) {
-
-		mlog_write_ulint(sys_header + field
-				 + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD,
-				 TRX_SYS_MYSQL_LOG_MAGIC_N,
-				 MLOG_4BYTES, mtr);
-	}
-
-	if (0 != strcmp((char*) (sys_header + field + TRX_SYS_MYSQL_LOG_NAME),
-			file_name)) {
-
-		mlog_write_string(sys_header + field
-				  + TRX_SYS_MYSQL_LOG_NAME,
-				  (byte*) file_name, 1 + ut_strlen(file_name),
-				  mtr);
-	}
-
-	if (mach_read_from_4(sys_header + field
-			     + TRX_SYS_MYSQL_LOG_OFFSET_HIGH) > 0
-	    || (offset >> 32) > 0) {
-
-		mlog_write_ulint(sys_header + field
-				 + TRX_SYS_MYSQL_LOG_OFFSET_HIGH,
-				 (ulint)(offset >> 32),
-				 MLOG_4BYTES, mtr);
-	}
-
-	mlog_write_ulint(sys_header + field
-			 + TRX_SYS_MYSQL_LOG_OFFSET_LOW,
-			 (ulint)(offset & 0xFFFFFFFFUL),
-			 MLOG_4BYTES, mtr);
+	mlog_write_ull(sys_header + field + TRX_SYS_DRIZZLE_MAX_COMMIT_ID, 
+		       commit_id, mtr);
 }
 
-/*****************************************************************//**
-Stores the MySQL binlog offset info in the trx system header if
-the magic number shows it valid, and print the info to stderr */
+
 UNIV_INTERN
 void
-trx_sys_print_mysql_binlog_offset(void)
+trx_sys_read_commit_id(void)
 /*===================================*/
 {
-	trx_sysf_t*	sys_header;
-	mtr_t		mtr;
-	ulint		trx_sys_mysql_bin_log_pos_high;
-	ulint		trx_sys_mysql_bin_log_pos_low;
+	trx_sysf_t*     sys_header;
+	mtr_t           mtr;
 
 	mtr_start(&mtr);
 
 	sys_header = trx_sysf_get(&mtr);
 
-	if (mach_read_from_4(sys_header + TRX_SYS_MYSQL_LOG_INFO
-			     + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD)
-	    != TRX_SYS_MYSQL_LOG_MAGIC_N) {
+	trx_sys_commit_id = mach_read_from_8(sys_header + TRX_SYS_DRIZZLE_LOG_INFO 
+					     + TRX_SYS_DRIZZLE_MAX_COMMIT_ID);
 
-		mtr_commit(&mtr);
-
-		return;
-	}
-
-	trx_sys_mysql_bin_log_pos_high = mach_read_from_4(
-		sys_header + TRX_SYS_MYSQL_LOG_INFO
-		+ TRX_SYS_MYSQL_LOG_OFFSET_HIGH);
-	trx_sys_mysql_bin_log_pos_low = mach_read_from_4(
-		sys_header + TRX_SYS_MYSQL_LOG_INFO
-		+ TRX_SYS_MYSQL_LOG_OFFSET_LOW);
-
-	trx_sys_mysql_bin_log_pos
-		= (((ib_int64_t)trx_sys_mysql_bin_log_pos_high) << 32)
-		+ (ib_int64_t)trx_sys_mysql_bin_log_pos_low;
-
-	ut_memcpy(trx_sys_mysql_bin_log_name,
-		  sys_header + TRX_SYS_MYSQL_LOG_INFO
-		  + TRX_SYS_MYSQL_LOG_NAME, TRX_SYS_MYSQL_LOG_NAME_LEN);
-
-	fprintf(stderr,
-		"InnoDB: Last MySQL binlog file position %lu %lu,"
-		" file name %s\n",
-		trx_sys_mysql_bin_log_pos_high, trx_sys_mysql_bin_log_pos_low,
-		trx_sys_mysql_bin_log_name);
-
-	mtr_commit(&mtr);
-}
-
-/*****************************************************************//**
-Prints to stderr the MySQL master log offset info in the trx system header if
-the magic number shows it valid. */
-UNIV_INTERN
-void
-trx_sys_print_mysql_master_log_pos(void)
-/*====================================*/
-{
-	trx_sysf_t*	sys_header;
-	mtr_t		mtr;
-
-	mtr_start(&mtr);
-
-	sys_header = trx_sysf_get(&mtr);
-
-	if (mach_read_from_4(sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-			     + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD)
-	    != TRX_SYS_MYSQL_LOG_MAGIC_N) {
-
-		mtr_commit(&mtr);
-
-		return;
-	}
-
-	fprintf(stderr,
-		"InnoDB: In a MySQL replication slave the last"
-		" master binlog file\n"
-		"InnoDB: position %lu %lu, file name %s\n",
-		(ulong) mach_read_from_4(sys_header
-					 + TRX_SYS_MYSQL_MASTER_LOG_INFO
-					 + TRX_SYS_MYSQL_LOG_OFFSET_HIGH),
-		(ulong) mach_read_from_4(sys_header
-					 + TRX_SYS_MYSQL_MASTER_LOG_INFO
-					 + TRX_SYS_MYSQL_LOG_OFFSET_LOW),
-		sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-		+ TRX_SYS_MYSQL_LOG_NAME);
-	/* Copy the master log position info to global variables we can
-	use in ha_innobase.cc to initialize glob_mi to right values */
-
-	ut_memcpy(trx_sys_mysql_master_log_name,
-		  sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-		  + TRX_SYS_MYSQL_LOG_NAME,
-		  TRX_SYS_MYSQL_LOG_NAME_LEN);
-
-	trx_sys_mysql_master_log_pos
-		= (((ib_int64_t) mach_read_from_4(
-			    sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-			    + TRX_SYS_MYSQL_LOG_OFFSET_HIGH)) << 32)
-		+ ((ib_int64_t) mach_read_from_4(
-			   sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-			   + TRX_SYS_MYSQL_LOG_OFFSET_LOW));
 	mtr_commit(&mtr);
 }
 
@@ -1158,19 +1029,16 @@ trx_sys_file_format_max_check(
 		format_id = DICT_TF_FORMAT_MIN;
 	}
 
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		"  InnoDB: highest supported file format is %s.\n",
-		trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
+        drizzled::errmsg_printf(drizzled::error::INFO, "InnoDB: highest supported file format is %s",
+                                trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
 
 	if (format_id > DICT_TF_FORMAT_MAX) {
 
 		ut_a(format_id < FILE_FORMAT_NAME_N);
 
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: %s: the system tablespace is in a file "
-			"format that this version doesn't support - %s\n",
+                drizzled::errmsg_printf(drizzled::error::ERROR,
+			"InnoDB: %s: the system tablespace is in a file "
+			"format that this version doesn't support - %s",
 			((max_format_id <= DICT_TF_FORMAT_MAX)
 				? "Error" : "Warning"),
 			trx_sys_file_format_id_to_name(format_id));
@@ -1341,39 +1209,6 @@ trx_sys_create_rsegs(
 }
 
 #else /* !UNIV_HOTBACKUP */
-/*****************************************************************//**
-Prints to stderr the MySQL binlog info in the system header if the
-magic number shows it valid. */
-UNIV_INTERN
-void
-trx_sys_print_mysql_binlog_offset_from_page(
-/*========================================*/
-	const byte*	page)	/*!< in: buffer containing the trx
-				system header page, i.e., page number
-				TRX_SYS_PAGE_NO in the tablespace */
-{
-	const trx_sysf_t*	sys_header;
-
-	sys_header = page + TRX_SYS;
-
-	if (mach_read_from_4(sys_header + TRX_SYS_MYSQL_LOG_INFO
-			     + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD)
-	    == TRX_SYS_MYSQL_LOG_MAGIC_N) {
-
-		fprintf(stderr,
-			"ibbackup: Last MySQL binlog file position %lu %lu,"
-			" file name %s\n",
-			(ulong) mach_read_from_4(
-				sys_header + TRX_SYS_MYSQL_LOG_INFO
-				+ TRX_SYS_MYSQL_LOG_OFFSET_HIGH),
-			(ulong) mach_read_from_4(
-				sys_header + TRX_SYS_MYSQL_LOG_INFO
-				+ TRX_SYS_MYSQL_LOG_OFFSET_LOW),
-			sys_header + TRX_SYS_MYSQL_LOG_INFO
-			+ TRX_SYS_MYSQL_LOG_NAME);
-	}
-}
-
 
 /* THESE ARE COPIED FROM NON-HOTBACKUP PART OF THE INNODB SOURCE TREE
    (This code duplicaton should be fixed at some point!)

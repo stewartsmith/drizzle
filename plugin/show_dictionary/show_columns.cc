@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
 #include <string>
 
 using namespace std;
@@ -60,16 +60,24 @@ ShowColumns::Generator::Generator(Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
   {
     table_name.append(select->getShowTable().c_str());
     identifier::Table identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
 
-    is_tables_primed= plugin::StorageEngine::getTableDefinition(getSession(),
-                                                                identifier,
-                                                                table_proto);
+    if (not plugin::Authorization::isAuthorized(*getSession().user(),
+                                            identifier, false))
+    {
+      drizzled::error::access(*getSession().user(), identifier);
+      return;
+    }
+
+    table_proto= plugin::StorageEngine::getTableMessage(getSession(), identifier);
+
+    if (table_proto)
+      is_tables_primed= true;
   }
 }
 

@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 
@@ -41,11 +41,11 @@ Item_row::Item_row(List<Item> &arg):
 {
 
   //TODO: think placing 2-3 component items in item (as it done for function)
-  if ((arg_count= arg.elements))
+  if ((arg_count= arg.size()))
     items= (Item**) memory::sql_alloc(sizeof(Item*)*arg_count);
   else
     items= 0;
-  List_iterator<Item> li(arg);
+  List<Item>::iterator li(arg.begin());
   uint32_t i= 0;
   Item *item;
   while ((item= li++))
@@ -149,14 +149,14 @@ bool Item_row::check_cols(uint32_t c)
   return 0;
 }
 
-void Item_row::print(String *str, enum_query_type query_type)
+void Item_row::print(String *str)
 {
   str->append('(');
   for (uint32_t i= 0; i < arg_count; i++)
   {
     if (i)
       str->append(',');
-    items[i]->print(str, query_type);
+    items[i]->print(str);
   }
   str->append(')');
 }
@@ -180,15 +180,7 @@ Item *Item_row::transform(Item_transformer transformer, unsigned char *arg)
     Item *new_item= items[i]->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (items[i] != new_item)
-      current_session->change_item_tree(&items[i], new_item);
+      items[i]= new_item;
   }
   return (this->*transformer)(arg);
 }

@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <drizzled/show.h>
+#include <config.h>
+
+#include <drizzled/kill.h>
 #include <drizzled/session.h>
-#include <drizzled/session/cache.h>
 #include <drizzled/statement/kill.h>
 
 namespace drizzled
@@ -38,31 +38,18 @@ Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
       getSession()->getLex()->type= ONLY_KILL_QUERY;
     }
 
-    getSession()->getLex()->value_list.empty();
+    getSession()->getLex()->value_list.clear();
     getSession()->getLex()->value_list.push_front(item);
     getSession()->getLex()->sql_command= SQLCOM_KILL;
   }
 
 } // namespace statement
 
-bool statement::Kill::kill(session_id_t id, bool only_kill_query)
-{
-  drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id);
-
-  if (session_param and session_param->isViewable(*getSession()->user()))
-  {
-    session_param->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-    return true;
-  }
-
-  return false;
-}
-
 bool statement::Kill::execute()
 {
-  Item *it= (Item *) getSession()->lex->value_list.head();
+  Item *it= &getSession()->getLex()->value_list.front();
 
-  if ((not it->fixed && it->fix_fields(getSession()->lex->session, &it)) || it->check_cols(1))
+  if ((not it->fixed && it->fix_fields(getSession()->getLex()->session, &it)) || it->check_cols(1))
   {
     my_message(ER_SET_CONSTANTS_ONLY, 
                ER(ER_SET_CONSTANTS_ONLY),
@@ -70,7 +57,7 @@ bool statement::Kill::execute()
     return true;
   }
 
-  if (kill(static_cast<session_id_t>(it->val_int()), getSession()->lex->type & ONLY_KILL_QUERY))
+  if (drizzled::kill(*getSession()->user(), static_cast<session_id_t>(it->val_int()), getSession()->getLex()->type & ONLY_KILL_QUERY))
   {
     getSession()->my_ok();
   }

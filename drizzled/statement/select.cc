@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/select.h>
 
@@ -36,7 +36,7 @@ Select::Select(Session *in_session) :
 
 bool Select::execute()
 {
-  TableList *all_tables= getSession()->lex->query_tables;
+  TableList *all_tables= getSession()->getLex()->query_tables;
   getSession()->status_var.last_query_cost= 0.0;
   bool res= execute_sqlcom_select(getSession(), all_tables);
 

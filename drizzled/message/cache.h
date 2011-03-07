@@ -24,24 +24,18 @@
 #include <boost/unordered_map.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "drizzled/message.h"
-#include "drizzled/identifier/table.h"
+#include <drizzled/message.h>
+#include <drizzled/identifier/table.h>
 
 namespace drizzled {
 namespace message {
 
-typedef boost::unordered_map< drizzled::identifier::Table::Key, drizzled::message::table::shared_ptr> Map;
-
 class Cache
 {
-  boost::mutex _access;
-  Map cache;
-
 public:
-  static inline Cache &singleton()
+  static Cache &singleton()
   {
     static Cache open_cache;
-
     return open_cache;
   }
 
@@ -55,10 +49,15 @@ public:
     cache.rehash(arg);
   }
 
-  drizzled::message::table::shared_ptr find(const identifier::Table &identifier);
+  table::shared_ptr find(const identifier::Table &identifier);
   void erase(const identifier::Table &identifier);
-  bool insert(const identifier::Table &identifier, drizzled::message::table::shared_ptr share);
-  bool insert(const identifier::Table &identifier, message::Table &share);
+  bool insert(const identifier::Table &identifier, table::shared_ptr share);
+  bool insert(const identifier::Table &identifier, Table &share);
+private:
+  typedef boost::unordered_map<identifier::Table::Key, table::shared_ptr> Map;
+
+  boost::mutex _access;
+  Map cache;
 };
 
 } /* namespace message */

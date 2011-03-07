@@ -18,11 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <drizzled/table/instance/shared.h>
 #include <drizzled/definition/cache.h>
+#include <drizzled/error.h>
+#include <drizzled/message/schema.h>
 #include <drizzled/plugin/event_observer.h>
+#include <drizzled/table/instance/shared.h>
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled
 {
@@ -36,14 +39,37 @@ namespace instance
 Shared::Shared(const identifier::Table::Type type_arg,
                const identifier::Table &identifier,
                char *path_arg, uint32_t path_length_arg) :
-  TableShare(type_arg, identifier, path_arg, path_length_arg)
+  TableShare(type_arg, identifier, path_arg, path_length_arg),
+  event_observers(NULL)
+{
+}
+
+Shared::Shared(const identifier::Table &identifier,
+               message::schema::shared_ptr schema_message) :
+  TableShare(message::Table::STANDARD, identifier, NULL, 0),
+  _schema(schema_message),
+  event_observers(NULL)
 {
 }
 
 Shared::Shared(const identifier::Table &identifier) :
-  TableShare(identifier, identifier.getKey())
+  TableShare(identifier, identifier.getKey()),
+  event_observers(NULL)
 {
 }
+
+bool Shared::is_replicated() const
+{
+  if (_schema)
+  {
+    if (not message::is_replicated(*_schema))
+      return false;
+  }
+
+  assert(getTableMessage());
+  return message::is_replicated(*getTableMessage());
+}
+
 
 Shared::shared_ptr Shared::foundTableShare(Shared::shared_ptr share)
 {
@@ -100,9 +126,17 @@ Shared::shared_ptr Shared::make_shared(Session *session,
   /* Read table definition from cache */
   if ((share= definition::Cache::singleton().find(identifier.getKey())))
     return foundTableShare(share);
-
-  share.reset(new Shared(message::Table::STANDARD, identifier));
   
+  drizzled::message::schema::shared_ptr schema_message_ptr= plugin::StorageEngine::getSchemaDefinition(identifier);
+
+  if (not schema_message_ptr)
+  {
+    drizzled::my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier);
+    return Shared::shared_ptr();
+  }
+
+  share.reset(new Shared(identifier, schema_message_ptr));
+
   if (share->open_table_def(*session, identifier))
   {
     in_error= share->error;
@@ -116,7 +150,10 @@ Shared::shared_ptr Shared::make_shared(Session *session,
   bool ret= definition::Cache::singleton().insert(identifier.getKey(), share);
 
   if (not ret)
+  {
+    drizzled::my_error(ER_UNKNOWN_ERROR);
     return Shared::shared_ptr();
+  }
 
   return share;
 }
@@ -124,6 +161,7 @@ Shared::shared_ptr Shared::make_shared(Session *session,
 Shared::~Shared()
 {
   assert(getTableCount() == 0);
+  plugin::EventObserver::deregisterTableEvents(*this);
 }
 
 

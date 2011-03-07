@@ -100,7 +100,7 @@
            subject and may omit some details.
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <math.h>
 #include <float.h>
@@ -111,31 +111,35 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include "drizzled/sql_base.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/optimizer/cost_vector.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/field/num.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/optimizer/sum.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/quick_range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/optimizer/quick_group_min_max_select.h"
-#include "drizzled/optimizer/quick_index_merge_select.h"
-#include "drizzled/optimizer/quick_ror_intersect_select.h"
-#include "drizzled/optimizer/quick_ror_union_select.h"
-#include "drizzled/optimizer/table_read_plan.h"
-#include "drizzled/optimizer/sel_arg.h"
-#include "drizzled/optimizer/sel_imerge.h"
-#include "drizzled/optimizer/sel_tree.h"
-#include "drizzled/optimizer/range_param.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
-
-#include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/error.h>
+#include <drizzled/field/num.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/optimizer/cost_vector.h>
+#include <drizzled/optimizer/quick_group_min_max_select.h>
+#include <drizzled/optimizer/quick_index_merge_select.h>
+#include <drizzled/optimizer/quick_range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/optimizer/quick_ror_intersect_select.h>
+#include <drizzled/optimizer/quick_ror_union_select.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/range_param.h>
+#include <drizzled/optimizer/sel_arg.h>
+#include <drizzled/optimizer/sel_imerge.h>
+#include <drizzled/optimizer/sel_tree.h>
+#include <drizzled/optimizer/sum.h>
+#include <drizzled/optimizer/table_read_plan.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/records.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/table_reference.h>
+#include <drizzled/session.h>
+#include <drizzled/key.h>
+#include <drizzled/unique.h>
+#include <drizzled/temporal.h> /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
 using namespace std;
 namespace drizzled
@@ -213,9 +217,9 @@ static void get_sweep_read_cost(Table *table,
   else
   {
     double n_blocks=
-      ceil(uint64_t2double(table->cursor->stats.data_file_length) / IO_SIZE);
+      ceil(static_cast<double>(table->cursor->stats.data_file_length) / IO_SIZE);
     double busy_blocks=
-      n_blocks * (1.0 - pow(1.0 - 1.0/n_blocks, rows2double(nrows)));
+      n_blocks * (1.0 - pow(1.0 - 1.0/n_blocks, static_cast<double>(nrows)));
     if (busy_blocks < 1.0)
       busy_blocks= 1.0;
 
@@ -737,8 +741,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     {
       int key_for_use= head->find_shortest_key(&head->covering_keys);
       double key_read_time=
-        param.table->cursor->index_only_read_time(key_for_use,
-                                                rows2double(records)) +
+        param.table->cursor->index_only_read_time(key_for_use, records) +
         (double) records / TIME_FOR_COMPARE;
       if (key_read_time < read_time)
         read_time= key_read_time;
@@ -808,7 +811,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
           objects are not allowed so don't use ROR-intersection for
           table deletes.
         */
-        if ((session->lex->sql_command != SQLCOM_DELETE))
+        if ((session->getLex()->sql_command != SQLCOM_DELETE))
         {
           /*
             Get best non-covering ROR-intersection plan and prepare data for
@@ -836,7 +839,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         optimizer::SEL_IMERGE *imerge= NULL;
         optimizer::TableReadPlan *best_conj_trp= NULL;
         optimizer::TableReadPlan *new_conj_trp= NULL;
-        List_iterator_fast<optimizer::SEL_IMERGE> it(tree->merges);
+        List<optimizer::SEL_IMERGE>::iterator it(tree->merges.begin());
         while ((imerge= it++))
         {
           new_conj_trp= get_best_disjunct_quick(session, &param, imerge, best_read_time);
@@ -1041,7 +1044,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   /* Calculate cost(rowid_to_row_scan) */
   {
     optimizer::CostVector sweep_cost;
-    Join *join= param->session->lex->select_lex.join;
+    Join *join= param->session->getLex()->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, non_cpk_scan_records, is_interrupted,
                         &sweep_cost);
@@ -1084,7 +1087,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   }
 
 build_ror_index_merge:
-  if (!all_scans_ror_able || param->session->lex->sql_command == SQLCOM_DELETE)
+  if (!all_scans_ror_able || param->session->getLex()->sql_command == SQLCOM_DELETE)
     return(imerge_trp);
 
   /* Ok, it is possible to build a ROR-union, try it. */
@@ -1117,7 +1120,7 @@ skip_to_ror_scan:
       cost= param->table->cursor->
               read_time(param->real_keynr[(*cur_child)->key_idx], 1,
                         (*cur_child)->records) +
-              rows2double((*cur_child)->records) / TIME_FOR_COMPARE;
+              static_cast<double>((*cur_child)->records) / TIME_FOR_COMPARE;
     }
     else
       cost= read_time;
@@ -1159,12 +1162,12 @@ skip_to_ror_scan:
   double roru_total_cost;
   {
     optimizer::CostVector sweep_cost;
-    Join *join= param->session->lex->select_lex.join;
+    Join *join= param->session->getLex()->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, roru_total_records, is_interrupted,
                         &sweep_cost);
     roru_total_cost= roru_index_costs +
-                     rows2double(roru_total_records)*log((double)n_child_scans) /
+                     static_cast<double>(roru_total_records)*log((double)n_child_scans) /
                      (TIME_FOR_COMPARE_ROWID * M_LN2) +
                      sweep_cost.total_cost();
   }
@@ -1230,7 +1233,7 @@ optimizer::RorScanInfo *make_ror_scan(const optimizer::Parameter *param, int idx
     if (param->needed_fields.test(key_part->fieldnr-1))
       tmp_bitset.set(key_part->fieldnr-1);
   }
-  double rows= rows2double(param->table->quick_rows[ror_scan->keynr]);
+  double rows= param->table->quick_rows[ror_scan->keynr];
   ror_scan->index_read_cost=
     param->table->cursor->index_only_read_time(ror_scan->keynr, rows);
   ror_scan->covered_fields= tmp_bitset.to_ulong();
@@ -1253,8 +1256,8 @@ optimizer::RorScanInfo *make_ror_scan(const optimizer::Parameter *param, int idx
 
 static int cmp_ror_scan_info(optimizer::RorScanInfo** a, optimizer::RorScanInfo** b)
 {
-  double val1= rows2double((*a)->records) * (*a)->key_rec_length;
-  double val2= rows2double((*b)->records) * (*b)->key_rec_length;
+  double val1= static_cast<double>((*a)->records) * (*a)->key_rec_length;
+  double val2= static_cast<double>((*b)->records) * (*b)->key_rec_length;
   return (val1 < val2)? -1: (val1 == val2)? 0 : 1;
 }
 
@@ -1490,8 +1493,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
       if (cur_covered)
       {
         /* uncovered -> covered */
-        double tmp= rows2double(records)/rows2double(prev_records);
-        selectivity_mult *= tmp;
+        selectivity_mult *= static_cast<double>(records) / prev_records;
         prev_records= HA_POS_ERROR;
       }
       else
@@ -1504,11 +1506,9 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
   }
   if (!prev_covered)
   {
-    double tmp= rows2double(info->param->table->quick_rows[scan->keynr]) /
-                rows2double(prev_records);
-    selectivity_mult *= tmp;
+    selectivity_mult *= static_cast<double>(info->param->table->quick_rows[scan->keynr]) / prev_records;
   }
-  return(selectivity_mult);
+  return selectivity_mult;
 }
 
 
@@ -1569,7 +1569,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
       each record of every scan. Assuming 1/TIME_FOR_COMPARE_ROWID
       per check this gives us:
     */
-    info->index_scan_costs += rows2double(info->index_records) /
+    info->index_scan_costs += static_cast<double>(info->index_records) /
                               TIME_FOR_COMPARE_ROWID;
   }
   else
@@ -1588,7 +1588,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   if (! info->is_covering)
   {
     optimizer::CostVector sweep_cost;
-    Join *join= info->param->session->lex->select_lex.join;
+    Join *join= info->param->session->getLex()->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(info->param->table, double2rows(info->out_rows),
                         is_interrupted, &sweep_cost);
@@ -1702,7 +1702,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     cost total_cost.
   */
   /* Add priority queue use cost. */
-  total_cost += rows2double(records)*
+  total_cost += static_cast<double>(records) *
                 log((double)(ror_scan_mark - tree->ror_scans)) /
                 (TIME_FOR_COMPARE_ROWID * M_LN2);
 
@@ -2533,7 +2533,7 @@ static optimizer::SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *par
   Item_equal *item_equal= field_item->item_equal;
   if (item_equal)
   {
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     Item_field *item;
     while ((item= it++))
     {
@@ -2564,7 +2564,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
 
   if (cond->type() == Item::COND_ITEM)
   {
-    List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
     {
@@ -2688,7 +2688,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
     Item_equal *item_equal= (Item_equal *) cond;
     if (!(value= item_equal->get_const()))
       return 0;
-    Item_equal_iterator it(*item_equal);
+    Item_equal_iterator it(item_equal->begin());
     ref_tables= value->used_tables();
     while ((field_item= it++))
     {
@@ -2976,7 +2976,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
    * it is, then we must convert to the highest Timestamp value (or lowest,
    * depending on whether the datetime is before or after the epoch.
    */
-  if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+  if (field->is_timestamp())
   {
     /*
      * The left-side of the range comparison is a timestamp field.  Therefore,
@@ -3114,6 +3114,12 @@ get_mm_leaf(optimizer::RangeParameter *param,
                !((Item_int*)value)->unsigned_flag &&
                (value->val_int() < 0))
         type = Item_func::GE_FUNC;
+    }
+    else if (err == 1)
+    {
+      tree= new (alloc) optimizer::SEL_ARG(field, 0, 0);
+      tree->type= optimizer::SEL_ARG::IMPOSSIBLE;
+      goto end;
     }
   }
   else if (err < 0)
@@ -3257,8 +3263,11 @@ sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
 
 #define CLONE_KEY1_MAYBE 1
 #define CLONE_KEY2_MAYBE 2
-#define swap_clone_flag(A) ((A & 1) << 1) | ((A & 2) >> 1)
 
+static uint32_t swap_clone_flag(uint32_t a)
+{
+  return ((a & 1) << 1) | ((a & 2) >> 1);
+}
 
 static optimizer::SEL_TREE *
 tree_and(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer::SEL_TREE *tree2)
@@ -3310,7 +3319,7 @@ tree_and(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer
   /* dispose index_merge if there is a "range" option */
   if (result_keys.any())
   {
-    tree1->merges.empty();
+    tree1->merges.clear();
     return(tree1);
   }
 
@@ -3855,7 +3864,7 @@ ha_rows check_quick_select(Session *session,
       !(pk_is_clustered && keynr == param->table->getShare()->getPrimaryKey()))
      *mrr_flags |= HA_MRR_INDEX_ONLY;
 
-  if (session->lex->sql_command != SQLCOM_SELECT)
+  if (session->getLex()->sql_command != SQLCOM_SELECT)
     *mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   *bufsize= param->session->variables.read_rnd_buff_size;
@@ -4160,10 +4169,7 @@ optimizer::get_quick_keys(optimizer::Parameter *param,
   set_if_bigger(quick->max_used_key_length, (uint32_t)range->min_length);
   set_if_bigger(quick->max_used_key_length, (uint32_t)range->max_length);
   set_if_bigger(quick->used_key_parts, (uint32_t) key_tree->part+1);
-  if (insert_dynamic(&quick->ranges, (unsigned char*) &range))
-  {
-    return 1;
-  }
+  quick->ranges.push_back(&range);
 
  end:
   if (key_tree->right != &optimizer::null_element)
@@ -4287,8 +4293,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     key_part->null_bit=     key_info->key_part[part].null_bit;
     key_part->flag=         (uint8_t) key_info->key_part[part].key_part_flag;
   }
-  if (insert_dynamic(&quick->ranges,(unsigned char*)&range))
-    goto err;
+  quick->ranges.push_back(&range);
 
   /*
      Add a NULL range if REF_OR_NULL optimization is used.
@@ -4308,14 +4313,13 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
                                  make_prev_keypart_map(ref->key_parts), EQ_RANGE)))
       goto err;
     *ref->null_ref_key= 0;		// Clear null byte
-    if (insert_dynamic(&quick->ranges,(unsigned char*)&null_range))
-      goto err;
+    quick->ranges.push_back(&null_range);
   }
 
   /* Call multi_range_read_info() to get the MRR flags and buffer size */
   quick->mrr_flags= HA_MRR_NO_ASSOCIATION |
                     (table->key_read ? HA_MRR_INDEX_ONLY : 0);
-  if (session->lex->sql_command != SQLCOM_SELECT)
+  if (session->getLex()->sql_command != SQLCOM_SELECT)
     quick->mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   quick->mrr_buf_size= session->variables.read_rnd_buff_size;
@@ -4563,7 +4567,7 @@ static optimizer::GroupMinMaxReadPlan *
 get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
 {
   Session *session= param->session;
-  Join *join= session->lex->current_select->join;
+  Join *join= session->getLex()->current_select->join;
   Table *table= param->table;
   bool have_min= false;              /* true if there is a MIN function. */
   bool have_max= false;              /* true if there is a MAX function. */
@@ -4595,7 +4599,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     return NULL;
 
   /* Analyze the query in more detail. */
-  List_iterator<Item> select_items_it(join->fields_list);
+  List<Item>::iterator select_items_it(join->fields_list.begin());
 
   /* Check (SA1,SA4) and store the only MIN/MAX argument - the C attribute.*/
   if (join->make_sum_func_list(join->all_fields, join->fields_list, 1))
@@ -4751,7 +4755,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     */
     else if (join->select_distinct)
     {
-      select_items_it.rewind();
+      select_items_it= join->fields_list.begin();
       used_key_parts_map.reset();
       uint32_t max_key_part= 0;
       while ((item= select_items_it++))
@@ -4765,7 +4769,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
         */
         if (used_key_parts_map.test(key_part_nr))
           continue;
-        if (key_part_nr < 1 || key_part_nr > join->fields_list.elements)
+        if (key_part_nr < 1 || key_part_nr > join->fields_list.size())
           goto next_index;
         cur_part= cur_index_info->key_part + key_part_nr - 1;
         cur_group_prefix_len+= cur_part->store_length;
@@ -5032,7 +5036,7 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
   Item::Type cond_type= cond->type();
   if (cond_type == Item::COND_ITEM) /* 'AND' or 'OR' */
   {
-    List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
+    List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
     Item *and_or_arg= NULL;
     while ((and_or_arg= li++))
     {
@@ -5467,7 +5471,7 @@ optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, me
   optimizer::QuickGroupMinMaxSelect *quick= NULL;
 
   quick= new optimizer::QuickGroupMinMaxSelect(param->table,
-                                               param->session->lex->current_select->join,
+                                               param->session->getLex()->current_select->join,
                                                have_min,
                                                have_max,
                                                min_max_arg_part,
