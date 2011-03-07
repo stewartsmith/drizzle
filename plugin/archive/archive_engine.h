@@ -20,7 +20,6 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/thr_lock.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/cursor.h>
 #include <drizzled/plugin/storage_engine.h>
 

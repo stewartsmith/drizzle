@@ -31,12 +31,10 @@
 
 #include <drizzled/lex_string.h>
 #include <drizzled/sys_var.h>
-#include <drizzled/xid.h>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Session;
 class Item;

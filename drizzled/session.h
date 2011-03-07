@@ -42,7 +42,6 @@
 #include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
 #include <drizzled/lex_column.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/named_savepoint.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/plugin.h>

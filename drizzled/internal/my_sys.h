@@ -48,8 +48,6 @@ extern int errno;			/* declare errno */
 #endif
 #endif					/* #ifndef errno */
 
-#include <drizzled/dynamic_array.h>
-
 #ifdef HAVE_SYS_MMAN_H 
 #include <sys/mman.h>
 #endif
