@@ -22,14 +22,13 @@
 #define DRIZZLED_SESSION_TRANSACTIONS_H
 
 #include <deque>
+#include <drizzled/xid.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Session;
 
-namespace session
-{
+namespace session {
 
 /**
  * Structure used to manage "statement transactions" and
@@ -39,15 +38,9 @@ namespace session
  * Storage engines will be registered here when they participate in
  * a transaction. No engine is registered more than once.
  */
-class Transactions {
+class Transactions 
+{
 public:
-  Transactions() :
-    savepoints(),
-    all(),
-    stmt(),
-    xid_state()
-  { }
-
   std::deque<NamedSavepoint> savepoints;
 
   /**

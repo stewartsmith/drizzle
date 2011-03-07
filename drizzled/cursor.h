@@ -31,7 +31,6 @@
 #include <drizzled/message/table.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/thr_lock.h>
-#include <drizzled/xid.h>
 
 #include <bitset>
 #include <algorithm>
