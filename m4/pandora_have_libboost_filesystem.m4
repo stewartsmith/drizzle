@@ -42,6 +42,6 @@ AC_DEFUN([PANDORA_REQUIRE_BOOST_FILESYSTEM],[
   PANDORA_REQUIRE_BOOST($1)
   _PANDORA_SEARCH_BOOST_FILESYSTEM($1)
   AS_IF([test "x${ac_cv_libboost_filesystem}" = "xno" -a "x${ac_cv_libboost_filesystem_mt}" = "xno"],
-      AC_MSG_ERROR([Boost.Filesystem is required for ${PACKAGE}]))
+      PANDORA_MSG_ERROR([Boost.Filesystem is required for ${PACKAGE}]))
 ])
 
