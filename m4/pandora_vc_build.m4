@@ -128,16 +128,22 @@ AC_DEFUN([PANDORA_VC_VERSION],[
     
   AS_IF([test "x${PANDORA_VC_TAG}" != "x"],[
     PANDORA_RELEASE_VERSION="${PANDORA_VC_TAG}"
+    changequote(<<, >>)dnl
+    PANDORA_RELEASE_ID=`echo ${PANDORA_RELEASE_VERSION} | sed 's/[^0-9]//g'`
+    changequote([, ])dnl
   ],[
     AS_IF([test "x${PANDORA_VC_LATEST_TAG}" != "x"],[
       PANDORA_RELEASE_VERSION="${PANDORA_VC_LATEST_TAG}.${PANDORA_VC_REVNO}"
+      changequote(<<, >>)dnl
+      PANDORA_RELEASE_ID=`echo ${PANDORA_VC_LATEST_TAG} | sed 's/[^0-9]//g'`
+      changequote([, ])dnl
     ],[
       PANDORA_RELEASE_VERSION="${PANDORA_RELEASE_DATE}.${PANDORA_VC_REVNO}"
+      changequote(<<, >>)dnl
+      PANDORA_RELEASE_ID=`echo ${PANDORA_RELEASE_DATE} | sed 's/[^0-9]//g'`
+      changequote([, ])dnl
     ])
   ])
-  changequote(<<, >>)dnl
-  PANDORA_RELEASE_ID=`echo ${PANDORA_RELEASE_VERSION} | sed 's/[^0-9]//g'`
-  changequote([, ])dnl
 
 
   VERSION="${PANDORA_RELEASE_VERSION}"
