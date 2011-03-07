@@ -43,5 +43,5 @@ AC_DEFUN([PANDORA_HAVE_LIBGTEST],[
 AC_DEFUN([PANDORA_REQUIRE_LIBGTEST],[
   AC_REQUIRE([_PANDORA_SEARCH_LIBGTEST])
   AS_IF([test "x${ac_cv_libgtest}" = "xno"],
-    AC_MSG_ERROR([libgtest is required for ${PACKAGE}]))
+    PANDORA_MSG_ERROR([libgtest is required for ${PACKAGE}]))
 ])

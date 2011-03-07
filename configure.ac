@@ -53,12 +53,64 @@ AS_IF([test "x${localstatedir}" = 'x${prefix}/var'],[
   localstatedir='${prefix}/var/drizzle'
 ])
 
-AC_PATH_PROG(GPERF, gperf)
-AS_IF([test "x$GPERF" = "x"],
-      AC_MSG_ERROR("Drizzle requires gperf to build."))
+AC_ARG_WITH([server],
+    [AS_HELP_STRING([--without-server],
+      [Don not build the drizzled server.])],
+    [ pandora_cv_skip_requires="$withval" ]
+    [ pandora_cv_skip_requires=no ])
 
-# libexecinfo provides backtrace_symbols on FreeBSD
-AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
+AS_IF([test "x${pandora_cv_skip_requires}" != "xno"],[
+
+  AC_PATH_PROG(GPERF, gperf)
+  AS_IF([test "x$GPERF" = "x"],
+    AC_MSG_ERROR("Drizzle requires gperf to build."))
+
+  # libexecinfo provides backtrace_symbols on FreeBSD
+  AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
+
+  AC_FUNC_STRERROR_R
+
+  DRIZZLE_STACK_DIRECTION
+
+  PANDORA_USE_BETTER_MALLOC
+  AC_CHECK_FUNC(inet_ntoa, [], [AC_CHECK_LIB(nsl, inet_ntoa)])
+
+
+  AC_ARG_WITH([server-suffix],
+      [AS_HELP_STRING([--with-server-suffix],
+        [Append value to the version string.])],
+      [ DRIZZLE_SERVER_SUFFIX="$withval" ]
+      [ DRIZZLE_SERVER_SUFFIX= ])
+
+  AC_DEFINE_UNQUOTED([DRIZZLE_SERVER_SUFFIX],[$DRIZZLE_SERVER_SUFFIX],
+    [Append value to the version string])
+
+  AC_DEFINE([BUILDING_DRIZZLED],[1],
+    [Define indicating we are building and not consuming drizzle.])
+
+
+  AC_ARG_WITH([drizzled-user],
+    [AS_HELP_STRING([--with-drizzled-user=username],
+      [What user the drizzled daemon shall be run as.
+      @<:@default=drizzle@:>@])],
+    [ DRIZZLED_USER="$withval" ],
+    [ DRIZZLED_USER=drizzle ])
+  AC_SUBST(DRIZZLED_USER)
+
+
+  AC_ARG_WITH([comment],
+    [AS_HELP_STRING([--with-comment],
+      [Comment about compilation environment. @<:@default=off@:>@])],
+    [with_comment=$withval],
+    [with_comment=no])
+  AS_IF([test "$with_comment" != "no"],[
+    COMPILATION_COMMENT=$with_comment
+    ],[
+    COMPILATION_COMMENT="Source distribution (${PANDORA_RELEASE_COMMENT})"
+    ])
+  AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
+    [Comment about compilation environment])
+])
 
 PANDORA_REQUIRE_LIBPROTOBUF
 PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
@@ -72,53 +124,11 @@ PANDORA_REQUIRE_LIBPCRE
 PANDORA_REQUIRE_LIBREADLINE
 PANDORA_REQUIRE_LIBDL
 AC_LANG_POP
-AC_FUNC_STRERROR_R
-
-DRIZZLE_STACK_DIRECTION
-
-PANDORA_USE_BETTER_MALLOC
 
 PANDORA_DRIZZLE_BUILD
-AC_DEFINE([BUILDING_DRIZZLED],[1],
-          [Define indicating we are building and not consuming drizzle.])
-
 PANDORA_HAVE_BOOST_TEST
 PANDORA_HAVE_LIBSQLITE3
 
-AC_CHECK_FUNC(inet_ntoa, [], [AC_CHECK_LIB(nsl, inet_ntoa)])
-
-
-AC_ARG_WITH([server-suffix],
-    [AS_HELP_STRING([--with-server-suffix],
-      [Append value to the version string.])],
-    [ DRIZZLE_SERVER_SUFFIX="$withval" ]
-    [ DRIZZLE_SERVER_SUFFIX= ])
-
-AC_DEFINE_UNQUOTED([DRIZZLE_SERVER_SUFFIX],[$DRIZZLE_SERVER_SUFFIX],
-                   [Append value to the version string])
-
-
-AC_ARG_WITH([drizzled-user],
-    [AS_HELP_STRING([--with-drizzled-user=username],
-            [What user the drizzled daemon shall be run as.
-		@<:@default=drizzle@:>@])],
-    [ DRIZZLED_USER="$withval" ],
-    [ DRIZZLED_USER=drizzle ])
-AC_SUBST(DRIZZLED_USER)
-
-
-AC_ARG_WITH([comment],
-    [AS_HELP_STRING([--with-comment],
-            [Comment about compilation environment. @<:@default=off@:>@])],
-    [with_comment=$withval],
-    [with_comment=no])
-AS_IF([test "$with_comment" != "no"],[
-  COMPILATION_COMMENT=$with_comment
-],[
-  COMPILATION_COMMENT="Source distribution (${PANDORA_RELEASE_COMMENT})"
-])
-AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
-                   [Comment about compilation environment])
 
 
 #########################################################################

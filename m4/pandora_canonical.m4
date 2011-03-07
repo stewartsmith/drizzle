@@ -6,6 +6,14 @@ dnl with or without modifications, as long as this notice is preserved.
 dnl Which version of the canonical setup we're using
 AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.175])
 
+AC_DEFUN([PANDORA_MSG_ERROR],[
+  AS_IF([test "x${pandora_cv_skip_requires}" != "xno"],[
+    AC_MSG_ERROR($1)
+  ],[
+    AC_MSG_WARN($1)
+  ])
+])
+
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
     [AS_HELP_STRING([--enable-fat-binaries],
@@ -25,7 +33,7 @@ AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
 
 AC_DEFUN([PANDORA_BLOCK_BAD_OPTIONS],[
   AS_IF([test "x${prefix}" = "x"],[
-    AC_MSG_ERROR([--prefix requires an argument])
+    PANDORA_MSG_ERROR([--prefix requires an argument])
   ])
 ])
 
@@ -151,7 +159,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   PANDORA_CHECK_CXX_STANDARD
   m4_if(PCT_REQUIRE_CXX, [yes], [
     AS_IF([test "$ac_cv_cxx_stdcxx_98" = "no"],[
-      AC_MSG_ERROR([No working C++ Compiler has been found. ${PACKAGE} requires a C++ compiler that can handle C++98])
+      PANDORA_MSG_ERROR([No working C++ Compiler has been found. ${PACKAGE} requires a C++ compiler that can handle C++98])
     ])
   ])
   PANDORA_CXX_CSTDINT
@@ -182,12 +190,12 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   # off_t is not a builtin type
   AC_CHECK_SIZEOF(off_t, 4)
   AS_IF([test "$ac_cv_sizeof_off_t" -eq 0],[
-    AC_MSG_ERROR("${PACKAGE} needs an off_t type.")
+    PANDORA_MSG_ERROR("${PACKAGE} needs an off_t type.")
   ])
 
   AC_CHECK_SIZEOF(size_t)
   AS_IF([test "$ac_cv_sizeof_size_t" -eq 0],[
-    AC_MSG_ERROR("${PACKAGE} needs an size_t type.")
+    PANDORA_MSG_ERROR("${PACKAGE} needs an size_t type.")
   ])
 
   AC_DEFINE_UNQUOTED([SIZEOF_SIZE_T],[$ac_cv_sizeof_size_t],[Size of size_t as computed by sizeof()])
