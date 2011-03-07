@@ -67,6 +67,7 @@
 #include <drizzled/sort_field.h>
 #include <drizzled/select_result.h>
 #include <drizzled/key.h>
+#include <drizzled/my_hash.h>
 
 using namespace std;
 

@@ -63,13 +63,13 @@
 #include <drizzled/select_result.h>
 #include <drizzled/debug.h>
 #include <drizzled/item/subselect.h>
-
+#include <drizzled/my_hash.h>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
+
 extern plugin::StorageEngine *heap_engine;
 
 /** Declarations of static functions used in this source file. */
