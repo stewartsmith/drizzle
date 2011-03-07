@@ -57,6 +57,6 @@ AC_DEFUN([PANDORA_HAVE_LIBCURL],[
 AC_DEFUN([PANDORA_REQUIRE_LIBCURL],[
   PANDORA_HAVE_LIBCURL($1)
   AS_IF([test "x${ac_cv_libcurl}" = "xno"],[
-    AC_MSG_ERROR([libcurl is required for ${PACKAGE}])
+    PANDORA_MSG_ERROR([libcurl is required for ${PACKAGE}])
   ])
 ])

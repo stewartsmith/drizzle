@@ -138,3 +138,22 @@ CLEANFILES+= \
 	libdrizzle/drizzle_server.h.gch \
 	libdrizzle/common.h.gch
 
+libdrizzle: libdrizzle/libdrizzle.la
+install-libdrizzle:
+	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
+	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle/libdrizzle.la "$(DESTDIR)$(libdir)"
+	test -z "$(includedir)" || $(MKDIR_P) "$(DESTDIR)$(includedir)"
+	@list='$(nobase_dist_include_HEADERS)'; test -n "$(includedir)" || list=; \
+	$(am__nobase_list) | while read dir files; do \
+          if test "x$$dir" = "xlibdrizzle" ; then \
+	    xfiles=; for file in $$files; do \
+	      if test -f "$$file"; then xfiles="$$xfiles $$file"; \
+	      else xfiles="$$xfiles $(srcdir)/$$file"; fi; done; \
+	    test -z "$$xfiles" || { \
+	      test "x$$dir" = x. || { \
+	        echo "$(MKDIR_P) '$(DESTDIR)$(includedir)/$$dir'"; \
+	        $(MKDIR_P) "$(DESTDIR)$(includedir)/$$dir"; }; \
+	      echo " $(INSTALL_HEADER) $$xfiles '$(DESTDIR)$(includedir)/$$dir'"; \
+	      $(INSTALL_HEADER) $$xfiles "$(DESTDIR)$(includedir)/$$dir" || exit $$?; }; \
+          fi; \
+	done

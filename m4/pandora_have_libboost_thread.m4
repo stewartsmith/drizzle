@@ -49,6 +49,6 @@ AC_DEFUN([PANDORA_REQUIRE_BOOST_THREAD],[
   PANDORA_REQUIRE_BOOST($1)
   _PANDORA_SEARCH_BOOST_THREAD($1)
   AS_IF([test "x${ac_cv_libboost_thread}" = "xno" -a "x${ac_cv_libboost_thread_mt}" = "xno"],
-      AC_MSG_ERROR([boost::thread is required for ${PACKAGE}]))
+      PANDORA_MSG_ERROR([boost::thread is required for ${PACKAGE}]))
 ])
 
