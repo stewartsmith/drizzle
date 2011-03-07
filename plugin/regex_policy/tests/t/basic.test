@@ -1,0 +1,130 @@
+# Check for error if no parameter provided
+create schema user1;
+create schema user2;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+
+# Set up a table to be able to test not being able to kill other people
+use user2;
+create table t1 (kill_id int);
+insert into t1 values(connection_id());
+
+# Test that we get a normal don't exist error for things that don't exist
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist;
+
+# Connect as user1 - should only see information_schema, user1 and
+# data_dictionary
+# Also tests that we are able to read data_dictionary, without which fail
+# would happen
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (should_succeed,localhost,user1,,user1,,);
+connection should_succeed;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+
+# Test that we get blocked on not being allowed to see user2 at all before
+# we get blocked on the table not existing
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_DBACCESS_DENIED_ERROR
+SELECT * from user2.dont_exist;
+
+# Test that we can't create a schema that isn't named the same as we are
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_DBACCESS_DENIED_ERROR
+create schema authorize_fail;
+
+# Test that we can't drop a schema that isn't named the same as we are
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_DBACCESS_DENIED_ERROR
+drop schema user2;
+
+# Set up a table to test that we can kill other versions of us
+create table t1 (kill_id int);
+insert into t1 values(connection_id());
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (con1,localhost,user1,,user1,);
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (con2,localhost,user2,,user2,);
+connection con1;
+
+# Check that we don't see other people's connections
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+
+# Check that we can kill a process that is owned by our user
+--disable_reconnect
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+kill @id;
+
+connection should_succeed;
+--sleep 2
+
+--disable_query_log
+--disable_result_log
+# One of the following statements should fail
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
+select 1;
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
+select 1;
+--enable_query_log
+--enable_result_log
+--enable_reconnect
+
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+select @id != connection_id();
+
+# Set the table to our current id now
+update t1 set kill_id = connection_id();
+
+# Test that we cannot kill a process owned by someone else
+connection con2;
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+
+--replace_regex /Unknown session id: [0-9]+/Unknown session id: #/
+--error ER_NO_SUCH_THREAD
+kill @id;
+
+# Test that root can see everybody
+connection default;
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+
+# Test that root can kill someone else
+use user1;
+--disable_reconnect
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+kill @id;
+
+connection should_succeed;
+--sleep 2
+
+--disable_query_log
+--disable_result_log
+# One of the following statements should fail
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
+select 1;
+--error EE_OK,EE_BADCLOSE,EE_UNKNOWN_CHARSET,EE_CANT_SYMLINK
+select 1;
+--enable_query_log
+--enable_result_log
+--enable_reconnect
+
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+select @id != connection_id();
+
+
+# Test failing initial connection
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_DBACCESS_DENIED_ERROR
+connect (should_fail,localhost,authz,,authz_no,,);
+
+# Clean up after ourselves
+connection default;
+drop schema user1;
+drop schema user2;
+disconnect con1;
+disconnect con2;
+disconnect should_succeed;

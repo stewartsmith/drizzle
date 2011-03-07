@@ -1,0 +1,72 @@
+create schema user1;
+create schema user2;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SCHEMA_NAME
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+mysql
+test
+user1
+user2
+use user2;
+create table t1 (kill_id int);
+insert into t1 values(connection_id());
+SELECT * from user1.dont_exist;
+ERROR 42S02: Unknown table 'user1.dont_exist'
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SCHEMA_NAME
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+user1
+SELECT * from user2.dont_exist;
+ERROR 42000: Access denied for user 'user1' to schema 'user2'
+create schema authorize_fail;
+ERROR 42000: Access denied for user 'user1' to schema 'authorize_fail'
+drop schema user2;
+ERROR 42000: Access denied for user 'user1' to schema 'user2'
+create table t1 (kill_id int);
+insert into t1 values(connection_id());
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+USERNAME	DB
+user1	user1
+user1	user1
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
+kill @id;
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
+select @id != connection_id();
+@id != connection_id()
+1
+update t1 set kill_id = connection_id();
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+USERNAME	DB
+user2	user2
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
+kill @id;
+ERROR HY000: Unknown session id: #
+SELECT USERNAME, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USERNAME, DB;
+USERNAME	DB
+root	user2
+user1	user1
+user1	user1
+user2	user2
+use user1;
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
+kill @id;
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
+select @id != connection_id();
+@id != connection_id()
+1
+connect(localhost,authz,,authz_no,MASTER_PORT,);
+ERROR 42000: Access denied for user 'authz' to schema 'authz_no'
+drop schema user1;
+drop schema user2;
