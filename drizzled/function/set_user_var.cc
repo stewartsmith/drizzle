@@ -312,12 +312,12 @@ type::Decimal *Item_func_set_user_var::val_decimal_result(type::Decimal *val)
   return entry->val_decimal(&null_value, val);
 }
 
-void Item_func_set_user_var::print(String *str, enum_query_type query_type)
+void Item_func_set_user_var::print(String *str)
 {
   str->append(STRING_WITH_LEN("(@"));
   str->append(name.str, name.length);
   str->append(STRING_WITH_LEN(":="));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(')');
 }
 

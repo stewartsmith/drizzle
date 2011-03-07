@@ -44,7 +44,7 @@ public:
   enum Item_result result_type () const { return STRING_RESULT; }
   enum Item_result cast_to_int_type() const { return INT_RESULT; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_VARCHAR; }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 };

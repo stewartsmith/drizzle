@@ -369,7 +369,7 @@ void Item_ref::cleanup()
 }
 
 
-void Item_ref::print(String *str, enum_query_type query_type)
+void Item_ref::print(String *str)
 {
   if (ref)
   {
@@ -379,10 +379,10 @@ void Item_ref::print(String *str, enum_query_type query_type)
       str->append_identifier(name, (uint32_t) strlen(name));
     }
     else
-      (*ref)->print(str, query_type);
+      (*ref)->print(str);
   }
   else
-    Item_ident::print(str, query_type);
+    Item_ident::print(str);
 }
 
 

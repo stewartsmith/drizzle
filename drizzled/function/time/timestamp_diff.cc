@@ -130,7 +130,7 @@ null_date:
 }
 
 
-void Item_func_timestamp_diff::print(String *str, enum_query_type query_type)
+void Item_func_timestamp_diff::print(String *str)
 {
   str->append(func_name());
   str->append('(');
@@ -170,7 +170,7 @@ void Item_func_timestamp_diff::print(String *str, enum_query_type query_type)
   for (uint32_t i=0 ; i < 2 ; i++)
   {
     str->append(',');
-    args[i]->print(str, query_type);
+    args[i]->print(str);
   }
   str->append(')');
 }

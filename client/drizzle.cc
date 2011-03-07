@@ -1470,7 +1470,9 @@ try
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   _("Automatic limit for rows in a join when using --safe-updates"))
   ;
-
+#ifndef DRIZZLE_ADMIN_TOOL
+  const char* unix_user= getlogin();
+#endif
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -1482,7 +1484,7 @@ try
 #ifdef DRIZZLE_ADMIN_TOOL
   ("user,u", po::value<string>(&current_user)->default_value("root"),
 #else
-  ("user,u", po::value<string>(&current_user)->default_value(""),
+  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
 #endif
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),

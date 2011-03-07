@@ -49,9 +49,9 @@ public:
 
   void fix_length_and_dec() { unsigned_flag= 1; }
 
-  virtual void print(String *str, enum_query_type query_type)
+  virtual void print(String *str)
   {
-    print_op(str, query_type);                  
+    print_op(str);
   }
 };
 

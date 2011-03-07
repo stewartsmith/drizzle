@@ -55,7 +55,6 @@ void TransactionLogConnection::query(const std::string &str_query,
                                      drizzle_result_st *result)
 {
   drizzle_return_t ret;
-  drizzle_result_create(&connection, result);
   if (drizzle_query_str(&connection, result, str_query.c_str(), &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)
   {
@@ -69,6 +68,7 @@ void TransactionLogConnection::query(const std::string &str_query,
     {
       cerr << "Error executing query: " <<
         drizzle_con_error(&connection) << endl;
+      drizzle_result_free(result);
     }
     return;
   }
@@ -77,6 +77,7 @@ void TransactionLogConnection::query(const std::string &str_query,
   {
     cerr << "Could not buffer result: " <<
         drizzle_con_error(&connection) << endl;
+    drizzle_result_free(result);
     return;
   }
   return;

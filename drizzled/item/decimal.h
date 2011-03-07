@@ -53,7 +53,7 @@ public:
   {
     return new Item_decimal(name, &decimal_value, decimals, max_length);
   }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   Item_num *neg()
   {
     class_decimal_neg(&decimal_value);

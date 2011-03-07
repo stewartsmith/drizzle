@@ -149,14 +149,14 @@ bool Item_row::check_cols(uint32_t c)
   return 0;
 }
 
-void Item_row::print(String *str, enum_query_type query_type)
+void Item_row::print(String *str)
 {
   str->append('(');
   for (uint32_t i= 0; i < arg_count; i++)
   {
     if (i)
       str->append(',');
-    items[i]->print(str, query_type);
+    items[i]->print(str);
   }
   str->append(')');
 }

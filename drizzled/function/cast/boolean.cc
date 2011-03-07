@@ -29,10 +29,10 @@ namespace drizzled {
 namespace function {
 namespace cast {
 
-void Boolean::print(String *str, enum_query_type query_type)
+void Boolean::print(String *str)
 {
   str->append(STRING_WITH_LEN("cast("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" as boolean)"));
 }
 

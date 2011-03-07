@@ -612,6 +612,7 @@ static int extractRowsForTrxIds(TransactionLogConnection *connection,
                                         summarize, ignore_events,
                                         print_as_raw))
       {
+        drizzle_result_free(&result);
         return -1;
       }
     }

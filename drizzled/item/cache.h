@@ -77,7 +77,7 @@ public:
   static Item_cache* get_cache(const Item *item);
   table_map used_tables() const { return used_table_map; }
   virtual void keep_array() {}
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   bool eq_def(Field *field);
   bool eq(const Item *item, bool) const
   {

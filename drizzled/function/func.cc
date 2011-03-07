@@ -448,37 +448,37 @@ table_map Item_func::not_null_tables() const
 }
 
 
-void Item_func::print(String *str, enum_query_type query_type)
+void Item_func::print(String *str)
 {
   str->append(func_name());
   str->append('(');
-  print_args(str, 0, query_type);
+  print_args(str, 0);
   str->append(')');
 }
 
 
-void Item_func::print_args(String *str, uint32_t from, enum_query_type query_type)
+void Item_func::print_args(String *str, uint32_t from)
 {
   for (uint32_t i=from ; i < arg_count ; i++)
   {
     if (i != from)
       str->append(',');
-    args[i]->print(str, query_type);
+    args[i]->print(str);
   }
 }
 
 
-void Item_func::print_op(String *str, enum_query_type query_type)
+void Item_func::print_op(String *str)
 {
   str->append('(');
   for (uint32_t i=0 ; i < arg_count-1 ; i++)
   {
-    args[i]->print(str, query_type);
+    args[i]->print(str);
     str->append(' ');
     str->append(func_name());
     str->append(' ');
   }
-  args[arg_count-1]->print(str, query_type);
+  args[arg_count-1]->print(str);
   str->append(')');
 }
 

@@ -90,27 +90,6 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
 }
 
 /*
-  SYNOPSIS
-    write_bin_log()
-    session                           Thread object
-    query                         Query to log
-    query_length                  Length of query
-
-  RETURN VALUES
-    NONE
-
-  DESCRIPTION
-    Write the binlog if open, routine used in multiple places in this
-    cursor
-*/
-
-void write_bin_log(Session *session, const std::string &query)
-{
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.rawStatement(*session, query);
-}
-
-/*
   Execute the drop of a normal or temporary table
 
   SYNOPSIS

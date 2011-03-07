@@ -406,10 +406,10 @@ void Item_subselect::update_used_tables()
 }
 
 
-void Item_subselect::print(String *str, enum_query_type query_type)
+void Item_subselect::print(String *str)
 {
   str->append('(');
-  engine->print(str, query_type);
+  engine->print(str);
   str->append(')');
 }
 
@@ -487,10 +487,10 @@ void Item_maxmin_subselect::cleanup()
 }
 
 
-void Item_maxmin_subselect::print(String *str, enum_query_type query_type)
+void Item_maxmin_subselect::print(String *str)
 {
   str->append(max?"<max>":"<min>", 5);
-  Item_singlerow_subselect::print(str, query_type);
+  Item_singlerow_subselect::print(str);
 }
 
 
@@ -718,10 +718,10 @@ Item_exists_subselect::Item_exists_subselect(Select_Lex *select_lex):
 }
 
 
-void Item_exists_subselect::print(String *str, enum_query_type query_type)
+void Item_exists_subselect::print(String *str)
 {
   str->append(STRING_WITH_LEN("exists"));
-  Item_subselect::print(str, query_type);
+  Item_subselect::print(str);
 }
 
 
@@ -1733,16 +1733,16 @@ err:
 }
 
 
-void Item_in_subselect::print(String *str, enum_query_type query_type)
+void Item_in_subselect::print(String *str)
 {
   if (exec_method == IN_TO_EXISTS)
     str->append(STRING_WITH_LEN("<exists>"));
   else
   {
-    left_expr->print(str, query_type);
+    left_expr->print(str);
     str->append(STRING_WITH_LEN(" in "));
   }
-  Item_subselect::print(str, query_type);
+  Item_subselect::print(str);
 }
 
 
@@ -1905,18 +1905,18 @@ Item_allany_subselect::select_transformer(Join *join)
 }
 
 
-void Item_allany_subselect::print(String *str, enum_query_type query_type)
+void Item_allany_subselect::print(String *str)
 {
   if (exec_method == IN_TO_EXISTS)
     str->append(STRING_WITH_LEN("<exists>"));
   else
   {
-    left_expr->print(str, query_type);
+    left_expr->print(str);
     str->append(' ');
     str->append(func->symbol(all));
     str->append(all ? " all " : " any ", 5);
   }
-  Item_subselect::print(str, query_type);
+  Item_subselect::print(str);
 }
 
 
@@ -2763,25 +2763,23 @@ table_map subselect_union_engine::upper_select_const_tables()
 }
 
 
-void subselect_single_select_engine::print(String *str,
-                                           enum_query_type query_type)
+void subselect_single_select_engine::print(String *str)
 {
-  select_lex->print(session, str, query_type);
+  select_lex->print(session, str);
 }
 
 
-void subselect_union_engine::print(String *str, enum_query_type query_type)
+void subselect_union_engine::print(String *str)
 {
-  unit->print(str, query_type);
+  unit->print(str);
 }
 
 
-void subselect_uniquesubquery_engine::print(String *str,
-                                            enum_query_type query_type)
+void subselect_uniquesubquery_engine::print(String *str)
 {
   const char *table_name= tab->table->getShare()->getTableName();
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
-  tab->ref.items[0]->print(str, query_type);
+  tab->ref.items[0]->print(str);
   str->append(STRING_WITH_LEN(" in "));
   if (tab->table->getShare()->isTemporaryCategory())
   {
@@ -2799,7 +2797,7 @@ void subselect_uniquesubquery_engine::print(String *str,
   if (cond)
   {
     str->append(STRING_WITH_LEN(" where "));
-    cond->print(str, query_type);
+    cond->print(str);
   }
   str->append(')');
 }
@@ -2828,11 +2826,10 @@ void subselect_uniquesubquery_engine::print(String *str)
 }
 */
 
-void subselect_indexsubquery_engine::print(String *str,
-                                           enum_query_type query_type)
+void subselect_indexsubquery_engine::print(String *str)
 {
   str->append(STRING_WITH_LEN("<index_lookup>("));
-  tab->ref.items[0]->print(str, query_type);
+  tab->ref.items[0]->print(str);
   str->append(STRING_WITH_LEN(" in "));
   str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
   KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
@@ -2843,12 +2840,12 @@ void subselect_indexsubquery_engine::print(String *str,
   if (cond)
   {
     str->append(STRING_WITH_LEN(" where "));
-    cond->print(str, query_type);
+    cond->print(str);
   }
   if (having)
   {
     str->append(STRING_WITH_LEN(" having "));
-    having->print(str, query_type);
+    having->print(str);
   }
   str->append(')');
 }
@@ -3244,13 +3241,13 @@ err:
   Print the state of this engine into a string for debugging and views.
 */
 
-void subselect_hash_sj_engine::print(String *str, enum_query_type query_type)
+void subselect_hash_sj_engine::print(String *str)
 {
   str->append(STRING_WITH_LEN(" <materialize> ("));
-  materialize_engine->print(str, query_type);
+  materialize_engine->print(str);
   str->append(STRING_WITH_LEN(" ), "));
   if (tab)
-    subselect_uniquesubquery_engine::print(str, query_type);
+    subselect_uniquesubquery_engine::print(str);
   else
     str->append(STRING_WITH_LEN(
            "<the access method for lookups is not yet created>"

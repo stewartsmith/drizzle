@@ -97,7 +97,7 @@ err:
 }
 
 
-void Item_decimal_typecast::print(String *str, enum_query_type query_type)
+void Item_decimal_typecast::print(String *str)
 {
   char len_buf[20*3 + 1];
   char *end;
@@ -105,7 +105,7 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   uint32_t precision= class_decimal_length_to_precision(max_length, decimals,
                                                  unsigned_flag);
   str->append(STRING_WITH_LEN("cast("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" as decimal("));
 
   end=internal::int10_to_str(precision, len_buf,10);

@@ -48,7 +48,7 @@ public:
   type::Decimal *val_decimal(type::Decimal *);
   bool val_bool();
   bool get_date(type::Time &ltime, uint32_t fuzzydate);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   /*
     we add RAND_TABLE_BIT to prevent moving this item from HAVING to WHERE
   */
