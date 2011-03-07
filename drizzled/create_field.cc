@@ -378,13 +378,17 @@ bool CreateField::setDefaultValue(Item *default_value_item,
   if (sql_type == DRIZZLE_TYPE_TIMESTAMP
       || sql_type == DRIZZLE_TYPE_MICROTIME)
   {
+    bool on_update_now= on_update_item
+      || (unireg_check == Field::TIMESTAMP_DNUN_FIELD
+          || unireg_check == Field::TIMESTAMP_UN_FIELD);
+
     if (default_value_item)
     {
       /* Grammar allows only NOW() value for ON UPDATE clause */
       if (default_value_item->type() == Item::FUNC_ITEM &&
           ((Item_func*)default_value_item)->functype() == Item_func::NOW_FUNC)
       {
-        unireg_check= (on_update_item ? Field::TIMESTAMP_DNUN_FIELD:
+        unireg_check= (on_update_now ? Field::TIMESTAMP_DNUN_FIELD:
                        Field::TIMESTAMP_DN_FIELD);
         /*
           We don't need default value any longer moreover it is dangerous.
@@ -394,7 +398,7 @@ bool CreateField::setDefaultValue(Item *default_value_item,
       }
       else
       {
-        unireg_check= (on_update_item ? Field::TIMESTAMP_UN_FIELD:
+        unireg_check= (on_update_now ? Field::TIMESTAMP_UN_FIELD:
                        Field::NONE);
       }
     }
@@ -413,7 +417,7 @@ bool CreateField::setDefaultValue(Item *default_value_item,
         If we have TIMESTAMP NULL column without explicit DEFAULT value
         we treat it as having DEFAULT NULL attribute.
       */
-      unireg_check= (on_update_item ? Field::TIMESTAMP_UN_FIELD :
+      unireg_check= (on_update_now ? Field::TIMESTAMP_UN_FIELD :
                      (flags & NOT_NULL_FLAG ? Field::TIMESTAMP_OLD_FIELD :
                       Field::NONE));
     }
