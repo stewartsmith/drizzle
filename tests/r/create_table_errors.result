@@ -1,0 +1,6 @@
+CREATE TABLE t1 (a varchar(40000));
+ERROR 42000: Column length too big for column 'a' (max = 16383); use BLOB or TEXT instead
+CREATE TABLE t1 (a varchar(40000) default 'hello world');
+ERROR 42000: Column length too big for column 'a' (max = 16383); use BLOB or TEXT instead
+CREATE TABLE t1 (a varchar(99999));
+ERROR 42000: Column length too big for column 'a' (max = 16383); use BLOB or TEXT instead

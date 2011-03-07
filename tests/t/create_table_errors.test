@@ -1,0 +1,9 @@
+
+--error ER_TOO_BIG_FIELDLENGTH
+CREATE TABLE t1 (a varchar(40000));
+
+--error ER_TOO_BIG_FIELDLENGTH
+CREATE TABLE t1 (a varchar(40000) default 'hello world');
+
+--error ER_TOO_BIG_FIELDLENGTH
+CREATE TABLE t1 (a varchar(99999));
