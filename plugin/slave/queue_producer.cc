@@ -71,7 +71,12 @@ bool QueueProducer::process()
     }
   }
 
-  if (not queryForReplicationEvents(_saved_max_commit_id))
+  /* Keep getting events until caught up */
+  enum error_t err;
+  while ((err= (queryForReplicationEvents(_saved_max_commit_id))) == EE_OK)
+  {}
+
+  if (err == ER_YES)  /* We encountered an error */
   {
     if (_last_return == DRIZZLE_RETURN_LOST_CONNECTION)
     {
@@ -368,16 +373,16 @@ bool QueueProducer::queueInsert(const char *trx_id,
 }
 
 
-bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
+enum error_t QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
 {
   vector<uint64_t> trx_id_list;
 
   if (not queryForTrxIdList(max_commit_id, trx_id_list))
-    return false;
+    return ER_YES;
 
   if (trx_id_list.size() == 0)    /* nothing to get from the master */
   {
-    return true;
+    return ER_NO;
   }
 
   /*
@@ -406,7 +411,7 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
     _last_error_message.append(drizzle_error(&_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
-    return false;
+    return ER_YES;
   }
 
   /* TODO: Investigate 1-row-at-a-time buffering */
@@ -420,7 +425,7 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
     _last_error_message.append(drizzle_error(&_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
-    return false;
+    return ER_YES;
   }
 
   drizzle_row_t row;
@@ -432,13 +437,13 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
       errmsg_printf(error::ERROR,
                     _("Replication slave: Unable to insert into queue."));
       drizzle_result_free(&result);
-      return false;
+      return ER_YES;
     }
   }
 
   drizzle_result_free(&result);
 
-  return true;
+  return EE_OK;
 }
 
 
