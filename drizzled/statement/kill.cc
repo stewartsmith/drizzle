@@ -40,7 +40,7 @@ Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
 
     getSession()->getLex()->value_list.clear();
     getSession()->getLex()->value_list.push_front(item);
-    getSession()->getLex()->sql_command= SQLCOM_KILL;
+    set_command(SQLCOM_KILL);
   }
 
 } // namespace statement

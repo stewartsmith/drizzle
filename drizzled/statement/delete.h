@@ -36,7 +36,7 @@ public:
   Delete(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_DELETE;
+    set_command(SQLCOM_DELETE);
   }
 
   bool execute();

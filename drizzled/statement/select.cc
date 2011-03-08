@@ -31,7 +31,7 @@ namespace statement
 Select::Select(Session *in_session) :
   Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_SELECT;
+    set_command(SQLCOM_SELECT);
   }
 
 bool Select::execute()

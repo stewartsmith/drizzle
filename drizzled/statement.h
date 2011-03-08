@@ -50,6 +50,8 @@ public:
 
   virtual ~Statement() {}
 
+  void set_command(enum_sql_command);
+  LEX& lex();
   session::Transactions& transaction();
 
   /**

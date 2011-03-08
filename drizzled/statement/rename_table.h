@@ -37,7 +37,7 @@ public:
   RenameTable(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_RENAME_TABLE;
+    set_command(SQLCOM_RENAME_TABLE);
   }
 
   bool execute();

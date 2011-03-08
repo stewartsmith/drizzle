@@ -255,6 +255,11 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   plugin::EventObserver::registerSessionEvents(*this);
 }
 
+void statement::Statement::set_command(enum_sql_command v)
+{
+	session().getLex()->sql_command= v;
+}
+
 session::Transactions& statement::Statement::transaction()
 {
 	return session().transaction;

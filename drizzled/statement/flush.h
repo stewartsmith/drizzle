@@ -41,7 +41,7 @@ public:
     flush_status(false),
     flush_global_status(false)
   {
-    getSession()->getLex()->sql_command= SQLCOM_FLUSH;
+    set_command(SQLCOM_FLUSH);
     getSession()->getLex()->type= 0;
   }
 
