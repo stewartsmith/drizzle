@@ -1054,7 +1054,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<buffer_constraint>(&buffer_length)->default_value(16384),
           _("Buffer length."));
   context("bind-address",
-          po::value<string>()->default_value(""),
+          po::value<string>()->default_value("localhost"),
           _("Address to bind to."));
   context("max-connections",
           po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters->max_connections)->default_value(1000),
