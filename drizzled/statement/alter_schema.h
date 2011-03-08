@@ -36,7 +36,7 @@ public:
   AlterSchema(Session *in_session) :
     CreateSchema(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_ALTER_DB;
+    set_command(SQLCOM_ALTER_DB);
   }
 
   bool execute();

@@ -254,6 +254,21 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   plugin::EventObserver::registerSessionEvents(*this);
 }
 
+void statement::Statement::set_command(enum_sql_command v)
+{
+	session().getLex()->sql_command= v;
+}
+
+LEX& statement::Statement::lex()
+{
+	return *session().getLex();
+}
+
+session::Transactions& statement::Statement::transaction()
+{
+	return session().transaction;
+}
+
 void Session::free_items()
 {
   Item *next;
@@ -1615,7 +1630,7 @@ void Session::set_db(const std::string &new_db)
   Mark transaction to rollback and mark error as fatal to a sub-statement.
 
   @param  session   Thread handle
-  @param  all   true <=> rollback main transaction.
+  @param  all   true <=> rollback main transaction().
 */
 void Session::markTransactionForRollback(bool all)
 {

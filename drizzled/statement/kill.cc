@@ -35,21 +35,21 @@ Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
   {
     if (is_query_kill)
     {
-      getSession()->getLex()->type= ONLY_KILL_QUERY;
+      lex().type= ONLY_KILL_QUERY;
     }
 
-    getSession()->getLex()->value_list.clear();
-    getSession()->getLex()->value_list.push_front(item);
-    getSession()->getLex()->sql_command= SQLCOM_KILL;
+    lex().value_list.clear();
+    lex().value_list.push_front(item);
+    set_command(SQLCOM_KILL);
   }
 
 } // namespace statement
 
 bool statement::Kill::execute()
 {
-  Item *it= &getSession()->getLex()->value_list.front();
+  Item *it= &lex().value_list.front();
 
-  if ((not it->fixed && it->fix_fields(getSession()->getLex()->session, &it)) || it->check_cols(1))
+  if ((not it->fixed && it->fix_fields(lex().session, &it)) || it->check_cols(1))
   {
     my_message(ER_SET_CONSTANTS_ONLY, 
                ER(ER_SET_CONSTANTS_ONLY),
@@ -57,7 +57,7 @@ bool statement::Kill::execute()
     return true;
   }
 
-  if (drizzled::kill(*getSession()->user(), static_cast<session_id_t>(it->val_int()), getSession()->getLex()->type & ONLY_KILL_QUERY))
+  if (drizzled::kill(*getSession()->user(), static_cast<session_id_t>(it->val_int()), lex().type & ONLY_KILL_QUERY))
   {
     getSession()->my_ok();
   }
