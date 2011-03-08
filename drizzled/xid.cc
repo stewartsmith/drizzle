@@ -111,21 +111,4 @@ uint32_t XID::key_length() const
   return sizeof(gtrid_length)+sizeof(bqual_length)+gtrid_length+bqual_length;
 }
 
-bool xid_cache_init()
-{
-  return false;
-}
-
-void xid_cache_free()
-{
-}
-
-void xid_cache_insert(XID*, xa_states)
-{
-}
-
-void xid_cache_delete(XID_STATE*)
-{
-}
-
 } /* namespace drizzled */

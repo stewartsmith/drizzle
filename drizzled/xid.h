@@ -42,7 +42,7 @@ typedef uint64_t my_xid;
 #define DRIZZLE_XID_OFFSET (DRIZZLE_XID_PREFIX_LEN+sizeof(server_id))
 #define DRIZZLE_XID_GTRID_LEN (DRIZZLE_XID_OFFSET+sizeof(my_xid))
 
-class XID 
+class XID
 {
 public:
   long formatID;
@@ -80,7 +80,7 @@ public:
 
 */
 
-class DrizzleXid 
+class DrizzleXid
 {
 public:
   long formatID;
@@ -104,7 +104,7 @@ extern const char *xa_state_names[];
 #define MIN_XID_LIST_SIZE  128
 #define MAX_XID_LIST_SIZE  (1024*128)
 
-class XID_STATE 
+class XID_STATE
 {
 public:
   XID_STATE() :
@@ -116,12 +116,6 @@ public:
   xa_states xa_state;            // used by external XA only
   bool in_session;
 };
-
-bool xid_cache_init();
-void xid_cache_free();
-void xid_cache_insert(XID *xid, xa_states xa_state);
-bool xid_cache_insert(XID_STATE *xid_state);
-void xid_cache_delete(XID_STATE *xid_state);
 
 } /* namespace drizzled */
 
