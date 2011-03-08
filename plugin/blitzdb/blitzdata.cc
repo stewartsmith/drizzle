@@ -47,7 +47,7 @@ int BlitzData::shutdown() {
 }
 
 /* Similar to UNIX touch(1) but generates a tuned TCHDB file. */
-int BlitzData::create_data_table(drizzled::message::Table &proto,
+int BlitzData::create_data_table(const drizzled::message::Table &proto,
                                  drizzled::Table &table_info,
                                  const drizzled::identifier::Table &identifier) {
 
@@ -319,7 +319,7 @@ int BlitzData::close_system_table(void) {
   return 0;
 }
 
-bool BlitzData::write_table_definition(drizzled::message::Table &proto) {
+bool BlitzData::write_table_definition(const drizzled::message::Table &proto) {
   assert(system_table);
 
   std::string serialized_proto;

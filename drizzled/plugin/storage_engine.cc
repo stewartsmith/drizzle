@@ -1074,7 +1074,7 @@ int StorageEngine::renameDefinitionFromPath(const identifier::Table &dest, const
   return error;
 }
 
-int StorageEngine::writeDefinitionFromPath(const identifier::Table &identifier, message::Table &table_message)
+int StorageEngine::writeDefinitionFromPath(const identifier::Table &identifier, const message::Table &table_message)
 {
   char definition_file_tmp[FN_REFLEN];
   std::string file_name(identifier.getPath());

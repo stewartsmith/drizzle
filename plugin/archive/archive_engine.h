@@ -98,7 +98,7 @@ public:
   int doCreateTable(drizzled::Session &session,
                     drizzled::Table &table_arg,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table& proto);
+                    const drizzled::message::Table& proto);
 
   int doGetTableDefinition(drizzled::Session& session,
                            const drizzled::identifier::Table &identifier,

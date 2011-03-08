@@ -68,7 +68,7 @@ public:
   int doCreateTable(drizzled::Session &session,
                     drizzled::Table &table_arg,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table &table_proto);
+                    const drizzled::message::Table &table_proto);
 
   int doRenameTable(drizzled::Session &session,
                     const drizzled::identifier::Table &from_identifier,
@@ -124,7 +124,7 @@ static bool str_is_numeric(const std::string &str);
 int BlitzEngine::doCreateTable(drizzled::Session &,
                                drizzled::Table &table,
                                const drizzled::identifier::Table &identifier,
-                               drizzled::message::Table &proto) {
+                               const drizzled::message::Table &proto) {
   BlitzData dict;
   BlitzTree btree;
   int ecode;

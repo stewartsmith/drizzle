@@ -84,7 +84,7 @@ public:
   int doCreateTable(Session&,
                     Table&,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table&);
+                    const drizzled::message::Table&);
 
   int doDropTable(Session&, const drizzled::identifier::Table &identifier);
 
@@ -217,7 +217,7 @@ int ha_blackhole::close(void)
 int BlackholeEngine::doCreateTable(Session&,
                                    Table&,
                                    const drizzled::identifier::Table &identifier,
-                                   drizzled::message::Table& proto)
+                                   const drizzled::message::Table& proto)
 {
   string serialized_proto;
   string new_path;

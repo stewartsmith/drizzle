@@ -123,7 +123,7 @@ public:
   int doCreateTable(Session &,
                     Table &table_arg,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table&);
+                    const drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
                            const drizzled::identifier::Table &identifier,
@@ -1269,7 +1269,7 @@ int ha_tina::delete_all_rows()
 int Tina::doCreateTable(Session &session,
                         Table& table_arg,
                         const drizzled::identifier::Table &identifier,
-                        drizzled::message::Table &create_proto)
+                        const drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];
   int create_file;

@@ -500,7 +500,7 @@ int ha_archive::close(void)
 int ArchiveEngine::doCreateTable(Session &,
                                  Table& table_arg,
                                  const drizzled::identifier::Table &identifier,
-                                 drizzled::message::Table& proto)
+                                 const drizzled::message::Table& proto)
 {
   int error= 0;
   boost::scoped_ptr<azio_stream> create_stream(new azio_stream);

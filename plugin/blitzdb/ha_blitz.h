@@ -113,7 +113,7 @@ public:
   int shutdown(void);
 
   /* DATA DICTIONARY CREATION RELATED */
-  int create_data_table(drizzled::message::Table &proto,
+  int create_data_table(const drizzled::message::Table &proto,
                         drizzled::Table &table,
                         const drizzled::identifier::Table &identifier);
 
@@ -151,7 +151,7 @@ public:
   int create_system_table(const std::string &path);
   int open_system_table(const std::string &path, const int mode);
   int close_system_table(void);
-  bool write_table_definition(drizzled::message::Table &proto);
+  bool write_table_definition(const drizzled::message::Table &proto);
   char *get_system_entry(const char *key, const size_t klen, int *vlen);
 };
 

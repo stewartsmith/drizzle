@@ -282,7 +282,7 @@ protected:
   virtual int doCreateTable(Session &session,
                             Table &table_arg,
                             const drizzled::identifier::Table &identifier,
-                            message::Table &message)= 0;
+                            const message::Table &message)= 0;
 
   virtual int doRenameTable(Session &session,
                             const drizzled::identifier::Table &from, const drizzled::identifier::Table &to)= 0;
@@ -422,7 +422,7 @@ public:
 protected:
   static int deleteDefinitionFromPath(const drizzled::identifier::Table &identifier);
   static int renameDefinitionFromPath(const drizzled::identifier::Table &dest, const drizzled::identifier::Table &src);
-  static int writeDefinitionFromPath(const drizzled::identifier::Table &identifier, message::Table &proto);
+  static int writeDefinitionFromPath(const drizzled::identifier::Table &identifier, const message::Table &proto);
   static bool readTableFile(const std::string &path, message::Table &table_message);
 
 public:

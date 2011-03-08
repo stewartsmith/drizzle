@@ -87,7 +87,7 @@ public:
   int doCreateTable(Session &,
                     Table &table_arg,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table&);
+                    const drizzled::message::Table&);
 
   int doGetTableDefinition(Session& ,
                            const drizzled::identifier::Table &,
@@ -909,7 +909,7 @@ bool FilesystemEngine::validateCreateTableOption(const std::string &key,
 int FilesystemEngine::doCreateTable(Session &,
                                     Table&,
                                     const drizzled::identifier::Table &identifier,
-                                    drizzled::message::Table &proto)
+                                    const drizzled::message::Table &proto)
 {
   FormatInfo format;
   format.parseFromTable(&proto);
