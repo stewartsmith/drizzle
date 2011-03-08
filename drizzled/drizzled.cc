@@ -56,7 +56,6 @@
 #include <drizzled/message/cache.h>
 #include <drizzled/module/load_list.h>
 #include <drizzled/module/registry.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/error_message.h>
 #include <drizzled/plugin/event_observer.h>

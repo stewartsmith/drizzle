@@ -24,9 +24,7 @@
 */
 
 #include <config.h>
-
 #include <fcntl.h>
-
 #include <drizzled/error.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/gettext.h>
@@ -35,7 +33,6 @@
 #include <drizzled/item/int.h>
 #include <drizzled/lock.h>
 #include <drizzled/message/table.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/optimizer/cost_vector.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/event_observer.h>
@@ -49,8 +46,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /****************************************************************************
 ** General Cursor functions

@@ -48,7 +48,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/charset_info.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/internal/my_sys.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/plugin.h>
 #include <drizzled/show.h>
 #include <drizzled/data_home.h>

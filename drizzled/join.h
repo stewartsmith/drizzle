@@ -27,6 +27,7 @@
 #ifndef DRIZZLED_JOIN_H
 #define DRIZZLED_JOIN_H
 
+#include <drizzled/dynamic_array.h>
 #include <drizzled/optimizer/position.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/tmp_table_param.h>
