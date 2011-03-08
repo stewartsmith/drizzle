@@ -60,6 +60,22 @@ public:
     return _error;
   }
 
+  /**
+   * Set the initial value for the slave's maximum commit ID.
+   *
+   * This value basically determines where to start retrieving events from
+   * the master. Normally this is computed automatically based on the
+   * contents of the queue and/or the last applied commit ID. This allows
+   * us to override those values and start from another point. E.g., new
+   * slave provisioning or skipping a trouble statement.
+   *
+   * @param[in] value The commit ID value.
+   */
+  void setMaxCommitId(uint64_t value)
+  {
+    _producer.setMaxCommitId(value);
+  }
+
 private:
   std::string _config_file;
   std::string _error;
