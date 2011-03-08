@@ -50,4 +50,4 @@ To prevent changes to any schema beginning with *test* from being replicated::
 To prevent changes to any table beginning with *junk* from being replicated::
 
   sbin/drizzled --plugin-add=filtered_replicator \
-                --filtered-replicator.schemaregex="junk*"
+                --filtered-replicator.tableregex="junk*"
