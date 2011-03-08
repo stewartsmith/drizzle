@@ -796,9 +796,9 @@ bool Session::endActiveTransaction()
   bool result= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
 
-  if (transaction().xid_state.xa_state != XA_NOTR)
+  if (transaction.xid_state.xa_state != XA_NOTR)
   {
-    my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction().xid_state.xa_state]);
+    my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
   if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
@@ -1875,7 +1875,7 @@ void Session::close_thread_tables()
     main_da.can_overwrite_status= true;
     transaction_services.autocommitOrRollback(*this, is_error());
     main_da.can_overwrite_status= false;
-    transaction().stmt.reset();
+    transaction.stmt.reset();
   }
 
   if (lock)
