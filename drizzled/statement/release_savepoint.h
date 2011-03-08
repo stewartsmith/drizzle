@@ -35,7 +35,7 @@ public:
     Statement(in_session)
   {
     set_command(SQLCOM_RELEASE_SAVEPOINT);
-    getSession()->getLex()->ident= ident;
+    lex().ident= ident;
   }
 
   bool execute();

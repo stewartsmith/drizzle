@@ -260,6 +260,11 @@ void statement::Statement::set_command(enum_sql_command v)
 	session().getLex()->sql_command= v;
 }
 
+LEX& statement::Statement::lex()
+{
+	return *session().getLex();
+}
+
 session::Transactions& statement::Statement::transaction()
 {
 	return session().transaction;

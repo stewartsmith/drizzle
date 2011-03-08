@@ -52,7 +52,7 @@ public:
 public:
   message::Table &createTableMessage()
   {
-    return *getSession()->getLex()->table();
+    return *lex().table();
   };
 
 private:

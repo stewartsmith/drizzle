@@ -42,7 +42,7 @@ public:
     flush_global_status(false)
   {
     set_command(SQLCOM_FLUSH);
-    getSession()->getLex()->type= 0;
+    lex().type= 0;
   }
 
   bool execute();

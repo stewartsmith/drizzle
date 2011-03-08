@@ -89,10 +89,10 @@ AlterTable::AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_bui
 
 bool statement::AlterTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
+  Select_Lex *select_lex= &lex().select_lex;
   bool need_start_waiting= false;
 
   is_engine_set= not createTableMessage().engine().name().empty();
@@ -153,7 +153,7 @@ bool statement::AlterTable::execute()
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                   getSession()->getLex()->name.str ? getSession()->getLex()->name.str : first_table->getTableName());
+                                   lex().name.str ? lex().name.str : first_table->getTableName());
 
     res= alter_table(getSession(), 
                      identifier,
@@ -165,7 +165,7 @@ bool statement::AlterTable::execute()
                      &alter_info,
                      select_lex->order_list.size(),
                      (Order *) select_lex->order_list.first,
-                     getSession()->getLex()->ignore);
+                     lex().ignore);
   }
   else
   {
@@ -175,7 +175,7 @@ bool statement::AlterTable::execute()
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                       getSession()->getLex()->name.str ? getSession()->getLex()->name.str : first_table->getTableName(),
+                                       lex().name.str ? lex().name.str : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
       res= alter_table(getSession(), 
@@ -188,7 +188,7 @@ bool statement::AlterTable::execute()
                        &alter_info,
                        select_lex->order_list.size(),
                        (Order *) select_lex->order_list.first,
-                       getSession()->getLex()->ignore);
+                       lex().ignore);
     }
   }
 

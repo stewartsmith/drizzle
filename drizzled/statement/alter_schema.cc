@@ -35,7 +35,7 @@ namespace drizzled
 
 bool statement::AlterSchema::execute()
 {
-  LEX_STRING *db= &getSession()->getLex()->name;
+  LEX_STRING *db= &lex().name;
   message::schema::shared_ptr old_definition;
 
   if (not validateSchemaOptions())
