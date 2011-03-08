@@ -27,15 +27,15 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Session;
 class TableList;
 class Item;
 
-namespace statement
-{
+namespace session { class Transactions; }
+
+namespace statement {
 
 /**
  * @class Statement
@@ -44,11 +44,13 @@ namespace statement
 class Statement
 {
 public:
-  Statement(Session *in_session) : 
-    _session(in_session)
+  Statement(Session *in_session) :
+    _session(*in_session)
   {}
 
   virtual ~Statement() {}
+
+  session::Transactions& transaction();
 
   /**
    * Execute the statement.
@@ -64,12 +66,12 @@ public:
     return false;
   }
 
-  Session *getSession()
+  Session* getSession() const
   {
-    return _session;
+    return &session();
   }
 
-  Session *getSession() const
+  Session& session() const
   {
     return _session;
   }
@@ -77,14 +79,10 @@ public:
   virtual bool isShow() { return false; }
 
 private:
-  /**
-   * A session handler.
-   */
-  Session *_session;
+  Session& _session;
 };
 
 } /* namespace statement */
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_H */
