@@ -213,7 +213,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   lex->current_select= 0;
   memset(&variables, 0, sizeof(variables));
   scoreboard_index= -1;
-  cleanup_done= abort_on_warning= no_warnings_for_error= false;  
+  cleanup_done= abort_on_warning= no_warnings_for_error= false;
 
   /* query_cache init */
   query_cache_key= "";
@@ -251,8 +251,13 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   thr_lock_owner_init(&main_lock_id, &lock_info);
 
   m_internal_handler= NULL;
-  
-  plugin::EventObserver::registerSessionEvents(*this); 
+
+  plugin::EventObserver::registerSessionEvents(*this);
+}
+
+session::Transactions& statement::Statement::transaction()
+{
+	return session().transaction;
 }
 
 void Session::free_items()
@@ -398,7 +403,7 @@ Session::~Session()
   currentSession().release();
 
   plugin::Logging::postEndDo(this);
-  plugin::EventObserver::deregisterSessionEvents(*this); 
+  plugin::EventObserver::deregisterSessionEvents(*this);
 }
 
 void Session::setClient(plugin::Client *client_arg)

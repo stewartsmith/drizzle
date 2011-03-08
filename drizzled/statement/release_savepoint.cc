@@ -40,7 +40,7 @@ bool statement::ReleaseSavepoint::execute()
    * unbind it from our deque.
    */
   TransactionServices &transaction_services= TransactionServices::singleton();
-  deque<NamedSavepoint> &savepoints= getSession()->transaction.savepoints;
+  deque<NamedSavepoint> &savepoints= transaction().savepoints;
   deque<NamedSavepoint>::iterator iter;
 
   for (iter= savepoints.begin();

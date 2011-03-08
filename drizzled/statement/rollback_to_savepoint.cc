@@ -42,7 +42,7 @@ bool statement::RollbackToSavepoint::execute()
    * lockTables() by calling startStatement().
    */
   if ( (getSession()->options & OPTION_NOT_AUTOCOMMIT) &&
-       (getSession()->transaction.all.getResourceContexts().empty() == true) )
+       (transaction().all.getResourceContexts().empty() == true) )
   {
     if (getSession()->startTransaction() == false)
     {
@@ -64,7 +64,7 @@ bool statement::RollbackToSavepoint::execute()
    * find it, we must restructure the deque by removing
    * all savepoints "above" the one we find.
    */
-  deque<NamedSavepoint> &savepoints= getSession()->transaction.savepoints;
+  deque<NamedSavepoint> &savepoints= transaction().savepoints;
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   /* Short-circuit for no savepoints */
@@ -90,7 +90,7 @@ bool statement::RollbackToSavepoint::execute()
       /* Found the named savepoint we want to rollback to */
       (void) transaction_services.rollbackToSavepoint(*getSession(), first_savepoint);
 
-      if (getSession()->transaction.all.hasModifiedNonTransData())
+      if (transaction().all.hasModifiedNonTransData())
       {
         push_warning(getSession(), 
                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -141,7 +141,7 @@ bool statement::RollbackToSavepoint::execute()
   }
   if (found)
   {
-    if (getSession()->transaction.all.hasModifiedNonTransData())
+    if (transaction().all.hasModifiedNonTransData())
     {
       push_warning(getSession(), 
                    DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -149,13 +149,13 @@ bool statement::RollbackToSavepoint::execute()
                    ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
     }
     /* Store new savepoints list */
-    getSession()->transaction.savepoints= new_savepoints;
+    transaction().savepoints= new_savepoints;
     getSession()->my_ok();
   }
   else
   {
     /* restore the original savepoint list */
-    getSession()->transaction.savepoints= copy_savepoints;
+    transaction().savepoints= copy_savepoints;
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 

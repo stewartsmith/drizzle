@@ -49,7 +49,7 @@ bool statement::Savepoint::execute()
      * by calling startStatement().
      */
     if ( (getSession()->options & OPTION_NOT_AUTOCOMMIT) &&
-         (getSession()->transaction.all.getResourceContexts().empty() == true) )
+         (transaction().all.getResourceContexts().empty() == true) )
     {
       if (getSession()->startTransaction() == false)
       {
@@ -62,7 +62,7 @@ bool statement::Savepoint::execute()
      * the same name, delete it.
      */
     TransactionServices &transaction_services= TransactionServices::singleton();
-    deque<NamedSavepoint> &savepoints= getSession()->transaction.savepoints;
+    deque<NamedSavepoint> &savepoints= transaction().savepoints;
     deque<NamedSavepoint>::iterator iter;
 
     for (iter= savepoints.begin();
