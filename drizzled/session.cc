@@ -320,7 +320,7 @@ void Session::pop_internal_handler()
 
 void Session::get_xid(DrizzleXid *xid)
 {
-  *xid = *(DrizzleXid *) &transaction().xid_state.xid;
+  *xid = *(DrizzleXid *) &transaction.xid_state.xid;
 }
 
 /* Do operations that may take a long time */
@@ -331,7 +331,7 @@ void Session::cleanup(void)
 
   setKilled(KILL_CONNECTION);
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
-  if (transaction().xid_state.xa_state == XA_PREPARED)
+  if (transaction.xid_state.xa_state == XA_PREPARED)
   {
 #error xid_state in the cache should be replaced by the allocated value
   }
@@ -339,7 +339,7 @@ void Session::cleanup(void)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     transaction_services.rollbackTransaction(*this, true);
-    xid_cache_delete(&transaction().xid_state);
+    xid_cache_delete(&transaction.xid_state);
   }
 
   for (UserVars::iterator iter= user_vars.begin();
@@ -512,8 +512,8 @@ void Session::prepareForQueries()
 
   mem_root->reset_root_defaults(variables.query_alloc_block_size,
                                 variables.query_prealloc_size);
-  transaction().xid_state.xid.null();
-  transaction().xid_state.in_session=1;
+  transaction.xid_state.xid.null();
+  transaction.xid_state.in_session=1;
   if (use_usage)
     resetUsage();
 }
@@ -736,9 +736,9 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
   bool result= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
 
-  if (transaction().xid_state.xa_state != XA_NOTR)
+  if (transaction.xid_state.xa_state != XA_NOTR)
   {
-    my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction().xid_state.xa_state]);
+    my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
   switch (completion)
