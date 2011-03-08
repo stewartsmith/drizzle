@@ -281,6 +281,8 @@ a single statement, then a message buffering strategy should be employed
 to guarantee that a statement was indeed applied successfully before
 executing on the receiver.
 
+.. _replication_streams:
+
 Replication Streams
 ###################
 
