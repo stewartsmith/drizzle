@@ -246,7 +246,9 @@ CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, Chec
   /* using RCU to only need to lock when updating the cache */
   if ((*check_cache) && (check_val= (*check_cache)->find(key)) != (*check_cache)->end())
   {
-    setCachedResult(check_val->second);
+    /* It was in the cache, no need to do any more lookups */
+    cached_result= check_val->second;
+    has_cached_result= true;
   }
 }
 
