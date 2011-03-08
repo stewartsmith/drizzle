@@ -145,9 +145,8 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   xa_id(0),
-  lex(&main_lex),
   query(new std::string),
-  _schema(new std::string("")),
+  _schema(new std::string),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -210,10 +209,10 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   cuted_fields= sent_row_count= row_count= 0L;
   // Must be reset to handle error with Session's created for init of mysqld
-  lex->current_select= 0;
+  getLex()->current_select= 0;
   memset(&variables, 0, sizeof(variables));
   scoreboard_index= -1;
-  cleanup_done= abort_on_warning= no_warnings_for_error= false;  
+  cleanup_done= abort_on_warning= no_warnings_for_error= false;
 
   /* query_cache init */
   query_cache_key= "";
@@ -251,8 +250,8 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   thr_lock_owner_init(&main_lock_id, &lock_info);
 
   m_internal_handler= NULL;
-  
-  plugin::EventObserver::registerSessionEvents(*this); 
+
+  plugin::EventObserver::registerSessionEvents(*this);
 }
 
 void Session::free_items()
@@ -398,7 +397,7 @@ Session::~Session()
   currentSession().release();
 
   plugin::Logging::postEndDo(this);
-  plugin::EventObserver::deregisterSessionEvents(*this); 
+  plugin::EventObserver::deregisterSessionEvents(*this);
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -674,7 +673,7 @@ bool Session::executeStatement()
     indicator of uninitialized lex => normal flow of errors handling
     (see my_message_sql)
   */
-  lex->current_select= 0;
+  getLex()->current_select= 0;
   clear_error();
   main_da.reset_diagnostics_area();
 
@@ -914,7 +913,7 @@ int Session::send_explain_fields(select_result *result)
   item->maybe_null=1;
   field_list.push_back(item= new Item_return_int("rows", 10,
                                                  DRIZZLE_TYPE_LONGLONG));
-  if (lex->describe & DESCRIBE_EXTENDED)
+  if (getLex()->describe & DESCRIBE_EXTENDED)
   {
     field_list.push_back(item= new Item_float("filtered", 0.1234, 2, 4));
     item->maybe_null=1;
@@ -1537,7 +1536,7 @@ bool select_exists_subselect::send_data(List<Item> &)
 void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
-  lex->end();
+  getLex()->end();
   query_cache_key= ""; // reset the cache key
   resetResultsetMessage();
 }
@@ -1904,9 +1903,9 @@ void Session::close_tables_for_reopen(TableList **tables)
     If table list consists only from tables from prelocking set, table list
     for new attempt should be empty, so we have to update list's root pointer.
   */
-  if (lex->first_not_own_table() == *tables)
+  if (getLex()->first_not_own_table() == *tables)
     *tables= 0;
-  lex->chop_off_not_own_tables();
+  getLex()->chop_off_not_own_tables();
   for (TableList *tmp= *tables; tmp; tmp= tmp->next_global)
     tmp->table= 0;
   close_thread_tables();
@@ -1931,7 +1930,7 @@ bool Session::openTablesLock(TableList *tables)
     close_tables_for_reopen(&tables);
   }
 
-  if ((handle_derived(lex, &derived_prepare) || (handle_derived(lex, &derived_filling))))
+  if ((handle_derived(getLex(), &derived_prepare) || (handle_derived(getLex(), &derived_filling))))
     return true;
 
   return false;
