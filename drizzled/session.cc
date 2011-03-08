@@ -333,7 +333,6 @@ void Session::cleanup(void)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     transaction_services.rollbackTransaction(*this, true);
-    xid_cache_delete(&transaction.xid_state);
   }
 
   for (UserVars::iterator iter= user_vars.begin();
