@@ -31,6 +31,8 @@
 #include <boost/regex.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/locks.hpp>
 
 #include <drizzled/configmake.h>
 #include <drizzled/plugin/authorization.h>
@@ -113,17 +115,10 @@ typedef boost::unordered_map<std::string, bool> UnorderedCheckMap;
 class CheckMap
 {
   LruList lru;
-  boost::mutex *lru_mutex;
+  boost::mutex lru_mutex;
+  boost::shared_mutex map_mutex;
   UnorderedCheckMap map;
 public:
-  void setLruMutex(boost::mutex *mutex)
-  {
-    lru_mutex= mutex;
-  }
-  boost::mutex *getLruMutex() const
-  {
-    return lru_mutex;
-  }
   UnorderedCheckMap::iterator find(std::string const&k);
   UnorderedCheckMap::const_iterator end() const
   {
@@ -139,9 +134,9 @@ class CheckItem
   std::string key;
   bool has_cached_result;
   bool cached_result;
-  CheckMap **check_cache;
+  CheckMap &check_cache;
 public:
-  CheckItem(const std::string &u, const std::string &obj, CheckMap **check_cache);
+  CheckItem(const std::string &u, const std::string &obj, CheckMap &check_cache);
   bool operator()(PolicyItem *p);
   bool hasCachedResult() const
   {
@@ -171,15 +166,12 @@ inline bool PolicyItem::isRestricted()
 
 void clearPolicyItemList(PolicyItemList policies);
 
-static boost::mutex check_cache_mutex;
-
 class Policy :
   public drizzled::plugin::Authorization
 {
 public:
   Policy(const fs::path &f_path) :
-    drizzled::plugin::Authorization("Regex Policy"), policy_file(f_path), error(),
-    table_check_cache(NULL), schema_check_cache(NULL), process_check_cache(NULL)
+    drizzled::plugin::Authorization("Regex Policy"), policy_file(f_path), error()
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
@@ -197,16 +189,16 @@ public:
 private:
   bool restrictObject(const drizzled::identifier::User &user_ctx,
                                    const std::string &obj, const PolicyItemList &policies,
-                                   CheckMap **check_cache);
+                                   CheckMap &check_cache);
   fs::path policy_file;
 
   std::stringstream error;
   PolicyItemList table_policies;
   PolicyItemList schema_policies;
   PolicyItemList process_policies;
-  CheckMap *table_check_cache;
-  CheckMap *schema_check_cache;
-  CheckMap *process_check_cache;
+  CheckMap table_check_cache;
+  CheckMap schema_check_cache;
+  CheckMap process_check_cache;
 };
 
 } /* namespace regex_policy */

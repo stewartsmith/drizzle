@@ -24,6 +24,7 @@
 #include <config.h>
 
 #include <boost/unordered_set.hpp>
+#include <boost/thread/locks.hpp>
 
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/module/option_map.h>
@@ -193,17 +194,11 @@ Policy::~Policy()
   clearPolicyItemList(table_policies);
   clearPolicyItemList(process_policies);
   clearPolicyItemList(schema_policies);
-  delete table_check_cache->getLruMutex();
-  delete process_check_cache->getLruMutex();
-  delete schema_check_cache->getLruMutex();
-  delete table_check_cache;
-  delete process_check_cache;
-  delete schema_check_cache;
 }
 
 bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
                                    const string &obj, const PolicyItemList &policies,
-                                   CheckMap **check_cache)
+                                   CheckMap &check_cache)
 {
   CheckItem c(user_ctx.username(), obj, check_cache);
   if (!c.hasCachedResult())
@@ -225,19 +220,19 @@ bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
 bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
                                    drizzled::identifier::Schema::const_reference schema)
 {
-  return restrictObject(user_ctx, schema.getSchemaName(), schema_policies, &schema_check_cache);
+  return restrictObject(user_ctx, schema.getSchemaName(), schema_policies, schema_check_cache);
 }
 
 bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
                                     const drizzled::identifier::User &session_ctx)
 {
-  return restrictObject(user_ctx, session_ctx.username(), process_policies, &process_check_cache);
+  return restrictObject(user_ctx, session_ctx.username(), process_policies, process_check_cache);
 }
 
 bool Policy::restrictTable(drizzled::identifier::User::const_reference user_ctx,
                              drizzled::identifier::Table::const_reference table)
 {
-  return restrictObject(user_ctx, table.getTableName(), table_policies, &table_check_cache);
+  return restrictObject(user_ctx, table.getTableName(), table_policies, table_check_cache);
 }
 
 bool CheckItem::operator()(PolicyItem *p)
@@ -261,14 +256,14 @@ bool CheckItem::operator()(PolicyItem *p)
   return false;
 }
 
-CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, CheckMap **check_cache_in)
+CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, CheckMap &check_cache_in)
   : user(user_in), object(obj_in), has_cached_result(false), check_cache(check_cache_in)
 {
   UnorderedCheckMap::iterator check_val;
   key= user + "_" + object;
 
   /* using RCU to only need to lock when updating the cache */
-  if ((*check_cache) && (check_val= (*check_cache)->find(key)) != (*check_cache)->end())
+  if ((check_val= check_cache.find(key)) != check_cache.end())
   {
     /* It was in the cache, no need to do any more lookups */
     cached_result= check_val->second;
@@ -279,7 +274,7 @@ CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, Chec
 UnorderedCheckMap::iterator CheckMap::find(std::string const &k)
 {
   /* tack on to LRU list */
-  boost::mutex::scoped_lock lock(*lru_mutex);
+  boost::mutex::scoped_lock lock(lru_mutex);
   lru.push_back(k);
   if (lru.size() > max_lru_length)
   {
@@ -300,11 +295,13 @@ UnorderedCheckMap::iterator CheckMap::find(std::string const &k)
     }
   }
   lock.unlock();
+  boost::shared_lock<boost::shared_mutex> map_lock(map_mutex);
   return map.find(k);
 }
 
 bool &CheckMap::operator[](std::string const &k)
 {
+  boost::unique_lock<boost::shared_mutex> map_lock(map_mutex);
   /* add our new hotness to the map */
   bool &result= map[k];
   /* Now prune if necessary */
@@ -314,8 +311,7 @@ bool &CheckMap::operator[](std::string const &k)
     boost::unordered_set<std::string> found;
 
     /* Must unfortunately lock the LRU list while we traverse it */
-    boost::mutex::scoped_lock lock(*lru_mutex, boost::defer_lock);
-    lock.lock();
+    boost::mutex::scoped_lock lock(lru_mutex);
     for (LruList::reverse_iterator x= lru.rbegin(); x < lru.rend(); ++x)
     {
       if (found.find(*x) == found.end())
@@ -356,39 +352,9 @@ bool &CheckMap::operator[](std::string const &k)
 
 void CheckItem::setCachedResult(bool result)
 {
-  // TODO: make the mutex per-cache
-  CheckMap *old_cache;
-  CheckMap *new_cache;
-  boost::mutex::scoped_lock lock(check_cache_mutex);
-
-  // Copy the current one
-  if (*check_cache)
-  {
-    new_cache= new CheckMap(**check_cache);
-    new_cache->setLruMutex((*check_cache)->getLruMutex());
-  }
-  else
-  {
-    new_cache= new CheckMap();
-    /* Deleted in ~Policy */
-    boost::mutex *new_mutex= new boost::mutex;
-    new_cache->setLruMutex(new_mutex);
-  }
-
-  // Update it
-  (*new_cache)[key]= result;
-  // Replace old
-  old_cache= *check_cache;
-  *check_cache= new_cache;
-
-  lock.unlock();
+  check_cache[key]= result;
   has_cached_result= true;
   cached_result= result;
-
-  if (old_cache)
-  {
-    delete old_cache;
-  }
 }
 
 } /* namespace regex_policy */
