@@ -1,9 +1,0 @@
-CREATE TABLE t1 (
-Period int DEFAULT '0000' NOT NULL,
-Varor_period int DEFAULT '0' NOT NULL
-) ENGINE=archive;
-INSERT INTO t1 VALUES (9410,9412);
-SELECT * FROM t1;
-Period	Varor_period
-9410	9412
-DROP TABLE t1;
