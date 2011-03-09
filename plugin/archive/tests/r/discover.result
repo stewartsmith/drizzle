@@ -1,0 +1,8 @@
+CREATE TABLE t1 (a int) ENGINE=ARCHIVE;
+INSERT into t1 (a) values (42);
+SELECT * from t1;
+a
+42
+FLUSH TABLES;
+SELECT * FROM t1;
+ERROR 42S02: Unknown table 'test.t1'
