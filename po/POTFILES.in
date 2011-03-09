@@ -59,8 +59,6 @@ plugin/auth_all/auth_all.cc
 plugin/auth_file/auth_file.cc
 plugin/auth_http/auth_http.cc
 plugin/auth_ldap/auth_ldap.cc
-plugin/blitzdb/ha_blitz.cc
-plugin/blitzdb/ha_blitz.h
 plugin/console/console.cc
 plugin/default_replicator/default_replicator.cc
 plugin/drizzle_protocol/drizzle_protocol.cc

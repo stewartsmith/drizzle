@@ -34,8 +34,8 @@ public:
   ReleaseSavepoint(Session *in_session, const lex_string_t &ident) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_RELEASE_SAVEPOINT;
-    getSession()->getLex()->ident= ident;
+    set_command(SQLCOM_RELEASE_SAVEPOINT);
+    lex().ident= ident;
   }
 
   bool execute();

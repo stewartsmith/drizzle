@@ -31,11 +31,11 @@ namespace drizzled
 
 bool statement::InsertSelect::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
-  Select_Lex_Unit *unit= &getSession()->getLex()->unit;
+  Select_Lex *select_lex= &lex().select_lex;
+  Select_Lex_Unit *unit= &lex().unit;
   select_result *sel_result= NULL;
   bool res= false;
   bool need_start_waiting= false;
@@ -66,14 +66,14 @@ bool statement::InsertSelect::execute()
     res= insert_select_prepare(getSession());
     if (! res && (sel_result= new select_insert(first_table,
                                                 first_table->table,
-                                                &getSession()->getLex()->field_list,
-                                                &getSession()->getLex()->update_list,
-                                                &getSession()->getLex()->value_list,
-                                                getSession()->getLex()->duplicates,
-                                                getSession()->getLex()->ignore)))
+                                                &lex().field_list,
+                                                &lex().update_list,
+                                                &lex().value_list,
+                                                lex().duplicates,
+                                                lex().ignore)))
     {
       res= handle_select(getSession(), 
-                         getSession()->getLex(), 
+                         &lex(), 
                          sel_result, 
                          OPTION_SETUP_TABLES_DONE);
 

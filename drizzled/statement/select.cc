@@ -31,12 +31,12 @@ namespace statement
 Select::Select(Session *in_session) :
   Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_SELECT;
+    set_command(SQLCOM_SELECT);
   }
 
 bool Select::execute()
 {
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *all_tables= lex().query_tables;
   getSession()->status_var.last_query_cost= 0.0;
   bool res= execute_sqlcom_select(getSession(), all_tables);
 

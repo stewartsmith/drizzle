@@ -28,7 +28,7 @@ namespace drizzled
 
 bool statement::Truncate::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
 
   if (getSession()->inTransaction())
   {

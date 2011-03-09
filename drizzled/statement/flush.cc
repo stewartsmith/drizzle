@@ -48,7 +48,7 @@ bool statement::Flush::execute()
 bool statement::Flush::reloadCache()
 {
   bool result= false;
-  TableList *tables= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *tables= (TableList *) lex().select_lex.table_list.first;
 
   if (flush_log)
   {

@@ -36,7 +36,7 @@ public:
   ChangeSchema(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command=SQLCOM_CHANGE_DB;
+    set_command(SQLCOM_CHANGE_DB);
   }
 
   bool execute();

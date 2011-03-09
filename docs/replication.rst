@@ -280,3 +280,45 @@ for the entire transaction. If the receiver cannot handle rolling back
 a single statement, then a message buffering strategy should be employed 
 to guarantee that a statement was indeed applied successfully before
 executing on the receiver.
+
+.. _replication_streams:
+
+Replication Streams
+###################
+
+The Drizzle kernel handles delivering replication messages to plugins by
+maintaining a list of replication streams. A stream is represented as a
+registered *replicator* and *applier* pair.
+
+When a replication message is generated within the kernel, the replication
+services module of the kernel will send this message to each registered
+*replicator*. The *replicator* will then do something useful with it and
+send it to each *applier* with which it is associated.
+
+Replicators
+***********
+
+A registered *replicator* is a plugin that implements the TransactionReplicator
+API. Each replicator will be plugged into the kernel to receive the Google
+Protobuf messages that are generated as the database is changed. Ideally,
+each registered replicator will transform or modify the messages it receives
+to implement a specific behavior. For example, filtering by schema name.
+
+Each registered replicator should have a unique name. The default replicator,
+cleverly named **default_replicator**, does no transformation at all on the
+replication messages.
+
+Appliers
+********
+
+A registered *applier* is a plugin that implements the TransactionApplier
+API. Appliers are responsible for applying the replication messages that it
+will receive from a registered replicator. The word "apply" is used loosely
+here. An applier may do anything with the replication messages that provides
+useful behavior. For example, an applier may simply write the messages to a
+file on disk, or it may send the messages over the network to some other
+service to be processed.
+
+At the point of registration with the Drizzle kernel, each applier specifies
+the name of a registered replicator that it should be attached to in order to
+make the replication stream pair.
