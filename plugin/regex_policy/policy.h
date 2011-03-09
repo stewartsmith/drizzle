@@ -42,6 +42,9 @@ namespace regex_policy
 
 static const fs::path DEFAULT_POLICY_FILE= SYSCONFDIR "/drizzle.policy";
 
+static const uint64_t DEFAULT_MAX_LRU_LENGTH= 16384;
+static const uint64_t DEFAULT_MAX_CACHE_BUCKETS= 4096;
+
 static const char *comment_regex = "^[[:space:]]*#.*$";
 static const char *empty_regex = "^[[:space:]]*$";
 static const char *table_match_regex = "^([^ ]+) table\\=([^ ]+) (ACCEPT|DENY)$";
@@ -52,9 +55,6 @@ static const int MATCH_REGEX_USER_POS= 1;
 static const int MATCH_REGEX_OBJECT_POS= 2;
 static const int MATCH_REGEX_ACTION_POS= 3;
 
-/* TODO: make these sys vars for the plugin */
-static const size_t max_lru_size= 4096;
-static const size_t max_cache_size= 4096;
 
 typedef enum 
 {
@@ -168,6 +168,9 @@ void clearPolicyItemList(PolicyItemList policies);
 
 static boost::mutex check_cache_mutex;
 
+uint64_t max_cache_buckets;
+uint64_t max_lru_length;
+
 class Policy :
   public drizzled::plugin::Authorization
 {
@@ -194,6 +197,7 @@ private:
                                    const std::string &obj, const PolicyItemList &policies,
                                    CheckMap **check_cache);
   fs::path policy_file;
+
   std::stringstream error;
   PolicyItemList table_policies;
   PolicyItemList schema_policies;

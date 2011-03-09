@@ -42,6 +42,18 @@ static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
+  max_cache_buckets= vm["max-cache-buckets"].as<uint64_t>();
+  if (max_cache_buckets < 1)
+  {
+    errmsg_printf(error::ERROR, _("max-cache-buckets is too low, must be greater than 0"));
+    return 1;
+  }
+  max_lru_length= vm["max-lru-length"].as<uint64_t>();
+  if (max_lru_length < 1)
+  {
+    errmsg_printf(error::ERROR, _("max-lru-length is too low, must be greater than 0"));
+    return 1;
+  }
   Policy *policy= new (nothrow) Policy(fs::path(vm["policy"].as<string>()));
   if (policy == NULL or not policy->loadFile())
   {
@@ -65,6 +77,12 @@ static void init_options(drizzled::module::option_context &context)
   context("policy",
       po::value<string>()->default_value(DEFAULT_POLICY_FILE.string()),
       N_("File to load for regex authorization policies"));
+  context("max-cache-buckets",
+      po::value<uint64_t>()->default_value(DEFAULT_MAX_CACHE_BUCKETS),
+      N_("Maximum buckets for authorization cache"));
+  context("max-lru-length",
+      po::value<uint64_t>()->default_value(DEFAULT_MAX_LRU_LENGTH),
+      N_("Maximum number of LRU entries to track at once"));
 }
 
 bool Policy::loadFile()
@@ -263,10 +281,10 @@ CheckMap::iterator CheckMap::find(std::string const &k)
   boost::mutex::scoped_lock lock(*lru_mutex, boost::defer_lock);
   lock.lock();
   lru.push_back(k);
-  if (lru.size() > max_lru_size)
+  if (lru.size() > max_lru_length)
   {
     /* Fold all of the oldest entries into a single list at the front */
-    size_t size_halfway= lru.size() / 2;
+    uint64_t size_halfway= lru.size() / 2;
     LruList::iterator halfway= lru.begin();
     halfway += size_halfway;
     boost::unordered_set<std::string> uniqs;
@@ -290,21 +308,20 @@ bool &CheckMap::operator[](std::string const &k)
   /* add our new hotness to the map */
   bool &result= boost::unordered_map<std::string, bool>::operator[](k);
   /* Now prune if necessary */
-  if (bucket_count() > max_cache_size)
+  if (bucket_count() > max_cache_buckets)
   {
     /* Determine LRU key by running through the LRU list */
     boost::unordered_set<std::string> found;
 
     /* Must unfortunately lock the LRU list while we traverse it */
-    LruList::iterator x;
     boost::mutex::scoped_lock lock(*lru_mutex, boost::defer_lock);
     lock.lock();
-    for (x= lru.end(); x != lru.begin(); --x)
+    for (LruList::reverse_iterator x= lru.rbegin(); x < lru.rend(); ++x)
     {
       if (found.find(*x) == found.end())
       {
         /* Newly found key */
-        if (found.size() >= max_cache_size)
+        if (found.size() >= max_cache_buckets)
         {
           /* Since found is already as big as the cache can be, anything else
              is LRU */
@@ -316,10 +333,20 @@ bool &CheckMap::operator[](std::string const &k)
         }
       }
     }
-    if (bucket_count() > max_cache_size)
+    if (bucket_count() > max_cache_buckets)
     {
-      /* Still too big. Just delete the oldest item */
-      boost::unordered_map<std::string, bool>::erase(*(lru.begin()));
+      /* Still too big. */
+      if (lru.size())
+      {
+        /* Just delete the oldest item */
+        boost::unordered_map<std::string, bool>::erase(*(lru.begin()));
+      }
+      else
+      {
+        /* Nothing to delete, warn */
+        errmsg_printf(error::WARN, 
+            _("Unable to reduce size of cache below max buckets (current buckets=%ld)"), bucket_count());
+      }
     }
     lru.empty();
     lock.unlock();
