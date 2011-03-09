@@ -5117,15 +5117,12 @@ int remove_dup_with_hash_index(Session *session,
 {
   unsigned char *key_pos, *record=table->getInsertRecord();
   int error;
-  Cursor *cursor= table->cursor;
+  Cursor &cursor= *table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
   uint32_t *field_length;
   HASH hash;
-  std::vector<unsigned char> key_buffer;
-  std::vector<uint32_t> field_lengths;
-
-  key_buffer.resize((key_length + extra_length) * (long) cursor->stats.records);
-  field_lengths.resize(field_count);
+  std::vector<unsigned char> key_buffer((key_length + extra_length) * (long) cursor.stats.records);
+  std::vector<uint32_t> field_lengths(field_count);
 
   {
     Field **ptr;
@@ -5142,13 +5139,10 @@ int remove_dup_with_hash_index(Session *session,
     extra_length= ALIGN_SIZE(key_length)-key_length;
   }
 
-  if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor->stats.records, 0,
-		key_length, (hash_get_key) 0, 0, 0))
-  {
-    return(1);
-  }
+  if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor.stats.records, 0, key_length, (hash_get_key) 0, 0, 0))
+    return 1;
 
-  if ((error= cursor->startTableScan(1)))
+  if ((error= cursor.startTableScan(1)))
     goto err;
 
   key_pos= &key_buffer[0];
@@ -5160,7 +5154,7 @@ int remove_dup_with_hash_index(Session *session,
       error=0;
       goto err;
     }
-    if ((error=cursor->rnd_next(record)))
+    if ((error=cursor.rnd_next(record)))
     {
       if (error == HA_ERR_RECORD_DELETED)
         continue;
@@ -5170,7 +5164,7 @@ int remove_dup_with_hash_index(Session *session,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->deleteRecord(record)))
+      if ((error=cursor.deleteRecord(record)))
         goto err;
       continue;
     }
@@ -5187,7 +5181,7 @@ int remove_dup_with_hash_index(Session *session,
     if (hash_search(&hash, org_key_pos, key_length))
     {
       /* Duplicated found ; Remove the row */
-      if ((error=cursor->deleteRecord(record)))
+      if ((error=cursor.deleteRecord(record)))
         goto err;
     }
     else
@@ -5195,17 +5189,17 @@ int remove_dup_with_hash_index(Session *session,
     key_pos+=extra_length;
   }
   hash_free(&hash);
-  cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->endTableScan();
-  return(0);
+  cursor.extra(HA_EXTRA_NO_CACHE);
+  (void) cursor.endTableScan();
+  return 0;
 
 err:
   hash_free(&hash);
-  cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->endTableScan();
+  cursor.extra(HA_EXTRA_NO_CACHE);
+  (void) cursor.endTableScan();
   if (error)
     table->print_error(error,MYF(0));
-  return(1);
+  return 1;
 }
 
 SortField *make_unireg_sortorder(Order *order, uint32_t *length, SortField *sortorder)
