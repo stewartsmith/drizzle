@@ -52,6 +52,10 @@ static const int MATCH_REGEX_USER_POS= 1;
 static const int MATCH_REGEX_OBJECT_POS= 2;
 static const int MATCH_REGEX_ACTION_POS= 3;
 
+/* TODO: make these sys vars for the plugin */
+static const size_t max_lru_size= 4096;
+static const size_t max_cache_size= 4096;
+
 typedef enum 
 {
   POLICY_ACCEPT,
@@ -103,9 +107,25 @@ public:
 };
 
 typedef std::list<PolicyItem *> PolicyItemList;
-typedef boost::unordered_map<std::string, bool> CheckMap;
+typedef std::vector<std::string> LruList;
+typedef boost::unordered_map<std::string, bool> UnorderedCheckMap;
 
-static boost::mutex check_cache_mutex;
+class CheckMap : public UnorderedCheckMap
+{
+  LruList lru;
+  boost::mutex *lru_mutex;
+public:
+  void setLruMutex(boost::mutex *mutex)
+  {
+    lru_mutex= mutex;
+  }
+  boost::mutex *getLruMutex() const
+  {
+    return lru_mutex;
+  }
+  iterator find(std::string const&k);
+  bool &operator[](std::string const &k);
+};
 
 class CheckItem
 {
@@ -145,6 +165,8 @@ inline bool PolicyItem::isRestricted()
 }
 
 void clearPolicyItemList(PolicyItemList policies);
+
+static boost::mutex check_cache_mutex;
 
 class Policy :
   public drizzled::plugin::Authorization

@@ -23,6 +23,8 @@
 
 #include <config.h>
 
+#include <boost/unordered_set.hpp>
+
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/module/option_map.h>
 
@@ -170,6 +172,9 @@ Policy::~Policy()
   clearPolicyItemList(table_policies);
   clearPolicyItemList(process_policies);
   clearPolicyItemList(schema_policies);
+  delete table_check_cache->getLruMutex();
+  delete process_check_cache->getLruMutex();
+  delete schema_check_cache->getLruMutex();
   delete table_check_cache;
   delete process_check_cache;
   delete schema_check_cache;
@@ -252,6 +257,76 @@ CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, Chec
   }
 }
 
+CheckMap::iterator CheckMap::find(std::string const &k)
+{
+  /* tack on to LRU list */
+  boost::mutex::scoped_lock lock(*lru_mutex, boost::defer_lock);
+  lock.lock();
+  lru.push_back(k);
+  if (lru.size() > max_lru_size)
+  {
+    /* Fold all of the oldest entries into a single list at the front */
+    size_t size_halfway= lru.size() / 2;
+    LruList::iterator halfway= lru.begin();
+    halfway += size_halfway;
+    boost::unordered_set<std::string> uniqs;
+    uniqs.insert(lru.begin(), halfway);
+
+    /* If we can save space, drop the oldest half */
+    if (size_halfway < uniqs.size())
+    {
+      lru.erase(lru.begin(), halfway);
+
+      /* Re-add set elements to front */
+      lru.insert(lru.begin(), uniqs.begin(), uniqs.end());
+    }
+  }
+  lock.unlock();
+  return boost::unordered_map<std::string, bool>::find(k);
+}
+
+bool &CheckMap::operator[](std::string const &k)
+{
+  /* add our new hotness to the map */
+  bool &result= boost::unordered_map<std::string, bool>::operator[](k);
+  /* Now prune if necessary */
+  if (bucket_count() > max_cache_size)
+  {
+    /* Determine LRU key by running through the LRU list */
+    boost::unordered_set<std::string> found;
+
+    /* Must unfortunately lock the LRU list while we traverse it */
+    LruList::iterator x;
+    boost::mutex::scoped_lock lock(*lru_mutex, boost::defer_lock);
+    lock.lock();
+    for (x= lru.end(); x != lru.begin(); --x)
+    {
+      if (found.find(*x) == found.end())
+      {
+        /* Newly found key */
+        if (found.size() >= max_cache_size)
+        {
+          /* Since found is already as big as the cache can be, anything else
+             is LRU */
+          boost::unordered_map<std::string, bool>::erase(*x);
+        }
+        else
+        {
+          found.insert(*x);
+        }
+      }
+    }
+    if (bucket_count() > max_cache_size)
+    {
+      /* Still too big. Just delete the oldest item */
+      boost::unordered_map<std::string, bool>::erase(*(lru.begin()));
+    }
+    lru.empty();
+    lock.unlock();
+  }
+  return result;
+}
+
 void CheckItem::setCachedResult(bool result)
 {
   // TODO: make the mutex per-cache
@@ -264,10 +339,14 @@ void CheckItem::setCachedResult(bool result)
   if (*check_cache)
   {
     new_cache= new CheckMap(**check_cache);
+    new_cache->setLruMutex((*check_cache)->getLruMutex());
   }
   else
   {
     new_cache= new CheckMap();
+    /* Deleted in ~Policy */
+    boost::mutex *new_mutex= new boost::mutex;
+    new_cache->setLruMutex(new_mutex);
   }
 
   // Update it
