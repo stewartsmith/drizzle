@@ -179,7 +179,8 @@ bool QueueConsumer::getListOfCompletedTransactions(TrxIdList &list)
   Execute execute(*(_session.get()), true);
   
   string sql("SELECT `trx_id` FROM `sys_replication`.`queue`"
-             " WHERE `commit_order` IS NOT NULL ORDER BY `commit_order` ASC");
+             " WHERE `commit_order` IS NOT NULL AND `commit_order` > 0"
+             " ORDER BY `commit_order` ASC");
   
   /* ResultSet size must match column count */
   sql::ResultSet result_set(1);
