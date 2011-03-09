@@ -67,6 +67,7 @@
 #include <drizzled/sort_field.h>
 #include <drizzled/select_result.h>
 #include <drizzled/key.h>
+#include <drizzled/my_hash.h>
 
 using namespace std;
 
@@ -682,8 +683,8 @@ bool update_ref_and_keys(Session *session,
         save_pos++;
       }
       i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
-      set_dynamic(keyuse, (unsigned char*) &key_end, i);
-      keyuse->elements= i;
+      reinterpret_cast<optimizer::KeyUse*>(keyuse->buffer)[i] = key_end;
+      keyuse->set_size(i);
     }
   }
   return false;

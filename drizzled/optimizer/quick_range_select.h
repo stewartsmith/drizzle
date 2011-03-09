@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_OPTIMIZER_QUICK_RANGE_SELECT_H
 #define DRIZZLED_OPTIMIZER_QUICK_RANGE_SELECT_H
 
+#include <drizzled/dynamic_array.h>
 #include <drizzled/optimizer/range.h>
 
 #include <boost/dynamic_bitset.hpp>

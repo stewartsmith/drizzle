@@ -27,7 +27,6 @@
 
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/session.h>
 #include <drizzled/schema.h>

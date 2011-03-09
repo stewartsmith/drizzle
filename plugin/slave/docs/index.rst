@@ -28,9 +28,8 @@ Configuration
 -------------
 
 Most of the options that can be used to control the replication slave plugin
-can only be given in a configuration file. The only exception is the
-:option:`--slave.config-file` option which designates the location of this configuration
-file.
+can only be given in a configuration file. The only exceptions are the
+:option:`--slave.config-file` and :option:`--slave.max-commit-id` options.
 
 .. program:: drizzled
 
@@ -42,6 +41,20 @@ file.
    configuration file name, it is best to specify a full path to the
    file. The relative path used by plugins is within the :option:`--datadir`
    directory, so a full path is recommended.
+
+.. option:: --slave.max-commit-id=arg
+
+   Manually set the maximum commit ID the slave is assumed to have retrieved
+   from the master. This value will be used by the slave to determine where
+   to begin retrieving replication messages from the master transaction log.
+   This option can be used to provision a new slave machine by setting it to
+   the value output from the drizzledump client when used with the
+   --single-transaction option.
+
+   This value is not allowed to be set via the configuration file since
+   you would normally only set it once on initial slave startup. This
+   eliminates the possibility of forgetting to delete it from the configuration
+   file for subsequent slave restarts.
 
 The options below are read from the configuration file.
 

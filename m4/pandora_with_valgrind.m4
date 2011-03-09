@@ -3,7 +3,7 @@ dnl This file is free software; Brian Aker
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
-AC_DEFUN([WITH_VALGRIND],[
+AC_DEFUN([PANDORA_WITH_VALGRIND],[
 
   AC_ARG_WITH([valgrind],
     [AS_HELP_STRING([--with-valgrind],

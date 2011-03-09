@@ -41,7 +41,7 @@
 #include <drizzled/typelib.h>
 #include <drizzled/configmake.h>
 #include <drizzled/gettext.h>
-
+#include <drizzled/dynamic_array.h>
 #include <drizzled/cached_directory.h>
 
 #ifdef HAVE_SYS_STAT_H
@@ -448,13 +448,13 @@ int load_defaults(const char *conf_file, const char **groups,
     Here error contains <> 0 only if we have a fully specified conf_file
     or a forced default file
   */
-  if (!(ptr=(char*) alloc.alloc_root(sizeof(alloc)+ (args.elements + *argc +1) *sizeof(char*))))
+  if (!(ptr=(char*) alloc.alloc_root(sizeof(alloc)+ (args.size() + *argc +1) *sizeof(char*))))
     goto err;
   res= (char**) (ptr+sizeof(alloc));
 
   /* copy name + found arguments + command line arguments to new array */
   res[0]= argv[0][0];  /* Name MUST be set, even by embedded library */
-  memcpy(res+1, args.buffer, args.elements*sizeof(char*));
+  memcpy(res+1, args.buffer, args.size()*sizeof(char*));
   /* Skip --defaults-xxx options */
   (*argc)-= args_used;
   (*argv)+= args_used;
@@ -464,10 +464,10 @@ int load_defaults(const char *conf_file, const char **groups,
     This options must always be the last of the default options
   */
   if (*argc)
-    memcpy(res+1+args.elements, *argv + 1, (*argc-1)*sizeof(char*));
-  res[args.elements+ *argc]=0;			/* last null */
+    memcpy(res+1+args.size(), *argv + 1, (*argc-1)*sizeof(char*));
+  res[args.size()+ *argc]=0;			/* last null */
 
-  (*argc)+=int(args.elements);
+  (*argc)+=int(args.size());
   *argv= static_cast<char**>(res);
   *(memory::Root*) ptr= alloc;			/* Save alloc root for free */
   delete_dynamic(&args);

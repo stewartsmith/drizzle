@@ -3341,10 +3341,10 @@ and_all_keys(optimizer::RangeParameter *param,
   optimizer::SEL_ARG *next= NULL;
   ulong use_count=key1->use_count;
 
-  if (key1->elements != 1)
+  if (key1->size() != 1)
   {
-    key2->use_count+=key1->elements-1; //psergey: why we don't count that key1 has n-k-p?
-    key2->increment_use_count((int) key1->elements-1);
+    key2->use_count+=key1->size()-1; //psergey: why we don't count that key1 has n-k-p?
+    key2->increment_use_count((int) key1->size()-1);
   }
   if (key1->type == optimizer::SEL_ARG::MAYBE_KEY)
   {
@@ -4354,7 +4354,7 @@ range_seq_t optimizer::quick_range_seq_init(void *init_param, uint32_t, uint32_t
   quick->qr_traversal_ctx.first=  (optimizer::QuickRange**)quick->ranges.buffer;
   quick->qr_traversal_ctx.cur=    (optimizer::QuickRange**)quick->ranges.buffer;
   quick->qr_traversal_ctx.last=   quick->qr_traversal_ctx.cur +
-                                  quick->ranges.elements;
+                                  quick->ranges.size();
   return &quick->qr_traversal_ctx;
 }
 

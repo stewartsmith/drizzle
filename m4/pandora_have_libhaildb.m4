@@ -39,5 +39,5 @@ AC_DEFUN([PANDORA_HAVE_LIBHAILDB],[
 AC_DEFUN([PANDORA_REQUIRE_LIBHAILDB],[
   AC_REQUIRE([PANDORA_HAVE_LIBHAILDB])
   AS_IF([test "x${ac_cv_libhaildb}" = "xno"],
-      AC_MSG_ERROR([libhaildb 2.3.2 or later is required for ${PACKAGE}]))
+      PANDORA_MSG_ERROR([libhaildb 2.3.2 or later is required for ${PACKAGE}]))
 ])

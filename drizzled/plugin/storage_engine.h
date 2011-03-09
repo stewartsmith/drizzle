@@ -46,7 +46,7 @@ namespace drizzled
 class TableList;
 class Session;
 class Cursor;
-typedef struct st_hash HASH;
+struct HASH;
 
 class TableShare;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,

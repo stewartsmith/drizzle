@@ -14,6 +14,10 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 def setup(app):
-    app.add_description_unit('confval', 'confval',
-                             objname='configuration value',
-                             indextemplate='pair: %s; configuration value')
+    try:
+        app.add_description_unit('confval', 'confval',
+                                objname='configuration value',
+                                 indextemplate='pair: %s; configuration value')
+    except TypeError:
+        # We have to trap for this because of Sphinx 0.6.2
+        pass

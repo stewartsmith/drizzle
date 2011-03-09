@@ -27,6 +27,7 @@
 #include <drizzled/thr_lock.h>
 #include <drizzled/common.h>
 #include <drizzled/enum.h>
+#include <drizzled/dynamic_array.h>
 
 #include <assert.h>
 #include <fcntl.h>
