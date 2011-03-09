@@ -168,9 +168,6 @@ void clearPolicyItemList(PolicyItemList policies);
 
 static boost::mutex check_cache_mutex;
 
-uint64_t max_cache_buckets;
-uint64_t max_lru_length;
-
 class Policy :
   public drizzled::plugin::Authorization
 {

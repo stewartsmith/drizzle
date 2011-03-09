@@ -38,6 +38,9 @@ using namespace drizzled;
 namespace regex_policy
 {
 
+uint64_t max_cache_buckets= DEFAULT_MAX_CACHE_BUCKETS;
+uint64_t max_lru_length= DEFAULT_MAX_LRU_LENGTH;
+
 static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
@@ -262,9 +265,7 @@ CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, Chec
   : user(user_in), object(obj_in), has_cached_result(false), check_cache(check_cache_in)
 {
   CheckMap::iterator check_val;
-  std::stringstream keystream;
-  keystream << user << "_" << object;
-  key= keystream.str();
+  key= user + "_" + object;
 
   /* using RCU to only need to lock when updating the cache */
   if ((*check_cache) && (check_val= (*check_cache)->find(key)) != (*check_cache)->end())
@@ -278,8 +279,7 @@ CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, Chec
 CheckMap::iterator CheckMap::find(std::string const &k)
 {
   /* tack on to LRU list */
-  boost::mutex::scoped_lock lock(*lru_mutex, boost::defer_lock);
-  lock.lock();
+  boost::mutex::scoped_lock lock(*lru_mutex);
   lru.push_back(k);
   if (lru.size() > max_lru_length)
   {
@@ -359,8 +359,7 @@ void CheckItem::setCachedResult(bool result)
   // TODO: make the mutex per-cache
   CheckMap *old_cache;
   CheckMap *new_cache;
-  boost::mutex::scoped_lock lock(check_cache_mutex, boost::defer_lock);
-  lock.lock();
+  boost::mutex::scoped_lock lock(check_cache_mutex);
 
   // Copy the current one
   if (*check_cache)
