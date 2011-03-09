@@ -110,10 +110,11 @@ typedef std::list<PolicyItem *> PolicyItemList;
 typedef std::vector<std::string> LruList;
 typedef boost::unordered_map<std::string, bool> UnorderedCheckMap;
 
-class CheckMap : public UnorderedCheckMap
+class CheckMap
 {
   LruList lru;
   boost::mutex *lru_mutex;
+  UnorderedCheckMap map;
 public:
   void setLruMutex(boost::mutex *mutex)
   {
@@ -123,7 +124,11 @@ public:
   {
     return lru_mutex;
   }
-  iterator find(std::string const&k);
+  UnorderedCheckMap::iterator find(std::string const&k);
+  UnorderedCheckMap::const_iterator end() const
+  {
+    return map.end();
+  }
   bool &operator[](std::string const &k);
 };
 

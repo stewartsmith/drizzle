@@ -264,7 +264,7 @@ bool CheckItem::operator()(PolicyItem *p)
 CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, CheckMap **check_cache_in)
   : user(user_in), object(obj_in), has_cached_result(false), check_cache(check_cache_in)
 {
-  CheckMap::iterator check_val;
+  UnorderedCheckMap::iterator check_val;
   key= user + "_" + object;
 
   /* using RCU to only need to lock when updating the cache */
@@ -276,7 +276,7 @@ CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, Chec
   }
 }
 
-CheckMap::iterator CheckMap::find(std::string const &k)
+UnorderedCheckMap::iterator CheckMap::find(std::string const &k)
 {
   /* tack on to LRU list */
   boost::mutex::scoped_lock lock(*lru_mutex);
@@ -300,15 +300,15 @@ CheckMap::iterator CheckMap::find(std::string const &k)
     }
   }
   lock.unlock();
-  return boost::unordered_map<std::string, bool>::find(k);
+  return map.find(k);
 }
 
 bool &CheckMap::operator[](std::string const &k)
 {
   /* add our new hotness to the map */
-  bool &result= boost::unordered_map<std::string, bool>::operator[](k);
+  bool &result= map[k];
   /* Now prune if necessary */
-  if (bucket_count() > max_cache_buckets)
+  if (map.bucket_count() > max_cache_buckets)
   {
     /* Determine LRU key by running through the LRU list */
     boost::unordered_set<std::string> found;
@@ -325,7 +325,7 @@ bool &CheckMap::operator[](std::string const &k)
         {
           /* Since found is already as big as the cache can be, anything else
              is LRU */
-          boost::unordered_map<std::string, bool>::erase(*x);
+          map.erase(*x);
         }
         else
         {
@@ -333,19 +333,19 @@ bool &CheckMap::operator[](std::string const &k)
         }
       }
     }
-    if (bucket_count() > max_cache_buckets)
+    if (map.bucket_count() > max_cache_buckets)
     {
       /* Still too big. */
       if (lru.size())
       {
         /* Just delete the oldest item */
-        boost::unordered_map<std::string, bool>::erase(*(lru.begin()));
+        map.erase(*(lru.begin()));
       }
       else
       {
         /* Nothing to delete, warn */
         errmsg_printf(error::WARN, 
-            _("Unable to reduce size of cache below max buckets (current buckets=%ld)"), bucket_count());
+            _("Unable to reduce size of cache below max buckets (current buckets=%ld)"), map.bucket_count());
       }
     }
     lru.empty();
