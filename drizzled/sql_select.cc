@@ -202,9 +202,9 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
     true  an error occured
     false ok
 */
-bool fix_inner_refs(Session *session, 
-                    List<Item> &all_fields, 
-                    Select_Lex *select, 
+bool fix_inner_refs(Session *session,
+                    List<Item> &all_fields,
+                    Select_Lex *select,
                     Item **ref_pointer_array)
 {
   Item_outer_ref *ref;
@@ -356,16 +356,16 @@ void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
 */
 bool select_query(Session *session,
                   Item ***rref_pointer_array,
-                  TableList *tables, 
-                  uint32_t wild_num, 
+                  TableList *tables,
+                  uint32_t wild_num,
                   List<Item> &fields,
-                  COND *conds, 
-                  uint32_t og_num,  
+                  COND *conds,
+                  uint32_t og_num,
                   Order *order,
                   Order *group,
-                  Item *having, 
+                  Item *having,
                   uint64_t select_options,
-                  select_result *result, 
+                  select_result *result,
                   Select_Lex_Unit *unit,
                   Select_Lex *select_lex)
 {
@@ -545,7 +545,7 @@ bool update_ref_and_keys(Session *session,
                          DYNAMIC_ARRAY *keyuse,
                          JoinTable *join_tab,
                          uint32_t tables,
-                         COND *cond, 
+                         COND *cond,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
@@ -562,7 +562,7 @@ bool update_ref_and_keys(Session *session,
     except BETWEEN predicates that have 3 arguments and
     IN predicates.
     This any predicate if it's not BETWEEN/IN can be used
-    directly to fill at most 2 array elements, either of KeyField 
+    directly to fill at most 2 array elements, either of KeyField
     or SargableParam type. For a BETWEEN predicate 3 elements
     can be filled as this predicate is considered as
     saragable with respect to each of its argument.
@@ -662,7 +662,7 @@ bool update_ref_and_keys(Session *session,
           use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
         if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
         {
-          if (prev->getKeypart() + 1 < use->getKeypart() || 
+          if (prev->getKeypart() + 1 < use->getKeypart() ||
               ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
             continue;				/* remove */
         }
@@ -957,8 +957,8 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
     *e1= e2;
 }
 
-bool create_ref_for_key(Join *join, 
-                        JoinTable *j, 
+bool create_ref_for_key(Join *join,
+                        JoinTable *j,
                         optimizer::KeyUse *org_keyuse,
                         table_map used_tables)
 {
@@ -1634,7 +1634,7 @@ static bool check_simple_equality(Item *left_item,
     false   otherwise
 */
 static bool check_row_equality(Session *session,
-                               Item *left_row, 
+                               Item *left_row,
                                Item_row *right_row,
                                COND_EQUAL *cond_equal,
                                List<Item>* eq_list)
@@ -2402,7 +2402,7 @@ static void change_cond_ref_to_const(Session *session,
       args[1]= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
-	        and_father != cond && 
+	        and_father != cond &&
           ! left_item->const_item())
       {
         cond->marker=1;
@@ -2425,7 +2425,7 @@ static void change_cond_ref_to_const(Session *session,
       value= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
-          and_father != cond && 
+          and_father != cond &&
           ! right_item->const_item())
       {
         args[0]= args[1];                       // For easy check
@@ -2469,9 +2469,9 @@ Item *remove_additional_cond(Item* conds)
   return conds;
 }
 
-static void propagate_cond_constants(Session *session, 
-                                     list<COND_CMP>& save_list, 
-                                     COND *and_father, 
+static void propagate_cond_constants(Session *session,
+                                     list<COND_CMP>& save_list,
+                                     COND *and_father,
                                      COND *cond)
 {
   if (cond->type() == Item::COND_ITEM)
@@ -2730,7 +2730,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
       if (*cond_value == Item::COND_UNDEF)
 	      *cond_value= tmp_cond_value;
 
-      switch (tmp_cond_value) 
+      switch (tmp_cond_value)
       {
         case Item::COND_OK:			/* Not true or false */
           if (and_level || (*cond_value == Item::COND_FALSE))
@@ -2762,7 +2762,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
       return (COND*) NULL;
 
     if (((Item_cond*) cond)->argument_list()->size() == 1)
-    {						
+    {
       /* Argument list contains only one element, so reduce it so a single item, then remove list */
       item= &((Item_cond*) cond)->argument_list()->front();
       ((Item_cond*) cond)->argument_list()->clear();
@@ -2786,11 +2786,11 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     if (args[0]->type() == Item::FIELD_ITEM)
     {
       Field *field= ((Item_field*) args[0])->field;
-      if (field->flags & AUTO_INCREMENT_FLAG 
-          && ! field->getTable()->maybe_null 
+      if (field->flags & AUTO_INCREMENT_FLAG
+          && ! field->getTable()->maybe_null
           && session->options & OPTION_AUTO_IS_NULL
           && (
-            session->first_successful_insert_id_in_prev_stmt > 0 
+            session->first_successful_insert_id_in_prev_stmt > 0
             && session->substitute_null_with_insert_id
             )
           )
@@ -2817,8 +2817,8 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
 #ifdef NOTDEFINED
       /* fix to replace 'NULL' dates with '0' (shreeve@uci.edu) */
       else if (
-          ((field->type() == DRIZZLE_TYPE_DATE) || (field->type() == DRIZZLE_TYPE_DATETIME)) 
-          && (field->flags & NOT_NULL_FLAG) 
+          ((field->type() == DRIZZLE_TYPE_DATE) || (field->type() == DRIZZLE_TYPE_DATETIME))
+          && (field->flags & NOT_NULL_FLAG)
           && ! field->table->maybe_null)
       {
         COND *new_cond;
@@ -2857,7 +2857,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     return (COND *) NULL;
   }
   else if ((*cond_value= cond->eq_cmp_result()) != Item::COND_OK)
-  {						
+  {
     /* boolan compare function */
     Item *left_item=	((Item_func*) cond)->arguments()[0];
     Item *right_item= ((Item_func*) cond)->arguments()[1];
@@ -4063,7 +4063,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
         if (fix)
           new_cond->argument_list()->push_back(fix);
       }
-      switch (new_cond->argument_list()->size()) 
+      switch (new_cond->argument_list()->size())
       {
         case 0:
           return (COND*) 0;			// Always true
@@ -4166,7 +4166,7 @@ static Item *part_of_refkey(Table *table,Field *field)
       if (field->eq(key_part->field) &&
 	  !(key_part->key_part_flag & HA_PART_KEY_SEG) &&
           //If field can be NULL, we should not remove this predicate, as
-          //it may lead to non-rejection of NULL values. 
+          //it may lead to non-rejection of NULL values.
           !(field->real_maybe_null()))
       {
 	return table->reginfo.join_tab->ref.items[part];
@@ -4860,7 +4860,7 @@ check_reverse_order:
 
         /* ORDER BY range_key DESC */
         tmp= new optimizer::QuickSelectDescending((optimizer::QuickRangeSelect*)(select->quick),
-                                                  used_key_parts, 
+                                                  used_key_parts,
                                                   &error);
         if (! tmp || error)
         {
@@ -4980,8 +4980,8 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
         For impossible ranges (like when doing a lookup on NULL on a NOT NULL
         field, quick will contain an empty record set.
       */
-      if (! (select->quick= (optimizer::get_quick_select_for_ref(session, 
-                                                                 table, 
+      if (! (select->quick= (optimizer::get_quick_select_for_ref(session,
+                                                                 table,
                                                                  &tab->ref,
                                                                  tab->found_records))))
       {
@@ -5108,7 +5108,7 @@ err:
   @note
     Note that this will not work on tables with blobs!
 */
-int remove_dup_with_hash_index(Session *session, 
+int remove_dup_with_hash_index(Session *session,
                                Table *table,
                                uint32_t field_count,
                                Field **first_field,
@@ -5154,7 +5154,6 @@ int remove_dup_with_hash_index(Session *session,
   key_pos= &key_buffer[0];
   for (;;)
   {
-    unsigned char *org_key_pos;
     if (session->getKilled())
     {
       session->send_kill_message();
@@ -5177,7 +5176,7 @@ int remove_dup_with_hash_index(Session *session,
     }
 
     /* copy fields to key buffer */
-    org_key_pos= key_pos;
+    unsigned char* org_key_pos= key_pos;
     field_length= &field_lengths[0];
     for (Field **ptr= first_field ; *ptr ; ptr++)
     {
@@ -5337,8 +5336,8 @@ bool cp_buffer_from_ref(Session *session, table_reference_st *ref)
   @retval
     true  if error occurred
 */
-static bool find_order_in_list(Session *session, 
-                               Item **ref_pointer_array, 
+static bool find_order_in_list(Session *session,
+                               Item **ref_pointer_array,
                                TableList *tables,
                                Order *order,
                                List<Item> &fields,
@@ -5872,7 +5871,7 @@ bool setup_copy_fields(Session *session,
 	     !real_pos->with_sum_func)
     {						// Save for send fields
       pos= real_pos;
-      /* 
+      /*
         @todo In most cases this result will be sent to the user.
         This should be changed to use copy_int or copy_real depending
         on how the value is to be used: In some cases this may be an
