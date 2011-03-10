@@ -42,7 +42,7 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
+  statement::Show *select= static_cast<statement::Show *>(lex().statement);
 
   if (not select->getShowSchema().empty())
   {

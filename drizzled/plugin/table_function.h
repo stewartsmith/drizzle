@@ -39,6 +39,8 @@
 
 namespace drizzled {
 
+namespace statement { class Statement; }
+
 class LEX;
 
 namespace plugin
@@ -111,6 +113,7 @@ public:
 
   protected:
   	LEX& lex();
+  	statement::Statement& statement();
 
     drizzled::Session &getSession()
     {
