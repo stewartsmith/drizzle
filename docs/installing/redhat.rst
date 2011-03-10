@@ -3,7 +3,7 @@ Installing in RedHat and Fedora
 
 Using RPMs
 ----------
-We have a custom RedHat/Fedora repository at
+There is a custom RedHat/Fedora repository at
 http://rpm.drizzle.org/7-dev/ which includes everything needed
 to install or compile Drizzle on RedHat 5 and 6 as well as Fedora 13 - 14.
 
@@ -29,7 +29,7 @@ Install EPEL Repository on 64-bit Linux 5.X:
 
   sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
 
-To add the repository to your distribution you also need to create a /etc/yum.repos.d/drizzle.repo file with the following content:
+To add the Drizzle repository to your system you also need to create a /etc/yum.repos.d/drizzle.repo file with the following content:
 
 *RedHat*
 
@@ -67,15 +67,15 @@ To add the repository to your distribution you also need to create a /etc/yum.re
 
 **$releasever** uses the Fedora version (currently 13 or 14), and **$basearch** is the architecture (i386 or x86_64).
 
-You can then use the following shell command:
+You can then install Drizzle by running the following command:
 
 .. code-block:: bash
 
-   yum install drizzle7-server drizzle7-client
+   sudo yum install drizzle7-server drizzle7-client
 
 Compiling From Source
 ---------------------
-To compile from source you will need to add the repositories above and then install the following packages:
+To compile from source you will need to add the repositories described above, and then install the following packages:
 
  * bzr
  * boost-devel

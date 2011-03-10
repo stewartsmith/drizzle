@@ -15,11 +15,11 @@ Description
 
 :program:`drizzledump` is used for backing up and
 restoring logical backups of a Drizzle database, as well as for migrating
-from *MySQL*. 
+from a more traditional *MySQL* server. 
 
-When connecting to a Drizzle server it will do a plain dump of the server.  It
-will, however, automatically detect when it is connected to a *MySQL* server and
-will convert the tables and data into a Drizzle compatible format.
+When connecting to a Drizzle server it will do a plain dump of the server.
+When connecting to a MySQL server, it will automatically detect this, and
+will convert the dump of the tables and data into a Drizzle compatible format.
 
 Any binary data in tables will be converted into hexadecimal output so that it
 does not corrupt the dump file.
@@ -41,7 +41,7 @@ The :program:`drizzledump` tool has several available options:
 
 .. option:: --force, -f
 
-   Continue even if we get an sql-error.
+   Continue even if a sql-error is received.
 
 .. option:: --help, -?
 
@@ -96,6 +96,8 @@ The :program:`drizzledump` tool has several available options:
 	INSERT INTO `t1` VALUES (1,'hello');
 	INSERT INTO `t1` VALUES (2,'world');
 
+   This is useful for calculating and storing diffs of dump files.
+
 .. option:: --skip-dump-date
 
    Do not display the date/time at the end of the dump.
@@ -149,7 +151,7 @@ The :program:`drizzledump` tool has several available options:
 
 .. option:: --no-data, -d
 
-   Do not dump the data itself, used to dump the schemas only.
+   Do not dump the data itself. Used to dump the schemas only.
 
 .. option:: --replace
 

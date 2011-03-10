@@ -2,7 +2,7 @@ Drizzle Admin Commandline Client
 ================================
 
 The :program:`drizzleadmin` command line client is the primary program for
-connecting to and manipulating a Drizzle database with an administrative user.
+connecting to and manipulating a Drizzle database with an administrative user rights.
 
 The :program:`drizzleadmin` tool can only connect using the 'root' user and
 only on IP addresses defined by drizzle-protocol.admin-ip-addresses or 
