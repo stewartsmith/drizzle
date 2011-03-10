@@ -346,7 +346,7 @@ cleanup:
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();    
+    session->main_da.reset_diagnostics_area();
     session->my_ok((ha_rows) session->rowCount());
   }
   session->status_var.deleted_row_count+= deleted;
@@ -415,7 +415,7 @@ bool truncate(Session& session, TableList *table_list)
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  init_select(session.getLex());
+  init_select(&session.lex());
   error= delete_query(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
   /*

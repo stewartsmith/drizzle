@@ -225,7 +225,7 @@ void LEX::start(Session *arg)
 
 void lex_start(Session *session)
 {
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
 
   lex->session= lex->unit.session= session;
 
@@ -672,7 +672,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   unsigned int length;
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
   const CHARSET_INFO * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;

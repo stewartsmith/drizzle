@@ -63,7 +63,7 @@ void plugin::TableFunction::getNames(const std::string &arg,
 
 LEX& plugin::TableFunction::Generator::lex()
 {
-	return *getSession().getLex();
+	return getSession().lex();
 }
 
 statement::Statement& plugin::TableFunction::Generator::statement()

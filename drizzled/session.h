@@ -217,15 +217,6 @@ public:
   uint32_t id;
 
 public:
-  const LEX* getLex() const
-  {
-    return &main_lex;
-  }
-  LEX* getLex()
-  {
-    return &main_lex;
-  }
-
   const LEX& lex() const
   {
     return main_lex;

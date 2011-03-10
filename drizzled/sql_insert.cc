@@ -1041,7 +1041,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 
 bool insert_select_prepare(Session *session)
 {
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
   Select_Lex *select_lex= &lex->select_lex;
 
   /*

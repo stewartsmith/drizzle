@@ -539,7 +539,7 @@ static int execute_command(Session *session)
 }
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
-  LEX	*lex= session->getLex();
+  LEX	*lex= &session->lex();
   select_result *result=lex->result;
   bool res= false;
   /* assign global limit variable if limit is not given */
@@ -618,7 +618,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
 
 bool my_yyoverflow(short **yyss, ParserType **yyvs, ulong *yystacksize)
 {
-  LEX	*lex= current_session->getLex();
+  LEX	*lex= &current_session->lex();
   ulong old_info=0;
   if ((uint32_t) *yystacksize >= MY_YACC_MAX)
     return 1;
@@ -751,7 +751,7 @@ void create_select_for_variable(Session *session, const char *var_name)
   char buff[MAX_SYS_VAR_LENGTH*2+4+8];
   char *end= buff;
 
-  lex= session->getLex();
+  lex= &session->lex();
   init_select(lex);
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
@@ -796,7 +796,7 @@ void parse(Session *session, const char *inBuf, uint32_t length)
   {
     return;
   }
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
   Lex_input_stream lip(session, inBuf, length);
   bool err= parse_sql(session, &lip);
   if (!err)
@@ -853,7 +853,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
                        List<String> *interval_list, const CHARSET_INFO * const cs)
 {
   register CreateField *new_field;
-  LEX  *lex= session->getLex();
+  LEX  *lex= &session->lex();
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
@@ -961,7 +961,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
 
   if (!table)
     return NULL;				// End of memory
@@ -1331,7 +1331,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   fake_select_lex->include_standalone(this,
                                       (Select_Lex_Node**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
-  fake_select_lex->parent_lex= session_arg->getLex(); /* Used in init_query. */
+  fake_select_lex->parent_lex= &session_arg->lex(); /* Used in init_query. */
   fake_select_lex->make_empty_select();
   fake_select_lex->linkage= GLOBAL_OPTIONS_TYPE;
   fake_select_lex->select_limit= 0;

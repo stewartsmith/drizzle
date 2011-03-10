@@ -262,7 +262,7 @@ void statement::Statement::set_command(enum_sql_command v)
 
 LEX& statement::Statement::lex()
 {
-	return *session().getLex();
+	return session().lex();
 }
 
 session::Transactions& statement::Statement::transaction()
@@ -1945,10 +1945,7 @@ bool Session::openTablesLock(TableList *tables)
     close_tables_for_reopen(&tables);
   }
 
-  if ((handle_derived(getLex(), &derived_prepare) || (handle_derived(getLex(), &derived_filling))))
-    return true;
-
-  return false;
+  return handle_derived(&lex(), &derived_prepare) || handle_derived(&lex(), &derived_filling);
 }
 
 /*
