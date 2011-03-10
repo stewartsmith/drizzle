@@ -1046,8 +1046,7 @@ public:
 
   void set_time_after_lock()
   {
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
-    utime_after_lock= (mytime - _epoch).total_microseconds();
+    utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - _epoch).total_microseconds();
   }
 
   void set_end_timer()
@@ -1066,28 +1065,13 @@ public:
    */
   type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
   {
-    type::Time::epoch_t t_mark;
-
-    if (actual)
-    {
-      boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
-      t_mark= (mytime - _epoch).total_microseconds();
-    }
-    else
-    {
-      t_mark= (_end_timer - _epoch).total_microseconds();
-    }
-
-    return t_mark;
+    return ((actual ? boost::posix_time::microsec_clock::universal_time() : _end_timer) - _epoch).total_microseconds();
   }
 
   // We may need to set user on this
   type::Time::epoch_t getCurrentTimestampEpoch() const
   {
-    if (not _user_time.is_not_a_date_time())
-      return (_user_time - _epoch).total_seconds();
-
-    return (_start_timer - _epoch).total_seconds();
+	 	return ((_user_time.is_not_a_date_time() ? _start_timer : _user_time) - _epoch).total_seconds();
   }
 
   type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
