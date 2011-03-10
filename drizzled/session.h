@@ -226,9 +226,19 @@ public:
     return &main_lex;
   }
 
+  const LEX& lex() const
+  {
+    return main_lex;
+  }
+
+  LEX& lex()
+  {
+    return main_lex;
+  }
+
   enum_sql_command getSqlCommand() const
   {
-    return getLex()->sql_command;
+    return lex().sql_command;
   }
 
   /** query associated with this statement */
@@ -1496,22 +1506,22 @@ public:
 
   inline bool add_item_to_list(Item *item)
   {
-    return getLex()->current_select->add_item_to_list(this, item);
+    return lex().current_select->add_item_to_list(this, item);
   }
 
   inline bool add_value_to_list(Item *value)
   {
-    return getLex()->value_list.push_back(value);
+    return lex().value_list.push_back(value);
   }
 
   inline bool add_order_to_list(Item *item, bool asc)
   {
-    return getLex()->current_select->add_order_to_list(this, item, asc);
+    return lex().current_select->add_order_to_list(this, item, asc);
   }
 
   inline bool add_group_to_list(Item *item, bool asc)
   {
-    return getLex()->current_select->add_group_to_list(this, item, asc);
+    return lex().current_select->add_group_to_list(this, item, asc);
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);

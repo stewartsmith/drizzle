@@ -1925,7 +1925,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
   }
 
   err= ib_cursor_first(cursor);
-  if (current_session->getLex()->sql_command == SQLCOM_CREATE_TABLE
+  if (current_session->lex().sql_command == SQLCOM_CREATE_TABLE
       && err == DB_MISSING_HISTORY)
   {
     /* See https://bugs.launchpad.net/drizzle/+bug/556978

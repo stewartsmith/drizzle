@@ -88,7 +88,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
   }
   else
   {						// Part field list
-    Select_Lex *select_lex= &session->getLex()->select_lex;
+    Select_Lex *select_lex= &session->lex().select_lex;
     Name_resolution_context *context= &select_lex->context;
     Name_resolution_context_state ctx_state;
     int res;
@@ -283,7 +283,7 @@ bool insert_query(Session *session,TableList *table_list,
     if (table != NULL)
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
-      free_underlaid_joins(session, &session->getLex()->select_lex);
+      free_underlaid_joins(session, &session->lex().select_lex);
     session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
@@ -292,7 +292,7 @@ bool insert_query(Session *session,TableList *table_list,
   /* mysql_prepare_insert set table_list->table if it was not set */
   table= table_list->table;
 
-  context= &session->getLex()->select_lex.context;
+  context= &session->lex().select_lex.context;
   /*
     These three asserts test the hypothesis that the resetting of the name
     resolution context below is not necessary at all since the list of local
@@ -322,7 +322,7 @@ bool insert_query(Session *session,TableList *table_list,
       if (table != NULL)
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
-        free_underlaid_joins(session, &session->getLex()->select_lex);
+        free_underlaid_joins(session, &session->lex().select_lex);
       session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
 
@@ -333,7 +333,7 @@ bool insert_query(Session *session,TableList *table_list,
       if (table != NULL)
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
-        free_underlaid_joins(session, &session->getLex()->select_lex);
+        free_underlaid_joins(session, &session->lex().select_lex);
       session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
       return true;
@@ -425,7 +425,7 @@ bool insert_query(Session *session,TableList *table_list,
     session->row_count++;
   }
 
-  free_underlaid_joins(session, &session->getLex()->select_lex);
+  free_underlaid_joins(session, &session->lex().select_lex);
   joins_freed= true;
 
   /*
@@ -485,7 +485,7 @@ bool insert_query(Session *session,TableList *table_list,
     if (table != NULL)
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
-      free_underlaid_joins(session, &session->getLex()->select_lex);
+      free_underlaid_joins(session, &session->lex().select_lex);
     session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
@@ -548,10 +548,10 @@ static bool prepare_insert_check_table(Session *session, TableList *table_list,
      than INSERT.
   */
 
-  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
-                                    &session->getLex()->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->lex().select_lex.context,
+                                    &session->lex().select_lex.top_join_list,
                                     table_list,
-                                    &session->getLex()->select_lex.leaf_tables,
+                                    &session->lex().select_lex.leaf_tables,
                                     select_insert))
     return(true);
 
@@ -598,7 +598,7 @@ bool prepare_insert(Session *session, TableList *table_list,
                           bool select_insert,
                           bool check_fields, bool abort_on_warning)
 {
-  Select_Lex *select_lex= &session->getLex()->select_lex;
+  Select_Lex *select_lex= &session->lex().select_lex;
   Name_resolution_context *context= &select_lex->context;
   Name_resolution_context_state ctx_state;
   bool insert_into_view= (0 != 0);
@@ -965,8 +965,8 @@ gok_or_after_err:
 err:
   info->last_errno= error;
   /* current_select is NULL if this is a delayed insert */
-  if (session->getLex()->current_select)
-    session->getLex()->current_select->no_error= 0;        // Give error
+  if (session->lex().current_select)
+    session->lex().current_select->no_error= 0;        // Give error
   table->print_error(error,MYF(0));
 
 before_err:
@@ -1090,7 +1090,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
   int res;
   table_map map= 0;
-  Select_Lex *lex_current_select_save= session->getLex()->current_select;
+  Select_Lex *lex_current_select_save= session->lex().current_select;
 
 
   unit= u;
@@ -1100,7 +1100,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     select, LEX::current_select should point to the first select while
     we are fixing fields from insert list.
   */
-  session->getLex()->current_select= &session->getLex()->select_lex;
+  session->lex().current_select= &session->lex().select_lex;
   res= check_insert_fields(session, table_list, *fields, values,
                            !insert_into_view, &map) ||
        setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0);
@@ -1116,7 +1116,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   if (info.handle_duplicates == DUP_UPDATE && !res)
   {
-    Name_resolution_context *context= &session->getLex()->select_lex.context;
+    Name_resolution_context *context= &session->lex().select_lex.context;
     Name_resolution_context_state ctx_state;
 
     /* Save the state of the current name resolution context. */
@@ -1134,8 +1134,8 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
       We use next_name_resolution_table descructively, so check it first (views?)
     */
     assert (!table_list->next_name_resolution_table);
-    if (session->getLex()->select_lex.group_list.elements == 0 and
-        not session->getLex()->select_lex.with_sum_func)
+    if (session->lex().select_lex.group_list.elements == 0 and
+        not session->lex().select_lex.with_sum_func)
       /*
         We must make a single context out of the two separate name resolution contexts :
         the INSERT table and the tables in the SELECT part of INSERT ... SELECT.
@@ -1160,7 +1160,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
       while ((item= li++))
       {
         item->transform(&Item::update_value_transformer,
-                        (unsigned char*)session->getLex()->current_select);
+                        (unsigned char*)session->lex().current_select);
       }
     }
 
@@ -1168,7 +1168,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     ctx_state.restore_state(context, table_list);
   }
 
-  session->getLex()->current_select= lex_current_select_save;
+  session->lex().current_select= lex_current_select_save;
   if (res)
     return(1);
   /*
@@ -1184,10 +1184,10 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
   if (unique_table(table_list, table_list->next_global))
   {
     /* Using same table for INSERT and SELECT */
-    session->getLex()->current_select->options|= OPTION_BUFFER_RESULT;
-    session->getLex()->current_select->join->select_options|= OPTION_BUFFER_RESULT;
+    session->lex().current_select->options|= OPTION_BUFFER_RESULT;
+    session->lex().current_select->join->select_options|= OPTION_BUFFER_RESULT;
   }
-  else if (not (session->getLex()->current_select->options & OPTION_BUFFER_RESULT))
+  else if (not (session->lex().current_select->options & OPTION_BUFFER_RESULT))
   {
     /*
       We must not yet prepare the result table if it is the same as one of the
@@ -1240,7 +1240,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
 int select_insert::prepare2(void)
 {
-  if (session->getLex()->current_select->options & OPTION_BUFFER_RESULT)
+  if (session->lex().current_select->options & OPTION_BUFFER_RESULT)
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
 
   return(0);

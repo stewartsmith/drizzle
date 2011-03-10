@@ -210,7 +210,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   cuted_fields= sent_row_count= row_count= 0L;
   // Must be reset to handle error with Session's created for init of mysqld
-  getLex()->current_select= 0;
+  lex().current_select= 0;
   memset(&variables, 0, sizeof(variables));
   scoreboard_index= -1;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
@@ -257,7 +257,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
 
 void statement::Statement::set_command(enum_sql_command v)
 {
-	session().getLex()->sql_command= v;
+	session().lex().sql_command= v;
 }
 
 LEX& statement::Statement::lex()
@@ -688,7 +688,7 @@ bool Session::executeStatement()
     indicator of uninitialized lex => normal flow of errors handling
     (see my_message_sql)
   */
-  getLex()->current_select= 0;
+  lex().current_select= 0;
   clear_error();
   main_da.reset_diagnostics_area();
 
@@ -928,7 +928,7 @@ int Session::send_explain_fields(select_result *result)
   item->maybe_null=1;
   field_list.push_back(item= new Item_return_int("rows", 10,
                                                  DRIZZLE_TYPE_LONGLONG));
-  if (getLex()->describe & DESCRIBE_EXTENDED)
+  if (lex().describe & DESCRIBE_EXTENDED)
   {
     field_list.push_back(item= new Item_float("filtered", 0.1234, 2, 4));
     item->maybe_null=1;
@@ -1551,7 +1551,7 @@ bool select_exists_subselect::send_data(List<Item> &)
 void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
-  getLex()->end();
+  lex().end();
   query_cache_key= ""; // reset the cache key
   resetResultsetMessage();
 }
@@ -1918,9 +1918,9 @@ void Session::close_tables_for_reopen(TableList **tables)
     If table list consists only from tables from prelocking set, table list
     for new attempt should be empty, so we have to update list's root pointer.
   */
-  if (getLex()->first_not_own_table() == *tables)
+  if (lex().first_not_own_table() == *tables)
     *tables= 0;
-  getLex()->chop_off_not_own_tables();
+  lex().chop_off_not_own_tables();
   for (TableList *tmp= *tables; tmp; tmp= tmp->next_global)
     tmp->table= 0;
   close_thread_tables();

@@ -2080,11 +2080,11 @@ void LEX::link_first_table_back(TableList *first, bool link_to_local)
 void LEX::cleanup_after_one_table_open()
 {
   /*
-    session->getLex()->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear session->getLex()->derived_tables flag
+    session->lex().derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->lex().derived_tables flag
     to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to session->getLex()->select_lex, because we
+    NOTE: all units will be connected to session->lex().select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)

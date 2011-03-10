@@ -640,7 +640,7 @@ size_t Table::max_row_length(const unsigned char *data)
 void Table::setVariableWidth(void)
 {
   assert(in_use);
-  if (in_use && in_use->getLex()->sql_command == SQLCOM_CREATE_TABLE)
+  if (in_use && in_use->lex().sql_command == SQLCOM_CREATE_TABLE)
   {
     getMutableShare()->setVariableWidth();
     return;
@@ -1018,8 +1018,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
   if (blob_count || using_unique_constraint || 
-      (session->getLex()->select_lex.options & SELECT_BIG_RESULT) ||
-      (session->getLex()->current_select->olap == ROLLUP_TYPE) ||
+      (session->lex().select_lex.options & SELECT_BIG_RESULT) ||
+      (session->lex().current_select->olap == ROLLUP_TYPE) ||
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     table->getMutableShare()->storage_engine= myisam_engine;

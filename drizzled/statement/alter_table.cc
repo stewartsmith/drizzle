@@ -1506,8 +1506,8 @@ copy_data_between_tables(Session *session,
         tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
         error= 1;
 
-        if (session->getLex()->select_lex.setup_ref_array(session, order_num) ||
-            setup_order(session, session->getLex()->select_lex.ref_pointer_array,
+        if (session->lex().select_lex.setup_ref_array(session, order_num) ||
+            setup_order(session, session->lex().select_lex.ref_pointer_array,
                         &tables, fields, all_fields, order) ||
             !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
             (from->sort.found_records= filesort.run(from, sortorder, length,
