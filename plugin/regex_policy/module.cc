@@ -341,7 +341,8 @@ bool &CheckMap::operator[](std::string const &k)
       {
         /* Nothing to delete, warn */
         errmsg_printf(error::WARN, 
-            _("Unable to reduce size of cache below max buckets (current buckets=%ld)"), map.bucket_count());
+            _("Unable to reduce size of cache below max buckets (current buckets=%" PRIu64 ")"), 
+            static_cast<uint64_t>(map.bucket_count()));
       }
     }
     lru.empty();
