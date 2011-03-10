@@ -149,7 +149,6 @@ class Session::impl_c
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
-  xa_id(0),
   query(new std::string),
   _schema(new std::string),
   client(client_arg),
@@ -169,8 +168,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   ha_data(plugin::num_trx_monitored_objects),
   query_id(0),
   warn_query_id(0),
-  concurrent_execute_allowed(true),
-  arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
@@ -194,14 +191,17 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   is_fatal_error(false),
   transaction_rollback_request(false),
   is_fatal_sub_stmt_error(0),
-  tablespace_op(false),
   derived_tables_processing(false),
   m_lip(NULL),
   cached_table(0),
   transaction_message(NULL),
   statement_message(NULL),
   session_event_observers(NULL),
+  arg_of_last_insert_id_function(false),
   _catalog(catalog_arg),
+  xa_id(0),
+  concurrent_execute_allowed(true),
+  tablespace_op(false),
   use_usage(false)
 {
   client->setSession(this);

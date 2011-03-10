@@ -194,8 +194,6 @@ public:
     return mem_root;
   }
 
-  uint64_t xa_id;
-
   uint64_t getXaId()
   {
     return xa_id;
@@ -517,12 +515,8 @@ public:
   Field *dup_field;
   sigset_t signals;
 
-  // As of right now we do not allow a concurrent execute to launch itself
-private:
-  bool concurrent_execute_allowed;
-
 public:
-
+  // As of right now we do not allow a concurrent execute to launch itself
   void setConcurrentExecute(bool arg)
   {
     concurrent_execute_allowed= arg;
@@ -532,9 +526,6 @@ public:
   {
     return concurrent_execute_allowed;
   }
-
-  /* Tells if LAST_INSERT_ID(#) was called for the current statement */
-  bool arg_of_last_insert_id_function;
 
   /*
     ALL OVER THIS FILE, "insert_id" means "*automatically generated* value for
@@ -764,10 +755,6 @@ public:
   /** for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool substitute_null_with_insert_id;
   bool cleanup_done;
-
-private:
-  bool abort_on_warning;
-  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
 
 public:
   bool got_warning; /**< Set on call to push_warning() */
@@ -1425,7 +1412,6 @@ public:
 
 
  private:
-  const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */
   Internal_error_handler *m_internal_handler;
@@ -1576,11 +1562,10 @@ public:
   }
 
   template<class T>
-  bool setProperty(const std::string &arg, T *value)
+  void setProperty(const std::string &arg, T *value)
   {
     life_properties.setProperty(arg, value);
-
-    return true;
+    // return true;
   }
 
   /**
@@ -1623,6 +1608,7 @@ public:
     return *_catalog;
   }
 
+  bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
 	class impl_c;
 
@@ -1637,7 +1623,11 @@ private:
   boost::scoped_ptr<impl_c> impl_;
   catalog::Instance::shared_ptr _catalog;
 
-  // This lives throughout the life of Session
+  uint64_t xa_id;
+  const char *proc_info;
+  bool abort_on_warning;
+  bool concurrent_execute_allowed;
+  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
   session::PropertyMap life_properties;
   std::vector<table::Singular *> temporary_shares;
