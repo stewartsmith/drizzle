@@ -42,12 +42,12 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(lex().statement);
+  statement::Show& select= static_cast<statement::Show&>(statement());
 
-  if (not select->getShowSchema().empty())
+  if (not select.getShowSchema().empty())
   {
-    schema_name.append(select->getShowTable());
-    identifier::Schema identifier(select->getShowSchema());
+    schema_name.append(select.getShowTable());
+    identifier::Schema identifier(select.getShowSchema());
 
     if (not plugin::Authorization::isAuthorized(*getSession().user(),
                                                 identifier, false))
@@ -58,7 +58,7 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
 
     schema_message= plugin::StorageEngine::getSchemaDefinition(identifier);
 
-    if_not_exists= select->getShowExists();
+    if_not_exists= select.getShowExists();
   }
 }
 

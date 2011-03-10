@@ -42,7 +42,7 @@ public:
 
     bool isShowQuery()
     {
-      return lex().statement->isShow();
+      return statement().isShow();
     }
   };
 

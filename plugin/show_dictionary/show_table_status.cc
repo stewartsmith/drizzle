@@ -49,9 +49,9 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(lex().statement);
+  statement::Show& select= static_cast<statement::Show&>(statement());
 
-  schema_predicate.append(select->getShowSchema());
+  schema_predicate.append(select.getShowSchema());
 
   util::string::const_shared_ptr schema(getSession().schema());
   if (schema_predicate.empty() and schema)
@@ -138,7 +138,7 @@ bool ShowTableStatus::Generator::populate()
 {
   if (not next())
     return false;
-  
+
   fill();
 
   return true;

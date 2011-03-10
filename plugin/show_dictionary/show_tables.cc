@@ -39,11 +39,11 @@ ShowTables::Generator::Generator(drizzled::Field **arg) :
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(lex().statement);
+  statement::Show& select= static_cast<statement::Show&>(statement());
 
-  if (not select->getShowSchema().empty())
+  if (not select.getShowSchema().empty())
   {
-    schema_name.append(select->getShowSchema());
+    schema_name.append(select.getShowSchema());
     assert(not schema_name.empty());
   }
 }
@@ -94,7 +94,7 @@ bool ShowTables::Generator::populate()
 {
   if (not next())
     return false;
-  
+
   fill();
 
   return true;

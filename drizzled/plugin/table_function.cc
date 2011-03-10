@@ -66,6 +66,11 @@ LEX& plugin::TableFunction::Generator::lex()
 	return *getSession().getLex();
 }
 
+statement::Statement& plugin::TableFunction::Generator::statement()
+{
+	return *lex().statement;
+}
+
 plugin::TableFunction::Generator *plugin::TableFunction::generator(Field **arg)
 {
   return new Generator(arg);
