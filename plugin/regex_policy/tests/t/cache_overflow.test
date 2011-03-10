@@ -57,3 +57,14 @@ SELECT * from user5.t1;
 SELECT * from user6.t1;
 --error ER_DBACCESS_DENIED_ERROR
 SELECT * from user7.t1;
+
+connection default;
+drop schema user0;
+drop schema user1;
+drop schema user2;
+drop schema user3;
+drop schema user4;
+drop schema user5;
+drop schema user6;
+drop schema user7;
+disconnect should_succeed;

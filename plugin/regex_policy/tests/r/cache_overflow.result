@@ -63,3 +63,11 @@ SELECT * from user6.t1;
 ERROR 42000: Access denied for user 'user1' to schema 'user6'
 SELECT * from user7.t1;
 ERROR 42000: Access denied for user 'user1' to schema 'user7'
+drop schema user0;
+drop schema user1;
+drop schema user2;
+drop schema user3;
+drop schema user4;
+drop schema user5;
+drop schema user6;
+drop schema user7;
