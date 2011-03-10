@@ -9,7 +9,7 @@ Overview
 Drizzle can draw its configuration from a number of sources, including the
 command line, configuration files and environment variables.
 
-Support is planned for pluggable configuration souces.
+Support is planned for pluggable configuration sources.
 
 ----------------
 Loading Sequence

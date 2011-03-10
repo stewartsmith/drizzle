@@ -1,14 +1,28 @@
 Replication Slave
-=================
+==================
+
+This page contains the configuration and implementation details for Drizzle replication.
+
+See this page for a user-level example: 
+
+.. toctree::
+   :maxdepth: 2
+
+   user_example
 
 Description
 -----------
 
-The replication slave plugin provides a native implementation of replication
-between two Drizzle processes.
+Replication enables data from one Drizzle database server (the master) to be replicated to one or more Drizzle database servers (the slaves). It provides a native implementation of replication between two Drizzle processes. Depending on your configuration, you can replicate all databases, selected databases, or selected tables within a database.
 
-This plugin requires a master that is running with the InnoDB replication log
-enabled.
+Drizzle’s replication system is entirely new and different from MySQL. Replication events are stored using Google Protocol Buffer messages in an InnoDB table. These events are read by the slave, stored locally, and applied. The advantage of the Google Protocol Buffer messages is a script or program can be put together in pretty much any language in minutes, and read the replication log. In other words, replication plugins are easy to implement, which enable developers to entirely customize their replication system.
+
+This plugin requires a master that is running with the InnoDB replication log enabled. The slave plugin allows a server to replicate from another server that is using the innodb-trx log. It is a very simple setup: 
+master options:  –innodb.replication-log=true slave options: –plugin-add=slave –slave.config-file=XYZ
+
+The config file may contain the following options in option=value format: 
+master-host – hostname/ip of the master host master-port – port used by the master server master-user – username master-pass – password max-reconnects – max # of reconnect attempts if the master disappears seconds-between-reconnects – how long to wait between reconnect attempts
+
 
 Configuration
 -------------

@@ -15,11 +15,19 @@ distribution.
 
    The EPEL repository is not required in Fedora.
 
-To add that repository, run the following command:
+To add the EPEL repository, run one of the following commands (choose from the i386(32-bit) or x86_64(64-bit) EPEL repository package).
+
+Install EPEL Repository on 32-bit Linux 5.X:
 
 .. code-block:: bash
 
   sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+
+Install EPEL Repository on 64-bit Linux 5.X:
+
+.. code-block:: bash
+
+  sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
 
 To add the repository to your distribution you also need to create a /etc/yum.repos.d/drizzle.repo file with the following content:
 
@@ -39,6 +47,8 @@ To add the repository to your distribution you also need to create a /etc/yum.re
    enabled=1
    gpgcheck=0
 
+**$releasever** uses RHEL 5 or RHEL 6, and **$basearch** is the architecture (i386 or x86_64).
+
 *Fedora*
 
 .. code-block:: ini
@@ -54,6 +64,8 @@ To add the repository to your distribution you also need to create a /etc/yum.re
    baseurl=http://rpm.drizzle.org/7-dev/fedora/$releasever/SRPMS
    enabled=1
    gpgcheck=0
+
+**$releasever** uses the Fedora version (currently 13 or 14), and **$basearch** is the architecture (i386 or x86_64).
 
 You can then use the following shell command:
 
