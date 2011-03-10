@@ -205,17 +205,22 @@ try_again:
 	
 	
 	if (!path->exists()) { // Create the transaction log.	
-		CSFile *tr_file = path->createFile(CSFile::CREATE);
+		// Preallocate the log space and initialize it.
+		MSDiskTransRec *recs;
+		off64_t offset = sizeof(MSDiskTransHeadRec);
+		uint64_t num_records = DFLT_TRANS_LOG_LIST_SIZE;
+		size_t size;
+		CSFile *tr_file;
+		
+		recs = (MSDiskTransRec *) cs_calloc(1024 * sizeof(MSDiskTransRec));
+		push_ptr_(recs);
+		
+		tr_file = path->createFile(CSFile::CREATE);
 		push_(tr_file);
 		
 		log_size = DFLT_TRANS_LOG_LIST_SIZE * sizeof(MSDiskTransRec) + sizeof(MSDiskTransHeadRec);
 
-		// Preallocate the log space and initialize it.
-                MSDiskTransRec *recs= (MSDiskTransRec*)calloc(1024, sizeof(MSDiskTransRec));
-		off64_t offset = sizeof(MSDiskTransHeadRec);
-		uint64_t num_records = DFLT_TRANS_LOG_LIST_SIZE;
-		size_t size;
-
+		
 		while (num_records) {
 			if (num_records < 1024)
 				size = num_records;
@@ -225,8 +230,6 @@ try_again:
 			offset += size * sizeof(MSDiskTransRec);
 			num_records -= size;
 		}
-
-                free(recs);
 
 		trans->txn_MaxRecords = DFLT_TRANS_LOG_LIST_SIZE;
 		trans->txn_ReqestedMaxRecords = DFLT_TRANS_LOG_LIST_SIZE;
@@ -260,6 +263,9 @@ try_again:
 		trans->txn_Checksum = CS_GET_DISK_1(trans->txn_DiskHeader.th_checksum_1);
 		
 		trans->txn_TransCache = MSTransCache::newMSTransCache(DFLT_TRANS_CACHE_SIZE);
+		
+		release_(recs);
+
 	} else { // The transaction log already exists
 		bool overflow = false, recovered = false;
 		

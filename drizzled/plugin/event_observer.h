@@ -208,14 +208,14 @@ public:
    * interested in this database. 
  */
   static void registerSchemaEvents(Session &session, const std::string &db); 
-  static void deregisterSchemaEvents(Session &session, const std::string &db); 
+  static void deregisterSchemaEvents(EventObserverList *observers); 
 
   /*==========================================================*/
   /* Called from drizzle to register all events for all event plugins 
    * interested in this session. 
  */
   static void registerSessionEvents(Session &session); 
-  static void deregisterSessionEvents(Session &session); 
+  static void deregisterSessionEvents(EventObserverList *observers); 
 
 
   /*==========================================================*/

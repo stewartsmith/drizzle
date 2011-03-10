@@ -472,8 +472,7 @@ bool MSBackup::doWork()
 		char				*transferBuffer;
 		CloudKeyRec			cloud_key;
 
-                transferBuffer= (char*)malloc(MS_BACKUP_BUFFER_SIZE);
-
+	
 		bu_BackupRunning = true;
 		bu_State = BU_RUNNING; 
 
@@ -487,6 +486,9 @@ bool MSBackup::doWork()
 		}
 	*/
 	
+		transferBuffer = (char*) cs_malloc(MS_BACKUP_BUFFER_SIZE);
+		push_ptr_(transferBuffer);
+		
 		new_(head, CSStringBuffer(100));
 		push_(head);
 
@@ -681,12 +683,12 @@ bool MSBackup::doWork()
 		}
 				
 		release_(head);
+		release_(transferBuffer);
 		if (myMustQuit)
 			bu_State = BU_TERMINATED; 
 		else
 			bu_State = BU_COMPLETED; 
-
-                free(transferBuffer);
+			
 	}	
 	
 	catch_(a) {
