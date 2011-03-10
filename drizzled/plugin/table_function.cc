@@ -46,7 +46,7 @@ void plugin::TableFunction::init()
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
 {
   assert(tool != NULL);
-  table_functions.addFunction(tool); 
+  table_functions.addFunction(tool);
   return false;
 }
 
@@ -59,6 +59,11 @@ void plugin::TableFunction::getNames(const std::string &arg,
                                      std::set<std::string> &set_of_names)
 {
   table_functions.getNames(arg, set_of_names);
+}
+
+LEX& plugin::TableFunction::Generator::lex()
+{
+	return *getSession().getLex();
 }
 
 plugin::TableFunction::Generator *plugin::TableFunction::generator(Field **arg)
@@ -96,7 +101,7 @@ void plugin::TableFunction::add_field(const char *label,
   field_options->set_default_null(is_default_null);
   field_constraints->set_is_notnull(not is_default_null);
 
-  switch (type) 
+  switch (type)
   {
   case TableFunction::STRING:
     {
