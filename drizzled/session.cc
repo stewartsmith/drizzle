@@ -194,11 +194,11 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   derived_tables_processing(false),
   m_lip(NULL),
   cached_table(0),
+  arg_of_last_insert_id_function(false),
+  _catalog(catalog_arg),
   transaction_message(NULL),
   statement_message(NULL),
   session_event_observers(NULL),
-  arg_of_last_insert_id_function(false),
-  _catalog(catalog_arg),
   xa_id(0),
   concurrent_execute_allowed(true),
   tablespace_op(false),
@@ -272,6 +272,26 @@ LEX& statement::Statement::lex()
 session::Transactions& statement::Statement::transaction()
 {
 	return session().transaction;
+}
+
+bool Session::add_item_to_list(Item *item)
+{
+  return lex().current_select->add_item_to_list(this, item);
+}
+
+bool Session::add_value_to_list(Item *value)
+{
+  return lex().value_list.push_back(value);
+}
+
+bool Session::add_order_to_list(Item *item, bool asc)
+{
+  return lex().current_select->add_order_to_list(this, item, asc);
+}
+
+bool Session::add_group_to_list(Item *item, bool asc)
+{
+  return lex().current_select->add_group_to_list(this, item, asc);
 }
 
 void Session::free_items()

@@ -1371,19 +1371,6 @@ public:
     resultset= NULL;
   }
 
-private:
-  /** Pointers to memory managed by the ReplicationServices component */
-  message::Transaction *transaction_message;
-  message::Statement *statement_message;
-  /* Pointer to the current resultset of Select query */
-  message::Resultset *resultset;
-  plugin::EventObserverList *session_event_observers;
-
-  /* Schema observers are mapped to databases. */
-  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
-  schema_event_observers_t schema_event_observers;
-
-
 public:
   plugin::EventObserverList *getSessionObservers()
   {
@@ -1469,27 +1456,11 @@ public:
     main_da.set_eof_status(this);
   }
 
-  /* Some inline functions for more speed */
+  bool add_item_to_list(Item *item);
+  bool add_value_to_list(Item *value);
+  bool add_order_to_list(Item *item, bool asc);
+  bool add_group_to_list(Item *item, bool asc);
 
-  inline bool add_item_to_list(Item *item)
-  {
-    return lex().current_select->add_item_to_list(this, item);
-  }
-
-  inline bool add_value_to_list(Item *value)
-  {
-    return lex().value_list.push_back(value);
-  }
-
-  inline bool add_order_to_list(Item *item, bool asc)
-  {
-    return lex().current_select->add_order_to_list(this, item, asc);
-  }
-
-  inline bool add_group_to_list(Item *item, bool asc)
-  {
-    return lex().current_select->add_group_to_list(this, item, asc);
-  }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
   user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
@@ -1565,7 +1536,6 @@ public:
   void setProperty(const std::string &arg, T *value)
   {
     life_properties.setProperty(arg, value);
-    // return true;
   }
 
   /**
@@ -1622,6 +1592,17 @@ private:
   session::TableMessages _table_message_cache;
   boost::scoped_ptr<impl_c> impl_;
   catalog::Instance::shared_ptr _catalog;
+
+  /** Pointers to memory managed by the ReplicationServices component */
+  message::Transaction *transaction_message;
+  message::Statement *statement_message;
+  /* Pointer to the current resultset of Select query */
+  message::Resultset *resultset;
+  plugin::EventObserverList *session_event_observers;
+
+  /* Schema observers are mapped to databases. */
+  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
+  schema_event_observers_t schema_event_observers;
 
   uint64_t xa_id;
   const char *proc_info;

@@ -247,7 +247,7 @@ public:
       UNCACHEABLE_PREPARE
   */
   std::bitset<8> uncacheable;
-  enum sub_select_type linkage;
+  sub_select_type linkage;
   bool no_table_names_allowed; /* used for global order by */
   bool no_error; /* suppress error message (convert it to warnings) */
 
@@ -470,7 +470,7 @@ public:
   Item::cond_result having_value;
   /* point on lex in which it was created, used in view subquery detection */
   LEX *parent_lex;
-  enum olap_type olap;
+  olap_type olap;
   /* FROM clause - points to the beginning of the TableList::next_local list. */
   SQL_LIST table_list;
   SQL_LIST group_list; /* GROUP BY clause. */
@@ -488,7 +488,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  enum drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
+  drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
@@ -663,7 +663,7 @@ public:
   */
   void cleanup_all_joins(bool full);
 
-  void set_index_hint_type(enum index_hint_type type, index_clause_map clause);
+  void set_index_hint_type(index_hint_type type, index_clause_map clause);
 
   /*
    Add a index hint to the tagged list of hints. The type and clause of the
@@ -685,7 +685,7 @@ public:
 
 private:
   /* current index hint kind. used in filling up index_hints */
-  enum index_hint_type current_index_hint_type;
+  index_hint_type current_index_hint_type;
   index_clause_map current_index_hint_clause;
   /* a list of USE/FORCE/IGNORE INDEX */
   List<Index_hint> *index_hints;
