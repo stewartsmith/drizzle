@@ -63,7 +63,7 @@ bool statement::Flush::reloadCache()
   */
   if (flush_tables || flush_tables_with_read_lock)
   {
-    if (getSession() && flush_tables_with_read_lock)
+    if (&session() && flush_tables_with_read_lock)
     {
       if (session().lockGlobalReadLock())
       {
@@ -84,15 +84,15 @@ bool statement::Flush::reloadCache()
     }
   }
 
-  if (getSession() && flush_status)
+  if (&session() && flush_status)
   {
     session().refresh_status();
   }
 
-  if (getSession() && flush_global_status)
+  if (&session() && flush_global_status)
   {
     memset(&current_global_counters, 0, sizeof(current_global_counters));
-    plugin::Logging::resetStats(getSession());
+    plugin::Logging::resetStats(&session());
     session().refresh_status();
   }
 

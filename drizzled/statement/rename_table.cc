@@ -117,7 +117,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   if (not error)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rawStatement(*getSession(),
+    transaction_services.rawStatement(session(),
                                       *session().getQueryString(),
                                       *session().schema());        
     session().my_ok();
@@ -160,22 +160,22 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   identifier::Table old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
-  if (not (table_message= plugin::StorageEngine::getTableMessage(*getSession(), old_identifier)))
+  if (not (table_message= plugin::StorageEngine::getTableMessage(session(), old_identifier)))
   {
     my_error(ER_TABLE_UNKNOWN, old_identifier);
     return true;
   }
 
-  engine= plugin::StorageEngine::findByName(*getSession(), table_message->engine().name());
+  engine= plugin::StorageEngine::findByName(session(), table_message->engine().name());
 
   identifier::Table new_identifier(new_db, new_alias, message::Table::STANDARD);
-  if (plugin::StorageEngine::doesTableExist(*getSession(), new_identifier))
+  if (plugin::StorageEngine::doesTableExist(session(), new_identifier))
   {
     my_error(ER_TABLE_EXISTS_ERROR, new_identifier);
     return 1; // This can't be skipped
   }
 
-  rc= rename_table(*getSession(), engine, old_identifier, new_identifier);
+  rc= rename_table(session(), engine, old_identifier, new_identifier);
   if (rc && ! skip_error)
     return true;
 

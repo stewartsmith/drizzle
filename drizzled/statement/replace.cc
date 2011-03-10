@@ -33,7 +33,7 @@ bool statement::Replace::execute()
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
 
-  if (insert_precheck(getSession(), all_tables))
+  if (insert_precheck(&session(), all_tables))
   {
     return true;
   }
@@ -43,7 +43,7 @@ bool statement::Replace::execute()
     return true;
   }
 
-  bool res= insert_query(getSession(), 
+  bool res= insert_query(&session(), 
                          all_tables, 
                          lex().field_list, 
                          lex().many_values,

@@ -37,7 +37,7 @@ bool statement::DropIndex::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(session(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
@@ -71,7 +71,7 @@ bool statement::DropIndex::execute()
 
     create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
-    res= alter_table(getSession(), 
+    res= alter_table(&session(), 
                      identifier,
                      identifier,
                      &create_info, 
@@ -90,7 +90,7 @@ bool statement::DropIndex::execute()
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getShare()->getPath());
       create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
-      res= alter_table(getSession(), 
+      res= alter_table(&session(), 
                        identifier,
                        identifier,
                        &create_info, 

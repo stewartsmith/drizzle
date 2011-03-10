@@ -92,7 +92,7 @@ bool statement::CreateTable::execute()
   if (is_engine_set)
   {
     create_info().db_type= 
-      plugin::StorageEngine::findByName(*getSession(), createTableMessage().engine().name());
+      plugin::StorageEngine::findByName(session(), createTableMessage().engine().name());
 
     if (create_info().db_type == NULL)
     {
@@ -233,7 +233,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
             CREATE from SELECT give its Select_Lex for SELECT,
             and item_list belong to SELECT
           */
-          res= handle_select(getSession(), &lex(), result, 0);
+          res= handle_select(&session(), &lex(), result, 0);
           delete result;
         }
       }
@@ -247,7 +247,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
       /* regular create */
       if (is_create_table_like)
       {
-        res= create_like_table(getSession(), 
+        res= create_like_table(&session(), 
                                new_table_identifier,
                                identifier::Table(select_tables->getSchemaName(),
                                                  select_tables->getTableName()),
@@ -265,7 +265,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
           *field= alter_info.alter_proto.added_field(x);
         }
 
-        res= create_table(getSession(), 
+        res= create_table(&session(), 
                           new_table_identifier,
                           &create_info(),
                           createTableMessage(),

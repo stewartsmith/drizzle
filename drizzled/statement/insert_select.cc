@@ -40,7 +40,7 @@ bool statement::InsertSelect::execute()
   bool res= false;
   bool need_start_waiting= false;
 
-  if (insert_precheck(getSession(), all_tables))
+  if (insert_precheck(&session(), all_tables))
   {
     return true;
   }
@@ -63,7 +63,7 @@ bool statement::InsertSelect::execute()
     select_lex->table_list.first= (unsigned char*) second_table;
     select_lex->context.table_list=
       select_lex->context.first_name_resolution_table= second_table;
-    res= insert_select_prepare(getSession());
+    res= insert_select_prepare(&session());
     if (! res && (sel_result= new select_insert(first_table,
                                                 first_table->table,
                                                 &lex().field_list,
@@ -72,7 +72,7 @@ bool statement::InsertSelect::execute()
                                                 lex().duplicates,
                                                 lex().ignore)))
     {
-      res= handle_select(getSession(), 
+      res= handle_select(&session(), 
                          &lex(), 
                          sel_result, 
                          OPTION_SETUP_TABLES_DONE);

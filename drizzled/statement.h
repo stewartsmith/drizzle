@@ -68,11 +68,6 @@ public:
     return false;
   }
 
-  Session* getSession() const
-  {
-    return &session();
-  }
-
   Session& session() const
   {
     return _session;

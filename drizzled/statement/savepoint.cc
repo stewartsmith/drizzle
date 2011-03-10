@@ -81,13 +81,13 @@ bool statement::Savepoint::execute()
     if (iter != savepoints.end())
     {
       NamedSavepoint &sv= *iter;
-      (void) transaction_services.releaseSavepoint(*getSession(), sv);
+      (void) transaction_services.releaseSavepoint(session(), sv);
       savepoints.erase(iter);
     }
     
     NamedSavepoint newsv(lex().ident.str, lex().ident.length);
 
-    if (transaction_services.setSavepoint(*getSession(), newsv))
+    if (transaction_services.setSavepoint(session(), newsv))
     {
       return true;
     }

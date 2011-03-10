@@ -121,7 +121,7 @@ bool statement::Execute::execute_shell()
       return false;
     }
 
-    drizzled::Execute executer(*getSession(), should_wait);
+    drizzled::Execute executer(session(), should_wait);
     executer.run(to_execute.str, to_execute.length);
   }
   else // Non-concurrent run.
@@ -219,7 +219,7 @@ bool statement::Execute::execute_shell()
     }
     else
     {
-      parse(getSession(), to_execute.str, to_execute.length);
+      parse(&session(), to_execute.str, to_execute.length);
     }
   }
 

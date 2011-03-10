@@ -47,7 +47,7 @@ bool statement::SetOption::execute()
   {
     return true;
   }
-  bool res= sql_set_variables(getSession(), lex().var_list);
+  bool res= sql_set_variables(&session(), lex().var_list);
   if (res)
   {
     /*

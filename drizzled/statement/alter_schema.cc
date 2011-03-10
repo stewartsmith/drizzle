@@ -43,7 +43,7 @@ bool statement::AlterSchema::execute()
 
   identifier::Schema schema_identifier(string(db->str, db->length));
 
-  if (not schema::check(*getSession(), schema_identifier))
+  if (not schema::check(session(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
@@ -83,7 +83,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= schema::alter(*getSession(), schema_message, *old_definition);
+  bool res= schema::alter(session(), schema_message, *old_definition);
 
   return not res;
 }

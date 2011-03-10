@@ -36,7 +36,7 @@ bool statement::Truncate::execute()
     return true;
   }
 
-  return truncate(*getSession(), first_table);
+  return truncate(session(), first_table);
 }
 
 } /* namespace drizzled */

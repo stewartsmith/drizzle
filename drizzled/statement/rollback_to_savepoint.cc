@@ -88,11 +88,11 @@ bool statement::RollbackToSavepoint::execute()
                      first_savepoint_name.size()) == 0)
     {
       /* Found the named savepoint we want to rollback to */
-      (void) transaction_services.rollbackToSavepoint(*getSession(), first_savepoint);
+      (void) transaction_services.rollbackToSavepoint(session(), first_savepoint);
 
       if (transaction().all.hasModifiedNonTransData())
       {
-        push_warning(getSession(), 
+        push_warning(&session(), 
                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      ER_WARNING_NOT_COMPLETE_ROLLBACK,
                      ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
@@ -126,7 +126,7 @@ bool statement::RollbackToSavepoint::execute()
       /* Found the named savepoint we want to rollback to */
       found= true;
 
-      (void) transaction_services.rollbackToSavepoint(*getSession(), sv);
+      (void) transaction_services.rollbackToSavepoint(session(), sv);
     }
     if (found)
     {
@@ -143,7 +143,7 @@ bool statement::RollbackToSavepoint::execute()
   {
     if (transaction().all.hasModifiedNonTransData())
     {
-      push_warning(getSession(), 
+      push_warning(&session(), 
                    DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    ER_WARNING_NOT_COMPLETE_ROLLBACK,
                    ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));

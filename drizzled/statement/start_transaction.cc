@@ -30,7 +30,7 @@ bool statement::StartTransaction::execute()
 {
   if (session().inTransaction())
   {
-    push_warning_printf(getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRANSACTION_ALREADY_STARTED,
                         ER(ER_TRANSACTION_ALREADY_STARTED));
     return false;

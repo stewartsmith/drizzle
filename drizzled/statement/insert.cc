@@ -35,7 +35,7 @@ bool statement::Insert::execute()
   assert(first_table == all_tables && first_table != 0);
   bool need_start_waiting= false;
 
-  if (insert_precheck(getSession(), all_tables))
+  if (insert_precheck(&session(), all_tables))
   {
     return true;
   }
@@ -47,7 +47,7 @@ bool statement::Insert::execute()
 
   DRIZZLE_INSERT_START(session().getQueryString()->c_str());
 
-  bool res= insert_query(getSession(),
+  bool res= insert_query(&session(),
                          all_tables,
                          lex().field_list,
                          lex().many_values,

@@ -99,7 +99,7 @@ bool statement::AlterTable::execute()
   if (is_engine_set)
   {
     create_info().db_type=
-      plugin::StorageEngine::findByName(*getSession(), createTableMessage().engine().name());
+      plugin::StorageEngine::findByName(session(), createTableMessage().engine().name());
 
     if (create_info().db_type == NULL)
     {
@@ -116,7 +116,7 @@ bool statement::AlterTable::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(session(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
@@ -125,7 +125,7 @@ bool statement::AlterTable::execute()
     if (not  create_info().db_type)
     {
       create_info().db_type=
-        plugin::StorageEngine::findByName(*getSession(), original_table_message->engine().name());
+        plugin::StorageEngine::findByName(session(), original_table_message->engine().name());
 
       if (not create_info().db_type)
       {
@@ -154,7 +154,7 @@ bool statement::AlterTable::execute()
     identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
                                    lex().name.str ? lex().name.str : first_table->getTableName());
 
-    res= alter_table(getSession(),
+    res= alter_table(&session(),
                      identifier,
                      new_identifier,
                      &create_info(),
@@ -177,7 +177,7 @@ bool statement::AlterTable::execute()
                                        lex().name.str ? lex().name.str : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
-      res= alter_table(getSession(),
+      res= alter_table(&session(),
                        identifier,
                        new_identifier,
                        &create_info(),
