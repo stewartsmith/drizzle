@@ -93,7 +93,7 @@ bool statement::DropTable::execute()
 
   if (not drop_temporary)
   {
-    if (getSession()->inTransaction())
+    if (session().inTransaction())
     {
       my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
       return true;

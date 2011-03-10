@@ -37,7 +37,7 @@ bool statement::RenameTable::execute()
   assert(first_table == all_tables && first_table != 0);
   TableList *table;
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -71,19 +71,19 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     Avoid problems with a rename on a table that we have locked or
     if the user is trying to to do this in a transcation context
   */
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
     return true;
   }
 
-  if (getSession()->wait_if_global_read_lock(false, true))
+  if (session().wait_if_global_read_lock(false, true))
     return true;
 
   {
     boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Rename table lock for exclusive access */
 
-    if (not getSession()->lock_table_names_exclusively(table_list))
+    if (not session().lock_table_names_exclusively(table_list))
     {
       error= false;
       ren_table= renameTablesInList(table_list, false);
@@ -118,12 +118,12 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     transaction_services.rawStatement(*getSession(),
-                                      *getSession()->getQueryString(),
-                                      *getSession()->schema());        
-    getSession()->my_ok();
+                                      *session().getQueryString(),
+                                      *session().schema());        
+    session().my_ok();
   }
 
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return error;
 }

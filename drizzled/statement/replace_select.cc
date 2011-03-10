@@ -48,12 +48,12 @@ bool statement::ReplaceSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (getSession()->wait_if_global_read_lock(false, true))
+  if (session().wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
-  if (! (res= getSession()->openTablesLock(all_tables)))
+  if (! (res= session().openTablesLock(all_tables)))
   {
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
@@ -80,7 +80,7 @@ bool statement::ReplaceSelect::execute()
          the unlock procedure.
        */
       if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT &&
-          getSession()->lock)
+          session().lock)
       {
         /* INSERT ... SELECT should invalidate only the very first table */
         TableList *save_table= first_table->next_local;
@@ -97,7 +97,7 @@ bool statement::ReplaceSelect::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }

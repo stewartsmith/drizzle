@@ -56,7 +56,7 @@ bool statement::DropIndex::execute()
   HA_CREATE_INFO create_info;
 
   assert(first_table == all_tables && first_table != 0);
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -84,7 +84,7 @@ bool statement::DropIndex::execute()
   else
   {
     identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= getSession()->find_temporary_table(catch22);
+    Table *table= session().find_temporary_table(catch22);
     assert(table);
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getShare()->getPath());

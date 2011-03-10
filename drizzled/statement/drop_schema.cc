@@ -36,7 +36,7 @@ namespace drizzled
 
 bool statement::DropSchema::execute()
 {
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -51,7 +51,7 @@ bool statement::DropSchema::execute()
     return false;
   }
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
         ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 

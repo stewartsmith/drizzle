@@ -43,7 +43,7 @@ bool statement::SetOption::execute()
 {
   TableList *all_tables= lex().query_tables;
 
-  if (getSession()->openTablesLock(all_tables))
+  if (session().openTablesLock(all_tables))
   {
     return true;
   }
@@ -55,14 +55,14 @@ bool statement::SetOption::execute()
      * Send something semi-generic here since we don't know which
      * assignment in the list caused the error.
      */
-    if (! getSession()->is_error())
+    if (! session().is_error())
     {
       my_error(ER_WRONG_ARGUMENTS, MYF(0), "SET");
     }
   }
   else
   {
-    getSession()->my_ok();
+    session().my_ok();
   }
 
   return res;

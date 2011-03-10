@@ -41,10 +41,10 @@ bool statement::RollbackToSavepoint::execute()
    * starts the transaction. Table affecting statements do this work in
    * lockTables() by calling startStatement().
    */
-  if ( (getSession()->options & OPTION_NOT_AUTOCOMMIT) &&
+  if ( (session().options & OPTION_NOT_AUTOCOMMIT) &&
        (transaction().all.getResourceContexts().empty() == true) )
   {
-    if (getSession()->startTransaction() == false)
+    if (session().startTransaction() == false)
     {
       return false;
     }
@@ -97,7 +97,7 @@ bool statement::RollbackToSavepoint::execute()
                      ER_WARNING_NOT_COMPLETE_ROLLBACK,
                      ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
       }
-      getSession()->my_ok();
+      session().my_ok();
       return false;
     }
   }
@@ -150,7 +150,7 @@ bool statement::RollbackToSavepoint::execute()
     }
     /* Store new savepoints list */
     transaction().savepoints= new_savepoints;
-    getSession()->my_ok();
+    session().my_ok();
   }
   else
   {

@@ -38,7 +38,7 @@ bool statement::Replace::execute()
     return true;
   }
 
-  if (getSession()->wait_if_global_read_lock(false, true))
+  if (session().wait_if_global_read_lock(false, true))
   {
     return true;
   }
@@ -55,7 +55,7 @@ bool statement::Replace::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }
