@@ -72,6 +72,7 @@ class testCase:
             self.server_requirements=[self.server_options]
         else:
             self.server_requirements = self.server_options
+            self.server_options= self.server_options[0][0]
         self.comment = comment
         self.master_sh = master_sh
         self.disable = disable
@@ -280,7 +281,9 @@ class testManager(test_management.testManager):
         # should ever be used in conjunction and I am biased towards .cnf ; )
         cnf_files = ['t/master.cnf']
         for cnf_file in cnf_files:
-            found_options = self.process_cnf_file(os.path.join(suite_dir,cnf_file))
+            cnf_flag, returned_options = self.process_cnf_file(os.path.join(suite_dir,cnf_file))
+            if cnf_flag: # we found a proper file and need to override
+                found_options = returned_options
         return found_options
 
     def process_disabled_test_file(self, testdir):
@@ -367,11 +370,13 @@ class testManager(test_management.testManager):
         """
 
         server_requirements = []
+        cnf_flag = 0
         if os.path.exists(cnf_file_path):
+            cnf_flag = 1
             config_reader = RawConfigParser()
             config_reader.read(cnf_file_path)
             server_requirements = self.process_server_reqs(config_reader.get('test_servers','servers'))
-        return server_requirements
+        return ( cnf_flag, server_requirements )
 
     def process_server_reqs(self,data_string):
         """ We read in the list of lists as a string, so we need to 

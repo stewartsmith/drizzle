@@ -555,7 +555,6 @@ sub collect_one_test_case($$$$$$$$$) {
   if (-e $master_cnf_file || -e $test_cnf_file)
   {
     $tinfo->{'skip'}= 1;
-    return;
   }
 
   # ----------------------------------------------------------------------
