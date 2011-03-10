@@ -306,13 +306,6 @@ public:
   {
   }
 
-  void *next()
-  {
-    prev=el;
-    current= *el;
-    el= &current->next;
-    return current->info;
-  }
   void *replace(base_list &new_list)
   {
     void *ret_value=current->info;
@@ -393,7 +386,7 @@ template <class T> class List_iterator : public base_list_iterator
 public:
   List_iterator(List<T>& a, list_node** b) : base_list_iterator(a, b) {};
   List_iterator() {};
-  T *operator++(int) { return (T*) base_list_iterator::next(); }
+  T *operator++(int) { prev=el; current= *el; el= &current->next; return (T*)current->info; }
   T *replace(T *a)   { T* old = (T*) current->info; current->info= a; return old; }
   void replace(List<T> &a) { base_list_iterator::replace(a); }
   T** ref() { return (T**) &current->info; }
@@ -401,6 +394,11 @@ public:
   T& operator*()
   {
     return *(T*)current->info;
+  }
+
+  T* operator->()
+  {
+    return (T*)current->info;
   }
 };
 

@@ -18,15 +18,12 @@
  */
 
 #include <config.h>
-#include <string.h>
+#include <cstring>
 
-#include <drizzled/my_hash.h>
 #include <drizzled/xid.h>
 #include <drizzled/charset.h>
 #include <drizzled/global_charset_info.h>
 #include <drizzled/charset_info.h>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/mutex.hpp>
 
 namespace drizzled {
 

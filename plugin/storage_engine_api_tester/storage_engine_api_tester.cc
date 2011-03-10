@@ -501,7 +501,7 @@ public:
   int doCreateTable(Session&,
                     Table&,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table& create_proto);
+                    const drizzled::message::Table& create_proto);
 
   int doDropTable(Session&, const identifier::Table &identifier);
 
@@ -599,7 +599,7 @@ void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &cd,
 int SEAPITester::doCreateTable(Session& session,
                                Table& table,
                                const drizzled::identifier::Table &identifier,
-                               drizzled::message::Table& create_proto)
+                               const drizzled::message::Table& create_proto)
 {
   ENGINE_NEW_STATE("::doCreateTable()");
 

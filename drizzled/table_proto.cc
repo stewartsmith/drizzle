@@ -45,6 +45,7 @@ using namespace std;
 
 namespace drizzled {
 
+static
 bool fill_table_proto(identifier::Table::const_reference identifier,
                       message::Table &table_proto,
                       List<CreateField> &create_fields,

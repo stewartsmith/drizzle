@@ -36,7 +36,6 @@
 
 #include <drizzled/atomics.h>
 #include <drizzled/enum.h>
-#include <drizzled/session.h>
 #include <drizzled/plugin/logging.h>
 
 #include <string>

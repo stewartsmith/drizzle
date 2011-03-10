@@ -461,7 +461,7 @@ public:
   UNIV_INTERN int doCreateTable(Session &session,
                                 Table &form,
                                 const identifier::Table &identifier,
-                                message::Table&);
+                                const message::Table&);
   UNIV_INTERN int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
   UNIV_INTERN int doDropTable(Session &session, const identifier::Table &identifier);
 
@@ -6019,11 +6019,11 @@ Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
 InnobaseEngine::doCreateTable(
-/*================*/
-  Session         &session, /*!< in: Session */
-  Table&    form,   /*!< in: information on table columns and indexes */
-        const identifier::Table &identifier,
-        message::Table& create_proto)
+			      /*================*/
+			      Session         &session, /*!< in: Session */
+			      Table&    form,   /*!< in: information on table columns and indexes */
+			      const identifier::Table &identifier,
+			      const message::Table& create_proto)
 {
   int   error;
   dict_table_t* innobase_table;

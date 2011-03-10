@@ -68,7 +68,6 @@
 #include <drizzled/select_dump.h>
 #include <drizzled/select_dumpvar.h>
 #include <drizzled/select_export.h>
-#include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/statement.h>

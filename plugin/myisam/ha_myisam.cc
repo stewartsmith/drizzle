@@ -120,7 +120,7 @@ public:
   int doCreateTable(Session&,
                     Table& table_arg,
                     const identifier::Table &identifier,
-                    message::Table&);
+                    const message::Table&);
 
   int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 
@@ -1358,7 +1358,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
                                 const identifier::Table &identifier,
-                                message::Table& create_proto)
+                                const message::Table& create_proto)
 {
   int error;
   uint32_t create_flags= 0, create_records;
