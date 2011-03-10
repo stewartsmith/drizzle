@@ -154,12 +154,12 @@ bool buildScemas(Session *session)
 
   if (session->lex().current_select->where)
   {
-    if (prepare_new_schema_table(session, session->getLex(), "SCHEMAS"))
+    if (prepare_new_schema_table(session, session->lex(), "SCHEMAS"))
       return false;
   }
   else
   {
-    if (prepare_new_schema_table(session, session->getLex(), "SHOW_SCHEMAS"))
+    if (prepare_new_schema_table(session, session->lex(), "SHOW_SCHEMAS"))
       return false;
   }
 
@@ -216,7 +216,7 @@ bool buildTables(Session *session, const char *ident)
     column_name.append(")");
   }
 
-  if (prepare_new_schema_table(session, session->getLex(), "SHOW_TABLES"))
+  if (prepare_new_schema_table(session, session->lex(), "SHOW_TABLES"))
     return false;
 
   Item_field *my_field= new Item_field(&session->lex().current_select->context, NULL, NULL, "TABLE_NAME");
@@ -239,7 +239,7 @@ bool buildTemporaryTables(Session *session)
   session->lex().statement= new statement::Show(session);
 
 
-  if (prepare_new_schema_table(session, session->getLex(), "SHOW_TEMPORARY_TABLES"))
+  if (prepare_new_schema_table(session, session->lex(), "SHOW_TEMPORARY_TABLES"))
     return false;
 
   if (session->add_item_to_list( new Item_field(&session->lex().current_select->context, NULL, NULL, "*")))
@@ -281,12 +281,10 @@ bool buildTableStatus(Session *session, const char *ident)
     return false;
   }
 
-  if (prepare_new_schema_table(session, session->getLex(), "SHOW_TABLE_STATUS"))
+  if (prepare_new_schema_table(session, session->lex(), "SHOW_TABLE_STATUS"))
     return false;
 
-  if (session->add_item_to_list( new Item_field(&session->lex().current_select->
-                                                  context,
-                                                  NULL, NULL, "*")))
+  if (session->add_item_to_list( new Item_field(&session->lex().current_select->context, NULL, NULL, "*")))
     return false;
 
   (session->lex().current_select->with_wild)++;
@@ -338,7 +336,7 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
     }
   }
 
-  if (prepare_new_schema_table(session, session->getLex(), "SHOW_COLUMNS"))
+  if (prepare_new_schema_table(session, session->lex(), "SHOW_COLUMNS"))
     return false;
 
   if (session->add_item_to_list( new Item_field(&session->lex().current_select->context, NULL, NULL, "*")))
@@ -404,7 +402,7 @@ bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_i
     }
   }
 
-  if (prepare_new_schema_table(session, session->getLex(), "SHOW_INDEXES"))
+  if (prepare_new_schema_table(session, session->lex(), "SHOW_INDEXES"))
     return false;
 
   if (session->add_item_to_list( new Item_field(&session->lex().current_select->context, NULL, NULL, "*")))
@@ -422,12 +420,12 @@ bool buildStatus(Session *session, const drizzled::sql_var_t is_global)
 
   if (is_global == OPT_GLOBAL)
   {
-    if (prepare_new_schema_table(session, session->getLex(), "GLOBAL_STATUS"))
+    if (prepare_new_schema_table(session, session->lex(), "GLOBAL_STATUS"))
       return false;
   }
   else
   {
-    if (prepare_new_schema_table(session, session->getLex(), "SESSION_STATUS"))
+    if (prepare_new_schema_table(session, session->lex(), "SESSION_STATUS"))
       return false;
   }
 
@@ -460,7 +458,7 @@ bool buildCreateTable(Session *session, Table_ident *ident)
   if (session->lex().statement == NULL)
     return false;
 
-  if (prepare_new_schema_table(session, session->getLex(), "TABLE_SQL_DEFINITION"))
+  if (prepare_new_schema_table(session, session->lex(), "TABLE_SQL_DEFINITION"))
     return false;
 
   util::string::const_shared_ptr schema(session->schema());
@@ -503,7 +501,7 @@ bool buildProcesslist(Session *session)
   session->lex().sql_command= SQLCOM_SELECT;
   session->lex().statement= new statement::Show(session);
 
-  if (prepare_new_schema_table(session, session->getLex(), "PROCESSLIST"))
+  if (prepare_new_schema_table(session, session->lex(), "PROCESSLIST"))
     return false;
 
   if (session->add_item_to_list( new Item_field(&session->lex().current_select->context, NULL, NULL, "*")))
@@ -521,12 +519,12 @@ bool buildVariables(Session *session, const drizzled::sql_var_t is_global)
 
   if (is_global == OPT_GLOBAL)
   {
-    if (prepare_new_schema_table(session, session->getLex(), "GLOBAL_VARIABLES"))
+    if (prepare_new_schema_table(session, session->lex(), "GLOBAL_VARIABLES"))
       return false;
   }
   else
   {
-    if (prepare_new_schema_table(session, session->getLex(), "SESSION_VARIABLES"))
+    if (prepare_new_schema_table(session, session->lex(), "SESSION_VARIABLES"))
       return false;
   }
 
@@ -556,7 +554,7 @@ bool buildCreateSchema(Session *session, LEX_STRING &ident)
   drizzled::statement::Show *select= new statement::Show(session);
   session->lex().statement= select;
 
-  if (prepare_new_schema_table(session, session->getLex(), "SCHEMA_SQL_DEFINITION"))
+  if (prepare_new_schema_table(session, session->lex(), "SCHEMA_SQL_DEFINITION"))
     return false;
 
   util::string::const_shared_ptr schema(session->schema());
@@ -597,7 +595,7 @@ bool buildCreateSchema(Session *session, LEX_STRING &ident)
 bool buildDescribe(Session *session, Table_ident *ident)
 {
   session->lex().lock_option= TL_READ;
-  init_select(session->getLex());
+  init_select(&session->lex());
   session->lex().current_select->parsing_place= SELECT_LIST;
   session->lex().sql_command= SQLCOM_SELECT;
   drizzled::statement::Show *select= new statement::Show(session);
@@ -627,14 +625,12 @@ bool buildDescribe(Session *session, Table_ident *ident)
     }
   }
 
-  if (prepare_new_schema_table(session, session->getLex(), "SHOW_COLUMNS"))
+  if (prepare_new_schema_table(session, session->lex(), "SHOW_COLUMNS"))
   {
     return false;
   }
 
-  if (session->add_item_to_list( new Item_field(&session->lex().current_select->
-                                                  context,
-                                                  NULL, NULL, "*")))
+  if (session->add_item_to_list( new Item_field(&session->lex().current_select->context, NULL, NULL, "*")))
   {
     return false;
   }

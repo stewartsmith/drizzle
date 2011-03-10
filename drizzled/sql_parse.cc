@@ -260,7 +260,7 @@ bool dispatch_command(enum_server_command command, Session *session,
       {
         uint32_t kill_id;
         memcpy(&kill_id, packet, sizeof(uint32_t));
-        
+
         kill_id= ntohl(kill_id);
         (void)drizzled::kill(*session->user(), kill_id, true);
       }
@@ -415,12 +415,12 @@ static bool _schema_select(Session *session, Select_Lex *sel,
   return false;
 }
 
-int prepare_new_schema_table(Session *session, LEX *lex,
+int prepare_new_schema_table(Session *session, LEX& lex,
                              const string& schema_table_name)
 {
   Select_Lex *schema_select_lex= NULL;
 
-  Select_Lex *select_lex= lex->current_select;
+  Select_Lex *select_lex= lex.current_select;
   assert(select_lex);
   if (_schema_select(session, select_lex, schema_table_name))
   {
@@ -600,10 +600,10 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         return true;
 
       /* Init the Query Cache plugin */
-      plugin::QueryCache::prepareResultset(session); 
+      plugin::QueryCache::prepareResultset(session);
       res= handle_select(session, lex, result, 0);
       /* Send the Resultset to the cache */
-      plugin::QueryCache::setResultset(session); 
+      plugin::QueryCache::setResultset(session);
 
       if (result != lex->result)
         delete result;
@@ -809,7 +809,7 @@ void parse(Session *session, const char *inBuf, uint32_t length)
                                  const_cast<const char *>(session->schema()->c_str()));
         // Implement Views here --Brian
         /* Actually execute the query */
-        try 
+        try
         {
           execute_command(session);
         }
