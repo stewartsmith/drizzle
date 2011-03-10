@@ -35,6 +35,7 @@
 #include <drizzled/select_create.h>
 #include <drizzled/table/shell.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/sql_parse.h>
 
 namespace drizzled
 {
@@ -1004,7 +1005,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
     {
       /*
        * However, if an actual NULL value was specified
-       * for the field and the field is a NOT NULL field, 
+       * for the field and the field is a NOT NULL field,
        * throw ER_BAD_NULL_ERROR.
        *
        * Per the SQL standard, inserting NULL into a NOT NULL
@@ -1385,7 +1386,7 @@ bool select_insert::send_eof()
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   session->my_ok((ulong) session->rowCount(),
                  info.copied + info.deleted + info.touched, id, buff);
-  session->status_var.inserted_row_count+= session->rowCount(); 
+  session->status_var.inserted_row_count+= session->rowCount();
   DRIZZLE_INSERT_SELECT_DONE(0, session->rowCount());
   return 0;
 }
@@ -1658,10 +1659,10 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   DrizzleLock *extra_lock= NULL;
   /*
     For replication, the CREATE-SELECT statement is written
-    in two pieces: the first transaction messsage contains 
+    in two pieces: the first transaction messsage contains
     the CREATE TABLE statement as a CreateTableStatement message
     necessary to create the table.
-    
+
     The second transaction message contains all the InsertStatement
     and associated InsertRecords that should go into the table.
    */

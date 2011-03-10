@@ -22,6 +22,7 @@
 #define PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
 
 #include <drizzled/plugin/table_function.h>
+#include <drizzled/sql_parse.h>
 #include <plugin/session_dictionary/processlist.h>
 #include <plugin/session_dictionary/savepoints.h>
 #include <plugin/session_dictionary/sessions.h>

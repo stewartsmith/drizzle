@@ -31,6 +31,7 @@
 #include <drizzled/index_hint.h>
 #include <drizzled/select_result.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/statement.h>
 
 #include <cstdio>
 #include <ctype.h>
@@ -277,7 +278,7 @@ void lex_start(Session *session)
 
   lex->is_lex_started= true;
   lex->statement= NULL;
-  
+
   lex->is_cross= false;
   lex->reset();
 }
@@ -402,7 +403,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       if (use_mb(cs))
       {
         int l= my_ismbchar(cs, lip->get_ptr() -1, lip->get_end_of_query());
-        if (l != 0) 
+        if (l != 0)
         {
           lip->skip_binary(l-1);
           continue;
@@ -1621,7 +1622,7 @@ bool Select_Lex_Node::set_braces(bool)
 bool Select_Lex_Node::inc_in_sum_expr()
 { return true; }
 
-uint32_t Select_Lex_Node::get_in_sum_expr() 
+uint32_t Select_Lex_Node::get_in_sum_expr()
 { return 0; }
 
 TableList* Select_Lex_Node::get_table_list()
@@ -1630,12 +1631,12 @@ TableList* Select_Lex_Node::get_table_list()
 List<Item>* Select_Lex_Node::get_item_list()
 { return NULL; }
 
-TableList *Select_Lex_Node::add_table_to_list(Session *, 
-                                              Table_ident *, 
-                                              LEX_STRING *, 
+TableList *Select_Lex_Node::add_table_to_list(Session *,
+                                              Table_ident *,
+                                              LEX_STRING *,
                                               const bitset<NUM_OF_TABLE_OPTIONS>&,
-                                              thr_lock_type, 
-                                              List<Index_hint> *, 
+                                              thr_lock_type,
+                                              List<Index_hint> *,
                                               LEX_STRING *)
 {
   return 0;
@@ -1875,15 +1876,15 @@ void Query_tables_list::reset_query_tables_list(bool init)
     for this.
 */
 LEX::LEX() :
-    result(0), 
-    yacc_yyss(0), 
+    result(0),
+    yacc_yyss(0),
     yacc_yyvs(0),
     session(NULL),
     charset(NULL),
     var_list(),
-    sql_command(SQLCOM_END), 
+    sql_command(SQLCOM_END),
     statement(NULL),
-    option_type(OPT_DEFAULT), 
+    option_type(OPT_DEFAULT),
     is_lex_started(0),
     cacheable(true),
     sum_expr_used(false),

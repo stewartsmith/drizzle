@@ -38,6 +38,7 @@
 #include <drizzled/copy_info.h>
 #include <drizzled/cursor.h>
 #include <drizzled/diagnostics_area.h>
+#include <drizzled/error.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>

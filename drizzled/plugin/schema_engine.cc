@@ -20,7 +20,7 @@
 #include <config.h>
 
 #include <drizzled/session.h>
-
+#include <drizzled/sql_base.h>
 #include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/transaction_services.h>
@@ -34,7 +34,7 @@ namespace drizzled
 namespace plugin
 {
 
-class AddSchemaNames : 
+class AddSchemaNames :
   public std::unary_function<StorageEngine *, void>
 {
   identifier::Schema::vector &schemas;
@@ -70,7 +70,7 @@ public:
   StorageEngineGetSchemaDefinition(const identifier::Schema &identifier_arg,
                                    message::schema::shared_ptr &schema_proto_arg) :
     identifier(identifier_arg),
-    schema_proto(schema_proto_arg) 
+    schema_proto(schema_proto_arg)
   {
   }
 
@@ -143,7 +143,7 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const identifier::Schema &
   return default_charset_info;
 }
 
-class CreateSchema : 
+class CreateSchema :
   public std::unary_function<StorageEngine *, void>
 {
   const drizzled::message::Schema &schema_message;
@@ -162,7 +162,7 @@ public:
     // @todo eomeday check that at least one engine said "true"
     bool success= engine->doCreateSchema(schema_message);
 
-    if (success) 
+    if (success)
     {
       success_count++;
       TransactionServices &transaction_services= TransactionServices::singleton();
@@ -178,7 +178,7 @@ bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
                 CreateSchema(schema_message, success_count));
 
-  if (success_count) 
+  if (success_count)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     transaction_services.allocateNewTransactionId();
@@ -187,7 +187,7 @@ bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message
   return (bool)success_count;
 }
 
-class DropSchema : 
+class DropSchema :
   public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
@@ -265,7 +265,7 @@ bool StorageEngine::dropSchema(Session::reference session,
     // Remove all temp tables first, this prevents loss of table from
     // shadowing (ie temp over standard table)
     {
-      // Lets delete the temporary tables first outside of locks.  
+      // Lets delete the temporary tables first outside of locks.
       identifier::Table::vector set_of_identifiers;
       session.doGetTableIdentifiers(identifier, set_of_identifiers);
 
@@ -322,7 +322,7 @@ bool StorageEngine::dropSchema(Session::reference session,
   return error;
 }
 
-class AlterSchema : 
+class AlterSchema :
   public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
