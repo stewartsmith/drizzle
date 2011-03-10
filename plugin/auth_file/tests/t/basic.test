@@ -20,3 +20,4 @@ connect (bad_user_password,localhost,auth_file_password,bad_password,,);
 
 # Test that the command line client processes direct passwords properly
 --exec $TOP_BUILDDIR/client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 1" --user=auth_file_password --password=test_password 2>&1
+

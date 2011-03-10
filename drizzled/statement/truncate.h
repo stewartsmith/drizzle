@@ -38,7 +38,7 @@ public:
   Truncate(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_TRUNCATE;
+    set_command(SQLCOM_TRUNCATE);
   }
 
   bool execute();

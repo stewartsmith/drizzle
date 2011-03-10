@@ -36,7 +36,7 @@ public:
   Replace(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_REPLACE;
+    set_command(SQLCOM_REPLACE);
   }
 
   bool execute();

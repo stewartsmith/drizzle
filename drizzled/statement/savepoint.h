@@ -36,8 +36,8 @@ public:
   Savepoint(Session *in_session, const lex_string_t &ident) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_SAVEPOINT;
-    getSession()->getLex()->ident= ident;
+    set_command(SQLCOM_SAVEPOINT);
+    lex().ident= ident;
   }
 
   bool execute();

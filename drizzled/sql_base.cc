@@ -329,7 +329,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
 
 /**
-  move one table to free list 
+  move one table to free list
 */
 
 bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
@@ -900,7 +900,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   const char *alias= table_list->alias;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
-  assert(lex->is_lex_started);
+  assert(getLex()->is_lex_started);
 
   /* find a unused table in the open table cache */
   if (refresh)

@@ -36,10 +36,10 @@ bool statement::StartTransaction::execute()
     return false;
   }
 
-  if (getSession()->transaction.xid_state.xa_state != XA_NOTR)
+  if (transaction().xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
-        xa_state_names[getSession()->transaction.xid_state.xa_state]);
+        xa_state_names[transaction().xid_state.xa_state]);
     return false;
   }
   /*
