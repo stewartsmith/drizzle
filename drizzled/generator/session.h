@@ -45,10 +45,6 @@ public:
     iter= local_list.begin();
   }
 
-  ~Session()
-  {
-  }
-
   operator drizzled::Session::pointer()
   {
     while (iter != local_list.end())
@@ -56,14 +52,9 @@ public:
       drizzled::Session::pointer ret= iter->get();
       iter++;
 
-      if (not ret->isViewable(user))
-      {
-        continue;
-      }
-
-      return ret;
+      if (ret->isViewable(user))
+	      return ret;
     }
-
     return drizzled::Session::pointer();
   }
 };

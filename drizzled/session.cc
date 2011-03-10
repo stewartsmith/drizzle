@@ -142,6 +142,10 @@ int64_t session_test_options(const Session *session, int64_t test_options)
   return session->options & test_options;
 }
 
+class Session::impl_c
+{
+};
+
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),

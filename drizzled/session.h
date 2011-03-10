@@ -70,21 +70,20 @@
 
 #define MIN_HANDSHAKE_SIZE      6
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace plugin
 {
-class Client;
-class Scheduler;
-class EventObserverList;
+	class Client;
+	class Scheduler;
+	class EventObserverList;
 }
 
 namespace message
 {
-class Transaction;
-class Statement;
-class Resultset;
+	class Transaction;
+	class Statement;
+	class Resultset;
 }
 
 namespace internal { struct st_my_thread_var; }
@@ -163,8 +162,8 @@ public:
   enum enum_mark_columns mark_used_columns;
   inline void* calloc(size_t size)
   {
-    void *ptr;
-    if ((ptr= mem_root->alloc_root(size)))
+    void *ptr= mem_root->alloc_root(size);
+    if (ptr)
       memset(ptr, 0, size);
     return ptr;
   }
@@ -175,9 +174,9 @@ public:
 
   inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
   {
-    void *ptr;
-    if ((ptr= mem_root->alloc_root(size + gap)))
-      memcpy(ptr,str,size);
+    void *ptr= mem_root->alloc_root(size + gap);
+    if (ptr)
+      memcpy(ptr, str, size);
     return ptr;
   }
   /** Frees all items attached to this Statement */
@@ -189,7 +188,6 @@ public:
    */
   Item *free_list;
   memory::Root *mem_root; /**< Pointer to current memroot */
-
 
   memory::Root *getMemRoot()
   {
@@ -207,14 +205,6 @@ public:
   {
     xa_id= in_xa_id;
   }
-
-  /**
-   * Uniquely identifies each statement object in thread scope; change during
-   * statement lifetime.
-   *
-   * @todo should be const
-   */
-  uint32_t id;
 
 public:
   const LEX& lex() const
@@ -358,7 +348,7 @@ public:
     return (enum_tx_isolation)variables.tx_isolation;
   }
 
-  struct system_status_var status_var; /**< Session-local status counters */
+  system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
@@ -785,7 +775,7 @@ public:
   /** set during loop of derived table processing */
   bool derived_tables_processing;
 
-  bool doing_tablespace_operation(void)
+  bool doing_tablespace_operation()
   {
     return tablespace_op;
   }
@@ -921,7 +911,7 @@ public:
     if (first_successful_insert_id_in_cur_stmt == 0)
       first_successful_insert_id_in_cur_stmt= id_arg;
   }
-  inline uint64_t read_first_successful_insert_id_in_prev_stmt(void)
+  inline uint64_t read_first_successful_insert_id_in_prev_stmt()
   {
     return first_successful_insert_id_in_prev_stmt;
   }
@@ -939,7 +929,7 @@ public:
   Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
   virtual ~Session();
 
-  void cleanup(void);
+  void cleanup();
   /**
    * Cleans up after query.
    *
@@ -1125,7 +1115,7 @@ public:
     return (_start_timer - _epoch).total_seconds();
   }
 
-  uint64_t found_rows(void) const
+  uint64_t found_rows() const
   {
     return limit_found_rows;
   }
@@ -1529,11 +1519,6 @@ public:
   void close_open_tables();
   void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
-private:
-  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
-
-public:
-
   /**
    * Prepares statement for reopening of tables and recalculation of set of
    * prelocked tables.
@@ -1572,10 +1557,6 @@ public:
   table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
   bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
-private:
-  session::TableMessages _table_message_cache;
-
-public:
   session::TableMessages &getMessageCache()
   {
     return _table_message_cache;
@@ -1622,47 +1603,45 @@ public:
   table::Singular *getInstanceTable();
   table::Singular *getInstanceTable(List<CreateField> &field_list);
 
-private:
-  bool resetUsage()
-  {
-    if (getrusage(RUSAGE_THREAD, &usage))
-    {
-      return false;
-    }
-
-    return true;
-  }
-
-public:
-
   void setUsage(bool arg)
   {
     use_usage= arg;
   }
 
-  const struct rusage &getUsage()
+  const rusage &getUsage()
   {
     return usage;
   }
 
   catalog::Instance::const_reference catalog() const
   {
-    return *(_catalog.get());
+    return *_catalog;
   }
 
   catalog::Instance::reference catalog()
   {
-    return *(_catalog.get());
+    return *_catalog;
   }
 
 private:
+	class impl_c;
+
+  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+
+  bool resetUsage()
+  {
+    return not getrusage(RUSAGE_THREAD, &usage);
+  }
+
+  session::TableMessages _table_message_cache;
+  boost::scoped_ptr<impl_c> impl_;
   catalog::Instance::shared_ptr _catalog;
 
   // This lives throughout the life of Session
   bool use_usage;
   session::PropertyMap life_properties;
   std::vector<table::Singular *> temporary_shares;
-  struct rusage usage;
+  rusage usage;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
