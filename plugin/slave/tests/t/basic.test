@@ -14,12 +14,7 @@ echo Using connection slave_con...;
 connection slave_con;
 --echo Checking slave contents...
 --source include/wait_for_slave_plugin_to_sync.inc
-#use sys_replication;
 
-#select * from applier_state;
-#select * from io_state;
-#select * from queue;
-#use test;
 SHOW CREATE TABLE t1;
 SELECT * FROM t1;
 
