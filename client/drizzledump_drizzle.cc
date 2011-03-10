@@ -246,11 +246,11 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
       index->isPrimary= (strcmp(row[0], "PRIMARY") == 0);
       index->isUnique= boost::lexical_cast<uint32_t>(row[3]);
       index->isHash= 0;
-      index->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
       lastKey= row[0];
       firstIndex= false;
     }
-    index->columns.push_back(row[1]);
+    uint32_t length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
+    index->columns.push_back(std::make_pair(row[1],length));
   }
   if (!firstIndex)
     indexes.push_back(index);

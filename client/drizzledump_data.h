@@ -76,9 +76,10 @@ class DrizzleDumpIndex
     bool isPrimary;
     bool isUnique;
     bool isHash;
-    uint32_t length;
 
-    std::vector<std::string> columns;
+    /* Stores the column name and the length of the index part */
+    typedef std::pair<std::string,uint32_t> columnData;
+    std::vector<columnData> columns;
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj);
 };
 
