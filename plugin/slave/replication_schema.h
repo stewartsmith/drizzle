@@ -33,6 +33,21 @@ public:
   { }
 
   bool create();
+
+  /**
+   * Set initial value of the last applied COMMIT_ID value in applier_state.
+   *
+   * This is used when the server is started with --slave.max-commit-id to
+   * begin reading from the master transaction log at a given point. This
+   * method will persist the value to the applier_state table. If it wasn't
+   * permanently stored immediately, we risk the possibility of losing the
+   * value if the server is again restarted without ever having received
+   * another event from the master (which causes persistence of the value).
+   * An edge case, but still possible.
+   *
+   * @param[in] value The initial value.
+   */
+  bool setInitialMaxCommitId(uint64_t value);
 };
 
 } /* namespace slave */
