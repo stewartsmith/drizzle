@@ -22,18 +22,17 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <drizzled/memory/sql_alloc.h>
-#include <drizzled/sql_list.h>
+#include <drizzled/enum.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace plugin
 {
-class StorageEngine;
+  class StorageEngine;
 }
 
+class Session;
 class sys_var;
 class Item;
 class Item_func_set_user_var;
