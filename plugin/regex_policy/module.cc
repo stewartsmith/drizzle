@@ -345,7 +345,7 @@ bool &CheckMap::operator[](std::string const &k)
             static_cast<uint64_t>(map.bucket_count()));
       }
     }
-    lru.empty();
+    lru.clear();
     lock.unlock();
   }
   return result;
