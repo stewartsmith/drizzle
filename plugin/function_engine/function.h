@@ -22,7 +22,6 @@
 #define PLUGIN_FUNCTION_ENGINE_FUNCTION_H
 
 #include <assert.h>
-#include <drizzled/session.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/identifier/schema.h>
@@ -49,7 +48,7 @@ public:
   int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
                     const drizzled::identifier::Table &,
-                    drizzled::message::Table&)
+                    const drizzled::message::Table&)
   {
     return drizzled::ER_TABLE_PERMISSION_DENIED;
   }

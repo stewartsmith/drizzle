@@ -36,7 +36,7 @@ public:
   Insert(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_INSERT;
+    set_command(SQLCOM_INSERT);
   }
 
   bool execute();

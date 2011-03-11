@@ -38,6 +38,7 @@
 #include <config.h>
 #include <cstdio>
 #include <drizzled/parser.h>
+#include <drizzled/session.h>
 #include <drizzled/alter_column.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
@@ -1051,11 +1052,11 @@ custom_engine_option:
           }
         | REPLICATE opt_equal TRUE_SYM
           {
-            Lex->table()->mutable_options()->set_dont_replicate(false);
+	    message::set_is_replicated(*Lex->table(), true);
           }
         | REPLICATE opt_equal FALSE_SYM
           {
-            Lex->table()->mutable_options()->set_dont_replicate(true);
+	    message::set_is_replicated(*Lex->table(), false);
           }
         |  ROW_FORMAT_SYM equal row_format_or_text
           {

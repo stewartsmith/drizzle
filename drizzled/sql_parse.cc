@@ -19,7 +19,6 @@
 
 #include <drizzled/item/num.h>
 #include <drizzled/abort_exception.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>

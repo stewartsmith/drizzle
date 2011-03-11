@@ -38,7 +38,7 @@ public:
     tx_chain(tx_chain_arg),
     tx_release(tx_release_arg)
   {
-    getSession()->getLex()->sql_command= SQLCOM_COMMIT;
+    set_command(SQLCOM_COMMIT);
   }
 
   bool execute();

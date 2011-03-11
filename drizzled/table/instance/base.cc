@@ -579,7 +579,7 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
   getTableMessage()->set_schema(identifier_arg.getSchemaName());
 }
 
-bool TableShare::parse_table_proto(Session& session, message::Table &table)
+bool TableShare::parse_table_proto(Session& session, const message::Table &table)
 {
   drizzled::error_t local_error= EE_OK;
 

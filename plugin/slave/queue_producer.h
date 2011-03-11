@@ -21,9 +21,10 @@
 #ifndef PLUGIN_SLAVE_QUEUE_PRODUCER_H
 #define PLUGIN_SLAVE_QUEUE_PRODUCER_H
 
+#include <client/client_priv.h>
+#include <drizzled/error_t.h>
 #include <plugin/slave/queue_thread.h>
 #include <plugin/slave/sql_executor.h>
-#include <client/client_priv.h>
 #include <string>
 #include <vector>
 
@@ -90,6 +91,11 @@ public:
     _seconds_between_reconnects= seconds;
   }
 
+  void setCachedMaxCommitId(uint64_t value)
+  {
+    _saved_max_commit_id= value;
+  }
+
 private:
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
@@ -132,8 +138,31 @@ private:
    */
   bool reconnect(bool initial_connection);
 
+  /**
+   * Get maximum commit ID that we have stored locally on the slave.
+   *
+   * This method determines where this slave is in relation to the master,
+   * or, in other words, how "caught up" we are.
+   *
+   * @param[out] max_commit_id Maximum commit ID we have on this slave.
+   */
   bool queryForMaxCommitId(uint64_t *max_commit_id);
-  bool queryForReplicationEvents(uint64_t max_commit_id);
+
+  /**
+   * Get replication events/messages from the master.
+   *
+   * Calling this method will a limited number of events from the master.
+   * It should be repeatedly called until it returns -1, which means there
+   * were no more events to retrieve.
+   *
+   * @param[in] max_commit_id Largest commit ID we have stored locally.
+   *
+   * @retval EE_OK  Successfully retrieved events
+   * @retval ER_NO  No errors, but no more events to retrieve
+   * @retval ER_YES Error
+   */
+  enum drizzled::error_t queryForReplicationEvents(uint64_t max_commit_id);
+
   bool queryForTrxIdList(uint64_t max_commit_id, std::vector<uint64_t> &list);
   bool queueInsert(const char *trx_id,
                    const char *seg_id,

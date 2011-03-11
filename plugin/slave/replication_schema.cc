@@ -24,9 +24,11 @@
 #include <drizzled/sql/result_set.h>
 #include <string>
 #include <vector>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace drizzled;
+using namespace boost;
 
 namespace slave
 {
@@ -128,6 +130,17 @@ bool ReplicationSchema::create()
     return false;
 
   return true;
+}
+
+bool ReplicationSchema::setInitialMaxCommitId(uint64_t value)
+{
+  vector<string> sql;
+
+  sql.push_back("UPDATE `sys_replication`.`applier_state`"
+                " SET `last_applied_commit_id` = "
+                + lexical_cast<string>(value));
+
+  return executeSQL(sql);
 }
 
 } /* namespace slave */

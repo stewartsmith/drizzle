@@ -22,7 +22,6 @@
 
 #include <plugin/show_dictionary/dictionary.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/my_hash.h>
 
 using namespace drizzled;
 using namespace std;

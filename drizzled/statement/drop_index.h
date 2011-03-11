@@ -37,7 +37,7 @@ public:
   DropIndex(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_DROP_INDEX;
+    set_command(SQLCOM_DROP_INDEX);
   }
 
   bool execute();

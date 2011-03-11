@@ -30,12 +30,11 @@
 #include <drizzled/base.h>
 #include <drizzled/global_charset_info.h>
 #include <drizzled/lex_string.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
+class Session;
 class sys_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;

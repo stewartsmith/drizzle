@@ -33,7 +33,7 @@ namespace drizzled
 
 bool statement::ChangeSchema::execute()
 {
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
+  Select_Lex *select_lex= &lex().select_lex;
 
   identifier::Schema identifier(select_lex->db);
   if (not schema::change(*getSession(), identifier))

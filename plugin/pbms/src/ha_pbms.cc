@@ -137,7 +137,7 @@ public:
 		(void) session;
 	}
 	
-	int doCreateTable(Session&, Table&, const identifier::Table& ident, drizzled::message::Table& );	
+	int doCreateTable(Session&, Table&, const identifier::Table& ident, const drizzled::message::Table& );	
 	int doDropTable(Session &, const identifier::Table& );
 	
 	int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
@@ -1045,7 +1045,7 @@ THR_LOCK_DATA **ha_pbms::store_lock(THD *, THR_LOCK_DATA **to, enum thr_lock_typ
 
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::doCreateTable(Session&, Table&, const identifier::Table& , drizzled::message::Table& )
+int PBMSStorageEngine::doCreateTable(Session&, Table&, const identifier::Table& , const drizzled::message::Table& )
 {
 	/* You cannot create PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );

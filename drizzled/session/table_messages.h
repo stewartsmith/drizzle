@@ -44,7 +44,7 @@ class DRIZZLED_API TableMessages
   Cache table_message_cache;
 
 public:
-  bool storeTableMessage(const identifier::Table &identifier, message::Table &table_message);
+  bool storeTableMessage(const identifier::Table &identifier, const message::Table &table_message);
   bool removeTableMessage(const identifier::Table &identifier);
   bool getTableMessage(const identifier::Table &identifier, message::Table &table_message);
   bool doesTableMessageExist(const identifier::Table &identifier);

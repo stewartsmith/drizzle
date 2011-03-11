@@ -22,8 +22,7 @@
 
 #include <cstring>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern uint32_t server_id;
 
@@ -43,10 +42,9 @@ typedef uint64_t my_xid;
 #define DRIZZLE_XID_OFFSET (DRIZZLE_XID_PREFIX_LEN+sizeof(server_id))
 #define DRIZZLE_XID_GTRID_LEN (DRIZZLE_XID_OFFSET+sizeof(my_xid))
 
-class XID {
-
+class XID
+{
 public:
-
   long formatID;
   long gtrid_length;
   long bqual_length;
@@ -69,9 +67,9 @@ public:
   void null();
   my_xid quick_get_my_xid();
   my_xid get_my_xid();
-  uint32_t length();
-  unsigned char *key();
-  uint32_t key_length();
+  uint32_t length() const;
+  const unsigned char* key() const;
+  uint32_t key_length() const;
 };
 
 /**
@@ -82,7 +80,8 @@ public:
 
 */
 
-class DrizzleXid {
+class DrizzleXid
+{
 public:
   long formatID;
   long gtrid_length;
@@ -105,26 +104,18 @@ extern const char *xa_state_names[];
 #define MIN_XID_LIST_SIZE  128
 #define MAX_XID_LIST_SIZE  (1024*128)
 
-class XID_STATE 
+class XID_STATE
 {
 public:
   XID_STATE() :
-    xid(),
     xa_state(XA_NOTR),
     in_session(false)
   {}
   /* For now, this is only used to catch duplicated external xids */
   XID  xid;                           // transaction identifier
-  enum xa_states xa_state;            // used by external XA only
+  xa_states xa_state;            // used by external XA only
   bool in_session;
 };
-
-bool xid_cache_init(void);
-void xid_cache_free(void);
-XID_STATE *xid_cache_search(XID *xid);
-bool xid_cache_insert(XID *xid, enum xa_states xa_state);
-bool xid_cache_insert(XID_STATE *xid_state);
-void xid_cache_delete(XID_STATE *xid_state);
 
 } /* namespace drizzled */
 

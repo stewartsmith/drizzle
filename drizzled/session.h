@@ -42,7 +42,6 @@
 #include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
 #include <drizzled/lex_column.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/named_savepoint.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/plugin.h>
@@ -205,7 +204,7 @@ public:
 
   void setXaId(uint64_t in_xa_id)
   {
-    xa_id= in_xa_id; 
+    xa_id= in_xa_id;
   }
 
   /**
@@ -215,18 +214,20 @@ public:
    * @todo should be const
    */
   uint32_t id;
-private:
-  LEX *lex; /**< parse tree descriptor */
 
 public:
-  LEX *getLex() 
+  const LEX* getLex() const
   {
-    return lex;
+    return &main_lex;
+  }
+  LEX* getLex()
+  {
+    return &main_lex;
   }
 
   enum_sql_command getSqlCommand() const
   {
-    return lex->sql_command;
+    return getLex()->sql_command;
   }
 
   /** query associated with this statement */
@@ -271,7 +272,7 @@ public:
   }
 
 private:
-  session::State::shared_ptr  _state; 
+  session::State::shared_ptr  _state;
 
 public:
 
@@ -604,7 +605,7 @@ public:
 
   ha_rows cuted_fields; /**< Count of "cut" or truncated fields. @todo Kill this friggin thing. */
 
-  /** 
+  /**
    * Number of rows we actually sent to the client, including "synthetic"
    * rows in ROLLUP etc.
    */
@@ -620,7 +621,7 @@ public:
    * of the query.
    *
    * @todo
-   * 
+   *
    * Possibly this it is incorrect to have used tables in Session because
    * with more than one subquery, it is not clear what does the field mean.
    */
@@ -628,7 +629,7 @@ public:
 
   /**
     @todo
-    
+
     This, and some other variables like 'count_cuted_fields'
     maybe should be statement/cursor local, that is, moved to Statement
     class. With current implementation warnings produced in each prepared
@@ -810,7 +811,7 @@ public:
     and may point to invalid memory after that.
   */
   Lex_input_stream *m_lip;
-  
+
   /** Place to store various things */
   void *session_marker;
 
@@ -826,7 +827,7 @@ public:
     macro/function.
   */
   inline void set_proc_info(const char *info)
-  { 
+  {
     proc_info= info;
   }
   inline const char* get_proc_info() const
@@ -972,10 +973,10 @@ public:
   void prepareForQueries();
 
   /**
-   * Executes a single statement received from the 
+   * Executes a single statement received from the
    * client connection.
    *
-   * Returns true if the statement was successful, or false 
+   * Returns true if the statement was successful, or false
    * otherwise.
    *
    * @note
@@ -990,7 +991,7 @@ public:
   /**
    * Reads a query from packet and stores it.
    *
-   * Returns true if query is read and allocated successfully, 
+   * Returns true if query is read and allocated successfully,
    * false otherwise.  On a return of false, Session::fatal_error
    * is set.
    *
@@ -1008,7 +1009,7 @@ public:
   /**
    * Ends the current transaction and (maybe) begins the next.
    *
-   * Returns true if the transaction completed successfully, 
+   * Returns true if the transaction completed successfully,
    * otherwise false.
    *
    * @param Completion type
@@ -1065,7 +1066,7 @@ public:
   }
 
   void set_time_after_lock()
-  { 
+  {
     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
     utime_after_lock= (mytime - _epoch).total_microseconds();
   }
@@ -1085,7 +1086,7 @@ public:
    * Returns the current micro-timestamp
    */
   type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
-  { 
+  {
     type::Time::epoch_t t_mark;
 
     if (actual)
@@ -1098,12 +1099,12 @@ public:
       t_mark= (_end_timer - _epoch).total_microseconds();
     }
 
-    return t_mark; 
+    return t_mark;
   }
 
   // We may need to set user on this
   type::Time::epoch_t getCurrentTimestampEpoch() const
-  { 
+  {
     if (not _user_time.is_not_a_date_time())
       return (_user_time - _epoch).total_seconds();
 
@@ -1111,7 +1112,7 @@ public:
   }
 
   type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
-  { 
+  {
     if (not _user_time.is_not_a_date_time())
     {
       fraction_arg= 0;
@@ -1301,15 +1302,15 @@ public:
    *
    * @note Host, user and passwd may point to communication buffer.
    * Current implementation does not depend on that, but future changes
-   * should be done with this in mind; 
+   * should be done with this in mind;
    *
    * @param passwd Scrambled password received from client
    * @param db Database name to connect to, may be NULL
    */
   bool checkUser(const std::string &passwd, const std::string &db);
-  
+
   /**
-   * Returns the timestamp (in microseconds) of when the Session 
+   * Returns the timestamp (in microseconds) of when the Session
    * connected to the server.
    */
   uint64_t getConnectMicroseconds() const
@@ -1340,7 +1341,7 @@ public:
   {
     return statement_message;
   }
-  
+
   /**
    * Returns a pointer to the current Resulset message for this
    * Session, or NULL if no active message.
@@ -1387,7 +1388,7 @@ public:
    */
 
   void resetResultsetMessage()
-  { 
+  {
     resultset= NULL;
   }
 
@@ -1398,39 +1399,39 @@ private:
   /* Pointer to the current resultset of Select query */
   message::Resultset *resultset;
   plugin::EventObserverList *session_event_observers;
-  
+
   /* Schema observers are mapped to databases. */
   typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
   schema_event_observers_t schema_event_observers;
 
- 
+
 public:
-  plugin::EventObserverList *getSessionObservers() 
-  { 
+  plugin::EventObserverList *getSessionObservers()
+  {
     return session_event_observers;
   }
-  
-  void setSessionObservers(plugin::EventObserverList *observers) 
-  { 
+
+  void setSessionObservers(plugin::EventObserverList *observers)
+  {
     session_event_observers= observers;
   }
-  
+
   /* For schema event observers there is one set of observers per database. */
-  plugin::EventObserverList *getSchemaObservers(const std::string &db_name) 
-  { 
+  plugin::EventObserverList *getSchemaObservers(const std::string &db_name)
+  {
     if (schema_event_observers_t::mapped_type* i= find_ptr(schema_event_observers, db_name))
       return *i;
     return NULL;
   }
-  
-  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers) 
-  { 
+
+  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers)
+  {
     schema_event_observers.erase(db_name);
     if (observers)
       schema_event_observers[db_name] = observers;
   }
-  
-  
+
+
  private:
   const char *proc_info;
 
@@ -1465,9 +1466,9 @@ public:
    * if table->query_id != session->query_id to know if a table is in use.
    *
    * For example
-   * 
+   *
    *  SELECT f1_that_uses_t1() FROM t1;
-   *  
+   *
    * In f1_that_uses_t1() we will see one instance of t1 where query_id is
    * set to query_id of original query.
    */
@@ -1494,28 +1495,28 @@ public:
 
   inline bool add_item_to_list(Item *item)
   {
-    return lex->current_select->add_item_to_list(this, item);
+    return getLex()->current_select->add_item_to_list(this, item);
   }
 
   inline bool add_value_to_list(Item *value)
   {
-    return lex->value_list.push_back(value);
+    return getLex()->value_list.push_back(value);
   }
 
   inline bool add_order_to_list(Item *item, bool asc)
   {
-    return lex->current_select->add_order_to_list(this, item, asc);
+    return getLex()->current_select->add_order_to_list(this, item, asc);
   }
 
   inline bool add_group_to_list(Item *item, bool asc)
   {
-    return lex->current_select->add_group_to_list(this, item, asc);
+    return getLex()->current_select->add_group_to_list(this, item, asc);
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
   user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
   void setVariable(const std::string &name, const std::string &value);
-  
+
   /**
    * Closes all tables used by the current substatement, or all tables
    * used by this thread if we are on the upper level.
@@ -1551,7 +1552,7 @@ public:
    *  true  - error
    *
    * @note
-   * 
+   *
    * The lock will automaticaly be freed by close_thread_tables()
    */
   bool openTablesLock(TableList *tables);
@@ -1666,7 +1667,7 @@ private:
 
 /* Bits in sql_command_flags */
 
-enum sql_command_flag_bits 
+enum sql_command_flag_bits
 {
   CF_BIT_CHANGES_DATA,
   CF_BIT_HAS_ROW_COUNT,

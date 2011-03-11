@@ -90,7 +90,7 @@ bool statement::Execute::execute()
   bool ret= execute_shell();
 
   // We have to restore ourselves at the top for delete() to work.
-  getSession()->getLex()->statement= this;
+  lex().statement= this;
 
   return ret;
 }

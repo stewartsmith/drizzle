@@ -7,3 +7,5 @@ create temporary table t3 (a varchar(255), b varchar(255)) engine=myisam;
 insert into t3 select * from t1;
 --error ER_OUT_OF_GLOBAL_READMEMORY
 select SQL_BIG_RESULT * from t3, (select * from t1) as t4 where t3.a != '';
+
+--source include/teardown-global-constraints.inc
