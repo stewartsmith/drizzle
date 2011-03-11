@@ -411,7 +411,12 @@ Session::~Session()
   currentSession().release();
 
   plugin::Logging::postEndDo(this);
-  plugin::EventObserver::deregisterSessionEvents(*this);
+  plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
+ 
+  // Free all schema event observer lists.
+  for (std::map<std::string, plugin::EventObserverList *>::iterator it=schema_event_observers.begin() ; it != schema_event_observers.end(); it++ )
+    plugin::EventObserver::deregisterSchemaEvents(it->second);
+
 }
 
 void Session::setClient(plugin::Client *client_arg)

@@ -501,7 +501,6 @@ void MSConnectionHandler::handlePut()
 		otab->createBlob(&bh, blob_len, metadata->getBuffer(0), metadata_size, RETAIN(iInputStream), NULL, &checksum);
 
 		cs_bin_to_hex(33, hex_checksum, 16, checksum.val);
-		hex_checksum[32] = 0;
 		iOutputStream->addHeader(MS_CHECKSUM_TAG, hex_checksum);
 	} else { // If there is no BLOB data then the client will send it to the cloud server themselves.
 		if (!cloud_blob_len)
