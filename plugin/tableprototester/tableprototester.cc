@@ -70,7 +70,7 @@ public:
   int doCreateTable(Session&,
                     Table&,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table&);
+                    const drizzled::message::Table&);
 
   int doDropTable(Session&, const drizzled::identifier::Table &identifier);
 
@@ -146,7 +146,7 @@ int TableProtoTesterCursor::close(void)
 int TableProtoTesterEngine::doCreateTable(Session&,
                                           Table&,
                                           const drizzled::identifier::Table&,
-                                          drizzled::message::Table&)
+                                          const drizzled::message::Table&)
 {
   return EEXIST;
 }

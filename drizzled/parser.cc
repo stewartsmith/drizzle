@@ -19,6 +19,7 @@
  */
 
 #include <config.h>
+#include <drizzled/session.h>
 #include <drizzled/parser.h>
 #include <drizzled/alter_info.h>
 #include <drizzled/alter_drop.h>

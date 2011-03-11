@@ -19,13 +19,13 @@
 
 #include <config.h>
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/exception/get_error_info.hpp>
 #include <string>
 
 #include <drizzled/session.h>
 #include <drizzled/item/string.h>
-#include <drizzled/sql_list.h>
 #include <drizzled/function/set_user_var.h>
 
 using namespace std;
@@ -56,28 +56,21 @@ namespace drizzled
 int sql_set_variables(Session *session, const SetVarVector &var_list)
 {
   int error;
-
-  SetVarVector::const_iterator it(var_list.begin());
-
-  while (it != var_list.end())
+  BOOST_FOREACH(SetVarVector::const_reference it, var_list)
   {
-    if ((error= (*it)->check(session)))
+    if ((error= it->check(session)))
       goto err;
-    ++it;
   }
   if (!(error= test(session->is_error())))
   {
-    it= var_list.begin();
-    while (it != var_list.end())
+    BOOST_FOREACH(SetVarVector::const_reference it, var_list)
     {
-      error|= (*it)->update(session);         // Returns 0, -1 or 1
-      ++it;
+      error|= it->update(session);         // Returns 0, -1 or 1
     }
   }
-
 err:
   free_underlaid_joins(session, &session->lex().select_lex);
-  return(error);
+  return error;
 }
 
 

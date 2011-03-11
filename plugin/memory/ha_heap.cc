@@ -72,7 +72,7 @@ public:
   int doCreateTable(Session &session,
                     Table &table_arg,
                     const identifier::Table &identifier,
-                    message::Table &create_proto);
+                    const message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
      for MEMORY.
@@ -82,7 +82,7 @@ public:
   int heap_create_table(Session *session, const char *table_name,
                         Table *table_arg,
                         bool internal_table,
-                        message::Table &create_proto,
+                        const message::Table &create_proto,
                         HP_SHARE **internal_share);
 
   int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
@@ -654,7 +654,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 int HeapEngine::doCreateTable(Session &session,
                               Table &table_arg,
                               const identifier::Table &identifier,
-                              message::Table& create_proto)
+                              const message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
@@ -677,7 +677,7 @@ int HeapEngine::doCreateTable(Session &session,
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   Table *table_arg,
                                   bool internal_table, 
-                                  message::Table &create_proto,
+                                  const message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0;

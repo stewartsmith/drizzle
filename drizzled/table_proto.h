@@ -17,9 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-#ifndef DRIZZLED_TABLE_PROTO_H
-#define DRIZZLED_TABLE_PROTO_H
+#pragma once
 
 namespace drizzled {
 /*
@@ -31,13 +29,6 @@ namespace drizzled {
 #define COLUMN_COMMENT_MAXLEN 1024
 #define INDEX_COMMENT_MAXLEN 1024
 
-bool fill_table_proto(identifier::Table::const_reference identifier,
-                      message::Table &table_proto,
-                      List<CreateField> &create_fields,
-                      HA_CREATE_INFO *create_info,
-                      uint32_t keys,
-                      KeyInfo *key_info);
-
 bool rea_create_table(Session *session,
                       const identifier::Table &identifier,
                       message::Table &table_proto,
@@ -46,5 +37,3 @@ bool rea_create_table(Session *session,
                       uint32_t key_count,KeyInfo *key_info);
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_TABLE_PROTO_H */
