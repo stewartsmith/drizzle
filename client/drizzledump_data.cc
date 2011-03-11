@@ -107,16 +107,15 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
 
   os << "(";
   
-  std::vector<std::string>::iterator i;
-  std::vector<std::string> fields = obj.columns;
+  std::vector<DrizzleDumpIndex::columnData>::iterator i;
+  std::vector<DrizzleDumpIndex::columnData> fields = obj.columns;
   for (i= fields.begin(); i != fields.end(); ++i)
   {
     if (i != fields.begin())
       os << ",";
-    std::string field= *i;
-    os << "`" << field << "`";
-    if (obj.length > 0)
-      os << "(" << obj.length << ")";
+    os << "`" << (*i).first << "`";
+    if ((*i).second > 0)
+      os << "(" << (*i).second << ")";
   }
 
   os << ")";
