@@ -36,7 +36,7 @@ public:
   ShowErrors(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_SHOW_ERRORS;
+    set_command(SQLCOM_SHOW_ERRORS);
   }
 
   bool execute();

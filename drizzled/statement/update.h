@@ -36,7 +36,7 @@ public:
   Update(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_UPDATE;
+    set_command(SQLCOM_UPDATE);
   }
 
   bool execute();

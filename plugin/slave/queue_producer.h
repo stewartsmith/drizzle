@@ -91,7 +91,7 @@ public:
     _seconds_between_reconnects= seconds;
   }
 
-  void setMaxCommitId(uint64_t value)
+  void setCachedMaxCommitId(uint64_t value)
   {
     _saved_max_commit_id= value;
   }

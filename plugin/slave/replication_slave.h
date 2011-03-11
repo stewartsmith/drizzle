@@ -41,7 +41,8 @@ public:
 
   ReplicationSlave(const std::string &config)
     : drizzled::plugin::Daemon("Replication Slave"),
-      _config_file(config)
+      _config_file(config),
+      _initial_max_commit_id(0)
   {}
   
   ~ReplicationSlave()
@@ -73,7 +74,10 @@ public:
    */
   void setMaxCommitId(uint64_t value)
   {
-    _producer.setMaxCommitId(value);
+    /* must tell producer to set its cached value */
+    _producer.setCachedMaxCommitId(value);
+    /* setting this indicates that we should store it permanently */
+    _initial_max_commit_id= value;
   }
 
 private:
@@ -88,6 +92,8 @@ private:
 
   /** I/O thread that will populate the work queue */
   boost::thread _producer_thread;
+
+  uint64_t _initial_max_commit_id;
 
   /**
    * Initialize slave services with the given configuration file.

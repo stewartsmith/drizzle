@@ -1860,9 +1860,6 @@ sub setup_vardir() {
   symlink(collapse_path("$glob_drizzle_test_dir/std_data"),
           "$opt_vardir/std_data_ln");
 
-  symlink(collapse_path("$glob_suite_path/filesystem_engine/tests/t"),
-          "$opt_vardir/filesystem_ln");
-
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
   {
@@ -1871,7 +1868,6 @@ sub setup_vardir() {
   system("chmod -R ugo+r $opt_vardir");
   system("chmod -R ugo+r $opt_vardir/std_data_ln/*");
   system("chmod -R ugo+rw $opt_vardir/filesystem_ln/*");
-  system("chmod -R ugo+w $glob_suite_path/filesystem_engine/tests/t");
 }
 
 

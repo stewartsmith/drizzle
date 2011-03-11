@@ -42,7 +42,7 @@ bool statement::DropSchema::execute()
     return true;
   }
 
-  identifier::Schema schema_identifier(std::string(getSession()->getLex()->name.str, getSession()->getLex()->name.length));
+  identifier::Schema schema_identifier(std::string(lex().name.str, lex().name.length));
 
   if (not schema::check(*getSession(), schema_identifier))
   {

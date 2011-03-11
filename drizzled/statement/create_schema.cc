@@ -46,11 +46,11 @@ bool statement::CreateSchema::execute()
     return true;
   }
 
-  identifier::Schema schema_identifier(string(getSession()->getLex()->name.str, getSession()->getLex()->name.length));
+  identifier::Schema schema_identifier(string(lex().name.str, lex().name.length));
   if (not check(schema_identifier))
     return false;
 
-  drizzled::message::schema::init(schema_message, getSession()->getLex()->name.str);
+  drizzled::message::schema::init(schema_message, lex().name.str);
 
   bool res = false;
   std::string path;
@@ -62,7 +62,7 @@ bool statement::CreateSchema::execute()
   }
   else
   {
-    res= schema::create(*getSession(), schema_message, getSession()->getLex()->exists());
+    res= schema::create(*getSession(), schema_message, lex().exists());
     if (unlikely(plugin::EventObserver::afterCreateDatabase(*getSession(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
@@ -82,7 +82,7 @@ bool statement::CreateSchema::check(const identifier::Schema &identifier)
   if (not plugin::Authorization::isAuthorized(*getSession()->user(), identifier))
     return false;
 
-  if (not getSession()->getLex()->exists())
+  if (not lex().exists())
   {
     if (plugin::StorageEngine::doesSchemaExist(identifier))
     {

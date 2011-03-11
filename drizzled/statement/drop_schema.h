@@ -36,7 +36,7 @@ public:
   DropSchema(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_DROP_DB;
+    set_command(SQLCOM_DROP_DB);
   }
 
   bool execute();

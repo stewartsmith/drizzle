@@ -40,7 +40,7 @@ public:
     Statement(in_session),
     start_transaction_opt(opt)
   {
-    getSession()->getLex()->sql_command= SQLCOM_BEGIN;
+    set_command(SQLCOM_BEGIN);
   }
 
   bool execute();

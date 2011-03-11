@@ -29,8 +29,8 @@ namespace drizzled
 
 bool statement::Replace::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
 
   if (insert_precheck(getSession(), all_tables))
@@ -45,12 +45,12 @@ bool statement::Replace::execute()
 
   bool res= insert_query(getSession(), 
                          all_tables, 
-                         getSession()->getLex()->field_list, 
-                         getSession()->getLex()->many_values,
-                         getSession()->getLex()->update_list, 
-                         getSession()->getLex()->value_list,
-                         getSession()->getLex()->duplicates, 
-                         getSession()->getLex()->ignore);
+                         lex().field_list, 
+                         lex().many_values,
+                         lex().update_list, 
+                         lex().value_list,
+                         lex().duplicates, 
+                         lex().ignore);
   /*
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.

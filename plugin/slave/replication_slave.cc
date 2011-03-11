@@ -110,6 +110,15 @@ bool ReplicationSlave::initWithConfig()
     return false;
   }
 
+  if (_initial_max_commit_id)
+  {
+    if (not rs.setInitialMaxCommitId(_initial_max_commit_id))
+    {
+      _error= rs.getErrorMessage();
+      return false;
+    }
+  }
+
   return true;
 }
 

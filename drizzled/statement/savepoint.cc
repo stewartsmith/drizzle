@@ -49,7 +49,7 @@ bool statement::Savepoint::execute()
      * by calling startStatement().
      */
     if ( (getSession()->options & OPTION_NOT_AUTOCOMMIT) &&
-         (getSession()->transaction.all.getResourceContexts().empty() == true) )
+         (transaction().all.getResourceContexts().empty() == true) )
     {
       if (getSession()->startTransaction() == false)
       {
@@ -62,7 +62,7 @@ bool statement::Savepoint::execute()
      * the same name, delete it.
      */
     TransactionServices &transaction_services= TransactionServices::singleton();
-    deque<NamedSavepoint> &savepoints= getSession()->transaction.savepoints;
+    deque<NamedSavepoint> &savepoints= transaction().savepoints;
     deque<NamedSavepoint>::iterator iter;
 
     for (iter= savepoints.begin();
@@ -72,8 +72,8 @@ bool statement::Savepoint::execute()
       NamedSavepoint &sv= *iter;
       const string &sv_name= sv.getName();
       if (my_strnncoll(system_charset_info,
-                       (unsigned char *) getSession()->getLex()->ident.str,
-                       getSession()->getLex()->ident.length,
+                       (unsigned char *) lex().ident.str,
+                       lex().ident.length,
                        (unsigned char *) sv_name.c_str(),
                        sv_name.size()) == 0)
         break;
@@ -85,7 +85,7 @@ bool statement::Savepoint::execute()
       savepoints.erase(iter);
     }
     
-    NamedSavepoint newsv(getSession()->getLex()->ident.str, getSession()->getLex()->ident.length);
+    NamedSavepoint newsv(lex().ident.str, lex().ident.length);
 
     if (transaction_services.setSavepoint(*getSession(), newsv))
     {

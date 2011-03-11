@@ -36,7 +36,7 @@ public:
   Analyze(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_ANALYZE;
+    set_command(SQLCOM_ANALYZE);
   }
 
   bool execute();

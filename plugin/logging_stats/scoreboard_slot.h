@@ -34,6 +34,7 @@
 #include "status_vars.h"
 #include "user_commands.h"
 
+#include <drizzled/session.h>
 #include <string>
 
 class ScoreboardSlot

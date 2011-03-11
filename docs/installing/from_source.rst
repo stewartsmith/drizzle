@@ -14,7 +14,7 @@ Dependencies
 
 Minimal Requirements
 ^^^^^^^^^^^^^^^^^^^^
-To compile Drizzle with the most basic set of plugins, you will need the following
+To compile Drizzle with the most basic set of plugins, you will need to have the following
 dependencies installed. Scroll down for the apt-get install commands for Ubuntu and Debian.
 
  * autoconf
@@ -43,7 +43,7 @@ dependencies installed. Scroll down for the apt-get install commands for Ubuntu 
 Full Dependencies
 ^^^^^^^^^^^^^^^^^
 Additionally, if you wish to build all of the plugins, you will need to install
-these too:
+these additional dependencies:
 
  * libcurl4-gnutls-dev
  * libgcrypt11-dev
@@ -114,7 +114,7 @@ or (if you want to install and not build drizzle):
 Obtaining The Source
 --------------------
 The latest source release can always be found on our `LaunchPad site
-<https://launchpad.net/drizzle>`_. Alternatively the bzr source from our stable
+<https://launchpad.net/drizzle>`_. Alternatively, the bzr source from our stable
 trunk can be obtained by doing:
 
 .. code-block:: bash
@@ -125,7 +125,7 @@ trunk can be obtained by doing:
 
 Compiling The Source
 --------------------
-Compiling is as simple as doing the following inside the source:
+Compiling is done by performing the standard automake commands from the top level directory inside the source:
 
 .. code-block:: bash
 
