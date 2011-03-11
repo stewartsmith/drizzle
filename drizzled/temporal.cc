@@ -1130,8 +1130,8 @@ void Time::to_int32_t(int32_t *to) const
 // We fill the structure based on just int
 void Time::to_uint64_t(uint64_t &to) const
 {
-  to= _hours * 24
-     + _minutes * 60
+  to= (_hours * 60 * 60)
+     + (_minutes * 60)
      + _seconds;
 }
 
