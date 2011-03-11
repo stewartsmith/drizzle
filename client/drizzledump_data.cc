@@ -528,6 +528,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
     os << " COMMENT='" << obj.comment << "'";
   }
 
+  if (not obj.replicate)
+  {
+    os << " REPLICATE=FALSE";
+  }
+
   os << ";" << std::endl << std::endl;
 
   return os;
