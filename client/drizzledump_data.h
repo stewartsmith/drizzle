@@ -133,6 +133,7 @@ class DrizzleDumpTable
     DrizzleDumpTable(std::string &table, DrizzleDumpConnection* connection) :
       dcon(connection),
       tableName(table),
+      replicate(true),
       database(NULL)
     { }
 
@@ -155,6 +156,7 @@ class DrizzleDumpTable
     std::string engineName;
     std::string collate;
     std::string comment;
+    bool replicate;
 
     // Currently MySQL only, hard to do in Drizzle
     uint64_t autoIncrement;
