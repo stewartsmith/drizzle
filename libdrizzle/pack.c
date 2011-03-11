@@ -300,7 +300,8 @@ static drizzle_return_t _pack_scramble_hash(drizzle_con_st *con,
   SHA1Final(buffer, &ctx);
 
   /* Fourth, xor the last hash against the first password hash. */
-  for (uint32_t x= 0; x < SHA1_DIGEST_LENGTH; x++)
+  uint32_t x= 0;
+  for (; x < SHA1_DIGEST_LENGTH; x++)
     buffer[x]= buffer[x] ^ hash_tmp1[x];
 
   return DRIZZLE_RETURN_OK;
