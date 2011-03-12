@@ -34,7 +34,7 @@ IF/ELSE
 
 This type of control flow function checks IF a condition is satisfied (i.e. the Boolean expression returns TRUE), the IF SQL statement will execute. IF the condition is not satisfied (i.e. the Boolean expression returns FALSE), the ELSE SQL statement is executed.
 
-Syntax for IFÉELSE: ::
+Syntax for IF/ELSE: ::
 
 	IF ( Boolean_expression ) 
 	BEGIN
