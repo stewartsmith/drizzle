@@ -401,7 +401,6 @@ public:
 		curl_easy_getinfo(ms_curl, CURLINFO_FILETIME, &ms_last_modified);
 		exit_();		
 	}
-	
 	inline void ms_execute_put_request(CSInputStream *input, off64_t size)
 	{
 		enter_();
@@ -437,8 +436,7 @@ public:
 			Md5Digest digest;
 			
 			ms_md5.md5_get_digest(&digest);
-			cs_bin_to_hex(HEX_CHECKSUM_VALUE_SIZE, checksum, CHECKSUM_VALUE_SIZE, digest.val);
-			checksum[HEX_CHECKSUM_VALUE_SIZE] = 0;
+			cs_bin_to_hex(HEX_CHECKSUM_VALUE_SIZE +1, checksum, CHECKSUM_VALUE_SIZE, digest.val);
 			
 			cs_strToUpper(ms_s3Checksum);
 			if (strcmp(checksum, ms_s3Checksum)) {
@@ -522,9 +520,11 @@ CSString *CSS3Protocol::s3_getSignature(const char *verb,
 	s3_buffer->append(bucket);
 	s3_buffer->append("/");
 	s3_buffer->append(key);
-	
+
 #ifdef SHOW_SIGNING
 printf("signing:\n=================\n%s\n=================\n", 	s3_buffer->getCString());
+printf("Public Key:\"%s\"\n", 	s3_public_key->getCString());
+printf("Private Key:\"%s\"\n", 	s3_private_key->getCString());
 if(0){
 	const char *ptr = s3_buffer->getCString();
 	while (*ptr) {
@@ -623,14 +623,16 @@ static size_t receive_data(void *vptr, size_t objs, size_t obj_size, void *v_con
 //----------------------
 static bool try_addHeader(CSThread *self, S3ProtocolCon *con, char *name, uint32_t name_len, char *value, uint32_t value_len)
 {
+	volatile bool rtc = true;
+	
 	try_(a) {
 		con->ms_reply_headers.addHeader(name, name_len, value, value_len);
-		return false;
+		rtc = false;
 	}
 	
 	catch_(a);
 	cont_(a);
-	return true;
+	return rtc;
 }
 
 //----------------------
@@ -1358,6 +1360,7 @@ int main(int argc, char **argv)
 		prot->s3_setServer(server);
 		prot->s3_setPublicKey(pub_key);
 		prot->s3_setPrivateKey(priv_key);
+		prot->s3_setMaxRetries(0);
 		
 		switch (argv[1][0]) {
 			case 'q': // Get the query string

@@ -25,9 +25,6 @@
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/plugin/storage_engine.h>
-// #include <drizzled/session.h>
-// #include <drizzled/current_session.h>
-// #include <drizzled/statement/select.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/generator.h>
 

@@ -858,15 +858,28 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
          */
         return CMP_DATE_DFLT;
       }
-      if (! temporal.from_string(str_val->c_ptr(), str_val->length()))
+      if (temporal.from_string(str_val->c_ptr(), str_val->length()))
       {
-        /* Chuck an error. Bad datetime input. */
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
-        return CMP_DATE_DFLT; /* :( What else can I return... */
+        /* String conversion was good.  Convert to an integer for comparison purposes. */
+        temporal.to_int64_t(&value);
       }
-
-      /* String conversion was good.  Convert to an integer for comparison purposes. */
-      temporal.to_int64_t(&value);
+      else
+      {
+        /* We aren't a DATETIME but still could be a TIME */
+        Time timevalue;
+        if (timevalue.from_string(str_val->c_ptr(), str_val->length()))
+        {
+          uint64_t timeint;
+          timevalue.to_uint64_t(timeint);
+          value= static_cast<int64_t>(timeint);
+        }
+        else
+        {
+          /* Chuck an error. Bad datetime input. */
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
+          return CMP_DATE_DFLT; /* :( What else can I return... */
+        }
+      }
 
       if (const_value)
         *const_value= value;
