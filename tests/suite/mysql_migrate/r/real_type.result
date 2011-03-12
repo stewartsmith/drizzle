@@ -1,0 +1,27 @@
+DROP SCHEMA IF EXISTS drizzledump_migrate_test;
+Dropping test database on MySQL...
+Create test database on MySQL...
+populating MySQL with test data...
+calling drizzledump to populate Drizzle...
+test our table:
+test real type
+SHOW CREATE TABLE drizzledump_migrate_test.real_table;
+Table	Create Table
+real_table	CREATE TABLE `real_table` (
+  `description` TEXT COLLATE utf8_general_ci,
+  `col_real_unsigned` DOUBLE(22,0) DEFAULT NULL,
+  `col_real2` DOUBLE(2,0) DEFAULT NULL,
+  `col_real` DOUBLE(22,0) DEFAULT NULL,
+  `col_real_5_2` DOUBLE(5,2) DEFAULT NULL,
+  `col_real_23` DOUBLE(23,1) DEFAULT NULL,
+  `col_real_not_null` DOUBLE(22,0) NOT NULL,
+  `col_real_default_null` DOUBLE(22,0) DEFAULT NULL,
+  `col_real_default` DOUBLE(5,2) DEFAULT '999.99'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.real_table;
+description	col_real_unsigned	col_real2	col_real	col_real_5_2	col_real_23	col_real_not_null	col_real_default_null	col_real_default
+MIN	0	-99	-9999999999	-999.99	-10000000000000000000000.0	-9999999999	NULL	999.99
+MAX	999999999	99	9999999999	999.99	10000000000000000000000.0	9999999999	NULL	999.99
+NULL	NULL	NULL	NULL	NULL	NULL	1000	NULL	999.99
+Dropping test database on MySQL...
+DROP SCHEMA drizzledump_migrate_test;

@@ -1,0 +1,7 @@
+To use the tests in this suite you need the following:
+1) You need a running MySQL server
+2) Set two environment vars:
+  DRIZZLE_MYSQL_MIGRATE_TEST=1
+  DRIZZLE_MYSQL_MIGRATE_PORT= port where MySQL is running
+
+Everything else behaves as with other test-run tests.

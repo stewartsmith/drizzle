@@ -1,0 +1,28 @@
+DROP SCHEMA IF EXISTS drizzledump_migrate_test;
+Dropping test database on MySQL...
+Create test database on MySQL...
+populating MySQL with test data...
+calling drizzledump to populate Drizzle...
+test our table:
+SHOW CREATE TABLE drizzledump_migrate_test.t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT NOT NULL,
+  `b` INT NOT NULL,
+  PRIMARY KEY (`a`),
+  KEY `b_key1` (`b`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE drizzledump_migrate_test.t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  KEY `b_key` (`b`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.t1;
+a	b
+SELECT * FROM drizzledump_migrate_test.t2;
+a	b
+Dropping test database on MySQL...
+DROP SCHEMA drizzledump_migrate_test;

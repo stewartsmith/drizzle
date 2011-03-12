@@ -1,0 +1,90 @@
+# mysql_migrate.databases
+# test of migration of multiple databases
+# as used by the --databases DB1 [DB2...] format of calling
+# drizzledump
+#
+# We expect to not have drizzledump_migrate_test3 in our
+# mysql-populated Drizzle system even though it exists
+# on the MySQL server in this test 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_databases.dat;
+let $database1 = drizzledump_migrate_test1;
+let $database2 = drizzledump_migrate_test2;
+let $database3 = drizzledump_migrate_test3;
+
+# test if we should run this test, will skip if we don't have
+# the environment variable set
+--disable_query_log
+--require r/true.require
+SELECT VARIABLE_VALUE AS `TRUE` FROM DATA_DICTIONARY.ENVIRONMENTAL WHERE VARIABLE_NAME="DRIZZLE_MYSQL_MIGRATE_TEST";
+--enable_query_log
+
+--disable_warnings
+eval DROP SCHEMA IF EXISTS $database1;
+eval DROP SCHEMA IF EXISTS $database2;
+eval DROP SCHEMA IF EXISTS $database3;
+--enable_warnings
+
+
+# we migrate the test db back from MySQL so we drop the drizzle one
+CREATE SCHEMA tmp_test;
+USE tmp_test;
+DROP SCHEMA test;
+
+# clean up our MySQL server
+--echo Dropping test database on MySQL...
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "DROP SCHEMA IF EXISTS $database1";
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "DROP SCHEMA IF EXISTS $database2";
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "DROP SCHEMA IF EXISTS $database3";
+
+
+
+--echo Create test database on MySQL...
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "CREATE SCHEMA $database1";
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "CREATE SCHEMA $database2";
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "CREATE SCHEMA $database3";
+
+
+--echo populating MySQL with test data...
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT $database1 < $datafile;
+
+--echo calling drizzledump to populate Drizzle...
+# next line just debugging aid
+--echo $DRIZZLE_DUMP_CLIENT --compact --host=127.0.0.1 --port=$DRIZZLE_MYSQL_MIGRATE_PORT --destination-type=database --destination-host=localhost --destination-port=$MASTER_MYPORT --destination-user=root --user=root --all-databases;
+
+exec $DRIZZLE_DUMP_CLIENT --compact --host=127.0.0.1 --port=$DRIZZLE_MYSQL_MIGRATE_PORT --destination-type=database --destination-host=localhost --destination-port=$MASTER_MYPORT --destination-user=root --user=root --all-databases ;
+
+--echo see our schemas
+SHOW SCHEMAS;
+
+--echo test our table:
+eval SHOW CREATE TABLE $database1.t1;
+eval SHOW CREATE TABLE $database1.t2;
+eval SHOW CREATE TABLE $database2.t1;
+eval SHOW CREATE TABLE $database2.t2;
+--echo The table_name is a lie!
+# we reuse the test bed from another test
+eval SHOW CREATE TABLE $database3.not_on_drizzle;
+
+eval SELECT * FROM $database1.t1;
+eval SELECT * FROM $database1.t2;
+eval SELECT * FROM $database2.t1;
+eval SELECT * FROM $database2.t2;
+--echo The table_name is a lie!
+# we reuse the test bed from another test
+eval SELECT * FROM $database3.not_on_drizzle;
+
+# clean up our MySQL server
+--echo Dropping test database on MySQL...
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "DROP SCHEMA IF EXISTS $database1";
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "DROP SCHEMA IF EXISTS $database2";
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "DROP SCHEMA IF EXISTS $database3";
+
+eval DROP SCHEMA $database1;
+eval DROP SCHEMA $database2;
+eval DROP SCHEMA $database3;
+USE test;
+DROP SCHEMA tmp_test;
+
+
+

@@ -253,6 +253,7 @@ sub collect_one_suite($)
     $suite_opts= dtr_get_opts_from_file($suite_opt_file);
   }
 
+
   if ( @::opt_cases )
   {
     # Collect in specified order
@@ -548,6 +549,12 @@ sub collect_one_test_case($$$$$$$$$) {
   {
     $tinfo->{'skip'}= 1;
     return;
+  }
+  my $master_cnf_file = "$testdir/master.cnf";
+  my $test_cnf_file = "$testdir/$tname.cnf";
+  if (-e $master_cnf_file || -e $test_cnf_file)
+  {
+    $tinfo->{'skip'}= 1;
   }
 
   # ----------------------------------------------------------------------

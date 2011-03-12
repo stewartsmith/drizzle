@@ -1,0 +1,27 @@
+DROP SCHEMA IF EXISTS drizzledump_migrate_test;
+Dropping test database on MySQL...
+Create test database on MySQL...
+populating MySQL with test data...
+../client/drizzle -uroot --port=13000 drizzledump_migrate_test < /home/pcrews/bzr/work/drizzledump/mysql-migrate-tests/tests/var/std_data_ln/mysqlmigrate_set_type.dat
+calling drizzledump to populate Drizzle...
+test our table:
+test set type
+SHOW CREATE TABLE drizzledump_migrate_test.set_table;
+Table	Create Table
+set_table	CREATE TABLE `set_table` (
+  `description` TEXT COLLATE utf8_general_ci,
+  `col_2` TEXT COLLATE utf8_general_ci,
+  `col_2_not_null` TEXT COLLATE utf8_general_ci NOT NULL,
+  `col_2_default_null` TEXT COLLATE utf8_general_ci,
+  `col_2_default` TEXT COLLATE utf8_general_ci,
+  `col_64` TEXT COLLATE utf8_general_ci,
+  `col_64_default_null` TEXT COLLATE utf8_general_ci,
+  `col_64_default` TEXT COLLATE utf8_general_ci
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.set_table;
+description	col_2	col_2_not_null	col_2_default_null	col_2_default	col_64	col_64_default_null	col_64_default
+MIN	Roy	Roy	NULL	Roy,Moss,Jen	a	NULL	a,0,1,2
+MAX	Roy,Moss,Jen	Roy,Moss,Jen	NULL	Roy,Moss,Jen	z	NULL	a,0,1,2
+NULL_ROW	NULL	Moss	NULL	Roy,Moss,Jen	NULL	NULL	a,0,1,2
+Dropping test database on MySQL...
+DROP SCHEMA drizzledump_migrate_test;
