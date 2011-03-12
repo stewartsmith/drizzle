@@ -1,0 +1,16 @@
+# mysql_migrate.varchar_type
+# test the ENUM data type migration 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_varchar_type.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+--echo test varchar type
+eval SHOW CREATE TABLE $database.varchar_table;
+eval SELECT * FROM $database.varchar_table;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;

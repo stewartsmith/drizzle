@@ -1,0 +1,16 @@
+# mysql_migrate.bit_type
+# bit type migration test case 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_bit_type.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+--echo test bit type
+eval SHOW CREATE TABLE $database.bit_table;
+eval SELECT * FROM $database.bit_table;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;

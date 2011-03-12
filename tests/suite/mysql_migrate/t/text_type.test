@@ -1,0 +1,31 @@
+# mysql_migrate.text_type
+# test migration of the MySQL TEXT type 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_text_type.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+--echo test tinytext type
+eval SHOW CREATE TABLE $database.tinytext_table;
+eval SELECT * FROM $database.tinytext_table;
+
+--echo test our table:
+--echo test text type
+eval SHOW CREATE TABLE $database.text_table;
+eval SELECT * FROM $database.text_table;
+
+--echo test our table:
+--echo test mediumtext type
+eval SHOW CREATE TABLE $database.mediumtext_table;
+eval SELECT * FROM $database.mediumtext_table;
+
+--echo test our table:
+--echo test longtext type
+eval SHOW CREATE TABLE $database.longtext_table;
+eval SELECT * FROM $database.longtext_table;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;
