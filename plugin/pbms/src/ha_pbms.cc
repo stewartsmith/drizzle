@@ -32,7 +32,9 @@
 #endif
 
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
+
+#include <drizzled/current_session.h>
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
@@ -114,7 +116,7 @@ public:
 	int doCommit(Session *, bool);
 	int doRollback(Session *, bool);
 	Cursor *create(Table& table);
-	bool doDropSchema(const drizzled::SchemaIdentifier&);
+	bool doDropSchema(const drizzled::identifier::Schema&);
 	
 	/*
 	* Indicates to a storage engine the start of a
@@ -135,26 +137,26 @@ public:
 		(void) session;
 	}
 	
-	int doCreateTable(Session&, Table&, const TableIdentifier& ident, drizzled::message::Table& );	
-	int doDropTable(Session &, const TableIdentifier& );
+	int doCreateTable(Session&, Table&, const identifier::Table& ident, const drizzled::message::Table& );	
+	int doDropTable(Session &, const identifier::Table& );
 	
-	int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+	int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 	
         void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
-                                   const drizzled::SchemaIdentifier &schema,
-                                   drizzled::TableIdentifier::vector &set_of_identifiers) 
+                                   const drizzled::identifier::Schema &schema,
+                                   drizzled::identifier::Table::vector &set_of_identifiers) 
 	{
 		std::set<std::string> set_of_names;
 		
 		doGetTableNames(dir, schema, set_of_names);
 		for (std::set<std::string>::iterator set_iter = set_of_names.begin(); set_iter != set_of_names.end(); ++set_iter)
 		{
-			set_of_identifiers.push_back(TableIdentifier(schema, *set_iter));
+			set_of_identifiers.push_back(identifier::Table(schema, *set_iter));
 		}
 	}
 	
 	void doGetTableNames(CachedDirectory&, 
-					const SchemaIdentifier &schema, 
+					const identifier::Schema &schema, 
 					std::set<std::string> &set_of_names) 
 	{
 		bool isPBMS = schema.compare("PBMS");
@@ -168,7 +170,7 @@ public:
 	int doReleaseSavepoint(Session *session, NamedSavepoint &savepoint);
 	const char **bas_ext() const;
 
-  int doGetTableDefinition(Session&, const TableIdentifier &identifier,
+  int doGetTableDefinition(Session&, const identifier::Table &identifier,
                                           drizzled::message::Table &table_proto)
   {
 		int err;
@@ -186,7 +188,7 @@ public:
 		return EEXIST;
   }
 
-	bool doDoesTableExist(Session&, const TableIdentifier &identifier)
+	bool doDoesTableExist(Session&, const identifier::Table &identifier)
 	{
 		const char *tab_name = identifier.getTableName().c_str();
 		const char *db_name = identifier.getSchemaName().c_str();
@@ -434,7 +436,7 @@ static int pbms_savepoint_release(handlerton *hton, THD *thd, void *sv)
 #endif
 
 #ifdef DRIZZLED
-bool  PBMSStorageEngine::doDropSchema(const drizzled::SchemaIdentifier &schema)
+bool  PBMSStorageEngine::doDropSchema(const drizzled::identifier::Schema &schema)
 {
 	CSThread *self;
 	PBMSResultRec result;
@@ -695,10 +697,11 @@ int ha_pbms::open(const char *table_path, int , uint )
 
 	inner_();
 	try_(a) {
-		ha_open_tab = MSSystemTableShare::openSystemTable(table_path, getTable());
 #ifdef DRIZZLED
+		ha_open_tab = MSSystemTableShare::openSystemTable(table_path, getTable());
 		ha_lock.init(&ha_open_tab->myShare->myThrLock);
 #else
+		ha_open_tab = MSSystemTableShare::openSystemTable(table_path, table);
 		thr_lock_data_init(&ha_open_tab->myShare->myThrLock, &ha_lock, NULL);
 #endif
 		ref_length = ha_open_tab->getRefLen();
@@ -928,7 +931,7 @@ int ha_pbms::rnd_next(unsigned char *buf)
 //-------
 void ha_pbms::position(const unsigned char *)
 {
-	ha_open_tab->seqScanPos((uint8_t *) ref);
+	ha_open_tab->seqScanPos((unsigned char *) ref);
 }
 
 //-------
@@ -937,7 +940,7 @@ int ha_pbms::rnd_pos(unsigned char * buf, unsigned char *pos)
 	int err = 0;
 	enter_();
 	try_(a) {
-		ha_open_tab->seqScanRead((uint8_t *) pos, (char *) buf);
+		ha_open_tab->seqScanRead(pos, (char *) buf);
 	}
 	catch_(a) {
 		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
@@ -1043,19 +1046,19 @@ THR_LOCK_DATA **ha_pbms::store_lock(THD *, THR_LOCK_DATA **to, enum thr_lock_typ
 
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::doCreateTable(Session&, Table&, const TableIdentifier& , drizzled::message::Table& )
+int PBMSStorageEngine::doCreateTable(Session&, Table&, const identifier::Table& , const drizzled::message::Table& )
 {
 	/* You cannot create PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );
 }
 
-int PBMSStorageEngine::doDropTable(Session &, const TableIdentifier& )
+int PBMSStorageEngine::doDropTable(Session &, const identifier::Table& )
 {
 	/* You cannot delete PBMS tables. */
 	return( 0 );
 }
 
-int PBMSStorageEngine::doRenameTable(Session&, const TableIdentifier &, const TableIdentifier &)
+int PBMSStorageEngine::doRenameTable(Session&, const identifier::Table &, const identifier::Table &)
 {
 	/* You cannot rename PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );

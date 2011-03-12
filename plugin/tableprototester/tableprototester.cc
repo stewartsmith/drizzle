@@ -16,10 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "config.h"
-#include <drizzled/table.h>
-#include <drizzled/error.h>
-#include "drizzled/internal/my_pthread.h"
+#include <config.h>
 
 #include "tableprototester.h"
 
@@ -28,10 +25,14 @@
 #include <string>
 #include <map>
 #include <fstream>
-#include <drizzled/message/table.pb.h>
-#include "drizzled/internal/m_string.h"
 
-#include "drizzled/global_charset_info.h"
+#include <drizzled/error.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/internal/my_pthread.h>
+#include <drizzled/message/table.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/table.h>
 
 
 using namespace std;
@@ -68,13 +69,13 @@ public:
 
   int doCreateTable(Session&,
                     Table&,
-                    const drizzled::TableIdentifier &identifier,
-                    drizzled::message::Table&);
+                    const drizzled::identifier::Table &identifier,
+                    const drizzled::message::Table&);
 
-  int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
+  int doDropTable(Session&, const drizzled::identifier::Table &identifier);
 
   int doGetTableDefinition(Session &session,
-                           const drizzled::TableIdentifier &identifier,
+                           const drizzled::identifier::Table &identifier,
                            drizzled::message::Table &table_proto);
 
   /* The following defines can be increased if necessary */
@@ -91,31 +92,31 @@ public:
             HA_KEYREAD_ONLY);
   }
 
-  bool doDoesTableExist(Session &session, const drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(Session &session, const drizzled::identifier::Table &identifier);
 
-  int doRenameTable(Session&, const drizzled::TableIdentifier&, const drizzled::TableIdentifier&)
+  int doRenameTable(Session&, const drizzled::identifier::Table&, const drizzled::identifier::Table&)
   {
-    return EPERM;
+    return HA_ERR_NO_SUCH_TABLE;
   }
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
 };
 
 void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                                   const drizzled::SchemaIdentifier &schema_identifier,
-                                                   drizzled::TableIdentifier::vector &set_of_identifiers)
+                                                   const drizzled::identifier::Schema &schema_identifier,
+                                                   drizzled::identifier::Table::vector &set_of_identifiers)
 {
   if (schema_identifier.compare("test"))
   {
-    set_of_identifiers.push_back(TableIdentifier(schema_identifier, "t1"));
-    set_of_identifiers.push_back(TableIdentifier(schema_identifier, "too_many_enum_values"));
-    set_of_identifiers.push_back(TableIdentifier(schema_identifier, "invalid_table_collation"));
+    set_of_identifiers.push_back(identifier::Table(schema_identifier, "t1"));
+    set_of_identifiers.push_back(identifier::Table(schema_identifier, "too_many_enum_values"));
+    set_of_identifiers.push_back(identifier::Table(schema_identifier, "invalid_table_collation"));
   }
 }
 
-bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::TableIdentifier &identifier)
+bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::identifier::Table &identifier)
 {
   if (not identifier.getPath().compare("test/t1"))
     return true;
@@ -144,16 +145,16 @@ int TableProtoTesterCursor::close(void)
 
 int TableProtoTesterEngine::doCreateTable(Session&,
                                           Table&,
-                                          const drizzled::TableIdentifier&,
-                                          drizzled::message::Table&)
+                                          const drizzled::identifier::Table&,
+                                          const drizzled::message::Table&)
 {
   return EEXIST;
 }
 
 
-int TableProtoTesterEngine::doDropTable(Session&, const drizzled::TableIdentifier&)
+int TableProtoTesterEngine::doDropTable(Session&, const drizzled::identifier::Table&)
 {
-  return EPERM;
+  return HA_ERR_NO_SUCH_TABLE;
 }
 
 static void fill_table1(message::Table &table)
@@ -235,7 +236,7 @@ static void fill_table_invalid_table_collation(message::Table &table)
 }
 
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
-                                                 const drizzled::TableIdentifier &identifier,
+                                                 const drizzled::identifier::Table &identifier,
                                                  drizzled::message::Table &table_proto)
 {
   if (not identifier.getPath().compare("test/t1"))
@@ -364,7 +365,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Used to test rest of server with various table proto messages",
   PLUGIN_LICENSE_GPL,
   tableprototester_init,     /* Plugin Init */
-  NULL,               /* system variables */
+  NULL,               /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

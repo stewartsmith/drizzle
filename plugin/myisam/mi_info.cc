@@ -17,7 +17,7 @@
 
 #include "myisam_priv.h"
 #include <sys/stat.h>
-#include "drizzled/error.h"
+#include <drizzled/error.h>
 
 using namespace drizzled;
 
@@ -117,11 +117,15 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint32_t flag)
 
 void mi_report_error(int errcode, const char *file_name)
 {
+  mi_report_error(errcode, file_name);
+}
+
+void mi_report_error(drizzled::error_t errcode, const char *file_name)
+{
   size_t        lgt;
 
   if ((lgt= strlen(file_name)) > 64)
     file_name+= lgt - 64;
   my_error(errcode, MYF(ME_NOREFRESH), file_name);
-  return;
 }
 

@@ -43,7 +43,7 @@ public:
     not_fixed(dec_arg >= NOT_FIXED_DEC)
     {}
   int store_decimal(const type::Decimal *);
-  type::Decimal *val_decimal(type::Decimal *);
+  type::Decimal *val_decimal(type::Decimal *) const;
   int truncate(double *nr, double max_length);
   uint32_t max_display_length() { return field_length; }
   uint32_t size_of() const { return sizeof(*this); }

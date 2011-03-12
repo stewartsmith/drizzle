@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/information_schema_dictionary/dictionary.h"
+#include <config.h>
+#include <plugin/information_schema_dictionary/dictionary.h>
 
 using namespace std;
 using namespace drizzled;
@@ -93,7 +93,7 @@ bool Columns::Generator::populate()
     }
 
     /* IS_NULLABLE */
-    push(field.constraints().is_nullable());
+    push(not field.constraints().is_notnull());
 
     /* DATA_TYPE <-- display the type that the user is going to expect, which is not the same as the type we store internally */
     push(drizzled::message::type(field));

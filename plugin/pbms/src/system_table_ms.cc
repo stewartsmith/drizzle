@@ -28,7 +28,7 @@
  */
 
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 #include <drizzled/common.h>
 #include <drizzled/session.h>
 #include <drizzled/table.h>
@@ -36,7 +36,7 @@
 #include <drizzled/field/blob.h>
 
 #include <drizzled/message/table.pb.h>
-#include "drizzled/charset_info.h"
+#include <drizzled/charset_info.h>
 #include <drizzled/table_proto.h>
 #endif
 
@@ -320,9 +320,7 @@ static int pbms_create_proto_table(const char *engine_name, const char *name, DT
 			
 		field_constraints= field->mutable_constraints();
 		if (info->field_flags & NOT_NULL_FLAG)
-			field_constraints->set_is_nullable(false);
-		else
-			field_constraints->set_is_nullable(true);
+			field_constraints->set_is_notnull(true);
 		
 		if (info->field_flags & UNSIGNED_FLAG)
 			field_constraints->set_is_unsigned(true);
@@ -857,7 +855,7 @@ int	MSRepositoryTable::getRefLen()
 
 
 //-----------------------
-void MSRepositoryTable::seqScanPos(uint8_t *pos)
+void MSRepositoryTable::seqScanPos(unsigned char *pos)
 {
 	mi_int4store(pos, iRepoIndex); pos +=4;
 	mi_int8store(pos, iRepoCurrentOffset);
@@ -875,7 +873,7 @@ void MSRepositoryTable::seqScanRead(uint32_t repo, uint64_t offset, char *buf)
 }
 
 //-----------------------
-void MSRepositoryTable::seqScanRead(uint8_t *pos, char *buf)
+void MSRepositoryTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	seqScanRead(mi_uint4korr( pos), mi_uint8korr(pos +4), buf);
 }
@@ -1056,10 +1054,10 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 				break;
 			case 'M': // MD5_Checksum
 				if (storage_type == MS_STANDARD_STORAGE) {
-					char checksum[sizeof(Md5Digest) *2];
+					char checksum[sizeof(Md5Digest) *2 +1];
 					
 					ASSERT(strcmp(curr_field->field_name, "MD5_Checksum") == 0);
-					cs_bin_to_hex(sizeof(Md5Digest) *2, checksum, sizeof(Md5Digest), &(blob->rb_blob_checksum_md5d));
+					cs_bin_to_hex(sizeof(Md5Digest) *2 +1, checksum, sizeof(Md5Digest), &(blob->rb_blob_checksum_md5d));
 					curr_field->store(checksum, sizeof(Md5Digest) *2, system_charset_info);
 					setNotNullInRecord(curr_field, buf);
 					
@@ -1345,7 +1343,7 @@ int	MSReferenceTable::getRefLen()
 	return sizeof(iRefDataUsed) + sizeof(iRefDataPos) + sizeof(iRefCurrentIndex) + sizeof(iRefCurrentOffset);
 }
 
-void MSReferenceTable::seqScanPos(uint8_t *pos)
+void MSReferenceTable::seqScanPos(unsigned char *pos)
 {
 	mi_int4store(pos, iRefCurrentDataPos); pos +=4;
 	mi_int4store(pos, iRefCurrentDataUsed);pos +=4;	
@@ -1353,7 +1351,7 @@ void MSReferenceTable::seqScanPos(uint8_t *pos)
 	mi_int8store(pos, iRefCurrentOffset);
 }
 
-void MSReferenceTable::seqScanRead(uint8_t *pos, char *buf)
+void MSReferenceTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	iRefDataPos = mi_uint4korr( pos); pos +=4;
 	iRefDataUsed = mi_uint4korr(pos); pos +=4;
@@ -1810,7 +1808,7 @@ int	MSMetaDataTable::getRefLen()
 	return sizeof(iMetCurrentDataPos) + sizeof(iMetCurrentDataSize) + sizeof(iMetCurrentBlobRepo) + sizeof(iMetCurrentBlobOffset);
 }
 
-void MSMetaDataTable::seqScanPos(uint8_t *pos)
+void MSMetaDataTable::seqScanPos(unsigned char *pos)
 {
 	mi_int4store(pos, iMetCurrentDataPos); pos +=4;
 	mi_int4store(pos, iMetCurrentDataSize);pos +=4;	
@@ -1818,7 +1816,7 @@ void MSMetaDataTable::seqScanPos(uint8_t *pos)
 	mi_int8store(pos, iMetCurrentBlobOffset);
 }
 
-void MSMetaDataTable::seqScanRead(uint8_t *pos, char *buf)
+void MSMetaDataTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	iMetStateSaved = false;
 	iMetDataPos = mi_uint4korr( pos); pos +=4;
@@ -2391,7 +2389,7 @@ iOpenCount(0)
 MSSystemTableShare::~MSSystemTableShare()
 {
 #ifdef DRIZZLED
-	myThrLock.unlock();
+	myThrLock.deinit();
 #else
 	thr_lock_delete(&myThrLock);
 #endif

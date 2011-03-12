@@ -15,10 +15,10 @@
 
 /* Kopierar biblioteksstrukturen och extensionen fr}n ett filnamn */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {

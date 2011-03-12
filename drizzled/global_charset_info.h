@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_GLOBAL_CHARSET_INFO_H
 #define DRIZZLED_GLOBAL_CHARSET_INFO_H
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
@@ -29,10 +31,10 @@ typedef struct charset_info_st CHARSET_INFO;
 /*
   External variables
 */
-extern const CHARSET_INFO *default_charset_info;
-extern const CHARSET_INFO *system_charset_info;
-extern const CHARSET_INFO *files_charset_info;
-extern const CHARSET_INFO *table_alias_charset;
+extern DRIZZLED_API const charset_info_st *default_charset_info;
+extern DRIZZLED_API const charset_info_st *system_charset_info;
+extern const charset_info_st *files_charset_info;
+extern const charset_info_st *table_alias_charset;
 
 } /* namespace drizzled */
 

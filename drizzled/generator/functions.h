@@ -21,16 +21,20 @@
 #ifndef DRIZZLED_GENERATOR_FUNCTIONS_H
 #define DRIZZLED_GENERATOR_FUNCTIONS_H
 
-#include "drizzled/plugin/function.h"
+#include <drizzled/plugin/function.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled {
 namespace generator {
 
-class Functions
+class DRIZZLED_API Functions
 {
   Session &session;
+  typedef std::vector <std::string> vector;
   std::string function_name;
-  plugin::Function::UdfMap::const_iterator udf_iter;
+  vector function_list;
+  vector::iterator iter;
 
 public:
 
@@ -38,11 +42,11 @@ public:
 
   operator std::string*()
   {
-    if (udf_iter == plugin::Function::getMap().end())
+    if (iter == function_list.end())
       return NULL;
 
-    function_name= (*udf_iter).first;
-    udf_iter++;
+    function_name= *iter;
+    iter++;
 
     return &function_name;
   }

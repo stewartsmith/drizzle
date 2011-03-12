@@ -19,8 +19,8 @@
  */
 
 
-#include "config.h"
-#include "drizzled/util/backtrace.h"
+#include <config.h>
+#include <drizzled/util/backtrace.h>
 
 #include <string.h>
 #include <stdlib.h>

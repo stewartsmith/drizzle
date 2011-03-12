@@ -16,28 +16,36 @@
 
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
-#include "config.h"
+#include <config.h>
+
 #define DRIZZLE_LEX 1
-#include "drizzled/configmake.h"
-#include "drizzled/item/num.h"
-#include "drizzled/error.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/lookup_symbol.h"
-#include "drizzled/index_hint.h"
+
+#include <drizzled/sql_reserved_words.h>
+
+#include <drizzled/configmake.h>
+#include <drizzled/item/num.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/lookup_symbol.h>
+#include <drizzled/index_hint.h>
+#include <drizzled/select_result.h>
+#include <drizzled/item/subselect.h>
 
 #include <cstdio>
 #include <ctype.h>
 
+union ParserType;
+
 using namespace std;
 
 /* Stay outside of the namespace because otherwise bison goes nuts */
-int DRIZZLElex(void *arg, void *yysession);
+int base_sql_lex(ParserType *arg, drizzled::Session *yysession);
 
 namespace drizzled
 {
 
-static int lex_one_token(void *arg, void *yysession);
+static int lex_one_token(ParserType *arg, drizzled::Session *yysession);
 
 /**
   save order by and tables in own lists.
@@ -45,16 +53,19 @@ static int lex_one_token(void *arg, void *yysession);
 static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
   Order *order;
-  if (!(order = (Order *) session->alloc(sizeof(Order))))
-    return(1);
+
+  if (!(order = (Order *) session->getMemRoot()->allocate(sizeof(Order))))
+    return true;
+
   order->item_ptr= item;
   order->item= &order->item_ptr;
   order->asc = asc;
   order->free_me=0;
   order->used=0;
   order->counter_used= 0;
-  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return(0);
+  list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
+
+  return false;
 }
 
 /**
@@ -64,8 +75,8 @@ const LEX_STRING null_lex_str= {NULL, 0};
 
 Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
-                                   unsigned int length)
-: m_session(session),
+                                   unsigned int length) :
+  m_session(session),
   yylineno(1),
   yytoklen(0),
   yylval(NULL),
@@ -88,7 +99,7 @@ Lex_input_stream::Lex_input_stream(Session *session,
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
-  m_cpp_buf= (char*) session->alloc(length + 1);
+  m_cpp_buf= (char*) session->getMemRoot()->allocate(length + 1);
   m_cpp_ptr= m_cpp_buf;
 }
 
@@ -115,7 +126,7 @@ void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
     (m_buf_length / default_charset_info->mbminlen) *
     my_charset_utf8_bin.mbmaxlen;
 
-  m_body_utf8= (char *) session->alloc(body_utf8_length + 1);
+  m_body_utf8= (char *) session->getMemRoot()->allocate(body_utf8_length + 1);
   m_body_utf8_ptr= m_body_utf8;
   *m_body_utf8_ptr= 0;
 
@@ -213,19 +224,19 @@ void LEX::start(Session *arg)
 
 void lex_start(Session *session)
 {
-  LEX *lex= session->lex;
+  LEX *lex= session->getLex();
 
   lex->session= lex->unit.session= session;
 
-  lex->context_stack.empty();
+  lex->context_stack.clear();
   lex->unit.init_query();
   lex->unit.init_select();
   /* 'parent_lex' is used in init_query() so it must be before it. */
   lex->select_lex.parent_lex= lex;
   lex->select_lex.init_query();
-  lex->value_list.empty();
-  lex->update_list.empty();
-  lex->auxiliary_table_list.empty();
+  lex->value_list.clear();
+  lex->update_list.clear();
+  lex->auxiliary_table_list.clear();
   lex->unit.next= lex->unit.master=
     lex->unit.link_next= lex->unit.return_to= 0;
   lex->unit.prev= lex->unit.link_prev= 0;
@@ -237,7 +248,7 @@ void lex_start(Session *session)
   lex->select_lex.link_prev= (Select_Lex_Node**)&(lex->all_selects_list);
   lex->select_lex.options= 0;
   lex->select_lex.init_order();
-  lex->select_lex.group_list.empty();
+  lex->select_lex.group_list.clear();
   lex->describe= 0;
   lex->derived_tables= 0;
   lex->lock_option= TL_READ;
@@ -246,8 +257,8 @@ void lex_start(Session *session)
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
-  lex->select_lex.group_list.empty();
-  lex->select_lex.order_list.empty();
+  lex->select_lex.group_list.clear();
+  lex->select_lex.order_list.clear();
   lex->sql_command= SQLCOM_END;
   lex->duplicates= DUP_ERROR;
   lex->ignore= 0;
@@ -262,12 +273,12 @@ void lex_start(Session *session)
   lex->nest_level=0 ;
   lex->allow_sum_func= 0;
   lex->in_sum_func= NULL;
+  lex->type= 0;
 
   lex->is_lex_started= true;
   lex->statement= NULL;
   
   lex->is_cross= false;
-
   lex->reset();
 }
 
@@ -281,13 +292,15 @@ void LEX::end()
     yacc_yyvs= 0;
   }
 
-  delete result;
+  safe_delete(result);
+  safe_delete(_create_table);
+  _create_table= NULL;
+  _create_field= NULL;
 
   result= 0;
   setCacheable(true);
 
-  delete statement;
-  statement= NULL;
+  safe_delete(statement);
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
@@ -348,7 +361,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
   char *to;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length= lip->yytoklen=length;
-  tmp.str=(char*) lip->m_session->alloc(tmp.length+1);
+  tmp.str=(char*) lip->m_session->getMemRoot()->allocate(tmp.length+1);
   from= lip->get_tok_start() + skip;
   to= tmp.str;
   end= to+length;
@@ -375,7 +388,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
 */
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
-  register unsigned char c,sep;
+  unsigned char c,sep;
   bool found_escape= false;
   const CHARSET_INFO * const cs= lip->m_session->charset();
 
@@ -424,7 +437,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       end-= post_skip;
       assert(end >= str);
 
-      if (!(start= (char*) lip->m_session->alloc((uint32_t) (end-str)+1)))
+      if (!(start= (char*) lip->m_session->getMemRoot()->allocate((uint32_t) (end-str)+1)))
         return (char*) "";		// memory::SqlAlloc has set error flag
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
@@ -590,17 +603,15 @@ static inline uint32_t int_token(const char *str,uint32_t length)
 
 } /* namespace drizzled */
 /*
-  DRIZZLElex remember the following states from the following DRIZZLElex()
+  base_sql_lex remember the following states from the following sql_baselex()
 
   - MY_LEX_EOQ			Found end of query
   - MY_LEX_OPERATOR_OR_IDENT	Last state was an ident, text or number
 				(which can't be followed by a signed number)
 */
-int DRIZZLElex(void *arg, void *yysession)
+int base_sql_lex(union ParserType *yylval, drizzled::Session *session)
 {
-  drizzled::Session *session= (drizzled::Session *)yysession;
   drizzled::Lex_input_stream *lip= session->m_lip;
-  YYSTYPE *yylval=(YYSTYPE*) arg;
   int token;
 
   if (lip->lookahead_token != END_OF_INPUT)
@@ -616,7 +627,7 @@ int DRIZZLElex(void *arg, void *yysession)
     return token;
   }
 
-  token= drizzled::lex_one_token(arg, yysession);
+  token= drizzled::lex_one_token(yylval, session);
 
   switch(token) {
   case WITH:
@@ -627,7 +638,7 @@ int DRIZZLElex(void *arg, void *yysession)
       to transform the grammar into a LALR(1) grammar,
       which sql_yacc.yy can process.
     */
-    token= drizzled::lex_one_token(arg, yysession);
+    token= drizzled::lex_one_token(yylval, session);
     if (token == ROLLUP_SYM)
     {
       return WITH_ROLLUP_SYM;
@@ -652,17 +663,15 @@ int DRIZZLElex(void *arg, void *yysession)
 namespace drizzled
 {
 
-int lex_one_token(void *arg, void *yysession)
+int lex_one_token(ParserType *yylval, drizzled::Session *session)
 {
-  register unsigned char c= 0; /* Just set to shutup GCC */
+  unsigned char c= 0; /* Just set to shutup GCC */
   bool comment_closed;
   int	tokval, result_state;
   unsigned int length;
   enum my_lex_states state;
-  Session *session= (Session *)yysession;
   Lex_input_stream *lip= session->m_lip;
-  LEX *lex= session->lex;
-  YYSTYPE *yylval=(YYSTYPE*) arg;
+  LEX *lex= session->getLex();
   const CHARSET_INFO * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
@@ -1053,6 +1062,7 @@ int lex_one_token(void *arg, void *yysession)
       lip->yyUnget();                   // Safety against eof
       state = MY_LEX_START;		// Try again
       break;
+
     case MY_LEX_LONG_COMMENT:		/* Long C comment? */
       if (lip->yyPeek() != '*')
       {
@@ -1150,6 +1160,7 @@ int lex_one_token(void *arg, void *yysession)
       lip->in_comment= NO_COMMENT;
       lip->set_echo(true);
       break;
+
     case MY_LEX_END_LONG_COMMENT:
       if ((lip->in_comment != NO_COMMENT) && lip->yyPeek() == '/')
       {
@@ -1166,6 +1177,7 @@ int lex_one_token(void *arg, void *yysession)
       else
         state=MY_LEX_CHAR;		// Return '*'
       break;
+
     case MY_LEX_SET_VAR:		// Check if ':='
       if (lip->yyPeek() != '=')
       {
@@ -1174,6 +1186,7 @@ int lex_one_token(void *arg, void *yysession)
       }
       lip->yySkip();
       return (SET_VAR);
+
     case MY_LEX_SEMICOLON:			// optional line terminator
       if (lip->yyPeek())
       {
@@ -1182,6 +1195,7 @@ int lex_one_token(void *arg, void *yysession)
       }
       lip->next_state=MY_LEX_END;       // Mark for next loop
       return(END_OF_INPUT);
+
     case MY_LEX_EOL:
       if (lip->eof())
       {
@@ -1197,11 +1211,13 @@ int lex_one_token(void *arg, void *yysession)
       }
       state=MY_LEX_CHAR;
       break;
+
     case MY_LEX_END:
       lip->next_state=MY_LEX_END;
       return false;			// We found end of input last time
 
       /* Actually real shouldn't start with . but allow them anyhow */
+
     case MY_LEX_REAL_OR_POINT:
       if (my_isdigit(cs,lip->yyPeek()))
         state= MY_LEX_REAL;		// Real
@@ -1211,6 +1227,7 @@ int lex_one_token(void *arg, void *yysession)
         lip->yyUnget();                 // Put back '.'
       }
       break;
+
     case MY_LEX_USER_END:		// end '@' of user@hostname
       switch (state_map[(uint8_t)lip->yyPeek()]) {
       case MY_LEX_STRING:
@@ -1227,12 +1244,14 @@ int lex_one_token(void *arg, void *yysession)
       yylval->lex_str.str=(char*) lip->get_ptr();
       yylval->lex_str.length=1;
       return((int) '@');
+
     case MY_LEX_HOSTNAME:		// end '@' of user@hostname
       for (c=lip->yyGet() ;
            my_isalnum(cs,c) || c == '.' || c == '_' ||  c == '$';
            c= lip->yyGet()) ;
       yylval->lex_str=get_token(lip, 0, lip->yyLength());
       return(LEX_HOSTNAME);
+
     case MY_LEX_SYSTEM_VAR:
       yylval->lex_str.str=(char*) lip->get_ptr();
       yylval->lex_str.length=1;
@@ -1242,6 +1261,7 @@ int lex_one_token(void *arg, void *yysession)
 			MY_LEX_OPERATOR_OR_IDENT :
 			MY_LEX_IDENT_OR_KEYWORD);
       return((int) '@');
+
     case MY_LEX_IDENT_OR_KEYWORD:
       /*
         We come here when we have found two '@' in a row.
@@ -1255,9 +1275,11 @@ int lex_one_token(void *arg, void *yysession)
 
       if (c == '.')
         lip->next_state=MY_LEX_IDENT_SEP;
+
       length= lip->yyLength();
       if (length == 0)
         return(ABORT_SYM);              // Names must be nonempty.
+
       if ((tokval= find_keyword(lip, length,0)))
       {
         lip->yyUnget();                         // Put back 'c'
@@ -1326,7 +1348,7 @@ void Select_Lex_Unit::init_query()
   table= 0;
   fake_select_lex= 0;
   cleaned= 0;
-  item_list.empty();
+  item_list.clear();
   describe= 0;
   found_rows_for_union= 0;
 }
@@ -1334,11 +1356,11 @@ void Select_Lex_Unit::init_query()
 void Select_Lex::init_query()
 {
   Select_Lex_Node::init_query();
-  table_list.empty();
-  top_join_list.empty();
+  table_list.clear();
+  top_join_list.clear();
   join_list= &top_join_list;
   embedding= leaf_tables= 0;
-  item_list.empty();
+  item_list.clear();
   join= 0;
   having= where= 0;
   olap= UNSPECIFIED_OLAP_TYPE;
@@ -1370,14 +1392,14 @@ void Select_Lex::init_query()
 
 void Select_Lex::init_select()
 {
-  sj_nests.empty();
-  group_list.empty();
+  sj_nests.clear();
+  group_list.clear();
   db= 0;
   having= 0;
   in_sum_expr= with_wild= 0;
   options= 0;
   braces= 0;
-  interval_list.empty();
+  interval_list.clear();
   inner_sum_func_list= 0;
   linkage= UNSPECIFIED_TYPE;
   order_list.elements= 0;
@@ -1387,11 +1409,12 @@ void Select_Lex::init_select()
   select_limit= 0;      /* denotes the default limit = HA_POS_ERROR */
   offset_limit= 0;      /* denotes the default offset = 0 */
   with_sum_func= 0;
+  is_cross= false;
   is_correlated= 0;
   cur_pos_in_select_list= UNDEF_POS;
-  non_agg_fields.empty();
+  non_agg_fields.clear();
   cond_value= having_value= Item::COND_UNDEF;
-  inner_refs_list.empty();
+  inner_refs_list.clear();
   full_group_by_flag.reset();
 }
 
@@ -1702,14 +1725,14 @@ bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
     return false;
 
   return (ref_pointer_array=
-          (Item **)session->alloc(sizeof(Item*) * (n_child_sum_items +
-                                                 item_list.elements +
+          (Item **)session->getMemRoot()->allocate(sizeof(Item*) * (n_child_sum_items +
+                                                 item_list.size() +
                                                  select_n_having_items +
                                                  select_n_where_fields +
                                                  order_group_num)*5)) == 0;
 }
 
-void Select_Lex_Unit::print(String *str, enum_query_type query_type)
+void Select_Lex_Unit::print(String *str)
 {
   bool union_all= !union_distinct;
   for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
@@ -1724,7 +1747,7 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
     }
     if (sl->braces)
       str->append('(');
-    sl->print(session, str, query_type);
+    sl->print(session, str);
     if (sl->braces)
       str->append(')');
   }
@@ -1735,16 +1758,14 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
       str->append(STRING_WITH_LEN(" order by "));
       fake_select_lex->print_order(
         str,
-        (Order *) fake_select_lex->order_list.first,
-        query_type);
+        (Order *) fake_select_lex->order_list.first);
     }
-    fake_select_lex->print_limit(session, str, query_type);
+    fake_select_lex->print_limit(session, str);
   }
 }
 
 void Select_Lex::print_order(String *str,
-                                Order *order,
-                                enum_query_type query_type)
+                             Order *order)
 {
   for (; order; order= order->next)
   {
@@ -1755,7 +1776,7 @@ void Select_Lex::print_order(String *str,
       str->append(buffer, length);
     }
     else
-      (*order->item)->print(str, query_type);
+      (*order->item)->print(str);
     if (!order->asc)
       str->append(STRING_WITH_LEN(" desc"));
     if (order->next)
@@ -1763,8 +1784,7 @@ void Select_Lex::print_order(String *str,
   }
 }
 
-void Select_Lex::print_limit(Session *, String *str,
-                                enum_query_type query_type)
+void Select_Lex::print_limit(Session *, String *str)
 {
   Select_Lex_Unit *unit= master_unit();
   Item_subselect *item= unit->item;
@@ -1795,26 +1815,16 @@ void Select_Lex::print_limit(Session *, String *str,
     str->append(STRING_WITH_LEN(" limit "));
     if (offset_limit)
     {
-      offset_limit->print(str, query_type);
+      offset_limit->print(str);
       str->append(',');
     }
-    select_limit->print(str, query_type);
+    select_limit->print(str);
   }
 }
 
-/**
-  @brief Restore the LEX and Session in case of a parse error.
-
-  This is a clean up call that is invoked by the Bison generated
-  parser before returning an error from DRIZZLEparse. If your
-  semantic actions manipulate with the global thread state (which
-  is a very bad practice and should not normally be employed) and
-  need a clean-up in case of error, and you can not use %destructor
-  rule in the grammar file itself, this function should be used
-  to implement the clean up.
-*/
-void LEX::cleanup_lex_after_parse_error(Session *)
+LEX::~LEX()
 {
+  delete _create_table;
 }
 
 /*
@@ -1864,21 +1874,24 @@ void Query_tables_list::reset_query_tables_list(bool init)
     statement parsing. On should use lex_start() function to prepare LEX
     for this.
 */
-LEX::LEX()
-  :
+LEX::LEX() :
     result(0), 
     yacc_yyss(0), 
     yacc_yyvs(0),
+    session(NULL),
     charset(NULL),
     var_list(),
     sql_command(SQLCOM_END), 
+    statement(NULL),
     option_type(OPT_DEFAULT), 
     is_lex_started(0),
     cacheable(true),
-    sum_expr_used(false)
+    sum_expr_used(false),
+    _create_table(NULL),
+    _create_field(NULL),
+    _exists(false)
 {
   reset_query_tables_list(true);
-  statement= NULL;
 }
 
 /**
@@ -2066,11 +2079,11 @@ void LEX::link_first_table_back(TableList *first, bool link_to_local)
 void LEX::cleanup_after_one_table_open()
 {
   /*
-    session->lex->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear session->lex->derived_tables flag
+    session->getLex()->derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->getLex()->derived_tables flag
     to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to session->lex->select_lex, because we
+    NOTE: all units will be connected to session->getLex()->select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)
@@ -2153,5 +2166,22 @@ bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
                                             current_index_hint_clause,
                                             str, length));
 }
+
+bool check_for_sql_keyword(drizzled::lex_string_t const& string)
+{
+  if (sql_reserved_words::in_word_set(string.str, string.length))
+      return true;
+
+  return false;
+}
+
+bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
+{
+  if (sql_reserved_words::in_word_set(string.str, string.length))
+      return true;
+
+  return false;
+}
+
 
 } /* namespace drizzled */

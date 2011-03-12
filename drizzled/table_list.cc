@@ -13,18 +13,17 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 
-#include "drizzled/error.h"
-#include "drizzled/table_list.h"
-#include "drizzled/item.h"
-#include "drizzled/item/field.h"
-#include "drizzled/nested_join.h"
-#include "drizzled/sql_lex.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/strfunc.h"
+#include <drizzled/error.h>
+#include <drizzled/table_list.h>
+#include <drizzled/item.h>
+#include <drizzled/item/field.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/sql_select.h>
 
 using namespace std;
 
@@ -76,7 +75,7 @@ bool TableList::placeholder()
 TableList *TableList::last_leaf_for_name_resolution()
 {
   TableList *cur_table_ref= this;
-  nested_join_st *cur_nested_join;
+  NestedJoin *cur_nested_join;
 
   if (is_leaf_for_name_resolution())
     return this;
@@ -86,7 +85,7 @@ TableList *TableList::last_leaf_for_name_resolution()
        cur_nested_join;
        cur_nested_join= cur_table_ref->nested_join)
   {
-    cur_table_ref= cur_nested_join->join_list.head();
+    cur_table_ref= &cur_nested_join->join_list.front();
     /*
       If the current nested is a RIGHT JOIN, the operands in
       'join_list' are in reverse order, thus the last operand is in the
@@ -94,7 +93,7 @@ TableList *TableList::last_leaf_for_name_resolution()
     */
     if ((cur_table_ref->outer_join & JOIN_TYPE_RIGHT))
     {
-      List_iterator_fast<TableList> it(cur_nested_join->join_list);
+      List<TableList>::iterator it(cur_nested_join->join_list.begin());
       TableList *next;
       cur_table_ref= it++;
       while ((next= it++))
@@ -114,7 +113,7 @@ TableList *TableList::last_leaf_for_name_resolution()
 TableList *TableList::first_leaf_for_name_resolution()
 {
   TableList *cur_table_ref= NULL;
-  nested_join_st *cur_nested_join;
+  NestedJoin *cur_nested_join;
 
   if (is_leaf_for_name_resolution())
     return this;
@@ -124,7 +123,7 @@ TableList *TableList::first_leaf_for_name_resolution()
        cur_nested_join;
        cur_nested_join= cur_table_ref->nested_join)
   {
-    List_iterator_fast<TableList> it(cur_nested_join->join_list);
+    List<TableList>::iterator it(cur_nested_join->join_list.begin());
     cur_table_ref= it++;
     /*
       If the current nested join is a RIGHT JOIN, the operands in
@@ -165,7 +164,7 @@ bool TableList::process_index_hints(Table *tbl)
     int type;
     bool have_empty_use_join= false, have_empty_use_order= false,
          have_empty_use_group= false;
-    List_iterator <Index_hint> iter(*index_hints);
+    List_iterator <Index_hint> iter(index_hints->begin());
 
     /* initialize temporary variables used to collect hints of each kind */
     for (type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
@@ -262,12 +261,12 @@ bool TableList::process_index_hints(Table *tbl)
   return 0;
 }
 
-void TableList::print(Session *session, String *str, enum_query_type query_type)
+void TableList::print(Session *session, String *str)
 {
   if (nested_join)
   {
     str->append('(');
-    print_join(session, str, &nested_join->join_list, query_type);
+    print_join(session, str, &nested_join->join_list);
     str->append(')');
   }
   else
@@ -277,7 +276,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     {
       // A derived table
       str->append('(');
-      derived->print(str, query_type);
+      derived->print(str);
       str->append(')');
       cmp_name= "";                               // Force printing of alias
     }
@@ -309,7 +308,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
 
     if (index_hints)
     {
-      List_iterator<Index_hint> it(*index_hints);
+      List<Index_hint>::iterator it(index_hints->begin());
       Index_hint *hint;
 
       while ((hint= it++))

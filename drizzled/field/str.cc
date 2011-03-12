@@ -19,12 +19,12 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/field/str.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {
@@ -106,11 +106,11 @@ int Field_str::store_decimal(const type::Decimal *d)
 {
   char buff[DECIMAL_MAX_STR_LENGTH+1];
   String str(buff, sizeof(buff), &my_charset_bin);
-  class_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
+  class_decimal2string(d, 0, &str);
   return store(str.ptr(), str.length(), str.charset());
 }
 
-type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value)
+type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value) const
 {
   int64_t nr= val_int();
   int2_class_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);
@@ -137,10 +137,14 @@ int Field_str::store(double nr)
   length= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
   {
-    if (getTable()->in_use->abort_on_warning)
+    if (getTable()->getSession()->abortOnWarning())
+    {
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+    }
     else
+    {
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    }
   }
   return store(buff, length, charset());
 }
@@ -195,7 +199,7 @@ bool check_string_copy_error(Field_str *field,
   }
   *t= '\0';
   push_warning_printf(field->getTable()->in_use,
-                      field->getTable()->in_use->abort_on_warning ?
+                      field->getTable()->in_use->abortOnWarning() ?
                       DRIZZLE_ERROR::WARN_LEVEL_ERROR :
                       DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,

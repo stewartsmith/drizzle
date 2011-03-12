@@ -21,37 +21,22 @@
 #ifndef DRIZZLED_STATEMENT_CREATE_SCHEMA_H
 #define DRIZZLED_STATEMENT_CREATE_SCHEMA_H
 
+#include <drizzled/session.h>
 #include <drizzled/statement.h>
 #include <drizzled/message/schema.pb.h>
 #include <uuid/uuid.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class CreateSchema : public Statement
 {
-  bool check(const SchemaIdentifier &identifier);
-
 public:
   CreateSchema(Session *in_session) :
     Statement(in_session),
     is_if_not_exists(false)
   {
-    schema_message.set_creation_timestamp(time(NULL));
-    schema_message.set_update_timestamp(time(NULL));
-
-    /* 36 characters for uuid string +1 for NULL */
-    uuid_t uu;
-    char uuid_string[37];
-    uuid_generate_random(uu);
-    uuid_unparse(uu, uuid_string);
-    schema_message.set_uuid(uuid_string, 36);
-
-    schema_message.set_version(1);
+    set_command(SQLCOM_CREATE_DB);
   }
 
   bool execute();
@@ -59,10 +44,11 @@ public:
   message::Schema schema_message;
 
   bool validateSchemaOptions();
+private:
+  bool check(const identifier::Schema &identifier);
 };
 
 } /* end namespace statement */
-
 } /* end namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_CREATE_SCHEMA_H */

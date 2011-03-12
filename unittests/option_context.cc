@@ -18,18 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <gtest/gtest.h>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
+
 #include <boost/program_options.hpp>
 
-#include "drizzled/module/option_context.h"
+#include <drizzled/module/option_context.h>
 
 namespace po=boost::program_options;
 
 using namespace drizzled;
 
-TEST(option_context, parsing)
+BOOST_AUTO_TEST_SUITE(OptionContext)
+BOOST_AUTO_TEST_CASE(parsing)
 {
   const std::string module_name("test");
   po::options_description command_line_options("Test prefix injection");
@@ -50,7 +53,8 @@ TEST(option_context, parsing)
             options(command_line_options).run(), vm);
   po::notify(vm);
 
-  EXPECT_EQ(0, vm.count("option"));
-  EXPECT_EQ(1, vm.count("test.option"));
-  EXPECT_EQ(0, vm["test.option"].as<std::string>().compare("foo"));
+  BOOST_REQUIRE_EQUAL(0, vm.count("option"));
+  BOOST_REQUIRE_EQUAL(1, vm.count("test.option"));
+  BOOST_REQUIRE_EQUAL(0, vm["test.option"].as<std::string>().compare("foo"));
 }
+BOOST_AUTO_TEST_SUITE_END()

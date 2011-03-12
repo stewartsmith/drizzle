@@ -8,6 +8,7 @@ option java_package = "org.drizzle.messages";
 option java_outer_classname = "TableMessage";
 
 import "engine.proto";
+import "replication_options.proto";
 
 message Table {
 
@@ -34,6 +35,7 @@ message Table {
     optional bool checksum = 17;
     optional bool page_checksum = 18;
     optional bool delay_key_write = 19;
+    optional bool dont_replicate = 20;
   }
 
   message ForeignKeyConstraint {
@@ -91,8 +93,10 @@ message Table {
     }
 
     message FieldConstraints {
-      required bool is_nullable = 1 [default = true];
+      optional bool is_nullable = 1 [default = true]; // Dead option, do not use
       optional bool is_unsigned = 2 [default = false];
+      optional bool is_notnull = 3 [default = false];
+      optional bool is_unique = 4 [default = false];
       repeated string expression = 16; /* Reserve 0-15 for frequenty accessed attributes */
     }
 
@@ -119,8 +123,7 @@ message Table {
       Do we store microseconds or timezone.
     */
     message TimeFieldOptions {
-      optional bool microseconds = 1 [default = false];
-      optional bool timezone = 2 [default = false];
+      optional bool microseconds = 1;
     }
 
     required string name = 1;
@@ -189,6 +192,8 @@ message Table {
     A version value of 0, means that it was never set.
     */
   optional uint64 version = 15;
+
+  optional ReplicationOptions replication_options= 16;
 }
 
 message AlterTable {

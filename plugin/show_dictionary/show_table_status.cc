@@ -18,11 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/my_hash.h"
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/pthread_globals.h>
 
 using namespace drizzled;
 using namespace std;
@@ -47,7 +46,10 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   is_primed(false),
   scopedLock(table::Cache::singleton().mutex())
 {
-  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
+  if (not isShowQuery())
+   return;
+
+  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
 
   schema_predicate.append(select->getShowSchema());
 
@@ -65,7 +67,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
          iter != open_cache.end();
          iter++)
     {
-      table_list.push_back((*iter).second);
+      table_list.push_back(iter->second);
     }
 
     for (drizzled::Table *tmp_table= getSession().getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
@@ -180,5 +182,16 @@ void ShowTableStatus::Generator::fill()
   push(table->getCursor().tableSize());
 
   /* Auto_increment 10 */
-  push(table->getCursor().getNextInsertId());
+  bool session_set= false;
+  if (table->in_use == NULL)
+  {
+    table->in_use= &getSession();
+    session_set= true;
+  }
+
+  table->getCursor().info(HA_STATUS_AUTO);
+  push(table->getCursor().getAutoIncrement());
+
+  if (session_set)
+    table->in_use= NULL;
 }

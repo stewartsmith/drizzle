@@ -21,12 +21,14 @@
 #ifndef DRIZZLED_GENERATOR_EVENT_OBSERVERS_H
 #define DRIZZLED_GENERATOR_EVENT_OBSERVERS_H
 
-#include "drizzled/plugin/event_observer.h"
+#include <drizzled/plugin/event_observer.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled {
 namespace generator {
 
-class EventObserver
+class DRIZZLED_API EventObserver
 {
   plugin::EventObserverVector::const_iterator iter;
 

@@ -21,13 +21,13 @@
 /* One of key_length or key_length_offset must be given */
 /* Key length of 0 isn't allowed */
 
-#include "config.h"
-#include "drizzled/my_hash.h"
-#include "drizzled/charset.h"
-#include "drizzled/charset_info.h"
+#include <config.h>
+#include <drizzled/my_hash.h>
+#include <drizzled/charset.h>
+#include <drizzled/charset_info.h>
+#include <vector>
 
-namespace drizzled
-{
+namespace drizzled {
 
 const uint32_t NO_RECORD= UINT32_MAX;
 
@@ -36,27 +36,18 @@ const int LOWUSED= 2;
 const int HIGHFIND= 4;
 const int HIGHUSED= 8;
 
-typedef struct st_hash_info {
-  /* index to next key */
-  uint32_t next;
-  /* data for current entry */
-  unsigned char *data;
-} HASH_LINK;
+static uint32_t hash_mask(uint32_t hashnr, uint32_t buffmax, uint32_t maxlength);
+static void movelink(HASH_LINK *array, uint32_t pos, uint32_t next_link, uint32_t newlink);
+static int hashcmp(const HASH *hash, HASH_LINK *pos, const unsigned char *key, size_t length);
 
-static uint32_t hash_mask(uint32_t hashnr, uint32_t buffmax,
-                          uint32_t maxlength);
-static void movelink(HASH_LINK *array, uint32_t pos,
-                     uint32_t next_link, uint32_t newlink);
-static int hashcmp(const HASH *hash, HASH_LINK *pos, const unsigned char *key,
-                   size_t length);
-
-static uint32_t calc_hash(const HASH *hash, const unsigned char *key,
-                          size_t length)
+static uint32_t calc_hash(const HASH *hash, const unsigned char *key, size_t length)
 {
   uint32_t nr1=1, nr2=4;
   hash->charset->coll->hash_sort(hash->charset, key,length, &nr1, &nr2);
   return nr1;
 }
+
+#define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
 
 bool
 _hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,

@@ -17,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/time/dayname.h>
 #include <drizzled/session.h>
+#include <drizzled/typelib.h>
 
 namespace drizzled
 {
@@ -30,12 +31,11 @@ String* Item_func_dayname::val_str(String* str)
   assert(fixed == 1);
   uint32_t weekday=(uint) val_int();            // Always Item_func_daynr()
   const char *day_name;
-  Session *session= current_session;
 
   if (null_value)
     return (String*) 0;
 
-  day_name= session->variables.lc_time_names->day_names->type_names[weekday];
+  day_name= getSession().variables.lc_time_names->day_names->type_names[weekday];
   str->set(day_name, strlen(day_name), system_charset_info);
   return str;
 }

@@ -21,55 +21,25 @@
 #define DRIZZLED_CHARSET_H
 
 #include <cstddef>
-#include "drizzled/definitions.h"
+#include <drizzled/definitions.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
 
 typedef struct charset_info_st CHARSET_INFO;
 
-extern CHARSET_INFO *all_charsets[256];
+extern DRIZZLED_API CHARSET_INFO *all_charsets[256];
 extern CHARSET_INFO compiled_charsets[];
 
-/* character sets */
-void *cs_alloc(size_t size);
-
 extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
 extern uint32_t get_collation_number(const char *name);
 extern const char *get_charset_name(uint32_t cs_number);
 
-extern const CHARSET_INFO *get_charset(uint32_t cs_number);
-extern const CHARSET_INFO *get_charset_by_name(const char *cs_name);
-extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
-
-extern bool resolve_charset(const char *cs_name,
-			    const CHARSET_INFO *default_cs,
-			    const CHARSET_INFO **cs);
-extern bool resolve_collation(const char *cl_name,
-			     const CHARSET_INFO *default_cl,
-			     const CHARSET_INFO **cl);
-
-extern void free_charsets(void);
-extern char *get_charsets_dir(char *buf);
-extern bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2);
-extern bool init_compiled_charsets(myf flags);
-extern void add_compiled_collation(CHARSET_INFO *cs);
-extern size_t escape_string_for_drizzle(const CHARSET_INFO *charset_info,
-					char *to, size_t to_length,
-					const char *from, size_t length);
-extern size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
-					char *to, size_t to_length,
-					const char *from, size_t length);
-/* character sets */
-void *cs_alloc(size_t size);
-
-extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
-extern uint32_t get_collation_number(const char *name);
-extern const char *get_charset_name(uint32_t cs_number);
-
-extern const CHARSET_INFO *get_charset(uint32_t cs_number);
-extern const CHARSET_INFO *get_charset_by_name(const char *cs_name);
-extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
+DRIZZLED_API const CHARSET_INFO *get_charset(uint32_t cs_number);
+DRIZZLED_API const CHARSET_INFO *get_charset_by_name(const char *cs_name);
+DRIZZLED_API const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
 
 extern bool resolve_charset(const char *cs_name,
 			    const CHARSET_INFO *default_cs,

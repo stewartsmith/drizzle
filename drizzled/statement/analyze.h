@@ -33,12 +33,14 @@ namespace statement
 class Analyze : public Statement
 {
 public:
-  Analyze(Session *in_session)
-    :
-      Statement(in_session)
-  { }
+  Analyze(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_ANALYZE);
+  }
 
   bool execute();
+
   HA_CHECK_OPT check_opt;			// check/repair options
 };
 

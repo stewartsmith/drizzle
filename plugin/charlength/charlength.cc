@@ -17,8 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/function/math/int.h>
+#include <drizzled/plugin.h>
 #include <drizzled/plugin/function.h>
 
 using namespace std;
@@ -84,7 +86,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Return the number of characters in a string",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

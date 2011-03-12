@@ -22,6 +22,8 @@
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
@@ -104,7 +106,7 @@ struct THR_LOCK_OWNER
 struct THR_LOCK;
 struct THR_LOCK_DATA;
 
-struct THR_LOCK_DATA {
+struct DRIZZLED_API THR_LOCK_DATA {
   THR_LOCK_OWNER *owner;
   struct THR_LOCK_DATA *next,**prev;
   struct THR_LOCK *lock;
@@ -185,7 +187,7 @@ public:
 class Session; 
 
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
-void thr_lock_init(THR_LOCK *lock);
+DRIZZLED_API void thr_lock_init(THR_LOCK *lock);
 enum enum_thr_lock_result thr_multi_lock(Session &session, THR_LOCK_DATA **data,
                                          uint32_t count, THR_LOCK_OWNER *owner);
 void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);

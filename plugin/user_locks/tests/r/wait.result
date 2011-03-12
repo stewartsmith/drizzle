@@ -18,14 +18,18 @@ set @count_barrier= "count_barrier";
 SELECT WAIT_UNTIL(@count_barrier, 4);
 WAIT_UNTIL(@count_barrier, 4)
 1
-SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
-USER	INFO
-root	NULL
+SELECT USERNAME, INFO FROM DATA_DICTIONARY.PROCESSLIST
+WHERE 
+INFO LIKE '%con1"' OR
+INFO LIKE '%con2"' OR
+INFO LIKE '%con3"' OR
+INFO LIKE '%con4"'
+  ORDER BY ID;
+USERNAME	INFO
 root	SELECT wait(@count_barrier), "con1"
 root	SELECT wait(@count_barrier), "con2"
 root	SELECT wait(@count_barrier), "con3"
 root	SELECT wait(@count_barrier), "con4"
-root	SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID
 SELECT signal(@count_barrier);
 signal(@count_barrier)
 1

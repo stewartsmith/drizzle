@@ -23,6 +23,8 @@
 
 #include <drizzled/field.h>
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
@@ -30,7 +32,9 @@ typedef struct charset_info_st CHARSET_INFO;
 
 /* base class for all string related classes */
 
-class Field_str :public Field {
+class DRIZZLED_API Field_str :
+  public Field
+{
 protected:
   const CHARSET_INFO *field_charset;
   enum Derivation field_derivation;
@@ -61,7 +65,7 @@ public:
   bool binary() const { return field_charset == &my_charset_bin; }
   uint32_t max_display_length() { return field_length; }
   friend class CreateField;
-  type::Decimal *val_decimal(type::Decimal *);
+  type::Decimal *val_decimal(type::Decimal *) const;
   virtual bool str_needs_quotes() { return true; }
   uint32_t max_data_length() const;
 };

@@ -899,9 +899,9 @@ Note	1003	select `test`.`t1`.`a` AS `a`,<in_optimizer>(`test`.`t1`.`a`,<exists>(
 drop table t1,t2,t3;
 #LIMIT is not supported now
 #create table t1 (a float) ENGINE=MyISAM;
-#-- error 1235
+#--error ER_NOT_SUPPORTED_YET
 #select 10.5 IN (SELECT * from t1 LIMIT 1);
-#-- error 1235
+#--error ER_NOT_SUPPORTED_YET
 #select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
 #drop table t1;
 #
@@ -925,7 +925,7 @@ drop table t1,t2,t3;
 #select ROW(1, 1, 'a') IN (select a,b,c from t1 where c='b' or c='a');
 #select ROW(1, 2, 'a') IN (select a,b,c from t1 where c='b' or c='a');
 #select ROW(1, 1, 'a') IN (select b,a,c from t1 where c='b' or c='a');
-#-- error 1235
+#--error ER_NOT_SUPPORTED_YET
 #select ROW(1, 1, 'a') IN (select b,a,c from t1 limit 2);
 #drop table t1;
 #test of uncacheable subqueries
@@ -1036,7 +1036,7 @@ drop table t1;
 # error in IN
 #
 select t1.Continent, t2.Name, t2.Population from t1 LEFT JOIN t2 ON t1.Code = t2.Country  where t2.Population IN (select max(t2.Population) AS Population from t2, t1 where t2.Country = t1.Code group by Continent);
-ERROR 42S02: Table 'test.t1' doesn't exist
+ERROR 42S02: Unknown table 'test.t1'
 #
 # complex subquery
 #
@@ -1330,9 +1330,9 @@ DROP TABLE t1, t2;
 #CREATE TABLE t1 (s1 CHAR(5) COLLATE latin1_german1_ci,
 #                 s2 CHAR(5) COLLATE latin1_swedish_ci) ENGINE=MyISAM;
 #INSERT INTO t1 VALUES ('z','?');
-#-- error 1267
+#--error ER_CANT_AGGREGATE_2COLLATIONS
 #select * from t1 where s1 > (select max(s2) from t1);
-#-- error 1267
+#--error ER_CANT_AGGREGATE_2COLLATIONS
 #select * from t1 where s1 > any (select max(s2) from t1);
 #drop table t1;
 #
@@ -4524,17 +4524,9 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 SELECT * FROM t1 JOIN ((t1 t1a)) t1a ON 1;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 't1a ON 1' at line 1
 SELECT * FROM t1 JOIN  (t1 t1a)  ON 1;
-a	a
-1	1
-1	2
-2	1
-2	2
+ERROR HY000: Implicit cartesian join attempted.
 SELECT * FROM t1 JOIN ((t1 t1a)) ON 1;
-a	a
-1	1
-2	1
-1	2
-2	2
+ERROR HY000: Implicit cartesian join attempted.
 SELECT * FROM (t1 t1a);
 a
 1

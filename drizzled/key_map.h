@@ -24,6 +24,8 @@
 
 #include <bitset>
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
@@ -36,7 +38,7 @@ typedef std::bitset<((MAX_INDEXES+7)/8*8)> key_map;
 
 /* useful constants */
 extern const key_map key_map_empty;
-extern key_map key_map_full;          /* Should be threaded as const */
+extern DRIZZLED_API key_map key_map_full;          /* Should be threaded as const */
 
 bool is_keymap_prefix(const key_map& map, const uint32_t n);
 bool is_overlapping(const key_map& map, const key_map& map2);

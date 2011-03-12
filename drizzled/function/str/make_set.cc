@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/function/str/make_set.h>
 #include <drizzled/session.h>
@@ -116,28 +116,19 @@ Item *Item_func_make_set::transform(Item_transformer transformer, unsigned char 
   Item *new_item= item->transform(transformer, arg);
   if (!new_item)
     return 0;
-
-  /*
-    Session::change_item_tree() should be called only if the tree was
-    really transformed, i.e. when a new item has been created.
-    Otherwise we'll be allocating a lot of unnecessary memory for
-    change records at each execution.
-  */
-  if (item != new_item)
-    session.change_item_tree(&item, new_item);
-
+  item= new_item;
   return Item_str_func::transform(transformer, arg);
 }
 
 
-void Item_func_make_set::print(String *str, enum_query_type query_type)
+void Item_func_make_set::print(String *str)
 {
   str->append(STRING_WITH_LEN("make_set("));
-  item->print(str, query_type);
+  item->print(str);
   if (arg_count)
   {
     str->append(',');
-    print_args(str, 0, query_type);
+    print_args(str, 0);
   }
   str->append(')');
 }

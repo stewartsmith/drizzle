@@ -17,40 +17,42 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/show.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/item/cache_row.h"
-#include "drizzled/item/type_holder.h"
-#include "drizzled/item/sum.h"
-#include "drizzled/item/copy_string.h"
-#include "drizzled/function/str/conv_charset.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/util/convert.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/time_functions.h"
-
-#include "drizzled/field/str.h"
-#include "drizzled/field/num.h"
-
-#include "drizzled/field/blob.h"
-#include "drizzled/field/date.h"
-#include "drizzled/field/datetime.h"
-#include "drizzled/field/decimal.h"
-#include "drizzled/field/double.h"
-#include "drizzled/field/enum.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/field/int32.h"
-#include "drizzled/field/int64.h"
-#include "drizzled/field/null.h"
-#include "drizzled/field/real.h"
-#include "drizzled/field/size.h"
-#include "drizzled/field/time.h"
-#include "drizzled/field/varstring.h"
-
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/error.h>
+#include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/cache_row.h>
+#include <drizzled/item/type_holder.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/item/copy_string.h>
+#include <drizzled/function/str/conv_charset.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/util/convert.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/time_functions.h>
+#include <drizzled/field/str.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/decimal.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
+#include <drizzled/field/microtime.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/size.h>
+#include <drizzled/field/time.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/current_session.h>
+#include <drizzled/session.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/item/ref.h>
+#include <drizzled/item/subselect.h>
 
 #include <cstdio>
 #include <math.h>
@@ -101,7 +103,7 @@ bool Item::val_bool()
       type::Decimal decimal_value;
       type::Decimal *val= val_decimal(&decimal_value);
       if (val)
-        return not val->is_zero();
+        return not val->isZero();
       return false;
     }
 
@@ -145,7 +147,7 @@ String *Item::val_string_from_decimal(String *str)
     return NULL;
 
   class_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
-  class_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, 0, str);
+  class_decimal2string(&dec_buf, 0, str);
   return str;
 }
 
@@ -182,7 +184,7 @@ type::Decimal *Item::val_decimal_from_string(type::Decimal *decimal_value)
                      res->length(), 
                      res->charset()) & E_DEC_BAD_NUM)
   {
-    push_warning_printf(current_session, 
+    push_warning_printf(&getSession(), 
                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "DECIMAL",
@@ -195,7 +197,7 @@ type::Decimal *Item::val_decimal_from_date(type::Decimal *decimal_value)
 {
   assert(fixed);
   type::Time ltime;
-  if (get_date(&ltime, TIME_FUZZY_DATE))
+  if (get_date(ltime, TIME_FUZZY_DATE))
   {
     decimal_value->set_zero();
     null_value= 1;                               // set NULL, stop processing
@@ -208,7 +210,7 @@ type::Decimal *Item::val_decimal_from_time(type::Decimal *decimal_value)
 {
   assert(fixed);
   type::Time ltime;
-  if (get_time(&ltime))
+  if (get_time(ltime))
   {
     decimal_value->set_zero();
     return NULL;
@@ -232,28 +234,36 @@ int64_t Item::val_int_from_decimal()
   /* Note that fix_fields may not be called for Item_avg_field items */
   int64_t result;
   type::Decimal value, *dec_val= val_decimal(&value);
+
   if (null_value)
     return 0;
   dec_val->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
+
   return result;
 }
 
-int Item::save_time_in_field(Field *field)
+bool Item::save_time_in_field(Field *field)
 {
   type::Time ltime;
-  if (get_time(&ltime))
+
+  if (get_time(ltime))
     return set_field_to_null(field);
+
   field->set_notnull();
-  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_TIME);
+
+  return field->store_time(ltime, type::DRIZZLE_TIMESTAMP_TIME);
 }
 
-int Item::save_date_in_field(Field *field)
+bool Item::save_date_in_field(Field *field)
 {
   type::Time ltime;
-  if (get_date(&ltime, TIME_FUZZY_DATE))
+
+  if (get_date(ltime, TIME_FUZZY_DATE))
     return set_field_to_null(field);
+
   field->set_notnull();
-  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
+
+  return field->store_time(ltime, type::DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 /**
@@ -264,7 +274,9 @@ int Item::save_str_value_in_field(Field *field, String *result)
 {
   if (null_value)
     return set_field_to_null(field);
+
   field->set_notnull();
+
   return field->store(result->ptr(), result->length(), collation.collation);
 }
 
@@ -283,25 +295,25 @@ Item::Item():
   with_sum_func(false),
   is_autogenerated_name(true),
   with_subselect(false),
-  collation(&my_charset_bin, DERIVATION_COERCIBLE)
+  collation(&my_charset_bin, DERIVATION_COERCIBLE),
+  _session(*current_session)
 {
   cmp_context= (Item_result)-1;
 
   /* Put item in free list so that we can free all items at end */
-  Session *session= current_session;
-  next= session->free_list;
-  session->free_list= this;
+  next= getSession().free_list;
+  getSession().free_list= this;
 
   /*
     Item constructor can be called during execution other then SQL_COM
-    command => we should check session->lex->current_select on zero (session->lex
+    command => we should check session->getLex()->current_select on zero (session->lex
     can be uninitialised)
   */
-  if (session->lex->current_select)
+  if (getSession().getLex()->current_select)
   {
-    enum_parsing_place place= session->lex->current_select->parsing_place;
+    enum_parsing_place place= getSession().getLex()->current_select->parsing_place;
     if (place == SELECT_LIST || place == IN_HAVING)
-      session->lex->current_select->select_n_having_items++;
+      getSession().getLex()->current_select->select_n_having_items++;
   }
 }
 
@@ -322,11 +334,12 @@ Item::Item(Session *session, Item *item):
   is_autogenerated_name(item->is_autogenerated_name),
   with_subselect(item->with_subselect),
   collation(item->collation),
-  cmp_context(item->cmp_context)
+  cmp_context(item->cmp_context),
+  _session(*session)
 {
   /* Put this item in the session's free list */
-  next= session->free_list;
-  session->free_list= this;
+  next= getSession().free_list;
+  getSession().free_list= this;
 }
 
 uint32_t Item::float_length(uint32_t decimals_par) const
@@ -349,14 +362,14 @@ int Item::decimal_int_part() const
   return class_decimal_int_part(decimal_precision(), decimals);
 }
 
-void Item::print(String *str, enum_query_type)
+void Item::print(String *str)
 {
   str->append(full_name());
 }
 
-void Item::print_item_w_name(String *str, enum_query_type query_type)
+void Item::print_item_w_name(String *str)
 {
-  print(str, query_type);
+  print(str);
 
   if (name)
   {
@@ -424,13 +437,13 @@ void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const
     if (orig_len != length && ! is_autogenerated_name)
     {
       if (length == 0)
-        push_warning_printf(current_session, 
+        push_warning_printf(&getSession(), 
                             DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_NAME_BECOMES_EMPTY, 
                             ER(ER_NAME_BECOMES_EMPTY),
                             str + length - orig_len);
       else
-        push_warning_printf(current_session, 
+        push_warning_printf(&getSession(),
                             DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_REMOVED_SPACES, 
                             ER(ER_REMOVED_SPACES),
@@ -459,54 +472,68 @@ Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
   return conv->safe ? conv : NULL;
 }
 
-bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Item::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
-  if (result_type() == STRING_RESULT)
+  do
   {
-    char buff[40];
-    String tmp(buff,sizeof(buff), &my_charset_bin),*res;
-    if (!(res=val_str(&tmp)) ||
-        str_to_datetime_with_warn(res->ptr(), res->length(),
-                                  ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
-      goto err;
-  }
-  else
-  {
-    int64_t value= val_int();
-    int was_cut;
-    if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
+    if (is_null())
     {
-      char buff[22], *end;
-      end= internal::int64_t10_to_str(value, buff, -10);
-      make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                   buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
-                                   NULL);
-      goto err;
+      break;
     }
-  }
-  return false;
+    else if (result_type() == STRING_RESULT)
+    {
+      char buff[type::Time::MAX_STRING_LENGTH];
+      String tmp(buff,sizeof(buff), &my_charset_bin),*res;
+      if (!(res=val_str(&tmp)) ||
+          str_to_datetime_with_warn(&getSession(), res->ptr(), res->length(),
+                                    &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
+      {
+        break;
+      }
+    }
+    else
+    {
+      int64_t value= val_int();
+      type::datetime_t date_value;
 
-err:
-  memset(ltime, 0, sizeof(*ltime));
+      ltime.convert(date_value, value, fuzzydate);
+
+      if (not type::is_valid(date_value))
+      {
+        char buff[DECIMAL_LONGLONG_DIGITS], *end;
+        end= internal::int64_t10_to_str(value, buff, -10);
+        make_truncated_value_warning(&getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                     buff, (int) (end-buff), type::DRIZZLE_TIMESTAMP_NONE, NULL);
+        break;
+      }
+    }
+
+    return false;
+  } while (0);
+
+  ltime.reset();
+
   return true;
 }
 
-bool Item::get_time(type::Time *ltime)
+bool Item::get_time(type::Time &ltime)
 {
-  char buff[40];
+  char buff[type::Time::MAX_STRING_LENGTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str(&tmp)) ||
-      str_to_time_with_warn(res->ptr(), res->length(), ltime))
+  if (!(res=val_str(&tmp)) or
+      str_to_time_with_warn(&getSession(), res->ptr(), res->length(), &ltime))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
+
     return true;
   }
+
   return false;
 }
 
-bool Item::get_date_result(type::Time *ltime,uint32_t fuzzydate)
+bool Item::get_date_result(type::Time &ltime,uint32_t fuzzydate)
 {
-  return get_date(ltime,fuzzydate);
+  return get_date(ltime, fuzzydate);
 }
 
 bool Item::is_null()
@@ -713,12 +740,12 @@ public:
                   const char *table_name_arg, const char *field_name_arg)
     :Item_ref(context_arg, item, table_name_arg, field_name_arg) {}
 
-  virtual inline void print (String *str, enum_query_type query_type)
+  virtual inline void print (String *str)
   {
     if (ref)
-      (*ref)->print(str, query_type);
+      (*ref)->print(str);
     else
-      Item_ident::print(str, query_type);
+      Item_ident::print(str);
   }
 };
 
@@ -755,17 +782,17 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
       Item_ref to allow fields from view being stored in tmp table.
     */
     Item_aggregate_ref *item_ref;
-    uint32_t el= fields.elements;
+    uint32_t el= fields.size();
     Item *real_itm= real_item();
 
     ref_pointer_array[el]= real_itm;
-    if (!(item_ref= new Item_aggregate_ref(&session->lex->current_select->context,
+    if (!(item_ref= new Item_aggregate_ref(&session->getLex()->current_select->context,
                                            ref_pointer_array + el, 0, name)))
       return; /* fatal_error is set */
     if (type() == SUM_FUNC_ITEM)
       item_ref->depended_from= ((Item_sum *) this)->depended_from();
     fields.push_front(real_itm);
-    session->change_item_tree(ref, item_ref);
+    *ref= item_ref;
   }
 }
 
@@ -792,7 +819,7 @@ void mark_as_dependent(Session *session, Select_Lex *last, Select_Lex *current,
   if (mark_item)
     mark_item->depended_from= last;
   current->mark_as_dependent(last);
-  if (session->lex->describe & DESCRIBE_EXTENDED)
+  if (session->getLex()->describe & DESCRIBE_EXTENDED)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
     snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_FIELD_RESOLVED),
@@ -823,7 +850,7 @@ void mark_select_range_as_dependent(Session *session,
   {
     Item_subselect *prev_subselect_item= previous_select->master_unit()->item;
     prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
   }
   {
     Item_subselect *prev_subselect_item= previous_select->master_unit()->item;
@@ -838,7 +865,7 @@ void mark_select_range_as_dependent(Session *session,
     }
     else
       prev_subselect_item->used_tables_cache|= found_field->getTable()->map;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
     mark_as_dependent(session, last_select, current_sel, resolved_item,
                       dependent);
   }
@@ -858,7 +885,7 @@ void mark_select_range_as_dependent(Session *session,
     - the found item on success
     - NULL if find_item is not in group_list
 */
-static Item** find_field_in_group_list(Item *find_item, Order *group_list)
+static Item** find_field_in_group_list(Session *session, Item *find_item, Order *group_list)
 {
   const char *db_name;
   const char *table_name;
@@ -914,9 +941,11 @@ static Item** find_field_in_group_list(Item *find_item, Order *group_list)
         if (cur_field->db_name && db_name)
         {
           /* If field_name is also qualified by a database name. */
-          if (strcasecmp(cur_field->db_name, db_name))
+          if (my_strcasecmp(system_charset_info, cur_field->db_name, db_name))
+          {
             /* Same field names, different databases. */
             return NULL;
+          }
           ++cur_match_degree;
         }
       }
@@ -935,7 +964,7 @@ static Item** find_field_in_group_list(Item *find_item, Order *group_list)
           best match, they must reference the same column, otherwise the field
           is ambiguous.
         */
-        my_error(ER_NON_UNIQ_ERROR, MYF(0), find_item->full_name(), current_session->where);
+        my_error(ER_NON_UNIQ_ERROR, MYF(0), find_item->full_name(), session->where());
         return NULL;
       }
     }
@@ -971,7 +1000,7 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
   /* If this is a non-aggregated field inside HAVING, search in GROUP BY. */
   if (select->having_fix_field && !ref->with_sum_func && group_list)
   {
-    group_by_ref= find_field_in_group_list(ref, group_list);
+    group_by_ref= find_field_in_group_list(session, ref, group_list);
 
     /* Check if the fields found in SELECT and GROUP BY are the same field. */
     if (group_by_ref && (select_ref != not_found_item) &&
@@ -980,7 +1009,7 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
       ambiguous_fields= true;
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR), ref->full_name(),
-                          current_session->where);
+                          session->where());
 
     }
   }
@@ -1059,28 +1088,7 @@ enum_field_types Item::field_type() const
 
 bool Item::is_datetime()
 {
-  switch (field_type())
-  {
-    case DRIZZLE_TYPE_TIME:
-    case DRIZZLE_TYPE_DATE:
-    case DRIZZLE_TYPE_DATETIME:
-    case DRIZZLE_TYPE_TIMESTAMP:
-      return true;
-    case DRIZZLE_TYPE_BLOB:
-    case DRIZZLE_TYPE_VARCHAR:
-    case DRIZZLE_TYPE_DOUBLE:
-    case DRIZZLE_TYPE_DECIMAL:
-    case DRIZZLE_TYPE_ENUM:
-    case DRIZZLE_TYPE_LONG:
-    case DRIZZLE_TYPE_LONGLONG:
-    case DRIZZLE_TYPE_NULL:
-    case DRIZZLE_TYPE_UUID:
-    case DRIZZLE_TYPE_BOOLEAN:
-      return false;
-  }
-
-  assert(0);
-  abort();
+  return field::isDateTime(field_type());
 }
 
 String *Item::check_well_formed_result(String *str, bool send_error)
@@ -1093,7 +1101,6 @@ String *Item::check_well_formed_result(String *str, bool send_error)
                                        str->length(), &well_formed_error);
   if (wlen < str->length())
   {
-    Session *session= current_session;
     char hexbuf[7];
     enum DRIZZLE_ERROR::enum_warning_level level;
     uint32_t diff= str->length() - wlen;
@@ -1110,7 +1117,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
       null_value= 1;
       str= 0;
     }
-    push_warning_printf(session, level, ER_INVALID_CHARACTER_STRING,
+    push_warning_printf(&getSession(), level, ER_INVALID_CHARACTER_STRING,
                         ER(ER_INVALID_CHARACTER_STRING), cs->csname, hexbuf);
   }
   return str;
@@ -1175,9 +1182,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
                                  0,
                                  Field::NONE,
                                  name,
-                                 decimals,
-                                 0,
-                                 unsigned_flag);
+                                 decimals);
     break;
   case DRIZZLE_TYPE_LONG:
     field= new field::Int32((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE, name);
@@ -1190,19 +1195,24 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
                             name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
-    field= new Field_null((unsigned char*) 0, max_length, name, &my_charset_bin);
+    field= new Field_null((unsigned char*) 0, max_length, name);
     break;
   case DRIZZLE_TYPE_DATE:
-    field= new Field_date(maybe_null, name, &my_charset_bin);
+    field= new Field_date(maybe_null, name);
     break;
+
+  case DRIZZLE_TYPE_MICROTIME:
+    field= new field::Microtime(maybe_null, name);
+    break;
+
   case DRIZZLE_TYPE_TIMESTAMP:
-    field= new field::Epoch(maybe_null, name, &my_charset_bin);
+    field= new field::Epoch(maybe_null, name);
     break;
   case DRIZZLE_TYPE_DATETIME:
-    field= new Field_datetime(maybe_null, name, &my_charset_bin);
+    field= new Field_datetime(maybe_null, name);
     break;
   case DRIZZLE_TYPE_TIME:
-    field= new field::Time(maybe_null, name, &my_charset_bin);
+    field= new field::Time(maybe_null, name);
     break;
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
@@ -1394,16 +1404,17 @@ bool Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_TIME:
     {
       type::Time tm;
-      get_time(&tm);
+      get_time(tm);
       if (not null_value)
         result= client->store(&tm);
       break;
     }
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     {
       type::Time tm;
-      get_date(&tm, TIME_FUZZY_DATE);
+      get_date(tm, TIME_FUZZY_DATE);
       if (!null_value)
         result= client->store(&tm);
       break;
@@ -1413,6 +1424,44 @@ bool Item::send(plugin::Client *client, String *buffer)
     result= client->store();
 
   return result;
+}
+
+uint32_t Item::max_char_length() const
+{
+  return max_length / collation.collation->mbmaxlen;
+}
+
+void Item::fix_length_and_charset(uint32_t max_char_length_arg, CHARSET_INFO *cs)
+{ 
+  max_length= char_to_byte_length_safe(max_char_length_arg, cs->mbmaxlen);
+  collation.collation= cs;
+}
+
+void Item::fix_char_length(uint32_t max_char_length_arg)
+{ 
+  max_length= char_to_byte_length_safe(max_char_length_arg, collation.collation->mbmaxlen);
+}
+
+void Item::fix_char_length_uint64_t(uint64_t max_char_length_arg)
+{ 
+  uint64_t max_result_length= max_char_length_arg *
+    collation.collation->mbmaxlen;
+
+  if (max_result_length >= MAX_BLOB_WIDTH)
+  { 
+    max_length= MAX_BLOB_WIDTH;
+    maybe_null= false;
+  }
+  else
+  {
+    max_length= max_result_length;
+  }
+}
+
+void Item::fix_length_and_charset_datetime(uint32_t max_char_length_arg)
+{ 
+  collation.set(&my_charset_bin);
+  fix_char_length(max_char_length_arg);
 }
 
 Item_result item_cmp_type(Item_result a,Item_result b)
@@ -1520,7 +1569,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
   }
 
   if (new_item)
-    session->change_item_tree(ref, new_item);
+    *ref= new_item;
 }
 
 bool field_is_equal_to_item(Field *field,Item *item)
@@ -1630,15 +1679,11 @@ static Field *create_tmp_field_from_item(Session *,
   case STRING_RESULT:
     assert(item->collation.collation);
 
-    enum enum_field_types type;
     /*
       DATE/TIME fields have STRING_RESULT result type.
       To preserve type they needed to be handled separately.
     */
-    if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
-        type == DRIZZLE_TYPE_TIME ||
-        type == DRIZZLE_TYPE_DATE ||
-        type == DRIZZLE_TYPE_TIMESTAMP)
+    if (field::isDateTime(item->field_type()))
     {
       new_field= item->tmp_table_field_from_field_type(table, 1);
       /*

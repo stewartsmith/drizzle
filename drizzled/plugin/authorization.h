@@ -22,12 +22,14 @@
 #ifndef DRIZZLED_PLUGIN_AUTHORIZATION_H
 #define DRIZZLED_PLUGIN_AUTHORIZATION_H
 
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/identifier.h"
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/identifier.h>
 
 #include <string>
 #include <set>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -35,7 +37,7 @@ namespace drizzled
 namespace plugin
 {
 
-class Authorization : public Plugin
+class DRIZZLED_API Authorization : public Plugin
 {
   Authorization();
   Authorization(const Authorization &);
@@ -55,7 +57,7 @@ public:
    * @returns true if the user cannot access the schema
    */
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              SchemaIdentifier::const_reference schema)= 0;
+                              identifier::Schema::const_reference schema)= 0;
 
   /**
    * Should we restrict the current user's access to this table?
@@ -66,8 +68,8 @@ public:
    *
    * @returns true if the user cannot access the table
    */
-  virtual bool restrictTable(const drizzled::identifier::User &user_ctx,
-                             TableIdentifier &table);
+  virtual bool restrictTable(drizzled::identifier::User::const_reference user_ctx,
+                             drizzled::identifier::Table::const_reference table);
 
   /**
    * Should we restrict the current user's access to see this process?
@@ -82,31 +84,26 @@ public:
                                const drizzled::identifier::User &session_ctx);
 
   /** Server API method for checking schema authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_shared_ptr user_ctx,
-                           SchemaIdentifier::const_reference schema_identifier,
+  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+                           identifier::Schema::const_reference schema_identifier,
                            bool send_error= true);
 
   /** Server API method for checking table authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_shared_ptr user_ctx,
-                           TableIdentifier &table_identifier,
-                           bool send_error= true);
-
-  /** Server API method for checking process authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_shared_ptr user_ctx,
-                           const Session *session,
+  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+                           drizzled::identifier::Table::const_reference table_identifier,
                            bool send_error= true);
 
   /** Server API method for checking process authorization */
   static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                           const Session *session,
+                           const Session &session,
                            bool send_error= true);
 
   /**
    * Server API helper method for applying authorization tests
    * to a set of schema names (for use in the context of getSchemaNames
    */
-  static void pruneSchemaNames(drizzled::identifier::User::const_shared_ptr user_ctx,
-                               SchemaIdentifier::vector &set_of_schemas);
+  static void pruneSchemaNames(drizzled::identifier::User::const_reference user_ctx,
+                               identifier::Schema::vector &set_of_schemas);
   
   /**
    * Standard plugin system registration hooks
@@ -116,8 +113,8 @@ public:
 
 };
 
-inline bool Authorization::restrictTable(const drizzled::identifier::User &user_ctx,
-                                         TableIdentifier &table)
+inline bool Authorization::restrictTable(drizzled::identifier::User::const_reference user_ctx,
+                                         drizzled::identifier::Table::const_reference table)
 {
   return restrictSchema(user_ctx, table);
 }

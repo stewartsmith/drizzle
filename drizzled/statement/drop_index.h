@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_DROP_INDEX_H
 #define DRIZZLED_STATEMENT_DROP_INDEX_H
 
+#include <drizzled/alter_info.h>
 #include <drizzled/statement.h>
 
 namespace drizzled
@@ -33,10 +34,11 @@ namespace statement
 class DropIndex : public Statement
 {
 public:
-  DropIndex(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  DropIndex(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_DROP_INDEX);
+  }
 
   bool execute();
   message::Table create_table_proto;

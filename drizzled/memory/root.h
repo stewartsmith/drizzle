@@ -18,12 +18,16 @@
  * @brief Memory root declarations
  */
 
+
+
 #ifndef DRIZZLED_MEMORY_ROOT_H
 #define DRIZZLED_MEMORY_ROOT_H
 
 #include <cstddef>
 
 #include <drizzled/definitions.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -60,7 +64,7 @@ static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::Use
 
 
 
-class Root
+class DRIZZLED_API Root
 {
 public:
 
@@ -119,11 +123,21 @@ public:
   void (*error_handler)(void);
   void reset_root_defaults(size_t block_size, size_t prealloc_size);
   void *alloc_root(size_t Size);
+  inline void *allocate(size_t Size)
+  {
+    return alloc_root(Size);
+  }
   void mark_blocks_free();
   void *memdup_root(const void *str, size_t len);
   char *strdup_root(const char *str);
+
   char *strmake_root(const char *str,size_t len);
   void init_alloc_root(size_t block_size= ROOT_MIN_BLOCK_SIZE);
+
+  inline void *duplicate(const void *str, size_t len)
+  {
+    return memdup_root(str, len);
+  }
 
   inline bool alloc_root_inited()
   {

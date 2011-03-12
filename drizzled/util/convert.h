@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_UTIL_CONVERT_H
 #define DRIZZLED_UTIL_CONVERT_H
 
@@ -25,6 +27,8 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -45,9 +49,10 @@ std::string& to_string(std::string &str, T t)
 
 void bytesToHexdumpFormat(std::string &s, const unsigned char *from, size_t from_length);
 
-uint64_t drizzled_string_to_hex(char *to, const char *from,
-                                uint64_t from_size);
-void drizzled_hex_to_string(char *to, const char *from, uint64_t from_size);
+DRIZZLED_API uint64_t drizzled_string_to_hex(char *to, const char *from,
+                                             uint64_t from_size);
+DRIZZLED_API void drizzled_hex_to_string(char *to, const char *from,
+                                         uint64_t from_size);
 
 } /* namespace drizzled */
 

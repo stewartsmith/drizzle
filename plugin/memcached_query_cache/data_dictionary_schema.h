@@ -30,8 +30,8 @@
 #ifndef PLUGIN_MEMCACHED_QUERY_CACHE_DATA_DICTIONARY_SCHEMA_H
 #define PLUGIN_MEMCACHED_QUERY_CACHE_DATA_DICTIONARY_SCHEMA_H
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/field.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/field.h>
 
 namespace drizzled
 {

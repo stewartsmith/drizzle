@@ -37,27 +37,27 @@ SELECT 1 FROM (SELECT 1) a WHERE a=2;
 ERROR 42S22: Unknown column 'a' in 'where clause'
 SELECT (SELECT 1) as a FROM (SELECT 1 FROM t1  HAVING a=1) as a;
 ERROR 42S22: Unknown column 'a' in 'having clause'
-select * from t1 as x1, (select * from t1) as x2;
+select * from t1 as x1, (select * from t1) as x2 where x1.a != 0;
 a	b	a	b
 1	a	1	a
-2	b	1	a
-3	c	1	a
-3	c	1	a
 1	a	2	b
+1	a	3	c
+1	a	3	c
+2	b	1	a
 2	b	2	b
+2	b	3	c
+2	b	3	c
+3	c	1	a
+3	c	1	a
 3	c	2	b
 3	c	2	b
-1	a	3	c
-2	b	3	c
 3	c	3	c
 3	c	3	c
-1	a	3	c
-2	b	3	c
 3	c	3	c
 3	c	3	c
-explain select * from t1 as x1, (select * from t1) as x2;
+explain select * from t1 as x1, (select * from t1) as x2 where x1.a != 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	x1	ALL	NULL	NULL	NULL	NULL	4	
+1	PRIMARY	x1	ALL	NULL	NULL	NULL	NULL	4	Using where
 1	PRIMARY	<derived2>	ALL	NULL	NULL	NULL	NULL	4	Using join buffer
 2	DERIVED	t1	ALL	NULL	NULL	NULL	NULL	4	
 drop table if exists  t2,t3;
@@ -140,9 +140,9 @@ a	t
 18	18
 19	19
 20	20
-explain select count(*) from t1 as tt1, (select * from t1) as tt2;
+explain select count(*) from t1 as tt1, (select * from t1) as tt2 where tt1.a != 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	tt1	index	NULL	a	4	NULL	X	Using index
+1	PRIMARY	tt1	range	a	a	4	NULL	X	Using where; Using index
 1	PRIMARY	<derived2>	ALL	NULL	NULL	NULL	NULL	X	Using join buffer
 2	DERIVED	t1	ALL	NULL	NULL	NULL	NULL	X	
 drop table t1;
@@ -225,15 +225,15 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 drop table t1;
 create table t1 (a int);
 insert into t1 values (1),(2);
-select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b;
+select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b where a.a != 0;
 a	a
 1	1
-2	1
 1	2
+2	1
 2	2
-explain select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b;
+explain select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b where a.a != 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	<derived2>	ALL	NULL	NULL	NULL	NULL	2	
+1	PRIMARY	<derived2>	ALL	NULL	NULL	NULL	NULL	2	Using where
 1	PRIMARY	<derived4>	ALL	NULL	NULL	NULL	NULL	2	Using join buffer
 4	DERIVED	t1	ALL	NULL	NULL	NULL	NULL	2	
 5	UNION	t1	ALL	NULL	NULL	NULL	NULL	2	
@@ -328,7 +328,7 @@ a
 drop table t1, t2, t3;
 create table t1 (a int);
 create table t2 (a int);
-select * from (select * from t1,t2) foo;
+select * from (select * from t1,t2 where t1.a != 0) foo;
 a	a
 drop table t1,t2;
 create table t1 (ID int not null auto_increment,

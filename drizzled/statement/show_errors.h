@@ -33,10 +33,11 @@ namespace statement
 class ShowErrors : public Statement
 {
 public:
-  ShowErrors(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  ShowErrors(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_SHOW_ERRORS);
+  }
 
   bool execute();
 };

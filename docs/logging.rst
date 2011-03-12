@@ -1,7 +1,7 @@
 Logging
 =======
 
-Drizzle provides a number of logging solutions. 
+Drizzle provides a number of logging plugins.
 
 .. toctree::
    :maxdepth: 2

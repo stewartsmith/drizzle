@@ -21,15 +21,19 @@
 #ifndef DRIZZLED_SELECT_RESULT_H
 #define DRIZZLED_SELECT_RESULT_H
 
+#include <drizzled/current_session.h>
+
 namespace drizzled
 {
 
 class Join;
+class Select_Lex_Unit;
 
 class select_result :public memory::SqlAlloc {
 protected:
   Session *session;
   Select_Lex_Unit *unit;
+
 public:
   select_result()
   {
@@ -48,7 +52,7 @@ public:
     there is a result set) apart from sending columns metadata.
   */
   virtual uint32_t field_count(List<Item> &fields) const
-  { return fields.elements; }
+  { return fields.size(); }
   virtual bool send_fields(List<Item> &list)=0;
   virtual bool send_data(List<Item> &items)=0;
   virtual bool initialize_tables (Join *)
@@ -62,7 +66,7 @@ public:
    ** Functions to provide a interface to select results
    *****************************************************************************/
 
-  virtual void send_error(uint32_t errcode, const char *err);
+  virtual void send_error(drizzled::error_t errcode, const char *err);
 
   /*
     Cleanup instance of this class for next execution of a prepared

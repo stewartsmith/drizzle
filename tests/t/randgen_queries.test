@@ -61,6 +61,7 @@ select SQL_BIG_RESULT table_schema,
 
 # bookkeeping query in Executor/Drizzle.pm in randgen - variant 1
 # test of non-DATA_DICTIONARY / INFORMATION_SCHEMA tables
+COMMIT;
 CREATE SCHEMA randgen_query_test;
 USE randgen_query_test;
 CREATE TABLE t1 (a INT);
@@ -82,6 +83,7 @@ select SQL_BIG_RESULT table_schema,
             data_dictionary.columns USING(table_schema, table_name) WHERE table_schema NOT IN ('DATA_DICTIONARY','INFORMATION_SCHEMA')
        ORDER BY table_schema, table_name limit 20;
 
+COMMIT;
 DROP SCHEMA randgen_query_test;
 USE test;
 # end bookkeeping test
@@ -96,5 +98,5 @@ select collation_name,character_set_name FROM data_dictionary.collations;
 --replace_column 1 ####.##.####
 --sorted_result
 select COUNT(*) from data_dictionary.tables;
-
+COMMIT;
 DROP TABLE t1;

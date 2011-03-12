@@ -31,12 +31,12 @@ namespace table
 
 class Placeholder : public table::Concurrent
 {
-  TableShare private_share;
+  instance::Shared private_share;
 
 public:
-  Placeholder(Session *session, TableIdentifier &identifier) :
+  Placeholder(Session *session, identifier::Table &identifier) :
     table::Concurrent(),
-    private_share(identifier, identifier.getKey())
+    private_share(identifier)
   {
     setShare(&private_share);
     in_use= session;
@@ -51,7 +51,7 @@ public:
 
   void release(void)
   {
-    TableShare::release(getMutableShare());
+    table::instance::release(getMutableShare());
   }
 };
 

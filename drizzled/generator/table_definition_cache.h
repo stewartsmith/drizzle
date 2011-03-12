@@ -21,15 +21,15 @@
 #ifndef DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
 #define DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
 
-#include "drizzled/definition/cache.h"
+#include <drizzled/definition/cache.h>
 
 namespace drizzled {
 namespace generator {
 
 class TableDefinitionCache
 {
-  drizzled::TableShare::vector local_vector;
-  drizzled::TableShare::vector::iterator iter;
+  drizzled::table::instance::Shared::vector local_vector;
+  drizzled::table::instance::Shared::vector::iterator iter;
 
 public:
 

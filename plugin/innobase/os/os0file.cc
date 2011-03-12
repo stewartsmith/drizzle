@@ -662,7 +662,7 @@ os_file_lock(
 		if (errno == EAGAIN || errno == EACCES) {
 			fprintf(stderr,
 				"InnoDB: Check that you do not already have"
-				" another mysqld process\n"
+				" another drizzled process\n"
 				"InnoDB: using the same InnoDB data"
 				" or log files.\n");
 		}
@@ -3215,7 +3215,7 @@ os_aio_array_create(
 #ifdef WIN_ASYNC_IO
 	OVERLAPPED*	over;
 #elif defined(LINUX_NATIVE_AIO)
-	struct io_event*	io_event = NULL;
+	struct io_event*	aio_event = NULL;
 #endif
 	ut_a(n > 0);
 	ut_a(n_segments > 0);
@@ -3250,7 +3250,7 @@ os_aio_array_create(
 	/* Initialize the io_context array. One io_context
 	per segment in the array. */
 
-	array->aio_ctx = ut_malloc(n_segments *
+	array->aio_ctx = (io_context**) ut_malloc(n_segments *
 				   sizeof(*array->aio_ctx));
 	for (i = 0; i < n_segments; ++i) {
 		if (!os_aio_linux_create_io_ctx(n/n_segments,
@@ -3266,9 +3266,9 @@ os_aio_array_create(
 	}
 
 	/* Initialize the event array. One event per slot. */
-	io_event = ut_malloc(n * sizeof(*io_event));
-	memset(io_event, 0x0, sizeof(*io_event) * n);
-	array->aio_events = io_event;
+	aio_event = (io_event*) ut_malloc(n * sizeof(io_event));
+	memset(aio_event, 0x0, sizeof(io_event) * n);
+	array->aio_events = aio_event;
 
 skip_native_aio:
 #endif /* LINUX_NATIVE_AIO */

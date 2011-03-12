@@ -1,8 +1,0 @@
-DROP TABLE IF EXISTS t1;
-CREATE TABLE t1 (c1 INT, c2 VARCHAR(20), c3 INT)
-ENGINE=FILESYSTEM,FILE="../../filesystem_ln/select_with_escaped_character.data",COL_SEPARATOR=",",ESCAPED_BY="\\";
-SELECT * FROM t1;
-c1	c2	c3
-1	one, two or three	1234
-2	other 			text	4567
-DROP TABLE t1;

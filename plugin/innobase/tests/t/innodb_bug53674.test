@@ -3,4 +3,5 @@ insert into bug53674 values (1),(2);
 start transaction;
 select * from bug53674 for update;
 select * from bug53674 where a=(select a from bug53674 where a > 1);
+commit;
 drop table bug53674;

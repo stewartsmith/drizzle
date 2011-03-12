@@ -18,13 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <gtest/gtest.h>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
+
 #include <libdrizzle/drizzle_client.h>
 #include <libdrizzle/drizzle_server.h>
 
-TEST(libdrizzle, drizzle_escape_string)
+BOOST_AUTO_TEST_SUITE(LibDrizzle)
+BOOST_AUTO_TEST_CASE(drizzleEscapeString)
 {
   const char* orig= "hello \"world\"\n";
   char out[255];
@@ -32,11 +35,24 @@ TEST(libdrizzle, drizzle_escape_string)
 
   out_len= drizzle_escape_string(out, orig, strlen(orig));
 
-  EXPECT_EQ(17, out_len);
-  ASSERT_STREQ("hello \\\"world\\\"\\n", out);
+  BOOST_REQUIRE_EQUAL(17, out_len);
+  BOOST_REQUIRE_EQUAL("hello \\\"world\\\"\\n", out);
 }
 
-TEST(libdrizzle, drizzle_hex_string)
+BOOST_AUTO_TEST_CASE(drizzleEscapeStringBinary)
+{
+  const char orig[6]= {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+  char out[255];
+  size_t out_len;
+
+  out_len= drizzle_escape_string(out, orig, 6);
+
+  BOOST_REQUIRE_EQUAL(7, out_len);
+  BOOST_REQUIRE_EQUAL("\\0\1\2\3\4\5", out);
+}
+
+
+BOOST_AUTO_TEST_CASE(drizzleHexString)
 {
   const unsigned char orig[5]= {0x34, 0x26, 0x80, 0x99, 0xFF};
   char out[255];
@@ -44,16 +60,17 @@ TEST(libdrizzle, drizzle_hex_string)
 
   out_len= drizzle_hex_string(out, (char*) orig, 5);
 
-  EXPECT_EQ(10, out_len);
-  ASSERT_STREQ("34268099FF", out);
+  BOOST_REQUIRE_EQUAL(10, out_len);
+  BOOST_REQUIRE_EQUAL("34268099FF", out);
 }
 
-TEST(libdrizzle, drizzle_mysql_password_hash)
+BOOST_AUTO_TEST_CASE(drizzleMysqlPasswordHash)
 {
   const char* orig= "test password";
   char out[255];
 
   drizzle_mysql_password_hash(out, orig, strlen(orig));
 
-  ASSERT_STREQ("3B942720DACACBBA7E3838AF03C5B6B5A6DFE0AB", out);
+  BOOST_REQUIRE_EQUAL("3B942720DACACBBA7E3838AF03C5B6B5A6DFE0AB", out);
 }
+BOOST_AUTO_TEST_SUITE_END()

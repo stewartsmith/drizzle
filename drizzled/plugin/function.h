@@ -21,12 +21,17 @@
 #define DRIZZLED_PLUGIN_FUNCTION_H
 
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/item/func.h"
+#include <drizzled/item/func.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
 
 #include <string>
 #include <vector>
 #include <functional>
+
+#include <boost/unordered_map.hpp>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -38,13 +43,19 @@ namespace memory
   class Root;
 }
 
+namespace util
+{
+struct insensitive_hash;
+struct insensitive_equal_to;
+}
+
 namespace plugin
 {
 
 /**
  * Functions in the server: AKA UDF
  */
-class Function
+class DRIZZLED_API Function
   : public Plugin,
     public std::unary_function<memory::Root*, Item_func *>
 {
@@ -69,13 +80,10 @@ public:
    */
   static void removePlugin(const plugin::Function *function_obj);
 
-  /**
-   * Accept a new connection (Protocol object) on one of the configured
-   * listener interfaces.
-   */
-  static const plugin::Function *get(const char *name, size_t len=0);
+  static const plugin::Function *get(const std::string &name);
 
   typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> UdfMap;
+  typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> Map;
 
   static const UdfMap &getMap();
 };

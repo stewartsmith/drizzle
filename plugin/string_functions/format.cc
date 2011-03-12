@@ -17,10 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include "format.h"
 
 #include <limits>
+
+#include <drizzled/charset_info.h>
+#include <drizzled/type/decimal.h>
+#include <drizzled/table.h>
 
 using namespace std;
 
@@ -80,7 +84,7 @@ String *Item_func_format::val_str(String *str)
     if ((null_value=args[0]->null_value))
       return 0;
     class_decimal_round(E_DEC_FATAL_ERROR, res, dec, false, &rnd_dec);
-    class_decimal2string(E_DEC_FATAL_ERROR, &rnd_dec, 0, 0, 0, str);
+    class_decimal2string(&rnd_dec, 0, str);
     str_length= str->length();
     if (rnd_dec.sign())
       str_length--;
@@ -126,12 +130,12 @@ String *Item_func_format::val_str(String *str)
 }
 
 
-void Item_func_format::print(String *str, enum_query_type query_type)
+void Item_func_format::print(String *str)
 {
   str->append(STRING_WITH_LEN("format("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(',');
-  args[1]->print(str, query_type);
+  args[1]->print(str);
   str->append(')');
 }
 

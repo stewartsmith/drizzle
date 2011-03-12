@@ -29,12 +29,12 @@
 
 
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/plugin.h"
-#include "drizzled/session.h"
-#include "drizzled/select_send.h"
-#include "drizzled/item/null.h"
+#include <drizzled/plugin.h>
+#include <drizzled/session.h>
+#include <drizzled/select_send.h>
+#include <drizzled/item/null.h>
 
 #include <gcrypt.h>
 #include <string>
@@ -176,7 +176,7 @@ void MemcachedQueryCache::checkTables(Session *session, TableList* in_table)
   {
     if (strcasecmp(tmp_table->db, "DATA_DICTIONARY") == 0)
     {
-      session->lex->setCacheable(false);
+      session->getLex()->setCacheable(false);
       break;
     }
   } 
@@ -187,8 +187,8 @@ void MemcachedQueryCache::checkTables(Session *session, TableList* in_table)
  */
 bool MemcachedQueryCache::doPrepareResultset(Session *session)
 {		
-  checkTables(session, session->lex->query_tables);
-  if (sysvar_memcached_qc_enable && session->lex->isCacheable())
+  checkTables(session, session->getLex()->query_tables);
+  if (sysvar_memcached_qc_enable && session->getLex()->isCacheable())
   {
     /* Prepare and set the key for the session */
     string query= session->query + *session->schema();
@@ -227,10 +227,10 @@ bool MemcachedQueryCache::doPrepareResultset(Session *session)
 bool MemcachedQueryCache::doSetResultset(Session *session)
 {		
   message::Resultset *resultset= session->getResultsetMessage();
-  if (sysvar_memcached_qc_enable && (not session->is_error()) && resultset != NULL && session->lex->isCacheable())
+  if (sysvar_memcached_qc_enable && (not session->is_error()) && resultset != NULL && session->getLex()->isCacheable())
   {
     /* Generate the final Header */
-    queryCacheService.setResultsetHeader(*resultset, session, session->lex->query_tables);
+    queryCacheService.setResultsetHeader(*resultset, session, session->getLex()->query_tables);
     /* serialize the Resultset Message */
     std::string output;
     resultset->SerializeToString(&output);
@@ -385,13 +385,13 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("servers",
           po::value<string>()->default_value("127.0.0.1:11211"),
-          N_("List of memcached servers."));
+          _("List of memcached servers."));
   context("expiry",
           po::value<uint64_constraint>(&expiry_time)->default_value(1000),
-          N_("Expiry time of memcached entries"));
+          _("Expiry time of memcached entries"));
   context("enable",
           po::value<bool>(&sysvar_memcached_qc_enable)->default_value(false)->zero_tokens(),
-          N_("Enable Memcached Query Cache"));
+          _("Enable Memcached Query Cache"));
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -403,7 +403,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Caches Select resultsets in Memcached",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

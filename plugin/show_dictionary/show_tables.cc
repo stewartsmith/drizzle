@@ -19,9 +19,9 @@
  */
 
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
 
 using namespace std;
 using namespace drizzled;
@@ -36,7 +36,10 @@ ShowTables::Generator::Generator(drizzled::Field **arg) :
   show_dictionary::Show::Generator(arg),
   is_primed(false)
 {
-  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
+  if (not isShowQuery())
+   return;
+
+  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
 
   if (not select->getShowSchema().empty())
   {
@@ -59,7 +62,7 @@ bool ShowTables::Generator::nextCore()
       return false;
     }
 
-    SchemaIdentifier identifier(schema_name);
+    identifier::Schema identifier(schema_name);
     plugin::StorageEngine::getIdentifiers(getSession(), identifier, set_of_identifiers);
     table_iterator= set_of_identifiers.begin();
     is_primed= true;

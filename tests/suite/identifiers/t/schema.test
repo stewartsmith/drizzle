@@ -7,7 +7,7 @@ CREATE SCHEMA temporary;
 
 SELECT SCHEMA();
 
---error 1064,ER_SYNTAX_ERROR
+--error ER_PARSE_ERROR,ER_SYNTAX_ERROR
 CREATE SCHEMA .admin;
 
 --error ER_WRONG_DB_NAME
@@ -16,7 +16,7 @@ CREATE SCHEMA `.admin `;
 --error ER_WRONG_DB_NAME
 CREATE SCHEMA `.admin`;
 
---error 1064
+--error ER_PARSE_ERROR
 CREATE SCHEMA #admin;
 
 CREATE SCHEMA `#admin`;

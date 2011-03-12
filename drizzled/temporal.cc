@@ -34,15 +34,17 @@
  * their single parameter.
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/charset_info.h"
-#include "drizzled/type/decimal.h"
-#include "drizzled/calendar.h"
-#include "drizzled/temporal.h"
-#include "drizzled/temporal_format.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/charset_info.h>
+#include <drizzled/type/decimal.h>
+#include <drizzled/calendar.h>
+#include <drizzled/temporal.h>
+#include <drizzled/temporal_format.h>
+#include <drizzled/time_functions.h>
 #include "time.h"
+
+#include <drizzled/util/gmtime.h>
 
 #include <time.h>
 
@@ -59,19 +61,18 @@ extern std::vector<TemporalFormat *> known_datetime_formats;
 extern std::vector<TemporalFormat *> known_date_formats;
 extern std::vector<TemporalFormat *> known_time_formats;
 
-Temporal::Temporal()
-:
-  _calendar(GREGORIAN)
-, _years(0)
-, _months(0)
-, _days(0)
-, _hours(0)
-, _minutes(0)
-, _seconds(0)
-, _epoch_seconds(0)
-, _useconds(0)
-, _nseconds(0)
-, _overflow(false)
+Temporal::Temporal() :
+  _calendar(GREGORIAN),
+  _years(0),
+  _months(0),
+  _days(0),
+  _hours(0),
+  _minutes(0),
+  _seconds(0),
+  _epoch_seconds(0),
+  _useconds(0),
+  _nseconds(0),
+  _overflow(false)
 {}
 
 uint64_t Temporal::_cumulative_seconds_in_time() const
@@ -100,7 +101,7 @@ static time_t timegm(struct tm *my_time)
 	}
 	
 	// Get the gmtime based on the local seconds since the Epoch
-	gm_time = gmtime_r(&local_secs, &gm__rec);
+	gm_time = util::gmtime(local_secs, &gm__rec);
 	gm_time->tm_isdst = 0;
 	
 	// Interpret gmtime as the local time and convert it to seconds since the Epoch
@@ -153,6 +154,7 @@ bool Date::from_string(const char *from, size_t from_len)
   TemporalFormat *current_format;
   std::vector<TemporalFormat *>::iterator current= known_date_formats.begin();
 
+  _useconds= 0; // We may not match on it, so we need to make sure we zero it out.
   while (current != known_date_formats.end())
   {
     current_format= *current;
@@ -1069,10 +1071,10 @@ int DateTime::to_string(char *to, size_t to_len) const
 int MicroTimestamp::to_string(char *to, size_t to_len) const
 {
   return snprintf(to, to_len,
-		  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
-		      " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
-		  _years, _months, _days,
-		  _hours, _minutes, _seconds, _useconds);
+                  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
+                  " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+                  _years, _months, _days,
+                  _hours, _minutes, _seconds, _useconds);
 }
 
 void Time::to_decimal(type::Decimal *to) const
@@ -1128,8 +1130,8 @@ void Time::to_int32_t(int32_t *to) const
 // We fill the structure based on just int
 void Time::to_uint64_t(uint64_t &to) const
 {
-  to= _hours * 24
-     + _minutes * 60
+  to= (_hours * 60 * 60)
+     + (_minutes * 60)
      + _seconds;
 }
 
@@ -1289,7 +1291,7 @@ bool Time::from_time_t(const time_t from)
   struct tm broken_time;
   struct tm *result;
 
-  result= gmtime_r(&from, &broken_time);
+  result= util::gmtime(from, &broken_time);
   if (result != NULL)
   {
     _years= 0;
@@ -1313,7 +1315,7 @@ bool Date::from_time_t(const time_t from)
   struct tm broken_time;
   struct tm *result;
 
-  result= gmtime_r(&from, &broken_time);
+  result= util::gmtime(from, &broken_time);
   if (result != NULL)
   {
     _years= 1900 + broken_time.tm_year;
@@ -1332,12 +1334,38 @@ bool Date::from_time_t(const time_t from)
     return false;
 }
 
+bool DateTime::from_timeval(struct timeval &timeval_arg)
+{
+  struct tm broken_time;
+  struct tm *result;
+
+  result= util::gmtime(timeval_arg.tv_sec, &broken_time);
+  if (result != NULL)
+  {
+    _years= 1900 + broken_time.tm_year;
+    _months= 1 + broken_time.tm_mon; /* Month is NOT ordinal for struct tm! */
+    _days= broken_time.tm_mday; /* Day IS ordinal for struct tm */
+    _hours= broken_time.tm_hour;
+    _minutes= broken_time.tm_min;
+    _seconds= broken_time.tm_sec;
+    _epoch_seconds= timeval_arg.tv_sec;
+    /* Set hires precision to zero */
+    _useconds= timeval_arg.tv_usec;
+    _nseconds= 0;
+    return is_valid();
+  }
+  else 
+  {
+    return false;
+  }
+}
+
 bool DateTime::from_time_t(const time_t from)
 {
   struct tm broken_time;
   struct tm *result;
 
-  result= gmtime_r(&from, &broken_time);
+  result= util::gmtime(from, &broken_time);
   if (result != NULL)
   {
     _years= 1900 + broken_time.tm_year;
@@ -1353,7 +1381,9 @@ bool DateTime::from_time_t(const time_t from)
     return is_valid();
   }
   else 
+  {
     return false;
+  }
 }
 
 void Date::to_time_t(time_t &to) const
@@ -1373,10 +1403,10 @@ void Timestamp::to_time_t(time_t &to) const
   to= _epoch_seconds;
 }
 
-void MicroTimestamp::to_timeval(struct timeval *to) const
+void MicroTimestamp::to_timeval(struct timeval &to) const
 {
-  to->tv_sec= _epoch_seconds;
-  to->tv_usec= _useconds;
+  to.tv_sec= _epoch_seconds;
+  to.tv_usec= _useconds;
 }
 
 void NanoTimestamp::to_timespec(struct timespec *to) const
@@ -1388,7 +1418,7 @@ void NanoTimestamp::to_timespec(struct timespec *to) const
 bool Date::is_valid() const
 {
   return (_years >= DRIZZLE_MIN_YEARS_SQL && _years <= DRIZZLE_MAX_YEARS_SQL)
-      && (_months >= 1 && _months <= 12)
+      && (_months >= 1 && _months <= DRIZZLE_MAX_MONTHS)
       && (_days >= 1 && _days <= days_in_gregorian_year_month(_years, _months));
 }
 
@@ -1397,9 +1427,9 @@ bool Time::is_valid() const
   return (_years == 0)
       && (_months == 0)
       && (_days == 0)
-      && (_hours <= 23)
-      && (_minutes <= 59)
-      && (_seconds <= 59); /* No Leap second... TIME is for elapsed time... */
+      && (_hours <= DRIZZLE_MAX_HOURS)
+      && (_minutes <= DRIZZLE_MAX_MINUTES)
+      && (_seconds <= DRIZZLE_MAX_SECONDS); /* No Leap second... TIME is for elapsed time... */
 }
 
 bool Time::is_fuzzy_valid() const
@@ -1408,28 +1438,28 @@ bool Time::is_fuzzy_valid() const
     return true;
 
   return (_years >= DRIZZLE_MIN_YEARS_SQL && _years <= DRIZZLE_MAX_YEARS_SQL)
-      && (_months >= 1 && _months <= 12)
+      && (_months >= 1 && _months <= DRIZZLE_MAX_MONTHS)
       && (_days >= 1 && _days <= days_in_gregorian_year_month(_years, _months))
-      && (_hours <= 23)
-      && (_minutes <= 59)
-      && (_seconds <= 59); /* No Leap second... TIME is for elapsed time... */
+      && (_hours <= DRIZZLE_MAX_HOURS)
+      && (_minutes <= DRIZZLE_MAX_MINUTES)
+      && (_seconds <= DRIZZLE_MAX_SECONDS); /* No Leap second... TIME is for elapsed time... */
 }
 
 bool DateTime::is_valid() const
 {
   return (_years >= DRIZZLE_MIN_YEARS_SQL && _years <= DRIZZLE_MAX_YEARS_SQL)
-      && (_months >= 1 && _months <= 12)
+      && (_months >= 1 && _months <= DRIZZLE_MAX_MONTHS)
       && (_days >= 1 && _days <= days_in_gregorian_year_month(_years, _months))
-      && (_hours <= 23)
-      && (_minutes <= 59)
-      && (_seconds <= 61); /* Leap second... */
+      && (_hours <= DRIZZLE_MAX_HOURS)
+      && (_minutes <= DRIZZLE_MAX_MINUTES)
+      && (_seconds <= DRIZZLE_MAX_SECONDS_WITH_LEAP); /* Leap second... */
 }
 
 bool Timestamp::is_valid() const
 {
-  return DateTime::is_valid() 
+  return DateTime::is_valid()
       && in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds)
-      && (_seconds <= 59);
+      && (_seconds <= DRIZZLE_MAX_SECONDS);
 }
 
 bool MicroTimestamp::is_valid() const

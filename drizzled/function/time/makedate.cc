@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/function/time/makedate.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/function/time/makedate.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {
@@ -56,9 +56,11 @@ String *Item_func_makedate::val_str(String *str)
   {
     null_value=0;
     get_date_from_daynr(days,&l_time.year,&l_time.month,&l_time.day);
-    if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
+    if (str->alloc(type::Time::MAX_STRING_LENGTH))
       goto err;
-    make_date(&l_time, str);
+
+    l_time.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
+
     return str;
   }
 

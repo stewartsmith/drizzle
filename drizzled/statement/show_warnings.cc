@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/show_warnings.h>
@@ -36,7 +36,8 @@ bool statement::ShowWarnings::execute()
   warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_NOTE);
   warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_WARN);
   warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_ERROR);
-  bool res= show_warnings(session, warning_levels);
+  bool res= show_warnings(getSession(), warning_levels);
+
   return res;
 }
 

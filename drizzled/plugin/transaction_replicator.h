@@ -25,8 +25,10 @@
 #ifndef DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
 #define DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
 
-#include "drizzled/plugin/replication.h"
-#include "drizzled/plugin/plugin.h"
+#include <drizzled/plugin/replication.h>
+#include <drizzled/plugin/plugin.h>
+
+#include <drizzled/visibility.h>
 
 /**
  * @file Defines the API for a TransactionReplicator.  
@@ -55,7 +57,7 @@ class TransactionApplier;
 /**
  * Class which replicates Transaction messages
  */
-class TransactionReplicator : public Plugin
+class DRIZZLED_API TransactionReplicator : public Plugin
 {
   TransactionReplicator();
   TransactionReplicator(const TransactionReplicator &);

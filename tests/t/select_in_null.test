@@ -12,7 +12,6 @@ create temporary table foo (
 	primary key( a )
 ) engine=myisam;
 
-begin;
 insert into foo( b ) values (1),(1),(1),(1),(1);
 create table t2 as select * from foo;
 insert into foo( b ) select b from t2;
@@ -29,7 +28,6 @@ drop table t2;
 create table t2 as select * from foo;
 insert into foo( b ) select b from t2;
 drop table t2;
-commit;
 
 explain select * from foo where a in (160000, 160001, 160002);
 explain select * from foo where a in (null, 160000, 160001, 160002);

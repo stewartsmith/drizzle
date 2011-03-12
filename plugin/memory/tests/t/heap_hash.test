@@ -51,9 +51,9 @@ create temporary table t1 (x int not null, y int not null, key x  using HASH (x)
 engine=MEMORY;
 insert into t1 values (1,1),(2,2),(1,3),(2,4),(2,5),(2,6);
 select * from t1 where x=1;
--- error 1137
+--error ER_CANT_REOPEN_TABLE
 select * from t1,t1 as t2 where t1.x=t2.y;
--- error 1137
+--error ER_CANT_REOPEN_TABLE
 explain select * from t1,t1 as t2 where t1.x=t2.y;
 drop table t1;
 
@@ -171,7 +171,7 @@ explain select * from t1 where a='aaaa';
 explain select * from t1 where a='aaab';
 explain select * from t1 where a='aaac';
 explain select * from t1 where a='aaad';
--- error 1137
+--error ER_CANT_REOPEN_TABLE
 insert into t1 select * from t1;
 
 # avoid statistics differences between normal and ps-protocol tests

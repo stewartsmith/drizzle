@@ -18,42 +18,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <boost/bind.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
-#include "drizzled/session.h"
-#include "drizzled/identifier/table.h"
-#include "drizzled/definition/cache.h"
-#include "drizzled/definition/table.h"
+#include <drizzled/session.h>
+#include <drizzled/identifier/table.h>
+#include <drizzled/definition/cache.h>
+#include <drizzled/table/instance.h>
+#include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
 
 namespace definition {
 
-TableShare::shared_ptr Cache::find(const TableIdentifier::Key &key)
+table::instance::Shared::shared_ptr Cache::find(const identifier::Table::Key &key)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-
-  Map::iterator iter= cache.find(key);
-  if (iter != cache.end())
-  {
-    return (*iter).second;
-  }
-
-  return TableShare::shared_ptr();
+  if (Map::mapped_type* ptr= find_ptr(cache, key))
+    return *ptr;
+  return table::instance::Shared::shared_ptr();
 }
 
-void Cache::erase(const TableIdentifier::Key &key)
+void Cache::erase(const identifier::Table::Key &key)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   
   cache.erase(key);
 }
 
-bool Cache::insert(const TableIdentifier::Key &key, TableShare::shared_ptr share)
+bool Cache::insert(const identifier::Table::Key &key, table::instance::Shared::shared_ptr share)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   std::pair<Map::iterator, bool> ret=
@@ -62,7 +58,7 @@ bool Cache::insert(const TableIdentifier::Key &key, TableShare::shared_ptr share
   return ret.second;
 }
 
-void Cache::CopyFrom(drizzled::TableShare::vector &vector)
+void Cache::CopyFrom(drizzled::table::instance::Shared::vector &vector)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 

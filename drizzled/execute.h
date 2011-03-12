@@ -21,10 +21,17 @@
 #ifndef DRIZZLED_EXECUTE_H
 #define DRIZZLED_EXECUTE_H
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
-class Execute
+namespace sql
+{
+  class ResultSet;
+}
+
+class DRIZZLED_API Execute
 {
   bool wait;
   Session &_session;
@@ -35,6 +42,7 @@ public:
 
   void run(std::string &to_execute);
   void run(const char *arg, size_t length);
+  void run(std::string &execution_string, sql::ResultSet &result_set);
 
   Session &session()
   {

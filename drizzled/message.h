@@ -21,21 +21,18 @@
 #ifndef DRIZZLED_MESSAGE_H
 #define DRIZZLED_MESSAGE_H
 
-#include "drizzled/message/table.h"
-#include "drizzled/message/schema.h"
+#include <drizzled/message/table.h>
+#include <drizzled/message/schema.h>
 #if 0
-#include "drizzled/message/transaction.pb.h"
+#include <drizzled/message/transaction.pb.h>
 #include <google/protobuf/text_format.h>
 #endif
-#include "drizzled/identifier.h"
+#include <drizzled/identifier.h>
 
 #include <boost/shared_ptr.hpp>
 
 namespace drizzled {
 namespace message {
-
-void init(drizzled::message::Schema &arg, const std::string &name_arg);
-void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg);
 
 void update(drizzled::message::Schema &arg);
 void update(drizzled::message::Table &arg);
@@ -48,6 +45,24 @@ const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignK
 const std::string &type(bool type);
 const std::string &type(drizzled::message::Table::Index::IndexType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyMatchOption type);
+const std::string &type(drizzled::message::Table::TableType type);
+
+template<class T> bool is_replicated(const T& reference)
+{
+  if (reference.has_replication_options() and
+      reference.replication_options().has_is_replicated())
+  {
+    return reference.replication_options().is_replicated();
+  }
+
+  return true;
+}
+
+template<class T> void set_is_replicated(T& reference, bool arg)
+{
+  message::ReplicationOptions *options= reference.mutable_replication_options();
+  options->set_is_replicated(arg);
+}
 
 #if 0
 std::ostream& operator<<(std::ostream& output, const message::Transaction &message);

@@ -22,7 +22,7 @@
  *
  */
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 #include <drizzled/common.h>
 #include <drizzled/session.h>
 #include <drizzled/field/blob.h>
@@ -436,10 +436,10 @@ void MSDumpTable::insertRow(char *buf)
     /* Get the blob record: */
 #ifdef DRIZZLED
     blob_rec= buf + field->offset(table->getInsertRecord());
-    packlength= field->pack_length() - table->getShare()->blob_ptr_size;
+    packlength= field->pack_length() - table->getShare()->sizeBlobPtr();
 #else
     blob_rec= buf + field->offset(table->record[0]);
-    packlength= field->pack_length() - table->s->blob_ptr_size;
+    packlength= field->pack_length() - table->s->sizeBlobPtr();
 #endif
 
     memcpy(&blob_ptr, blob_rec +packlength, sizeof(char*));

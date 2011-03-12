@@ -199,8 +199,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     {
       if (!no_messages)
 	printf("  - Merging %u keys\n", (uint32_t) records);
-      if (merge_many_buff(info,keys,sort_keys,
-                  dynamic_element(&buffpek,0,BUFFPEK *),&maxbuffer,&tempfile))
+      if (merge_many_buff(info,keys,sort_keys, (BUFFPEK*)buffpek.buffer, &maxbuffer, &tempfile))
 	goto err;
     }
     if (internal::flush_io_cache(&tempfile) ||
@@ -208,8 +207,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       goto err;
     if (!no_messages)
       printf("  - Last merge and dumping keys\n");
-    if (merge_index(info,keys,sort_keys,dynamic_element(&buffpek,0,BUFFPEK *),
-                    maxbuffer,&tempfile))
+    if (merge_index(info,keys,sort_keys, (BUFFPEK*)buffpek.buffer, maxbuffer, &tempfile))
       goto err;
   }
 
@@ -290,12 +288,12 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
   }
   if (error > 0)
     return(HA_POS_ERROR);
-  if (buffpek->elements)
+  if (buffpek->size())
   {
     if (info->write_keys(info,sort_keys,idx,(BUFFPEK *)alloc_dynamic(buffpek),
 		   tempfile))
       return(HA_POS_ERROR);
-    *maxbuffer=buffpek->elements-1;
+    *maxbuffer=buffpek->size() - 1;
   }
   else
     *maxbuffer=0;
@@ -332,7 +330,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     if (!got_error)
     {
       mi_set_key_active(share->state.key_map, sinfo->key);
-      if (!sinfo->buffpek.elements)
+      if (!sinfo->buffpek.size())
       {
         if (param->testflag & T_VERBOSE)
         {
@@ -377,9 +375,9 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       sinfo->read_to_buffer=read_to_buffer;
       sinfo->write_key=write_merge_key;
     }
-    if (sinfo->buffpek.elements)
+    if (sinfo->buffpek.size())
     {
-      size_t maxbuffer=sinfo->buffpek.elements-1;
+      size_t maxbuffer=sinfo->buffpek.size() - 1;
       if (!mergebuf)
       {
         length=param->sort_buffer_length;
@@ -400,8 +398,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       {
         if (param->testflag & T_VERBOSE)
           printf("Key %d  - Merging %u keys\n",sinfo->key+1, sinfo->keys);
-        if (merge_many_buff(sinfo, keys, (unsigned char **)mergebuf,
-			    dynamic_element(&sinfo->buffpek, 0, BUFFPEK *),
+        if (merge_many_buff(sinfo, keys, (unsigned char **)mergebuf, (BUFFPEK*)sinfo->buffpek.buffer,
 			    &maxbuffer, &sinfo->tempfile))
         {
           got_error=1;
@@ -415,8 +412,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       }
       if (param->testflag & T_VERBOSE)
         printf("Key %d  - Last merge and dumping keys\n", sinfo->key+1);
-      if (merge_index(sinfo, keys, (unsigned char **)mergebuf,
-                      dynamic_element(&sinfo->buffpek,0,BUFFPEK *),
+      if (merge_index(sinfo, keys, (unsigned char **)mergebuf, (BUFFPEK*)sinfo->buffpek.buffer,
                       maxbuffer,&sinfo->tempfile) ||
 	  flush_pending_blocks(sinfo))
       {

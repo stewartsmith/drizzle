@@ -172,6 +172,7 @@ enum enum_server_command
   COM_SHUTDOWN,
   COM_CONNECT,
   COM_PING,
+  COM_KILL,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
   /* Must be last */
   COM_END
@@ -192,9 +193,10 @@ enum enum_field_types {
                         DRIZZLE_TYPE_BLOB,
                         DRIZZLE_TYPE_TIME,
                         DRIZZLE_TYPE_BOOLEAN,
-                        DRIZZLE_TYPE_UUID
+                        DRIZZLE_TYPE_UUID,
+                        DRIZZLE_TYPE_MICROTIME
 };
-const int enum_field_types_size= DRIZZLE_TYPE_UUID + 1;
+const int enum_field_types_size= DRIZZLE_TYPE_MICROTIME + 1;
 
 } /* namespace drizzled */
 

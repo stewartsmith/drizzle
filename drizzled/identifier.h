@@ -18,11 +18,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_IDENTIFIER_H
-#define DRIZZLED_IDENTIFIER_H
+#pragma once
 
-#include "drizzled/identifier/schema.h"
-#include "drizzled/identifier/table.h"
-#include "drizzled/identifier/user.h"
+#include <string>
 
-#endif /* DRIZZLED_IDENTIFIER_H */
+#include <drizzled/visibility.h>
+
+namespace drizzled {
+
+class DRIZZLED_API Identifier {
+public:
+  typedef const Identifier& const_reference;
+
+  virtual void getSQLPath(std::string &arg) const;
+
+  virtual ~Identifier()
+  { }
+};
+
+} // namespace drizzled
+
+#include <drizzled/identifier/catalog.h>
+#include <drizzled/identifier/schema.h>
+#include <drizzled/identifier/session.h>
+#include <drizzled/identifier/table.h>
+#include <drizzled/identifier/user.h>
+
+// Constant identifiers user internally
+#include <drizzled/identifier/constants/schema.h>
+#include <drizzled/identifier/constants/table.h>

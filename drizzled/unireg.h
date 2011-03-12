@@ -23,10 +23,12 @@
 #ifndef DRIZZLED_UNIREG_H
 #define DRIZZLED_UNIREG_H
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
-void unireg_abort(int exit_code) __attribute__((noreturn));
+DRIZZLED_API void unireg_abort(int exit_code) __attribute__((noreturn));
 
 } /* namespace drizzled */
 

@@ -22,7 +22,6 @@
 #define PLUGIN_FUNCTION_ENGINE_FUNCTION_H
 
 #include <assert.h>
-#include <drizzled/session.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/identifier/schema.h>
@@ -48,15 +47,15 @@ public:
 
   int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
-                    const drizzled::TableIdentifier &,
-                    drizzled::message::Table&)
+                    const drizzled::identifier::Table &,
+                    const drizzled::message::Table&)
   {
-    return EPERM;
+    return drizzled::ER_TABLE_PERMISSION_DENIED;
   }
 
-  int doDropTable(drizzled::Session&, const drizzled::TableIdentifier&)
+  int doDropTable(drizzled::Session&, const drizzled::identifier::Table&)
   { 
-    return EPERM; 
+    return drizzled::HA_ERR_NO_SUCH_TABLE; 
   }
 
   virtual drizzled::Cursor *create(drizzled::Table &table);
@@ -71,27 +70,27 @@ public:
     return drizzled::plugin::TableFunction::getFunction(path);
   }
 
-  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
+  bool doCanCreateTable(const drizzled::identifier::Table &identifier);
 
 
   int doGetTableDefinition(drizzled::Session &session,
-                           const drizzled::TableIdentifier &identifier,
+                           const drizzled::identifier::Table &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::SchemaIdentifier::vector&);
+  void doGetSchemaIdentifiers(drizzled::identifier::Schema::vector&);
 
-  bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const drizzled::identifier::Table &identifier);
 
-  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier &schema, drizzled::message::schema::shared_ptr &schema_message);
+  drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema &schema);
 
-  int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &, const drizzled::TableIdentifier &)
+  int doRenameTable(drizzled::Session&, const drizzled::identifier::Table &, const drizzled::identifier::Table &)
   {
     return EPERM;
   }
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifier::vector &set_of_identifiers);
+                             const drizzled::identifier::Schema &schema_identifier,
+                             drizzled::identifier::Table::vector &set_of_identifiers);
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */

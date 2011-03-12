@@ -15,10 +15,10 @@
 
 /* Get date in a printable form: yyyy-mm-dd hh:mm:ss */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 #include <cstdio>
 
 namespace drizzled
@@ -42,9 +42,9 @@ namespace internal
 */
 
 
-void get_date(register char * to, int flag, time_t date)
+void get_date(char * to, int flag, time_t date)
 {
-   register struct tm *start_time;
+   tm *start_time;
    time_t skr;
    struct tm tm_tmp;
 

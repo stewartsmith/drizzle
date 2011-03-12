@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
@@ -29,33 +29,33 @@ namespace drizzled
 
 bool statement::Replace::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
 
-  if (insert_precheck(session, all_tables))
+  if (insert_precheck(getSession(), all_tables))
   {
     return true;
   }
 
-  if (session->wait_if_global_read_lock(false, true))
+  if (getSession()->wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
-  bool res= insert_query(session, 
+  bool res= insert_query(getSession(), 
                          all_tables, 
-                         session->lex->field_list, 
-                         session->lex->many_values,
-                         session->lex->update_list, 
-                         session->lex->value_list,
-                         session->lex->duplicates, 
-                         session->lex->ignore);
+                         lex().field_list, 
+                         lex().many_values,
+                         lex().update_list, 
+                         lex().value_list,
+                         lex().duplicates, 
+                         lex().ignore);
   /*
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  session->startWaitingGlobalReadLock();
+  getSession()->startWaitingGlobalReadLock();
 
   return res;
 }

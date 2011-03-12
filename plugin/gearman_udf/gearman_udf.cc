@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
-#include "drizzled/plugin/function.h"
+#include <config.h>
+#include <drizzled/plugin/function.h>
 
 #include "gman_servers_set.h"
 #include "gman_do.h"
@@ -60,7 +60,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Gearman Client UDFs",
   PLUGIN_LICENSE_BSD,
   gearman_udf_plugin_init, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

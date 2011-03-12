@@ -18,13 +18,16 @@
 #ifndef PLUGIN_MYISAM_MYISAM_PRIV_H
 #define PLUGIN_MYISAM_MYISAM_PRIV_H
 
-#include "config.h"
+#include <config.h>
+
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
-#include "drizzled/tree.h"
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/tree.h>
+#include <drizzled/internal/my_pthread.h>
 #include <drizzled/thr_lock.h>
 #include <drizzled/common.h>
+#include <drizzled/enum.h>
+#include <drizzled/dynamic_array.h>
 
 #include <assert.h>
 #include <fcntl.h>
@@ -686,6 +689,7 @@ extern uint32_t _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
                                     int file, drizzled::internal::my_off_t filepos);
 extern void _my_store_blob_length(unsigned char *pos,uint32_t pack_length,uint32_t length);
 extern void mi_report_error(int errcode, const char *file_name);
+extern void mi_report_error(drizzled::error_t errcode, const char *file_name);
 extern size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
                             size_t Count, drizzled::internal::my_off_t offset, drizzled::myf MyFlags);
 extern size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,

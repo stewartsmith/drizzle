@@ -86,6 +86,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: false
 transaction_context {
   server_id: 1
   TRANSACTION_ID
@@ -97,6 +99,8 @@ statement {
   START_TIMESTAMP
   END_TIMESTAMP
 }
+segment_id: 2
+end_segment: true
 
 START TRANSACTION;
 -- Rollback statement
@@ -207,5 +211,8 @@ statement {
     }
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;

@@ -21,13 +21,15 @@
 #ifndef DRIZZLED_STATUS_HELPER_H
 #define DRIZZLED_STATUS_HELPER_H
 
-#include "drizzled/plugin.h"
-#include "drizzled/statistics_variables.h"
+#include <drizzled/plugin.h>
+#include <drizzled/statistics_variables.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
 
-class StatusHelper 
+class DRIZZLED_API StatusHelper 
 {
 public:
 

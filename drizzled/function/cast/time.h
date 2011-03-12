@@ -22,7 +22,7 @@
 #define DRIZZLED_FUNCTION_CAST_TIME_H
 
 #include <drizzled/function/str/strfunc.h>
-#include "drizzled/function/time/typecast.h"
+#include <drizzled/function/time/typecast.h>
 #include <drizzled/temporal.h>
 
 namespace drizzled {
@@ -40,7 +40,7 @@ public:
 
   const char *func_name() const { return "cast_as_time"; }
   String *val_str(String *str);
-  bool get_time(type::Time *ltime);
+  bool get_time(type::Time &ltime);
   const char *cast_type() const { return "time"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_TIME; }
 

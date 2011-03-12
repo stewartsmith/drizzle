@@ -71,10 +71,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ***********************************************************************/
 
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/internal/my_pthread.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/plugin/error_message.h>
 
@@ -88,9 +88,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
-#include "drizzled/global_charset_info.h"
+#include <drizzled/global_charset_info.h>
 
 #include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"
@@ -101,22 +101,26 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "haildb_engine.h"
 
 #include <drizzled/field.h>
-#include "drizzled/field/blob.h"
-#include "drizzled/field/enum.h"
+#include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
 #include <drizzled/session.h>
-#include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include <iostream>
 #include <drizzled/charset.h>
+#include <drizzled/current_session.h>
+
+#include <drizzled/key.h>
+
+#include <iostream>
 
 namespace po= boost::program_options;
+#include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace google;
 using namespace drizzled;
 
-int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot= NULL);
+int read_row_from_haildb(Session *session, unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot= NULL);
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
                                                 const drizzled::KeyInfo *key_info,
                                                 const unsigned char *key_ptr,
@@ -165,30 +169,30 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    const drizzled::TableIdentifier &identifier,
-                    drizzled::message::Table& proto);
+                    const drizzled::identifier::Table &identifier,
+                    const drizzled::message::Table& proto);
 
-  int doDropTable(Session&, const TableIdentifier &identifier);
+  int doDropTable(Session&, const identifier::Table &identifier);
 
   int doRenameTable(drizzled::Session&,
-                    const drizzled::TableIdentifier&,
-                    const drizzled::TableIdentifier&);
+                    const drizzled::identifier::Table&,
+                    const drizzled::identifier::Table&);
 
   int doGetTableDefinition(Session& session,
-                           const TableIdentifier &identifier,
+                           const identifier::Table &identifier,
                            drizzled::message::Table &table_proto);
 
-  bool doDoesTableExist(Session&, const TableIdentifier &identifier);
+  bool doDoesTableExist(Session&, const identifier::Table &identifier);
 
 private:
-  void getTableNamesInSchemaFromHailDB(const drizzled::SchemaIdentifier &schema,
+  void getTableNamesInSchemaFromHailDB(const drizzled::identifier::Schema &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
-                                       drizzled::TableIdentifier::vector *identifiers);
+                                       drizzled::identifier::Table::vector *identifiers);
 
 public:
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
-                             const drizzled::SchemaIdentifier &schema,
-                             drizzled::TableIdentifier::vector &identifiers);
+                             const drizzled::identifier::Schema &schema,
+                             drizzled::identifier::Table::vector &identifiers);
 
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 1000; }
@@ -239,7 +243,7 @@ static ib_trx_t* get_trx(Session* session)
 /* This is a superset of the map from innobase plugin.
    Unlike innobase plugin we don't act on errors here, we just
    map error codes. */
-static int ib_err_t_to_drizzle_error(ib_err_t err)
+static int ib_err_t_to_drizzle_error(Session* session, ib_err_t err)
 {
   switch (err)
   {
@@ -269,9 +273,13 @@ static int ib_err_t_to_drizzle_error(ib_err_t err)
     return HA_ERR_NO_ACTIVE_RECORD;
 
   case DB_DEADLOCK:
+    /* HailDB will roll back a transaction itself due to DB_DEADLOCK.
+       This means we have to tell Drizzle about it */
+    session->markTransactionForRollback(true);
     return HA_ERR_LOCK_DEADLOCK;
 
   case DB_LOCK_WAIT_TIMEOUT:
+    session->markTransactionForRollback(false);
     return HA_ERR_LOCK_WAIT_TIMEOUT;
 
   case DB_NO_REFERENCED_ROW:
@@ -350,7 +358,7 @@ int HailDBEngine::doStartTransaction(Session *session,
   (void)options;
 
   transaction= get_trx(session);
-  isolation_level= tx_isolation_to_ib_trx_level((enum_tx_isolation)session_tx_isolation(session));
+  isolation_level= tx_isolation_to_ib_trx_level(session->getTxIsolation());
   *transaction= ib_trx_begin(isolation_level);
 
   return *transaction == NULL;
@@ -387,7 +395,7 @@ int HailDBEngine::doRollbackToSavepoint(Session* session,
   err= ib_savepoint_rollback(*transaction, savepoint.getName().c_str(),
                              savepoint.getName().length());
 
-  return ib_err_t_to_drizzle_error(err);
+  return ib_err_t_to_drizzle_error(session, err);
 }
 
 int HailDBEngine::doReleaseSavepoint(Session* session,
@@ -399,7 +407,7 @@ int HailDBEngine::doReleaseSavepoint(Session* session,
   err= ib_savepoint_release(*transaction, savepoint.getName().c_str(),
                             savepoint.getName().length());
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(session, err);
 
   return 0;
 }
@@ -409,12 +417,12 @@ int HailDBEngine::doCommit(Session* session, bool all)
   ib_err_t err;
   ib_trx_t *transaction= get_trx(session);
 
-  if (all || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  if (all)
   {
     err= ib_trx_commit(*transaction);
 
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(session, err);
 
     *transaction= NULL;
   }
@@ -427,21 +435,27 @@ int HailDBEngine::doRollback(Session* session, bool all)
   ib_err_t err;
   ib_trx_t *transaction= get_trx(session);
 
-  if (all || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  if (all)
   {
-    err= ib_trx_rollback(*transaction);
+    if (ib_trx_state(*transaction) == IB_TRX_NOT_STARTED)
+      err= ib_trx_release(*transaction);
+    else
+      err= ib_trx_rollback(*transaction);
 
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(session, err);
 
     *transaction= NULL;
   }
   else
   {
+    if (ib_trx_state(*transaction) == IB_TRX_NOT_STARTED)
+      return 0;
+
     err= ib_savepoint_rollback(*transaction, statement_savepoint_name.c_str(),
                                statement_savepoint_name.length());
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(session, err);
   }
 
   return 0;
@@ -526,8 +540,8 @@ uint64_t HailDBCursor::getInitialAutoIncrementValue()
   doEndIndexScan();
   (void) extra(HA_EXTRA_NO_KEYREAD);
 
-  if (getTable()->getShare()->getTableProto()->options().auto_increment_value() > nr)
-    nr= getTable()->getShare()->getTableProto()->options().auto_increment_value();
+  if (getTable()->getShare()->getTableMessage()->options().auto_increment_value() > nr)
+    nr= getTable()->getShare()->getTableMessage()->options().auto_increment_value();
 
   return nr;
 }
@@ -640,7 +654,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
 
   /* the below is adapted from ha_innodb.cc */
 
-  const uint32_t sql_command = session_sql_command(session);
+  const uint32_t sql_command = session->getSqlCommand();
 
   if (sql_command == SQLCOM_DROP_TABLE) {
 
@@ -671,7 +685,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
     unexpected if an obsolete consistent read view would be
     used. */
 
-    enum_tx_isolation isolation_level= session_tx_isolation(session);
+    enum_tx_isolation isolation_level= session->getTxIsolation();
 
     if (isolation_level != ISO_SERIALIZABLE
         && (lock_type == TL_READ || lock_type == TL_READ_NO_INSERT)
@@ -714,7 +728,7 @@ THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
          && lock_type <= TL_WRITE)
-        && !session_tablespace_op(session)
+        && ! session->doing_tablespace_operation()
         && sql_command != SQLCOM_TRUNCATE
         && sql_command != SQLCOM_CREATE_TABLE) {
 
@@ -775,7 +789,7 @@ static const char* table_path_to_haildb_name(const char* name)
     std::transform(find_name.begin(), find_name.end(), find_name.begin(), ::toupper);
     boost::unordered_set<string>::iterator iter= haildb_system_table_names.find(find_name);
     if (iter != haildb_system_table_names.end())
-      return (*iter).c_str()+sys_table_prefix.length();
+      return iter->c_str()+sys_table_prefix.length();
   }
 
   int slashes= 2;
@@ -791,7 +805,7 @@ static const char* table_path_to_haildb_name(const char* name)
   return &name[l];
 }
 
-static void TableIdentifier_to_haildb_name(const TableIdentifier &identifier, std::string *str)
+static void TableIdentifier_to_haildb_name(const identifier::Table &identifier, std::string *str)
 {
   str->assign(table_path_to_haildb_name(identifier.getPath().c_str()));
 }
@@ -825,13 +839,13 @@ int HailDBCursor::open(const char *name, int, uint32_t)
   ib_id_t idx_id;
 
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
   err= ib_cursor_open_table_using_id(table_id, NULL, &cursor);
   cursor_is_sec_index= false;
 
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
   err= ib_index_get_id(haildb_table_name, "HIDDEN_PRIMARY", &idx_id);
 
@@ -862,7 +876,7 @@ int HailDBCursor::close(void)
 {
   ib_err_t err= ib_cursor_close(cursor);
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
   free_share();
 
@@ -895,7 +909,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
 {
   ib_col_attr_t column_attr= IB_COL_NONE;
 
-  if (field.has_constraints() && ! field.constraints().is_nullable())
+  if (field.has_constraints() && field.constraints().is_notnull())
     column_attr= IB_COL_NOT_NULL;
 
   switch (field.type())
@@ -946,7 +960,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
   return 0;
 }
 
-static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name, drizzled::message::Table& table_message)
+static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name, const drizzled::message::Table& table_message)
 {
   ib_crsr_t cursor;
   ib_tpl_t message_tuple;
@@ -1026,8 +1040,8 @@ static ib_tbl_fmt_t parse_ib_table_format(const std::string &value)
 
 int HailDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
-                                        const drizzled::TableIdentifier &identifier,
-                                        drizzled::message::Table& table_message)
+                                        const drizzled::identifier::Table &identifier,
+                                        const drizzled::message::Table& table_message)
 {
   ib_tbl_sch_t haildb_table_schema= NULL;
 //  ib_idx_sch_t haildb_pkey= NULL;
@@ -1070,7 +1084,7 @@ int HailDBEngine::doCreateTable(Session &session,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. HailDB Error %d (%s)\n"),
                         haildb_table_name.c_str(), haildb_err, ib_strerror(haildb_err));
-    return ib_err_t_to_drizzle_error(haildb_err);
+    return ib_err_t_to_drizzle_error(&session, haildb_err);
   }
 
   for (int colnr= 0; colnr < table_message.field_size() ; colnr++)
@@ -1091,7 +1105,7 @@ int HailDBEngine::doCreateTable(Session &session,
                             " HailDB Error %d (%s)\n"),
                           field.name().c_str(), haildb_table_name.c_str(),
                           haildb_err, ib_strerror(haildb_err));
-      return ib_err_t_to_drizzle_error(haildb_err);
+      return ib_err_t_to_drizzle_error(&session, haildb_err);
     }
     if (field_err != 0)
       return field_err;
@@ -1100,16 +1114,16 @@ int HailDBEngine::doCreateTable(Session &session,
   bool has_primary= false;
   for (int indexnr= 0; indexnr < table_message.indexes_size() ; indexnr++)
   {
-    message::Table::Index *index = table_message.mutable_indexes(indexnr);
+    const message::Table::Index &index = table_message.indexes(indexnr);
 
     ib_idx_sch_t haildb_index;
 
-    haildb_err= ib_table_schema_add_index(haildb_table_schema, index->name().c_str(),
-                                   &haildb_index);
+    haildb_err= ib_table_schema_add_index(haildb_table_schema, index.name().c_str(),
+					  &haildb_index);
     if (haildb_err != DB_SUCCESS)
       goto schema_error;
 
-    if (index->is_primary())
+    if (index.is_primary())
     {
       has_primary= true;
       haildb_err= ib_index_schema_set_clustered(haildb_index);
@@ -1118,19 +1132,18 @@ int HailDBEngine::doCreateTable(Session &session,
         goto schema_error;
     }
 
-    if (index->is_unique())
+    if (index.is_unique())
     {
       haildb_err= ib_index_schema_set_unique(haildb_index);
       if (haildb_err != DB_SUCCESS)
         goto schema_error;
     }
 
-    if (index->type() == message::Table::Index::UNKNOWN_INDEX)
-      index->set_type(message::Table::Index::BTREE);
+    assert(index.type() == message::Table::Index::UNKNOWN_INDEX);
 
-    for (int partnr= 0; partnr < index->index_part_size(); partnr++)
+    for (int partnr= 0; partnr < index.index_part_size(); partnr++)
     {
-      const message::Table::Index::IndexPart part= index->index_part(partnr);
+      const message::Table::Index::IndexPart part= index.index_part(partnr);
       const message::Table::Field::FieldType part_type= table_message.field(part.fieldnr()).type();
       uint64_t compare_length= 0;
 
@@ -1145,7 +1158,7 @@ int HailDBEngine::doCreateTable(Session &session,
         goto schema_error;
     }
 
-    if (! has_primary && index->is_unique())
+    if (! has_primary && index.is_unique())
     {
       haildb_err= ib_index_schema_set_clustered(haildb_index);
       has_explicit_pkey= true;
@@ -1239,7 +1252,7 @@ schema_error:
                         _("Cannot create table %s. HailDB Error %d (%s)\n"),
                         haildb_table_name.c_str(),
                         haildb_err, ib_strerror(haildb_err));
-    return ib_err_t_to_drizzle_error(haildb_err);
+    return ib_err_t_to_drizzle_error(&session, haildb_err);
   }
 
   return 0;
@@ -1282,7 +1295,7 @@ rollback:
 }
 
 int HailDBEngine::doDropTable(Session &session,
-                                      const TableIdentifier &identifier)
+                                      const identifier::Table &identifier)
 {
   ib_trx_t haildb_schema_transaction;
   ib_err_t haildb_err;
@@ -1364,7 +1377,7 @@ int HailDBEngine::doDropTable(Session &session,
   return 0;
 }
 
-static ib_err_t rename_table_message(ib_trx_t transaction, const TableIdentifier &from_identifier, const TableIdentifier &to_identifier)
+static ib_err_t rename_table_message(ib_trx_t transaction, const identifier::Table &from_identifier, const identifier::Table &to_identifier)
 {
   ib_crsr_t cursor;
   ib_tpl_t search_tuple;
@@ -1455,8 +1468,8 @@ rollback:
 }
 
 int HailDBEngine::doRenameTable(drizzled::Session &session,
-                                        const drizzled::TableIdentifier &from,
-                                        const drizzled::TableIdentifier &to)
+                                        const drizzled::identifier::Table &from,
+                                        const drizzled::identifier::Table &to)
 {
   ib_trx_t haildb_schema_transaction;
   ib_err_t err;
@@ -1506,13 +1519,13 @@ rollback:
   assert(rollback_err == DB_SUCCESS);
   rollback_err= ib_trx_rollback(haildb_schema_transaction);
   assert(rollback_err == DB_SUCCESS);
-  return ib_err_t_to_drizzle_error(err);
+  return ib_err_t_to_drizzle_error(&session, err);
 }
 
 void HailDBEngine::getTableNamesInSchemaFromHailDB(
-                                 const drizzled::SchemaIdentifier &schema,
+                                 const drizzled::identifier::Schema &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
-                                 drizzled::TableIdentifier::vector *identifiers)
+                                 drizzled::identifier::Table::vector *identifiers)
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
@@ -1542,7 +1555,7 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
     {
       BOOST_FOREACH(std::string table_name, haildb_system_table_names)
       {
-        identifiers->push_back(TableIdentifier(schema.getSchemaName(),
+        identifiers->push_back(identifier::Table(schema.getSchemaName(),
                                                table_name));
       }
     }
@@ -1585,7 +1598,7 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
       if (set_of_names)
         set_of_names->insert(just_table_name);
       if (identifiers)
-        identifiers->push_back(TableIdentifier(schema.getSchemaName(), just_table_name));
+        identifiers->push_back(identifier::Table(schema.getSchemaName(), just_table_name));
     }
 
 
@@ -1604,8 +1617,8 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
 }
 
 void HailDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
-                                                 const drizzled::SchemaIdentifier &schema,
-                                                 drizzled::TableIdentifier::vector &identifiers)
+                                                 const drizzled::identifier::Schema &schema,
+                                                 drizzled::identifier::Table::vector &identifiers)
 {
   getTableNamesInSchemaFromHailDB(schema, NULL, &identifiers);
 }
@@ -1730,7 +1743,7 @@ rollback_close_err:
 }
 
 int HailDBEngine::doGetTableDefinition(Session &session,
-                                               const TableIdentifier &identifier,
+                                               const identifier::Table &identifier,
                                                drizzled::message::Table &table)
 {
   ib_crsr_t haildb_cursor= NULL;
@@ -1759,7 +1772,7 @@ int HailDBEngine::doGetTableDefinition(Session &session,
 }
 
 bool HailDBEngine::doDoesTableExist(Session &,
-                                    const TableIdentifier& identifier)
+                                    const identifier::Table& identifier)
 {
   ib_crsr_t haildb_cursor;
   string haildb_table_name;
@@ -1901,7 +1914,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
     err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
 
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
     cursor_is_sec_index= false;
   }
@@ -1911,7 +1924,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
   }
 
   err= ib_cursor_first(cursor);
-  if (current_session->lex->sql_command == SQLCOM_CREATE_TABLE
+  if (current_session->getLex()->sql_command == SQLCOM_CREATE_TABLE
       && err == DB_MISSING_HISTORY)
   {
     /* See https://bugs.launchpad.net/drizzle/+bug/556978
@@ -2010,7 +2023,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
       ret= HA_ERR_FOUND_DUPP_KEY;
   }
   else if (err != DB_SUCCESS)
-    ret= ib_err_t_to_drizzle_error(err);
+    ret= ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
   tuple= ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
@@ -2041,7 +2054,7 @@ int HailDBCursor::doUpdateRecord(const unsigned char *old_data,
       err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
 
       if (err != DB_SUCCESS)
-        return ib_err_t_to_drizzle_error(err);
+        return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
       cursor_is_sec_index= false;
     }
     else
@@ -2093,7 +2106,7 @@ int HailDBCursor::doUpdateRecord(const unsigned char *old_data,
 
   advance_cursor= true;
 
-  return ib_err_t_to_drizzle_error(err);
+  return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 }
 
 int HailDBCursor::doDeleteRecord(const unsigned char *)
@@ -2105,7 +2118,7 @@ int HailDBCursor::doDeleteRecord(const unsigned char *)
 
   advance_cursor= true;
 
-  return ib_err_t_to_drizzle_error(err);
+  return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 }
 
 int HailDBCursor::delete_all_rows(void)
@@ -2114,7 +2127,7 @@ int HailDBCursor::delete_all_rows(void)
      so only support TRUNCATE and not DELETE FROM t;
      (this is what ha_innodb does)
   */
-  if (session_sql_command(getTable()->in_use) != SQLCOM_TRUNCATE)
+  if (getTable()->in_use->getSqlCommand() != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
 
   ib_id_t id;
@@ -2130,7 +2143,7 @@ int HailDBCursor::delete_all_rows(void)
     err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
 
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
     cursor_is_sec_index= false;
   }
   else
@@ -2172,7 +2185,7 @@ err:
   ib_schema_unlock(transaction);
   ib_err_t rollback_err= ib_trx_rollback(transaction);
   assert(rollback_err == DB_SUCCESS);
-  return ib_err_t_to_drizzle_error(err);
+  return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 }
 
 int HailDBCursor::doStartTableScan(bool)
@@ -2202,7 +2215,7 @@ int HailDBCursor::doStartTableScan(bool)
   }
 
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
   err= ib_cursor_set_lock_mode(cursor, ib_lock_mode);
   assert(err == DB_SUCCESS); // FIXME
@@ -2212,18 +2225,17 @@ int HailDBCursor::doStartTableScan(bool)
   err= ib_cursor_first(cursor);
   if (err != DB_SUCCESS && err != DB_END_OF_INDEX)
   {
-    previous_error= ib_err_t_to_drizzle_error(err);
-    err= ib_cursor_reset(cursor);
-    return previous_error;
+    int reset_err= ib_cursor_reset(cursor);
+    assert(reset_err == DB_SUCCESS);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
   }
 
   advance_cursor= false;
 
-  previous_error= 0;
   return(0);
 }
 
-int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot)
+int read_row_from_haildb(Session *session, unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot)
 {
   ib_err_t err;
   ptrdiff_t row_offset= buf - table->getInsertRecord();
@@ -2233,7 +2245,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   if (err == DB_RECORD_NOT_FOUND)
     return HA_ERR_END_OF_FILE;
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(session, err);
 
   int colnr= 0;
 
@@ -2299,7 +2311,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
     (**field).move_field_offset(-row_offset);
 
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(session, err);
   }
 
   if (has_hidden_primary_key)
@@ -2307,7 +2319,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
     err= ib_tuple_read_u64(tuple, colnr, hidden_pkey);
   }
 
-  return ib_err_t_to_drizzle_error(err);
+  return ib_err_t_to_drizzle_error(session, err);
 }
 
 int HailDBCursor::rnd_next(unsigned char *buf)
@@ -2315,18 +2327,16 @@ int HailDBCursor::rnd_next(unsigned char *buf)
   ib_err_t err;
   int ret;
 
-  if (previous_error)
-    return previous_error;
-
   if (advance_cursor)
   {
     err= ib_cursor_next(cursor);
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
+  ret= read_row_from_haildb(getTable()->getSession(), buf, cursor, tuple,
+                            getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2343,8 +2353,7 @@ int HailDBCursor::doEndTableScan()
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
   in_table_scan= false;
-  previous_error= 0;
-  return ib_err_t_to_drizzle_error(err);
+  return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 }
 
 int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
@@ -2359,7 +2368,7 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
     err= ib_col_set_value(search_tuple, 0,
                           ((uint64_t*)(pos)), sizeof(uint64_t));
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
   }
   else
   {
@@ -2376,7 +2385,7 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 
   err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
   assert(res==0);
   if (res != 0)
@@ -2387,7 +2396,8 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   tuple= ib_tuple_clear(tuple);
 
   if (ret == 0)
-    ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
+    ret= read_row_from_haildb(getTable()->getSession(), buf, cursor, tuple,
+                              getTable(),
                               share->has_hidden_primary_key,
                               &hidden_autoinc_pkey_position);
 
@@ -2526,6 +2536,46 @@ int HailDBCursor::info(uint32_t flag)
 
   }
 
+  if (flag & HA_STATUS_CONST)
+  {
+    for (unsigned int i = 0; i < getTable()->getShare()->sizeKeys(); i++)
+    {
+      const char* index_name= getTable()->key_info[i].name;
+      uint64_t ncols;
+      int64_t *n_diff;
+      ha_rows rec_per_key;
+
+      err= ib_get_index_stat_n_diff_key_vals(cursor, index_name,
+                                             &ncols, &n_diff);
+
+      if (err != DB_SUCCESS)
+        return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
+
+      for (unsigned int j=0; j < getTable()->key_info[i].key_parts; j++)
+      {
+        if (n_diff[j+1] == 0)
+          rec_per_key= stats.records;
+        else
+          rec_per_key= stats.records / n_diff[j+1];
+
+        /* We import this heuristic from ha_innodb, which says
+           that MySQL favours table scans too much over index searches,
+           so we pretend our index selectivity is 2 times better. */
+
+        rec_per_key= rec_per_key / 2;
+
+        if (rec_per_key == 0)
+          rec_per_key= 1;
+
+        getTable()->key_info[i].rec_per_key[j]=
+          rec_per_key >= ~(ulong) 0 ? ~(ulong) 0 :
+          (ulong) rec_per_key;
+      }
+
+      free(n_diff);
+    }
+  }
+
   return(0);
 }
 
@@ -2546,7 +2596,7 @@ int HailDBCursor::doStartIndexScan(uint32_t keynr, bool)
       err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
 
       if (err != DB_SUCCESS)
-        return ib_err_t_to_drizzle_error(err);
+        return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
     }
     else
@@ -2564,7 +2614,7 @@ int HailDBCursor::doStartIndexScan(uint32_t keynr, bool)
                          getShare()->getKeyInfo(keynr).name,
                          &index_id);
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
     err= ib_cursor_close(cursor);
     assert(err == DB_SUCCESS);
@@ -2572,7 +2622,7 @@ int HailDBCursor::doStartIndexScan(uint32_t keynr, bool)
     err= ib_cursor_open_index_using_id(index_id, transaction, &cursor);
 
     if (err != DB_SUCCESS)
-      return ib_err_t_to_drizzle_error(err);
+      return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
     cursor_is_sec_index= true;
 
@@ -2725,11 +2775,12 @@ int HailDBCursor::haildb_index_read(unsigned char *buf,
 
   if (err != DB_SUCCESS)
   {
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
+  ret= read_row_from_haildb(getTable()->getSession(), buf, cursor, tuple,
+                            getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position,
                             (allocate_blobs)? &blobroot : NULL);
@@ -2806,6 +2857,15 @@ int HailDBCursor::reset()
   return 0;
 }
 
+int HailDBCursor::analyze(Session*)
+{
+  ib_err_t err;
+
+  err= ib_update_table_statistics(cursor);
+
+  return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
+}
+
 int HailDBCursor::index_next(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
@@ -2818,7 +2878,8 @@ int HailDBCursor::index_next(unsigned char *buf)
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
+  ret= read_row_from_haildb(getTable()->getSession(), buf, cursor, tuple,
+                            getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2846,12 +2907,13 @@ int HailDBCursor::index_prev(unsigned char *buf)
       if (err == DB_END_OF_INDEX)
         return HA_ERR_END_OF_FILE;
       else
-        return ib_err_t_to_drizzle_error(err);
+        return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
     }
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
+  ret= read_row_from_haildb(getTable()->getSession(), buf, cursor, tuple,
+                            getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2868,10 +2930,11 @@ int HailDBCursor::index_first(unsigned char *buf)
 
   err= ib_cursor_first(cursor);
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
+  ret= read_row_from_haildb(getTable()->getSession(), buf, cursor, tuple,
+                            getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2888,10 +2951,11 @@ int HailDBCursor::index_last(unsigned char *buf)
 
   err= ib_cursor_last(cursor);
   if (err != DB_SUCCESS)
-    return ib_err_t_to_drizzle_error(err);
+    return ib_err_t_to_drizzle_error(getTable()->getSession(), err);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
+  ret= read_row_from_haildb(getTable()->getSession(), buf, cursor, tuple,
+                            getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
   advance_cursor= true;
@@ -3084,10 +3148,14 @@ extern "C" int haildb_errmsg_callback(ib_msg_stream_t, const char *fmt, ...)
   bool r= false;
   va_list args;
   va_start(args, fmt);
-  if (! shutdown_in_progress)
-    r= plugin::ErrorMessage::vprintf(NULL, ERRMSG_LVL_WARN, fmt, args);
+  if (not shutdown_in_progress)
+  {
+    r= plugin::ErrorMessage::vprintf(error::WARN, fmt, args);
+  }
   else
+  {
     vfprintf(stderr, fmt, args);
+  }
   va_end(args);
 
   return (! r==true);
@@ -3472,7 +3540,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Transactional Storage Engine using the HailDB Library",
   PLUGIN_LICENSE_GPL,
   haildb_init,     /* Plugin Init */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

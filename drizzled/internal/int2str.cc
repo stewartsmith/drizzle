@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {
@@ -42,7 +42,6 @@ namespace internal
 char *int10_to_str(int32_t val,char *dst,int radix)
 {
   char buffer[65];
-  register char *p;
   int32_t new_val;
   uint32_t uval = (uint32_t) val;
 
@@ -56,7 +55,7 @@ char *int10_to_str(int32_t val,char *dst,int radix)
     }
   }
 
-  p = &buffer[sizeof(buffer)-1];
+  char* p = &buffer[sizeof(buffer)-1];
   *p = '\0';
   new_val= (int32_t) (uval / 10);
   *--p = '0'+ (char) (uval - (uint32_t) new_val * 10);

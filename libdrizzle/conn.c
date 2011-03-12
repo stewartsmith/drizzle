@@ -86,7 +86,7 @@ void drizzle_con_close(drizzle_con_st *con)
   if (con->fd == -1)
     return;
 
-  (void)close(con->fd);
+  (void)closesocket(con->fd);
   con->fd= -1;
 
   con->options&= (drizzle_con_options_t)~DRIZZLE_CON_READY;
@@ -195,7 +195,9 @@ void drizzle_con_add_options(drizzle_con_st *con,
 
   /* If asking for the experimental Drizzle protocol, clean the MySQL flag. */
   if (con->options & DRIZZLE_CON_EXPERIMENTAL)
+  {
     con->options&= (drizzle_con_options_t)~DRIZZLE_CON_MYSQL;
+  }
 }
 
 void drizzle_con_remove_options(drizzle_con_st *con,
@@ -451,6 +453,16 @@ drizzle_result_st *drizzle_shutdown(drizzle_con_st *con,
   return drizzle_con_shutdown(con, result, ret_ptr);
 }
 
+drizzle_result_st *drizzle_kill(drizzle_con_st *con,
+                                drizzle_result_st *result,
+                                uint32_t query_id,
+                                drizzle_return_t *ret_ptr)
+{
+  uint32_t sent= htonl(query_id);
+  return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_PROCESS_KILL,
+                                   &sent, sizeof(uint32_t), sizeof(uint32_t), ret_ptr);
+}
+
 drizzle_result_st *drizzle_con_ping(drizzle_con_st *con,
                                     drizzle_result_st *result,
                                     drizzle_return_t *ret_ptr)
@@ -473,6 +485,8 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
                                              size_t total,
                                              drizzle_return_t *ret_ptr)
 {
+  drizzle_result_st *old_result;
+
   if (!(con->options & DRIZZLE_CON_READY))
   {
     if (con->options & DRIZZLE_CON_RAW_PACKET)
@@ -494,6 +508,16 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
       con->result= NULL;
     else
     {
+      for (old_result= con->result_list; old_result != NULL; old_result= old_result->next)
+      {
+        if (result == old_result)
+        {
+          drizzle_set_error(con->drizzle, "drizzle_command_write", "result struct already in use");
+          *ret_ptr= DRIZZLE_RETURN_INTERNAL_ERROR;
+          return result;
+        }
+      }
+
       con->result= drizzle_result_create(con, result);
       if (con->result == NULL)
       {
@@ -666,8 +690,7 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
   size_t offset= 0;
   size_t size= 0;
 
-  command_data= drizzle_con_command_read(con, command, &offset, &size, total,
-                                         ret_ptr);
+  command_data= drizzle_con_command_read(con, command, &offset, &size, total, ret_ptr);
   if (*ret_ptr != DRIZZLE_RETURN_OK)
     return NULL;
 
@@ -950,12 +973,24 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
     con->buffer_ptr= con->buffer;
   }
 
+  if ((con->revents & POLLIN) == 0 &&
+      (con->drizzle->options & DRIZZLE_NON_BLOCKING))
+  {
+    /* non-blocking mode: return IO_WAIT instead of attempting to read. This
+     * avoids reading immediately after writing a command, which typically
+     * returns EAGAIN. This improves performance. */
+    ret= drizzle_con_set_events(con, POLLIN);
+    if (ret != DRIZZLE_RETURN_OK)
+      return ret;
+    return DRIZZLE_RETURN_IO_WAIT;
+  }
+
   while (1)
   {
+    size_t available_buffer= (size_t)DRIZZLE_MAX_BUFFER_SIZE -
+        ((size_t)(con->buffer_ptr - con->buffer) + con->buffer_size);
     read_size = recv(con->fd, (char *)con->buffer_ptr + con->buffer_size,
-                     (size_t)DRIZZLE_MAX_BUFFER_SIZE -
-                     ((size_t)(con->buffer_ptr - con->buffer) +
-                      con->buffer_size),0); 
+                     available_buffer, 0);
 #ifdef _WIN32
     /*Get windows error codes and map it to Posix*/
     errno = WSAGetLastError();
@@ -981,9 +1016,11 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
     {
       if (errno == EAGAIN)
       {
+        /* clear the read ready flag */
+        con->revents&= ~POLLIN;
         ret= drizzle_con_set_events(con, POLLIN);
         if (ret != DRIZZLE_RETURN_OK)
-          return 0;
+          return ret;
 
         if (con->drizzle->options & DRIZZLE_NON_BLOCKING)
           return DRIZZLE_RETURN_IO_WAIT;
@@ -1016,11 +1053,13 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
       return DRIZZLE_RETURN_ERRNO;
     }
 
+    /* clear the "read ready" flag if we read all available data. */
+    if ((size_t) read_size < available_buffer) con->revents&= ~POLLIN;
     con->buffer_size+= (size_t)read_size;
     break;
   }
 
-  drizzle_state_pop(con);;
+  drizzle_state_pop(con);
   return DRIZZLE_RETURN_OK;
 }
 
@@ -1303,8 +1342,11 @@ static drizzle_return_t _con_setsockopt(drizzle_con_st *con)
   }
 
 #if defined (_WIN32)
-  unsigned long asyncmode = 1;
-  ioctlsocket(con->fd, FIONBIO, &asyncmode);
+  {
+    unsigned long asyncmode;
+    asyncmode= 1;
+    ioctlsocket(con->fd, FIONBIO, &asyncmode);
+  }
 #else
   ret= fcntl(con->fd, F_GETFL, 0);
   if (ret == -1)

@@ -23,9 +23,11 @@
 
 #include <drizzled/field/str.h>
 
-#include "drizzled/global_charset_info.h"
+#include <drizzled/global_charset_info.h>
 
 #include <string>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -33,7 +35,9 @@ namespace drizzled
 /**
  * Class representing a BLOB data type column
  */
-class Field_blob :public Field_str {
+class DRIZZLED_API Field_blob :
+  public Field_str
+{
 protected:
   String value;				// For temporaries
 public:
@@ -73,10 +77,10 @@ public:
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
 
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  type::Decimal *val_decimal(type::Decimal *);
+  double val_real(void) const;
+  int64_t val_int(void) const;
+  String *val_str(String*,String *) const;
+  type::Decimal *val_decimal(type::Decimal *) const;
   int cmp_max(const unsigned char *, const unsigned char *, uint32_t max_length);
   int cmp(const unsigned char *a,const unsigned char *b)
     { return cmp_max(a, b, UINT32_MAX); }
@@ -128,9 +132,9 @@ public:
   */
   uint32_t get_packed_size(const unsigned char *ptr_arg, bool low_byte_first);
 
-  uint32_t get_length(uint32_t row_offset= 0);
-  uint32_t get_length(const unsigned char *ptr, bool low_byte_first);
-  uint32_t get_length(const unsigned char *ptr_arg);
+  DRIZZLED_API uint32_t get_length(uint32_t row_offset= 0) const;
+  DRIZZLED_API uint32_t get_length(const unsigned char *ptr, bool low_byte_first) const;
+  DRIZZLED_API uint32_t get_length(const unsigned char *ptr_arg) const;
   void put_length(unsigned char *pos, uint32_t length);
   inline void get_ptr(unsigned char **str)
     {

@@ -33,15 +33,16 @@
  --print-defaults	  ; Print the modified command line and exit
 ****************************************************************************/
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/typelib.h>
 #include <drizzled/configmake.h>
 #include <drizzled/gettext.h>
-
-#include "drizzled/cached_directory.h"
+#include <drizzled/dynamic_array.h>
+#include <drizzled/cached_directory.h>
 
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
@@ -287,12 +288,11 @@ int handle_default_option(void *in_ctx, const char *group_name,
   if (!option)
     return 0;
 
-  if (find_type((char *)group_name, ctx->group, 3))
+  if (ctx->group->find_type(const_cast<char*>(group_name), 3))
   {
     if (!(tmp= (char *)ctx->alloc->alloc_root(strlen(option) + 1)))
       return 1;
-    if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
-      return 1;
+    ctx->args->push_back(&tmp);
     strcpy(tmp, option);
   }
 
@@ -448,13 +448,13 @@ int load_defaults(const char *conf_file, const char **groups,
     Here error contains <> 0 only if we have a fully specified conf_file
     or a forced default file
   */
-  if (!(ptr=(char*) alloc.alloc_root(sizeof(alloc)+ (args.elements + *argc +1) *sizeof(char*))))
+  if (!(ptr=(char*) alloc.alloc_root(sizeof(alloc)+ (args.size() + *argc +1) *sizeof(char*))))
     goto err;
   res= (char**) (ptr+sizeof(alloc));
 
   /* copy name + found arguments + command line arguments to new array */
   res[0]= argv[0][0];  /* Name MUST be set, even by embedded library */
-  memcpy(res+1, args.buffer, args.elements*sizeof(char*));
+  memcpy(res+1, args.buffer, args.size()*sizeof(char*));
   /* Skip --defaults-xxx options */
   (*argc)-= args_used;
   (*argv)+= args_used;
@@ -464,10 +464,10 @@ int load_defaults(const char *conf_file, const char **groups,
     This options must always be the last of the default options
   */
   if (*argc)
-    memcpy(res+1+args.elements, *argv + 1, (*argc-1)*sizeof(char*));
-  res[args.elements+ *argc]=0;			/* last null */
+    memcpy(res+1+args.size(), *argv + 1, (*argc-1)*sizeof(char*));
+  res[args.size()+ *argc]=0;			/* last null */
 
-  (*argc)+=int(args.elements);
+  (*argc)+=int(args.size());
   *argv= static_cast<char**>(res);
   *(memory::Root*) ptr= alloc;			/* Save alloc root for free */
   delete_dynamic(&args);
@@ -945,18 +945,19 @@ void print_defaults(const char *conf_file, const char **groups)
   This extra complexity is to avoid declaring 'rc' if it won't be
   used.
 */
-#define ADD_DIRECTORY(DIR)  (void) array_append_string_unique((DIR), default_directories, \
-                             array_elements(default_directories))
+static void add_directory(const char* dir)
+{
+  array_append_string_unique(dir, default_directories, array_elements(default_directories));
+}
 
-#define ADD_COMMON_DIRECTORIES() \
-  do { \
-    const char *env; \
-    if ((env= getenv("DRIZZLE_HOME"))) \
-      ADD_DIRECTORY(env); \
-    /* Placeholder for --defaults-extra-file=<path> */ \
-    ADD_DIRECTORY(""); \
-  } while (0)
-
+static void add_common_directories()
+{
+  const char *env= getenv("DRIZZLE_HOME"); 
+  if (env) 
+    add_directory(env); 
+  // Placeholder for --defaults-extra-file=<path>
+  add_directory(""); 
+}
 
 /**
   Initialize default directories for Unix
@@ -973,11 +974,11 @@ void print_defaults(const char *conf_file, const char **groups)
 static void init_default_directories(void)
 {
   memset(default_directories, 0, sizeof(default_directories));
-  ADD_DIRECTORY("/etc/");
-  ADD_DIRECTORY("/etc/drizzle/");
-  ADD_DIRECTORY(SYSCONFDIR);
-  ADD_COMMON_DIRECTORIES();
-  ADD_DIRECTORY("~/");
+  add_directory("/etc/");
+  add_directory("/etc/drizzle/");
+  add_directory(SYSCONFDIR);
+  add_common_directories();
+  add_directory("~/");
 }
 
 } /* namespace internal */

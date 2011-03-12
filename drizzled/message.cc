@@ -18,19 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/message.h>
 
-#include "drizzled/message/table.pb.h"
-#include "drizzled/message/schema.pb.h"
+#include <drizzled/message/table.pb.h>
+#include <drizzled/message/schema.pb.h>
 
 #include <string>
-#include <uuid/uuid.h>
 
 namespace drizzled {
 namespace message {
@@ -50,6 +49,7 @@ static const std::string DECIMAL("DECIMAL");
 static const std::string DATE("DATE");
 static const std::string EPOCH("EPOCH");
 static const std::string TIMESTAMP("TIMESTAMP");
+static const std::string MICROTIME("MICROTIME");
 static const std::string DATETIME("DATETIME");
 static const std::string TIME("TIME");
 static const std::string UUID("UUID");
@@ -75,42 +75,10 @@ static const std::string MATCH_FULL("FULL");
 static const std::string MATCH_PARTIAL("PARTIAL");
 static const std::string MATCH_SIMPLE("SIMPLE");
 
-void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg)
-{
-  arg.set_name(name_arg);
-  arg.set_schema(schema_arg);
-  arg.set_creation_timestamp(time(NULL));
-  arg.set_update_timestamp(time(NULL));
-  arg.mutable_engine()->set_name(engine_arg);
-
-  /* 36 characters for uuid string +1 for NULL */
-  uuid_t uu;
-  char uuid_string[37];
-  uuid_generate_random(uu);
-  uuid_unparse(uu, uuid_string);
-  arg.set_uuid(uuid_string, 36);
-
-  arg.set_version(1);
-}
-
-void init(drizzled::message::Schema &arg, const std::string &name_arg)
-{
-  arg.set_name(name_arg);
-  arg.mutable_engine()->set_name(std::string("filesystem")); // For the moment we have only one.
-  if (not arg.has_collation())
-  {
-    arg.set_collation(default_charset_info->name);
-  }
-
-  /* 36 characters for uuid string +1 for NULL */
-  uuid_t uu;
-  char uuid_string[37];
-  uuid_generate_random(uu);
-  uuid_unparse(uu, uuid_string);
-  arg.set_uuid(uuid_string, 36);
-
-  arg.set_version(1);
-}
+const static std::string STANDARD_STRING("STANDARD");
+const static std::string TEMPORARY_STRING("TEMPORARY");
+const static std::string INTERNAL_STRING("INTERNAL");
+const static std::string FUNCTION_STRING("FUNCTION");
 
 void update(drizzled::message::Schema &arg)
 {
@@ -282,6 +250,24 @@ const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignK
   }
 
   return MATCH_SIMPLE;
+}
+
+const std::string &type(drizzled::message::Table::TableType type)
+{
+  switch (type)
+  {
+  case message::Table::STANDARD:
+    return STANDARD_STRING;
+  case message::Table::TEMPORARY:
+    return TEMPORARY_STRING;
+  case message::Table::INTERNAL:
+    return INTERNAL_STRING;
+  case message::Table::FUNCTION:
+    return FUNCTION_STRING;
+  }
+
+  assert(0);
+  return PROGRAM_ERROR;
 }
 
 #if 0

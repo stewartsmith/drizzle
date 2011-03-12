@@ -33,10 +33,11 @@ namespace statement
 class ChangeSchema : public Statement
 {
 public:
-  ChangeSchema(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  ChangeSchema(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_CHANGE_DB);
+  }
 
   bool execute();
 };

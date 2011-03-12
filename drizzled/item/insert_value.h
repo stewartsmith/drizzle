@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_ITEM_INSERT_VALUE_H
 #define DRIZZLED_ITEM_INSERT_VALUE_H
 
-#include "drizzled/item/field.h"
+#include <drizzled/item/field.h>
 
 namespace drizzled
 {
@@ -45,7 +45,7 @@ public:
      arg(a) {}
   bool eq(const Item *item, bool binary_cmp) const;
   bool fix_fields(Session *, Item **);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   int save_in_field(Field *field_arg, bool no_conversions)
   {
     return Item_field::save_in_field(field_arg, no_conversions);

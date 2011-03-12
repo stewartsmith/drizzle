@@ -1,0 +1,13 @@
+drop table if exists t1;
+create table t1 (a int, b float(5));
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT DEFAULT NULL,
+  `b` DOUBLE DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+insert into t1 values (1, 99.99);
+select * from t1;
+a	b
+1	99.99
+drop table t1;

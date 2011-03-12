@@ -180,14 +180,14 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `da` DATE DEFAULT '1962-03-03',
-  `dt` DATETIME DEFAULT '1962-03-03 00:00:00'
+  `dt` DATETIME DEFAULT '1962-03-03 00:00:00.000000'
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
-ERROR HY000: Received an invalid datetime value '2007-03-32'.
+ERROR HY000: Received an invalid DATE value '2007-03-32'.
 select * from t1;
 da	dt
 1962-03-03	1962-03-03 00:00:00
@@ -450,14 +450,14 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `da` DATE DEFAULT '1962-03-03',
-  `dt` DATETIME DEFAULT '1962-03-03 00:00:00'
+  `dt` DATETIME DEFAULT '1962-03-03 00:00:00.000000'
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
-ERROR HY000: Received an invalid datetime value '2007-03-32'.
+ERROR HY000: Received an invalid DATE value '2007-03-32'.
 select * from t1;
 da	dt
 1962-03-03	1962-03-03 00:00:00

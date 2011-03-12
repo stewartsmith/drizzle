@@ -20,10 +20,11 @@
 #ifndef DRIZZLED_ITEM_CACHE_H
 #define DRIZZLED_ITEM_CACHE_H
 
-#include "drizzled/item/ident.h"
-#include "drizzled/item/field.h"
-#include "drizzled/item/basic_constant.h"
-#include "drizzled/util/test.h"
+#include <drizzled/item/basic_constant.h>
+#include <drizzled/item/field.h>
+#include <drizzled/item/ident.h>
+#include <drizzled/type/decimal.h>
+#include <drizzled/util/test.h>
 
 namespace drizzled
 {
@@ -76,7 +77,7 @@ public:
   static Item_cache* get_cache(const Item *item);
   table_map used_tables() const { return used_table_map; }
   virtual void keep_array() {}
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   bool eq_def(Field *field);
   bool eq(const Item *item, bool) const
   {

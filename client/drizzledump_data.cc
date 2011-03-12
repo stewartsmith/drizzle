@@ -56,15 +56,10 @@ enum destinations {
 
 extern int opt_destination;
 
-/* returns true on keep, false on ignore */
+// returns true on keep, false on ignore Olaf: sounds backwards/wrong, shouldn't it be the other way around?
 bool DrizzleDumpDatabase::ignoreTable(std::string tableName)
 {
-  std::string dbTable(databaseName);
-  dbTable.append(".");
-  dbTable.append(tableName);
-
-  boost::unordered_set<std::string>::iterator iter= ignore_table.find(dbTable);
-  return (iter == ignore_table.end());
+  return ignore_table.find(databaseName + "." + tableName) == ignore_table.end();
 }
 
 void DrizzleDumpDatabase::cleanTableName(std::string &tableName)
@@ -112,16 +107,15 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
 
   os << "(";
   
-  std::vector<std::string>::iterator i;
-  std::vector<std::string> fields = obj.columns;
+  std::vector<DrizzleDumpIndex::columnData>::iterator i;
+  std::vector<DrizzleDumpIndex::columnData> fields = obj.columns;
   for (i= fields.begin(); i != fields.end(); ++i)
   {
     if (i != fields.begin())
       os << ",";
-    std::string field= *i;
-    os << "`" << field << "`";
-    if (obj.length > 0)
-      os << "(" << obj.length << ")";
+    os << "`" << (*i).first << "`";
+    if ((*i).second > 0)
+      os << "(" << (*i).second << ")";
   }
 
   os << ")";
@@ -373,6 +367,13 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
           {
             os << "NULL";
           }
+          else if (obj.table->fields[i]->type.compare("BOOLEAN") == 0)
+          {
+            if (strncmp(row[i], "1", 1) == 0)
+              os << "TRUE";
+            else
+              os << "FALSE";
+          }
           else
             os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
           byte_counter+= 3;
@@ -526,6 +527,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
     os << " COMMENT='" << obj.comment << "'";
   }
 
+  if (not obj.replicate)
+  {
+    os << " REPLICATE=FALSE";
+  }
+
   os << ";" << std::endl << std::endl;
 
   return os;
@@ -561,19 +567,10 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
     throw std::exception();
   }
 
-  boost::match_flag_type flags = boost::match_default; 
+  ServerDetect server_detect= ServerDetect(&connection);
 
-  boost::regex mysql_regex("(5\\.[0-9]+\\.[0-9]+)");
-  boost::regex drizzle_regex("(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
-
-  std::string version(getServerVersion());
-
-  if (regex_search(version, mysql_regex, flags))
-    serverType= SERVER_MYSQL_FOUND;
-  else if (regex_search(version, drizzle_regex, flags))
-    serverType= SERVER_DRIZZLE_FOUND;
-  else
-    serverType= SERVER_UNKNOWN_FOUND;
+  serverType= server_detect.getServerType();
+  serverVersion= server_detect.getServerVersion();
 }
 
 drizzle_result_st* DrizzleDumpConnection::query(std::string &str_query)

@@ -21,7 +21,7 @@
   Sorts a database
 */
 
-#include "config.h"
+#include <config.h>
 
 #include <float.h>
 #include <limits.h>
@@ -30,28 +30,28 @@
 #include <algorithm>
 #include <iostream>
 
-#include "drizzled/drizzled.h"
-#include "drizzled/sql_sort.h"
-#include "drizzled/filesort.h"
-#include "drizzled/error.h"
-#include "drizzled/probes.h"
-#include "drizzled/session.h"
-#include "drizzled/table.h"
-#include "drizzled/table_list.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/records.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/internal/my_sys.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/atomics.h"
-#include "drizzled/global_buffer.h"
-
+#include <drizzled/drizzled.h>
+#include <drizzled/sql_sort.h>
+#include <drizzled/filesort.h>
+#include <drizzled/error.h>
+#include <drizzled/probes.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/table_list.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/records.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/internal/my_sys.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/atomics.h>
+#include <drizzled/global_buffer.h>
+#include <drizzled/sort_field.h>
+#include <drizzled/item/subselect.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Defines used by filesort and uniques */
 #define MERGEBUFF		7
@@ -132,7 +132,7 @@ public:
 
 /* functions defined in this file */
 
-static char **make_char_array(char **old_pos, register uint32_t fields,
+static char **make_char_array(char **old_pos, uint32_t fields,
                               uint32_t length);
 
 static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffer_file,
@@ -454,10 +454,10 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
 
 /** Make a array of string pointers. */
 
-static char **make_char_array(char **old_pos, register uint32_t fields,
+static char **make_char_array(char **old_pos, uint32_t fields,
                               uint32_t length)
 {
-  register char **pos;
+  char **pos;
   char *char_pos;
 
   if (old_pos ||
@@ -564,7 +564,8 @@ ha_rows FileSort::find_all_keys(SortParam *param,
   if (! indexfile && ! quick_select)
   {
     next_pos=(unsigned char*) 0;			/* Find records in sequence */
-    file->startTableScan(1);
+    if (file->startTableScan(1))
+      return(HA_POS_ERROR);
     file->extra_opt(HA_EXTRA_CACHE, getSession().variables.read_buff_size);
   }
 
@@ -574,7 +575,8 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     if (select->quick->reset())
       return(HA_POS_ERROR);
 
-    read_record_info.init_read_record(&getSession(), select->quick->head, select, 1, 1);
+    if (read_record_info.init_read_record(&getSession(), select->quick->head, select, 1, 1))
+      return(HA_POS_ERROR);
   }
 
   /* Remember original bitmaps */
@@ -719,7 +721,7 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     1 Error
 */
 
-int SortParam::write_keys(register unsigned char **sort_keys, uint32_t count,
+int SortParam::write_keys(unsigned char **sort_keys, uint32_t count,
                           internal::IO_CACHE *buffpek_pointers, internal::IO_CACHE *tempfile)
 {
   buffpek buffpek;
@@ -784,7 +786,7 @@ static inline void store_length(unsigned char *to, uint32_t length, uint32_t pac
 
 /** Make a sort-key from record. */
 
-void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
+void SortParam::make_sortkey(unsigned char *to, unsigned char *ref_pos)
 {
   Field *field;
   SortField *sort_field;
@@ -1017,7 +1019,7 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
 
 
 /*
-  Register fields used by sorting in the sorted table's read set
+  fields used by sorting in the sorted table's read set
 */
 
 void SortParam::register_used_fields()
@@ -1100,7 +1102,7 @@ int FileSort::merge_many_buff(SortParam *param, unsigned char *sort_buffer,
   from_file= t_file ; to_file= &t_file2;
   while (*maxbuffer >= MERGEBUFF2)
   {
-    register uint32_t i;
+    uint32_t i;
 
     if (from_file->reinit_io_cache(internal::READ_CACHE,0L,0,0))
     {
@@ -1160,7 +1162,7 @@ cleanup:
 
 uint32_t FileSort::read_to_buffer(internal::IO_CACHE *fromfile, buffpek *buffpek_inst, uint32_t rec_length)
 {
-  register uint32_t count;
+  uint32_t count;
   uint32_t length;
 
   if ((count= (uint32_t) min((ha_rows) buffpek_inst->max_keys,buffpek_inst->count)))
@@ -1401,7 +1403,7 @@ int FileSort::merge_buffers(SortParam *param, internal::IO_CACHE *from_file,
     }
     else
     {
-      register unsigned char *end;
+      unsigned char *end;
       strpos= buffpek_inst->key+offset;
       for (end= strpos+buffpek_inst->mem_count*rec_length ;
            strpos != end ;
@@ -1472,7 +1474,7 @@ static uint32_t suffix_length(uint32_t string_length)
 
 uint32_t FileSort::sortlength(SortField *sortorder, uint32_t s_length, bool *multi_byte_charset)
 {
-  register uint32_t length;
+  uint32_t length;
   const CHARSET_INFO *cs;
   *multi_byte_charset= 0;
 

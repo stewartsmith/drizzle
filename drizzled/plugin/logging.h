@@ -22,9 +22,11 @@
 #ifndef DRIZZLED_PLUGIN_LOGGING_H
 #define DRIZZLED_PLUGIN_LOGGING_H
 
-#include "drizzled/plugin/plugin.h"
+#include <drizzled/plugin/plugin.h>
 
 #include <string>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -33,7 +35,7 @@ class Session;
 namespace plugin
 {
 
-class Logging : public Plugin
+class DRIZZLED_API Logging : public Plugin
 {
   Logging();
   Logging(const Logging &);

@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/function/str/set_collation.h>
 #include <drizzled/error.h>
-#include "drizzled/charset.h"
+#include <drizzled/charset.h>
 
 namespace drizzled
 {
@@ -85,10 +85,10 @@ bool Item_func_set_collation::eq(const Item *item, bool binary_cmp) const
   return 1;
 }
 
-void Item_func_set_collation::print(String *str, enum_query_type query_type)
+void Item_func_set_collation::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" collate "));
   assert(args[1]->basic_const_item() &&
               args[1]->type() == Item::STRING_ITEM);

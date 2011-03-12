@@ -100,7 +100,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/mtr0mtr.h \
                  plugin/innobase/include/mtr0mtr.ic \
                  plugin/innobase/include/mtr0types.h \
-                 plugin/innobase/include/mysql_addons.h \
                  plugin/innobase/include/os0file.h \
 		 plugin/innobase/include/os0file.ic \
                  plugin/innobase/include/os0proc.h \
@@ -226,6 +225,7 @@ noinst_LTLIBRARIES+= \
 endif
 
 plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_LDDADD= ${LTLIBAIO}
 plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/btr/btr0btr.cc \
                                         plugin/innobase/btr/btr0cur.cc \
@@ -319,7 +319,7 @@ plugin_innobase_libinnobase_la_SOURCES= \
 # and unused/undefeind stuf, but are generated anyway 
 plugin_innobase_libpars_la_CFLAGS= \
 				   ${AM_CFLAGS} \
-				   ${PERMISSIVE_WARNINGS} \
+				   ${PERMISSIVE_C_WARNINGS} \
 				   -DUNIV_NONINL \
 				   -I$(top_builddir)/plugin/innobase/include \
 				   -I$(top_srcdir)/plugin/innobase/include \

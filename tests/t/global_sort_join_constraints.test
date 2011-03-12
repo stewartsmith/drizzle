@@ -9,5 +9,7 @@ USE test;
 #--exec $DRIZZLE_SLAP -q "SELECT * FROM t1 ORDER BY 1" -c100 --iterations=1 --number-of-queries=1000 --create-schema=test
 
 # Test for join buffer constraint
---error 1703
+--error ER_OUT_OF_GLOBAL_JOINMEMORY
 select SQL_BIG_RESULT * from t1 join t2 on (t1.charcol1 = t2.charcol2) join t2 as t3 on (t1.charcol1 = t3.charcol2);
+
+--source include/teardown-global-constraints.inc

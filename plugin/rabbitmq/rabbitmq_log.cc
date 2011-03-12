@@ -22,7 +22,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include "rabbitmq_log.h"
 #include <drizzled/message/transaction.pb.h>
 #include <google/protobuf/io/coded_stream.h>
@@ -69,7 +69,7 @@ RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
   uint8_t* buffer= new uint8_t[message_byte_length];
   if(buffer == NULL)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate enough memory to transaction message\n"));
+    errmsg_printf(error::ERROR, _("Failed to allocate enough memory to transaction message\n"));
     deactivate();
     return plugin::UNKNOWN_ERROR;
   }
@@ -84,7 +84,7 @@ RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
   }
   catch(exception& e)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _(e.what()));
+    errmsg_printf(error::ERROR, _(e.what()));
     deactivate();
     return plugin::UNKNOWN_ERROR;
   }
@@ -114,7 +114,7 @@ static int init(drizzled::module::Context &context)
   } 
   catch (exception& e) 
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the RabbitMQHandler.  Got error: %s\n"),
+    errmsg_printf(error::ERROR, _("Failed to allocate the RabbitMQHandler.  Got error: %s\n"),
                   e.what());
     return 1;
   }
@@ -127,7 +127,7 @@ static int init(drizzled::module::Context &context)
   } 
   catch (exception& e) 
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the RabbitMQLog instance.  Got error: %s\n"), 
+    errmsg_printf(error::ERROR, _("Failed to allocate the RabbitMQLog instance.  Got error: %s\n"), 
                   e.what());
     return 1;
   }
@@ -152,28 +152,28 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("host", 
           po::value<string>()->default_value("localhost"),
-          N_("Host name to connect to"));
+          _("Host name to connect to"));
   context("port",
           po::value<port_constraint>(&sysvar_rabbitmq_port)->default_value(5672),
-          N_("Port to connect to"));
+          _("Port to connect to"));
   context("virtualhost",
           po::value<string>()->default_value("/"),
-          N_("RabbitMQ virtualhost"));
+          _("RabbitMQ virtualhost"));
   context("username",
           po::value<string>()->default_value("guest"),
-          N_("RabbitMQ username"));
+          _("RabbitMQ username"));
   context("password",
           po::value<string>()->default_value("guest"),
-          N_("RabbitMQ password"));
+          _("RabbitMQ password"));
   context("use-replicator",
           po::value<string>()->default_value("default_replicator"),
-          N_("Name of the replicator plugin to use (default='default_replicator')"));
+          _("Name of the replicator plugin to use (default='default_replicator')"));
   context("exchange",
           po::value<string>()->default_value("ReplicationExchange"),
-          N_("Name of RabbitMQ exchange to publish to"));
+          _("Name of RabbitMQ exchange to publish to"));
   context("routingkey",
           po::value<string>()->default_value("ReplicationRoutingKey"),
-          N_("Name of RabbitMQ routing key to use"));
+          _("Name of RabbitMQ routing key to use"));
 }
 
 } /* namespace drizzle_plugin */

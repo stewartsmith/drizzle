@@ -23,10 +23,13 @@
 /* This file is originally from the mysql distribution. Coded by monty */
 
 #include <drizzled/common.h>
+
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <string>
+
+#include <drizzled/visibility.h>
 
 #ifndef NOT_FIXED_DEC
 #define NOT_FIXED_DEC			(uint8_t)31
@@ -37,13 +40,13 @@ namespace drizzled
 
 class String;
 
-extern String my_empty_string;
+extern DRIZZLED_API String my_empty_string;
 extern const String my_null_string;
 namespace memory { class Root; }
 typedef struct charset_info_st CHARSET_INFO;
 
-std::string String_to_std_string(String const& s);
-String* set_String_from_std_string(String* s, std::string const& cs);
+DRIZZLED_API std::string String_to_std_string(String const& s);
+DRIZZLED_API String* set_String_from_std_string(String* s, std::string const& cs);
 
 int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
 int stringcmp(const String *a,const String *b);
@@ -58,7 +61,7 @@ size_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
                                  const char **from_end_pos);
 
 
-class String
+class DRIZZLED_API String
 {
   char *Ptr;
   size_t str_length,Alloced_length;
@@ -246,13 +249,14 @@ public:
 
   bool copy();					// Alloc string if not alloced
   bool copy(const String &s);			// Allocate new string
+  bool copy(const std::string&, const CHARSET_INFO * const cs);	// Allocate new string
   bool copy(const char *s,size_t arg_length, const CHARSET_INFO * const cs);	// Allocate new string
   static bool needs_conversion(size_t arg_length,
   			       const CHARSET_INFO * const cs_from, const CHARSET_INFO * const cs_to,
 			       size_t *offset);
   bool set_or_copy_aligned(const char *s, size_t arg_length, const CHARSET_INFO * const cs);
   bool copy(const char*s,size_t arg_length, const CHARSET_INFO * const csfrom,
-	    const CHARSET_INFO * const csto, size_t *errors);
+            const CHARSET_INFO * const csto, size_t *errors);
   bool append(const String &s);
   bool append(const char *s);
   bool append(const char *s,size_t arg_length);

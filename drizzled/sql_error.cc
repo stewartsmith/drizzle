@@ -41,7 +41,7 @@ This file contains the implementation of error and warnings related
 
 ***********************************************************************/
 
-#include "config.h"
+#include <config.h>
 
 #include <cstdio>
 #include <stdarg.h>
@@ -91,7 +91,7 @@ void drizzle_reset_errors(Session *session, bool force)
     memset(session->warn_count, 0, sizeof(session->warn_count));
     if (force)
       session->total_warn_count= 0;
-    session->warn_list.empty();
+    session->warn_list.clear();
     session->row_count= 1; // by default point to row 1
   }
   return;
@@ -113,13 +113,14 @@ void drizzle_reset_errors(Session *session, bool force)
 */
 
 DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-                          uint32_t code, const char *msg)
+                            drizzled::error_t code, const char *msg)
 {
   DRIZZLE_ERROR *err= 0;
 
-  if (level == DRIZZLE_ERROR::WARN_LEVEL_NOTE &&
-      !(session->options & OPTION_SQL_NOTES))
-    return(0);
+  if (level == DRIZZLE_ERROR::WARN_LEVEL_NOTE && !(session->options & OPTION_SQL_NOTES))
+  {
+    return NULL;
+  }
 
   if (session->getQueryId() != session->getWarningQueryId())
     drizzle_reset_errors(session, 0);
@@ -127,7 +128,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 
   /* Abort if we are using strict mode and we are not using IGNORE */
   if ((int) level >= (int) DRIZZLE_ERROR::WARN_LEVEL_WARN &&
-      session->really_abort_on_warning())
+      session->abortOnWarning())
   {
     /* Avoid my_message() calling push_warning */
     bool no_warnings_for_error= session->no_warnings_for_error;
@@ -145,15 +146,18 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   if (session->handle_error(code, msg, level))
     return NULL;
 
-  if (session->warn_list.elements < session->variables.max_error_count)
+  if (session->warn_list.size() < session->variables.max_error_count)
   {
     /* We have to use warn_root, as mem_root is freed after each query */
     if ((err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg)))
+    {
       session->warn_list.push_back(err, &session->warn_root);
+    }
   }
   session->warn_count[(uint32_t) level]++;
   session->total_warn_count++;
-  return(err);
+
+  return err;
 }
 
 /*
@@ -168,7 +172,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 */
 
 void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-			 uint32_t code, const char *format, ...)
+			 drizzled::error_t code, const char *format, ...)
 {
   va_list args;
   char    warning[ERRMSGSIZE+20];
@@ -177,7 +181,6 @@ void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level lev
   vsnprintf(warning, sizeof(warning), format, args);
   va_end(args);
   push_warning(session, level, code, warning);
-  return;
 }
 
 
@@ -218,13 +221,13 @@ bool show_warnings(Session *session,
     return true;
 
   DRIZZLE_ERROR *err;
-  Select_Lex *sel= &session->lex->select_lex;
-  Select_Lex_Unit *unit= &session->lex->unit;
+  Select_Lex *sel= &session->getLex()->select_lex;
+  Select_Lex_Unit *unit= &session->getLex()->unit;
   ha_rows idx= 0;
 
   unit->set_limit(sel);
 
-  List_iterator_fast<DRIZZLE_ERROR> it(session->warn_list);
+  List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
   while ((err= it++))
   {
     /* Skip levels that the user is not interested in */

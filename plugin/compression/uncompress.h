@@ -20,7 +20,6 @@
 #ifndef PLUGIN_COMPRESSION_UNCOMPRESS_H
 #define PLUGIN_COMPRESSION_UNCOMPRESS_H
 
-#include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 

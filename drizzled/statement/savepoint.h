@@ -33,12 +33,18 @@ namespace statement
 class Savepoint : public Statement
 {
 public:
-  Savepoint(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Savepoint(Session *in_session, const lex_string_t &ident) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_SAVEPOINT);
+    lex().ident= ident;
+  }
 
   bool execute();
+  bool isTransactional()
+  {
+    return true;
+  }
 };
 
 } /* namespace statement */

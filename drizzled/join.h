@@ -27,12 +27,18 @@
 #ifndef DRIZZLED_JOIN_H
 #define DRIZZLED_JOIN_H
 
+#include <drizzled/dynamic_array.h>
 #include <drizzled/optimizer/position.h>
-#include "drizzled/sql_select.h"
+#include <drizzled/sql_select.h>
+#include <drizzled/tmp_table_param.h>
 #include <bitset>
 
 namespace drizzled
 {
+
+class DrizzleLock;
+class Session;
+class SortField;
 
 class Join :public memory::SqlAlloc
 {
@@ -180,7 +186,7 @@ public:
   DrizzleLock *lock;
 
   Join *tmp_join; /**< copy of this Join to be used with temporary tables */
-  ROLLUP rollup;				/**< Used with rollup */
+  Rollup rollup;				/**< Used with rollup */
   DYNAMIC_ARRAY keyuse;
   Item::cond_result cond_value;
   Item::cond_result having_value;
@@ -228,86 +234,7 @@ public:
   Join(Session *session_arg, 
        List<Item> &fields_arg, 
        uint64_t select_options_arg,
-       select_result *result_arg)
-    :
-      join_tab(NULL),
-      best_ref(NULL),
-      map2table(NULL),
-      join_tab_save(NULL),
-      table(NULL),
-      all_tables(NULL),
-      sort_by_table(NULL),
-      tables(0),
-      outer_tables(0),
-      const_tables(0),
-      send_group_parts(0),
-      sort_and_group(false),
-      first_record(false),
-      full_join(false),
-      group(false),
-      no_field_update(false),
-      do_send_rows(true),
-      resume_nested_loop(false),
-      no_const_tables(false),
-      select_distinct(false),
-      group_optimized_away(false),
-      simple_order(false),
-      simple_group(false),
-      no_order(false),
-      skip_sort_order(false),
-      union_part(false),
-      optimized(false),
-      need_tmp(false),
-      hidden_group_fields(false),
-      const_table_map(0),
-      found_const_table_map(0),
-      outer_join(0),
-      send_records(0),
-      found_records(0),
-      examined_rows(0),
-      row_limit(0),
-      select_limit(0),
-      fetch_limit(HA_POS_ERROR),
-      session(session_arg),
-      fields_list(fields_arg), 
-      join_list(NULL),
-      unit(NULL),
-      select_lex(NULL),
-      select(NULL),
-      exec_tmp_table1(NULL),
-      exec_tmp_table2(NULL),
-      sum_funcs(NULL),
-      sum_funcs2(NULL),
-      having(NULL),
-      tmp_having(NULL),
-      having_history(NULL),
-      select_options(select_options_arg),
-      result(result_arg),
-      lock(session_arg->lock),
-      tmp_join(NULL),
-      all_fields(fields_arg),
-      error(0),
-      cond_equal(NULL),
-      return_tab(NULL),
-      ref_pointer_array(NULL),
-      items0(NULL),
-      items1(NULL),
-      items2(NULL),
-      items3(NULL),
-      ref_pointer_array_size(0),
-      zero_result_cause(NULL),
-      sortorder(NULL),
-      table_reexec(NULL),
-      join_tab_reexec(NULL)
-  {
-    select_distinct= test(select_options & SELECT_DISTINCT);
-    if (&fields_list != &fields_arg) /* only copy if not same*/
-      fields_list= fields_arg;
-    memset(&keyuse, 0, sizeof(keyuse));
-    tmp_table_param.init();
-    tmp_table_param.end_write_records= HA_POS_ERROR;
-    rollup.state= ROLLUP::STATE_NONE;
-  }
+       select_result *result_arg);
 
   /** 
    * This method is currently only used when a subselect EXPLAIN is performed.
@@ -315,88 +242,10 @@ public:
    * was previously in the init() method.  See the note about the hack in 
    * sql_union.cc...
    */
-  inline void reset(Session *session_arg, 
-       List<Item> &fields_arg, 
-       uint64_t select_options_arg,
-       select_result *result_arg)
-  {
-    join_tab= NULL;
-    best_ref= NULL;
-    map2table= NULL;
-    join_tab_save= NULL;
-    table= NULL;
-    all_tables= NULL;
-    sort_by_table= NULL;
-    tables= 0;
-    outer_tables= 0;
-    const_tables= 0;
-    send_group_parts= 0;
-    sort_and_group= false;
-    first_record= false;
-    full_join= false;
-    group= false;
-    no_field_update= false;
-    do_send_rows= true;
-    resume_nested_loop= false;
-    no_const_tables= false;
-    select_distinct= false;
-    group_optimized_away= false;
-    simple_order= false;
-    simple_group= false;
-    no_order= false;
-    skip_sort_order= false;
-    union_part= false;
-    optimized= false;
-    need_tmp= false;
-    hidden_group_fields= false;
-    const_table_map= 0;
-    found_const_table_map= 0;
-    outer_join= 0;
-    send_records= 0;
-    found_records= 0;
-    examined_rows= 0;
-    row_limit= 0;
-    select_limit= 0;
-    fetch_limit= HA_POS_ERROR;
-    session= session_arg;
-    fields_list= fields_arg; 
-    join_list= NULL;
-    unit= NULL;
-    select_lex= NULL;
-    select= NULL;
-    exec_tmp_table1= NULL;
-    exec_tmp_table2= NULL;
-    sum_funcs= NULL;
-    sum_funcs2= NULL;
-    having= NULL;
-    tmp_having= NULL;
-    having_history= NULL;
-    select_options= select_options_arg;
-    result= result_arg;
-    lock= session_arg->lock;
-    tmp_join= NULL;
-    all_fields= fields_arg;
-    error= 0;
-    cond_equal= NULL;
-    return_tab= NULL;
-    ref_pointer_array= NULL;
-    items0= NULL;
-    items1= NULL;
-    items2= NULL;
-    items3= NULL;
-    ref_pointer_array_size= 0;
-    zero_result_cause= NULL;
-    sortorder= NULL;
-    table_reexec= NULL;
-    join_tab_reexec= NULL;
-    select_distinct= test(select_options & SELECT_DISTINCT);
-    if (&fields_list != &fields_arg) /* only copy if not same*/
-      fields_list= fields_arg;
-    memset(&keyuse, 0, sizeof(keyuse));
-    tmp_table_param.init();
-    tmp_table_param.end_write_records= HA_POS_ERROR;
-    rollup.state= ROLLUP::STATE_NONE;
-  }
+  void reset(Session *session_arg, 
+             List<Item> &fields_arg, 
+             uint64_t select_options_arg,
+             select_result *result_arg);
 
   int prepare(Item ***rref_pointer_array, 
               TableList *tables,
@@ -408,6 +257,7 @@ public:
               Item *having,
               Select_Lex *select,
               Select_Lex_Unit *unit);
+
   int optimize();
   int reinit();
   void exec();
@@ -427,7 +277,7 @@ public:
   }
   inline void init_items_ref_array()
   {
-    items0= ref_pointer_array + all_fields.elements;
+    items0= ref_pointer_array + all_fields.size();
     memcpy(items0, ref_pointer_array, ref_pointer_array_size);
     current_ref_pointer_array= items0;
   }
@@ -457,11 +307,7 @@ public:
 	    !group_list);
   }
   bool change_result(select_result *result);
-  bool is_top_level_join() const
-  {
-    return (unit == &session->lex->unit && (unit->fake_select_lex == 0 ||
-                                        select_lex == unit->fake_select_lex));
-  }
+  bool is_top_level_join() const;
 
   /**
    * Copy the partial query plan into the optimal query plan.

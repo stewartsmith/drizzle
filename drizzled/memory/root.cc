@@ -18,10 +18,10 @@
  * Routines to handle mallocing of results which will be freed the same time 
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
 
 #include <algorithm>
 
@@ -257,7 +257,10 @@ void *memory::Root::multi_alloc_root(int unused, ...)
   return((void*) start);
 }
 
-#define TRASH_MEM(X) TRASH(((char*)(X) + ((X)->size-(X)->left)), (X)->left)
+static void trash_mem(memory::internal::UsedMemory *)
+{
+  TRASH(((char*)(x) + (x->size - x->left)), x->left);
+}
 
 /**
  * @brief
@@ -273,7 +276,7 @@ void memory::Root::mark_blocks_free()
   for (next= free; next; next= *(last= &next->next))
   {
     next->left= next->size - ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    TRASH_MEM(next);
+    trash_mem(next);
   }
 
   /* Combine the free and the used list */
@@ -283,7 +286,7 @@ void memory::Root::mark_blocks_free()
   for (; next; next= next->next)
   {
     next->left= next->size - ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    TRASH_MEM(next);
+    trash_mem(next);
   }
 
   /* Now everything is set; Indicate that nothing is used anymore */
@@ -336,7 +339,7 @@ void memory::Root::free_root(myf MyFlags)
   {
     this->free=this->pre_alloc;
     this->free->left=this->pre_alloc->size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    TRASH_MEM(this->pre_alloc);
+    trash_mem(this->pre_alloc);
     this->free->next=0;
   }
   this->block_num= 4;

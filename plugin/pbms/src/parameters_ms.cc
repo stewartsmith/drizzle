@@ -25,7 +25,7 @@
  */
 
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 #include <set>
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
@@ -423,42 +423,42 @@ void PBMSParameters::initOptions(drizzled::module::option_context &context)
 {
 	context("port",
                 po::value<port_constraint>(&pbms_port_number)->default_value(DEFAULT_PBMS_PORT),
-                N_("Port number to use for connection or 0 for default PBMS port "));
+                _("Port number to use for connection or 0 for default PBMS port "));
         context("repository-threshold",
                 po::value<std::string>(&my_repository_threshold)->default_value(MS_REPO_THRESHOLD_DEF),
-                N_("The maximum size of a BLOB repository file."));
+                _("The maximum size of a BLOB repository file."));
         context("temp-log-threshold",
                 po::value<std::string>(&my_temp_log_threshold)->default_value(MS_TEMP_LOG_THRESHOLD_DEF),
-                N_("The maximum size of a temorary BLOB log file."));
+                _("The maximum size of a temorary BLOB log file."));
         context("http-metadata-headers",
                 po::value<std::string>(&my_http_metadata_headers)->default_value(MS_HTTP_METADATA_HEADERS_DEF),
-                N_("A ':' delimited list of metadata header names to be used to initialize "
+                _("A ':' delimited list of metadata header names to be used to initialize "
                    "the pbms_metadata_header table when a database is created."));
         context("garbage-threshold",
                 po::value<percent_constraint>(&my_garbage_threshold)->default_value(MS_DEFAULT_GARBAGE_LEVEL),
-                N_("The percentage of garbage in a repository file before it is compacted."));
+                _("The percentage of garbage in a repository file before it is compacted."));
 	context("temp-blob-timeout",
 		po::value<uint32_nonzero_constraint>(&my_temp_blob_timeout)->default_value(MS_DEFAULT_TEMP_LOG_WAIT),
-		N_("The timeout, in seconds, for temporary BLOBs. Uploaded blob data is removed after this time, unless committed to the database."));
+		_("The timeout, in seconds, for temporary BLOBs. Uploaded blob data is removed after this time, unless committed to the database."));
 	context("max-keep-alive",
 		po::value<uint32_nonzero_constraint>(&my_temp_blob_timeout)->default_value(MS_DEFAULT_KEEP_ALIVE),
-		N_("The timeout, in milli-seconds, before the HTTP server will close an inactive HTTP connection."));
+		_("The timeout, in milli-seconds, before the HTTP server will close an inactive HTTP connection."));
 	context("next-backup-db-id",
 		po::value<uint32_nonzero_constraint>(&my_backup_db_id)->default_value(1),
-		N_("The next backup ID to use when backing up a PBMS database."));
+		_("The next backup ID to use when backing up a PBMS database."));
 	context("watch-tables",
 		po::value<std::string>(&my_table_list)->default_value("*"),
-		N_("A comma delimited list of tables to watch of the format: <database>.<table>, ..."));
+		_("A comma delimited list of tables to watch of the format: <database>.<table>, ..."));
 	context("watch-disable",
-		N_("Enable PBMS daemon Insert/Update/Delete event scanning"));
+		_("Enable PBMS daemon Insert/Update/Delete event scanning"));
 
 	context("before-insert-position",
 		po::value<before_position_constraint>(&my_before_insert_position)->default_value(1),
-		N_("Before insert row event observer call position"));
+		_("Before insert row event observer call position"));
 
 	context("before-update-position",
 		po::value<before_position_constraint>(&my_before_update_position)->default_value(1),
-		N_("Before update row event observer call position"));
+		_("Before update row event observer call position"));
 
 }
 #endif

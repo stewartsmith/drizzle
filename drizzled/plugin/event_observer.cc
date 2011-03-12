@@ -21,16 +21,16 @@
  * 2010-05-12
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 #include <vector>
 
-#include "drizzled/session.h"
-#include "drizzled/table_list.h"
-#include "drizzled/definition/table.h"
-#include "drizzled/module/registry.h"
-#include "drizzled/plugin/event_observer.h"
+#include <drizzled/session.h>
+#include <drizzled/table_list.h>
+#include <drizzled/table/instance.h>
+#include <drizzled/module/registry.h>
+#include <drizzled/plugin/event_observer.h>
 #include <drizzled/util/functors.h>
 #include <algorithm>
 
@@ -97,7 +97,7 @@ namespace plugin
     {
       std::for_each(event_observer_lists.begin(),
                     event_observer_lists.end(),
-                    SafeDeletePtr());
+                    DeletePtr());
       event_observer_lists.clear();
     }
 
@@ -127,9 +127,9 @@ namespace plugin
       /* If positioned then check if the position is already taken. */
       if (position) 
       {
-        if (observers->find(event_pos) != observers->end())
+        if (observers->count(event_pos))
         {
-          errmsg_printf(ERRMSG_LVL_WARN,
+          errmsg_printf(error::WARN,
                         _("EventObserverList::addEventObserver() Duplicate event position %d for event '%s' from EventObserver plugin '%s'"),
                         position,
                         EventObserver::eventName(event), 
@@ -196,7 +196,7 @@ namespace plugin
 
     if (observers != NULL) 
 		{
-			errmsg_printf(ERRMSG_LVL_WARN,
+			errmsg_printf(error::WARN,
 									_("EventObserver::registerTableEvents(): Table already has events registered on it: probable programming error."));
 			table_share.setTableObservers(NULL);
       delete observers;
@@ -280,21 +280,10 @@ namespace plugin
 
   //----------
   /* Cleanup before freeing the Session object. */
-  void EventObserver::deregisterSchemaEvents(Session &session, const std::string &db)
+  void EventObserver::deregisterSchemaEvents(EventObserverList *observers)
   {
-    if (all_event_plugins.empty())
-      return;
-
-    EventObserverList *observers;
-
-    observers= session.getSchemaObservers(db);
-
-    if (observers) 
-    {
-      session.setSchemaObservers(db, NULL);
       delete observers;
-    }
-  }
+   }
 
   /*========================================================*/
   /*             Session Event Observer handling:           */
@@ -331,7 +320,7 @@ namespace plugin
 
     observers= session.getSessionObservers();
 		if (observers) { // This should not happed
-			errmsg_printf(ERRMSG_LVL_WARN,
+			errmsg_printf(error::WARN,
 									_("EventObserver::registerSessionEvents(): Session already has events registered on it: probable programming error."));
 			session.setSessionObservers(NULL);
 			delete observers;
@@ -347,20 +336,9 @@ namespace plugin
 
   //----------
   /* Cleanup before freeing the session object. */
-  void EventObserver::deregisterSessionEvents(Session &session)
+  void EventObserver::deregisterSessionEvents(EventObserverList *observers)
   {
-    if (all_event_plugins.empty())
-      return;
-
-    EventObserverList *observers;
-
-    observers= session.getSessionObservers();
-
-    if (observers) 
-    {
-      session.setSessionObservers(NULL);
       delete observers;
-    }
   }
 
 
@@ -383,7 +361,7 @@ namespace plugin
       {
         /* TRANSLATORS: The leading word "EventObserver" is the name
           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR,
+        errmsg_printf(error::ERROR,
                       _("EventIterate event handler '%s' failed for event '%s'"),
                       handler.second->getName().c_str(), handler.second->eventName(data.event));
 
@@ -430,6 +408,11 @@ namespace plugin
     return EventData::callEventObservers();
   }
 
+  bool SessionEventData::hasEvents(Session &in_session)
+  {
+    return (in_session.getSessionObservers() != NULL);
+  }
+
   //--------
   bool SchemaEventData::callEventObservers()
   {
@@ -451,11 +434,16 @@ namespace plugin
     return EventData::callEventObservers();
   }
 
+  bool TableEventData::hasEvents(Table &in_table)
+  {
+    return (in_table.getMutableShare()->getTableObservers() != NULL);
+  }
+
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
    * of a schema event.
  */
-  bool EventObserver::beforeDropTable(Session &session, const drizzled::TableIdentifier &table)
+  bool EventObserver::beforeDropTable(Session &session, const drizzled::identifier::Table &table)
   {
     if (all_event_plugins.empty())
       return false;
@@ -464,7 +452,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::afterDropTable(Session &session, const drizzled::TableIdentifier &table, int err)
+  bool EventObserver::afterDropTable(Session &session, const drizzled::identifier::Table &table, int err)
   {
     if (all_event_plugins.empty())
       return false;
@@ -473,7 +461,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::beforeRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
+  bool EventObserver::beforeRenameTable(Session &session, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to)
   {
     if (all_event_plugins.empty())
       return false;
@@ -482,7 +470,7 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
-  bool EventObserver::afterRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to, int err)
+  bool EventObserver::afterRenameTable(Session &session, const drizzled::identifier::Table &from, const drizzled::identifier::Table &to, int err)
   {
     if (all_event_plugins.empty())
       return false;

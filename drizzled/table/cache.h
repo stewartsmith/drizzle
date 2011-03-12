@@ -23,13 +23,21 @@
 #define DRIZZLED_TABLE_CACHE_H
 
 #include <boost/unordered_map.hpp>
+#include <drizzled/identifier.h>
 
 namespace drizzled {
+
+class Session;
+
 namespace table {
+
+namespace instance {
+class Shared;
+} 
 
 class Concurrent;
 
-typedef boost::unordered_multimap< TableIdentifier::Key, Concurrent *> CacheMap;
+typedef boost::unordered_multimap< identifier::Table::Key, Concurrent *> CacheMap;
 typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRange;
 
 class Cache 
@@ -55,9 +63,9 @@ public:
   }
 
   bool areTablesUsed(Table *table, bool wait_for_name_lock);
-  void removeSchema(const SchemaIdentifier &schema_identifier);
-  bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
-  void release(TableShare *share);
+  void removeSchema(const identifier::Schema &schema_identifier);
+  bool removeTable(Session *session, identifier::Table &identifier, uint32_t flags);
+  void release(table::instance::Shared *share);
   bool insert(table::Concurrent *arg);
 
   boost::mutex &mutex()

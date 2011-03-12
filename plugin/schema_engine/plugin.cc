@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <plugin/schema_engine/schema.h>
 
@@ -52,7 +52,7 @@ DRIZZLE_DECLARE_PLUGIN
   "This implements the default file based Schema engine.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  NULL,               /* system variables */
+  "signal_handler",               /* depends */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

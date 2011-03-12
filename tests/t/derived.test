@@ -4,9 +4,9 @@ drop table if exists t1,t2,t3;
 --enable_warnings
 
 select * from (select 2) b;
--- error 1054
+--error ER_BAD_FIELD_ERROR
 SELECT 1 as a FROM (SELECT 1 UNION SELECT a) b;
--- error 1054
+--error ER_BAD_FIELD_ERROR
 SELECT 1 as a FROM (SELECT a UNION SELECT 1) b;
 CREATE TABLE t1 (a int not null, b char (10) not null);
 insert into t1 values(1,'a'),(2,'b'),(3,'c'),(3,'c');
@@ -27,9 +27,9 @@ SELECT a,2 as a FROM (SELECT '1' as a) b HAVING a=1;
 SELECT 1 FROM (SELECT 1) a WHERE a=2;
 --error ER_BAD_FIELD_ERROR
 SELECT (SELECT 1) as a FROM (SELECT 1 FROM t1  HAVING a=1) as a;
---sort_result
-select * from t1 as x1, (select * from t1) as x2;
-explain select * from t1 as x1, (select * from t1) as x2;
+--sorted_result
+select * from t1 as x1, (select * from t1) as x2 where x1.a != 0;
+explain select * from t1 as x1, (select * from t1) as x2 where x1.a != 0;
 drop table if exists  t2,t3;
 select * from (select 1) as a;
 select a from (select 1 as a) as b;
@@ -58,7 +58,7 @@ commit;
 enable_query_log;
 SELECT * FROM (SELECT * FROM t1) as b ORDER BY a  ASC LIMIT 0,20;
 --replace_column 9 X
-explain select count(*) from t1 as tt1, (select * from t1) as tt2;
+explain select count(*) from t1 as tt1, (select * from t1) as tt2 where tt1.a != 0;
 drop table t1;
 SELECT * FROM (SELECT (SELECT * FROM (SELECT 1 as a) as a )) as b;
 select * from (select 1 as a) b  left join (select 2 as a) c using(a);
@@ -105,9 +105,9 @@ SELECT a.x FROM (SELECT 1 AS x) AS a HAVING a.x = 1;
 #
 create table t1 (a int);
 insert into t1 values (1),(2),(3);
--- error 1064
+--error ER_PARSE_ERROR
 delete from (select * from t1);
--- error 1064
+--error ER_PARSE_ERROR
 insert into  (select * from t1) values (5);
 drop table t1;
 
@@ -117,16 +117,16 @@ drop table t1;
 create table t1 (E1 INTEGER NOT NULL, E2 INTEGER NOT NULL, E3 INTEGER NOT NULL, PRIMARY KEY(E1)
 );
 insert into t1 VALUES(1,1,1), (2,2,1);
---sort_result
+--sorted_result
 select count(*) from t1 INNER JOIN (SELECT A.E1, A.E2, A.E3 FROM t1 AS A WHERE A.E3 = (SELECT MAX(B.E3) FROM t1 AS B WHERE A.E2 = B.E2)) AS THEMAX ON t1.E1 = THEMAX.E2 AND t1.E1 = t1.E2;
 explain select count(*) from t1 INNER JOIN (SELECT A.E1, A.E2, A.E3 FROM t1 AS A WHERE A.E3 = (SELECT MAX(B.E3) FROM t1 AS B WHERE A.E2 = B.E2)) AS THEMAX ON t1.E1 = THEMAX.E2 AND t1.E1 = t1.E2;
 drop table t1;
 
 create table t1 (a int);
 insert into t1 values (1),(2);
---sort_result
-select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b;
-explain select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b;
+--sorted_result
+select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b where a.a != 0;
+explain select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b where a.a != 0;
 drop table t1;
 
 #
@@ -221,7 +221,7 @@ drop table t1, t2, t3;
 #
 create table t1 (a int);
 create table t2 (a int);
-select * from (select * from t1,t2) foo;
+select * from (select * from t1,t2 where t1.a != 0) foo;
 drop table t1,t2;
 
 #

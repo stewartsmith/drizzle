@@ -13,14 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/charset.h"
-#include "drizzled/error.h"
-#include "drizzled/charset_info.h"
-#include "drizzled/internal/m_string.h"
+#include <drizzled/charset.h>
+#include <drizzled/error.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/internal/m_string.h>
 #include <drizzled/configmake.h>
 #include <vector>
+
+#include <drizzled/visibility.h>
 
 using namespace std;
 
@@ -30,7 +32,7 @@ namespace drizzled
 /*
   We collect memory in this vector that we free on delete.
 */
-static vector<void *>memory_vector;
+static vector<unsigned char*> memory_vector;
 
 /*
   The code below implements this functionality:
@@ -51,102 +53,90 @@ bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2)
 static uint
 get_collation_number_internal(const char *name)
 {
-  CHARSET_INFO **cs;
-  for (cs= all_charsets;
-       cs < all_charsets+array_elements(all_charsets)-1 ;
+  for (CHARSET_INFO **cs= all_charsets;
+       cs < all_charsets+array_elements(all_charsets)-1;
        cs++)
   {
-    if ( cs[0] && cs[0]->name &&
-         !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->name, name))
+    if ( cs[0] && cs[0]->name && !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->name, name))
+    {
       return cs[0]->number;
+    }
   }
   return 0;
 }
 
+static unsigned char *cs_alloc(size_t size)
+{
+  memory_vector.push_back(new unsigned char[size]);
+  return memory_vector.back();
+}
 
 static bool init_state_maps(CHARSET_INFO *cs)
 {
-  uint32_t i;
-  unsigned char *state_map;
-  unsigned char *ident_map;
-
-  if (!(cs->state_map= (unsigned char*) cs_alloc(256)))
+  if (!(cs->state_map= cs_alloc(256)))
     return 1;
     
-  if (!(cs->ident_map= (unsigned char*) cs_alloc(256)))
+  if (!(cs->ident_map= cs_alloc(256)))
     return 1;
 
-  state_map= cs->state_map;
-  ident_map= cs->ident_map;
+  unsigned char *state_map= cs->state_map;
+  unsigned char *ident_map= cs->ident_map;
 
   /* Fill state_map with states to get a faster parser */
-  for (i=0; i < 256 ; i++)
+  for (int i= 0; i < 256; i++)
   {
     if (my_isalpha(cs,i))
-      state_map[i]=(unsigned char) MY_LEX_IDENT;
+      state_map[i]= MY_LEX_IDENT;
     else if (my_isdigit(cs,i))
-      state_map[i]=(unsigned char) MY_LEX_NUMBER_IDENT;
+      state_map[i]= MY_LEX_NUMBER_IDENT;
     else if (my_mbcharlen(cs, i)>1)
-      state_map[i]=(unsigned char) MY_LEX_IDENT;
+      state_map[i]= MY_LEX_IDENT;
     else if (my_isspace(cs,i))
-      state_map[i]=(unsigned char) MY_LEX_SKIP;
+      state_map[i]= MY_LEX_SKIP;
     else
-      state_map[i]=(unsigned char) MY_LEX_CHAR;
+      state_map[i]= MY_LEX_CHAR;
   }
-  state_map[(unsigned char)'_']=state_map[(unsigned char)'$']=(unsigned char) MY_LEX_IDENT;
-  state_map[(unsigned char)'\'']=(unsigned char) MY_LEX_STRING;
-  state_map[(unsigned char)'.']=(unsigned char) MY_LEX_REAL_OR_POINT;
-  state_map[(unsigned char)'>']=state_map[(unsigned char)'=']=state_map[(unsigned char)'!']= (unsigned char) MY_LEX_CMP_OP;
-  state_map[(unsigned char)'<']= (unsigned char) MY_LEX_LONG_CMP_OP;
-  state_map[(unsigned char)'&']=state_map[(unsigned char)'|']=(unsigned char) MY_LEX_BOOL;
-  state_map[(unsigned char)'#']=(unsigned char) MY_LEX_COMMENT;
-  state_map[(unsigned char)';']=(unsigned char) MY_LEX_SEMICOLON;
-  state_map[(unsigned char)':']=(unsigned char) MY_LEX_SET_VAR;
-  state_map[0]=(unsigned char) MY_LEX_EOL;
-  state_map[(unsigned char)'\\']= (unsigned char) MY_LEX_ESCAPE;
-  state_map[(unsigned char)'/']= (unsigned char) MY_LEX_LONG_COMMENT;
-  state_map[(unsigned char)'*']= (unsigned char) MY_LEX_END_LONG_COMMENT;
-  state_map[(unsigned char)'@']= (unsigned char) MY_LEX_USER_END;
-  state_map[(unsigned char) '`']= (unsigned char) MY_LEX_USER_VARIABLE_DELIMITER;
-  state_map[(unsigned char)'"']= (unsigned char) MY_LEX_STRING_OR_DELIMITER;
+  state_map['_']=state_map['$']= MY_LEX_IDENT;
+  state_map['\'']= MY_LEX_STRING;
+  state_map['.']= MY_LEX_REAL_OR_POINT;
+  state_map['>']=state_map['=']=state_map['!']=  MY_LEX_CMP_OP;
+  state_map['<']=  MY_LEX_LONG_CMP_OP;
+  state_map['&']=state_map['|']= MY_LEX_BOOL;
+  state_map['#']= MY_LEX_COMMENT;
+  state_map[';']= MY_LEX_SEMICOLON;
+  state_map[':']= MY_LEX_SET_VAR;
+  state_map[0]= MY_LEX_EOL;
+  state_map['\\']=  MY_LEX_ESCAPE;
+  state_map['/']=  MY_LEX_LONG_COMMENT;
+  state_map['*']=  MY_LEX_END_LONG_COMMENT;
+  state_map['@']=  MY_LEX_USER_END;
+  state_map['`']=  MY_LEX_USER_VARIABLE_DELIMITER;
+  state_map['"']=  MY_LEX_STRING_OR_DELIMITER;
 
   /*
     Create a second map to make it faster to find identifiers
   */
-  for (i=0; i < 256 ; i++)
+  for (int i= 0; i < 256; i++)
   {
-    ident_map[i]= (unsigned char) (state_map[i] == MY_LEX_IDENT ||
-			   state_map[i] == MY_LEX_NUMBER_IDENT);
+    ident_map[i]= state_map[i] == MY_LEX_IDENT || state_map[i] == MY_LEX_NUMBER_IDENT;
   }
 
   /* Special handling of hex and binary strings */
-  state_map[(unsigned char)'x']= state_map[(unsigned char)'X']= (unsigned char) MY_LEX_IDENT_OR_HEX;
-  state_map[(unsigned char)'b']= state_map[(unsigned char)'B']= (unsigned char) MY_LEX_IDENT_OR_BIN;
+  state_map['x']= state_map['X']=  MY_LEX_IDENT_OR_HEX;
+  state_map['b']= state_map['B']=  MY_LEX_IDENT_OR_BIN;
   return 0;
 }
 
-
 static bool charset_initialized= false;
 
-CHARSET_INFO *all_charsets[256];
-const CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
+DRIZZLED_API CHARSET_INFO *all_charsets[256];
+const DRIZZLED_API CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
 
 void add_compiled_collation(CHARSET_INFO * cs)
 {
   all_charsets[cs->number]= cs;
   cs->state|= MY_CS_AVAILABLE;
 }
-
-void *cs_alloc(size_t size)
-{
-  void *ptr= malloc(size);
-
-  memory_vector.push_back(ptr);
-
-  return ptr;
-}
-
-
 
 static bool init_available_charsets(myf myflags)
 {
@@ -182,18 +172,15 @@ static bool init_available_charsets(myf myflags)
 }
 
 
-void free_charsets(void)
+void free_charsets()
 {
-  charset_initialized= true;
+  charset_initialized= false;
 
-  while (memory_vector.empty() == false)
+  while (not memory_vector.empty())
   {
-    void *ptr= memory_vector.back();
+    delete[] memory_vector.back();
     memory_vector.pop_back();
-    free(ptr);
   }
-  memory_vector.clear();
-
 }
 
 
@@ -213,8 +200,7 @@ uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
        cs < all_charsets+array_elements(all_charsets)-1 ;
        cs++)
   {
-    if ( cs[0] && cs[0]->csname && (cs[0]->state & cs_flags) &&
-         !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->csname, charset_name))
+    if ( cs[0] && cs[0]->csname && (cs[0]->state & cs_flags) && !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->csname, charset_name))
       return cs[0]->number;
   }
   return 0;
@@ -223,14 +209,13 @@ uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
 
 const char *get_charset_name(uint32_t charset_number)
 {
-  const CHARSET_INFO *cs;
   init_available_charsets(MYF(0));
 
-  cs=all_charsets[charset_number];
+  const CHARSET_INFO *cs= all_charsets[charset_number];
   if (cs && (cs->number == charset_number) && cs->name )
-    return (char*) cs->name;
+    return cs->name;
 
-  return (char*) "?";   /* this mimics find_type() */
+  return "?";   /* this mimics find_type() */
 }
 
 
@@ -379,7 +364,7 @@ size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
     }
   }
   *to= 0;
-  return overflow ? UINT32_MAX : (uint32_t) (to - to_start);
+  return overflow ? UINT32_MAX : to - to_start;
 }
 
 } /* namespace drizzled */

@@ -1,63 +1,86 @@
 CREATE TABLE
 ============
 
-A CREATE statement in SQL creates an object inside of Drizzle. One of the most common CREATE command is the CREATE TABLE command.
+A CREATE statement in SQL creates an object inside of Drizzle. One of
+the most common CREATE commands is the CREATE TABLE command.
 
-CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
-    (create_definition, ...)
-    [engine_options]
+.. code-block:: mysql
 
-    or:
+    CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
+      (create_definition, ...)
+      [engine_options]
 
-CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
-    [(create_definition, ...)]
-    [engine_options]
-    select_statement
+or:
 
-    or:
+.. code-block:: mysql
 
-CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
-    LIKE different_table_name
-    [engine_options]
+    CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
+      [(create_definition, ...)]
+      [engine_options]
+      select_statement
 
-create_definition:
+or:
+
+.. code-block:: mysql
+
+    CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
+      LIKE different_table_name
+      [engine_options]
+
+create_definition
+-----------------
+
+::
+
     column_name column_definition
-  | [CONSTRAINT [symbol] ] PRIMARY KEY [index_type]
+    [CONSTRAINT [symbol] ] PRIMARY KEY [index_type]
     (index_column_name, ...)
-  | INDEX [index_name] (index_column_name, ...)
+    INDEX [index_name] (index_column_name, ...)
     (index_column_name, ...)
-  | [CONSTRAINT [symbol] ] UNIQUE [INDEX]
+    [CONSTRAINT [symbol] ] UNIQUE [INDEX]
     (index_column_name, ...)
-  | [CONSTRAINT [symbol] ] FOREIGN KEY [index_name] (index_column_name, ...)
+    [CONSTRAINT [symbol] ] FOREIGN KEY [index_name] (index_column_name, ...)
     reference_definition
-  | CHECK (expr)
+    CHECK (expr)
 
-column_definition:
-  data_type [NOT NULL | NULL] [DEFAULT default_value]
+column_definition
+-----------------
+
+::
+
+	data_type [NOT NULL | NULL] [DEFAULT default_value]
     [AUTO_INCREMENT] [UNIQUE [KEY] | [PRIMARY] KEY]
     [COMMENT 'string']
     [reference_definition]
 
-data_type:
-  | INTEGER
-  | BIGINT
-  | DOUBLE[(length, decimals)]
-  | DECIMAL[(length[,decimals])]
-  | DATE
-  | TIMESTAMP
-  | DATETIME
-  | VARCHAR(length) [COLLATE collation_name]
-  | VARBINARY(length)
-  | BLOB
-  | TEXT [BINARY] [COLLATE collation_name]
-  | ENUM(value1, value2, value3, ...) [COLLATE collation_name]
+data_type
+---------
 
-reference_option:
+	* INTEGER
+	* BIGINT
+	* DOUBLE[(length, decimals)]
+	* DECIMAL[(length[,decimals])]
+	* DATE
+	* TIMESTAMP
+	* DATETIME
+	* VARCHAR(length) [COLLATE collation_name]
+	* VARBINARY(length)
+	* BLOB
+	* TEXT [BINARY] [COLLATE collation_name]
+	* ENUM(value1, value2, value3, ...) [COLLATE collation_name]
+
+reference_option
+----------------
+
   RESTRICT | CASCADE | SET NULL | NO ACTION
 
-engine_options:
+engine_options
+---------------
+
     engine_option [[,] engine_option] ...
 
-engine_option:
+engine_option
+-------------
+
   ENGINE = engine_name
   { engine_specific }

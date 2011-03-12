@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
@@ -30,9 +30,9 @@
 #include <algorithm>
 #include <vector>
 #include <unistd.h>
-#include "drizzled/gettext.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/message/statement_transform.h"
+#include <drizzled/gettext.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/statement_transform.h>
 #include "transaction_manager.h"
 #include "transaction_file_reader.h"
 #include "transaction_log_connection.h"
@@ -50,14 +50,57 @@ namespace po= boost::program_options;
 
 static const char *replace_with_spaces= "\n\r";
 
-static void printStatement(const message::Statement &statement, string &output)
+static void printErrorMessage(enum message::TransformSqlError err)
+{
+  switch (err)
+  {
+    case message::MISSING_HEADER:
+    {
+      cerr << "Data segment without a header\n";
+      break;
+    }
+    case message::MISSING_DATA:
+    {
+      cerr << "Header segment without a data segment\n";
+      break;
+    }
+    case message::UUID_MISMATCH:
+    {
+      cerr << "UUID on objects did not match\n";
+      break;
+    }
+    default:
+    {
+      cerr << "Unhandled error\n";
+      break;
+    }
+  }
+}
+
+/**
+ * Transform the given Statement message into a printable SQL string.
+ *
+ * @param[in] statement The Statement protobuf message to transform.
+ * @param[out] output Storage for the printable string.
+ *
+ * @retval true Success
+ * @retval false Error
+ */
+static bool printStatement(const message::Statement &statement, string &output)
 {
   vector<string> sql_strings;
+  enum message::TransformSqlError err;
 
-  message::transformStatementToSql(statement,
-                                   sql_strings,
-                                   message::DRIZZLE,
-                                   true /* already in transaction */);
+  err= message::transformStatementToSql(statement,
+                                        sql_strings,
+                                        message::DRIZZLE,
+                                        true /* already in transaction */);
+
+  if (err != message::NONE)
+  {
+    printErrorMessage(err);
+    return false;
+  }
 
   for (vector<string>::iterator sql_string_iter= sql_strings.begin();
        sql_string_iter != sql_strings.end();
@@ -93,6 +136,36 @@ static void printStatement(const message::Statement &statement, string &output)
 
     output.append(sql + ";\n");
   }
+  
+  return true;
+}
+
+static bool isDDLStatement(const message::Statement &statement)
+{
+  bool isDDL;
+
+  switch (statement.type())
+  {
+    case (message::Statement::TRUNCATE_TABLE):
+    case (message::Statement::CREATE_SCHEMA):
+    case (message::Statement::ALTER_SCHEMA):
+    case (message::Statement::DROP_SCHEMA):
+    case (message::Statement::CREATE_TABLE):
+    case (message::Statement::ALTER_TABLE):
+    case (message::Statement::DROP_TABLE):
+    case (message::Statement::RAW_SQL):
+    {
+      isDDL= true;
+      break;
+    }
+    default:
+    {
+      isDDL= false;
+      break;
+    }
+  }
+  
+  return isDDL;
 }
 
 static bool isEndStatement(const message::Statement &statement)
@@ -284,7 +357,17 @@ static void printTransactionSummary(const message::Transaction &transaction,
   }
 }
 
-static void printTransaction(const message::Transaction &transaction,
+/**
+ * Transform the given Transaction message into printable SQL strings.
+ *
+ * @param[in] transaction The Transaction protobuf message to transform.
+ * @param[in] ignore_events If true, Event messages are not output.
+ * @param[in] print_as_raw If true, print as raw protobuf instead of SQL.
+ *
+ * @retval true Success
+ * @retval false Error
+ */
+static bool printTransaction(const message::Transaction &transaction,
                              bool ignore_events,
                              bool print_as_raw)
 {
@@ -305,33 +388,40 @@ static void printTransaction(const message::Transaction &transaction,
       else
         printEvent(transaction.event());
     }
-    return;
+    return true;
   }
 
   if (print_as_raw)
   {
     transaction.PrintDebugString();
-    return;
+    return true;
   }
 
   size_t num_statements= transaction.statement_size();
-  size_t x;
-
-  /*
-   * One way to determine when a new transaction begins is when the
-   * transaction id changes (if all transactions have their GPB messages
-   * grouped together, which this program will). We check that here.
-   */
-  if (trx.transaction_id() != last_trx_id)
-    cout << "START TRANSACTION;" << endl;
-
-  last_trx_id= trx.transaction_id();
-
   vector<string> cached_statement_sql;
 
-  for (x= 0; x < num_statements; ++x)
+  for (size_t x= 0; x < num_statements; ++x)
   {
     const message::Statement &statement= transaction.statement(x);
+
+    /* Transactional DDL not supported yet. Use AUTOCOMMIT for DDL. */
+    if (x == 0)
+    {
+      /* Transaction ID change means new transaction to start */
+      if (trx.transaction_id() != last_trx_id)
+      {
+        if (isDDLStatement(statement))
+        {
+          cout << "SET AUTOCOMMIT=0;" << endl;
+        }
+        else
+        {
+          cout << "START TRANSACTION;" << endl;
+        }
+      }
+  
+      last_trx_id= trx.transaction_id();
+    }
 
     if (should_commit)
       should_commit= isEndStatement(statement);
@@ -346,8 +436,12 @@ static void printTransaction(const message::Transaction &transaction,
       should_commit= false;
 
     string output;
-    printStatement(statement, output);
-    
+
+    if (not printStatement(statement, output))
+    {
+      return false;
+    }
+
     if (isEndStatement(statement))
     {
       /* A complete, non-segmented statement */
@@ -394,9 +488,11 @@ static void printTransaction(const message::Transaction &transaction,
    */
   if (should_commit)
     cout << "COMMIT;" << endl;
+  
+  return true;
 }
 
-static void processTransactionMessage(TransactionManager &trx_mgr, 
+static bool processTransactionMessage(TransactionManager &trx_mgr, 
                                       const message::Transaction &transaction, 
                                       bool summarize,
                                       bool ignore_events,
@@ -432,7 +528,10 @@ static void processTransactionMessage(TransactionManager &trx_mgr,
         }
         else
         {
-          printTransaction(new_trx, ignore_events, print_as_raw);
+          if (not printTransaction(new_trx, ignore_events, print_as_raw))
+          {
+            return false;
+          }
         }
         idx++;
       }
@@ -448,12 +547,86 @@ static void processTransactionMessage(TransactionManager &trx_mgr,
       }
       else
       {
-        printTransaction(transaction, ignore_events, print_as_raw);
+        if (not printTransaction(transaction, ignore_events, print_as_raw))
+        {
+          return false;
+        }
       }
     }
   }
+  
+  return true;
 }
 
+static void getTrxIdList(TransactionLogConnection *connection,
+                         const string &query_string,
+                         vector<uint64_t> &ordered_trx_id_list)
+{
+  drizzle_result_st result;
+  
+  connection->query(query_string, &result);
+  
+  drizzle_row_t row;
+  while ((row= drizzle_row_next(&result)))
+  {
+    if (row[0])
+    {
+      ordered_trx_id_list.push_back(boost::lexical_cast<uint64_t>(row[0]));
+    }
+  }
+
+  drizzle_result_free(&result);
+}
+
+static int extractRowsForTrxIds(TransactionLogConnection *connection,
+                                const vector<uint64_t> &ordered_trx_id_list,
+                                bool summarize,
+                                bool ignore_events,
+                                bool print_as_raw)
+{
+  for (size_t idx= 0; idx < ordered_trx_id_list.size(); idx++)
+  {
+    uint64_t trx_id= ordered_trx_id_list[idx];
+
+    string sql("SELECT MESSAGE, MESSAGE_LEN"
+               " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+               " WHERE ID = ");
+    sql.append(boost::lexical_cast<string>(trx_id));
+    sql.append(" ORDER BY SEGID ASC");
+
+    drizzle_result_st result;
+    connection->query(sql, &result);
+    
+    drizzle_row_t row;
+    while ((row= drizzle_row_next(&result)))
+    {
+      char* data= (char*)row[0];
+      uint64_t length= (row[1]) ? boost::lexical_cast<uint64_t>(row[1]) : 0;
+      
+      message::Transaction transaction;
+      TransactionManager trx_mgr;
+      
+      transaction.ParseFromArray(data, length);
+      
+      if (not processTransactionMessage(trx_mgr, transaction, 
+                                        summarize, ignore_events,
+                                        print_as_raw))
+      {
+        drizzle_result_free(&result);
+        return -1;
+      }
+    }
+    
+    drizzle_result_free(&result);
+  }
+  
+  return 0;
+}
+
+/**
+ * @retval  0 Process completed successfully.
+ * @retval -1 Process encountered an error.
+ */
 int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -469,30 +642,30 @@ int main(int argc, char* argv[])
    */
   po::options_description desc("Program options");
   desc.add_options()
-    ("help", N_("Display help and exit"))
-    ("use-innodb-replication-log", N_("Read from the innodb transaction log"))
+    ("help", _("Display help and exit"))
+    ("use-innodb-replication-log", _("Read from the innodb transaction log"))
     ("user,u", po::value<string>(&current_user)->default_value(""), 
-      N_("User for login if not current user."))
+      _("User for login if not current user."))
     ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0), 
-      N_("Port number to use for connection."))
+      _("Port number to use for connection."))
     ("password,P", po::value<string>(&opt_password)->default_value(""), 
-      N_("Password to use when connecting to server"))
+      _("Password to use when connecting to server"))
     ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
-      N_("The protocol of connection (mysql or drizzle)."))
-    ("checksum", N_("Perform checksum"))
-    ("ignore-events", N_("Ignore event messages"))
-    ("input-file", po::value< vector<string> >(), N_("Transaction log file"))
-    ("raw", N_("Print raw Protobuf messages instead of SQL"))
+      _("The protocol of connection (mysql or drizzle)."))
+    ("checksum", _("Perform checksum"))
+    ("ignore-events", _("Ignore event messages"))
+    ("input-file", po::value< vector<string> >(), _("Transaction log file"))
+    ("raw", _("Print raw Protobuf messages instead of SQL"))
     ("start-pos",
       po::value<int>(&opt_start_pos),
-      N_("Start reading from the given file position"))
+      _("Start reading from the given file position"))
     ("start-transaction-id",
       po::value<uint64_t>(&opt_start_transaction_id),
-      N_("Only output for the given transaction ID and later"))
+      _("Only output for the given transaction ID and later"))
     ("transaction-id",
       po::value<uint64_t>(&opt_transaction_id),
-      N_("Only output for the given transaction ID"))
-    ("summarize", N_("Summarize message contents"));
+      _("Only output for the given transaction ID"))
+    ("summarize", _("Summarize message contents"));
 
   /*
    * We allow one positional argument that will be transaction file name
@@ -542,46 +715,58 @@ int main(int argc, char* argv[])
   bool print_as_raw= vm.count("raw") ? true : false;
   bool summarize= vm.count("summarize") ? true : false;
 
+  /*
+   * InnoDB transaction log processing
+   */
+
   if (use_innodb_replication_log)
   {
-    TransactionLogConnection *connection = new TransactionLogConnection(current_host, opt_drizzle_port,
-      current_user, opt_password, use_drizzle_protocol);
+    TransactionLogConnection *connection;
+    connection= new TransactionLogConnection(current_host, opt_drizzle_port,
+                                             current_user, opt_password,
+                                             use_drizzle_protocol);
 
+    /* List of transaction IDs (in proper commit order) to extract */
+    vector<uint64_t> ordered_trx_id_list;
     string query_string;
+
     if (vm.count("transaction-id"))
     {
-      query_string.append("SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE transaction_id=");
-      query_string.append(boost::lexical_cast<string>(opt_transaction_id));
+      ordered_trx_id_list.push_back(opt_transaction_id);
     }
     else if (vm.count("start-transaction-id"))
     {
-      query_string.append("SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE transaction_id >=");
+      query_string.append("SELECT ID"
+                          " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+                          " WHERE COMMIT_ID > 0"
+                          " AND ID > ");
       query_string.append(boost::lexical_cast<string>(opt_start_transaction_id));
-      query_string.append(" ORDER BY transaction_id ASC");
+      query_string.append(" ORDER BY COMMIT_ID ASC");
+      
+      getTrxIdList(connection, query_string, ordered_trx_id_list);
     }
     else
     {
-      query_string= "SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG";
+      query_string.append("SELECT ID"
+                          " FROM DATA_DICTIONARY.SYS_REPLICATION_LOG"
+                          " WHERE COMMIT_ID > 0"
+                          " ORDER BY COMMIT_ID ASC");
+      
+      getTrxIdList(connection, query_string, ordered_trx_id_list);
     }
 
-    drizzle_result_st *result= connection->query(query_string);
-
-    drizzle_row_t row;
-    while ((row= drizzle_row_next(result)))
+    if (extractRowsForTrxIds(connection, ordered_trx_id_list,
+                             summarize, ignore_events, print_as_raw))
     {
-      char* data= (char*)row[0];
-      uint64_t length= (row[1]) ? boost::lexical_cast<uint64_t>(row[1]) : 0;
-
-      message::Transaction transaction;
-      TransactionManager trx_mgr;
-
-      transaction.ParseFromArray(data, length);
-
-      processTransactionMessage(trx_mgr, transaction, 
-                                summarize, ignore_events, print_as_raw);
-    }    
+      return -1;
+    }
   }
-  else // file based transaction log 
+
+  /*
+   * File based transaction log processing
+   */
+
+  else 
   {
     string filename= vm["input-file"].as< vector<string> >()[0];
 
@@ -610,8 +795,11 @@ int main(int argc, char* argv[])
       {
         if (opt_transaction_id == transaction_id)
         {
-          processTransactionMessage(trx_mgr, transaction, summarize, 
-                                    ignore_events, print_as_raw);
+          if (not processTransactionMessage(trx_mgr, transaction, summarize, 
+                                            ignore_events, print_as_raw))
+          {
+            return -1;
+          }
         }
         else
         {
@@ -623,8 +811,11 @@ int main(int argc, char* argv[])
         /*
          * No transaction ID given, so process all messages.
          */
-        processTransactionMessage(trx_mgr, transaction, summarize,
-                                  ignore_events, print_as_raw);
+        if (not processTransactionMessage(trx_mgr, transaction, summarize,
+                                          ignore_events, print_as_raw))
+        {
+          return -1;
+        }
       }  
 
       if (do_checksum)
@@ -646,7 +837,7 @@ int main(int argc, char* argv[])
     if (error != "EOF")
     {
       cerr << error << endl;
-      return 1;
+      return -1;
     }
   }
 

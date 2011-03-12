@@ -18,13 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/plugin/logging.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/plugin/logging.h>
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled
 {
@@ -37,14 +39,7 @@ bool statement::Flush::execute()
    */
   if (not reloadCache())
   {
-    /*
-     * We WANT to write and we CAN write.
-     * ! we write after unlocking the table.
-     *
-     * Presumably, RESET and binlog writing doesn't require synchronization
-     */
-    write_bin_log(session, *session->getQueryString());
-    session->my_ok();
+    getSession()->my_ok();
   }
 
   return false;
@@ -53,7 +48,7 @@ bool statement::Flush::execute()
 bool statement::Flush::reloadCache()
 {
   bool result= false;
-  TableList *tables= (TableList *) session->lex->select_lex.table_list.first;
+  TableList *tables= (TableList *) lex().select_lex.table_list.first;
 
   if (flush_log)
   {
@@ -68,37 +63,37 @@ bool statement::Flush::reloadCache()
   */
   if (flush_tables || flush_tables_with_read_lock)
   {
-    if (session && flush_tables_with_read_lock)
+    if (getSession() && flush_tables_with_read_lock)
     {
-      if (session->lockGlobalReadLock())
+      if (getSession()->lockGlobalReadLock())
       {
         return true; /* Killed */
       }
-      result= session->close_cached_tables(tables, true, true);
+      result= getSession()->close_cached_tables(tables, true, true);
 
-      if (session->makeGlobalReadLockBlockCommit()) /* Killed */
+      if (getSession()->makeGlobalReadLockBlockCommit()) /* Killed */
       {
         /* Don't leave things in a half-locked state */
-        session->unlockGlobalReadLock();
+        getSession()->unlockGlobalReadLock();
         return true;
       }
     }
     else
     {
-      result= session->close_cached_tables(tables, true, false);
+      result= getSession()->close_cached_tables(tables, true, false);
     }
   }
 
-  if (session && flush_status)
+  if (getSession() && flush_status)
   {
-    session->refresh_status();
+    getSession()->refresh_status();
   }
 
-  if (session && flush_global_status)
+  if (getSession() && flush_global_status)
   {
     memset(&current_global_counters, 0, sizeof(current_global_counters));
-    plugin::Logging::resetStats(session);
-    session->refresh_status();
+    plugin::Logging::resetStats(getSession());
+    getSession()->refresh_status();
   }
 
   return result;

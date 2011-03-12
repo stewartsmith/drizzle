@@ -20,11 +20,8 @@
 #ifndef DRIZZLED_OPTIMIZER_SEL_ARG_H
 #define DRIZZLED_OPTIMIZER_SEL_ARG_H
 
-namespace drizzled
-{
-
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 class RangeParameter;
 
@@ -259,6 +256,11 @@ public:
       color(BLACK), 
       type(type_arg)
   {}
+
+  int size() const
+  {
+    return elements;
+  }
 
   inline bool is_same(SEL_ARG *arg)
   {

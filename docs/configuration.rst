@@ -7,9 +7,9 @@ Overview
 --------
 
 Drizzle can draw its configuration from a number of sources, including the
-command line, configuration files and environment variables.
+command line, from configuration files, and from environment variables.
 
-Support is planned for pluggable configuration souces.
+Support is planned for pluggable configuration sources.
 
 ----------------
 Loading Sequence
@@ -38,17 +38,22 @@ the variable name is prefixed with *DRIZZLED_*, in all caps and all `.` and
 *DRIZZLED_INNODB_BUFFER_POOL_SIZE*
 
 The config files contain a set of lines of the form `option-name=value`, one
-per line. Due to a bug in Boost.Program_options Boolean values require an argument, e.g. `console.enable=true`.
+per line. Due to a bug in Boost.Program_options Boolean values require an argument,
+e.g. `console.enable=true`.
 
 Config files support section headers such as `[innodb]` with all options
 occuring subsequently being prefixed by the section header. For instance, if
-one were do give::
+one were do give:
+
+.. code-block:: ini
 
   [innodb]
   buffer_pool_size=10M
   log_file_size=5M
 
-It would be the same as::
+It would be the same as:
+
+.. code-block:: ini
 
   innodb.buffer_pool_size=10M
   innodb.log_file_size

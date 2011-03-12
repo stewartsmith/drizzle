@@ -27,9 +27,9 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "drizzled/show.h"
-#include "drizzled/gettext.h"
+#include <config.h>
+#include <drizzled/show.h>
+#include <drizzled/gettext.h>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include "stats_table.h"
@@ -84,7 +84,7 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("servers",
           po::value<std::string>()->default_value(""),
-          N_("List of memcached servers."));
+          _("List of memcached servers."));
 }
 
 } /* namespace drizzle_plugin */
@@ -98,7 +98,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Memcached Stats as I_S tables"),
   PLUGIN_LICENSE_BSD,
   drizzle_plugin::init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   drizzle_plugin::init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

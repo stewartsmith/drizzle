@@ -21,9 +21,11 @@
 #ifndef DRIZZLED_PLUGIN_QUERY_CACHE_H
 #define DRIZZLED_PLUGIN_QUERY_CACHE_H
 
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/plugin.h"
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
 #include <drizzled/sql_list.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -37,7 +39,7 @@ namespace plugin
   This is the API that a qcache plugin must implement.
 */
 
-class QueryCache : public Plugin
+class DRIZZLED_API QueryCache : public Plugin
 {
 private:  
   

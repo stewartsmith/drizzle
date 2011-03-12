@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/lock.h>
@@ -35,11 +35,15 @@ bool statement::UnlockTables::execute()
      done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
      false, mysqldump will not work.
    */
-  if (session->isGlobalReadLock())
+  if (getSession()->isGlobalReadLock())
   {
-    session->unlockGlobalReadLock();
+    getSession()->unlockGlobalReadLock();
+    getSession()->my_ok();
   }
-  session->my_ok();
+  else
+  {
+    my_error(ER_NO_LOCK_HELD, MYF(0));
+  }
 
   return false;
 }

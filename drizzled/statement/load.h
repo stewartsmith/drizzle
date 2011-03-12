@@ -33,12 +33,17 @@ namespace statement
 class Load : public Statement
 {
 public:
-  Load(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Load(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_LOAD);
+  }
 
   bool execute();
+  bool isTransactional()
+  {
+    return true;
+  }
 
   /*
     Pointers to part of LOAD DATA statement that should be rewritten

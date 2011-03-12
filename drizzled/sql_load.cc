@@ -16,16 +16,17 @@
 
 /* Copy data from a textfile to table */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/sql_load.h>
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/epoch.h>
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
-#include <drizzled/db.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -155,10 +156,10 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (session->openTablesLock(table_list))
     return(true);
 
-  if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
-                                    &session->lex->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
+                                    &session->getLex()->select_lex.top_join_list,
                                     table_list,
-                                    &session->lex->select_lex.leaf_tables, true))
+                                    &session->getLex()->select_lex.leaf_tables, true))
      return(-1);
 
   /*
@@ -178,7 +179,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   table= table_list->table;
   transactional_table= table->cursor->has_transactions();
 
-  if (!fields_vars.elements)
+  if (!fields_vars.size())
   {
     Field **field;
     for (field= table->getFields(); *field ; field++)
@@ -224,7 +225,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
 
   size_t tot_length=0;
   bool use_blobs= 0, use_vars= 0;
-  List_iterator_fast<Item> it(fields_vars);
+  List<Item>::iterator it(fields_vars.begin());
   Item *item;
 
   while ((item= it++))
@@ -319,7 +320,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
-  SchemaIdentifier identifier(*schema);
+  identifier::Schema identifier(*schema);
   READ_INFO read_info(file, tot_length,
                       ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(identifier),
 		      *field_term, *ex->line_start, *ex->line_term, *enclosed,
@@ -365,7 +366,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
     table->copy_blobs=1;
 
-    session->abort_on_warning= true;
+    session->setAbortOnWarning(true);
 
     if (!field_term->length() && !enclosed->length())
       error= read_fixed_length(session, info, table_list, fields_vars,
@@ -414,7 +415,8 @@ err:
               session->transaction.stmt.hasModifiedNonTransData());
   table->cursor->ha_release_auto_increment();
   table->auto_increment_field_not_null= false;
-  session->abort_on_warning= 0;
+  session->setAbortOnWarning(false);
+
   return(error);
 }
 
@@ -429,7 +431,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                   List<Item> &set_values, READ_INFO &read_info,
                   uint32_t skip_lines, bool ignore_check_option_errors)
 {
-  List_iterator_fast<Item> it(fields_vars);
+  List<Item>::iterator it(fields_vars.begin());
   Item_field *sql_field;
   Table *table= table_list->table;
   uint64_t id;
@@ -455,7 +457,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
       skip_lines--;
       continue;
     }
-    it.rewind();
+    it= fields_vars.begin();
     unsigned char *pos=read_info.row_start;
 #ifdef HAVE_VALGRIND
     read_info.row_end[0]=0;
@@ -485,7 +487,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                             ER_WARN_TOO_FEW_RECORDS,
                             ER(ER_WARN_TOO_FEW_RECORDS), session->row_count);
 
-        if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
+        if (not field->maybe_null() and field->is_timestamp())
             ((field::Epoch::pointer) field)->set_time();
       }
       else
@@ -550,7 +552,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
 	       String &enclosed, uint32_t skip_lines,
 	       bool ignore_check_option_errors)
 {
-  List_iterator_fast<Item> it(fields_vars);
+  List<Item>::iterator it(fields_vars.begin());
   Item *item;
   Table *table= table_list->table;
   uint32_t enclosed_length;
@@ -560,7 +562,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
   enclosed_length=enclosed.length();
   id= 0;
 
-  for (;;it.rewind())
+  for (;;it= fields_vars.begin())
   {
     if (session->getKilled())
     {
@@ -602,9 +604,9 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
             return(1);
           }
           field->set_null();
-          if (!field->maybe_null())
+          if (not field->maybe_null())
           {
-            if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+            if (field->is_timestamp())
             {
               ((field::Epoch::pointer) field)->set_time();
             }
@@ -658,7 +660,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
     if (item)
     {
       /* Have not read any field, thus input cursor is simply ended */
-      if (item == fields_vars.head())
+      if (item == &fields_vars.front())
 	break;
       for (; item ; item= it++)
       {
@@ -672,7 +674,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                      session->row_count);
             return(1);
           }
-          if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
+          if (not field->maybe_null() and field->is_timestamp())
               ((field::Epoch::pointer) field)->set_time();
           /*
             QQ: We probably should not throw warning for each field.

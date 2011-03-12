@@ -17,9 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/identifier/user.h"
+#include <drizzled/identifier.h>
+#include <drizzled/identifier/user.h>
 
 namespace drizzled
 {
@@ -31,6 +32,17 @@ User::shared_ptr User::make_shared()
   return shared_ptr(new User);
 }
 
+void User::getSQLPath(std::string &arg) const
+{
+  if (_user.empty())
+  {
+    arg+= "<no user>";
+  }
+  else
+  {
+    arg+= _user;
+  }
+}
 
 } /* namespace identifier */
 } /* namespace drizzled */

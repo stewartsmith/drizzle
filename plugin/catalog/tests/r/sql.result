@@ -1,0 +1,4 @@
+CREATE CATALOG foo;
+ERROR HY000: Permission is denied to create 'foo' catalog.
+DROP CATALOG foo;
+ERROR HY000: Permission is denied to drop 'foo' catalog.

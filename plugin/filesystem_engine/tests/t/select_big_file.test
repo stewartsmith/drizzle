@@ -1,9 +1,0 @@
---disable_warnings
-DROP TABLE IF EXISTS t1;
---enable_warnings
-
-CREATE TABLE t1 (c1 INT, c2 DECIMAL(3, 2), c3 VARCHAR(20)) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/select_big_file.data";
-
-SELECT * FROM t1;
-
-DROP TABLE t1;

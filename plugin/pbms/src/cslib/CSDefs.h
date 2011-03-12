@@ -102,7 +102,7 @@ class CSThread;
 
 #define CS_CALL_STACK_SIZE		100
 #define CS_RELEASE_STACK_SIZE	200
-#define CS_JUMP_STACK_SIZE		20
+#define CS_JUMP_STACK_SIZE		20	// NOTE: If a stack overflow occurs check that there are no returns inside of try_() blocks.
 
 /* C string display width sizes including space for a null terminator and possible sign. */
 #define CS_WIDTH_INT_8	5

@@ -4,21 +4,27 @@ User Defined Locks
 A user can create a "lock" which is scoped to their user space. Multiple
 session of the user can see the lock.
 
-SELECT GET_LOCK();
+.. code-block:: mysql
+   
+   SELECT GET_LOCK();
 
-SELECT GET_LOCKS();
+   SELECT GET_LOCKS();
 
-SELECT RELEASE_LOCK();
+   SELECT RELEASE_LOCK();
 
-SELECT RELEASE_LOCK();
+   SELECT RELEASE_LOCK();
 
-SELECT RELEASE_LOCKS();
+   SELECT RELEASE_LOCKS();
 
-SELECT is_free_lock();
+   SELECT is_free_lock();
 
-SELECT is_used_lock();
+   SELECT is_used_lock();
 
 If a session should exit, whatever locks it was holding will be deleted.
+
+.. todo::
+
+   deleted or released? are locks recursive?
 
 Please note, get_lock() was designed to be compatible with MySQL. If you
 hold any locks when calling get_lock() they will be released. For this

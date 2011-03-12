@@ -29,7 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
 #include "streams.h"
 
 #include <drizzled/plugin/transaction_replicator.h>

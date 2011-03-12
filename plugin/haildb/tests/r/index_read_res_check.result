@@ -1,0 +1,24 @@
+DROP TABLE IF EXISTS `sbtest`;
+Warnings:
+Note	1051	Unknown table 'sbtest'
+CREATE TABLE `sbtest` (
+`id` INT NOT NULL AUTO_INCREMENT,
+`k` INT NOT NULL DEFAULT '0',
+`o` INT NOT NULL DEFAULT '0',
+`c` VARCHAR(120) NOT NULL COLLATE utf8_general_ci,
+`pad` VARCHAR(60) NOT NULL COLLATE utf8_general_ci,
+PRIMARY KEY (`id`),
+KEY `k` (`k`),
+KEY `o` (`o`)
+) ENGINE='InnoDB' AUTO_INCREMENT=1 COLLATE='utf8_general_ci';
+ALTER TABLE `sbtest` DISABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'sbtest' doesn't have this option
+BEGIN;
+ALTER TABLE `sbtest` ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'sbtest' doesn't have this option
+select *  from sbtest where k=5003;
+id	k	o	c	pad
+5003	5003	5003	 	qqqqqqqqqqwwwwwwwwwweeeeeeeeeerrrrrrrrrrtttttttttt
+DROP TABLE sbtest;

@@ -17,14 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <drizzled/plugin/table_function.h>
-#include <drizzled/table_function_container.h>
+#include <drizzled/current_session.h>
 #include <drizzled/gettext.h>
-#include "drizzled/global_charset_info.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
+#include <drizzled/global_charset_info.h>
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/session.h>
+#include <drizzled/show.h>
+#include <drizzled/table_function_container.h>
 
 #include <vector>
 
@@ -35,21 +36,11 @@ static TableFunctionContainer table_functions;
 
 void plugin::TableFunction::init()
 {
-  drizzled::message::Engine *engine;
-  drizzled::message::Table::TableOptions *table_options;
-
-  proto.set_name(getTableLabel());
-  proto.set_schema(identifier.getSchemaName());
+  drizzled::message::table::init(proto, getTableLabel(), identifier.getSchemaName(), "FunctionEngine");
   proto.set_type(drizzled::message::Table::FUNCTION);
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
-
-  table_options= proto.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= proto.mutable_engine();
-  engine->set_name("FunctionEngine");
+  message::set_is_replicated(proto, false);
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
@@ -103,7 +94,7 @@ void plugin::TableFunction::add_field(const char *label,
   field_options= field->mutable_options();
   field_constraints= field->mutable_constraints();
   field_options->set_default_null(is_default_null);
-  field_constraints->set_is_nullable(is_default_null);
+  field_constraints->set_is_notnull(not is_default_null);
 
   switch (type) 
   {
@@ -232,12 +223,12 @@ void plugin::TableFunction::Generator::push(bool arg)
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  if (not getSession().lex->wild)
+  if (not getSession().getLex()->wild)
     return false;
 
   bool match= wild_case_compare(system_charset_info,
                                 predicate.c_str(),
-                                getSession().lex->wild->ptr());
+                                getSession().getLex()->wild->ptr());
 
   return match;
 }

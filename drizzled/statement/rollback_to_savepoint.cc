@@ -18,13 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/show.h"
-#include "drizzled/session.h"
-#include "drizzled/statement/rollback_to_savepoint.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/named_savepoint.h"
-#include "drizzled/util/functors.h"
+#include <config.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/rollback_to_savepoint.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/named_savepoint.h>
+#include <drizzled/util/functors.h>
 
 #include <string>
 
@@ -41,10 +41,10 @@ bool statement::RollbackToSavepoint::execute()
    * starts the transaction. Table affecting statements do this work in
    * lockTables() by calling startStatement().
    */
-  if ( (session->options & OPTION_NOT_AUTOCOMMIT) &&
-       (session->transaction.all.getResourceContexts().empty() == true) )
+  if ( (getSession()->options & OPTION_NOT_AUTOCOMMIT) &&
+       (transaction().all.getResourceContexts().empty() == true) )
   {
-    if (session->startTransaction() == false)
+    if (getSession()->startTransaction() == false)
     {
       return false;
     }
@@ -64,7 +64,7 @@ bool statement::RollbackToSavepoint::execute()
    * find it, we must restructure the deque by removing
    * all savepoints "above" the one we find.
    */
-  deque<NamedSavepoint> &savepoints= session->transaction.savepoints;
+  deque<NamedSavepoint> &savepoints= transaction().savepoints;
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   /* Short-circuit for no savepoints */
@@ -73,7 +73,7 @@ bool statement::RollbackToSavepoint::execute()
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 
-             session->lex->ident.str);
+             lex().ident.str);
     return false;
   }
 
@@ -82,22 +82,22 @@ bool statement::RollbackToSavepoint::execute()
     NamedSavepoint &first_savepoint= savepoints.front();
     const string &first_savepoint_name= first_savepoint.getName();
     if (my_strnncoll(system_charset_info,
-                     (unsigned char *) session->lex->ident.str, 
-                     session->lex->ident.length,
+                     (unsigned char *) lex().ident.str, 
+                     lex().ident.length,
                      (unsigned char *) first_savepoint_name.c_str(), 
                      first_savepoint_name.size()) == 0)
     {
       /* Found the named savepoint we want to rollback to */
-      (void) transaction_services.rollbackToSavepoint(session, first_savepoint);
+      (void) transaction_services.rollbackToSavepoint(*getSession(), first_savepoint);
 
-      if (session->transaction.all.hasModifiedNonTransData())
+      if (transaction().all.hasModifiedNonTransData())
       {
-        push_warning(session, 
+        push_warning(getSession(), 
                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      ER_WARNING_NOT_COMPLETE_ROLLBACK,
                      ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
       }
-      session->my_ok();
+      getSession()->my_ok();
       return false;
     }
   }
@@ -118,15 +118,15 @@ bool statement::RollbackToSavepoint::execute()
     const string &sv_name= sv.getName();
     if (! found && 
         my_strnncoll(system_charset_info,
-                     (unsigned char *) session->lex->ident.str, 
-                     session->lex->ident.length,
+                     (unsigned char *) lex().ident.str, 
+                     lex().ident.length,
                      (unsigned char *) sv_name.c_str(), 
                      sv_name.size()) == 0)
     {
       /* Found the named savepoint we want to rollback to */
       found= true;
 
-      (void) transaction_services.rollbackToSavepoint(session, sv);
+      (void) transaction_services.rollbackToSavepoint(*getSession(), sv);
     }
     if (found)
     {
@@ -141,25 +141,25 @@ bool statement::RollbackToSavepoint::execute()
   }
   if (found)
   {
-    if (session->transaction.all.hasModifiedNonTransData())
+    if (transaction().all.hasModifiedNonTransData())
     {
-      push_warning(session, 
+      push_warning(getSession(), 
                    DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    ER_WARNING_NOT_COMPLETE_ROLLBACK,
                    ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
     }
     /* Store new savepoints list */
-    session->transaction.savepoints= new_savepoints;
-    session->my_ok();
+    transaction().savepoints= new_savepoints;
+    getSession()->my_ok();
   }
   else
   {
     /* restore the original savepoint list */
-    session->transaction.savepoints= copy_savepoints;
+    transaction().savepoints= copy_savepoints;
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 
-             session->lex->ident.str);
+             lex().ident.str);
   }
   return false;
 }

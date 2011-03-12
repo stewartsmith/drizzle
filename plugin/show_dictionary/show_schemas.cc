@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/show_dictionary/dictionary.h"
+#include <config.h>
+#include <plugin/show_dictionary/dictionary.h>
 
 using namespace std;
 using namespace drizzled;
@@ -32,71 +32,27 @@ ShowSchemas::ShowSchemas() :
 
 ShowSchemas::Generator::Generator(Field **arg) :
   show_dictionary::Show::Generator(arg),
-  is_schema_primed(false)
+  schema_generator(getSession())
 {
 }
-
-/**
-  @note return true if a match occurs.
-*/
-bool ShowSchemas::Generator::checkSchema()
-{
-  if (isWild((*schema_iterator).getSchemaName()))
-    return true;
-
-  return false;
-}
-
-bool ShowSchemas::Generator::nextSchemaCore()
-{
-  if (is_schema_primed)
-  {
-    schema_iterator++;
-  }
-  else
-  {
-    plugin::StorageEngine::getIdentifiers(getSession(), schema_names);
-    schema_iterator= schema_names.begin();
-    is_schema_primed= true;
-  }
-
-  if (schema_iterator == schema_names.end())
-    return false;
-
-  if (checkSchema())
-      return false;
-
-  return true;
-}
-  
-bool ShowSchemas::Generator::nextSchema()
-{
-  while (not nextSchemaCore())
-  {
-    if (schema_iterator == schema_names.end())
-      return false;
-  }
-
-  return true;
-}
-
 
 bool ShowSchemas::Generator::populate()
 {
-  if (nextSchema())
+  drizzled::message::schema::shared_ptr schema_ptr;
+
+  if (not isShowQuery())
+    return false;
+
+  while ((schema_ptr= schema_generator))
   {
-    fill();
+    if (isWild(schema_ptr->name()))
+      continue;
+
+    /* Schema */
+    push(schema_ptr->name());
+
     return true;
   }
 
   return false;
-}
-
-/**
-  A lack of a parsed schema file means we are using defaults.
-*/
-void ShowSchemas::Generator::fill()
-{
-  /* Schema */
-  push((*schema_iterator).getSchemaName());
 }

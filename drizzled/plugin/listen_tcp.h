@@ -24,6 +24,8 @@
 
 #include <netinet/in.h>
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 namespace plugin
@@ -33,7 +35,7 @@ namespace plugin
  * This class is used by client plugins to provide and manage TCP listening
  * interfaces for new client instances.
  */
-class ListenTcp : public Listen
+class DRIZZLED_API ListenTcp : public Listen
 {
   ListenTcp();
   ListenTcp(const ListenTcp&);

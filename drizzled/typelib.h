@@ -17,25 +17,33 @@
 #ifndef DRIZZLED_TYPELIB_H
 #define DRIZZLED_TYPELIB_H
 
-#include "drizzled/memory/root.h"
+#include <drizzled/global_charset_info.h>
+#include <drizzled/memory/root.h>
 
 namespace drizzled
 {
 
-typedef struct st_typelib {	/* Different types saved here */
-  unsigned int count;		/* How many types */
-  const char *name;		/* Name of typelib */
+typedef struct st_typelib 
+{
+public:
+  st_typelib *copy_typelib(memory::Root *root) const;
+  int find_type_or_exit(const char *x, const char *option) const;
+  int find_type(const char *x, unsigned int full_name) const;
+  int find_type(char *x, unsigned int full_name) const;
+  uint64_t find_typeset(const char *x, int *error_position) const;
+  const char *get_type(unsigned int nr) const;
+  void make_type(char *to, unsigned int nr) const;
+
+  uint64_t find_set(const char *x, uint32_t length, const CHARSET_INFO *cs,
+                    char **err_pos, uint32_t *err_len, bool *set_warning) const;
+  uint32_t find_type(const char *find, uint32_t length, bool part_match) const;
+  uint32_t find_type2(const char *find, uint32_t length, const CHARSET_INFO *cs) const;
+
+  unsigned int count;
+  const char *name;
   const char **type_names;
   unsigned int *type_lengths;
 } TYPELIB;
-
-extern uint64_t find_typeset(char *x, TYPELIB *typelib,int *error_position);
-extern int find_type_or_exit(char *x, TYPELIB *typelib,
-                             const char *option);
-extern int find_type(char *x, const TYPELIB *typelib, unsigned int full_name);
-extern void make_type(char *to,unsigned int nr,TYPELIB *typelib);
-extern const char *get_type(TYPELIB *typelib,unsigned int nr);
-extern TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from);
 
 } /* namespace drizzled */
 

@@ -19,19 +19,18 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
 #include <algorithm>
 
 #include <uuid/uuid.h>
 
-#include "drizzled/field/uuid.h"
+#include <drizzled/field/uuid.h>
 
-#include "drizzled/error.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/session.h"
-#include "drizzled/table.h"
-#include "drizzled/temporal.h"
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
 
 namespace drizzled
 {
@@ -104,14 +103,14 @@ void Uuid::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("uuid"));
 }
 
-double Uuid::val_real()
+double Uuid::val_real() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   my_error(ER_INVALID_UUID_VALUE, MYF(ME_FATALERROR));
   return 0;
 }
 
-int64_t Uuid::val_int()
+int64_t Uuid::val_int() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   my_error(ER_INVALID_UUID_VALUE, MYF(ME_FATALERROR));
@@ -134,7 +133,7 @@ void Uuid::set(const unsigned char *arg)
 }
 #endif
 
-String *Uuid::val_str(String *val_buffer, String *)
+String *Uuid::val_str(String *val_buffer, String *) const
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t mlength= (type::Uuid::DISPLAY_BUFFER_LENGTH) * cs->mbmaxlen;
@@ -159,7 +158,7 @@ void Uuid::sort_string(unsigned char *to, uint32_t length_arg)
   memcpy(to, ptr, length_arg);
 }
 
-bool Uuid::get_date(type::Time *ltime, uint32_t )
+bool Uuid::get_date(type::Time &ltime, uint32_t ) const
 {
   type::Uuid uu;
 
@@ -167,32 +166,22 @@ bool Uuid::get_date(type::Time *ltime, uint32_t )
 
   if (uu.isTimeType())
   {
-    Timestamp temporal;
     struct timeval ret_tv;
 
-    ret_tv.tv_sec= ret_tv.tv_usec= 0;
+    memset(&ret_tv, 0, sizeof(struct timeval));
 
     uu.time(ret_tv);
 
-    temporal.from_time_t(ret_tv.tv_sec);
-
-    ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
-    ltime->year= temporal.years();
-    ltime->month= temporal.months();
-    ltime->day= temporal.days();
-    ltime->hour= temporal.hours();
-    ltime->minute= temporal.minutes();
-    ltime->second= temporal.seconds();
-    ltime->second_part= temporal.nseconds();
+    ltime.store(ret_tv);
 
     return false;
   }
-  memset(ltime, 0, sizeof(type::Time));
+  ltime.reset();
 
   return true;
 }
 
-bool Uuid::get_time(type::Time *ltime)
+bool Uuid::get_time(type::Time &ltime) const
 {
   return get_date(ltime, 0);
 }

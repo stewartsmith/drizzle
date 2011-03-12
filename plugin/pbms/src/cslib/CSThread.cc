@@ -48,6 +48,7 @@
 #include "CSStrUtil.h"
 #include "CSMemory.h"
 
+#define PBMS_THREAD_SIG SIGUSR1
 /*
  * ---------------------------------------------------------------
  * SIGNAL HANDLERS
@@ -98,7 +99,7 @@ static bool td_setup_signals(CSThread *thread)
 
     action.sa_handler = td_catch_signal;
 
-	if (sigaction(SIGUSR2, &action, NULL) == -1)
+	if (sigaction(PBMS_THREAD_SIG, &action, NULL) == -1)
 		goto error_occurred;
 
     action.sa_handler = td_throw_signal;
@@ -351,7 +352,7 @@ void CSThread::signal(unsigned int sig)
 	int err;
 
 	setSignalPending(sig);
-	if ((err = pthread_kill(iThread, SIGUSR2)))
+	if ((err = pthread_kill(iThread, PBMS_THREAD_SIG)))
 	{
 		/* Ignore the error if the process does not exist! */
 		if (err != ESRCH) /* No such process */

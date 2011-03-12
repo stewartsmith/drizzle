@@ -23,21 +23,20 @@
   Handler-calling-functions
 */
 
-#include "config.h"
-#include "drizzled/my_hash.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/probes.h"
-#include "drizzled/sql_parse.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/replication_services.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/int.h"
-#include "drizzled/item/empty_string.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/probes.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/replication_services.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/empty_string.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/internal/my_sys.h>
 
 using namespace std;
 

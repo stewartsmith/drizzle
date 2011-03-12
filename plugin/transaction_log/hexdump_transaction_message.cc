@@ -28,14 +28,16 @@
  * Implements the HEXDUMP_TRANSACTION_MESSAGE(filename, offset) UDF.
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/error.h>
 #include <drizzled/algorithm/crc32.h>
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/charset.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/charset.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
 
 #include <fcntl.h>
 #include <errno.h>
@@ -102,12 +104,9 @@ String *HexdumpTransactionMessageFunction::val_str(String *str)
   int log_file= open(filename.c_str(), O_RDONLY);
   if (log_file == -1)
   {
-    char errmsg[STRERROR_MAX];
-    strerror_r(errno, errmsg, sizeof(errmsg));
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open transaction log file %s.  Got error: %s\n"), 
-                  filename.c_str(), 
-                  errmsg);
+    drizzled::sql_perror(_("Failed to open transaction log file"), filename);
     null_value= true;
+
     return NULL;
   }
 

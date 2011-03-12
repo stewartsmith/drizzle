@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
+#include <drizzled/charset_info.h>
+#include <drizzled/field.h>
+#include <drizzled/internal/m_string.h>
 #include <drizzled/item/int.h>
-#include "drizzled/internal/m_string.h"
 
 namespace drizzled
 {
@@ -54,7 +57,7 @@ String *Item_int::val_str(String *str)
   return str;
 }
 
-void Item_int::print(String *str, enum_query_type)
+void Item_int::print(String *str)
 {
   // my_charset_bin is good enough for numbers
   str_value.set(value, &my_charset_bin);

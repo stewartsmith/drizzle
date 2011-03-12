@@ -18,10 +18,10 @@
 /* This file is for binary pseudo charset, created by bar@mysql.com */
 
 
-#include "config.h"
-#include "drizzled/definitions.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
+#include <config.h>
+#include <drizzled/definitions.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
 
 #include <algorithm>
 
@@ -94,7 +94,7 @@ int my_strnncoll_binary(const CHARSET_INFO * const,
 {
   size_t len= min(slen,tlen);
   int cmp= memcmp(s,t,len);
-  return cmp ? cmp : (int)((t_is_prefix ? len : slen) - tlen);
+  return cmp ? cmp : static_cast<int>((t_is_prefix ? len : slen) - tlen);
 }
 
 
@@ -143,7 +143,7 @@ int my_strnncoll_8bit_bin(const CHARSET_INFO * const,
 {
   size_t len= min(slen,tlen);
   int cmp= memcmp(s,t,len);
-  return cmp ? cmp : (int)((t_is_prefix ? len : slen) - tlen);
+  return cmp ? cmp : static_cast<int>((t_is_prefix ? len : slen) - tlen);
 }
 
 
@@ -189,7 +189,7 @@ int my_strnncollsp_8bit_bin(const CHARSET_INFO * const,
   while (a < end)
   {
     if (*a++ != *b++)
-      return ((int) a[-1] - (int) b[-1]);
+      return a[-1] - b[-1];
   }
   res= 0;
   if (a_length != b_length)
@@ -267,7 +267,7 @@ int my_wc_mb_bin(const CHARSET_INFO * const, my_wc_t wc,
 
   if (wc < 256)
   {
-    str[0]= (char) wc;
+    str[0]= wc;
     return 1;
   }
   return MY_CS_ILUNI;
@@ -286,10 +286,9 @@ void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
   */
   key= internal::skip_trailing_space(key, len);
 
-  for (; pos < (unsigned char*) key ; pos++)
+  for (; pos < key ; pos++)
   {
-    nr1[0]^=(ulong) ((((uint32_t) nr1[0] & 63)+nr2[0]) *
-	     ((uint32_t)*pos)) + (nr1[0] << 8);
+    nr1[0]^= (((nr1[0] & 63) + nr2[0]) * *pos) + (nr1[0] << 8);
     nr2[0]+=3;
   }
 }
@@ -303,10 +302,9 @@ void my_hash_sort_bin(const CHARSET_INFO * const,
 
   key+= len;
 
-  for (; pos < (unsigned char*) key ; pos++)
+  for (; pos < key ; pos++)
   {
-    nr1[0]^=(ulong) ((((uint32_t) nr1[0] & 63)+nr2[0]) *
-	     ((uint32_t)*pos)) + (nr1[0] << 8);
+    nr1[0]^= (((nr1[0] & 63) + nr2[0]) * *pos) + (nr1[0] << 8);
     nr2[0]+=3;
   }
 }
@@ -418,7 +416,7 @@ uint32_t my_instr_bin(const CHARSET_INFO * const,
                       const char *s, size_t s_length,
                       my_match_t *match, uint32_t nmatch)
 {
-  register const unsigned char *str, *search, *end, *search_end;
+  const unsigned char *str, *search, *end, *search_end;
 
   if (s_length <= b_length)
   {
@@ -443,7 +441,7 @@ skip:
     {
       if ( (*str++) == (*search))
       {
-	register const unsigned char *i,*j;
+	const unsigned char *i,*j;
 
 	i= str;
 	j= search+1;
@@ -521,7 +519,7 @@ static MY_CHARSET_HANDLER my_charset_handler=
 };
 
 
-CHARSET_INFO my_charset_bin =
+DRIZZLED_API CHARSET_INFO my_charset_bin =
 {
     63,0,0,			/* number        */
     MY_CS_COMPILED|MY_CS_BINSORT|MY_CS_PRIMARY,/* state */

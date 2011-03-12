@@ -30,14 +30,11 @@
   This will replace Table_ident.
   */
 
-#ifndef DRIZZLED_IDENTIFIER_TABLE_H
-#define DRIZZLED_IDENTIFIER_TABLE_H
+#pragma once
 
 #include <drizzled/enum.h>
-#include "drizzled/definitions.h"
-#include "drizzled/message/table.pb.h"
-
-#include "drizzled/identifier.h"
+#include <drizzled/definitions.h>
+#include <drizzled/message/table.pb.h>
 
 #include <string.h>
 
@@ -50,17 +47,20 @@
 
 #include <boost/functional/hash.hpp>
 
-namespace drizzled {
+#include <drizzled/visibility.h>
 
+namespace drizzled {
 class Table;
 
-class TableIdentifier : public SchemaIdentifier
+namespace identifier {
+
+class DRIZZLED_API Table : public Schema
 {
 public:
   typedef message::Table::TableType Type;
-  typedef std::vector <TableIdentifier> vector;
-  typedef const TableIdentifier& const_reference;
-  typedef TableIdentifier& reference;
+  typedef std::vector <Table> vector;
+  typedef const Table& const_reference;
+  typedef Table& reference;
 
   class Key
   {
@@ -117,6 +117,7 @@ private:
 
   Type type;
   std::string path;
+  std::string key_path;
   std::string table_name;
   Key key;
   size_t hash_value;
@@ -129,32 +130,33 @@ private:
   }
 
 public:
-  TableIdentifier(const Table &table);
+
+  Table(const drizzled::Table &table);
                    
-  TableIdentifier( const SchemaIdentifier &schema,
-                   const std::string &table_name_arg,
-                   Type tmp_arg= message::Table::STANDARD) :
-    SchemaIdentifier(schema),
+  Table(const identifier::Schema &schema,
+        const std::string &table_name_arg,
+        Type tmp_arg= message::Table::STANDARD) :
+    Schema(schema),
     type(tmp_arg),
     table_name(table_name_arg)
   { 
     init();
   }
 
-  TableIdentifier( const std::string &db_arg,
+  Table( const std::string &db_arg,
                    const std::string &table_name_arg,
                    Type tmp_arg= message::Table::STANDARD) :
-    SchemaIdentifier(db_arg),
+    Schema(db_arg),
     type(tmp_arg),
     table_name(table_name_arg)
   { 
     init();
   }
 
-  TableIdentifier( const std::string &schema_name_arg,
+  Table( const std::string &schema_name_arg,
                    const std::string &table_name_arg,
                    const std::string &path_arg ) :
-    SchemaIdentifier(schema_name_arg),
+    Schema(schema_name_arg),
     type(message::Table::TEMPORARY),
     path(path_arg),
     table_name(table_name_arg)
@@ -162,12 +164,13 @@ public:
     init();
   }
 
-  using SchemaIdentifier::compare;
+  using Schema::compare;
 
   bool isTmp() const
   {
     if (type == message::Table::TEMPORARY || type == message::Table::INTERNAL)
       return true;
+
     return false;
   }
 
@@ -200,6 +203,7 @@ public:
   virtual void getSQLPath(std::string &sql_path) const;
 
   virtual const std::string &getPath() const;
+  const std::string &getKeyPath() const;
 
   void setPath(const std::string &new_path)
   {
@@ -213,7 +217,7 @@ public:
 
   void copyToTableMessage(message::Table &message) const;
 
-  friend bool operator<(TableIdentifier::const_reference left, TableIdentifier::const_reference right)
+  friend bool operator<(Table::const_reference left, Table::const_reference right)
   {
     if (left.getKey() < right.getKey())
     {
@@ -223,42 +227,7 @@ public:
     return false;
   }
 
-  friend std::ostream& operator<<(std::ostream& output, TableIdentifier::const_reference identifier)
-  {
-    const char *type_str;
-
-    output << "TableIdentifier:(";
-    output <<  identifier.getSchemaName();
-    output << ", ";
-    output << identifier.getTableName();
-    output << ", ";
-
-    switch (identifier.type) {
-    case message::Table::STANDARD:
-      type_str= "standard";
-      break;
-    case message::Table::INTERNAL:
-      type_str= "internal";
-      break;
-    case message::Table::TEMPORARY:
-      type_str= "temporary";
-      break;
-    case message::Table::FUNCTION:
-      type_str= "function";
-      break;
-    }
-
-    output << type_str;
-    output << ", ";
-    output << identifier.path;
-    output << ", ";
-    output << identifier.getHashValue();
-    output << ")";
-
-    return output;  // for multiple << operators.
-  }
-
-  friend bool operator==(TableIdentifier::const_reference left, TableIdentifier::const_reference right)
+  friend bool operator==(Table::const_reference left, Table::const_reference right)
   {
     if (left.getHashValue() == right.getHashValue())
     {
@@ -288,9 +257,9 @@ public:
   }
 };
 
-std::size_t hash_value(TableIdentifier const& b);
-std::size_t hash_value(TableIdentifier::Key const& b);
+std::ostream& operator<<(std::ostream& output, Table::const_reference identifier);
+std::size_t hash_value(Table const& b);
+std::size_t hash_value(Table::Key const& b);
 
+} /* namespace identifier */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_IDENTIFIER_TABLE_H */

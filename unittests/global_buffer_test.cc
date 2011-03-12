@@ -18,43 +18,47 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <gtest/gtest.h>
-#include "drizzled/global_buffer.h"
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
-TEST(global_buffer, overflow)
+#include <drizzled/global_buffer.h>
+
+BOOST_AUTO_TEST_SUITE(GlobalBufferTests)
+BOOST_AUTO_TEST_CASE(overflow)
 {
   drizzled::global_buffer_constraint<uint64_t> test_buffer(1024);
 
-  ASSERT_TRUE(test_buffer.add(512));
-  ASSERT_TRUE(test_buffer.add(512));
-  ASSERT_FALSE(test_buffer.add(1));
+  BOOST_REQUIRE(test_buffer.add(512));
+  BOOST_REQUIRE(test_buffer.add(512));
+  BOOST_REQUIRE(not test_buffer.add(1));
 }
 
-TEST(global_buffer, subtract)
+BOOST_AUTO_TEST_CASE(subtract)
 {
   drizzled::global_buffer_constraint<uint64_t> test_buffer(1024);
 
-  ASSERT_TRUE(test_buffer.add(1024));
-  ASSERT_TRUE(test_buffer.sub(512));
-  ASSERT_TRUE(test_buffer.add(512));
-  ASSERT_FALSE(test_buffer.add(1));
+  BOOST_REQUIRE(test_buffer.add(1024));
+  BOOST_REQUIRE(test_buffer.sub(512));
+  BOOST_REQUIRE(test_buffer.add(512));
+  BOOST_REQUIRE(not test_buffer.add(1));
 }
 
-TEST(global_buffer, underflow)
+BOOST_AUTO_TEST_CASE(underflow)
 {
   drizzled::global_buffer_constraint<uint64_t> test_buffer(1024);
 
-  ASSERT_TRUE(test_buffer.add(10));
-  ASSERT_FALSE(test_buffer.sub(11));
+  BOOST_REQUIRE(test_buffer.add(10));
+  BOOST_REQUIRE(not test_buffer.sub(11));
 }
 
-TEST(global_buffer, change_max)
+BOOST_AUTO_TEST_CASE(change_max)
 {
   drizzled::global_buffer_constraint<uint64_t> test_buffer(1024);
 
   test_buffer.setMaxSize(512);
 
-  ASSERT_FALSE(test_buffer.add(513));
+  BOOST_REQUIRE(not test_buffer.add(513));
 }
+BOOST_AUTO_TEST_SUITE_END()

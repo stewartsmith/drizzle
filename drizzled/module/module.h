@@ -28,49 +28,38 @@
  * or more plugin::Plugin objects. 
  */
 
-#include <cassert>
+#include <string>
 #include <vector>
-#include <boost/program_options.hpp>
 
-#include "drizzled/module/manifest.h"
-#include "drizzled/module/registry.h"
+namespace drizzled {
 
-
-namespace drizzled
-{
 class set_var;
+class sys_var;
 
-void module_shutdown(module::Registry &registry);
+namespace module { class Registry; }
 
-namespace module
-{
+void module_shutdown(module::Registry&);
+
+namespace module {
 
 class Library;
+class Manifest;
+class VertexHandle;
 
 /* A plugin module */
 class Module
 {
-  const std::string name;
-  const Manifest *manifest;
-
 public:
   typedef std::vector<sys_var *> Variables;
+  typedef std::vector<std::string> Depends;
+
   Library *plugin_dl;
   bool isInited;
   Variables system_vars;         /* server variables for this plugin */
   Variables sys_vars;
-  Module(const Manifest *manifest_arg,
-         Library *library_arg) :
-    name(manifest_arg->name),
-    manifest(manifest_arg),
-    plugin_dl(library_arg),
-    isInited(false),
-    system_vars(),
-    sys_vars()
-  {
-    assert(manifest != NULL);
-  }
+  Depends depends_;
 
+  Module(const Manifest *manifest_arg, Library *library_arg);
   ~Module();
 
   const std::string& getName() const
@@ -80,7 +69,7 @@ public:
 
   const Manifest& getManifest() const
   {
-    return *manifest;
+    return manifest;
   }
 
   void addMySysVar(sys_var *var)
@@ -98,6 +87,25 @@ public:
   {
     return system_vars;
   }
+
+  const Depends &getDepends() const
+  {
+    return depends_;
+  }
+
+  void setVertexHandle(VertexHandle *vertex)
+  {
+    vertex_= vertex;
+  }
+
+  VertexHandle *getVertexHandle()
+  {
+    return vertex_;
+  }
+private:
+  const std::string name;
+  const Manifest &manifest;
+  VertexHandle *vertex_;
 };
 
 } /* namespace module */

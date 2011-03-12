@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/rollback.h>
@@ -26,15 +26,27 @@
 namespace drizzled
 {
 
-bool statement::Rollback::execute()
+namespace statement
 {
-  if (! session->endTransaction(tx_release ? ROLLBACK_RELEASE : tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
+
+Rollback::Rollback(Session *in_session, bool tx_chain_arg, bool tx_release_arg) :
+  Statement(in_session),
+  tx_chain(tx_chain_arg),
+  tx_release(tx_release_arg)
+  {
+    set_command(SQLCOM_ROLLBACK);
+  }
+
+bool Rollback::execute()
+{
+  if (not getSession()->endTransaction(tx_release ? ROLLBACK_RELEASE : tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
   {
     return true;
   }
-  session->my_ok();
+  getSession()->my_ok();
+
   return false;
 }
 
+} /* namespace statement */
 } /* namespace drizzled */
-

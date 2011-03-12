@@ -19,15 +19,17 @@
   @brief
   Functions for easy reading of records, possible through a cache
 */
-#include "config.h"
-#include "drizzled/error.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
-#include "drizzled/records.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/iocache.h"
-#include "drizzled/drizzled.h"
+#include <config.h>
+
+#include <drizzled/drizzled.h>
+#include <drizzled/error.h>
+#include <drizzled/internal/iocache.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/records.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
 
 namespace drizzled
 {
@@ -48,10 +50,10 @@ void ReadRecord::init_reard_record_sequential()
   read_record= rr_sequential;
 }
 
-void ReadRecord::init_read_record_idx(Session *, 
-                                      Table *table_arg,
-                                      bool print_error_arg, 
-                                      uint32_t idx)
+int ReadRecord::init_read_record_idx(Session *,
+                                     Table *table_arg,
+                                     bool print_error_arg,
+                                     uint32_t idx)
 {
   table_arg->emptyRecord();
   table= table_arg;
@@ -61,19 +63,26 @@ void ReadRecord::init_read_record_idx(Session *,
 
   table->status=0;			/* And it's always found */
   if (not table->cursor->inited)
-    table->cursor->startIndexScan(idx, 1);
+  {
+    int error= table->cursor->startIndexScan(idx, 1);
+    if (error != 0)
+      return error;
+  }
   /* read_record will be changed to rr_index in rr_index_first */
   read_record= rr_index_first;
+
+  return 0;
 }
 
 
-void ReadRecord::init_read_record(Session *session_arg, 
-                                  Table *table_arg,
-                                  optimizer::SqlSelect *select_arg,
-                                  int use_record_cache, 
-                                  bool print_error_arg)
+int ReadRecord::init_read_record(Session *session_arg,
+                                 Table *table_arg,
+                                 optimizer::SqlSelect *select_arg,
+                                 int use_record_cache,
+                                 bool print_error_arg)
 {
   internal::IO_CACHE *tempfile;
+  int error= 0;
 
   session= session_arg;
   table= table_arg;
@@ -114,7 +123,11 @@ void ReadRecord::init_read_record(Session *session_arg,
     io_cache->reinit_io_cache(internal::READ_CACHE,0L,0,0);
     ref_pos=table->cursor->ref;
     if (!table->cursor->inited)
-      table->cursor->startTableScan(0);
+    {
+      error= table->cursor->startTableScan(0);
+      if (error != 0)
+        return error;
+    }
 
     /*
       table->sort.addon_field is checked because if we use addon fields,
@@ -146,7 +159,10 @@ void ReadRecord::init_read_record(Session *session_arg,
   }
   else if (table->sort.record_pointers)
   {
-    table->cursor->startTableScan(0);
+    error= table->cursor->startTableScan(0);
+    if (error != 0)
+      return error;
+
     cache_pos=table->sort.record_pointers;
     cache_end= cache_pos+ table->sort.found_records * ref_length;
     read_record= (table->sort.addon_field ?  rr_unpack_from_buffer : rr_from_pointers);
@@ -154,7 +170,10 @@ void ReadRecord::init_read_record(Session *session_arg,
   else
   {
     read_record= rr_sequential;
-    table->cursor->startTableScan(1);
+    error= table->cursor->startTableScan(1);
+    if (error != 0)
+      return error;
+
     /* We can use record cache if we don't update dynamic length tables */
     if (!table->no_cache &&
         (use_record_cache > 0 ||
@@ -165,7 +184,7 @@ void ReadRecord::init_read_record(Session *session_arg,
     }
   }
 
-  return;
+  return 0;
 } /* init_read_record */
 
 

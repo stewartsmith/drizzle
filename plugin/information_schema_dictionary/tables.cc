@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/information_schema_dictionary/dictionary.h"
+#include <config.h>
+#include <plugin/information_schema_dictionary/dictionary.h>
 
 using namespace std;
 using namespace drizzled;
@@ -41,7 +41,7 @@ Tables::Generator::Generator(drizzled::Field **arg) :
 
 bool Tables::Generator::populate()
 {
-  const drizzled::TableIdentifier *identifier;
+  const drizzled::identifier::Table *identifier;
 
   while ((identifier= generator))
   {

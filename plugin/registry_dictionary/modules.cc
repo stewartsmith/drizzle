@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/registry_dictionary/dictionary.h"
-#include "drizzled/module/library.h"
+#include <plugin/registry_dictionary/dictionary.h>
+#include <drizzled/module/library.h>
 
 using namespace std;
 using namespace drizzled;
@@ -51,7 +51,7 @@ ModulesTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   module::Registry &registry= module::Registry::singleton();
-  modules= registry.getList(true);
+  modules= registry.getList();
   it= modules.begin();
 }
 

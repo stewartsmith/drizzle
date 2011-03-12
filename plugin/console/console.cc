@@ -13,12 +13,14 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/session.h>
 #include <drizzled/module/option_map.h>
+
+#include <drizzled/plugin/catalog.h>
 
 #include <iostream>
 
@@ -40,24 +42,38 @@ class ClientConsole: public plugin::Client
   uint32_t max_column;
   const std::string &username;
   const std::string &password;
-  const std::string &db;
+  const std::string &schema;
+  const std::string &_catalog;
 
 public:
   ClientConsole(const std::string &username_arg,
                 const std::string &password_arg,
-                const std::string &db_arg) :
+                const std::string &schema_arg,
+                const std::string &catalog_arg) :
     is_dead(false),
     column(0),
     max_column(0),
     username(username_arg),
     password(password_arg),
-    db(db_arg)
+    schema(schema_arg),
+    _catalog(catalog_arg)
   {}
 
   virtual void printDebug(const char *message)
   {
     if (debug_enabled)
       cout << "CONSOLE: " << message << endl;
+  }
+
+  catalog::Instance::shared_ptr catalog()
+  {
+    identifier::Catalog identifier(_catalog);
+    catalog::Instance::shared_ptr tmp= plugin::Catalog::getInstance(identifier);
+    if (not tmp)
+    {
+      std::cerr << "Invalid catalog '" << identifier << "', resorting to 'local' catalog" << std::endl;
+    }
+    return tmp;
   }
 
   virtual int getFileDescriptor(void)
@@ -102,7 +118,8 @@ public:
     identifier::User::shared_ptr user= identifier::User::make_shared();
     user->setUser(username);
     session->setUser(user);
-    return session->checkUser(password, db);
+
+    return session->checkUser(password, schema);
   }
 
   virtual bool readCommand(char **packet, uint32_t *packet_length)
@@ -133,13 +150,15 @@ public:
     }
     while (cin.eof() == false && cin.fail() == true);
 
-    if ((*packet_length == 1 && cin.eof() == true) ||
-        !strncasecmp(*packet + 1, "quit", 4) ||
-        !strncasecmp(*packet + 1, "exit", 4))
+    if ((*packet_length == 1 && cin.eof() == true) or
+        not strncasecmp(*packet + 1, "quit", 4) or
+        not strncasecmp(*packet + 1, "exit", 4) or
+        not strncasecmp(*packet + 1, "shutdown", sizeof("shutdown") -1))
     {
       is_dead= true;
       *packet_length= 1;
       (*packet)[0]= COM_SHUTDOWN;
+
       return true;
     }
 
@@ -147,6 +166,7 @@ public:
     cin.ignore(2, '\n');
 
     (*packet)[0]= COM_QUERY;
+
     return true;
   }
 
@@ -160,14 +180,14 @@ public:
     printDebug("sendEOF");
   }
 
-  virtual void sendError(uint32_t sql_errno, const char *err)
+  virtual void sendError(const drizzled::error_t sql_errno, const char *err)
   {
-    cout << "Error: " << sql_errno << " " << err << endl;
+    cout << "Error: " << static_cast<long>(sql_errno) << " " << err << endl;
   }
 
   virtual bool sendFields(List<Item> *list)
   {
-    List_iterator_fast<Item> it(*list);
+    List<Item>::iterator it(list->begin());
     Item *item;
 
     column= 0;
@@ -271,6 +291,16 @@ public:
     printDebug("wasAborted");
     return false;
   }
+
+  bool isConsole() const
+  {
+    return true;
+  }
+
+  bool isInteractive() const
+  {
+    return true;
+  }
 };
 
 class ListenConsole: public plugin::Listen
@@ -278,17 +308,20 @@ class ListenConsole: public plugin::Listen
   int pipe_fds[2];
   const std::string username;
   const std::string password;
-  const std::string db;
+  const std::string schema;
+  const std::string _catalog;
 
 public:
   ListenConsole(const std::string &name_arg,
                 const std::string &username_arg,
                 const std::string &password_arg,
-                const std::string &db_arg) :
+                const std::string &schema_arg,
+                const std::string &catalog_arg) :
     plugin::Listen(name_arg),
     username(username_arg),
     password(password_arg),
-    db(db_arg)
+    schema(schema_arg),
+    _catalog(catalog_arg)
   {
     pipe_fds[0]= -1;
   }
@@ -312,7 +345,7 @@ public:
 
     if (pipe(pipe_fds) == -1)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("pipe() failed with errno %d"), errno);
+      errmsg_printf(error::ERROR, _("pipe() failed with errno %d"), errno);
       return true;
     }
 
@@ -325,7 +358,8 @@ public:
   {
     char buffer[1];
     assert(read(fd, buffer, 1) == 1);
-    return new ClientConsole(username, password, db);
+
+    return new ClientConsole(username, password, schema, _catalog);
   }
 };
 
@@ -334,13 +368,12 @@ static int init(drizzled::module::Context &context)
   const module::option_map &vm= context.getOptions();
   const string username(vm.count("username") ? vm["username"].as<string>() : "");
   const string password(vm.count("password") ? vm["password"].as<string>() : "");
-  const string db(vm.count("db") ? vm["db"].as<string>() : "");
-  context.registerVariable(new sys_var_bool_ptr("enable", &enabled));
-  context.registerVariable(new sys_var_bool_ptr("debug_enable", &debug_enabled));
-  context.registerVariable(new sys_var_const_string_val("username", username));
-  context.registerVariable(new sys_var_const_string_val("password", password));
-  context.registerVariable(new sys_var_const_string_val("db", db));
-  context.add(new ListenConsole("console", username, password, db));
+  const string schema(vm.count("schema") ? vm["schema"].as<string>() : "");
+
+  const std::string catalog(vm.count("catalog") ? vm["catalog"].as<string>() : "LOCAL");
+
+  context.add(new ListenConsole("console", username, password, schema, catalog));
+
   return 0;
 }
 
@@ -358,21 +391,24 @@ static void init_options(drizzled::module::option_context &context)
   context("password",
           po::value<string>(),
           N_("Password to use for auth."));
-  context("db",
+  context("catalog",
           po::value<string>(),
-          N_("Default database to use."));
+          N_("Default catalog to use."));
+  context("schema",
+          po::value<string>(),
+          N_("Default schema to use."));
 }
 
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "console",
-  "0.1",
+  "0.2",
   "Eric Day",
   "Console Client",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

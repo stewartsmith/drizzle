@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/schema_dictionary/dictionary.h"
-#include "drizzled/identifier.h"
+#include <config.h>
+#include <plugin/schema_dictionary/dictionary.h>
+#include <drizzled/identifier.h>
 
 using namespace std;
 using namespace drizzled;
@@ -58,6 +58,7 @@ TablesTool::TablesTool() :
   add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER, 0, false);
   add_field("TABLE_UUID", plugin::TableFunction::STRING, 36, true);
   add_field("TABLE_VERSION", plugin::TableFunction::NUMBER, 0, true);
+  add_field("IS_REPLICATED", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 TablesTool::Generator::Generator(Field **arg) :
@@ -103,7 +104,7 @@ void TablesTool::Generator::fill()
   push(getTableMessage().name());
 
   /* TABLE_TYPE */
-  if (drizzled::TableIdentifier::isView(getTableMessage().type()))
+  if (drizzled::identifier::Table::isView(getTableMessage().type()))
   {
     push("VIEW");
   }
@@ -133,10 +134,24 @@ void TablesTool::Generator::fill()
   }
 
   /* ENGINE */
-  push(getTableMessage().engine().name());
+  const drizzled::message::Engine &engine= getTableMessage().engine();
+  push(engine.name());
 
   /* ROW_FORMAT */
-  push("DEFAULT");
+  bool row_format_sent= false;
+  for (ssize_t it= 0; it < engine.options_size(); it++)
+  {
+    const drizzled::message::Engine::Option &opt= engine.options(it);
+    if (opt.name().compare("ROW_FORMAT") == 0)
+    {
+      row_format_sent= true;
+      push(opt.state());
+      break;
+    }
+  }
+
+  if (not row_format_sent)
+    push("DEFAULT");
 
   /* TABLE_COLLATION */
   push(getTableMessage().options().collation());
@@ -174,4 +189,7 @@ void TablesTool::Generator::fill()
 
   /* TABLE_VERSION */
   push(getTableMessage().version());
+
+  /* IS_REPLICATED */
+  push(message::is_replicated(getTableMessage()));
 }

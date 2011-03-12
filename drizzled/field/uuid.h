@@ -24,7 +24,7 @@
 #include <drizzled/field.h>
 #include <string>
 
-#include "drizzled/type/uuid.h"
+#include <drizzled/type/uuid.h>
 
 namespace drizzled
 {
@@ -51,9 +51,9 @@ public:
 
   int store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
   int store(int64_t nr, bool unsigned_val);
-  double val_real();
-  int64_t val_int();
-  String *val_str(String*,String *);
+  double val_real() const;
+  int64_t val_int() const;
+  String *val_str(String*,String *) const;
   void sql_type(drizzled::String&) const;
   int store_decimal(const drizzled::type::Decimal*);
 
@@ -66,8 +66,8 @@ public:
   inline String *val_str(String *str) { return val_str(str, str); }
   uint32_t size_of() const { return sizeof(*this); }
 
-  bool get_date(type::Time *ltime, uint32_t);
-  bool get_time(type::Time *ltime);
+  bool get_date(type::Time &ltime, uint32_t) const;
+  bool get_time(type::Time &ltime) const;
 
 #ifdef NOT_YET
   void generate();

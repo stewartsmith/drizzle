@@ -55,9 +55,9 @@
 --echo Comparing tables $diff_table_1 and $diff_table_2
 disable_query_log;
 
---error 0,1
+--error EE_OK,EE_ERROR_FIRST
 --remove_file $DRIZZLETEST_VARDIR/tmp/diff_table_1
---error 0,1
+--error EE_OK,EE_ERROR_FIRST
 --remove_file $DRIZZLETEST_VARDIR/tmp/diff_table_2
 
 let $_diff_table=$diff_table_2;

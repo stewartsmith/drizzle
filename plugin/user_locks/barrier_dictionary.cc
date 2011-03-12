@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/user_locks/module.h"
+#include <plugin/user_locks/module.h>
 
 #include <drizzled/atomics.h>
 #include <drizzled/session.h>
@@ -56,25 +56,25 @@ bool UserBarriers::Generator::populate()
   while (iter != barrier_map.end())
   {
     // USER_BARRIER_NAME
-    push((*iter).first.getLockName());
+    push(iter->first.getLockName());
 
     // SESSION_ID
-    push((*iter).second->getOwner());
+    push(iter->second->getOwner());
      
     // USER_NAME
-    push((*iter).first.getUser());
+    push(iter->first.getUser());
     
     // WAITER_LIMIT
-    push((*iter).second->getLimit());
+    push(iter->second->getLimit());
     
     // GENERATION
-    push((*iter).second->getGeneration());
+    push(iter->second->getGeneration());
     
     // WAITERS
-    push((*iter).second->sizeWaiters());
+    push(iter->second->sizeWaiters());
     
     // OBSERVERS
-    push((*iter).second->sizeObservers());
+    push(iter->second->sizeObservers());
 
     iter++;
     return true;

@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/change_schema.h>
-#include <drizzled/db.h>
+#include <drizzled/schema.h>
 
 #include <string>
 
@@ -33,12 +33,12 @@ namespace drizzled
 
 bool statement::ChangeSchema::execute()
 {
-  Select_Lex *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &lex().select_lex;
 
-  SchemaIdentifier identifier(select_lex->db);
-  if (not change_db(session, identifier))
+  identifier::Schema identifier(select_lex->db);
+  if (not schema::change(*getSession(), identifier))
   {
-    session->my_ok();
+    getSession()->my_ok();
   }
 
   return false;

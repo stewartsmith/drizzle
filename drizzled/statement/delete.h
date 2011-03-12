@@ -33,12 +33,17 @@ namespace statement
 class Delete : public Statement
 {
 public:
-  Delete(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Delete(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_DELETE);
+  }
 
   bool execute();
+  bool isTransactional()
+  {
+    return true;
+  }
 };
 
 } /* namespace statement */

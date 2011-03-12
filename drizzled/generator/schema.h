@@ -21,10 +21,13 @@
 #ifndef DRIZZLED_GENERATOR_SCHEMA_H
 #define DRIZZLED_GENERATOR_SCHEMA_H
 
-#include "drizzled/session.h"
-#include "drizzled/plugin/storage_engine.h"
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled {
+
+class Session;
+
 namespace generator {
 
 class Schema
@@ -32,40 +35,15 @@ class Schema
   Session &session;
   message::schema::shared_ptr schema;
 
-  SchemaIdentifier::vector schema_names;
-  SchemaIdentifier::vector::const_iterator schema_iterator;
+  identifier::Schema::vector schema_names;
+  identifier::Schema::vector::const_iterator schema_iterator;
 
 public:
 
   Schema(Session &arg);
 
-  operator const drizzled::message::schema::shared_ptr()
-  {
-    while (schema_iterator != schema_names.end())
-    {
-      SchemaIdentifier schema_identifier(*schema_iterator);
-      bool is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
-      schema_iterator++;
-
-      if (is_schema_parsed)
-        return schema;
-    }
-
-    return message::schema::shared_ptr();
-  }
-
-  operator const drizzled::SchemaIdentifier*()
-  {
-    while (schema_iterator != schema_names.end())
-    {
-      const drizzled::SchemaIdentifier *_ptr= &(*schema_iterator);
-      schema_iterator++;
-
-      return _ptr;
-    }
-
-    return NULL;
-  }
+  operator const drizzled::message::schema::shared_ptr();
+  operator const drizzled::identifier::Schema*();
 };
 
 } /* namespace generator */

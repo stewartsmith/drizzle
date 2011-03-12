@@ -1,3 +1,6 @@
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 DROP TABLE IF EXISTS t1_trx, t1_non_trx;
 SET AUTOCOMMIT= 0;
 CREATE TABLE t1_trx (
@@ -18,6 +21,34 @@ INSERT INTO t1_non_trx VALUES ('key2','value2');
 ROLLBACK;
 Warnings:
 Warning	1196	Some non-transactional changed tables couldn't be rolled back
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_key_parts()
+::max_supported_keys()
+::max_supported_key_part_length()
+::doCreateTable()
+::SEAPITester()
+BEGIN
+In Transaction
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+ROLLBACK
+::SEAPITester()
+BEGIN
+In Transaction
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 Expected warning about non-trx data changes not being rolled back
 SELECT * FROM t1_trx;
 k	v
@@ -25,7 +56,18 @@ SELECT * FROM t1_non_trx;
 k	v
 key1	value1
 key2	value2
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 START TRANSACTION;
+Warnings:
+Warning	1746	There is already a transaction in progress
 INSERT INTO t1_trx VALUES ('key1','value1');
 INSERT INTO t1_trx VALUES ('key2','value2');
 SELECT t1_trx.k, t1_trx.v
@@ -35,9 +77,44 @@ k	v
 key1	value1
 key2	value2
 ROLLBACK;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+ROLLBACK
+::SEAPITester()
+BEGIN
+In Transaction
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
 SELECT t1_trx.k, t1_trx.v
 FROM t1_trx
 INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
 k	v
+COMMIT;
 DROP TABLE t1_trx;
 DROP TABLE t1_non_trx;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+START STATEMENT
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+COMMIT
+::SEAPITester()
+BEGIN
+In Transaction
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0

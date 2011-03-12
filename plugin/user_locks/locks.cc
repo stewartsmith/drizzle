@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/user_locks/module.h"
+#include <config.h>
+#include <plugin/user_locks/module.h>
 
 #include <boost/thread/locks.hpp>
 
@@ -35,7 +35,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
   LockMap::iterator iter;
   while ((iter= lock_map.find(arg)) != lock_map.end())
   {
-    if (id_arg == (*iter).second->id)
+    if (id_arg == iter->second->id)
     {
       // We own the lock, so we just exit.
       return true;
@@ -137,7 +137,7 @@ bool Locks::isUsed(const user_locks::Key &arg, drizzled::session_id_t &id_arg)
   if ( iter == lock_map.end())
     return false;
 
-  id_arg= (*iter).second->id;
+  id_arg= iter->second->id;
 
   return true;
 }
@@ -167,7 +167,7 @@ locks::return_t Locks::release(const user_locks::Key &arg, drizzled::session_id_
   if ( iter == lock_map.end())
     return locks::NOT_FOUND;
 
-  if ((*iter).second->id == id_arg)
+  if (iter->second->id == id_arg)
   {
     elements= lock_map.erase(arg);
     assert(elements); // If we can't find what we just found, then we are broken

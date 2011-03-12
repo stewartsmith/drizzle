@@ -18,17 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <assert.h>
 
-#include "drizzled/identifier.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/identifier.h>
+#include <drizzled/session.h>
+#include <drizzled/internal/my_sys.h>
 
-#include "drizzled/util/tablename_to_filename.h"
-#include "drizzled/util/backtrace.h"
+#include <drizzled/util/tablename_to_filename.h>
+#include <drizzled/util/backtrace.h>
 
 #include <algorithm>
 #include <sstream>
@@ -41,8 +40,10 @@ using namespace std;
 namespace drizzled
 {
 
+namespace identifier
+{
+
 extern string drizzle_tmpdir;
-extern pid_t current_pid;
 
 static size_t build_schema_filename(string &path, const string &db)
 {
@@ -52,7 +53,7 @@ static size_t build_schema_filename(string &path, const string &db)
   conversion_error= util::tablename_to_filename(db, path);
   if (conversion_error)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Schema name cannot be encoded and fit within filesystem "
                     "name length restrictions."));
     return 0;
@@ -61,10 +62,9 @@ static size_t build_schema_filename(string &path, const string &db)
   return path.length();
 }
 
-SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
+Schema::Schema(const std::string &db_arg) :
   db(db_arg),
-  db_path(""),
-  catalog("LOCAL")
+  db_path("")
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);
@@ -78,32 +78,32 @@ SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
 
   if (not db_arg.empty())
   {
-    drizzled::build_schema_filename(db_path, db);
+    build_schema_filename(db_path, db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
 }
 
-void SchemaIdentifier::getSQLPath(std::string &arg) const
+void Schema::getSQLPath(std::string &arg) const
 {
-  arg.append(getSchemaName());
+  arg= db;
 }
 
-const std::string &SchemaIdentifier::getPath() const
+const std::string &Schema::getPath() const
 {
   return db_path;
 }
 
-bool SchemaIdentifier::compare(const std::string &arg) const
+bool Schema::compare(const std::string &arg) const
 {
   return boost::iequals(arg, db);
 }
 
-bool SchemaIdentifier::compare(SchemaIdentifier::const_reference arg) const
+bool Schema::compare(Schema::const_reference arg) const
 {
   return boost::iequals(arg.getSchemaName(), db);
 }
 
-bool SchemaIdentifier::isValid() const
+bool Schema::isValid() const
 {
   bool error= false;
 
@@ -149,10 +149,7 @@ bool SchemaIdentifier::isValid() const
 
   if (error)
   {
-    std::string name;
-
-    getSQLPath(name);
-    my_error(ER_WRONG_DB_NAME, MYF(0), name.c_str());
+    my_error(ER_WRONG_DB_NAME, *this);
 
     return false;
   }
@@ -160,4 +157,23 @@ bool SchemaIdentifier::isValid() const
   return true;
 }
 
+const std::string &Schema::getCatalogName() const
+{
+  return drizzled::catalog::local_identifier().name();
+}
+
+std::ostream& operator<<(std::ostream& output, const Schema&identifier)
+{
+  output << "identifier::Schema:(";
+  output <<  catalog::local_identifier();
+  output << ", ";
+  output <<  identifier.getSchemaName().c_str();
+  output << ", ";
+  output << identifier.getPath().c_str();
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
+} /* namespace identifier */
 } /* namespace drizzled */

@@ -27,15 +27,15 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Session;
 class TableList;
 class Item;
 
-namespace statement
-{
+namespace session { class Transactions; }
+
+namespace statement {
 
 /**
  * @class Statement
@@ -44,12 +44,15 @@ namespace statement
 class Statement
 {
 public:
-  Statement(Session *in_session)
-    : 
-      session(in_session)
+  Statement(Session *in_session) :
+    _session(*in_session)
   {}
 
   virtual ~Statement() {}
+
+  void set_command(enum_sql_command);
+  LEX& lex();
+  session::Transactions& transaction();
 
   /**
    * Execute the statement.
@@ -58,21 +61,30 @@ public:
    */
   virtual bool execute()= 0;
 
-  Session *getSession()
+  /* True if can be in transaction. Currently only DDL is not.
+     This should go away when DDL commands are within transactions. */
+  virtual bool isTransactional()
   {
-    return session;
+    return false;
   }
 
-protected:
+  Session* getSession() const
+  {
+    return &session();
+  }
 
-  /**
-   * A session handler.
-   */
-  Session *session;
+  Session& session() const
+  {
+    return _session;
+  }
+
+  virtual bool isShow() { return false; }
+
+private:
+  Session& _session;
 };
 
 } /* namespace statement */
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_H */

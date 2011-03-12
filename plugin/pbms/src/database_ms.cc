@@ -28,12 +28,12 @@
  */
  
 #ifdef DRIZZLED
-#include "config.h"
+#include <config.h>
 #include <drizzled/common.h>
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/charset_info.h"
+#include <drizzled/charset_info.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/field.h>
 #endif
@@ -529,8 +529,7 @@ MSRepoFile *MSDatabase::getRepoFileFromPool(uint32_t repo_id, bool missing_ok)
 	if (!file) {
 		file = repo->openRepoFile();
 		lock_(myRepostoryList);
-		repo->addRepoFile(file);
-		file->retain();
+		repo->addRepoFile(RETAIN(file));
 		unlock_(myRepostoryList);
 	}
 	return_(file);
@@ -545,11 +544,11 @@ void MSDatabase::returnRepoFileToPool(MSRepoFile *file)
 	push_(file);
 	if ((repo = file->myRepo)) {
 		if (repo->isRemovingFP) {
-			repo->removeRepoFile(RETAIN(file));
+			repo->removeRepoFile(file); // No retain expected
 			myRepostoryList->wakeup();
 		}
 		else
-			repo->returnRepoFile(RETAIN(file));
+			repo->returnRepoFile(file); // No retain expected
 		repo->release(); /* [++] here is the release.  */
 	}
 	release_(file);
@@ -1047,7 +1046,7 @@ MSDatabase *MSDatabase::getDatabase(const char *db_name, bool create)
 	return getDatabase(CSString::newString(db_name), create);
 }
 
-MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
+MSDatabase *MSDatabase::getDatabase(uint32_t db_id, bool missing_ok)
 {
 	MSDatabase *db;
 	
@@ -1088,7 +1087,7 @@ MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
 	}
 	unlock_(gDatabaseList);
 	
-	if (!db) {
+	if ((!db) && !missing_ok) {
 		char buffer[CS_EXC_MESSAGE_SIZE];
 
 		cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Unknown database #");

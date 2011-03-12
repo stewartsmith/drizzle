@@ -33,12 +33,14 @@ namespace statement
 class DropTable : public Statement
 {
 public:
-  DropTable(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  DropTable(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_DROP_TABLE);
+  }
 
   bool execute();
+
   /* True if "IF EXISTS" */
   bool drop_if_exists;
 

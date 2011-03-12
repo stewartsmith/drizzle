@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <cstdio>
-#include "drizzled/plugin/client.h"
+
+#include <drizzled/plugin/client.h>
+#include <drizzled/type/time.h>
 
 namespace drizzled
 {
@@ -33,7 +36,7 @@ bool plugin::Client::store(const type::Time *from)
 
   switch (from->time_type)
   {
-  case DRIZZLE_TIMESTAMP_DATETIME:
+  case type::DRIZZLE_TIMESTAMP_DATETIME:
     length= snprintf(buff, (buff_len-length), "%04d-%02d-%02d %02d:%02d:%02d",
                     (int) from->year,
                     (int) from->month,
@@ -45,14 +48,14 @@ bool plugin::Client::store(const type::Time *from)
       length+= snprintf(buff+length, (buff_len-length), ".%06d", (int)from->second_part);
     break;
 
-  case DRIZZLE_TIMESTAMP_DATE:
+  case type::DRIZZLE_TIMESTAMP_DATE:
     length= snprintf(buff, (buff_len-length), "%04d-%02d-%02d",
                     (int) from->year,
                     (int) from->month,
                     (int) from->day);
     break;
 
-  case DRIZZLE_TIMESTAMP_TIME:
+  case type::DRIZZLE_TIMESTAMP_TIME:
     day= (from->year || from->month) ? 0 : from->day;
     length= snprintf(buff, (buff_len-length), "%s%02ld:%02d:%02d",
                     from->neg ? "-" : "",
@@ -63,8 +66,8 @@ bool plugin::Client::store(const type::Time *from)
       length+= snprintf(buff+length, (buff_len-length), ".%06d", (int)from->second_part);
     break;
 
-  case DRIZZLE_TIMESTAMP_NONE:
-  case DRIZZLE_TIMESTAMP_ERROR:
+  case type::DRIZZLE_TIMESTAMP_NONE:
+  case type::DRIZZLE_TIMESTAMP_ERROR:
   default:
     assert(0);
     return false;
@@ -77,6 +80,7 @@ bool plugin::Client::store(const char *from)
 {
   if (from == NULL)
     return store();
+
   return store(from, strlen(from));
 }
 

@@ -18,22 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 
-#include "drizzled/identifier/table.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
-#include "drizzled/table/concurrent.h"
+#include <drizzled/identifier.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include <drizzled/table/concurrent.h>
 
-#include "drizzled/table/cache.h"
-#include "drizzled/table/unused.h"
+#include <drizzled/table/cache.h>
+#include <drizzled/table/unused.h>
 
-#include "drizzled/pthread_globals.h"
+#include <drizzled/pthread_globals.h>
 
 namespace drizzled
 {
@@ -67,7 +67,7 @@ static void free_cache_entry(table::Concurrent *table)
     getUnused().unlink(table);
   }
 
-  delete table;
+  boost::checked_delete(table);
 }
 
 void remove_table(table::Concurrent *arg)
@@ -78,7 +78,7 @@ void remove_table(table::Concurrent *arg)
   for (CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
   {
-    table::Concurrent *found_table= (*iter).second;
+    table::Concurrent *found_table= iter->second;
 
     if (found_table == arg)
     {
@@ -99,13 +99,13 @@ bool Cache::areTablesUsed(Table *table, bool wait_for_name_lock)
 {
   do
   {
-    const TableIdentifier::Key &key(table->getShare()->getCacheKey());
+    const identifier::Table::Key &key(table->getShare()->getCacheKey());
 
     table::CacheRange ppp= table::getCache().equal_range(key);
 
     for (table::CacheMap::const_iterator iter= ppp.first; iter != ppp.second; ++iter)
     {
-      Table *search= (*iter).second;
+      Table *search= iter->second;
       if (search->in_use == table->in_use)
         continue;                               // Name locked by this thread
       /*
@@ -136,7 +136,7 @@ We can't use hash_delete when looping hash_elements. We mark them first
 and afterwards delete those marked unused.
 */
 
-void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
+void Cache::removeSchema(const identifier::Schema &schema_identifier)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 
@@ -144,7 +144,7 @@ void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
        iter != table::getCache().end();
        iter++)
   {
-    table::Concurrent *table= (*iter).second;
+    table::Concurrent *table= iter->second;
 
     if (not schema_identifier.getPath().compare(table->getShare()->getSchemaName()))
     {
@@ -172,9 +172,9 @@ void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
   1  Table is in use by another thread
 */
 
-bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t flags)
+bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_t flags)
 {
-  const TableIdentifier::Key &key(identifier.getKey());
+  const identifier::Table::Key &key(identifier.getKey());
   bool result= false; 
   bool signalled= false;
 
@@ -188,7 +188,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
     for (table::CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
-      table::Concurrent *table= (*iter).second;
+      table::Concurrent *table= iter->second;
       Session *in_use;
 
       table->getMutableShare()->resetVersion();		/* Free when thread is ready */
@@ -235,7 +235,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
     table::getUnused().cullByVersion();
 
     /* Remove table from table definition cache if it's not in use */
-    TableShare::release(identifier);
+    table::instance::release(identifier);
 
     if (result && (flags & RTFC_WAIT_OTHER_THREAD_FLAG))
     {

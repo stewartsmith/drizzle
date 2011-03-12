@@ -17,20 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_FUNCTION_FUNC_H
 #define DRIZZLED_FUNCTION_FUNC_H
 
 /// TODO: Rename this file - func.h is stupid.
 
+#include <drizzled/charset_info.h>
 #include <drizzled/item.h>
-#include <drizzled/sql_list.h>
 #include <drizzled/item/bin_string.h>
-#include "drizzled/current_session.h"
+#include <drizzled/lex_string.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/type/decimal.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
 
-class Item_func :public Item_result_field
+class DRIZZLED_API Item_func :
+  public Item_result_field
 {
   Session &_session;
 
@@ -41,6 +48,7 @@ protected:
     0 means get this number from first argument
   */
   uint32_t allowed_arg_cols;
+
 public:
 
   using Item::split_sum_func;
@@ -65,76 +73,17 @@ public:
   virtual enum Functype functype() const   { return UNKNOWN_FUNC; }
   virtual ~Item_func() {}
 
-  Item_func(void):
-    _session(*current_session),
-    allowed_arg_cols(1), arg_count(0)
-  {
-    with_sum_func= 0;
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(void);
 
-  Item_func(Item *a):
-    _session(*current_session),
-    allowed_arg_cols(1), arg_count(1)
-  {
-    args= tmp_arg;
-    args[0]= a;
-    with_sum_func= a->with_sum_func;
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a);
   
-  Item_func(Item *a,Item *b):
-    _session(*current_session),
-    allowed_arg_cols(1), arg_count(2)
-  {
-    args= tmp_arg;
-    args[0]= a; args[1]= b;
-    with_sum_func= a->with_sum_func || b->with_sum_func;
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a,Item *b);
   
-  Item_func(Item *a,Item *b,Item *c):
-    _session(*current_session),
-    allowed_arg_cols(1)
-  {
-    arg_count= 0;
-    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*3)))
-    {
-      arg_count= 3;
-      args[0]= a; args[1]= b; args[2]= c;
-      with_sum_func= a->with_sum_func || b->with_sum_func || c->with_sum_func;
-    }
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a,Item *b,Item *c);
   
-  Item_func(Item *a,Item *b,Item *c,Item *d):
-    _session(*current_session),
-    allowed_arg_cols(1)
-  {
-    arg_count= 0;
-    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*4)))
-    {
-      arg_count= 4;
-      args[0]= a; args[1]= b; args[2]= c; args[3]= d;
-      with_sum_func= a->with_sum_func || b->with_sum_func ||
-        c->with_sum_func || d->with_sum_func;
-    }
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a,Item *b,Item *c,Item *d);
   
-  Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
-    _session(*current_session),
-    allowed_arg_cols(1)
-  {
-    arg_count= 5;
-    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*5)))
-    {
-      args[0]= a; args[1]= b; args[2]= c; args[3]= d; args[4]= e;
-      with_sum_func= a->with_sum_func || b->with_sum_func ||
-        c->with_sum_func || d->with_sum_func || e->with_sum_func ;
-    }
-    collation.set(DERIVATION_SYSCONST);
-  }
+  Item_func(Item *a,Item *b,Item *c,Item *d,Item* e);
   
   Item_func(List<Item> &list);
   
@@ -175,18 +124,23 @@ public:
   virtual void split_sum_func(Session *session, Item **ref_pointer_array,
                               List<Item> &fields);
 
-  virtual void print(String *str, enum_query_type query_type);
-  void print_op(String *str, enum_query_type query_type);
-  void print_args(String *str, uint32_t from, enum_query_type query_type);
+  virtual void print(String *str);
+  void print_op(String *str);
+  void print_args(String *str, uint32_t from);
   virtual void fix_num_length_and_dec();
   void count_only_length();
   void count_real_length();
   void count_decimal_length();
 
-  bool get_arg0_date(type::Time *ltime, uint32_t fuzzy_date);
-  bool get_arg0_time(type::Time *ltime);
+  bool get_arg0_date(type::Time &ltime, uint32_t fuzzy_date);
+  bool get_arg0_time(type::Time &ltime);
 
   bool is_null();
+
+  virtual bool deterministic() const
+  {
+    return false;
+  }
 
   void signal_divide_by_null();
 

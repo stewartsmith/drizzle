@@ -22,6 +22,7 @@
 
 #define DRIZZLE_MAX_LINE_LENGTH 1024*1024L-1025
 #include "client_priv.h"
+#include "server_detect.h"
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -75,9 +76,10 @@ class DrizzleDumpIndex
     bool isPrimary;
     bool isUnique;
     bool isHash;
-    uint32_t length;
 
-    std::vector<std::string> columns;
+    /* Stores the column name and the length of the index part */
+    typedef std::pair<std::string,uint32_t> columnData;
+    std::vector<columnData> columns;
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj);
 };
 
@@ -132,6 +134,7 @@ class DrizzleDumpTable
     DrizzleDumpTable(std::string &table, DrizzleDumpConnection* connection) :
       dcon(connection),
       tableName(table),
+      replicate(true),
       database(NULL)
     { }
 
@@ -154,6 +157,7 @@ class DrizzleDumpTable
     std::string engineName;
     std::string collate;
     std::string comment;
+    bool replicate;
 
     // Currently MySQL only, hard to do in Drizzle
     uint64_t autoIncrement;
@@ -214,14 +218,10 @@ class DrizzleDumpConnection
     drizzle_con_st connection;
     std::string hostName;
     bool drizzleProtocol;
-    int serverType;
+    ServerDetect::server_type serverType;
+    std::string serverVersion;
 
   public:
-    enum server_type {
-      SERVER_MYSQL_FOUND,
-      SERVER_DRIZZLE_FOUND,
-      SERVER_UNKNOWN_FOUND
-    };
     DrizzleDumpConnection(std::string &host, uint16_t port,
       std::string &username, std::string &password, bool drizzle_protocol);
     ~DrizzleDumpConnection();
@@ -244,7 +244,7 @@ class DrizzleDumpConnection
     bool setDB(std::string databaseName);
     bool usingDrizzleProtocol(void) const { return drizzleProtocol; }
     bool getServerType(void) const { return serverType; }
-    const char* getServerVersion(void) { return drizzle_con_server_version(&connection); }
+    std::string getServerVersion(void) const { return serverVersion; }
 };
 
 class DrizzleStringBuf : public std::streambuf

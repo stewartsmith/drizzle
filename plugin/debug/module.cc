@@ -34,14 +34,15 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <signal.h>
 
-#include <drizzled/util/backtrace.h>
 #include <drizzled/function/func.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/function/boolean.h>
+#include <drizzled/plugin/function.h>
+#include <drizzled/util/backtrace.h>
 
 using namespace drizzled;
 
@@ -153,7 +154,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Useful functions for programmers to debug the server.",
   PLUGIN_LICENSE_BSD,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

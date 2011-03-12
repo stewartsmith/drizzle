@@ -33,8 +33,10 @@
  * call.
  */
 
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/plugin/replication.h"
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/plugin/replication.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -49,7 +51,7 @@ namespace plugin
 /**
  * Base class for appliers of Transaction messages
  */
-class TransactionApplier : public Plugin
+class DRIZZLED_API TransactionApplier : public Plugin
 {
   TransactionApplier();
   TransactionApplier(const TransactionApplier &);

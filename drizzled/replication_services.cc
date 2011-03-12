@@ -34,14 +34,14 @@
  * ReplicationServices is a bridge between replication modules and the kernel,
  * and its primary function is to  */
 
-#include "config.h"
-#include "drizzled/replication_services.h"
-#include "drizzled/plugin/transaction_replicator.h"
-#include "drizzled/plugin/transaction_applier.h"
-#include "drizzled/message/transaction.pb.h"
-#include "drizzled/gettext.h"
-#include "drizzled/session.h"
-#include "drizzled/error.h"
+#include <config.h>
+#include <drizzled/replication_services.h>
+#include <drizzled/plugin/transaction_replicator.h>
+#include <drizzled/plugin/transaction_applier.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/gettext.h>
+#include <drizzled/session.h>
+#include <drizzled/error.h>
 
 #include <string>
 #include <vector>
@@ -90,7 +90,7 @@ bool ReplicationServices::evaluateRegisteredPlugins()
 
   if (replicators.empty() && not appliers.empty())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   N_("You registered a TransactionApplier plugin but no "
                      "TransactionReplicator plugins were registered.\n"));
     return false;
@@ -121,7 +121,7 @@ bool ReplicationServices::evaluateRegisteredPlugins()
     }
     if (not found)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     N_("You registered a TransactionApplier plugin but no "
                        "TransactionReplicator plugins were registered that match the "
                        "requested replicator name of '%s'.\n"
@@ -173,8 +173,8 @@ plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(Sessio
        iter != replication_streams.end();
        ++iter)
   {
-    plugin::TransactionReplicator *cur_repl= (*iter).first;
-    plugin::TransactionApplier *cur_appl= (*iter).second;
+    plugin::TransactionReplicator *cur_repl= iter->first;
+    plugin::TransactionApplier *cur_appl= iter->second;
 
     result= cur_repl->replicate(cur_appl, in_session, to_push);
 

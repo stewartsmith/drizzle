@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/session.h>
 #include <drizzled/table.h>
@@ -29,6 +29,7 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/item/subselect.h>
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -56,7 +57,7 @@ namespace drizzled
 bool Item_field::collect_item_field_processor(unsigned char *arg)
 {
   List<Item_field> *item_list= (List<Item_field>*) arg;
-  List_iterator<Item_field> item_list_it(*item_list);
+  List<Item_field>::iterator item_list_it(item_list->begin());
   Item_field *curr_item;
   while ((curr_item= item_list_it++))
   {
@@ -165,7 +166,7 @@ Item_field::Item_field(Name_resolution_context *context_arg,
    have_privileges(0),
    any_privileges(0)
 {
-  Select_Lex *select= current_session->lex->current_select;
+  Select_Lex *select= getSession().getLex()->current_select;
   collation.set(DERIVATION_IMPLICIT);
 
   if (select && select->parsing_place != IN_HAVING)
@@ -262,32 +263,32 @@ String *Item_field::str_result(String *str)
   return result_field->val_str(str,&str_value);
 }
 
-bool Item_field::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Item_field::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   if ((null_value=field->is_null()) || field->get_date(ltime,fuzzydate))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
 }
 
-bool Item_field::get_date_result(type::Time *ltime,uint32_t fuzzydate)
+bool Item_field::get_date_result(type::Time &ltime,uint32_t fuzzydate)
 {
   if ((null_value=result_field->is_null()) ||
       result_field->get_date(ltime,fuzzydate))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
 }
 
-bool Item_field::get_time(type::Time *ltime)
+bool Item_field::get_time(type::Time &ltime)
 {
   if ((null_value=field->is_null()) || field->get_time(ltime))
   {
-    memset(ltime, 0, sizeof(*ltime));
+    ltime.reset();
     return 1;
   }
   return 0;
@@ -319,7 +320,10 @@ type::Decimal *Item_field::val_decimal_result(type::Decimal *decimal_value)
 bool Item_field::val_bool_result()
 {
   if ((null_value= result_field->is_null()))
+  {
     return false;
+  }
+
   switch (result_field->result_type()) {
   case INT_RESULT:
     return result_field->val_int() != 0;
@@ -329,7 +333,7 @@ bool Item_field::val_bool_result()
       type::Decimal decimal_value;
       type::Decimal *val= result_field->val_decimal(&decimal_value);
       if (val)
-        return not val->is_zero();
+        return not val->isZero();
       return 0;
     }
 
@@ -366,21 +370,21 @@ bool Item_field::eq(const Item *item, bool) const
     (In cases where we would choose wrong we would have to generate a
     ER_NON_UNIQ_ERROR).
   */
-  return (!my_strcasecmp(system_charset_info, item_field->name,
-			 field_name) &&
-	  (!item_field->table_name || !table_name ||
-	   (!my_strcasecmp(table_alias_charset, item_field->table_name,
-			   table_name) &&
-	    (!item_field->db_name || !db_name ||
-	     (item_field->db_name && !strcasecmp(item_field->db_name,
-					     db_name))))));
+  return (not my_strcasecmp(system_charset_info, item_field->name, field_name) &&
+          (not item_field->table_name || not table_name ||
+           (not my_strcasecmp(table_alias_charset, item_field->table_name, table_name) &&
+            (not item_field->db_name || not db_name ||
+             (item_field->db_name && not my_strcasecmp(system_charset_info, item_field->db_name, db_name))))));
 }
 
 
 table_map Item_field::used_tables() const
 {
   if (field->getTable()->const_table)
+  {
     return 0;					// const item
+  }
+
   return (depended_from ? OUTER_REF_TABLE_BIT : field->getTable()->map);
 }
 
@@ -493,7 +497,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
   */
   Name_resolution_context *last_checked_context= context;
   Item **ref= (Item **) not_found_item;
-  Select_Lex *current_sel= (Select_Lex *) session->lex->current_select;
+  Select_Lex *current_sel= (Select_Lex *) session->getLex()->current_select;
   Name_resolution_context *outer_context= 0;
   Select_Lex *select= 0;
   /* Currently derived tables cannot be correlated */
@@ -538,7 +542,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
         if (*from_field != view_ref_found)
         {
           prev_subselect_item->used_tables_cache|= (*from_field)->getTable()->map;
-          prev_subselect_item->const_item_cache= 0;
+          prev_subselect_item->const_item_cache= false;
           set_field(*from_field);
           if (!last_checked_context->select_lex->having_fix_field &&
               select->group_list.elements &&
@@ -557,20 +561,20 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
             ;
             if (!(rf= new Item_outer_ref(context, this)))
               return -1;
-            session->change_item_tree(reference, rf);
+            *reference= rf;
             select->inner_refs_list.push_back(rf);
-            rf->in_sum_func= session->lex->in_sum_func;
+            rf->in_sum_func= session->getLex()->in_sum_func;
           }
           /*
             A reference is resolved to a nest level that's outer or the same as
             the nest level of the enclosing set function : adjust the value of
             max_arg_level for the function if it's needed.
           */
-          if (session->lex->in_sum_func &&
-              session->lex->in_sum_func->nest_level >= select->nest_level)
+          if (session->getLex()->in_sum_func &&
+              session->getLex()->in_sum_func->nest_level >= select->nest_level)
           {
             Item::Type ref_type= (*reference)->type();
-            set_if_bigger(session->lex->in_sum_func->max_arg_level,
+            set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
                           select->nest_level);
             set_field(*from_field);
             fixed= 1;
@@ -626,7 +630,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       case it does not matter which used tables bits we set)
     */
     prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-    prev_subselect_item->const_item_cache= 0;
+    prev_subselect_item->const_item_cache= false;
   }
 
   assert(ref != 0);
@@ -637,7 +641,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     if (upward_lookup)
     {
       // We can't say exactly what absent table or field
-      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where);
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where());
     }
     else
     {
@@ -679,9 +683,9 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     if (place != IN_HAVING && select->group_list.elements)
     {
       outer_context->select_lex->inner_refs_list.push_back((Item_outer_ref*)rf);
-      ((Item_outer_ref*)rf)->in_sum_func= session->lex->in_sum_func;
+      ((Item_outer_ref*)rf)->in_sum_func= session->getLex()->in_sum_func;
     }
-    session->change_item_tree(reference, rf);
+    *reference= rf;
     /*
       rf is Item_ref => never substitute other items (in this case)
       during fix_fields() => we can use rf after fix_fields()
@@ -708,7 +712,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
                        (char*) cached_table->alias, (char*) field_name);
       if (!rf)
         return -1;
-      session->change_item_tree(reference, rf);
+      *reference= rf;
       /*
         rf is Item_ref => never substitute other items (in this case)
         during fix_fields() => we can use rf after fix_fields()
@@ -785,19 +789,19 @@ bool Item_field::fix_fields(Session *session, Item **reference)
                                           context->first_name_resolution_table,
                                           context->last_name_resolution_table,
                                           reference,
-                                          session->lex->use_only_table_context ?
+                                          session->getLex()->use_only_table_context ?
                                             REPORT_ALL_ERRORS :
                                             IGNORE_EXCEPT_NON_UNIQUE, true)) ==
         not_found_field)
     {
       int ret;
       /* Look up in current select's item_list to find aliased fields */
-      if (session->lex->current_select->is_item_list_lookup)
+      if (session->getLex()->current_select->is_item_list_lookup)
       {
         uint32_t counter;
         enum_resolution_type resolution;
         Item** res= find_item_in_list(session,
-                                      this, session->lex->current_select->item_list,
+                                      this, session->getLex()->current_select->item_list,
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution);
         if (!res)
@@ -821,7 +825,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
             {
               /* The column to which we link isn't valid. */
               my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name,
-                       current_session->where);
+                       session->where());
               return(1);
             }
 
@@ -838,7 +842,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
             Item_ref *rf= new Item_ref(context, db_name,table_name,field_name);
             if (!rf)
               return 1;
-            session->change_item_tree(reference, rf);
+            *reference= rf;
             /*
               Because Item_ref never substitutes itself with other items
               in Item_ref::fix_fields(), we can safely use the original
@@ -885,12 +889,12 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       return false;
 
     set_field(from_field);
-    if (session->lex->in_sum_func &&
-        session->lex->in_sum_func->nest_level ==
-        session->lex->current_select->nest_level)
+    if (session->getLex()->in_sum_func &&
+        session->getLex()->in_sum_func->nest_level ==
+        session->getLex()->current_select->nest_level)
     {
-      set_if_bigger(session->lex->in_sum_func->max_arg_level,
-                    session->lex->current_select->nest_level);
+      set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
+                    session->getLex()->current_select->nest_level);
     }
   }
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
@@ -977,7 +981,7 @@ Item_equal *Item_field::find_item_equal(COND_EQUAL *cond_equal)
   Item_equal *item= 0;
   while (cond_equal)
   {
-    List_iterator_fast<Item_equal> li(cond_equal->current_level);
+    List<Item_equal>::iterator li(cond_equal->current_level.begin());
     while ((item= li++))
     {
       if (item->contains(field))
@@ -1249,7 +1253,7 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
   {
     List<Item> *all_fields= &select->join->all_fields;
     Item **ref_pointer_array= select->ref_pointer_array;
-    int el= all_fields->elements;
+    int el= all_fields->size();
     Item_ref *ref;
 
     ref_pointer_array[el]= (Item*)this;
@@ -1262,7 +1266,7 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
 }
 
 
-void Item_field::print(String *str, enum_query_type query_type)
+void Item_field::print(String *str)
 {
   if (field && field->getTable()->const_table)
   {
@@ -1279,7 +1283,7 @@ void Item_field::print(String *str, enum_query_type query_type)
     }
     return;
   }
-  Item_ident::print(str, query_type);
+  Item_ident::print(str);
 }
 
 

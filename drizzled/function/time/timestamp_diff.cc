@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/function/time/timestamp_diff.h"
-#include "drizzled/time_functions.h"
+#include <drizzled/function/time/timestamp_diff.h>
+#include <drizzled/time_functions.h>
 
 namespace drizzled
 {
@@ -34,8 +34,8 @@ int64_t Item_func_timestamp_diff::val_int()
   int neg= 1;
 
   null_value= 0;
-  if (args[0]->get_date(&ltime1, TIME_NO_ZERO_DATE) ||
-      args[1]->get_date(&ltime2, TIME_NO_ZERO_DATE))
+  if (args[0]->get_date(ltime1, TIME_NO_ZERO_DATE) ||
+      args[1]->get_date(ltime2, TIME_NO_ZERO_DATE))
     goto null_date;
 
   if (calc_time_diff(&ltime2,&ltime1, 1,
@@ -130,7 +130,7 @@ null_date:
 }
 
 
-void Item_func_timestamp_diff::print(String *str, enum_query_type query_type)
+void Item_func_timestamp_diff::print(String *str)
 {
   str->append(func_name());
   str->append('(');
@@ -170,7 +170,7 @@ void Item_func_timestamp_diff::print(String *str, enum_query_type query_type)
   for (uint32_t i=0 ; i < 2 ; i++)
   {
     str->append(',');
-    args[i]->print(str, query_type);
+    args[i]->print(str);
   }
   str->append(')');
 }

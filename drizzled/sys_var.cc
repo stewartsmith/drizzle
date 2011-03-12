@@ -36,35 +36,32 @@
   @todo
     Add full support for the variable character_set (for 4.1)
 
-  @note
-    Be careful with var->save_result: sys_var::check() only updates
-    uint64_t_value; so other members of the union are garbage then; to use
-    them you must first assign a value to them (in specific ::check() for
-    example).
 */
 
-#include "config.h"
-#include "drizzled/option.h"
-#include "drizzled/error.h"
-#include "drizzled/gettext.h"
-#include "drizzled/tztime.h"
-#include "drizzled/data_home.h"
-#include "drizzled/set_var.h"
-#include "drizzled/session.h"
-#include "drizzled/sql_base.h"
-#include "drizzled/lock.h"
-#include "drizzled/item/uint.h"
-#include "drizzled/item/null.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/string.h"
-#include "drizzled/plugin.h"
-#include "drizzled/version.h"
-#include "drizzled/strfunc.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/constrained_value.h"
+#include <config.h>
+#include <drizzled/option.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/tztime.h>
+#include <drizzled/data_home.h>
+#include <drizzled/set_var.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/lock.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/item/null.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/string.h>
+#include <drizzled/plugin.h>
+#include <drizzled/version.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/pthread_globals.h>
+#include <drizzled/charset.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/constrained_value.h>
+#include <drizzled/visibility.h>
+#include <drizzled/typelib.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <cstdio>
 #include <map>
@@ -94,6 +91,12 @@ extern char *opt_drizzle_tmpdir;
 
 extern TYPELIB tx_isolation_typelib;
 
+namespace
+{
+static size_t revno= DRIZZLE7_VC_REVNO;
+static size_t release_id= DRIZZLE7_RELEASE_ID;
+}
+
 const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=
 {
@@ -110,8 +113,6 @@ static void fix_completion_type(Session *session, sql_var_t type);
 static void fix_max_join_size(Session *session, sql_var_t type);
 static void fix_session_mem_root(Session *session, sql_var_t type);
 static void fix_server_id(Session *session, sql_var_t type);
-static bool get_unsigned32(Session *session, set_var *var);
-static bool get_unsigned64(Session *session, set_var *var);
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
                           const std::string &name, int64_t val);
 static unsigned char *get_error_count(Session *session);
@@ -156,8 +157,6 @@ static sys_var_session_uint64_t	sys_join_buffer_size("join_buffer_size",
                                                      &drizzle_system_variables::join_buff_size);
 static sys_var_session_uint32_t	sys_max_allowed_packet("max_allowed_packet",
                                                        &drizzle_system_variables::max_allowed_packet);
-static sys_var_uint64_t_ptr	sys_max_connect_errors("max_connect_errors",
-                                               &max_connect_errors);
 static sys_var_session_uint64_t	sys_max_error_count("max_error_count",
                                                   &drizzle_system_variables::max_error_count);
 static sys_var_session_uint64_t	sys_max_heap_table_size("max_heap_table_size",
@@ -220,13 +219,11 @@ static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
 static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
                                                 &drizzle_system_variables::sortbuff_size);
 
-static sys_var_session_size_t sys_transaction_message_threshold("transaction_message_threshold",
-                                                                &drizzle_system_variables::transaction_message_threshold);
+static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transaction_message_threshold",
+                                                                &transaction_message_threshold);
 
 static sys_var_session_storage_engine sys_storage_engine("storage_engine",
 				       &drizzle_system_variables::storage_engine);
-static sys_var_const_str	sys_system_time_zone("system_time_zone",
-                                             system_time_zone);
 static sys_var_size_t_ptr	sys_table_def_size("table_definition_cache",
                                              &table_def_size);
 static sys_var_uint64_t_ptr	sys_table_cache_size("table_open_cache",
@@ -315,10 +312,13 @@ static sys_var_readonly sys_warning_count("warning_count",
 sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len",
                                                   &drizzle_system_variables::group_concat_max_len);
 
-sys_var_session_time_zone sys_time_zone("time_zone");
-
 /* Global read-only variable containing hostname */
-static sys_var_const_str        sys_hostname("hostname", glob_hostname);
+static sys_var_const_string sys_hostname("hostname", getServerHostname());
+
+static sys_var_const_str sys_revid("vc_revid", DRIZZLE7_VC_REVID);
+static sys_var_const_str sys_branch("vc_branch", DRIZZLE7_VC_BRANCH);
+static sys_var_size_t_ptr_readonly sys_revno("vc_revno", &revno);
+static sys_var_size_t_ptr_readonly sys_release_id("vc_release_id", &release_id);
 
 bool sys_var::check(Session *session, set_var *var)
 {
@@ -329,7 +329,7 @@ bool sys_var::check(Session *session, set_var *var)
       my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
     return res;
   }
-  var->save_result.uint64_t_value= var->value->val_int();
+  var->updateValue();
   return 0;
 }
 
@@ -439,7 +439,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
 {
   if (fixed)
   {
-    char buf[22];
+    char buf[DECIMAL_LONGLONG_DIGITS];
 
     if (unsignd)
       internal::ullstr((uint64_t) val, buf);
@@ -474,98 +474,62 @@ static size_t fix_size_t(Session *session, size_t num,
   return out;
 }
 
-static bool get_unsigned32(Session *session, set_var *var)
-{
-  if (var->value->unsigned_flag)
-    var->save_result.uint32_t_value= 
-      static_cast<uint32_t>(var->value->val_int());
-  else
-  {
-    int64_t v= var->value->val_int();
-    if (v > UINT32_MAX)
-      throw_bounds_warning(session, true, true,var->var->getName().c_str(), v);
-    
-    var->save_result.uint32_t_value= 
-      static_cast<uint32_t>((v > UINT32_MAX) ? UINT32_MAX : (v < 0) ? 0 : v);
-  }
-  return false;
-}
-
-static bool get_unsigned64(Session *, set_var *var)
-{
-  if (var->value->unsigned_flag)
-      var->save_result.uint64_t_value=(uint64_t) var->value->val_int();
-  else
-  {
-    int64_t v= var->value->val_int();
-      var->save_result.uint64_t_value= (uint64_t) ((v < 0) ? 0 : v);
-  }
-  return 0;
-}
-
-static bool get_size_t(Session *, set_var *var)
-{
-  if (var->value->unsigned_flag)
-    var->save_result.size_t_value= (size_t) var->value->val_int();
-  else
-  {
-    ssize_t v= (ssize_t)var->value->val_int();
-    var->save_result.size_t_value= (size_t) ((v < 0) ? 0 : v);
-  }
-  return 0;
-}
-
 bool sys_var_uint32_t_ptr::check(Session *, set_var *var)
 {
-  var->save_result.uint32_t_value= (uint32_t)var->value->val_int();
+  var->updateValue();
   return 0;
 }
 
 bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
 {
-  uint32_t tmp= var->save_result.uint32_t_value;
-  LOCK_global_system_variables.lock();
+  uint64_t tmp= var->getInteger();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+
   if (option_limits)
   {
     uint32_t newvalue= (uint32_t) fix_unsigned(session, tmp, option_limits);
-    if(newvalue==tmp)
+    if(static_cast<uint64_t>(newvalue) == tmp)
       *value= newvalue;
   }
   else
-    *value= (uint32_t) tmp;
-  LOCK_global_system_variables.unlock();
+  {
+    *value= static_cast<uint32_t>(tmp);
+  }
+
   return 0;
 }
 
 
-void sys_var_uint32_t_ptr::set_default(Session *, sql_var_t)
+void sys_var_uint32_t_ptr::set_default(Session *session, sql_var_t)
 {
   bool not_used;
-  LOCK_global_system_variables.lock();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
   *value= (uint32_t)getopt_ull_limit_value((uint32_t) option_limits->def_value,
                                            option_limits, &not_used);
-  LOCK_global_system_variables.unlock();
 }
 
 
 bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
 {
-  uint64_t tmp= var->save_result.uint64_t_value;
-  LOCK_global_system_variables.lock();
+  uint64_t tmp= var->getInteger();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+
   if (option_limits)
   {
-    uint64_t newvalue= (uint64_t) fix_unsigned(session, tmp, option_limits);
+    uint64_t newvalue= fix_unsigned(session, tmp, option_limits);
     if(newvalue==tmp)
       *value= newvalue;
   }
   else
-    *value= (uint64_t) tmp;
-  LOCK_global_system_variables.unlock();
+  {
+    *value= tmp;
+  }
+
   return 0;
 }
 
 
-void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
+void sys_var_uint64_t_ptr::set_default(Session *session, sql_var_t)
 {
   if (have_default_value)
   {
@@ -574,39 +538,44 @@ void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
   else
   {
     bool not_used;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
                                    option_limits, &not_used);
-    LOCK_global_system_variables.unlock();
   }
 }
 
 
 bool sys_var_size_t_ptr::update(Session *session, set_var *var)
 {
-  size_t tmp= var->save_result.size_t_value;
-  LOCK_global_system_variables.lock();
+  size_t tmp= size_t(var->getInteger());
+
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+
   if (option_limits)
     *value= fix_size_t(session, tmp, option_limits);
   else
     *value= tmp;
-  LOCK_global_system_variables.unlock();
+
   return 0;
 }
 
 
-void sys_var_size_t_ptr::set_default(Session *, sql_var_t)
+void sys_var_size_t_ptr::set_default(Session *session, sql_var_t)
 {
   bool not_used;
-  LOCK_global_system_variables.lock();
+  boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
   *value= (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
                                          option_limits, &not_used);
-  LOCK_global_system_variables.unlock();
+}
+
+bool sys_var_bool_ptr::check(Session *session, set_var *var)
+{
+  return check_enum(session, var, &bool_typelib);
 }
 
 bool sys_var_bool_ptr::update(Session *, set_var *var)
 {
-  *value= (bool) var->save_result.uint32_t_value;
+  *value= bool(var->getInteger());
   return 0;
 }
 
@@ -622,13 +591,13 @@ void sys_var_bool_ptr::set_default(Session *, sql_var_t)
 */
 bool sys_var_session_uint32_t::check(Session *session, set_var *var)
 {
-  return (get_unsigned32(session, var) ||
-          (check_func && (*check_func)(session, var)));
+  var->updateValue();
+  return (check_func && (*check_func)(session, var));
 }
 
 bool sys_var_session_uint32_t::update(Session *session, set_var *var)
 {
-  uint64_t tmp= (uint64_t) var->save_result.uint32_t_value;
+  uint64_t tmp= var->getInteger();
 
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((uint32_t) tmp > max_system_variables.*offset)
@@ -642,7 +611,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
   else if (tmp > UINT32_MAX)
   {
     tmp= UINT32_MAX;
-    throw_bounds_warning(session, true, true, getName(), (int64_t) var->save_result.uint64_t_value);
+    throw_bounds_warning(session, true, true, getName(), int64_t(var->getInteger()));
   }
 
   if (var->type == OPT_GLOBAL)
@@ -681,7 +650,7 @@ unsigned char *sys_var_session_uint32_t::value_ptr(Session *session,
 
 bool sys_var_session_ha_rows::update(Session *session, set_var *var)
 {
-  uint64_t tmp= var->save_result.uint64_t_value;
+  uint64_t tmp= var->getInteger();
 
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((ha_rows) tmp > max_system_variables.*offset)
@@ -692,12 +661,14 @@ bool sys_var_session_ha_rows::update(Session *session, set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset= (ha_rows) tmp;
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= (ha_rows) tmp;
+  }
+
   return 0;
 }
 
@@ -708,14 +679,15 @@ void sys_var_session_ha_rows::set_default(Session *session, sql_var_t type)
   {
     bool not_used;
     /* We will not come here if option_limits is not set */
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
       (ha_rows) getopt_ull_limit_value((ha_rows) option_limits->def_value,
                                        option_limits, &not_used);
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= global_system_variables.*offset;
+  }
 }
 
 
@@ -730,13 +702,13 @@ unsigned char *sys_var_session_ha_rows::value_ptr(Session *session,
 
 bool sys_var_session_uint64_t::check(Session *session, set_var *var)
 {
-  return (get_unsigned64(session, var) ||
-	  (check_func && (*check_func)(session, var)));
+  var->updateValue();
+  return (check_func && (*check_func)(session, var));
 }
 
 bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
 {
-  uint64_t tmp= var->save_result.uint64_t_value;
+  uint64_t tmp= var->getInteger();
 
   if (tmp > max_system_variables.*offset)
   {
@@ -749,12 +721,14 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset= (uint64_t) tmp;
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= (uint64_t) tmp;
+  }
+
   return 0;
 }
 
@@ -764,14 +738,15 @@ void sys_var_session_uint64_t::set_default(Session *session, sql_var_t type)
   if (type == OPT_GLOBAL)
   {
     bool not_used;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
       getopt_ull_limit_value((uint64_t) option_limits->def_value,
                              option_limits, &not_used);
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= global_system_variables.*offset;
+  }
 }
 
 
@@ -786,13 +761,13 @@ unsigned char *sys_var_session_uint64_t::value_ptr(Session *session,
 
 bool sys_var_session_size_t::check(Session *session, set_var *var)
 {
-  return (get_size_t(session, var) ||
-	  (check_func && (*check_func)(session, var)));
+  var->updateValue();
+  return (check_func && (*check_func)(session, var));
 }
 
 bool sys_var_session_size_t::update(Session *session,  set_var *var)
 {
-  size_t tmp= var->save_result.size_t_value;
+  size_t tmp= size_t(var->getInteger());
 
   if (tmp > max_system_variables.*offset)
     tmp= max_system_variables.*offset;
@@ -802,12 +777,14 @@ bool sys_var_session_size_t::update(Session *session,  set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset= tmp;
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= tmp;
+  }
+
   return 0;
 }
 
@@ -817,14 +794,15 @@ void sys_var_session_size_t::set_default(Session *session, sql_var_t type)
   if (type == OPT_GLOBAL)
   {
     bool not_used;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
       (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
                                      option_limits, &not_used);
-    LOCK_global_system_variables.unlock();
   }
   else
+  {
     session->variables.*offset= global_system_variables.*offset;
+  }
 }
 
 
@@ -837,13 +815,18 @@ unsigned char *sys_var_session_size_t::value_ptr(Session *session,
   return (unsigned char*) &(session->variables.*offset);
 }
 
+bool sys_var_session_bool::check(Session *session, set_var *var)
+{
+  return check_enum(session, var, &bool_typelib);
+}
 
 bool sys_var_session_bool::update(Session *session,  set_var *var)
 {
   if (var->type == OPT_GLOBAL)
-    global_system_variables.*offset= (bool) var->save_result.uint32_t_value;
+    global_system_variables.*offset= bool(var->getInteger());
   else
-    session->variables.*offset= (bool) var->save_result.uint32_t_value;
+    session->variables.*offset= bool(var->getInteger());
+
   return 0;
 }
 
@@ -876,26 +859,31 @@ bool sys_var::check_enum(Session *,
 
   if (var->value->result_type() == STRING_RESULT)
   {
-    if (!(res=var->value->val_str(&str)) ||
-        (var->save_result.uint32_t_value= find_type(enum_names, res->ptr(),
-                                                    res->length(),1)) == 0)
+    res= var->value->val_str(&str);
+    if (res == NULL)
     {
-      value= res ? res->c_ptr() : "NULL";
+      value= "NULL";
       goto err;
     }
 
-    var->save_result.uint32_t_value--;
+    uint64_t tmp_val= enum_names->find_type(res->ptr(), res->length(), true);
+    if (tmp_val == 0)
+    {
+      value= res->c_ptr();
+      goto err;
+    }
+    var->setValue(tmp_val-1);
   }
   else
   {
-    uint64_t tmp=var->value->val_int();
+    uint64_t tmp= var->value->val_int();
     if (tmp >= enum_names->count)
     {
       internal::llstr(tmp,buff);
       value=buff;				// Wrong value is here
       goto err;
     }
-    var->save_result.uint32_t_value= (uint32_t) tmp;	// Save for update
+    var->setValue(tmp);	// Save for update
   }
   return 0;
 
@@ -931,56 +919,57 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
   case SHOW_INT:
   {
     uint32_t value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(uint*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+
     return new Item_uint((uint64_t) value);
   }
   case SHOW_LONGLONG:
   {
     int64_t value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(int64_t*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+
     return new Item_int(value);
   }
   case SHOW_DOUBLE:
   {
     double value;
-    LOCK_global_system_variables.lock();
-    value= *(double*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+    {
+      boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
+      value= *(double*) value_ptr(session, var_type, base);
+    }
+
     /* 6, as this is for now only used with microseconds */
     return new Item_float(value, 6);
   }
   case SHOW_HA_ROWS:
   {
     ha_rows value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(ha_rows*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+
     return new Item_int((uint64_t) value);
   }
   case SHOW_SIZE:
   {
     size_t value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(size_t*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
+
     return new Item_int((uint64_t) value);
   }
   case SHOW_MY_BOOL:
   {
     int32_t value;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     value= *(bool*) value_ptr(session, var_type, base);
-    LOCK_global_system_variables.unlock();
     return new Item_int(value,1);
   }
   case SHOW_CHAR_PTR:
   {
     Item *tmp;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     char *str= *(char**) value_ptr(session, var_type, base);
     if (str)
     {
@@ -993,13 +982,13 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
       tmp= new Item_null();
       tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     }
-    LOCK_global_system_variables.unlock();
+
     return tmp;
   }
   case SHOW_CHAR:
   {
     Item *tmp;
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     char *str= (char*) value_ptr(session, var_type, base);
     if (str)
       tmp= new Item_string(str, strlen(str),
@@ -1009,7 +998,7 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
       tmp= new Item_null();
       tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     }
-    LOCK_global_system_variables.unlock();
+
     return tmp;
   }
   default:
@@ -1022,9 +1011,9 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
 bool sys_var_session_enum::update(Session *session, set_var *var)
 {
   if (var->type == OPT_GLOBAL)
-    global_system_variables.*offset= var->save_result.uint32_t_value;
+    global_system_variables.*offset= var->getInteger();
   else
-    session->variables.*offset= var->save_result.uint32_t_value;
+    session->variables.*offset= var->getInteger();
   return 0;
 }
 
@@ -1074,13 +1063,7 @@ unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t,
 }
 
 
-typedef struct old_names_map_st
-{
-  const char *old_name;
-  const char *new_name;
-} my_old_conv;
-
-bool sys_var_collation::check(Session *, set_var *var)
+bool sys_var_collation_sv::update(Session *session, set_var *var)
 {
   const CHARSET_INFO *tmp;
 
@@ -1090,12 +1073,13 @@ bool sys_var_collation::check(Session *, set_var *var)
     String str(buff,sizeof(buff), system_charset_info), *res;
     if (!(res=var->value->val_str(&str)))
     {
-      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), "NULL");
+      boost::throw_exception(invalid_option_value(var->var->getName()) << invalid_value(std::string("NULL")));
       return 1;
     }
     if (!(tmp=get_charset_by_name(res->c_ptr())))
     {
       my_error(ER_UNKNOWN_COLLATION, MYF(0), res->c_ptr());
+      boost::throw_exception(invalid_option_value(var->var->getName()) << invalid_value(std::string(res->c_ptr())));
       return 1;
     }
   }
@@ -1106,21 +1090,15 @@ bool sys_var_collation::check(Session *, set_var *var)
       char buf[20];
       internal::int10_to_str((int) var->value->val_int(), buf, -10);
       my_error(ER_UNKNOWN_COLLATION, MYF(0), buf);
+      boost::throw_exception(invalid_option_value(var->var->getName()) << invalid_value(boost::lexical_cast<std::string>(var->value->val_int())));
       return 1;
     }
   }
-  var->save_result.charset= tmp;	// Save for update
-  return 0;
-}
-
-
-bool sys_var_collation_sv::update(Session *session, set_var *var)
-{
   if (var->type == OPT_GLOBAL)
-    global_system_variables.*offset= var->save_result.charset;
+    global_system_variables.*offset= tmp;
   else
   {
-    session->variables.*offset= var->save_result.charset;
+    session->variables.*offset= tmp;
   }
   return 0;
 }
@@ -1151,7 +1129,7 @@ unsigned char *sys_var_collation_sv::value_ptr(Session *session,
 
 bool sys_var_timestamp::update(Session *session,  set_var *var)
 {
-  session->set_time((time_t) var->save_result.uint64_t_value);
+  session->set_time(time_t(var->getInteger()));
   return 0;
 }
 
@@ -1172,8 +1150,7 @@ unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t,
 
 bool sys_var_last_insert_id::update(Session *session, set_var *var)
 {
-  session->first_successful_insert_id_in_prev_stmt=
-    var->save_result.uint64_t_value;
+  session->first_successful_insert_id_in_prev_stmt= var->getInteger();
   return 0;
 }
 
@@ -1191,86 +1168,7 @@ unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
   return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
 }
 
-
-bool sys_var_session_time_zone::check(Session *session, set_var *var)
-{
-  char buff[MAX_TIME_ZONE_NAME_LENGTH];
-  String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-  String *res= var->value->val_str(&str);
-
-  if (!(var->save_result.time_zone= my_tz_find(session, res)))
-  {
-    my_error(ER_UNKNOWN_TIME_ZONE, MYF(0), res ? res->c_ptr() : "NULL");
-    return 1;
-  }
-  return 0;
-}
-
-
-bool sys_var_session_time_zone::update(Session *session, set_var *var)
-{
-  /* We are using Time_zone object found during check() phase. */
-  if (var->type == OPT_GLOBAL)
-  {
-    LOCK_global_system_variables.lock();
-    global_system_variables.time_zone= var->save_result.time_zone;
-    LOCK_global_system_variables.unlock();
-  }
-  else
-    session->variables.time_zone= var->save_result.time_zone;
-  return 0;
-}
-
-
-unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
-                                                    sql_var_t type,
-                                                    const LEX_STRING *)
-{
-  /*
-    We can use ptr() instead of c_ptr() here because String contaning
-    time zone name is guaranteed to be zero ended.
-  */
-  if (type == OPT_GLOBAL)
-    return (unsigned char *)(global_system_variables.time_zone->get_name()->ptr());
-  else
-  {
-    /*
-      This is an ugly fix for replication: we don't replicate properly queries
-      invoking system variables' values to update tables; but
-      CONVERT_TZ(,,@@session.time_zone) is so popular that we make it
-      replicable (i.e. we tell the binlog code to store the session
-      timezone). If it's the global value which was used we can't replicate
-      (binlog code stores session value only).
-    */
-    return (unsigned char *)(session->variables.time_zone->get_name()->ptr());
-  }
-}
-
-
-void sys_var_session_time_zone::set_default(Session *session, sql_var_t type)
-{
- LOCK_global_system_variables.lock();
- if (type == OPT_GLOBAL)
- {
-   if (default_tz_name)
-   {
-     String str(default_tz_name, &my_charset_utf8_general_ci);
-     /*
-       We are guaranteed to find this time zone since its existence
-       is checked during start-up.
-     */
-     global_system_variables.time_zone= my_tz_find(session, &str);
-   }
-   else
-     global_system_variables.time_zone= my_tz_SYSTEM;
- }
- else
-   session->variables.time_zone= global_system_variables.time_zone;
- LOCK_global_system_variables.unlock();
-}
-
-
-bool sys_var_session_lc_time_names::check(Session *, set_var *var)
+bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
 {
   MY_LOCALE *locale_match;
 
@@ -1278,7 +1176,7 @@ bool sys_var_session_lc_time_names::check(Session *, set_var *var)
   {
     if (!(locale_match= my_locale_by_number((uint32_t) var->value->val_int())))
     {
-      char buf[20];
+      char buf[DECIMAL_LONGLONG_DIGITS];
       internal::int10_to_str((int) var->value->val_int(), buf, -10);
       my_printf_error(ER_UNKNOWN_ERROR, "Unknown locale: '%s'", MYF(0), buf);
       return 1;
@@ -1302,17 +1200,10 @@ bool sys_var_session_lc_time_names::check(Session *, set_var *var)
     }
   }
 
-  var->save_result.locale_value= locale_match;
-  return 0;
-}
-
-
-bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
-{
   if (var->type == OPT_GLOBAL)
-    global_system_variables.lc_time_names= var->save_result.locale_value;
+    global_system_variables.lc_time_names= locale_match;
   else
-    session->variables.lc_time_names= var->save_result.locale_value;
+    session->variables.lc_time_names= locale_match;
   return 0;
 }
 
@@ -1355,9 +1246,8 @@ bool sys_var_microseconds::update(Session *session, set_var *var)
   microseconds= (int64_t) (num * 1000000.0 + 0.5);
   if (var->type == OPT_GLOBAL)
   {
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     (global_system_variables.*offset)= microseconds;
-    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= microseconds;
@@ -1370,9 +1260,8 @@ void sys_var_microseconds::set_default(Session *session, sql_var_t type)
   int64_t microseconds= (int64_t) (option_limits->def_value * 1000000.0);
   if (type == OPT_GLOBAL)
   {
-    LOCK_global_system_variables.lock();
+    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset= microseconds;
-    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= microseconds;
@@ -1385,7 +1274,7 @@ void sys_var_microseconds::set_default(Session *session, sql_var_t type)
 static bool set_option_bit(Session *session, set_var *var)
 {
   sys_var_session_bit *sys_var= ((sys_var_session_bit*) var->var);
-  if ((var->save_result.uint32_t_value != 0) == sys_var->reverse)
+  if ((var->getInteger() != 0) == sys_var->reverse)
     session->options&= ~sys_var->bit_flag;
   else
     session->options|= sys_var->bit_flag;
@@ -1395,37 +1284,46 @@ static bool set_option_bit(Session *session, set_var *var)
 
 static bool set_option_autocommit(Session *session, set_var *var)
 {
+  bool success= true;
   /* The test is negative as the flag we use is NOT autocommit */
 
   uint64_t org_options= session->options;
+  uint64_t new_options= session->options;
 
-  if (var->save_result.uint32_t_value != 0)
-    session->options&= ~((sys_var_session_bit*) var->var)->bit_flag;
+  if (var->getInteger() != 0)
+    new_options&= ~((sys_var_session_bit*) var->var)->bit_flag;
   else
-    session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
+    new_options|= ((sys_var_session_bit*) var->var)->bit_flag;
 
-  if ((org_options ^ session->options) & OPTION_NOT_AUTOCOMMIT)
+  if ((org_options ^ new_options) & OPTION_NOT_AUTOCOMMIT)
   {
     if ((org_options & OPTION_NOT_AUTOCOMMIT))
     {
+      success= session->endActiveTransaction();
       /* We changed to auto_commit mode */
       session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      if (transaction_services.commitTransaction(session, true))
-        return 1;
     }
     else
     {
       session->server_status&= ~SERVER_STATUS_AUTOCOMMIT;
     }
   }
+
+  if (var->getInteger() != 0)
+    session->options&= ~((sys_var_session_bit*) var->var)->bit_flag;
+  else
+    session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
+
+  if (not success)
+    return true;
+
   return 0;
 }
 
 static int check_pseudo_thread_id(Session *, set_var *var)
 {
-  var->save_result.uint64_t_value= var->value->val_int();
+  var->updateValue();
   return 0;
 }
 
@@ -1523,7 +1421,7 @@ static struct option *find_option(struct option *opt, const char *name)
 drizzle_show_var* enumerate_sys_vars(Session *session)
 {
   int size= sizeof(drizzle_show_var) * (system_variable_map.size() + 1);
-  drizzle_show_var *result= (drizzle_show_var*) session->alloc(size);
+  drizzle_show_var *result= (drizzle_show_var*) session->getMemRoot()->allocate(size);
 
   if (result)
   {
@@ -1532,7 +1430,7 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
     SystemVariableMap::const_iterator iter= system_variable_map.begin();
     while (iter != system_variable_map.end())
     {
-      sys_var *var= (*iter).second;
+      sys_var *var= iter->second;
       show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
@@ -1555,9 +1453,9 @@ void add_sys_var_to_list(sys_var *var)
             lower_name.begin(), ::tolower);
 
   /* this fails if there is a conflicting variable name. */
-  if (system_variable_map.find(lower_name) != system_variable_map.end())
+  if (system_variable_map.count(lower_name))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Variable named %s already exists!\n"),
+    errmsg_printf(error::ERROR, _("Variable named %s already exists!\n"),
                   var->getName().c_str());
     throw exception();
   } 
@@ -1566,7 +1464,7 @@ void add_sys_var_to_list(sys_var *var)
     system_variable_map.insert(make_pair(lower_name, var));
   if (ret.second == false)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not add Variable: %s\n"),
+    errmsg_printf(error::ERROR, _("Could not add Variable: %s\n"),
                   var->getName().c_str());
     throw exception();
   }
@@ -1599,6 +1497,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_back_log, my_long_options);
     add_sys_var_to_list(&sys_basedir, my_long_options);
     add_sys_var_to_list(&sys_big_selects, my_long_options);
+    add_sys_var_to_list(&sys_branch, my_long_options);
     add_sys_var_to_list(&sys_buffer_results, my_long_options);
     add_sys_var_to_list(&sys_bulk_insert_buff_size, my_long_options);
     add_sys_var_to_list(&sys_collation_server, my_long_options);
@@ -1614,7 +1513,6 @@ int sys_var_init()
     add_sys_var_to_list(&sys_last_insert_id, my_long_options);
     add_sys_var_to_list(&sys_lc_time_names, my_long_options);
     add_sys_var_to_list(&sys_max_allowed_packet, my_long_options);
-    add_sys_var_to_list(&sys_max_connect_errors, my_long_options);
     add_sys_var_to_list(&sys_max_error_count, my_long_options);
     add_sys_var_to_list(&sys_max_heap_table_size, my_long_options);
     add_sys_var_to_list(&sys_max_join_size, my_long_options);
@@ -1634,7 +1532,10 @@ int sys_var_init()
     add_sys_var_to_list(&sys_range_alloc_block_size, my_long_options);
     add_sys_var_to_list(&sys_read_buff_size, my_long_options);
     add_sys_var_to_list(&sys_read_rnd_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_release_id, my_long_options);
     add_sys_var_to_list(&sys_replicate_query, my_long_options);
+    add_sys_var_to_list(&sys_revid, my_long_options);
+    add_sys_var_to_list(&sys_revno, my_long_options);
     add_sys_var_to_list(&sys_scheduler, my_long_options);
     add_sys_var_to_list(&sys_secure_file_priv, my_long_options);
     add_sys_var_to_list(&sys_select_limit, my_long_options);
@@ -1643,12 +1544,10 @@ int sys_var_init()
     add_sys_var_to_list(&sys_sql_notes, my_long_options);
     add_sys_var_to_list(&sys_sql_warnings, my_long_options);
     add_sys_var_to_list(&sys_storage_engine, my_long_options);
-    add_sys_var_to_list(&sys_system_time_zone, my_long_options);
     add_sys_var_to_list(&sys_table_cache_size, my_long_options);
     add_sys_var_to_list(&sys_table_def_size, my_long_options);
     add_sys_var_to_list(&sys_table_lock_wait_timeout, my_long_options);
     add_sys_var_to_list(&sys_thread_stack_size, my_long_options);
-    add_sys_var_to_list(&sys_time_zone, my_long_options);
     add_sys_var_to_list(&sys_timed_mutexes, my_long_options);
     add_sys_var_to_list(&sys_timestamp, my_long_options);
     add_sys_var_to_list(&sys_tmp_table_size, my_long_options);
@@ -1665,7 +1564,7 @@ int sys_var_init()
   }
   catch (std::exception&)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
+    errmsg_printf(error::ERROR, _("Failed to initialize system variables"));
     return(1);
   }
   return(0);
@@ -1691,11 +1590,8 @@ sys_var *find_sys_var(const std::string &name)
 
   sys_var *result= NULL;
 
-  SystemVariableMap::iterator iter= system_variable_map.find(lower_name);
-  if (iter != system_variable_map.end())
-  {
-    result= (*iter).second;
-  } 
+  if (SystemVariableMap::mapped_type* ptr= find_ptr(system_variable_map, lower_name))
+    result= *ptr;
 
   if (result == NULL)
   {
@@ -1710,45 +1606,6 @@ sys_var *find_sys_var(const std::string &name)
 /****************************************************************************
  Functions to handle table_type
 ****************************************************************************/
-
-/* Based upon sys_var::check_enum() */
-
-bool sys_var_session_storage_engine::check(Session *session, set_var *var)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  const char *value;
-  String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
-
-  var->save_result.storage_engine= NULL;
-  if (var->value->result_type() == STRING_RESULT)
-  {
-    res= var->value->val_str(&str);
-    if (res == NULL || res->ptr() == NULL)
-    {
-      value= "NULL";
-      goto err;
-    }
-    else
-    {
-      const std::string engine_name(res->ptr());
-      plugin::StorageEngine *engine;
-      var->save_result.storage_engine= plugin::StorageEngine::findByName(*session, engine_name);
-      if (var->save_result.storage_engine == NULL)
-      {
-        value= res->c_ptr();
-        goto err;
-      }
-      engine= var->save_result.storage_engine;
-    }
-    return 0;
-  }
-  value= "unknown";
-
-err:
-  my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), value);
-  return 1;
-}
-
 
 unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
                                                          sql_var_t type,
@@ -1787,15 +1644,48 @@ void sys_var_session_storage_engine::set_default(Session *session, sql_var_t typ
 
 bool sys_var_session_storage_engine::update(Session *session, set_var *var)
 {
-  plugin::StorageEngine **value= &(global_system_variables.*offset), *old_value;
+  char buff[STRING_BUFFER_USUAL_SIZE];
+  const char *name_value;
+  String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
+
+  plugin::StorageEngine *tmp= NULL;
+  plugin::StorageEngine **value= NULL;
+    
+  if (var->value->result_type() == STRING_RESULT)
+  {
+    res= var->value->val_str(&str);
+    if (res == NULL || res->ptr() == NULL)
+    {
+      name_value= "NULL";
+      goto err;
+    }
+    else
+    {
+      const std::string engine_name(res->ptr());
+      tmp= plugin::StorageEngine::findByName(*session, engine_name);
+      if (tmp == NULL)
+      {
+        name_value= res->c_ptr();
+        goto err;
+      }
+    }
+  }
+  else
+  {
+    name_value= "unknown";
+  }
+
+  value= &(global_system_variables.*offset);
    if (var->type != OPT_GLOBAL)
      value= &(session->variables.*offset);
-  old_value= *value;
-  if (old_value != var->save_result.storage_engine)
+  if (*value != tmp)
   {
-    *value= var->save_result.storage_engine;
+    *value= tmp;
   }
   return 0;
+err:
+  my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), name_value);
+  return 1;
 }
 
 } /* namespace drizzled */

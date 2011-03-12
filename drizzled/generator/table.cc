@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/generator/table.h"
+#include <drizzled/generator/table.h>
 
 using namespace std;
 
@@ -29,7 +29,7 @@ namespace drizzled
 namespace generator
 {
 
-Table::Table(Session &arg, const SchemaIdentifier &schema_identifier) :
+Table::Table(Session &arg, const identifier::Schema &schema_identifier) :
   session(arg)
 {
   plugin::StorageEngine::getIdentifiers(session, schema_identifier, table_names);

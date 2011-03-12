@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/schema_dictionary/dictionary.h"
+#include <config.h>
+#include <plugin/schema_dictionary/dictionary.h>
 
 using namespace std;
 using namespace drizzled;
@@ -130,7 +130,7 @@ bool ColumnsTool::Generator::populate()
     push(column.numeric_options().is_autoincrement());
 
     /* IS_NULLABLE */
-    push(column.constraints().is_nullable());
+    push(not column.constraints().is_notnull());
 
     /* IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
     bool is_indexed= false;

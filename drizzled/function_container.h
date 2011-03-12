@@ -23,16 +23,17 @@
 
 #include <set>
 #include <boost/unordered_map.hpp>
-#include "drizzled/util/string.h"
+#include <drizzled/util/string.h>
 
 namespace drizzled {
 
-struct Native_func_registry;
-typedef boost::unordered_map<std::string, Native_func_registry *, util::insensitive_hash, util::insensitive_equal_to> NativeFunctionsMap;
+class Create_func;
 
 class FunctionContainer {
 public:
-  static NativeFunctionsMap &getMap();
+  typedef boost::unordered_map<std::string, Create_func *, util::insensitive_hash, util::insensitive_equal_to> Map;
+
+  static Map &getMap();
 };
 
 } /* namepsace drizzled */

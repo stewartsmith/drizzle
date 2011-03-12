@@ -31,12 +31,12 @@ set global hello_events1_watch_tables = "x,y";
 
  */
 
-#include "config.h"
+#include <config.h>
 #include <string>
 #include <cstdio>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include "drizzled/session.h"
+#include <drizzled/session.h>
 #include "hello_events.h"
 
 namespace po= boost::program_options;
@@ -427,7 +427,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("An example events Plugin"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

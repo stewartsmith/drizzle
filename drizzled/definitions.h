@@ -42,7 +42,6 @@ namespace drizzled
 
 #define LANGUAGE	"english/"
 #define TEMP_PREFIX	"MY"
-#define LOG_PREFIX	"ML"
 
 #define ER(X) ::drizzled::error_message((X))
 
@@ -50,21 +49,19 @@ namespace drizzled
 #define STRERROR_MAX 256
 
 /* extra 4+4 bytes for slave tmp tables */
-#define MAX_DBKEY_LENGTH (NAME_LEN*2+1+1+4+4)
-#define MAX_ALIAS_NAME 256
 #define MAX_FIELD_NAME 34			/* Max colum name length +2 */
 #define MAX_SYS_VAR_LENGTH 32
 #define MAX_INDEXES 64
-#define MAX_KEY MAX_INDEXES                     /* Max used keys */
-#define MAX_REF_PARTS 16			/* Max parts used as ref */
-#define MAX_KEY_LENGTH 4096			/* max possible key */
-#define MAX_KEY_LENGTH_DECIMAL_WIDTH 4          /* strlen("4096") */
+const uint32_t MAX_KEY = MAX_INDEXES;                     /* Max used keys */
+const uint32_t MAX_REF_PARTS = 16;			/* Max parts used as ref */
+const uint32_t MAX_KEY_LENGTH = 4096;			 // max possible key
+const uint32_t MAX_KEY_LENGTH_DECIMAL_WIDTH = 4; // strlen("4096")
+
 #if SIZEOF_OFF_T > 4
 #define MAX_REFLENGTH 8				/* Max length for record ref */
 #else
 #define MAX_REFLENGTH 4				/* Max length for record ref */
 #endif
-#define MAX_HOSTNAME  61			/* len+1 in mysql.user */
 
 #define MAX_MBWIDTH		4		/* Max multibyte sequence */
 #define MAX_FIELD_CHARLENGTH	255
@@ -73,8 +70,6 @@ namespace drizzled
 
 /* Max column width +1 */
 #define MAX_FIELD_WIDTH		(MAX_FIELD_CHARLENGTH*MAX_MBWIDTH+1)
-
-#define MAX_DATETIME_COMPRESSED_WIDTH 14  /* YYYYMMDDHHMMSS */
 
 #define MAX_TABLES	(sizeof(table_map)*8-3)	/* Max tables in join */
 #define PARAM_TABLE_BIT	(((table_map) 1) << (sizeof(table_map)*8-3))
@@ -106,20 +101,11 @@ namespace drizzled
 */
 #define MIN_TURBOBM_PATTERN_LEN 3
 
-/*
-   Defines for binary logging.
-   Do not decrease the value of BIN_LOG_HEADER_SIZE.
-   Do not even increase it before checking code.
-*/
-
-#define BIN_LOG_HEADER_SIZE    4
-
 /* Below are #defines that used to be in mysql_priv.h */
 /***************************************************************************
   Configuration parameters
 ****************************************************************************/
 #define MAX_FIELDS_BEFORE_HASH	32
-#define USER_VARS_HASH_SIZE     16
 #define TABLE_OPEN_CACHE_MIN    64
 #define TABLE_OPEN_CACHE_DEFAULT 1024
 
@@ -190,29 +176,6 @@ namespace drizzled
 
 /** Characters shown for the command in 'show processlist'. */
 #define PROCESS_LIST_WIDTH 100
-
-#define PRECISION_FOR_DOUBLE 53
-#define PRECISION_FOR_FLOAT  24
-
-/* The following can also be changed from the command line */
-#define DEFAULT_CONCURRENCY	10
-#define FLUSH_TIME		0		/**< Don't flush tables */
-#define MAX_CONNECT_ERRORS	10		///< errors before disabling host
-
-/* Bits from testflag */
-enum test_flag_bit
-{
-  TEST_PRINT_CACHED_TABLES= 1,
-  TEST_NO_KEY_GROUP,
-  TEST_MIT_THREAD,
-  TEST_KEEP_TMP_TABLES,
-  TEST_READCHECK, /**< Force use of readcheck */
-  TEST_NO_EXTRA,
-  TEST_CORE_ON_SIGNAL, /**< Give core if signal */
-  TEST_NO_STACKTRACE,
-  TEST_SIGINT, /**< Allow sigint on threads */
-  TEST_SYNCHRONIZATION /**< get server to do sleep in some places */
-};
 
 /* Bits for different SQL modes modes (including ANSI mode) */
 #define MODE_NO_ZERO_DATE		(2)
@@ -293,15 +256,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_KEY_SWITCH_ALL_SAVE     3
 
 /*
-  Note: the following includes binlog and closing 0.
-  so: innodb + bdb + ndb + binlog + myisam + myisammrg + archive +
-      example + csv + heap + blackhole + federated + 0
-  (yes, the sum is deliberately inaccurate)
-  TODO remove the limit, use dynarrays
-*/
-#define MAX_HA 15
-
-/*
   Parameters for open() (in register form->filestat)
   HA_GET_INFO does an implicit HA_ABORT_IF_LOCKED
 */
@@ -318,15 +272,11 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_BLOCK_LOCK		256	/* unlock when reading some records */
 #define HA_OPEN_TEMPORARY	512
 
-/* For transactional LOCK Table. handler::lock_table() */
-#define HA_LOCK_IN_SHARE_MODE      F_RDLCK
-#define HA_LOCK_IN_EXCLUSIVE_MODE  F_WRLCK
-
 /* Some key definitions */
 #define HA_KEY_NULL_LENGTH	1
 #define HA_KEY_BLOB_LENGTH	2
 
-#define HA_MAX_REC_LENGTH	65535
+const uint32_t HA_MAX_REC_LENGTH = 65535;
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
 enum start_transaction_option_t
@@ -345,7 +295,6 @@ enum start_transaction_option_t
 #define HA_CREATE_USED_AUTO             (1L << 0)
 #define HA_CREATE_USED_CHARSET          (1L << 8)
 #define HA_CREATE_USED_DEFAULT_CHARSET  (1L << 9)
-#define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 
 /*
   The below two are not used (and not handled) in this milestone of this WL
@@ -410,10 +359,10 @@ typedef int myf;
 #define MY_COLL_DISALLOW_NONE         4
 #define MY_COLL_CMP_CONV              7
 
-inline static void clear_timestamp_auto_bits(enum timestamp_auto_set_type &_target_, 
-                                             const enum timestamp_auto_set_type _bits_)
+inline static void clear_timestamp_auto_bits(timestamp_auto_set_type &_target_, 
+                                             timestamp_auto_set_type _bits_)
 {
-  _target_= (enum timestamp_auto_set_type)((int)(_target_) & ~_bits_);
+  _target_= static_cast<timestamp_auto_set_type>(_target_ & ~_bits_);
 }
 
 /*
@@ -474,6 +423,11 @@ template <class T> void set_if_smaller(T &a, const T &b)
 #endif
 #endif
 
+template<class T> inline void safe_delete(T*& ptr)
+{
+  delete ptr;
+  ptr = 0;
+}
 
 #define array_elements(a) \
   ((sizeof(a) / sizeof(*(a))) / \
@@ -511,10 +465,13 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 #define uint64_t2double(A) ((double) (uint64_t) (A))
 #endif
 
+#ifndef int64_t2double
+#define int64_t2double(A) ((double) (int64_t) (A))
+#endif
+
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
-#define ulong_to_double(X) ((double) (ulong) (X))
 
 /* From limits.h instead */
 #ifndef DBL_MIN
@@ -542,16 +499,10 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 */
 #define MY_ALIGN(A,L)  (((A) + (L) - 1) & ~((L) - 1))
 #define ALIGN_SIZE(A)  MY_ALIGN((A),sizeof(double))
-/* Size to make adressable obj. */
-#define ALIGN_PTR(A, t) ((t*) MY_ALIGN((A),sizeof(t)))
-/* Offset of field f in structure t */
-#define OFFSET(t, f)  ((size_t)(char *)&((t *)0)->f)
 #ifdef __cplusplus
 #define ADD_TO_PTR(ptr,size,type) (type) (reinterpret_cast<const unsigned char*>(ptr)+size)
-#define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
 #else
  #define ADD_TO_PTR(ptr,size,type) (type) ((unsigned char*) (ptr)+size)
- #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
 #endif
 
 #define MY_DIV_UP(A, B) (((A) + (B) - 1) / (B))
@@ -587,8 +538,6 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 #define IO_SIZE 4096
 /* Max file name len */
 #define FN_LEN 256
-/* Max length of extension (part of FN_LEN) */
-#define FN_EXTLEN 20
 /* Max length of full path-name */
 #define FN_REFLEN 512
 /* File extension character */

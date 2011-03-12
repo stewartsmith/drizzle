@@ -15,9 +15,9 @@
 
 /* Funktions for comparing with wild-cards */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_sys.h>
 
 namespace drizzled
 {
@@ -31,8 +31,7 @@ char wild_many='%';
 char wild_one='_';
 char wild_prefix= '\\';
 
-int wild_compare(register const char *str, register const char *wildstr,
-                 bool str_is_pattern)
+int wild_compare(const char *str, const char *wildstr, bool str_is_pattern)
 {
   char cmp;
 

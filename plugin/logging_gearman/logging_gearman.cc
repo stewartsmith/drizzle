@@ -17,13 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <boost/scoped_array.hpp>
 
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/errmsg_print.h>
 #include <boost/date_time.hpp>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
@@ -181,10 +182,7 @@ public:
 
     if (gearman_client_create(&_gearman_client) == NULL)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
-                              errmsg);
+      drizzled::sql_perror(_("fail gearman_client_create()"));
       return;
     }
 
@@ -194,7 +192,7 @@ public:
                                    host.c_str(), 0);
     if (ret != GEARMAN_SUCCESS)
     {
-      drizzled::errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_add_server(): %s"),
+      drizzled::errmsg_printf(drizzled::error::ERROR, _("fail gearman_client_add_server(): %s"),
                               gearman_client_error(&_gearman_client));
       return;
     }
@@ -251,10 +249,10 @@ public:
                (int)dbs->size(), dbs->c_str(),
                // do need to quote the query
                quotify((const unsigned char *)session->getQueryString()->c_str(), session->getQueryString()->length(), qs, sizeof(qs)),
-               // command_name is defined in drizzled/sql_parse.cc
-               // dont need to quote the command name, always CSV safe
-               (int)drizzled::command_name[session->command].length,
-               drizzled::command_name[session->command].str,
+               // getCommandName is defined in drizzled/sql_parse.h dont
+               // need to quote the command name, always CSV safe
+               (int)drizzled::getCommandName(session->command).size(),
+               drizzled::getCommandName(session->command).c_str(),
                // counters are at end, to make it easier to add more
                (t_mark - session->getConnectMicroseconds()),
                (session->getElapsedTime()),
@@ -264,7 +262,7 @@ public:
                session->tmp_table,
                session->total_warn_count,
                session->getServerId(),
-               drizzled::glob_hostname
+               drizzled::getServerHostname().c_str()
                );
   
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];
@@ -299,10 +297,10 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("host",
           po::value<std::string>()->default_value("localhost"),
-          N_("Hostname for logging to a Gearman server"));
+          _("Hostname for logging to a Gearman server"));
   context("function",
           po::value<std::string>()->default_value("drizzlelog"),
-          N_("Gearman Function to send logging to"));
+          _("Gearman Function to send logging to"));
 }
 
 } /* namespace drizzle_plugin */

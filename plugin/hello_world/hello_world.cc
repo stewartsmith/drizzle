@@ -17,10 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <drizzled/plugin/function.h>
-#include <drizzled/item/func.h>
+#include <config.h>
+
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/item/func.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/function.h>
 
 #include <string>
 
@@ -61,7 +63,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Hello, world!",
   PLUGIN_LICENSE_GPL,
   hello_world_plugin_init, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -17,11 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/function/time/date_format.h"
-#include "drizzled/session.h"
-#include "drizzled/time_functions.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+#include <drizzled/function/time/date_format.h>
+#include <drizzled/session.h>
+#include <drizzled/time_functions.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/typelib.h>
 
 #include <cstdio>
 #include <algorithm>
@@ -35,16 +36,16 @@ namespace drizzled
   Create a formated date/time value in a string.
 */
 
-static bool make_date_time(String *format, type::Time *l_time,
-                           enum enum_drizzle_timestamp_type type, String *str)
+static bool make_date_time(Session &session,
+                           String *format, type::Time *l_time,
+                           type::timestamp_t type, String *str)
 {
   char intbuff[15];
   uint32_t hours_i;
   uint32_t weekday;
   ulong length;
   const char *ptr, *end;
-  Session *session= current_session;
-  MY_LOCALE *locale= session->variables.lc_time_names;
+  MY_LOCALE *locale= session.variables.lc_time_names;
 
   str->length(0);
 
@@ -74,7 +75,7 @@ static bool make_date_time(String *format, type::Time *l_time,
                     system_charset_info);
         break;
       case 'W':
-        if (type == DRIZZLE_TIMESTAMP_TIME)
+        if (type == type::DRIZZLE_TIMESTAMP_TIME)
           return 1;
         weekday= calc_weekday(calc_daynr(l_time->year,l_time->month,
                               l_time->day),0);
@@ -83,7 +84,7 @@ static bool make_date_time(String *format, type::Time *l_time,
                     system_charset_info);
         break;
       case 'a':
-        if (type == DRIZZLE_TIMESTAMP_TIME)
+        if (type == type::DRIZZLE_TIMESTAMP_TIME)
           return 1;
         weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
                              l_time->day),0);
@@ -92,7 +93,7 @@ static bool make_date_time(String *format, type::Time *l_time,
                     system_charset_info);
         break;
       case 'D':
-	if (type == DRIZZLE_TIMESTAMP_TIME)
+	if (type == type::DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= internal::int10_to_str(l_time->day, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 1, '0');
@@ -159,7 +160,7 @@ static bool make_date_time(String *format, type::Time *l_time,
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'j':
-	if (type == DRIZZLE_TIMESTAMP_TIME)
+	if (type == type::DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= internal::int10_to_str(calc_daynr(l_time->year,l_time->month,
 					l_time->day) -
@@ -205,7 +206,7 @@ static bool make_date_time(String *format, type::Time *l_time,
       case 'u':
       {
 	uint32_t year;
-	if (type == DRIZZLE_TIMESTAMP_TIME)
+	if (type == type::DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= internal::int10_to_str(calc_week(l_time,
 				       (*ptr) == 'U' ?
@@ -219,7 +220,7 @@ static bool make_date_time(String *format, type::Time *l_time,
       case 'V':
       {
 	uint32_t year;
-	if (type == DRIZZLE_TIMESTAMP_TIME)
+	if (type == type::DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= internal::int10_to_str(calc_week(l_time,
 				       ((*ptr) == 'V' ?
@@ -234,7 +235,7 @@ static bool make_date_time(String *format, type::Time *l_time,
       case 'X':
       {
 	uint32_t year;
-	if (type == DRIZZLE_TIMESTAMP_TIME)
+	if (type == type::DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	(void) calc_week(l_time,
 			 ((*ptr) == 'X' ?
@@ -246,7 +247,7 @@ static bool make_date_time(String *format, type::Time *l_time,
       }
       break;
       case 'w':
-	if (type == DRIZZLE_TIMESTAMP_TIME)
+	if (type == type::DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
 					l_time->day),1);
@@ -265,11 +266,10 @@ static bool make_date_time(String *format, type::Time *l_time,
 
 void Item_func_date_format::fix_length_and_dec()
 {
-  Session* session= current_session;
   Item *arg1= args[1];
 
   decimals=0;
-  const CHARSET_INFO * const cs= session->variables.getCollation();
+  const CHARSET_INFO * const cs= getSession().variables.getCollation();
   collation.set(cs, arg1->collation.derivation);
   if (arg1->type() == STRING_ITEM)
   {                                             // Optimize the normal case
@@ -392,14 +392,14 @@ String *Item_func_date_format::val_str(String *str)
 
   if (!is_time_format)
   {
-    if (get_arg0_date(&l_time, TIME_FUZZY_DATE))
+    if (get_arg0_date(l_time, TIME_FUZZY_DATE))
       return 0;
   }
   else
   {
     String *res;
     if (!(res=args[0]->val_str(str)) ||
-        (str_to_time_with_warn(res->ptr(), res->length(), &l_time)))
+        (str_to_time_with_warn(&getSession(), res->ptr(), res->length(), &l_time)))
       goto null_date;
 
     l_time.year=l_time.month=l_time.day=0;
@@ -410,12 +410,12 @@ String *Item_func_date_format::val_str(String *str)
     goto null_date;
 
   if (fixed_length)
-    size=max_length;
+    size= max_length;
   else
-    size=format_length(format);
+    size= format_length(format);
 
-  if (size < MAX_DATE_STRING_REP_LENGTH)
-    size= MAX_DATE_STRING_REP_LENGTH;
+  if (size < type::Time::MAX_STRING_LENGTH)
+    size= type::Time::MAX_STRING_LENGTH;
 
   if (format == str)
     str= &value;				// Save result here
@@ -425,9 +425,10 @@ String *Item_func_date_format::val_str(String *str)
 
   /* Create the result string */
   str->set_charset(collation.collation);
-  if (not make_date_time(format, &l_time,
-                         is_time_format ? DRIZZLE_TIMESTAMP_TIME :
-                         DRIZZLE_TIMESTAMP_DATE,
+  if (not make_date_time(getSession(),
+                         format, &l_time,
+                         is_time_format ? type::DRIZZLE_TIMESTAMP_TIME :
+                         type::DRIZZLE_TIMESTAMP_DATE,
                          str))
     return str;
 

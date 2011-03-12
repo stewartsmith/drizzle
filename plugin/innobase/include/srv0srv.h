@@ -268,7 +268,10 @@ extern mutex_t*	kernel_mutex_temp;/* mutex protecting the server, trx structs,
 				query threads, and lock table: we allocate
 				it from dynamic memory to get it to the
 				same DRAM page as other hotspot semaphores */
+extern mutex_t* commit_id_mutex_temp;
+
 #define kernel_mutex (*kernel_mutex_temp)
+#define commit_id_mutex (*commit_id_mutex_temp)
 
 #define SRV_MAX_N_IO_THREADS	130
 

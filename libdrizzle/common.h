@@ -42,9 +42,7 @@
 #ifndef __DRIZZLE_COMMON_H
 #define __DRIZZLE_COMMON_H
 
-#include "config.h"
-
-#define HAVE_VISIBILITY 1
+#include <config.h>
 
 #include "drizzle_client.h"
 #include "drizzle_server.h"
@@ -52,13 +50,15 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <netinet/tcp.h>
+#ifndef _WIN32
+# include <netinet/tcp.h>
+# include <sys/uio.h>
+# include <unistd.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/uio.h>
-#include <unistd.h>
 #include <signal.h>
 
 #include "drizzle_local.h"

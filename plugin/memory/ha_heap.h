@@ -47,7 +47,7 @@ public:
                    drizzled::ha_rows rows)
   { return (double) rows /  20.0+1; }
 
-  int doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  int doOpen(const drizzled::identifier::Table &identifier, int mode, uint32_t test_if_locked);
   int close(void);
   void set_keys_for_scanning(void);
   int doInsertRecord(unsigned char * buf);

@@ -31,12 +31,18 @@ namespace statement
 class ReleaseSavepoint : public Statement
 {
 public:
-  ReleaseSavepoint(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  ReleaseSavepoint(Session *in_session, const lex_string_t &ident) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_RELEASE_SAVEPOINT);
+    lex().ident= ident;
+  }
 
   bool execute();
+  bool isTransactional()
+  {
+    return true;
+  }
 };
 
 } /* namespace statement */

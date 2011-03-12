@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
@@ -29,17 +29,18 @@ namespace drizzled
 
 bool statement::Load::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  bool res= load(session,
-                       session->lex->exchange,
-                       first_table,
-                       session->lex->field_list,
-                       session->lex->update_list,
-                       session->lex->value_list,
-                       session->lex->duplicates,
-                       session->lex->ignore);
+  bool res= load(getSession(),
+                 lex().exchange,
+                 first_table,
+                 lex().field_list,
+                 lex().update_list,
+                 lex().value_list,
+                 lex().duplicates,
+                 lex().ignore);
+
   return res;
 }
 

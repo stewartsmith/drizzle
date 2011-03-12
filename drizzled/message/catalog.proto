@@ -1,0 +1,22 @@
+/*
+  Message format for schemas.
+*/
+package drizzled.message;
+option optimize_for = SPEED;
+
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "CatalogMessage";
+
+import "engine.proto";
+
+message Catalog {
+  required string name = 1;
+  required Engine engine = 3;
+  required uint64 creation_timestamp= 11 [default = 0];
+  required uint64 update_timestamp= 12 [default = 0];
+  optional string uuid = 13;
+  /*
+    A version value of 0, means that it was never set.
+    */
+  optional uint64 version = 14;
+}

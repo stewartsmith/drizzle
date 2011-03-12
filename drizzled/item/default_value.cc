@@ -17,13 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/current_session.h>
 #include <drizzled/item/default_value.h>
 
 namespace drizzled
@@ -79,7 +78,7 @@ error:
 }
 
 
-void Item_default_value::print(String *str, enum_query_type query_type)
+void Item_default_value::print(String *str)
 {
   if (!arg)
   {
@@ -87,7 +86,7 @@ void Item_default_value::print(String *str, enum_query_type query_type)
     return;
   }
   str->append(STRING_WITH_LEN("default("));
-  arg->print(str, query_type);
+  arg->print(str);
   str->append(')');
 }
 
@@ -131,15 +130,7 @@ Item *Item_default_value::transform(Item_transformer transformer, unsigned char 
   Item *new_item= arg->transform(transformer, args);
   if (!new_item)
     return NULL;
-
-  /*
-    Session::change_item_tree() should be called only if the tree was
-    really transformed, i.e. when a new item has been created.
-    Otherwise we'll be allocating a lot of unnecessary memory for
-    change records at each execution.
-  */
-  if (arg != new_item)
-    current_session->change_item_tree(&arg, new_item);
+  arg= new_item;
   return (this->*transformer)(args);
 }
 

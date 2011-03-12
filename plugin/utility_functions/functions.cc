@@ -19,14 +19,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/utility_functions/functions.h"
+#include <config.h>
+
+#include <drizzled/plugin.h>
+#include <plugin/utility_functions/functions.h>
 
 using namespace drizzled;
 
 static int init(drizzled::module::Context &context)
 {
   context.add(new plugin::Create_function<utility_functions::Assert>("assert"));
+  context.add(new plugin::Create_function<utility_functions::BitCount>("bit_count"));
   context.add(new plugin::Create_function<utility_functions::Catalog>("catalog"));
   context.add(new plugin::Create_function<utility_functions::Execute>("execute"));
   context.add(new plugin::Create_function<utility_functions::GlobalReadLock>("global_read_lock"));

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/session.h>
 #include <drizzled/error.h>
@@ -45,8 +45,10 @@ Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
     */
     return NULL;
   }
-  if (!(ptr= current_session->strmake(cstr.ptr(), cstr.length())))
+
+  if (!(ptr= getSession().strmake(cstr.ptr(), cstr.length())))
     return NULL;
+
   conv->str_value.set(ptr, cstr.length(), cstr.charset());
   /* Ensure that no one is going to change the result string */
   conv->str_value.mark_as_const();
@@ -93,9 +95,9 @@ bool Item_string::eq(const Item *item, bool binary_cmp) const
   return 0;
 }
 
-void Item_string::print(String *str, enum_query_type query_type)
+void Item_string::print(String *str)
 {
-  if (query_type == QT_ORDINARY && is_cs_specified())
+  if (is_cs_specified())
   {
     str->append('_');
     str->append(collation.collation->csname);
@@ -125,7 +127,7 @@ double Item_string::val_real()
       We can use str_value.ptr() here as Item_string is gurantee to put an
       end \0 here.
     */
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "DOUBLE",
                         str_value.ptr());
@@ -154,7 +156,7 @@ int64_t Item_string::val_int()
   if (err > 0 ||
       (end != org_end && !check_if_only_end_space(cs, end, org_end)))
   {
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "INTEGER",
                         str_value.ptr());

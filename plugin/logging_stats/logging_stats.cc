@@ -84,7 +84,7 @@
  * 
  */
 
-#include "config.h"
+#include <config.h>
 #include "user_commands.h"
 #include "status_vars.h"
 #include "global_stats.h"
@@ -128,7 +128,7 @@ LoggingStats::~LoggingStats()
 void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
                                            Session *session)
 {
-  enum_sql_command sql_command= session->lex->sql_command;
+  enum_sql_command sql_command= session->getLex()->sql_command;
 
   scoreboard_slot->getUserCommands()->logCommand(sql_command);
 
@@ -370,14 +370,14 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("max-user-count",
           po::value<max_user_count_constraint>(&sysvar_logging_stats_max_user_count)->default_value(500),
-          N_("Max number of users that will be logged"));
+          _("Max number of users that will be logged"));
   context("bucket-count",
           po::value<bucket_count_constraint>(&sysvar_logging_stats_bucket_count)->default_value(10),
-          N_("Max number of range locks to use for Scoreboard"));
+          _("Max number of range locks to use for Scoreboard"));
   context("scoreboard-size",
           po::value<scoreboard_size_constraint>(&sysvar_logging_stats_scoreboard_size)->default_value(2000),
-          N_("Max number of concurrent sessions that will be logged"));
-  context("disable", N_("Enable Logging Statistics Collection"));
+          _("Max number of concurrent sessions that will be logged"));
+  context("disable", _("Enable Logging Statistics Collection"));
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -389,7 +389,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("User Statistics as DATA_DICTIONARY tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  NULL, /* system variables */
+  NULL, /* depends */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

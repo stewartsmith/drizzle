@@ -93,9 +93,9 @@ DROP DATABASE test;
 DROP DATABASE drizzledump_test;
 Ensure we don't have those tables (verify we restored something)
 SELECT * FROM test.t1;
-ERROR 42S02: Table 'test.t1' doesn't exist
+Got one of the listed errors
 SELECT * FROM drizzledump_test.t1;
-ERROR 42S02: Table 'drizzledump_test.t1' doesn't exist
+Got one of the listed errors
 Restoring from dumpfile
 USE test;
 SELECT * FROM t1;

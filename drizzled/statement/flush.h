@@ -33,15 +33,17 @@ namespace statement
 class Flush : public Statement
 {
 public:
-  Flush(Session *in_session)
-    :
+  Flush(Session *in_session) :
     Statement(in_session),
     flush_log(false),
     flush_tables(false),
     flush_tables_with_read_lock(false),
     flush_status(false),
     flush_global_status(false)
-  {}
+  {
+    set_command(SQLCOM_FLUSH);
+    lex().type= 0;
+  }
 
   bool execute();
 

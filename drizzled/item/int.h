@@ -69,7 +69,7 @@ public:
 
   Item *clone_item() { return new Item_int(name,value,max_length); }
 
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 
   Item_num *neg() { value= -value; return this; }
 

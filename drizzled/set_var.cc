@@ -17,15 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/exception/get_error_info.hpp>
 #include <string>
 
-#include "drizzled/session.h"
-#include "drizzled/item/string.h"
-#include "drizzled/sql_list.h"
+#include <drizzled/session.h>
+#include <drizzled/item/string.h>
+#include <drizzled/function/set_user_var.h>
 
 using namespace std;
 
@@ -55,28 +56,21 @@ namespace drizzled
 int sql_set_variables(Session *session, const SetVarVector &var_list)
 {
   int error;
-
-  SetVarVector::const_iterator it(var_list.begin());
-
-  while (it != var_list.end())
+  BOOST_FOREACH(SetVarVector::const_reference it, var_list)
   {
-    if ((error= (*it)->check(session)))
+    if ((error= it->check(session)))
       goto err;
-    ++it;
   }
   if (!(error= test(session->is_error())))
   {
-    it= var_list.begin();
-    while (it != var_list.end())
+    BOOST_FOREACH(SetVarVector::const_reference it, var_list)
     {
-      error|= (*it)->update(session);         // Returns 0, -1 or 1
-      ++it;
+      error|= it->update(session);         // Returns 0, -1 or 1
     }
   }
-
 err:
-  free_underlaid_joins(session, &session->lex->select_lex);
-  return(error);
+  free_underlaid_joins(session, &session->getLex()->select_lex);
+  return error;
 }
 
 
@@ -85,7 +79,11 @@ err:
 *****************************************************************************/
 set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
                  const LEX_STRING *base_name_arg, Item *value_arg) :
-  var(var_arg), type(type_arg), base(*base_name_arg)
+  uint64_t_value(0),
+  str_value(""),
+  var(var_arg),
+  type(type_arg),
+  base(*base_name_arg)
 {
   /*
     If the set value is a field, change it to a string to allow things like
@@ -100,7 +98,9 @@ set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
       value=value_arg;			/* Give error message later */
   }
   else
-    value=value_arg;
+  {
+    value= value_arg;
+  }
 }
 
 int set_var::check(Session *session)
@@ -113,7 +113,7 @@ int set_var::check(Session *session)
   if (var->check_type(type))
   {
     int err= type == OPT_GLOBAL ? ER_LOCAL_VARIABLE : ER_GLOBAL_VARIABLE;
-    my_error(err, MYF(0), var->getName().c_str());
+    my_error(static_cast<drizzled::error_t>(err), MYF(0), var->getName().c_str());
     return -1;
   }
   /* value is a NULL pointer if we are using SET ... = DEFAULT */
@@ -164,7 +164,7 @@ int set_var::update(Session *session)
   catch (invalid_option_value &ex)
   {
     /* TODO: Fix this to be typesafe once we have properly typed set_var */
-    string new_val= boost::lexical_cast<string>(save_result.uint32_t_value);
+    string new_val= boost::lexical_cast<string>(uint64_t_value);
     if (boost::get_error_info<invalid_max_info>(ex) != NULL)
     { 
       const uint64_t max_val= *(boost::get_error_info<invalid_max_info>(ex));
@@ -183,6 +183,19 @@ int set_var::update(Session *session)
       const int64_t min_val= *(boost::get_error_info<invalid_min_info>(ex));
       string explanation("(< ");
       explanation.append(boost::lexical_cast<std::string>(min_val));
+      explanation.push_back(')');
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_INVALID_OPTION_VALUE,
+                          ER(ER_INVALID_OPTION_VALUE),
+                          var->getName().c_str(),
+                          new_val.c_str(),
+                          explanation.c_str());
+    }
+    else if (boost::get_error_info<invalid_value>(ex) != NULL)
+    {
+      const std::string str_val= *(boost::get_error_info<invalid_value>(ex));
+      string explanation("(");
+      explanation.append(str_val);
       explanation.push_back(')');
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_INVALID_OPTION_VALUE,
@@ -229,5 +242,24 @@ int set_var_user::update(Session *)
   }
   return 0;
 }
+
+void set_var::setValue(const std::string &new_value)
+{
+  str_value= new_value;
+}
+
+void set_var::setValue(uint64_t new_value)
+{
+  uint64_t_value= new_value;
+}
+
+void set_var::updateValue()
+{
+  if (var->show_type() != SHOW_CHAR)
+  {
+    uint64_t_value= value->val_int();
+  }
+}
+
 
 } /* namespace drizzled */

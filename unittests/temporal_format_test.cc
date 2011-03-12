@@ -18,31 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
-#include <gtest/gtest.h>
+
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
+
 #include <vector>
 
 #include "temporal_generator.h"
 
 using namespace drizzled;
 
-class TemporalFormatTest : public ::testing::Test
+class TemporalFormatTest
 {
   protected:
     TemporalFormat *tf;
     Temporal *temporal;
     bool result;
 
-  virtual void SetUp()
+  TemporalFormatTest()
   {
     tf= NULL;
     temporal= NULL;
   }
 
-  virtual void TearDown()
+  ~TemporalFormatTest()
   {
     if (tf != NULL)
       delete tf;
@@ -51,36 +54,36 @@ class TemporalFormatTest : public ::testing::Test
   }
 };
 
-
-TEST_F(TemporalFormatTest, constructor_WithValidRegExp_shouldCompile)
+BOOST_FIXTURE_TEST_SUITE(TemporalFormatTestSuite, TemporalFormatTest)
+BOOST_AUTO_TEST_CASE(constructor_WithValidRegExp_shouldCompile)
 {
   tf= new TemporalFormat("^(\\d{4})[-/.]$");
   
   result= tf->is_valid();
 
-  ASSERT_TRUE(result);
+  BOOST_REQUIRE(result);
 }
 
-TEST_F(TemporalFormatTest, constructor_WithInvalidRegExp_shouldNotCompile)
+BOOST_AUTO_TEST_CASE(constructor_WithInvalidRegExp_shouldNotCompile)
 {
   tf= new TemporalFormat("^\\d{4)[-/.]$");
 
   result= tf->is_valid();
   
-  ASSERT_FALSE(result);
+  BOOST_REQUIRE(not result);
 }
 
-TEST_F(TemporalFormatTest, matches_OnNotMatchingString_shouldReturn_False)
+BOOST_AUTO_TEST_CASE(matches_OnNotMatchingString_shouldReturn_False)
 {
   tf= new TemporalFormat("^(\\d{4})[-/.]$");
   char matched[] ="1234/ABC";
 
   result= tf->matches(matched, sizeof(matched) - sizeof(char), NULL);
   
-  ASSERT_FALSE(result);
+  BOOST_REQUIRE(not result);
 }
 
-TEST_F(TemporalFormatTest, matches_OnMatchingString_FormatWithIndexesSet_shouldPopulateTemporal)
+BOOST_AUTO_TEST_CASE(matches_OnMatchingString_FormatWithIndexesSet_shouldPopulateTemporal)
 {
   char regexp[]= "^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})$";
   char matched[]= "1999/9/14T23:29:05";
@@ -89,17 +92,17 @@ TEST_F(TemporalFormatTest, matches_OnMatchingString_FormatWithIndexesSet_shouldP
 
   
   result= tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
-  ASSERT_TRUE(result);
+  BOOST_REQUIRE(result);
   
-  EXPECT_EQ(1999, temporal->years());
-  EXPECT_EQ(9, temporal->months());
-  EXPECT_EQ(14, temporal->days());
-  EXPECT_EQ(23, temporal->hours());
-  EXPECT_EQ(29, temporal->minutes());
-  EXPECT_EQ(5, temporal->seconds());
+  BOOST_REQUIRE_EQUAL(1999, temporal->years());
+  BOOST_REQUIRE_EQUAL(9, temporal->months());
+  BOOST_REQUIRE_EQUAL(14, temporal->days());
+  BOOST_REQUIRE_EQUAL(23, temporal->hours());
+  BOOST_REQUIRE_EQUAL(29, temporal->minutes());
+  BOOST_REQUIRE_EQUAL(5, temporal->seconds());
 }
 
-TEST_F(TemporalFormatTest, matches_FormatWithMicroSecondIndexSet_shouldAddTrailingZeros)
+BOOST_AUTO_TEST_CASE(matches_FormatWithMicroSecondIndexSet_shouldAddTrailingZeros)
 {
   tf= TemporalGenerator::TemporalFormatGen::make_temporal_format("^(\\d{1,6})$", 0, 0, 0, 0, 0, 0, 1, 0);
   char matched[]= "560";
@@ -107,10 +110,10 @@ TEST_F(TemporalFormatTest, matches_FormatWithMicroSecondIndexSet_shouldAddTraili
   
   tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
   
-  ASSERT_EQ(560000, temporal->useconds());
+  BOOST_REQUIRE_EQUAL(560000, temporal->useconds());
 }
 
-TEST_F(TemporalFormatTest, matches_FormatWithNanoSecondIndexSet_shouldAddTrailingZeros)
+BOOST_AUTO_TEST_CASE(matches_FormatWithNanoSecondIndexSet_shouldAddTrailingZeros)
 {
   tf= TemporalGenerator::TemporalFormatGen::make_temporal_format("^(\\d{1,9})$", 0, 0, 0, 0, 0, 0, 0, 1);
   char matched[]= "4321";
@@ -118,8 +121,9 @@ TEST_F(TemporalFormatTest, matches_FormatWithNanoSecondIndexSet_shouldAddTrailin
   
   tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
   
-  ASSERT_EQ(432100000, temporal->nseconds());
+  BOOST_REQUIRE_EQUAL(432100000, temporal->nseconds());
 }
+BOOST_AUTO_TEST_SUITE_END()
 
 namespace drizzled
 {
@@ -129,23 +133,25 @@ extern std::vector<TemporalFormat *> known_time_formats;
 extern std::vector<TemporalFormat *> all_temporal_formats;
 }
 
-TEST(TemporalFormatInitTest, init_temporal_formats_vectorsWithKnownFormats_shouldHaveExpectedLengths)
+BOOST_AUTO_TEST_SUITE(TemporalFormatTestSuite)
+BOOST_AUTO_TEST_CASE(init_temporal_formats_vectorsWithKnownFormats_shouldHaveExpectedLengths)
 {
   init_temporal_formats();
 
-  EXPECT_EQ(13, known_datetime_formats.size());	
-  EXPECT_EQ(8, known_date_formats.size());
-  EXPECT_EQ(11, known_time_formats.size());
-  EXPECT_EQ(19, all_temporal_formats.size());
+  BOOST_REQUIRE_EQUAL(13, known_datetime_formats.size());	
+  BOOST_REQUIRE_EQUAL(8, known_date_formats.size());
+  BOOST_REQUIRE_EQUAL(11, known_time_formats.size());
+  BOOST_REQUIRE_EQUAL(19, all_temporal_formats.size());
 }
 
-TEST(TemporalFormatDeinitTest, deinit_temporal_formats_vectorsWithKnownFormats_shouldHaveZeroLengths)
+BOOST_AUTO_TEST_CASE(deinit_temporal_formats_vectorsWithKnownFormats_shouldHaveZeroLengths)
 {
   init_temporal_formats();
   deinit_temporal_formats();
   
-  EXPECT_EQ(0, known_datetime_formats.size());
-  EXPECT_EQ(0, known_date_formats.size());
-  EXPECT_EQ(0, known_time_formats.size());
-  EXPECT_EQ(0, all_temporal_formats.size());
+  BOOST_REQUIRE_EQUAL(0, known_datetime_formats.size());
+  BOOST_REQUIRE_EQUAL(0, known_date_formats.size());
+  BOOST_REQUIRE_EQUAL(0, known_time_formats.size());
+  BOOST_REQUIRE_EQUAL(0, all_temporal_formats.size());
 }
+BOOST_AUTO_TEST_SUITE_END()

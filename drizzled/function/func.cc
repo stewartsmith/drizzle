@@ -17,20 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include <drizzled/sql_string.h>
-#include <drizzled/sql_list.h>
-
-#include <drizzled/function/math/int.h>
-#include <drizzled/field/int32.h>
-#include <drizzled/field/int64.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/field/double.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/size.h>
+#include <drizzled/function/math/int.h>
 #include <drizzled/session.h>
-#include <drizzled/error.h>
-#include <drizzled/check_stack_overrun.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/sql_string.h>
+
 #include <limits>
 #include <algorithm>
 
@@ -40,14 +41,92 @@ namespace drizzled
 {
 
 
+Item_func::Item_func(void):
+  _session(*current_session),
+  allowed_arg_cols(1), arg_count(0),
+  const_item_cache(false)
+  {
+    with_sum_func= 0;
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a):
+  _session(*current_session),
+  allowed_arg_cols(1), arg_count(1),
+  const_item_cache(false)
+  {
+    args= tmp_arg;
+    args[0]= a;
+    with_sum_func= a->with_sum_func;
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a,Item *b):
+  _session(*current_session),
+  allowed_arg_cols(1), arg_count(2),
+  const_item_cache(false)
+  {
+    args= tmp_arg;
+    args[0]= a; args[1]= b;
+    with_sum_func= a->with_sum_func || b->with_sum_func;
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a,Item *b,Item *c):
+  _session(*current_session),
+  allowed_arg_cols(1),
+  const_item_cache(false)
+  {
+    arg_count= 0;
+    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*3)))
+    {
+      arg_count= 3;
+      args[0]= a; args[1]= b; args[2]= c;
+      with_sum_func= a->with_sum_func || b->with_sum_func || c->with_sum_func;
+    }
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a,Item *b,Item *c,Item *d):
+  _session(*current_session),
+  allowed_arg_cols(1),
+  const_item_cache(false)
+  {
+    arg_count= 0;
+    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*4)))
+    {
+      arg_count= 4;
+      args[0]= a; args[1]= b; args[2]= c; args[3]= d;
+      with_sum_func= a->with_sum_func || b->with_sum_func ||
+        c->with_sum_func || d->with_sum_func;
+    }
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+Item_func::Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
+  _session(*current_session),
+  allowed_arg_cols(1),
+  const_item_cache(false)
+  {
+    arg_count= 5;
+    if ((args= (Item**) memory::sql_alloc(sizeof(Item*)*5)))
+    {
+      args[0]= a; args[1]= b; args[2]= c; args[3]= d; args[4]= e;
+      with_sum_func= a->with_sum_func || b->with_sum_func ||
+        c->with_sum_func || d->with_sum_func || e->with_sum_func ;
+    }
+    collation.set(DERIVATION_SYSCONST);
+  }
+
+
 void Item_func::set_arguments(List<Item> &list)
 {
   allowed_arg_cols= 1;
-  arg_count=list.elements;
+  arg_count=list.size();
   args= tmp_arg;                                // If 2 arguments
   if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
-    List_iterator_fast<Item> li(list);
+    List<Item>::iterator li(list.begin());
     Item *item;
     Item **save_args= args;
 
@@ -57,12 +136,13 @@ void Item_func::set_arguments(List<Item> &list)
       with_sum_func|=item->with_sum_func;
     }
   }
-  list.empty();          // Fields are used
+  list.clear();          // Fields are used
 }
 
 Item_func::Item_func(List<Item> &list) :
   _session(*current_session),
-  allowed_arg_cols(1)
+  allowed_arg_cols(1),
+  const_item_cache(false)
 {
   collation.set(DERIVATION_SYSCONST);
   set_arguments(list);
@@ -83,7 +163,7 @@ Item_func::Item_func(Session *session, Item_func *item) :
       args= tmp_arg;
     else
     {
-      if (!(args=(Item**) session->alloc(sizeof(Item*)*arg_count)))
+      if (!(args=(Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
         return;
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);
@@ -134,7 +214,7 @@ Item_func::fix_fields(Session *session, Item **)
   unsigned char buff[STACK_BUFF_ALLOC];      // Max argument in function
   session->session_marker= 0;
   used_tables_cache= not_null_tables_cache= 0;
-  const_item_cache=1;
+  const_item_cache= true;
 
   if (check_stack_overrun(session, STACK_MIN_SIZE, buff))
     return true;        // Fatal error if flag is set!
@@ -189,7 +269,7 @@ void Item_func::fix_after_pullout(Select_Lex *new_parent,
   Item **arg,**arg_end;
 
   used_tables_cache= not_null_tables_cache= 0;
-  const_item_cache=1;
+  const_item_cache= false;
 
   if (arg_count)
   {
@@ -276,15 +356,7 @@ Item *Item_func::transform(Item_transformer transformer, unsigned char *argument
       Item *new_item= (*arg)->transform(transformer, argument);
       if (!new_item)
         return 0;
-
-      /*
-        Session::change_item_tree() should be called only if the tree was
-        really transformed, i.e. when a new item has been created.
-        Otherwise we'll be allocating a lot of unnecessary memory for
-        change records at each execution.
-      */
-      if (*arg != new_item)
-        getSession().change_item_tree(arg, new_item);
+      *arg= new_item;
     }
   }
   return (this->*transformer)(argument);
@@ -332,7 +404,7 @@ Item *Item_func::compile(Item_analyzer analyzer, unsigned char **arg_p,
       unsigned char *arg_v= *arg_p;
       Item *new_item= (*arg)->compile(analyzer, &arg_v, transformer, arg_t);
       if (new_item && *arg != new_item)
-        current_session->change_item_tree(arg, new_item);
+        *arg= new_item;
     }
   }
   return (this->*transformer)(arg_t);
@@ -354,7 +426,7 @@ void Item_func::split_sum_func(Session *session, Item **ref_pointer_array,
 void Item_func::update_used_tables()
 {
   used_tables_cache=0;
-  const_item_cache=1;
+  const_item_cache= true;
   for (uint32_t i=0 ; i < arg_count ; i++)
   {
     args[i]->update_used_tables();
@@ -376,37 +448,37 @@ table_map Item_func::not_null_tables() const
 }
 
 
-void Item_func::print(String *str, enum_query_type query_type)
+void Item_func::print(String *str)
 {
   str->append(func_name());
   str->append('(');
-  print_args(str, 0, query_type);
+  print_args(str, 0);
   str->append(')');
 }
 
 
-void Item_func::print_args(String *str, uint32_t from, enum_query_type query_type)
+void Item_func::print_args(String *str, uint32_t from)
 {
   for (uint32_t i=from ; i < arg_count ; i++)
   {
     if (i != from)
       str->append(',');
-    args[i]->print(str, query_type);
+    args[i]->print(str);
   }
 }
 
 
-void Item_func::print_op(String *str, enum_query_type query_type)
+void Item_func::print_op(String *str)
 {
   str->append('(');
   for (uint32_t i=0 ; i < arg_count-1 ; i++)
   {
-    args[i]->print(str, query_type);
+    args[i]->print(str);
     str->append(' ');
     str->append(func_name());
     str->append(' ');
   }
-  args[arg_count-1]->print(str, query_type);
+  args[arg_count-1]->print(str);
   str->append(')');
 }
 
@@ -434,13 +506,13 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
 }
 
 
-bool Item_func::get_arg0_date(type::Time *ltime, uint32_t fuzzy_date)
+bool Item_func::get_arg0_date(type::Time &ltime, uint32_t fuzzy_date)
 {
   return (null_value=args[0]->get_date(ltime, fuzzy_date));
 }
 
 
-bool Item_func::get_arg0_time(type::Time *ltime)
+bool Item_func::get_arg0_time(type::Time &ltime)
 {
   return (null_value= args[0]->get_time(ltime));
 }

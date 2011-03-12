@@ -22,6 +22,8 @@
 
 #include <cstring>
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
@@ -44,7 +46,7 @@ extern size_t num_trx_monitored_objects;
  * "is a" and is the appropriate use here since all implementing classes
  * *are* monitored in a transaction...
  */
-class MonitoredInTransaction
+class DRIZZLED_API MonitoredInTransaction
 {
 public:
 

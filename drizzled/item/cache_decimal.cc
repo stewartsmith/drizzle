@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/item/cache_decimal.h>
 
@@ -52,7 +52,7 @@ String* Item_cache_decimal::val_str(String *str)
   assert(fixed);
   class_decimal_round(E_DEC_FATAL_ERROR, &decimal_value, decimals, false,
                    &decimal_value);
-  class_decimal2string(E_DEC_FATAL_ERROR, &decimal_value, 0, 0, 0, str);
+  class_decimal2string(&decimal_value, 0, str);
   return str;
 }
 

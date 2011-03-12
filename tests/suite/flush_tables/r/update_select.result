@@ -1,3 +1,5 @@
 CREATE TABLE t1 (a serial);
 select * from t1 for update;
 UNLOCK tables;
+ERROR HY000: No lock is held by this connection.
+DROP TABLE t1;

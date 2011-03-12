@@ -34,21 +34,13 @@
  *
  **/
 
-#include "config.h"
-#include <libdrizzle/drizzle_client.h>
+#include <config.h>
+#include <libdrizzle/libdrizzle.h>
 
-#include "client/get_password.h"
+#include "server_detect.h"
+#include "get_password.h"
 
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <cerrno>
 #include <string>
@@ -62,11 +54,11 @@
 #include <stdarg.h>
 #include <math.h>
 #include <memory>
-#include "client/linebuffer.h"
+#include <client/linebuffer.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
-#include "drizzled/utf8/utf8.h"
+#include <drizzled/utf8/utf8.h>
 #include <cstdlib>
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
@@ -160,7 +152,7 @@ typedef Function drizzle_compentry_func_t;
 #endif
 #include <boost/program_options.hpp>
 #include <boost/scoped_ptr.hpp>
-#include "drizzled/program_options/config_file.h"
+#include <drizzled/program_options/config_file.h>
 
 using namespace std;
 namespace po=boost::program_options;
@@ -299,13 +291,13 @@ static bool ignore_errors= false, quick= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
   use_drizzle_protocol= false, opt_local_infile;
+static uint32_t opt_kill= 0;
 static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line;
 static uint32_t opt_drizzle_port= 0;
 static int  opt_silent, verbose= 0;
-static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
@@ -316,6 +308,7 @@ static Status status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static uint32_t opt_connect_timeout= 0;
+static ServerDetect::server_type server_type= ServerDetect::SERVER_UNKNOWN_FOUND;
 std::string current_db,
   delimiter_str,  
   current_host,
@@ -325,10 +318,63 @@ std::string current_db,
   current_password,
   opt_password,
   opt_protocol;
-// TODO: Need to i18n these
-static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
-                                  "Aug","Sep","Oct","Nov","Dec"};
+
+static const char* get_day_name(int day_of_week)
+{
+  switch(day_of_week)
+  {
+  case 0:
+    return _("Sun");
+  case 1:
+    return _("Mon");
+  case 2:
+    return _("Tue");
+  case 3:
+    return _("Wed");
+  case 4:
+    return _("Thu");
+  case 5:
+    return _("Fri");
+  case 6:
+    return _("Sat");
+  }
+
+  return NULL;
+}
+
+static const char* get_month_name(int month)
+{
+  switch(month)
+  {
+  case 0:
+    return _("Jan");
+  case 1:
+    return _("Feb");
+  case 2:
+    return _("Mar");
+  case 3:
+    return _("Apr");
+  case 4:
+    return _("May");
+  case 5:
+    return _("Jun");
+  case 6:
+    return _("Jul");
+  case 7:
+    return _("Aug");
+  case 8:
+    return _("Sep");
+  case 9:
+    return _("Oct");
+  case 10:
+    return _("Nov");
+  case 11:
+    return _("Dec");
+  }
+
+  return NULL;
+}
+
 /* @TODO: Remove this */
 #define FN_REFLEN 512
 
@@ -368,8 +414,7 @@ static int com_quit(string *str,const char*),
   com_nopager(string *str, const char*), com_pager(string *str, const char*);
 
 static int read_and_execute(bool interactive);
-static int sql_connect(const string &host, const string &database, const string &user, const string &password,
-                       uint32_t silent);
+static int sql_connect(const string &host, const string &database, const string &user, const string &password);
 static const char *server_version_string(drizzle_con_st *con);
 static int put_info(const char *str,INFO_TYPE info,uint32_t error,
                     const char *sql_state);
@@ -385,7 +430,7 @@ static void init_username(void);
 static void add_int_to_prompt(int toadd);
 static int get_result_width(drizzle_result_st *res);
 static int get_field_disp_length(drizzle_column_st * field);
-static const char * strcont(register const char *str, register const char *set);
+static const char * strcont(const char *str, const char *set);
 
 /* A class which contains information on the commands this program
    can understand. */
@@ -1122,10 +1167,10 @@ static void print_table_data(drizzle_result_st *result);
 static void print_tab_data(drizzle_result_st *result);
 static void print_table_data_vertically(drizzle_result_st *result);
 static void print_warnings(uint32_t error_code);
-static uint32_t start_timer(void);
-static void end_timer(uint32_t start_time,char *buff);
-static void drizzle_end_timer(uint32_t start_time,char *buff);
-static void nice_time(double sec,char *buff,bool part_second);
+static boost::posix_time::ptime start_timer(void);
+static void end_timer(boost::posix_time::ptime, string &buff);
+static void drizzle_end_timer(boost::posix_time::ptime, string &buff);
+static void nice_time(boost::posix_time::time_duration duration, string &buff);
 extern "C" void drizzle_end(int sig);
 extern "C" void handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
@@ -1165,6 +1210,42 @@ static bool server_shutdown(void)
     else
     {
       fprintf(stderr, _("shutdown failed; error: '%s'"),
+              drizzle_con_error(&con));
+    }
+    return false;
+  }
+
+  drizzle_result_free(&result);
+
+  if (verbose)
+    printf(_("done\n"));
+
+  return true;
+}
+
+static bool kill_query(uint32_t query_id)
+{
+  drizzle_result_st result;
+  drizzle_return_t ret;
+
+  if (verbose)
+  {
+    printf(_("killing query %u"), query_id);
+    printf("... ");
+  }
+
+  if (drizzle_kill(&con, &result, query_id,
+                   &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      fprintf(stderr, _("kill failed; error: '%s'"),
+              drizzle_result_error(&result));
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      fprintf(stderr, _("kill failed; error: '%s'"),
               drizzle_con_error(&con));
     }
     return false;
@@ -1247,6 +1328,16 @@ static bool execute_commands(int *error)
       *error= 1;
     executed= true;
   }
+
+  if (opt_kill)
+  {
+    if (kill_query(opt_kill) == false)
+    {
+      *error= 1;
+    }
+    executed= true;
+  }
+
   return executed;
 }
 
@@ -1281,122 +1372,126 @@ try
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle", LOCALEDIR);
-  textdomain("drizzle");
+  bindtextdomain("drizzle7", LOCALEDIR);
+  textdomain("drizzle7");
 #endif
 
-  po::options_description commandline_options(N_("Options used only in command line"));
+  po::options_description commandline_options(_("Options used only in command line"));
   commandline_options.add_options()
-  ("help,?",N_("Displays this help and exit."))
-  ("batch,B",N_("Don't use history file. Disable interactive behavior. (Enables --silent)"))
+  ("help,?",_("Displays this help and exit."))
+  ("batch,B",_("Don't use history file. Disable interactive behavior. (Enables --silent)"))
   ("column-type-info", po::value<bool>(&column_types_flag)->default_value(false)->zero_tokens(),
-  N_("Display column type information."))
+  _("Display column type information."))
   ("comments,c", po::value<bool>(&preserve_comments)->default_value(false)->zero_tokens(),
-  N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
+  _("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
   ("vertical,E", po::value<bool>(&vertical)->default_value(false)->zero_tokens(),
-  N_("Print the output of a query (rows) vertically."))
+  _("Print the output of a query (rows) vertically."))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
-  N_("Continue even if we get an sql error."))
+  _("Continue even if we get an sql error."))
   ("named-commands,G", po::value<bool>(&named_cmds)->default_value(false)->zero_tokens(),
-  N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter."))
+  _("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter."))
   ("no-beep,b", po::value<bool>(&opt_nobeep)->default_value(false)->zero_tokens(),
-  N_("Turn off beep on error."))
-  ("disable-line-numbers", N_("Do not write line numbers for errors."))
-  ("disable-column-names", N_("Do not write column names in results."))
+  _("Turn off beep on error."))
+  ("disable-line-numbers", _("Do not write line numbers for errors."))
+  ("disable-column-names", _("Do not write column names in results."))
   ("skip-column-names,N", 
-  N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
+  _("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
   ("set-variable,O", po::value<string>(),
-  N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."))
+  _("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."))
   ("table,t", po::value<bool>(&output_tables)->default_value(false)->zero_tokens(),
-  N_("Output in table format.")) 
+  _("Output in table format.")) 
   ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
-  N_("Only allow UPDATE and DELETE that uses keys."))
+  _("Only allow UPDATE and DELETE that uses keys."))
   ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
-  N_("Synonym for option --safe-updates, -U."))
+  _("Synonym for option --safe-updates, -U."))
   ("verbose,v", po::value<string>(&opt_verbose)->default_value(""),
-  N_("-v vvv implies that verbose= 3, Used to specify verbose"))
-  ("version,V", N_("Output version information and exit."))
+  _("-v vvv implies that verbose= 3, Used to specify verbose"))
+  ("version,V", _("Output version information and exit."))
   ("secure-auth", po::value<bool>(&opt_secure_auth)->default_value(false)->zero_tokens(),
-  N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
+  _("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
   ("show-warnings", po::value<bool>(&show_warnings)->default_value(false)->zero_tokens(),
-  N_("Show warnings after every statement."))
+  _("Show warnings after every statement."))
   ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(0),
-  N_("Number of lines before each import progress report."))
+  _("Number of lines before each import progress report."))
   ("ping", po::value<bool>(&opt_ping)->default_value(false)->zero_tokens(),
-  N_("Ping the server to check if it's alive."))
+  _("Ping the server to check if it's alive."))
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
-  N_("Configuration file defaults are not used if no-defaults is set"))
+  _("Configuration file defaults are not used if no-defaults is set"))
   ;
 
-  po::options_description drizzle_options(N_("Options specific to the drizzle client"));
+  po::options_description drizzle_options(_("Options specific to the drizzle client"));
   drizzle_options.add_options()
   ("disable-auto-rehash,A",
-  N_("Disable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time."))
+  _("Disable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time."))
   ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
-  N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
+  _("Automatically switch to vertical output mode if the result is wider than the terminal width."))
   ("database,D", po::value<string>(&current_db)->default_value(""),
-  N_("Database to use."))
+  _("Database to use."))
   ("default-character-set",po::value<string>(),
-  N_("(not used)"))
+  _("(not used)"))
   ("delimiter", po::value<string>(&delimiter_str)->default_value(";"),
-  N_("Delimiter to be used."))
+  _("Delimiter to be used."))
   ("execute,e", po::value<string>(),
-  N_("Execute command and quit. (Disables --force and history file)"))
+  _("Execute command and quit. (Disables --force and history file)"))
   ("local-infile", po::value<bool>(&opt_local_infile)->default_value(false)->zero_tokens(),
-  N_("Enable LOAD DATA LOCAL INFILE."))
+  _("Enable LOAD DATA LOCAL INFILE."))
   ("unbuffered,n", po::value<bool>(&unbuffered)->default_value(false)->zero_tokens(),
-  N_("Flush buffer after each query."))
+  _("Flush buffer after each query."))
   ("sigint-ignore", po::value<bool>(&opt_sigint_ignore)->default_value(false)->zero_tokens(),
-  N_("Ignore SIGINT (CTRL-C)"))
+  _("Ignore SIGINT (CTRL-C)"))
   ("one-database,o", po::value<bool>(&one_database)->default_value(false)->zero_tokens(),
-  N_("Only update the default database. This is useful for skipping updates to other database in the update log."))
+  _("Only update the default database. This is useful for skipping updates to other database in the update log."))
   ("pager", po::value<string>(),
-  N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
+  _("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
   ("disable-pager", po::value<bool>(&opt_nopager)->default_value(false)->zero_tokens(),
-  N_("Disable pager and print to stdout. See interactive help (\\h) also."))
+  _("Disable pager and print to stdout. See interactive help (\\h) also."))
   ("prompt", po::value<string>(&current_prompt)->default_value(""),  
-  N_("Set the drizzle prompt to this value."))
+  _("Set the drizzle prompt to this value."))
   ("quick,q", po::value<bool>(&quick)->default_value(false)->zero_tokens(),
-  N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."))
+  _("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."))
   ("raw,r", po::value<bool>(&opt_raw_data)->default_value(false)->zero_tokens(),
-  N_("Write fields without conversion. Used with --batch.")) 
-  ("disable-reconnect", N_("Do not reconnect if the connection is lost."))
+  _("Write fields without conversion. Used with --batch.")) 
+  ("disable-reconnect", _("Do not reconnect if the connection is lost."))
   ("shutdown", po::value<bool>()->zero_tokens(),
-  N_("Shutdown the server"))
-  ("silent,s", N_("Be more silent. Print results with a tab as separator, each row on new line."))
+  _("Shutdown the server"))
+  ("silent,s", _("Be more silent. Print results with a tab as separator, each row on new line."))
+  ("kill", po::value<uint32_t>(&opt_kill)->default_value(0),
+  _("Kill a running query."))
   ("tee", po::value<string>(),
-  N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
+  _("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
-  N_("Disable outfile. See interactive help (\\h) also."))
+  _("Disable outfile. See interactive help (\\h) also."))
   ("connect-timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
-  N_("Number of seconds before connection timeout."))
+  _("Number of seconds before connection timeout."))
   ("max-input-line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
-  N_("Max length of input line"))
+  _("Max length of input line"))
   ("select-limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
-  N_("Automatic limit for SELECT when using --safe-updates"))
+  _("Automatic limit for SELECT when using --safe-updates"))
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
-  N_("Automatic limit for rows in a join when using --safe-updates"))
+  _("Automatic limit for rows in a join when using --safe-updates"))
   ;
-
-  po::options_description client_options(N_("Options specific to the client"));
+#ifndef DRIZZLE_ADMIN_TOOL
+  const char* unix_user= getlogin();
+#endif
+  po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
-  N_("Connect to host"))
+  _("Connect to host"))
   ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
-  N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
+  _("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
-  N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
+  _("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
 #ifdef DRIZZLE_ADMIN_TOOL
   ("user,u", po::value<string>(&current_user)->default_value("root"),
 #else
-  ("user,u", po::value<string>(&current_user)->default_value(""),
+  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
 #endif
-  N_("User for login if not current user."))
+  _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
-  N_("The protocol of connection (mysql or drizzle)."))
+  _("The protocol of connection (mysql or drizzle)."))
   ;
 
-  po::options_description long_options(N_("Allowed Options"));
+  po::options_description long_options(_("Allowed Options"));
   long_options.add(commandline_options).add(drizzle_options).add(client_options);
 
   std::string system_config_dir_drizzle(SYSCONFDIR); 
@@ -1465,7 +1560,10 @@ try
                       "prompt. Aborting.\n"));
     exit(ENOMEM);
   }
-  current_prompt= strdup(default_prompt);
+
+  if (current_prompt.empty())
+    current_prompt= strdup(default_prompt);
+
   if (current_prompt.empty())
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -1490,7 +1588,6 @@ try
   if (! isatty(0) || ! isatty(1))
   {
     status.setBatch(1); opt_silent=1;
-    ignore_errors=0;
   }
   else
     status.setAddToHistory(1);
@@ -1667,7 +1764,7 @@ try
   }
   if (vm.count("silent"))
   {
-    opt_silent++;
+    opt_silent= 2;
   }
   
   if (vm.count("help") || vm.count("version"))
@@ -1695,7 +1792,7 @@ try
   }
 
   memset(&drizzle, 0, sizeof(drizzle));
-  if (sql_connect(current_host, current_db, current_user, opt_password,opt_silent))
+  if (sql_connect(current_host, current_db, current_user, opt_password))
   {
     quick= 1;          // Avoid history
     status.setExitStatus(1);
@@ -1926,7 +2023,6 @@ static int process_options(void)
     default_pager_set= 0;
     opt_outfile= 0;
     opt_reconnect= 0;
-    connect_flag= DRIZZLE_CAPABILITIES_NONE; /* Not in interactive mode */
   }
 
   if (tty_password)
@@ -2715,7 +2811,7 @@ int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
 static int
 com_help(string *buffer, const char *)
 {
-  register int i, j;
+  int i, j;
   char buff[32], *end;
   std::vector<char> output_buff;
   output_buff.resize(512);
@@ -2764,10 +2860,10 @@ static int
 com_go(string *buffer, const char *)
 {
   char          buff[200]; /* about 110 chars used so far */
-  char          time_buff[52+3+1]; /* time max + space&parens + NUL */
   drizzle_result_st result;
   drizzle_return_t ret;
-  uint32_t      timer, warnings= 0;
+  uint32_t      warnings= 0;
+  boost::posix_time::ptime timer;
   uint32_t      error= 0;
   uint32_t      error_code= 0;
   int           err= 0;
@@ -2836,10 +2932,9 @@ com_go(string *buffer, const char *)
         goto end;
     }
 
+    string time_buff("");
     if (verbose >= 3 || !opt_silent)
       drizzle_end_timer(timer,time_buff);
-    else
-      time_buff[0]= '\0';
 
     /* Every branch must truncate  buff . */
     if (drizzle_result_column_count(&result) > 0)
@@ -2890,7 +2985,7 @@ com_go(string *buffer, const char *)
       if (warnings != 1)
         *pos++= 's';
     }
-    strcpy(pos, time_buff);
+    strcpy(pos, time_buff.c_str());
     put_info(buff,INFO_RESULT,0,0);
     if (strcmp(drizzle_result_info(&result), ""))
       put_info(drizzle_result_info(&result),INFO_RESULT,0,0);
@@ -3084,11 +3179,15 @@ print_table_data(drizzle_result_st *result)
   drizzle_return_t ret;
   drizzle_column_st *field;
   std::vector<bool> num_flag;
+  std::vector<bool> boolean_flag;
+  std::vector<bool> ansi_boolean_flag;
   string separator;
 
   separator.reserve(256);
 
   num_flag.resize(drizzle_result_column_count(result));
+  boolean_flag.resize(drizzle_result_column_count(result));
+  ansi_boolean_flag.resize(drizzle_result_column_count(result));
   if (column_types_flag)
   {
     print_field_types(result);
@@ -3131,6 +3230,14 @@ print_table_data(drizzle_result_st *result)
       // Room for "NULL"
       length=4;
     }
+    if ((length < 5) and 
+      (server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+      (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY) and
+      (drizzle_column_type(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+    {
+      // Room for "FALSE"
+      length= 5;
+    }
     drizzle_column_set_max_size(field, length);
 
     for (x=0; x< (length+2); x++)
@@ -3154,6 +3261,24 @@ print_table_data(drizzle_result_st *result)
                   drizzle_column_name(field));
       num_flag[off]= ((drizzle_column_type(field) <= DRIZZLE_COLUMN_TYPE_LONGLONG) ||
                       (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_NEWDECIMAL));
+      if ((server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+        (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
+      {
+        if ((drizzle_column_flags(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+        {
+          ansi_boolean_flag[off]= true;
+        }
+        else
+        {
+          ansi_boolean_flag[off]= false;
+        }
+        boolean_flag[off]= true;
+        num_flag[off]= false;
+      }
+      else
+      {
+        boolean_flag[off]= false;
+      }
     }
     (void) tee_fputs("\n", PAGER);
     tee_puts((char*) separator.c_str(), PAGER);
@@ -3191,6 +3316,35 @@ print_table_data(drizzle_result_st *result)
       {
         buffer= "NULL";
         data_length= 4;
+      }
+      else if (boolean_flag[off])
+      {
+        if (strncmp(cur[off],"1", 1) == 0)
+        {
+          if (ansi_boolean_flag[off])
+          {
+            buffer= "YES";
+            data_length= 3;
+          }
+          else
+          {
+            buffer= "TRUE";
+            data_length= 4;
+          }
+        }
+        else
+        {
+          if (ansi_boolean_flag[off])
+          {
+            buffer= "NO";
+            data_length= 2;
+          }
+          else
+          {
+            buffer= "FALSE";
+            data_length= 5;
+          }
+        }
       }
       else
       {
@@ -3465,16 +3619,41 @@ print_tab_data(drizzle_result_st *result)
   drizzle_return_t ret;
   drizzle_column_st *field;
   size_t *lengths;
+  std::vector<bool> boolean_flag;
+  std::vector<bool> ansi_boolean_flag;
 
-  if (opt_silent < 2 && column_names)
+  boolean_flag.resize(drizzle_result_column_count(result));
+  ansi_boolean_flag.resize(drizzle_result_column_count(result));
+
+  int first=0;
+  for (uint32_t off= 0; (field = drizzle_column_next(result)); off++)
   {
-    int first=0;
-    while ((field = drizzle_column_next(result)))
+    if (opt_silent < 2 && column_names)
     {
       if (first++)
         (void) tee_fputs("\t", PAGER);
       (void) tee_fputs(drizzle_column_name(field), PAGER);
     }
+    if ((server_type == ServerDetect::SERVER_DRIZZLE_FOUND) and
+      (drizzle_column_type(field) == DRIZZLE_COLUMN_TYPE_TINY))
+    {
+      if ((drizzle_column_flags(field) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+      {
+        ansi_boolean_flag[off]= true;
+      }
+      else
+      {
+        ansi_boolean_flag[off]= false;
+      }
+      boolean_flag[off]= true;
+    }
+    else
+    {
+      boolean_flag[off]= false;
+    }
+  }
+  if (opt_silent < 2 && column_names)
+  {
     (void) tee_fputs("\n", PAGER);
   }
   while (1)
@@ -3495,11 +3674,40 @@ print_tab_data(drizzle_result_st *result)
       break;
 
     lengths= drizzle_row_field_sizes(result);
-    safe_put_field(cur[0],lengths[0]);
-    for (uint32_t off=1 ; off < drizzle_result_column_count(result); off++)
+    drizzle_column_seek(result, 0);
+    for (uint32_t off=0 ; off < drizzle_result_column_count(result); off++)
     {
-      (void) tee_fputs("\t", PAGER);
-      safe_put_field(cur[off], lengths[off]);
+      if (off != 0)
+        (void) tee_fputs("\t", PAGER);
+      if (boolean_flag[off])
+      {
+        if (strncmp(cur[off],"1", 1) == 0)
+        {
+          if (ansi_boolean_flag[off])
+          {
+            safe_put_field("YES", 3);
+          }
+          else
+          {
+            safe_put_field("TRUE", 4);
+          }
+        }
+        else
+        {
+          if (ansi_boolean_flag[off])
+          {
+            safe_put_field("NO", 2);
+          }
+          else
+          {
+            safe_put_field("FALSE", 5);
+          }
+        }
+      }
+      else
+      {
+        safe_put_field(cur[off], lengths[off]);
+      }
     }
     (void) tee_fputs("\n", PAGER);
     if (quick)
@@ -3695,7 +3903,7 @@ com_connect(string *buffer, const char *line)
   }
   else
     opt_rehash= 0;
-  error=sql_connect(current_host, current_db, current_user, opt_password,0);
+  error=sql_connect(current_host, current_db, current_user, opt_password);
   opt_rehash= save_rehash;
 
   if (connected)
@@ -4004,8 +4212,7 @@ char *get_arg(char *line, bool get_next_arg)
 
 
 static int
-sql_connect(const string &host, const string &database, const string &user, const string &password,
-                 uint32_t silent)
+sql_connect(const string &host, const string &database, const string &user, const string &password)
 {
   drizzle_return_t ret;
   if (connected)
@@ -4017,45 +4224,25 @@ sql_connect(const string &host, const string &database, const string &user, cons
   drizzle_create(&drizzle);
 
 #ifdef DRIZZLE_ADMIN_TOOL
-  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL));
+  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE));
 #else
-  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
 #endif
 
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
-    opt_drizzle_port, (char *)user.c_str(),
-    (char *)password.c_str(), (char *)database.c_str(),
-    options) == NULL)
+                          opt_drizzle_port, (char *)user.c_str(),
+                          (char *)password.c_str(), (char *)database.c_str(),
+                          options) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
     return 1;
   }
 
-/* XXX add this back in
-  if (opt_connect_timeout)
-  {
-    uint32_t timeout=opt_connect_timeout;
-    drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT,
-                  (char*) &timeout);
-  }
-*/
-
-/* XXX Do we need this?
-  if (safe_updates)
-  {
-    char init_command[100];
-    sprintf(init_command,
-            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
-            ",MAX_JOIN_SIZE=%"PRIu32,
-            select_limit, max_join_size);
-    drizzleclient_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
-  }
-*/
   if ((ret= drizzle_con_connect(&con)) != DRIZZLE_RETURN_OK)
   {
-    if (!silent || (ret != DRIZZLE_RETURN_GETADDRINFO &&
-                    ret != DRIZZLE_RETURN_COULD_NOT_CONNECT))
+
+    if (opt_silent < 2)
     {
       (void) put_error(&con, NULL);
       (void) fflush(stdout);
@@ -4063,7 +4250,10 @@ sql_connect(const string &host, const string &database, const string &user, cons
     }
     return -1;          // Retryable
   }
-  connected=1;
+  connected= 1;
+
+  ServerDetect server_detect(&con);
+  server_type= server_detect.getServerType();
 
   build_completion_hash(opt_rehash, 1);
   return 0;
@@ -4345,80 +4535,55 @@ void tee_putc(int c, FILE *file)
 }
 
 #include <sys/times.h>
-#ifdef _SC_CLK_TCK        // For mit-pthreads
-#undef CLOCKS_PER_SEC
-#define CLOCKS_PER_SEC (sysconf(_SC_CLK_TCK))
-#endif
 
-static uint32_t start_timer(void)
+static boost::posix_time::ptime start_timer(void)
 {
-  struct tms tms_tmp;
-  return times(&tms_tmp);
+  return boost::posix_time::microsec_clock::universal_time();
 }
 
-
-/**
-   Write as many as 52+1 bytes to buff, in the form of a legible
-   duration of time.
-
-   len("4294967296 days, 23 hours, 59 minutes, 60.00 seconds")  ->  52
-*/
-static void nice_time(double sec,char *buff,bool part_second)
+static void nice_time(boost::posix_time::time_duration duration, string &buff)
 {
-  uint32_t tmp;
   ostringstream tmp_buff_str;
 
-  if (sec >= 3600.0*24)
+  if (duration.hours() > 0)
   {
-    tmp=(uint32_t) floor(sec/(3600.0*24));
-    sec-= 3600.0*24*tmp;
-    tmp_buff_str << tmp;
-
-    if (tmp > 1)
-      tmp_buff_str << " days ";
-    else
-      tmp_buff_str << " day ";
-
-  }
-  if (sec >= 3600.0)
-  {
-    tmp=(uint32_t) floor(sec/3600.0);
-    sec-=3600.0*tmp;
-    tmp_buff_str << tmp;
-
-    if (tmp > 1)
+    tmp_buff_str << duration.hours();
+    if (duration.hours() > 1)
       tmp_buff_str << _(" hours ");
     else
       tmp_buff_str << _(" hour ");
   }
-  if (sec >= 60.0)
+  if (duration.hours() > 0 || duration.minutes() > 0)
   {
-    tmp=(uint32_t) floor(sec/60.0);
-    sec-=60.0*tmp;
-    tmp_buff_str << tmp << _(" min ");
+    tmp_buff_str << duration.minutes() << _(" min ");
   }
-  if (part_second)
-    tmp_buff_str.precision(2);
-  else
-    tmp_buff_str.precision(0);
-  tmp_buff_str << sec << _(" sec");
-  strcpy(buff, tmp_buff_str.str().c_str());
+
+  tmp_buff_str.precision(duration.num_fractional_digits());
+
+  double seconds= duration.fractional_seconds();
+
+  seconds/= pow(10.0,duration.num_fractional_digits());
+
+  seconds+= duration.seconds();
+  tmp_buff_str << seconds << _(" sec");
+
+  buff.append(tmp_buff_str.str());
+}
+
+static void end_timer(boost::posix_time::ptime start_time, string &buff)
+{
+  boost::posix_time::ptime end_time= start_timer();
+  boost::posix_time::time_period duration(start_time, end_time);
+
+  nice_time(duration.length(), buff);
 }
 
 
-static void end_timer(uint32_t start_time,char *buff)
+static void drizzle_end_timer(boost::posix_time::ptime start_time, string &buff)
 {
-  nice_time((double) (start_timer() - start_time) /
-            CLOCKS_PER_SEC,buff,1);
-}
-
-
-static void drizzle_end_timer(uint32_t start_time,char *buff)
-{
-  buff[0]=' ';
-  buff[1]='(';
-  end_timer(start_time,buff+2);
-  strcpy(strchr(buff, '\0'),")");
+  buff.append(" (");
+  end_timer(start_time,buff);
+  buff.append(")");
 }
 
 static const char * construct_prompt()
@@ -4557,7 +4722,7 @@ static const char * construct_prompt()
         add_int_to_prompt(t->tm_sec);
         break;
       case 'w':
-        processed_prompt->append(day_names[t->tm_wday]);
+        processed_prompt->append(get_day_name(t->tm_wday));
         break;
       case 'P':
         processed_prompt->append(t->tm_hour < 12 ? "am" : "pm");
@@ -4566,7 +4731,7 @@ static const char * construct_prompt()
         add_int_to_prompt(t->tm_mon+1);
         break;
       case 'O':
-        processed_prompt->append(month_names[t->tm_mon]);
+        processed_prompt->append(get_month_name(t->tm_mon));
         break;
       case '\'':
         processed_prompt->append("'");
@@ -4643,9 +4808,9 @@ static int com_prompt(string *, const char *line)
     if there isn't anything found.
 */
 
-static const char * strcont(register const char *str, register const char *set)
+static const char * strcont(const char *str, const char *set)
 {
-  register const char * start = (const char *) set;
+  const char * start = (const char *) set;
 
   while (*str)
   {

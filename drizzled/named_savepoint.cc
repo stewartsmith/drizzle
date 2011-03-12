@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <string>
-#include "drizzled/named_savepoint.h"
-#include "drizzled/message/transaction.pb.h"
+#include <drizzled/named_savepoint.h>
+#include <drizzled/message/transaction.pb.h>
 
 namespace drizzled
 {

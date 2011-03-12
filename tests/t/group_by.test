@@ -7,7 +7,7 @@ drop table if exists t1,t2,t3;
 #
 # Simple test without tables
 
--- error 1111
+--error ER_INVALID_GROUP_FUNC_USE
 SELECT 1 FROM (SELECT 1) as a  GROUP BY SUM(1);
 
 #
@@ -750,7 +750,7 @@ create table t1(f1 int, f2 int);
 select * from t1 group by f1;
 select * from t1 group by f2;
 select * from t1 group by f1, f2;
-select t1.f1,t.* from t1, t1 t group by 1;
+select t1.f1,t.* from t1, t1 t where t1.f1 >= 0 group by 1;
 drop table t1;
 
 #

@@ -24,10 +24,11 @@
   Buffers to save and compare item values
 */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/session.h>
+#include <drizzled/item/field.h>
 #include <algorithm>
 
 using namespace std;

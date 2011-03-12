@@ -334,6 +334,7 @@
    fun:azwrite_row
    ...
 }
+
 {
    azwrite_row issue in libazio
    Memcheck:Value4
@@ -345,6 +346,45 @@
    ...
 }
 
+{
+   azopen issue in libz
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   fun:azopen
+   ...
+}
+
+{
+   uncompress issue in libz
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   fun:uncompress
+   ...
+}
+
+{
+   uncompress issue in libz (32bit)
+   Memcheck:Cond
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:_ZL7azwriteP11azio_streamPvj
+   fun:azwrite_row
+   ...
+}
+
+{
+   uncompress issue in libz (32bit)
+   Memcheck:Value4
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:_ZL7azwriteP11azio_streamPvj
+   fun:azwrite_row
+   ...
+}
 
 {
    MyISAM pwrite issue. Teh Suck.
@@ -384,30 +424,6 @@
    fun:main
 }
 
-
-# https://bugs.launchpad.net/drizzle/+bug/582486
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Value8
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Value4
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-{
-   Bug 582486 - Conditional jump or move depends on uninitialised value
-   Memcheck:Cond
-   ...
-   fun:_ZN8drizzled10mysql_loadEPNS_7SessionEPNS_13file_exchangeEPNS_9TableListERNS_4ListINS_4ItemEEES9_S9_NS_15enum_duplicatesEb
-   ...
-}
-
 # https://bugs.launchpad.net/drizzle/+bug/582495
 {
    Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
@@ -416,9 +432,10 @@
    ...
    fun:_ZN8drizzled8internal8my_writeEiPKhmi
    ...
-   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
+   fun:_ZN8drizzled9SortParam10write_keysEPPhjPNS_8internal11st_io_cacheES5_
    ...
 }
+
 {
    Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
    Memcheck:Param
@@ -426,53 +443,29 @@
    ...
    fun:_ZN8drizzled8internal8my_writeEiPKhmi
    ...
-   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEybPy
-   ...
-}
-{
-   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
-   Memcheck:Param
-   ...
-   fun:_ZN8drizzled8internal8my_writeEiPKhmi
-   ...
-   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
-   ...
-}
-{
-   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
-   Memcheck:Param
-   ...
-   fun:_ZN8drizzled8internal8my_writeEiPKhmi
-   ...
-   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEybPy
+   fun:_ZN8drizzled8FileSort3runEPNS_5TableEPNS_9SortFieldEjPNS_9optimizer9SqlSelectEmbRm
    ...
 }
 
-# https://bugs.launchpad.net/drizzle/+bug/582498
 {
-   Bug 582498 - Invalid read of size 8
-   Memcheck:Addr8
-   fun:_Z8hp_panicN8drizzled17ha_panic_functionE
-   fun:_ZN10HeapEngineD0Ev
+   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)  (32bit)
+   Memcheck:Param
+   write(buf)
    ...
-}
-{
-   Bug 582498 - Invalid read of size 4
-   Memcheck:Addr4
-   fun:_Z8hp_panicN8drizzled17ha_panic_functionE
-   fun:_ZN10HeapEngineD0Ev
+   fun:_ZN8drizzled8internalL11_my_b_writeEPNS0_11st_io_cacheEPKhj
+   ...
+   fun:_ZN8drizzled8FileSort3runEPNS_5TableEPNS_9SortFieldEjPNS_9optimizer9SqlSelectEybRy
    ...
 }
 
-# https://bugs.launchpad.net/drizzle/+bug/582526
 {
-   Possibly lack of deallocation of a thread
-   Memcheck:Leak
-   fun:calloc
+   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)  (32bit)
+   Memcheck:Param
+   write(buf)
    ...
-   fun:pthread_create*
-   fun:_Z34initTransactionLogBackgroundWorkerv
+   fun:_ZN8drizzled8FileSort3runEPNS_5TableEPNS_9SortFieldEjPNS_9optimizer9SqlSelectEybRy
    ...
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEy
 }
 
 # Issues with boost::thread

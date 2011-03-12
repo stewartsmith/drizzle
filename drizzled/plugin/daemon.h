@@ -22,7 +22,9 @@
 #ifndef DRIZZLED_PLUGIN_DAEMON_H
 #define DRIZZLED_PLUGIN_DAEMON_H
 
-#include "drizzled/plugin/plugin.h"
+#include <drizzled/plugin/plugin.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -31,7 +33,7 @@ class Session;
 namespace plugin
 {
 
-class Daemon : public Plugin
+class DRIZZLED_API Daemon : public Plugin
 {
   Daemon();
   Daemon(const Daemon &);

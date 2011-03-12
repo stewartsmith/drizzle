@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/empty_query.h>
@@ -28,7 +28,7 @@ namespace drizzled
 
 bool statement::EmptyQuery::execute()
 {
-  session->my_ok();
+  getSession()->my_ok();
   return false;
 }
 

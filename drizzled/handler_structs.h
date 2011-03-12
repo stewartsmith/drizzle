@@ -32,13 +32,14 @@
 #endif
 
 #include <drizzled/base.h>
-#include <drizzled/structs.h>
 #include <drizzled/definitions.h>
 #include <drizzled/lex_string.h>
-#include "drizzled/global_charset_info.h"
+#include <drizzled/structs.h>
 
 namespace drizzled
 {
+
+struct charset_info_st;
 
 namespace plugin
 {
@@ -47,7 +48,7 @@ class StorageEngine;
 
 typedef struct st_ha_create_information
 {
-  const CHARSET_INFO *table_charset, *default_table_charset;
+  const charset_info_st *table_charset, *default_table_charset;
   const char *alias;
   uint64_t auto_increment_value;
   uint32_t table_options;
@@ -90,7 +91,7 @@ typedef struct st_ha_alter_information
 } HA_ALTER_INFO;
 
 
-typedef struct st_key_create_information
+typedef struct key_create_information_st
 {
   enum ha_key_alg algorithm;
   uint32_t block_size;

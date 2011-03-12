@@ -74,8 +74,7 @@ while ($max_used != 1 && $wait_left > 0)
 --enable_result_log
 
 # Prerequisite.
-SHOW STATUS LIKE 'max_used_connections';
-SELECT * FROM data_dictionary.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
+SELECT ASSERT(VARIABLE_VALUE = 1) FROM data_dictionary.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
 
 # Save original setting.
 connect (con1,localhost,root,,);
@@ -87,8 +86,7 @@ connection default;
 disconnect con1;
 
 # Check that max_used_connections still reflects maximum value.
-SHOW STATUS LIKE 'max_used_connections';
-SELECT * FROM data_dictionary.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
+SELECT ASSERT(VARIABLE_VALUE >= 3) FROM data_dictionary.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
 
 #
 # Bug #30377: EXPLAIN loses last_query_cost when used with UNION
@@ -117,7 +115,7 @@ SHOW SESSION STATUS LIKE 'Last_query_cost';
 SELECT (SELECT a FROM t1 LIMIT 1) x FROM t1 LIMIT 1;
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 
-SELECT * FROM t1 a, t1 b LIMIT 1;
+SELECT * FROM t1 a CROSS JOIN t1 b LIMIT 1;
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 
 DROP TABLE t1;

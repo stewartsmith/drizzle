@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <stdarg.h>
 #include <limits.h>
@@ -51,7 +51,7 @@ logging::Syslog::Syslog(const std::string &facility,
 {
   if (_facility < 0)
   {
-    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+    drizzled::errmsg_printf(drizzled::error::WARN,
                             _("syslog facility \"%s\" not known, using \"local0\""),
                             facility.c_str());
     _facility= WrapSyslog::getFacilityByName("local0");
@@ -59,7 +59,7 @@ logging::Syslog::Syslog(const std::string &facility,
 
   if (_priority < 0)
   {
-    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+    drizzled::errmsg_printf(drizzled::error::WARN,
                             _("syslog priority \"%s\" not known, using \"info\""),
                             priority.c_str());
     _priority= WrapSyslog::getPriorityByName("info");
@@ -106,8 +106,8 @@ bool logging::Syslog::post(drizzled::Session *session)
          schema->empty() ? "" : schema->c_str(),
          (int) query_string->length(), 
          query_string->empty() ? "" : query_string->c_str(),
-         (int) drizzled::command_name[session->command].length,
-         drizzled::command_name[session->command].str,
+         (int) drizzled::getCommandName(session->command).size(),
+         drizzled::getCommandName(session->command).c_str(),
          (unsigned long long) (t_mark - session->getConnectMicroseconds()),
          (unsigned long long) (session->getElapsedTime()),
          (unsigned long long) (t_mark - session->utime_after_lock),

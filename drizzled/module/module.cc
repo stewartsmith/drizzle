@@ -17,23 +17,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <algorithm>
+#include <drizzled/module/module.h>
+#include <drizzled/sys_var.h>
+#include <drizzled/util/functors.h>
+#include <drizzled/util/tokenize.h>
+#include <drizzled/module/manifest.h>
+#include <drizzled/module/vertex_handle.h>
 
-#include "drizzled/module/module.h"
-#include "drizzled/sys_var.h"
-#include "drizzled/util/functors.h"
+namespace drizzled {
+namespace module {
 
-namespace drizzled
+Module::Module(const Manifest *manifest_arg, Library *library_arg) :
+  plugin_dl(library_arg),
+  isInited(false),
+  name(manifest_arg->name),
+  manifest(*manifest_arg),
+  vertex_(NULL)
 {
-
-namespace module
-{
+  if (manifest.depends != NULL)
+  {
+    tokenize(manifest.depends, depends_, ",", true);
+  }
+}
 
 Module::~Module()
 {
   std::for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
+  delete vertex_;
 }
 
 } /* namespace module */

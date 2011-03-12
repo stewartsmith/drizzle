@@ -18,33 +18,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <drizzled/show.h>
+#include <config.h>
+
+#include <drizzled/kill.h>
 #include <drizzled/session.h>
-#include <drizzled/session/cache.h>
 #include <drizzled/statement/kill.h>
 
 namespace drizzled
 {
 
-bool statement::Kill::kill(session_id_t id, bool only_kill_query)
+namespace statement
 {
-  drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id);
 
-  if (session_param and session_param->isViewable(*getSession()->user()))
+Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
+  Statement(in_session)
   {
-    session_param->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-    return true;
+    if (is_query_kill)
+    {
+      lex().type= ONLY_KILL_QUERY;
+    }
+
+    lex().value_list.clear();
+    lex().value_list.push_front(item);
+    set_command(SQLCOM_KILL);
   }
 
-  return false;
-}
+} // namespace statement
 
 bool statement::Kill::execute()
 {
-  Item *it= (Item *) session->lex->value_list.head();
+  Item *it= &lex().value_list.front();
 
-  if ((not it->fixed && it->fix_fields(session->lex->session, &it)) || it->check_cols(1))
+  if ((not it->fixed && it->fix_fields(lex().session, &it)) || it->check_cols(1))
   {
     my_message(ER_SET_CONSTANTS_ONLY, 
                ER(ER_SET_CONSTANTS_ONLY),
@@ -52,9 +57,9 @@ bool statement::Kill::execute()
     return true;
   }
 
-  if (kill(static_cast<session_id_t>(it->val_int()), session->lex->type & ONLY_KILL_QUERY))
+  if (drizzled::kill(*getSession()->user(), static_cast<session_id_t>(it->val_int()), lex().type & ONLY_KILL_QUERY))
   {
-    session->my_ok();
+    getSession()->my_ok();
   }
   else
   {

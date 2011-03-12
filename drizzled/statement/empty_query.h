@@ -33,10 +33,11 @@ namespace statement
 class EmptyQuery : public Statement
 {
 public:
-  EmptyQuery(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  EmptyQuery(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_EMPTY_QUERY);
+  }
 
   bool execute();
 };

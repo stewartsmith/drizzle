@@ -17,16 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/sql_base.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/memory/sql_alloc.h"
-#include "drizzled/optimizer/range.h"
-#include "drizzled/optimizer/range_param.h"
-#include "drizzled/optimizer/sel_arg.h"
-#include "drizzled/optimizer/sel_tree.h"
-#include "drizzled/optimizer/sel_imerge.h"
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/memory/sql_alloc.h>
+#include <drizzled/optimizer/range.h>
+#include <drizzled/optimizer/range_param.h>
+#include <drizzled/optimizer/sel_arg.h>
+#include <drizzled/optimizer/sel_tree.h>
+#include <drizzled/optimizer/sel_imerge.h>
 
 using namespace std;
 using namespace drizzled;
@@ -91,11 +91,11 @@ static int imerge_list_or_list(optimizer::RangeParameter *param,
                                List<optimizer::SEL_IMERGE> *im1,
                                List<optimizer::SEL_IMERGE> *im2)
 {
-  optimizer::SEL_IMERGE *imerge= im1->head();
-  im1->empty();
+  optimizer::SEL_IMERGE *imerge= &im1->front();
+  im1->clear();
   im1->push_back(imerge);
 
-  return imerge->or_sel_imerge_with_checks(param, im2->head());
+  return imerge->or_sel_imerge_with_checks(param, &im2->front());
 }
 
 
@@ -112,7 +112,7 @@ static int imerge_list_or_tree(optimizer::RangeParameter *param,
                                optimizer::SEL_TREE *tree)
 {
   optimizer::SEL_IMERGE *imerge= NULL;
-  List_iterator<optimizer::SEL_IMERGE> it(*im1);
+  List_iterator<optimizer::SEL_IMERGE> it(im1->begin());
   while ((imerge= it++))
   {
     if (imerge->or_sel_tree_with_checks(param, tree))

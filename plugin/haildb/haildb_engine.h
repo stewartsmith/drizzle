@@ -115,6 +115,7 @@ public:
                           uint64_t *nb_reserved_values);
 
   int reset();
+  int analyze(drizzled::Session* session);
 
 private:
   ib_id_t table_id;
@@ -122,7 +123,6 @@ private:
   ib_tpl_t tuple;
   bool advance_cursor;
   ib_lck_mode_t ib_lock_mode;
-  int previous_error;
   bool cursor_is_sec_index;
 
   bool write_can_replace;

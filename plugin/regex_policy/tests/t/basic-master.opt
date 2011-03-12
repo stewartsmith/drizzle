@@ -1,0 +1,1 @@
+--plugin-add=regex_policy --regex-policy.policy=$TOP_SRCDIR/plugin/regex_policy/tests/t/basic.policy --verbose=INSPECT

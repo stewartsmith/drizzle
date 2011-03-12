@@ -16,7 +16,7 @@
 /* Functions to check if a row is unique */
 
 #include "myisam_priv.h"
-#include "drizzled/charset_info.h"
+#include <drizzled/charset_info.h>
 
 using namespace drizzled;
 

@@ -34,23 +34,22 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <signal.h>
 #include <drizzled/session.h>
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/plugin/function.h>
 
 using namespace drizzled;
 
 #define SHUTDOWN_MESSAGE "Beginning shutdown"
 
-class Shutdown :public Item_str_func
+class Shutdown : public Item_str_func
 {
 public:
-  Shutdown() :
-    Item_str_func()
+  Shutdown()
   { }
-
 
   void fix_length_and_dec()
   {
@@ -85,7 +84,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Cause the database to shutdown.",
   PLUGIN_LICENSE_BSD,
   initialize, /* Plugin Init */
-  NULL,   /* system variables */
+  NULL,   /* depends */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

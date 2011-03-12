@@ -21,6 +21,7 @@
 #define DRIZZLED_ITEM_STRING_H
 
 #include <drizzled/item/basic_constant.h>
+#include <drizzled/charset_info.h>
 
 namespace drizzled
 {
@@ -94,7 +95,7 @@ public:
     str_value.append(str, length);
     max_length= str_value.numchars() * collation.collation->mbmaxlen;
   }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 
   /**
     Return true if character-set-introducer was explicitly specified in the
@@ -151,7 +152,7 @@ public:
   {}
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 
-  virtual inline void print(String *str, enum_query_type)
+  virtual inline void print(String *str)
   {
     str->append(func_name);
   }

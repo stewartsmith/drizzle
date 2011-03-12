@@ -24,11 +24,15 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <iostream>
 
-#include "drizzled/gettext.h"
-#include "drizzled/unireg.h"
-#include "drizzled/errmsg_print.h"
-#include "drizzled/plugin/plugin.h"
+#include <boost/scoped_ptr.hpp>
+
+#include <drizzled/gettext.h>
+#include <drizzled/unireg.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/plugin/plugin.h>
+
 
 namespace drizzled
 {
@@ -37,22 +41,31 @@ namespace module
 {
 class Module;
 class Library;
+class Graph;
+
 
 class Registry
 {
+public:
+
+  typedef std::map<std::string, Library *> LibraryMap;
+  typedef std::map<std::string, Module *> ModuleMap;
+  typedef std::vector<Module *> ModuleList;
 private:
-  std::map<std::string, Library *> library_map;
-  std::map<std::string, Module *> module_map;
-  std::map<std::string, plugin::Plugin *> plugin_registry;
+  LibraryMap library_registry_;
+  ModuleMap module_registry_;
+  boost::scoped_ptr<Graph> depend_graph_; 
+  
+  plugin::Plugin::map plugin_registry;
 
-  Registry()
-   : module_map(),
-     plugin_registry()
-  { }
+  bool deps_built_;
 
+  Registry();
   Registry(const Registry&);
   Registry& operator=(const Registry&);
   ~Registry();
+
+  void buildDeps();
 public:
 
   static Registry& singleton()
@@ -71,16 +84,16 @@ public:
 
   void remove(Module *module);
 
-  std::vector<Module *> getList(bool active);
+  std::vector<Module *> getList();
 
-  const std::map<std::string, plugin::Plugin *> &getPluginsMap() const
+  const plugin::Plugin::map &getPluginsMap() const
   {
     return plugin_registry;
   }
 
-  const std::map<std::string, Module *> &getModulesMap() const
+  const ModuleMap &getModulesMap() const
   {
-    return module_map;
+    return module_registry_;
   }
 
   Library *addLibrary(const std::string &plugin_name, bool builtin= false);
@@ -93,36 +106,48 @@ public:
   void add(T *plugin)
   {
     bool failed= false;
+    std::string plugin_type(plugin->getTypeName());
+    std::transform(plugin_type.begin(), plugin_type.end(),
+                   plugin_type.begin(), ::tolower);
     std::string plugin_name(plugin->getName());
     std::transform(plugin_name.begin(), plugin_name.end(),
                    plugin_name.begin(), ::tolower);
-    if (plugin_registry.find(plugin_name) != plugin_registry.end())
+    if (plugin_registry.find(std::make_pair(plugin_type, plugin_name)) != plugin_registry.end())
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Loading plugin %s failed: a plugin by that name already "
-                      "exists.\n"), plugin->getName().c_str());
+      errmsg_printf(error::ERROR,
+                    _("Loading plugin %s failed: a %s plugin by that name "
+                      "already exists.\n"),
+                    plugin->getTypeName().c_str(),
+                    plugin->getName().c_str());
       failed= true;
     }
     if (T::addPlugin(plugin))
+    {
       failed= true;
+    }
+
     if (failed)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Fatal error: Failed initializing %s plugin.\n"),
+      errmsg_printf(error::ERROR,
+                    _("Fatal error: Failed initializing %s::%s plugin.\n"),
+                    plugin->getTypeName().c_str(),
                     plugin->getName().c_str());
       unireg_abort(1);
     }
-    plugin_registry.insert(std::pair<std::string, plugin::Plugin *>(plugin_name, plugin));
+    plugin_registry.insert(std::make_pair(std::make_pair(plugin_type, plugin_name), plugin));
   }
 
   template<class T>
   void remove(T *plugin)
   {
+    std::string plugin_type(plugin->getTypeName());
+    std::transform(plugin_type.begin(), plugin_type.end(),
+                   plugin_type.begin(), ::tolower);
     std::string plugin_name(plugin->getName());
     std::transform(plugin_name.begin(), plugin_name.end(),
                    plugin_name.begin(), ::tolower);
     T::removePlugin(plugin);
-    plugin_registry.erase(plugin_name);
+    plugin_registry.erase(std::make_pair(plugin_type, plugin_name));
   }
 
 

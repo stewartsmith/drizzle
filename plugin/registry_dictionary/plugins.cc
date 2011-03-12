@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <plugin/registry_dictionary/dictionary.h>
 
@@ -37,7 +37,7 @@ PluginsTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   module::Registry &registry= module::Registry::singleton();
-  const std::map<std::string, plugin::Plugin *> &plugin_map=
+  const plugin::Plugin::map &plugin_map=
     registry.getPluginsMap();
 
   it= plugin_map.begin();

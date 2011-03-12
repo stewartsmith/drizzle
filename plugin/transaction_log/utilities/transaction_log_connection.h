@@ -20,7 +20,7 @@
 #ifndef PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H
 #define PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H
 
-#include "client/client_priv.h"
+#include <client/client_priv.h>
 #include <string>
 
 
@@ -34,7 +34,7 @@ public:
   ~TransactionLogConnection();
 
 
-  drizzle_result_st* query(std::string &str_query);
+  void query(const std::string &str_query, drizzle_result_st *result);
 
   void errorHandler(drizzle_result_st *res,  drizzle_return_t ret, const char *when);
 

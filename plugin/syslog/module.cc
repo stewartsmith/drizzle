@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/logging.h>
@@ -92,31 +92,31 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("ident",
           po::value<string>()->default_value("drizzled"),
-          N_("Syslog Ident"));
+          _("Syslog Ident"));
   context("facility",
           po::value<string>()->default_value("local0"),
-          N_("Syslog Facility"));
+          _("Syslog Facility"));
   context("logging-enable",
           po::value<bool>(&sysvar_logging_enable)->default_value(false)->zero_tokens(),
-          N_("Enable logging to syslog of the query log"));
+          _("Enable logging to syslog of the query log"));
   context("logging-priority",
           po::value<string>()->default_value("warning"),
-          N_("Syslog Priority of query logging"));
+          _("Syslog Priority of query logging"));
   context("logging-threshold-slow",
           po::value<uint64_constraint>(&sysvar_logging_threshold_slow)->default_value(0),
-          N_("Threshold for logging slow queries, in microseconds"));
+          _("Threshold for logging slow queries, in microseconds"));
   context("logging-threshold-big-resultset",
           po::value<uint64_constraint>(&sysvar_logging_threshold_big_resultset)->default_value(0),
-          N_("Threshold for logging big queries, for rows returned"));
+          _("Threshold for logging big queries, for rows returned"));
   context("logging-threshold-big-examined",
           po::value<uint64_constraint>(&sysvar_logging_threshold_big_examined)->default_value(0),
-          N_("Threshold for logging big queries, for rows examined"));
+          _("Threshold for logging big queries, for rows examined"));
   context("errmsg-enable",
           po::value<bool>(&sysvar_errmsg_enable)->default_value(false)->zero_tokens(),
-          N_("Enable logging to syslog of the error messages"));
+          _("Enable logging to syslog of the error messages"));
   context("errmsg-priority",
           po::value<string>()->default_value("warning"),
-          N_("Syslog Priority of error messages"));
+          _("Syslog Priority of error messages"));
 }
 
 } /* namespace drizzle_plugin */

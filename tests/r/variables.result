@@ -1,5 +1,4 @@
 drop table if exists t1,t2;
-set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
 set @my_max_join_size             =@@global.max_join_size;
 set @my_mysql_protocol_buffer_length =@@global.mysql_protocol_buffer_length;
@@ -286,7 +285,6 @@ set last_insert_id=1;
 set max_allowed_packet=100;
 Warnings:
 Error	1292	Truncated incorrect max_allowed_packet value: '100'
-set global max_connect_errors=100;
 set max_heap_table_size=100;
 Warnings:
 Error	1292	Truncated incorrect max_heap_table_size value: '100'
@@ -533,7 +531,6 @@ hostname	#
 End of 5.0 tests
 set global flush_time                =@my_flush_time;
 ERROR HY000: Unknown system variable 'flush_time'
-set global max_connect_errors        =@my_max_connect_errors;
 set global max_heap_table_size       =@my_max_heap_table_size;
 set global max_join_size             =@my_max_join_size;
 set global max_write_lock_count      =default;
@@ -552,7 +549,6 @@ max_join_size	100
 set GLOBAL bulk_insert_buffer_size=DEFAULT;
 set GLOBAL join_buffer_size=DEFAULT;
 set GLOBAL max_allowed_packet=DEFAULT;
-set GLOBAL max_connect_errors=DEFAULT;
 set GLOBAL max_heap_table_size=DEFAULT;
 set GLOBAL max_join_size=DEFAULT;
 set GLOBAL max_sort_length=DEFAULT;

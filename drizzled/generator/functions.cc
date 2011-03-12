@@ -18,11 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/generator.h"
-#include "drizzled/plugin/function.h"
-#include "drizzled/session.h"
+#include <drizzled/generator.h>
+#include <drizzled/function_container.h>
+#include <drizzled/plugin/function.h>
+#include <drizzled/session.h>
 
 using namespace std;
 
@@ -34,7 +35,19 @@ namespace generator
 Functions::Functions(Session &arg) :
   session(arg)
 {
-  udf_iter= plugin::Function::getMap().begin();
+  function_list.reserve(plugin::Function::getMap().size() + FunctionContainer::getMap().size());
+
+  std::transform(FunctionContainer::getMap().begin(),
+                 FunctionContainer::getMap().end(),
+                 std::back_inserter(function_list),
+                 boost::bind(&FunctionContainer::Map::value_type::first, _1) );
+
+  std::transform(plugin::Function::getMap().begin(),
+                 plugin::Function::getMap().end(),
+                 std::back_inserter(function_list),
+                 boost::bind(&plugin::Function::Map::value_type::first, _1) );
+
+  iter= function_list.begin();
 }
 
 } /* namespace generator */

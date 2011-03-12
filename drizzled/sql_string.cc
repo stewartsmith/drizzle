@@ -15,16 +15,16 @@
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset.h"
-#include "drizzled/global_charset_info.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset.h>
+#include <drizzled/global_charset_info.h>
 
 #include <algorithm>
 
-#include "drizzled/sql_string.h"
+#include <drizzled/sql_string.h>
 
 using namespace std;
 
@@ -216,6 +216,20 @@ bool String::copy(const String &str)
   memmove(Ptr, str.Ptr, str_length);		// May be overlapping
   Ptr[str_length]=0;
   str_charset=str.str_charset;
+  return false;
+}
+
+bool String::copy(const std::string& arg, const CHARSET_INFO * const cs)	// Allocate new string
+{
+  if (alloc(arg.size()))
+    return true;
+
+  if ((str_length= arg.size()))
+    memcpy(Ptr, arg.c_str(), arg.size());
+
+  Ptr[arg.size()]= 0;
+  str_charset= cs;
+
   return false;
 }
 
@@ -419,8 +433,8 @@ int String::strstr(const String &s,size_t offset)
     if (!s.length())
       return ((int) offset);	// Empty string is always found
 
-    register const char *str = Ptr+offset;
-    register const char *search=s.ptr();
+    const char *str = Ptr+offset;
+    const char *search=s.ptr();
     const char *end=Ptr+str_length-s.length()+1;
     const char *search_end=s.ptr()+s.length();
 skip:
@@ -428,7 +442,7 @@ skip:
     {
       if (*str++ == *search)
       {
-	register char *i,*j;
+	char *i,*j;
 	i=(char*) str; j=(char*) search+1;
 	while (j != search_end)
 	  if (*i++ != *j++) goto skip;
@@ -449,8 +463,8 @@ int String::strrstr(const String &s,size_t offset)
   {
     if (!s.length())
       return offset;				// Empty string is always found
-    register const char *str = Ptr+offset-1;
-    register const char *search=s.ptr()+s.length()-1;
+    const char *str = Ptr+offset-1;
+    const char *search=s.ptr()+s.length()-1;
 
     const char *end=Ptr+s.length()-2;
     const char *search_end=s.ptr()-1;
@@ -459,7 +473,7 @@ skip:
     {
       if (*str-- == *search)
       {
-	register char *i,*j;
+	char *i,*j;
 	i=(char*) str; j=(char*) search-1;
 	while (j != search_end)
 	  if (*i-- != *j--) goto skip;

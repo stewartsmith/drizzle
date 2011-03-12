@@ -17,11 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/optimizer/quick_range.h"
-#include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/internal/m_string.h"
+#include <config.h>
+
+#include <drizzled/session.h>
+#include <drizzled/optimizer/quick_range.h>
+#include <drizzled/optimizer/quick_range_select.h>
+#include <drizzled/internal/m_string.h>
+#include <drizzled/current_session.h>
+#include <drizzled/key.h>
+
 #include <fcntl.h>
 
 using namespace std;
@@ -213,7 +217,7 @@ void optimizer::QuickRangeSelect::save_last_pos()
 
 bool optimizer::QuickRangeSelect::unique_key_range() const
 {
-  if (ranges.elements == 1)
+  if (ranges.size() == 1)
   {
     optimizer::QuickRange *tmp= *((optimizer::QuickRange**)ranges.buffer);
     if ((tmp->flag & (EQ_RANGE | NULL_RANGE)) == EQ_RANGE)
@@ -255,7 +259,7 @@ int optimizer::QuickRangeSelect::reset()
   };
   error= cursor->multi_range_read_init(&seq_funcs,
                                        (void*) this,
-                                       ranges.elements,
+                                       ranges.size(),
                                        mrr_flags);
   return error;
 }
@@ -304,7 +308,7 @@ int optimizer::QuickRangeSelect::get_next_prefix(uint32_t prefix_length,
         return result;
     }
 
-    uint32_t count= ranges.elements - (cur_range - (optimizer::QuickRange**) ranges.buffer);
+    uint32_t count= ranges.size() - (cur_range - (optimizer::QuickRange**) ranges.buffer);
     if (count == 0)
     {
       /* Ranges have already been used up before. None is left for read. */
@@ -347,12 +351,12 @@ bool optimizer::QuickRangeSelect::row_in_ranges()
 {
   optimizer::QuickRange *res= NULL;
   uint32_t min= 0;
-  uint32_t max= ranges.elements - 1;
+  uint32_t max= ranges.size() - 1;
   uint32_t mid= (max + min) / 2;
 
   while (min != max)
   {
-    if (cmp_next(*(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid)))
+    if (cmp_next(reinterpret_cast<optimizer::QuickRange**>(ranges.buffer)[mid]))
     {
       /* current row value > mid->max */
       min= mid + 1;
@@ -361,8 +365,8 @@ bool optimizer::QuickRangeSelect::row_in_ranges()
       max= mid;
     mid= (min + max) / 2;
   }
-  res= *(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid);
-  return (! cmp_next(res) && ! cmp_prev(res));
+  res= reinterpret_cast<optimizer::QuickRange**>(ranges.buffer)[mid];
+  return not cmp_next(res) && not cmp_prev(res);
 }
 
 
@@ -416,15 +420,15 @@ int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 }
 
 
-void optimizer::QuickRangeSelect::add_info_string(String *str)
+void optimizer::QuickRangeSelect::add_info_string(string *str)
 {
   KeyInfo *key_info= head->key_info + index;
   str->append(key_info->name);
 }
 
 
-void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
-                                                       String *used_lengths)
+void optimizer::QuickRangeSelect::add_keys_and_lengths(string *key_names,
+                                                       string *used_lengths)
 {
   char buf[64];
   uint32_t length;
@@ -449,7 +453,7 @@ optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSel
     optimizer::QuickRangeSelect(*q)
 {
   optimizer::QuickRange **pr= (optimizer::QuickRange**) ranges.buffer;
-  optimizer::QuickRange **end_range= pr + ranges.elements;
+  optimizer::QuickRange **end_range= pr + ranges.size();
   for (; pr != end_range; pr++)
   {
     rev_ranges.push_back(*pr);

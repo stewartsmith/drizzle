@@ -13,10 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/error.h"
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/error.h>
 
 #include <fcntl.h>
 
@@ -120,7 +120,7 @@ int my_register_filename(int fd, const char *FileName, uint32_t error_message_nu
   {
     if (errno == EMFILE)
       error_message_number= EE_OUT_OF_FILERESOURCES;
-    my_error(error_message_number, MYF(ME_BELL+ME_WAITTANG),
+    my_error(static_cast<drizzled::error_t>(error_message_number), MYF(ME_BELL+ME_WAITTANG),
              FileName, errno);
   }
   return -1;

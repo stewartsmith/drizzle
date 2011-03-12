@@ -33,10 +33,13 @@ namespace statement
 class Commit : public Statement
 {
 public:
-  Commit(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Commit(Session *in_session, bool tx_chain_arg, bool tx_release_arg) :
+    Statement(in_session),
+    tx_chain(tx_chain_arg),
+    tx_release(tx_release_arg)
+  {
+    set_command(SQLCOM_COMMIT);
+  }
 
   bool execute();
 

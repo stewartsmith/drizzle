@@ -35,10 +35,11 @@ namespace statement
 class Truncate : public Statement
 {
 public:
-  Truncate(Session *in_session)
-    :
-      Statement(in_session)
-  {}
+  Truncate(Session *in_session) :
+    Statement(in_session)
+  {
+    set_command(SQLCOM_TRUNCATE);
+  }
 
   bool execute();
 };

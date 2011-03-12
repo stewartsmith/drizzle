@@ -22,38 +22,39 @@
 
 /* compare and test functions */
 
-#include "drizzled/comp_creator.h"
-#include "drizzled/item/row.h"
-#include "drizzled/item/sum.h"
-#include "drizzled/item/int.h"
-#include "drizzled/item/float.h"
-#include "drizzled/item/string.h"
-#include "drizzled/item/decimal.h"
-#include "drizzled/function/math/int.h"
-#include "drizzled/function/numhybrid.h"
-#include "drizzled/session.h"
-#include "drizzled/common.h"
-#include "drizzled/qsort_cmp.h"
-#include "drizzled/item/function/boolean.h"
+#include <drizzled/common.h>
+#include <drizzled/comp_creator.h>
+#include <drizzled/function/math/int.h>
+#include <drizzled/function/numhybrid.h>
+#include <drizzled/item/decimal.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/function/boolean.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/row.h>
+#include <drizzled/item/string.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/qsort_cmp.h>
 
 namespace drizzled
 {
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
+
 class Item_bool_func2;
 class Arg_comparator;
 class Item_sum_hybrid;
 class Item_row;
+class Session;
 
 typedef int (Arg_comparator::*arg_cmp_func)();
 
 typedef int (*Item_field_cmpfunc)(Item_field *f1, Item_field *f2, void *arg);
 
-uint64_t get_datetime_value(Session *session, 
-                            Item ***item_arg, 
-                            Item **cache_arg,
-                            Item *warn_item, 
-                            bool *is_null);
+int64_t get_datetime_value(Session *session, 
+                           Item ***item_arg, 
+                           Item **cache_arg,
+                           Item *warn_item, 
+                           bool *is_null);
 
 class Arg_comparator: public memory::SqlAlloc
 {
@@ -69,14 +70,14 @@ class Arg_comparator: public memory::SqlAlloc
   bool is_nulls_eq;                // TRUE <=> compare for the EQUAL_FUNC
   enum enum_date_cmp_type { CMP_DATE_DFLT= 0, CMP_DATE_WITH_DATE,
                             CMP_DATE_WITH_STR, CMP_STR_WITH_DATE };
-  uint64_t (*get_value_func)(Session *session, Item ***item_arg, Item **cache_arg,
-                              Item *warn_item, bool *is_null);
+  int64_t (*get_value_func)(Session *session, Item ***item_arg, Item **cache_arg,
+                            Item *warn_item, bool *is_null);
 public:
   DTCollation cmp_collation;
 
-  Arg_comparator(): session(0), a_cache(0), b_cache(0) {};
-  Arg_comparator(Item **a1, Item **a2): a(a1), b(a2), session(0),
-    a_cache(0), b_cache(0) {};
+  Arg_comparator();
+
+  Arg_comparator(Item **a1, Item **a2);
 
   int set_compare_func(Item_bool_func2 *owner, Item_result type);
   inline int set_compare_func(Item_bool_func2 *owner_arg)
@@ -118,7 +119,7 @@ public:
   int compare_datetime();        // compare args[0] & args[1] as DATETIMEs
 
   static enum enum_date_cmp_type can_compare_as_dates(Item *a, Item *b,
-                                                      uint64_t *const_val_arg);
+                                                      int64_t *const_val_arg);
 
   void set_datetime_cmp_func(Item **a1, Item **b1);
   static arg_cmp_func comparator_matrix [5][2];
@@ -138,7 +139,7 @@ public:
   virtual bool val_bool();
   virtual int64_t val_int();
   virtual void fix_length_and_dec();
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 
 protected:
   Item_func_truth(Item *a, bool a_value, bool a_affirmative)
@@ -350,9 +351,9 @@ public:
   virtual enum Functype rev_functype() const { return UNKNOWN_FUNC; }
   bool have_rev_func() const { return rev_functype() != UNKNOWN_FUNC; }
 
-  virtual inline void print(String *str, enum_query_type query_type)
+  virtual inline void print(String *str)
   {
-    Item_func::print_op(str, query_type);
+    Item_func::print_op(str);
   }
 
   bool is_null() { return test(args[0]->is_null() || args[1]->is_null()); }
@@ -385,7 +386,7 @@ public:
   enum Functype functype() const { return NOT_FUNC; }
   const char *func_name() const { return "not"; }
   Item *neg_transformer(Session *session);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 class Item_maxmin_subselect;
@@ -452,7 +453,7 @@ public:
   int64_t val_int();
   enum Functype functype() const { return NOT_ALL_FUNC; }
   const char *func_name() const { return "<not>"; }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   void set_sum_test(Item_sum_hybrid *item) { test_sum_item= item; };
   void set_sub_test(Item_maxmin_subselect *item) { test_sub_item= item; };
   bool empty_underlying_subquery();
@@ -614,7 +615,7 @@ public:
   const char *func_name() const { return "between"; }
   bool fix_fields(Session *, Item **);
   void fix_length_and_dec();
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   bool is_bool_func() { return 1; }
   const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
   uint32_t decimal_precision() const { return 1; }
@@ -629,9 +630,9 @@ public:
   optimize_type select_optimize() const { return OPTIMIZE_NONE; }
   const char *func_name() const { return "strcmp"; }
 
-  virtual inline void print(String *str, enum_query_type query_type)
+  virtual inline void print(String *str)
   {
-    Item_func::print(str, query_type);
+    Item_func::print(str);
   }
 };
 
@@ -740,9 +741,9 @@ public:
   uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
   const char *func_name() const { return "nullif"; }
 
-  virtual inline void print(String *str, enum_query_type query_type)
+  virtual inline void print(String *str)
   {
-    Item_func::print(str, query_type);
+    Item_func::print(str);
   }
 
   table_map not_null_tables() const { return 0; }
@@ -879,9 +880,8 @@ public:
   /* Cache for the left item. */
   Item *lval_cache;
 
-  in_datetime(Item *warn_item_arg, uint32_t elements)
-    :in_int64_t(elements), session(current_session), warn_item(warn_item_arg),
-     lval_cache(0) {};
+  in_datetime(Item *warn_item_arg, uint32_t elements);
+
   void set(uint32_t pos,Item *item);
   unsigned char *get_value(Item *item);
   friend int cmp_int64_t(void *cmp_arg, packed_int64_t *a,packed_int64_t *b);
@@ -937,7 +937,12 @@ class cmp_item :public memory::SqlAlloc
 {
 public:
   const CHARSET_INFO *cmp_charset;
-  cmp_item() { cmp_charset= &my_charset_bin; }
+
+  cmp_item()
+  {
+    cmp_charset= &my_charset_bin;
+  }
+
   virtual ~cmp_item() {}
   virtual void store_value(Item *item)= 0;
   virtual int cmp(Item *item)= 0;
@@ -1028,7 +1033,8 @@ public:
 */
 class cmp_item_datetime :public cmp_item
 {
-  uint64_t value;
+  int64_t value;
+
 public:
   Session *session;
   /* Item used for issuing warnings. */
@@ -1036,8 +1042,8 @@ public:
   /* Cache for the left item. */
   Item *lval_cache;
 
-  cmp_item_datetime(Item *warn_item_arg)
-    :session(current_session), warn_item(warn_item_arg), lval_cache(0) {}
+  cmp_item_datetime(Item *warn_item_arg);
+
   void store_value(Item *item);
   int cmp(Item *arg);
   int compare(cmp_item *ci);
@@ -1146,15 +1152,15 @@ public:
     :Item_func(), first_expr_num(-1), else_expr_num(-1),
     cached_result_type(INT_RESULT), left_result_type(INT_RESULT), case_item(0)
   {
-    ncases= list.elements;
+    ncases= list.size();
     if (first_expr_arg)
     {
-      first_expr_num= list.elements;
+      first_expr_num= list.size();
       list.push_back(first_expr_arg);
     }
     if (else_expr_arg)
     {
-      else_expr_num= list.elements;
+      else_expr_num= list.size();
       list.push_back(else_expr_arg);
     }
     set_arguments(list);
@@ -1171,7 +1177,7 @@ public:
   enum Item_result result_type () const { return cached_result_type; }
   enum_field_types field_type() const { return cached_field_type; }
   const char *func_name() const { return "case"; }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   Item *find_item(String *str);
   const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
   void cleanup();
@@ -1236,7 +1242,7 @@ public:
   }
   optimize_type select_optimize() const
     { return OPTIMIZE_KEY; }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   enum Functype functype() const { return IN_FUNC; }
   const char *func_name() const { return " IN "; }
   bool nulls_in_row();
@@ -1358,7 +1364,7 @@ public:
   table_map not_null_tables() const
   { return abort_on_null ? not_null_tables_cache : 0; }
   Item *neg_transformer(Session *session);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   const CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
   void top_level_item() { abort_on_null=1; }
 };
@@ -1439,7 +1445,7 @@ public:
   List<Item>* argument_list() { return &list; }
   table_map used_tables() const;
   void update_used_tables();
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   void split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields);
   friend int setup_conds(Session *session, TableList *tables, TableList *leaves,
                          COND **conds);
@@ -1534,19 +1540,20 @@ public:
 
 class Item_equal: public item::function::Boolean
 {
-  List<Item_field> fields; /* list of equal field items                    */
-  Item *const_item;        /* optional constant item equal to fields items */
-  cmp_item *eval_item;
-  bool cond_false;
-
 public:
-  inline Item_equal() :
-    item::function::Boolean(),
+  typedef List<Item_field> fields_t;
+
+  Item_equal() :
     const_item(0),
     eval_item(0),
     cond_false(0)
   {
     const_item_cache=0;
+  }
+
+  fields_t::iterator begin()
+  {
+    return fields.begin();
   }
 
   Item_equal(Item_field *f1, Item_field *f2);
@@ -1557,7 +1564,7 @@ public:
   void add(Item_field *f);
   uint32_t members();
   bool contains(Field *field);
-  Item_field* get_first() { return fields.head(); }
+  Item_field* get_first() { return &fields.front(); }
   void merge(Item_equal *item);
   void update_const();
   enum Functype functype() const { return MULT_EQUAL_FUNC; }
@@ -1565,15 +1572,20 @@ public:
   const char *func_name() const { return "multiple equal"; }
   optimize_type select_optimize() const { return OPTIMIZE_EQUAL; }
   void sort(Item_field_cmpfunc cmp, void *arg);
-  friend class Item_equal_iterator;
   void fix_length_and_dec();
   bool fix_fields(Session *session, Item **ref);
   void update_used_tables();
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
   Item *transform(Item_transformer transformer, unsigned char *arg);
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   const CHARSET_INFO *compare_collation()
-  { return fields.head()->collation.collation; }
+  { return fields.front().collation.collation; }
+private:
+  fields_t fields; /* list of equal field items                    */
+  Item *const_item;        /* optional constant item equal to fields items */
+  cmp_item *eval_item;
+  bool cond_false;
+
 };
 
 class COND_EQUAL: public memory::SqlAlloc
@@ -1590,23 +1602,7 @@ public:
   }
 };
 
-
-class Item_equal_iterator : public List_iterator_fast<Item_field>
-{
-public:
-  inline Item_equal_iterator(Item_equal &item_equal)
-    :List_iterator_fast<Item_field> (item_equal.fields)
-  {}
-  inline Item_field* operator++(int)
-  {
-    Item_field *item= (*(List_iterator_fast<Item_field> *) this)++;
-    return  item;
-  }
-  inline void rewind(void)
-  {
-    List_iterator_fast<Item_field>::rewind();
-  }
-};
+typedef List<Item_field>::iterator Item_equal_iterator;
 
 class Item_cond_and :public Item_cond
 {

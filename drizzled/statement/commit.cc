@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/commit.h>
@@ -28,11 +28,11 @@ namespace drizzled
 
 bool statement::Commit::execute()
 {
-  if (! session->endTransaction(tx_release ? COMMIT_RELEASE : tx_chain ? COMMIT_AND_CHAIN : COMMIT))
+  if (! getSession()->endTransaction(tx_release ? COMMIT_RELEASE : tx_chain ? COMMIT_AND_CHAIN : COMMIT))
   {
     return true;
   }
-  session->my_ok();
+  getSession()->my_ok();
   return false;
 }
 

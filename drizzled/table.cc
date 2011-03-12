@@ -16,7 +16,7 @@
 
 /* Some general useful functions */
 
-#include "config.h"
+#include <config.h>
 
 #include <float.h>
 #include <fcntl.h>
@@ -28,8 +28,8 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include "drizzled/plugin/transactional_storage_engine.h"
-#include "drizzled/plugin/authorization.h"
+#include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/plugin/authorization.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -42,10 +42,11 @@
 #include <drizzled/field/double.h>
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
-#include "drizzled/sql_table.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-#include "plugin/myisam/myisam.h"
+#include <drizzled/sql_table.h>
+#include <drizzled/charset.h>
+#include <drizzled/internal/m_string.h>
+#include <plugin/myisam/myisam.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
@@ -54,23 +55,22 @@
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
 
-#include "drizzled/table/instance.h"
+#include <drizzled/refresh_version.h>
 
-#include "drizzled/table_proto.h"
+#include <drizzled/table/singular.h>
+
+#include <drizzled/table_proto.h>
+#include <drizzled/typelib.h>
 
 using namespace std;
 
 namespace drizzled
 {
 
-extern pid_t current_pid;
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
 
 /* Functions defined in this cursor */
-
-void open_table_error(TableShare *share, int error, int db_errno,
-                      myf errortype, int errarg);
 
 /*************************************************************************/
 
@@ -82,6 +82,7 @@ int Table::delete_table(bool free_share)
   if (db_stat)
     error= cursor->close();
   _alias.clear();
+
   if (field)
   {
     for (Field **ptr=field ; *ptr ; ptr++)
@@ -90,8 +91,7 @@ int Table::delete_table(bool free_share)
     }
     field= 0;
   }
-  delete cursor;
-  cursor= 0;				/* For easier errorchecking */
+  safe_delete(cursor);
 
   if (free_share)
   {
@@ -112,6 +112,8 @@ void Table::resetTable(Session *session,
                        uint32_t db_stat_arg)
 {
   setShare(share);
+  in_use= session;
+
   field= NULL;
 
   cursor= NULL;
@@ -124,7 +126,6 @@ void Table::resetTable(Session *session,
   tablenr= 0;
   db_stat= db_stat_arg;
 
-  in_use= session;
   record[0]= (unsigned char *) NULL;
   record[1]= (unsigned char *) NULL;
 
@@ -196,7 +197,7 @@ void Table::resetTable(Session *session,
 
 /* Deallocate temporary blob storage */
 
-void free_blobs(register Table *table)
+void free_blobs(Table *table)
 {
   uint32_t *ptr, *end;
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
@@ -213,7 +214,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
   TYPELIB *result= (TYPELIB*) mem_root->alloc_root(sizeof(TYPELIB));
   if (!result)
     return 0;
-  result->count= strings.elements;
+  result->count= strings.size();
   result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   
@@ -222,7 +223,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  List_iterator<String> it(strings);
+  List<String>::iterator it(strings.begin());
   String *tmp;
   for (uint32_t i= 0; (tmp= it++); i++)
   {
@@ -238,7 +239,7 @@ TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 
 	/* Check that the integer is in the internal */
 
-int set_zone(register int nr, int min_zone, int max_zone)
+int set_zone(int nr, int min_zone, int max_zone)
 {
   if (nr<=min_zone)
     return (min_zone);
@@ -319,28 +320,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
   to_s.append(to);
   to_s.append(ext);
   return (internal::my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
-}
-
-/*
-  Check if database name is valid
-
-  SYNPOSIS
-    check_db_name()
-    org_name		Name of database and length
-
-  RETURN
-    false error
-    true ok
-*/
-
-bool check_db_name(Session *session, SchemaIdentifier &schema_identifier)
-{
-  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
-  {
-    return false;
-  }
-
-  return schema_identifier.isValid();
 }
 
 /*
@@ -661,7 +640,7 @@ size_t Table::max_row_length(const unsigned char *data)
 void Table::setVariableWidth(void)
 {
   assert(in_use);
-  if (in_use && in_use->lex->sql_command == SQLCOM_CREATE_TABLE)
+  if (in_use && in_use->getLex()->sql_command == SQLCOM_CREATE_TABLE)
   {
     getMutableShare()->setVariableWidth();
     return;
@@ -838,7 +817,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  table::Instance *table;
+  table::Singular *table;
   table= session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
   if (not table->getMemRoot()->multi_alloc_root(0,
@@ -884,7 +863,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table->getMutableShare()->blob_field.resize(field_count+1);
   uint32_t *blob_field= &table->getMutableShare()->blob_field[0];
-  table->getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
   table->getMutableShare()->db_low_byte_first=1;                // True for HEAP and MyISAM
   table->getMutableShare()->table_charset= param->table_charset;
   table->getMutableShare()->keys_for_keyread.reset();
@@ -896,7 +874,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   blob_count= string_count= null_count= hidden_null_count= group_null_items= 0;
   param->using_indirect_summary_function= 0;
 
-  List_iterator_fast<Item> li(fields);
+  List<Item>::iterator li(fields.begin());
   Item *item;
   Field **tmp_from_field=from_field;
   while ((item=li++))
@@ -954,7 +932,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
             string_total_length+= new_field->pack_length();
           }
           session->mem_root= mem_root_save;
-          session->change_item_tree(argp, new Item_field(new_field));
+          *argp= new Item_field(new_field);
           session->mem_root= table->getMemRoot();
 	  if (!(new_field->flags & NOT_NULL_FLAG))
           {
@@ -1040,8 +1018,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
   if (blob_count || using_unique_constraint || 
-      (session->lex->select_lex.options & SELECT_BIG_RESULT) ||
-      (session->lex->current_select->olap == ROLLUP_TYPE) ||
+      (session->getLex()->select_lex.options & SELECT_BIG_RESULT) ||
+      (session->getLex()->current_select->olap == ROLLUP_TYPE) ||
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     table->getMutableShare()->storage_engine= myisam_engine;
@@ -1647,25 +1625,14 @@ Table::Table() :
   query_id(0),
   quick_condition_rows(0),
   timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-  map(0)
+  map(0),
+  quick_rows(),
+  const_key_parts(),
+  quick_key_parts(),
+  quick_n_ranges()
 {
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
-
-  reginfo.reset();
-  covering_keys.reset();
-  quick_keys.reset();
-  merge_keys.reset();
-
-  keys_in_use_for_query.reset();
-  keys_in_use_for_group_by.reset();
-  keys_in_use_for_order_by.reset();
-
-  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
-  memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-  memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-  memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 }
 
 /*****************************************************************************
@@ -1687,7 +1654,7 @@ int Table::report_error(int error)
     print them to the .err log
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
+    errmsg_printf(error::ERROR, _("Got error %d when reading table '%s'"),
                   error, getShare()->getPath());
   print_error(error, MYF(0));
 
@@ -1763,6 +1730,24 @@ void Table::filesort_free_buffers(bool full)
     sort.addon_buf=0;
     sort.addon_field=0;
   }
+}
+
+/*
+  Is this instance of the table should be reopen or represents a name-lock?
+*/
+bool Table::needs_reopen_or_name_lock() const
+{ 
+  return getShare()->getVersion() != refresh_version;
+}
+
+uint32_t Table::index_flags(uint32_t idx) const
+{
+  return getShare()->getEngine()->index_flags(getShare()->getKeyInfo(idx).algorithm);
+}
+
+void Table::print_error(int error, myf errflag) const
+{
+  getShare()->getEngine()->print_error(error, errflag, *this);
 }
 
 } /* namespace drizzled */

@@ -18,11 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/table_cache_dictionary/dictionary.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/my_hash.h"
+#include <plugin/table_cache_dictionary/dictionary.h>
+#include <drizzled/pthread_globals.h>
 
 using namespace drizzled;
 using namespace std;
@@ -51,7 +50,7 @@ table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) 
        iter != table::getCache().end();
        iter++)
    {
-    table_list.push_back((*iter).second);
+    table_list.push_back(iter->second);
   }
   std::sort(table_list.begin(), table_list.end(), Table::compare);
 }

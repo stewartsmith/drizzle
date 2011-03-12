@@ -25,7 +25,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage']
+extensions = ['sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'pyext.options', 'pyext.confval', 'pyext.dbtable']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -110,12 +110,12 @@ html_theme = 'default'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = 'logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-#html_favicon = None
+html_favicon = 'drizzle.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -212,6 +212,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('clients/drizzledump', 'drizzledump', u'a database backup program',
+     [u'Andrew Hutchings'], 1),
+    ('clients/drizzleadmin', 'drizzleadmin', u'a database backup program',
      [u'Andrew Hutchings'], 1)
 ]
 
@@ -255,3 +257,6 @@ epub_copyright = u'2010, The Drizzle Developers'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+[extensions]
+todo_include_todos=True

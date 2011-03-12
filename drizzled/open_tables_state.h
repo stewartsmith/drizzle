@@ -21,10 +21,13 @@
 #ifndef DRIZZLED_OPEN_TABLES_STATE_H
 #define DRIZZLED_OPEN_TABLES_STATE_H
 
-#include "drizzled/lock.h"
+#include <drizzled/lock.h>
+#include <drizzled/query_id.h>
 
 namespace drizzled
 {
+
+class CachedDirectory;
 
 /**
   Class that holds information about tables which were opened and locked
@@ -50,6 +53,7 @@ public:
   */
 private:
   Table *temporary_tables;
+
 public:
 
   Table *getTemporaryTables()
@@ -70,22 +74,24 @@ public:
 
 protected:
   void close_temporary_tables();
+
 public:
   void close_temporary_table(Table *table);
+  
+private:
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
-private:
   void nukeTable(Table *table);
-public:
 
+public:
   /* Work with temporary tables */
-  Table *find_temporary_table(const TableIdentifier &identifier);
+  Table *find_temporary_table(const identifier::Table &identifier);
 
   void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
-  bool rm_temporary_table(plugin::StorageEngine *base, const TableIdentifier &identifier);
-  bool rm_temporary_table(const drizzled::TableIdentifier &identifier, bool best_effort= false);
-  Table *open_temporary_table(const drizzled::TableIdentifier &identifier,
+  int drop_temporary_table(const drizzled::identifier::Table &identifier);
+  bool rm_temporary_table(plugin::StorageEngine *base, const identifier::Table &identifier);
+  bool rm_temporary_table(const drizzled::identifier::Table &identifier, bool best_effort= false);
+  Table *open_temporary_table(const drizzled::identifier::Table &identifier,
                               bool link_in_list= true);
 
   virtual query_id_t getQueryId()  const= 0;
@@ -152,20 +158,20 @@ public:
   virtual ~Open_tables_state() {}
 
   void doGetTableNames(CachedDirectory &directory,
-                       const SchemaIdentifier &schema_identifier,
+                       const identifier::Schema &schema_identifier,
                        std::set<std::string>& set_of_names);
-  void doGetTableNames(const SchemaIdentifier &schema_identifier,
+  void doGetTableNames(const identifier::Schema &schema_identifier,
                        std::set<std::string>& set_of_names);
 
   void doGetTableIdentifiers(CachedDirectory &directory,
-                             const SchemaIdentifier &schema_identifier,
-                             TableIdentifier::vector &set_of_identifiers);
-  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
-                             TableIdentifier::vector &set_of_identifiers);
+                             const identifier::Schema &schema_identifier,
+                             identifier::Table::vector &set_of_identifiers);
+  void doGetTableIdentifiers(const identifier::Schema &schema_identifier,
+                             identifier::Table::vector &set_of_identifiers);
 
-  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
+  int doGetTableDefinition(const drizzled::identifier::Table &identifier,
                            message::Table &table_proto);
-  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(const drizzled::identifier::Table &identifier);
 
 
   Open_tables_state(uint64_t version_arg);

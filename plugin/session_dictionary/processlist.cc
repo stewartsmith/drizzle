@@ -18,17 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/session_dictionary/dictionary.h"
+#include <plugin/session_dictionary/dictionary.h>
 
 #include <netdb.h>
 
-#include "drizzled/pthread_globals.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/plugin/authorization.h"
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/thread_var.h"
+#include <drizzled/pthread_globals.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/internal/thread_var.h>
 
 #include <set>
 
@@ -39,7 +39,7 @@ ProcesslistTool::ProcesslistTool() :
   plugin::TableFunction("DATA_DICTIONARY", "PROCESSLIST")
 {
   add_field("ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("USER", 16);
+  add_field("USERNAME", 16);
   add_field("HOST", NI_MAXHOST);
   add_field("DB", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
   add_field("COMMAND", 16);
@@ -65,7 +65,7 @@ bool ProcesslistTool::Generator::populate()
 
   while ((tmp= session_generator))
   {
-    drizzled::Session::State::const_shared_ptr state(tmp->state());
+    drizzled::session::State::const_shared_ptr state(tmp->state());
     identifier::User::const_shared_ptr tmp_sctx= tmp->user();
 
     /* ID */
@@ -99,7 +99,7 @@ bool ProcesslistTool::Generator::populate()
     }
     else
     {
-      push(command_name[tmp->command].str, command_name[tmp->command].length);
+      push(getCommandName(tmp->command));
     }
 
     /* type::Time */

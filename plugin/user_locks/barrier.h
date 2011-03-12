@@ -245,7 +245,7 @@ private:
     {
       return limit - current_wait;
     }
-    return std::abs(current_wait);
+    return std::abs(static_cast<long int>(current_wait));
   }
 
 

@@ -41,7 +41,7 @@
  * the log file(s)
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <fcntl.h>
 
@@ -59,7 +59,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <drizzled/algorithm/crc32.h>
 #include <drizzled/errmsg_print.h>
-#include "drizzled/definitions.h"
+#include <drizzled/definitions.h>
 
 using namespace std;
 using namespace drizzled;
@@ -91,12 +91,7 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
 
     if (log_file == -1)
     {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      errmsg_printf(ERRMSG_LVL_ERROR, 
-                    _("Failed to open transaction log file %s.  Got error: %s\n"),
-                    log_filename_to_read.c_str(),
-                    errmsg);
+      sql_perror(_("Failed to open transaction log file"), log_filename_to_read);
       return false;
     }
 

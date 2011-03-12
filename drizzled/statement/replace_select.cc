@@ -18,26 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/replace_select.h>
+#include <drizzled/select_insert.h>
 
 namespace drizzled
 {
 
 bool statement::ReplaceSelect::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &session->lex->select_lex;
-  Select_Lex_Unit *unit= &session->lex->unit;
+  Select_Lex *select_lex= &lex().select_lex;
+  Select_Lex_Unit *unit= &lex().unit;
   select_result *sel_result= NULL;
   bool res;
 
-  if (insert_precheck(session, all_tables))
+  if (insert_precheck(getSession(), all_tables))
   {
     return true;
   }
@@ -47,29 +48,29 @@ bool statement::ReplaceSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (session->wait_if_global_read_lock(false, true))
+  if (getSession()->wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
-  if (! (res= session->openTablesLock(all_tables)))
+  if (! (res= getSession()->openTablesLock(all_tables)))
   {
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
     select_lex->context.table_list=
       select_lex->context.first_name_resolution_table= second_table;
-    res= insert_select_prepare(session);
+    res= insert_select_prepare(getSession());
     if (! res && (sel_result= new select_insert(first_table,
                                                 first_table->table,
-                                                &session->lex->field_list,
-                                                &session->lex->update_list,
-                                                &session->lex->value_list,
-                                                session->lex->duplicates,
-                                                session->lex->ignore)))
+                                                &lex().field_list,
+                                                &lex().update_list,
+                                                &lex().value_list,
+                                                lex().duplicates,
+                                                lex().ignore)))
     {
-      res= handle_select(session,
-                         session->lex,
+      res= handle_select(getSession(),
+                         &lex(),
                          sel_result,
                          OPTION_SETUP_TABLES_DONE);
       /*
@@ -79,7 +80,7 @@ bool statement::ReplaceSelect::execute()
          the unlock procedure.
        */
       if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT &&
-          session->lock)
+          getSession()->lock)
       {
         /* INSERT ... SELECT should invalidate only the very first table */
         TableList *save_table= first_table->next_local;
@@ -96,7 +97,7 @@ bool statement::ReplaceSelect::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  session->startWaitingGlobalReadLock();
+  getSession()->startWaitingGlobalReadLock();
 
   return res;
 }

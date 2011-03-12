@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_SELECT_TO_FILE_H
 #define DRIZZLED_SELECT_TO_FILE_H
 
+#include <drizzled/select_result_interceptor.h>
+#include <drizzled/file_exchange.h>
+
 #include <boost/filesystem.hpp>
 
 namespace drizzled
@@ -44,7 +47,7 @@ protected:
 public:
   select_to_file(file_exchange *ex);
   virtual ~select_to_file();
-  void send_error(uint32_t errcode,const char *err);
+  void send_error(drizzled::error_t errcode,const char *err);
   bool send_eof();
   void cleanup();
 };

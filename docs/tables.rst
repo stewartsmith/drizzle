@@ -1,5 +1,5 @@
-Tables 
-=======
+Tables
+======
 
 A table makes up a collection of :doc:`/columntypes` that
 can be joined together in order to create relational result sets. 

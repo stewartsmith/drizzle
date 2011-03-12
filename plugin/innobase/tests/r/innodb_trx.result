@@ -25,10 +25,14 @@ INNODB_TRX	CREATE TABLE `INNODB_TRX` (
   `TRX_LAST_FOREIGN_KEY_ERROR` VARCHAR(256) DEFAULT NULL,
   `TRX_ADAPTIVE_HASH_LATCHED` BIGINT NOT NULL,
   `TRX_ADAPTIVE_HASH_TIMEOUT` BIGINT NOT NULL
-) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE
 use test;
 create table t1 (a int);
 start transaction;
 select TRX_STATE,TRX_QUERY from data_dictionary.INNODB_TRX;
 TRX_STATE	TRX_QUERY
 RUNNING	NULL
+commit;
+commit;
+use test;
+drop table t1;

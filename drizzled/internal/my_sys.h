@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
+
 #ifndef DRIZZLED_INTERNAL_MY_SYS_H
 #define DRIZZLED_INTERNAL_MY_SYS_H
 
@@ -29,15 +31,14 @@
 
 #include <errno.h>
 
-#include "drizzled/internal/my_pthread.h"
+#include <drizzled/internal/my_pthread.h>
 
-#include "drizzled/charset_info.h"                    /* for CHARSET_INFO */
+#include <drizzled/charset_info.h>                    /* for CHARSET_INFO */
 #include <stdarg.h>
-#include "drizzled/typelib.h"
-#include "drizzled/internal/aio_result.h"
+#include <drizzled/internal/aio_result.h>
 
-#include "drizzled/memory/root.h"
-#include "drizzled/error.h"
+#include <drizzled/memory/root.h>
+#include <drizzled/error.h>
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
@@ -47,13 +48,13 @@ extern int errno;			/* declare errno */
 #endif
 #endif					/* #ifndef errno */
 
-#include <drizzled/dynamic_array.h>
-
 #ifdef HAVE_SYS_MMAN_H 
 #include <sys/mman.h>
 #endif
 
-#include "drizzled/qsort_cmp.h"
+#include <drizzled/qsort_cmp.h>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -151,7 +152,7 @@ extern uint	mysys_usage_id;
 extern bool	my_init_done;
 
 					/* Executed when comming from shell */
-extern int my_umask,		/* Default creation mask  */
+extern DRIZZLED_API int my_umask,		/* Default creation mask  */
 	   my_umask_dir,
 	   my_recived_signals,	/* Signals we have got */
 	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */
@@ -266,40 +267,33 @@ typedef uint32_t ha_checksum;
 typedef int (*Process_option_func)(void *ctx, const char *group_name,
                                    const char *option);
 
-int handle_default_option(void *in_ctx, const char *group_name,
-                          const char *option);
-
-
-
-	/* Prototypes for mysys and my_func functions */
+/* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
-extern int my_delete(const char *name,myf MyFlags);
-extern int my_open(const char *FileName,int Flags,myf MyFlags);
+DRIZZLED_API int my_delete(const char *name,myf MyFlags);
+DRIZZLED_API int my_open(const char *FileName,int Flags,myf MyFlags);
 extern int my_register_filename(int fd, const char *FileName,
-				 uint32_t error_message_number, myf MyFlags);
-extern int my_create(const char *FileName,int CreateFlags,
-		      int AccessFlags, myf MyFlags);
-extern int my_close(int Filedes,myf MyFlags);
+                                uint32_t error_message_number, myf MyFlags);
+DRIZZLED_API int my_create(const char *FileName,int CreateFlags,
+                           int AccessFlags, myf MyFlags);
+DRIZZLED_API int my_close(int Filedes,myf MyFlags);
 extern int my_mkdir(const char *dir, int Flags, myf MyFlags);
 extern int my_realpath(char *to, const char *filename, myf MyFlags);
 extern int my_create_with_symlink(const char *linkname, const char *filename,
-				   int createflags, int access_flags,
-				   myf MyFlags);
-extern int my_delete_with_symlink(const char *name, myf MyFlags);
+                                  int createflags, int access_flags,
+                                  myf MyFlags);
+DRIZZLED_API int my_delete_with_symlink(const char *name, myf MyFlags);
 extern int my_rename_with_symlink(const char *from,const char *to,myf MyFlags);
-extern size_t my_read(int Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
-extern int my_rename(const char *from,const char *to,myf MyFlags);
-extern size_t my_write(int Filedes,const unsigned char *Buffer,size_t Count,
-		     myf MyFlags);
+DRIZZLED_API size_t my_read(int Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
+DRIZZLED_API int my_rename(const char *from, const char *to,myf MyFlags);
+DRIZZLED_API size_t my_write(int Filedes, const unsigned char *Buffer,
+                             size_t Count, myf MyFlags);
 extern int _sanity(const char *sFile, uint32_t uLine);
 
 extern int check_if_legal_filename(const char *path);
 extern int check_if_legal_tablename(const char *path);
 
-#define my_delete_allow_opened(fname,flags)  my_delete((fname),(flags))
-
-extern int my_sync(int fd, myf my_flags);
+DRIZZLED_API int my_sync(int fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
 extern int my_sync_dir_by_file(const char *file_name, myf my_flags);
 extern bool my_init(void);
@@ -317,8 +311,8 @@ bool test_if_hard_path(const char *dir_name);
 extern char *convert_dirname(char *to, const char *from, const char *from_end);
 extern char * fn_ext(const char *name);
 extern char * fn_same(char * toname,const char *name,int flag);
-extern char * fn_format(char * to,const char *name,const char *dir,
-			   const char *form, uint32_t flag);
+DRIZZLED_API char * fn_format(char * to,const char *name,const char *dir,
+                              const char *form, uint32_t flag);
 extern size_t strlength(const char *str);
 extern size_t unpack_dirname(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
@@ -354,8 +348,8 @@ extern void my_qsort(void *base_ptr, size_t total_elems, size_t size,
 extern void my_qsort2(void *base_ptr, size_t total_elems, size_t size,
                       qsort2_cmp cmp, void *cmp_argument);
 extern qsort2_cmp get_ptr_compare(size_t);
-void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
-my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
+DRIZZLED_API void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
+DRIZZLED_API my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 int create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
 
 extern int get_defaults_options(int argc, char **argv,

@@ -17,11 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
-#include "drizzled/internal/m_string.h"
+#include <drizzled/internal/m_string.h>
 
 namespace drizzled
 {
@@ -31,7 +31,7 @@ String *Item_decimal_typecast::val_str(String *str)
   type::Decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   if (null_value)
     return NULL;
-  class_decimal2string(E_DEC_FATAL_ERROR, tmp, 0, 0, 0, str);
+  class_decimal2string(tmp, 0, str);
   return str;
 }
 
@@ -97,7 +97,7 @@ err:
 }
 
 
-void Item_decimal_typecast::print(String *str, enum_query_type query_type)
+void Item_decimal_typecast::print(String *str)
 {
   char len_buf[20*3 + 1];
   char *end;
@@ -105,7 +105,7 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   uint32_t precision= class_decimal_length_to_precision(max_length, decimals,
                                                  unsigned_flag);
   str->append(STRING_WITH_LEN("cast("));
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" as decimal("));
 
   end=internal::int10_to_str(precision, len_buf,10);

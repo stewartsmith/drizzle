@@ -18,12 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
+
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_schema.h>
-#include <drizzled/db.h>
 #include <drizzled/plugin/event_observer.h>
+
+#include <drizzled/schema.h>
 
 #include <string>
 
@@ -34,20 +36,22 @@ namespace drizzled
 
 bool statement::DropSchema::execute()
 {
-  if (! session->endActiveTransaction())
+  if (getSession()->inTransaction())
   {
+    my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
-  SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
-  if (not check_db_name(session, schema_identifier))
-  {
-    std::string path;
-    schema_identifier.getSQLPath(path);
 
-    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
+  identifier::Schema schema_identifier(std::string(lex().name.str, lex().name.length));
+
+  if (not schema::check(*getSession(), schema_identifier))
+  {
+    my_error(ER_WRONG_DB_NAME, schema_identifier);
+
     return false;
   }
-  if (session->inTransaction())
+
+  if (getSession()->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
         ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
@@ -58,14 +62,14 @@ bool statement::DropSchema::execute()
   bool res = true;
   std::string path;
   schema_identifier.getSQLPath(path);
-  if (unlikely(plugin::EventObserver::beforeDropDatabase(*session, path))) 
+  if (unlikely(plugin::EventObserver::beforeDropDatabase(*getSession(), path))) 
   {
-    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
+    my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
   }
   else
   {
-    res= rm_db(session, schema_identifier, drop_if_exists);
-    if (unlikely(plugin::EventObserver::afterDropDatabase(*session, path, res)))
+    res= schema::drop(*getSession(), schema_identifier, drop_if_exists);
+    if (unlikely(plugin::EventObserver::afterDropDatabase(*getSession(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
       res = false;

@@ -65,7 +65,7 @@ public:
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "convert"; }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 } /* namespace drizzled */

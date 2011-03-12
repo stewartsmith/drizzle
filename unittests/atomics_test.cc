@@ -18,102 +18,88 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-
-#include <gtest/gtest.h>
+#include <config.h>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include <drizzled/atomics.h>
 
 using namespace drizzled;
 
-TEST(atomic_operations, fetch_and_store)
+BOOST_AUTO_TEST_SUITE(AtomicOperations)
+BOOST_AUTO_TEST_CASE(fetch_and_store)
 {
   atomic<uint32_t> u235;
 
-  EXPECT_EQ(0, u235.fetch_and_store(1));
+  BOOST_REQUIRE_EQUAL(0, u235.fetch_and_store(1));
 
   u235.fetch_and_store(15);
 
-  EXPECT_EQ(15, u235.fetch_and_store(100));
-  EXPECT_EQ(100, u235);
+  BOOST_REQUIRE_EQUAL(15, u235.fetch_and_store(100));
+  BOOST_REQUIRE_EQUAL(100, u235);
 }
 
-TEST(atomic_operations, fetch_and_increment)
+BOOST_AUTO_TEST_CASE(fetch_and_increment)
 {
   atomic<uint32_t> u235;
 
-  EXPECT_EQ(0, u235.fetch_and_increment());
-  EXPECT_EQ(1, u235);
+  BOOST_REQUIRE_EQUAL(0, u235.fetch_and_increment());
+  BOOST_REQUIRE_EQUAL(1, u235);
 }
 
-TEST(atomic_operations, fetch_and_add)
+BOOST_AUTO_TEST_CASE(fetch_and_add)
 {
   atomic<uint32_t> u235;
 
-  EXPECT_EQ(0, u235.fetch_and_add(2));
-  EXPECT_EQ(2, u235);
+  BOOST_REQUIRE_EQUAL(0, u235.fetch_and_add(2));
+  BOOST_REQUIRE_EQUAL(2, u235);
 }
 
-TEST(atomic_operations, add_and_fetch)
+BOOST_AUTO_TEST_CASE(add_and_fetch)
 {
   atomic<uint32_t> u235;
 
-  EXPECT_EQ(10, u235.add_and_fetch(10));
-  EXPECT_EQ(10, u235);
+  BOOST_REQUIRE_EQUAL(10, u235.add_and_fetch(10));
+  BOOST_REQUIRE_EQUAL(10, u235);
 }
 
-TEST(atomic_operations, fetch_and_decrement)
+BOOST_AUTO_TEST_CASE(fetch_and_decrement)
 {
   atomic<uint32_t> u235;
 
   u235.fetch_and_store(15);
 
-  EXPECT_EQ(15, u235.fetch_and_decrement());
-  EXPECT_EQ(14, u235);
+  BOOST_REQUIRE_EQUAL(15, u235.fetch_and_decrement());
+  BOOST_REQUIRE_EQUAL(14, u235);
 }
 
-TEST(atomic_operations, compare_and_swap)
+BOOST_AUTO_TEST_CASE(compare_and_swap)
 {
   atomic<uint32_t> u235;
 
   u235.fetch_and_store(100);
 
-  ASSERT_FALSE(u235.compare_and_swap(42, 200));
-  ASSERT_TRUE(u235.compare_and_swap(200, 100));
-  EXPECT_EQ(200, u235);
+  BOOST_REQUIRE(not u235.compare_and_swap(42, 200));
+  BOOST_REQUIRE(u235.compare_and_swap(200, 100));
+  BOOST_REQUIRE_EQUAL(200, u235);
 }
 
-TEST(atomic_operations, increment)
+BOOST_AUTO_TEST_CASE(increment)
 {
   atomic<uint32_t> u235;
   u235.fetch_and_store(200);
-  EXPECT_EQ(201, u235.increment());
+  BOOST_REQUIRE_EQUAL(201, u235.increment());
 }
 
-TEST(atomic_operations, decrement)
-{
-  atomic<uint32_t> u235;
-  u235.fetch_and_store(200);
-
-  EXPECT_EQ(199, u235.decrement());
-}
-
-/*
-TEST(atomic_operations, increment_assign)
+BOOST_AUTO_TEST_CASE(decrement)
 {
   atomic<uint32_t> u235;
   u235.fetch_and_store(200);
 
-  EXPECT_EQ(242, u235+=42);
+  BOOST_REQUIRE_EQUAL(199, u235.decrement());
 }
 
-TEST(atomic_operations, decrement_assign)
-{
-  atomic<uint32_t> u235;
-  u235.fetch_and_store(200);
+BOOST_AUTO_TEST_SUITE_END()
 
-  EXPECT_EQ(158, u235-=42);
-}
-*/
-
+/* TODO: add tests for += and -= when supported */
 

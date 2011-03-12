@@ -25,12 +25,14 @@
 #ifndef DRIZZLED_REPLICATION_SERVICES_H
 #define DRIZZLED_REPLICATION_SERVICES_H
 
-#include "drizzled/atomics.h"
-#include "drizzled/plugin/replication.h"
+#include <drizzled/atomics.h>
+#include <drizzled/plugin/replication.h>
 
 #include <string>
 #include <vector>
 #include <utility>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -54,7 +56,7 @@ namespace message
  * transactional events into GPB messages and sending those
  * events out through registered replicators and appliers.
  */
-class ReplicationServices
+class DRIZZLED_API ReplicationServices
 {
 public:
   typedef uint64_t GlobalTransactionId;

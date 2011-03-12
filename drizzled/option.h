@@ -16,8 +16,6 @@
 #ifndef DRIZZLED_OPTION_H
 #define DRIZZLED_OPTION_H
 
-#include "drizzled/typelib.h"
-
 namespace drizzled
 {
 

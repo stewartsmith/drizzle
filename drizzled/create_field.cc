@@ -21,34 +21,35 @@
  * @file Implementation of CreateField class
  */
 
-#include "config.h"
+#include <config.h>
 #include <errno.h>
 #include <float.h>
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/field.h"
-#include "drizzled/create_field.h"
-#include "drizzled/field/str.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/field/boolean.h"
-#include "drizzled/field/enum.h"
-#include "drizzled/field/null.h"
-#include "drizzled/field/date.h"
-#include "drizzled/field/decimal.h"
-#include "drizzled/field/real.h"
-#include "drizzled/field/double.h"
-#include "drizzled/field/int32.h"
-#include "drizzled/field/int64.h"
-#include "drizzled/field/num.h"
-#include "drizzled/field/epoch.h"
-#include "drizzled/field/datetime.h"
-#include "drizzled/field/varstring.h"
-#include "drizzled/field/uuid.h"
-#include "drizzled/temporal.h"
-#include "drizzled/item/string.h"
+#include <drizzled/sql_select.h>
+#include <drizzled/error.h>
+#include <drizzled/field.h>
+#include <drizzled/create_field.h>
+#include <drizzled/field/str.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/boolean.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/decimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/epoch.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/uuid.h>
+#include <drizzled/temporal.h>
+#include <drizzled/item/string.h>
+#include <drizzled/table.h>
 
-#include "drizzled/display.h"
+#include <drizzled/display.h>
 
 #include <algorithm>
 
@@ -74,7 +75,9 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
 
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)
-    pack_length= (pack_length - old_field->getTable()->getShare()->blob_ptr_size + portable_sizeof_char_ptr);
+  {
+    pack_length= (pack_length - old_field->getTable()->getShare()->sizeBlobPtr() + portable_sizeof_char_ptr);
+  }
 
   switch (sql_type) 
   {
@@ -102,7 +105,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
   if (!(flags & (NO_DEFAULT_VALUE_FLAG)) &&
       !(flags & AUTO_INCREMENT_FLAG) &&
       old_field->ptr && orig_field &&
-      (sql_type != DRIZZLE_TYPE_TIMESTAMP ||                /* set def only if */
+      (not old_field->is_timestamp() ||                /* set def only if */
        old_field->getTable()->timestamp_field != old_field ||  /* timestamp field */
        unireg_check == Field::TIMESTAMP_UN_FIELD))        /* has default val */
   {
@@ -218,7 +221,7 @@ bool CreateField::init(Session *,
   interval= 0;
   pack_length= key_length= 0;
   charset= fld_charset;
-  interval_list.empty();
+  interval_list.clear();
 
   comment= *fld_comment;
 
@@ -227,8 +230,10 @@ bool CreateField::init(Session *,
     it is NOT NULL, not an AUTO_INCREMENT field and not a TIMESTAMP.
   */
   if (!fld_default_value && !(fld_type_modifier & AUTO_INCREMENT_FLAG) &&
-      (fld_type_modifier & NOT_NULL_FLAG) && fld_type != DRIZZLE_TYPE_TIMESTAMP)
+      (fld_type_modifier & NOT_NULL_FLAG) && (fld_type != DRIZZLE_TYPE_TIMESTAMP and fld_type != DRIZZLE_TYPE_MICROTIME))
+  {
     flags|= NO_DEFAULT_VALUE_FLAG;
+  }
 
   if (fld_length && !(length= (uint32_t) atoi(fld_length)))
     fld_length= 0;
@@ -300,19 +305,16 @@ bool CreateField::init(Session *,
         return(true);
       }
       break;
-    case DRIZZLE_TYPE_TIMESTAMP:
-      if (!fld_length)
-      {
-        length= DateTime::MAX_STRING_LENGTH;
-      }
-
-      /* This assert() should be correct due to absence of length
-         specifiers for timestamp. Previous manipulation also wasn't
-         ever called (from examining lcov)
+    case DRIZZLE_TYPE_MICROTIME:
+      /* 
+        This assert() should be correct due to absence of length
+        specifiers for timestamp. Previous manipulation also wasn't
+        ever called (from examining lcov)
       */
-      assert(length == (uint32_t)DateTime::MAX_STRING_LENGTH);
+      assert(fld_type);
+    case DRIZZLE_TYPE_TIMESTAMP:
+      length= MicroTimestamp::MAX_STRING_LENGTH;
 
-      flags|= UNSIGNED_FLAG;
       if (fld_default_value)
       {
         /* Grammar allows only NOW() value for ON UPDATE clause */
@@ -328,8 +330,10 @@ bool CreateField::init(Session *,
           def= 0;
         }
         else
+        {
           unireg_check= (fld_on_update_value ? Field::TIMESTAMP_UN_FIELD:
-                                              Field::NONE);
+                         Field::NONE);
+        }
       }
       else
       {
@@ -371,7 +375,7 @@ bool CreateField::init(Session *,
         /* Should be safe. */
         pack_length= 4;
 
-        List_iterator<String> it(*fld_interval_list);
+        List<String>::iterator it(fld_interval_list->begin());
         String *tmp;
         while ((tmp= it++))
           interval_list.push_back(tmp);

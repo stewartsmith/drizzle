@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/user_locks/module.h"
+#include <plugin/user_locks/module.h>
 
 #include <drizzled/atomics.h>
 #include <drizzled/session.h>
@@ -33,7 +33,7 @@ user_locks::UserLocks::UserLocks() :
 {
   add_field("USER_LOCK_NAME", plugin::TableFunction::STRING, user_locks::LARGEST_LOCK_NAME, false);
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("USER_NAME", plugin::TableFunction::STRING);
+  add_field("USERNAME", plugin::TableFunction::STRING);
 }
 
 user_locks::UserLocks::Generator::Generator(drizzled::Field **arg) :
@@ -49,13 +49,13 @@ bool user_locks::UserLocks::Generator::populate()
   while (iter != lock_map.end())
   {
     // USER_LOCK_NAME
-    push((*iter).first.getLockName());
+    push(iter->first.getLockName());
 
     // SESSION_ID
-    push((*iter).second->id);
+    push(iter->second->id);
     //
-    // USER_NAME
-    push((*iter).first.getUser());
+    // USERNAME
+    push(iter->first.getUser());
 
     iter++;
     return true;

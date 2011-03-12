@@ -18,10 +18,10 @@
 /* UTF8 according RFC 2279 */
 /* Written by Alexander Barkov <bar@udm.net> */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
 #include <errno.h>
 
 #include <algorithm>
@@ -2717,7 +2717,7 @@ MY_CHARSET_HANDLER my_charset_utf8mb4_handler=
 
 
 
-CHARSET_INFO my_charset_utf8mb4_general_ci=
+DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_general_ci=
 {
   45,0,0,              /* number       */
   MY_CS_COMPILED|MY_CS_PRIMARY|MY_CS_STRNXFRM|MY_CS_UNICODE,  /* state  */
@@ -2752,7 +2752,7 @@ CHARSET_INFO my_charset_utf8mb4_general_ci=
 };
 
 
-CHARSET_INFO my_charset_utf8mb4_bin=
+DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_bin=
 {
   46,0,0,             /* number       */
   MY_CS_COMPILED|MY_CS_BINSORT|MY_CS_UNICODE, /* state  */

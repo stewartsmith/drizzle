@@ -18,7 +18,8 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/field/varstring.h>
-#include "drizzled/plugin/daemon.h"
+#include <drizzled/plugin/daemon.h>
+#include <drizzled/plugin/storage_engine.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -70,8 +71,8 @@ public:
 
   int doCreateTable(Session &session,
                     Table &table_arg,
-                    const TableIdentifier &identifier,
-                    message::Table &create_proto);
+                    const identifier::Table &identifier,
+                    const message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
      for MEMORY.
@@ -81,15 +82,15 @@ public:
   int heap_create_table(Session *session, const char *table_name,
                         Table *table_arg,
                         bool internal_table,
-                        message::Table &create_proto,
+                        const message::Table &create_proto,
                         HP_SHARE **internal_share);
 
-  int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+  int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 
-  int doDropTable(Session&, const TableIdentifier &identifier);
+  int doDropTable(Session&, const identifier::Table &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const TableIdentifier &identifier,
+                           const identifier::Table &identifier,
                            message::Table &table_message);
 
   uint32_t max_supported_keys()          const { return MAX_KEY; }
@@ -100,25 +101,25 @@ public:
     return ( HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
   }
 
-  bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
+  bool doDoesTableExist(Session& session, const identifier::Table &identifier);
   void doGetTableIdentifiers(CachedDirectory &directory,
-                             const SchemaIdentifier &schema_identifier,
-                             TableIdentifier::vector &set_of_identifiers);
+                             const identifier::Schema &schema_identifier,
+                             identifier::Table::vector &set_of_identifiers);
 };
 
 void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
-                                       const SchemaIdentifier&,
-                                       TableIdentifier::vector&)
+                                       const identifier::Schema&,
+                                       identifier::Table::vector&)
 {
 }
 
-bool HeapEngine::doDoesTableExist(Session& session, const TableIdentifier &identifier)
+bool HeapEngine::doDoesTableExist(Session& session, const identifier::Table &identifier)
 {
   return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 int HeapEngine::doGetTableDefinition(Session &session,
-                                     const TableIdentifier &identifier,
+                                     const identifier::Table &identifier,
                                      message::Table &table_proto)
 {
   if (session.getMessageCache().getTableMessage(identifier, table_proto))
@@ -130,7 +131,7 @@ int HeapEngine::doGetTableDefinition(Session &session,
   We have to ignore ENOENT entries as the MEMORY table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDropTable(Session &session, const TableIdentifier &identifier)
+int HeapEngine::doDropTable(Session &session, const identifier::Table &identifier)
 {
   session.getMessageCache().removeTableMessage(identifier);
 
@@ -175,7 +176,7 @@ ha_heap::ha_heap(plugin::StorageEngine &engine_arg,
 */
 #define MEMORY_STATS_UPDATE_THRESHOLD 10
 
-int ha_heap::doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+int ha_heap::doOpen(const drizzled::identifier::Table &identifier, int mode, uint32_t test_if_locked)
 {
   if ((test_if_locked & HA_OPEN_INTERNAL_TABLE) || (!(file= heap_open(identifier.getPath().c_str(), mode)) && errno == ENOENT))
   {
@@ -240,7 +241,7 @@ int ha_heap::close(void)
 Cursor *ha_heap::clone(memory::Root *)
 {
   Cursor *new_handler= getTable()->getMutableShare()->db_type()->getCursor(*getTable());
-  TableIdentifier identifier(getTable()->getShare()->getSchemaName(),
+  identifier::Table identifier(getTable()->getShare()->getSchemaName(),
                              getTable()->getShare()->getTableName(),
                              getTable()->getShare()->getPath());
 
@@ -623,7 +624,7 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
+int HeapEngine::doRenameTable(Session &session, const identifier::Table &from, const identifier::Table &to)
 {
   session.getMessageCache().renameTableMessage(from, to);
   return heap_rename(from.getPath().c_str(), to.getPath().c_str());
@@ -652,8 +653,8 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 
 int HeapEngine::doCreateTable(Session &session,
                               Table &table_arg,
-                              const TableIdentifier &identifier,
-                              message::Table& create_proto)
+                              const identifier::Table &identifier,
+                              const message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
@@ -676,7 +677,7 @@ int HeapEngine::doCreateTable(Session &session,
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   Table *table_arg,
                                   bool internal_table, 
-                                  message::Table &create_proto,
+                                  const message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0;
@@ -839,7 +840,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
-  NULL,                       /* system variables                */
+  NULL,                       /* depends */
   NULL                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

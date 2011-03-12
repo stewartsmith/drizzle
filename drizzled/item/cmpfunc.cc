@@ -21,17 +21,22 @@
   This file defines all compare functions
 */
 
-#include "config.h"
-#include "drizzled/sql_select.h"
-#include "drizzled/error.h"
-#include "drizzled/temporal.h"
-#include "drizzled/item/cmpfunc.h"
-#include "drizzled/cached_item.h"
-#include "drizzled/item/cache_int.h"
-#include "drizzled/item/int_with_ref.h"
-#include "drizzled/check_stack_overrun.h"
-#include "drizzled/time_functions.h"
-#include "drizzled/internal/my_sys.h"
+#include <config.h>
+
+#include <drizzled/cached_item.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/item/cache_int.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/int_with_ref.h>
+#include <drizzled/item/subselect.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/temporal.h>
+#include <drizzled/time_functions.h>
+
 #include <math.h>
 #include <algorithm>
 
@@ -342,10 +347,10 @@ int64_t Item_func_not::val_int()
   higher than the precedence of NOT.
 */
 
-void Item_func_not::print(String *str, enum_query_type query_type)
+void Item_func_not::print(String *str)
 {
   str->append('(');
-  Item_func::print(str, query_type);
+  Item_func::print(str);
   str->append(')');
 }
 
@@ -377,12 +382,12 @@ bool Item_func_not_all::empty_underlying_subquery()
           (test_sub_item && !test_sub_item->any_value()));
 }
 
-void Item_func_not_all::print(String *str, enum_query_type query_type)
+void Item_func_not_all::print(String *str)
 {
   if (show)
-    Item_func::print(str, query_type);
+    Item_func::print(str);
   else
-    args[0]->print(str, query_type);
+    args[0]->print(str);
 }
 
 
@@ -472,7 +477,7 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
       Item *tmp= new Item_int_with_ref(field->val_int(), *item,
                                        test(field->flags & UNSIGNED_FLAG));
       if (tmp)
-        session->change_item_tree(item, tmp);
+        *item= tmp;
       result= 1;					// Item was replaced
     }
 
@@ -493,7 +498,6 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
 void Item_bool_func2::fix_length_and_dec()
 {
   max_length= 1;				     // Function returns 0 or 1
-  Session *session;
 
   /*
     As some compare functions are generated after sql_yacc,
@@ -531,7 +535,6 @@ void Item_bool_func2::fix_length_and_dec()
     return;
   }
 
-  session= current_session;
   Item_field *field_item= NULL;
 
   if (args[0]->real_item()->type() == FIELD_ITEM)
@@ -540,7 +543,7 @@ void Item_bool_func2::fix_length_and_dec()
     if (field_item->field->can_be_compared_as_int64_t() &&
         !(field_item->is_datetime() && args[1]->result_type() == STRING_RESULT))
     {
-      if (convert_constant_item(session, field_item, &args[1]))
+      if (convert_constant_item(&getSession(), field_item, &args[1]))
       {
         cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
                          INT_RESULT);		// Works for all types.
@@ -556,7 +559,7 @@ void Item_bool_func2::fix_length_and_dec()
           !(field_item->is_datetime() &&
             args[0]->result_type() == STRING_RESULT))
       {
-        if (convert_constant_item(session, field_item, &args[0]))
+        if (convert_constant_item(&getSession(), field_item, &args[0]))
         {
           cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
                            INT_RESULT); // Works for all types.
@@ -569,6 +572,19 @@ void Item_bool_func2::fix_length_and_dec()
   set_cmp_func();
 }
 
+Arg_comparator::Arg_comparator():
+  session(current_session),
+  a_cache(0),
+  b_cache(0)
+{}
+
+Arg_comparator::Arg_comparator(Item **a1, Item **a2):
+  a(a1),
+  b(a2),
+  session(current_session),
+  a_cache(0),
+  b_cache(0)
+{}
 
 int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
 {
@@ -696,36 +712,35 @@ WHERE col= 'j'
     converted value. 0 on error and on zero-dates -- check 'failure'
 */
 
-static uint64_t
-get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_type warn_type,
+static int64_t
+get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
                   char *warn_name, bool *error_arg)
 {
-  uint64_t value= 0;
-  int error;
+  int64_t value= 0;
+  type::cut_t error= type::VALID;
   type::Time l_time;
-  enum enum_drizzle_timestamp_type ret;
+  type::timestamp_t ret;
 
-  ret= str_to_datetime(str->ptr(), str->length(), &l_time,
-                       (TIME_FUZZY_DATE | MODE_INVALID_DATES |
-                        (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
-                       &error);
+  ret= l_time.store(str->ptr(), str->length(),
+                    (TIME_FUZZY_DATE | MODE_INVALID_DATES | (session->variables.sql_mode & MODE_NO_ZERO_DATE)),
+                    error);
 
-  if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
+  if (ret == type::DRIZZLE_TIMESTAMP_DATETIME || ret == type::DRIZZLE_TIMESTAMP_DATE)
   {
     /*
       Do not return yet, we may still want to throw a "trailing garbage"
       warning.
     */
     *error_arg= false;
-    value= TIME_to_uint64_t_datetime(&l_time);
+    l_time.convert(value);
   }
   else
   {
     *error_arg= true;
-    error= 1;                                   /* force warning */
+    error= type::CUT;                                   /* force warning */
   }
 
-  if (error > 0)
+  if (error != type::VALID)
   {
     make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
@@ -770,7 +785,7 @@ get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_typ
 
 enum Arg_comparator::enum_date_cmp_type
 Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
-                                     uint64_t *const_value)
+                                     int64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
   Item *str_arg= 0, *date_arg= 0;
@@ -781,7 +796,9 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
   if (in_a->is_datetime())
   {
     if (in_b->is_datetime())
+    {
       cmp_type= CMP_DATE_WITH_DATE;
+    }
     else if (in_b->result_type() == STRING_RESULT)
     {
       cmp_type= CMP_DATE_WITH_STR;
@@ -823,7 +840,7 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
        * Does a uint64_t conversion really have to happen here?  Fields return int64_t
        * from val_int(), not uint64_t...
        */
-      uint64_t value;
+      int64_t value;
       String *str_val;
       String tmp;
       /* DateTime used to pick up as many string conversion possibilities as possible. */
@@ -841,17 +858,28 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
          */
         return CMP_DATE_DFLT;
       }
-      if (! temporal.from_string(str_val->c_ptr(), str_val->length()))
+      if (temporal.from_string(str_val->c_ptr(), str_val->length()))
       {
-        /* Chuck an error. Bad datetime input. */
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
-        return CMP_DATE_DFLT; /* :( What else can I return... */
+        /* String conversion was good.  Convert to an integer for comparison purposes. */
+        temporal.to_int64_t(&value);
       }
-
-      /* String conversion was good.  Convert to an integer for comparison purposes. */
-      int64_t int_value;
-      temporal.to_int64_t(&int_value);
-      value= (uint64_t) int_value;
+      else
+      {
+        /* We aren't a DATETIME but still could be a TIME */
+        Time timevalue;
+        if (timevalue.from_string(str_val->c_ptr(), str_val->length()))
+        {
+          uint64_t timeint;
+          timevalue.to_uint64_t(timeint);
+          value= static_cast<int64_t>(timeint);
+        }
+        else
+        {
+          /* Chuck an error. Bad datetime input. */
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
+          return CMP_DATE_DFLT; /* :( What else can I return... */
+        }
+      }
 
       if (const_value)
         *const_value= value;
@@ -865,21 +893,20 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
                                         Item **a1, Item **a2,
                                         Item_result type)
 {
-  enum enum_date_cmp_type cmp_type;
-  uint64_t const_value= (uint64_t)-1;
+  enum_date_cmp_type cmp_type;
+  int64_t const_value= -1;
   a= a1;
   b= a2;
 
   if ((cmp_type= can_compare_as_dates(*a, *b, &const_value)))
   {
-    session= current_session;
     owner= owner_arg;
     a_type= (*a)->field_type();
     b_type= (*b)->field_type();
     a_cache= 0;
     b_cache= 0;
 
-    if (const_value != (uint64_t)-1)
+    if (const_value != -1)
     {
       Item_cache_int *cache= new Item_cache_int();
       /* Mark the cache as non-const to prevent re-caching. */
@@ -900,6 +927,7 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
     is_nulls_eq= test(owner && owner->functype() == Item_func::EQUAL_FUNC);
     func= &Arg_comparator::compare_datetime;
     get_value_func= &get_datetime_value;
+
     return 0;
   }
 
@@ -909,7 +937,6 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
 
 void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
 {
-  session= current_session;
   /* A caller will handle null values by itself. */
   owner= NULL;
   a= a1;
@@ -953,11 +980,11 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
     obtained value
 */
 
-uint64_t
+int64_t
 get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
                    Item *warn_item, bool *is_null)
 {
-  uint64_t value= 0;
+  int64_t value= 0;
   String buf, *str= 0;
   Item *item= **item_arg;
 
@@ -981,8 +1008,10 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
     str= item->val_str(&buf);
     *is_null= item->null_value;
   }
+
   if (*is_null)
     return ~(uint64_t) 0;
+
   /*
     Convert strings to the integer DATE/DATETIME representation.
     Even if both dates provided in strings we can't compare them directly as
@@ -993,8 +1022,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
   {
     bool error;
     enum_field_types f_type= warn_item->field_type();
-    enum enum_drizzle_timestamp_type t_type= f_type ==
-      DRIZZLE_TYPE_DATE ? DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME;
+    type::timestamp_t t_type= f_type == DRIZZLE_TYPE_DATE ? type::DRIZZLE_TIMESTAMP_DATE : type::DRIZZLE_TIMESTAMP_DATETIME;
     value= get_date_from_str(session, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current
@@ -1017,6 +1045,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
     *cache_arg= cache;
     *item_arg= cache_arg;
   }
+
   return value;
 }
 
@@ -1429,10 +1458,10 @@ void Item_func_truth::fix_length_and_dec()
 }
 
 
-void Item_func_truth::print(String *str, enum_query_type query_type)
+void Item_func_truth::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" is "));
   if (! affirmative)
     str->append(STRING_WITH_LEN("not "));
@@ -1661,14 +1690,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, unsigned char *
   new_item= (*args)->transform(transformer, argument);
   if (!new_item)
     return 0;
-  /*
-    Session::change_item_tree() should be called only if the tree was
-    really transformed, i.e. when a new item has been created.
-    Otherwise we'll be allocating a lot of unnecessary memory for
-    change records at each execution.
-  */
-  if ((*args) != new_item)
-    current_session->change_item_tree(args, new_item);
+  *args= new_item;
 
   /*
     Transform the right IN operand which should be an Item_in_subselect or a
@@ -1981,7 +2003,7 @@ bool Item_func_between::fix_fields(Session *session, Item **ref)
   if (Item_func_opt_neg::fix_fields(session, ref))
     return 1;
 
-  session->lex->current_select->between_count++;
+  session->getLex()->current_select->between_count++;
 
   /* not_null_tables_cache == union(T1(e),T1(e1),T1(e2)) */
   if (pred_level && !negated)
@@ -2002,7 +2024,6 @@ void Item_func_between::fix_length_and_dec()
   int i;
   bool datetime_found= false;
   compare_as_dates= true;
-  Session *session= current_session;
 
   /*
     As some compare functions are generated after sql_yacc,
@@ -2049,9 +2070,9 @@ void Item_func_between::fix_length_and_dec()
         The following can't be recoded with || as convert_constant_item
         changes the argument
       */
-      if (convert_constant_item(session, field_item, &args[1]))
+      if (convert_constant_item(&getSession(), field_item, &args[1]))
         cmp_type=INT_RESULT;			// Works for all types.
-      if (convert_constant_item(session, field_item, &args[2]))
+      if (convert_constant_item(&getSession(), field_item, &args[2]))
         cmp_type=INT_RESULT;			// Works for all types.
     }
   }
@@ -2168,16 +2189,16 @@ int64_t Item_func_between::val_int()
 }
 
 
-void Item_func_between::print(String *str, enum_query_type query_type)
+void Item_func_between::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   if (negated)
     str->append(STRING_WITH_LEN(" not"));
   str->append(STRING_WITH_LEN(" between "));
-  args[1]->print(str, query_type);
+  args[1]->print(str);
   str->append(STRING_WITH_LEN(" and "));
-  args[2]->print(str, query_type);
+  args[2]->print(str);
   str->append(')');
 }
 
@@ -2826,26 +2847,26 @@ uint32_t Item_func_case::decimal_precision() const
     Fix this so that it prints the whole CASE expression
 */
 
-void Item_func_case::print(String *str, enum_query_type query_type)
+void Item_func_case::print(String *str)
 {
   str->append(STRING_WITH_LEN("(case "));
   if (first_expr_num != -1)
   {
-    args[first_expr_num]->print(str, query_type);
+    args[first_expr_num]->print(str);
     str->append(' ');
   }
   for (uint32_t i=0 ; i < ncases ; i+=2)
   {
     str->append(STRING_WITH_LEN("when "));
-    args[i]->print(str, query_type);
+    args[i]->print(str);
     str->append(STRING_WITH_LEN(" then "));
-    args[i+1]->print(str, query_type);
+    args[i+1]->print(str);
     str->append(' ');
   }
   if (else_expr_num != -1)
   {
     str->append(STRING_WITH_LEN("else "));
-    args[else_expr_num]->print(str, query_type);
+    args[else_expr_num]->print(str);
     str->append(' ');
   }
   str->append(STRING_WITH_LEN("end)"));
@@ -3181,8 +3202,8 @@ void in_row::set(uint32_t pos, Item *item)
   return;
 }
 
-in_int64_t::in_int64_t(uint32_t elements)
-  :in_vector(elements,sizeof(packed_int64_t),(qsort2_cmp) cmp_int64_t, 0)
+in_int64_t::in_int64_t(uint32_t elements) :
+  in_vector(elements, sizeof(packed_int64_t),(qsort2_cmp) cmp_int64_t, 0)
 {}
 
 void in_int64_t::set(uint32_t pos,Item *item)
@@ -3202,7 +3223,14 @@ unsigned char *in_int64_t::get_value(Item *item)
   return (unsigned char*) &tmp;
 }
 
-void in_datetime::set(uint32_t pos,Item *item)
+in_datetime::in_datetime(Item *warn_item_arg, uint32_t elements) :
+  in_int64_t(elements),
+  session(current_session),
+  warn_item(warn_item_arg),
+  lval_cache(0)
+{}
+
+void in_datetime::set(uint32_t pos, Item *item)
 {
   Item **tmp_item= &item;
   bool is_null;
@@ -3552,7 +3580,6 @@ void Item_func_in::fix_length_and_dec()
 {
   Item **arg, **arg_end;
   bool const_itm= 1;
-  Session *session= current_session;
   bool datetime_found= false;
   /* true <=> arguments values will be compared as DATETIMEs. */
   bool compare_as_datetime= false;
@@ -3700,7 +3727,7 @@ void Item_func_in::fix_length_and_dec()
           bool all_converted= true;
           for (arg=args+1, arg_end=args+arg_count; arg != arg_end ; arg++)
           {
-            if (!convert_constant_item (session, field_item, &arg[0]))
+            if (!convert_constant_item (&getSession(), field_item, &arg[0]))
               all_converted= false;
           }
           if (all_converted)
@@ -3737,7 +3764,7 @@ void Item_func_in::fix_length_and_dec()
       }
     }
 
-    if (array && !(session->is_fatal_error))		// If not EOM
+    if (array && !(getSession().is_fatal_error))		// If not EOM
     {
       uint32_t j=0;
       for (uint32_t arg_num=1 ; arg_num < arg_count ; arg_num++)
@@ -3780,14 +3807,14 @@ void Item_func_in::fix_length_and_dec()
 }
 
 
-void Item_func_in::print(String *str, enum_query_type query_type)
+void Item_func_in::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   if (negated)
     str->append(STRING_WITH_LEN(" not"));
   str->append(STRING_WITH_LEN(" in ("));
-  print_args(str, 1, query_type);
+  print_args(str, 1);
   str->append(STRING_WITH_LEN("))"));
 }
 
@@ -3865,7 +3892,7 @@ Item_cond::Item_cond(Session *session, Item_cond *item)
 
 void Item_cond::copy_andor_arguments(Session *session, Item_cond *item)
 {
-  List_iterator_fast<Item> li(item->list);
+  List<Item>::iterator li(item->list.begin());
   while (Item *it= li++)
     list.push_back(it->copy_andor_structure(session));
 }
@@ -3875,12 +3902,12 @@ bool
 Item_cond::fix_fields(Session *session, Item **)
 {
   assert(fixed == 0);
-  List_iterator<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   void *orig_session_marker= session->session_marker;
   unsigned char buff[sizeof(char*)];			// Max local vars in function
   not_null_tables_cache= used_tables_cache= 0;
-  const_item_cache= 1;
+  const_item_cache= true;
 
   if (functype() == COND_OR_FUNC)
     session->session_marker= 0;
@@ -3915,8 +3942,8 @@ Item_cond::fix_fields(Session *session, Item **)
            !((Item_cond*) item)->list.is_empty())
     {						// Identical function
       li.replace(((Item_cond*) item)->list);
-      ((Item_cond*) item)->list.empty();
-      item= *li.ref();				// new current item
+      ((Item_cond*) item)->list.clear();
+      item= &*li;				// new current item
     }
     if (abort_on_null)
       item->top_level_item();
@@ -3924,7 +3951,7 @@ Item_cond::fix_fields(Session *session, Item **)
     // item can be substituted in fix_fields
     if ((!item->fixed &&
 	 item->fix_fields(session, li.ref())) ||
-	(item= *li.ref())->check_cols(1))
+	(item= &*li)->check_cols(1))
       return true;
     used_tables_cache|=     item->used_tables();
     if (item->const_item())
@@ -3941,7 +3968,7 @@ Item_cond::fix_fields(Session *session, Item **)
     if (item->maybe_null)
       maybe_null=1;
   }
-  session->lex->current_select->cond_count+= list.elements;
+  session->getLex()->current_select->cond_count+= list.size();
   session->session_marker= orig_session_marker;
   fix_length_and_dec();
   fixed= 1;
@@ -3951,11 +3978,11 @@ Item_cond::fix_fields(Session *session, Item **)
 
 void Item_cond::fix_after_pullout(Select_Lex *new_parent, Item **)
 {
-  List_iterator<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
 
   used_tables_cache=0;
-  const_item_cache=1;
+  const_item_cache= true;
 
   and_tables_cache= ~(table_map) 0; // Here and below we do as fix_fields does
   not_null_tables_cache= 0;
@@ -3964,7 +3991,7 @@ void Item_cond::fix_after_pullout(Select_Lex *new_parent, Item **)
   {
     table_map tmp_table_map;
     item->fix_after_pullout(new_parent, li.ref());
-    item= *li.ref();
+    item= &*li;
     used_tables_cache|= item->used_tables();
     const_item_cache&= item->const_item();
 
@@ -3983,7 +4010,7 @@ void Item_cond::fix_after_pullout(Select_Lex *new_parent, Item **)
 
 bool Item_cond::walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
 {
-  List_iterator_fast<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   while ((item= li++))
     if (item->walk(processor, walk_subquery, arg))
@@ -4012,22 +4039,14 @@ bool Item_cond::walk(Item_processor processor, bool walk_subquery, unsigned char
 
 Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
 {
-  List_iterator<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   while ((item= li++))
   {
     Item *new_item= item->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (new_item != item)
-      current_session->change_item_tree(li.ref(), new_item);
+    *li.ref()= new_item;
   }
   return Item_func::transform(transformer, arg);
 }
@@ -4063,7 +4082,7 @@ Item *Item_cond::compile(Item_analyzer analyzer, unsigned char **arg_p,
   if (!(this->*analyzer)(arg_p))
     return 0;
 
-  List_iterator<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   while ((item= li++))
   {
@@ -4082,7 +4101,7 @@ Item *Item_cond::compile(Item_analyzer analyzer, unsigned char **arg_p,
 void Item_cond::traverse_cond(Cond_traverser traverser,
                               void *arg, traverse_order order)
 {
-  List_iterator<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
 
   switch (order) {
@@ -4120,14 +4139,12 @@ void Item_cond::traverse_cond(Cond_traverser traverser,
     that have or refer (HAVING) to a SUM expression.
 */
 
-void Item_cond::split_sum_func(Session *session, Item **ref_pointer_array,
-                               List<Item> &fields)
+void Item_cond::split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields)
 {
-  List_iterator<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   while ((item= li++))
-    item->split_sum_func(session, ref_pointer_array,
-                         fields, li.ref(), true);
+    item->split_sum_func(session, ref_pointer_array, fields, li.ref(), true);
 }
 
 
@@ -4140,11 +4157,11 @@ Item_cond::used_tables() const
 
 void Item_cond::update_used_tables()
 {
-  List_iterator_fast<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
 
   used_tables_cache=0;
-  const_item_cache=1;
+  const_item_cache= true;
   while ((item=li++))
   {
     item->update_used_tables();
@@ -4154,19 +4171,19 @@ void Item_cond::update_used_tables()
 }
 
 
-void Item_cond::print(String *str, enum_query_type query_type)
+void Item_cond::print(String *str)
 {
   str->append('(');
-  List_iterator_fast<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   if ((item=li++))
-    item->print(str, query_type);
+    item->print(str);
   while ((item=li++))
   {
     str->append(' ');
     str->append(func_name());
     str->append(' ');
-    item->print(str, query_type);
+    item->print(str);
   }
   str->append(')');
 }
@@ -4174,7 +4191,7 @@ void Item_cond::print(String *str, enum_query_type query_type)
 
 void Item_cond::neg_arguments(Session *session)
 {
-  List_iterator<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   while ((item= li++))		/* Apply not transformation to the arguments */
   {
@@ -4212,7 +4229,7 @@ void Item_cond::neg_arguments(Session *session)
 int64_t Item_cond_and::val_int()
 {
   assert(fixed == 1);
-  List_iterator_fast<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   null_value= 0;
   while ((item=li++))
@@ -4230,7 +4247,7 @@ int64_t Item_cond_and::val_int()
 int64_t Item_cond_or::val_int()
 {
   assert(fixed == 1);
-  List_iterator_fast<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   null_value=0;
   while ((item=li++))
@@ -4346,10 +4363,10 @@ int64_t Item_func_isnotnull::val_int()
 }
 
 
-void Item_func_isnotnull::print(String *str, enum_query_type query_type)
+void Item_func_isnotnull::print(String *str)
 {
   str->append('(');
-  args[0]->print(str, query_type);
+  args[0]->print(str);
   str->append(STRING_WITH_LEN(" is not null)"));
 }
 
@@ -4467,9 +4484,9 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       {
         pattern     = first + 1;
         pattern_len = (int) len - 2;
-        int *suff = (int*) session->alloc((int) (sizeof(int)*
-                                      ((pattern_len + 1)*2+
-                                      alphabet_size)));
+        int *suff = (int*) session->getMemRoot()->allocate((int) (sizeof(int)*
+                                                                  ((pattern_len + 1)*2+
+                                                                   alphabet_size)));
         bmGs      = suff + pattern_len + 1;
         bmBc      = bmGs + pattern_len + 1;
         turboBM_compute_good_suffix_shifts(suff);
@@ -4486,12 +4503,14 @@ void Item_func_like::cleanup()
   Item_bool_func2::cleanup();
 }
 
+static unsigned char likeconv(const CHARSET_INFO *cs, unsigned char a)
+{
 #ifdef LIKE_CMP_TOUPPER
-#define likeconv(cs,A) (unsigned char) (cs)->toupper(A)
+  return cs->toupper(a);
 #else
-#define likeconv(cs,A) (unsigned char) (cs)->sort_order[(unsigned char) (A)]
+  return cs->sort_order[a];
 #endif
-
+}
 
 /**
   Precomputation dependent only on pattern_len.
@@ -4628,8 +4647,8 @@ void Item_func_like::turboBM_compute_bad_character_shifts()
 
 bool Item_func_like::turboBM_matches(const char* text, int text_len) const
 {
-  register int bcShift;
-  register int turboShift;
+  int bcShift;
+  int turboShift;
   int shift = pattern_len;
   int j     = 0;
   int u     = 0;
@@ -4643,7 +4662,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
   {
     while (j <= tlmpl)
     {
-      register int i= plm1;
+      int i= plm1;
       while (i >= 0 && pattern[i] == text[i + j])
       {
 	i--;
@@ -4653,7 +4672,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
       if (i < 0)
 	return 1;
 
-      register const int v = plm1 - i;
+      const int v = plm1 - i;
       turboShift = u - v;
       bcShift    = bmBc[(uint32_t) (unsigned char) text[i + j]] - plm1 + i;
       shift      = (turboShift > bcShift) ? turboShift : bcShift;
@@ -4674,7 +4693,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
   {
     while (j <= tlmpl)
     {
-      register int i = plm1;
+      int i = plm1;
       while (i >= 0 && likeconv(cs,pattern[i]) == likeconv(cs,text[i + j]))
       {
         i--;
@@ -4685,7 +4704,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
       if (i < 0)
         return 1;
 
-      register const int v= plm1 - i;
+      const int v= plm1 - i;
       turboShift= u - v;
       bcShift= bmBc[(uint32_t) likeconv(cs, text[i + j])] - plm1 + i;
       shift= (turboShift > bcShift) ? turboShift : bcShift;
@@ -4726,7 +4745,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
 int64_t Item_cond_xor::val_int()
 {
   assert(fixed == 1);
-  List_iterator<Item> li(list);
+  List<Item>::iterator li(list.begin());
   Item *item;
   int result=0;
   null_value=0;
@@ -4888,7 +4907,7 @@ Item *Item_bool_rowready_func2::negated_item()
 Item_equal::Item_equal(Item_field *f1, Item_field *f2)
   : item::function::Boolean(), const_item(0), eval_item(0), cond_false(0)
 {
-  const_item_cache= 0;
+  const_item_cache= false;
   fields.push_back(f1);
   fields.push_back(f2);
 }
@@ -4896,7 +4915,7 @@ Item_equal::Item_equal(Item_field *f1, Item_field *f2)
 Item_equal::Item_equal(Item *c, Item_field *f)
   : item::function::Boolean(), eval_item(0), cond_false(0)
 {
-  const_item_cache= 0;
+  const_item_cache= false;
   fields.push_back(f);
   const_item= c;
 }
@@ -4905,8 +4924,8 @@ Item_equal::Item_equal(Item *c, Item_field *f)
 Item_equal::Item_equal(Item_equal *item_equal)
   : item::function::Boolean(), eval_item(0), cond_false(0)
 {
-  const_item_cache= 0;
-  List_iterator_fast<Item_field> li(item_equal->fields);
+  const_item_cache= false;
+  List<Item_field>::iterator li(item_equal->fields.begin());
   Item_field *item;
   while ((item= li++))
   {
@@ -4929,7 +4948,7 @@ void Item_equal::add(Item *c)
   func->set_cmp_func();
   func->quick_fix_field();
   if ((cond_false= !func->val_int()))
-    const_item_cache= 1;
+    const_item_cache= true;
 }
 
 void Item_equal::add(Item_field *f)
@@ -4939,7 +4958,7 @@ void Item_equal::add(Item_field *f)
 
 uint32_t Item_equal::members()
 {
-  return fields.elements;
+  return fields.size();
 }
 
 
@@ -4958,7 +4977,7 @@ uint32_t Item_equal::members()
 
 bool Item_equal::contains(Field *field)
 {
-  List_iterator_fast<Item_field> it(fields);
+  List<Item_field>::iterator it(fields.begin());
   Item_field *item;
   while ((item= it++))
   {
@@ -5017,7 +5036,7 @@ void Item_equal::merge(Item_equal *item)
 void Item_equal::sort(Item_field_cmpfunc cmp, void *arg)
 {
   bool swap;
-  List_iterator<Item_field> it(fields);
+  List<Item_field>::iterator it(fields.begin());
   do
   {
     Item_field *item1= it++;
@@ -5041,7 +5060,7 @@ void Item_equal::sort(Item_field_cmpfunc cmp, void *arg)
         ref1= ref2;
       }
     }
-    it.rewind();
+    it= fields.begin();
   } while (swap);
 }
 
@@ -5058,7 +5077,7 @@ void Item_equal::sort(Item_field_cmpfunc cmp, void *arg)
 
 void Item_equal::update_const()
 {
-  List_iterator<Item_field> it(fields);
+  List<Item_field>::iterator it(fields.begin());
   Item *item;
   while ((item= it++))
   {
@@ -5072,10 +5091,10 @@ void Item_equal::update_const()
 
 bool Item_equal::fix_fields(Session *, Item **)
 {
-  List_iterator_fast<Item_field> li(fields);
+  List<Item_field>::iterator li(fields.begin());
   Item *item;
   not_null_tables_cache= used_tables_cache= 0;
-  const_item_cache= 0;
+  const_item_cache= false;
   while ((item= li++))
   {
     table_map tmp_table_map;
@@ -5092,7 +5111,7 @@ bool Item_equal::fix_fields(Session *, Item **)
 
 void Item_equal::update_used_tables()
 {
-  List_iterator_fast<Item_field> li(fields);
+  List<Item_field>::iterator li(fields.begin());
   Item *item;
   not_null_tables_cache= used_tables_cache= 0;
   if ((const_item_cache= cond_false))
@@ -5110,17 +5129,17 @@ int64_t Item_equal::val_int()
   Item_field *item_field;
   if (cond_false)
     return 0;
-  List_iterator_fast<Item_field> it(fields);
+  List<Item_field>::iterator it(fields.begin());
   Item *item= const_item ? const_item : it++;
+  eval_item->store_value(item);
   if ((null_value= item->null_value))
     return 0;
-  eval_item->store_value(item);
   while ((item_field= it++))
   {
     /* Skip fields of non-const tables. They haven't been read yet */
     if (item_field->field->getTable()->const_table)
     {
-      if ((null_value= item_field->null_value) || eval_item->cmp(item_field))
+      if (eval_item->cmp(item_field) || (null_value= item_field->null_value))
         return 0;
     }
   }
@@ -5136,7 +5155,7 @@ void Item_equal::fix_length_and_dec()
 
 bool Item_equal::walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
 {
-  List_iterator_fast<Item_field> it(fields);
+  List<Item_field>::iterator it(fields.begin());
   Item *item;
   while ((item= it++))
   {
@@ -5148,46 +5167,44 @@ bool Item_equal::walk(Item_processor processor, bool walk_subquery, unsigned cha
 
 Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
 {
-  List_iterator<Item_field> it(fields);
+  List<Item_field>::iterator it(fields.begin());
   Item *item;
   while ((item= it++))
   {
     Item *new_item= item->transform(transformer, arg);
     if (!new_item)
       return 0;
-
-    /*
-      Session::change_item_tree() should be called only if the tree was
-      really transformed, i.e. when a new item has been created.
-      Otherwise we'll be allocating a lot of unnecessary memory for
-      change records at each execution.
-    */
-    if (new_item != item)
-      current_session->change_item_tree((Item **) it.ref(), new_item);
+    *(Item **)it.ref()= new_item;
   }
   return Item_func::transform(transformer, arg);
 }
 
-void Item_equal::print(String *str, enum_query_type query_type)
+void Item_equal::print(String *str)
 {
   str->append(func_name());
   str->append('(');
-  List_iterator_fast<Item_field> it(fields);
+  List<Item_field>::iterator it(fields.begin());
   Item *item;
   if (const_item)
-    const_item->print(str, query_type);
+    const_item->print(str);
   else
   {
     item= it++;
-    item->print(str, query_type);
+    item->print(str);
   }
   while ((item= it++))
   {
     str->append(',');
     str->append(' ');
-    item->print(str, query_type);
+    item->print(str);
   }
   str->append(')');
 }
+
+cmp_item_datetime::cmp_item_datetime(Item *warn_item_arg) :
+  session(current_session),
+  warn_item(warn_item_arg),
+  lval_cache(0)
+{}
 
 } /* namespace drizzled */

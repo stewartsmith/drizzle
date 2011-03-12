@@ -18,9 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "plugin/session_dictionary/dictionary.h"
+#include <plugin/session_dictionary/dictionary.h>
+#include <drizzled/user_var_entry.h>
 
 #define LARGEST_USER_VARIABLE_NAME 128
 
@@ -53,11 +54,11 @@ bool Variables::Generator::populate()
 
     bool null_value;
     uint32_t decimals= 4; // arbitrary
-    (*iter).second->val_str(&null_value, &tmp, decimals);
+    iter->second->val_str(&null_value, &tmp, decimals);
 
 
     // VARIABLE_NAME
-    push((*iter).first);
+    push(iter->first);
     
     // VARIABLE_VALUE 
     if (null_value)

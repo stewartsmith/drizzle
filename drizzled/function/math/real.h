@@ -22,10 +22,13 @@
 
 #include <drizzled/function/func.h>
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
 
-class Item_real_func :public Item_func
+class DRIZZLED_API Item_real_func :
+  public Item_func
 {
 public:
   Item_real_func() :Item_func() {}

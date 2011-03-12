@@ -12,10 +12,12 @@
 --source ../plugin/transaction_log/tests/t/insert.inc
 
 # Trim result since Solaris/BSD wc program apparently adds whitespace before output
---exec wc -l var/master-data/local/transaction.log | tr -d ' ' 
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec wc -l $DRIZZLETEST_VARDIR/master-data/local/transaction.log | tr -d ' ' 
 
 # Truncate the log file
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
 
 # Trim result since Solaris/BSD wc program apparently adds whitespace before output
---exec wc -l var/master-data/local/transaction.log | tr -d ' ' 
+--replace_result $DRIZZLETEST_VARDIR VARDIR
+--exec wc -l $DRIZZLETEST_VARDIR/master-data/local/transaction.log | tr -d ' ' 

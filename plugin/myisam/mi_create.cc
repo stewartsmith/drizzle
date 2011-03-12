@@ -16,12 +16,12 @@
 /* Create a MyISAM table */
 
 #include "myisam_priv.h"
-#include "drizzled/internal/my_bit.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/internal/my_bit.h>
+#include <drizzled/internal/my_sys.h>
 
-#include "drizzled/util/test.h"
-#include "drizzled/global_charset_info.h"
-#include "drizzled/error.h"
+#include <drizzled/util/test.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/error.h>
 
 #include <cassert>
 #include <algorithm>
@@ -392,7 +392,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   /* There are only 16 bits for the total header length. */
   if (info_length > 65535)
   {
-    my_printf_error(0, "MyISAM table '%s' has too many columns and/or "
+    my_printf_error(EE_OK, "MyISAM table '%s' has too many columns and/or "
                     "indexes and/or unique constraints.",
                     MYF(0), name + internal::dirname_length(name));
     errno= HA_WRONG_CREATE_OPTION;
@@ -526,7 +526,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   */
   if (test_if_reopen(filename))
   {
-    my_printf_error(0, "MyISAM table '%s' is in use "
+    my_printf_error(EE_OK, "MyISAM table '%s' is in use "
                     "(most likely by a MERGE table). Try FLUSH TABLES.",
                     MYF(0), name + internal::dirname_length(name));
     errno= HA_ERR_TABLE_EXIST;

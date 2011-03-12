@@ -26,9 +26,9 @@ drop table t1;
 # Test of some CREATE TABLE'S that should fail
 #
 
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 create temporary table t2 engine=MEMORY select * from t1;
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 create table t2 select auto+1 from t1;
 drop table if exists t1,t2;
 --error ER_WRONG_KEY_COLUMN
@@ -40,7 +40,7 @@ drop table if exists t1;
 --error ER_WRONG_AUTO_KEY
 create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=MEMORY;
 
--- error 1049
+-- error ER_BAD_DB_ERROR
 create table not_existing_database.test (a int);
 create table `a/a` (a int);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -162,7 +162,7 @@ CREATE TABLE t1 (a int not null);
 INSERT INTO t1 values (1),(2),(1);
 --error ER_DUP_ENTRY
 CREATE TABLE t2 (primary key(a)) SELECT * FROM t1;
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 SELECT * from t2;
 DROP TABLE t1;
 DROP TABLE IF EXISTS t2;
@@ -314,20 +314,28 @@ drop table t2, t3;
 create database mysqltest;
 create table mysqltest.t3 like t1;
 create temporary table t3 like mysqltest.t3;
+
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t3;
+
 create table t2 like t3;
+
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select * from t2;
+
 --error ER_TABLE_EXISTS_ERROR
 create table t3 like t1;
+
 --error ER_TABLE_EXISTS_ERROR
 create table t3 like mysqltest.t3;
+
 --error ER_BAD_DB_ERROR
 create table non_existing_database.t1 like t1;
---error ER_NO_SUCH_TABLE
-create table t3 like non_existing_table;
+
+--error ER_TABLE_UNKNOWN
+create table t4 like non_existing_table;
+
 --error ER_TABLE_EXISTS_ERROR
 create temporary table t3 like t1;
 drop table t1, t2, t3;
@@ -656,7 +664,7 @@ drop table t1, t2;
 #  of error it is automatically dropped if it has not existed before.)
 #
 # Error during open_and_lock_tables() of tables
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 create table t1 select * from t2;
 # Rather special error which also caught during open tables pahse
 --error ER_UPDATE_TABLE_USED
@@ -707,7 +715,7 @@ create temporary table t1 (j int);
 create table if not exists t1 select 1;
 select * from t1;
 drop temporary table t1;
---error ER_NO_SUCH_TABLE
+--error ER_TABLE_UNKNOWN
 select * from t1;
 --error ER_BAD_TABLE_ERROR
 drop table t1;
@@ -1213,12 +1221,12 @@ drop table имя_таблицы_в_кодировке_утф8_длиной_бо
 #
 # Bug#25629 CREATE TABLE LIKE does not work with INFORMATION_SCHEMA
 #
---error ER_CANT_CREATE_TABLE
+--error ER_CANT_CREATE_TABLE,ER_TABLE_PERMISSION_DENIED
 create table t1 like data_dictionary.processlist;
 create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 drop table t1;
---error ER_CANT_CREATE_TABLE
+--error ER_CANT_CREATE_TABLE,ER_TABLE_PERMISSION_DENIED
 create temporary table t1 like data_dictionary.processlist;
 create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;

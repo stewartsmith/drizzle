@@ -17,11 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/error.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/session.h>
+#include <drizzled/sys_var.h>
 
 namespace drizzled
 {
@@ -49,8 +50,9 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   */
   if (!(item= var->item(session, var_type, &component)))
     return(1);                             // Impossible
+
   item->set_name(name, 0, system_charset_info); // don't allocate a new name
-  session->change_item_tree(ref, item);
+  *ref= item;
 
   return(0);
 }
@@ -79,7 +81,7 @@ Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
     my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->str);
     return 0;
   }
-  session->lex->setCacheable(false);
+  session->getLex()->setCacheable(false);
 
   set_if_smaller(component_name->length, (size_t)MAX_SYS_VAR_LENGTH);
 

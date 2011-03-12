@@ -36,7 +36,7 @@ public:
   const char *func_name() const { return "locate"; }
   int64_t val_int();
   void fix_length_and_dec();
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
 };
 
 } /* namespace drizzled */

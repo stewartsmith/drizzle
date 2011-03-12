@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-#ifndef DRIZZLED_IDENTIFIER_USER_H
-#define DRIZZLED_IDENTIFIER_USER_H
+#pragma once
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+
+#include <drizzled/visibility.h>
 
 namespace drizzled
 {
@@ -35,24 +35,42 @@ namespace identifier
   @brief A set of Session members describing the current authenticated user.
 */
 
-class User {
+class User : public Identifier
+{
 public:
   typedef boost::shared_ptr<User> shared_ptr;
   typedef boost::shared_ptr<const User> const_shared_ptr;
   typedef const User& const_reference;
-  static shared_ptr make_shared();
+  DRIZZLED_API static shared_ptr make_shared();
 
   enum PasswordType
   {
+    NONE,
     PLAIN_TEXT,
     MYSQL_HASH
   };
 
   User():
-    password_type(PLAIN_TEXT),
+    password_type(NONE),
     _user(""),
     _address("")
   { }
+
+  virtual void getSQLPath(std::string &arg) const;
+
+  bool hasPassword() const
+  {
+    switch (password_type)
+    {
+    case NONE:
+      return false;
+    case PLAIN_TEXT:
+    case MYSQL_HASH:
+      break;
+    }
+
+    return true;
+  }
 
   const std::string& address() const
   {
@@ -103,5 +121,3 @@ private:
 
 } /* namespace identifier */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_IDENTIFIER_USER_H */

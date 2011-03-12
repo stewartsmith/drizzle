@@ -20,11 +20,11 @@
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
-GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
+GENSCRIPTS =		tests/dtr tests/mtr tests/test-run tests/dbqp
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
-NORMAL_TESTS =		main,jp,tamil,regression,$(PLUGIN_TESTS)
-ALL_TESTS =		main,big,jp,tamil,regression,$(PLUGIN_TESTS)
+NORMAL_TESTS =		main,bool_type,cast,ddl_transactions,execute,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type,microtime_type,$(PLUGIN_TESTS)
+ALL_TESTS =		main,big,jp,tamil,regression,microtime_type,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr
 
@@ -33,6 +33,7 @@ TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 		--top-srcdir=../${top_srcdir} \
 		--top-builddir=../${top_builddir} \
 		--vardir=../${top_builddir}/tests/var \
+		--reorder \
 		--suitepath=../${top_srcdir}/plugin \
 		--testdir=../${top_srcdir}/tests \
 		--dtr-build-thread=$$$$
@@ -42,12 +43,23 @@ TEST_RUN_MEM= $(PERL) -I../$(top_srcdir)/tests/lib \
 	      --top-srcdir=../${top_srcdir} \
 	      --top-builddir=../${top_builddir} \
 	      --mem \
+	      --reorder \
 	      --suitepath=../${top_srcdir}/plugin \
 	      --testdir=../${top_srcdir}/tests \
 	      --dtr-build-thread=$$$$
 
+TEST_RUN_DBQP= $(PYTHON) ../$(top_srcdir)/tests/dbqp.py \
+		--top-srcdir=../${top_srcdir} \
+		--top-builddir=../${top_builddir} \
+		--reorder \
+		--basedir=../${top_srcdir} \
+		--testdir=../${top_srcdir}/tests \
+                --workdir=../${top_srcdir}/tests/workdir
+
+
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/dbqp.py \
 	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
@@ -59,7 +71,11 @@ EXTRA_DIST += \
 	${srcdir}/tests/r/pbxt/*result \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
+        ${srcdir}/tests/lib/*.py \
 	${srcdir}/tests/lib/My/*.pm \
+        ${srcdir}/tests/lib/server_mgmt/*py \
+	${srcdir}/tests/lib/sys_mgmt/*py \
+	${srcdir}/tests/lib/test_mgmt/*py \
 	tests/strip-valgrind
 
 check-local: test-drizzle
@@ -81,11 +97,16 @@ tests/test-run: tests/var
 	$(RM) -f tests/test-run
 	$(LN_S) test-run.pl tests/test-run
 
+tests/dbqp:  
+	$(RM) -f tests/dbqp
+	$(LN_S) dbqp.py tests/dbqp
+
 
 .PHONY: test \
 	test-all \
 	test-big \
 	test-drizzle \
+        test-dbqp \
 	test-plugins
 
 # Target 'test' will run the regression test suite using the built server.
@@ -101,39 +122,46 @@ test: check
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification
 
-test-all:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
+test-all: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
 
-test-mem:
-	( cd tests && $(TEST_RUN_MEM) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
+test-mem: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN_MEM) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
-test-drizzle:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
+test-drizzle: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
-test-valgrind:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
+test-valgrind: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
-test-valgrind-suppressions:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
+test-valgrind-suppressions: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
-test-junitxml:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
+test-junitxml: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
 
-test-big:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )
+test-big: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )
 
-test-big-junitxml:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml )
+test-big-junitxml: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml )
 
-test-jp:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=jp )
+test-jp: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=jp )
 
-test-plugins:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
+test-plugins: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
+
+test-dbqp: 
+	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) )
+
 
 distclean-local: nukevar
 
 nukevar:
-	rm -rf tests/var
+	rm -rf tests/var \
+        rm -rf tests/workdir \
+        rm tests/dbqp_data/*
+ 
 
 .PHONY: nukevar

@@ -24,22 +24,21 @@
 #define DRIZZLED_PLUGIN_TABLE_FUNCTION_H
 
 #include <drizzled/definitions.h>
-#include "drizzled/plugin.h"
-#include "drizzled/plugin/plugin.h"
-#include "drizzled/identifier.h"
-#include "drizzled/message/table.pb.h"
-#include "drizzled/charset.h"
-#include "drizzled/field.h"
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/identifier.h>
+#include <drizzled/message/table.pb.h>
+#include <drizzled/charset.h>
+#include <drizzled/field.h>
 
 #include <string>
 #include <set>
 #include <algorithm>
 
+#include <drizzled/visibility.h>
+
 namespace drizzled
 {
-
-extern int wild_case_compare(const CHARSET_INFO * const cs, 
-                             const char *str,const char *wildstr);
 
 namespace plugin
 {
@@ -61,14 +60,14 @@ static const char *local_string_append(const char *arg1, const char *arg2)
   return buffer;
 }
 
-class TableFunction : public Plugin
+class DRIZZLED_API TableFunction : public Plugin
 {
   TableFunction();
   TableFunction(const TableFunction &);
   TableFunction& operator=(const TableFunction &);
 
   message::Table proto;
-  TableIdentifier identifier;
+  identifier::Table identifier;
   std::string local_path;
   std::string original_table_label;
 
@@ -186,7 +185,7 @@ public:
                  uint32_t field_length,
                  bool is_default_null= false);
 
-  virtual bool visable() { return true; }
+  virtual bool visible() const { return true; }
 };
 
 } /* namespace plugin */

@@ -18,18 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <assert.h>
 #include <boost/lexical_cast.hpp>
-#include "drizzled/identifier.h"
-#include "drizzled/session.h"
-#include "drizzled/internal/my_sys.h"
+#include <drizzled/identifier.h>
+#include <drizzled/internal/my_sys.h>
 
-#include "drizzled/table.h"
+#include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
 
-#include "drizzled/util/string.h"
-#include "drizzled/util/tablename_to_filename.h"
+#include <drizzled/table.h>
+
+#include <drizzled/util/string.h>
+#include <drizzled/util/tablename_to_filename.h>
 
 #include <algorithm>
 #include <sstream>
@@ -42,10 +45,13 @@ using namespace std;
 namespace drizzled
 {
 
-class SchemaIdentifier;
+class Table;
 
 extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
+
+namespace identifier {
+class Schema;
 
 static const char hexchars[]= "0123456789abcdef";
 
@@ -61,7 +67,7 @@ static const char hexchars[]= "0123456789abcdef";
   RETURN
     Table name length.
 */
-uint32_t TableIdentifier::filename_to_tablename(const char *from, char *to, uint32_t to_length)
+uint32_t Table::filename_to_tablename(const char *from, char *to, uint32_t to_length)
 {
   uint32_t length= 0;
 
@@ -139,7 +145,7 @@ static uint32_t get_counter()
 
 #endif
 
-size_t TableIdentifier::build_tmptable_filename(std::string &buffer)
+size_t Table::build_tmptable_filename(std::string &buffer)
 {
   size_t tmpdir_length;
   ostringstream post_tmpdir_str;
@@ -157,7 +163,7 @@ size_t TableIdentifier::build_tmptable_filename(std::string &buffer)
   return buffer.length();
 }
 
-size_t TableIdentifier::build_tmptable_filename(std::vector<char> &buffer)
+size_t Table::build_tmptable_filename(std::vector<char> &buffer)
 {
   ostringstream post_tmpdir_str;
 
@@ -204,14 +210,14 @@ size_t TableIdentifier::build_tmptable_filename(std::vector<char> &buffer)
     path length on success, 0 on failure
 */
 
-size_t TableIdentifier::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
+size_t Table::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
   bool conversion_error= false;
 
   conversion_error= util::tablename_to_filename(in_db, in_path);
   if (conversion_error)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
+    errmsg_printf(error::ERROR,
                   _("Schema name cannot be encoded and fit within filesystem "
                     "name length restrictions."));
     return 0;
@@ -228,7 +234,7 @@ size_t TableIdentifier::build_table_filename(std::string &in_path, const std::st
     conversion_error= util::tablename_to_filename(in_table_name, in_path);
     if (conversion_error)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
+      errmsg_printf(error::ERROR,
                     _("Table name cannot be encoded and fit within filesystem "
                       "name length restrictions."));
       return 0;
@@ -238,8 +244,8 @@ size_t TableIdentifier::build_table_filename(std::string &in_path, const std::st
   return in_path.length();
 }
 
-TableIdentifier::TableIdentifier(const drizzled::Table &table) :
-  SchemaIdentifier(table.getShare()->getSchemaName()),
+Table::Table(const drizzled::Table &table) :
+  identifier::Schema(table.getShare()->getSchemaName()),
   type(table.getShare()->getTableType()),
   table_name(table.getShare()->getTableName())
 {
@@ -249,7 +255,7 @@ TableIdentifier::TableIdentifier(const drizzled::Table &table) :
   init();
 }
 
-void TableIdentifier::init()
+void Table::init()
 {
   switch (type) {
   case message::Table::FUNCTION:
@@ -269,6 +275,24 @@ void TableIdentifier::init()
     break;
   }
 
+  switch (type) {
+  case message::Table::FUNCTION:
+  case message::Table::STANDARD:
+  case message::Table::INTERNAL:
+    break;
+  case message::Table::TEMPORARY:
+    {
+      size_t pos;
+
+      pos= path.find("tmp/#sql");
+      if (pos != std::string::npos) 
+      {
+        key_path= path.substr(pos);
+      }
+    }
+    break;
+  }
+
   util::insensitive_hash hasher;
   hash_value= hasher(path);
 
@@ -279,12 +303,20 @@ void TableIdentifier::init()
 }
 
 
-const std::string &TableIdentifier::getPath() const
+const std::string &Table::getPath() const
 {
   return path;
 }
 
-void TableIdentifier::getSQLPath(std::string &sql_path) const  // @todo this is just used for errors, we should find a way to optimize it
+const std::string &Table::getKeyPath() const
+{
+  if (key_path.empty())
+    return path;
+
+  return key_path;
+}
+
+void Table::getSQLPath(std::string &sql_path) const  // @todo this is just used for errors, we should find a way to optimize it
 {
   switch (type) {
   case message::Table::FUNCTION:
@@ -305,9 +337,9 @@ void TableIdentifier::getSQLPath(std::string &sql_path) const  // @todo this is 
   }
 }
 
-bool TableIdentifier::isValid() const
+bool Table::isValid() const
 {
-  if (not SchemaIdentifier::isValid())
+  if (not identifier::Schema::isValid())
     return false;
 
   bool error= false;
@@ -365,13 +397,13 @@ bool TableIdentifier::isValid() const
 }
 
 
-void TableIdentifier::copyToTableMessage(message::Table &message) const
+void Table::copyToTableMessage(message::Table &message) const
 {
   message.set_name(table_name);
   message.set_schema(getSchemaName());
 }
 
-void TableIdentifier::Key::set(size_t resize_arg, const std::string &a, const std::string &b)
+void Table::Key::set(size_t resize_arg, const std::string &a, const std::string &b)
 {
   key_buffer.resize(resize_arg);
 
@@ -382,14 +414,33 @@ void TableIdentifier::Key::set(size_t resize_arg, const std::string &a, const st
   hash_value= hasher(key_buffer);
 }
 
-std::size_t hash_value(TableIdentifier const& b)
+std::size_t hash_value(Table const& b)
 {
   return b.getHashValue();
 }
 
-std::size_t hash_value(TableIdentifier::Key const& b)
+std::size_t hash_value(Table::Key const& b)
 {
   return b.getHashValue();
 }
 
+
+std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
+{
+  output << "Table:(";
+  output <<  identifier.getSchemaName();
+  output << ", ";
+  output << identifier.getTableName();
+  output << ", ";
+  output << message::type(identifier.getType());
+  output << ", ";
+  output << identifier.getPath();
+  output << ", ";
+  output << identifier.getHashValue();
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
+} /* namespace identifier */
 } /* namespace drizzled */

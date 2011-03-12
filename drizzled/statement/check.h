@@ -33,10 +33,10 @@ namespace statement
 class Check : public Statement
 {
 public:
-  Check(Session *in_session)
-    :
-      Statement(in_session)
+  Check(Session *in_session) :
+    Statement(in_session)
   {
+    set_command(SQLCOM_CHECK);
   }
 
   bool execute();

@@ -17,14 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 
-#include "drizzled/session.h"
-#include "drizzled/error.h"
-#include "drizzled/show.h"
-#include "drizzled/item/ref.h"
-#include "drizzled/plugin/client.h"
-#include "drizzled/item/sum.h"
+#include <drizzled/session.h>
+#include <drizzled/error.h>
+#include <drizzled/show.h>
+#include <drizzled/item/ref.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/item/subselect.h>
 
 namespace drizzled
 {
@@ -113,7 +114,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 {
   enum_parsing_place place= NO_MATTER;
   assert(fixed == 0);
-  Select_Lex *current_sel= session->lex->current_select;
+  Select_Lex *current_sel= session->getLex()->current_select;
 
   if (!ref || ref == not_found_item)
   {
@@ -132,7 +133,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       {
         /* The current reference cannot be resolved in this query. */
         my_error(ER_BAD_FIELD_ERROR,MYF(0),
-                 this->full_name(), current_session->where);
+                 full_name(), session->where());
         goto error;
       }
 
@@ -247,7 +248,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
                        cached_table->select_lex != outer_context->select_lex);
             }
             prev_subselect_item->used_tables_cache|= from_field->getTable()->map;
-            prev_subselect_item->const_item_cache= 0;
+            prev_subselect_item->const_item_cache= false;
             break;
           }
         }
@@ -255,7 +256,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 
         /* Reference is not found => depend on outer (or just error). */
         prev_subselect_item->used_tables_cache|= OUTER_REF_TABLE_BIT;
-        prev_subselect_item->const_item_cache= 0;
+        prev_subselect_item->const_item_cache= false;
 
         outer_context= outer_context->outer_context;
       } while (outer_context);
@@ -266,18 +267,18 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
         Item_field* fld;
         if (!(fld= new Item_field(from_field)))
           goto error;
-        session->change_item_tree(reference, fld);
+        *reference= fld;
         mark_as_dependent(session, last_checked_context->select_lex,
-                          session->lex->current_select, this, fld);
+                          session->getLex()->current_select, this, fld);
         /*
           A reference is resolved to a nest level that's outer or the same as
           the nest level of the enclosing set function : adjust the value of
           max_arg_level for the function if it's needed.
         */
-        if (session->lex->in_sum_func &&
-            session->lex->in_sum_func->nest_level >=
+        if (session->getLex()->in_sum_func &&
+            session->getLex()->in_sum_func->nest_level >=
             last_checked_context->select_lex->nest_level)
-          set_if_bigger(session->lex->in_sum_func->max_arg_level,
+          set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
                         last_checked_context->select_lex->nest_level);
         return false;
       }
@@ -285,7 +286,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       {
         /* The item was not a table field and not a reference */
         my_error(ER_BAD_FIELD_ERROR, MYF(0),
-                 this->full_name(), current_session->where);
+                 full_name(), session->where());
         goto error;
       }
       /* Should be checked in resolve_ref_in_select_and_group(). */
@@ -297,10 +298,10 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
         the nest level of the enclosing set function : adjust the value of
         max_arg_level for the function if it's needed.
       */
-      if (session->lex->in_sum_func &&
-          session->lex->in_sum_func->nest_level >=
+      if (session->getLex()->in_sum_func &&
+          session->getLex()->in_sum_func->nest_level >=
           last_checked_context->select_lex->nest_level)
-        set_if_bigger(session->lex->in_sum_func->max_arg_level,
+        set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
                       last_checked_context->select_lex->nest_level);
     }
   }
@@ -368,7 +369,7 @@ void Item_ref::cleanup()
 }
 
 
-void Item_ref::print(String *str, enum_query_type query_type)
+void Item_ref::print(String *str)
 {
   if (ref)
   {
@@ -378,10 +379,10 @@ void Item_ref::print(String *str, enum_query_type query_type)
       str->append_identifier(name, (uint32_t) strlen(name));
     }
     else
-      (*ref)->print(str, query_type);
+      (*ref)->print(str);
   }
   else
-    Item_ident::print(str, query_type);
+    Item_ident::print(str);
 }
 
 
@@ -457,7 +458,7 @@ bool Item_ref::val_bool_result()
         type::Decimal decimal_value;
         type::Decimal *val= result_field->val_decimal(&decimal_value);
         if (val)
-          return not val->is_zero();
+          return not val->isZero();
         return 0;
       }
 
@@ -517,7 +518,7 @@ bool Item_ref::is_null()
 }
 
 
-bool Item_ref::get_date(type::Time *ltime,uint32_t fuzzydate)
+bool Item_ref::get_date(type::Time &ltime,uint32_t fuzzydate)
 {
   return (null_value=(*ref)->get_date_result(ltime,fuzzydate));
 }

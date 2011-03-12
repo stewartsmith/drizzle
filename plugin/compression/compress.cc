@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -21,7 +21,7 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/current_session.h>
 #include <zlib.h>
-#include "plugin/compression/compress.h"
+#include <plugin/compression/compress.h>
 
 #include <string>
 
@@ -30,7 +30,8 @@ using namespace drizzled;
 
 String *Item_func_compress::val_str(String *str)
 {
-  int err= Z_OK, code;
+  int err= Z_OK;
+  drizzled::error_t code;
   ulong new_size;
   String *res;
   Byte *body;

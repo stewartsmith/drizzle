@@ -21,6 +21,7 @@
 #define DRIZZLED_FUNCTION_GET_USER_VAR_H
 
 #include <drizzled/function/func.h>
+#include <drizzled/lex_string.h>
 
 namespace drizzled
 {
@@ -48,7 +49,7 @@ public:
   type::Decimal *val_decimal(type::Decimal*);
   String *val_str(String* str);
   void fix_length_and_dec();
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   enum Item_result result_type() const;
   /*
     We must always return variables as strings to guard against selects of type

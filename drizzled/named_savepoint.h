@@ -24,7 +24,7 @@
 #ifndef DRIZZLED_NAMED_SAVEPOINT_H
 #define DRIZZLED_NAMED_SAVEPOINT_H
 
-#include "drizzled/transaction_context.h" /* for TransactionContext::ResourceContexts */
+#include <drizzled/transaction_context.h> /* for TransactionContext::ResourceContexts */
 
 namespace drizzled
 {

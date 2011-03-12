@@ -18,21 +18,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/select.h>
 
 namespace drizzled
 {
 
-bool statement::Select::execute()
+namespace statement
 {
-  TableList *all_tables= session->lex->query_tables;
-  session->status_var.last_query_cost= 0.0;
-  bool res= execute_sqlcom_select(session, all_tables);
+
+Select::Select(Session *in_session) :
+  Statement(in_session)
+  {
+    set_command(SQLCOM_SELECT);
+  }
+
+bool Select::execute()
+{
+  TableList *all_tables= lex().query_tables;
+  getSession()->status_var.last_query_cost= 0.0;
+  bool res= execute_sqlcom_select(getSession(), all_tables);
 
   return res;
 }
 
+} /* namespace statement */
 } /* namespace drizzled */
-

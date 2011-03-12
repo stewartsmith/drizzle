@@ -17,4 +17,7 @@ connection con1;
 SEND select * from t1 for update;
 
 connection default;
+--error ER_NO_LOCK_HELD
 UNLOCK tables;
+
+DROP TABLE t1;

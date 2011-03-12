@@ -60,6 +60,9 @@ Created 10/8/1995 Heikki Tuuri
 /* Dummy comment */
 #include "srv0srv.h"
 
+#include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
+
 #include "ut0mem.h"
 #include "ut0ut.h"
 #include "os0proc.h"
@@ -488,6 +491,8 @@ UNIV_INTERN mutex_t	srv_monitor_file_mutex;
 #ifdef UNIV_PFS_MUTEX
 /* Key to register kernel_mutex with performance schema */
 UNIV_INTERN mysql_pfs_key_t	kernel_mutex_key;
+/* Key to protect writing the commit_id to the sys header */
+UNIV_INTERN mysql_pfs_key_t     commit_id_mutex_key;
 /* Key to register srv_innodb_monitor_mutex with performance schema */
 UNIV_INTERN mysql_pfs_key_t	srv_innodb_monitor_mutex_key;
 /* Key to register srv_monitor_file_mutex with performance schema */
@@ -746,6 +751,9 @@ the same memory cache line */
 UNIV_INTERN byte	srv_pad1[64];
 /* mutex protecting the server, trx structs, query threads, and lock table */
 UNIV_INTERN mutex_t*	kernel_mutex_temp;
+/* mutex protecting the sys header for writing the commit id */
+UNIV_INTERN mutex_t*   	commit_id_mutex_temp;
+
 /* padding to prevent other memory update hotspots from residing on
 the same memory cache line */
 UNIV_INTERN byte	srv_pad2[64];
@@ -1023,6 +1031,9 @@ srv_init(void)
         kernel_mutex_temp = static_cast<ib_mutex_t *>(mem_alloc(sizeof(mutex_t)));
 	mutex_create(kernel_mutex_key, &kernel_mutex, SYNC_KERNEL);
 
+	commit_id_mutex_temp = static_cast<ib_mutex_t *>(mem_alloc(sizeof(mutex_t)));
+	mutex_create(commit_id_mutex_key, &commit_id_mutex, SYNC_COMMIT_ID_LOCK);
+
 	mutex_create(srv_innodb_monitor_mutex_key,
 		     &srv_innodb_monitor_mutex, SYNC_NO_ORDER_CHECK);
 
@@ -1110,6 +1121,9 @@ srv_free(void)
 	kernel_mutex_temp = NULL;
 	mem_free(srv_mysql_table);
 	srv_mysql_table = NULL;
+
+	mem_free(commit_id_mutex_temp);
+	commit_id_mutex_temp = NULL;
 
 	trx_i_s_cache_free(trx_i_s_cache);
 }
@@ -2384,14 +2398,10 @@ loop:
 	new_lsn = log_get_lsn();
 
 	if (new_lsn < old_lsn) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: Error: old log sequence number %"PRIu64""
-			" was greater\n"
-			"InnoDB: than the new log sequence number %"PRIu64"!\n"
-			"InnoDB: Please submit a bug report"
-			" to http://bugs.mysql.com\n",
-			old_lsn, new_lsn);
+          drizzled::errmsg_printf(drizzled::error::INFO,
+                                  "InnoDB: Error: old log sequence number %"PRIu64" was greater than the new log sequence number %"PRIu64"!"
+                                  "InnoDB: Please submit a bug report to http://bugs.launchpad.net/drizzle",
+                                  old_lsn, new_lsn);
 	}
 
 	old_lsn = new_lsn;

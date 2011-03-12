@@ -19,23 +19,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/plugin/function.h>
-#include "plugin/math_functions/functions.h"
-#include "plugin/math_functions/abs.h"
-#include "plugin/math_functions/acos.h"
-#include "plugin/math_functions/asin.h"
-#include "plugin/math_functions/atan.h"
-#include "plugin/math_functions/cos.h"
-#include "plugin/math_functions/log.h"
-#include "plugin/math_functions/sin.h"
-#include "plugin/math_functions/pow.h"
-#include "plugin/math_functions/ln.h"
-#include "plugin/math_functions/sqrt.h"
-#include "plugin/math_functions/ceiling.h"
-#include "plugin/math_functions/exp.h"
-#include "plugin/math_functions/floor.h"
-#include "plugin/math_functions/ord.h"
+#include <plugin/math_functions/functions.h>
+#include <plugin/math_functions/abs.h>
+#include <plugin/math_functions/acos.h>
+#include <plugin/math_functions/asin.h>
+#include <plugin/math_functions/atan.h>
+#include <plugin/math_functions/cos.h>
+#include <plugin/math_functions/log.h>
+#include <plugin/math_functions/sin.h>
+#include <plugin/math_functions/pow.h>
+#include <plugin/math_functions/ln.h>
+#include <plugin/math_functions/sqrt.h>
+#include <plugin/math_functions/ceiling.h>
+#include <plugin/math_functions/exp.h>
+#include <plugin/math_functions/floor.h>
+#include <plugin/math_functions/ord.h>
 
 using namespace drizzled;
 

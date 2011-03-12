@@ -43,7 +43,7 @@ public:
     collation.set(&my_charset_bin);
     max_length=args[0]->max_length;
   }
-  virtual void print(String *str, enum_query_type query_type);
+  virtual void print(String *str);
   const char *func_name() const { return "cast_as_binary"; }
 };
 

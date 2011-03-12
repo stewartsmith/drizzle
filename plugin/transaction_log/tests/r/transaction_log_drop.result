@@ -29,10 +29,14 @@ statement {
       schema_name: "test"
       table_name: "t1"
     }
+    if_exists_clause: false
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SET GLOBAL transaction_log_truncate_debug= true;
 
@@ -59,8 +63,11 @@ statement {
       schema_name: "test"
       table_name: "t3"
     }
+    if_exists_clause: false
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -77,8 +84,11 @@ statement {
       schema_name: "test"
       table_name: "t2"
     }
+    if_exists_clause: false
   }
 }
+segment_id: 1
+end_segment: true
 
 transaction_context {
   server_id: 1
@@ -95,8 +105,11 @@ statement {
       schema_name: "test"
       table_name: "t1"
     }
+    if_exists_clause: false
   }
 }
+segment_id: 1
+end_segment: true
 
 SET GLOBAL transaction_log_truncate_debug= true;
 
@@ -131,10 +144,14 @@ statement {
       schema_name: "test"
       table_name: "t1"
     }
+    if_exists_clause: true
   }
 }
+segment_id: 1
+end_segment: true
 
 
+COMMIT;
 
 SET GLOBAL transaction_log_truncate_debug= true;
 

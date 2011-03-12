@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#include <config.h>
 #include <drizzled/field/real.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
@@ -136,7 +136,7 @@ int Field_real::store_decimal(const type::Decimal *dm)
   return store(dbl);
 }
 
-type::Decimal *Field_real::val_decimal(type::Decimal *decimal_value)
+type::Decimal *Field_real::val_decimal(type::Decimal *decimal_value) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
