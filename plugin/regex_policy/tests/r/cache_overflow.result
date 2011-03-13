@@ -21,8 +21,8 @@ user5
 user6
 user7
 use user0;
-create table t1 (kill_id int);
-insert into t1 values(connection_id());
+create table t1 (id int);
+insert into t1 values(1);
 create table user1.t1 as select * from user0.t1;
 create table user2.t1 as select * from user0.t1;
 create table user3.t1 as select * from user0.t1;
@@ -47,7 +47,7 @@ ERROR 42S02: Unknown table 'user1.dont_exist6'
 SELECT * from user1.dont_exist7;
 ERROR 42S02: Unknown table 'user1.dont_exist7'
 SELECT * from user1.t1;
-kill_id
+id
 1
 SELECT * from user0.t1;
 ERROR 42000: Access denied for user 'user1' to schema 'user0'
