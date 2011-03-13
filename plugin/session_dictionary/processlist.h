@@ -30,13 +30,12 @@ public:
 
   ProcesslistTool();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator
   {
     drizzled::generator::Session session_generator;
 
   public:
     Generator(drizzled::Field **arg);
-    ~Generator();
 
     bool populate();
   };

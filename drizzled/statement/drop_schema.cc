@@ -36,7 +36,7 @@ namespace drizzled
 
 bool statement::DropSchema::execute()
 {
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -44,14 +44,14 @@ bool statement::DropSchema::execute()
 
   identifier::Schema schema_identifier(std::string(lex().name.str, lex().name.length));
 
-  if (not schema::check(*getSession(), schema_identifier))
+  if (not schema::check(session(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
 
     return false;
   }
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
         ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
@@ -62,14 +62,14 @@ bool statement::DropSchema::execute()
   bool res = true;
   std::string path;
   schema_identifier.getSQLPath(path);
-  if (unlikely(plugin::EventObserver::beforeDropDatabase(*getSession(), path))) 
+  if (unlikely(plugin::EventObserver::beforeDropDatabase(session(), path))) 
   {
     my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
   }
   else
   {
-    res= schema::drop(*getSession(), schema_identifier, drop_if_exists);
-    if (unlikely(plugin::EventObserver::afterDropDatabase(*getSession(), path, res)))
+    res= schema::drop(session(), schema_identifier, drop_if_exists);
+    if (unlikely(plugin::EventObserver::afterDropDatabase(session(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
       res = false;

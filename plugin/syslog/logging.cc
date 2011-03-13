@@ -30,6 +30,7 @@
 
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_parse.h>
 
 #include "logging.h"
 #include "wrap.h"
@@ -76,7 +77,7 @@ bool logging::Syslog::post(drizzled::Session *session)
     return false;
   if (session->examined_row_count < _threshold_big_examined)
     return false;
-  
+
   /*
     TODO, the session object should have a "utime command completed"
     inside itself, so be more accurate, and so this doesnt have to
@@ -87,7 +88,7 @@ bool logging::Syslog::post(drizzled::Session *session)
   // return if query was not too slow
   if (session->getElapsedTime() < _threshold_slow)
     return false;
-  
+
   drizzled::Session::QueryString query_string(session->getQueryString());
   drizzled::util::string::const_shared_ptr schema(session->schema());
 
@@ -104,7 +105,7 @@ bool logging::Syslog::post(drizzled::Session *session)
          (unsigned long) session->getQueryId(),
          (int) schema->size(),
          schema->empty() ? "" : schema->c_str(),
-         (int) query_string->length(), 
+         (int) query_string->length(),
          query_string->empty() ? "" : query_string->c_str(),
          (int) drizzled::getCommandName(session->command).size(),
          drizzled::getCommandName(session->command).c_str(),
@@ -115,7 +116,7 @@ bool logging::Syslog::post(drizzled::Session *session)
          (unsigned long) session->examined_row_count,
          (unsigned long) session->tmp_table,
          (unsigned long) session->total_warn_count);
-  
+
     return false;
 }
 

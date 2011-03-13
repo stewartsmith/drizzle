@@ -39,11 +39,11 @@ Rollback::Rollback(Session *in_session, bool tx_chain_arg, bool tx_release_arg) 
 
 bool Rollback::execute()
 {
-  if (not getSession()->endTransaction(tx_release ? ROLLBACK_RELEASE : tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
+  if (not session().endTransaction(tx_release ? ROLLBACK_RELEASE : tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
   {
     return true;
   }
-  getSession()->my_ok();
+  session().my_ok();
 
   return false;
 }

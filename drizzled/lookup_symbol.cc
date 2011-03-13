@@ -23,6 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lookup_symbol.h>
+#include <drizzled/comp_creator.h>
 
 #include <drizzled/lex_symbol.h>
 #include <drizzled/function_hash.h>
@@ -45,5 +46,5 @@ const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function)
     return ret_sym;
   return NULL;
 }
-  
+
 } /* namespace drizzled */

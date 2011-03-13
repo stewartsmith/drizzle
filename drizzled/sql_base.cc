@@ -900,7 +900,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   const char *alias= table_list->alias;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
-  assert(getLex()->is_lex_started);
+  assert(lex().is_lex_started);
 
   /* find a unused table in the open table cache */
   if (refresh)
@@ -2292,7 +2292,7 @@ find_field_in_tables(Session *session, Item_ident *item,
         fields.
       */
       {
-        Select_Lex *current_sel= session->getLex()->current_select;
+        Select_Lex *current_sel= session->lex().current_select;
         Select_Lex *last_select= table_ref->select_lex;
         /*
           If the field was an outer referencee, mark all selects using this
@@ -3271,7 +3271,7 @@ int setup_wild(Session *session, List<Item> &fields,
   Item *item;
   List<Item>::iterator it(fields.begin());
 
-  session->getLex()->current_select->cur_pos_in_select_list= 0;
+  session->lex().current_select->cur_pos_in_select_list= 0;
   while (wild_num && (item= it++))
   {
     if (item->type() == Item::FIELD_ITEM &&
@@ -3281,7 +3281,7 @@ int setup_wild(Session *session, List<Item> &fields,
     {
       uint32_t elem= fields.size();
       bool any_privileges= ((Item_field *) item)->any_privileges;
-      Item_subselect *subsel= session->getLex()->current_select->master_unit()->item;
+      Item_subselect *subsel= session->lex().current_select->master_unit()->item;
       if (subsel &&
           subsel->substype() == Item_subselect::EXISTS_SUBS)
       {
@@ -3312,9 +3312,9 @@ int setup_wild(Session *session, List<Item> &fields,
       wild_num--;
     }
     else
-      session->getLex()->current_select->cur_pos_in_select_list++;
+      session->lex().current_select->cur_pos_in_select_list++;
   }
-  session->getLex()->current_select->cur_pos_in_select_list= UNDEF_POS;
+  session->lex().current_select->cur_pos_in_select_list= UNDEF_POS;
 
   return 0;
 }
@@ -3329,16 +3329,16 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
 {
   register Item *item;
   enum_mark_columns save_mark_used_columns= session->mark_used_columns;
-  nesting_map save_allow_sum_func= session->getLex()->allow_sum_func;
+  nesting_map save_allow_sum_func= session->lex().allow_sum_func;
   List<Item>::iterator it(fields.begin());
   bool save_is_item_list_lookup;
 
   session->mark_used_columns= mark_used_columns;
   if (allow_sum_func)
-    session->getLex()->allow_sum_func|= 1 << session->getLex()->current_select->nest_level;
+    session->lex().allow_sum_func|= 1 << session->lex().current_select->nest_level;
   session->setWhere(Session::DEFAULT_WHERE);
-  save_is_item_list_lookup= session->getLex()->current_select->is_item_list_lookup;
-  session->getLex()->current_select->is_item_list_lookup= 0;
+  save_is_item_list_lookup= session->lex().current_select->is_item_list_lookup;
+  session->lex().current_select->is_item_list_lookup= 0;
 
   /*
     To prevent fail on forward lookup we fill it with zerows,
@@ -3356,13 +3356,13 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
   }
 
   Item **ref= ref_pointer_array;
-  session->getLex()->current_select->cur_pos_in_select_list= 0;
+  session->lex().current_select->cur_pos_in_select_list= 0;
   while ((item= it++))
   {
     if ((!item->fixed && item->fix_fields(session, it.ref())) || (item= *(it.ref()))->check_cols(1))
     {
-      session->getLex()->current_select->is_item_list_lookup= save_is_item_list_lookup;
-      session->getLex()->allow_sum_func= save_allow_sum_func;
+      session->lex().current_select->is_item_list_lookup= save_is_item_list_lookup;
+      session->lex().allow_sum_func= save_allow_sum_func;
       session->mark_used_columns= save_mark_used_columns;
       return true;
     }
@@ -3372,12 +3372,12 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
         sum_func_list)
       item->split_sum_func(session, ref_pointer_array, *sum_func_list);
     session->used_tables|= item->used_tables();
-    session->getLex()->current_select->cur_pos_in_select_list++;
+    session->lex().current_select->cur_pos_in_select_list++;
   }
-  session->getLex()->current_select->is_item_list_lookup= save_is_item_list_lookup;
-  session->getLex()->current_select->cur_pos_in_select_list= UNDEF_POS;
+  session->lex().current_select->is_item_list_lookup= save_is_item_list_lookup;
+  session->lex().current_select->cur_pos_in_select_list= UNDEF_POS;
 
-  session->getLex()->allow_sum_func= save_allow_sum_func;
+  session->lex().allow_sum_func= save_allow_sum_func;
   session->mark_used_columns= save_mark_used_columns;
   return(test(session->is_error()));
 }
@@ -3653,7 +3653,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
         session->used_tables|= item->used_tables();
       }
 
-      session->getLex()->current_select->cur_pos_in_select_list++;
+      session->lex().current_select->cur_pos_in_select_list++;
     }
     /*
       In case of stored tables, all fields are considered as used,
@@ -3706,7 +3706,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
 int Session::setup_conds(TableList *leaves, COND **conds)
 {
   Session *session= this;
-  Select_Lex *select_lex= session->getLex()->current_select;
+  Select_Lex *select_lex= session->lex().current_select;
   TableList *table= NULL;	// For HP compilers
   void *save_session_marker= session->session_marker;
   /*
@@ -3764,7 +3764,7 @@ int Session::setup_conds(TableList *leaves, COND **conds)
   }
   session->session_marker= save_session_marker;
 
-  session->getLex()->current_select->is_item_list_lookup= save_is_item_list_lookup;
+  session->lex().current_select->is_item_list_lookup= save_is_item_list_lookup;
   return(test(session->is_error()));
 
 err_no_arena:

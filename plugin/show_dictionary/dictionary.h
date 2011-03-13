@@ -26,15 +26,12 @@
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/statement/show.h>
-
 #include <drizzled/session.h>
 #include <drizzled/current_session.h>
 #include <drizzled/message/schema.pb.h>
-
 #include <drizzled/generator.h>
 
 #include <plugin/show_dictionary/show.h>
-
 #include <plugin/show_dictionary/show_columns.h>
 #include <plugin/show_dictionary/show_create_schema.h>
 #include <plugin/show_dictionary/show_create_table.h>

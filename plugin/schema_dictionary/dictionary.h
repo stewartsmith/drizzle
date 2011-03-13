@@ -25,14 +25,10 @@
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/plugin/storage_engine.h>
-#include <drizzled/statement/select.h>
-
 #include <drizzled/message/schema.pb.h>
-
 #include <drizzled/generator.h>
 
 #include <plugin/schema_dictionary/data_dictionary.h>
-
 #include <plugin/schema_dictionary/schemas.h>
 #include <plugin/schema_dictionary/tables.h>
 #include <plugin/schema_dictionary/columns.h>

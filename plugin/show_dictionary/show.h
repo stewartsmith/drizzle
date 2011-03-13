@@ -33,7 +33,7 @@ public:
 
   bool visible() const { return false; }
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator
   {
   public:
     Generator(drizzled::Field **arg):
@@ -42,10 +42,7 @@ public:
 
     bool isShowQuery()
     {
-      if (getSession().getLex()->statement->isShow())
-       return true;
-
-      return false;
+      return statement().isShow();
     }
   };
 

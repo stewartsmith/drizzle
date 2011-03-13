@@ -28,6 +28,7 @@
 #include <drizzled/identifier.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 #include <drizzled/table/concurrent.h>
 
 #include <drizzled/table/cache.h>
@@ -175,7 +176,7 @@ void Cache::removeSchema(const identifier::Schema &schema_identifier)
 bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_t flags)
 {
   const identifier::Table::Key &key(identifier.getKey());
-  bool result= false; 
+  bool result= false;
   bool signalled= false;
 
   for (;;)
@@ -265,9 +266,9 @@ bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_
             and then we retry another loop in the
             table::Cache::singleton().removeTable routine.
           */
-          boost::xtime xt; 
-          xtime_get(&xt, boost::TIME_UTC); 
-          xt.sec += 10; 
+          boost::xtime xt;
+          xtime_get(&xt, boost::TIME_UTC);
+          xt.sec += 10;
           boost_unique_lock_t scoped(table::Cache::singleton().mutex(), boost::adopt_lock_t());
           COND_refresh.timed_wait(scoped, xt);
           scoped.release();

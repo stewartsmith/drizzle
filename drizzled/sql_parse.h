@@ -82,8 +82,7 @@ bool check_simple_select(Session* session);
 void init_select(LEX *lex);
 bool new_select(LEX *lex, bool move_down);
 
-int prepare_new_schema_table(Session *session, LEX *lex,
-                             const std::string& schema_table_name);
+int prepare_new_schema_table(Session*, LEX&, const std::string& schema_table_name);
 
 Item * all_any_subquery_creator(Item *left_expr,
                                 chooser_compare_func_creator cmp,

@@ -92,7 +92,7 @@ bool statement::CreateTable::execute()
   if (is_engine_set)
   {
     create_info().db_type= 
-      plugin::StorageEngine::findByName(*getSession(), createTableMessage().engine().name());
+      plugin::StorageEngine::findByName(session(), createTableMessage().engine().name());
 
     if (create_info().db_type == NULL)
     {
@@ -104,7 +104,7 @@ bool statement::CreateTable::execute()
   }
   else /* We now get the default, place it in create_info, and put the engine name in table proto */
   {
-    create_info().db_type= getSession()->getDefaultStorageEngine();
+    create_info().db_type= session().getDefaultStorageEngine();
   }
 
   if (not validateCreateTableOption())
@@ -114,7 +114,7 @@ bool statement::CreateTable::execute()
 
   if (not lex_identified_temp_table)
   {
-    if (getSession()->inTransaction())
+    if (session().inTransaction())
     {
       my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
       return true;
@@ -152,7 +152,7 @@ bool statement::CreateTable::execute()
      TABLE in the same way. That way we avoid that a new table is
      created during a gobal read lock.
    */
-  if (! (need_start_waiting= not getSession()->wait_if_global_read_lock(0, 1)))
+  if (! (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
   {
     /* put tables back for PS rexecuting */
     lex().link_first_table_back(create_table_list, link_to_local);
@@ -165,7 +165,7 @@ bool statement::CreateTable::execute()
     Release the protection against the global read lock and wake
     everyone, who might want to set a global read lock.
   */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }
@@ -192,7 +192,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
         create_table_list->setCreate(true);
       }
 
-      if (not (res= getSession()->openTablesLock(lex().query_tables)))
+      if (not (res= session().openTablesLock(lex().query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -233,7 +233,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
             CREATE from SELECT give its Select_Lex for SELECT,
             and item_list belong to SELECT
           */
-          res= handle_select(getSession(), &lex(), result, 0);
+          res= handle_select(&session(), &lex(), result, 0);
           delete result;
         }
       }
@@ -247,7 +247,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
       /* regular create */
       if (is_create_table_like)
       {
-        res= create_like_table(getSession(), 
+        res= create_like_table(&session(), 
                                new_table_identifier,
                                identifier::Table(select_tables->getSchemaName(),
                                                  select_tables->getTableName()),
@@ -265,7 +265,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
           *field= alter_info.alter_proto.added_field(x);
         }
 
-        res= create_table(getSession(), 
+        res= create_table(&session(), 
                           new_table_identifier,
                           &create_info(),
                           createTableMessage(),
@@ -277,7 +277,7 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
 
       if (not res)
       {
-        getSession()->my_ok();
+        session().my_ok();
       }
     }
   } while (0);
@@ -295,7 +295,7 @@ bool statement::CreateTable::check(const identifier::Table &identifier)
   if (not plugin::StorageEngine::canCreateTable(identifier))
   {
     identifier::Schema schema_identifier= identifier;
-    error::access(*getSession()->user(), schema_identifier);
+    error::access(*session().user(), schema_identifier);
 
     return false;
   }

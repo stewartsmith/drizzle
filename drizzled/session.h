@@ -38,6 +38,7 @@
 #include <drizzled/copy_info.h>
 #include <drizzled/cursor.h>
 #include <drizzled/diagnostics_area.h>
+#include <drizzled/error.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
@@ -69,21 +70,20 @@
 
 #define MIN_HANDSHAKE_SIZE      6
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace plugin
 {
-class Client;
-class Scheduler;
-class EventObserverList;
+	class Client;
+	class Scheduler;
+	class EventObserverList;
 }
 
 namespace message
 {
-class Transaction;
-class Statement;
-class Resultset;
+	class Transaction;
+	class Statement;
+	class Resultset;
 }
 
 namespace internal { struct st_my_thread_var; }
@@ -162,8 +162,8 @@ public:
   enum enum_mark_columns mark_used_columns;
   inline void* calloc(size_t size)
   {
-    void *ptr;
-    if ((ptr= mem_root->alloc_root(size)))
+    void *ptr= mem_root->alloc_root(size);
+    if (ptr)
       memset(ptr, 0, size);
     return ptr;
   }
@@ -174,9 +174,9 @@ public:
 
   inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
   {
-    void *ptr;
-    if ((ptr= mem_root->alloc_root(size + gap)))
-      memcpy(ptr,str,size);
+    void *ptr= mem_root->alloc_root(size + gap);
+    if (ptr)
+      memcpy(ptr, str, size);
     return ptr;
   }
   /** Frees all items attached to this Statement */
@@ -189,13 +189,10 @@ public:
   Item *free_list;
   memory::Root *mem_root; /**< Pointer to current memroot */
 
-
   memory::Root *getMemRoot()
   {
     return mem_root;
   }
-
-  uint64_t xa_id;
 
   uint64_t getXaId()
   {
@@ -207,27 +204,20 @@ public:
     xa_id= in_xa_id;
   }
 
-  /**
-   * Uniquely identifies each statement object in thread scope; change during
-   * statement lifetime.
-   *
-   * @todo should be const
-   */
-  uint32_t id;
-
 public:
-  const LEX* getLex() const
+  const LEX& lex() const
   {
-    return &main_lex;
+    return main_lex;
   }
-  LEX* getLex()
+
+  LEX& lex()
   {
-    return &main_lex;
+    return main_lex;
   }
 
   enum_sql_command getSqlCommand() const
   {
-    return getLex()->sql_command;
+    return lex().sql_command;
   }
 
   /** query associated with this statement */
@@ -356,7 +346,7 @@ public:
     return (enum_tx_isolation)variables.tx_isolation;
   }
 
-  struct system_status_var status_var; /**< Session-local status counters */
+  system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
@@ -525,12 +515,8 @@ public:
   Field *dup_field;
   sigset_t signals;
 
-  // As of right now we do not allow a concurrent execute to launch itself
-private:
-  bool concurrent_execute_allowed;
-
 public:
-
+  // As of right now we do not allow a concurrent execute to launch itself
   void setConcurrentExecute(bool arg)
   {
     concurrent_execute_allowed= arg;
@@ -540,9 +526,6 @@ public:
   {
     return concurrent_execute_allowed;
   }
-
-  /* Tells if LAST_INSERT_ID(#) was called for the current statement */
-  bool arg_of_last_insert_id_function;
 
   /*
     ALL OVER THIS FILE, "insert_id" means "*automatically generated* value for
@@ -773,17 +756,13 @@ public:
   bool substitute_null_with_insert_id;
   bool cleanup_done;
 
-private:
-  bool abort_on_warning;
-  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
-
 public:
   bool got_warning; /**< Set on call to push_warning() */
   bool no_warnings_for_error; /**< no warnings on call to my_error() */
   /** set during loop of derived table processing */
   bool derived_tables_processing;
 
-  bool doing_tablespace_operation(void)
+  bool doing_tablespace_operation()
   {
     return tablespace_op;
   }
@@ -919,7 +898,7 @@ public:
     if (first_successful_insert_id_in_cur_stmt == 0)
       first_successful_insert_id_in_cur_stmt= id_arg;
   }
-  inline uint64_t read_first_successful_insert_id_in_prev_stmt(void)
+  inline uint64_t read_first_successful_insert_id_in_prev_stmt()
   {
     return first_successful_insert_id_in_prev_stmt;
   }
@@ -937,7 +916,7 @@ public:
   Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
   virtual ~Session();
 
-  void cleanup(void);
+  void cleanup();
   /**
    * Cleans up after query.
    *
@@ -1067,8 +1046,7 @@ public:
 
   void set_time_after_lock()
   {
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
-    utime_after_lock= (mytime - _epoch).total_microseconds();
+    utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - _epoch).total_microseconds();
   }
 
   void set_end_timer()
@@ -1087,28 +1065,13 @@ public:
    */
   type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
   {
-    type::Time::epoch_t t_mark;
-
-    if (actual)
-    {
-      boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
-      t_mark= (mytime - _epoch).total_microseconds();
-    }
-    else
-    {
-      t_mark= (_end_timer - _epoch).total_microseconds();
-    }
-
-    return t_mark;
+    return ((actual ? boost::posix_time::microsec_clock::universal_time() : _end_timer) - _epoch).total_microseconds();
   }
 
   // We may need to set user on this
   type::Time::epoch_t getCurrentTimestampEpoch() const
   {
-    if (not _user_time.is_not_a_date_time())
-      return (_user_time - _epoch).total_seconds();
-
-    return (_start_timer - _epoch).total_seconds();
+	 	return ((_user_time.is_not_a_date_time() ? _start_timer : _user_time) - _epoch).total_seconds();
   }
 
   type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
@@ -1123,7 +1086,7 @@ public:
     return (_start_timer - _epoch).total_seconds();
   }
 
-  uint64_t found_rows(void) const
+  uint64_t found_rows() const
   {
     return limit_found_rows;
   }
@@ -1392,19 +1355,6 @@ public:
     resultset= NULL;
   }
 
-private:
-  /** Pointers to memory managed by the ReplicationServices component */
-  message::Transaction *transaction_message;
-  message::Statement *statement_message;
-  /* Pointer to the current resultset of Select query */
-  message::Resultset *resultset;
-  plugin::EventObserverList *session_event_observers;
-
-  /* Schema observers are mapped to databases. */
-  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
-  schema_event_observers_t schema_event_observers;
-
-
 public:
   plugin::EventObserverList *getSessionObservers()
   {
@@ -1433,7 +1383,6 @@ public:
 
 
  private:
-  const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */
   Internal_error_handler *m_internal_handler;
@@ -1491,27 +1440,11 @@ public:
     main_da.set_eof_status(this);
   }
 
-  /* Some inline functions for more speed */
+  bool add_item_to_list(Item *item);
+  bool add_value_to_list(Item *value);
+  bool add_order_to_list(Item *item, bool asc);
+  bool add_group_to_list(Item *item, bool asc);
 
-  inline bool add_item_to_list(Item *item)
-  {
-    return getLex()->current_select->add_item_to_list(this, item);
-  }
-
-  inline bool add_value_to_list(Item *value)
-  {
-    return getLex()->value_list.push_back(value);
-  }
-
-  inline bool add_order_to_list(Item *item, bool asc)
-  {
-    return getLex()->current_select->add_order_to_list(this, item, asc);
-  }
-
-  inline bool add_group_to_list(Item *item, bool asc)
-  {
-    return getLex()->current_select->add_group_to_list(this, item, asc);
-  }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
   user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
@@ -1526,11 +1459,6 @@ public:
                             bool send_refresh= false);
   void close_open_tables();
   void close_data_files_and_morph_locks(const identifier::Table &identifier);
-
-private:
-  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
-
-public:
 
   /**
    * Prepares statement for reopening of tables and recalculation of set of
@@ -1570,10 +1498,6 @@ public:
   table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
   bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
-private:
-  session::TableMessages _table_message_cache;
-
-public:
   session::TableMessages &getMessageCache()
   {
     return _table_message_cache;
@@ -1593,11 +1517,9 @@ public:
   }
 
   template<class T>
-  bool setProperty(const std::string &arg, T *value)
+  void setProperty(const std::string &arg, T *value)
   {
     life_properties.setProperty(arg, value);
-
-    return true;
   }
 
   /**
@@ -1620,47 +1542,61 @@ public:
   table::Singular *getInstanceTable();
   table::Singular *getInstanceTable(List<CreateField> &field_list);
 
-private:
-  bool resetUsage()
-  {
-    if (getrusage(RUSAGE_THREAD, &usage))
-    {
-      return false;
-    }
-
-    return true;
-  }
-
-public:
-
   void setUsage(bool arg)
   {
     use_usage= arg;
   }
 
-  const struct rusage &getUsage()
+  const rusage &getUsage()
   {
     return usage;
   }
 
   catalog::Instance::const_reference catalog() const
   {
-    return *(_catalog.get());
+    return *_catalog;
   }
 
   catalog::Instance::reference catalog()
   {
-    return *(_catalog.get());
+    return *_catalog;
   }
 
+  bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
+	class impl_c;
+
+  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+
+  bool resetUsage()
+  {
+    return not getrusage(RUSAGE_THREAD, &usage);
+  }
+
+  session::TableMessages _table_message_cache;
+  boost::scoped_ptr<impl_c> impl_;
   catalog::Instance::shared_ptr _catalog;
 
-  // This lives throughout the life of Session
+  /** Pointers to memory managed by the ReplicationServices component */
+  message::Transaction *transaction_message;
+  message::Statement *statement_message;
+  /* Pointer to the current resultset of Select query */
+  message::Resultset *resultset;
+  plugin::EventObserverList *session_event_observers;
+
+  /* Schema observers are mapped to databases. */
+  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
+  schema_event_observers_t schema_event_observers;
+
+  uint64_t xa_id;
+  const char *proc_info;
+  bool abort_on_warning;
+  bool concurrent_execute_allowed;
+  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
   session::PropertyMap life_properties;
   std::vector<table::Singular *> temporary_shares;
-  struct rusage usage;
+  rusage usage;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
