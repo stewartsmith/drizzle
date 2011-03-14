@@ -25,8 +25,7 @@
  * used in the nested loops join implementation.
  */
 
-#ifndef DRIZZLED_JOIN_TABLE_H
-#define DRIZZLED_JOIN_TABLE_H
+#pragma once
 
 #include <drizzled/enum_nested_loop_state.h>
 #include <drizzled/table_reference.h>
@@ -252,4 +251,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_JOIN_TABLE_H */

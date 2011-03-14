@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_TRANSACTIONAL_STORAGE_ENGINE_H
-#define DRIZZLED_PLUGIN_TRANSACTIONAL_STORAGE_ENGINE_H
+#pragma once
 
 #include <drizzled/definitions.h> /* for start_transaction_option_t */
 #include <drizzled/plugin/storage_engine.h>
@@ -232,4 +231,3 @@ private:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_TRANSACTIONAL_STORAGE_ENGINE_H */

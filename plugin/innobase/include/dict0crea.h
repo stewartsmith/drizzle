@@ -23,6 +23,7 @@ Database object creation
 Created 1/8/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef dict0crea_h
 #define dict0crea_h
 

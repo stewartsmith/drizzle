@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_OPTION_H
-#define DRIZZLED_OPTION_H
+#pragma once
 
 namespace drizzled
 {
@@ -91,5 +90,4 @@ bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTION_H */
 

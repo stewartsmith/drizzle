@@ -23,6 +23,7 @@ Some type definitions
 Created 9/21/2000 Heikki Tuuri
 *************************************************************************/
 
+#pragma once
 #ifndef data0types_h
 #define data0types_h
 

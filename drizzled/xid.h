@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_XID_H
-#define DRIZZLED_XID_H
+#pragma once
 
 #include <cstring>
 
@@ -119,4 +118,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_XID_H */

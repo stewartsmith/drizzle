@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_QUEUE_PRODUCER_H
-#define PLUGIN_SLAVE_QUEUE_PRODUCER_H
+#pragma once
 
 #include <client/client_priv.h>
 #include <drizzled/error_t.h>
@@ -182,4 +181,3 @@ private:
 
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_QUEUE_PRODUCER_H */

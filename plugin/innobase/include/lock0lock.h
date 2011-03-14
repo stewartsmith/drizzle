@@ -23,6 +23,7 @@ The transaction lock system
 Created 5/7/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef lock0lock_h
 #define lock0lock_h
 

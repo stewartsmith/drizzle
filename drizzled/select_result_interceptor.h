@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_RESULT_INTERCEPTOR_H
-#define DRIZZLED_SELECT_RESULT_INTERCEPTOR_H
+#pragma once
 
 #include <drizzled/select_result.h>
 
@@ -45,4 +44,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_RESULT_INTERCEPTOR_H */

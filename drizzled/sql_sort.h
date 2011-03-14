@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_SORT_H
-#define DRIZZLED_SQL_SORT_H
+#pragma once
 
 #include <unistd.h>
 #include <drizzled/base.h>
@@ -92,4 +91,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_SORT_H */

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_SEL_IMERGE_H
-#define DRIZZLED_OPTIMIZER_SEL_IMERGE_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 
@@ -119,4 +118,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_SEL_IMERGE_H */

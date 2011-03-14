@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_TABLE_INSTANCE_SINGULAR_H
-#define DRIZZLED_TABLE_INSTANCE_SINGULAR_H
+#pragma once
 
 #include <drizzled/table/instance/base.h>
 
@@ -50,4 +49,3 @@ public:
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_SINGULAR_H */

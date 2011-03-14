@@ -21,8 +21,7 @@
 #include <drizzled/session.h>
 #include <drizzled/generator/session.h>
 
-#ifndef PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
-#define PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
+#pragma once
 
 class ProcesslistTool : public drizzled::plugin::TableFunction
 {
@@ -46,4 +45,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H */

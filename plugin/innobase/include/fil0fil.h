@@ -23,6 +23,7 @@ The low-level file system
 Created 10/25/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef fil0fil_h
 #define fil0fil_h
 

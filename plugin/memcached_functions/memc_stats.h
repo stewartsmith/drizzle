@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H
-#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H
+#pragma once
 
 #include <drizzled/item/func.h>
 
@@ -67,4 +66,3 @@ private:
   drizzled::String results_buff;
 };
 
-#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H */

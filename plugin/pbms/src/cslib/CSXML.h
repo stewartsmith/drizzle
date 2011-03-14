@@ -28,6 +28,7 @@
 #include <inttypes.h>
 #include <wchar.h>
 
+#pragma once
 #ifndef __CSXML_H__
 #define __CSXML_H__
 

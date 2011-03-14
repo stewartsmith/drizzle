@@ -23,6 +23,7 @@ Random numbers and hashing
 Created 1/20/1994 Heikki Tuuri
 ***********************************************************************/
 
+#pragma once
 #ifndef ut0rnd_h
 #define ut0rnd_h
 

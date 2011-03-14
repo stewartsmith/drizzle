@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SCHEMA_H
-#define DRIZZLED_SCHEMA_H
+#pragma once
 
 #include <drizzled/message/schema.h>
 
@@ -41,4 +40,3 @@ bool check(Session &session, identifier::Schema &schema);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SCHEMA_H */

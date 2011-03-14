@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_GLOBAL_CHARSET_INFO_H
-#define DRIZZLED_GLOBAL_CHARSET_INFO_H
+#pragma once
 
 #include <drizzled/visibility.h>
 
@@ -38,4 +37,3 @@ extern const charset_info_st *table_alias_charset;
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GLOBAL_CHARSET_INFO_H */

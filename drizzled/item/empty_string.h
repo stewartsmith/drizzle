@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_EMPTY_STRING_H
-#define DRIZZLED_ITEM_EMPTY_STRING_H
+#pragma once
 
 /**
   Item_empty_string -- is a utility class to put an item into List<Item>
@@ -42,4 +41,3 @@ public:
 
 } /* namespace drizzled */
   
-#endif /* DRIZZLED_ITEM_EMPTY_STRING_H */

@@ -19,8 +19,7 @@
  */
 
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_ASSERT_H
-#define PLUGIN_UTILITY_FUNCTIONS_ASSERT_H
+#pragma once
 
 #include <drizzled/item/function/boolean.h>
 #include <iostream>
@@ -62,4 +61,3 @@ public:
 } /* namespace utility_functions */
 } /* namespace drizzled */
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_ASSERT_H */

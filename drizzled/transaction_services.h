@@ -22,8 +22,7 @@
  * @file Transaction processing code
  */
 
-#ifndef DRIZZLED_TRANSACTION_SERVICES_H
-#define DRIZZLED_TRANSACTION_SERVICES_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/message/transaction.pb.h>
@@ -572,4 +571,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TRANSACTION_SERVICES_H */

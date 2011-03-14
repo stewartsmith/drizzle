@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_KEY_FIELD_H
-#define DRIZZLED_OPTIMIZER_KEY_FIELD_H
+#pragma once
 
 #include <drizzled/sql_select.h>
 
@@ -291,4 +290,3 @@ void add_key_equal_fields(KeyField **key_fields,
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_KEY_FIELD_H */

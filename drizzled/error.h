@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_ERROR_H
-#define DRIZZLED_ERROR_H
+#pragma once
 
 #include <string>
 #include <boost/unordered_map.hpp>
@@ -104,4 +103,3 @@ void my_printf_error(drizzled::error_t my_err, const char *format,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ERROR_H */

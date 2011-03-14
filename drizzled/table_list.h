@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_LIST_H
-#define DRIZZLED_TABLE_LIST_H
+#pragma once
 
 #include <drizzled/nested_join.h>
 #include <drizzled/table.h>
@@ -555,4 +554,3 @@ void close_thread_tables(Session *session);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_LIST_H */

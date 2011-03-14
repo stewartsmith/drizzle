@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_TABLE_INSTANCE_SHARED_H
-#define DRIZZLED_TABLE_INSTANCE_SHARED_H
+#pragma once
 
 #include <drizzled/table/instance/base.h>
 
@@ -107,4 +106,3 @@ private:
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_SHARED_H */

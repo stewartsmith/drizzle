@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_LEX_H
-#define DRIZZLED_SQL_LEX_H
+#pragma once
 
 /**
   @defgroup Semantic_Analysis Semantic Analysis
@@ -1055,4 +1054,3 @@ bool check_for_sql_keyword(drizzled::lex_string_t const&);
 } /* namespace drizzled */
 
 #endif /* DRIZZLE_SERVER */
-#endif /* DRIZZLED_SQL_LEX_H */

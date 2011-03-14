@@ -22,8 +22,7 @@
 #include <drizzled/session.h>
 #include <drizzled/generator/session.h>
 
-#ifndef PLUGIN_SESSION_DICTIONARY_SESSIONS_H
-#define PLUGIN_SESSION_DICTIONARY_SESSIONS_H
+#pragma once
 
 namespace session_dictionary {
 
@@ -52,4 +51,3 @@ public:
 
 } // namespace session_dictionary
 
-#endif /* PLUGIN_SESSION_DICTIONARY_SESSIONS_H */

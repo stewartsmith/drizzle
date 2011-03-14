@@ -23,6 +23,7 @@ The dynamically allocated array
 Created 2/5/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef dyn0dyn_h
 #define dyn0dyn_h
 

@@ -64,6 +64,7 @@ CREATE TABLE pbms_reference (
 	PRIMARY KEY (Table_name, Blob_id, Column_name, Condition)
 */
 
+#pragma once
 #ifndef __SYSTEMTABLE_MS_H__
 #define __SYSTEMTABLE_MS_H__
 

@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __ENGINE_MS_H__
 #define __ENGINE_MS_H__
 

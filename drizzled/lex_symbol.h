@@ -20,8 +20,7 @@
 
 /* This struct includes all reserved words and functions */
 
-#ifndef DRIZZLED_LEX_SYMBOL_H
-#define DRIZZLED_LEX_SYMBOL_H
+#pragma once
 
 namespace drizzled
 {
@@ -49,4 +48,3 @@ extern SYM_GROUP sym_group_rtree;
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_LEX_SYMBOL_H */

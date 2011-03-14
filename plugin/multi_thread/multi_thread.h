@@ -13,8 +13,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef PLUGIN_MULTI_THREAD_MULTI_THREAD_H
-#define PLUGIN_MULTI_THREAD_MULTI_THREAD_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/gettext.h>
@@ -55,4 +54,3 @@ private:
 
 } // namespace multi_thread
 
-#endif /* PLUGIN_MULTI_THREAD_MULTI_THREAD_H */

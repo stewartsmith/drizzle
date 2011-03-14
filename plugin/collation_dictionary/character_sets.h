@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_COLLATION_DICTIONARY_CHARACTER_SETS_H
-#define PLUGIN_COLLATION_DICTIONARY_CHARACTER_SETS_H
+#pragma once
 
 class CharacterSetsTool : public drizzled::plugin::TableFunction
 {
@@ -65,4 +64,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_COLLATION_DICTIONARY_CHARACTER_SETS_H */

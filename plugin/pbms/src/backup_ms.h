@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef _BACKUP_MS_H_
 #define _BACKUP_MS_H_
 

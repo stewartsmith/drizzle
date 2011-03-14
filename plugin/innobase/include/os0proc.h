@@ -24,6 +24,7 @@ process control primitives
 Created 9/30/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef os0proc_h
 #define os0proc_h
 

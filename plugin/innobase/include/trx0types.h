@@ -23,6 +23,7 @@ Transaction system global type definitions
 Created 3/26/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef trx0types_h
 #define trx0types_h
 

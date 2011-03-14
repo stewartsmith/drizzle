@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_ERROR_DICTIONARY_ERRORS_H
-#define PLUGIN_ERROR_DICTIONARY_ERRORS_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/error.h>
@@ -56,4 +55,3 @@ public:
 } /* namespace error_dictionary */
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_ERROR_DICTIONARY_ERRORS_H */

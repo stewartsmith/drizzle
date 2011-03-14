@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_MICROTIME_H
-#define DRIZZLED_FIELD_MICROTIME_H
+#pragma once
 
 #include <drizzled/field/epoch.h>
 
@@ -86,5 +85,4 @@ public:
 } /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_MICROTIME_H */
 

@@ -38,6 +38,7 @@ The server main program
 Created 10/10/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef srv0srv_h
 #define srv0srv_h
 

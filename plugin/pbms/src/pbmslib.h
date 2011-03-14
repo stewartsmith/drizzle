@@ -20,6 +20,7 @@
  *
  * H&G2JCtL
  */
+#pragma once
 #ifndef __PBMSLIB_H__
 #define __PBMSLIB_H__
 

@@ -24,6 +24,7 @@
  *
  */
 
+#pragma once
 #ifndef __SYSTAB_CLOUD_H__
 #define __SYSTAB_CLOUD_H__
 

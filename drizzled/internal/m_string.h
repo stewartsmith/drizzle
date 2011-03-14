@@ -18,8 +18,7 @@
 
 
 
-#ifndef DRIZZLED_INTERNAL_M_STRING_H
-#define DRIZZLED_INTERNAL_M_STRING_H
+#pragma once
 
 #if defined(HAVE_STRINGS_H)
 #include <strings.h>
@@ -134,4 +133,3 @@ skip_trailing_space(const unsigned char *ptr, size_t len)
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_M_STRING_H */

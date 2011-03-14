@@ -15,8 +15,7 @@
 
 /* This file is included by all internal myisam files */
 
-#ifndef PLUGIN_MYISAM_MYISAM_PRIV_H
-#define PLUGIN_MYISAM_MYISAM_PRIV_H
+#pragma once
 
 #include <config.h>
 
@@ -757,4 +756,3 @@ void mi_disable_non_unique_index(MI_INFO *info, drizzled::ha_rows rows);
 void _mi_report_crashed(MI_INFO *file, const char *message, const char *sfile,
                         uint32_t sline);
 
-#endif /* PLUGIN_MYISAM_MYISAM_PRIV_H */

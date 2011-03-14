@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SET_VAR_H
-#define DRIZZLED_SET_VAR_H
+#pragma once
 
 #include <boost/shared_ptr.hpp>
 
@@ -108,4 +107,3 @@ int sql_set_variables(Session *session, const SetVarVector &var_list);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SET_VAR_H */

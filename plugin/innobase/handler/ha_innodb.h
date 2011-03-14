@@ -23,6 +23,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
   Innodb
 */
 
+#pragma once
 #ifndef INNODB_HANDLER_HA_INNODB_H
 #define INNODB_HANDLER_HA_INNODB_H
 

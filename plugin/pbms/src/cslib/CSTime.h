@@ -28,6 +28,7 @@
  *
  */
 
+#pragma once
 #ifndef __DBTIME_H__
 #define __DBTIME_H__
 

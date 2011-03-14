@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_H
-#define DRIZZLED_SESSION_H
+#pragma once
 
 #include <algorithm>
 #include <bitset>
@@ -1627,4 +1626,3 @@ size_t max_string_length(drizzled::Session::global_read_lock_t type);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SESSION_H */

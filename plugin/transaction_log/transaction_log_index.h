@@ -28,8 +28,7 @@
  * Defines the API of a simple index for the transaction log
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_INDEX_H
-#define PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_INDEX_H
+#pragma once
 
 #include "transaction_log.h"
 #include "transaction_log_entry.h"
@@ -147,4 +146,3 @@ private:
   pthread_mutex_t index_lock; ///< The global index lock
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_INDEX_H */

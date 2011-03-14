@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DYNAMIC_ARRAY_H
-#define DRIZZLED_DYNAMIC_ARRAY_H
+#pragma once
 
 #include <cstddef>
 
@@ -60,4 +59,3 @@ void delete_dynamic(DYNAMIC_ARRAY *array);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DYNAMIC_ARRAY_H */

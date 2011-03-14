@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLED_SQL_EXCEPTION_H
-#define DRIZZLED_SQL_EXCEPTION_H
+#pragma once
 
 #include <drizzled/error_t.h>
 
@@ -121,4 +120,3 @@ std::ostream& operator<<(std::ostream& output, const Exception &arg);
 } // namespace sql 
 } // namespace drizzled
 
-#endif /* DRIZZLED_SQL_EXCEPTION_H */

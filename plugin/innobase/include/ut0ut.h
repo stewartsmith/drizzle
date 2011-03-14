@@ -30,6 +30,7 @@ Various utilities
 Created 1/20/1994 Heikki Tuuri
 ***********************************************************************/
 
+#pragma once
 #ifndef ut0ut_h
 #define ut0ut_h
 

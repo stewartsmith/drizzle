@@ -24,8 +24,7 @@
  * will eventually go away, but for now we split these definitions out into
  * their own header file for easier maintenance
  */
-#ifndef DRIZZLED_SHOW_H
-#define DRIZZLED_SHOW_H
+#pragma once
 
 #include <drizzled/enum.h>
 #include <drizzled/lex_string.h>
@@ -71,4 +70,3 @@ void buildSelectError(Session *session);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SHOW_H */

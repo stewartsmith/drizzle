@@ -24,6 +24,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSOBJECT_H__
 #define __CSOBJECT_H__
 

@@ -36,6 +36,7 @@
  * are streaming enabled.
  *
  */
+#pragma once
 #ifndef __PBMS_H__
 #define __PBMS_H__
 

@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_UNIQUE_H
-#define DRIZZLED_UNIQUE_H
+#pragma once
 
 #include <drizzled/tree.h>
 /*
@@ -76,4 +75,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UNIQUE_H */

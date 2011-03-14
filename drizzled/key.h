@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_KEY_H
-#define DRIZZLED_KEY_H
+#pragma once
 
 #include <string>
 #include <boost/dynamic_bitset.hpp>
@@ -109,4 +108,3 @@ int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_KEY_H */

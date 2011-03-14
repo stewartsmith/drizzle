@@ -15,8 +15,7 @@
    Software Foundation, Inc., 51 Franklin Place - Suite 330, Boston,
    MA 02110-1301, USA */
 
-#ifndef PLUGIN_MYISAM_MY_HANDLER_H
-#define PLUGIN_MYISAM_MY_HANDLER_H
+#pragma once
 
 #include <drizzled/charset_info.h>
 #include <plugin/myisam/myisampack.h>
@@ -118,4 +117,3 @@ extern int ha_key_cmp(HA_KEYSEG *keyseg, unsigned char *a,unsigned char *b,
 */
 #define portable_sizeof_char_ptr 8
 
-#endif /* PLUGIN_MYISAM_MY_HANDLER_H */

@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __OPENTABLE_MS_H__
 #define __OPENTABLE_MS_H__
 

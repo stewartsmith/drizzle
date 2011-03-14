@@ -23,6 +23,7 @@ Row undo
 Created 1/8/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0undo_h
 #define row0undo_h
 

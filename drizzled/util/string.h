@@ -33,8 +33,7 @@
   Some sections of this code came from the Boost examples.
 */
 
-#ifndef DRIZZLED_UTIL_STRING_H
-#define DRIZZLED_UTIL_STRING_H
+#pragma once
 
 #include <utility>
 #include <string>
@@ -99,4 +98,3 @@ struct sensitive_hash : std::unary_function< std::vector<char>, std::size_t>
 } /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_STRING_H */

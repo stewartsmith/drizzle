@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <set>
 
@@ -37,4 +36,3 @@
 #include <plugin/schema_dictionary/foreign_keys.h>
 #include <plugin/schema_dictionary/table_constraints.h>
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

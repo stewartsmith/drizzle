@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSUTIL_H__
 #define __CSUTIL_H__
 

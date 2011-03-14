@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_REFRESH_VERSION_H
-#define DRIZZLED_REFRESH_VERSION_H
+#pragma once
 
 namespace drizzled
 {
@@ -31,4 +30,3 @@ extern uint64_t refresh_version;  /* Increments on each reload */
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_REFRESH_VERSION_H */

@@ -17,8 +17,7 @@
 
 
 
-#ifndef DRIZZLED_INTERNAL_MY_PTHREAD_H
-#define DRIZZLED_INTERNAL_MY_PTHREAD_H
+#pragma once
 
 #include <unistd.h>
 
@@ -125,4 +124,3 @@ extern const char *my_thread_name(void);
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_MY_PTHREAD_H */

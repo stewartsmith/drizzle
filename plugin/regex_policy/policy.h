@@ -22,8 +22,7 @@
  */
 
 
-#ifndef PLUGIN_REGEX_POLICY_POLICY_H
-#define PLUGIN_REGEX_POLICY_POLICY_H
+#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -183,4 +182,3 @@ private:
 
 } /* namespace regex_policy */
 
-#endif /* PLUGIN_REGEX_POLICY_POLICY_H */

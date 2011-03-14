@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HA_DATA_H
-#define DRIZZLED_HA_DATA_H
+#pragma once
 
 #include <drizzled/resource_context.h>
 
@@ -64,4 +63,3 @@ struct Ha_data
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_HA_DATA_H */

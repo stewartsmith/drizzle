@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CATALOG_INSTANCE_H
-#define DRIZZLED_CATALOG_INSTANCE_H
+#pragma once
 
 #include <boost/thread/mutex.hpp>
 #include <boost/make_shared.hpp>
@@ -141,4 +140,3 @@ public:
 } /* namespace catalog */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CATALOG_INSTANCE_H */

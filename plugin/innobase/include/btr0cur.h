@@ -23,6 +23,7 @@ The index tree cursor
 Created 10/16/1994 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef btr0cur_h
 #define btr0cur_h
 

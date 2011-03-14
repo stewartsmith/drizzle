@@ -29,8 +29,7 @@
 #include <drizzled/util/string.h>
 
 
-#ifndef PLUGIN_USER_LOCKS_BARRIERS_H
-#define PLUGIN_USER_LOCKS_BARRIERS_H
+#pragma once
 
 namespace user_locks {
 namespace barriers {
@@ -70,4 +69,3 @@ private:
 } /* namespace barriers */
 } /* namespace user_locks */
 
-#endif /* PLUGIN_USER_LOCKS_BARRIERS_H */

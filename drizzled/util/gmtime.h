@@ -22,8 +22,7 @@
  * This is just the header file, the actual code is under a BSD license.
  */
 
-#ifndef DRIZZLED_UTIL_GMTIME_H
-#define DRIZZLED_UTIL_GMTIME_H
+#pragma once
 
 #include <time.h>
 
@@ -41,5 +40,4 @@ void localtime(const type::Time::epoch_t &timer,  type::Time &tmbuf);
 } /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_GMTIME_H */
 

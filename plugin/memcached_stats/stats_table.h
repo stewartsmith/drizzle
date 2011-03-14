@@ -28,8 +28,7 @@
  */
 
 
-#ifndef PLUGIN_MEMCACHED_STATS_STATS_TABLE_H
-#define PLUGIN_MEMCACHED_STATS_STATS_TABLE_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/field.h>
@@ -67,4 +66,3 @@ public:
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MEMCACHED_STATS_STATS_TABLE_H */

@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_FIELD_ITERATOR_H
-#define DRIZZLED_FIELD_ITERATOR_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
@@ -133,4 +132,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_ITERATOR_H */

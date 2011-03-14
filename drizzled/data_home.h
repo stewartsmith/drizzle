@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_DATA_HOME_H
-#define DRIZZLED_DATA_HOME_H
+#pragma once
 
 #include <boost/filesystem.hpp>
 
@@ -35,4 +34,3 @@ DRIZZLED_API boost::filesystem::path& getDataHomeCatalog();
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DATA_HOME_H */

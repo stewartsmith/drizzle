@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_STATUS_DICTIONARY_VARIABLES_H
-#define PLUGIN_STATUS_DICTIONARY_VARIABLES_H
+#pragma once
 
 #include <plugin/status_dictionary/dictionary.h>
 #include <drizzled/current_session.h>
@@ -42,4 +41,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_STATUS_DICTIONARY_VARIABLES_H */

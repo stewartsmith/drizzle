@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SHOW_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SHOW_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <set>
 
@@ -41,4 +40,3 @@
 #include <plugin/show_dictionary/show_table_status.h>
 #include <plugin/show_dictionary/show_temporary_tables.h>
 
-#endif /* PLUGIN_SHOW_DICTIONARY_DICTIONARY_H */

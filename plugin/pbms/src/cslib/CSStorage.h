@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSSTORAGE_H__
 #define __CSSTORAGE_H__
 

@@ -23,6 +23,7 @@ Caching of externally stored column prefixes
 Created September 2006 Marko Makela
 *******************************************************/
 
+#pragma once
 #ifndef row0ext_h
 #define row0ext_h
 

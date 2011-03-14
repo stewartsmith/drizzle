@@ -23,6 +23,7 @@ Row operation global types
 Created 12/27/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0types_h
 #define row0types_h
 

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PTHREAD_GLOBALS_H
-#define DRIZZLED_PTHREAD_GLOBALS_H
+#pragma once
 
 #include <pthread.h>
 #include <boost/thread/mutex.hpp>
@@ -41,4 +40,3 @@ extern pthread_t signal_thread;
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PTHREAD_GLOBALS_H */

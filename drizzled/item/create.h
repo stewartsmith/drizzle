@@ -19,8 +19,7 @@
 
 /* Functions to create an item. Used by sql/sql_yacc.yy */
 
-#ifndef DRIZZLED_ITEM_CREATE_H
-#define DRIZZLED_ITEM_CREATE_H
+#pragma once
 
 #include <drizzled/item/func.h>
 #include <drizzled/plugin/function.h>
@@ -179,4 +178,3 @@ void item_create_cleanup();
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_CREATE_H */

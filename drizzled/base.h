@@ -27,8 +27,7 @@
 
 #include <drizzled/definitions.h>
 
-#ifndef DRIZZLED_BASE_H
-#define DRIZZLED_BASE_H
+#pragma once
 
 namespace drizzled
 {
@@ -437,4 +436,3 @@ inline static uint32_t ha_varchar_packlength(uint32_t field_length)
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_BASE_H */

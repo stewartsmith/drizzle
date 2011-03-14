@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_CACHE_H
-#define PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_CACHE_H
+#pragma once
 
 namespace table_cache_dictionary {
 
@@ -56,4 +55,3 @@ public:
 
 } /* namespace table_cache_dictionary */
 
-#endif /* PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_CACHE_H */

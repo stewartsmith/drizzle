@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HYBRID_TYPE_TRAITS_H
-#define DRIZZLED_HYBRID_TYPE_TRAITS_H
+#pragma once
 
 #include <drizzled/common.h>
 #include <drizzled/item_result.h>
@@ -66,4 +65,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_HYBRID_TYPE_TRAITS_H */

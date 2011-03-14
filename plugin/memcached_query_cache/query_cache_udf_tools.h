@@ -40,8 +40,7 @@
  * to a key stored in the cache
  */
 
-#ifndef PLUGIN_MEMCACHED_QUERY_CACHE_QUERY_CACHE_UDF_TOOLS_H
-#define PLUGIN_MEMCACHED_QUERY_CACHE_QUERY_CACHE_UDF_TOOLS_H
+#pragma once
 
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -96,4 +95,3 @@ public:
 
 };
 
-#endif /* PLUGIN_MEMCACHED_QUERY_CACHE_QUERY_CACHE_UDF_TOOLS_H */

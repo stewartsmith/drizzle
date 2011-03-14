@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMCACHED_FUNCTIONS_H
-#define PLUGIN_MEMCACHED_FUNCTIONS_MEMCACHED_FUNCTIONS_H
+#pragma once
 
 #include <libmemcached/memcached.h>
 
@@ -49,4 +48,3 @@ bool initMemcUDF();
  */
 void cleanupMemcUDF();
 
-#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMCACHED_FUNCTIONS_H */

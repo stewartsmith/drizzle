@@ -23,6 +23,7 @@ A vector of pointers to data items
 Created 4/6/2006 Osku Salerma
 ************************************************************************/
 
+#pragma once
 #ifndef IB_VECTOR_H
 #define IB_VECTOR_H
 

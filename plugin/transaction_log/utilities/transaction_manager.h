@@ -23,8 +23,7 @@
  * can be retrieved as a collection.
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_MANAGER_H
-#define PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_MANAGER_H
+#pragma once
 
 #include <drizzled/message/transaction.pb.h>
 #include <string>
@@ -119,4 +118,3 @@ private:
   boost::unordered_map<uint64_t,MsgBufferType> cache;
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_MANAGER_H */

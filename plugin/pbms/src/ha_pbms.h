@@ -26,6 +26,7 @@
  * Table handler.
  *
  */
+#pragma once
 #ifndef __HA_PBMS_H__
 #define __HA_PBMS_H__
 

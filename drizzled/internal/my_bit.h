@@ -21,8 +21,7 @@
   Some useful bit functions
 */
 
-#ifndef DRIZZLED_INTERNAL_MY_BIT_H
-#define DRIZZLED_INTERNAL_MY_BIT_H
+#pragma once
 
 namespace drizzled
 {
@@ -88,4 +87,3 @@ static inline uint32_t my_reverse_bits(uint32_t key)
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_MY_BIT_H */

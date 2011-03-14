@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_SINGLEROW_SUBSELECT_H
-#define DRIZZLED_SELECT_SINGLEROW_SUBSELECT_H
+#pragma once
 
 #include <drizzled/select_subselect.h>
 
@@ -38,4 +37,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_SINGLEROW_SUBSELECT_H */

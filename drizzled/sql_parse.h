@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_PARSE_H
-#define DRIZZLED_SQL_PARSE_H
+#pragma once
 
 #include <string>
 
@@ -93,4 +92,3 @@ char* query_table_status(Session *session,const char *db,const char *table_name)
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_PARSE_H */

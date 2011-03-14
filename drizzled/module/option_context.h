@@ -22,8 +22,7 @@
  * @brief An Proxy Wrapper around options_description_easy_init
  */
 
-#ifndef DRIZZLED_MODULE_OPTION_CONTEXT_H
-#define DRIZZLED_MODULE_OPTION_CONTEXT_H
+#pragma once
 
 #include <boost/noncopyable.hpp>
 #include <boost/program_options.hpp>
@@ -68,4 +67,3 @@ private:
 } /* namespace drizzled */
 
 
-#endif /* DRIZZLED_MODULE_OPTION_CONTEXT_H */

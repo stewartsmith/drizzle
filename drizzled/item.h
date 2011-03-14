@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_ITEM_H
-#define DRIZZLED_ITEM_H
+#pragma once
 
 #include <drizzled/dtcollation.h>
 #include <drizzled/global_charset_info.h>
@@ -958,4 +957,3 @@ Field *create_tmp_field(Session *session,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_H */

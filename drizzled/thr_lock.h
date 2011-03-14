@@ -15,8 +15,7 @@
 
 /* For use with thr_locks */
 
-#ifndef DRIZZLED_THR_LOCK_H
-#define DRIZZLED_THR_LOCK_H
+#pragma once
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -194,4 +193,3 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_THR_LOCK_H */

@@ -18,10 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H
-#define PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 #include <plugin/function_dictionary/functions.h>
 
-#endif /* PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H */

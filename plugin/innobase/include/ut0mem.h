@@ -23,6 +23,7 @@ Memory primitives
 Created 5/30/1994 Heikki Tuuri
 ************************************************************************/
 
+#pragma once
 #ifndef ut0mem_h
 #define ut0mem_h
 

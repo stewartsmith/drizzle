@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PROBES_H
-#define DRIZZLED_PROBES_H
+#pragma once
 
 #ifdef HAVE_DTRACE
 #include <drizzled/generated_probes.h>
@@ -102,4 +101,3 @@
 #define DRIZZLE_UPDATE_START_ENABLED() (0)
 #endif
 
-#endif /* DRIZZLED_PROBES_H */

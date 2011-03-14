@@ -24,6 +24,7 @@ from dictionary tables
 Created 4/24/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef dict0load_h
 #define dict0load_h
 

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ENUM_NESTED_LOOP_STATE_H
-#define DRIZZLED_ENUM_NESTED_LOOP_STATE_H
+#pragma once
 
 namespace drizzled
 {
@@ -43,4 +42,3 @@ Next_select_func setup_end_select_func(Join *join);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ENUM_NESTED_LOOP_STATE_H */
