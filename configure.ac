@@ -41,6 +41,9 @@ LIBDRIZZLE_LIBRARY_VERSION=1:0:0
 #                      changed
 AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
 
+libdrizzleincludedir='${includedir}/libdrizzle-1.0'
+AC_SUBST(libdrizzleincludedir)
+
 # libdrizzle versioning when linked with GNU ld.
 AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
   LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/config/drizzle.ver"
@@ -156,7 +159,7 @@ AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
  support-files/drizzle7.pc dnl
- support-files/libdrizzle.pc dnl
+ support-files/libdrizzle-1.0.pc dnl
  support-files/smf/install.sh dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)
