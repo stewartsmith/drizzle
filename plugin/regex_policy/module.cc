@@ -262,7 +262,6 @@ CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, Chec
   UnorderedCheckMap::iterator check_val;
   key= user + "_" + object;
 
-  /* using RCU to only need to lock when updating the cache */
   if ((check_val= check_cache.find(key)) != check_cache.end())
   {
     /* It was in the cache, no need to do any more lookups */
@@ -299,11 +298,11 @@ UnorderedCheckMap::iterator CheckMap::find(std::string const &k)
   return map.find(k);
 }
 
-bool &CheckMap::operator[](std::string const &k)
+void CheckMap::insert(std::string const &k, bool v)
 {
   boost::unique_lock<boost::shared_mutex> map_lock(map_mutex);
   /* add our new hotness to the map */
-  bool &result= map[k];
+  map[k]=v;
   /* Now prune if necessary */
   if (map.bucket_count() > max_cache_buckets)
   {
@@ -348,12 +347,11 @@ bool &CheckMap::operator[](std::string const &k)
     lru.clear();
     lock.unlock();
   }
-  return result;
 }
 
 void CheckItem::setCachedResult(bool result)
 {
-  check_cache[key]= result;
+  check_cache.insert(key, result);
   has_cached_result= true;
   cached_result= result;
 }

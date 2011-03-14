@@ -124,7 +124,7 @@ public:
   {
     return map.end();
   }
-  bool &operator[](std::string const &k);
+  void insert(std::string const &k, bool v);
 };
 
 class CheckItem
