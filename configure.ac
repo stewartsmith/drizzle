@@ -26,7 +26,7 @@ AC_CONFIG_AUX_DIR([config])
 
 PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
-LIBDRIZZLE_LIBRARY_VERSION=1:0:0
+LIBDRIZZLE_LIBRARY_VERSION=2:0:1
 #                          | | |
 #                   +------+ | +---+
 #                   |        |     |
