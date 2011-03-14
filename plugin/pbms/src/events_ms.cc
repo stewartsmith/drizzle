@@ -42,134 +42,6 @@ using namespace std;
 
 //==================================
 // My table event observers: 
-#ifdef OLD_WAY
-static bool insertRecord(TableEventData &data, unsigned char *new_row)
-{
-	Field_blob *field;
-	unsigned char *blob_rec;
-	char *blob_url, *possible_blob_url;
-	char safe_url[PBMS_BLOB_URL_SIZE+1];
-	PBMSBlobURLRec blob_url_buffer;
-	size_t packlength, i, length, org_length;
-	int32_t err;
-	PBMSResultRec result;
-	
-	for (i= 0; i < data.table.sizeBlobFields(); i++) {
-		field = data.table.getBlobFieldAt(i);
-
-		// Get the blob record:
-		blob_rec = new_row + field->offset(data.table.getInsertRecord());
-		packlength = field->pack_length() - data.table.getBlobPtrSize();
-
-		length = field->get_length(blob_rec);
-		memcpy(&possible_blob_url, blob_rec +packlength, sizeof(char*));
-		org_length = field->get_length(blob_rec);
-		
-		// Signal PBMS to record a new reference to the BLOB.
-		// If 'blob' is not a BLOB URL then it will be stored in the repositor as a new BLOB
-		// and a reference to it will be created.
-		if (MSEngine::couldBeURL(possible_blob_url, length) == false) {
-			err = MSEngine::createBlob(data.table.getSchemaName(), data.table.getTableName(), possible_blob_url, length, &blob_url_buffer, &result);
-			if (err) {
-				// If it fails log the error and continue to try and release any other BLOBs in the row.
-				fprintf(stderr, "PBMSEvents: createBlob(\"%s.%s\") error (%d):'%s'\n", 
-					data.table.getSchemaName(), data.table.getTableName(), result.mr_code,  result.mr_message);
-					
-				return true;
-			}				
-			blob_url = blob_url_buffer.bu_data;
-		} else {
-			// The BLOB URL may not be null terminate, if so
-			// then copy it to a safe buffer and terminate it.
-			if (possible_blob_url[length]) {
-				memcpy(safe_url, possible_blob_url, length);
-				safe_url[length] = 0;
-				blob_url = safe_url;
-			} else
-				blob_url = possible_blob_url;
-		}
-		
-		// Signal PBMS to delete the reference to the BLOB.
-		err = MSEngine::referenceBlob(data.table.getSchemaName(), data.table.getTableName(), &blob_url_buffer, blob_url, field->position(), &result);
-		if (err) {
-			// If it fails log the error and continue to try and release any other BLOBs in the row.
-			fprintf(stderr, "PBMSEvents: referenceBlob(\"%s.%s\", \"%s\" ) error (%d):'%s'\n", 
-				data.table.getSchemaName(), data.table.getTableName(), blob_url, result.mr_code,  result.mr_message);
-				
-			return true;
-		}
-		
-		// The URL is modified on insert so if the BLOB length changed reset it. 
-		// This will happen if the BLOB data was replaced with a BLOB reference. 
-		length = strlen(blob_url_buffer.bu_data)  +1;
-		if ((length != org_length) || memcmp(blob_url_buffer.bu_data, possible_blob_url, length)) {
-			char *blob = possible_blob_url; // This is the BLOB as the server currently sees it.
-			
-			if (length != org_length) {
-				field->store_length(blob_rec, packlength, length);
-			}
-			
-			if (length > org_length) {
-				// This can only happen if the BLOB URL is actually larger than the BLOB itself.
-				blob = (char *) data.session.alloc(length);
-				memcpy(blob_rec+packlength, &blob, sizeof(char*));
-			}			
-			memcpy(blob, blob_url_buffer.bu_data, length);
-		} 
-	}
-
-	return false;
-}
-
-//---
-static bool deleteRecord(TableEventData &data, const unsigned char *old_row)
-{
-	Field_blob *field;
-	const char *blob_rec;
-	unsigned char *blob_url;
-	size_t packlength, i, length;
-	int32_t err;
-	PBMSResultRec result;
-	bool call_failed = false;
-	
-	for (i= 0; i < data.table.sizeBlobFields(); i++) {
-		field = data.table.getBlobFieldAt(i);
-
-		// Get the blob record:
-		blob_rec = (char *)old_row + field->offset(data.table.getInsertRecord());
-		packlength = field->pack_length() - data.table.getBlobPtrSize();
-
-		length = field->get_length((unsigned char *)blob_rec);
-		memcpy(&blob_url, blob_rec +packlength, sizeof(char*));
-		
-		// Check to see if this is a valid URL.
-		if (MSEngine::couldBeURL(blob_url, length)) {
-		
-			// The BLOB URL may not be null terminate, if so
-			// then copy it to a safe buffer and terminate it.
-			char safe_url[PBMS_BLOB_URL_SIZE+1];
-			if (blob_url[length]) {
-				memcpy(safe_url, blob_url, length);
-				safe_url[length] = 0;
-				blob_url = safe_url;
-			}
-			
-			// Signal PBMS to delete the reference to the BLOB.
-			err = MSEngine::dereferenceBlob(data.table.getSchemaName(), data.table.getTableName(), blob_url, &result);
-			if (err) {
-				// If it fails log the error and continue to try and release any other BLOBs in the row.
-				fprintf(stderr, "PBMSEvents: dereferenceBlob(\"%s.%s\") error (%d):'%s'\n", 
-					data.table.getSchemaName(), data.table.getTableName(), result.mr_code,  result.mr_message);
-					
-				call_failed = true;
-			}
-		}
-	}
-
-	return call_failed;
-}
-#endif
-
 static bool insertRecord(const char *db, const char *table_name, char *possible_blob_url,  size_t length, 
 	Session &session, Field_blob *field, unsigned char *blob_rec, size_t packlength)
 {
@@ -222,7 +94,7 @@ static bool insertRecord(const char *db, const char *table_name, char *possible_
 		char *blob = possible_blob_url; // This is the BLOB as the server currently sees it.
 		
 		if (length != org_length) {
-			field->store_length(blob_rec, packlength);
+			field->store_length(blob_rec, length);
 		}
 		
 		if (length > org_length) {

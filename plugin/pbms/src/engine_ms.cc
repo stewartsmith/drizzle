@@ -409,6 +409,11 @@ bool MSEngine::try_dropTable(CSThread *self, const char *db_name, const char *ta
 		MSTable			*tab;
 		UnDoInfoPtr		undo_info = NULL;
 
+		undo_info = (UnDoInfoPtr) cs_malloc(sizeof(UnDoInfoRec));
+		
+		undo_info->udo_WasRename = false;
+		self->myInfo = undo_info;
+
 		otab = openTable(db_name, tab_name, false);
 		if (!otab) {
 			goto end_try;
@@ -462,10 +467,6 @@ bool MSEngine::try_dropTable(CSThread *self, const char *db_name, const char *ta
 		release_(new_path);
 
 
-		undo_info = (UnDoInfoPtr) cs_malloc(sizeof(UnDoInfoRec));
-		
-		undo_info->udo_WasRename = false;
-		self->myInfo = undo_info;
 				
 end_try:
 		rtc = false;	

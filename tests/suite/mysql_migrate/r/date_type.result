@@ -1,0 +1,25 @@
+DROP SCHEMA IF EXISTS drizzledump_migrate_test;
+Dropping test database on MySQL...
+Create test database on MySQL...
+populating MySQL with test data...
+calling drizzledump to populate Drizzle...
+test our table:
+test date type
+SHOW CREATE TABLE drizzledump_migrate_test.date_table;
+Table	Create Table
+date_table	CREATE TABLE `date_table` (
+  `description` TEXT COLLATE utf8_general_ci,
+  `col_date` DATE DEFAULT NULL,
+  `col_date_not_null` DATE DEFAULT NULL,
+  `col_date_default_null` DATE DEFAULT NULL,
+  `col_date_default_min` DATE DEFAULT NULL,
+  `col_date_default_max` DATE DEFAULT '9999-12-31'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.date_table;
+description	col_date	col_date_not_null	col_date_default_null	col_date_default_min	col_date_default_max
+MIN	1000-01-01	1000-01-01	NULL	NULL	9999-12-31
+MAX	9999-12-31	9999-12-31	NULL	NULL	9999-12-31
+NULL_ROW	NULL	2012-12-14	NULL	NULL	9999-12-31
+ZERO	NULL	NULL	NULL	NULL	NULL
+Dropping test database on MySQL...
+DROP SCHEMA drizzledump_migrate_test;

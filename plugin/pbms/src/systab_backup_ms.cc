@@ -372,7 +372,7 @@ bool MSBackupTable::seqScanNext(char *buf)
 	return_(true);
 }
 
-void MSBackupTable::seqScanPos(uint8_t *pos)
+void MSBackupTable::seqScanPos(unsigned char *pos)
 {
 	int32_t index = iBackupIndex -1;
 	if (index < 0)
@@ -381,7 +381,7 @@ void MSBackupTable::seqScanPos(uint8_t *pos)
 	mi_int4store(pos, index);
 }
 
-void MSBackupTable::seqScanRead(uint8_t *pos, char *buf)
+void MSBackupTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	iBackupIndex = mi_uint4korr(pos);
 	seqScanNext(buf);

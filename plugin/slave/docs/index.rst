@@ -3,12 +3,13 @@ Replication Slave
 
 This page contains the configuration and implementation details for Drizzle replication.
 
-See this page for a user-level example: 
+See these pages for user-level information: 
 
 .. toctree::
    :maxdepth: 2
 
    user_example
+   admin
 
 Description
 -----------
