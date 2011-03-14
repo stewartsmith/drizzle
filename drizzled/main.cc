@@ -69,6 +69,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/daemon.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/sql_lex.h>
 
 using namespace drizzled;
 using namespace std;

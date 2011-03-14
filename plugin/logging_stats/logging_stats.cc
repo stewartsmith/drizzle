@@ -94,6 +94,7 @@
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;

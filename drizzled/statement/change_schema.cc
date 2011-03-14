@@ -23,6 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/schema.h>
+#include <drizzled/sql_lex.h>
 
 #include <string>
 

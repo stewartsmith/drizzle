@@ -36,6 +36,7 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
+#include <drizzled/sql_lex.h>
 
 #include <math.h>
 #include <algorithm>

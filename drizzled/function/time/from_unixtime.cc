@@ -24,6 +24,7 @@
 #include <drizzled/session.h>
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
+#include <drizzled/field.h>
 
 #include <sstream>
 #include <string>
