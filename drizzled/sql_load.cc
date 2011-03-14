@@ -27,6 +27,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/sql_lex.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>

@@ -34,6 +34,7 @@
 #include <drizzled/filesort.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/key.h>
+#include <drizzled/sql_lex.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>

@@ -20,11 +20,10 @@
 
 #pragma once
 
-namespace drizzled
-{
+#include <drizzled/table.h>
 
-namespace table
-{
+namespace drizzled {
+namespace table {
 
 class Shell : public drizzled::Table
 {
@@ -32,12 +31,7 @@ class Shell : public drizzled::Table
 
 public:
   Shell(TableShare &arg) :
-    Table(),
     _share(arg)
-  {
-  }
-
-  ~Shell()
   {
   }
 
@@ -46,7 +40,7 @@ public:
   bool hasShare() const { return true; } /* Get rid of this long term */
   void setShare(TableShare *) { ; } /* Get rid of this long term */
 
-  void release() { assert(0); }; // This should never happen
+  void release() { assert(false); }; // This should never happen
 
 };
 

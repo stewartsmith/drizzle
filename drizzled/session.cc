@@ -70,6 +70,7 @@
 #include <plugin/myisam/myisam.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/statement.h>
+#include <drizzled/sql_lex.h>
 
 #include <algorithm>
 #include <climits>
