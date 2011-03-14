@@ -76,9 +76,10 @@ class DrizzleDumpIndex
     bool isPrimary;
     bool isUnique;
     bool isHash;
-    uint32_t length;
 
-    std::vector<std::string> columns;
+    /* Stores the column name and the length of the index part */
+    typedef std::pair<std::string,uint32_t> columnData;
+    std::vector<columnData> columns;
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj);
 };
 
@@ -133,6 +134,7 @@ class DrizzleDumpTable
     DrizzleDumpTable(std::string &table, DrizzleDumpConnection* connection) :
       dcon(connection),
       tableName(table),
+      replicate(true),
       database(NULL)
     { }
 
@@ -155,6 +157,7 @@ class DrizzleDumpTable
     std::string engineName;
     std::string collate;
     std::string comment;
+    bool replicate;
 
     // Currently MySQL only, hard to do in Drizzle
     uint64_t autoIncrement;

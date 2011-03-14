@@ -24,6 +24,7 @@
  *
  */
 
+#pragma once
 #ifndef __PARAMETERS_MS_H__
 #define __PARAMETERS_MS_H__
 

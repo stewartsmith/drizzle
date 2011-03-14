@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSUTIL_H__
 #define __CSUTIL_H__
 
@@ -77,6 +78,7 @@ int64_t		cs_byte_size_to_int8(const char *ptr, bool *invalid = NULL);
 uint64_t	cs_str_to_word8(const char *ptr, bool *overflow = NULL);
 size_t		cs_hex_to_bin(size_t size, void *bin, const char *hex);
 size_t		cs_hex_to_bin(size_t size, void *bin, size_t len, const char *hex);
+// NOTE: cs_bin_to_hex() Always null terminates the result.
 void		cs_bin_to_hex(size_t size, char *hex, size_t len, const void *bin);
 void		cs_strToUpper(char *ptr);
 void		cs_strToLower(char *ptr);

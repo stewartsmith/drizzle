@@ -27,6 +27,7 @@
  *
  */
  
+#pragma once
 #ifndef __TRANSACTION_MS_H__
 #define __TRANSACTION_MS_H__
 #include "cslib/CSDefs.h"

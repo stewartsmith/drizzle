@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_ENGINE_H
-#define PLUGIN_CATALOG_ENGINE_H
+#pragma once
 
 #include <boost/make_shared.hpp>
 #include <drizzled/catalog/engine.h>
@@ -65,4 +64,3 @@ private:
 } /* namespace catalog */
 } /* namespace plugin */
 
-#endif /* PLUGIN_CATALOG_ENGINE_H */

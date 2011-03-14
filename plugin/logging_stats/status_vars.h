@@ -27,8 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_STATUS_VARS_H
-#define PLUGIN_LOGGING_STATS_STATUS_VARS_H
+#pragma once
 
 namespace drizzled 
 { 
@@ -70,4 +69,3 @@ private:
 
 };
 
-#endif /* PLUGIN_LOGGING_STATS_STATUS_VARS_H */

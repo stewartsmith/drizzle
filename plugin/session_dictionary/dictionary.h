@@ -18,13 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
+#include <drizzled/sql_parse.h>
 #include <plugin/session_dictionary/processlist.h>
 #include <plugin/session_dictionary/savepoints.h>
 #include <plugin/session_dictionary/sessions.h>
 #include <plugin/session_dictionary/variables.h>
 
-#endif /* PLUGIN_SESSION_DICTIONARY_DICTIONARY_H */

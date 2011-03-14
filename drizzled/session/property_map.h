@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_PROPERTY_MAP_H
-#define DRIZZLED_SESSION_PROPERTY_MAP_H
+#pragma once
 
 #include <drizzled/util/storable.h>
 #include <drizzled/util/string.h>
@@ -90,4 +89,3 @@ private:
 } /* namespace session */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SESSION_PROPERTY_MAP_H */

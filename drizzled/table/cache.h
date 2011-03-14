@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_CACHE_H
-#define DRIZZLED_TABLE_CACHE_H
+#pragma once
 
 #include <boost/unordered_map.hpp>
 #include <drizzled/identifier.h>
@@ -83,4 +82,3 @@ void remove_table(table::Concurrent *arg);
 } /* namepsace table */
 } /* namepsace drizzled */
 
-#endif /* DRIZZLED_TABLE_CACHE_H */

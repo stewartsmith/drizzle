@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSMUTEX_H__
 #define __CSMUTEX_H__
 

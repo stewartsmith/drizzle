@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_PLUGIN_CATALOG_H
-#define DRIZZLED_PLUGIN_CATALOG_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/identifier.h>
@@ -77,4 +76,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_CATALOG_H */

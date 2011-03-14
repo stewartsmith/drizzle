@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TEMPORAL_INTERVAL_H
-#define DRIZZLED_TEMPORAL_INTERVAL_H
+#pragma once
 
 /* @TODO Replace this include with some forward decls */
 #include <drizzled/item.h>
@@ -198,4 +197,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TEMPORAL_INTERVAL_H */

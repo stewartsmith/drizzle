@@ -23,6 +23,7 @@ The index tree general types
 Created 2/17/1996 Heikki Tuuri
 *************************************************************************/
 
+#pragma once
 #ifndef btr0types_h
 #define btr0types_h
 

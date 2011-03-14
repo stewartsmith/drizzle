@@ -23,6 +23,7 @@ The hash table with external chains
 Created 8/18/1994 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef ha0ha_h
 #define ha0ha_h
 

@@ -46,7 +46,7 @@ void plugin::TableFunction::init()
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
 {
   assert(tool != NULL);
-  table_functions.addFunction(tool); 
+  table_functions.addFunction(tool);
   return false;
 }
 
@@ -59,6 +59,16 @@ void plugin::TableFunction::getNames(const std::string &arg,
                                      std::set<std::string> &set_of_names)
 {
   table_functions.getNames(arg, set_of_names);
+}
+
+LEX& plugin::TableFunction::Generator::lex()
+{
+	return getSession().lex();
+}
+
+statement::Statement& plugin::TableFunction::Generator::statement()
+{
+	return *lex().statement;
 }
 
 plugin::TableFunction::Generator *plugin::TableFunction::generator(Field **arg)
@@ -96,7 +106,7 @@ void plugin::TableFunction::add_field(const char *label,
   field_options->set_default_null(is_default_null);
   field_constraints->set_is_notnull(not is_default_null);
 
-  switch (type) 
+  switch (type)
   {
   case TableFunction::STRING:
     {
@@ -223,12 +233,12 @@ void plugin::TableFunction::Generator::push(bool arg)
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  if (not getSession().getLex()->wild)
+  if (not lex().wild)
     return false;
 
   bool match= wild_case_compare(system_charset_info,
                                 predicate.c_str(),
-                                getSession().getLex()->wild->ptr());
+                                lex().wild->ptr());
 
   return match;
 }

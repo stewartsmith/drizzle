@@ -23,6 +23,7 @@ The page cursor
 Created 10/4/1994 Heikki Tuuri
 *************************************************************************/
 
+#pragma once
 #ifndef page0cur_h
 #define page0cur_h
 

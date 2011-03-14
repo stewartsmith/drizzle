@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_SCHEMAS_H
-#define PLUGIN_SHOW_DICTIONARY_SHOW_SCHEMAS_H
+#pragma once
 
 class ShowSchemas : public show_dictionary::Show
 {
@@ -45,4 +44,3 @@ public:
 };
 
 
-#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_SCHEMAS_H */

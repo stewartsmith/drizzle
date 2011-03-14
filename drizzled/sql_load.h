@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_LOAD_H
-#define DRIZZLED_SQL_LOAD_H
+#pragma once
 
 #include <drizzled/definitions.h>
 #include <drizzled/sql_list.h>
@@ -42,4 +41,3 @@ int write_record(Session *session, Table *table, CopyInfo *info);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_LOAD_H */

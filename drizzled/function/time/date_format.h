@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_TIME_DATE_FORMAT_H
-#define DRIZZLED_FUNCTION_TIME_DATE_FORMAT_H
+#pragma once
 
 #include <drizzled/function/str/strfunc.h>
 
@@ -43,4 +42,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_TIME_DATE_FORMAT_H */

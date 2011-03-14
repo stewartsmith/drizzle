@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_STORAGE_ENGINE_H
-#define DRIZZLED_PLUGIN_STORAGE_ENGINE_H
+#pragma once
 
 
 #include <drizzled/cached_directory.h>
@@ -465,4 +464,3 @@ std::ostream& operator<<(std::ostream& output, const StorageEngine &engine);
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

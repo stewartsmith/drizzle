@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_MISC_H
-#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_MISC_H
+#pragma once
 
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -86,4 +85,3 @@ public:
   int64_t val_int();
 };
 
-#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_MISC_H */

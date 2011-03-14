@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_REPLICATION_SCHEMA_H
-#define PLUGIN_SLAVE_REPLICATION_SCHEMA_H
+#pragma once
 
 #include <plugin/slave/sql_executor.h>
 
@@ -52,4 +51,3 @@ public:
 
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_REPLICATION_SCHEMA_H */

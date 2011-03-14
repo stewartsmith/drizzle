@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
-#define DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
+#pragma once
 
 #include <drizzled/definition/cache.h>
 
@@ -59,4 +58,3 @@ public:
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H */

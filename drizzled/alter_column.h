@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ALTER_COLUMN_H
-#define DRIZZLED_ALTER_COLUMN_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 
@@ -50,4 +49,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ALTER_COLUMN_H */

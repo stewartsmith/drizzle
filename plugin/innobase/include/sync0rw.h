@@ -30,6 +30,7 @@ The read-write lock (for threads, not for database transactions)
 Created 9/11/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef sync0rw_h
 #define sync0rw_h
 

@@ -23,6 +23,7 @@ Select
 Created 12/19/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0sel_h
 #define row0sel_h
 

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SYSTEM_VARIABLES_H
-#define DRIZZLED_SYSTEM_VARIABLES_H
+#pragma once
 
 namespace drizzled
 {
@@ -100,4 +99,3 @@ struct drizzle_system_variables
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SYSTEM_VARIABLES_H */

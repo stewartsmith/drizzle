@@ -30,13 +30,13 @@ bool statement::Truncate::execute()
 {
   TableList *first_table= (TableList *) lex().select_lex.table_list.first;
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
-  return truncate(*getSession(), first_table);
+  return truncate(session(), first_table);
 }
 
 } /* namespace drizzled */

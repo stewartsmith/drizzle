@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_ACCESS_METHOD_SCAN_H
-#define DRIZZLED_OPTIMIZER_ACCESS_METHOD_SCAN_H
+#pragma once
 
 #include <drizzled/optimizer/access_method.h>
 
@@ -49,4 +48,3 @@ public:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_ACCESS_METHOD_SCAN_H */

@@ -23,6 +23,7 @@ The simple hash table utility
 Created 5/20/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef hash0hash_h
 #define hash0hash_h
 

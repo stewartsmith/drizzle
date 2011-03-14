@@ -93,7 +93,7 @@ bool statement::DropTable::execute()
 
   if (not drop_temporary)
   {
-    if (getSession()->inTransaction())
+    if (session().inTransaction())
     {
       my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
       return true;
@@ -102,7 +102,7 @@ bool statement::DropTable::execute()
 
   /* DDL and binlog write order protected by table::Cache::singleton().mutex() */
 
-  return rm_table(getSession(), first_table, drop_if_exists, drop_temporary);
+  return rm_table(&session(), first_table, drop_if_exists, drop_temporary);
 }
 
 } /* namespace drizzled */

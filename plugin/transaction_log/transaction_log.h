@@ -35,8 +35,7 @@
  * the TransactionLogApplier plugin(s).
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H
-#define PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/replication_services.h>
@@ -210,4 +209,3 @@ private:
   bool do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H */

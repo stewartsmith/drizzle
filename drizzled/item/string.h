@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_STRING_H
-#define DRIZZLED_ITEM_STRING_H
+#pragma once
 
 #include <drizzled/item/basic_constant.h>
 #include <drizzled/charset_info.h>
@@ -160,4 +159,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_STRING_H */

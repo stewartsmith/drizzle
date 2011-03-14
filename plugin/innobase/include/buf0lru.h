@@ -23,6 +23,7 @@ The database buffer pool LRU replacement algorithm
 Created 11/5/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef buf0lru_h
 #define buf0lru_h
 

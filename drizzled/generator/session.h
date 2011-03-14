@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_SESSION_H
-#define DRIZZLED_GENERATOR_SESSION_H
+#pragma once
 
 #include <boost/thread/mutex.hpp>
 
@@ -45,10 +44,6 @@ public:
     iter= local_list.begin();
   }
 
-  ~Session()
-  {
-  }
-
   operator drizzled::Session::pointer()
   {
     while (iter != local_list.end())
@@ -56,14 +51,9 @@ public:
       drizzled::Session::pointer ret= iter->get();
       iter++;
 
-      if (not ret->isViewable(user))
-      {
-        continue;
-      }
-
-      return ret;
+      if (ret->isViewable(user))
+	      return ret;
     }
-
     return drizzled::Session::pointer();
   }
 };
@@ -71,4 +61,3 @@ public:
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_SESSION_H */

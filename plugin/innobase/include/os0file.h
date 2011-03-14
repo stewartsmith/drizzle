@@ -32,6 +32,7 @@ The interface to the operating system file io
 Created 10/21/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef os0file_h
 #define os0file_h
 

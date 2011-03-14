@@ -23,6 +23,7 @@ General row routines
 Created 4/20/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0row_h
 #define row0row_h
 

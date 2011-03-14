@@ -14,8 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* This file is included in all heap-files */
-#ifndef PLUGIN_MEMORY_HEAP_PRIV_H
-#define PLUGIN_MEMORY_HEAP_PRIV_H
+#pragma once
 
 #include <config.h>
 #include <drizzled/base.h>
@@ -104,4 +103,3 @@ extern bool hp_compare_record_data_to_chunkset(HP_SHARE *info, const unsigned ch
 
 extern boost::mutex THR_LOCK_heap;
 
-#endif /* PLUGIN_MEMORY_HEAP_PRIV_H */

@@ -30,6 +30,7 @@ Database log
 Created 12/9/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef log0log_h
 #define log0log_h
 

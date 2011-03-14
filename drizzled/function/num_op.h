@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_NUM_OP_H
-#define DRIZZLED_FUNCTION_NUM_OP_H
+#pragma once
 
 #include <drizzled/function/numhybrid.h>
 
@@ -45,4 +44,3 @@ class Item_num_op :public Item_func_numhybrid
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_NUM_OP_H */

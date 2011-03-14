@@ -69,7 +69,7 @@ int sql_set_variables(Session *session, const SetVarVector &var_list)
     }
   }
 err:
-  free_underlaid_joins(session, &session->getLex()->select_lex);
+  free_underlaid_joins(session, &session->lex().select_lex);
   return error;
 }
 

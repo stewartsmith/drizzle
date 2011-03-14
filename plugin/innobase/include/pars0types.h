@@ -23,6 +23,7 @@ SQL parser global types
 Created 1/11/1998 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef pars0types_h
 #define pars0types_h
 

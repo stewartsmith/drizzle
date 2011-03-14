@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_PARSER_H
-#define DRIZZLED_PARSER_H
+#pragma once
 
 #include <drizzled/charset.h>
 #include <drizzled/error.h>
@@ -175,4 +174,3 @@ void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key= fal
 } // namespace parser
 } // namespace drizzled
 
-#endif /* DRIZZLED_PARSER_H */

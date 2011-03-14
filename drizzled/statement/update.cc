@@ -33,13 +33,13 @@ bool statement::Update::execute()
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &lex().select_lex;
   Select_Lex_Unit *unit= &lex().unit;
-  if (update_precheck(getSession(), all_tables))
+  if (update_precheck(&session(), all_tables))
   {
     return true;
   }
   assert(select_lex->offset_limit == 0);
   unit->set_limit(select_lex);
-  bool res= update_query(getSession(), 
+  bool res= update_query(&session(), 
                          all_tables,
                          select_lex->item_list,
                          lex().value_list,

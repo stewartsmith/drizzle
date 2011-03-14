@@ -40,7 +40,7 @@ bool statement::CreateSchema::execute()
   if (not validateSchemaOptions())
     return true;
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -56,14 +56,14 @@ bool statement::CreateSchema::execute()
   std::string path;
   schema_identifier.getSQLPath(path);
 
-  if (unlikely(plugin::EventObserver::beforeCreateDatabase(*getSession(), path)))
+  if (unlikely(plugin::EventObserver::beforeCreateDatabase(session(), path)))
   {
     my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
   }
   else
   {
-    res= schema::create(*getSession(), schema_message, lex().exists());
-    if (unlikely(plugin::EventObserver::afterCreateDatabase(*getSession(), path, res)))
+    res= schema::create(session(), schema_message, lex().exists());
+    if (unlikely(plugin::EventObserver::afterCreateDatabase(session(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
       res = false;
@@ -79,7 +79,7 @@ bool statement::CreateSchema::check(const identifier::Schema &identifier)
   if (not identifier.isValid())
     return false;
 
-  if (not plugin::Authorization::isAuthorized(*getSession()->user(), identifier))
+  if (not plugin::Authorization::isAuthorized(*session().user(), identifier))
     return false;
 
   if (not lex().exists())

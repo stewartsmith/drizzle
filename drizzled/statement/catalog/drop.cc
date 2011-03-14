@@ -42,7 +42,7 @@ Drop::Drop(Session *in_session, drizzled::lex_string_t &arg) :
 
 bool Drop::authorized() const
 {
-  if (getSession()->getClient()->isConsole())
+  if (session().getClient()->isConsole())
   {
     return true;
   }

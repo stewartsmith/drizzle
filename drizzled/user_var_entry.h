@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_USER_VAR_ENTRY_H
-#define DRIZZLED_USER_VAR_ENTRY_H
+#pragma once
 
 #include <drizzled/dtcollation.h>
 #include <drizzled/query_id.h>
@@ -77,4 +76,3 @@ class user_var_entry
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_USER_VAR_ENTRY_H */

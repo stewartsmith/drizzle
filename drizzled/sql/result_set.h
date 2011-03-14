@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLED_SQL_RESULT_SET_H
-#define DRIZZLED_SQL_RESULT_SET_H
+#pragma once
 
 #include <drizzled/visibility.h>
 #include <drizzled/sql/exception.h>
@@ -143,4 +142,3 @@ std::ostream& operator<<(std::ostream& output, const ResultSet &result_set);
 } // namespace sql 
 } // namespace drizzled
 
-#endif /* DRIZZLED_SQL_RESULT_SET_H */

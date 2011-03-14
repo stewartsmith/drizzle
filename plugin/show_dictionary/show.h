@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_H
-#define PLUGIN_SHOW_DICTIONARY_SHOW_H
+#pragma once
 
 namespace show_dictionary {
 
@@ -33,7 +32,7 @@ public:
 
   bool visible() const { return false; }
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator
   {
   public:
     Generator(drizzled::Field **arg):
@@ -42,10 +41,7 @@ public:
 
     bool isShowQuery()
     {
-      if (getSession().getLex()->statement->isShow())
-       return true;
-
-      return false;
+      return statement().isShow();
     }
   };
 
@@ -57,4 +53,3 @@ public:
 
 } /* namespace show_dictionary */
 
-#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_H */

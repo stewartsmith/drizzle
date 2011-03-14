@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_MEMORY_SQL_ALLOC_H
-#define DRIZZLED_MEMORY_SQL_ALLOC_H
+#pragma once
 
 #include <unistd.h>
 #include <drizzled/memory/root.h>
@@ -67,4 +66,3 @@ public:
 }
 }
 
-#endif /* DRIZZLED_MEMORY_SQL_ALLOC_H */

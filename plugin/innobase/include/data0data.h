@@ -23,6 +23,7 @@ SQL data field and tuple
 Created 5/30/1994 Heikki Tuuri
 *************************************************************************/
 
+#pragma once
 #ifndef data0data_h
 #define data0data_h
 

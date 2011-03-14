@@ -19,8 +19,7 @@
  */
 
 
-#ifndef PLUGIN_DRIZZLE_PROTOCOL_DRIZZLE_PROTOCOL_H
-#define PLUGIN_DRIZZLE_PROTOCOL_DRIZZLE_PROTOCOL_H
+#pragma once
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
@@ -63,4 +62,3 @@ public:
 } /* namespace drizzle_protocol */
 } /* namespace drizzle_plugin */
  
-#endif /* PLUGIN_DRIZZLE_PROTOCOL_DRIZZLE_PROTOCOL_H */

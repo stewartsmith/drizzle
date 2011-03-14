@@ -23,6 +23,7 @@ Query graph
 Created 5/27/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef que0que_h
 #define que0que_h
 

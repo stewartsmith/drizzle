@@ -7,8 +7,7 @@
  * @brief SHA1 Declarations
  */
 
-#ifndef DRIZZLED_ALGORITHM_SHA1_H
-#define DRIZZLED_ALGORITHM_SHA1_H
+#pragma once
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -57,4 +56,3 @@ DRIZZLED_API void SHA1Final(uint8_t [SHA1_DIGEST_LENGTH], SHA1_CTX *);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ALGORITHM_SHA1_H */

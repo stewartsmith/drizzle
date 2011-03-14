@@ -44,8 +44,7 @@
   in this Software without prior written authorization of the copyright holder.
 */
 
-#ifndef DRIZZLED_UTF8_UTF8_H
-#define DRIZZLED_UTF8_UTF8_H
+#pragma once
 
 #include <string>
 
@@ -140,4 +139,3 @@ static inline uint32_t char_length(const char *in_string)
 } /* namespace utf8 */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTF8_UTF8_H */

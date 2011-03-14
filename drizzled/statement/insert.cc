@@ -35,19 +35,19 @@ bool statement::Insert::execute()
   assert(first_table == all_tables && first_table != 0);
   bool need_start_waiting= false;
 
-  if (insert_precheck(getSession(), all_tables))
+  if (insert_precheck(&session(), all_tables))
   {
     return true;
   }
 
-  if (! (need_start_waiting= ! getSession()->wait_if_global_read_lock(false, true)))
+  if (! (need_start_waiting= ! session().wait_if_global_read_lock(false, true)))
   {
     return true;
   }
 
-  DRIZZLE_INSERT_START(getSession()->getQueryString()->c_str());
+  DRIZZLE_INSERT_START(session().getQueryString()->c_str());
 
-  bool res= insert_query(getSession(),
+  bool res= insert_query(&session(),
                          all_tables,
                          lex().field_list,
                          lex().many_values,
@@ -59,7 +59,7 @@ bool statement::Insert::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }

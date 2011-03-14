@@ -23,8 +23,7 @@
  * by transaction_writer.
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_FILE_READER_H
-#define PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_FILE_READER_H
+#pragma once
 
 #include <string>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -83,4 +82,3 @@ private:
   google::protobuf::io::ZeroCopyInputStream *raw_input;
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_FILE_READER_H */

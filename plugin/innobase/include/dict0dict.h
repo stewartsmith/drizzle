@@ -23,6 +23,7 @@ Data dictionary system
 Created 1/8/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef dict0dict_h
 #define dict0dict_h
 

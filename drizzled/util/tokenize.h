@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_UTIL_TOKENIZE_H
-#define DRIZZLED_UTIL_TOKENIZE_H
+#pragma once
 
 namespace drizzled
 {
@@ -56,4 +55,3 @@ void tokenize(const std::string& str, ContainerT& tokens, const std::string& del
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_TOKENIZE_H */

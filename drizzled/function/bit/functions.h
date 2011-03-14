@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_FUNCTION_BIT_FUNCTIONS_H
-#define DRIZZLED_FUNCTION_BIT_FUNCTIONS_H
+#pragma once
 
 #include <drizzled/function/bit.h>
 
@@ -91,4 +90,3 @@ public:
 } /* namespace drizzled */
 
 
-#endif /* DRIZZLED_FUNCTION_BIT_FUNCTIONS_H */

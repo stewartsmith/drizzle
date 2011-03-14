@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_STRING_H
-#define DRIZZLED_SQL_STRING_H
+#pragma once
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
@@ -351,4 +350,3 @@ bool operator==(const drizzled::String &s1, const drizzled::String &s2);
 bool operator!=(const drizzled::String &s1, const drizzled::String &s2);
 
 
-#endif /* DRIZZLED_SQL_STRING_H */

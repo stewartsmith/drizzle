@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_PLUGIN_CLIENT_CACHED_H
-#define DRIZZLED_PLUGIN_CLIENT_CACHED_H
+#pragma once
 
 
 #include <drizzled/plugin/client/concurrent.h>
@@ -176,4 +175,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_CLIENT_CACHED_H */

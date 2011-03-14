@@ -29,8 +29,7 @@
 #include <drizzled/util/string.h>
 
 
-#ifndef PLUGIN_USER_LOCKS_KEY_H
-#define PLUGIN_USER_LOCKS_KEY_H
+#pragma once
 
 namespace user_locks {
 
@@ -72,4 +71,3 @@ typedef boost::unordered_set<Key> Keys;
 
 } /* namespace user_locks */
 
-#endif /* PLUGIN_USER_LOCKS_KEY_H */

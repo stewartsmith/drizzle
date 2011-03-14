@@ -20,8 +20,7 @@
 
 
 
-#ifndef DRIZZLED_MEMORY_ROOT_H
-#define DRIZZLED_MEMORY_ROOT_H
+#pragma once
 
 #include <cstddef>
 
@@ -150,4 +149,3 @@ public:
 } /* namespace memory */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MEMORY_ROOT_H */

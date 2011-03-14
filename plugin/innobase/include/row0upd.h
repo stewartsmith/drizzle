@@ -23,6 +23,7 @@ Update of a row
 Created 12/27/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0upd_h
 #define row0upd_h
 

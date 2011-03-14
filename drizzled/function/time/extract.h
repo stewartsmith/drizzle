@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_TIME_EXTRACT_H
-#define DRIZZLED_FUNCTION_TIME_EXTRACT_H
+#pragma once
 
 #include <drizzled/function/math/int.h>
 
@@ -43,4 +42,3 @@ class Item_extract :public Item_int_func
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_TIME_EXTRACT_H */

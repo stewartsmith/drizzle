@@ -18,23 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SHOW_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SHOW_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <set>
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/statement/show.h>
-
 #include <drizzled/session.h>
 #include <drizzled/current_session.h>
 #include <drizzled/message/schema.pb.h>
-
 #include <drizzled/generator.h>
 
 #include <plugin/show_dictionary/show.h>
-
 #include <plugin/show_dictionary/show_columns.h>
 #include <plugin/show_dictionary/show_create_schema.h>
 #include <plugin/show_dictionary/show_create_table.h>
@@ -44,4 +40,3 @@
 #include <plugin/show_dictionary/show_table_status.h>
 #include <plugin/show_dictionary/show_temporary_tables.h>
 
-#endif /* PLUGIN_SHOW_DICTIONARY_DICTIONARY_H */

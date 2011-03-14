@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_UNION_H
-#define DRIZZLED_SELECT_UNION_H
+#pragma once
 
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/tmp_table_param.h>
@@ -48,4 +47,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_UNION_H */

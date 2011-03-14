@@ -29,8 +29,7 @@
   This will replace Table_ident.
   */
 
-#ifndef DRIZZLED_FILESORT_H
-#define DRIZZLED_FILESORT_H
+#pragma once
 
 namespace drizzled {
 
@@ -94,4 +93,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FILESORT_H */

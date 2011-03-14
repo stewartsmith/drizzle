@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MESSAGE_CACHE_H
-#define DRIZZLED_MESSAGE_CACHE_H
+#pragma once
 
 #include <boost/unordered_map.hpp>
 #include <boost/shared_ptr.hpp>
@@ -63,4 +62,3 @@ private:
 } /* namespace message */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MESSAGE_CACHE_H */

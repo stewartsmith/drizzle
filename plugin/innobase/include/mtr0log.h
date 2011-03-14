@@ -23,6 +23,7 @@ Mini-transaction logging routines
 Created 12/7/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef mtr0log_h
 #define mtr0log_h
 

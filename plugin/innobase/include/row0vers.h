@@ -23,6 +23,7 @@ Row versions
 Created 2/6/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0vers_h
 #define row0vers_h
 

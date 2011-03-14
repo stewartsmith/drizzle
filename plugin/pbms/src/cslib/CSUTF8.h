@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSUTF8_H__
 #define __CSUTF8_H__
 

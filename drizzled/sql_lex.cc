@@ -31,6 +31,7 @@
 #include <drizzled/index_hint.h>
 #include <drizzled/select_result.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/statement.h>
 
 #include <cstdio>
 #include <ctype.h>
@@ -224,7 +225,7 @@ void LEX::start(Session *arg)
 
 void lex_start(Session *session)
 {
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
 
   lex->session= lex->unit.session= session;
 
@@ -277,7 +278,7 @@ void lex_start(Session *session)
 
   lex->is_lex_started= true;
   lex->statement= NULL;
-  
+
   lex->is_cross= false;
   lex->reset();
 }
@@ -402,7 +403,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       if (use_mb(cs))
       {
         int l= my_ismbchar(cs, lip->get_ptr() -1, lip->get_end_of_query());
-        if (l != 0) 
+        if (l != 0)
         {
           lip->skip_binary(l-1);
           continue;
@@ -671,7 +672,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   unsigned int length;
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
   const CHARSET_INFO * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
@@ -1621,7 +1622,7 @@ bool Select_Lex_Node::set_braces(bool)
 bool Select_Lex_Node::inc_in_sum_expr()
 { return true; }
 
-uint32_t Select_Lex_Node::get_in_sum_expr() 
+uint32_t Select_Lex_Node::get_in_sum_expr()
 { return 0; }
 
 TableList* Select_Lex_Node::get_table_list()
@@ -1630,12 +1631,12 @@ TableList* Select_Lex_Node::get_table_list()
 List<Item>* Select_Lex_Node::get_item_list()
 { return NULL; }
 
-TableList *Select_Lex_Node::add_table_to_list(Session *, 
-                                              Table_ident *, 
-                                              LEX_STRING *, 
+TableList *Select_Lex_Node::add_table_to_list(Session *,
+                                              Table_ident *,
+                                              LEX_STRING *,
                                               const bitset<NUM_OF_TABLE_OPTIONS>&,
-                                              thr_lock_type, 
-                                              List<Index_hint> *, 
+                                              thr_lock_type,
+                                              List<Index_hint> *,
                                               LEX_STRING *)
 {
   return 0;
@@ -1875,15 +1876,15 @@ void Query_tables_list::reset_query_tables_list(bool init)
     for this.
 */
 LEX::LEX() :
-    result(0), 
-    yacc_yyss(0), 
+    result(0),
+    yacc_yyss(0),
     yacc_yyvs(0),
     session(NULL),
     charset(NULL),
     var_list(),
-    sql_command(SQLCOM_END), 
+    sql_command(SQLCOM_END),
     statement(NULL),
-    option_type(OPT_DEFAULT), 
+    option_type(OPT_DEFAULT),
     is_lex_started(0),
     cacheable(true),
     sum_expr_used(false),
@@ -2079,11 +2080,11 @@ void LEX::link_first_table_back(TableList *first, bool link_to_local)
 void LEX::cleanup_after_one_table_open()
 {
   /*
-    session->getLex()->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear session->getLex()->derived_tables flag
+    session->lex().derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->lex().derived_tables flag
     to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to session->getLex()->select_lex, because we
+    NOTE: all units will be connected to session->lex().select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)

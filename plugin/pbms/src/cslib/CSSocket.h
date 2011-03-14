@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSSOCKET_H__
 #define __CSSOCKET_H__
 

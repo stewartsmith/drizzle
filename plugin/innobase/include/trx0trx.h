@@ -23,6 +23,7 @@ The transaction
 Created 3/26/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef trx0trx_h
 #define trx0trx_h
 

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_ALTER_TABLE_H
-#define DRIZZLED_STATEMENT_ALTER_TABLE_H
+#pragma once
 
 #include <drizzled/statement/create_table.h>
 
@@ -63,4 +62,3 @@ bool alter_table(Session *session,
                  uint32_t order_num, Order *order, bool ignore);
 
 } /* namespace drizzled */
-#endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */

@@ -21,6 +21,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Define a symbol to prevent multiple inclusions of this header file
  */
+#pragma once
 #ifndef	XA_H
 #define	XA_H
 

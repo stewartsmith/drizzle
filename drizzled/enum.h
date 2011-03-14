@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ENUM_H
-#define DRIZZLED_ENUM_H
+#pragma once
 
 namespace drizzled
 {
@@ -301,4 +300,3 @@ enum drizzle_exit_codes
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ENUM_H */

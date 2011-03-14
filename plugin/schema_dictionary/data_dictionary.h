@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_DATA_DICTIONARY_H
-#define PLUGIN_SCHEMA_DICTIONARY_DATA_DICTIONARY_H
+#pragma once
 
 class DataDictionary : public drizzled::plugin::TableFunction
 {
@@ -44,4 +43,3 @@ public:
 
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_DATA_DICTIONARY_H */

@@ -39,8 +39,7 @@
  * @see drizzled/calendar.cc
  */
 
-#ifndef DRIZZLED_TEMPORAL_H
-#define DRIZZLED_TEMPORAL_H
+#pragma once
 
 #define DRIZZLE_MAX_SECONDS 59
 #define DRIZZLE_MAX_SECONDS_WITH_LEAP 61
@@ -830,4 +829,3 @@ public:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_TEMPORAL_H */

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TZTIME_H
-#define DRIZZLED_TZTIME_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/type/time.h>
@@ -74,4 +73,3 @@ bool     my_tz_init(Session *org_session, const char *default_tzname);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TZTIME_H */

@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_INTERNAL_ERROR_HANDLER_H
-#define DRIZZLED_INTERNAL_ERROR_HANDLER_H
+#pragma once
 
 #include <drizzled/sql_error.h>
 
@@ -71,4 +70,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_ERROR_HANDLER_H */

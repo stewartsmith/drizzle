@@ -19,8 +19,7 @@
  */
 
 
-#ifndef PLUGIN_MYSQL_UNIX_SOCKET_PROTOCOL_PROTOCOL_H
-#define PLUGIN_MYSQL_UNIX_SOCKET_PROTOCOL_PROTOCOL_H
+#pragma once
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
@@ -70,4 +69,3 @@ public:
 } /* namespace mysql_unix_socket_protocol */
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MYSQL_UNIX_SOCKET_PROTOCOL_PROTOCOL_H */

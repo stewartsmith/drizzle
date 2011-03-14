@@ -16,9 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_HAILDB_STATUS_TABLE_FUNCTION_H
-#define PLUGIN_HAILDB_STATUS_TABLE_FUNCTION_H
+#pragma once
 
 int status_table_function_initialize(drizzled::module::Context &context);
 
-#endif /* PLUGIN_HAILDB_STATUS_TABLE_FUNCTION_H */

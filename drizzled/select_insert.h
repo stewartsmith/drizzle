@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_INSERT_H
-#define DRIZZLED_SELECT_INSERT_H
+#pragma once
 
 #include <drizzled/select_result_interceptor.h>
 
@@ -53,4 +52,3 @@ class select_insert :public select_result_interceptor {
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_INSERT_H */

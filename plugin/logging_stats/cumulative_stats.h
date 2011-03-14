@@ -27,8 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H
-#define PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H
+#pragma once
 
 #include "scoreboard_slot.h"
 #include "scoreboard.h"
@@ -99,4 +98,3 @@ private:
   bool isOpenUserSlots;
 };
 
-#endif /* PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H */

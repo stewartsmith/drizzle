@@ -1,0 +1,16 @@
+# mysql_migrate.partitions
+# tests migration of partitioned tables 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_partitions.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+eval SHOW CREATE TABLE $database.t1;
+
+eval SELECT * FROM $database.t1;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;

@@ -18,14 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_TABLE_CACHE_DICTIONARY_DICTIONARY_H
-#define PLUGIN_TABLE_CACHE_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <set>
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/plugin/storage_engine.h>
-#include <drizzled/statement/select.h>
 
 #include <drizzled/session.h>
 #include <drizzled/message/schema.pb.h>
@@ -33,4 +31,3 @@
 #include <plugin/table_cache_dictionary/table_definition_cache.h>
 #include <plugin/table_cache_dictionary/table_cache.h>
 
-#endif /* PLUGIN_TABLE_CACHE_DICTIONARY_DICTIONARY_H */

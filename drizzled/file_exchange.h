@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_FILE_EXCHANGE_H
-#define DRIZZLED_FILE_EXCHANGE_H
+#pragma once
 
 #include <drizzled/sql_string.h>
 #include <drizzled/memory/sql_alloc.h>
@@ -58,4 +57,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FILE_EXCHANGE_H */

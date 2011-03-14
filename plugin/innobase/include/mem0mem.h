@@ -23,6 +23,7 @@ The memory management
 Created 6/9/1994 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef mem0mem_h
 #define mem0mem_h
 

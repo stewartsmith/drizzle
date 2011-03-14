@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_TYPE_DECIMAL_H
-#define DRIZZLED_TYPE_DECIMAL_H
+#pragma once
 #include <assert.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/definitions.h>
@@ -457,5 +456,4 @@ double my_double_round(double value, int64_t dec, bool dec_unsigned,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TYPE_DECIMAL_H */
 

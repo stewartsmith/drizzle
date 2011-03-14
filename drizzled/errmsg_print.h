@@ -24,8 +24,7 @@
 
 
 
-#ifndef DRIZZLED_ERRMSG_PRINT_H
-#define DRIZZLED_ERRMSG_PRINT_H
+#pragma once
 
 #include <drizzled/visibility.h>
 #include <drizzled/error/level_t.h>
@@ -44,6 +43,5 @@ DRIZZLED_API void sql_perror(std::string message, const std::string &extra);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ERRMSG_PRINT_H */
 
 

@@ -22,8 +22,7 @@
 
 
 
-#ifndef DRIZZLED_TABLE_H
-#define DRIZZLED_TABLE_H
+#pragma once
 
 #include <string>
 #include <boost/dynamic_bitset.hpp>
@@ -846,4 +845,3 @@ bool check_table_name(const char *name, uint32_t length);
 #include <drizzled/table/singular.h>
 #include <drizzled/table/concurrent.h>
 
-#endif /* DRIZZLED_TABLE_H */

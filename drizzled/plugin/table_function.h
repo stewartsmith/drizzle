@@ -20,8 +20,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_TABLE_FUNCTION_H
-#define DRIZZLED_PLUGIN_TABLE_FUNCTION_H
+#pragma once
 
 #include <drizzled/definitions.h>
 #include <drizzled/plugin.h>
@@ -37,8 +36,11 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
+
+namespace statement { class Statement; }
+
+class LEX;
 
 namespace plugin
 {
@@ -88,7 +90,7 @@ public:
   virtual ~TableFunction() {}
 
   static bool addPlugin(TableFunction *function);
-  static void removePlugin(TableFunction *) 
+  static void removePlugin(TableFunction *)
   { }
   static TableFunction *getFunction(const std::string &arg);
   static void getNames(const std::string &arg,
@@ -102,13 +104,15 @@ public:
     SIZE
   };
 
-  class Generator 
+  class Generator
   {
     Field **columns;
     Field **columns_iterator;
     Session *session;
 
   protected:
+  	LEX& lex();
+  	statement::Statement& statement();
 
     drizzled::Session &getSession()
     {
@@ -143,27 +147,27 @@ public:
   };
 
   void define(message::Table &arg)
-  { 
+  {
     arg.CopyFrom(proto);
   }
 
   const std::string &getTableLabel()
-  { 
+  {
     return original_table_label;
   }
 
   const std::string &getIdentifierTableName()
-  { 
+  {
     return identifier.getTableName();
   }
 
   const std::string &getSchemaHome()
-  { 
+  {
     return identifier.getSchemaName();
   }
 
   const std::string &getPath()
-  { 
+  {
     return identifier.getPath();
   }
 
@@ -191,4 +195,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_TABLE_FUNCTION_H */
