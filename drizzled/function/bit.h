@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_FUNCTION_BIT_H
-#define DRIZZLED_FUNCTION_BIT_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
@@ -61,4 +60,3 @@ public:
 } /* namespace drizzled */
 
 
-#endif /* DRIZZLED_FUNCTION_BIT_H */

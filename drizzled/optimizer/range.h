@@ -19,8 +19,7 @@
 
 /* classes to use when handling where clause */
 
-#ifndef DRIZZLED_OPTIMIZER_RANGE_H
-#define DRIZZLED_OPTIMIZER_RANGE_H
+#pragma once
 
 #include <drizzled/field.h>
 #include <drizzled/item/sum.h>
@@ -371,4 +370,3 @@ bool get_quick_keys(Parameter *param,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_RANGE_H */

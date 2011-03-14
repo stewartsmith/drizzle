@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_TMP_TABLE_PARAM_H
-#define DRIZZLED_TMP_TABLE_PARAM_H
+#pragma once
 
 #include <plugin/myisam/myisam.h>
 
@@ -114,4 +113,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TMP_TABLE_PARAM_H */

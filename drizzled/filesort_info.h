@@ -18,8 +18,7 @@
  */
 
 #include <drizzled/sql_sort.h>
-#ifndef DRIZZLED_FILESORT_INFO_H
-#define DRIZZLED_FILESORT_INFO_H
+#pragma once
 
 
 namespace drizzled
@@ -75,4 +74,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FILESORT_INFO_H */

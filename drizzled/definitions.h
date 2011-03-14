@@ -23,8 +23,7 @@
  * Mostly constants and some macros/functions used by the server
  */
 
-#ifndef DRIZZLED_DEFINITIONS_H
-#define DRIZZLED_DEFINITIONS_H
+#pragma once
 
 #include <drizzled/enum.h>
 
@@ -593,4 +592,3 @@ typedef uint32_t nesting_map; /* Used for flags of nesting constructs */
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DEFINITIONS_H */

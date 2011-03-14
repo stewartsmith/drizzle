@@ -1,3 +1,4 @@
+#pragma once
 #ifndef __SYSTAB_UTIL_H__
 #define __SYSTAB_UTIL_H__
 /* Copyright (C) 2009 PrimeBase Technologies GmbH, Germany

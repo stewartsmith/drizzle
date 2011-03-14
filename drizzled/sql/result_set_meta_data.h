@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLED_SQL_RESULT_SET_META_DATA_H
-#define DRIZZLED_SQL_RESULT_SET_META_DATA_H
+#pragma once
 
 #include <cassert>
 #include <queue>
@@ -67,4 +66,3 @@ std::ostream& operator<<(std::ostream& output, const ResultSetMetaData &result_s
 } // namespace sql 
 } // namespace drizzled
 
-#endif /* DRIZZLED_SQL_RESULT_SET_META_DATA_H */

@@ -114,7 +114,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 {
   enum_parsing_place place= NO_MATTER;
   assert(fixed == 0);
-  Select_Lex *current_sel= session->getLex()->current_select;
+  Select_Lex *current_sel= session->lex().current_select;
 
   if (!ref || ref == not_found_item)
   {
@@ -269,16 +269,16 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
           goto error;
         *reference= fld;
         mark_as_dependent(session, last_checked_context->select_lex,
-                          session->getLex()->current_select, this, fld);
+                          session->lex().current_select, this, fld);
         /*
           A reference is resolved to a nest level that's outer or the same as
           the nest level of the enclosing set function : adjust the value of
           max_arg_level for the function if it's needed.
         */
-        if (session->getLex()->in_sum_func &&
-            session->getLex()->in_sum_func->nest_level >=
+        if (session->lex().in_sum_func &&
+            session->lex().in_sum_func->nest_level >=
             last_checked_context->select_lex->nest_level)
-          set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
+          set_if_bigger(session->lex().in_sum_func->max_arg_level,
                         last_checked_context->select_lex->nest_level);
         return false;
       }
@@ -298,10 +298,10 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
         the nest level of the enclosing set function : adjust the value of
         max_arg_level for the function if it's needed.
       */
-      if (session->getLex()->in_sum_func &&
-          session->getLex()->in_sum_func->nest_level >=
+      if (session->lex().in_sum_func &&
+          session->lex().in_sum_func->nest_level >=
           last_checked_context->select_lex->nest_level)
-        set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
+        set_if_bigger(session->lex().in_sum_func->max_arg_level,
                       last_checked_context->select_lex->nest_level);
     }
   }

@@ -24,6 +24,7 @@ to the machine format.
 Created 11/28/1995 Heikki Tuuri
 ***********************************************************************/
 
+#pragma once
 #ifndef mach0data_h
 #define mach0data_h
 

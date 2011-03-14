@@ -16,11 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_STORAGE_ENGINE_API_TESTER_ENGINE_STATE_HISTORY_H
-#define PLUGIN_STORAGE_ENGINE_API_TESTER_ENGINE_STATE_HISTORY_H
+#pragma once
 
 extern std::vector<std::string> engine_state_history;
 
 int engine_state_history_table_initialize(drizzled::module::Context &context);
 
-#endif /* PLUGIN_STORAGE_ENGINE_API_TESTER_ENGINE_STATE_HISTORY_H */

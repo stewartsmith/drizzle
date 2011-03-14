@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_CATALOG_LOCAL_H
-#define DRIZZLED_CATALOG_LOCAL_H
+#pragma once
 
 #include <drizzled/identifier.h>
 #include <drizzled/catalog/instance.h>
@@ -37,4 +36,3 @@ DRIZZLED_API Instance::shared_ptr local();
 } /* namespace catalog */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CATALOG_LOCAL_H */

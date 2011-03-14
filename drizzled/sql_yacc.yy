@@ -33,7 +33,7 @@
 
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
-#define Lex (session->getLex())
+#define Lex (session->lex())
 
 #include <config.h>
 #include <cstdio>
@@ -632,8 +632,8 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         opt_status
         opt_zerofill
         opt_if_not_exists
-        if_exists 
-        opt_temporary 
+        if_exists
+        opt_temporary
         opt_field_number_signed
 
 %type <num>
@@ -797,14 +797,14 @@ rule: <-- starts at col 1
 query:
           END_OF_INPUT
           {
-            if (!(YYSession->getLex()->select_lex.options & OPTION_FOUND_COMMENT))
+            if (!(YYSession->lex().select_lex.options & OPTION_FOUND_COMMENT))
             {
               my_message(ER_EMPTY_QUERY, ER(ER_EMPTY_QUERY), MYF(0));
               DRIZZLE_YYABORT;
             }
             else
             {
-              YYSession->getLex()->statement= new statement::EmptyQuery(YYSession);
+              YYSession->lex().statement= new statement::EmptyQuery(YYSession);
             }
           }
         | verb_clause END_OF_INPUT {}
@@ -850,42 +850,42 @@ statement:
 create:
           CREATE CATALOG_SYM catalog_name
           {
-            Lex->statement= new statement::catalog::Create(YYSession, $3);
+            Lex.statement= new statement::catalog::Create(YYSession, $3);
           }
         | CREATE opt_table_options TABLE_SYM opt_if_not_exists table_ident
           {
-            Lex->statement= new statement::CreateTable(YYSession, $5, $2);
+            Lex.statement= new statement::CreateTable(YYSession, $5, $2);
 
-            if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL,
+            if (not Lex.select_lex.add_table_to_list(YYSession, $5, NULL,
                                                      TL_OPTION_UPDATING,
                                                      TL_WRITE))
               DRIZZLE_YYABORT;
-            Lex->col_list.clear();
+            Lex.col_list.clear();
           }
           create_table_definition
           {
-            Lex->current_select= &Lex->select_lex;
+            Lex.current_select= &Lex.select_lex;
           }
         | CREATE build_method
           {
-            Lex->statement= new statement::CreateIndex(YYSession, $2);
+            Lex.statement= new statement::CreateIndex(YYSession, $2);
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
-            if (not Lex->current_select->add_table_to_list(Lex->session, $9,
+            if (not Lex.current_select->add_table_to_list(Lex.session, $9,
                                                             NULL,
                                                             TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
 
-            parser::buildKey(Lex, $4, $6);
+            parser::buildKey(&Lex, $4, $6);
           }
         | CREATE DATABASE opt_if_not_exists schema_name
           {
-            Lex->statement= new statement::CreateSchema(YYSession);
+            Lex.statement= new statement::CreateSchema(YYSession);
           }
           opt_create_database_options
           {
-            Lex->name= $4;
+            Lex.name= $4;
           }
         ;
 
@@ -894,14 +894,14 @@ create_table_definition:
           { }
         | '(' create_select ')'
            {
-             Lex->current_select->set_braces(1);
+             Lex.current_select->set_braces(1);
            }
            union_opt {}
         |  '(' create_like ')' opt_create_table_options
           { }
         | create_like opt_create_table_options
           { }
-        | opt_create_table_options create_select_as 
+        | opt_create_table_options create_select_as
           { }
         ;
 
@@ -909,12 +909,12 @@ create_select_as:
           /* empty */ {}
         | opt_duplicate_as create_select
           {
-            Lex->current_select->set_braces(0);
+            Lex.current_select->set_braces(0);
           }
           union_clause {}
         | opt_duplicate_as '(' create_select ')'
           {
-            Lex->current_select->set_braces(1);
+            Lex.current_select->set_braces(1);
           }
           union_opt {}
         ;
@@ -922,9 +922,9 @@ create_select_as:
 create_like:
           LIKE table_ident
           {
-            ((statement::CreateTable *)(YYSession->getLex()->statement))->is_create_table_like= true;
+            ((statement::CreateTable *)(YYSession->lex().statement))->is_create_table_like= true;
 
-            if (not YYSession->getLex()->select_lex.add_table_to_list(YYSession, $2, NULL, 0, TL_READ))
+            if (not YYSession->lex().select_lex.add_table_to_list(YYSession, $2, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
         ;
@@ -941,28 +941,28 @@ create_select:
 stored_select:
           SELECT_SYM
           {
-            Lex->lock_option= TL_READ;
-            if (Lex->sql_command == SQLCOM_INSERT)
+            Lex.lock_option= TL_READ;
+            if (Lex.sql_command == SQLCOM_INSERT)
             {
-              delete Lex->statement;
-              Lex->statement= new statement::InsertSelect(YYSession);
+              delete Lex.statement;
+              Lex.statement= new statement::InsertSelect(YYSession);
             }
-            else if (Lex->sql_command == SQLCOM_REPLACE)
+            else if (Lex.sql_command == SQLCOM_REPLACE)
             {
-              delete Lex->statement;
-              Lex->statement= new statement::ReplaceSelect(YYSession);
+              delete Lex.statement;
+              Lex.statement= new statement::ReplaceSelect(YYSession);
             }
             /*
               The following work only with the local list, the global list
               is created correctly in this case
             */
-            Lex->current_select->table_list.save_and_clear(&Lex->save_list);
-            init_select(Lex);
-            Lex->current_select->parsing_place= SELECT_LIST;
+            Lex.current_select->table_list.save_and_clear(&Lex.save_list);
+            init_select(&Lex);
+            Lex.current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
           {
-            Lex->current_select->parsing_place= NO_MATTER;
+            Lex.current_select->parsing_place= NO_MATTER;
           }
           opt_select_from
           {
@@ -970,7 +970,7 @@ stored_select:
               The following work only with the local list, the global list
               is created correctly in this case
             */
-            Lex->current_select->table_list.push_front(&Lex->save_list);
+            Lex.current_select->table_list.push_front(&Lex.save_list);
           }
         ;
 
@@ -988,24 +988,24 @@ opt_database_custom_options:
 custom_database_option:
           ident_or_text
           {
-            statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+            statement::CreateSchema *statement= (statement::CreateSchema *)Lex.statement;
             statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
           }
         | REPLICATE opt_equal TRUE_SYM
           {
-            parser::buildReplicationOption(Lex, true);
+            parser::buildReplicationOption(&Lex, true);
           }
         | REPLICATE opt_equal FALSE_SYM
           {
-            parser::buildReplicationOption(Lex, false);
+            parser::buildReplicationOption(&Lex, false);
           }
         | ident_or_text equal ident_or_text
           {
-            parser::buildSchemaOption(Lex, $1.str, $3);
+            parser::buildSchemaOption(&Lex, $1.str, $3);
           }
         | ident_or_text equal ulonglong_num
           {
-            parser::buildSchemaOption(Lex, $1.str, $3);
+            parser::buildSchemaOption(&Lex, $1.str, $3);
           }
         ;
 
@@ -1016,7 +1016,7 @@ opt_table_options:
 
 opt_if_not_exists:
           /* empty */ { $$= false; }
-        | IF NOT_SYM EXISTS { $$= true; YYSession->getLex()->setExists(); }
+        | IF NOT_SYM EXISTS { $$= true; YYSession->lex().setExists(); }
         ;
 
 opt_create_table_options:
@@ -1040,39 +1040,39 @@ create_table_option:
 custom_engine_option:
         ENGINE_SYM equal ident_or_text
           {
-            Lex->table()->mutable_engine()->set_name($3.str);
+            Lex.table()->mutable_engine()->set_name($3.str);
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
-            Lex->table()->mutable_options()->set_comment($3.str);
+            Lex.table()->mutable_options()->set_comment($3.str);
           }
         | AUTO_INC opt_equal ulonglong_num
           {
-            Lex->table()->mutable_options()->set_auto_increment_value($3);
+            Lex.table()->mutable_options()->set_auto_increment_value($3);
           }
         | REPLICATE opt_equal TRUE_SYM
           {
-	    message::set_is_replicated(*Lex->table(), true);
+	    message::set_is_replicated(*Lex.table(), true);
           }
         | REPLICATE opt_equal FALSE_SYM
           {
-	    message::set_is_replicated(*Lex->table(), false);
+	    message::set_is_replicated(*Lex.table(), false);
           }
         |  ROW_FORMAT_SYM equal row_format_or_text
           {
-            parser::buildEngineOption(Lex, "ROW_FORMAT", $3);
+            parser::buildEngineOption(&Lex, "ROW_FORMAT", $3);
           }
         |  FILE_SYM equal TEXT_STRING_sys
           {
-            parser::buildEngineOption(Lex, "FILE", $3);
+            parser::buildEngineOption(&Lex, "FILE", $3);
           }
         |  ident_or_text equal engine_option_value
           {
-            parser::buildEngineOption(Lex, $1.str, $3);
+            parser::buildEngineOption(&Lex, $1.str, $3);
           }
         | ident_or_text equal ulonglong_num
           {
-            parser::buildEngineOption(Lex, $1.str, $3);
+            parser::buildEngineOption(&Lex, $1.str, $3);
           }
         | default_collation
         ;
@@ -1080,7 +1080,7 @@ custom_engine_option:
 default_collation:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
-            if (not parser::buildCollation(Lex, $4))
+            if (not parser::buildCollation(&Lex, $4))
             {
               DRIZZLE_YYABORT;
             }
@@ -1090,7 +1090,7 @@ default_collation:
 default_collation_schema:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
-            ((statement::CreateSchema *)Lex->statement)->schema_message.set_collation($4->name);
+            ((statement::CreateSchema *)Lex.statement)->schema_message.set_collation($4->name);
           }
         ;
 
@@ -1130,31 +1130,31 @@ column_def:
           field_spec opt_check_constraint
         | field_spec references
           {
-            Lex->col_list.clear(); /* Alloced by memory::sql_alloc */
+            Lex.col_list.clear(); /* Alloced by memory::sql_alloc */
           }
         ;
 
 key_def:
           key_type opt_ident key_alg '(' key_list ')' key_options
           {
-            parser::buildKey(Lex, $1, $2);
+            parser::buildKey(&Lex, $1, $2);
           }
         | opt_constraint constraint_key_type opt_ident key_alg
           '(' key_list ')' key_options
           {
-            parser::buildKey(Lex, $2, $3.str ? $3 : $1);
+            parser::buildKey(&Lex, $2, $3.str ? $3 : $1);
           }
         | opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
           {
-            parser::buildForeignKey(Lex, $1.str ? $1 : $4, $8);
+            parser::buildForeignKey(&Lex, $1.str ? $1 : $4, $8);
           }
         | constraint opt_check_constraint
           {
-            Lex->col_list.clear(); /* Alloced by memory::sql_alloc */
+            Lex.col_list.clear(); /* Alloced by memory::sql_alloc */
           }
         | opt_constraint check_constraint
           {
-            Lex->col_list.clear(); /* Alloced by memory::sql_alloc */
+            Lex.col_list.clear(); /* Alloced by memory::sql_alloc */
           }
         ;
 
@@ -1179,126 +1179,126 @@ constraint:
 field_spec:
           field_ident
           {
-            parser::buildCreateFieldIdent(Lex);
+            parser::buildCreateFieldIdent(&Lex);
           }
           field_def opt_attribute_comment
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex.statement;
 
-            if (Lex->field())
+            if (Lex.field())
             {
-              Lex->field()->set_name($1.str);
+              Lex.field()->set_name($1.str);
             }
 
-            if (add_field_to_list(Lex->session, &$1, (enum enum_field_types) $3,
-                                  Lex->length, Lex->dec, Lex->type,
+            if (add_field_to_list(Lex.session, &$1, (enum enum_field_types) $3,
+                                  Lex.length, Lex.dec, Lex.type,
                                   statement->column_format,
                                   statement->default_value, statement->on_update_value,
                                   &statement->comment,
-                                  statement->change, &Lex->interval_list, Lex->charset))
+                                  statement->change, &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
 
-            Lex->setField(NULL);
+            Lex.setField(NULL);
           }
         ;
 
 field_def:
           TIMESTAMP_SYM opt_attribute_timestamp
           {
-            $$=parser::buildTimestampColumn(Lex, NULL);
+            $$=parser::buildTimestampColumn(&Lex, NULL);
           }
         | TIMESTAMP_SYM '(' NUM ')' opt_attribute_timestamp
           {
-            $$=parser::buildTimestampColumn(Lex, $3.str);
-          } 
+            $$=parser::buildTimestampColumn(&Lex, $3.str);
+          }
         | DATETIME_SYM opt_attribute_timestamp
           {
             $$=DRIZZLE_TYPE_DATETIME;
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DATETIME);
-          } 
+            if (Lex.field())
+              Lex.field()->set_type(message::Table::Field::DATETIME);
+          }
         | int_type opt_attribute_number
-          { 
+          {
             $$= $1;
           }
         | CHAR_SYM opt_attribute_string
           {
-            $$= parser::buildVarcharColumn(Lex, "1");
+            $$= parser::buildVarcharColumn(&Lex, "1");
           }
         | varchar '(' NUM ')' opt_attribute_string
           {
-            $$= parser::buildVarcharColumn(Lex, $3.str);
+            $$= parser::buildVarcharColumn(&Lex, $3.str);
           }
         | TEXT_SYM opt_attribute_string
           {
             $$=DRIZZLE_TYPE_BLOB;
-            Lex->length=(char*) 0; /* use default length */
+            Lex.length=(char*) 0; /* use default length */
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::BLOB);
+            if (Lex.field())
+              Lex.field()->set_type(message::Table::Field::BLOB);
           }
         | ENUM_SYM
           {
-            Lex->interval_list.clear();
+            Lex.interval_list.clear();
           }
           '(' string_list ')' opt_attribute_string
           {
             $$=DRIZZLE_TYPE_ENUM;
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::ENUM);
+            if (Lex.field())
+              Lex.field()->set_type(message::Table::Field::ENUM);
           }
         | VARBINARY '(' NUM ')' opt_attribute
           {
-            $$= parser::buildVarbinaryColumn(Lex, $3.str);
+            $$= parser::buildVarbinaryColumn(&Lex, $3.str);
           }
         | real_type opt_attribute_number
           {
             assert ($1 == DRIZZLE_TYPE_DOUBLE);
-            $$= parser::buildDoubleColumn(Lex);
-          } 
+            $$= parser::buildDoubleColumn(&Lex);
+          }
         | DATE_SYM opt_attribute
           {
             $$=DRIZZLE_TYPE_DATE;
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::DATE);
+            if (Lex.field())
+              Lex.field()->set_type(message::Table::Field::DATE);
           }
         | TIME_SYM opt_attribute
           {
             $$=DRIZZLE_TYPE_TIME;
 
-            if (Lex->field())
-              Lex->field()->set_type(message::Table::Field::TIME);
+            if (Lex.field())
+              Lex.field()->set_type(message::Table::Field::TIME);
           }
         | BLOB_SYM opt_attribute
           {
-            $$= parser::buildBlobColumn(Lex);
+            $$= parser::buildBlobColumn(&Lex);
           }
         | DECIMAL_SYM float_options opt_attribute_number
           {
-            $$= parser::buildDecimalColumn(Lex);
+            $$= parser::buildDecimalColumn(&Lex);
           }
         | NUMERIC_SYM float_options opt_attribute_number
           {
-            $$= parser::buildDecimalColumn(Lex);
+            $$= parser::buildDecimalColumn(&Lex);
           }
         | FIXED_SYM float_options opt_attribute_number
           {
-            $$= parser::buildDecimalColumn(Lex);
+            $$= parser::buildDecimalColumn(&Lex);
           }
         | UUID_SYM opt_attribute
           {
-            $$= parser::buildUuidColumn(Lex);
+            $$= parser::buildUuidColumn(&Lex);
           }
         | BOOLEAN_SYM opt_attribute_boolean
           {
-            $$= parser::buildBooleanColumn(Lex);
+            $$= parser::buildBooleanColumn(&Lex);
           }
         | SERIAL_SYM
           {
-            $$= parser::buildSerialColumn(Lex);
+            $$= parser::buildSerialColumn(&Lex);
           }
         ;
 
@@ -1312,13 +1312,13 @@ varchar:
         ;
 
 int_type:
-          INT_SYM  ignored_field_number_length opt_field_number_signed opt_zerofill 
+          INT_SYM  ignored_field_number_length opt_field_number_signed opt_zerofill
           {
-            $$= parser::buildIntegerColumn(Lex, DRIZZLE_TYPE_LONG, ($3 or $4));
+            $$= parser::buildIntegerColumn(&Lex, DRIZZLE_TYPE_LONG, ($3 or $4));
           }
-        | BIGINT_SYM ignored_field_number_length opt_field_number_signed opt_zerofill 
+        | BIGINT_SYM ignored_field_number_length opt_field_number_signed opt_zerofill
           {
-            $$= parser::buildIntegerColumn(Lex, DRIZZLE_TYPE_LONGLONG, ($3 or $4));
+            $$= parser::buildIntegerColumn(&Lex, DRIZZLE_TYPE_LONGLONG, ($3 or $4));
           }
         ;
 
@@ -1339,9 +1339,9 @@ real_type:
 
 float_options:
           /* empty */
-          { Lex->dec=Lex->length= (char*)0; }
+          { Lex.dec=Lex.length= (char*)0; }
         | '(' NUM ')'
-          { Lex->length=$2.str; Lex->dec= (char*)0; }
+          { Lex.length=$2.str; Lex.dec= (char*)0; }
         | precision
           {}
         ;
@@ -1349,20 +1349,20 @@ float_options:
 precision:
           '(' NUM ',' NUM ')'
           {
-            Lex->length= $2.str;
-            Lex->dec= $4.str;
+            Lex.length= $2.str;
+            Lex.dec= $4.str;
           }
         ;
 
 opt_len:
-          /* empty */ { Lex->length=(char*) 0; /* use default length */ }
-        | '(' NUM ')' { Lex->length= $2.str; }
+          /* empty */ { Lex.length=(char*) 0; /* use default length */ }
+        | '(' NUM ')' { Lex.length= $2.str; }
         ;
 
 opt_field_number_signed:
           /* empty */ { $$= false; }
         | SIGNED_SYM { $$= false; }
-        | UNSIGNED_SYM { $$= true; Lex->type|= UNSIGNED_FLAG; }
+        | UNSIGNED_SYM { $$= true; Lex.type|= UNSIGNED_FLAG; }
         ;
 
 ignored_field_number_length:
@@ -1372,14 +1372,14 @@ ignored_field_number_length:
 
 opt_zerofill:
           /* empty */ { $$= false; }
-        | ZEROFILL_SYM { $$= true; Lex->type|= UNSIGNED_FLAG; }
+        | ZEROFILL_SYM { $$= true; Lex.type|= UNSIGNED_FLAG; }
         ;
 
 opt_precision:
           /* empty */
-          { Lex->dec=Lex->length= (char*)0; }
+          { Lex.dec=Lex.length= (char*)0; }
         | '(' NUM ')'
-          { Lex->length=Lex->dec= (char*)0; }
+          { Lex.length=Lex.dec= (char*)0; }
         | precision
           {}
         ;
@@ -1387,15 +1387,15 @@ opt_precision:
 opt_attribute_not_null:
           NULL_SYM
           {
-            Lex->type&= ~ NOT_NULL_FLAG;
+            Lex.type&= ~ NOT_NULL_FLAG;
           }
         | NOT_SYM NULL_SYM
           {
-            Lex->type|= NOT_NULL_FLAG;
+            Lex.type|= NOT_NULL_FLAG;
 
-            if (Lex->field())
+            if (Lex.field())
             {
-              Lex->field()->mutable_constraints()->set_is_notnull(true);
+              Lex.field()->mutable_constraints()->set_is_notnull(true);
             }
           }
         ;
@@ -1403,15 +1403,15 @@ opt_attribute_not_null:
 opt_attribute_index:
           opt_primary KEY_SYM
           {
-            parser::buildPrimaryOnColumn(Lex);
+            parser::buildPrimaryOnColumn(&Lex);
           }
         | UNIQUE_SYM
           {
-            parser::buildKeyOnColumn(Lex);
+            parser::buildKeyOnColumn(&Lex);
           }
         | UNIQUE_SYM KEY_SYM
           {
-            parser::buildKeyOnColumn(Lex);
+            parser::buildKeyOnColumn(&Lex);
           }
         ;
 
@@ -1421,7 +1421,7 @@ opt_attribute:
           { }
         | opt_attribute DEFAULT signed_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->default_value= $3;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
@@ -1436,7 +1436,7 @@ opt_attribute_boolean:
           { }
         | opt_attribute_boolean DEFAULT boolean_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->default_value= $3;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
@@ -1460,22 +1460,22 @@ attribute_string:
           { }
         | DEFAULT signed_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | COLLATE_SYM collation_name
           {
-            if (Lex->charset && !my_charset_same(Lex->charset,$2))
+            if (Lex.charset && !my_charset_same(Lex.charset,$2))
             {
               my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                       $2->name,Lex->charset->csname);
+                       $2->name,Lex.charset->csname);
               DRIZZLE_YYABORT;
             }
             else
             {
-              Lex->charset=$2;
+              Lex.charset=$2;
             }
           }
         | opt_attribute_index
@@ -1497,15 +1497,15 @@ attribute_integer:
           { }
         | AUTO_INC
           {
-            parser::buildAutoOnColumn(Lex);
+            parser::buildAutoOnColumn(&Lex);
           }
         | SERIAL_SYM DEFAULT VALUE_SYM
           {
-            (void)parser::buildSerialColumn(Lex);
+            (void)parser::buildSerialColumn(&Lex);
           }
         | DEFAULT integer_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
@@ -1529,21 +1529,21 @@ attribute_timestamp:
           { }
         | DEFAULT NOW_SYM optional_braces
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->default_value= new Item_func_now_local();
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | DEFAULT date_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ON UPDATE_SYM NOW_SYM optional_braces
           {
-            ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local();
+            ((statement::AlterTable *)Lex.statement)->on_update_value= new Item_func_now_local();
           }
         | opt_attribute_index
           { }
@@ -1553,11 +1553,11 @@ opt_attribute_comment:
           /* empty */ { }
         | COMMENT_SYM TEXT_STRING_sys
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
             statement->comment= $2;
 
-            if (Lex->field())
-              Lex->field()->set_comment($2.str);
+            if (Lex.field())
+              Lex.field()->set_comment($2.str);
           }
         ;
 
@@ -1596,58 +1596,58 @@ references:
 
 opt_ref_list:
           /* empty */
-          { Lex->ref_list.clear(); }
+          { Lex.ref_list.clear(); }
         | '(' ref_list ')'
         ;
 
 ref_list:
           ref_list ',' ident
-          { Lex->ref_list.push_back(new Key_part_spec($3, 0)); }
+          { Lex.ref_list.push_back(new Key_part_spec($3, 0)); }
         | ident
           {
-            Lex->ref_list.clear();
-            Lex->ref_list.push_back(new Key_part_spec($1, 0));
+            Lex.ref_list.clear();
+            Lex.ref_list.push_back(new Key_part_spec($1, 0));
           }
         ;
 
 opt_match_clause:
           /* empty */
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_UNDEFINED; }
+          { ((statement::CreateTable *)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_UNDEFINED; }
         | MATCH FULL
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_FULL; }
+          { ((statement::CreateTable *)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_FULL; }
         | MATCH PARTIAL
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_PARTIAL; }
+          { ((statement::CreateTable *)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_PARTIAL; }
         | MATCH SIMPLE_SYM
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_SIMPLE; }
+          { ((statement::CreateTable *)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_SIMPLE; }
         ;
 
 opt_on_update_delete:
           /* empty */
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable *)Lex.statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable *)Lex.statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON UPDATE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= $3;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable *)Lex.statement)->fk_update_opt= $3;
+            ((statement::CreateTable *)Lex.statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON DELETE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $3;
+            ((statement::CreateTable *)Lex.statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable *)Lex.statement)->fk_delete_opt= $3;
           }
         | ON UPDATE_SYM delete_option
           ON DELETE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= $3;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $6;
+            ((statement::CreateTable *)Lex.statement)->fk_update_opt= $3;
+            ((statement::CreateTable *)Lex.statement)->fk_delete_opt= $6;
           }
         | ON DELETE_SYM delete_option
           ON UPDATE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= $6;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $3;
+            ((statement::CreateTable *)Lex.statement)->fk_update_opt= $6;
+            ((statement::CreateTable *)Lex.statement)->fk_delete_opt= $3;
           }
         ;
 
@@ -1691,12 +1691,12 @@ opt_unique:
 
 init_key_options:
           {
-            ((statement::CreateTable *)Lex->statement)->key_create_info= default_key_create_info;
+            ((statement::CreateTable *)Lex.statement)->key_create_info= default_key_create_info;
           }
         ;
 
 /*
-  For now, key_alg initializies Lex->key_create_info.
+  For now, key_alg initializies Lex.key_create_info.
   In the future, when all key options are after key definition,
   we can remove key_alg and move init_key_options to key_options
 */
@@ -1717,15 +1717,15 @@ key_opts:
         ;
 
 key_using_alg:
-          USING btree_or_rtree     { ((statement::CreateTable *)Lex->statement)->key_create_info.algorithm= $2; }
+          USING btree_or_rtree     { ((statement::CreateTable *)Lex.statement)->key_create_info.algorithm= $2; }
         ;
 
 key_opt:
           key_using_alg
         | KEY_BLOCK_SIZE opt_equal ulong_num
-          { ((statement::CreateTable *)Lex->statement)->key_create_info.block_size= $3; }
+          { ((statement::CreateTable *)Lex.statement)->key_create_info.block_size= $3; }
         | COMMENT_SYM TEXT_STRING_sys
-          { ((statement::CreateTable *)Lex->statement)->key_create_info.comment= $2; }
+          { ((statement::CreateTable *)Lex.statement)->key_create_info.comment= $2; }
         ;
 
 btree_or_rtree:
@@ -1734,8 +1734,8 @@ btree_or_rtree:
         ;
 
 key_list:
-          key_list ',' key_part order_dir { Lex->col_list.push_back($3); }
-        | key_part order_dir { Lex->col_list.push_back($1); }
+          key_list ',' key_part order_dir { Lex.col_list.push_back($3); }
+        | key_part order_dir { Lex.col_list.push_back($1); }
         ;
 
 key_part:
@@ -1762,8 +1762,8 @@ opt_component:
         ;
 
 string_list:
-          text_string { Lex->interval_list.push_back($1); }
-        | string_list ',' text_string { Lex->interval_list.push_back($3); };
+          text_string { Lex.interval_list.push_back($1); }
+        | string_list ',' text_string { Lex.interval_list.push_back($3); };
 
 /*
 ** Alter table
@@ -1773,27 +1773,27 @@ alter:
           ALTER_SYM build_method opt_ignore TABLE_SYM table_ident
           {
             statement::AlterTable *statement= new statement::AlterTable(YYSession, $5, $2);
-            Lex->statement= statement;
-            Lex->duplicates= DUP_ERROR;
-            if (not Lex->select_lex.add_table_to_list(YYSession, $5, NULL, TL_OPTION_UPDATING))
+            Lex.statement= statement;
+            Lex.duplicates= DUP_ERROR;
+            if (not Lex.select_lex.add_table_to_list(YYSession, $5, NULL, TL_OPTION_UPDATING))
             {
               DRIZZLE_YYABORT;
             }
 
-            Lex->col_list.clear();
-            Lex->select_lex.init_order();
-            Lex->select_lex.db= const_cast<char *>(((TableList*) Lex->select_lex.table_list.first)->getSchemaName());
+            Lex.col_list.clear();
+            Lex.select_lex.init_order();
+            Lex.select_lex.db= const_cast<char *>(((TableList*) Lex.select_lex.table_list.first)->getSchemaName());
           }
           alter_commands
           {}
         | ALTER_SYM DATABASE schema_name
           {
-            Lex->statement= new statement::AlterSchema(YYSession);
+            Lex.statement= new statement::AlterSchema(YYSession);
           }
           default_collation_schema
           {
-            Lex->name= $3;
-            if (Lex->name.str == NULL && Lex->copy_db_to(&Lex->name.str, &Lex->name.length))
+            Lex.name= $3;
+            if (Lex.name.str == NULL && Lex.copy_db_to(&Lex.name.str, &Lex.name.length))
               DRIZZLE_YYABORT;
           }
         ;
@@ -1802,12 +1802,12 @@ alter_commands:
           /* empty */
         | DISCARD TABLESPACE
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
             statement->alter_info.tablespace_op= DISCARD_TABLESPACE;
           }
         | IMPORT TABLESPACE
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
             statement->alter_info.tablespace_op= IMPORT_TABLESPACE;
           }
         | alter_list
@@ -1836,7 +1836,7 @@ alter_list:
 add_column:
           ADD_SYM opt_column
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->change=0;
             statement->alter_info.flags.set(ALTER_ADD_COLUMN);
@@ -1847,107 +1847,107 @@ alter_list_item:
           add_column column_def opt_place { }
         | ADD_SYM key_def
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | add_column '(' field_list ')'
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.flags.set(ALTER_ADD_COLUMN);
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | CHANGE_SYM opt_column field_ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
             statement->change= $3.str;
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
           }
           field_spec opt_place
         | MODIFY_SYM opt_column field_ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Lex->length= Lex->dec=0;
-            Lex->type= 0;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
+            Lex.length= Lex.dec=0;
+            Lex.type= 0;
             statement->default_value= statement->on_update_value= 0;
             statement->comment= null_lex_str;
-            Lex->charset= NULL;
+            Lex.charset= NULL;
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
             statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
 
-            Lex->setField(NULL);
+            Lex.setField(NULL);
           }
           field_def opt_attribute_comment
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            if (add_field_to_list(Lex->session,&$3,
+            if (add_field_to_list(Lex.session,&$3,
                                   (enum enum_field_types) $5,
-                                  Lex->length, Lex->dec, Lex->type,
+                                  Lex.length, Lex.dec, Lex.type,
                                   statement->column_format,
                                   statement->default_value,
                                   statement->on_update_value,
                                   &statement->comment,
-                                  $3.str, &Lex->interval_list, Lex->charset))
+                                  $3.str, &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
           }
           opt_place
         | DROP opt_column field_ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::COLUMN, $3.str));
             statement->alter_info.flags.set(ALTER_DROP_COLUMN);
           }
         | DROP FOREIGN KEY_SYM opt_ident
           {
-            parser::buildAddAlterDropIndex(Lex, $4.str, true);
+            parser::buildAddAlterDropIndex(&Lex, $4.str, true);
           }
         | DROP PRIMARY_SYM KEY_SYM
           {
-            parser::buildAddAlterDropIndex(Lex, "PRIMARY");
+            parser::buildAddAlterDropIndex(&Lex, "PRIMARY");
           }
         | DROP key_or_index field_ident
           {
-            parser::buildAddAlterDropIndex(Lex, $3.str);
+            parser::buildAddAlterDropIndex(&Lex, $3.str);
           }
         | DISABLE_SYM KEYS
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.keys_onoff= DISABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
           }
         | ENABLE_SYM KEYS
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.keys_onoff= ENABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
           }
         | ALTER_SYM opt_column field_ident SET_SYM DEFAULT signed_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.alter_list.push_back(AlterColumn($3.str,$6));
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ALTER_SYM opt_column field_ident DROP DEFAULT
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.alter_list.push_back(AlterColumn($3.str, (Item*) 0));
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | RENAME opt_to table_ident
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
             size_t dummy;
 
-            Lex->select_lex.db=$3->db.str;
-            if (Lex->select_lex.db == NULL &&
-                Lex->copy_db_to(&Lex->select_lex.db, &dummy))
+            Lex.select_lex.db=$3->db.str;
+            if (Lex.select_lex.db == NULL &&
+                Lex.copy_db_to(&Lex.select_lex.db, &dummy))
             {
               DRIZZLE_YYABORT;
             }
@@ -1958,12 +1958,12 @@ alter_list_item:
               DRIZZLE_YYABORT;
             }
 
-            Lex->name= $3->table;
+            Lex.name= $3->table;
             statement->alter_info.flags.set(ALTER_RENAME);
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->create_info().table_charset=
             statement->create_info().default_table_charset= $3;
@@ -1973,19 +1973,19 @@ alter_list_item:
           }
         | create_table_options_space_separated
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.flags.set(ALTER_OPTIONS);
           }
         | FORCE_SYM
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.flags.set(ALTER_FORCE);
           }
         | alter_order_clause
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
             statement->alter_info.flags.set(ALTER_ORDER);
           }
@@ -1997,19 +1997,19 @@ opt_column:
         ;
 
 opt_ignore:
-          /* empty */ { Lex->ignore= 0;}
-        | IGNORE_SYM { Lex->ignore= 1;}
+          /* empty */ { Lex.ignore= 0;}
+        | IGNORE_SYM { Lex.ignore= 1;}
         ;
 
 opt_place:
           /* empty */ {}
         | AFTER_SYM ident
           {
-            parser::storeAlterColumnPosition(Lex, $2.str);
+            parser::storeAlterColumnPosition(&Lex, $2.str);
           }
         | FIRST_SYM
           {
-            parser::storeAlterColumnPosition(Lex, first_keyword);
+            parser::storeAlterColumnPosition(&Lex, first_keyword);
           }
         ;
 
@@ -2022,7 +2022,7 @@ opt_to:
 start:
           START_SYM TRANSACTION_SYM start_transaction_opts
           {
-            Lex->statement= new statement::StartTransaction(YYSession, (start_transaction_option_t)$3);
+            Lex.statement= new statement::StartTransaction(YYSession, (start_transaction_option_t)$3);
           }
         ;
 
@@ -2037,7 +2037,7 @@ start_transaction_opts:
 analyze:
           ANALYZE_SYM table_or_tables
           {
-            Lex->statement= new statement::Analyze(YYSession);
+            Lex.statement= new statement::Analyze(YYSession);
           }
           table_list
           {}
@@ -2046,7 +2046,7 @@ analyze:
 check:
           CHECK_SYM table_or_tables
           {
-            Lex->statement= new statement::Check(YYSession);
+            Lex.statement= new statement::Check(YYSession);
           }
           table_list
           {}
@@ -2055,7 +2055,7 @@ check:
 rename:
           RENAME table_or_tables
           {
-            Lex->statement= new statement::RenameTable(YYSession);
+            Lex.statement= new statement::RenameTable(YYSession);
           }
           table_to_table_list
           {}
@@ -2069,10 +2069,10 @@ table_to_table_list:
 table_to_table:
           table_ident TO_SYM table_ident
           {
-            Select_Lex *sl= Lex->current_select;
-            if (!sl->add_table_to_list(Lex->session, $1,NULL,TL_OPTION_UPDATING,
+            Select_Lex *sl= Lex.current_select;
+            if (!sl->add_table_to_list(Lex.session, $1,NULL,TL_OPTION_UPDATING,
                                        TL_IGNORE) ||
-                !sl->add_table_to_list(Lex->session, $3,NULL,TL_OPTION_UPDATING,
+                !sl->add_table_to_list(Lex.session, $3,NULL,TL_OPTION_UPDATING,
                                        TL_IGNORE))
               DRIZZLE_YYABORT;
           }
@@ -2086,7 +2086,7 @@ table_to_table:
 select:
           select_init
           {
-            Lex->statement= new statement::Select(YYSession);
+            Lex.statement= new statement::Select(YYSession);
           }
         ;
 
@@ -2099,7 +2099,7 @@ select_init:
 select_paren:
           SELECT_SYM select_part2
           {
-            if (parser::setup_select_in_parentheses(YYSession, Lex))
+            if (parser::setup_select_in_parentheses(YYSession, &Lex))
               DRIZZLE_YYABORT;
           }
         | '(' select_paren ')'
@@ -2109,7 +2109,7 @@ select_paren:
 select_paren_derived:
           SELECT_SYM select_part2_derived
           {
-            if (parser::setup_select_in_parentheses(YYSession, Lex))
+            if (parser::setup_select_in_parentheses(YYSession, &Lex))
               DRIZZLE_YYABORT;
           }
         | '(' select_paren_derived ')'
@@ -2118,8 +2118,8 @@ select_paren_derived:
 select_init2:
           select_part2
           {
-            Select_Lex * sel= Lex->current_select;
-            if (Lex->current_select->set_braces(0))
+            Select_Lex * sel= Lex.current_select;
+            if (Lex.current_select->set_braces(0))
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
@@ -2136,14 +2136,14 @@ select_init2:
 
 select_part2:
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             if (sel->linkage != UNION_TYPE)
-              init_select(Lex);
-            Lex->current_select->parsing_place= SELECT_LIST;
+              init_select(&Lex);
+            Lex.current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
           {
-            Lex->current_select->parsing_place= NO_MATTER;
+            Lex.current_select->parsing_place= NO_MATTER;
           }
           select_into select_lock_type
         ;
@@ -2160,9 +2160,9 @@ select_from:
           FROM join_table_list where_clause group_clause having_clause
           opt_order_clause opt_limit_clause
           {
-            Lex->current_select->context.table_list=
-              Lex->current_select->context.first_name_resolution_table=
-                reinterpret_cast<TableList *>(Lex->current_select->table_list.first);
+            Lex.current_select->context.table_list=
+              Lex.current_select->context.first_name_resolution_table=
+                reinterpret_cast<TableList *>(Lex.current_select->table_list.first);
           }
         ;
 
@@ -2180,9 +2180,9 @@ select_option_list:
 select_option_distinct_or_all:
           DISTINCT
           {
-            Lex->current_select->options|= SELECT_DISTINCT; 
+            Lex.current_select->options|= SELECT_DISTINCT;
 
-            if (Lex->current_select->options & SELECT_DISTINCT && Lex->current_select->options & SELECT_ALL)
+            if (Lex.current_select->options & SELECT_DISTINCT && Lex.current_select->options & SELECT_ALL)
             {
               my_error(ER_WRONG_USAGE, MYF(0), "ALL", "DISTINCT");
               DRIZZLE_YYABORT;
@@ -2190,9 +2190,9 @@ select_option_distinct_or_all:
           }
         | ALL
           {
-            Lex->current_select->options|= SELECT_ALL; 
+            Lex.current_select->options|= SELECT_ALL;
 
-            if (Lex->current_select->options & SELECT_DISTINCT && Lex->current_select->options & SELECT_ALL)
+            if (Lex.current_select->options & SELECT_DISTINCT && Lex.current_select->options & SELECT_ALL)
             {
               my_error(ER_WRONG_USAGE, MYF(0), "ALL", "DISTINCT");
               DRIZZLE_YYABORT;
@@ -2203,9 +2203,9 @@ select_option_distinct_or_all:
 select_option_small_or_big:
           SQL_SMALL_RESULT
           {
-            Lex->current_select->options|= SELECT_SMALL_RESULT;
+            Lex.current_select->options|= SELECT_SMALL_RESULT;
 
-            if (Lex->current_select->options & SELECT_SMALL_RESULT && Lex->current_select->options & SELECT_BIG_RESULT)
+            if (Lex.current_select->options & SELECT_SMALL_RESULT && Lex.current_select->options & SELECT_BIG_RESULT)
             {
               my_error(ER_WRONG_USAGE, MYF(0), "SELECT_SMALL_RESULT", "SELECT_SMALL_RESULT");
               DRIZZLE_YYABORT;
@@ -2213,9 +2213,9 @@ select_option_small_or_big:
           }
         | SQL_BIG_RESULT
           {
-            Lex->current_select->options|= SELECT_BIG_RESULT;
+            Lex.current_select->options|= SELECT_BIG_RESULT;
 
-            if (Lex->current_select->options & SELECT_SMALL_RESULT && Lex->current_select->options & SELECT_BIG_RESULT)
+            if (Lex.current_select->options & SELECT_SMALL_RESULT && Lex.current_select->options & SELECT_BIG_RESULT)
             {
               my_error(ER_WRONG_USAGE, MYF(0), "SELECT_SMALL_RESULT", "SELECT_SMALL_RESULT");
               DRIZZLE_YYABORT;
@@ -2225,12 +2225,12 @@ select_option_small_or_big:
 
 
 select_option:
-          STRAIGHT_JOIN { Lex->current_select->options|= SELECT_STRAIGHT_JOIN; }
+          STRAIGHT_JOIN { Lex.current_select->options|= SELECT_STRAIGHT_JOIN; }
         | SQL_BUFFER_RESULT
           {
             if (check_simple_select(YYSession))
               DRIZZLE_YYABORT;
-            Lex->current_select->options|= OPTION_BUFFER_RESULT;
+            Lex.current_select->options|= OPTION_BUFFER_RESULT;
           }
         | select_option_small_or_big
           { }
@@ -2240,7 +2240,7 @@ select_option:
           {
             if (check_simple_select(YYSession))
               DRIZZLE_YYABORT;
-            Lex->current_select->options|= OPTION_FOUND_ROWS;
+            Lex.current_select->options|= OPTION_FOUND_ROWS;
           }
         ;
 
@@ -2248,11 +2248,11 @@ select_lock_type:
           /* empty */
         | FOR_SYM UPDATE_SYM
           {
-            Lex->current_select->set_lock_for_tables(TL_WRITE);
+            Lex.current_select->set_lock_for_tables(TL_WRITE);
           }
         | LOCK_SYM IN_SYM SHARE_SYM MODE_SYM
           {
-            Lex->current_select->
+            Lex.current_select->
               set_lock_for_tables(TL_READ_WITH_SHARED_LOCKS);
           }
         ;
@@ -2262,10 +2262,10 @@ select_item_list:
         | select_item
         | '*'
           {
-            if (YYSession->add_item_to_list( new Item_field(&YYSession->getLex()->current_select->context, NULL, NULL, "*")))
+            if (YYSession->add_item_to_list( new Item_field(&YYSession->lex().current_select->context, NULL, NULL, "*")))
               DRIZZLE_YYABORT;
 
-            (YYSession->getLex()->current_select->with_wild)++;
+            (YYSession->lex().current_select->with_wild)++;
           }
         ;
 
@@ -2327,7 +2327,7 @@ expr:
           {
             /*
               Design notes:
-              Do not use a manually maintained stack like session->lex->xxx_list,
+              Do not use a manually maintained stack like session->Lex.xxx_list,
               but use the internal bison stack ($$, $1 and $3) instead.
               Using the bison stack is:
               - more robust to changes in the grammar,
@@ -2421,7 +2421,7 @@ expr:
         | NOT_SYM expr %prec NOT_SYM
           { $$= negate_expression(YYSession, $2); }
         | bool_pri IS TRUE_SYM %prec IS
-          { 
+          {
             $$= new (YYSession->mem_root) Item_func_istrue($1);
           }
         | bool_pri IS NOT_SYM TRUE_SYM %prec IS
@@ -2514,15 +2514,15 @@ predicate:
             $$= item;
           }
         | bit_expr LIKE simple_expr opt_escape
-          { 
-            $$= new Item_func_like($1,$3,$4,Lex->escape_used);
+          {
+            $$= new Item_func_like($1,$3,$4,Lex.escape_used);
           }
         | bit_expr NOT_SYM LIKE simple_expr opt_escape
-          { 
-            $$= new Item_func_not(new Item_func_like($1,$4,$5, Lex->escape_used));
+          {
+            $$= new Item_func_not(new Item_func_like($1,$4,$5, Lex.escape_used));
           }
         | bit_expr REGEXP_SYM bit_expr
-          { 
+          {
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($1);
             args->push_back($3);
@@ -2532,7 +2532,7 @@ predicate:
             }
           }
         | bit_expr NOT_SYM REGEXP_SYM bit_expr
-          { 
+          {
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($1);
             args->push_back($4);
@@ -2567,7 +2567,7 @@ bit_expr:
             $$= new Item_func_plus($1,$3);
           }
         | bit_expr '-' bit_expr %prec '-'
-          { 
+          {
             $$= new Item_func_minus($1,$3);
           }
         | bit_expr '+' INTERVAL_SYM expr interval %prec '+'
@@ -2636,7 +2636,7 @@ simple_expr:
         | variable
         | sum_expr
           {
-            Lex->setSumExprUsed();
+            Lex.setSumExprUsed();
           }
         | simple_expr CONCAT simple_expr
           {
@@ -2678,8 +2678,8 @@ simple_expr:
           }
         | CAST_SYM '(' expr AS cast_type ')'
           {
-            $$= create_func_cast(YYSession, $3, $5, Lex->length, Lex->dec,
-                                 Lex->charset);
+            $$= create_func_cast(YYSession, $3, $5, Lex.length, Lex.dec,
+                                 Lex.charset);
             if (!$$)
               DRIZZLE_YYABORT;
           }
@@ -2687,19 +2687,19 @@ simple_expr:
           { $$= new (YYSession->mem_root) Item_func_case(* $3, $2, $4 ); }
         | CONVERT_SYM '(' expr ',' cast_type ')'
           {
-            $$= create_func_cast(YYSession, $3, $5, Lex->length, Lex->dec,
-                                 Lex->charset);
+            $$= create_func_cast(YYSession, $3, $5, Lex.length, Lex.dec,
+                                 Lex.charset);
             if (!$$)
               DRIZZLE_YYABORT;
           }
         | DEFAULT '(' simple_ident ')'
           {
-            $$= new (YYSession->mem_root) Item_default_value(Lex->current_context(),
+            $$= new (YYSession->mem_root) Item_default_value(Lex.current_context(),
                                                          $3);
           }
         | VALUES '(' simple_ident ')'
           {
-            $$= new (YYSession->mem_root) Item_insert_value(Lex->current_context(),
+            $$= new (YYSession->mem_root) Item_insert_value(Lex.current_context(),
                                                         $3);
           }
         | INTERVAL_SYM expr interval '+' expr %prec INTERVAL_SYM
@@ -2722,7 +2722,7 @@ function_call_keyword:
             {
               DRIZZLE_YYABORT;
             }
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         | DATE_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_date_typecast($3); }
@@ -2781,7 +2781,7 @@ function_call_keyword:
             {
               DRIZZLE_YYABORT;
             }
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         | YEAR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_year($3); }
@@ -2809,7 +2809,7 @@ function_call_nonkeyword:
         | CURDATE optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_local();
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         | DATE_ADD_INTERVAL '(' expr ',' INTERVAL_SYM expr interval ')' %prec INTERVAL_SYM
           { $$= new (YYSession->mem_root) Item_date_add_interval($3,$6,$7,0); }
@@ -2820,12 +2820,12 @@ function_call_nonkeyword:
         | NOW_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_now_local();
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         | NOW_SYM '(' expr ')'
           {
             $$= new (YYSession->mem_root) Item_func_now_local($3);
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         | POSITION_SYM '(' bit_expr IN_SYM expr ')'
           { $$ = new (YYSession->mem_root) Item_func_locate($5,$3); }
@@ -2879,14 +2879,14 @@ function_call_nonkeyword:
             }
           }
         | SYSDATE optional_braces
-          { 
-            $$= new (YYSession->mem_root) Item_func_sysdate_local(); 
-            Lex->setCacheable(false);
+          {
+            $$= new (YYSession->mem_root) Item_func_sysdate_local();
+            Lex.setCacheable(false);
           }
         | SYSDATE '(' expr ')'
-          { 
-            $$= new (YYSession->mem_root) Item_func_sysdate_local($3); 
-            Lex->setCacheable(false);
+          {
+            $$= new (YYSession->mem_root) Item_func_sysdate_local($3);
+            Lex.setCacheable(false);
           }
         | TIMESTAMP_ADD '(' interval_time_stamp ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($7,$5,$3,0); }
@@ -2895,12 +2895,12 @@ function_call_nonkeyword:
         | UTC_DATE_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_utc();
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         | UTC_TIMESTAMP_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_now_utc();
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         ;
 
@@ -2920,7 +2920,7 @@ function_call_conflict:
             {
               DRIZZLE_YYABORT;
             }
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
 	  }
         | CATALOG_SYM '(' ')'
           {
@@ -2928,7 +2928,7 @@ function_call_conflict:
             {
               DRIZZLE_YYABORT;
             }
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
 	  }
         | EXECUTE_SYM '(' expr ')' opt_wait
           {
@@ -2989,7 +2989,7 @@ function_call_conflict:
             {
               DRIZZLE_YYABORT;
             }
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
 	  }
         | WAIT_SYM '(' expr ',' expr ')'
           {
@@ -3055,7 +3055,7 @@ function_call_generic:
             {
               DRIZZLE_YYABORT;
             }
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         ;
 
@@ -3107,9 +3107,9 @@ sum_expr:
         | COUNT_SYM '(' in_sum_expr ')'
           { $$=new Item_sum_count($3); }
         | COUNT_SYM '(' DISTINCT
-          { Lex->current_select->in_sum_expr++; }
+          { Lex.current_select->in_sum_expr++; }
           expr_list
-          { Lex->current_select->in_sum_expr--; }
+          { Lex.current_select->in_sum_expr--; }
           ')'
           { $$=new Item_sum_count_distinct(* $5); }
         | MIN_SYM '(' in_sum_expr ')'
@@ -3138,14 +3138,14 @@ sum_expr:
         | SUM_SYM '(' DISTINCT in_sum_expr ')'
           { $$=new Item_sum_sum_distinct($4); }
         | GROUP_CONCAT_SYM '(' opt_distinct
-          { Lex->current_select->in_sum_expr++; }
+          { Lex.current_select->in_sum_expr++; }
           expr_list opt_gorder_clause
           opt_gconcat_separator
           ')'
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             sel->in_sum_expr--;
-            $$=new Item_func_group_concat(Lex->current_context(), $3, $5,
+            $$=new Item_func_group_concat(Lex.current_context(), $3, $5,
                                           sel->gorder_list, $7);
             $5->clear();
           }
@@ -3164,12 +3164,12 @@ variable_aux:
           user_variable_ident SET_VAR expr
           {
             $$= new Item_func_set_user_var($1, $3);
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         | user_variable_ident
           {
             $$= new Item_func_get_user_var(*YYSession, $1);
-            Lex->setCacheable(false);
+            Lex.setCacheable(false);
           }
         | '@' opt_var_ident_type user_variable_ident opt_component
           {
@@ -3200,11 +3200,11 @@ opt_gconcat_separator:
 opt_gorder_clause:
           /* empty */
           {
-            Lex->current_select->gorder_list = NULL;
+            Lex.current_select->gorder_list = NULL;
           }
         | order_clause
           {
-            Select_Lex *select= Lex->current_select;
+            Select_Lex *select= Lex.current_select;
             select->gorder_list=
               (SQL_LIST*) memory::sql_memdup((char*) &select->order_list,
                                      sizeof(st_sql_list));
@@ -3215,7 +3215,7 @@ opt_gorder_clause:
 in_sum_expr:
           opt_all
           {
-            if (Lex->current_select->inc_in_sum_expr())
+            if (Lex.current_select->inc_in_sum_expr())
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
@@ -3223,36 +3223,36 @@ in_sum_expr:
           }
           expr
           {
-            Lex->current_select->in_sum_expr--;
+            Lex.current_select->in_sum_expr--;
             $$= $3;
           }
         ;
 
 cast_type:
           BINARY opt_len
-          { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
+          { $$=ITEM_CAST_CHAR; Lex.charset= &my_charset_bin; Lex.dec= 0; }
         | BOOLEAN_SYM
-          { $$=ITEM_CAST_BOOLEAN; Lex->charset= &my_charset_bin; Lex->dec= 0; }
+          { $$=ITEM_CAST_BOOLEAN; Lex.charset= &my_charset_bin; Lex.dec= 0; }
         | SIGNED_SYM
-          { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
         | SIGNED_SYM INT_SYM
-          { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
         | INT_SYM
-          { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
         | UNSIGNED_SYM
-          { $$=ITEM_CAST_UNSIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
         | UNSIGNED_SYM INT_SYM
-          { $$=ITEM_CAST_UNSIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
         | CHAR_SYM opt_len
-          { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
+          { $$=ITEM_CAST_CHAR; Lex.dec= 0; }
         | DATE_SYM
-          { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+          { $$=ITEM_CAST_DATE; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
         | TIME_SYM
-          { $$=ITEM_CAST_TIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+          { $$=ITEM_CAST_TIME; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
         | DATETIME_SYM
-          { $$=ITEM_CAST_DATETIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+          { $$=ITEM_CAST_DATETIME; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
         | DECIMAL_SYM float_options
-          { $$=ITEM_CAST_DECIMAL; Lex->charset= NULL; }
+          { $$=ITEM_CAST_DECIMAL; Lex.charset= NULL; }
         ;
 
 expr_list:
@@ -3299,7 +3299,7 @@ table_ref:
           table_factor { $$=$1; }
         | join_table
           {
-            if (!($$= Lex->current_select->nest_last_join(Lex->session)))
+            if (!($$= Lex.current_select->nest_last_join(Lex.session)))
               DRIZZLE_YYABORT;
           }
         ;
@@ -3345,29 +3345,29 @@ join_table:
             left-associative joins.
           */
           table_ref normal_join table_ref %prec TABLE_REF_PRIORITY
-          { 
+          {
             DRIZZLE_YYABORT_UNLESS($1 && ($$=$3));
-            Lex->is_cross= false;
+            Lex.is_cross= false;
           }
         | table_ref STRAIGHT_JOIN table_factor
-          { 
-            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; 
+          {
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1;
           }
         | table_ref normal_join table_ref
           ON
           {
             DRIZZLE_YYABORT_UNLESS($1 && $3);
-            DRIZZLE_YYABORT_UNLESS( not Lex->is_cross );
+            DRIZZLE_YYABORT_UNLESS( not Lex.is_cross );
             /* Change the current name resolution context to a local context. */
             if (push_new_name_resolution_context(YYSession, $1, $3))
               DRIZZLE_YYABORT;
-            Lex->current_select->parsing_place= IN_ON;
+            Lex.current_select->parsing_place= IN_ON;
           }
           expr
           {
             add_join_on($3,$6);
-            Lex->pop_context();
-            Lex->current_select->parsing_place= NO_MATTER;
+            Lex.pop_context();
+            Lex.current_select->parsing_place= NO_MATTER;
           }
         | table_ref STRAIGHT_JOIN table_factor
           ON
@@ -3376,14 +3376,14 @@ join_table:
             /* Change the current name resolution context to a local context. */
             if (push_new_name_resolution_context(YYSession, $1, $3))
               DRIZZLE_YYABORT;
-            Lex->current_select->parsing_place= IN_ON;
+            Lex.current_select->parsing_place= IN_ON;
           }
           expr
           {
             $3->straight=1;
             add_join_on($3,$6);
-            Lex->pop_context();
-            Lex->current_select->parsing_place= NO_MATTER;
+            Lex.pop_context();
+            Lex.current_select->parsing_place= NO_MATTER;
           }
         | table_ref normal_join table_ref
           USING
@@ -3391,11 +3391,11 @@ join_table:
             DRIZZLE_YYABORT_UNLESS($1 && $3);
           }
           '(' using_list ')'
-          { add_join_natural($1,$3,$7,Lex->current_select); $$=$3; }
+          { add_join_natural($1,$3,$7,Lex.current_select); $$=$3; }
         | table_ref NATURAL JOIN_SYM table_factor
           {
             DRIZZLE_YYABORT_UNLESS($1 && ($$=$4));
-            add_join_natural($1,$4,NULL,Lex->current_select);
+            add_join_natural($1,$4,NULL,Lex.current_select);
           }
 
           /* LEFT JOIN variants */
@@ -3406,15 +3406,15 @@ join_table:
             /* Change the current name resolution context to a local context. */
             if (push_new_name_resolution_context(YYSession, $1, $5))
               DRIZZLE_YYABORT;
-            Lex->current_select->parsing_place= IN_ON;
+            Lex.current_select->parsing_place= IN_ON;
           }
           expr
           {
             add_join_on($5,$8);
-            Lex->pop_context();
+            Lex.pop_context();
             $5->outer_join|=JOIN_TYPE_LEFT;
             $$=$5;
-            Lex->current_select->parsing_place= NO_MATTER;
+            Lex.current_select->parsing_place= NO_MATTER;
           }
         | table_ref LEFT opt_outer JOIN_SYM table_factor
           {
@@ -3422,14 +3422,14 @@ join_table:
           }
           USING '(' using_list ')'
           {
-            add_join_natural($1,$5,$9,Lex->current_select);
+            add_join_natural($1,$5,$9,Lex.current_select);
             $5->outer_join|=JOIN_TYPE_LEFT;
             $$=$5;
           }
         | table_ref NATURAL LEFT opt_outer JOIN_SYM table_factor
           {
             DRIZZLE_YYABORT_UNLESS($1 && $6);
-            add_join_natural($1,$6,NULL,Lex->current_select);
+            add_join_natural($1,$6,NULL,Lex.current_select);
             $6->outer_join|=JOIN_TYPE_LEFT;
             $$=$6;
           }
@@ -3442,15 +3442,15 @@ join_table:
             /* Change the current name resolution context to a local context. */
             if (push_new_name_resolution_context(YYSession, $1, $5))
               DRIZZLE_YYABORT;
-            Lex->current_select->parsing_place= IN_ON;
+            Lex.current_select->parsing_place= IN_ON;
           }
           expr
           {
-            if (!($$= Lex->current_select->convert_right_join()))
+            if (!($$= Lex.current_select->convert_right_join()))
               DRIZZLE_YYABORT;
             add_join_on($$, $8);
-            Lex->pop_context();
-            Lex->current_select->parsing_place= NO_MATTER;
+            Lex.pop_context();
+            Lex.current_select->parsing_place= NO_MATTER;
           }
         | table_ref RIGHT opt_outer JOIN_SYM table_factor
           {
@@ -3458,15 +3458,15 @@ join_table:
           }
           USING '(' using_list ')'
           {
-            if (!($$= Lex->current_select->convert_right_join()))
+            if (!($$= Lex.current_select->convert_right_join()))
               DRIZZLE_YYABORT;
-            add_join_natural($$,$5,$9,Lex->current_select);
+            add_join_natural($$,$5,$9,Lex.current_select);
           }
         | table_ref NATURAL RIGHT opt_outer JOIN_SYM table_factor
           {
             DRIZZLE_YYABORT_UNLESS($1 && $6);
-            add_join_natural($6,$1,NULL,Lex->current_select);
-            if (!($$= Lex->current_select->convert_right_join()))
+            add_join_natural($6,$1,NULL,Lex.current_select);
+            if (!($$= Lex.current_select->convert_right_join()))
               DRIZZLE_YYABORT;
           }
         ;
@@ -3476,8 +3476,8 @@ normal_join:
         | INNER_SYM JOIN_SYM {}
         | CROSS JOIN_SYM
           {
-            Lex->is_cross= true;
-            Lex->current_select->is_cross= true;
+            Lex.is_cross= true;
+            Lex.current_select->is_cross= true;
           }
         ;
 
@@ -3487,23 +3487,23 @@ normal_join:
 
    I.e.
    <table factor> ::= <table primary> [ <sample clause> ]
-*/  
+*/
 /* Warning - may return NULL in case of incomplete SELECT */
 table_factor:
           {
           }
           table_ident opt_table_alias opt_key_definition
           {
-            if (!($$= Lex->current_select->add_table_to_list(YYSession, $2, $3,
+            if (!($$= Lex.current_select->add_table_to_list(YYSession, $2, $3,
                              0,
-                             Lex->lock_option,
-                             Lex->current_select->pop_index_hints())))
+                             Lex.lock_option,
+                             Lex.current_select->pop_index_hints())))
               DRIZZLE_YYABORT;
-            Lex->current_select->add_joined_table($$);
+            Lex.current_select->add_joined_table($$);
           }
         | select_derived_init get_select_lex select_derived2
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             if ($1)
             {
               if (sel->set_braces(1))
@@ -3516,7 +3516,7 @@ table_factor:
                 sel->master_unit()->global_parameters=
                    sel->master_unit()->fake_select_lex;
             }
-            if ($2->init_nested_join(Lex->session))
+            if ($2->init_nested_join(Lex.session))
               DRIZZLE_YYABORT;
             $$= 0;
             /* incomplete derived tables return NULL, we must be
@@ -3526,7 +3526,7 @@ table_factor:
             Represents a flattening of the following rules from the SQL:2003
             standard. This sub-rule corresponds to the sub-rule
             <table primary> ::= ... | <derived table> [ AS ] <correlation name>
-           
+
             The following rules have been flattened into query_expression_body
             (since we have no <with clause>).
 
@@ -3542,8 +3542,8 @@ table_factor:
           */
         | '(' get_select_lex select_derived_union ')' opt_table_alias
           {
-            /* Use $2 instead of Lex->current_select as derived table will
-               alter value of Lex->current_select. */
+            /* Use $2 instead of Lex.current_select as derived table will
+               alter value of Lex.current_select. */
             if (!($3 || $5) && $2->embedding &&
                 !$2->embedding->getNestedJoin()->join_list.size())
             {
@@ -3558,16 +3558,16 @@ table_factor:
               /* Handle case of derived table, alias may be NULL if there
                  are no outer parentheses, add_table_to_list() will throw
                  error in this case */
-              Select_Lex *sel= Lex->current_select;
+              Select_Lex *sel= Lex.current_select;
               Select_Lex_Unit *unit= sel->master_unit();
-              Lex->current_select= sel= unit->outer_select();
-              if (!($$= sel->add_table_to_list(Lex->session,
+              Lex.current_select= sel= unit->outer_select();
+              if (!($$= sel->add_table_to_list(Lex.session,
                                                new Table_ident(unit), $5, 0,
                                                TL_READ)))
 
                 DRIZZLE_YYABORT;
               sel->add_joined_table($$);
-              Lex->pop_context();
+              Lex.pop_context();
             }
             else if (($3->select_lex && $3->select_lex->master_unit()->is_union()) || $5)
             {
@@ -3586,7 +3586,7 @@ select_derived_union:
           UNION_SYM
           union_option
           {
-            if (parser::add_select_to_union_list(YYSession, Lex, (bool)$3))
+            if (parser::add_select_to_union_list(YYSession, &Lex, (bool)$3))
               DRIZZLE_YYABORT;
           }
           query_specification
@@ -3595,7 +3595,7 @@ select_derived_union:
               Remove from the name resolution context stack the context of the
               last select in the union.
              */
-            Lex->pop_context();
+            Lex.pop_context();
           }
           opt_order_clause opt_limit_clause
         ;
@@ -3604,8 +3604,8 @@ select_derived_union:
 select_init2_derived:
           select_part2_derived
           {
-            Select_Lex * sel= Lex->current_select;
-            if (Lex->current_select->set_braces(0))
+            Select_Lex * sel= Lex.current_select;
+            if (Lex.current_select->set_braces(0))
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
@@ -3622,14 +3622,14 @@ select_init2_derived:
 /* The equivalent of select_part2 for nested queries. */
 select_part2_derived:
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             if (sel->linkage != UNION_TYPE)
-              init_select(Lex);
-            Lex->current_select->parsing_place= SELECT_LIST;
+              init_select(&Lex);
+            Lex.current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
           {
-            Lex->current_select->parsing_place= NO_MATTER;
+            Lex.current_select->parsing_place= NO_MATTER;
           }
           opt_select_from select_lock_type
         ;
@@ -3638,7 +3638,7 @@ select_part2_derived:
 select_derived:
           get_select_lex
           {
-            if ($1->init_nested_join(Lex->session))
+            if ($1->init_nested_join(Lex.session))
               DRIZZLE_YYABORT;
           }
           derived_table_list
@@ -3646,7 +3646,7 @@ select_derived:
             /* for normal joins, $3 != NULL and end_nested_join() != NULL,
                for derived tables, both must equal NULL */
 
-            if (!($$= $1->end_nested_join(Lex->session)) && $3)
+            if (!($$= $1->end_nested_join(Lex.session)) && $3)
               DRIZZLE_YYABORT;
 
             if (!$3 && $$)
@@ -3659,41 +3659,41 @@ select_derived:
 
 select_derived2:
           {
-            Lex->derived_tables|= DERIVED_SUBQUERY;
-            if (not Lex->expr_allows_subselect)
+            Lex.derived_tables|= DERIVED_SUBQUERY;
+            if (not Lex.expr_allows_subselect)
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
-            if (Lex->current_select->linkage == GLOBAL_OPTIONS_TYPE || new_select(Lex, 1))
+            if (Lex.current_select->linkage == GLOBAL_OPTIONS_TYPE || new_select(&Lex, 1))
               DRIZZLE_YYABORT;
-            init_select(Lex);
-            Lex->current_select->linkage= DERIVED_TABLE_TYPE;
-            Lex->current_select->parsing_place= SELECT_LIST;
+            init_select(&Lex);
+            Lex.current_select->linkage= DERIVED_TABLE_TYPE;
+            Lex.current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
           {
-            Lex->current_select->parsing_place= NO_MATTER;
+            Lex.current_select->parsing_place= NO_MATTER;
           }
           opt_select_from
         ;
 
 get_select_lex:
-          /* Empty */ { $$= Lex->current_select; }
+          /* Empty */ { $$= Lex.current_select; }
         ;
 
 select_derived_init:
           SELECT_SYM
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             TableList *embedding;
-            if (!sel->embedding || sel->end_nested_join(Lex->session))
+            if (!sel->embedding || sel->end_nested_join(Lex.session))
             {
               /* we are not in parentheses */
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
             }
-            embedding= Lex->current_select->embedding;
+            embedding= Lex.current_select->embedding;
             $$= embedding &&
                 !embedding->getNestedJoin()->join_list.size();
             /* return true if we are deeply nested */
@@ -3723,12 +3723,12 @@ index_hint_type:
 index_hint_definition:
           index_hint_type key_or_index index_hint_clause
           {
-            Lex->current_select->set_index_hint_type($1, $3);
+            Lex.current_select->set_index_hint_type($1, $3);
           }
           '(' key_usage_list ')'
         | USE_SYM key_or_index index_hint_clause
           {
-            Lex->current_select->set_index_hint_type(INDEX_HINT_USE, $3);
+            Lex.current_select->set_index_hint_type(INDEX_HINT_USE, $3);
           }
           '(' opt_key_usage_list ')'
        ;
@@ -3740,24 +3740,24 @@ index_hints_list:
 
 opt_index_hints_list:
           /* empty */
-        | { Lex->current_select->alloc_index_hints(YYSession); } index_hints_list
+        | { Lex.current_select->alloc_index_hints(YYSession); } index_hints_list
         ;
 
 opt_key_definition:
-          {  Lex->current_select->clear_index_hints(); }
+          {  Lex.current_select->clear_index_hints(); }
           opt_index_hints_list
         ;
 
 opt_key_usage_list:
-          /* empty */ { Lex->current_select->add_index_hint(YYSession, NULL, 0); }
+          /* empty */ { Lex.current_select->add_index_hint(YYSession, NULL, 0); }
         | key_usage_list {}
         ;
 
 key_usage_element:
           ident
-          { Lex->current_select->add_index_hint(YYSession, $1.str, $1.length); }
+          { Lex.current_select->add_index_hint(YYSession, $1.str, $1.length); }
         | PRIMARY_SYM
-          { Lex->current_select->add_index_hint(YYSession, (char *)"PRIMARY", 7); }
+          { Lex.current_select->add_index_hint(YYSession, (char *)"PRIMARY", 7); }
         ;
 
 key_usage_list:
@@ -3848,14 +3848,14 @@ opt_all:
         ;
 
 where_clause:
-          /* empty */  { Lex->current_select->where= 0; }
+          /* empty */  { Lex.current_select->where= 0; }
         | WHERE
           {
-            Lex->current_select->parsing_place= IN_WHERE;
+            Lex.current_select->parsing_place= IN_WHERE;
           }
           expr
           {
-            Select_Lex *select= Lex->current_select;
+            Select_Lex *select= Lex.current_select;
             select->where= $3;
             select->parsing_place= NO_MATTER;
             if ($3)
@@ -3867,11 +3867,11 @@ having_clause:
           /* empty */
         | HAVING
           {
-            Lex->current_select->parsing_place= IN_HAVING;
+            Lex.current_select->parsing_place= IN_HAVING;
           }
           expr
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             sel->having= $3;
             sel->parsing_place= NO_MATTER;
             if ($3)
@@ -3882,12 +3882,12 @@ having_clause:
 opt_escape:
           ESCAPE_SYM simple_expr
           {
-            Lex->escape_used= true;
+            Lex.escape_used= true;
             $$= $2;
           }
         | /* empty */
           {
-            Lex->escape_used= false;
+            Lex.escape_used= false;
             $$= new Item_string("\\", 1, &my_charset_utf8_general_ci);
           }
         ;
@@ -3919,13 +3919,13 @@ olap_opt:
               MySQL syntax: GROUP BY col1, col2, col3 WITH ROLLUP
               SQL-2003: GROUP BY ... ROLLUP(col1, col2, col3)
             */
-            if (Lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
+            if (Lex.current_select->linkage == GLOBAL_OPTIONS_TYPE)
             {
               my_error(ER_WRONG_USAGE, MYF(0), "WITH ROLLUP",
                        "global union parameters");
               DRIZZLE_YYABORT;
             }
-            Lex->current_select->olap= ROLLUP_TYPE;
+            Lex.current_select->olap= ROLLUP_TYPE;
           }
         ;
 
@@ -3963,7 +3963,7 @@ opt_order_clause:
 order_clause:
           ORDER_SYM BY
           {
-            if (not parser::buildOrderBy(Lex))
+            if (not parser::buildOrderBy(&Lex))
               DRIZZLE_YYABORT;
           }
           order_list
@@ -3991,7 +3991,7 @@ order_dir:
 opt_limit_clause_init:
           /* empty */
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             sel->offset_limit= 0;
             sel->select_limit= 0;
           }
@@ -4010,21 +4010,21 @@ limit_clause:
 limit_options:
           limit_option
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             sel->select_limit= $1;
             sel->offset_limit= 0;
             sel->explicit_limit= 1;
           }
         | limit_option ',' limit_option
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             sel->select_limit= $3;
             sel->offset_limit= $1;
             sel->explicit_limit= 1;
           }
         | limit_option OFFSET_SYM limit_option
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             sel->select_limit= $1;
             sel->offset_limit= $3;
             sel->explicit_limit= 1;
@@ -4040,11 +4040,11 @@ limit_option:
 delete_limit_clause:
           /* empty */
           {
-            Lex->current_select->select_limit= 0;
+            Lex.current_select->select_limit= 0;
           }
         | LIMIT limit_option
           {
-            Select_Lex *sel= Lex->current_select;
+            Select_Lex *sel= Lex.current_select;
             sel->select_limit= $2;
             sel->explicit_limit= 1;
           }
@@ -4069,7 +4069,7 @@ ulonglong_num:
 
 select_var_list_init:
           {
-            if (not Lex->describe && (not (Lex->result= new select_dumpvar())))
+            if (not Lex.describe && (not (Lex.result= new select_dumpvar())))
               DRIZZLE_YYABORT;
           }
           select_var_list
@@ -4081,12 +4081,12 @@ select_var_list:
         | select_var_ident {}
         ;
 
-select_var_ident: 
+select_var_ident:
           '@' user_variable_ident
           {
-            if (Lex->result)
+            if (Lex.result)
             {
-              ((select_dumpvar *)Lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
+              ((select_dumpvar *)Lex.result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
             }
             else
             {
@@ -4094,7 +4094,7 @@ select_var_ident:
                 The parser won't create select_result instance only
                 if it's an EXPLAIN.
               */
-              assert(Lex->describe);
+              assert(Lex.describe);
             }
           }
         ;
@@ -4108,25 +4108,25 @@ into:
 into_destination:
           OUTFILE TEXT_STRING_filesystem
           {
-            Lex->setCacheable(false);
-            if (!(Lex->exchange= new file_exchange($2.str, 0)) ||
-                !(Lex->result= new select_export(Lex->exchange)))
+            Lex.setCacheable(false);
+            if (!(Lex.exchange= new file_exchange($2.str, 0)) ||
+                !(Lex.result= new select_export(Lex.exchange)))
               DRIZZLE_YYABORT;
           }
           opt_field_term opt_line_term
         | DUMPFILE TEXT_STRING_filesystem
           {
-            if (not Lex->describe)
+            if (not Lex.describe)
             {
-              Lex->setCacheable(false);
-              if (not (Lex->exchange= new file_exchange($2.str,1)))
+              Lex.setCacheable(false);
+              if (not (Lex.exchange= new file_exchange($2.str,1)))
                 DRIZZLE_YYABORT;
-              if (not (Lex->result= new select_dump(Lex->exchange)))
+              if (not (Lex.result= new select_dump(Lex.exchange)))
                 DRIZZLE_YYABORT;
             }
           }
         | select_var_list_init
-          {Lex->setCacheable(false);}
+          {Lex.setCacheable(false);}
         ;
 
 /*
@@ -4136,32 +4136,32 @@ into_destination:
 drop:
           DROP CATALOG_SYM catalog_name
           {
-            Lex->statement= new statement::catalog::Drop(YYSession, $3);
+            Lex.statement= new statement::catalog::Drop(YYSession, $3);
           }
         | DROP opt_temporary table_or_tables if_exists table_list
           {
             statement::DropTable *statement= new statement::DropTable(YYSession);
-            Lex->statement= statement;
+            Lex.statement= statement;
             statement->drop_temporary= $2;
             statement->drop_if_exists= $4;
           }
         | DROP build_method INDEX_SYM ident ON table_ident {}
           {
             statement::DropIndex *statement= new statement::DropIndex(YYSession);
-            Lex->statement= statement;
+            Lex.statement= statement;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
             statement->alter_info.build_method= $2;
             statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::KEY, $4.str));
-            if (not Lex->current_select->add_table_to_list(Lex->session, $6, NULL,
+            if (not Lex.current_select->add_table_to_list(Lex.session, $6, NULL,
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
           }
         | DROP DATABASE if_exists schema_name
           {
             statement::DropSchema *statement= new statement::DropSchema(YYSession);
-            Lex->statement= statement;
+            Lex.statement= statement;
             statement->drop_if_exists=$3;
-            Lex->name= $4;
+            Lex.name= $4;
           }
         ;
 
@@ -4173,7 +4173,7 @@ table_list:
 table_name:
           table_ident
           {
-            if (!Lex->current_select->add_table_to_list(YYSession, $1, NULL, TL_OPTION_UPDATING))
+            if (!Lex.current_select->add_table_to_list(YYSession, $1, NULL, TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
           }
         ;
@@ -4195,7 +4195,7 @@ opt_temporary:
 execute:
        EXECUTE_SYM execute_var_or_string opt_status opt_concurrent opt_wait
         {
-          Lex->statement= new statement::Execute(YYSession, $2, $3, $4, $5);
+          Lex.statement= new statement::Execute(YYSession, $2, $3, $4, $5);
         }
 
 
@@ -4231,16 +4231,16 @@ opt_wait:
 insert:
           INSERT
           {
-            Lex->statement= new statement::Insert(YYSession);
-            Lex->duplicates= DUP_ERROR;
-            init_select(Lex);
+            Lex.statement= new statement::Insert(YYSession);
+            Lex.duplicates= DUP_ERROR;
+            init_select(&Lex);
             /* for subselects */
-            Lex->lock_option= TL_READ;
+            Lex.lock_option= TL_READ;
           }
           opt_ignore insert2
           {
-            Lex->current_select->set_lock_for_tables(TL_WRITE_CONCURRENT_INSERT);
-            Lex->current_select= &Lex->select_lex;
+            Lex.current_select->set_lock_for_tables(TL_WRITE_CONCURRENT_INSERT);
+            Lex.current_select= &Lex.select_lex;
           }
           insert_field_spec opt_insert_update
           {}
@@ -4249,14 +4249,14 @@ insert:
 replace:
           REPLACE
           {
-            Lex->statement= new statement::Replace(YYSession);
-            Lex->duplicates= DUP_REPLACE;
-            init_select(Lex);
+            Lex.statement= new statement::Replace(YYSession);
+            Lex.duplicates= DUP_REPLACE;
+            init_select(&Lex);
           }
           insert2
           {
-            Lex->current_select->set_lock_for_tables(TL_WRITE_DEFAULT);
-            Lex->current_select= &Lex->select_lex;
+            Lex.current_select->set_lock_for_tables(TL_WRITE_DEFAULT);
+            Lex.current_select= &Lex.select_lex;
           }
           insert_field_spec
           {}
@@ -4270,9 +4270,9 @@ insert2:
 insert_table:
           table_name
           {
-            Lex->field_list.clear();
-            Lex->many_values.clear();
-            Lex->insert_list=0;
+            Lex.field_list.clear();
+            Lex.many_values.clear();
+            Lex.insert_list=0;
           };
 
 insert_field_spec:
@@ -4281,16 +4281,16 @@ insert_field_spec:
         | '(' fields ')' insert_values {}
         | SET_SYM
           {
-            if (not (Lex->insert_list = new List_item) ||
-                Lex->many_values.push_back(Lex->insert_list))
+            if (not (Lex.insert_list = new List_item) ||
+                Lex.many_values.push_back(Lex.insert_list))
               DRIZZLE_YYABORT;
           }
           ident_eq_list
         ;
 
 fields:
-          fields ',' insert_ident { Lex->field_list.push_back($3); }
-        | insert_ident { Lex->field_list.push_back($1); }
+          fields ',' insert_ident { Lex.field_list.push_back($3); }
+        | insert_ident { Lex.field_list.push_back($1); }
         ;
 
 insert_values:
@@ -4298,12 +4298,12 @@ insert_values:
         | VALUE_SYM values_list {}
         | stored_select
           {
-            Lex->current_select->set_braces(0);
+            Lex.current_select->set_braces(0);
           }
           union_clause {}
         | '(' stored_select ')'
           {
-            Lex->current_select->set_braces(1);
+            Lex.current_select->set_braces(1);
           }
           union_opt {}
         ;
@@ -4321,8 +4321,8 @@ ident_eq_list:
 ident_eq_value:
           simple_ident equal expr_or_default
           {
-            if (Lex->field_list.push_back($1) ||
-                Lex->insert_list->push_back($3))
+            if (Lex.field_list.push_back($1) ||
+                Lex.insert_list->push_back($3))
               DRIZZLE_YYABORT;
           }
         ;
@@ -4340,12 +4340,12 @@ opt_equal:
 no_braces:
           '('
           {
-              if (!(Lex->insert_list = new List_item))
+              if (!(Lex.insert_list = new List_item))
                 DRIZZLE_YYABORT;
           }
           opt_values ')'
           {
-            if (Lex->many_values.push_back(Lex->insert_list))
+            if (Lex.many_values.push_back(Lex.insert_list))
               DRIZZLE_YYABORT;
           }
         ;
@@ -4358,24 +4358,24 @@ opt_values:
 values:
           values ','  expr_or_default
           {
-            if (Lex->insert_list->push_back($3))
+            if (Lex.insert_list->push_back($3))
               DRIZZLE_YYABORT;
           }
         | expr_or_default
           {
-            if (Lex->insert_list->push_back($1))
+            if (Lex.insert_list->push_back($1))
               DRIZZLE_YYABORT;
           }
         ;
 
 expr_or_default:
           expr { $$= $1;}
-        | DEFAULT {$$= new Item_default_value(Lex->current_context()); }
+        | DEFAULT {$$= new Item_default_value(Lex.current_context()); }
         ;
 
 opt_insert_update:
           /* empty */
-        | ON DUPLICATE_SYM { Lex->duplicates= DUP_UPDATE; }
+        | ON DUPLICATE_SYM { Lex.duplicates= DUP_UPDATE; }
           KEY_SYM UPDATE_SYM insert_update_list
         ;
 
@@ -4384,18 +4384,18 @@ opt_insert_update:
 update:
           UPDATE_SYM opt_ignore table_ident SET_SYM update_list
           {
-            init_select(Lex);
-            Lex->statement= new statement::Update(YYSession);
-            Lex->lock_option= TL_UNLOCK; /* Will be set later */
-            Lex->duplicates= DUP_ERROR;
-            if (not Lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
+            init_select(&Lex);
+            Lex.statement= new statement::Update(YYSession);
+            Lex.lock_option= TL_UNLOCK; /* Will be set later */
+            Lex.duplicates= DUP_ERROR;
+            if (not Lex.select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
 
-            if (Lex->select_lex.get_table_list()->derived)
+            if (Lex.select_lex.get_table_list()->derived)
             {
               /* it is single table update and it is update of derived table */
               my_error(ER_NON_UPDATABLE_TABLE, MYF(0),
-                       Lex->select_lex.get_table_list()->alias, "UPDATE");
+                       Lex.select_lex.get_table_list()->alias, "UPDATE");
               DRIZZLE_YYABORT;
             }
             /*
@@ -4403,7 +4403,7 @@ update:
               be too pessimistic. We will decrease lock level if possible in
               multi_update().
             */
-            Lex->current_select->set_lock_for_tables(TL_WRITE_DEFAULT);
+            Lex.current_select->set_lock_for_tables(TL_WRITE_DEFAULT);
           }
           where_clause opt_order_clause delete_limit_clause {}
         ;
@@ -4429,8 +4429,8 @@ insert_update_list:
 insert_update_elem:
           simple_ident equal expr_or_default
           {
-          if (Lex->update_list.push_back($1) ||
-              Lex->value_list.push_back($3))
+          if (Lex.update_list.push_back($1) ||
+              Lex.value_list.push_back($3))
               DRIZZLE_YYABORT;
           }
         ;
@@ -4440,13 +4440,13 @@ insert_update_elem:
 delete:
           DELETE_SYM opt_delete_option FROM table_ident
           {
-            Lex->statement= new statement::Delete(YYSession);
-            init_select(Lex);
-            Lex->lock_option= TL_WRITE_DEFAULT;
-            Lex->select_lex.init_order();
+            Lex.statement= new statement::Delete(YYSession);
+            init_select(&Lex);
+            Lex.lock_option= TL_WRITE_DEFAULT;
+            Lex.select_lex.init_order();
 
-            if (!Lex->current_select->add_table_to_list(YYSession, $4, NULL, TL_OPTION_UPDATING,
-                                           Lex->lock_option))
+            if (!Lex.current_select->add_table_to_list(YYSession, $4, NULL, TL_OPTION_UPDATING,
+                                           Lex.lock_option))
               DRIZZLE_YYABORT;
           }
           where_clause opt_order_clause
@@ -4454,16 +4454,16 @@ delete:
         ;
 
 opt_delete_option:
-           /* empty */ { Lex->ignore= 0; }
-         | IGNORE_SYM  { Lex->ignore= 1; }
+           /* empty */ { Lex.ignore= 0; }
+         | IGNORE_SYM  { Lex.ignore= 1; }
         ;
 
 truncate:
           TRUNCATE_SYM opt_table_sym table_name
           {
-            Lex->statement= new statement::Truncate(YYSession);
-            Lex->select_lex.options= 0;
-            Lex->select_lex.init_order();
+            Lex.statement= new statement::Truncate(YYSession);
+            Lex.select_lex.options= 0;
+            Lex.select_lex.init_order();
           }
         ;
 
@@ -4477,9 +4477,9 @@ opt_table_sym:
 show:
           SHOW
           {
-            Lex->lock_option= TL_READ;
-            init_select(Lex);
-            Lex->current_select->parsing_place= SELECT_LIST;
+            Lex.lock_option= TL_READ;
+            init_select(&Lex);
+            Lex.current_select->parsing_place= SELECT_LIST;
           }
           show_param
           {}
@@ -4583,14 +4583,14 @@ show_wild:
           /* empty */
         | LIKE TEXT_STRING_sys
           {
-            Lex->wild= new (YYSession->mem_root) String($2.str, $2.length,
+            Lex.wild= new (YYSession->mem_root) String($2.str, $2.length,
                                                     system_charset_info);
-            if (Lex->wild == NULL)
+            if (Lex.wild == NULL)
               DRIZZLE_YYABORT;
           }
         | WHERE expr
           {
-            Lex->current_select->where= $2;
+            Lex.current_select->where= $2;
             if ($2)
               $2->top_level_item();
           }
@@ -4607,10 +4607,10 @@ describe:
           }
           opt_describe_column {}
         | describe_command opt_extended_describe
-          { Lex->describe|= DESCRIBE_NORMAL; }
+          { Lex.describe|= DESCRIBE_NORMAL; }
           select
           {
-            Lex->select_lex.options|= SELECT_DESCRIBE;
+            Lex.select_lex.options|= SELECT_DESCRIBE;
           }
         ;
 
@@ -4621,15 +4621,15 @@ describe_command:
 
 opt_extended_describe:
           /* empty */ {}
-        | EXTENDED_SYM   { Lex->describe|= DESCRIBE_EXTENDED; }
+        | EXTENDED_SYM   { Lex.describe|= DESCRIBE_EXTENDED; }
         ;
 
 opt_describe_column:
           /* empty */ {}
-        | text_string { Lex->wild= $1; }
+        | text_string { Lex.wild= $1; }
         | ident
           {
-            Lex->wild= new (YYSession->mem_root) String((const char*) $1.str,
+            Lex.wild= new (YYSession->mem_root) String((const char*) $1.str,
                                                     $1.length,
                                                     system_charset_info);
           }
@@ -4641,7 +4641,7 @@ opt_describe_column:
 flush:
           FLUSH_SYM
           {
-            Lex->statement= new statement::Flush(YYSession);
+            Lex.statement= new statement::Flush(YYSession);
           }
           flush_options
           {}
@@ -4655,28 +4655,28 @@ flush_options:
 flush_option:
           table_or_tables
           {
-            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement::Flush *statement= (statement::Flush*)Lex.statement;
             statement->setFlushTables(true);
           }
           opt_table_list {}
         | TABLES WITH READ_SYM LOCK_SYM
           {
-            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement::Flush *statement= (statement::Flush*)Lex.statement;
             statement->setFlushTablesWithReadLock(true);
           }
         | LOGS_SYM
           {
-            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement::Flush *statement= (statement::Flush*)Lex.statement;
             statement->setFlushLog(true);
           }
         | STATUS_SYM
           {
-            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement::Flush *statement= (statement::Flush*)Lex.statement;
             statement->setFlushStatus(true);
           }
         | GLOBAL_SYM STATUS_SYM
           {
-            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement::Flush *statement= (statement::Flush*)Lex.statement;
             statement->setFlushGlobalStatus(true);
           }
         ;
@@ -4691,7 +4691,7 @@ opt_table_list:
 kill:
           KILL_SYM kill_option expr
           {
-            Lex->statement= new statement::Kill(YYSession, $3, $2);
+            Lex.statement= new statement::Kill(YYSession, $3, $2);
           }
         ;
 
@@ -4706,8 +4706,8 @@ kill_option:
 use:
           USE_SYM schema_name
           {
-            Lex->statement= new statement::ChangeSchema(YYSession);
-            Lex->select_lex.db= $2.str;
+            Lex.statement= new statement::ChangeSchema(YYSession);
+            Lex.select_lex.db= $2.str;
           }
         ;
 
@@ -4717,33 +4717,33 @@ load:
           LOAD data_file
           {
             statement::Load *statement= new statement::Load(YYSession);
-            Lex->statement= statement;
+            Lex.statement= statement;
 
             Lex_input_stream *lip= YYSession->m_lip;
             statement->fname_start= lip->get_ptr();
           }
           load_data_lock INFILE TEXT_STRING_filesystem
           {
-            Lex->lock_option= $4;
-            Lex->duplicates= DUP_ERROR;
-            Lex->ignore= 0;
-            if (not (Lex->exchange= new file_exchange($6.str, 0, $2)))
+            Lex.lock_option= $4;
+            Lex.duplicates= DUP_ERROR;
+            Lex.ignore= 0;
+            if (not (Lex.exchange= new file_exchange($6.str, 0, $2)))
               DRIZZLE_YYABORT;
           }
           opt_duplicate INTO
           {
             Lex_input_stream *lip= YYSession->m_lip;
-            ((statement::Load *)Lex->statement)->fname_end= lip->get_ptr();
+            ((statement::Load *)Lex.statement)->fname_end= lip->get_ptr();
           }
           TABLE_SYM table_ident
           {
-            if (!Lex->current_select->add_table_to_list(YYSession,
+            if (!Lex.current_select->add_table_to_list(YYSession,
                     $12, NULL, TL_OPTION_UPDATING,
-                    Lex->lock_option))
+                    Lex.lock_option))
               DRIZZLE_YYABORT;
-            Lex->field_list.clear();
-            Lex->update_list.clear();
-            Lex->value_list.clear();
+            Lex.field_list.clear();
+            Lex.update_list.clear();
+            Lex.value_list.clear();
           }
           opt_field_term opt_line_term opt_ignore_lines opt_field_or_var_spec
           opt_load_data_set_spec
@@ -4762,18 +4762,18 @@ load_data_lock:
         ;
 
 opt_duplicate:
-          /* empty */ { Lex->duplicates=DUP_ERROR; }
-        | REPLACE { Lex->duplicates=DUP_REPLACE; }
-        | IGNORE_SYM { Lex->ignore= 1; }
+          /* empty */ { Lex.duplicates=DUP_ERROR; }
+        | REPLACE { Lex.duplicates=DUP_REPLACE; }
+        | IGNORE_SYM { Lex.ignore= 1; }
         ;
 
 opt_duplicate_as:
-          /* empty */ { Lex->duplicates=DUP_ERROR; }
-        | AS { Lex->duplicates=DUP_ERROR; }
-        | REPLACE { Lex->duplicates=DUP_REPLACE; }
-        | IGNORE_SYM { Lex->ignore= true; }
-        | REPLACE AS { Lex->duplicates=DUP_REPLACE; }
-        | IGNORE_SYM AS { Lex->ignore= true; }
+          /* empty */ { Lex.duplicates=DUP_ERROR; }
+        | AS { Lex.duplicates=DUP_ERROR; }
+        | REPLACE { Lex.duplicates=DUP_REPLACE; }
+        | IGNORE_SYM { Lex.ignore= true; }
+        | REPLACE AS { Lex.duplicates=DUP_REPLACE; }
+        | IGNORE_SYM AS { Lex.ignore= true; }
         ;
 
 opt_field_term:
@@ -4789,24 +4789,24 @@ field_term_list:
 field_term:
           TERMINATED BY text_string
           {
-            assert(Lex->exchange != 0);
-            Lex->exchange->field_term= $3;
+            assert(Lex.exchange != 0);
+            Lex.exchange->field_term= $3;
           }
         | OPTIONALLY ENCLOSED BY text_string
           {
-            assert(Lex->exchange != 0);
-            Lex->exchange->enclosed= $4;
-            Lex->exchange->opt_enclosed= 1;
+            assert(Lex.exchange != 0);
+            Lex.exchange->enclosed= $4;
+            Lex.exchange->opt_enclosed= 1;
           }
         | ENCLOSED BY text_string
           {
-            assert(Lex->exchange != 0);
-            Lex->exchange->enclosed= $3;
+            assert(Lex.exchange != 0);
+            Lex.exchange->enclosed= $3;
           }
         | ESCAPED BY text_string
           {
-            assert(Lex->exchange != 0);
-            Lex->exchange->escaped= $3;
+            assert(Lex.exchange != 0);
+            Lex.exchange->escaped= $3;
           }
         ;
 
@@ -4823,13 +4823,13 @@ line_term_list:
 line_term:
           TERMINATED BY text_string
           {
-            assert(Lex->exchange != 0);
-            Lex->exchange->line_term= $3;
+            assert(Lex.exchange != 0);
+            Lex.exchange->line_term= $3;
           }
         | STARTING BY text_string
           {
-            assert(Lex->exchange != 0);
-            Lex->exchange->line_start= $3;
+            assert(Lex.exchange != 0);
+            Lex.exchange->line_start= $3;
           }
         ;
 
@@ -4837,8 +4837,8 @@ opt_ignore_lines:
           /* empty */
         | IGNORE_SYM NUM lines_or_rows
           {
-            assert(Lex->exchange != 0);
-            Lex->exchange->skip_lines= atol($2.str);
+            assert(Lex.exchange != 0);
+            Lex.exchange->skip_lines= atol($2.str);
           }
         ;
 
@@ -4855,9 +4855,9 @@ opt_field_or_var_spec:
 
 fields_or_vars:
           fields_or_vars ',' field_or_var
-          { Lex->field_list.push_back($3); }
+          { Lex.field_list.push_back($3); }
         | field_or_var
-          { Lex->field_list.push_back($1); }
+          { Lex.field_list.push_back($1); }
         ;
 
 field_or_var:
@@ -5029,11 +5029,11 @@ insert_ident:
 table_wild:
           ident '.' '*'
           {
-            $$= parser::buildTableWild(Lex, NULL_LEX_STRING, $1);
+            $$= parser::buildTableWild(&Lex, NULL_LEX_STRING, $1);
           }
         | ident '.' ident '.' '*'
           {
-            $$= parser::buildTableWild(Lex, $1, $3);
+            $$= parser::buildTableWild(&Lex, $1, $3);
           }
         ;
 
@@ -5044,7 +5044,7 @@ order_ident:
 simple_ident:
           ident
           {
-            $$= parser::buildIdent(Lex, NULL_LEX_STRING, NULL_LEX_STRING, $1);
+            $$= parser::buildIdent(&Lex, NULL_LEX_STRING, NULL_LEX_STRING, $1);
           }
         | simple_ident_q { $$= $1; }
         ;
@@ -5052,38 +5052,38 @@ simple_ident:
 simple_ident_q:
           ident '.' ident
           {
-            $$= parser::buildIdent(Lex, NULL_LEX_STRING, $1, $3);
+            $$= parser::buildIdent(&Lex, NULL_LEX_STRING, $1, $3);
           }
         | '.' ident '.' ident
           {
-            $$= parser::buildIdent(Lex, NULL_LEX_STRING, $2, $4);
+            $$= parser::buildIdent(&Lex, NULL_LEX_STRING, $2, $4);
           }
         | ident '.' ident '.' ident
           {
-            $$= parser::buildIdent(Lex, $1, $3, $5);
+            $$= parser::buildIdent(&Lex, $1, $3, $5);
           }
         ;
 
 field_ident:
-          ident 
+          ident
           {
             $$=$1;
           }
         | ident '.' ident '.' ident
           {
-            if (not parser::checkFieldIdent(Lex, $1, $3))
+            if (not parser::checkFieldIdent(&Lex, $1, $3))
               DRIZZLE_YYABORT;
 
             $$=$5;
           }
         | ident '.' ident
           {
-            if (not parser::checkFieldIdent(Lex, NULL_LEX_STRING, $1))
+            if (not parser::checkFieldIdent(&Lex, NULL_LEX_STRING, $1))
               DRIZZLE_YYABORT;
 
             $$=$3;
           }
-        | '.' ident 
+        | '.' ident
           { /* For Delphi */
             $$=$2;
           }
@@ -5113,7 +5113,7 @@ catalog_name:
         ;
 
 IDENT_sys:
-          IDENT 
+          IDENT
           {
             $$= $1;
           }
@@ -5345,7 +5345,7 @@ keyword_sp:
 set:
           SET_SYM opt_option
           {
-            Lex->statement= new statement::SetOption(YYSession);
+            Lex.statement= new statement::SetOption(YYSession);
           }
           option_value_list
           {}
@@ -5376,7 +5376,7 @@ option_type:
 
 option_type2:
           /* empty */ { $$= OPT_DEFAULT; }
-        | ONE_SHOT_SYM { ((statement::SetOption *)Lex->statement)->one_shot_set= true; $$= OPT_SESSION; }
+        | ONE_SHOT_SYM { ((statement::SetOption *)Lex.statement)->one_shot_set= true; $$= OPT_SESSION; }
         ;
 
 opt_var_type:
@@ -5405,15 +5405,15 @@ sys_option_value:
             { /* System variable */
               if ($1)
               {
-                Lex->option_type= $1;
+                Lex.option_type= $1;
               }
-              Lex->var_list.push_back(SetVarPtr(new set_var(Lex->option_type, $2.var, &$2.base_name, $4)));
+              Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type, $2.var, &$2.base_name, $4)));
             }
           }
         | option_type TRANSACTION_SYM ISOLATION LEVEL_SYM isolation_types
           {
-            Lex->option_type= $1;
-            Lex->var_list.push_back(SetVarPtr(new set_var(Lex->option_type,
+            Lex.option_type= $1;
+            Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type,
                                               find_sys_var("tx_isolation"),
                                               &null_lex_str,
                                               new Item_int((int32_t)
@@ -5424,11 +5424,11 @@ sys_option_value:
 option_value:
           '@' user_variable_ident equal expr
           {
-            Lex->var_list.push_back(SetVarPtr(new set_var_user(new Item_func_set_user_var($2,$4))));
+            Lex.var_list.push_back(SetVarPtr(new set_var_user(new Item_func_set_user_var($2,$4))));
           }
         | '@' '@' opt_var_ident_type internal_variable_name equal set_expr_or_default
           {
-            Lex->var_list.push_back(SetVarPtr(new set_var($3, $4.var, &$4.base_name, $6)));
+            Lex.var_list.push_back(SetVarPtr(new set_var($3, $4.var, &$4.base_name, $6)));
           }
         ;
 
@@ -5485,7 +5485,7 @@ table_or_tables:
 unlock:
           UNLOCK_SYM
           {
-            Lex->statement= new statement::UnlockTables(YYSession);
+            Lex.statement= new statement::UnlockTables(YYSession);
           }
           table_or_tables
           {}
@@ -5494,7 +5494,7 @@ unlock:
 begin:
           BEGIN_SYM
           {
-            Lex->statement= new statement::StartTransaction(YYSession);
+            Lex.statement= new statement::StartTransaction(YYSession);
           }
           opt_work {}
         ;
@@ -5526,32 +5526,32 @@ opt_savepoint:
 commit:
           COMMIT_SYM opt_work opt_chain opt_release
           {
-            Lex->statement= new statement::Commit(YYSession, $3, $4);
+            Lex.statement= new statement::Commit(YYSession, $3, $4);
           }
         ;
 
 rollback:
           ROLLBACK_SYM opt_work opt_chain opt_release
           {
-            Lex->statement= new statement::Rollback(YYSession, $3, $4);
+            Lex.statement= new statement::Rollback(YYSession, $3, $4);
           }
         | ROLLBACK_SYM opt_work TO_SYM opt_savepoint savepoint_ident
           {
-            Lex->statement= new statement::RollbackToSavepoint(YYSession, $5);
+            Lex.statement= new statement::RollbackToSavepoint(YYSession, $5);
           }
         ;
 
 savepoint:
           SAVEPOINT_SYM savepoint_ident
           {
-            Lex->statement= new statement::Savepoint(YYSession, $2);
+            Lex.statement= new statement::Savepoint(YYSession, $2);
           }
         ;
 
 release:
           RELEASE_SYM SAVEPOINT_SYM savepoint_ident
           {
-            Lex->statement= new statement::ReleaseSavepoint(YYSession, $3);
+            Lex.statement= new statement::ReleaseSavepoint(YYSession, $3);
           }
         ;
 
@@ -5572,7 +5572,7 @@ union_clause:
 union_list:
           UNION_SYM union_option
           {
-            if (parser::add_select_to_union_list(YYSession, Lex, (bool)$2))
+            if (parser::add_select_to_union_list(YYSession, &Lex, (bool)$2))
               DRIZZLE_YYABORT;
           }
           select_init
@@ -5581,7 +5581,7 @@ union_list:
               Remove from the name resolution context stack the context of the
               last select in the union.
             */
-            Lex->pop_context();
+            Lex.pop_context();
           }
         ;
 
@@ -5593,21 +5593,21 @@ union_opt:
 
 union_order_or_limit:
           {
-            assert(Lex->current_select->linkage != GLOBAL_OPTIONS_TYPE);
-            Select_Lex *sel= Lex->current_select;
+            assert(Lex.current_select->linkage != GLOBAL_OPTIONS_TYPE);
+            Select_Lex *sel= Lex.current_select;
             Select_Lex_Unit *unit= sel->master_unit();
             Select_Lex *fake= unit->fake_select_lex;
             if (fake)
             {
               unit->global_parameters= fake;
               fake->no_table_names_allowed= 1;
-              Lex->current_select= fake;
+              Lex.current_select= fake;
             }
             YYSession->setWhere("global ORDER clause");
           }
           order_or_limit
           {
-            YYSession->getLex()->current_select->no_table_names_allowed= 0;
+            YYSession->lex().current_select->no_table_names_allowed= 0;
             YYSession->setWhere("");
           }
         ;
@@ -5626,11 +5626,11 @@ union_option:
 query_specification:
           SELECT_SYM select_init2_derived
           {
-            $$= Lex->current_select->master_unit()->first_select();
+            $$= Lex.current_select->master_unit()->first_select();
           }
         | '(' select_paren_derived ')'
           {
-            $$= Lex->current_select->master_unit()->first_select();
+            $$= Lex.current_select->master_unit()->first_select();
           }
         ;
 
@@ -5639,12 +5639,12 @@ query_expression_body:
         | query_expression_body
           UNION_SYM union_option
           {
-            if (parser::add_select_to_union_list(YYSession, Lex, (bool)$3))
+            if (parser::add_select_to_union_list(YYSession, &Lex, (bool)$3))
               DRIZZLE_YYABORT;
           }
           query_specification
           {
-            Lex->pop_context();
+            Lex.pop_context();
             $$= $1;
           }
         ;
@@ -5659,7 +5659,7 @@ subselect:
 
 subselect_start:
           {
-            if (not Lex->expr_allows_subselect)
+            if (not Lex.expr_allows_subselect)
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
@@ -5671,23 +5671,23 @@ subselect_start:
               (SELECT .. ) UNION ...  becomes
               SELECT * FROM ((SELECT ...) UNION ...)
             */
-            if (new_select(Lex, 1))
+            if (new_select(&Lex, 1))
               DRIZZLE_YYABORT;
           }
         ;
 
 subselect_end:
           {
-            Lex->pop_context();
-            Select_Lex *child= Lex->current_select;
-            Lex->current_select= Lex->current_select->return_after_parsing();
-            Lex->nest_level--;
-            Lex->current_select->n_child_sum_items += child->n_sum_items;
+            Lex.pop_context();
+            Select_Lex *child= Lex.current_select;
+            Lex.current_select= Lex.current_select->return_after_parsing();
+            Lex.nest_level--;
+            Lex.current_select->n_child_sum_items += child->n_sum_items;
             /*
               A subselect can add fields to an outer select. Reserve space for
               them.
             */
-            Lex->current_select->select_n_where_fields+=
+            Lex.current_select->select_n_where_fields+=
             child->select_n_where_fields;
           }
         ;

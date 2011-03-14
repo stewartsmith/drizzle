@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H
-#define DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H
+#pragma once
 
 namespace drizzled
 {
@@ -43,4 +42,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H */

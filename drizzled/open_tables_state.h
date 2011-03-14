@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_OPEN_TABLES_STATE_H
-#define DRIZZLED_OPEN_TABLES_STATE_H
+#pragma once
 
 #include <drizzled/lock.h>
 #include <drizzled/query_id.h>
@@ -179,4 +178,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPEN_TABLES_STATE_H */

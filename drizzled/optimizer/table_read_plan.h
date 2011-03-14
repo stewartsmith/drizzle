@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
-#define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
+#pragma once
 
 #include <drizzled/util/functors.h>
 #include <algorithm>
@@ -250,4 +249,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H */

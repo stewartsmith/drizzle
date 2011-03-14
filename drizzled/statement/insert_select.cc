@@ -40,7 +40,7 @@ bool statement::InsertSelect::execute()
   bool res= false;
   bool need_start_waiting= false;
 
-  if (insert_precheck(getSession(), all_tables))
+  if (insert_precheck(&session(), all_tables))
   {
     return true;
   }
@@ -50,20 +50,20 @@ bool statement::InsertSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (! (need_start_waiting= not getSession()->wait_if_global_read_lock(false, true)))
+  if (! (need_start_waiting= not session().wait_if_global_read_lock(false, true)))
   {
     return true;
   }
 
-  if (! (res= getSession()->openTablesLock(all_tables)))
+  if (! (res= session().openTablesLock(all_tables)))
   {
-    DRIZZLE_INSERT_SELECT_START(getSession()->getQueryString()->c_str());
+    DRIZZLE_INSERT_SELECT_START(session().getQueryString()->c_str());
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
     select_lex->context.table_list=
       select_lex->context.first_name_resolution_table= second_table;
-    res= insert_select_prepare(getSession());
+    res= insert_select_prepare(&session());
     if (! res && (sel_result= new select_insert(first_table,
                                                 first_table->table,
                                                 &lex().field_list,
@@ -72,7 +72,7 @@ bool statement::InsertSelect::execute()
                                                 lex().duplicates,
                                                 lex().ignore)))
     {
-      res= handle_select(getSession(), 
+      res= handle_select(&session(), 
                          &lex(), 
                          sel_result, 
                          OPTION_SETUP_TABLES_DONE);
@@ -83,7 +83,7 @@ bool statement::InsertSelect::execute()
          TODO: this is a workaround. right way will be move invalidating in
          the unlock procedure.
        */
-      if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT && getSession()->lock)
+      if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT && session().lock)
       {
         /* INSERT ... SELECT should invalidate only the very first table */
         TableList *save_table= first_table->next_local;
@@ -100,7 +100,7 @@ bool statement::InsertSelect::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }

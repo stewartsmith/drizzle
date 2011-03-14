@@ -23,6 +23,7 @@ Purge obsolete records
 Created 3/14/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0purge_h
 #define row0purge_h
 

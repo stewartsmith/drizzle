@@ -26,6 +26,7 @@
  *
  */
  
+#pragma once
 #ifndef __TRANSCACHE_MS_H__
 #define __TRANSCACHE_MS_H__
 

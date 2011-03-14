@@ -27,6 +27,7 @@
  */
 
 
+#pragma once
 #ifndef __ALIAS_MS_H__
 #define __ALIAS_MS_H__
 #include <stddef.h>

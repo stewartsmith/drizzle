@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_FUNCTION_DICTIONARY_FUNCTIONS_H
-#define PLUGIN_FUNCTION_DICTIONARY_FUNCTIONS_H
+#pragma once
 
 #include <drizzled/generator/functions.h>
 
@@ -51,4 +50,3 @@ public:
 
 } /* namespace function_dictionary */
 
-#endif /* PLUGIN_FUNCTION_DICTIONARY_FUNCTIONS_H */

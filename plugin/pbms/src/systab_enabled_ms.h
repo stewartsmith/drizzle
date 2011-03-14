@@ -22,6 +22,7 @@
  *
  */
 
+#pragma once
 #ifndef __SYSTAB_ENABLED_H__
 #define __SYSTAB_ENABLED_H__
 

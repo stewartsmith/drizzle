@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_ALL_INDEXES_H
-#define DRIZZLED_GENERATOR_ALL_INDEXES_H
+#pragma once
 
 namespace drizzled {
 namespace generator {
@@ -62,4 +61,3 @@ public:
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_ALL_INDEXES_H */

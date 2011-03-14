@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SELECT_DUMPVAR_H
-#define DRIZZLED_SELECT_DUMPVAR_H
+#pragma once
 
 #include <drizzled/error.h>
 #include <drizzled/function/set_user_var.h>
@@ -56,4 +55,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_DUMPVAR_H */

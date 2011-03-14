@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_SQL_ERROR_H
-#define DRIZZLED_SQL_ERROR_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/lex_string.h>
@@ -77,4 +76,3 @@ extern const LEX_STRING warning_level_names[];
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_ERROR_H */

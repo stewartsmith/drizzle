@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H
-#define DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/lex_string.h>
@@ -59,4 +58,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H */

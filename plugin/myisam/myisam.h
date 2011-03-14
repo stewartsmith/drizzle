@@ -15,8 +15,7 @@
 
 /* This file should be included when using myisam_funktions */
 
-#ifndef PLUGIN_MYISAM_MYISAM_H
-#define PLUGIN_MYISAM_MYISAM_H
+#pragma once
 
 #include <drizzled/identifier.h>
 
@@ -489,4 +488,3 @@ void mi_flush_bulk_insert(MI_INFO *info, uint32_t inx);
 void mi_end_bulk_insert(MI_INFO *info);
 int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves);
 
-#endif /* PLUGIN_MYISAM_MYISAM_H */

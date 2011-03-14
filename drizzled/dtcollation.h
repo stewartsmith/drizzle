@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DTCOLLATION_H
-#define DRIZZLED_DTCOLLATION_H
+#pragma once
 
 #include <drizzled/definitions.h>
 #include <drizzled/visibility.h>
@@ -141,4 +140,3 @@ void my_coll_agg_error(Item** args, uint32_t count, const char *fname,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DTCOLLATION_H */

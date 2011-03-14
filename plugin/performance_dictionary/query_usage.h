@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H
-#define PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H
+#pragma once
 
 #include <drizzled/session.h>
 
@@ -102,4 +101,3 @@ public:
 
 } /* namespace performance_dictionary */
 
-#endif /* PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H */

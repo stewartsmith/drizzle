@@ -23,6 +23,7 @@ File-based list utilities
 Created 11/28/1995 Heikki Tuuri
 ***********************************************************************/
 
+#pragma once
 #ifndef fut0lst_h
 #define fut0lst_h
 

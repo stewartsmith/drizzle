@@ -33,17 +33,17 @@ bool statement::Replace::execute()
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
 
-  if (insert_precheck(getSession(), all_tables))
+  if (insert_precheck(&session(), all_tables))
   {
     return true;
   }
 
-  if (getSession()->wait_if_global_read_lock(false, true))
+  if (session().wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
-  bool res= insert_query(getSession(), 
+  bool res= insert_query(&session(), 
                          all_tables, 
                          lex().field_list, 
                          lex().many_values,
@@ -55,7 +55,7 @@ bool statement::Replace::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }

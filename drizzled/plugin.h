@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_H
-#define DRIZZLED_PLUGIN_H
+#pragma once
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -201,5 +200,4 @@ DRIZZLED_API int tmpfile(const char *prefix);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_H */
 

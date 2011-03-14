@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSDIRECTORY_H__
 #define __CSDIRECTORY_H__
 

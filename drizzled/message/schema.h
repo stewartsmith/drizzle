@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_MESSAGE_SCHEMA_H
-#define DRIZZLED_MESSAGE_SCHEMA_H
+#pragma once
 
 #include <boost/shared_ptr.hpp>
 #include <drizzled/message/schema.pb.h>
@@ -44,4 +43,3 @@ void init(drizzled::message::Schema &arg, const std::string &name_arg);
 } // namespace message
 } // namespace drizzled
 
-#endif /* DRIZZLED_MESSAGE_SCHEMA_H */

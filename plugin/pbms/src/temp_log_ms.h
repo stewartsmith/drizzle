@@ -34,6 +34,7 @@
  * Temporary BLOBs are referenced by the temporary log.
  */
 
+#pragma once
 #ifndef __TEMPLOG_MS_H__
 #define __TEMPLOG_MS_H__
 

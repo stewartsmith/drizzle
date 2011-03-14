@@ -22,6 +22,7 @@
  *
  */
 
+#pragma once
 #ifndef __SYSTAB_VARIABLES_H__
 #define __SYSTAB_VARIABLES_H__
 

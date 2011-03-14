@@ -25,6 +25,7 @@
  * PBMS Meta Data utilities.
  *
  */
+#pragma once
 #ifndef __METADATA_MS_H__
 #define __METADATA_MS_H__
 

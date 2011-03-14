@@ -55,10 +55,6 @@ ProcesslistTool::Generator::Generator(Field **arg) :
 {
 }
 
-ProcesslistTool::Generator::~Generator()
-{
-}
-
 bool ProcesslistTool::Generator::populate()
 {
   drizzled::Session::pointer tmp;
@@ -74,7 +70,7 @@ bool ProcesslistTool::Generator::populate()
     /* USER */
     if (not tmp_sctx->username().empty())
       push(tmp_sctx->username());
-    else 
+    else
       push(_("no user"));
 
     /* HOST */

@@ -24,6 +24,7 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_parse.h>
 #include <drizzled/errmsg_print.h>
 #include <boost/date_time.hpp>
 #include <boost/program_options.hpp>

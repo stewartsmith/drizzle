@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_CURRENT_SESSION_H
-#define DRIZZLED_CURRENT_SESSION_H
+#pragma once
 
 #include <pthread.h>
 #include <boost/thread/tss.hpp>
@@ -45,4 +44,3 @@ MyMemoryRootVar &currentMemRoot(void);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CURRENT_SESSION_H */

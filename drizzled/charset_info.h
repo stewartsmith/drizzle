@@ -17,8 +17,7 @@
   A better inplementation of the UNIX ctype(3) library.
 */
 
-#ifndef DRIZZLED_CHARSET_INFO_H
-#define DRIZZLED_CHARSET_INFO_H
+#pragma once
 
 #include <sys/types.h>
 #include <cstddef>
@@ -887,4 +886,3 @@ int make_escape_code(const CHARSET_INFO * const cs, const char *escape);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CHARSET_INFO_H */

@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __NETWORK_MS_H__
 #define __NETWORK_MS_H__
 

@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __DATABASE_MS_H__
 #define __DATABASE_MS_H__
 

@@ -57,9 +57,9 @@ bool statement::Kill::execute()
     return true;
   }
 
-  if (drizzled::kill(*getSession()->user(), static_cast<session_id_t>(it->val_int()), lex().type & ONLY_KILL_QUERY))
+  if (drizzled::kill(*session().user(), static_cast<session_id_t>(it->val_int()), lex().type & ONLY_KILL_QUERY))
   {
-    getSession()->my_ok();
+    session().my_ok();
   }
   else
   {

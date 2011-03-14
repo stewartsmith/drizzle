@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_TABLE_MESSAGES_H
-#define DRIZZLED_SESSION_TABLE_MESSAGES_H
+#pragma once
 
 #include <drizzled/util/string.h>
 #include <drizzled/message/table.h>
@@ -54,4 +53,3 @@ public:
 } /* namespace session */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SESSION_TABLE_MESSAGES_H */

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_ENGINE_SCHEMA_H
-#define PLUGIN_SCHEMA_ENGINE_SCHEMA_H
+#pragma once
 
 #include <assert.h>
 #include <drizzled/plugin/storage_engine.h>
@@ -115,4 +114,3 @@ public:
                              drizzled::identifier::Table::vector &set_of_identifiers);
 };
 
-#endif /* PLUGIN_SCHEMA_ENGINE_SCHEMA_H */

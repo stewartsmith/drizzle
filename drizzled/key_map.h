@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_KEY_MAP_H
-#define DRIZZLED_KEY_MAP_H
+#pragma once
 
 #include <drizzled/definitions.h>
 
@@ -47,4 +46,3 @@ void key_map_subtract(key_map& map1, key_map& map2);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_KEY_MAP_H */

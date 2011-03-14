@@ -27,6 +27,7 @@ Created 6/9/1994 Heikki Tuuri
 /* In the debug version each allocated field is surrounded with
 check fields whose sizes are given below */
 
+#pragma once
 #ifdef UNIV_MEM_DEBUG
 # ifndef UNIV_HOTBACKUP
 /* The mutex which protects in the debug version the hash table

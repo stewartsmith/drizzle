@@ -19,8 +19,7 @@
 
 /* Dynamic hashing of record with different key-length */
 
-#ifndef DRIZZLED_MY_HASH_H
-#define DRIZZLED_MY_HASH_H
+#pragma once
 
 #include <drizzled/dynamic_array.h>
 
@@ -88,4 +87,3 @@ bool hash_delete(HASH *hash,unsigned char *record);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MY_HASH_H */

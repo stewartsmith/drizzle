@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_INTERNAL_IOCACHE_H
-#define DRIZZLED_INTERNAL_IOCACHE_H
+#pragma once
 
 #include <drizzled/internal/my_sys.h>
 
@@ -209,4 +208,3 @@ extern int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock);
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_IOCACHE_H */

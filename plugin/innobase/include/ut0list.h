@@ -43,6 +43,7 @@ automatically freeing the list node when the item's heap is freed.
 
 ************************************************************************/
 
+#pragma once
 #ifndef IB_LIST_H
 #define IB_LIST_H
 

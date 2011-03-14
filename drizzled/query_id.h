@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_QUERY_ID_H
-#define DRIZZLED_QUERY_ID_H
+#pragma once
 
 #include <drizzled/atomics.h>
 
@@ -52,4 +51,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_QUERY_ID_H */

@@ -23,6 +23,7 @@ Mini-transaction buffer global types
 Created 11/26/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef mtr0types_h
 #define mtr0types_h
 

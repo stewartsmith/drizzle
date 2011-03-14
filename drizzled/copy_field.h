@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_COPY_FIELD_H
-#define DRIZZLED_COPY_FIELD_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_string.h>
@@ -80,4 +79,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_COPY_FIELD_H */

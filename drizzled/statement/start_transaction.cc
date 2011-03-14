@@ -28,9 +28,9 @@ namespace drizzled
 
 bool statement::StartTransaction::execute()
 {
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
-    push_warning_printf(getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRANSACTION_ALREADY_STARTED,
                         ER(ER_TRANSACTION_ALREADY_STARTED));
     return false;
@@ -45,11 +45,11 @@ bool statement::StartTransaction::execute()
   /*
      Breakpoints for backup testing.
    */
-  if (! getSession()->startTransaction(start_transaction_opt))
+  if (! session().startTransaction(start_transaction_opt))
   {
     return true;
   }
-  getSession()->my_ok();
+  session().my_ok();
   return false;
 }
 

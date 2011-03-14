@@ -22,8 +22,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H
-#define PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H
+#pragma once
 
 #include <exception>
 #include <string>
@@ -131,4 +130,3 @@ private:
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H */

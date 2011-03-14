@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSFILE_H__
 #define __CSFILE_H__
 

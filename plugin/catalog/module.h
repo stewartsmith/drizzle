@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_MODULE_H
-#define PLUGIN_CATALOG_MODULE_H
+#pragma once
 
 #include <drizzled/error.h>
 #include <drizzled/item/func.h>
@@ -39,4 +38,3 @@
 #include <plugin/catalog/tables/catalog_cache.h>
 #include <plugin/catalog/tables/catalogs.h>
 
-#endif /* PLUGIN_CATALOG_MODULE_H */

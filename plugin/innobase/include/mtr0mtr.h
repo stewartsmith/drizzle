@@ -23,6 +23,7 @@ Mini-transaction buffer
 Created 11/26/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef mtr0mtr_h
 #define mtr0mtr_h
 

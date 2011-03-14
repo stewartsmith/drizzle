@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MESSAGE_CATALOG_H
-#define DRIZZLED_MESSAGE_CATALOG_H
+#pragma once
 
 #include <boost/shared_ptr.hpp>
 #include <drizzled/message/catalog.pb.h>
@@ -43,4 +42,3 @@ shared_ptr make_shared(const drizzled::identifier::Catalog &identifier);
 } /* namespace message */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MESSAGE_CATALOG_H */

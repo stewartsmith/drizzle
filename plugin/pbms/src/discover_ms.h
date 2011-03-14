@@ -20,6 +20,7 @@
  *
  */
 
+#pragma once
 #ifndef __DISCOVER_MS_H__
 #define __DISCOVER_MS_H__
 #include "cslib/CSConfig.h"

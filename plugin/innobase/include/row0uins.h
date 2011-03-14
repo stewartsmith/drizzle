@@ -23,6 +23,7 @@ Fresh insert undo
 Created 2/25/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0uins_h
 #define row0uins_h
 

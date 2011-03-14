@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_REPLICATION_SLAVE_H
-#define PLUGIN_SLAVE_REPLICATION_SLAVE_H
+#pragma once
 
 #include <plugin/slave/queue_consumer.h>
 #include <plugin/slave/queue_producer.h>
@@ -109,4 +108,3 @@ private:
   
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_REPLICATION_SLAVE_H */

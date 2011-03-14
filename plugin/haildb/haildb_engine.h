@@ -16,8 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_HAILDB_HAILDB_ENGINE_H
-#define PLUGIN_HAILDB_HAILDB_ENGINE_H
+#pragma once
 
 #include <drizzled/cursor.h>
 #include <drizzled/atomics.h>
@@ -134,4 +133,3 @@ private:
 
 int get_haildb_system_table_message(const char* table_name, drizzled::message::Table *table_message);
 
-#endif /* PLUGIN_HAILDB_HAILDB_ENGINE_H */

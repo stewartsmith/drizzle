@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_FUNCTION_ENGINE_CURSOR_H
-#define PLUGIN_FUNCTION_ENGINE_CURSOR_H
+#pragma once
 
 #include <drizzled/cursor.h>
 
@@ -87,4 +86,3 @@ public:
   {}
 };
 
-#endif /* PLUGIN_FUNCTION_ENGINE_CURSOR_H */

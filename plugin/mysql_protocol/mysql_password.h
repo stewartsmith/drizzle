@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_MYSQL_PASSWORD_H
-#define PLUGIN_MYSQL_PROTOCOL_MYSQL_PASSWORD_H
+#pragma once
 
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -36,4 +35,3 @@ public:
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_MYSQL_PASSWORD_H */

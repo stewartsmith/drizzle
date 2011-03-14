@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_SEND_H
-#define DRIZZLED_SELECT_SEND_H
+#pragma once
 
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/query_cache.h>
@@ -126,4 +125,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_SEND_H */

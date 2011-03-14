@@ -40,8 +40,7 @@
  *  SchemaEventObservers, or TableEventObservers class.
  *
  */
-#ifndef DRIZZLED_PLUGIN_EVENT_OBSERVER_H
-#define DRIZZLED_PLUGIN_EVENT_OBSERVER_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 
@@ -579,4 +578,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_EVENT_OBSERVER_H */

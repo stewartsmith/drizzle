@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_SUBSELECT_H
-#define DRIZZLED_SELECT_SUBSELECT_H
+#pragma once
 
 #include <drizzled/select_result_interceptor.h>
 
@@ -39,4 +38,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_SUBSELECT_H */

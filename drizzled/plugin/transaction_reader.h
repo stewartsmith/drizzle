@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_TRANSACTION_READER_H
-#define DRIZZLED_PLUGIN_TRANSACTION_READER_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/replication_services.h> /* For global transaction ID typedef */
@@ -75,4 +74,3 @@ public:
 } /* end namespace plugin */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_TRANSACTION_READER_H */

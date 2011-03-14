@@ -39,7 +39,7 @@ bool statement::Flush::execute()
    */
   if (not reloadCache())
   {
-    getSession()->my_ok();
+    session().my_ok();
   }
 
   return false;
@@ -63,37 +63,37 @@ bool statement::Flush::reloadCache()
   */
   if (flush_tables || flush_tables_with_read_lock)
   {
-    if (getSession() && flush_tables_with_read_lock)
+    if (&session() && flush_tables_with_read_lock)
     {
-      if (getSession()->lockGlobalReadLock())
+      if (session().lockGlobalReadLock())
       {
         return true; /* Killed */
       }
-      result= getSession()->close_cached_tables(tables, true, true);
+      result= session().close_cached_tables(tables, true, true);
 
-      if (getSession()->makeGlobalReadLockBlockCommit()) /* Killed */
+      if (session().makeGlobalReadLockBlockCommit()) /* Killed */
       {
         /* Don't leave things in a half-locked state */
-        getSession()->unlockGlobalReadLock();
+        session().unlockGlobalReadLock();
         return true;
       }
     }
     else
     {
-      result= getSession()->close_cached_tables(tables, true, false);
+      result= session().close_cached_tables(tables, true, false);
     }
   }
 
-  if (getSession() && flush_status)
+  if (&session() && flush_status)
   {
-    getSession()->refresh_status();
+    session().refresh_status();
   }
 
-  if (getSession() && flush_global_status)
+  if (&session() && flush_global_status)
   {
     memset(&current_global_counters, 0, sizeof(current_global_counters));
-    plugin::Logging::resetStats(getSession());
-    getSession()->refresh_status();
+    plugin::Logging::resetStats(&session());
+    session().refresh_status();
   }
 
   return result;

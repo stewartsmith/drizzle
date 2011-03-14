@@ -36,8 +36,7 @@
  * @cite http://en.wikipedia.org/wiki/Julian_day#Calculation
  */
 
-#ifndef DRIZZLED_CALENDAR_H
-#define DRIZZLED_CALENDAR_H
+#pragma once
 
 #define JULIAN_DAY_NUMBER_AT_ABSOLUTE_DAY_ONE INT64_C(1721425)
 
@@ -339,4 +338,3 @@ inline static bool is_julian_leap_year(uint32_t y)
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CALENDAR_H */

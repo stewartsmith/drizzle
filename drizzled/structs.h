@@ -20,8 +20,7 @@
 
 /* The old structures from unireg */
 
-#ifndef DRIZZLED_STRUCTS_H
-#define DRIZZLED_STRUCTS_H
+#pragma once
 
 #include <drizzled/base.h>
 #include <drizzled/definitions.h>
@@ -129,4 +128,3 @@ typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 #define STATUS_NO_PARENT	4	/* Parent record wasn't found */
 #define STATUS_NULL_ROW		32	/* table->null_row is set */
 
-#endif /* DRIZZLED_STRUCTS_H */

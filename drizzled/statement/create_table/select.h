@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CREATE_TABLE_SELECT_H
-#define DRIZZLED_STATEMENT_CREATE_TABLE_SELECT_H
+#pragma once
 
 #include <drizzled/statement/create_table.h>
 #include <drizzled/foreign_key.h>
@@ -56,4 +55,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CREATE_TABLE_SELECT_H */

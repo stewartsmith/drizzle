@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_INTERNAL_AIO_RESULT_H
-#define DRIZZLED_INTERNAL_AIO_RESULT_H
+#pragma once
 
 #ifdef HAVE_AIOWAIT
 #include <sys/asynch.h>      /* Used by record-cache */
@@ -39,4 +38,3 @@ typedef struct my_aio_result {
 
 #endif
 
-#endif /* DRIZZLED_INTERNAL_AIO_RESULT_H */

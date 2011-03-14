@@ -35,8 +35,7 @@
  * return Transaction messages.
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_READER_H
-#define PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_READER_H
+#pragma once
 
 #include <drizzled/plugin/transaction_reader.h>
 
@@ -73,4 +72,3 @@ public:
             drizzled::message::Transaction *to_fill);
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_READER_H */

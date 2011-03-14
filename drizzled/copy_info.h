@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COPY_INFO_H
-#define DRIZZLED_COPY_INFO_H
+#pragma once
 
 #include <drizzled/base.h>
 #include <drizzled/sql_list.h>
@@ -76,4 +75,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_COPY_INFO_H */

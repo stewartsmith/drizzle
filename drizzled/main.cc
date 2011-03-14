@@ -68,6 +68,7 @@
 #include <drizzled/util/backtrace.h>
 #include <drizzled/current_session.h>
 #include <drizzled/daemon.h>
+#include <drizzled/sql_base.h>
 
 using namespace drizzled;
 using namespace std;
@@ -102,11 +103,11 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
       return;
 
     /*
-      session->getLex()->current_select == 0 if lex structure is not inited
+      session->lex().current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (! (session->getLex()->current_select &&
-           session->getLex()->current_select->no_error && !session->is_fatal_error))
+    if (! (session->lex().current_select &&
+           session->lex().current_select->no_error && !session->is_fatal_error))
     {
       if (! session->main_da.is_error())            // Return only first message
       {
@@ -143,7 +144,7 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  if (not (getDebug().test(debug::NO_STACKTRACE) || 
+  if (not (getDebug().test(debug::NO_STACKTRACE) ||
         getDebug().test(debug::CORE_ON_SIGNAL)))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
@@ -383,7 +384,7 @@ int main(int argc, char **argv)
   if (opt_daemon)
     daemon_is_ready();
 
-  /* 
+  /*
     Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
      should be shutdown.

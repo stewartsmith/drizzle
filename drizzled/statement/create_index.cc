@@ -50,7 +50,7 @@ bool statement::CreateIndex::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(session(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
@@ -67,7 +67,7 @@ bool statement::CreateIndex::execute()
   */
 
   assert(first_table == all_tables && first_table != 0);
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -79,7 +79,7 @@ bool statement::CreateIndex::execute()
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     create_info().default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
-    res= alter_table(getSession(), 
+    res= alter_table(&session(), 
                      identifier,
                      identifier,
                      &create_info(), 
@@ -92,13 +92,13 @@ bool statement::CreateIndex::execute()
   else
   {
     identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= getSession()->find_temporary_table(catch22);
+    Table *table= session().find_temporary_table(catch22);
     assert(table);
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       create_info().default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
-      res= alter_table(getSession(), 
+      res= alter_table(&session(), 
                        identifier,
                        identifier,
                        &create_info(), 

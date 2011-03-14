@@ -176,7 +176,7 @@ void MemcachedQueryCache::checkTables(Session *session, TableList* in_table)
   {
     if (strcasecmp(tmp_table->db, "DATA_DICTIONARY") == 0)
     {
-      session->getLex()->setCacheable(false);
+      session->lex().setCacheable(false);
       break;
     }
   } 
@@ -187,8 +187,8 @@ void MemcachedQueryCache::checkTables(Session *session, TableList* in_table)
  */
 bool MemcachedQueryCache::doPrepareResultset(Session *session)
 {		
-  checkTables(session, session->getLex()->query_tables);
-  if (sysvar_memcached_qc_enable && session->getLex()->isCacheable())
+  checkTables(session, session->lex().query_tables);
+  if (sysvar_memcached_qc_enable && session->lex().isCacheable())
   {
     /* Prepare and set the key for the session */
     string query= session->query + *session->schema();
@@ -227,10 +227,10 @@ bool MemcachedQueryCache::doPrepareResultset(Session *session)
 bool MemcachedQueryCache::doSetResultset(Session *session)
 {		
   message::Resultset *resultset= session->getResultsetMessage();
-  if (sysvar_memcached_qc_enable && (not session->is_error()) && resultset != NULL && session->getLex()->isCacheable())
+  if (sysvar_memcached_qc_enable && (not session->is_error()) && resultset != NULL && session->lex().isCacheable())
   {
     /* Generate the final Header */
-    queryCacheService.setResultsetHeader(*resultset, session, session->getLex()->query_tables);
+    queryCacheService.setResultsetHeader(*resultset, session, session->lex().query_tables);
     /* serialize the Resultset Message */
     std::string output;
     resultset->SerializeToString(&output);

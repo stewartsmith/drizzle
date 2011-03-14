@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __CONNECTIONHANDLER_MS_H__
 #define __CONNECTIONHANDLER_MS_H__
 

@@ -15,8 +15,7 @@
 
 /* Defines to make different thread packages compatible */
 
-#ifndef DRIZZLED_INTERNAL_THREAD_VAR_H
-#define DRIZZLED_INTERNAL_THREAD_VAR_H
+#pragma once
 
 #include <pthread.h>
 #include <boost/thread/recursive_mutex.hpp>
@@ -59,4 +58,3 @@ extern struct st_my_thread_var *_my_thread_var(void);
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_THREAD_VAR_H */

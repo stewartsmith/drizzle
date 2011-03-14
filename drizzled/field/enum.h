@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_ENUM_H
-#define DRIZZLED_FIELD_ENUM_H
+#pragma once
 
 #include <drizzled/field/str.h>
 
@@ -108,4 +107,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_ENUM_H */

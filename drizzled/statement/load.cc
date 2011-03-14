@@ -32,7 +32,7 @@ bool statement::Load::execute()
   TableList *first_table= (TableList *) lex().select_lex.table_list.first;
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  bool res= load(getSession(),
+  bool res= load(&session(),
                  lex().exchange,
                  first_table,
                  lex().field_list,

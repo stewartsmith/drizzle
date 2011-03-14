@@ -24,8 +24,7 @@
 
 
 
-#ifndef DRIZZLED_FIELD_H
-#define DRIZZLED_FIELD_H
+#pragma once
 
 #include <drizzled/sql_error.h>
 #include <drizzled/type/decimal.h>
@@ -857,4 +856,3 @@ bool test_if_important_data(const CHARSET_INFO * const cs,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_H */

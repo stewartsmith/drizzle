@@ -20,8 +20,7 @@
 
 
 
-#ifndef DRIZZLED_INTERNAL_MY_SYS_H
-#define DRIZZLED_INTERNAL_MY_SYS_H
+#pragma once
 
 #ifdef __cplusplus
 # include <cstdio>
@@ -376,4 +375,3 @@ extern void thd_increment_net_big_packet_count(uint32_t length);
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_MY_SYS_H */

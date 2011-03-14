@@ -28,8 +28,7 @@
   LC_COLLATE category + Level information
 */
 
-#ifndef DRIZZLED_INTERNAL_T_CTYPE_H
-#define DRIZZLED_INTERNAL_T_CTYPE_H
+#pragma once
 
 namespace drizzled
 {
@@ -261,4 +260,3 @@ void ThNormalize(unsigned char* ptr, uint32_t field_length, const unsigned char*
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_T_CTYPE_H */

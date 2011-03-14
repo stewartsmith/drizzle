@@ -99,7 +99,7 @@ bool statement::AlterTable::execute()
   if (is_engine_set)
   {
     create_info().db_type=
-      plugin::StorageEngine::findByName(*getSession(), createTableMessage().engine().name());
+      plugin::StorageEngine::findByName(session(), createTableMessage().engine().name());
 
     if (create_info().db_type == NULL)
     {
@@ -116,7 +116,7 @@ bool statement::AlterTable::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(session(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
@@ -125,7 +125,7 @@ bool statement::AlterTable::execute()
     if (not  create_info().db_type)
     {
       create_info().db_type=
-        plugin::StorageEngine::findByName(*getSession(), original_table_message->engine().name());
+        plugin::StorageEngine::findByName(session(), original_table_message->engine().name());
 
       if (not create_info().db_type)
       {
@@ -138,13 +138,13 @@ bool statement::AlterTable::execute()
   if (not validateCreateTableOption())
     return true;
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
-  if (not (need_start_waiting= not getSession()->wait_if_global_read_lock(0, 1)))
+  if (not (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
     return true;
 
   bool res;
@@ -154,7 +154,7 @@ bool statement::AlterTable::execute()
     identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
                                    lex().name.str ? lex().name.str : first_table->getTableName());
 
-    res= alter_table(getSession(),
+    res= alter_table(&session(),
                      identifier,
                      new_identifier,
                      &create_info(),
@@ -169,7 +169,7 @@ bool statement::AlterTable::execute()
   else
   {
     identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= getSession()->find_temporary_table(catch22);
+    Table *table= session().find_temporary_table(catch22);
     assert(table);
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
@@ -177,7 +177,7 @@ bool statement::AlterTable::execute()
                                        lex().name.str ? lex().name.str : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
-      res= alter_table(getSession(),
+      res= alter_table(&session(),
                        identifier,
                        new_identifier,
                        &create_info(),
@@ -195,7 +195,7 @@ bool statement::AlterTable::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }
@@ -1506,8 +1506,8 @@ copy_data_between_tables(Session *session,
         tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
         error= 1;
 
-        if (session->getLex()->select_lex.setup_ref_array(session, order_num) ||
-            setup_order(session, session->getLex()->select_lex.ref_pointer_array,
+        if (session->lex().select_lex.setup_ref_array(session, order_num) ||
+            setup_order(session, session->lex().select_lex.ref_pointer_array,
                         &tables, fields, all_fields, order) ||
             !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
             (from->sort.found_records= filesort.run(from, sortorder, length,

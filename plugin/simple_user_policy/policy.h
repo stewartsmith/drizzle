@@ -18,8 +18,7 @@
  */
 
 
-#ifndef PLUGIN_SIMPLE_USER_POLICY_POLICY_H
-#define PLUGIN_SIMPLE_USER_POLICY_POLICY_H
+#pragma once
 
 #include <iostream>
 
@@ -67,4 +66,3 @@ inline bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
 
 } /* namespace simple_user_policy */
 
-#endif /* PLUGIN_SIMPLE_USER_POLICY_POLICY_H */

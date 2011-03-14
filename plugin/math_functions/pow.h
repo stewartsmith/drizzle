@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_MATH_FUNCTIONS_POW_H
-#define PLUGIN_MATH_FUNCTIONS_POW_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/dec.h>
@@ -37,4 +36,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* PLUGIN_MATH_FUNCTIONS_POW_H */

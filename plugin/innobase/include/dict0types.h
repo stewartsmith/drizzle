@@ -23,6 +23,7 @@ Data dictionary global types
 Created 1/8/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef dict0types_h
 #define dict0types_h
 

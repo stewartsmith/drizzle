@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_TABLE_IDENT_H
-#define DRIZZLED_TABLE_IDENT_H
+#pragma once
 
 #include <drizzled/lex_string.h>
 #include <drizzled/memory/sql_alloc.h>
@@ -71,4 +70,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_IDENT_H */

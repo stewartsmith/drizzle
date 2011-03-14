@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_SQL_BASE_H
-#define DRIZZLED_SQL_BASE_H
+#pragma once
 
 #include <drizzled/table.h>
 #include <drizzled/table_list.h>
@@ -159,4 +158,3 @@ bool drizzle_rm_tmp_tables();
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_BASE_H */

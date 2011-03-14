@@ -15,8 +15,7 @@
 
 /* Key cache variable structures */
 
-#ifndef PLUGIN_MYISAM_KEYCACHE_H
-#define PLUGIN_MYISAM_KEYCACHE_H
+#pragma once
 
 enum flush_type
 {
@@ -134,4 +133,3 @@ static inline uint32_t my_round_up_to_next_power(uint32_t v)
 }
 
 
-#endif /* PLUGIN_MYISAM_KEYCACHE_H */

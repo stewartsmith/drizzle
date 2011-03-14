@@ -14,8 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
-#ifndef PLUGIN_MYISAM_HA_MYISAM_H
-#define PLUGIN_MYISAM_HA_MYISAM_H
+#pragma once
 
 #include <drizzled/cursor.h>
 #include <drizzled/thr_lock.h>
@@ -96,4 +95,3 @@ private:
   drizzled::key_map keys_with_parts;
 };
 
-#endif /* PLUGIN_MYISAM_HA_MYISAM_H */
