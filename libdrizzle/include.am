@@ -98,7 +98,7 @@ examples_sqlite_server_DEPENDENCIES= libdrizzle/libdrizzle.la
 examples_sqlite_server_SOURCES= examples/sqlite_server.c
 endif
 
-nobase_dist_include_HEADERS+= \
+nobase_dist_libdrizzleinclude_HEADERS=
 	libdrizzle/column.h \
 	libdrizzle/column_client.h \
 	libdrizzle/column_server.h \
@@ -143,8 +143,8 @@ libdrizzle: libdrizzle/libdrizzle.la
 install-libdrizzle:
 	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
 	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle/libdrizzle.la "$(DESTDIR)$(libdir)"
-	test -z "$(includedir)" || $(MKDIR_P) "$(DESTDIR)$(includedir)"
-	@list='$(nobase_dist_include_HEADERS)'; test -n "$(includedir)" || list=; \
+	test -z "$(libdrizzleincludedir)" || $(MKDIR_P) "$(DESTDIR)$(libdrizzleincludedir)"
+	@list='$(nobase_dist_libdrizzleinclude_HEADERS)'; test -n "$(libdrizzleincludedir)" || list=; \
 	$(am__nobase_list) | while read dir files; do \
           if test "x$$dir" = "xlibdrizzle" ; then \
 	    xfiles=; for file in $$files; do \
@@ -152,9 +152,9 @@ install-libdrizzle:
 	      else xfiles="$$xfiles $(srcdir)/$$file"; fi; done; \
 	    test -z "$$xfiles" || { \
 	      test "x$$dir" = x. || { \
-	        echo "$(MKDIR_P) '$(DESTDIR)$(includedir)/$$dir'"; \
-	        $(MKDIR_P) "$(DESTDIR)$(includedir)/$$dir"; }; \
-	      echo " $(INSTALL_HEADER) $$xfiles '$(DESTDIR)$(includedir)/$$dir'"; \
-	      $(INSTALL_HEADER) $$xfiles "$(DESTDIR)$(includedir)/$$dir" || exit $$?; }; \
+	        echo "$(MKDIR_P) '$(DESTDIR)$(libdrizzleincludedir)/$$dir'"; \
+	        $(MKDIR_P) "$(DESTDIR)$(libdrizzleincludedir)/$$dir"; }; \
+	      echo " $(INSTALL_HEADER) $$xfiles '$(DESTDIR)$(libdrizzleincludedir)/$$dir'"; \
+	      $(INSTALL_HEADER) $$xfiles "$(DESTDIR)$(libdrizzleincludedir)/$$dir" || exit $$?; }; \
           fi; \
 	done
