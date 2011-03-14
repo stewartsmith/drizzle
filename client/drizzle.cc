@@ -2204,7 +2204,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
     return(0);
   if (status.getAddToHistory() && line[0] && not_in_history(line))
     add_history(line);
-  char *end_of_line=line+(uint32_t) strlen(line);
 
   for (pos=out=line ; (inchar= (unsigned char) *pos) ; pos++)
   {
@@ -2298,37 +2297,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
         continue;
       }
     }
-    else if (!*ml_comment && !*in_string &&
-             (end_of_line - pos) >= 10 &&
-             !strncmp(pos, "delimiter ", 10))
-    {
-      // Flush previously accepted characters
-      if (out != line)
-      {
-        buffer->append(line, (out - line));
-        out= line;
-      }
-
-      // Flush possible comments in the buffer
-      if (!buffer->empty())
-      {
-        if (com_go(buffer, 0) > 0) // < 0 is not fatal
-          return(1);
-        assert(buffer!=NULL);
-        buffer->clear();
-      }
-
-      /*
-        Delimiter wants the get rest of the given line as argument to
-        allow one to change ';' to ';;' and back
-      */
-      buffer->append(pos);
-      if (com_delimiter(buffer, pos) > 0)
-        return(1);
-
-      buffer->clear();
-      break;
-    }
     else if (!*ml_comment && !*in_string && !strncmp(pos, delimiter,
                                                      strlen(delimiter)))
     {
@@ -2388,7 +2356,22 @@ static bool add_line(string *buffer, char *line, char *in_string,
 
       // comment to end of line
       if (preserve_comments)
+      {
+        bool started_with_nothing= !buffer->empty();
         buffer->append(pos);
+
+        /*
+          A single-line comment by itself gets sent immediately so that
+          client commands (delimiter, status, etc) will be interpreted on
+          the next line.
+        */
+        if (started_with_nothing)
+        {
+          if (com_go(buffer, 0) > 0)             // < 0 is not fatal
+           return 1;
+          buffer->clear();
+        }
+      }  
 
       break;
     }
