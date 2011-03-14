@@ -31,6 +31,7 @@
 #include <drizzled/join.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/select_result.h>
+#include <drizzled/sql_lex.h>
 
 #include <cstdio>
 #include <string>

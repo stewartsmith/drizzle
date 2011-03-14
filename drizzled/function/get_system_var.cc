@@ -23,9 +23,9 @@
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/session.h>
 #include <drizzled/sys_var.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_func_get_system_var::
 Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,

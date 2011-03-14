@@ -21,9 +21,9 @@
 #include <drizzled/natural_join_column.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Natural_join_column::Natural_join_column(Field *field_param,
                                          TableList *tab)

@@ -26,9 +26,9 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,

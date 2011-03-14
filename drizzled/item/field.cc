@@ -30,6 +30,7 @@
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
 #include <boost/dynamic_bitset.hpp>
 
