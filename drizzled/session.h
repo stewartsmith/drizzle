@@ -41,7 +41,6 @@
 #include <drizzled/file_exchange.h>
 #include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
-#include <drizzled/lex_column.h>
 #include <drizzled/named_savepoint.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/plugin.h>
@@ -1379,13 +1378,6 @@ public:
 
   /** The current internal error handler for this thread, or NULL. */
   Internal_error_handler *m_internal_handler;
-  /**
-    The lex to hold the parsed tree of conventional (non-prepared) queries.
-    Whereas for prepared and stored procedure statements we use an own lex
-    instance for each new query, for conventional statements we reuse
-    the same lex. (@see mysql_parse for details).
-  */
-  LEX main_lex;
   /**
     This memory root is used for two purposes:
     - for conventional queries, to allocate structures stored in main_lex
