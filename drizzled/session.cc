@@ -259,6 +259,21 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   plugin::EventObserver::registerSessionEvents(*this);
 }
 
+const LEX& Session::lex() const
+{
+  return main_lex;
+}
+
+LEX& Session::lex()
+{
+  return main_lex;
+}
+
+enum_sql_command Session::getSqlCommand() const
+{
+  return lex().sql_command;
+}
+
 void statement::Statement::set_command(enum_sql_command v)
 {
 	session().lex().sql_command= v;

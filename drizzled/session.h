@@ -86,7 +86,12 @@ namespace message
 }
 
 namespace internal { struct st_my_thread_var; }
-namespace table { class Placeholder; }
+
+namespace table 
+{ 
+  class Placeholder; 
+  class Singular; 
+}
 
 class CopyField;
 class DrizzleXid;
@@ -204,20 +209,9 @@ public:
   }
 
 public:
-  const LEX& lex() const
-  {
-    return main_lex;
-  }
-
-  LEX& lex()
-  {
-    return main_lex;
-  }
-
-  enum_sql_command getSqlCommand() const
-  {
-    return lex().sql_command;
-  }
+  const LEX& lex() const;
+  LEX& lex();
+  enum_sql_command getSqlCommand() const;
 
   /** query associated with this statement */
   typedef boost::shared_ptr<const std::string> QueryString;
