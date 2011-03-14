@@ -140,7 +140,7 @@ class testExecutor():
                 variable_name = "%s_%s" %(self.name.upper(), server.name.upper())
                 variable_value = str(server.master_port)
                 extra_reqs[variable_name] = variable_value
-            self.working_environment = dict(self.working_environment, **extra_reqs)
+            self.working_environment.update(extra_reqs)
         return 
 
     def handle_start_and_exit(self, start_and_exit):
