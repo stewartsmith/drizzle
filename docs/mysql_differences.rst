@@ -181,18 +181,6 @@ Removed commands
  * SET NAMES
  * Multi-table delete and multi-table update code was removed and can be accomplished through subqueries. More detailed information can be found in the :doc:`dml` section.
 
-Operators Removed
------------------
-
-Bit operators
- * &&
- * >>
- * <<
- * ~
- * ^
- * '|'
- * &
-
 Removed functions
 -----------------
 
@@ -203,9 +191,6 @@ Removed functions
 Keywords removed
 ----------------
 
- * BIT_AND
- * BIT_OR
- * BIT_XOR
  * CIPHER
  * CLIENT
  * CODE

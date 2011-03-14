@@ -5,7 +5,7 @@ Syntax:
 
 .. code-block:: mysql
 
-	ANALYZE TABLE table_name [, table_name] ...
+	ANALYZE [LOCAL | NO_WRITE_TO_BINLOG] TABLE tbl_name [, tbl_name] 
 
 ANALYZE TABLE usually read locks a table, and then analyzes and stores
 the key distribution for a table.
