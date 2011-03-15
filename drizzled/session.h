@@ -39,7 +39,6 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
 #include <drizzled/session/property_map.h>
-#include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/sql_error.h>
@@ -75,6 +74,12 @@ namespace message
 }
 
 namespace internal { struct st_my_thread_var; }
+
+namespace session 
+{ 
+  class State; 
+  class TableMessages;
+}
 
 namespace table 
 { 
@@ -248,11 +253,11 @@ public:
   }
 
 private:
-  session::State::shared_ptr  _state;
+  boost::shared_ptr<session::State> _state;
 
 public:
 
-  session::State::const_shared_ptr state()
+  const boost::shared_ptr<session::State>& state()
   {
     return _state;
   }
@@ -1420,10 +1425,7 @@ public:
   table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
   bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
-  session::TableMessages &getMessageCache()
-  {
-    return _table_message_cache;
-  }
+  session::TableMessages &getMessageCache();
 
   /* Reopen operations */
   bool reopen_tables();
@@ -1495,7 +1497,6 @@ private:
     return not getrusage(RUSAGE_THREAD, &usage);
   }
 
-  session::TableMessages _table_message_cache;
   boost::scoped_ptr<impl_c> impl_;
   catalog::Instance::shared_ptr _catalog;
 

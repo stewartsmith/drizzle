@@ -74,6 +74,7 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/ha_data.h>
 #include <drizzled/diagnostics_area.h>
+#include <drizzled/session/state.h>
 
 #include <algorithm>
 #include <climits>
@@ -157,6 +158,7 @@ public:
     the same lex. (@see mysql_parse for details).
   */
   LEX lex;
+  session::TableMessages table_message_cache;
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
@@ -291,6 +293,11 @@ LEX& Session::lex()
 enum_sql_command Session::getSqlCommand() const
 {
   return lex().sql_command;
+}
+
+session::TableMessages& Session::getMessageCache()
+{
+  return impl_->table_message_cache;
 }
 
 void statement::Statement::set_command(enum_sql_command v)
