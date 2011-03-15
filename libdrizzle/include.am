@@ -98,7 +98,7 @@ examples_sqlite_server_DEPENDENCIES= libdrizzle/libdrizzle.la
 examples_sqlite_server_SOURCES= examples/sqlite_server.c
 endif
 
-nobase_dist_libdrizzleinclude_HEADERS=
+nobase_dist_libdrizzleinclude_HEADERS= \
 	libdrizzle/column.h \
 	libdrizzle/column_client.h \
 	libdrizzle/column_server.h \
