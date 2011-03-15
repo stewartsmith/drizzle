@@ -44,6 +44,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/key.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/resource_context.h>
 
 using namespace std;
 

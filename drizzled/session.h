@@ -38,7 +38,6 @@
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
-#include <drizzled/resource_context.h>
 #include <drizzled/session/property_map.h>
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
@@ -63,8 +62,9 @@ namespace drizzled {
 namespace plugin
 {
 	class Client;
-	class Scheduler;
 	class EventObserverList;
+  class MonitoredInTransaction;
+	class Scheduler;
 }
 
 namespace message
@@ -87,6 +87,7 @@ class Diagnostics_area;
 class DrizzleXid;
 class Internal_error_handler;
 class Lex_input_stream;
+class ResourceContext;
 class TableShareInstance;
 class Table_ident;
 class Time_zone;
