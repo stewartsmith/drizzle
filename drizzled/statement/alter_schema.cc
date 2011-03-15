@@ -25,6 +25,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/schema.h>
 #include <drizzled/message.h>
+#include <drizzled/sql_lex.h>
 
 #include <string>
 

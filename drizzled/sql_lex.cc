@@ -32,6 +32,7 @@
 #include <drizzled/select_result.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/statement.h>
+#include <drizzled/sql_lex.h>
 
 #include <cstdio>
 #include <ctype.h>

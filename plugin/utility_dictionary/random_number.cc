@@ -24,7 +24,7 @@
 
 #include <drizzled/atomics.h>
 #include <drizzled/session.h>
-
+#include <drizzled/sql_lex.h>
 
 using namespace drizzled;
 using namespace std;

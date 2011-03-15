@@ -26,11 +26,11 @@
 #include <drizzled/session.h>
 #include <drizzled/show.h>
 #include <drizzled/table_function_container.h>
+#include <drizzled/sql_lex.h>
 
 #include <vector>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static TableFunctionContainer table_functions;
 

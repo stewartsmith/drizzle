@@ -26,6 +26,7 @@
 
 #include <config.h>
 #include <drizzled/cached_item.h>
+#include <drizzled/field.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/session.h>
 #include <drizzled/item/field.h>
