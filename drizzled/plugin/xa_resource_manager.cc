@@ -28,7 +28,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/xa_resource_manager.h>
 #include <drizzled/xid.h>
-
+#include <drizzled/errmsg_print.h>
 
 #include <string>
 #include <vector>

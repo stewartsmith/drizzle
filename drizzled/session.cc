@@ -39,6 +39,7 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/lock.h>
 #include <drizzled/plugin/authentication.h>
+#include <drizzled/plugin/authorization.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/plugin/logging.h>

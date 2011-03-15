@@ -32,11 +32,10 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
+#include <drizzled/global_charset_info.h>
+#include <drizzled/base.h>
 #include <drizzled/error.h>
-#include <drizzled/identifier.h>
 #include <drizzled/open_tables_state.h>
-#include <drizzled/plugin.h>
-#include <drizzled/plugin/authorization.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
 #include <drizzled/resource_context.h>

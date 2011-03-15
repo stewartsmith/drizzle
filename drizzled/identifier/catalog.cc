@@ -19,9 +19,9 @@
  */
 
 #include <config.h>
-
-#include <assert.h>
-
+#include <cassert>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
 #include <drizzled/identifier.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
