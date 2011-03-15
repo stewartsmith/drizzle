@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-03-15 08:11-0400\n"
+"POT-Creation-Date: 2011-03-15 12:39-0400\n"
 "PO-Revision-Date: 2011-02-14 09:30+0000\n"
 "Last-Translator: CL <klrkdekira@gmail.com>\n"
 "Language-Team: Chinese (Hong Kong) <zh_HK@li.org>\n"
@@ -185,24 +185,24 @@ msgstr "每個聲明之後顯示警告。"
 msgid "Don't show warnings after every statement."
 msgstr "每個生命之後不顯示警告。"
 
-#: ../client/drizzle.cc:1198 ../client/drizzle.cc:4121
+#: ../client/drizzle.cc:1198 ../client/drizzle.cc:4104
 #, c-format
 msgid "shutting down drizzled"
 msgstr ""
 
-#: ../client/drizzle.cc:1200 ../client/drizzle.cc:4123
+#: ../client/drizzle.cc:1200 ../client/drizzle.cc:4106
 #, c-format
 msgid " on port %d"
 msgstr ""
 
 #: ../client/drizzle.cc:1209 ../client/drizzle.cc:1215
-#: ../client/drizzle.cc:4132 ../client/drizzle.cc:4138
+#: ../client/drizzle.cc:4115 ../client/drizzle.cc:4121
 #, c-format
 msgid "shutdown failed; error: '%s'"
 msgstr ""
 
 #: ../client/drizzle.cc:1224 ../client/drizzle.cc:1260
-#: ../client/drizzle.cc:4147
+#: ../client/drizzle.cc:4130
 #, c-format
 msgid "done\n"
 msgstr ""
@@ -500,7 +500,7 @@ msgstr ""
 msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr "建造初步提示時記憶分配錯誤。中止中。\n"
 
-#: ../client/drizzle.cc:1636 ../client/drizzle.cc:4017
+#: ../client/drizzle.cc:1636 ../client/drizzle.cc:4000
 msgid "DELIMITER cannot contain a backslash character"
 msgstr ""
 
@@ -515,7 +515,7 @@ msgstr ""
 msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
 msgstr ""
 
-#: ../client/drizzle.cc:1787 ../client/drizzle.cc:4288
+#: ../client/drizzle.cc:1787 ../client/drizzle.cc:4271
 #, c-format
 msgid "Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"
 msgstr ""
@@ -588,83 +588,83 @@ msgstr "查詢因Ctrl+C而終止\n"
 msgid "Processing line: %<PRIu32>\n"
 msgstr ""
 
-#: ../client/drizzle.cc:2289
+#: ../client/drizzle.cc:2288
 msgid "Unknown command: "
 msgstr ""
 
-#: ../client/drizzle.cc:2460
+#: ../client/drizzle.cc:2443
 msgid "Not found a delimiter within max_input_line of input"
 msgstr ""
 
-#: ../client/drizzle.cc:2706
+#: ../client/drizzle.cc:2689
 msgid ""
 "Reading table information for completion of table and column names\n"
 "You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 
-#: ../client/drizzle.cc:2745
+#: ../client/drizzle.cc:2728
 msgid "No connection. Trying to reconnect..."
 msgstr ""
 
-#: ../client/drizzle.cc:2751
+#: ../client/drizzle.cc:2734
 msgid "Can't connect to the server\n"
 msgstr "不能連接伺服器\n"
 
-#: ../client/drizzle.cc:2835
+#: ../client/drizzle.cc:2818
 msgid "List of all Drizzle commands:"
 msgstr "所有Drizzle的指令:"
 
-#: ../client/drizzle.cc:2839
+#: ../client/drizzle.cc:2822
 #, c-format
 msgid ""
 "Note that all text commands must be first on line and end with '%s' or \\g"
 msgstr ""
 
-#: ../client/drizzle.cc:2897
+#: ../client/drizzle.cc:2880
 msgid "No query specified\n"
 msgstr ""
 
-#: ../client/drizzle.cc:2912
+#: ../client/drizzle.cc:2895
 msgid "Ignoring query to other database"
 msgstr ""
 
-#: ../client/drizzle.cc:2961
+#: ../client/drizzle.cc:2944
 msgid "Empty set"
 msgstr ""
 
-#: ../client/drizzle.cc:2974
+#: ../client/drizzle.cc:2957
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../client/drizzle.cc:2983
+#: ../client/drizzle.cc:2966
 msgid "Query OK"
 msgstr "成功執行"
 
-#: ../client/drizzle.cc:2985
+#: ../client/drizzle.cc:2968
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "成功執行, %ld 筆記錄受到影響"
 
-#: ../client/drizzle.cc:3057
+#: ../client/drizzle.cc:3040
 msgid "popen() failed! defaulting PAGER to stdout!\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3079
+#: ../client/drizzle.cc:3062
 #, c-format
 msgid "Error logging to file '%s'\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3084
+#: ../client/drizzle.cc:3067
 #, fuzzy, c-format
 msgid "Logging to file '%s'\n"
 msgstr "提取歷史-檔案 %s。\n"
 
-#: ../client/drizzle.cc:3168
+#: ../client/drizzle.cc:3151
 #, c-format
 msgid ""
 "Field %3u:  `%s`\n"
@@ -681,174 +681,174 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3748
+#: ../client/drizzle.cc:3731
 #, c-format
 msgid "No previous outfile available, you must give a filename!\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3753
+#: ../client/drizzle.cc:3736
 #, c-format
 msgid "Currently logging to file '%s'\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3773
+#: ../client/drizzle.cc:3756
 #, c-format
 msgid "No outfile specified!\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3786
+#: ../client/drizzle.cc:3769
 msgid "Outfile disabled.\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3813
+#: ../client/drizzle.cc:3796
 #, fuzzy
 msgid "Default pager wasn't set, using stdout.\n"
 msgstr "禁用頁面分界,打印到標準輸出。"
 
-#: ../client/drizzle.cc:3833
+#: ../client/drizzle.cc:3816
 #, c-format
 msgid "PAGER set to '%s'\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3844
+#: ../client/drizzle.cc:3827
 msgid "PAGER set to stdout\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3927
+#: ../client/drizzle.cc:3910
 #, c-format
 msgid "Connection id:    %u"
 msgstr ""
 
-#: ../client/drizzle.cc:3929
+#: ../client/drizzle.cc:3912
 #, c-format
 msgid "Current schema: %.128s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3930
+#: ../client/drizzle.cc:3913
 msgid "*** NONE ***"
 msgstr ""
 
 #. Skip command name
-#: ../client/drizzle.cc:3950
+#: ../client/drizzle.cc:3933
 msgid "Usage: \\. <filename> | source <filename>"
 msgstr ""
 
-#: ../client/drizzle.cc:3965
+#: ../client/drizzle.cc:3948
 #, fuzzy, c-format
 msgid "Failed to open file '%s', error: %d"
 msgstr "讀取檔案'%s'時發生錯誤 (錯誤碼: %d)"
 
-#: ../client/drizzle.cc:3973
+#: ../client/drizzle.cc:3956
 msgid "Can't initialize LineBuffer"
 msgstr ""
 
-#: ../client/drizzle.cc:4009
+#: ../client/drizzle.cc:3992
 msgid "DELIMITER must be followed by a 'delimiter' character or string"
 msgstr ""
 
-#: ../client/drizzle.cc:4042
+#: ../client/drizzle.cc:4025
 msgid "USE must be followed by a schema name"
 msgstr ""
 
-#: ../client/drizzle.cc:4110
+#: ../client/drizzle.cc:4093
 msgid "Schema changed"
 msgstr ""
 
-#: ../client/drizzle.cc:4156
+#: ../client/drizzle.cc:4139
 #, fuzzy
 msgid "Show warnings enabled."
 msgstr "每個聲明之後顯示警告。"
 
-#: ../client/drizzle.cc:4164
+#: ../client/drizzle.cc:4147
 #, fuzzy
 msgid "Show warnings disabled."
 msgstr "每個聲明之後顯示警告。"
 
-#: ../client/drizzle.cc:4295
+#: ../client/drizzle.cc:4278
 #, c-format
 msgid ""
 "\n"
 "Connection id:\t\t%lu\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4307
+#: ../client/drizzle.cc:4290
 #, c-format
 msgid "Current schema:\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4308
+#: ../client/drizzle.cc:4291
 #, c-format
 msgid "Current user:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4314
+#: ../client/drizzle.cc:4297
 msgid "SSL:\t\t\tNot in use"
 msgstr ""
 
-#: ../client/drizzle.cc:4319
+#: ../client/drizzle.cc:4302
 msgid ""
 "\n"
 "No connection\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4326
+#: ../client/drizzle.cc:4309
 msgid ""
 "\n"
 "All updates ignored to this schema\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4329
+#: ../client/drizzle.cc:4312
 #, c-format
 msgid "Current pager:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4330
+#: ../client/drizzle.cc:4313
 #, c-format
 msgid "Using outfile:\t\t'%s'\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4331
+#: ../client/drizzle.cc:4314
 #, c-format
 msgid "Using delimiter:\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4332
+#: ../client/drizzle.cc:4315
 #, c-format
 msgid "Server version:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4333
+#: ../client/drizzle.cc:4316
 #, c-format
 msgid "Protocol:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4334
+#: ../client/drizzle.cc:4317
 #, c-format
 msgid "Protocol version:\t%d\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4335
+#: ../client/drizzle.cc:4318
 #, c-format
 msgid "Connection:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4342
+#: ../client/drizzle.cc:4325
 #, c-format
 msgid "UNIX socket:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4344
+#: ../client/drizzle.cc:4327
 #, c-format
 msgid "TCP port:\t\t%d\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4349
+#: ../client/drizzle.cc:4332
 msgid ""
 "\n"
 "Note that you are running in safe_update_mode:\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4351
+#: ../client/drizzle.cc:4334
 #, c-format
 msgid ""
 "UPDATEs and DELETEs that don't use a key in the WHERE clause are not "
@@ -861,57 +861,57 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4413 ../drizzled/option.cc:340
+#: ../client/drizzle.cc:4396 ../drizzled/option.cc:340
 #, c-format
 msgid "ERROR"
 msgstr "錯誤"
 
-#: ../client/drizzle.cc:4456
+#: ../client/drizzle.cc:4439
 #, c-format
 msgid "ERROR %d (%s): "
 msgstr ""
 
-#: ../client/drizzle.cc:4458
+#: ../client/drizzle.cc:4441
 #, fuzzy, c-format
 msgid "ERROR %d: "
 msgstr "錯誤"
 
-#: ../client/drizzle.cc:4461
+#: ../client/drizzle.cc:4444
 #, fuzzy
 msgid "ERROR: "
 msgstr "錯誤"
 
-#: ../client/drizzle.cc:4566
+#: ../client/drizzle.cc:4549
 msgid " hours "
 msgstr ""
 
-#: ../client/drizzle.cc:4568
+#: ../client/drizzle.cc:4551
 msgid " hour "
 msgstr ""
 
-#: ../client/drizzle.cc:4572
+#: ../client/drizzle.cc:4555
 msgid " min "
 msgstr ""
 
-#: ../client/drizzle.cc:4582
+#: ../client/drizzle.cc:4565
 msgid " sec"
 msgstr ""
 
-#: ../client/drizzle.cc:4684
+#: ../client/drizzle.cc:4667
 msgid "(unknown)"
 msgstr ""
 
-#: ../client/drizzle.cc:4804
+#: ../client/drizzle.cc:4787
 #, c-format
 msgid "Returning to default PROMPT of %s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4809
+#: ../client/drizzle.cc:4792
 #, fuzzy
 msgid "Memory allocation error. Not changing prompt\n"
 msgstr "建造初步提示時記憶分配錯誤。中止中。\n"
 
-#: ../client/drizzle.cc:4814
+#: ../client/drizzle.cc:4797
 #, c-format
 msgid "PROMPT set to '%s'\n"
 msgstr ""
@@ -3592,35 +3592,35 @@ msgstr ""
 msgid "error: could not open directory: %s\n"
 msgstr ""
 
-#: ../drizzled/main.cc:171
+#: ../drizzled/main.cc:172
 msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
 msgstr ""
 
-#: ../drizzled/main.cc:288
+#: ../drizzled/main.cc:289
 #, c-format
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-#: ../drizzled/main.cc:299
+#: ../drizzled/main.cc:300
 #, c-format
 msgid "Local catalog %s/local does not exist\n"
 msgstr ""
 
-#: ../drizzled/main.cc:324 ../plugin/multi_thread/multi_thread.cc:84
+#: ../drizzled/main.cc:325 ../plugin/multi_thread/multi_thread.cc:84
 msgid "Drizzle has receieved an abort event."
 msgstr ""
 
-#: ../drizzled/main.cc:325 ../plugin/multi_thread/multi_thread.cc:85
+#: ../drizzled/main.cc:326 ../plugin/multi_thread/multi_thread.cc:85
 msgid "In Function: "
 msgstr ""
 
-#: ../drizzled/main.cc:326 ../plugin/multi_thread/multi_thread.cc:86
+#: ../drizzled/main.cc:327 ../plugin/multi_thread/multi_thread.cc:86
 msgid "In File: "
 msgstr ""
 
-#: ../drizzled/main.cc:327 ../plugin/multi_thread/multi_thread.cc:87
+#: ../drizzled/main.cc:328 ../plugin/multi_thread/multi_thread.cc:87
 msgid "On Line: "
 msgstr ""
 
@@ -3915,7 +3915,7 @@ msgid ""
 "We have deactivated the TransactionApplier '%s'.\n"
 msgstr ""
 
-#: ../drizzled/session.cc:1994 ../drizzled/session.cc:2013
+#: ../drizzled/session.cc:2019 ../drizzled/session.cc:2038
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr ""
@@ -4076,33 +4076,33 @@ msgstr ""
 msgid "How often to empty the users cache, 0 to disable"
 msgstr ""
 
-#: ../plugin/console/console.cc:348
+#: ../plugin/console/console.cc:349
 #, c-format
 msgid "pipe() failed with errno %d"
 msgstr ""
 
-#: ../plugin/console/console.cc:384
+#: ../plugin/console/console.cc:385
 msgid "Enable the console."
 msgstr ""
 
-#: ../plugin/console/console.cc:387
+#: ../plugin/console/console.cc:388
 msgid "Turn on extra debugging."
 msgstr ""
 
-#: ../plugin/console/console.cc:390
+#: ../plugin/console/console.cc:391
 msgid "User to use for auth."
 msgstr ""
 
-#: ../plugin/console/console.cc:393
+#: ../plugin/console/console.cc:394
 msgid "Password to use for auth."
 msgstr ""
 
-#: ../plugin/console/console.cc:396
+#: ../plugin/console/console.cc:397
 #, fuzzy
 msgid "Default catalog to use."
 msgstr "使用的資料庫"
 
-#: ../plugin/console/console.cc:399
+#: ../plugin/console/console.cc:400
 #, fuzzy
 msgid "Default schema to use."
 msgstr "使用的資料庫"
@@ -4362,29 +4362,29 @@ msgid ""
 "Use HailDB's internal memory allocator instead of the OS memory allocator"
 msgstr ""
 
-#: ../plugin/hello_events/hello_events.cc:401
+#: ../plugin/hello_events/hello_events.cc:403
 msgid "Enable Example Events Plugin"
 msgstr ""
 
-#: ../plugin/hello_events/hello_events.cc:404
-#: ../plugin/hello_events/hello_events.cc:407
+#: ../plugin/hello_events/hello_events.cc:406
+#: ../plugin/hello_events/hello_events.cc:409
 msgid "A comma delimited list of databases to watch"
 msgstr ""
 
-#: ../plugin/hello_events/hello_events.cc:410
+#: ../plugin/hello_events/hello_events.cc:412
 msgid "Before write row event observer call position"
 msgstr ""
 
-#: ../plugin/hello_events/hello_events.cc:413
-#: ../plugin/pbms/src/parameters_ms.cc:461
+#: ../plugin/hello_events/hello_events.cc:415
+#: ../plugin/pbms/src/parameters_ms.cc:462
 msgid "Before update row event observer call position"
 msgstr ""
 
-#: ../plugin/hello_events/hello_events.cc:416
+#: ../plugin/hello_events/hello_events.cc:418
 msgid "After drop database event observer call position"
 msgstr ""
 
-#: ../plugin/hello_events/hello_events.cc:427
+#: ../plugin/hello_events/hello_events.cc:429
 msgid "An example events Plugin"
 msgstr ""
 
@@ -4550,23 +4550,23 @@ msgstr ""
 msgid "Log queries to a CSV file"
 msgstr ""
 
-#: ../plugin/logging_stats/logging_stats.cc:373
+#: ../plugin/logging_stats/logging_stats.cc:374
 msgid "Max number of users that will be logged"
 msgstr ""
 
-#: ../plugin/logging_stats/logging_stats.cc:376
+#: ../plugin/logging_stats/logging_stats.cc:377
 msgid "Max number of range locks to use for Scoreboard"
 msgstr ""
 
-#: ../plugin/logging_stats/logging_stats.cc:379
+#: ../plugin/logging_stats/logging_stats.cc:380
 msgid "Max number of concurrent sessions that will be logged"
 msgstr ""
 
-#: ../plugin/logging_stats/logging_stats.cc:380
+#: ../plugin/logging_stats/logging_stats.cc:381
 msgid "Enable Logging Statistics Collection"
 msgstr ""
 
-#: ../plugin/logging_stats/logging_stats.cc:389
+#: ../plugin/logging_stats/logging_stats.cc:390
 msgid "User Statistics as DATA_DICTIONARY tables"
 msgstr ""
 
@@ -4915,55 +4915,55 @@ msgstr ""
 msgid "Clobber socket file if one is there already."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:426
+#: ../plugin/pbms/src/parameters_ms.cc:427
 msgid "Port number to use for connection or 0 for default PBMS port "
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:429
+#: ../plugin/pbms/src/parameters_ms.cc:430
 msgid "The maximum size of a BLOB repository file."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:432
+#: ../plugin/pbms/src/parameters_ms.cc:433
 msgid "The maximum size of a temorary BLOB log file."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:435
+#: ../plugin/pbms/src/parameters_ms.cc:436
 msgid ""
 "A ':' delimited list of metadata header names to be used to initialize the "
 "pbms_metadata_header table when a database is created."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:439
+#: ../plugin/pbms/src/parameters_ms.cc:440
 msgid "The percentage of garbage in a repository file before it is compacted."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:442
+#: ../plugin/pbms/src/parameters_ms.cc:443
 msgid ""
 "The timeout, in seconds, for temporary BLOBs. Uploaded blob data is removed "
 "after this time, unless committed to the database."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:445
+#: ../plugin/pbms/src/parameters_ms.cc:446
 msgid ""
 "The timeout, in milli-seconds, before the HTTP server will close an inactive "
 "HTTP connection."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:448
+#: ../plugin/pbms/src/parameters_ms.cc:449
 msgid "The next backup ID to use when backing up a PBMS database."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:451
+#: ../plugin/pbms/src/parameters_ms.cc:452
 msgid ""
 "A comma delimited list of tables to watch of the format: <database>."
 "<table>, ..."
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:453
+#: ../plugin/pbms/src/parameters_ms.cc:454
 msgid "Enable PBMS daemon Insert/Update/Delete event scanning"
 msgstr ""
 
-#: ../plugin/pbms/src/parameters_ms.cc:457
+#: ../plugin/pbms/src/parameters_ms.cc:458
 msgid "Before insert row event observer call position"
 msgstr ""
 
