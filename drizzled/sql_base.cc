@@ -59,6 +59,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
 #include <drizzled/refresh_version.h>
 

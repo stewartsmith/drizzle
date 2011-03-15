@@ -24,7 +24,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_schema.h>
 #include <drizzled/plugin/event_observer.h>
-
+#include <drizzled/sql_lex.h>
 #include <drizzled/schema.h>
 
 #include <string>

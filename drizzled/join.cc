@@ -64,6 +64,7 @@
 #include <drizzled/debug.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/my_hash.h>
+#include <drizzled/sql_lex.h>
 #include <algorithm>
 
 using namespace std;

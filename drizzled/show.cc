@@ -29,11 +29,10 @@
 #include <drizzled/session.h>
 #include <drizzled/show.h>
 #include <drizzled/sql_select.h>
-
 #include <drizzled/statement/show.h>
 #include <drizzled/statement/show_errors.h>
 #include <drizzled/statement/show_warnings.h>
-
+#include <drizzled/sql_lex.h>
 
 #include <sys/stat.h>
 

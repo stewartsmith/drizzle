@@ -26,7 +26,7 @@ AC_CONFIG_AUX_DIR([config])
 
 PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
-LIBDRIZZLE_LIBRARY_VERSION=1:0:0
+LIBDRIZZLE_LIBRARY_VERSION=2:0:1
 #                          | | |
 #                   +------+ | +---+
 #                   |        |     |
@@ -40,6 +40,9 @@ LIBDRIZZLE_LIBRARY_VERSION=1:0:0
 #                   +- increment if interfaces have been added, removed or
 #                      changed
 AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
+
+libdrizzleincludedir='${includedir}/libdrizzle-1.0'
+AC_SUBST(libdrizzleincludedir)
 
 # libdrizzle versioning when linked with GNU ld.
 AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
@@ -156,7 +159,7 @@ AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
  support-files/drizzle7.pc dnl
- support-files/libdrizzle.pc dnl
+ support-files/libdrizzle-1.0.pc dnl
  support-files/smf/install.sh dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)

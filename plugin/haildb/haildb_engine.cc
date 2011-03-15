@@ -107,8 +107,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/module/option_map.h>
 #include <drizzled/charset.h>
 #include <drizzled/current_session.h>
-
 #include <drizzled/key.h>
+#include <drizzled/sql_lex.h>
 
 #include <iostream>
 
