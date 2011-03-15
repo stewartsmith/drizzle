@@ -22,9 +22,9 @@
 
 #include <drizzled/dtcollation.h>
 #include <drizzled/query_id.h>
+#include <drizzled/item_result.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace type { class Decimal; }
 
@@ -48,12 +48,10 @@ class user_var_entry
 
   ~user_var_entry()
   {
-    if (name.str) 
-      free(name.str);
-
-    if (value) 
-      free(value);
+    free(name.str);
+    free(value);
   }
+
   LEX_STRING name;
   char *value;
   ulong length;

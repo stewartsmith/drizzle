@@ -24,9 +24,9 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/replace_select.h>
 #include <drizzled/select_insert.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::ReplaceSelect::execute()
 {

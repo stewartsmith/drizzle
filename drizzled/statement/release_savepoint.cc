@@ -24,13 +24,12 @@
 #include <drizzled/statement/release_savepoint.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/named_savepoint.h>
-
+#include <drizzled/sql_lex.h>
 #include <string>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::ReleaseSavepoint::execute()
 {

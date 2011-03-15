@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <bitset>
 #include <boost/make_shared.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -34,6 +35,7 @@
 
 #include <drizzled/global_charset_info.h>
 #include <drizzled/base.h>
+#include <drizzled/discrete_interval.h>
 #include <drizzled/error.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
@@ -41,11 +43,11 @@
 #include <drizzled/session/property_map.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
-// #include <drizzled/table_ident.h>
 #include <drizzled/transaction_context.h>
 #include <drizzled/util/storable.h>
 #include <drizzled/var.h>
@@ -87,10 +89,16 @@ namespace table
   class Singular; 
 }
 
+typedef class Item COND;
+
 class CopyField;
+class CreateField;
 class Diagnostics_area;
 class DrizzleXid;
+class Field;
 class Internal_error_handler;
+class Item;
+class LEX;
 class Lex_input_stream;
 class ResourceContext;
 class TableShareInstance;
