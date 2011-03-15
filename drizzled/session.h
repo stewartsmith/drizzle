@@ -33,15 +33,11 @@
 #include <sys/time.h>
 
 #include <drizzled/catalog/instance.h>
-#include <drizzled/catalog/local.h>
-#include <drizzled/copy_info.h>
 #include <drizzled/cursor.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/error.h>
-#include <drizzled/file_exchange.h>
 #include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
-#include <drizzled/named_savepoint.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/authorization.h>

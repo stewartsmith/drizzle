@@ -28,6 +28,8 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/copy_info.h>
+#include <drizzled/file_exchange.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
