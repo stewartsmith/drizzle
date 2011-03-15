@@ -248,7 +248,7 @@ int update_query(Session *session, TableList *table_list,
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();
+    session->main_da().reset_diagnostics_area();
     free_underlaid_joins(session, select_lex);
     if (error || session->is_error())
     {
@@ -577,7 +577,7 @@ int update_query(Session *session, TableList *table_list,
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();
+    session->main_da().reset_diagnostics_area();
     session->my_ok((ulong) session->rowCount(), found, id, buff);
     session->status_var.updated_row_count+= session->rowCount();
   }
