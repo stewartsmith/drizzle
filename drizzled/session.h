@@ -32,8 +32,8 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <drizzled/catalog/instance.h>
-#include <drizzled/cursor.h>
+// #include <drizzled/catalog/instance.h>
+// #include <drizzled/cursor.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/error.h>
 #include <drizzled/identifier.h>
