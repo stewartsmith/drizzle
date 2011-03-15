@@ -30,6 +30,7 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/copy_info.h>
 #include <drizzled/file_exchange.h>
+#include <drizzled/util/test.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>

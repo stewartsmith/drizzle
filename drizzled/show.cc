@@ -33,6 +33,7 @@
 #include <drizzled/statement/show_errors.h>
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/table_ident.h>
 
 #include <sys/stat.h>
 

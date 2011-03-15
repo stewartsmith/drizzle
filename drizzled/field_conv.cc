@@ -47,9 +47,9 @@
 #include <drizzled/field/real.h>
 #include <drizzled/field/str.h>
 #include <drizzled/field/varstring.h>
+#include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static void do_field_eq(CopyField *copy)
 {

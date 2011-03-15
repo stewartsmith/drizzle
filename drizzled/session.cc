@@ -2188,6 +2188,22 @@ void Session::my_eof()
   main_da().set_eof_status(this);
 }
 
+void Session::set_end_timer()
+{
+  _end_timer= boost::posix_time::microsec_clock::universal_time();
+  status_var.execution_time_nsec+= (_end_timer - _start_timer).total_microseconds();
+}
+
+plugin::StorageEngine* Session::getDefaultStorageEngine()
+{
+  return variables.storage_engine ? variables.storage_engine : global_system_variables.storage_engine;
+}
+
+enum_tx_isolation Session::getTxIsolation()
+{
+  return (enum_tx_isolation)variables.tx_isolation;
+}
+
 namespace display  {
 
 static const std::string NONE= "NONE";

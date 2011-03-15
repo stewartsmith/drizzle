@@ -28,6 +28,7 @@
 #include <drizzled/identifier.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/select_create.h>
+#include <drizzled/table_ident.h>
 
 #include <iostream>
 

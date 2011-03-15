@@ -28,6 +28,7 @@
 #include <drizzled/item/string.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/util/test.h>
 
 using namespace std;
 

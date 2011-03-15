@@ -45,7 +45,7 @@
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
-#include <drizzled/table_ident.h>
+// #include <drizzled/table_ident.h>
 #include <drizzled/transaction_context.h>
 #include <drizzled/util/storable.h>
 #include <drizzled/var.h>
@@ -331,13 +331,10 @@ public:
   }
 
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
+  enum_tx_isolation getTxIsolation();
+  system_status_var status_var;
 
-  enum_tx_isolation getTxIsolation()
-  {
-    return (enum_tx_isolation)variables.tx_isolation;
-  }
-
-  system_status_var status_var; /**< Session-local status counters */
+  system_status_var status_var0; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
@@ -1039,11 +1036,7 @@ public:
     utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - _epoch).total_microseconds();
   }
 
-  void set_end_timer()
-  {
-    _end_timer= boost::posix_time::microsec_clock::universal_time();
-    status_var.execution_time_nsec+=(_end_timer - _start_timer).total_microseconds();
-  }
+  void set_end_timer();
 
   uint64_t getElapsedTime() const
   {
@@ -1454,13 +1447,7 @@ public:
     @return
     pointer to plugin::StorageEngine
   */
-  plugin::StorageEngine *getDefaultStorageEngine()
-  {
-    if (variables.storage_engine)
-      return variables.storage_engine;
-    return global_system_variables.storage_engine;
-  }
-
+  plugin::StorageEngine *getDefaultStorageEngine();
   void get_xid(DrizzleXid *xid); // Innodb only
 
   table::Singular *getInstanceTable();

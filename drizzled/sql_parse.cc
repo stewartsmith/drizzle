@@ -54,6 +54,7 @@
 #include <drizzled/schema.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/diagnostics_area.h>
+#include <drizzled/table_ident.h>
 
 #include <limits.h>
 
