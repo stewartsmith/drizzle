@@ -36,7 +36,6 @@
 #include <drizzled/cursor.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/error.h>
-#include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/plugin.h>
@@ -51,7 +50,6 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
-#include <drizzled/system_variables.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/table_ident.h>
 #include <drizzled/transaction_context.h>
@@ -97,6 +95,7 @@ class Table_ident;
 class Time_zone;
 class select_result;
 class user_var_entry;
+struct Ha_data;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
