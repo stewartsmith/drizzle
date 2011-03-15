@@ -68,6 +68,7 @@
 #include <drizzled/util/backtrace.h>
 #include <drizzled/current_session.h>
 #include <drizzled/daemon.h>
+#include <drizzled/diagnostics_area.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_lex.h>
 

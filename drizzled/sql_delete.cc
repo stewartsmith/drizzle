@@ -32,9 +32,9 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/filesort.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/diagnostics_area.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Implement DELETE SQL word.

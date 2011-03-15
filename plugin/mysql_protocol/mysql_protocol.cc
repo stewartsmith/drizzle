@@ -34,6 +34,7 @@
 #include "options.h"
 #include <drizzled/identifier.h>
 #include <drizzled/plugin/function.h>
+#include <drizzled/diagnostics_area.h>
 #include <libdrizzle/constants.h>
 
 #define PROTOCOL_VERSION 10

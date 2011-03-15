@@ -32,7 +32,6 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <drizzled/diagnostics_area.h>
 #include <drizzled/error.h>
 #include <drizzled/identifier.h>
 #include <drizzled/open_tables_state.h>
@@ -85,6 +84,7 @@ namespace table
 }
 
 class CopyField;
+class Diagnostics_area;
 class DrizzleXid;
 class Internal_error_handler;
 class Lex_input_stream;
@@ -607,7 +607,6 @@ public:
   List<DRIZZLE_ERROR> warn_list;
   uint32_t warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint32_t total_warn_count;
-  Diagnostics_area main_da0;
 
   ulong col_access;
 

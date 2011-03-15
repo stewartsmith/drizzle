@@ -72,6 +72,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/ha_data.h>
+#include <drizzled/diagnostics_area.h>
 
 #include <algorithm>
 #include <climits>

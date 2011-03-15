@@ -35,6 +35,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/key.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/diagnostics_area.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>

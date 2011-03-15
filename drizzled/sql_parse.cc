@@ -53,6 +53,7 @@
 #include <drizzled/kill.h>
 #include <drizzled/schema.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/diagnostics_area.h>
 
 #include <limits.h>
 
