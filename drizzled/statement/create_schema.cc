@@ -28,6 +28,7 @@
 #include <drizzled/message.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/plugin/authorization.h>
 
 #include <string>
 

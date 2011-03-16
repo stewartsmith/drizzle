@@ -22,12 +22,11 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/set_option.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace statement {
 
-namespace statement
-{
 SetOption::SetOption(Session *in_session) :
   Statement(in_session),
   one_shot_set(false)

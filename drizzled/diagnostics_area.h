@@ -19,8 +19,12 @@
 
 #pragma once
 
-namespace drizzled
-{
+#include <drizzled/base.h>
+#include <drizzled/error_t.h>
+
+namespace drizzled {
+
+class Session;
 
 /**
   Stores status of the currently executed statement.

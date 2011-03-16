@@ -25,9 +25,9 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Numeric fields base class constructor.

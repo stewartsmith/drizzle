@@ -53,6 +53,8 @@
 #include <drizzled/kill.h>
 #include <drizzled/schema.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/table_ident.h>
 
 #include <limits.h>
 
@@ -246,7 +248,7 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    session->main_da.disable_status();              // Don't send anything back
+    session->main_da().disable_status();              // Don't send anything back
     error= true;					// End server
     break;
   case COM_KILL:
@@ -289,10 +291,10 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
 
   /* If commit fails, we should be able to reset the OK status. */
-  session->main_da.can_overwrite_status= true;
+  session->main_da().can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
   transaction_services.autocommitOrRollback(*session, session->is_error());
-  session->main_da.can_overwrite_status= false;
+  session->main_da().can_overwrite_status= false;
 
   session->transaction.stmt.reset();
 
@@ -300,7 +302,7 @@ bool dispatch_command(enum_server_command command, Session *session,
   /* report error issued during command execution */
   if (session->killed_errno())
   {
-    if (! session->main_da.is_set())
+    if (! session->main_da().is_set())
       session->send_kill_message();
   }
   if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
@@ -310,14 +312,14 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
 
   /* Can not be true, but do not take chances in production. */
-  assert(! session->main_da.is_sent);
+  assert(! session->main_da().is_sent);
 
-  switch (session->main_da.status())
+  switch (session->main_da().status())
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->getClient()->sendError(session->main_da.sql_errno(),
-                               session->main_da.message());
+    session->getClient()->sendError(session->main_da().sql_errno(),
+                               session->main_da().message());
     break;
 
   case Diagnostics_area::DA_EOF:
@@ -337,7 +339,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     break;
   }
 
-  session->main_da.is_sent= true;
+  session->main_da().is_sent= true;
 
   session->set_proc_info("closing tables");
   /* Free tables */

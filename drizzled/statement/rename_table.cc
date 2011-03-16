@@ -26,9 +26,9 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/transaction_services.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::RenameTable::execute()
 {

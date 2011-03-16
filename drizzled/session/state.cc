@@ -22,14 +22,11 @@
 
 #include <drizzled/session/state.h>
 #include <drizzled/definitions.h>
-
+#include <cstring>
 #include <string>
 
-namespace drizzled
-{
-
-namespace session
-{
+namespace drizzled {
+namespace session {
 
 State::State(const char *in_packet, size_t in_packet_length)
 {

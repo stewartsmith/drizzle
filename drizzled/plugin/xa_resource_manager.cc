@@ -28,18 +28,16 @@
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/xa_resource_manager.h>
 #include <drizzled/xid.h>
-
+#include <drizzled/errmsg_print.h>
+#include <drizzled/sys_var.h>
 
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <functional>
 
-namespace drizzled
-{
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 static std::vector<XaResourceManager *> xa_resource_managers;
 

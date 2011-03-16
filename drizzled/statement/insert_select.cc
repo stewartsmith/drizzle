@@ -25,9 +25,9 @@
 #include <drizzled/probes.h>
 #include <drizzled/statement/insert_select.h>
 #include <drizzled/select_insert.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::InsertSelect::execute()
 {
