@@ -34,19 +34,15 @@ namespace performance_dictionary {
 bool SessionUsageLogger::pre(Session *session)
 {
   session->setUsage(true);
-
   return false;
 }
 
 bool SessionUsageLogger::post(Session *session)
 {
-  QueryUsage *usage_cache= session->getProperty<QueryUsage>("query_usage");
-
+  QueryUsage* usage_cache= session->getProperty<QueryUsage>("query_usage");
   if (not usage_cache)
     usage_cache= session->setProperty("query_usage", new QueryUsage);
-
   usage_cache->push(session->getQueryString(), session->getUsage());
-
   return false;
 }
 
