@@ -33,6 +33,7 @@
 #include <drizzled/common.h>
 #include <drizzled/data_home.h>
 #include <drizzled/current_session.h>
+#include <drizzled/plugin.h>
 #include <drizzled/session.h>
 #else
 #include "cslib/CSConfig.h"
