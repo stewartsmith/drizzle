@@ -24,6 +24,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/probes.h>
 #include <drizzled/statement/delete.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {

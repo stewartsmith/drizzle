@@ -29,6 +29,7 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/util/functors.h>
 #include <drizzled/key.h>
+#include <drizzled/table.h>
 
 #include <vector>
 

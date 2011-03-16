@@ -27,6 +27,7 @@
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/message.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/sql_lex.h>
 
 #include <string>
 

@@ -43,6 +43,7 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/key.h>
+#include <drizzled/sql_lex.h>
 
 using namespace std;
 

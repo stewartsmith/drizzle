@@ -41,7 +41,6 @@
 #include <drizzled/file_exchange.h>
 #include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
-#include <drizzled/lex_column.h>
 #include <drizzled/named_savepoint.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/plugin.h>
@@ -86,7 +85,12 @@ namespace message
 }
 
 namespace internal { struct st_my_thread_var; }
-namespace table { class Placeholder; }
+
+namespace table 
+{ 
+  class Placeholder; 
+  class Singular; 
+}
 
 class CopyField;
 class DrizzleXid;
@@ -204,20 +208,9 @@ public:
   }
 
 public:
-  const LEX& lex() const
-  {
-    return main_lex;
-  }
-
-  LEX& lex()
-  {
-    return main_lex;
-  }
-
-  enum_sql_command getSqlCommand() const
-  {
-    return lex().sql_command;
-  }
+  const LEX& lex() const;
+  LEX& lex();
+  enum_sql_command getSqlCommand() const;
 
   /** query associated with this statement */
   typedef boost::shared_ptr<const std::string> QueryString;
@@ -1385,13 +1378,6 @@ public:
 
   /** The current internal error handler for this thread, or NULL. */
   Internal_error_handler *m_internal_handler;
-  /**
-    The lex to hold the parsed tree of conventional (non-prepared) queries.
-    Whereas for prepared and stored procedure statements we use an own lex
-    instance for each new query, for conventional statements we reuse
-    the same lex. (@see mysql_parse for details).
-  */
-  LEX main_lex;
   /**
     This memory root is used for two purposes:
     - for conventional queries, to allocate structures stored in main_lex

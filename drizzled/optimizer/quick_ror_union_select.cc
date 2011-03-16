@@ -23,6 +23,7 @@
 #include <drizzled/optimizer/range.h>
 #include <drizzled/optimizer/quick_range_select.h>
 #include <drizzled/optimizer/quick_ror_union_select.h>
+#include <drizzled/table.h>
 
 #include <vector>
 #include <algorithm>

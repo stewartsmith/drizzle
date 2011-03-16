@@ -30,6 +30,7 @@
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 
 
 #define my_strdup(a,b) strdup(a)

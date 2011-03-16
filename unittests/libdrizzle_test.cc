@@ -51,6 +51,28 @@ BOOST_AUTO_TEST_CASE(drizzleEscapeStringBinary)
   BOOST_REQUIRE_EQUAL("\\0\1\2\3\4\5", out);
 }
 
+BOOST_AUTO_TEST_CASE(drizzleSafeEscapeString)
+{
+  const char* orig= "hello \"world\"\n";
+  char out[255];
+  ssize_t out_len;
+
+  out_len= drizzle_safe_escape_string(out, 255, orig, strlen(orig));
+
+  BOOST_REQUIRE_EQUAL(17, out_len);
+  BOOST_REQUIRE_EQUAL("hello \\\"world\\\"\\n", out);
+}
+
+BOOST_AUTO_TEST_CASE(drizzleSafeEscapeStringFail)
+{
+  const char* orig= "hello \"world\"\n";
+  char out[5];
+  ssize_t out_len;
+
+  out_len= drizzle_safe_escape_string(out, 5, orig, strlen(orig));
+
+  BOOST_REQUIRE_EQUAL(-1, out_len);
+}
 
 BOOST_AUTO_TEST_CASE(drizzleHexString)
 {

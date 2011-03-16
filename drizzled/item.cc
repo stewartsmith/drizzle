@@ -53,6 +53,7 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/ref.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
 #include <cstdio>
 #include <math.h>

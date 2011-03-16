@@ -31,6 +31,7 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/filesort.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {

@@ -22,11 +22,10 @@
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/session.h>
-
 #include <drizzled/temporal.h>
+#include <drizzled/item/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 int64_t Item_func_unix_timestamp::val_int()
 {

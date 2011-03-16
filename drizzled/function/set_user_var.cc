@@ -24,9 +24,9 @@
 #include <drizzled/session.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/user_var_entry.h>
+#include <drizzled/table.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   When a user variable is updated (in a SET command or a query like

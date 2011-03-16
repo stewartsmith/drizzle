@@ -45,9 +45,9 @@
 #include <drizzled/select_max_min_finder_subselect.h>
 #include <drizzled/select_exists_subselect.h>
 #include <drizzled/select_union.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *myisam_engine;
 

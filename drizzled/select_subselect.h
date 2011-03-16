@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <drizzled/item/subselect.h>
 #include <drizzled/select_result_interceptor.h>
 
 namespace drizzled

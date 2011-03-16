@@ -40,13 +40,13 @@
 #include <drizzled/type/decimal.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 
