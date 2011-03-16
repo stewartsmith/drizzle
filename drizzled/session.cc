@@ -158,6 +158,7 @@ public:
     the same lex. (@see mysql_parse for details).
   */
   LEX lex;
+  session::PropertyMap life_properties;
   session::TableMessages table_message_cache;
 };
 
@@ -2206,12 +2207,12 @@ enum_tx_isolation Session::getTxIsolation()
 
 drizzled::util::Storable* Session::getProperty0(const std::string& arg)
 {
-  return life_properties.getProperty(arg);
+  return impl_->life_properties.getProperty(arg);
 }
 
 void Session::setProperty0(const std::string& arg, drizzled::util::Storable* value)
 {
-  life_properties.setProperty(arg, value);
+  impl_->life_properties.setProperty(arg, value);
 }
 
 namespace display  {
