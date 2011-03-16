@@ -65,10 +65,7 @@ int64_t GetLocks::val_int()
   {
     user_locks::Storable *list= getSession().getProperty<user_locks::Storable>("user_locks");
     if (not list)
-    {
-      list= new user_locks::Storable(getSession().getSessionId());
-      getSession().setProperty("user_locks", list);
-    }
+      list= getSession().setProperty("user_locks", new user_locks::Storable(getSession().getSessionId()));
 
     for (Keys::iterator iter= list_of_locks.begin();
          iter != list_of_locks.end(); iter++)

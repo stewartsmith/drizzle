@@ -59,10 +59,7 @@ int64_t CreateBarrier::val_int()
   if (result)
   {
     if (not list)
-    {
-      list= new barriers::Storable(getSession().getSessionId());
-      getSession().setProperty(barriers::property_key, list);
-    }
+      list= getSession().setProperty(barriers::property_key, new barriers::Storable(getSession().getSessionId()));
 
     list->insert(Key(*user_identifier, res->c_str()));
 

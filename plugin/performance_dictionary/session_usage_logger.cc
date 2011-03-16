@@ -43,10 +43,7 @@ bool SessionUsageLogger::post(Session *session)
   QueryUsage *usage_cache= session->getProperty<QueryUsage>("query_usage");
 
   if (not usage_cache)
-  {
-    usage_cache= new QueryUsage;
-    session->setProperty("query_usage", usage_cache);
-  }
+    usage_cache= session->setProperty("query_usage", new QueryUsage);
 
   usage_cache->push(session->getQueryString(), session->getUsage());
 

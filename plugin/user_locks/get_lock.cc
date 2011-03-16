@@ -67,10 +67,7 @@ int64_t GetLock::val_int()
   if (result)
   {
     if (not list)
-    {
-      list= new user_locks::Storable(getSession().getSessionId());
-      getSession().setProperty("user_locks", list);
-    }
+      list= getSession().setProperty("user_locks", new user_locks::Storable(getSession().getSessionId()));
 
     list->insert(Key(*user_identifier, res->c_str()));
 
