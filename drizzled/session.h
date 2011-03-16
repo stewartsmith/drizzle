@@ -1436,15 +1436,17 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-  drizzled::util::Storable *getProperty(const std::string &arg)
+  template<class T>
+  T* getProperty(const std::string &arg)
   {
-    return life_properties.getProperty(arg);
+    return static_cast<T*>(life_properties.getProperty(arg));
   }
 
   template<class T>
-  void setProperty(const std::string &arg, T *value)
+  T* setProperty(const std::string &arg, T *value)
   {
     life_properties.setProperty(arg, value);
+    return value;
   }
 
   /**

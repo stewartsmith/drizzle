@@ -38,7 +38,7 @@ int64_t CreateBarrier::val_int()
   }
   null_value= false;
 
-  barriers::Storable *list= static_cast<barriers::Storable *>(getSession().getProperty(barriers::property_key));
+  barriers::Storable *list= getSession().getProperty<barriers::Storable>(barriers::property_key);
 
   bool result;
 
