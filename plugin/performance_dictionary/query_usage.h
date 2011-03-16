@@ -21,6 +21,7 @@
 #pragma once
 
 #include <drizzled/session.h>
+#include <drizzled/util/storable.h>
 
 namespace performance_dictionary {
 
@@ -81,7 +82,8 @@ struct query_usage {
 
 typedef std::list <query_usage> Query_list;
 
-class QueryUsage : public drizzled::util::Storable {
+class QueryUsage : public drizzled::util::Storable 
+{
 public:
   Query_list query_list;
 

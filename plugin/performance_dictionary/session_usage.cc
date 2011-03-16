@@ -71,10 +71,10 @@ bool performance_dictionary::SessionUsage::Generator::populate()
   if (not usage_cache)
     return false;
 
-  if (query_iter ==  usage_cache->list().rend())
+  if (query_iter == usage_cache->list().rend())
     return false;
 
-  publish((*query_iter).query, (*query_iter).delta());
+  publish(query_iter->query, query_iter->delta());
   query_iter++;
 
   return true;
