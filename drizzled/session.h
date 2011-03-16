@@ -1517,7 +1517,6 @@ private:
   bool concurrent_execute_allowed;
   bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
-  session::PropertyMap life_properties;
   std::vector<table::Singular *> temporary_shares;
   rusage usage;
 };
