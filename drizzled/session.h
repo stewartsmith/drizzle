@@ -1439,13 +1439,13 @@ public:
   template<class T>
   T* getProperty(const std::string &arg)
   {
-    return static_cast<T*>(life_properties.getProperty(arg));
+    return static_cast<T*>(getProperty0(arg));
   }
 
   template<class T>
   T* setProperty(const std::string &arg, T *value)
   {
-    life_properties.setProperty(arg, value);
+    setProperty0(arg, value);
     return value;
   }
 
@@ -1488,6 +1488,9 @@ private:
 	class impl_c;
 
   bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+  drizzled::util::Storable* getProperty0(const std::string&);
+  void setProperty0(const std::string&, drizzled::util::Storable*);
+
 
   bool resetUsage()
   {
