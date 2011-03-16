@@ -20,14 +20,14 @@
 
 #pragma once
 
+#include <drizzled/sql_lex.h>
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
+namespace drizzled {
+
 class Session;
 
-namespace statement
-{
+namespace statement {
 
 class Flush : public Statement
 {

@@ -23,8 +23,9 @@
 #include <drizzled/lock.h>
 #include <drizzled/query_id.h>
 
-namespace drizzled
-{
+namespace drizzled {
+
+namespace plugin { class StorageEngine; }
 
 class CachedDirectory;
 

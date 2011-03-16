@@ -39,6 +39,7 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/lock.h>
 #include <drizzled/plugin/authentication.h>
+#include <drizzled/plugin/authorization.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/plugin/logging.h>
@@ -71,6 +72,9 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/statement.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/ha_data.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/session/state.h>
 
 #include <algorithm>
 #include <climits>
@@ -146,6 +150,7 @@ int64_t session_test_options(const Session *session, int64_t test_options)
 class Session::impl_c
 {
 public:
+  Diagnostics_area diagnostics;
   /**
     The lex to hold the parsed tree of conventional (non-prepared) queries.
     Whereas for prepared and stored procedure statements we use an own lex
@@ -153,6 +158,7 @@ public:
     the same lex. (@see mysql_parse for details).
   */
   LEX lex;
+  session::TableMessages table_message_cache;
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
@@ -269,6 +275,11 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   plugin::EventObserver::registerSessionEvents(*this);
 }
 
+Diagnostics_area& Session::main_da()
+{
+  return impl_->diagnostics;
+}
+
 const LEX& Session::lex() const
 {
   return impl_->lex;
@@ -282,6 +293,11 @@ LEX& Session::lex()
 enum_sql_command Session::getSqlCommand() const
 {
   return lex().sql_command;
+}
+
+session::TableMessages& Session::getMessageCache()
+{
+  return impl_->table_message_cache;
 }
 
 void statement::Statement::set_command(enum_sql_command v)
@@ -348,7 +364,7 @@ bool Session::handle_error(drizzled::error_t sql_errno, const char *message,
     return m_internal_handler->handle_error(sql_errno, message, level, this);
   }
 
-  return false;                                 // 'false', as per coding style
+  return false;
 }
 
 void Session::setAbort(bool arg)
@@ -744,7 +760,7 @@ bool Session::executeStatement()
   */
   lex().current_select= 0;
   clear_error();
-  main_da.reset_diagnostics_area();
+  main_da().reset_diagnostics_area();
 
   if (client->readCommand(&l_packet, &packet_length) == false)
   {
@@ -1713,7 +1729,7 @@ void Session::disconnect(enum error_t errcode)
                   , (_schema->empty() ? "unconnected" : _schema->c_str())
                   , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
                   , security_ctx->address().c_str()
-                  , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
+                  , (main_da().is_error() ? main_da().message() : ER(ER_UNKNOWN_ERROR)));
     }
   }
 
@@ -1746,7 +1762,7 @@ void Session::reset_for_next_command()
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
 
   clear_error();
-  main_da.reset_diagnostics_area();
+  main_da().reset_diagnostics_area();
   total_warn_count=0;			// Warnings for this query
   sent_row_count= examined_row_count= 0;
 }
@@ -1935,9 +1951,9 @@ void Session::close_thread_tables()
    */
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    main_da.can_overwrite_status= true;
+    main_da().can_overwrite_status= true;
     transaction_services.autocommitOrRollback(*this, is_error());
-    main_da.can_overwrite_status= false;
+    main_da().can_overwrite_status= false;
     transaction.stmt.reset();
   }
 
@@ -2111,12 +2127,81 @@ table::Singular *Session::getInstanceTable()
 table::Singular *Session::getInstanceTable(List<CreateField> &field_list)
 {
   temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
+  return temporary_shares.back();
+}
 
-  table::Singular *tmp_share= temporary_shares.back();
+void Session::clear_error(bool full)
+{
+  if (main_da().is_error())
+    main_da().reset_diagnostics_area();
 
-  assert(tmp_share);
+  if (full)
+  {
+    drizzle_reset_errors(this, true);
+  }
+}
 
-  return tmp_share;
+void Session::clearDiagnostics()
+{
+  main_da().reset_diagnostics_area();
+}
+
+/**
+  Mark the current error as fatal. Warning: this does not
+  set any error, it sets a property of the error, so must be
+  followed or prefixed with my_error().
+*/
+void Session::fatal_error()
+{
+  assert(main_da().is_error());
+  is_fatal_error= true;
+}
+
+/**
+  true if there is an error in the error stack.
+
+  Please use this method instead of direct access to
+  net.report_error.
+
+  If true, the current (sub)-statement should be aborted.
+  The main difference between this member and is_fatal_error
+  is that a fatal error can not be handled by a stored
+  procedure continue handler, whereas a normal error can.
+
+  To raise this flag, use my_error().
+*/
+bool Session::is_error() const 
+{ 
+  return impl_->diagnostics.is_error(); 
+}
+
+/** A short cut for session->main_da().set_ok_status(). */
+void Session::my_ok(ha_rows affected_rows, ha_rows found_rows_arg, uint64_t passed_id, const char *message)
+{
+  main_da().set_ok_status(this, affected_rows, found_rows_arg, passed_id, message);
+}
+
+/** A short cut for session->main_da().set_eof_status(). */
+
+void Session::my_eof()
+{
+  main_da().set_eof_status(this);
+}
+
+void Session::set_end_timer()
+{
+  _end_timer= boost::posix_time::microsec_clock::universal_time();
+  status_var.execution_time_nsec+= (_end_timer - _start_timer).total_microseconds();
+}
+
+plugin::StorageEngine* Session::getDefaultStorageEngine()
+{
+  return variables.storage_engine ? variables.storage_engine : global_system_variables.storage_engine;
+}
+
+enum_tx_isolation Session::getTxIsolation()
+{
+  return (enum_tx_isolation)variables.tx_isolation;
 }
 
 namespace display  {

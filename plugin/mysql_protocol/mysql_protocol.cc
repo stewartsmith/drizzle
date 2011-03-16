@@ -34,6 +34,7 @@
 #include "options.h"
 #include <drizzled/identifier.h>
 #include <drizzled/plugin/function.h>
+#include <drizzled/diagnostics_area.h>
 #include <libdrizzle/constants.h>
 
 #define PROTOCOL_VERSION 10
@@ -201,7 +202,7 @@ bool ClientMySQLProtocol::authenticate()
   }
   else
   {
-    sendError(session->main_da.sql_errno(), session->main_da.message());
+    sendError(session->main_da().sql_errno(), session->main_da().message());
     counters->failedConnections.increment();
     return false;
   }
@@ -236,8 +237,8 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
 
     if(net.last_errno== ER_NET_PACKET_TOO_LARGE)
       my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    if (session->main_da.status() == Diagnostics_area::DA_ERROR)
-      sendError(session->main_da.sql_errno(), session->main_da.message());
+    if (session->main_da().status() == Diagnostics_area::DA_ERROR)
+      sendError(session->main_da().sql_errno(), session->main_da().message());
     else
       sendOK();
 
@@ -342,17 +343,17 @@ void ClientMySQLProtocol::sendOK()
   }
 
   buff[0]=0;                    // No fields
-  if (session->main_da.status() == Diagnostics_area::DA_OK)
+  if (session->main_da().status() == Diagnostics_area::DA_OK)
   {
-    if (client_capabilities & CLIENT_FOUND_ROWS && session->main_da.found_rows())
-      pos=storeLength(buff+1,session->main_da.found_rows());
+    if (client_capabilities & CLIENT_FOUND_ROWS && session->main_da().found_rows())
+      pos=storeLength(buff+1,session->main_da().found_rows());
     else
-      pos=storeLength(buff+1,session->main_da.affected_rows());
-    pos=storeLength(pos, session->main_da.last_insert_id());
-    int2store(pos, session->main_da.server_status());
+      pos=storeLength(buff+1,session->main_da().affected_rows());
+    pos=storeLength(pos, session->main_da().last_insert_id());
+    int2store(pos, session->main_da().server_status());
     pos+=2;
-    tmp= min(session->main_da.total_warn_count(), (uint32_t)65535);
-    message= session->main_da.message();
+    tmp= min(session->main_da().total_warn_count(), (uint32_t)65535);
+    message= session->main_da().message();
   }
   else
   {
@@ -367,7 +368,7 @@ void ClientMySQLProtocol::sendOK()
   int2store(pos, tmp);
   pos+= 2;
 
-  session->main_da.can_overwrite_status= true;
+  session->main_da().can_overwrite_status= true;
 
   if (message && message[0])
   {
@@ -379,7 +380,7 @@ void ClientMySQLProtocol::sendOK()
   drizzleclient_net_write(&net, buff, (size_t) (pos-buff));
   drizzleclient_net_flush(&net);
 
-  session->main_da.can_overwrite_status= false;
+  session->main_da().can_overwrite_status= false;
 }
 
 /**
@@ -402,11 +403,11 @@ void ClientMySQLProtocol::sendEOF()
   /* Set to true if no active vio, to work well in case of --init-file */
   if (net.vio != 0)
   {
-    session->main_da.can_overwrite_status= true;
-    writeEOFPacket(session->main_da.server_status(),
-                   session->main_da.total_warn_count());
+    session->main_da().can_overwrite_status= true;
+    writeEOFPacket(session->main_da().server_status(),
+                   session->main_da().total_warn_count());
     drizzleclient_net_flush(&net);
-    session->main_da.can_overwrite_status= false;
+    session->main_da().can_overwrite_status= false;
   }
   packet.shrink(buffer_length.get());
 }
@@ -427,7 +428,7 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
     It's one case when we can push an error even though there
     is an OK or EOF already.
   */
-  session->main_da.can_overwrite_status= true;
+  session->main_da().can_overwrite_status= true;
 
   /* Abort multi-result sets */
   session->server_status&= ~SERVER_MORE_RESULTS_EXISTS;
@@ -463,7 +464,7 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
 
   drizzleclient_net_flush(&net);
 
-  session->main_da.can_overwrite_status= false;
+  session->main_da().can_overwrite_status= false;
 }
 
 /**

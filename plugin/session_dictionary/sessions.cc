@@ -30,7 +30,7 @@
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/pthread_globals.h>
-
+#include <drizzled/session/state.h>
 #include <set>
 
 using namespace std;

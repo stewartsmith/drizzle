@@ -25,6 +25,7 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/optimizer/access_method/scan.h>
+#include <drizzled/util/test.h>
 
 using namespace drizzled;
 

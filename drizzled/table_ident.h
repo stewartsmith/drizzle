@@ -24,8 +24,9 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
+
+class Select_Lex_Unit;
 
 extern char empty_c_string[1];
 extern char internal_table_name[2];

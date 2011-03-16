@@ -21,13 +21,13 @@
 #pragma once
 
 #include <drizzled/statement.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
+
 class Session;
 
-namespace statement
-{
+namespace statement {
 
 class RollbackToSavepoint : public Statement
 {
@@ -47,6 +47,4 @@ public:
 };
 
 } /* namespace statement */
-
 } /* namespace drizzled */
-

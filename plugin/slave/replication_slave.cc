@@ -24,6 +24,7 @@
 #include <drizzled/errmsg_print.h>
 #include <boost/program_options.hpp>
 #include <fstream>
+#include <drizzled/plugin.h>
 
 using namespace std;
 using namespace drizzled;

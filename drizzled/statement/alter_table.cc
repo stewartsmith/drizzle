@@ -47,6 +47,7 @@
 #include <drizzled/alter_column.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/util/test.h>
 
 using namespace std;
 

@@ -20,13 +20,14 @@
 
 #pragma once
 
+#include <drizzled/copy_info.h>
 #include <drizzled/select_result_interceptor.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class select_insert :public select_result_interceptor {
- public:
+class select_insert :public select_result_interceptor 
+{
+public:
   TableList *table_list;
   Table *table;
   List<Item> *fields;

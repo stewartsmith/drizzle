@@ -20,8 +20,8 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/session.h>
 #include <drizzled/module/option_map.h>
-
 #include <drizzled/plugin/catalog.h>
+#include <drizzled/plugin.h>
 
 #include <iostream>
 
