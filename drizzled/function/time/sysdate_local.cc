@@ -22,9 +22,9 @@
 #include <drizzled/function/time/sysdate_local.h>
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
+#include <drizzled/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
     Converts current time in time_t to type::Time represenatation for local

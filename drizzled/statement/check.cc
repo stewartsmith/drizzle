@@ -23,6 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/check.h>
 #include <drizzled/sql_table.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {

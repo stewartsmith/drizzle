@@ -70,6 +70,7 @@
 #include <plugin/myisam/myisam.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/statement.h>
+#include <drizzled/sql_lex.h>
 
 #include <algorithm>
 #include <climits>
@@ -144,6 +145,14 @@ int64_t session_test_options(const Session *session, int64_t test_options)
 
 class Session::impl_c
 {
+public:
+  /**
+    The lex to hold the parsed tree of conventional (non-prepared) queries.
+    Whereas for prepared and stored procedure statements we use an own lex
+    instance for each new query, for conventional statements we reuse
+    the same lex. (@see mysql_parse for details).
+  */
+  LEX lex;
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
@@ -195,6 +204,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   m_lip(NULL),
   cached_table(0),
   arg_of_last_insert_id_function(false),
+  impl_(new impl_c),
   _catalog(catalog_arg),
   transaction_message(NULL),
   statement_message(NULL),
@@ -257,6 +267,21 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   m_internal_handler= NULL;
 
   plugin::EventObserver::registerSessionEvents(*this);
+}
+
+const LEX& Session::lex() const
+{
+  return impl_->lex;
+}
+
+LEX& Session::lex()
+{
+  return impl_->lex;
+}
+
+enum_sql_command Session::getSqlCommand() const
+{
+  return lex().sql_command;
 }
 
 void statement::Statement::set_command(enum_sql_command v)

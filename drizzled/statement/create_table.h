@@ -23,13 +23,13 @@
 #include <drizzled/alter_info.h>
 #include <drizzled/statement.h>
 #include <drizzled/foreign_key.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
+
 class Session;
 
-namespace statement
-{
+namespace statement {
 
 class CreateTable : public Statement
 {

@@ -792,11 +792,11 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
     memset(&ai, 0, sizeof(struct addrinfo));
     ai.ai_socktype= SOCK_STREAM;
     ai.ai_protocol= IPPROTO_TCP;
+    ai.ai_flags = AI_PASSIVE;
+    ai.ai_family = AF_UNSPEC;
 
     if (con->options & DRIZZLE_CON_LISTEN)
     {
-      ai.ai_flags = AI_PASSIVE;
-      ai.ai_family = AF_UNSPEC;
       host= tcp->host;
     }
     else

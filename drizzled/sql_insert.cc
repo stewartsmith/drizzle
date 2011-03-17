@@ -36,6 +36,7 @@
 #include <drizzled/table/shell.h>
 #include <drizzled/alter_info.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {

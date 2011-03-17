@@ -25,6 +25,7 @@
 #include <drizzled/optimizer/quick_ror_intersect_select.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/key.h>
+#include <drizzled/table.h>
 
 #include <vector>
 

@@ -24,6 +24,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/lookup_symbol.h>
 #include <drizzled/comp_creator.h>
+#include <drizzled/sql_lex.h>
 
 #include <drizzled/lex_symbol.h>
 #include <drizzled/function_hash.h>

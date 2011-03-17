@@ -26,6 +26,7 @@
 #include <drizzled/show.h>
 #include <drizzled/message/schema.h>
 #include <drizzled/session.h>
+#include <drizzled/charset_info.h>
 
 #include <drizzled/catalog/local.h>
 

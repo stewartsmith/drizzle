@@ -28,6 +28,7 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/null_client.h>
 #include <drizzled/plugin/client/concurrent.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {

@@ -24,6 +24,7 @@
 #include <drizzled/alter_info.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled {
 namespace parser {
