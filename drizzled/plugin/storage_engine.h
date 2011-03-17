@@ -22,7 +22,6 @@
 #include <drizzled/definitions.h>
 #include <drizzled/error_t.h>
 #include <drizzled/handler_structs.h>
-#include <drizzled/identifier.h>
 #include <drizzled/message.h>
 #include <drizzled/message/cache.h>
 #include <drizzled/plugin.h>
