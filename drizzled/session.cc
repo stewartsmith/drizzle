@@ -75,6 +75,7 @@
 #include <drizzled/ha_data.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/session/state.h>
+#include <drizzled/session/property_map.h>
 
 #include <algorithm>
 #include <climits>
@@ -2215,15 +2216,14 @@ void Session::setProperty0(const std::string& arg, drizzled::util::Storable* val
   impl_->life_properties.setProperty(arg, value);
 }
 
-namespace display  {
-
-static const std::string NONE= "NONE";
-static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
-static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
-
-const std::string &type(drizzled::Session::global_read_lock_t type)
+const std::string& display::type(drizzled::Session::global_read_lock_t type)
 {
-  switch (type) {
+  static const std::string NONE= "NONE";
+  static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
+  static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
+
+  switch (type) 
+  {
     default:
     case Session::NONE:
       return NONE;
@@ -2234,11 +2234,9 @@ const std::string &type(drizzled::Session::global_read_lock_t type)
   }
 }
 
-size_t max_string_length(drizzled::Session::global_read_lock_t)
+size_t display::max_string_length(drizzled::Session::global_read_lock_t)
 {
-  return MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT.size();
+  return type(Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT).size();
 }
-
-} /* namespace display */
 
 } /* namespace drizzled */

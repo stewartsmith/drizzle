@@ -40,7 +40,6 @@
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
-#include <drizzled/session/property_map.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/sql_list.h>
@@ -49,7 +48,6 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/transaction_context.h>
-#include <drizzled/util/storable.h>
 #include <drizzled/var.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
@@ -87,6 +85,11 @@ namespace table
 { 
   class Placeholder; 
   class Singular; 
+}
+
+namespace util
+{
+  class Storable;
 }
 
 typedef class Item COND;
@@ -1436,16 +1439,16 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-  template<class T>
-  T* getProperty(const std::string &arg)
+  template <class T>
+  T* getProperty(const std::string& name)
   {
-    return static_cast<T*>(getProperty0(arg));
+    return static_cast<T*>(getProperty0(name));
   }
 
-  template<class T>
-  T* setProperty(const std::string &arg, T *value)
+  template <class T>
+  T setProperty(const std::string& name, T value)
   {
-    setProperty0(arg, value);
+    setProperty0(name, value);
     return value;
   }
 
