@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_PLUGIN_PLUGIN_H
-#define DRIZZLED_PLUGIN_PLUGIN_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -118,4 +117,3 @@ public:
 } /* end namespace plugin */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_PLUGIN_H */

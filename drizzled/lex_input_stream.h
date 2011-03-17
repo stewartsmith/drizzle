@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LEX_INPUT_STREAM_H
-#define DRIZZLED_LEX_INPUT_STREAM_H
+#pragma once
 
 /**
   @brief This class represents the character input stream consumed during
@@ -387,4 +386,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_LEX_INPUT_STREAM_H */

@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_KEY_PART_SPEC_H
-#define DRIZZLED_KEY_PART_SPEC_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/lex_string.h>
@@ -59,4 +58,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_KEY_PART_SPEC_H */

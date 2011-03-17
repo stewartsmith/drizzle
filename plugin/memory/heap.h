@@ -18,8 +18,7 @@
 /* This file should be included when using heap_database_functions */
 /* Author: Michael Widenius */
 
-#ifndef PLUGIN_MEMORY_HEAP_H
-#define PLUGIN_MEMORY_HEAP_H
+#pragma once
 
 #include <drizzled/base.h>
 #include <drizzled/common.h>
@@ -313,4 +312,3 @@ extern unsigned char *heap_position(HP_INFO *info);
 
 typedef unsigned char *HEAP_PTR;
 
-#endif /* PLUGIN_MEMORY_HEAP_H */

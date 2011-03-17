@@ -137,7 +137,7 @@ public:
 		(void) session;
 	}
 	
-	int doCreateTable(Session&, Table&, const identifier::Table& ident, drizzled::message::Table& );	
+	int doCreateTable(Session&, Table&, const identifier::Table& ident, const drizzled::message::Table& );	
 	int doDropTable(Session &, const identifier::Table& );
 	
 	int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
@@ -697,10 +697,11 @@ int ha_pbms::open(const char *table_path, int , uint )
 
 	inner_();
 	try_(a) {
-		ha_open_tab = MSSystemTableShare::openSystemTable(table_path, getTable());
 #ifdef DRIZZLED
+		ha_open_tab = MSSystemTableShare::openSystemTable(table_path, getTable());
 		ha_lock.init(&ha_open_tab->myShare->myThrLock);
 #else
+		ha_open_tab = MSSystemTableShare::openSystemTable(table_path, table);
 		thr_lock_data_init(&ha_open_tab->myShare->myThrLock, &ha_lock, NULL);
 #endif
 		ref_length = ha_open_tab->getRefLen();
@@ -930,7 +931,7 @@ int ha_pbms::rnd_next(unsigned char *buf)
 //-------
 void ha_pbms::position(const unsigned char *)
 {
-	ha_open_tab->seqScanPos((uint8_t *) ref);
+	ha_open_tab->seqScanPos((unsigned char *) ref);
 }
 
 //-------
@@ -939,7 +940,7 @@ int ha_pbms::rnd_pos(unsigned char * buf, unsigned char *pos)
 	int err = 0;
 	enter_();
 	try_(a) {
-		ha_open_tab->seqScanRead((uint8_t *) pos, (char *) buf);
+		ha_open_tab->seqScanRead(pos, (char *) buf);
 	}
 	catch_(a) {
 		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
@@ -1045,7 +1046,7 @@ THR_LOCK_DATA **ha_pbms::store_lock(THD *, THR_LOCK_DATA **to, enum thr_lock_typ
 
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::doCreateTable(Session&, Table&, const identifier::Table& , drizzled::message::Table& )
+int PBMSStorageEngine::doCreateTable(Session&, Table&, const identifier::Table& , const drizzled::message::Table& )
 {
 	/* You cannot create PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );

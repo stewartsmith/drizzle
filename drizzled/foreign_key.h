@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_FOREIGN_KEY_H
-#define DRIZZLED_FOREIGN_KEY_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/key.h>
@@ -98,4 +97,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FOREIGN_KEY_H */

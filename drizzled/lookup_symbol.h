@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_LOOKUP_SYMBOL_H
-#define DRIZZLED_LOOKUP_SYMBOL_H
+#pragma once
 
 #include <drizzled/lex_symbol.h>
 
@@ -31,4 +30,3 @@ const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_LOOKUP_SYMBOL_H */

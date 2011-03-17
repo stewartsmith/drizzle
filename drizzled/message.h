@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MESSAGE_H
-#define DRIZZLED_MESSAGE_H
+#pragma once
 
 #include <drizzled/message/table.h>
 #include <drizzled/message/schema.h>
@@ -73,4 +72,3 @@ std::ostream& operator<<(std::ostream& output, const message::Table &message);
 } /* namespace message */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MESSAGE_H */

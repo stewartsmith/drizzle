@@ -94,6 +94,7 @@
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -128,7 +129,7 @@ LoggingStats::~LoggingStats()
 void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
                                            Session *session)
 {
-  enum_sql_command sql_command= session->getLex()->sql_command;
+  enum_sql_command sql_command= session->lex().sql_command;
 
   scoreboard_slot->getUserCommands()->logCommand(sql_command);
 

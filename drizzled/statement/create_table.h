@@ -18,19 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CREATE_TABLE_H
-#define DRIZZLED_STATEMENT_CREATE_TABLE_H
+#pragma once
 
 #include <drizzled/alter_info.h>
 #include <drizzled/statement.h>
 #include <drizzled/foreign_key.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
+
 class Session;
 
-namespace statement
-{
+namespace statement {
 
 class CreateTable : public Statement
 {
@@ -52,7 +51,7 @@ public:
 public:
   message::Table &createTableMessage()
   {
-    return *getSession()->getLex()->table();
+    return *lex().table();
   };
 
 private:
@@ -104,4 +103,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CREATE_TABLE_H */

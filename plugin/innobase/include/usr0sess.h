@@ -23,6 +23,7 @@ Sessions
 Created 6/25/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef usr0sess_h
 #define usr0sess_h
 

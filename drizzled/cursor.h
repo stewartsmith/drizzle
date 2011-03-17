@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CURSOR_H
-#define DRIZZLED_CURSOR_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/definitions.h>
@@ -31,7 +30,6 @@
 #include <drizzled/message/table.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/thr_lock.h>
-#include <drizzled/xid.h>
 
 #include <bitset>
 #include <algorithm>
@@ -747,4 +745,3 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CURSOR_H */

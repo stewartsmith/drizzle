@@ -54,8 +54,10 @@ CSPath::~CSPath()
 
 CSFile *CSPath::try_CreateAndOpen(CSThread *self, int mode, bool retry)
 {
+	volatile CSFile *fh = NULL;
+	
 	try_(a) {
-		return openFile(mode | CSFile::CREATE); // success, do not try again.
+		fh = openFile(mode | CSFile::CREATE); // success, do not try again.
 	}
 	catch_(a) {
 		if (retry || !CSFile::isDirNotFound(&self->myException))
@@ -69,7 +71,7 @@ CSFile *CSPath::try_CreateAndOpen(CSThread *self, int mode, bool retry)
 
 	}
 	cont_(a);
-	return NULL; 
+	return (CSFile *) fh; 
 }
 
 CSFile *CSPath::createFile(int mode)
@@ -526,6 +528,7 @@ void CSPath::rename(const char *name)
 void CSPath::move(CSPath *to_path)
 {
 	enter_();
+	push_(to_path);
 	lock_(&iRename_lock); // protect against race condition when testing if the new name exists yet or not.	
 	if (to_path->exists())
 		CSException::throwFileError(CS_CONTEXT, to_path->getCString(), EEXIST);
@@ -533,6 +536,7 @@ void CSPath::move(CSPath *to_path)
 	/* Cannot move from TD to non-TD: */
 	sys_rename(iPath->getCString(), to_path->getCString());
 	unlock_(&iRename_lock);
+	release_(to_path);
 	exit_();
 }
 

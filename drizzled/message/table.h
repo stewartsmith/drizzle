@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_MESSAGE_TABLE_H
-#define DRIZZLED_MESSAGE_TABLE_H
+#pragma once
 
 #include <uuid/uuid.h>
 
@@ -44,4 +43,3 @@ void update(drizzled::message::Table &arg);
 } // namespace message
 } // namespace drizzled
 
-#endif /* DRIZZLED_MESSAGE_TABLE_H */

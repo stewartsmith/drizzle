@@ -18,9 +18,9 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_SUBSELECT_H
-#define DRIZZLED_SELECT_SUBSELECT_H
+#pragma once
 
+#include <drizzled/item/subselect.h>
 #include <drizzled/select_result_interceptor.h>
 
 namespace drizzled
@@ -39,4 +39,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_SUBSELECT_H */

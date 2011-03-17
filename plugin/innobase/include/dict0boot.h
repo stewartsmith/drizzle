@@ -23,6 +23,7 @@ Data dictionary creation and booting
 Created 4/18/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef dict0boot_h
 #define dict0boot_h
 

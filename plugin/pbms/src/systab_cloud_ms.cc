@@ -318,7 +318,7 @@ bool MSCloudTable::seqScanNext(char *buf)
 	return_(true);
 }
 
-void MSCloudTable::seqScanPos(uint8_t *pos)
+void MSCloudTable::seqScanPos(unsigned char *pos )
 {
 	int32_t index = iCloudIndex -1;
 	if (index < 0)
@@ -327,7 +327,7 @@ void MSCloudTable::seqScanPos(uint8_t *pos)
 	mi_int4store(pos, index);
 }
 
-void MSCloudTable::seqScanRead(uint8_t *pos, char *buf)
+void MSCloudTable::seqScanRead(unsigned char *pos , char *buf)
 {
 	iCloudIndex = mi_uint4korr(pos);
 	seqScanNext(buf);

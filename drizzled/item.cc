@@ -53,6 +53,7 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/ref.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
 #include <cstdio>
 #include <math.h>
@@ -306,14 +307,14 @@ Item::Item():
 
   /*
     Item constructor can be called during execution other then SQL_COM
-    command => we should check session->getLex()->current_select on zero (session->lex
+    command => we should check session->lex().current_select on zero (session->lex
     can be uninitialised)
   */
-  if (getSession().getLex()->current_select)
+  if (getSession().lex().current_select)
   {
-    enum_parsing_place place= getSession().getLex()->current_select->parsing_place;
+    enum_parsing_place place= getSession().lex().current_select->parsing_place;
     if (place == SELECT_LIST || place == IN_HAVING)
-      getSession().getLex()->current_select->select_n_having_items++;
+      getSession().lex().current_select->select_n_having_items++;
   }
 }
 
@@ -786,7 +787,7 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
     Item *real_itm= real_item();
 
     ref_pointer_array[el]= real_itm;
-    if (!(item_ref= new Item_aggregate_ref(&session->getLex()->current_select->context,
+    if (!(item_ref= new Item_aggregate_ref(&session->lex().current_select->context,
                                            ref_pointer_array + el, 0, name)))
       return; /* fatal_error is set */
     if (type() == SUM_FUNC_ITEM)
@@ -819,7 +820,7 @@ void mark_as_dependent(Session *session, Select_Lex *last, Select_Lex *current,
   if (mark_item)
     mark_item->depended_from= last;
   current->mark_as_dependent(last);
-  if (session->getLex()->describe & DESCRIBE_EXTENDED)
+  if (session->lex().describe & DESCRIBE_EXTENDED)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
     snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_FIELD_RESOLVED),

@@ -22,8 +22,7 @@
  * @brief An Proxy Wrapper around boost::program_options::variables_map
  */
 
-#ifndef DRIZZLED_MODULE_OPTION_MAP_H
-#define DRIZZLED_MODULE_OPTION_MAP_H
+#pragma once
 
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_context.h>
@@ -63,4 +62,3 @@ private:
 } /* namespace drizzled */
 
 
-#endif /* DRIZZLED_MODULE_OPTION_MAP_H */

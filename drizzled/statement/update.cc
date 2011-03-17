@@ -28,27 +28,27 @@ namespace drizzled
 
 bool statement::Update::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
-  Select_Lex_Unit *unit= &getSession()->getLex()->unit;
-  if (update_precheck(getSession(), all_tables))
+  Select_Lex *select_lex= &lex().select_lex;
+  Select_Lex_Unit *unit= &lex().unit;
+  if (update_precheck(&session(), all_tables))
   {
     return true;
   }
   assert(select_lex->offset_limit == 0);
   unit->set_limit(select_lex);
-  bool res= update_query(getSession(), 
+  bool res= update_query(&session(), 
                          all_tables,
                          select_lex->item_list,
-                         getSession()->getLex()->value_list,
+                         lex().value_list,
                          select_lex->where,
                          select_lex->order_list.elements,
                          (Order *) select_lex->order_list.first,
                          unit->select_limit_cnt,
-                         getSession()->getLex()->duplicates, 
-                         getSession()->getLex()->ignore);
+                         lex().duplicates, 
+                         lex().ignore);
   return res;
 }
 

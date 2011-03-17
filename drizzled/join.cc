@@ -63,13 +63,14 @@
 #include <drizzled/select_result.h>
 #include <drizzled/debug.h>
 #include <drizzled/item/subselect.h>
-
+#include <drizzled/my_hash.h>
+#include <drizzled/sql_lex.h>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
+
 extern plugin::StorageEngine *heap_engine;
 
 /** Declarations of static functions used in this source file. */
@@ -310,7 +311,7 @@ void Join::reset(Session *session_arg,
 
 bool Join::is_top_level_join() const
 {
-  return (unit == &session->getLex()->unit && (unit->fake_select_lex == 0 ||
+  return (unit == &session->lex().unit && (unit->fake_select_lex == 0 ||
                                           select_lex == unit->fake_select_lex));
 }
 
@@ -351,7 +352,7 @@ int Join::prepare(Item ***rref_pointer_array,
   join_list= &select_lex->top_join_list;
   union_part= unit_arg->is_union();
 
-  session->getLex()->current_select->is_item_list_lookup= 1;
+  session->lex().current_select->is_item_list_lookup= 1;
   /*
     If we have already executed SELECT, then it have not sense to prevent
     its table from update (see unique_table())
@@ -392,9 +393,9 @@ int Join::prepare(Item ***rref_pointer_array,
 
   if (having)
   {
-    nesting_map save_allow_sum_func= session->getLex()->allow_sum_func;
+    nesting_map save_allow_sum_func= session->lex().allow_sum_func;
     session->setWhere("having clause");
-    session->getLex()->allow_sum_func|= 1 << select_lex_arg->nest_level;
+    session->lex().allow_sum_func|= 1 << select_lex_arg->nest_level;
     select_lex->having_fix_field= 1;
     bool having_fix_rc= (!having->fixed &&
        (having->fix_fields(session, &having) ||
@@ -402,7 +403,7 @@ int Join::prepare(Item ***rref_pointer_array,
     select_lex->having_fix_field= 0;
     if (having_fix_rc || session->is_error())
       return(-1);
-    session->getLex()->allow_sum_func= save_allow_sum_func;
+    session->lex().allow_sum_func= save_allow_sum_func;
   }
 
   {
@@ -452,7 +453,7 @@ int Join::prepare(Item ***rref_pointer_array,
             in_subs  &&                                                   // 1
             !select_lex->master_unit()->first_select()->next_select() &&  // 2
             select_lex->master_unit()->first_select()->leaf_tables &&     // 3
-            session->getLex()->sql_command == SQLCOM_SELECT)                       // *
+            session->lex().sql_command == SQLCOM_SELECT)                       // *
         {
           if (in_subs->is_top_level_item() &&                             // 4
               !in_subs->is_correlated &&                                  // 5
@@ -625,8 +626,8 @@ int Join::optimize()
     select_limit= HA_POS_ERROR;
   do_send_rows = (unit->select_limit_cnt) ? 1 : 0;
   // Ignore errors of execution if option IGNORE present
-  if (session->getLex()->ignore)
-    session->getLex()->current_select->no_error= 1;
+  if (session->lex().ignore)
+    session->lex().current_select->no_error= 1;
 
 #ifdef HAVE_REF_TO_FIELDS     // Not done yet
   /* Add HAVING to WHERE if possible */
@@ -726,7 +727,7 @@ int Join::optimize()
         conjunctions.
         Preserve conditions for EXPLAIN.
       */
-      if (conds && !(session->getLex()->describe & DESCRIBE_EXTENDED))
+      if (conds && !(session->lex().describe & DESCRIBE_EXTENDED))
       {
         COND *table_independent_conds= make_cond_for_table(conds, PSEUDO_TABLE_BITS, 0, 0);
         conds= table_independent_conds;
@@ -761,7 +762,7 @@ int Join::optimize()
       !(select_options & SELECT_DESCRIBE) &&
       (!conds ||
        !(conds->used_tables() & RAND_TABLE_BIT) ||
-       select_lex->master_unit() == &session->getLex()->unit)) // upper level SELECT
+       select_lex->master_unit() == &session->lex().unit)) // upper level SELECT
   {
     zero_result_cause= "no matching row in const table";
     goto setup_subq_exit;
@@ -821,9 +822,9 @@ int Join::optimize()
 
   if (conds &&!outer_join && const_table_map != found_const_table_map &&
       (select_options & SELECT_DESCRIBE) &&
-      select_lex->master_unit() == &session->getLex()->unit) // upper level SELECT
+      select_lex->master_unit() == &session->lex().unit) // upper level SELECT
   {
-    conds=new Item_int((int64_t) 0,1);  // Always false
+    conds=new Item_int(0, 1);  // Always false
   }
 
   if (make_join_select(this, select, conds))
@@ -1174,7 +1175,7 @@ int Join::optimize()
     */
     ha_rows tmp_rows_limit= ((order == 0 || skip_sort_order) &&
                              !tmp_group &&
-                             !session->getLex()->current_select->with_sum_func) ?
+                             !session->lex().current_select->with_sum_func) ?
                             select_limit : HA_POS_ERROR;
 
     if (!(exec_tmp_table1=
@@ -1513,7 +1514,7 @@ void Join::exec()
     session->set_proc_info("Copying to tmp table");
     if (! curr_join->sort_and_group && curr_join->const_tables != curr_join->tables)
       curr_join->join_tab[curr_join->const_tables].sorted= 0;
-    if ((tmp_error= do_select(curr_join, (List<Item> *) 0, curr_tmp_table)))
+    if ((tmp_error= do_select(curr_join, NULL, curr_tmp_table)))
     {
       error= tmp_error;
       return;
@@ -1612,7 +1613,7 @@ void Join::exec()
               exec_tmp_table2= create_tmp_table(session,
                                                 &curr_join->tmp_table_param,
                                                 *curr_all_fields,
-                                                (Order*) 0,
+                                                NULL,
                                                 curr_join->select_distinct &&
                                                 !curr_join->group_list,
                                                 1, curr_join->select_options,
@@ -1664,7 +1665,7 @@ void Join::exec()
         curr_join->join_tab[curr_join->const_tables].sorted= 0;
       
       if (setup_sum_funcs(curr_join->session, curr_join->sum_funcs) 
-        || (tmp_error= do_select(curr_join, (List<Item> *) 0, curr_tmp_table)))
+        || (tmp_error= do_select(curr_join, NULL, curr_tmp_table)))
       {
         error= tmp_error;
         return;
@@ -1870,7 +1871,7 @@ void Join::exec()
     for a derived table which is always materialized.
     Otherwise we would not be able to print the query  correctly.
   */
-  if (items0 && (session->getLex()->describe & DESCRIBE_EXTENDED) && select_lex->linkage == DERIVED_TABLE_TYPE)
+  if (items0 && (session->lex().describe & DESCRIBE_EXTENDED) && select_lex->linkage == DERIVED_TABLE_TYPE)
     set_items_ref_array(items0);
 
   return;
@@ -2002,7 +2003,7 @@ void Join::join_free()
     Optimization: if not EXPLAIN and we are done with the Join,
     free all tables.
   */
-  bool full= (select_lex->uncacheable.none() && ! session->getLex()->describe);
+  bool full= (select_lex->uncacheable.none() && ! session->lex().describe);
   bool can_unlock= full;
 
   cleanup(full);
@@ -2037,8 +2038,8 @@ void Join::join_free()
   if (can_unlock && lock && session->lock &&
       !(select_options & SELECT_NO_UNLOCK) &&
       !select_lex->subquery_in_having &&
-      (select_lex == (session->getLex()->unit.fake_select_lex ?
-                      session->getLex()->unit.fake_select_lex : &session->getLex()->select_lex)))
+      (select_lex == (session->lex().unit.fake_select_lex ?
+                      session->lex().unit.fake_select_lex : &session->lex().select_lex)))
   {
     /*
       TODO: unlock tables even if the join isn't top level select in the
@@ -2324,7 +2325,7 @@ bool Join::rollup_init()
           Item* new_item= new Item_func_rollup_const(item);
           if (!new_item)
             return 1;
-          new_item->fix_fields(session, (Item **) 0);
+          new_item->fix_fields(session, NULL);
           *it.ref()= new_item;
           for (Order *tmp= group_tmp; tmp; tmp= tmp->next)
           {
@@ -3526,7 +3527,7 @@ static bool choose_plan(Join *join, table_map join_tables)
     i.e. they have subqueries, unions or call stored procedures.
     TODO: calculate a correct cost for a query with subqueries and UNIONs.
   */
-  if (join->session->getLex()->is_single_level_stmt())
+  if (join->session->lex().is_single_level_stmt())
     join->session->status_var.last_query_cost= join->best_read;
   return(false);
 }
@@ -4720,14 +4721,14 @@ static bool make_join_select(Join *join,
       if (join->tables > 1)
         cond->update_used_tables();		// Tablenr may have changed
       if (join->const_tables == join->tables &&
-          session->getLex()->current_select->master_unit() ==
-          &session->getLex()->unit)		// not upper level SELECT
+          session->lex().current_select->master_unit() ==
+          &session->lex().unit)		// not upper level SELECT
         join->const_table_map|=RAND_TABLE_BIT;
       {						// Check const tables
         COND *const_cond=
           make_cond_for_table(cond,
               join->const_table_map,
-              (table_map) 0, 1);
+              0, 1);
         for (JoinTable *tab= join->join_tab+join->const_tables;
             tab < join->join_tab+join->tables ; tab++)
         {
@@ -4799,7 +4800,7 @@ static bool make_join_select(Join *join,
           join->full_join= 1;
       }
 
-      if (join->full_join and not session->getLex()->current_select->is_cross and not cond)
+      if (join->full_join and not session->lex().current_select->is_cross and not cond)
       {
         my_error(ER_CARTESIAN_JOIN_ATTEMPTED, MYF(0));
         return 1;
@@ -5649,18 +5650,18 @@ static int setup_without_group(Session *session,
                                bool *hidden_group_fields)
 {
   int res;
-  nesting_map save_allow_sum_func=session->getLex()->allow_sum_func ;
+  nesting_map save_allow_sum_func=session->lex().allow_sum_func ;
 
-  session->getLex()->allow_sum_func&= ~(1 << session->getLex()->current_select->nest_level);
+  session->lex().allow_sum_func&= ~(1 << session->lex().current_select->nest_level);
   res= session->setup_conds(tables, conds);
 
-  session->getLex()->allow_sum_func|= 1 << session->getLex()->current_select->nest_level;
+  session->lex().allow_sum_func|= 1 << session->lex().current_select->nest_level;
   res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields,
                           order);
-  session->getLex()->allow_sum_func&= ~(1 << session->getLex()->current_select->nest_level);
+  session->lex().allow_sum_func&= ~(1 << session->lex().current_select->nest_level);
   res= res || setup_group(session, ref_pointer_array, tables, fields, all_fields,
                           group, hidden_group_fields);
-  session->getLex()->allow_sum_func= save_allow_sum_func;
+  session->lex().allow_sum_func= save_allow_sum_func;
   return(res);
 }
 
@@ -5750,7 +5751,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
       if (!table->cursor->stats.records && !embedding)
       {						// Empty table
         s->dependent= 0;                        // Ignore LEFT JOIN depend.
-        set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+        set_position(join, const_count++, s, NULL);
         continue;
       }
       outer_join|= table->map;
@@ -5778,7 +5779,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 	      (table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
         !join->no_const_tables)
     {
-      set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+      set_position(join, const_count++, s, NULL);
     }
   }
   stat_vector[i]=0;
@@ -5902,7 +5903,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
             table->mark_as_null_row();
             found_const_table_map|= table->map;
             join->const_table_map|= table->map;
-            set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+            set_position(join, const_count++, s, NULL);
             goto more_const_tables_found;
            }
           keyuse++;
@@ -5921,7 +5922,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           int tmp= 0;
           s->type= AM_SYSTEM;
           join->const_table_map|=table->map;
-          set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+          set_position(join, const_count++, s, NULL);
           partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
           if ((tmp= s->joinReadConstTable(partial_pos)))
           {
@@ -6069,7 +6070,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           caller to abort with a zero row result.
         */
         join->const_table_map|= s->table->map;
-        set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
+        set_position(join, const_count++, s, NULL);
         s->type= AM_CONST;
         if (*s->on_expr_ref)
         {
@@ -6175,7 +6176,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
 */
 static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 {
-  table_map map= (table_map) 0;
+  table_map map= 0;
 
   if (!a)
     a= b;					// Only one need to be given

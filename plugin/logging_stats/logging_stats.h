@@ -27,8 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
-#define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
+#pragma once
 
 #include "scoreboard_slot.h"
 #include "cumulative_stats.h"
@@ -36,7 +35,6 @@
 
 #include <drizzled/atomics.h>
 #include <drizzled/enum.h>
-#include <drizzled/session.h>
 #include <drizzled/plugin/logging.h>
 
 #include <string>
@@ -92,4 +90,3 @@ private:
 
   typedef std::vector<std::vector<ScoreboardSlot* >* > ScoreBoardVectors;
 };
-#endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */

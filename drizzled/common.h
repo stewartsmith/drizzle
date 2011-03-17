@@ -21,8 +21,7 @@
 ** Common definition between mysql server & client
 */
 
-#ifndef DRIZZLED_COMMON_H
-#define DRIZZLED_COMMON_H
+#pragma once
 
 #include <unistd.h>
 #include <stdint.h>
@@ -202,4 +201,3 @@ const int enum_field_types_size= DRIZZLE_TYPE_MICROTIME + 1;
 
 #endif /* defined(__cplusplus) */
 
-#endif /* DRIZZLED_COMMON_H */

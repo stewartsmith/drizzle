@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H
-#define PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H
+#pragma once
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
@@ -140,4 +139,3 @@ public:
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H */

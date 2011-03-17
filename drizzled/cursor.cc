@@ -24,9 +24,7 @@
 */
 
 #include <config.h>
-
 #include <fcntl.h>
-
 #include <drizzled/error.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/gettext.h>
@@ -35,7 +33,6 @@
 #include <drizzled/item/int.h>
 #include <drizzled/lock.h>
 #include <drizzled/message/table.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/optimizer/cost_vector.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/event_observer.h>
@@ -46,11 +43,11 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/key.h>
+#include <drizzled/sql_lex.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /****************************************************************************
 ** General Cursor functions
@@ -1301,7 +1298,7 @@ static bool log_row_for_replication(Table* table,
 
   bool result= false;
 
-  switch (session->getLex()->sql_command)
+  switch (session->lex().sql_command)
   {
   case SQLCOM_CREATE_TABLE:
     /*

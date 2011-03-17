@@ -47,7 +47,7 @@ CreateTable::CreateTable(Session *in_session, Table_ident *ident, bool is_tempor
   link_to_local(false),
   create_table_list(NULL)
 {
-  getSession()->getLex()->sql_command= SQLCOM_CREATE_TABLE;
+  set_command(SQLCOM_CREATE_TABLE);
   createTableMessage().set_name(ident->table.str, ident->table.length);
 #if 0
   createTableMessage().set_schema(ident->db.str, ident->db.length);
@@ -74,15 +74,15 @@ CreateTable::CreateTable(Session *in_session) :
   link_to_local(false),
   create_table_list(NULL)
 {
-  getSession()->getLex()->sql_command= SQLCOM_CREATE_TABLE;
+  set_command(SQLCOM_CREATE_TABLE);
 }
 
 } // namespace statement
 
 bool statement::CreateTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
   bool need_start_waiting= false;
   lex_identified_temp_table= createTableMessage().type() == message::Table::TEMPORARY;
@@ -92,7 +92,7 @@ bool statement::CreateTable::execute()
   if (is_engine_set)
   {
     create_info().db_type= 
-      plugin::StorageEngine::findByName(*getSession(), createTableMessage().engine().name());
+      plugin::StorageEngine::findByName(session(), createTableMessage().engine().name());
 
     if (create_info().db_type == NULL)
     {
@@ -104,7 +104,7 @@ bool statement::CreateTable::execute()
   }
   else /* We now get the default, place it in create_info, and put the engine name in table proto */
   {
-    create_info().db_type= getSession()->getDefaultStorageEngine();
+    create_info().db_type= session().getDefaultStorageEngine();
   }
 
   if (not validateCreateTableOption())
@@ -114,14 +114,14 @@ bool statement::CreateTable::execute()
 
   if (not lex_identified_temp_table)
   {
-    if (getSession()->inTransaction())
+    if (session().inTransaction())
     {
       my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
       return true;
     }
   }
   /* Skip first table, which is the table we are creating */
-  create_table_list= getSession()->getLex()->unlink_first_table(&link_to_local);
+  create_table_list= lex().unlink_first_table(&link_to_local);
 
   drizzled::message::table::init(createTableMessage(), createTableMessage().name(), create_table_list->getSchemaName(), create_info().db_type->getName());
 
@@ -132,7 +132,7 @@ bool statement::CreateTable::execute()
   if (not check(new_table_identifier))
   {
     /* put tables back for PS rexecuting */
-    getSession()->getLex()->link_first_table_back(create_table_list, link_to_local);
+    lex().link_first_table_back(create_table_list, link_to_local);
     return true;
   }
 
@@ -152,10 +152,10 @@ bool statement::CreateTable::execute()
      TABLE in the same way. That way we avoid that a new table is
      created during a gobal read lock.
    */
-  if (! (need_start_waiting= not getSession()->wait_if_global_read_lock(0, 1)))
+  if (! (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
   {
     /* put tables back for PS rexecuting */
-    getSession()->getLex()->link_first_table_back(create_table_list, link_to_local);
+    lex().link_first_table_back(create_table_list, link_to_local);
     return true;
   }
 
@@ -165,7 +165,7 @@ bool statement::CreateTable::execute()
     Release the protection against the global read lock and wake
     everyone, who might want to set a global read lock.
   */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }
@@ -173,14 +173,14 @@ bool statement::CreateTable::execute()
 bool statement::CreateTable::executeInner(identifier::Table::const_reference new_table_identifier)
 {
   bool res= false;
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
-  TableList *select_tables= getSession()->getLex()->query_tables;
+  Select_Lex *select_lex= &lex().select_lex;
+  TableList *select_tables= lex().query_tables;
 
   do 
   {
     if (select_lex->item_list.size())		// With select
     {
-      Select_Lex_Unit *unit= &getSession()->getLex()->unit;
+      Select_Lex_Unit *unit= &lex().unit;
       select_result *result;
 
       select_lex->options|= SELECT_NO_UNLOCK;
@@ -188,11 +188,11 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
 
       if (not lex_identified_temp_table)
       {
-        getSession()->getLex()->link_first_table_back(create_table_list, link_to_local);
+        lex().link_first_table_back(create_table_list, link_to_local);
         create_table_list->setCreate(true);
       }
 
-      if (not (res= getSession()->openTablesLock(getSession()->getLex()->query_tables)))
+      if (not (res= session().openTablesLock(lex().query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -201,13 +201,13 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
         if (not lex_identified_temp_table)
         {
           TableList *duplicate= NULL;
-          create_table_list= getSession()->getLex()->unlink_first_table(&link_to_local);
+          create_table_list= lex().unlink_first_table(&link_to_local);
 
           if ((duplicate= unique_table(create_table_list, select_tables)))
           {
             my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table_list->alias);
             /* put tables back for PS rexecuting */
-            getSession()->getLex()->link_first_table_back(create_table_list, link_to_local);
+            lex().link_first_table_back(create_table_list, link_to_local);
 
             res= true;
             break;
@@ -219,13 +219,13 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
           needs to be created for every execution of a PS/SP.
         */
         if ((result= new select_create(create_table_list,
-                                       getSession()->getLex()->exists(),
+                                       lex().exists(),
                                        &create_info(),
                                        createTableMessage(),
                                        &alter_info,
                                        select_lex->item_list,
-                                       getSession()->getLex()->duplicates,
-                                       getSession()->getLex()->ignore,
+                                       lex().duplicates,
+                                       lex().ignore,
                                        select_tables,
                                        new_table_identifier)))
         {
@@ -233,13 +233,13 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
             CREATE from SELECT give its Select_Lex for SELECT,
             and item_list belong to SELECT
           */
-          res= handle_select(getSession(), getSession()->getLex(), result, 0);
+          res= handle_select(&session(), &lex(), result, 0);
           delete result;
         }
       }
       else if (not lex_identified_temp_table)
       {
-        create_table_list= getSession()->getLex()->unlink_first_table(&link_to_local);
+        create_table_list= lex().unlink_first_table(&link_to_local);
       }
     }
     else
@@ -247,12 +247,12 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
       /* regular create */
       if (is_create_table_like)
       {
-        res= create_like_table(getSession(), 
+        res= create_like_table(&session(), 
                                new_table_identifier,
                                identifier::Table(select_tables->getSchemaName(),
                                                  select_tables->getTableName()),
                                createTableMessage(),
-                               getSession()->getLex()->exists(),
+                               lex().exists(),
                                is_engine_set);
       }
       else
@@ -265,19 +265,19 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
           *field= alter_info.added_fields_proto.added_field(x);
         }
 
-        res= create_table(getSession(), 
+        res= create_table(&session(), 
                           new_table_identifier,
                           &create_info(),
                           createTableMessage(),
                           &alter_info, 
                           false, 
                           0,
-                          getSession()->getLex()->exists());
+                          lex().exists());
       }
 
       if (not res)
       {
-        getSession()->my_ok();
+        session().my_ok();
       }
     }
   } while (0);
@@ -295,7 +295,7 @@ bool statement::CreateTable::check(const identifier::Table &identifier)
   if (not plugin::StorageEngine::canCreateTable(identifier))
   {
     identifier::Schema schema_identifier= identifier;
-    error::access(*getSession()->user(), schema_identifier);
+    error::access(*session().user(), schema_identifier);
 
     return false;
   }

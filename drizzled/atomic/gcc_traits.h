@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ATOMIC_GCC_TRAITS_H
-#define DRIZZLED_ATOMIC_GCC_TRAITS_H
+#pragma once
 
 namespace drizzled {
 namespace internal {
@@ -93,4 +92,3 @@ public:
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ATOMIC_GCC_TRAITS_H */

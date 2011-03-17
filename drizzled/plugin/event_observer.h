@@ -40,8 +40,7 @@
  *  SchemaEventObservers, or TableEventObservers class.
  *
  */
-#ifndef DRIZZLED_PLUGIN_EVENT_OBSERVER_H
-#define DRIZZLED_PLUGIN_EVENT_OBSERVER_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 
@@ -208,14 +207,14 @@ public:
    * interested in this database. 
  */
   static void registerSchemaEvents(Session &session, const std::string &db); 
-  static void deregisterSchemaEvents(Session &session, const std::string &db); 
+  static void deregisterSchemaEvents(EventObserverList *observers); 
 
   /*==========================================================*/
   /* Called from drizzle to register all events for all event plugins 
    * interested in this session. 
  */
   static void registerSessionEvents(Session &session); 
-  static void deregisterSessionEvents(Session &session); 
+  static void deregisterSessionEvents(EventObserverList *observers); 
 
 
   /*==========================================================*/
@@ -579,4 +578,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_EVENT_OBSERVER_H */

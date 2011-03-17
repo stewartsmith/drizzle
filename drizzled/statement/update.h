@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_UPDATE_H
-#define DRIZZLED_STATEMENT_UPDATE_H
+#pragma once
 
 #include <drizzled/statement.h>
 
@@ -36,7 +35,7 @@ public:
   Update(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_UPDATE;
+    set_command(SQLCOM_UPDATE);
   }
 
   bool execute();
@@ -50,4 +49,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_UPDATE_H */

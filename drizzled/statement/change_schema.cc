@@ -23,6 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/schema.h>
+#include <drizzled/sql_lex.h>
 
 #include <string>
 
@@ -33,12 +34,12 @@ namespace drizzled
 
 bool statement::ChangeSchema::execute()
 {
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
+  Select_Lex *select_lex= &lex().select_lex;
 
   identifier::Schema identifier(select_lex->db);
-  if (not schema::change(*getSession(), identifier))
+  if (not schema::change(session(), identifier))
   {
-    getSession()->my_ok();
+    session().my_ok();
   }
 
   return false;

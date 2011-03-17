@@ -32,22 +32,22 @@ SetOption::SetOption(Session *in_session) :
   Statement(in_session),
   one_shot_set(false)
   {
-    getSession()->getLex()->sql_command= SQLCOM_SET_OPTION;
-    init_select(getSession()->getLex());
-    getSession()->getLex()->option_type= OPT_SESSION;
-    getSession()->getLex()->var_list.empty();
+    set_command(SQLCOM_SET_OPTION);
+    init_select(&lex());
+    lex().option_type= OPT_SESSION;
+    lex().var_list.empty();
   }
 } // namespace statement
 
 bool statement::SetOption::execute()
 {
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *all_tables= lex().query_tables;
 
-  if (getSession()->openTablesLock(all_tables))
+  if (session().openTablesLock(all_tables))
   {
     return true;
   }
-  bool res= sql_set_variables(getSession(), getSession()->getLex()->var_list);
+  bool res= sql_set_variables(&session(), lex().var_list);
   if (res)
   {
     /*
@@ -55,14 +55,14 @@ bool statement::SetOption::execute()
      * Send something semi-generic here since we don't know which
      * assignment in the list caused the error.
      */
-    if (! getSession()->is_error())
+    if (! session().is_error())
     {
       my_error(ER_WRONG_ARGUMENTS, MYF(0), "SET");
     }
   }
   else
   {
-    getSession()->my_ok();
+    session().my_ok();
   }
 
   return res;

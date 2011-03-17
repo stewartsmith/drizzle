@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __REPOSITORY_MS_H__
 #define __REPOSITORY_MS_H__
 #include <stddef.h>
@@ -190,7 +191,7 @@ typedef struct MSBlobHead {
 #define MS_CAN_ADD_MDATA(bh, l)		(MS_VAR_SPACE(bh) >= (int32_t)l)
 
 
-#define MS_BLOB_STAT_OFFS			offsetof(MSBlobHeadRec, rb_storage_type_1)
+#define MS_BLOB_STAT_OFFS			offsetof(MSBlobHeadRec, rb_status_1)
 #define MS_BLOB_META_OFFS			offsetof(MSBlobHeadRec, rb_alias_offset_2)
 
 #define MS_BLOB_FREE_REF			0x0000						/* A free reference */
@@ -355,6 +356,7 @@ public:
 	uint32_t			myRepoLockState;	// Bit mask of RepoLockStates						
 	bool			isRemovingFP;								/* Set to true if the file pool is being removed. */
 	CSMutex			myRepoLock[CS_REPO_REC_LOCK_COUNT];
+	CSMutex			myRepoWriteLock;		// Writing requires it's own lock. 
 	MSDatabase		*myRepoDatabase;
 	off64_t			myGarbageCount;
 	size_t			myRepoHeadSize;
@@ -411,7 +413,7 @@ public:
 private:
 	bool			myRepoXLock;
 	/* The read file pool: */
-	MSRepoFile		*iFilePool;									/* A list of files currently not in use. */
+	MSRepoFile		*iFilePool;									/* A list of files currently not in use. THIS LIST DOESN'T COUNT AS A REFERENCE! YUK!!*/
 	CSLinkedList	iPoolFiles;									/* A list of all files in this pool */
 
 	CSPath *getRepoFilePath();

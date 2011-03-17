@@ -25,8 +25,7 @@
  *   Defines the interface to the CachedDirectory class.
  */
 
-#ifndef DRIZZLED_CACHED_DIRECTORY_H
-#define DRIZZLED_CACHED_DIRECTORY_H
+#pragma once
 
 #include <dirent.h>
 
@@ -176,4 +175,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CACHED_DIRECTORY_H */

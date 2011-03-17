@@ -725,7 +725,9 @@ bool ClientMySQLProtocol::checkConnection(void)
     server_capabilites= CLIENT_BASIC_FLAGS;
 
     if (_using_mysql41_protocol)
+    {
       server_capabilites|= CLIENT_PROTOCOL_MYSQL41;
+    }
 
 #ifdef HAVE_COMPRESS
     server_capabilites|= CLIENT_COMPRESS;
@@ -816,7 +818,11 @@ bool ClientMySQLProtocol::checkConnection(void)
       passwd < (char *) net.read_pos + pkt_len)
   {
     passwd_len= (unsigned char)(*passwd++);
-    if (passwd_len > 0)
+    if (passwd_len > 0 and client_capabilities & CLIENT_CAPABILITIES_PLUGIN_AUTH)
+    {
+      user_identifier->setPasswordType(identifier::User::PLAIN_TEXT);
+    }
+    else if (passwd_len > 0)
     {
       user_identifier->setPasswordType(identifier::User::MYSQL_HASH);
       user_identifier->setPasswordContext(scramble, SCRAMBLE_LENGTH);
@@ -870,6 +876,11 @@ bool ClientMySQLProtocol::checkConnection(void)
   if (client_capabilities & CLIENT_INTERACTIVE)
   {
     _is_interactive= true;
+  }
+
+  if (client_capabilities & CLIENT_CAPABILITIES_PLUGIN_AUTH)
+  {
+    passwd_len= strlen(passwd);
   }
 
   user_identifier->setUser(user);
@@ -1054,7 +1065,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<buffer_constraint>(&buffer_length)->default_value(16384),
           _("Buffer length."));
   context("bind-address",
-          po::value<string>()->default_value(""),
+          po::value<string>()->default_value("localhost"),
           _("Address to bind to."));
   context("max-connections",
           po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters->max_connections)->default_value(1000),

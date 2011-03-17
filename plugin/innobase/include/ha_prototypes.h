@@ -24,6 +24,7 @@ InnoDB C code
 Created 5/11/2006 Osku Salerma
 ************************************************************************/
 
+#pragma once
 #ifndef HA_INNODB_PROTOTYPES_H
 #define HA_INNODB_PROTOTYPES_H
 

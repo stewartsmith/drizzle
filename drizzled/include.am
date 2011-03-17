@@ -938,7 +938,7 @@ drizzled_libtemporal_la_SOURCES= \
 				 drizzled/temporal_format.cc \
 				 drizzled/temporal_interval.cc
 drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
-drizzled_libserialutil_la_SOURCES = drizzled/schema.cc drizzled/table_proto_write.cc
+drizzled_libserialutil_la_SOURCES = drizzled/schema.cc drizzled/table_proto.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
 drizzled_libcached_directory_la_SOURCES=drizzled/cached_directory.cc

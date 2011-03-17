@@ -23,8 +23,7 @@
   instance of table share per one table in the database.
 */
 
-#ifndef DRIZZLED_TABLE_INSTANCE_BASE_H
-#define DRIZZLED_TABLE_INSTANCE_BASE_H
+#pragma once
 
 #include <string>
 
@@ -719,7 +718,7 @@ private:
                               Table &outparam,
                               bool &error_reported);
 public:
-  bool parse_table_proto(Session& session, message::Table &table);
+  bool parse_table_proto(Session& session, const message::Table &table);
 
   virtual bool is_replicated() const
   {
@@ -729,4 +728,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_BASE_H */

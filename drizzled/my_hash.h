@@ -19,13 +19,11 @@
 
 /* Dynamic hashing of record with different key-length */
 
-#ifndef DRIZZLED_MY_HASH_H
-#define DRIZZLED_MY_HASH_H
+#pragma once
 
 #include <drizzled/dynamic_array.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 typedef struct charset_info_st CHARSET_INFO;
 
@@ -41,18 +39,29 @@ typedef struct charset_info_st CHARSET_INFO;
 typedef unsigned char *(*hash_get_key)(const unsigned char *,size_t*,bool);
 typedef void (*hash_free_key)(void *);
 
-typedef struct st_hash {
+struct HASH_LINK 
+{
+  /* index to next key */
+  uint32_t next;
+  /* data for current entry */
+  unsigned char *data;
+} ;
+
+struct HASH
+{
+  // typedef std::vector<HASH_LINK> array_t;
+  typedef DYNAMIC_ARRAY array_t;
   /* Length of key if const length */
   size_t key_offset,key_length;
   uint32_t blength;
   uint32_t records;
   uint32_t flags;
   /* Place for hash_keys */
-  DYNAMIC_ARRAY array;
+  array_t array;
   hash_get_key get_key;
   hash_free_key free;
   const CHARSET_INFO *charset;
-} HASH;
+};
 
 /* A search iterator state */
 typedef uint32_t HASH_SEARCH_STATE;
@@ -78,4 +87,3 @@ bool hash_delete(HASH *hash,unsigned char *record);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MY_HASH_H */

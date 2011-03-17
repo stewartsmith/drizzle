@@ -28,6 +28,7 @@
 #include <drizzled/field/int64.h>
 #include <drizzled/field/size.h>
 #include <drizzled/function/math/int.h>
+#include <drizzled/item/field.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_string.h>

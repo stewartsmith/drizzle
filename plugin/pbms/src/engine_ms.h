@@ -27,12 +27,13 @@
  *
  */
 
+#pragma once
 #ifndef __ENGINE_MS_H__
 #define __ENGINE_MS_H__
 
 #include "defs_ms.h"
-
 #include "pbms.h"
+
 class MSOpenTable;
 
 #ifdef DRIZZLED

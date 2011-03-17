@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSLOG_H__
 #define __CSLOG_H__
 

@@ -31,8 +31,7 @@
 #include <drizzled/util/string.h>
 
 
-#ifndef PLUGIN_USER_LOCKS_LOCKS_H
-#define PLUGIN_USER_LOCKS_LOCKS_H
+#pragma once
 
 namespace user_locks {
 
@@ -76,4 +75,3 @@ private:
 
 } /* namespace user_locks */
 
-#endif /* PLUGIN_USER_LOCKS_LOCKS_H */

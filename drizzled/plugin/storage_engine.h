@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_STORAGE_ENGINE_H
-#define DRIZZLED_PLUGIN_STORAGE_ENGINE_H
+#pragma once
 
 
 #include <drizzled/cached_directory.h>
@@ -46,7 +45,7 @@ namespace drizzled
 class TableList;
 class Session;
 class Cursor;
-typedef struct st_hash HASH;
+struct HASH;
 
 class TableShare;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
@@ -282,7 +281,7 @@ protected:
   virtual int doCreateTable(Session &session,
                             Table &table_arg,
                             const drizzled::identifier::Table &identifier,
-                            message::Table &message)= 0;
+                            const message::Table &message)= 0;
 
   virtual int doRenameTable(Session &session,
                             const drizzled::identifier::Table &from, const drizzled::identifier::Table &to)= 0;
@@ -422,7 +421,7 @@ public:
 protected:
   static int deleteDefinitionFromPath(const drizzled::identifier::Table &identifier);
   static int renameDefinitionFromPath(const drizzled::identifier::Table &dest, const drizzled::identifier::Table &src);
-  static int writeDefinitionFromPath(const drizzled::identifier::Table &identifier, message::Table &proto);
+  static int writeDefinitionFromPath(const drizzled::identifier::Table &identifier, const message::Table &proto);
   static bool readTableFile(const std::string &path, message::Table &table_message);
 
 public:
@@ -465,4 +464,3 @@ std::ostream& operator<<(std::ostream& output, const StorageEngine &engine);
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

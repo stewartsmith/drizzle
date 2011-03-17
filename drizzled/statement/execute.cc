@@ -28,6 +28,7 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/null_client.h>
 #include <drizzled/plugin/client/concurrent.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {
@@ -55,7 +56,7 @@ bool statement::Execute::parseVariable()
 {
   if (to_execute.isVariable())
   {
-    user_var_entry *var= getSession()->getVariable(to_execute, false);
+    user_var_entry *var= session().getVariable(to_execute, false);
 
     if (var && var->length && var->value && var->type == STRING_RESULT)
     {
@@ -75,10 +76,10 @@ bool statement::Execute::parseVariable()
 bool statement::Execute::runStatement(plugin::NullClient *client, const std::string &arg)
 {
   client->pushSQL(arg);
-  if (not getSession()->executeStatement())
+  if (not session().executeStatement())
     return true;
 
-  if (getSession()->is_error())
+  if (session().is_error())
     return true;
 
   return false;
@@ -90,7 +91,7 @@ bool statement::Execute::execute()
   bool ret= execute_shell();
 
   // We have to restore ourselves at the top for delete() to work.
-  getSession()->getLex()->statement= this;
+  lex().statement= this;
 
   return ret;
 }
@@ -115,29 +116,29 @@ bool statement::Execute::execute_shell()
 
   if (is_concurrent)
   {
-    if (not getSession()->isConcurrentExecuteAllowed())
+    if (not session().isConcurrentExecuteAllowed())
     {
       my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
       return false;
     }
 
-    drizzled::Execute executer(*getSession(), should_wait);
+    drizzled::Execute executer(session(), should_wait);
     executer.run(to_execute.str, to_execute.length);
   }
   else // Non-concurrent run.
   {
     if (is_quiet)
     {
-      plugin::Client *temp= getSession()->getClient();
+      plugin::Client *temp= session().getClient();
       plugin::NullClient *null_client= new plugin::NullClient;
 
-      getSession()->setClient(null_client);
+      session().setClient(null_client);
       
       bool error_occured= false;
       bool is_savepoint= false;
       {
         std::string start_sql;
-        if (getSession()->inTransaction())
+        if (session().inTransaction())
         {
           // @todo Figure out something a bit more solid then this.
           start_sql.append("SAVEPOINT execute_internal_savepoint");
@@ -160,7 +161,7 @@ bool statement::Execute::execute_shell()
         Tokenizer tok(full_string, boost::escaped_list_separator<char>("\\", ";", "\""));
 
         for (Tokenizer::iterator iter= tok.begin();
-             iter != tok.end() and getSession()->getKilled() != Session::KILL_CONNECTION;
+             iter != tok.end() and session().getKilled() != Session::KILL_CONNECTION;
              ++iter)
         {
           if (runStatement(null_client, *iter))
@@ -202,24 +203,24 @@ bool statement::Execute::execute_shell()
         }
       }
 
-      getSession()->setClient(temp);
-      if (getSession()->is_error())
+      session().setClient(temp);
+      if (session().is_error())
       {
-        getSession()->clear_error(true);
+        session().clear_error(true);
       }
       else
       {
-        getSession()->clearDiagnostics();
+        session().clearDiagnostics();
       }
 
-      getSession()->my_ok();
+      session().my_ok();
 
       null_client->close();
       delete null_client;
     }
     else
     {
-      parse(getSession(), to_execute.str, to_execute.length);
+      parse(&session(), to_execute.str, to_execute.length);
     }
   }
 

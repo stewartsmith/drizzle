@@ -27,8 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_STATUS_TOOL_H
-#define PLUGIN_LOGGING_STATS_STATUS_TOOL_H
+#pragma once
 
 #include "logging_stats.h"
 
@@ -73,4 +72,3 @@ private:
   std::vector<drizzled::drizzle_show_var *> all_status_vars;
 };
 
-#endif /* PLUGIN_LOGGING_STATS_STATUS_TOOL_H */

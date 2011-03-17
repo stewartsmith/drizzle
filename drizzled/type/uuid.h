@@ -62,8 +62,7 @@
  * %End-Header%
  */
 
-#ifndef DRIZZLED_TYPE_UUID_H
-#define DRIZZLED_TYPE_UUID_H
+#pragma once
 
 #include <cstdio>
 #include <iostream>
@@ -231,5 +230,4 @@ public:
 } /* namespace type */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TYPE_UUID_H */
 

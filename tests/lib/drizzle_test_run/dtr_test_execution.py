@@ -191,13 +191,6 @@ class testExecutor(test_execution.testExecutor):
         """ Create any symlinks we may need """
         needed_symlinks = []
 
-        # handle filesystem_engine 
-        if self.current_testcase.suitename == 'filesystem_engine':
-            needed_symlinks.append(( os.path.join(self.current_testcase.suitepath
-                                  , 't')
-                                  , os.path.join(self.master_server.vardir
-                                  , "filesystem_ln")))
-
         self.system_manager.create_symlinks(needed_symlinks)
 
     

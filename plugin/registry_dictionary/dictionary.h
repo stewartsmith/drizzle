@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_REGISTRY_DICTIONARY_DICTIONARY_H
-#define PLUGIN_REGISTRY_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <set>
 
@@ -28,4 +27,3 @@
 #include <plugin/registry_dictionary/plugins.h>
 #include <plugin/registry_dictionary/modules.h>
 
-#endif /* PLUGIN_REGISTRY_DICTIONARY_DICTIONARY_H */

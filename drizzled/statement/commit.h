@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_COMMIT_H
-#define DRIZZLED_STATEMENT_COMMIT_H
+#pragma once
 
 #include <drizzled/statement.h>
 
@@ -38,7 +37,7 @@ public:
     tx_chain(tx_chain_arg),
     tx_release(tx_release_arg)
   {
-    getSession()->getLex()->sql_command= SQLCOM_COMMIT;
+    set_command(SQLCOM_COMMIT);
   }
 
   bool execute();
@@ -54,4 +53,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_COMMIT_H */

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_FLUSH_H
-#define DRIZZLED_STATEMENT_FLUSH_H
+#pragma once
 
 #include <drizzled/statement.h>
 
@@ -41,8 +40,8 @@ public:
     flush_status(false),
     flush_global_status(false)
   {
-    getSession()->getLex()->sql_command= SQLCOM_FLUSH;
-    getSession()->getLex()->type= 0;
+    set_command(SQLCOM_FLUSH);
+    lex().type= 0;
   }
 
   bool execute();
@@ -85,4 +84,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_FLUSH_H */

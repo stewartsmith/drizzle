@@ -27,6 +27,7 @@
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/message.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/sql_lex.h>
 
 #include <string>
 
@@ -40,30 +41,30 @@ bool statement::CreateSchema::execute()
   if (not validateSchemaOptions())
     return true;
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
-  identifier::Schema schema_identifier(string(getSession()->getLex()->name.str, getSession()->getLex()->name.length));
+  identifier::Schema schema_identifier(string(lex().name.str, lex().name.length));
   if (not check(schema_identifier))
     return false;
 
-  drizzled::message::schema::init(schema_message, getSession()->getLex()->name.str);
+  drizzled::message::schema::init(schema_message, lex().name.str);
 
   bool res = false;
   std::string path;
   schema_identifier.getSQLPath(path);
 
-  if (unlikely(plugin::EventObserver::beforeCreateDatabase(*getSession(), path)))
+  if (unlikely(plugin::EventObserver::beforeCreateDatabase(session(), path)))
   {
     my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
   }
   else
   {
-    res= schema::create(*getSession(), schema_message, getSession()->getLex()->exists());
-    if (unlikely(plugin::EventObserver::afterCreateDatabase(*getSession(), path, res)))
+    res= schema::create(session(), schema_message, lex().exists());
+    if (unlikely(plugin::EventObserver::afterCreateDatabase(session(), path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);
       res = false;
@@ -79,10 +80,10 @@ bool statement::CreateSchema::check(const identifier::Schema &identifier)
   if (not identifier.isValid())
     return false;
 
-  if (not plugin::Authorization::isAuthorized(*getSession()->user(), identifier))
+  if (not plugin::Authorization::isAuthorized(*session().user(), identifier))
     return false;
 
-  if (not getSession()->getLex()->exists())
+  if (not lex().exists())
   {
     if (plugin::StorageEngine::doesSchemaExist(identifier))
     {

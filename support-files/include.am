@@ -26,4 +26,4 @@ EXTRA_DIST+= \
 pkgconfigdir= $(libdir)/pkgconfig
 pkgconfig_DATA= \
 		support-files/drizzle7.pc \
-		support-files/libdrizzle.pc
+		support-files/libdrizzle-1.0.pc

@@ -1,7 +1,0 @@
---source include/have_linux.inc
---source include/not_valgrind.inc
-SET SESSION storage_engine=pbxt;
-CREATE TABLE t1 (a decimal(2,1));
-insert into t1 values (1.0),(1.1),(2.0);
-select * from t1 order by a;
-drop table t1;

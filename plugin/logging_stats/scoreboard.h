@@ -28,11 +28,9 @@
  *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_SCOREBOARD_H
-#define PLUGIN_LOGGING_STATS_SCOREBOARD_H
+#pragma once
 
 #include "scoreboard_slot.h"
-#include <drizzled/session.h>
 #include <boost/thread/shared_mutex.hpp>
 
 #include <vector>
@@ -102,4 +100,3 @@ private:
   ScoreboardSlot* claimOpenScoreboardSlot(drizzled::Session *session); 
 };
 
-#endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_H */

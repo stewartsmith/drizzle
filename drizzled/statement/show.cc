@@ -37,9 +37,9 @@ Show::Show(Session *in_session) :
 
 bool statement::Show::execute()
 {
-  TableList *all_tables= getSession()->getLex()->query_tables;
-  getSession()->status_var.last_query_cost= 0.0;
-  bool res= execute_sqlcom_select(getSession(), all_tables);
+  TableList *all_tables= lex().query_tables;
+  session().status_var.last_query_cost= 0.0;
+  bool res= execute_sqlcom_select(&session(), all_tables);
 
   return res;
 }

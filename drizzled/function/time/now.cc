@@ -22,11 +22,10 @@
 #include <drizzled/function/time/now.h>
 #include <drizzled/current_session.h>
 #include <drizzled/session.h>
-
 #include <drizzled/temporal.h>
+#include <drizzled/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 String *Item_func_now::val_str(String *)
 {

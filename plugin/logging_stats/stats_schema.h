@@ -27,8 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_STATS_SCHEMA_H
-#define PLUGIN_LOGGING_STATS_STATS_SCHEMA_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/field.h>
@@ -204,4 +203,3 @@ private:
   LoggingStats *outer_logging_stats;
 };
 
-#endif /* PLUGIN_LOGGING_STATS_STATS_SCHEMA_H */

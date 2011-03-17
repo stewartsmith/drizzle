@@ -26,6 +26,7 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/unique.h>
 #include <drizzled/key.h>
+#include <drizzled/table.h>
 
 #include <vector>
 

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_KILL_H
-#define DRIZZLED_KILL_H
+#pragma once
 
 #include <drizzled/identifier.h>
 #include <drizzled/visibility.h>
@@ -30,4 +29,3 @@ bool kill(identifier::User::const_reference user, session_id_t id_to_kill, bool 
 
 } // namespace drizzled
 
-#endif /* DRIZZLED_KILL_H */

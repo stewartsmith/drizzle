@@ -31,6 +31,7 @@
 import os
 import re
 import sys
+from ConfigParser import RawConfigParser
 
 import lib.test_mgmt.test_management as test_management
 
@@ -65,7 +66,13 @@ class testCase:
         self.master_count = 1
         self.server_options = test_server_options
         # We will populate this in a better fashion later on
-        self.server_requirements=[self.server_options]
+        # as we allow .cnf files, we need to do a bit of
+        # messing about to make this work right
+        if self.server_options == [] or type(self.server_options[0]) is not list:
+            self.server_requirements=[self.server_options]
+        else:
+            self.server_requirements = self.server_options
+            self.server_options= self.server_options[0][0]
         self.comment = comment
         self.master_sh = master_sh
         self.disable = disable
@@ -200,7 +207,8 @@ class testManager(test_management.testManager):
             master_sh = master_sh_path 
         else:
             master_sh = None
-        master_opt_path = test_path.replace('.test','-master.opt')
+        master_opt_path = test_path.replace('.test', '-master.opt')
+        config_file_path = test_path.replace('.test', '.cnf')
         test_server_options = test_server_options + self.process_opt_file(
                                                            master_opt_path)
         (disable, comment) = self.check_if_disabled(disabled_tests, test_name)
@@ -259,11 +267,23 @@ class testManager(test_management.testManager):
             that reside at the suite-level if they exist.
             Return a list of the options found
 
+            We also process .cnf files - this
+            is currently dbqp-only and is the proper
+            way to do things :P
+
         """
         found_options = []
         opt_files = ['t/master.opt','t/suite.opt']
         for opt_file in opt_files:
             found_options = found_options + self.process_opt_file(os.path.join(suite_dir,opt_file))
+        # We also process the suite-level .cnf file(s).  We override
+        # a master.opt file if we have a .cnf file.  There is no reason they
+        # should ever be used in conjunction and I am biased towards .cnf ; )
+        cnf_files = ['t/master.cnf']
+        for cnf_file in cnf_files:
+            cnf_flag, returned_options = self.process_cnf_file(os.path.join(suite_dir,cnf_file))
+            if cnf_flag: # we found a proper file and need to override
+                found_options = returned_options
         return found_options
 
     def process_disabled_test_file(self, testdir):
@@ -341,6 +361,35 @@ class testManager(test_management.testManager):
                         found_options.append('--%s' %(option.strip()))
         opt_file.close()
         return found_options
+
+    def process_cnf_file(self, cnf_file_path):
+        """ We extract meaningful information from a .cnf file
+            if it exists.  Currently limited to server allocation
+            needs
+
+        """
+
+        server_requirements = []
+        cnf_flag = 0
+        if os.path.exists(cnf_file_path):
+            cnf_flag = 1
+            config_reader = RawConfigParser()
+            config_reader.read(cnf_file_path)
+            server_requirements = self.process_server_reqs(config_reader.get('test_servers','servers'))
+        return ( cnf_flag, server_requirements )
+
+    def process_server_reqs(self,data_string):
+        """ We read in the list of lists as a string, so we need to 
+            handle this / break it down into proper chunks
+
+        """
+        server_reqs = []
+        # We expect to see a list of lists and throw away the 
+        # enclosing brackets
+        option_sets = data_string[1:-1].strip().split(',')
+        for option_set in option_sets:
+            server_reqs.append([option_set[1:-1].strip()])
+        return server_reqs
 
     def testlist_filter(self, testlist):
         """ Filter our list of testdir contents based on several 

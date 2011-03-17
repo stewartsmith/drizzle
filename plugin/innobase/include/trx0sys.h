@@ -23,6 +23,7 @@ Transaction system
 Created 3/26/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef trx0sys_h
 #define trx0sys_h
 

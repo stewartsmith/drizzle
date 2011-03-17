@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_ALTER_SCHEMA_H
-#define DRIZZLED_STATEMENT_ALTER_SCHEMA_H
+#pragma once
 
 #include <drizzled/statement/create_schema.h>
 
@@ -36,7 +35,7 @@ public:
   AlterSchema(Session *in_session) :
     CreateSchema(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_ALTER_DB;
+    set_command(SQLCOM_ALTER_DB);
   }
 
   bool execute();
@@ -46,4 +45,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_ALTER_SCHEMA_H */

@@ -23,6 +23,7 @@ File space management types
 Created May 26, 2009 Vasil Dimov
 *******************************************************/
 
+#pragma once
 #ifndef fsp0types_h
 #define fsp0types_h
 

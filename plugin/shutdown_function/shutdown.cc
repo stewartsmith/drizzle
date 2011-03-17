@@ -38,6 +38,7 @@
 
 #include <signal.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/plugin/function.h>
 

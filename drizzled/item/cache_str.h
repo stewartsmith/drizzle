@@ -19,8 +19,7 @@
 
 #include <drizzled/item/cache.h>
 
-#ifndef DRIZZLED_ITEM_CACHE_STR_H
-#define DRIZZLED_ITEM_CACHE_STR_H
+#pragma once
 
 namespace drizzled
 {
@@ -45,4 +44,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_CACHE_STR_H */

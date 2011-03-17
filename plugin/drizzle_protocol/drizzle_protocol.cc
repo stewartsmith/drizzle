@@ -134,7 +134,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<buffer_constraint>(&buffer_length)->default_value(16384),
           N_("Buffer length."));
   context("bind-address",
-          po::value<std::string>()->default_value(""),
+          po::value<std::string>()->default_value("localhost"),
           N_("Address to bind to."));
   context("max-connections",
           po::value<uint32_t>(&ListenDrizzleProtocol::drizzle_counters->max_connections)->default_value(1000),

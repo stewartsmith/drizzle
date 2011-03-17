@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_USER_LOCKS_MODULE_H
-#define PLUGIN_USER_LOCKS_MODULE_H
+#pragma once
 
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -50,4 +49,3 @@
 #include <plugin/user_locks/release_wait.h>
 #include <plugin/user_locks/user_locks_dictionary.h>
 
-#endif /* PLUGIN_USER_LOCKS_MODULE_H */

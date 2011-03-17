@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_SELECT_H
-#define DRIZZLED_SQL_SELECT_H
+#pragma once
 
 #include <drizzled/cached_item.h>
 #include <drizzled/field/varstring.h>
@@ -285,4 +284,3 @@ void print_join(Session *session, String *str, List<TableList> *tables);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_SELECT_H */

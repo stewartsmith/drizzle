@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_LEX_H
-#define DRIZZLED_SQL_LEX_H
+#pragma once
 
 /**
   @defgroup Semantic_Analysis Semantic Analysis
@@ -29,7 +28,6 @@
 #include <drizzled/function/math/real.h>
 #include <drizzled/key_part_spec.h>
 #include <drizzled/index_hint.h>
-#include <drizzled/statement.h>
 #include <drizzled/optimizer/explain_plan.h>
 
 #include <bitset>
@@ -38,6 +36,7 @@
 namespace drizzled {
 
 namespace plugin { class Function; }
+namespace statement { class Statement; }
 
   namespace message
   {
@@ -72,6 +71,7 @@ class Item_outer_ref;
 #  if defined(DRIZZLE_LEX)
 #   include <drizzled/foreign_key.h>
 #   include <drizzled/lex_symbol.h>
+#   include <drizzled/comp_creator.h>
 #   include <drizzled/sql_yacc.h>
 #   define LEX_YYSTYPE YYSTYPE *
 #  else
@@ -251,7 +251,7 @@ public:
       UNCACHEABLE_PREPARE
   */
   std::bitset<8> uncacheable;
-  enum sub_select_type linkage;
+  sub_select_type linkage;
   bool no_table_names_allowed; /* used for global order by */
   bool no_error; /* suppress error message (convert it to warnings) */
 
@@ -474,7 +474,7 @@ public:
   Item::cond_result having_value;
   /* point on lex in which it was created, used in view subquery detection */
   LEX *parent_lex;
-  enum olap_type olap;
+  olap_type olap;
   /* FROM clause - points to the beginning of the TableList::next_local list. */
   SQL_LIST table_list;
   SQL_LIST group_list; /* GROUP BY clause. */
@@ -492,7 +492,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  enum drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
+  drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
@@ -667,7 +667,7 @@ public:
   */
   void cleanup_all_joins(bool full);
 
-  void set_index_hint_type(enum index_hint_type type, index_clause_map clause);
+  void set_index_hint_type(index_hint_type type, index_clause_map clause);
 
   /*
    Add a index hint to the tagged list of hints. The type and clause of the
@@ -689,7 +689,7 @@ public:
 
 private:
   /* current index hint kind. used in filling up index_hints */
-  enum index_hint_type current_index_hint_type;
+  index_hint_type current_index_hint_type;
   index_clause_map current_index_hint_clause;
   /* a list of USE/FORCE/IGNORE INDEX */
   List<Index_hint> *index_hints;
@@ -815,13 +815,13 @@ public:
   /* list of all Select_Lex */
   Select_Lex *all_selects_list;
 
-  /* This is the "scale" for DECIMAL (S,P) notation */ 
+  /* This is the "scale" for DECIMAL (S,P) notation */
   char *length;
   /* This is the decimal precision in DECIMAL(S,P) notation */
   char *dec;
-  
+
   /**
-   * This is used kind of like the "ident" member variable below, as 
+   * This is used kind of like the "ident" member variable below, as
    * a place to store certain names of identifiers.  Unfortunately, it
    * is used differently depending on the Command (SELECT on a derived
    * table vs CREATE)
@@ -837,7 +837,7 @@ public:
    * or a named savepoint.  It should probably be refactored out into
    * the eventual Command class built for the Keycache and Savepoint
    * commands.
-   */ 
+   */
   LEX_STRING ident;
 
   unsigned char* yacc_yyss, *yacc_yyvs;
@@ -1039,7 +1039,7 @@ public:
     return _exists;
   }
 
-private: 
+private:
   bool cacheable;
   bool sum_expr_used;
   message::Table *_create_table;
@@ -1062,4 +1062,3 @@ bool check_for_sql_keyword(drizzled::lex_string_t const&);
 } /* namespace drizzled */
 
 #endif /* DRIZZLE_SERVER */
-#endif /* DRIZZLED_SQL_LEX_H */

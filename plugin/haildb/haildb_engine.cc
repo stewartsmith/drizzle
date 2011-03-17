@@ -107,8 +107,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/module/option_map.h>
 #include <drizzled/charset.h>
 #include <drizzled/current_session.h>
-
 #include <drizzled/key.h>
+#include <drizzled/sql_lex.h>
 
 #include <iostream>
 
@@ -170,7 +170,7 @@ public:
   int doCreateTable(Session&,
                     Table& table_arg,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table& proto);
+                    const drizzled::message::Table& proto);
 
   int doDropTable(Session&, const identifier::Table &identifier);
 
@@ -960,7 +960,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
   return 0;
 }
 
-static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name, drizzled::message::Table& table_message)
+static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name, const drizzled::message::Table& table_message)
 {
   ib_crsr_t cursor;
   ib_tpl_t message_tuple;
@@ -1041,7 +1041,7 @@ static ib_tbl_fmt_t parse_ib_table_format(const std::string &value)
 int HailDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
                                         const drizzled::identifier::Table &identifier,
-                                        drizzled::message::Table& table_message)
+                                        const drizzled::message::Table& table_message)
 {
   ib_tbl_sch_t haildb_table_schema= NULL;
 //  ib_idx_sch_t haildb_pkey= NULL;
@@ -1114,16 +1114,16 @@ int HailDBEngine::doCreateTable(Session &session,
   bool has_primary= false;
   for (int indexnr= 0; indexnr < table_message.indexes_size() ; indexnr++)
   {
-    message::Table::Index *index = table_message.mutable_indexes(indexnr);
+    const message::Table::Index &index = table_message.indexes(indexnr);
 
     ib_idx_sch_t haildb_index;
 
-    haildb_err= ib_table_schema_add_index(haildb_table_schema, index->name().c_str(),
-                                   &haildb_index);
+    haildb_err= ib_table_schema_add_index(haildb_table_schema, index.name().c_str(),
+					  &haildb_index);
     if (haildb_err != DB_SUCCESS)
       goto schema_error;
 
-    if (index->is_primary())
+    if (index.is_primary())
     {
       has_primary= true;
       haildb_err= ib_index_schema_set_clustered(haildb_index);
@@ -1132,19 +1132,18 @@ int HailDBEngine::doCreateTable(Session &session,
         goto schema_error;
     }
 
-    if (index->is_unique())
+    if (index.is_unique())
     {
       haildb_err= ib_index_schema_set_unique(haildb_index);
       if (haildb_err != DB_SUCCESS)
         goto schema_error;
     }
 
-    if (index->type() == message::Table::Index::UNKNOWN_INDEX)
-      index->set_type(message::Table::Index::BTREE);
+    assert(index.type() == message::Table::Index::UNKNOWN_INDEX);
 
-    for (int partnr= 0; partnr < index->index_part_size(); partnr++)
+    for (int partnr= 0; partnr < index.index_part_size(); partnr++)
     {
-      const message::Table::Index::IndexPart part= index->index_part(partnr);
+      const message::Table::Index::IndexPart part= index.index_part(partnr);
       const message::Table::Field::FieldType part_type= table_message.field(part.fieldnr()).type();
       uint64_t compare_length= 0;
 
@@ -1159,7 +1158,7 @@ int HailDBEngine::doCreateTable(Session &session,
         goto schema_error;
     }
 
-    if (! has_primary && index->is_unique())
+    if (! has_primary && index.is_unique())
     {
       haildb_err= ib_index_schema_set_clustered(haildb_index);
       has_explicit_pkey= true;
@@ -1925,7 +1924,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
   }
 
   err= ib_cursor_first(cursor);
-  if (current_session->getLex()->sql_command == SQLCOM_CREATE_TABLE
+  if (current_session->lex().sql_command == SQLCOM_CREATE_TABLE
       && err == DB_MISSING_HISTORY)
   {
     /* See https://bugs.launchpad.net/drizzle/+bug/556978

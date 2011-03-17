@@ -8,14 +8,14 @@ Welcome to Drizzle's documentation!
 
 .. image:: logo.png
 
-Drizzle is a transactional, relational, community-driven open source database that is forked from the popular MySQL database.
+Drizzle is a transactional, relational, community-driven open-source database that is forked from the popular MySQL database.
 
-The Drizzle team has removed non-essential code, re-factored the remaining code and modernized the code base moving to C++.
+The Drizzle team has removed non-essential code, has re-factored the remaining code, and has converted the code to modern C++ and modern libraries.
 
 Charter
  * A database optimized for Cloud infrastructure and Web applications
- * Design for massive concurrency on modern multi-cpu architecture
- * Optimize memory for increased performance and parallelism
+ * Design for massive concurrency on modern multi-CPU architectures
+ * Optimize memory use for increased performance and parallelism
  * Open source, open community, open design
 
 Scope

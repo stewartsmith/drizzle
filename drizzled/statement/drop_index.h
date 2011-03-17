@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_DROP_INDEX_H
-#define DRIZZLED_STATEMENT_DROP_INDEX_H
+#pragma once
 
 #include <drizzled/alter_info.h>
 #include <drizzled/statement.h>
@@ -37,7 +36,7 @@ public:
   DropIndex(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_DROP_INDEX;
+    set_command(SQLCOM_DROP_INDEX);
   }
 
   bool execute();
@@ -49,4 +48,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_DROP_INDEX_H */

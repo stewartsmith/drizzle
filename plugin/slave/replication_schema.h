@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_REPLICATION_SCHEMA_H
-#define PLUGIN_SLAVE_REPLICATION_SCHEMA_H
+#pragma once
 
 #include <plugin/slave/sql_executor.h>
 
@@ -33,8 +32,22 @@ public:
   { }
 
   bool create();
+
+  /**
+   * Set initial value of the last applied COMMIT_ID value in applier_state.
+   *
+   * This is used when the server is started with --slave.max-commit-id to
+   * begin reading from the master transaction log at a given point. This
+   * method will persist the value to the applier_state table. If it wasn't
+   * permanently stored immediately, we risk the possibility of losing the
+   * value if the server is again restarted without ever having received
+   * another event from the master (which causes persistence of the value).
+   * An edge case, but still possible.
+   *
+   * @param[in] value The initial value.
+   */
+  bool setInitialMaxCommitId(uint64_t value);
 };
 
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_REPLICATION_SCHEMA_H */

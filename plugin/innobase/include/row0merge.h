@@ -23,6 +23,7 @@ Index build routines using a merge sort
 Created 13/06/2005 Jan Lindstrom
 *******************************************************/
 
+#pragma once
 #ifndef row0merge_h
 #define row0merge_h
 

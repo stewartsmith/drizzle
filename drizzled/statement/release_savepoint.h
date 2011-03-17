@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_RELEASE_SAVEPOINT_H
-#define DRIZZLED_STATEMENT_RELEASE_SAVEPOINT_H
+#pragma once
 
 #include <drizzled/statement.h>
 
@@ -34,8 +33,8 @@ public:
   ReleaseSavepoint(Session *in_session, const lex_string_t &ident) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_RELEASE_SAVEPOINT;
-    getSession()->getLex()->ident= ident;
+    set_command(SQLCOM_RELEASE_SAVEPOINT);
+    lex().ident= ident;
   }
 
   bool execute();
@@ -49,4 +48,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_RELEASE_SAVEPOINT_H */

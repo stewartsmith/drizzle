@@ -18,8 +18,7 @@
  */
 
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_NET_SERV_H
-#define PLUGIN_MYSQL_PROTOCOL_NET_SERV_H
+#pragma once
 
 #include "vio.h"
 
@@ -88,4 +87,3 @@ void drizzleclient_drizzleclient_net_clear_error(NET *net);
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_NET_SERV_H */

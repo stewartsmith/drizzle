@@ -23,6 +23,7 @@ The database buffer pool high-level routines
 Created 11/5/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef buf0buf_h
 #define buf0buf_h
 

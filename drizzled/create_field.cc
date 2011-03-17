@@ -186,15 +186,12 @@ bool CreateField::init(Session *,
                         char *fld_length,
                         char *fld_decimals,
                         uint32_t fld_type_modifier,
-                        Item *fld_default_value,
-                        Item *fld_on_update_value,
                         LEX_STRING *fld_comment,
                         char *fld_change,
                         List<String> *fld_interval_list,
                         const CHARSET_INFO * const fld_charset,
                         uint32_t,
                         enum column_format_type column_format_in)
-                        
 {
   uint32_t sign_len= 0;
   uint32_t allowed_type_modifier= 0;
@@ -202,7 +199,6 @@ bool CreateField::init(Session *,
 
   field= 0;
   field_name= fld_name;
-  def= fld_default_value;
   flags= fld_type_modifier;
   flags|= (((uint32_t)column_format_in & COLUMN_FORMAT_MASK) << COLUMN_FORMAT_FLAGS);
   unireg_check= (fld_type_modifier & AUTO_INCREMENT_FLAG ?
@@ -224,16 +220,6 @@ bool CreateField::init(Session *,
   interval_list.clear();
 
   comment= *fld_comment;
-
-  /*
-    Set NO_DEFAULT_VALUE_FLAG if this field doesn't have a default value and
-    it is NOT NULL, not an AUTO_INCREMENT field and not a TIMESTAMP.
-  */
-  if (!fld_default_value && !(fld_type_modifier & AUTO_INCREMENT_FLAG) &&
-      (fld_type_modifier & NOT_NULL_FLAG) && (fld_type != DRIZZLE_TYPE_TIMESTAMP and fld_type != DRIZZLE_TYPE_MICROTIME))
-  {
-    flags|= NO_DEFAULT_VALUE_FLAG;
-  }
 
   if (fld_length && !(length= (uint32_t) atoi(fld_length)))
     fld_length= 0;
@@ -277,18 +263,6 @@ bool CreateField::init(Session *,
       max_field_charlength= MAX_FIELD_VARCHARLENGTH;
       break;
     case DRIZZLE_TYPE_BLOB:
-      if (fld_default_value)
-      {
-        /* Allow empty as default value. */
-        String str,*res;
-        res= fld_default_value->val_str(&str);
-        if (res->length())
-        {
-          my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), fld_name);
-          return(true);
-        }
-
-      }
       flags|= BLOB_FLAG;
       break;
     case DRIZZLE_TYPE_DOUBLE:
@@ -314,46 +288,6 @@ bool CreateField::init(Session *,
       assert(fld_type);
     case DRIZZLE_TYPE_TIMESTAMP:
       length= MicroTimestamp::MAX_STRING_LENGTH;
-
-      if (fld_default_value)
-      {
-        /* Grammar allows only NOW() value for ON UPDATE clause */
-        if (fld_default_value->type() == Item::FUNC_ITEM &&
-            ((Item_func*)fld_default_value)->functype() == Item_func::NOW_FUNC)
-        {
-          unireg_check= (fld_on_update_value ? Field::TIMESTAMP_DNUN_FIELD:
-                                              Field::TIMESTAMP_DN_FIELD);
-          /*
-            We don't need default value any longer moreover it is dangerous.
-            Everything handled by unireg_check further.
-          */
-          def= 0;
-        }
-        else
-        {
-          unireg_check= (fld_on_update_value ? Field::TIMESTAMP_UN_FIELD:
-                         Field::NONE);
-        }
-      }
-      else
-      {
-        /*
-          If we have default TIMESTAMP NOT NULL column without explicit DEFAULT
-          or ON UPDATE values then for the sake of compatiblity we should treat
-          this column as having DEFAULT NOW() ON UPDATE NOW() (when we don't
-          have another TIMESTAMP column with auto-set option before this one)
-          or DEFAULT 0 (in other cases).
-          So here we are setting TIMESTAMP_OLD_FIELD only temporary, and will
-          replace this value by TIMESTAMP_DNUN_FIELD or NONE later when
-          information about all TIMESTAMP fields in table will be availiable.
-
-          If we have TIMESTAMP NULL column without explicit DEFAULT value
-          we treat it as having DEFAULT NULL attribute.
-        */
-        unireg_check= (fld_on_update_value ? Field::TIMESTAMP_UN_FIELD :
-                      (flags & NOT_NULL_FLAG ? Field::TIMESTAMP_OLD_FIELD :
-                                                Field::NONE));
-      }
       break;
     case DRIZZLE_TYPE_DATE:
       length= Date::MAX_STRING_LENGTH;
@@ -388,13 +322,13 @@ bool CreateField::init(Session *,
 
   if (!(flags & BLOB_FLAG) &&
       ((length > max_field_charlength &&
-        fld_type != DRIZZLE_TYPE_ENUM &&
-        (fld_type != DRIZZLE_TYPE_VARCHAR || fld_default_value)) ||
+        fld_type != DRIZZLE_TYPE_ENUM  &&
+        (fld_type != DRIZZLE_TYPE_VARCHAR)) ||
        (!length && fld_type != DRIZZLE_TYPE_VARCHAR)))
   {
     my_error((fld_type == DRIZZLE_TYPE_VARCHAR) ?  ER_TOO_BIG_FIELDLENGTH : ER_TOO_BIG_DISPLAYWIDTH,
               MYF(0),
-              fld_name, max_field_charlength);
+             fld_name, max_field_charlength / (charset? charset->mbmaxlen : 1));
     return true;
   }
   fld_type_modifier&= AUTO_INCREMENT_FLAG;
@@ -405,6 +339,91 @@ bool CreateField::init(Session *,
   }
 
   return false; /* success */
+}
+
+bool CreateField::setDefaultValue(Item *default_value_item,
+                                  Item *on_update_item)
+{
+  def= default_value_item;
+
+  /*
+    Set NO_DEFAULT_VALUE_FLAG if this field doesn't have a default value and
+    it is NOT NULL, not an AUTO_INCREMENT field and not a TIMESTAMP.
+  */
+  if (! default_value_item
+      && ! (flags & AUTO_INCREMENT_FLAG)
+      && (flags & NOT_NULL_FLAG)
+      && (sql_type != DRIZZLE_TYPE_TIMESTAMP
+          and sql_type != DRIZZLE_TYPE_MICROTIME))
+  {
+    flags|= NO_DEFAULT_VALUE_FLAG;
+  }
+  else
+  {
+    flags&= ~NO_DEFAULT_VALUE_FLAG;
+  }
+
+  if (sql_type == DRIZZLE_TYPE_BLOB && default_value_item)
+  {
+    /* Allow empty as default value. */
+    String str,*res;
+    res= default_value_item->val_str(&str);
+    if (res->length())
+    {
+      my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), field_name);
+      return(true);
+    }
+  }
+
+  if (sql_type == DRIZZLE_TYPE_TIMESTAMP
+      || sql_type == DRIZZLE_TYPE_MICROTIME)
+  {
+    bool on_update_now= on_update_item
+      || (unireg_check == Field::TIMESTAMP_DNUN_FIELD
+          || unireg_check == Field::TIMESTAMP_UN_FIELD);
+
+    if (default_value_item)
+    {
+      /* Grammar allows only NOW() value for ON UPDATE clause */
+      if (default_value_item->type() == Item::FUNC_ITEM &&
+          ((Item_func*)default_value_item)->functype() == Item_func::NOW_FUNC)
+      {
+        unireg_check= (on_update_now ? Field::TIMESTAMP_DNUN_FIELD:
+                       Field::TIMESTAMP_DN_FIELD);
+        /*
+          We don't need default value any longer moreover it is dangerous.
+          Everything handled by unireg_check further.
+        */
+        def= 0;
+      }
+      else
+      {
+        unireg_check= (on_update_now ? Field::TIMESTAMP_UN_FIELD:
+                       Field::NONE);
+      }
+    }
+    else
+    {
+      /*
+        If we have default TIMESTAMP NOT NULL column without explicit DEFAULT
+        or ON UPDATE values then for the sake of compatiblity we should treat
+        this column as having DEFAULT NOW() ON UPDATE NOW() (when we don't
+        have another TIMESTAMP column with auto-set option before this one)
+        or DEFAULT 0 (in other cases).
+        So here we are setting TIMESTAMP_OLD_FIELD only temporary, and will
+        replace this value by TIMESTAMP_DNUN_FIELD or NONE later when
+        information about all TIMESTAMP fields in table will be availiable.
+
+        If we have TIMESTAMP NULL column without explicit DEFAULT value
+        we treat it as having DEFAULT NULL attribute.
+      */
+      unireg_check= (on_update_now ? Field::TIMESTAMP_UN_FIELD :
+                     (flags & NOT_NULL_FLAG ? Field::TIMESTAMP_OLD_FIELD :
+                      Field::NONE));
+    }
+  }
+
+  return false;
 }
 
 std::ostream& operator<<(std::ostream& output, const CreateField &field)

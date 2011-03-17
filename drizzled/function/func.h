@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_FUNCTION_FUNC_H
-#define DRIZZLED_FUNCTION_FUNC_H
+#pragma once
 
 /// TODO: Rename this file - func.h is stupid.
 
@@ -181,4 +180,3 @@ public:
 } /* namespace drizzled */
 
 
-#endif /* DRIZZLED_FUNCTION_FUNC_H */

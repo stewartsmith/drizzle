@@ -51,6 +51,7 @@ This file contains the implementation of error and warnings related
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/return_int.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/sql_lex.h>
 
 using namespace std;
 
@@ -221,8 +222,8 @@ bool show_warnings(Session *session,
     return true;
 
   DRIZZLE_ERROR *err;
-  Select_Lex *sel= &session->getLex()->select_lex;
-  Select_Lex_Unit *unit= &session->getLex()->unit;
+  Select_Lex *sel= &session->lex().select_lex;
+  Select_Lex_Unit *unit= &session->lex().unit;
   ha_rows idx= 0;
 
   unit->set_limit(sel);

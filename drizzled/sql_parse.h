@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_PARSE_H
-#define DRIZZLED_SQL_PARSE_H
+#pragma once
 
 #include <string>
 
@@ -82,8 +81,7 @@ bool check_simple_select(Session* session);
 void init_select(LEX *lex);
 bool new_select(LEX *lex, bool move_down);
 
-int prepare_new_schema_table(Session *session, LEX *lex,
-                             const std::string& schema_table_name);
+int prepare_new_schema_table(Session*, LEX&, const std::string& schema_table_name);
 
 Item * all_any_subquery_creator(Item *left_expr,
                                 chooser_compare_func_creator cmp,
@@ -94,4 +92,3 @@ char* query_table_status(Session *session,const char *db,const char *table_name)
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_PARSE_H */

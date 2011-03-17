@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MODULE_LIBRARY_H
-#define DRIZZLED_MODULE_LIBRARY_H
+#pragma once
 
 /**
  * @file Defines a Plugin Library Wrapper
@@ -76,4 +75,3 @@ public:
 } /* namespace module */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MODULE_LIBRARY_H */

@@ -18,8 +18,7 @@
  */
 
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_SCHEMA_H
-#define PLUGIN_UTILITY_FUNCTIONS_SCHEMA_H
+#pragma once
 
 #include <drizzled/function/str/strfunc.h>
 
@@ -47,4 +46,3 @@ public:
 } /* namespace utility_functions */
 } /* namespace drizzled */
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_SCHEMA_H */

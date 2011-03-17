@@ -27,8 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_MEMCACHED_QUERY_CACHE_INVALIDATOR_H
-#define PLUGIN_MEMCACHED_QUERY_CACHE_INVALIDATOR_H
+#pragma once
 
 #include <drizzled/replication_services.h>
 
@@ -90,4 +89,3 @@ private:
 
 };
 
-#endif /* PLUGIN_MEMCACHED_QUERY_CACHE_INVALIDATOR_H */

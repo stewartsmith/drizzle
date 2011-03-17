@@ -14,8 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_VIO_H
-#define PLUGIN_MYSQL_PROTOCOL_VIO_H
+#pragma once
 
 #include <sys/socket.h>
 #include <cerrno>
@@ -141,4 +140,3 @@ private:
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_VIO_H */

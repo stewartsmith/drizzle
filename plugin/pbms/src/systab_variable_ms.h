@@ -22,6 +22,7 @@
  *
  */
 
+#pragma once
 #ifndef __SYSTAB_VARIABLES_H__
 #define __SYSTAB_VARIABLES_H__
 
@@ -44,8 +45,8 @@ public:
 	void seqScanInit();
 	bool seqScanNext(char *buf);
 	int	getRefLen() { return sizeof(iVariableIndex);}
-	void seqScanPos(uint8_t *pos);
-	void seqScanRead(uint8_t *pos, char *buf);
+	void seqScanPos(unsigned char *pos);
+	void seqScanRead(unsigned char *pos, char *buf);
 
 	void updateRow(char *old_data, char *new_data);
 

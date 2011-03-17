@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H
-#define PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H
+#pragma once
 
 #include <client/client_priv.h>
 #include <string>
@@ -45,4 +44,3 @@ private:
   bool drizzleProtocol;
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H */

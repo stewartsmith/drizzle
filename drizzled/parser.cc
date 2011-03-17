@@ -19,11 +19,13 @@
  */
 
 #include <config.h>
+#include <drizzled/session.h>
 #include <drizzled/parser.h>
 #include <drizzled/alter_info.h>
 
 #include <drizzled/message/alter_table.pb.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled {
 namespace parser {

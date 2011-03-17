@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_H
-#define DRIZZLED_STATEMENT_H
+#pragma once
 
 #include <drizzled/definitions.h>
 #include <drizzled/error.h>
@@ -27,15 +26,15 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Session;
 class TableList;
 class Item;
 
-namespace statement
-{
+namespace session { class Transactions; }
+
+namespace statement {
 
 /**
  * @class Statement
@@ -44,11 +43,15 @@ namespace statement
 class Statement
 {
 public:
-  Statement(Session *in_session) : 
-    _session(in_session)
+  Statement(Session *in_session) :
+    _session(*in_session)
   {}
 
   virtual ~Statement() {}
+
+  void set_command(enum_sql_command);
+  LEX& lex();
+  session::Transactions& transaction();
 
   /**
    * Execute the statement.
@@ -64,12 +67,7 @@ public:
     return false;
   }
 
-  Session *getSession()
-  {
-    return _session;
-  }
-
-  Session *getSession() const
+  Session& session() const
   {
     return _session;
   }
@@ -77,14 +75,9 @@ public:
   virtual bool isShow() { return false; }
 
 private:
-  /**
-   * A session handler.
-   */
-  Session *_session;
+  Session& _session;
 };
 
 } /* namespace statement */
-
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_H */

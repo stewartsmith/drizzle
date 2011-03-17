@@ -22,8 +22,7 @@
  * @file Declaration of the AlterInfo class
  */
 
-#ifndef DRIZZLED_ALTER_INFO_H
-#define DRIZZLED_ALTER_INFO_H
+#pragma once
 
 #include <drizzled/alter_column.h>
 #include <drizzled/base.h>
@@ -90,4 +89,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ALTER_INFO_H */

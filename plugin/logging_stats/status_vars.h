@@ -27,10 +27,13 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_STATUS_VARS_H
-#define PLUGIN_LOGGING_STATS_STATUS_VARS_H
+#pragma once
 
-#include <drizzled/session.h>
+namespace drizzled 
+{ 
+  class Session;
+  class system_status_var;
+}
 
 class StatusVars
 {
@@ -66,4 +69,3 @@ private:
 
 };
 
-#endif /* PLUGIN_LOGGING_STATS_STATUS_VARS_H */

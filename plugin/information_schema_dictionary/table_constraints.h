@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_INFORMATION_SCHEMA_DICTIONARY_TABLE_CONSTRAINTS_H
-#define PLUGIN_INFORMATION_SCHEMA_DICTIONARY_TABLE_CONSTRAINTS_H
+#pragma once
 
 class TableConstraints : public InformationSchema
 {
@@ -46,4 +45,3 @@ public:
 
 };
 
-#endif /* PLUGIN_INFORMATION_SCHEMA_DICTIONARY_TABLE_CONSTRAINTS_H */

@@ -20,8 +20,7 @@
 
 
 
-#ifndef DRIZZLED_INTERNAL_MY_SYS_H
-#define DRIZZLED_INTERNAL_MY_SYS_H
+#pragma once
 
 #ifdef __cplusplus
 # include <cstdio>
@@ -47,8 +46,6 @@
 extern int errno;			/* declare errno */
 #endif
 #endif					/* #ifndef errno */
-
-#include <drizzled/dynamic_array.h>
 
 #ifdef HAVE_SYS_MMAN_H 
 #include <sys/mman.h>
@@ -378,4 +375,3 @@ extern void thd_increment_net_big_packet_count(uint32_t length);
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_MY_SYS_H */

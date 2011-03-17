@@ -89,29 +89,28 @@ static int apply_online_rename_table(Session *session,
 
 namespace statement {
 
-AlterTable::AlterTable(Session *in_session, Table_ident *ident) :
+AlterTable::AlterTable(Session *in_session, Table_ident *) :
   CreateTable(in_session)
 {
-  in_session->getLex()->sql_command= SQLCOM_ALTER_TABLE;
-  (void)ident;
+  set_command(SQLCOM_ALTER_TABLE);
 }
 
 } // namespace statement
 
 bool statement::AlterTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
+  Select_Lex *select_lex= &lex().select_lex;
   bool need_start_waiting= false;
 
   is_engine_set= not createTableMessage().engine().name().empty();
 
   if (is_engine_set)
   {
-    create_info().db_type= 
-      plugin::StorageEngine::findByName(*getSession(), createTableMessage().engine().name());
+    create_info().db_type=
+      plugin::StorageEngine::findByName(session(), createTableMessage().engine().name());
 
     if (create_info().db_type == NULL)
     {
@@ -128,7 +127,7 @@ bool statement::AlterTable::execute()
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(session(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
@@ -136,8 +135,8 @@ bool statement::AlterTable::execute()
 
     if (not  create_info().db_type)
     {
-      create_info().db_type= 
-        plugin::StorageEngine::findByName(*getSession(), original_table_message->engine().name());
+      create_info().db_type=
+        plugin::StorageEngine::findByName(session(), original_table_message->engine().name());
 
       if (not create_info().db_type)
       {
@@ -150,13 +149,13 @@ bool statement::AlterTable::execute()
   if (not validateCreateTableOption())
     return true;
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
-  if (not (need_start_waiting= not getSession()->wait_if_global_read_lock(0, 1)))
+  if (not (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
     return true;
 
   bool res;
@@ -164,9 +163,9 @@ bool statement::AlterTable::execute()
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                   getSession()->getLex()->name.str ? getSession()->getLex()->name.str : first_table->getTableName());
+                                   lex().name.str ? lex().name.str : first_table->getTableName());
 
-    res= alter_table(getSession(), 
+    res= alter_table(&session(),
                      identifier,
                      new_identifier,
                      &create_info(),
@@ -176,20 +175,20 @@ bool statement::AlterTable::execute()
                      &alter_info,
                      select_lex->order_list.size(),
                      (Order *) select_lex->order_list.first,
-                     getSession()->getLex()->ignore);
+                     lex().ignore);
   }
   else
   {
     identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= getSession()->find_temporary_table(catch22);
+    Table *table= session().find_temporary_table(catch22);
     assert(table);
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                       getSession()->getLex()->name.str ? getSession()->getLex()->name.str : first_table->getTableName(),
+                                       lex().name.str ? lex().name.str : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
-      res= alter_table(getSession(), 
+      res= alter_table(&session(),
                        identifier,
                        new_identifier,
                        &create_info(),
@@ -199,7 +198,7 @@ bool statement::AlterTable::execute()
                        &alter_info,
                        select_lex->order_list.size(),
                        (Order *) select_lex->order_list.first,
-                       getSession()->getLex()->ignore);
+                       lex().ignore);
     }
   }
 
@@ -207,7 +206,7 @@ bool statement::AlterTable::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }
@@ -378,21 +377,8 @@ static bool prepare_alter_table(Session *session,
 
       if (alter != alter_info->alter_list.end())
       {
-        if (def->sql_type == DRIZZLE_TYPE_BLOB)
-        {
-          my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
-          return true;
-        }
+        def->setDefaultValue(alter->def, NULL);
 
-        if ((def->def= alter->def))
-        {
-          /* Use new default */
-          def->flags&= ~NO_DEFAULT_VALUE_FLAG;
-        }
-        else
-        {
-          def->flags|= NO_DEFAULT_VALUE_FLAG;
-        }
         alter_info->alter_list.erase(alter);
       }
     }
@@ -716,7 +702,7 @@ static bool prepare_alter_table(Session *session,
     for (size_t y= 0; y < num_engine_options; ++y)
     {
       found= not table_message.engine().options(y).name().compare(original_proto.engine().options(x).name());
-      
+
       if (found)
         break;
     }
@@ -979,7 +965,7 @@ static bool internal_alter_table(Session *session,
   create_proto.set_type(new_table_identifier.getType());
 
   /**
-    @todo Have a check on the table definition for FK in the future 
+    @todo Have a check on the table definition for FK in the future
     to remove the need for the cursor. (aka can_switch_engines())
   */
   if (new_engine != original_engine &&
@@ -1061,7 +1047,7 @@ static bool internal_alter_table(Session *session,
         transaction_services.allocateNewTransactionId();
         transaction_services.rawStatement(*session,
                                           *session->getQueryString(),
-                                          *session->schema());        
+                                          *session->schema());
         session->my_ok();
       }
       else if (error > EE_OK) // If we have already set the error, we pass along -1
@@ -1335,13 +1321,13 @@ static bool internal_alter_table(Session *session,
     TransactionServices &transaction_services= TransactionServices::singleton();
     transaction_services.rawStatement(*session,
                                       *session->getQueryString(),
-                                      *session->schema());        
+                                      *session->schema());
     table_list->table= NULL;
   }
 
   /*
-   * Field::store() may have called my_error().  If this is 
-   * the case, we must not send an ok packet, since 
+   * Field::store() may have called my_error().  If this is
+   * the case, we must not send an ok packet, since
    * Diagnostics_area::is_set() will fail an assert.
  */
   if (session->is_error())
@@ -1466,7 +1452,7 @@ bool alter_table(Session *session,
 {
   bool error;
   Table *table;
-  message::AlterTable *alter_table_message= session->getLex()->alter_table();
+  message::AlterTable *alter_table_message= session->lex().alter_table();
 
   alter_table_message->set_catalog(original_table_identifier.getCatalogName());
   alter_table_message->set_schema(original_table_identifier.getSchemaName());
@@ -1491,7 +1477,7 @@ bool alter_table(Session *session,
 
   session->set_proc_info("gained write lock on table");
 
-  /* 
+  /*
     Check that we are not trying to rename to an existing table,
     if one existed we get a lock, if we can't we error.
   */
@@ -1560,8 +1546,8 @@ copy_data_between_tables(Session *session,
   */
   TransactionServices &transaction_services= TransactionServices::singleton();
 
-  /* 
-   * LP Bug #552420 
+  /*
+   * LP Bug #552420
    *
    * Since open_temporary_table() doesn't invoke lockTables(), we
    * don't get the usual automatic call to StorageEngine::startStatement(), so
@@ -1627,8 +1613,8 @@ copy_data_between_tables(Session *session,
         tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
         error= 1;
 
-        if (session->getLex()->select_lex.setup_ref_array(session, order_num) ||
-            setup_order(session, session->getLex()->select_lex.ref_pointer_array,
+        if (session->lex().select_lex.setup_ref_array(session, order_num) ||
+            setup_order(session, session->lex().select_lex.ref_pointer_array,
                         &tables, fields, all_fields, order) ||
             !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
             (from->sort.found_records= filesort.run(from, sortorder, length,
@@ -1705,9 +1691,9 @@ copy_data_between_tables(Session *session,
       to->auto_increment_field_not_null= false;
 
       if (error)
-      { 
+      {
         if (!ignore || to->cursor->is_fatal_error(error, HA_CHECK_DUP))
-        { 
+        {
           to->print_error(error, MYF(0));
           break;
         }

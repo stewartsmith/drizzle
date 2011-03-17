@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_RESULT_H
-#define DRIZZLED_SELECT_RESULT_H
+#pragma once
 
 #include <drizzled/current_session.h>
 
@@ -81,4 +80,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_RESULT_H */

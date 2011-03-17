@@ -18,24 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#pragma once
 
-#ifndef DRIZZLED_PLUGIN_CLIENT_CACHED_H
-#define DRIZZLED_PLUGIN_CLIENT_CACHED_H
-
-
+#include <drizzled/field.h>
 #include <drizzled/plugin/client/concurrent.h>
 #include <drizzled/sql/result_set.h>
-
-#include <boost/scoped_ptr.hpp>
-
 #include <iostream>
 
-namespace drizzled
-{
-namespace plugin
-{
-namespace client
-{
+namespace drizzled {
+namespace plugin {
+namespace client {
 
 class Cached : public Concurrent
 {
@@ -45,7 +37,6 @@ class Cached : public Concurrent
 
 public:
   Cached(sql::ResultSet &rs) :
-    Concurrent(),
     column(0),
     max_column(0),
     _result_set(&rs)
@@ -55,12 +46,11 @@ public:
   virtual bool sendFields(List<Item> *list)
   {
     List<Item>::iterator it(list->begin());
-    Item *item;
 
     column= 0;
     max_column= 0;
 
-    while ((item=it++))
+    while (Item* item= it++)
     {
       SendField field;
       item->make_field(&field);
@@ -73,11 +63,10 @@ public:
 
   virtual void sendError(drizzled::error_t error_code, const char *error_message)
   {
-    sql::Exception tmp(error_message, error_code);
-    _result_set->pushException(tmp);
+    _result_set->pushException(sql::Exception(error_message, error_code));
   }
 
-  virtual void checkRowEnd(void)
+  virtual void checkRowEnd()
   {
     if (++column % max_column == 0)
     {
@@ -99,7 +88,7 @@ public:
     return store(str.ptr(), str.length());
   }
 
-  virtual bool store(void)
+  virtual bool store()
   {
     _result_set->setColumnNull(currentColumn());
 
@@ -110,10 +99,7 @@ public:
 
   virtual bool store(int32_t from)
   {
-    std::string tmp;
-
-    tmp= boost::lexical_cast<std::string>(from);
-    _result_set->setColumn(currentColumn(), tmp);
+    _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
 
     return false;
@@ -121,10 +107,7 @@ public:
 
   virtual bool store(uint32_t from)
   {
-    std::string tmp;
-
-    tmp= boost::lexical_cast<std::string>(from);
-    _result_set->setColumn(currentColumn(), tmp);
+    _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
 
     return false;
@@ -132,10 +115,7 @@ public:
 
   virtual bool store(int64_t from)
   {
-    std::string tmp;
-
-    tmp= boost::lexical_cast<std::string>(from);
-    _result_set->setColumn(currentColumn(), tmp);
+    _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
 
     return false;
@@ -143,10 +123,7 @@ public:
 
   virtual bool store(uint64_t from)
   {
-    std::string tmp;
-
-    tmp= boost::lexical_cast<std::string>(from);
-    _result_set->setColumn(currentColumn(), tmp);
+    _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
 
     return false;
@@ -176,4 +153,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_CLIENT_CACHED_H */

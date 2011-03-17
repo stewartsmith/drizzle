@@ -21,6 +21,7 @@
 #include <drizzled/field_iterator.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 #include <drizzled/table.h>
 
 namespace drizzled
@@ -46,11 +47,7 @@ void Field_iterator_table::set_table(Table *table)
 
 Item *Field_iterator_table::create_item(Session *session)
 {
-  Select_Lex *select= session->getLex()->current_select;
-
-  Item_field *item= new Item_field(session, &select->context, *ptr);
-
-  return item;
+  return new Item_field(session, &session->lex().current_select->context, *ptr);
 }
 
 

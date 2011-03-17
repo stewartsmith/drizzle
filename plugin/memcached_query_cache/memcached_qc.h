@@ -26,8 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef PLUGIN_MEMCACHED_QUERY_CACHE_MEMCACHED_QC_H
-#define PLUGIN_MEMCACHED_QUERY_CACHE_MEMCACHED_QC_H
+#pragma once
 
 #include <drizzled/plugin/query_cache.h>
 #include "query_cache_service.h"
@@ -85,4 +84,3 @@ public:
   }
 
 };
-#endif /* PLUGIN_MEMCACHED_QUERY_CACHE_MEMCACHED_QC_H */

@@ -288,12 +288,12 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
   }
   if (error > 0)
     return(HA_POS_ERROR);
-  if (buffpek->elements)
+  if (buffpek->size())
   {
     if (info->write_keys(info,sort_keys,idx,(BUFFPEK *)alloc_dynamic(buffpek),
 		   tempfile))
       return(HA_POS_ERROR);
-    *maxbuffer=buffpek->elements-1;
+    *maxbuffer=buffpek->size() - 1;
   }
   else
     *maxbuffer=0;
@@ -330,7 +330,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     if (!got_error)
     {
       mi_set_key_active(share->state.key_map, sinfo->key);
-      if (!sinfo->buffpek.elements)
+      if (!sinfo->buffpek.size())
       {
         if (param->testflag & T_VERBOSE)
         {
@@ -375,9 +375,9 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       sinfo->read_to_buffer=read_to_buffer;
       sinfo->write_key=write_merge_key;
     }
-    if (sinfo->buffpek.elements)
+    if (sinfo->buffpek.size())
     {
-      size_t maxbuffer=sinfo->buffpek.elements-1;
+      size_t maxbuffer=sinfo->buffpek.size() - 1;
       if (!mergebuf)
       {
         length=param->sort_buffer_length;

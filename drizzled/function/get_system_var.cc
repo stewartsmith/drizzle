@@ -23,9 +23,9 @@
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/session.h>
 #include <drizzled/sys_var.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_func_get_system_var::
 Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
@@ -81,7 +81,7 @@ Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
     my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->str);
     return 0;
   }
-  session->getLex()->setCacheable(false);
+  session->lex().setCacheable(false);
 
   set_if_smaller(component_name->length, (size_t)MAX_SYS_VAR_LENGTH);
 

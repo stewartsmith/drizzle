@@ -29,8 +29,7 @@
  * Transaction messages to other formats, including SQL statements.
  */
 
-#ifndef DRIZZLED_MESSAGE_STATEMENT_TRANSFORM_H
-#define DRIZZLED_MESSAGE_STATEMENT_TRANSFORM_H
+#pragma once
 
 #include <drizzled/message/table.pb.h>
 #include <string>
@@ -515,4 +514,3 @@ bool transactionContainsBulkSegment(const Transaction &transaction);
 } /* namespace message */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MESSAGE_STATEMENT_TRANSFORM_H */

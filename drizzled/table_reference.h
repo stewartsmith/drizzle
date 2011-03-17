@@ -25,8 +25,7 @@
  * used in the nested loops join implementation.
  */
 
-#ifndef DRIZZLED_TABLE_REFERENCE_H
-#define DRIZZLED_TABLE_REFERENCE_H
+#pragma once
 
 #include <drizzled/base.h>
 #include <drizzled/definitions.h>
@@ -90,4 +89,3 @@ struct table_reference_st
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_REFERENCE_H */

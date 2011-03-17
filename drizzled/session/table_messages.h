@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_TABLE_MESSAGES_H
-#define DRIZZLED_SESSION_TABLE_MESSAGES_H
+#pragma once
 
 #include <drizzled/util/string.h>
 #include <drizzled/message/table.h>
@@ -44,7 +43,7 @@ class DRIZZLED_API TableMessages
   Cache table_message_cache;
 
 public:
-  bool storeTableMessage(const identifier::Table &identifier, message::Table &table_message);
+  bool storeTableMessage(const identifier::Table &identifier, const message::Table &table_message);
   bool removeTableMessage(const identifier::Table &identifier);
   bool getTableMessage(const identifier::Table &identifier, message::Table &table_message);
   bool doesTableMessageExist(const identifier::Table &identifier);
@@ -54,4 +53,3 @@ public:
 } /* namespace session */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SESSION_TABLE_MESSAGES_H */

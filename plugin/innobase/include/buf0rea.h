@@ -23,6 +23,7 @@ The database buffer read
 Created 11/5/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef buf0rea_h
 #define buf0rea_h
 

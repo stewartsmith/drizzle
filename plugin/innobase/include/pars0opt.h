@@ -23,6 +23,7 @@ Simple SQL optimizer
 Created 12/21/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef pars0opt_h
 #define pars0opt_h
 

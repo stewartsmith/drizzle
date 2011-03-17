@@ -23,6 +23,7 @@ Transaction undo log record
 Created 3/26/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef trx0rec_h
 #define trx0rec_h
 

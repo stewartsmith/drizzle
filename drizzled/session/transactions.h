@@ -18,18 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_TRANSACTIONS_H
-#define DRIZZLED_SESSION_TRANSACTIONS_H
+#pragma once
 
 #include <deque>
+#include <drizzled/xid.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Session;
 
-namespace session
-{
+namespace session {
 
 /**
  * Structure used to manage "statement transactions" and
@@ -39,15 +37,9 @@ namespace session
  * Storage engines will be registered here when they participate in
  * a transaction. No engine is registered more than once.
  */
-class Transactions {
+class Transactions 
+{
 public:
-  Transactions() :
-    savepoints(),
-    all(),
-    stmt(),
-    xid_state()
-  { }
-
   std::deque<NamedSavepoint> savepoints;
 
   /**
@@ -82,4 +74,3 @@ public:
 } /* namespace session */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SESSION_TRANSACTIONS_H */

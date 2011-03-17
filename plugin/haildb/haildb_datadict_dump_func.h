@@ -16,11 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_HAILDB_HAILDB_DATADICT_DUMP_FUNC_H
-#define PLUGIN_HAILDB_HAILDB_DATADICT_DUMP_FUNC_H
+#pragma once
 
 #include <drizzled/plugin/storage_engine.h>
 
 int haildb_datadict_dump_func_initialize(drizzled::module::Context &context);
 
-#endif /* PLUGIN_HAILDB_HAILDB_DATADICT_DUMP_FUNC_H */

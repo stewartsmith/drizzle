@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SYS_VAR_H
-#define DRIZZLED_SYS_VAR_H
+#pragma once
 
 #include <string>
 #include <boost/filesystem.hpp>
@@ -30,12 +29,11 @@
 #include <drizzled/base.h>
 #include <drizzled/global_charset_info.h>
 #include <drizzled/lex_string.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
+class Session;
 class sys_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
@@ -1142,4 +1140,3 @@ extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SYS_VAR_H */

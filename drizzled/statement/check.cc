@@ -23,19 +23,20 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/check.h>
 #include <drizzled/sql_table.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {
 
 bool statement::Check::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
-  bool res= check_table(getSession(), first_table, &check_opt);
+  Select_Lex *select_lex= &lex().select_lex;
+  bool res= check_table(&session(), first_table, &check_opt);
   select_lex->table_list.first= (unsigned char*) first_table;
-  getSession()->getLex()->query_tables=all_tables;
+  lex().query_tables=all_tables;
 
   return res;
 }

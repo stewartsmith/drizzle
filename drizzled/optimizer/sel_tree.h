@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_SEL_TREE_H
-#define DRIZZLED_OPTIMIZER_SEL_TREE_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 
@@ -153,4 +152,3 @@ bool remove_nonrange_trees(RangeParameter *param, SEL_TREE *tree);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_SEL_TREE_H */

@@ -35,7 +35,7 @@
  **/
 
 #include <config.h>
-#include <libdrizzle/drizzle_client.h>
+#include <libdrizzle/libdrizzle.h>
 
 #include "server_detect.h"
 #include "get_password.h"
@@ -163,6 +163,9 @@ const uint32_t MAX_COLUMN_LENGTH= 1024;
 
 /* Buffer to hold 'version' and 'version_comment' */
 const int MAX_SERVER_VERSION_LENGTH= 128;
+
+/* Options used during connect */
+drizzle_con_options_t global_con_options= DRIZZLE_CON_NONE;
 
 #define PROMPT_CHAR '\\'
 
@@ -1488,7 +1491,7 @@ try
 #endif
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
-  _("The protocol of connection (mysql or drizzle)."))
+  _("The protocol of connection (mysql, mysql-plugin-auth, or drizzle)."))
   ;
 
   po::options_description long_options(_("Allowed Options"));
@@ -1704,9 +1707,21 @@ try
       opt_protocol.begin(), ::tolower);
 
     if (not opt_protocol.compare("mysql"))
-      use_drizzle_protocol=false;
+    {
+
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
+      use_drizzle_protocol= false;
+    }
+    else if (not opt_protocol.compare("mysql-plugin-auth"))
+    {
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE|DRIZZLE_CON_AUTH_PLUGIN);
+      use_drizzle_protocol= false;
+    }
     else if (not opt_protocol.compare("drizzle"))
-      use_drizzle_protocol=true;
+    {
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_EXPERIMENTAL);
+      use_drizzle_protocol= true;
+    }
     else
     {
       cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
@@ -1950,7 +1965,8 @@ void handle_sigint(int sig)
   drizzle_return_t ret;
 
   /* terminate if no query being executed, or we already tried interrupting */
-  if (!executing_query || interrupted_query) {
+  if (!executing_query || interrupted_query)
+  {
     goto err;
   }
 
@@ -2188,7 +2204,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
     return(0);
   if (status.getAddToHistory() && line[0] && not_in_history(line))
     add_history(line);
-  char *end_of_line=line+(uint32_t) strlen(line);
 
   for (pos=out=line ; (inchar= (unsigned char) *pos) ; pos++)
   {
@@ -2282,37 +2297,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
         continue;
       }
     }
-    else if (!*ml_comment && !*in_string &&
-             (end_of_line - pos) >= 10 &&
-             !strncmp(pos, "delimiter ", 10))
-    {
-      // Flush previously accepted characters
-      if (out != line)
-      {
-        buffer->append(line, (out - line));
-        out= line;
-      }
-
-      // Flush possible comments in the buffer
-      if (!buffer->empty())
-      {
-        if (com_go(buffer, 0) > 0) // < 0 is not fatal
-          return(1);
-        assert(buffer!=NULL);
-        buffer->clear();
-      }
-
-      /*
-        Delimiter wants the get rest of the given line as argument to
-        allow one to change ';' to ';;' and back
-      */
-      buffer->append(pos);
-      if (com_delimiter(buffer, pos) > 0)
-        return(1);
-
-      buffer->clear();
-      break;
-    }
     else if (!*ml_comment && !*in_string && !strncmp(pos, delimiter,
                                                      strlen(delimiter)))
     {
@@ -2372,7 +2356,22 @@ static bool add_line(string *buffer, char *line, char *in_string,
 
       // comment to end of line
       if (preserve_comments)
+      {
+        bool started_with_nothing= !buffer->empty();
         buffer->append(pos);
+
+        /*
+          A single-line comment by itself gets sent immediately so that
+          client commands (delimiter, status, etc) will be interpreted on
+          the next line.
+        */
+        if (started_with_nothing)
+        {
+          if (com_go(buffer, 0) > 0)             // < 0 is not fatal
+           return 1;
+          buffer->clear();
+        }
+      }  
 
       break;
     }
@@ -4224,15 +4223,13 @@ sql_connect(const string &host, const string &database, const string &user, cons
   drizzle_create(&drizzle);
 
 #ifdef DRIZZLE_ADMIN_TOOL
-  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE));
-#else
-  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
+  global_con_options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | global_con_options);
 #endif
 
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
                           opt_drizzle_port, (char *)user.c_str(),
                           (char *)password.c_str(), (char *)database.c_str(),
-                          options) == NULL)
+                          global_con_options) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);

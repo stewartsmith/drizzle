@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/plugin/function.h>
@@ -35,4 +34,3 @@
 #include <plugin/utility_functions/typeof.h>
 #include <plugin/utility_functions/user.h>
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */

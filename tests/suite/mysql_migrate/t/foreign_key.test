@@ -1,0 +1,17 @@
+# mysql_migrate.foreign_key
+# simple test to ensure that we can get data from a MySQL
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_foreign_key.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+eval SHOW CREATE TABLE $database.t1;
+eval SHOW CREATE TABLE $database.t2;
+
+eval SELECT * FROM $database.t1;
+eval SELECT * FROM $database.t2;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+eval DROP SCHEMA $database;

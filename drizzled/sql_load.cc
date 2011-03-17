@@ -27,6 +27,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/sql_lex.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -156,10 +157,10 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (session->openTablesLock(table_list))
     return(true);
 
-  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
-                                    &session->getLex()->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->lex().select_lex.context,
+                                    &session->lex().select_lex.top_join_list,
                                     table_list,
-                                    &session->getLex()->select_lex.leaf_tables, true))
+                                    &session->lex().select_lex.leaf_tables, true))
      return(-1);
 
   /*

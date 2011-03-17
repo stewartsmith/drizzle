@@ -487,16 +487,6 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
 {
   drizzle_result_st *old_result;
 
-  for (old_result= con->result_list; old_result != NULL; old_result= old_result->next)
-  {
-    if (result == old_result)
-    {
-      drizzle_set_error(con->drizzle, "drizzle_command_write", "result struct already in use");
-      *ret_ptr= DRIZZLE_RETURN_INTERNAL_ERROR;
-      return result;    
-    }
-  }
-
   if (!(con->options & DRIZZLE_CON_READY))
   {
     if (con->options & DRIZZLE_CON_RAW_PACKET)
@@ -518,6 +508,16 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
       con->result= NULL;
     else
     {
+      for (old_result= con->result_list; old_result != NULL; old_result= old_result->next)
+      {
+        if (result == old_result)
+        {
+          drizzle_set_error(con->drizzle, "drizzle_command_write", "result struct already in use");
+          *ret_ptr= DRIZZLE_RETURN_INTERNAL_ERROR;
+          return result;
+        }
+      }
+
       con->result= drizzle_result_create(con, result);
       if (con->result == NULL)
       {
@@ -792,11 +792,11 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
     memset(&ai, 0, sizeof(struct addrinfo));
     ai.ai_socktype= SOCK_STREAM;
     ai.ai_protocol= IPPROTO_TCP;
+    ai.ai_flags = AI_PASSIVE;
+    ai.ai_family = AF_UNSPEC;
 
     if (con->options & DRIZZLE_CON_LISTEN)
     {
-      ai.ai_flags = AI_PASSIVE;
-      ai.ai_family = AF_UNSPEC;
       host= tcp->host;
     }
     else

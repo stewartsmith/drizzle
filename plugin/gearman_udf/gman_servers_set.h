@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef PLUGIN_GEARMAN_UDF_GMAN_SERVERS_SET_H
-#define PLUGIN_GEARMAN_UDF_GMAN_SERVERS_SET_H
+#pragma once
 
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -30,4 +29,3 @@ public:
   drizzled::String *val_str(drizzled::String *);
 };
 
-#endif /* PLUGIN_GEARMAN_UDF_GMAN_SERVERS_SET_H */

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_STRING_FUNCTIONS_QUOTE_H
-#define PLUGIN_STRING_FUNCTIONS_QUOTE_H
+#pragma once
 
 #include <drizzled/function/str/strfunc.h>
 
@@ -42,4 +41,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* PLUGIN_STRING_FUNCTIONS_QUOTE_H */

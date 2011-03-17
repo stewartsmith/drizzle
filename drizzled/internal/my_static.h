@@ -18,8 +18,7 @@
   a shared library
 */
 
-#ifndef DRIZZLED_INTERNAL_MY_STATIC_H
-#define DRIZZLED_INTERNAL_MY_STATIC_H
+#pragma once
 
 #include <signal.h>
 
@@ -77,4 +76,3 @@ extern sigset_t my_signals;		/* signals blocked by mf_brkhant */
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_MY_STATIC_H */

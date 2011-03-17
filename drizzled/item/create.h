@@ -19,8 +19,7 @@
 
 /* Functions to create an item. Used by sql/sql_yacc.yy */
 
-#ifndef DRIZZLED_ITEM_CREATE_H
-#define DRIZZLED_ITEM_CREATE_H
+#pragma once
 
 #include <drizzled/item/func.h>
 #include <drizzled/plugin/function.h>
@@ -51,12 +50,12 @@ public:
     In particular, the following members/methods can be set/called,
     depending on the function called and the function possible side effects.
     <ul>
-      <li><code>session->getLex()->binlog_row_based_if_mixed</code></li>
-      <li><code>session->getLex()->current_context()</code></li>
-      <li><code>session->getLex()->safe_to_cache_query</code></li>
-      <li><code>session->getLex()->uncacheable(UNCACHEABLE_SIDEEFFECT)</code></li>
-      <li><code>session->getLex()->uncacheable(UNCACHEABLE_RAND)</code></li>
-      <li><code>session->getLex()->add_time_zone_tables_to_query_tables(session)</code></li>
+      <li><code>session->lex().binlog_row_based_if_mixed</code></li>
+      <li><code>session->lex().current_context()</code></li>
+      <li><code>session->lex().safe_to_cache_query</code></li>
+      <li><code>session->lex().uncacheable(UNCACHEABLE_SIDEEFFECT)</code></li>
+      <li><code>session->lex().uncacheable(UNCACHEABLE_RAND)</code></li>
+      <li><code>session->lex().add_time_zone_tables_to_query_tables(session)</code></li>
     </ul>
     @param session The current thread
     @param name The function name
@@ -179,4 +178,3 @@ void item_create_cleanup();
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_CREATE_H */

@@ -40,7 +40,7 @@ bool statement::ReleaseSavepoint::execute()
    * unbind it from our deque.
    */
   TransactionServices &transaction_services= TransactionServices::singleton();
-  deque<NamedSavepoint> &savepoints= getSession()->transaction.savepoints;
+  deque<NamedSavepoint> &savepoints= transaction().savepoints;
   deque<NamedSavepoint>::iterator iter;
 
   for (iter= savepoints.begin();
@@ -50,8 +50,8 @@ bool statement::ReleaseSavepoint::execute()
     NamedSavepoint &sv= *iter;
     const string &sv_name= sv.getName();
     if (my_strnncoll(system_charset_info,
-                     (unsigned char *) getSession()->getLex()->ident.str,
-                     getSession()->getLex()->ident.length,
+                     (unsigned char *) lex().ident.str,
+                     lex().ident.length,
                      (unsigned char *) sv_name.c_str(),
                      sv_name.size()) == 0)
       break;
@@ -59,16 +59,16 @@ bool statement::ReleaseSavepoint::execute()
   if (iter != savepoints.end())
   {
     NamedSavepoint &sv= *iter;
-    (void) transaction_services.releaseSavepoint(*getSession(), sv);
+    (void) transaction_services.releaseSavepoint(session(), sv);
     savepoints.erase(iter);
-    getSession()->my_ok();
+    session().my_ok();
   }
   else
   {
     my_error(ER_SP_DOES_NOT_EXIST, 
              MYF(0), 
              "SAVEPOINT", 
-             getSession()->getLex()->ident.str);
+             lex().ident.str);
   }
   return false;
 }

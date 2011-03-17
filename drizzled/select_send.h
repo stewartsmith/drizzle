@@ -18,13 +18,13 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_SEND_H
-#define DRIZZLED_SELECT_SEND_H
+#pragma once
 
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/query_cache.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/select_result.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {
@@ -126,4 +126,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_SEND_H */

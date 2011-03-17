@@ -21,6 +21,7 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_parse.h>
 #include PCRE_HEADER
 #include <limits.h>
 #include <sys/time.h>
@@ -71,7 +72,7 @@ static void quotify(const string &src, string &dst)
   static const char hexit[]= { '0', '1', '2', '3', '4', '5', '6', '7',
 			  '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
   string::const_iterator src_iter;
-  
+
   for (src_iter= src.begin(); src_iter < src.end(); ++src_iter)
   {
     if (static_cast<unsigned char>(*src_iter) > 0x7f)
@@ -257,13 +258,13 @@ public:
 
     // buffer to quotify the query
     string qs;
-    
+
     // Since quotify() builds the quoted string incrementally, we can
     // avoid some reallocating if we reserve some space up front.
     qs.reserve(query_string->length());
-    
+
     quotify(*query_string, qs);
-    
+
     // to avoid trying to printf %s something that is potentially NULL
     util::string::const_shared_ptr schema(session->schema());
     const char *dbs= (schema and not schema->empty()) ? schema->c_str() : "";

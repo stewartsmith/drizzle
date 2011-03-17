@@ -17,10 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_COMPRESSION_UNCOMPRESS_H
-#define PLUGIN_COMPRESSION_UNCOMPRESS_H
+#pragma once
 
-#include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 
@@ -37,4 +35,3 @@ public:
 };
 
 
-#endif /* PLUGIN_COMPRESSION_UNCOMPRESS_H */

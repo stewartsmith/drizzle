@@ -22,7 +22,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
@@ -1746,7 +1745,7 @@ static bool admin_table(Session* session, TableList* tables,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
-  Select_Lex *select= &session->getLex()->select_lex;
+  Select_Lex *select= &session->lex().select_lex;
   List<Item> field_list;
   Item *item;
   int result_code= 0;
@@ -1791,9 +1790,9 @@ static bool admin_table(Session* session, TableList* tables,
         so it have to be prepared.
         @todo Investigate if we can put extra tables into argument instead of using lex->query_tables
       */
-      session->getLex()->query_tables= table;
-      session->getLex()->query_tables_last= &table->next_global;
-      session->getLex()->query_tables_own_last= 0;
+      session->lex().query_tables= table;
+      session->lex().query_tables_last= &table->next_global;
+      session->lex().query_tables_own_last= 0;
       session->no_warnings_for_error= 0;
 
       session->openTablesLock(table);
@@ -1832,7 +1831,7 @@ static bool admin_table(Session* session, TableList* tables,
       transaction_services.autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
-      session->getLex()->reset_query_tables_list(false);
+      session->lex().reset_query_tables_list(false);
       table->table=0;				// For query cache
       if (session->getClient()->flush())
 	goto err;
@@ -1858,7 +1857,7 @@ static bool admin_table(Session* session, TableList* tables,
 
 send_result:
 
-    session->getLex()->cleanup_after_one_table_open();
+    session->lex().cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
       List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());

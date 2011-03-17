@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_USER_LOCKS_USER_LOCKS_DICTIONARY_H
-#define PLUGIN_USER_LOCKS_USER_LOCKS_DICTIONARY_H
+#pragma once
 
 namespace user_locks {
 
@@ -48,4 +47,3 @@ public:
 
 } /* namespace user_locks */
 
-#endif /* PLUGIN_USER_LOCKS_USER_LOCKS_DICTIONARY_H */

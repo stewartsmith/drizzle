@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef PLUGIN_GEARMAN_UDF_FUNCTION_MAP_H
-#define PLUGIN_GEARMAN_UDF_FUNCTION_MAP_H
+#pragma once
 
 #include <map>
 #include <string>
@@ -36,4 +35,3 @@ public:
 /* This returns a reference to the global function map class. */
 GearmanFunctionMap& GetFunctionMap(void);
 
-#endif /* PLUGIN_GEARMAN_UDF_FUNCTION_MAP_H */

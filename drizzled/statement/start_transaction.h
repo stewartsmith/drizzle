@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_START_TRANSACTION_H
-#define DRIZZLED_STATEMENT_START_TRANSACTION_H
+#pragma once
 
 #include <drizzled/statement.h>
 
@@ -40,7 +39,7 @@ public:
     Statement(in_session),
     start_transaction_opt(opt)
   {
-    getSession()->getLex()->sql_command= SQLCOM_BEGIN;
+    set_command(SQLCOM_BEGIN);
   }
 
   bool execute();
@@ -57,4 +56,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_START_TRANSACTION_H */

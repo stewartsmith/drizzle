@@ -19,8 +19,7 @@
  */
 
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_KILL_H
-#define PLUGIN_UTILITY_FUNCTIONS_KILL_H
+#pragma once
 
 #include <drizzled/item/func.h>
 
@@ -60,4 +59,3 @@ private:
 } /* namespace utility_functions */
 } /* namespace drizzled */
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_KILL_H */

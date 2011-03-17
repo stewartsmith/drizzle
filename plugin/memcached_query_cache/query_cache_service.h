@@ -26,8 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef PLUGIN_MEMCACHED_QUERY_CACHE_QUERY_CACHE_SERVICE_H
-#define PLUGIN_MEMCACHED_QUERY_CACHE_QUERY_CACHE_SERVICE_H
+#pragma once
 
 #include <drizzled/message/resultset.pb.h>
 #include <drizzled/sql_list.h>
@@ -101,4 +100,3 @@ public:
   
 }; 
 } /* namespace drizzled */
-#endif /* PLUGIN_MEMCACHED_QUERY_CACHE_QUERY_CACHE_SERVICE_H */
